@@ -4,6 +4,12 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-08-10",
   "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "api.mccluster.org",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": true
   },
