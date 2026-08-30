@@ -1,0 +1,77 @@
+/* ============================================================
+   THE DESK AS ITS OWN ROOM
+
+   The widget is the same one that used to live in a corner and
+   on sites.html. Here it is the page: full height under the
+   masthead, above the bar, with a menu of doors on top so
+   nobody has to invent the first sentence.
+   ============================================================ */
+
+.chatpage { background: #0a0807; }
+.chat {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: clamp(4.4rem, 9vh, 6.2rem) clamp(1rem, 4vw, 1.6rem) 8.4rem;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+.chat__k {
+  font-size: 0.66rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: #e8c877;
+  font-weight: 800;
+  margin: 0;
+}
+.chat__title {
+  font-family: var(--sig, Anton, Impact, sans-serif);
+  text-transform: uppercase;
+  line-height: 0.86;
+  font-size: clamp(3rem, 14vw, 5.6rem);
+  margin: 0.45rem 0 0;
+  color: var(--cream, #f4efe6);
+}
+.chat__sub {
+  color: var(--cream-dim, rgba(244,239,230,0.72));
+  line-height: 1.65;
+  margin: 0.85rem 0 0;
+  font-size: 0.98rem;
+  max-width: 36ch;
+}
+.chat__menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1.25rem 0 1.1rem;
+}
+.chat__chip {
+  -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  touch-action: manipulation; text-decoration: none;
+  font: 700 0.78rem/1.2 var(--body, "Archivo", system-ui, sans-serif);
+  color: var(--cream, #f4efe6);
+  background: rgba(244,239,230,0.07);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,0.16);
+  border-radius: 999px;
+  padding: 0.55rem 0.85rem;
+}
+.chat__chip:hover, .chat__chip:focus-visible {
+  background: rgba(229,56,59,0.16);
+  box-shadow: inset 0 0 0 1px rgba(229,56,59,0.55);
+  outline: none;
+}
+.chat__chip--door { color: #e8c877; }
+.chat__stage {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: min(38rem, 62dvh);
+}
+.chatpage .dsk--inline {
+  flex: 1 1 auto;
+  min-height: min(38rem, 62dvh);
+  display: flex;
+  flex-direction: column;
+}
+.chatpage .dsk--inline .dsk__list { flex: 1 1 auto; }
