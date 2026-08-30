@@ -1,0 +1,87 @@
+; ============================================================
+; mccluster.org — the live zone.
+;
+; Captured 2026-08-18, then CORRECTED against the owner's own
+; WordPress.com DNS panel. Read that sentence twice before trusting a
+; capture: the first pass of this file was built by querying public DNS
+; for record names guessed from the SPF line, and it missed five records
+; — two DKIM CNAMEs, a DKIM TXT, the domain-connect record, and the
+; GitHub Pages verification challenge. A resolver only answers questions
+; you know to ask. The registrar's panel is the authority; this file now
+; matches it, record for record.
+;
+; 19 records. Cloudflare's DNS tab has an "Import DNS records" button
+; that reads this format. Upload the file. Do not hand-enter records, and
+; do not trust Cloudflare's signup scan to be complete either — it is
+; built the same fallible way the first version of this file was.
+;
+; NS and SOA are deliberately absent: Cloudflare issues its own.
+;
+; ---- READ BEFORE TOUCHING ANYTHING ---------------------------------
+;
+; THE FIVE MX RECORDS ARE YOUR EMAIL. Inbound mail for mccluster.org
+; goes to Google Workspace. Drop one, mistype one, or import without
+; them and mail stops — quietly, with senders getting bounces you never
+; see. Highest-consequence lines in the file.
+;
+; THREE SYSTEMS CAN SEND AS THIS DOMAIN. The SPF line authorises Google,
+; Titan, and WPCloud (WordPress.com). Two of them are DKIM-signed:
+; titan1._domainkey (Titan) and wpcloud1/2._domainkey (WordPress.com).
+; Google — where the MX records point — is NOT DKIM-signed. See the note
+; at the bottom of docs/cloudflare-cutover.md.
+;
+; THE GITHUB PAGES CHALLENGE IS FOR `here`, NOT `matthew`. GitHub domain
+; verification is per-hostname, and the only challenge record that exists
+; verifies here.mccluster.org. That is a leftover from before the rename.
+; It is not load-bearing — both hostnames serve fine without it — but it
+; means matthew.mccluster.org has no takeover protection. Adding one is a
+; separate job in GitHub Pages settings.
+;
+; _domainconnect IS A WORDPRESS.COM RECORD. It exists so WordPress.com
+; can auto-configure DNS for this domain. Once DNS lives at Cloudflare it
+; points at a system that no longer runs your zone. Carried below for a
+; faithful copy; safe to delete after the cutover settles.
+; ============================================================
+
+$ORIGIN mccluster.org.
+$TTL 3600
+
+; ---- the apex: still the WordPress.com site --------------------------
+@         300   IN  A      192.0.78.174
+@         300   IN  A      192.0.78.194
+
+; ---- MAIL. Google Workspace. Do not lose these. ----------------------
+@        3600   IN  MX     1  aspmx.l.google.com.
+@        3600   IN  MX     5  alt1.aspmx.l.google.com.
+@        3600   IN  MX     5  alt2.aspmx.l.google.com.
+@        3600   IN  MX     10 alt3.aspmx.l.google.com.
+@        3600   IN  MX     10 alt4.aspmx.l.google.com.
+
+; ---- who may send as this domain, and who signs -----------------------
+@        3600   IN  TXT    "v=spf1 include:_spf.google.com include:spf.titan.email include:_spf.wpcloud.com ~all"
+_dmarc   3600   IN  TXT    "v=DMARC1;p=none;sp=none;adkim=r;aspf=r;pct=100"
+
+; DKIM for Titan
+titan1._domainkey    3600 IN TXT "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCN0g36QFWRfaaqsBLnnt3SGq+lZtFovt7IVyvzKyLt8VtLReG90C8qIC0PzTDRm4rCsFxRseuEU9JkX+zqHfscArRzTm2HE3brvtB/gtLZOkYLdqS89iT5RFFF78kYhTB1EL3bPZdMcgvsMuefj5u3L7qCRNEHE/yGNw9FvzfGiwIDAQAB"
+
+; DKIM for WordPress.com (WPCloud) — delegated, not published here
+wpcloud1._domainkey  3600 IN CNAME wpcloud1._domainkey.wpcloud.com.
+wpcloud2._domainkey  3600 IN CNAME wpcloud2._domainkey.wpcloud.com.
+
+; ---- Google Search Console verification ------------------------------
+@        3600   IN  TXT    "google-site-verification=pkEXFriExNH_wgXBZE5hb08Cu4BHqiDiw8EqcDqDM_E"
+@        3600   IN  TXT    "google-site-verification=vgVUrR2HmhHKmTlW5ngjZrjOwg08_O0uy_QfAVTJaE8"
+
+; ---- GitHub Pages domain verification, for `here` only ---------------
+_github-pages-challenge-mcclusterishere.here 3600 IN TXT "adf7dc15cc48e2d224870b0e0c33dd"
+
+; ---- WordPress.com's own management record ---------------------------
+_domainconnect       3600 IN TXT "public-api.wordpress.com/rest/v1.3/domain-connect"
+
+; ---- the hosts ------------------------------------------------------
+; www follows the apex to WordPress.com
+www     14400   IN  CNAME  mccluster.org.
+; the site: both names serve the GitHub Pages property. `matthew` is the
+; canonical one; `here` is kept alive so old links keep working.
+matthew  3600   IN  CNAME  mcclusterishere.github.io.
+here     3600   IN  CNAME  mcclusterishere.github.io.

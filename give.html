@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Support the work · give or sponsor · McCluster Corp</title>
+  <meta name="description" content="Support McCluster Corp — a registered charitable organization. Give outright, or sponsor a production with your name on the work. One door, two honest lanes.">
+  <link rel="canonical" href="https://matthew.mccluster.org/give.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <!-- The fund program runs quiet until its governance, custody, and
+       reporting are publishable. This page is a single honest door for
+       direct visitors: unlisted, unindexed, no meters, no goals. -->
+  <meta name="robots" content="noindex, follow">
+  <meta property="og:title" content="Support the work · McCluster Corp">
+  <meta property="og:description" content="A gift buys nothing and promises nothing back; it moves the work forward.">
+  <meta property="og:url" content="https://matthew.mccluster.org/give.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
+  <link rel="preload" href="assets/fonts/manrope-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+    .gv { max-width: 40rem; margin: 0 auto; font-family: var(--ui); color: var(--cream);
+      padding: clamp(3.4rem, 10vh, 6rem) clamp(1.1rem, 4vw, 2rem) 9rem; }
+    .gv__k { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.32em; text-transform: uppercase; color: var(--ruby-hot); }
+    .gv h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.9;
+      font-size: clamp(2.5rem, 10.5vw, 4rem); margin: 0.3rem 0 0.6rem; }
+    .gv__sub { font-weight: 600; font-size: 0.95rem; color: var(--cream-dim); max-width: 52ch; line-height: 1.7; }
+    .gv__law { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1.3rem 0 1.8rem; }
+    .gv__law span { font-weight: 800; font-size: 0.72rem; color: var(--cream);
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); border-radius: 100px; padding: 0.5rem 0.95rem; }
+    .gv__law span.hot { color: #fff; background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    /* the closed sign; it paints itself the day the license lapses */
+    .gv__closed { border-radius: 18px; padding: 1.2rem 1.3rem; margin: 0 0 2rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); font-weight: 600; font-size: 0.92rem;
+      color: var(--cream-dim); line-height: 1.65; }
+    .gv__closed b { color: var(--cream); }
+    .gv__closed a { color: var(--ruby-hot); text-decoration: none; font-weight: 800; }
+    .gv__give { display: inline-block; margin-top: 1.6rem; text-decoration: none; font-weight: 800;
+      font-size: 0.9rem; letter-spacing: 0.06em; color: #fff; background: var(--metal);
+      border-radius: 100px; padding: 0.95rem 1.9rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .gv__foot { font-weight: 600; font-size: 0.78rem; color: var(--cream-dim); line-height: 1.7; margin-top: 2.4rem; max-width: 60ch; }
+    .gv__foot a { color: var(--cream); font-weight: 800; text-decoration: none; }
+    .gv h2 { font-family: var(--sig); text-transform: uppercase; line-height: 0.92;
+      font-size: clamp(1.7rem, 7vw, 2.6rem); margin: 3rem 0 0.5rem; }
+    .pk { border-radius: 18px; padding: 1.2rem 1.3rem; margin-top: 1rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .pk b { display: block; font-weight: 800; font-size: 1.05rem; }
+    .pk small { display: block; color: var(--cream-dim); font-size: 0.84rem; line-height: 1.6; margin-top: 0.35rem; }
+    .pk .tag { display: inline-block; font-weight: 800; font-size: 0.62rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--ruby-hot); margin-bottom: 0.4rem; }
+    .gv__sponsor-go { display: block; margin-top: 1.4rem; font-weight: 800; font-size: 0.95rem;
+      color: #fff; background: var(--metal); border-radius: 100px; padding: 1rem; text-align: center;
+      text-decoration: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .gv__tax { border-radius: 18px; padding: 1.2rem 1.3rem; margin-top: 2.4rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); font-weight: 600; font-size: 0.86rem;
+      color: var(--cream-dim); line-height: 1.7; }
+    .gv__tax b { color: var(--cream); }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
+</head>
+<body class="songpage">
+  <main class="gv">
+    <p class="gv__k">McCluster Corp</p>
+    <h1>Support<br>the work</h1>
+    <p class="gv__sub">McCluster Corp runs programs in media, civic engagement, and study.
+      A gift here supports that work. It buys nothing and promises nothing back: no goods,
+      no services, no perks. If that&rsquo;s not the note you came to play, the store and the
+      music are the honest doors.</p>
+    <div class="gv__law" id="gvLaw"></div>
+    <div id="gvClosed" hidden class="gv__closed"></div>
+    <a class="gv__give" id="gvGive" href="mailto:matthew@mccluster.org?subject=Supporting%20the%20work" rel="noopener">Give &#8594;</a>
+
+    <h2 id="sponsor">Or sponsor<br>the work</h2>
+    <p class="gv__sub">The other lane through the same door. Sponsorship puts your name on real
+      productions with a real audience — and because McCluster Corp is a nonprofit, sponsoring
+      the work is how the work gets made. Every package is scoped and priced in writing:
+      deliverables, term, territory, placement schedule.</p>
+
+    <div class="pk"><span class="tag">Package 01</span><b>A music video</b>
+      <small>Presenting credit on one HERE video: title card, description credit, social tags across the rollout, and cutdowns licensed for your own channels.</small></div>
+    <div class="pk"><span class="tag">Package 02</span><b>The album film</b>
+      <small>The flagship. Presenting sponsor of the HERE album film: opening billboard, end-card, premiere placement, and event presence.</small></div>
+    <div class="pk"><span class="tag">Package 03</span><b>A release event</b>
+      <small>The listening room, the pop-up, the screening: venue branding, stage mention, capture rights, and the recap edit carrying your mark.</small></div>
+    <div class="pk"><span class="tag">Package 04</span><b>A cultural campaign</b>
+      <small>Editorial content and public programs built with the desk: co-branded series, community screenings, an underwriting credit that means something.</small></div>
+
+    <a class="gv__sponsor-go" id="spGo" href="mailto:matthew@mccluster.org?subject=Sponsorship%3A%20HERE">Talk sponsorship with the desk &#8594;</a>
+
+    <div class="gv__tax">
+      <b>Where the money stands, plainly.</b> McCluster Corp is registered as a charitable
+      organization in Connecticut (CHR.0069693). A <b>gift</b> buys nothing and promises nothing
+      back. A <b>sponsorship</b> is a business placement — most businesses treat it as an
+      ordinary marketing expense; ask your tax adviser. Federal tax-exempt recognition is a
+      separate step the house is pursuing: <b>no contribution is tax-deductible today</b>, and
+      the day the IRS determination letter lands, it will live on this page and this sentence
+      will change.
+    </div>
+    <p class="gv__foot" id="gvFoot"></p>
+  </main>
+
+  <!-- THE BAR -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/signals.js?v=__STAMP__"></script>
+  <script src="js/cause.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/deskchat.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var live = MCC_CAUSE.active();
+
+    /* the law stays: a lapsed license never keeps soliciting */
+    $("gvLaw").innerHTML = live
+      ? '<span class="hot">Open · ' + MCC_CAUSE.daysLeft() + " days left in this cycle</span>" +
+        "<span>Connecticut-registered charitable organization</span>" +
+        "<span>Cycle runs through Sept 30, 2026</span>"
+      : "<span>Cycle closed Sept 30, 2026</span><span>The house runs on live rails</span>";
+
+    if (!live) {
+      var c = $("gvClosed");
+      c.hidden = false;
+      c.innerHTML = "<b>This giving cycle closed on September 30, 2026</b>. The registration is up for renewal, " +
+        "and the house does not solicit on a lapsed license. The programs continue, and the store runs on live rails: " +
+        '<a href="gallery.html">the gallery &amp; print shop &#8594;</a> · <a href="album.html">the music &#8594;</a>';
+      $("gvGive").hidden = true;
+      /* the packages stay: sponsorship is a commercial placement, not a
+         solicitation of charitable funds, so a lapsed cycle does not close it */
+    } else {
+      /* the single door; the ledger names it, this page just opens it */
+      MCC_CAUSE.load().then(function (j) {
+        var link = (j && j.link) || (j && j.funds && j.funds[0] && j.funds[0].link);
+        if (link) {
+          $("gvGive").href = link;
+          $("gvGive").target = "_blank";
+        }
+      });
+    }
+
+    $("gvGive").addEventListener("click", function () {
+      if (window.MCC_TRACK) window.MCC_TRACK("fund_give", { fund: "support" });
+    });
+    $("spGo").addEventListener("click", function () {
+      if (window.MCC_TRACK) window.MCC_TRACK("sponsor_inquiry", { via: "give" });
+    });
+
+    $("gvFoot").innerHTML = live
+      ? "Contributions support McCluster Corp&rsquo;s programs. The detailed program funds, with public " +
+        "goals, allocations, and reporting, return when that reporting is ready to stand behind. " +
+        'Questions: <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a>'
+      : 'The record of every cycle stays on the books. Questions: <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a>';
+
+    if (window.MCC_TRACK) window.MCC_TRACK("fund_view", { live: live, mode: "quiet" });
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

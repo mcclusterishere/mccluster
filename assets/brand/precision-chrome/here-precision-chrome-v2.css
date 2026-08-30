@@ -1,0 +1,35 @@
+:root {
+  --here-chrome-base: url("./here-precision-chrome-v2-basecolor.png");
+  --here-chrome-glint: url("./here-precision-chrome-v2-edge-glint-mask.png");
+}
+
+.here-chrome-edge {
+  position: relative;
+  border-color: rgba(190,195,200,.24);
+}
+
+.here-chrome-edge::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border:1px solid transparent;
+  border-radius:inherit;
+  background:
+    linear-gradient(
+      var(--here-light-angle, 112deg),
+      rgba(255,255,255,.28),
+      rgba(255,255,255,.035) 20%,
+      transparent 46%,
+      rgba(255,255,255,.09) 74%,
+      transparent
+    ) border-box;
+  -webkit-mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:var(--here-chrome-intensity,.34);
+}
+
+/* Chrome is an edge material, not a surface theme. */

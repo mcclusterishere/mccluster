@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Pay · McCluster</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Pay securely by Apple Pay, Google Pay, or card. Powered by McCluster.">
+  <link rel="canonical" href="https://matthew.mccluster.org/pay.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="theme-color" content="#0a0807">
+
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    html, body { background: var(--ink); }
+    body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center;
+      color: var(--cream, #f4efe6); padding: env(safe-area-inset-top) 1rem env(safe-area-inset-bottom); }
+    .pw { width: 100%; max-width: 27rem; margin: 0 auto; text-align: center; }
+    .pw__brand { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.68rem; letter-spacing: 0.22em;
+      text-transform: uppercase; color:var(--ruby-text); font-weight: 800; opacity: 0.85; margin-bottom: 1.4rem; }
+    .pw__brand img { width: 18px; height: 18px; border-radius: 4px; }
+    .pw__photo { width: 92px; height: 92px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem;
+      border: 2px solid rgba(229,56,59,0.4); background: #1a1512; display: block; }
+    .pw__to { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--cream-dim, #b8b0a2); }
+    .pw__name { font-family: var(--sig, "Anton"), sans-serif; text-transform: uppercase; line-height: 0.94;
+      font-size: clamp(2.2rem, 11vw, 3rem); margin: 0.2rem 0 0.15rem; }
+    .pw__craft { color: var(--cream-dim, #b8b0a2); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.6rem; }
+    .pw__for { color: var(--cream-dim, #b8b0a2); font-size: 0.9rem; margin-bottom: 0.3rem; }
+    .pw__amt { font-family: var(--sig, "Anton"), sans-serif; font-size: clamp(3rem, 18vw, 4.6rem); line-height: 1;
+      letter-spacing: -0.01em; }
+    .pw__amt small { font-size: 0.42em; vertical-align: 0.5em; color: var(--cream-dim, #b8b0a2); margin-right: 0.1em; }
+    .pw__btn { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      display: block; width: 100%; margin-top: 1.8rem; padding: 1.15rem 1rem; border-radius: 16px;
+      background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.15rem; letter-spacing: 0.01em;
+      box-shadow: 0 10px 30px -12px rgba(232,200,119,0.6); transition: transform 0.12s ease, opacity 0.2s ease; }
+    .pw__btn:active { transform: translateY(1px) scale(0.995); }
+    .pw__btn[disabled] { background: #2a241d; color: #8a8172; box-shadow: none; cursor: default; }
+    .pw__btn small { display: block; font-weight: 600; font-size: 0.72rem; letter-spacing: 0.06em; opacity: 0.72;
+      margin-top: 0.22rem; text-transform: none; }
+    .pw__wallets { display: flex; align-items: center; justify-content: center; gap: 0.55rem; margin-top: 1rem;
+      color: var(--cream-dim, #b8b0a2); font-size: 0.78rem; }
+    .pw__wallets svg { height: 15px; width: auto; opacity: 0.8; }
+    .pw__note { margin-top: 1.2rem; font-size: 0.76rem; color: var(--cream-dim, #b8b0a2); line-height: 1.6; }
+    .pw__note a { color:var(--ruby-text); text-decoration: none; }
+    .pw__pending { margin-top: 1.6rem; border: 1px solid rgba(229,56,59,0.3); border-radius: 14px;
+      background: rgba(229,56,59,0.06); padding: 1rem 1.05rem; color: var(--cream-dim, #b8b0a2); font-size: 0.9rem; line-height: 1.6; }
+    .pw__pending b { color: var(--cream, #f4efe6); }
+    .pw[hidden], [hidden] { display: none !important; }
+    .pw__spin { display: inline-block; width: 1em; height: 1em; border: 2px solid rgba(22,17,11,0.35);
+      border-top-color: #fff; border-radius: 50%; animation: pwspin 0.7s linear infinite; vertical-align: -0.15em; margin-right: 0.4em; }
+    @keyframes pwspin { to { transform: rotate(360deg); } }
+    .pw__done { font-size: 1.05rem; line-height: 1.6; }
+    .pw__done .pw__check { font-size: 2.6rem; color: #7ec96b; display: block; margin-bottom: 0.4rem; }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage" data-masthead="minimal">
+
+  <main class="pw" id="pw">
+    <span class="pw__brand"><img src="assets/img/m-mark.png" alt="">McCluster</span>
+
+    <div id="pwLive">
+      <p class="pw__to">Checkout</p>
+      <h1 class="pw__name" id="pwName">…</h1>
+      <p class="pw__craft" id="pwCraft"></p>
+
+      <div class="pw__amt" id="pwAmt"><small>$</small>…</div>
+      <input id="pwCustom" type="number" inputmode="decimal" min="1" step="1" hidden
+        style="width:100%;max-width:14rem;margin:0 auto 1rem;display:block;-webkit-appearance:none;appearance:none;border:0;font-family:inherit;font-weight:800;font-size:1.4rem;text-align:center;color:var(--cream,#f4efe6);border-radius:14px;padding:0.8rem;background:rgba(255,255,255,0.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.16)"
+        placeholder="Amount">
+
+      <button class="pw__btn" id="pwBtn" disabled>Pay<small>Apple&nbsp;Pay · Google&nbsp;Pay · card</small></button>
+
+      <div class="pw__wallets" id="pwWallets" aria-hidden="true">
+        <span>Secured checkout</span>
+      </div>
+      <p class="pw__note" id="pwNote">You'll see Apple&nbsp;Pay or Google&nbsp;Pay if your phone supports it, otherwise a card field. Nothing is stored on this page. Sold by McCluster.</p>
+
+      <div class="pw__pending" id="pwPending" hidden>
+        This payment link has been retired. Payments start from a real offering now:
+        <a href="hire.html" style="color:var(--ruby-text)">book the desk</a>,
+        <a href="gallery.html#shop" style="color:var(--ruby-text)">buy the work</a>, or
+        <a href="give.html" style="color:var(--ruby-text)">support the mission</a>.
+      </div>
+    </div>
+
+    <div class="pw__done" id="pwDone" hidden>
+      <span class="pw__check"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <p>Payment received. Thank you. A receipt is on its way to your email.</p>
+      <p class="pw__note"><a href="index.html">HERE →</a></p>
+    </div>
+  </main>
+
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    /* OFFERING-DRIVEN CHECKOUT: one seller, server-side prices.
+       The URL names an offering (?offer=slug); the page paints from the
+       published mirror (data/offerings.json); the checkout function
+       reads the DATABASE row for the authoritative price and seller.
+       No query parameter ever sets the charge on a fixed-price
+       offering. The old pay-anyone links (?to=&amt=) are retired,
+       except ?to=mccluster invoice links, which map to the
+       approved-invoice offering with server-side bounds. */
+    var q = new URLSearchParams(location.search);
+    var el = function (id) { return document.getElementById(id); };
+    var money = function (n) { return "$" + (Math.round(n * 100) / 100).toLocaleString("en-US", { minimumFractionDigits: (n % 1 ? 2 : 0), maximumFractionDigits: 2 }); };
+    var track = function (n, p) { if (window.MCC_TRACK) window.MCC_TRACK(n, p || {}); };
+
+    var offer = (q.get("offer") || "").toLowerCase().trim();
+    var legacyTo = (q.get("to") || "").toLowerCase().trim();
+    var legacyAmt = Math.max(0, +(q.get("amt") || 0) || 0);
+    var noteText = (q.get("for") || q.get("note") || "").slice(0, 80);
+    if (!offer && legacyTo === "mccluster") offer = "approved-invoice";
+
+    if (q.get("done") === "1") {
+      el("pwLive").hidden = true; el("pwDone").hidden = false;
+      track("checkout_done", { offer: offer });
+      return;
+    }
+
+    function retire() {
+      el("pwName").textContent = "This link has moved";
+      el("pwCraft").hidden = true;
+      el("pwAmt").hidden = true; el("pwBtn").hidden = true; el("pwNote").hidden = true;
+      el("pwPending").hidden = false;
+      track("checkout_retired_link", { to: legacyTo });
+    }
+
+    if (!offer) { retire(); return; }
+
+    fetch("data/offerings.json", { cache: "no-cache" })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var o = (j.offerings || []).filter(function (x) { return x.slug === offer; })[0];
+        if (!o) { retire(); return; }
+        el("pwName").textContent = o.title;
+        el("pwCraft").textContent = (o.short || "") + " · Sold by McCluster";
+        var custom = o.price_type === "custom";
+        var amt = custom ? (legacyAmt || 0) : o.price;
+        if (custom) {
+          var inp = el("pwCustom");
+          inp.hidden = false;
+          inp.min = o.min || 1; inp.max = o.max || 25000;
+          if (legacyAmt) inp.value = legacyAmt;
+          inp.placeholder = "$" + (o.min || 1) + " to $" + (o.max || 25000);
+          el("pwAmt").hidden = true;
+          inp.addEventListener("input", function () {
+            var v = +inp.value || 0;
+            el("pwBtn").disabled = !(v >= +inp.min && v <= +inp.max);
+          });
+          el("pwBtn").disabled = !(amt >= (o.min || 1) && amt <= (o.max || 25000));
+        } else {
+          el("pwAmt").innerHTML = "<small>$</small>" + Math.round(amt).toLocaleString("en-US");
+          el("pwBtn").disabled = false;
+        }
+        el("pwBtn").innerHTML = (o.action === "donate" ? "Give" : "Pay") +
+          (custom ? "" : " " + money(amt)) + "<small>Apple&nbsp;Pay · Google&nbsp;Pay · card</small>";
+        track("checkout_view", { offer: offer });
+        el("pwBtn").addEventListener("click", function () {
+          var btn = el("pwBtn");
+          if (btn.dataset.busy) return; btn.dataset.busy = "1"; btn.disabled = true;
+          btn.innerHTML = '<span class="pw__spin"></span>Opening secure checkout…';
+          var body = { offer: offer, note: noteText };
+          if (custom) body.amount = +el("pwCustom").value || 0;
+          var S = window.MCC_SUPA;
+          fetch(S.url + "/functions/v1/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", apikey: S.key },
+            body: JSON.stringify(body),
+          }).then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (jj) {
+              if (jj && jj.url) { track("checkout_go", { offer: offer, provider: jj.provider }); location.href = jj.url; return; }
+              throw new Error("no url");
+            }).catch(function () {
+              delete btn.dataset.busy; btn.disabled = false;
+              btn.innerHTML = "Try again<small>The checkout hiccuped. Tap once more</small>";
+            });
+        });
+      }).catch(retire);
+  })();
+  </script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

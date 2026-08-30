@@ -1,0 +1,23 @@
+{
+  "note": "THE CAPTURE MANIFEST. Empty on purpose. 3D Gaussian Splatting is CAPTURED from real footage, not authored and not generated — so there is no entry here until somebody films a shake. js/shake-viewer.js renders nothing while `asset` is empty, and the storefront is unaffected. docs/spatial-commerce.md has the capture spec.",
+  "schema": {
+    "slug": "must match a slug in shake_products, so the capture and the thing being sold cannot drift apart",
+    "asset": "path to a .sog or .spz under assets/splats/. EMPTY means not captured yet, and the viewer treats it as absent.",
+    "bytes": "transfer size. Anything over ~8 MB needs a hard look: the customer is a student on a phone at 11pm.",
+    "captured": "ISO date the footage was shot",
+    "views": "named camera positions the commerce overlays hang off (see Section C of the blueprint)"
+  },
+  "captures": [
+    {
+      "slug": "house-shake",
+      "asset": "",
+      "bytes": 0,
+      "captured": "",
+      "views": [
+        { "id": "hero", "note": "three-quarter, the pour catching the light" },
+        { "id": "texture", "note": "close on the froth — the detail a photo cannot carry" },
+        { "id": "back", "note": "rear of the cup; the viewpoint that opens the nutrition overlay" }
+      ]
+    }
+  ]
+}

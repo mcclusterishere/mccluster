@@ -1,0 +1,359 @@
+{
+    "note": "MIRROR, NOT SOURCE. supabase/migrations/0018_equity_uprise_seed.sql is the source of truth; this file is exported from it so topics.html renders before the database is reachable, and on a signed-out first paint. Regenerate with tools/eu-export-seed.sh after changing the seed.",
+    "topics": [
+        {
+            "name": "The United States and Israel",
+            "slug": "us-israel",
+            "tags": [
+                "foreign-policy",
+                "human-rights",
+                "diplomacy",
+                "middle-east",
+                "peacebuilding",
+                "national-security",
+                "journalism",
+                "advocacy"
+            ],
+            "status": "active",
+            "context": "What is documented: the current framework is a ten-year memorandum of understanding signed in 2016 covering roughly $38 billion in military assistance, making Israel the largest cumulative recipient of U.S. foreign aid since the Second World War. The United States has repeatedly used its Security Council veto on resolutions concerning Israel. Public polling since 2023 shows opinion moving, with the sharpest divides by age and party. Beyond that, the disagreements are about judgment and values, and this page does not settle them.",
+            "ordinal": 1,
+            "prompts": [
+                "In your own words: what do you think the United States owes here, if anything?",
+                "Has your view changed in the last two years? If it has, what changed it?",
+                "What would you want your own representative to actually do — not the country, your representative?",
+                "What is the strongest argument on the other side of where you landed?",
+                "Is there anything about this you wish people would stop assuming about you?"
+            ],
+            "tagline": "One of the few subjects that splits people who agree on everything else.",
+            "resources": [
+            ],
+            "dimensions": [
+                {
+                    "key": "aid",
+                    "help": "What should happen to it?",
+                    "label": "U.S. military aid",
+                    "options": [
+                        {
+                            "label": "Increase it",
+                            "value": "increase"
+                        },
+                        {
+                            "label": "Keep it as it is",
+                            "value": "keep"
+                        },
+                        {
+                            "label": "Keep it, but tie it to conditions",
+                            "value": "condition"
+                        },
+                        {
+                            "label": "Reduce it",
+                            "value": "reduce"
+                        },
+                        {
+                            "label": "End it",
+                            "value": "end"
+                        },
+                        {
+                            "label": "I'm still working it out",
+                            "value": "unsure"
+                        }
+                    ]
+                },
+                {
+                    "key": "role",
+                    "help": "What should the United States be here?",
+                    "label": "The American role",
+                    "options": [
+                        {
+                            "label": "A firm ally, without conditions",
+                            "value": "ally-firm"
+                        },
+                        {
+                            "label": "An ally, with limits",
+                            "value": "ally-limits"
+                        },
+                        {
+                            "label": "A neutral broker between both sides",
+                            "value": "broker"
+                        },
+                        {
+                            "label": "Less involved than we are",
+                            "value": "step-back"
+                        },
+                        {
+                            "label": "Out of it entirely",
+                            "value": "out"
+                        },
+                        {
+                            "label": "I'm still working it out",
+                            "value": "unsure"
+                        }
+                    ]
+                },
+                {
+                    "key": "weight",
+                    "help": "When you vote, how much does this issue count?",
+                    "label": "How much this weighs",
+                    "options": [
+                        {
+                            "label": "It decides my vote",
+                            "value": "decisive"
+                        },
+                        {
+                            "label": "One of my top issues",
+                            "value": "major"
+                        },
+                        {
+                            "label": "It counts, among others",
+                            "value": "some"
+                        },
+                        {
+                            "label": "Not much",
+                            "value": "little"
+                        }
+                    ]
+                }
+            ],
+            "description": "The United States and Israel have been close partners for decades: military aid, weapons sales, intelligence sharing, and diplomatic support. Americans disagree — sharply, and in good faith — about whether that partnership should stay as it is, change its terms, or end. People arrive at opposite conclusions from the same facts, and often from the same values. This is a place to say what you actually think and be recorded accurately."
+        },
+        {
+            "name": "Data centers",
+            "slug": "data-centers",
+            "tags": [
+                "energy",
+                "land-use",
+                "water",
+                "utilities",
+                "zoning",
+                "local-government",
+                "climate",
+                "labor",
+                "ai-policy",
+                "infrastructure"
+            ],
+            "status": "active",
+            "context": "What is documented: data centers are among the fastest-growing electricity loads in the United States, and utilities in several states have filed for rate increases citing new large-load customers. Facilities vary enormously in water use depending on their cooling design. Permanent staffing is typically small relative to construction employment and to the size of the tax abatements offered. Whether a specific project is a good deal for a specific town depends on the terms of that deal, which are usually public and usually negotiated before most residents hear about it.",
+            "ordinal": 2,
+            "prompts": [
+                "Is there a project near you? What have you actually been told about it, and by whom?",
+                "What would a data center have to guarantee, in writing, for you to be fine with it?",
+                "If your electric bill went up because of one, what would you want done about that?",
+                "Who in your town do you trust to read the deal? Is anybody doing it?",
+                "What is the strongest argument on the other side of where you landed?"
+            ],
+            "tagline": "The buildings behind the cloud, and the towns deciding whether to take one.",
+            "resources": [
+            ],
+            "dimensions": [
+                {
+                    "key": "stance",
+                    "help": "Your first instinct.",
+                    "label": "A data center proposed near you",
+                    "options": [
+                        {
+                            "label": "Welcome it",
+                            "value": "welcome"
+                        },
+                        {
+                            "label": "Welcome it, with binding conditions",
+                            "value": "conditions"
+                        },
+                        {
+                            "label": "Depends entirely on the terms",
+                            "value": "depends"
+                        },
+                        {
+                            "label": "Oppose it",
+                            "value": "oppose"
+                        },
+                        {
+                            "label": "I don't know enough yet",
+                            "value": "unsure"
+                        }
+                    ]
+                },
+                {
+                    "key": "concern",
+                    "help": "Pick the one that weighs heaviest.",
+                    "label": "What matters most to you here",
+                    "options": [
+                        {
+                            "label": "What it does to electric bills",
+                            "value": "bills"
+                        },
+                        {
+                            "label": "Water use",
+                            "value": "water"
+                        },
+                        {
+                            "label": "Jobs, and what kind",
+                            "value": "jobs"
+                        },
+                        {
+                            "label": "The tax deal the town signs",
+                            "value": "taxes"
+                        },
+                        {
+                            "label": "Land, farmland, and open space",
+                            "value": "land"
+                        },
+                        {
+                            "label": "Noise and traffic",
+                            "value": "noise"
+                        },
+                        {
+                            "label": "Emissions and climate",
+                            "value": "climate"
+                        },
+                        {
+                            "label": "None of these worry me",
+                            "value": "none"
+                        }
+                    ]
+                },
+                {
+                    "key": "process",
+                    "help": "Separate from whether you want one.",
+                    "label": "How the decision gets made",
+                    "options": [
+                        {
+                            "label": "It should need a public vote",
+                            "value": "vote"
+                        },
+                        {
+                            "label": "A real hearing, with the terms published first",
+                            "value": "hearing"
+                        },
+                        {
+                            "label": "The normal zoning process is enough",
+                            "value": "normal"
+                        },
+                        {
+                            "label": "It should be easier to build than it is",
+                            "value": "faster"
+                        }
+                    ]
+                }
+            ],
+            "description": "Data centers are the warehouses that run the internet and, lately, artificial intelligence. They are being built fast, and the decisions that matter are local: rezoning, tax abatements, a hookup to the grid, water for cooling, truck routes, noise, and what happens to the land. Some neighbors see a tax base and construction work. Others see higher electric bills, strained water, a few dozen permanent jobs, and a building nobody can walk into. Both of those can be true in different towns, and sometimes in the same one."
+        },
+        {
+            "name": "Cameras, plate readers, and tracking",
+            "slug": "surveillance-and-tracking",
+            "tags": [
+                "civil-liberties",
+                "surveillance",
+                "privacy",
+                "policing",
+                "technology",
+                "local-government",
+                "data-rights",
+                "journalism",
+                "civic-tech",
+                "criminal-justice"
+            ],
+            "status": "active",
+            "context": "What is documented: thousands of U.S. jurisdictions operate ALPR systems, many purchased through vendor contracts or grants rather than a public budget line. Retention periods, audit logging, and data-sharing arrangements vary widely by contract and by state law; some states have passed statutes limiting retention or out-of-state sharing, and some jurisdictions have adopted ordinances requiring council approval before surveillance technology is acquired. Reporting has documented both cases solved with these systems and cases of misuse and misidentification. This page does not adjudicate whether the trade is worth it.",
+            "ordinal": 3,
+            "prompts": [
+                "Do you know what your town has installed? How did you find out?",
+                "Has one of these systems touched you or someone you know — helpfully or otherwise?",
+                "What is the trade you would actually accept: what does the town get, and what does it give up?",
+                "If you had ten minutes at a council meeting, what would you ask for?",
+                "What is the strongest argument on the other side of where you landed?"
+            ],
+            "tagline": "Who is watching the street, what they keep, and who else gets a copy.",
+            "resources": [
+            ],
+            "dimensions": [
+                {
+                    "key": "stance",
+                    "help": "Where you land overall.",
+                    "label": "Cameras and plate readers in your town",
+                    "options": [
+                        {
+                            "label": "Support them",
+                            "value": "support"
+                        },
+                        {
+                            "label": "Support them, with rules",
+                            "value": "rules"
+                        },
+                        {
+                            "label": "Genuinely torn",
+                            "value": "unsure"
+                        },
+                        {
+                            "label": "Roll them back",
+                            "value": "limit"
+                        },
+                        {
+                            "label": "Oppose them",
+                            "value": "oppose"
+                        }
+                    ]
+                },
+                {
+                    "key": "rules",
+                    "help": "Choose as many as you mean.",
+                    "label": "If they exist, what should be required",
+                    "multi": true,
+                    "options": [
+                        {
+                            "label": "A public vote before any purchase",
+                            "value": "public-vote"
+                        },
+                        {
+                            "label": "A hard limit on how long footage is kept",
+                            "value": "retention"
+                        },
+                        {
+                            "label": "No sharing with federal or out-of-state agencies",
+                            "value": "no-share"
+                        },
+                        {
+                            "label": "Published audit logs of who searched what",
+                            "value": "audit"
+                        },
+                        {
+                            "label": "A warrant to search the archive",
+                            "value": "warrant"
+                        },
+                        {
+                            "label": "No facial recognition, at all",
+                            "value": "no-face"
+                        },
+                        {
+                            "label": "None of these — let police use the tools",
+                            "value": "none"
+                        }
+                    ]
+                },
+                {
+                    "key": "trust",
+                    "help": "Nobody is a real answer.",
+                    "label": "Who you would trust to hold the data",
+                    "options": [
+                        {
+                            "label": "The police department",
+                            "value": "police"
+                        },
+                        {
+                            "label": "The city, outside the police department",
+                            "value": "city"
+                        },
+                        {
+                            "label": "An independent oversight board",
+                            "value": "board"
+                        },
+                        {
+                            "label": "Nobody should be holding it",
+                            "value": "nobody"
+                        }
+                    ]
+                }
+            ],
+            "description": "Automated license plate readers — Flock Safety is the best-known vendor, and it is not the only one — photograph passing cars, read the plates, and keep a searchable record of where a vehicle was and when. Around them sit city camera networks, facial recognition, gunshot detection, and software that tries to predict where crime will happen. Police departments point to stolen cars recovered, missing people found, and cases closed. Civil liberties groups point out that everyone is recorded by default, that records are kept for months, that other agencies can often search them, and that oversight is usually thin. Most of these systems were bought without a public vote."
+        }
+    ]
+}

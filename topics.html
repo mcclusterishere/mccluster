@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>What we're listening about · Equity Uprise</title>
+  <meta name="description" content="Three things people are arguing about, framed so both sides can answer honestly. Tell the movement what you actually think — and get pointed at something real you can do about it.">
+  <link rel="canonical" href="https://matthew.mccluster.org/topics.html">
+  <link rel="icon" type="image/png" href="assets/img/eu-favicon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="author" content="Matthew McCluster">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="What we're listening about · Equity Uprise">
+  <meta property="og:description" content="Three things people are arguing about, framed so both sides can answer honestly.">
+  <meta property="og:url" content="https://matthew.mccluster.org/topics.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/uprise-still.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- The page is attributed to the same two @ids the whole house uses,
+       so a new room adds weight to the existing entity instead of
+       introducing a second, thinner one that has to be reconciled. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": "https://matthew.mccluster.org/topics.html#page",
+        "url": "https://matthew.mccluster.org/topics.html",
+        "name": "What we're listening about",
+        "description": "The topics Equity Uprise collects perspectives on, each framed so that people who disagree can both answer honestly.",
+        "isPartOf": { "@id": "https://matthew.mccluster.org/#website" },
+        "about": { "@id": "https://matthew.mccluster.org/#mccluster-corp" },
+        "author": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
+        "publisher": { "@id": "https://matthew.mccluster.org/#mccluster-corp" },
+        "inLanguage": "en-US"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://matthew.mccluster.org/" },
+          { "@type": "ListItem", "position": 2, "name": "Equity Uprise", "item": "https://matthew.mccluster.org/equity-uprise.html" },
+          { "@type": "ListItem", "position": 3, "name": "Topics", "item": "https://matthew.mccluster.org/topics.html" }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/equity-uprise-app.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+</head>
+<body class="songpage" data-mh-cta="The fellowship directory|fellowships.html">
+
+  <main class="eua">
+
+    <!-- ============ the index: every topic ============ -->
+    <section id="euIndex" hidden>
+      <p class="eua__kicker"><img src="assets/img/equity-uprise-logo.webp" alt="" style="filter:none"> Equity Uprise · Listening</p>
+      <h1>What we're<br>listening about.</h1>
+      <p class="eua__lede">Three things people argue about. Each one is framed so that somebody on either side of it can answer honestly — and each one comes with real programs you can join if you want to work on it.</p>
+
+      <div class="eua-figs" id="euCounts" hidden>
+        <div class="eua-fig"><b id="cTopics">—</b><span>topics open</span></div>
+        <div class="eua-fig"><b id="cVoices">—</b><span>perspectives on the record</span></div>
+        <div class="eua-fig"><b id="cFellows">—</b><span>programs in the directory</span></div>
+      </div>
+
+      <div class="eua-grid eua__sec" id="euTopicList"></div>
+
+      <p class="eua__note">A person reads every perspective before it appears anywhere on this site. Nothing is published under your name unless you asked for it to be.</p>
+
+      <!-- One contextual link out to the entity page, with anchor text that
+           says what it is. Every page in the house should be able to answer
+           "who is behind this" in one hop. -->
+      <p class="eua__note">Equity Uprise is a program of McCluster Corp, founded by
+        <a href="matthew-mccluster.html">Matthew McCluster</a>, a creative director and
+        community organizer working out of Bridgeport, Connecticut and Acworth, Georgia.
+        The documents behind the movement are on the
+        <a href="equity-uprise.html">Equity Uprise program page</a>.</p>
+    </section>
+
+    <!-- ============ one topic ============ -->
+    <section id="euTopic" hidden>
+      <p class="eua__kicker"><a href="topics.html">← All topics</a></p>
+      <h1 id="tName">—</h1>
+      <p class="eua__lede" id="tTagline"></p>
+
+      <div class="eua__sec">
+        <h2>How we frame it</h2>
+        <p style="line-height:1.75;color:var(--cream-dim)" id="tDesc"></p>
+        <details style="margin-top:1rem">
+          <summary style="cursor:pointer;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:.72rem;color:var(--ruby-hot)">What's actually documented</summary>
+          <p style="line-height:1.75;color:var(--cream-dim);margin-top:.7rem" id="tContext"></p>
+          <p class="eua__note">Facts, not a verdict. Where people disagree about judgment rather than fact, this page does not settle it.</p>
+        </details>
+      </div>
+
+      <!-- the structured half -->
+      <div class="eua__sec">
+        <h2>Where do you land?</h2>
+        <p class="eua__note" style="margin-top:0">Nothing here is required. Skip any question that doesn't fit you.</p>
+        <div id="tDims"></div>
+      </div>
+
+      <!-- the open half -->
+      <div class="eua__sec">
+        <h2>In your own words</h2>
+        <div id="tPrompts" class="eua-tags" style="margin-bottom:.8rem"></div>
+        <label class="eua-field">
+          <span>What you'd want done</span>
+          <textarea id="tBody" placeholder="Say it however you'd say it out loud."></textarea>
+        </label>
+        <div style="display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr))">
+          <label class="eua-field"><span>Your name, if you want it on the record</span>
+            <input type="text" id="tName2" placeholder="Optional" autocomplete="name"></label>
+          <label class="eua-field"><span>Where you are</span>
+            <input type="text" id="tRegion" placeholder="Optional — e.g. Bridgeport, CT"></label>
+        </div>
+        <label class="eua-field"><span>Email, only if you want a reply</span>
+          <input type="email" id="tEmail" placeholder="Optional" autocomplete="email"></label>
+
+        <label class="eua-check"><input type="checkbox" id="tAnon">
+          <span><b>Keep my name off it.</b> Your words go on the record with no name attached — the link back to you stays private to the desk.</span></label>
+        <label class="eua-check"><input type="checkbox" id="tConsent" checked>
+          <span><b>You can publish this.</b> Uncheck and it stays internal: the movement counts it, nobody reads it on the site.</span></label>
+
+        <div class="eua-actions">
+          <button class="btn btn--ruby" id="tSend" type="button">Put it on the record</button>
+          <a class="btn btn--ghost" href="fellowships.html" id="tMatchLink">Show me programs for this</a>
+        </div>
+        <p class="eua-say" id="tSay" aria-live="polite"></p>
+      </div>
+
+      <!-- the conversation -->
+      <div class="eua__sec">
+        <h2>Or just talk it through</h2>
+        <p class="eua__note" style="margin-top:0">The desk's listener doesn't take a side on this. It asks what you think, and it knows what programs exist. Ask for a person any time and you'll get one.</p>
+        <div class="eua-chat" id="tChat" style="margin-top:1rem">
+          <div class="eua-chat__log" id="tLog">
+            <p class="eua-msg eua-msg--system">Say what's on your mind about this one.</p>
+          </div>
+          <form class="eua-chat__bar" id="tChatForm">
+            <input class="eua-input" id="tChatIn" placeholder="Type here" autocomplete="off" aria-label="Message">
+            <button class="btn btn--ruby" type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- what other people said -->
+      <div class="eua__sec">
+        <h2>What people have said</h2>
+        <div id="tVoices"><p class="eua-empty">Loading the record…</p></div>
+      </div>
+
+      <!-- programs -->
+      <div class="eua__sec">
+        <h2>Programs that work on this</h2>
+        <div class="eua-grid" id="tFellows"></div>
+        <p class="eua__note">Deadlines and eligibility move year to year. Confirm every one of them on the program's own page before you plan around it.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/deskchat.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/eu-api.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+    function $(id) { return document.getElementById(id); }
+    var slug = new URLSearchParams(location.search).get("topic") || "";
+
+    /* ---------- the index ---------- */
+    function drawIndex(res) {
+      $("euIndex").hidden = false;
+      document.title = "What we're listening about · Equity Uprise";
+      $("euTopicList").innerHTML = res.rows.map(function (t) {
+        return '<a class="eua-card" href="topics.html?topic=' + encodeURIComponent(t.slug) + '">' +
+          '<span class="eua-card__eyebrow">Topic</span>' +
+          '<span class="eua-card__h">' + esc(t.name) + '</span>' +
+          '<span class="eua-card__sub">' + esc(t.tagline || "") + '</span>' +
+          '<span class="eua-card__meta">' + (t.tags || []).slice(0, 3).map(function (g) {
+            return '<span class="eua-tag eua-tag--flat">' + esc(g) + '</span>';
+          }).join("") + '</span></a>';
+      }).join("");
+
+      EU.counts().then(function (c) {
+        if (!c) return;
+        $("cTopics").textContent = c.topics;
+        $("cVoices").textContent = c.perspectives;
+        $("cFellows").textContent = c.fellowships;
+        $("euCounts").hidden = false;
+      });
+    }
+
+    /* ---------- one topic ---------- */
+    var answers = {};
+
+    function drawDims(dims) {
+      $("tDims").innerHTML = (dims || []).map(function (d) {
+        return '<div class="eua-dim" data-key="' + esc(d.key) + '">' +
+          '<p class="eua-dim__q">' + esc(d.label) + '</p>' +
+          (d.help ? '<p class="eua-dim__help">' + esc(d.help) + '</p>' : "") +
+          '<div class="eua-dim__opts">' + (d.options || []).map(function (o) {
+            return '<button type="button" class="eua-opt" data-v="' + esc(o.value) + '">' + esc(o.label) + '</button>';
+          }).join("") + '</div></div>';
+      }).join("");
+
+      /* multi-select dimensions keep every pick; single-select swap */
+      $("tDims").addEventListener("click", function (e) {
+        var b = e.target.closest(".eua-opt");
+        if (!b) return;
+        var box = b.closest(".eua-dim"), key = box.getAttribute("data-key");
+        var dim = (dims || []).filter(function (d) { return d.key === key; })[0] || {};
+        if (dim.multi) {
+          b.classList.toggle("is-on");
+          answers[key] = Array.prototype.slice.call(box.querySelectorAll(".eua-opt.is-on"))
+            .map(function (n) { return n.getAttribute("data-v"); });
+        } else {
+          box.querySelectorAll(".eua-opt").forEach(function (n) { n.classList.remove("is-on"); });
+          b.classList.add("is-on");
+          answers[key] = b.getAttribute("data-v");
+        }
+      });
+    }
+
+    function drawTopic(t) {
+      if (!t) { location.replace("topics.html"); return; }
+      $("euTopic").hidden = false;
+      document.title = t.name + " · Equity Uprise";
+      $("tName").textContent = t.name;
+      $("tTagline").textContent = t.tagline || "";
+      $("tDesc").textContent = t.description || "";
+      $("tContext").textContent = t.context || "";
+      drawDims(t.dimensions);
+
+      $("tPrompts").innerHTML = (t.prompts || []).map(function (p) {
+        return '<button type="button" class="eua-tag" data-p="' + esc(p) + '">' + esc(p) + '</button>';
+      }).join("");
+      $("tPrompts").addEventListener("click", function (e) {
+        var b = e.target.closest(".eua-tag");
+        if (!b) return;
+        var ta = $("tBody");
+        ta.value = (ta.value ? ta.value.replace(/\s*$/, "\n\n") : "") + b.getAttribute("data-p") + "\n";
+        ta.focus();
+      });
+
+      $("tMatchLink").href = "fellowships.html?topic=" + encodeURIComponent(t.slug);
+
+      /* the record */
+      EU.voices(t.slug, 12).then(function (rows) {
+        if (!rows.length) {
+          $("tVoices").innerHTML = '<p class="eua-empty">Nobody has gone on the record here yet. Be the first — a person reads it before it appears.</p>';
+          return;
+        }
+        $("tVoices").innerHTML = rows.map(function (v) {
+          var who = v.display_name ? esc(v.display_name) : "Anonymous";
+          if (v.handle) who = '<a href="profile.html?p=' + encodeURIComponent(v.handle) + '">' + who + "</a>";
+          return '<div class="eua-row"><div class="eua-row__top"><span class="eua-row__t">' + who +
+            (v.region ? ' <span class="eua-row__when">· ' + esc(v.region) + "</span>" : "") + "</span>" +
+            '<span class="eua-row__when">' + new Date(v.created_at).toLocaleDateString() + "</span></div>" +
+            '<p class="eua-row__body">' + esc(v.body) + "</p></div>";
+        }).join("");
+      });
+
+      /* programs */
+      EU.fellowships({ topic: t.slug, limit: 6 }).then(function (res) {
+        if (!res.rows.length) {
+          $("tFellows").innerHTML = '<p class="eua-empty">Nothing tagged to this topic yet. The <a href="fellowships.html">full directory</a> is still worth a look.</p>';
+          return;
+        }
+        $("tFellows").innerHTML = res.rows.map(card).join("");
+      });
+    }
+
+    function card(f) {
+      var badge = f.verification === "verified" ? '<span class="eua-badge eua-badge--verified">Verified</span>'
+        : f.verification === "link-checked" ? '<span class="eua-badge eua-badge--checked">Link checked</span>'
+        : '<span class="eua-badge eua-badge--unverified">Unverified</span>';
+      return '<a class="eua-card" href="' + esc(f.url || "#") + '" target="_blank" rel="noopener">' +
+        '<span class="eua-card__eyebrow">' + esc(f.org || "Program") + "</span>" +
+        '<span class="eua-card__h">' + esc(f.title) + "</span>" +
+        '<span class="eua-card__sub">' + esc(f.summary || "") + "</span>" +
+        '<span class="eua-card__meta">' + badge +
+        (f.location ? "<span>" + esc(f.location) + "</span>" : "") +
+        (f.duration ? "<span>" + esc(f.duration) + "</span>" : "") + "</span></a>";
+    }
+
+    /* ---------- putting it on the record ---------- */
+    $("tSend").addEventListener("click", function () {
+      var body = $("tBody").value.trim();
+      var say = $("tSay");
+      if (!body && !Object.keys(answers).length) {
+        say.className = "eua-say is-bad"; say.textContent = "Answer something first — a question above, or the box.";
+        return;
+      }
+      $("tSend").disabled = true;
+      say.className = "eua-say"; say.textContent = "Filing…";
+      EU.speak({
+        topic_slug: slug,
+        body: body,
+        answers: answers,
+        display_name: $("tName2").value.trim(),
+        region: $("tRegion").value.trim(),
+        contact_email: $("tEmail").value.trim(),
+        anonymous: $("tAnon").checked,
+        consent_public: $("tConsent").checked,
+      }).then(function () {
+        say.className = "eua-say is-ok";
+        say.textContent = "On the record. A person reads it before it appears anywhere — usually within a day or two.";
+        $("tBody").value = "";
+      }).catch(function () {
+        say.className = "eua-say is-bad";
+        say.textContent = "That didn't send. Try again, or say it in the box below and a person will pick it up.";
+        $("tSend").disabled = false;
+      });
+    });
+
+    /* ---------- the conversation ---------- */
+    var thread = null, talking = false;
+    function bubble(role, text) {
+      var p = document.createElement("p");
+      p.className = "eua-msg eua-msg--" + role;
+      p.textContent = text;
+      $("tLog").appendChild(p);
+      $("tLog").scrollTop = $("tLog").scrollHeight;
+      return p;
+    }
+    $("tChatForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var text = $("tChatIn").value.trim();
+      if (!text || talking) return;
+      talking = true;
+      $("tChatIn").value = "";
+      bubble("person", text);
+      var wait = bubble("system", "…");
+      EU.converse({ conversation_id: thread, topic: slug, message: text }).then(function (r) {
+        wait.remove();
+        thread = r.conversation_id;
+        bubble("agent", r.reply);
+        if (r.status === "human") bubble("system", "A person at the desk has this thread now.");
+      }).catch(function () {
+        wait.remove();
+        bubble("system", "The listener is offline right now. The form above still works, and a person reads every one.");
+      }).then(function () { talking = false; });
+    });
+
+    /* ---------- go ---------- */
+    EU.topics().then(function (res) {
+      if (!slug) { drawIndex(res); return; }
+      var hit = null;
+      res.rows.forEach(function (t) { if (t.slug === slug) hit = t; });
+      drawTopic(hit);
+    }).catch(function () {
+      $("euIndex").hidden = false;
+      $("euTopicList").innerHTML = '<p class="eua-empty">The topic list is not reachable right now. Try again in a moment.</p>';
+    });
+  })();
+  </script>
+</body>
+</html>

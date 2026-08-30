@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Desk · outreach</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script src="js/office.js?v=__STAMP__"></script>
+  <style>
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+    .dk { max-width: 44rem; margin: 0 auto; padding: clamp(1rem,3vh,1.8rem) clamp(1rem,4vw,1.6rem) 7rem;
+      font-family: var(--ui); color: var(--cream); }
+
+    .gate { max-width: 24rem; display: grid; gap: .5rem; }
+    .gate input { padding: .9rem 1rem; border-radius: 12px; border: 0; font: 600 max(16px,.95rem) var(--ui);
+      color: var(--cream); background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--edge); }
+    .gate button { padding: .95rem; border: 0; border-radius: 12px; cursor: pointer;
+      font: 800 .92rem var(--ui); color: #fff; background: var(--metal); }
+    .err { color: #ff8a8c; font-weight: 700; font-size: .78rem; }
+
+    /* the strip: the whole pipeline in one glance, never a list */
+    .strip { display: flex; gap: .3rem; margin: 0 0 1.1rem; overflow-x: auto; padding-bottom: .2rem; }
+    .strip button { flex: 0 0 auto; border: 0; cursor: pointer; border-radius: 10px; padding: .5rem .75rem;
+      font: 800 .68rem var(--ui); color: var(--cream-dim); text-align: left;
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .strip button b { display: block; font-family: var(--sig); font-size: 1.15rem; color: var(--cream);
+      line-height: 1; font-variant-numeric: tabular-nums; }
+    .strip .on { box-shadow: inset 0 0 0 1.5px var(--ruby-hot); }
+    .strip .on b { color: var(--ruby-hot); }
+
+    /* THE MOVE: one card, the only thing on screen that matters */
+    .move { border-radius: 20px; padding: 1.2rem; position: relative; overflow: hidden;
+      background: linear-gradient(180deg, rgba(229,56,59,.1), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge), 0 24px 50px -28px rgba(0,0,0,.9); }
+    .move__k { font: 800 .62rem var(--ui); letter-spacing: .24em; text-transform: uppercase;
+      color: var(--ruby-hot); margin: 0 0 .5rem; }
+    .move__who { font-family: var(--sig); text-transform: uppercase; line-height: .92;
+      font-size: clamp(1.5rem,6vw,2.2rem); margin: 0 0 .3rem; }
+    .move__org { font-weight: 800; font-size: .88rem; color: var(--cream); margin: 0 0 .5rem; }
+    .move__why { font-weight: 600; font-size: .88rem; color: var(--cream-dim); line-height: 1.6; margin: 0 0 .8rem; }
+    .heat { display: flex; align-items: center; gap: .5rem; margin: 0 0 .9rem; }
+    .heat__bar { flex: 1; height: 5px; border-radius: 99px; background: var(--edge); overflow: hidden; }
+    .heat__fill { height: 100%; background: var(--metal); }
+    .heat span { font: 800 .62rem var(--ui); letter-spacing: .14em; text-transform: uppercase; color: var(--cream-dim); }
+
+    .sig { display: flex; gap: .3rem; flex-wrap: wrap; margin: 0 0 .9rem; }
+    .sig span { font: 800 .58rem var(--ui); letter-spacing: .1em; text-transform: uppercase;
+      color: var(--cream-dim); padding: .22rem .5rem; border-radius: 99px; box-shadow: inset 0 0 0 1px var(--edge); }
+
+    .draft { border-radius: 14px; background: rgba(0,0,0,.34); box-shadow: inset 0 0 0 1px var(--edge);
+      padding: .85rem .95rem; margin: 0 0 .8rem; }
+    .draft label { display: block; font: 800 .58rem var(--ui); letter-spacing: .12em;
+      text-transform: uppercase; color: var(--cream-dim); margin: 0 0 .25rem; }
+    .draft input, .draft textarea { width: 100%; border: 0; background: transparent; color: var(--cream);
+      font: 600 max(16px,.88rem)/1.6 var(--ui); resize: vertical; padding: 0; }
+    .draft input { font-weight: 800; margin-bottom: .6rem; }
+    .draft textarea { min-height: 11rem; }
+    .draft__pick { display: flex; gap: .3rem; flex-wrap: wrap; margin: 0 0 .7rem; }
+    .draft__pick button { border: 0; cursor: pointer; border-radius: 99px; padding: .35rem .7rem;
+      font: 800 .62rem var(--ui); color: var(--cream-dim);
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .draft__pick .on { color: #fff; background: var(--metal); box-shadow: none; }
+
+    .acts { display: grid; grid-template-columns: 1fr auto auto; gap: .4rem; }
+    .acts button { border: 0; border-radius: 12px; cursor: pointer; padding: .85rem .9rem;
+      font: 800 .84rem var(--ui); color: var(--cream);
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .acts .go { color: #fff; background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,.5); }
+    .acts .go[disabled] { opacity: .6; }
+
+    .done { text-align: center; padding: 3rem 1rem; }
+    .done h2 { font-family: var(--sig); text-transform: uppercase; font-size: clamp(1.6rem,7vw,2.6rem);
+      margin: 0 0 .5rem; line-height: .95; }
+    .done p { color: var(--cream-dim); font-weight: 600; max-width: 40ch; margin: 0 auto; line-height: 1.6; }
+
+    .queue { margin-top: 1.1rem; font: 800 .64rem var(--ui); letter-spacing: .16em;
+      text-transform: uppercase; color: var(--cream-dim); text-align: center; }
+    .queue b { color: var(--ruby-hot); }
+
+    .add { margin-top: 1.4rem; }
+    .add summary { cursor: pointer; font: 800 .66rem var(--ui); letter-spacing: .16em;
+      text-transform: uppercase; color: var(--cream-dim); }
+    .add__f { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; margin-top: .7rem; }
+    .add__f input, .add__f select { grid-column: span 1; padding: .7rem .8rem; border-radius: 10px; border: 0;
+      font: 600 max(16px,.88rem) var(--ui); color: var(--cream); background: rgba(0,0,0,.34);
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .add__f button { grid-column: span 2; padding: .8rem; border: 0; border-radius: 10px; cursor: pointer;
+      font: 800 .82rem var(--ui); color: #fff; background: var(--metal); }
+    @media (max-width: 30rem) { .acts { grid-template-columns: 1fr; } }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body data-masthead="off">
+  <main class="dk" id="dk"></main>
+
+  <script src="js/env.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var MOVES = [], PIPE = [], TPL = [], SIGS = {}, I = 0, PICK = null, STAGE = null;
+    var ME = "https://matthew.mccluster.org";
+
+    function hdr(extra) {
+      return Object.assign({ apikey: MCC_SUPA.key, Authorization: "Bearer " + MCC_SUPA.token(),
+        "Content-Type": "application/json" }, extra || {});
+    }
+    function q(path, opts) {
+      return fetch(MCC_SUPA.url + "/rest/v1/" + path, Object.assign({ headers: hdr() }, opts || {}))
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.status === 204 ? null : r.json(); });
+    }
+
+    function gate(msg) {
+      $("dk").innerHTML = '<div class="gate">' + (msg ? '<p class="err">' + esc(msg) + "</p>" : "") +
+        '<input id="gE" type="email" placeholder="matthew@mccluster.org" autocomplete="username">' +
+        '<input id="gP" type="password" placeholder="Password" autocomplete="current-password">' +
+        '<button id="gGo" type="button">Open the desk &#8594;</button></div>';
+      $("gGo").onclick = function () {
+        MCC_AUTH.signInPassword($("gE").value.trim(), $("gP").value).then(boot)
+          .catch(function () { gate("That didn't open it."); });
+      };
+    }
+
+    /* fill a template against a contact: the desk writes the email, you edit it */
+    function fill(t, c) {
+      var wall = c.event_id ? ME + "/walls/" + c.event_id + ".html" : ME + "/walls.html";
+      var map = {
+        name: (c.name || "").split(" ")[0], org: c.org || "your team",
+        event: c.event_id ? c.event_id.replace(/-/g, " ") : "a recent event",
+        wall: wall, me: ME, subject_prev: "photographs",
+      };
+      var sub = function (s) {
+        return String(s || "").replace(/\{\{(\w+)\}\}/g, function (_, k) { return map[k] != null ? map[k] : ""; });
+      };
+      return { subject: sub(t.subject), body: sub(t.body), id: t.id, stage_to: t.stage_to, wait: t.wait_days };
+    }
+
+    function strip() {
+      var order = ["new", "contacted", "replied", "meeting", "proposal", "nurture", "won"];
+      var by = {}; PIPE.forEach(function (p) { by[p.stage] = p; });
+      return '<div class="strip">' + order.map(function (s) {
+        var p = by[s] || { n: 0, worth: 0 };
+        return '<button type="button" data-stage="' + s + '"' + (STAGE === s ? ' class="on"' : "") + ">" +
+          "<b>" + p.n + "</b>" + esc(s) + "</button>";
+      }).join("") + "</div>";
+    }
+
+    function moveCard() {
+      var c = MOVES[I];
+      if (!c) {
+        return '<div class="done"><h2>Desk clear</h2><p>Nothing is due. That is the goal, not a bug. ' +
+          'add someone below, or go shoot.</p></div>' + addForm();
+      }
+      var picks = TPL.filter(function (t) { return !t.stage_from || t.stage_from === c.stage; });
+      if (!picks.length) picks = TPL;
+      var t = PICK ? TPL.find(function (x) { return x.id === PICK; }) || picks[0] : picks[0];
+      var d = fill(t, c);
+      var sigs = SIGS[c.id] || [];
+
+      return strip() +
+        '<div class="move">' +
+          '<p class="move__k">' + esc(c.stage) + " &middot; next move</p>" +
+          '<h1 class="move__who">' + esc(c.name) + "</h1>" +
+          (c.org ? '<p class="move__org">' + esc([c.role, c.org].filter(Boolean).join(", ")) + "</p>" : "") +
+          '<p class="move__why">' + esc(c.why) + "</p>" +
+          '<div class="heat"><span>heat</span><span class="heat__bar"><span class="heat__fill" style="width:' +
+            (c.heat_now || 0) + '%"></span></span><span>' + (c.heat_now || 0) + "</span></div>" +
+          (sigs.length ? '<div class="sig">' + sigs.slice(0, 6).map(function (s) {
+            return "<span>" + esc(s.kind.replace(/_/g, " ")) + (s.detail ? " &middot; " + esc(s.detail) : "") + "</span>";
+          }).join("") + "</div>" : "") +
+
+          '<div class="draft__pick">' + picks.map(function (x) {
+            return '<button type="button" data-tpl="' + esc(x.id) + '"' + (x.id === t.id ? ' class="on"' : "") + ">" +
+              esc(x.label) + "</button>";
+          }).join("") + "</div>" +
+
+          '<div class="draft">' +
+            "<label>Subject</label><input id=\"dSub\" value=\"" + esc(d.subject) + "\">" +
+            "<label>Message</label><textarea id=\"dBody\">" + esc(d.body) + "</textarea>" +
+          "</div>" +
+
+          '<div class="acts">' +
+            '<button class="go" type="button" data-send="' + esc(c.id) + '" data-to="' + esc(d.stage_to || "contacted") +
+              '" data-wait="' + (d.wait || 4) + '" data-tid="' + esc(t.id) + '"' + (c.email ? "" : " disabled") + ">" +
+              (c.email ? "Send it &#8594;" : "No email on file") + "</button>" +
+            '<button type="button" data-skip>Later</button>' +
+            '<button type="button" data-park="' + esc(c.id) + '">Nurture</button>' +
+          "</div>" +
+        "</div>" +
+        '<p class="queue"><b>' + Math.max(0, MOVES.length - I - 1) + "</b> more waiting</p>" +
+        addForm();
+    }
+
+    function addForm() {
+      return '<details class="add"><summary>+ Put someone on the desk</summary>' +
+        '<div class="add__f">' +
+        '<input id="aName" placeholder="Name"><input id="aEmail" type="email" placeholder="Email">' +
+        '<input id="aRole" placeholder="Role, e.g. photo editor"><input id="aOrg" placeholder="Organisation">' +
+        '<input id="aEvent" placeholder="Event id (optional)">' +
+        '<select id="aKind"><option value="press">press</option><option value="county">county</option>' +
+        '<option value="nonprofit">nonprofit</option><option value="brand">brand</option>' +
+        '<option value="venue">venue</option><option value="agency">agency</option></select>' +
+        '<button type="button" id="aGo">Add and queue</button></div></details>';
+    }
+
+    function paint() { $("dk").innerHTML = moveCard(); }
+
+    document.addEventListener("click", function (e) {
+      var t = e.target, hit = function (s) { return t.closest && t.closest(s); };
+
+      var st = hit("[data-stage]");
+      if (st) {
+        var s = st.getAttribute("data-stage");
+        STAGE = STAGE === s ? null : s;
+        I = 0; PICK = null; load();
+        return;
+      }
+      var tp = hit("[data-tpl]"); if (tp) { PICK = tp.getAttribute("data-tpl"); paint(); return; }
+      if (hit("[data-skip]")) { I++; PICK = null; paint(); return; }
+
+      var pk = hit("[data-park]");
+      if (pk) {
+        var d = new Date(); d.setDate(d.getDate() + 30);
+        q("crm_contacts?id=eq." + pk.getAttribute("data-park"), { method: "PATCH",
+          body: JSON.stringify({ stage: "nurture", next_at: d.toISOString().slice(0, 10) }) })
+          .then(function () { I++; PICK = null; load(); });
+        return;
+      }
+
+      var sd = hit("[data-send]");
+      if (sd) {
+        var id = sd.getAttribute("data-send"), c = MOVES.find(function (x) { return x.id === id; });
+        var subject = $("dSub").value, body = $("dBody").value;
+        var wait = parseInt(sd.getAttribute("data-wait"), 10) || 4;
+        var to = sd.getAttribute("data-to");
+        sd.disabled = true; sd.textContent = "Sending…";
+
+        /* The send itself goes through the send-mail edge function, which
+           holds the API key. No key ever reaches this page. If it is not
+           deployed yet, the touch is still recorded and the mail client
+           opens; the record stays complete either way. */
+        fetch(MCC_SUPA.url + "/functions/v1/send-mail", {
+          method: "POST", headers: hdr(),
+          body: JSON.stringify({ to: c.email, subject: subject, text: body, contact_id: id }),
+        }).then(function (r) { return r.ok ? "sent" : "manual"; })
+          .catch(function () { return "manual"; })
+          .then(function (how) {
+            var due = new Date(); due.setDate(due.getDate() + wait);
+            return Promise.all([
+              q("crm_touches", { method: "POST", body: JSON.stringify({
+                contact_id: id, direction: "out", channel: "email", subject: subject,
+                body: body, template_id: sd.getAttribute("data-tid"),
+                status: how === "sent" ? "sent" : "draft" }) }),
+              q("crm_contacts?id=eq." + id, { method: "PATCH", body: JSON.stringify({
+                stage: to, last_touch: new Date().toISOString(),
+                next_at: due.toISOString().slice(0, 10) }) }),
+            ]).then(function () {
+              if (how === "manual") {
+                window.location.href = "mailto:" + encodeURIComponent(c.email) +
+                  "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+              }
+              I = 0; PICK = null; load();
+            });
+          });
+        return;
+      }
+
+      if (hit("#aGo")) {
+        var row = { name: $("aName").value.trim(), email: $("aEmail").value.trim() || null,
+          role: $("aRole").value.trim() || null, org: $("aOrg").value.trim() || null,
+          event_id: $("aEvent").value.trim() || null, org_kind: $("aKind").value, stage: "new" };
+        if (!row.name) return;
+        q("crm_contacts", { method: "POST", body: JSON.stringify(row) }).then(function () { I = 0; load(); });
+      }
+    });
+
+    function load() {
+      var path = "crm_next_move?select=*";
+      if (STAGE) path += "&stage=eq." + STAGE;
+      return Promise.all([q(path), q("crm_pipeline?select=*")]).then(function (r) {
+        MOVES = r[0]; PIPE = r[1];
+        var ids = MOVES.map(function (m) { return m.id; }).slice(0, 12);
+        if (!ids.length) { SIGS = {}; paint(); return; }
+        return q("crm_signals?select=contact_id,kind,detail&contact_id=in.(" + ids.join(",") + ")&order=at.desc&limit=80")
+          .then(function (s) {
+            SIGS = {}; (s || []).forEach(function (x) {
+              (SIGS[x.contact_id] = SIGS[x.contact_id] || []).push(x);
+            });
+            paint();
+          }).catch(function () { SIGS = {}; paint(); });
+      });
+    }
+
+    function boot() {
+      return q("crm_templates?select=*&order=id").then(function (t) { TPL = t; return load(); })
+        .catch(function () { gate("Signed in, but the desk refused the read. Run docs/the-desk.sql as the owner."); });
+    }
+    if (MCC_SUPA.token() && MCC_SUPA.email() === "matthew@mccluster.org") boot(); else gate();
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

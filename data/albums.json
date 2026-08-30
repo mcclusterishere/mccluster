@@ -1,0 +1,200 @@
+{
+ "albums": [
+  {
+   "slug": "here",
+   "name": "I AM HERE",
+   "tag": "The album · 6 tracks",
+   "art": "assets/img/here-cover.jpg",
+   "by": "Have no fear.",
+   "tracks": [
+    {
+     "title": "Who Did The Shoot",
+     "src": "assets/audio/who-did-the-shoot.mp3",
+     "video": "assets/video/hero.mp4",
+     "poster": "assets/frames/hero_0001.jpg",
+     "lyrics": "data/lyrics/who-did-the-shoot.json",
+     "pulse": "#e5383b"
+    },
+    {
+     "title": "Runway Walk",
+     "src": "assets/audio/runway-walk.mp3",
+     "video": "assets/video/vauntlive.mp4",
+     "poster": "assets/frames/vauntlive_0001.jpg",
+     "pulse": "#ff5a5c"
+    },
+    {
+     "title": "Write a Song",
+     "src": "assets/audio/write-a-song.mp3",
+     "video": "assets/video/studio360.mp4",
+     "poster": "assets/frames/studio360_0001.jpg",
+     "pulse": "#c1121f"
+    },
+    {
+     "title": "Here",
+     "sub": "the title track",
+     "src": "assets/audio/here.mp3",
+     "video": "assets/video/keynote.mp4",
+     "poster": "assets/frames/keynote_0001.jpg",
+     "pulse": "#ff3040"
+    },
+    {
+     "title": "Antisocial",
+     "src": "assets/audio/antisocial.mp3",
+     "video": "assets/video/nightscroll.mp4",
+     "poster": "assets/frames/nightscroll_0001.jpg",
+     "lyrics": "data/lyrics/antisocial.json",
+     "reel": "data/reels/antisocial.json",
+     "pulse": "#8f0f16"
+    },
+    {
+     "title": "Lightroom",
+     "src": "assets/audio/lightroom.mp3",
+     "video": "assets/video/editors.mp4",
+     "poster": "assets/frames/editors_0001.jpg",
+     "pulse": "#f0453f"
+    }
+   ]
+  },
+  {
+   "slug": "prim3",
+   "name": "PRIM3",
+   "tag": "The study tapes",
+   "art": "assets/img/prim3-logo.png",
+   "by": "Music to build to.",
+   "tracks": [
+    {
+     "title": "Got WiFi?",
+     "src": "assets/audio/got-wifi.mp3",
+     "video": "assets/video/prim3.mp4",
+     "poster": "assets/frames/prim3_0001.jpg",
+     "lyrics": "data/lyrics/got-wifi.json",
+     "reel": "data/reels/got-wifi.json"
+    }
+   ]
+  },
+  {
+   "slug": "equity-uprise",
+   "name": "Equity Uprise",
+   "tag": "The civic anthems · 4 tracks",
+   "art": "assets/img/equity-uprise-logo.webp",
+   "by": "The fight, on the record.",
+   "tracks": [
+    {
+     "title": "Environmental Injustice",
+     "sub": "ft. Ocho & Evangelist Angel",
+     "src": "assets/audio/environmental-injustice.mp3",
+     "video": "assets/video/uprise.mp4",
+     "poster": "assets/frames/uprise_0001.jpg",
+     "reel": "data/reels/environmental-injustice.json",
+     "lyrics": "data/lyrics/environmental-injustice.json"
+    },
+    {
+     "title": "Environmental Injustice (Brave mix)",
+     "sub": "the GA edition",
+     "src": "assets/audio/environmental-injustice-brave.mp3",
+     "video": "assets/video/uprise.mp4",
+     "poster": "assets/frames/uprise_0001.jpg",
+     "lyrics": "data/lyrics/environmental-injustice-brave.dk.json",
+     "reel": "data/reels/environmental-injustice-brave.json"
+    },
+    {
+     "title": "Please Set Me Free",
+     "sub": "the civic poll",
+     "src": "assets/audio/please-set-me-free.mp3",
+     "video": "assets/video/church.mp4",
+     "poster": "assets/frames/church_0001.jpg",
+     "lyrics": "data/lyrics/please-set-me-free.json",
+     "reel": "data/reels/please-set-me-free.json"
+    },
+    {
+     "title": "Money or the Power",
+     "src": "assets/audio/money-or-the-power.mp3",
+     "video": "assets/video/moneyglitch.mp4",
+     "poster": "assets/frames/moneyglitch_0001.jpg",
+     "lyrics": "data/lyrics/money-or-the-power.dk.json",
+     "reel": "data/reels/money-or-the-power.json"
+    }
+   ]
+  },
+  {
+   "slug": "heal-the-3",
+   "name": "Heal the 3",
+   "tag": "The EP · with VVS Madè",
+   "art": "assets/img/heal-the-3-cover.jpg",
+   "by": "Two sides: the healing and the deep end.",
+   "tracks": [
+    {
+     "title": "Deep End",
+     "sub": "the dark side · McCluster × VVS Madè",
+     "src": "assets/audio/deep-end.m4a",
+     "video": "assets/video/warroom.mp4",
+     "poster": "assets/frames/warroom_0001.jpg",
+     "lyrics": "data/lyrics/deep-end.json",
+     "reel": "data/reels/deep-end.json"
+    },
+    {
+     "title": "Heal the 3rd World",
+     "sub": "the light side · McCluster × VVS Madè",
+     "src": "assets/audio/heal-the-3rd-world.m4a",
+     "video": "assets/video/angel.mp4",
+     "poster": "assets/frames/angel_0001.jpg"
+    }
+   ]
+  },
+  {
+   "slug": "vaunt-ep",
+   "name": "Vaunt EP",
+   "tag": "The campaign jingle",
+   "art": "assets/img/vaunt-logo.webp",
+   "by": "Recorded for the runway.",
+   "tracks": [
+    {
+     "title": "Vaunt (Acoustic)",
+     "src": "assets/audio/vaunt.mp3",
+     "video": "assets/video/vauntlive.mp4",
+     "poster": "assets/frames/vauntlive_0001.jpg"
+    }
+   ]
+  },
+  {
+   "slug": "whip-equipped",
+   "name": "Whip Equipped",
+   "tag": "The dealership saga",
+   "art": "assets/img/wing-whip-poster.jpg",
+   "by": "Scored by Dealer Plates.",
+   "tracks": [
+    {
+     "title": "Dealer Plates (A-Side)",
+     "src": "assets/audio/dealer-plates.mp3",
+     "video": "assets/video/whip.mp4",
+     "poster": "assets/frames/whip_0001.jpg",
+     "lyrics": "data/lyrics/dealer-plates.json",
+     "reel": "data/reels/dealer-plates.json"
+    },
+    {
+     "title": "Dealer Plates (B-Side)",
+     "src": "assets/audio/dealer-plates-b.mp3",
+     "video": "assets/video/dealer-plates-b-video.mp4",
+     "poster": "assets/img/wing-whip-poster.jpg"
+    }
+   ]
+  },
+  {
+   "slug": "singles",
+   "name": "Singles",
+   "tag": "The singles",
+   "art": "assets/img/m-mark.png",
+   "by": "Between the albums.",
+   "tracks": [
+    {
+     "title": "Upset",
+     "src": "assets/audio/upset.mp3",
+     "video": "assets/video/coffeecam.mp4",
+     "poster": "assets/frames/coffeecam_0001.jpg",
+     "lyrics": "data/lyrics/upset.json",
+     "reel": "data/reels/upset.json"
+    }
+   ]
+  }
+ ]
+}

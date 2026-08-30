@@ -1,0 +1,106 @@
+{
+ "scenes": [
+  {
+   "begin": 0,
+   "src": "assets/video/redjet.mp4",
+   "poster": "assets/frames/redjet_0001.jpg"
+  },
+  {
+   "begin": 8.63,
+   "src": "assets/video/nightscroll.mp4",
+   "poster": "assets/frames/nightscroll_0001.jpg"
+  },
+  {
+   "begin": 22.12,
+   "src": "assets/video/gmcall.mp4",
+   "poster": "assets/frames/gmcall_0001.jpg"
+  },
+  {
+   "begin": 26.56,
+   "flip": [
+    "assets/img/peaceful-places.jpg"
+   ],
+   "every": 4.5
+  },
+  {
+   "begin": 35.29,
+   "src": "assets/video/ownit.mp4",
+   "poster": "assets/frames/ownit_0001.jpg"
+  },
+  {
+   "begin": 39.494,
+   "src": "assets/video/church.mp4",
+   "poster": "assets/frames/church_0001.jpg"
+  },
+  {
+   "begin": 44.1,
+   "src": "assets/video/lifeblur.mp4",
+   "poster": "assets/frames/lifeblur_0001.jpg"
+  },
+  {
+   "begin": 48.419,
+   "src": "assets/video/study.mp4",
+   "poster": "assets/frames/study_0001.jpg"
+  },
+  {
+   "begin": 53.258,
+   "src": "assets/video/coffeecam.mp4",
+   "poster": "assets/frames/coffeecam_0001.jpg"
+  },
+  {
+   "begin": 61.579,
+   "src": "assets/video/vauntlive.mp4",
+   "poster": "assets/frames/vauntlive_0001.jpg"
+  },
+  {
+   "begin": 70.713,
+   "src": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg"
+  },
+  {
+   "begin": 74.93,
+   "src": "assets/video/redjet.mp4",
+   "poster": "assets/frames/redjet_0001.jpg"
+  },
+  {
+   "begin": 88.249,
+   "src": "assets/video/designer.mp4",
+   "poster": "assets/frames/designer_0001.jpg"
+  },
+  {
+   "begin": 96.778,
+   "src": "assets/video/hero.mp4",
+   "poster": "assets/frames/hero_0001.jpg"
+  },
+  {
+   "begin": 105.301,
+   "src": "assets/video/daniel.mp4",
+   "poster": "assets/frames/daniel_0001.jpg"
+  },
+  {
+   "begin": 113.76,
+   "src": "assets/video/coffeecam.mp4",
+   "poster": "assets/frames/coffeecam_0001.jpg"
+  },
+  {
+   "begin": 122.386,
+   "src": "assets/video/redjet.mp4",
+   "poster": "assets/frames/redjet_0001.jpg"
+  },
+  {
+   "begin": 138.914,
+   "src": "assets/video/daniel.mp4",
+   "poster": "assets/frames/daniel_0001.jpg"
+  },
+  {
+   "begin": 147.25,
+   "src": "assets/video/vauntlive.mp4",
+   "poster": "assets/frames/vauntlive_0001.jpg"
+  },
+  {
+   "begin": 157.32,
+   "src": "assets/video/coldopen.mp4",
+   "poster": "assets/frames/coldopen_0001.jpg"
+  }
+ ]
+}

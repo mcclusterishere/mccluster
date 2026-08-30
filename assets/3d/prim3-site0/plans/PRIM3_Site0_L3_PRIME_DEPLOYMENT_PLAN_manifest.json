@@ -1,0 +1,22 @@
+{
+  "schema": "prim3.site0.plan-manifest.v2",
+  "drawing": "PRIM3_Site0_L3_PRIME_DEPLOYMENT_PLAN.svg",
+  "revision": "2026-08-14 clean P1 flush-deck correction",
+  "canonical_nodes": [
+    "P1_L3_HEAVY_LIFT_PLATFORM",
+    "L3_PRIME_FLUSH_DECK_TRANSITION",
+    "L3_PRIME_EXTERNAL_LIFT_APRON",
+    "L3_PRIME_EMERGENCY_MERGE_LANE",
+    "L3_FLIGHT_DECK"
+  ],
+  "forbidden_nodes": [
+    "L3_PRIME_ELEVATED_DEPARTURE_SPUR",
+    "L3_PRIME_SPUR_SUPPORT_00",
+    "L3_PRIME_SPUR_SUPPORT_01",
+    "L3_PRIME_SPUR_SUPPORT_02",
+    "L3_PRIME_SPUR_SUPPORT_03",
+    "L3_PRIME_SPUR_SUPPORT_04",
+    "L3_PRIME_SPUR_SUPPORT_05"
+  ],
+  "rule": "P1 arrives flush with L3; no elevated SOUTH roof connector."
+}

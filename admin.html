@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Back Office · McCluster</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script src="js/office.js?v=__STAMP__"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+    .bo { max-width: 54rem; margin: 0 auto; font-family: var(--ui);
+      padding: clamp(2.4rem, 6vh, 3.6rem) clamp(1.1rem, 4vw, 2rem) 10rem; }
+    .bo__k { font-size: 0.7rem; letter-spacing: 0.32em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
+    .bo h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.88;
+      font-size: clamp(2.4rem, 10vw, 4rem); margin: 0.3rem 0 0.5rem; color: var(--cream); }
+    .bo__sub { font-weight: 600; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.6; max-width: 46ch; }
+    /* ---- the door ---- */
+    .door { max-width: 26rem; margin-top: 1.6rem; }
+    .door label { display: block; font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase;
+      font-weight: 800; color: var(--cream-dim); margin-top: 0.9rem; }
+    .door input { width: 100%; margin-top: 0.35rem; padding: 0.85rem 1rem; border: 0; border-radius: 14px;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo)); color: var(--cream);
+      font-family: var(--ui); font-size: 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+    .door input::placeholder { color: rgba(244,239,230,0.38); }
+    .btn-go { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      margin-top: 1rem; padding: 0.9rem 1.5rem; border-radius: 100px; background: var(--metal); color: #fff;
+      font-family: var(--ui); font-weight: 800; font-size: 0.95rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .btn-go[disabled] { opacity: 0.55; }
+    .btn-flat { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      font-family: var(--ui); font-weight: 800; font-size: 0.76rem; color: var(--cream); border-radius: 100px;
+      padding: 0.5rem 1rem; background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+    .note { margin-top: 0.8rem; font-size: 0.82rem; color: var(--cream-dim); line-height: 1.6; }
+    .note.err { color: #ff8b8b; font-weight: 700; }
+    .alt { margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid rgba(244,239,230,0.12); }
+    /* ---- the bar ---- */
+    .bo__bar { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; margin: 0 0 1.2rem; }
+    .bo__who { font-size: 0.78rem; color: var(--cream-dim); font-weight: 700; }
+    .bo__who b { color: var(--cream); }
+    .bo__bar .btn-flat { margin-left: auto; }
+    /* ---- stats ---- */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 0.7rem; margin: 0 0 1.4rem; }
+    .stat { border-radius: 18px; padding: 0.9rem 1rem; min-width: 0;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+    .stat b { display: block; font-size: 1.5rem; font-weight: 800; color: var(--cream); line-height: 1.1; }
+    .stat small { display: block; margin-top: 0.2rem; font-size: 0.62rem; letter-spacing: 0.14em;
+      text-transform: uppercase; font-weight: 800; color: var(--cream-dim); }
+    .stat.hot b { color:var(--ruby-text); }
+    /* ---- lanes ---- */
+    .lanes { display: flex; gap: 0.45rem; overflow-x: auto; scrollbar-width: none; margin: 0 0 1.1rem; }
+    .lanes::-webkit-scrollbar { display: none; }
+    .lanes button { flex: none; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; font-family: var(--ui); font-weight: 700; font-size: 0.78rem; color: var(--cream);
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13); border-radius: 100px; padding: 0.55rem 1.05rem; white-space: nowrap; }
+    .lanes button.on { color: #fff; font-weight: 800; background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .lanes button .c { opacity: 0.7; margin-left: 0.35rem; font-variant-numeric: tabular-nums; }
+    /* ---- rows ---- */
+    .row { border-radius: 20px; padding: 1rem 1.05rem; margin-bottom: 0.7rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+    .row__top { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+    .row__top b { font-weight: 800; font-size: 1rem; color: var(--cream); }
+    .row__tag { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+      color:var(--ruby-text); background: rgba(229,56,59,0.16); border-radius: 100px; padding: 0.18rem 0.62rem; }
+    .row__when { margin-left: auto; font-size: 0.72rem; color: var(--cream-dim); white-space: nowrap; }
+    .row__note { margin-top: 0.5rem; font-size: 0.88rem; line-height: 1.6; color: var(--cream); word-break: break-word; }
+    .row__meta { margin-top: 0.5rem; font-size: 0.74rem; color: var(--cream-dim); }
+    .row__meta a { color:var(--ruby-text); text-decoration: none; }
+    .row__acts { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.8rem; }
+    .row__acts a, .row__acts button { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; text-decoration: none; font-family: var(--ui); font-weight: 800; font-size: 0.74rem;
+      border-radius: 100px; padding: 0.45rem 0.9rem; color: var(--cream);
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+    .row__acts .prime { background: var(--metal); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .row__acts button.on { background: var(--metal); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .row.is-done { opacity: 0.5; }
+    /* the order ticket */
+    .tick { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.9rem; margin-top: 0.6rem;
+      font-size: 0.8rem; line-height: 1.5; }
+    .tick dt { font-weight: 800; color: var(--cream-dim); font-size: 0.66rem; letter-spacing: 0.1em;
+      text-transform: uppercase; white-space: nowrap; }
+    .tick dd { margin: 0; color: var(--cream); word-break: break-word; }
+    .tick dd .amt { font-weight: 800; color:var(--ruby-text); }
+    /* the house table */
+    .tbl { width: 100%; border-collapse: collapse; margin-top: 0.6rem; font-size: 0.84rem; }
+    .tbl th { text-align: left; font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--cream-dim); font-weight: 800; padding: 0.5rem 0.6rem 0.5rem 0; border-bottom: 1px solid rgba(229,56,59,0.3); }
+    .tbl td { padding: 0.6rem 0.6rem 0.6rem 0; border-bottom: 1px solid rgba(244,239,230,0.09); color: var(--cream); }
+    .tbl td.dim { color: var(--cream-dim); }
+    .tbl .live { color:var(--ruby-text); font-weight: 800; }
+    .wrap { overflow-x: auto; }
+    .pane { display: none; }
+    .pane.on { display: block; }
+    .empty { font-size: 0.9rem; color: var(--cream-dim); padding: 1.6rem 0; }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage" data-masthead="off">
+  <main class="bo">
+    <p class="bo__k">Owner only · the back office</p>
+    <h1>The Back<br>Office</h1>
+
+    <!-- THE DOOR -->
+    <section id="door">
+      <p class="bo__sub">Everything the house took in, on one desk: print orders, bookings, the waitlist.
+        Sign in with the owner account.</p>
+      <div class="door">
+        <label for="boEmail">Email</label>
+        <input id="boEmail" type="email" placeholder="matthew@mccluster.org" autocomplete="username" inputmode="email">
+        <label for="boPass">Password</label>
+        <input id="boPass" type="password" placeholder="Your password" autocomplete="current-password">
+        <button class="btn-go" id="boIn" type="button">Open the office &#8594;</button>
+        <p class="note" id="boNote"></p>
+        <div class="alt">
+          <p class="note">No password set? Get a one-time link by email instead.</p>
+          <button class="btn-flat" id="boLink" type="button">Email me a sign-in link</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- THE DESK -->
+    <section id="desk" hidden>
+      <div class="bo__bar">
+        <span class="bo__who">Signed in as <b id="boWho">…</b></span>
+        <button class="btn-flat" id="boOut" type="button">Sign out</button>
+      </div>
+
+      <div class="stats" id="boStats"></div>
+
+      <div class="lanes" id="boLanes"></div>
+
+      <div class="pane on" id="paneList"></div>
+
+      <!-- the walls -->
+      <div class="pane" id="paneWalls">
+        <p class="bo__sub">Every wall in the gallery and what is loaded on it. Walls are edited in
+          <code>data/gallery.json</code>; this is the live state of the house.</p>
+        <div class="wrap"><table class="tbl" id="wallsTbl"></table></div>
+      </div>
+
+      <!-- the shop -->
+      <div class="pane" id="paneShop">
+        <p class="bo__sub">The live price ladder. Print prices derive from lab cost, so changing a cost in
+          <code>data/prints.json</code> repricies the whole shop.</p>
+        <div class="wrap"><table class="tbl" id="shopTbl"></table></div>
+      </div>
+
+      <!-- the rights desk -->
+      <div class="pane" id="paneRights">
+        <p class="bo__sub">Every frame's rights class, flippable live. <b>Editorial</b> = no release on file:
+          prints and personal files sell, the RAW carries an editorial-use license.
+          <b>Released</b> = paper on file: commercial rights sell. A flip lands in the database
+          (<code>rights_flags</code>) and the store reads it on the next load; flipping a wall flips
+          every frame on it. Requires migration <code>0006_rights_flags.sql</code>.</p>
+        <div class="wrap"><table class="tbl" id="rightsTbl"></table></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/prices.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+    var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+    var LEADS = [], LANE = "orders";
+
+    function ago(ts) {
+      var s = Math.max(1, (Date.now() - new Date(ts).getTime()) / 1000);
+      if (s < 3600) return Math.round(s / 60) + "m";
+      if (s < 86400) return Math.round(s / 3600) + "h";
+      return Math.round(s / 86400) + "d";
+    }
+    function money(n) { return "$" + (Math.round(n * 100) / 100).toLocaleString(); }
+
+    /* ---------- the door ---------- */
+    function token() { return window.MCC_SUPA && MCC_SUPA.token ? MCC_SUPA.token() : Promise.resolve(null); }
+
+    function fail(msg) { var n = $("boNote"); n.className = "note err"; n.textContent = msg; }
+    function say(msg) { var n = $("boNote"); n.className = "note"; n.textContent = msg; }
+
+    $("boIn").addEventListener("click", function () {
+      var em = $("boEmail").value.trim(), pw = $("boPass").value;
+      if (!em || !pw) { fail("Email and password, both."); return; }
+      var b = $("boIn"); b.disabled = true; b.textContent = "Opening…";
+      window.MCC_AUTH.signInPassword(em, pw).then(function () {
+        boot();
+      }).catch(function (e) {
+        b.disabled = false; b.textContent = "Open the office →";
+        fail(String(e.message || e));
+      });
+    });
+    $("boPass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("boIn").click(); });
+
+    $("boLink").addEventListener("click", function () {
+      var em = $("boEmail").value.trim();
+      if (!em) { fail("Put the owner email in first."); return; }
+      var b = $("boLink"); b.disabled = true; b.textContent = "Sending…";
+      window.MCC_AUTH.signIn(em).then(function () {
+        b.textContent = "Link sent";
+        say("Check " + em + ". The link opens this page signed in.");
+      }).catch(function (e) {
+        b.disabled = false; b.textContent = "Email me a sign-in link";
+        fail(String(e.message || e));
+      });
+    });
+
+    $("boOut").addEventListener("click", function () {
+      window.MCC_AUTH.signOut().then(function () { location.reload(); });
+    });
+
+    /* ---------- the pile ---------- */
+    function pull() {
+      return token().then(function (t) {
+        if (!t) throw new Error("signed out");
+        return fetch(SB + "/rest/v1/leads?order=at.desc&select=*&limit=400", {
+          headers: { apikey: KEY, Authorization: "Bearer " + t },
+        }).then(function (r) {
+          if (r.status === 401 || r.status === 403) throw new Error("not-owner");
+          if (!r.ok) throw new Error("leads " + r.status);
+          return r.json();
+        });
+      });
+    }
+    function setStatus(id, st) {
+      return token().then(function (t) {
+        return fetch(SB + "/rest/v1/leads?id=eq." + encodeURIComponent(id), {
+          method: "PATCH",
+          headers: { apikey: KEY, Authorization: "Bearer " + t, "Content-Type": "application/json", Prefer: "return=minimal" },
+          body: JSON.stringify({ status: st }),
+        });
+      });
+    }
+
+    /* which lane a lead belongs in: the campaign tag is set by the
+       page that captured it (prints.html, gallery.html, the lead sheet) */
+    function laneOf(r) {
+      var c = (r.campaign || "").toLowerCase();
+      if (c === "print-shop") return "orders";
+      if (c === "merch-shop") return "merch";
+      if (c === "gallery-waitlist") return "waitlist";
+      if (c === "tap-card") return "cards";
+      return "bookings";
+    }
+    /* Somebody tapped the card and handed theirs back:
+       "TAP CARD · NFC · 203-555-0117 · met at the Shiloh rally"        */
+    function cardTicket(r) {
+      if (laneOf(r) !== "cards") return null;
+      var parts = (r.note || "").split("·").map(function (s) { return s.trim(); });
+      return { how: parts[1] || "LINK", rest: parts.slice(2).filter(Boolean).join(" · ") };
+    }
+    /* a print order arrives as a structured note:
+       "PRINT SHOP · bnb-03 · 16×20 print ($55) · SHIP TO: …"   */
+    /* A rack order arrives as:
+       "THE RACK · the-mark · Heavyweight tee · L · Black ($30) · SHIP TO: …" */
+    function rackTicket(r) {
+      var n = r.note || "";
+      if (laneOf(r) !== "merch") return null;
+      var parts = n.split("·").map(function (s) { return s.trim(); });
+      var amt = 0;
+      var pm = n.match(/\$([\d,.]+)/);
+      if (pm) amt = parseFloat(pm[1].replace(/,/g, "")) || 0;
+      var ship = "";
+      var m = n.match(/SHIP TO:\s*(.+)$/i);
+      if (m) ship = m[1].trim();
+      /* A set writes SET where a single piece writes its name, then lists
+         both pieces with a size each in the next field. Read it as one
+         ticket; the desk places one order either way. */
+      if ((parts[2] || "") === "SET") {
+        return {
+          drop: parts[1] || "", piece: parts[3] || "", set: true, size: "",
+          color: (parts[4] || "").replace(/\s*\(\$[\d,.]+\)/, "").trim(),
+          amt: amt, ship: ship,
+        };
+      }
+      return {
+        drop: parts[1] || "", piece: parts[2] || "", set: false,
+        size: parts[3] || "", color: (parts[4] || "").replace(/\s*\(\$[\d,.]+\)/, "").trim(),
+        amt: amt, ship: ship,
+      };
+    }
+
+    function ticket(r) {
+      var n = r.note || "";
+      if (laneOf(r) !== "orders") return null;
+      var parts = n.split("·").map(function (s) { return s.trim(); });
+      var photo = parts[1] || "";
+      var fmt = parts[2] || "";
+      var ship = "";
+      var m = n.match(/SHIP TO:\s*(.+)$/i);
+      if (m) ship = m[1].trim();
+      var amt = 0;
+      var pm = fmt.match(/\$([\d,.]+)/);
+      if (pm) amt = parseFloat(pm[1].replace(/,/g, "")) || 0;
+      return { photo: photo, fmt: fmt.replace(/\s*\(\$[\d,.]+\)/, "").trim(), amt: amt, ship: ship,
+               digital: /digital delivery/i.test(n) };
+    }
+
+    function rowHTML(r) {
+      var t = ticket(r);
+      var rt = rackTicket(r);
+      var ct = cardTicket(r);
+      var done = r.status === "closed" || r.status === "booked";
+      var reply = "mailto:" + encodeURIComponent(r.email) +
+        "?subject=" + encodeURIComponent(t ? "Your order · McCluster" : "Re: your note · McCluster");
+      var out = '<div class="row' + (done ? " is-done" : "") + '" data-id="' + esc(r.id) + '">' +
+        '<div class="row__top"><b>' + esc(r.name) + "</b>" +
+        (t ? '<span class="row__tag">' + esc(t.digital ? "file" : "print") + "</span>"
+           : rt ? '<span class="row__tag">' + (rt.set ? "set" : "merch") + "</span>"
+           : ct ? '<span class="row__tag">card &middot; ' + esc(ct.how.toLowerCase()) + "</span>"
+           : (r.want ? '<span class="row__tag">' + esc(r.want) + "</span>" : "")) +
+        '<span class="row__when">' + ago(r.at) + " ago</span></div>";
+      if (t) {
+        out += '<dl class="tick">' +
+          "<dt>Photo</dt><dd>" + esc(t.photo || "·") + "</dd>" +
+          "<dt>Format</dt><dd>" + esc(t.fmt || "·") + ' <span class="amt">' + (t.amt ? money(t.amt) : "") + "</span></dd>" +
+          (t.ship ? "<dt>Ship to</dt><dd>" + esc(t.ship) + "</dd>" : "<dt>Deliver</dt><dd>By email</dd>") +
+          "</dl>";
+      } else if (rt) {
+        out += '<dl class="tick">' +
+          "<dt>" + (rt.set ? "Set" : "Piece") + "</dt><dd>" + esc(rt.piece || "·") + ' <span class="amt">' + (rt.amt ? money(rt.amt) : "") + "</span></dd>" +
+          (rt.set ? "<dt>Colour</dt><dd>" + esc(rt.color || "·") + "</dd>"
+                  : "<dt>Size</dt><dd>" + esc(rt.size || "·") + " · " + esc(rt.color || "·") + "</dd>") +
+          "<dt>Drop</dt><dd>" + esc(rt.drop || "·") + "</dd>" +
+          (rt.ship ? "<dt>Ship to</dt><dd>" + esc(rt.ship) + "</dd>" : "") +
+          "</dl>";
+      } else if (ct) {
+        out += '<dl class="tick">' +
+          "<dt>Handed over</dt><dd>" + esc(ct.how === "NFC" ? "Tapped the tag" : ct.how === "QR" ? "Scanned the code" : "Opened the link") + "</dd>" +
+          (ct.rest ? "<dt>They said</dt><dd>" + esc(ct.rest) + "</dd>" : "") +
+          "</dl>";
+      } else if (r.note) {
+        out += '<p class="row__note">' + esc(r.note) + "</p>";
+      }
+      out += '<p class="row__meta"><a href="mailto:' + esc(r.email) + '">' + esc(r.email) + "</a>" +
+        (r.page ? " · " + esc(r.page) : "") + (r.source && r.source !== "direct" ? " · " + esc(r.source) : "") + "</p>";
+      out += '<div class="row__acts"><a class="prime" href="' + reply + '">Reply &#8594;</a>' +
+        ["new", "replied", "booked", "closed"].map(function (st) {
+          return '<button type="button" data-st="' + st + '"' + (r.status === st ? ' class="on"' : "") + ">" + st + "</button>";
+        }).join("") + "</div></div>";
+      return out;
+    }
+
+    function paint() {
+      var lanes = [
+        { id: "orders", label: "Prints" },
+        { id: "merch", label: "Merch" },
+        { id: "bookings", label: "Bookings" },
+        { id: "cards", label: "Cards" },
+        { id: "waitlist", label: "Waitlist" },
+        { id: "walls", label: "The walls" },
+        { id: "shop", label: "The shop" },
+        { id: "rights", label: "Rights" },
+      ];
+      var counts = {};
+      LEADS.forEach(function (r) { var l = laneOf(r); counts[l] = (counts[l] || 0) + 1; });
+      $("boLanes").innerHTML = lanes.map(function (l) {
+        var c = counts[l.id];
+        return '<button type="button" data-lane="' + l.id + '"' + (l.id === LANE ? ' class="on"' : "") + ">" +
+          l.label + (c ? '<span class="c">' + c + "</span>" : "") + "</button>";
+      }).join("");
+
+      // stats
+      var week = Date.now() - 7 * 86400000;
+      var orders = LEADS.filter(function (r) { return laneOf(r) === "orders"; });
+      var rack = LEADS.filter(function (r) { return laneOf(r) === "merch"; });
+      var rev = orders.reduce(function (a, r) { var t = ticket(r); return a + (t ? t.amt : 0); }, 0) +
+                rack.reduce(function (a, r) { var t = rackTicket(r); return a + (t ? t.amt : 0); }, 0);
+      var open = orders.concat(rack).filter(function (r) { return r.status === "new"; }).length;
+      $("boStats").innerHTML =
+        '<div class="stat hot"><b>' + open + "</b><small>Orders to fill</small></div>" +
+        '<div class="stat"><b>' + money(rev) + "</b><small>Ordered, all time</small></div>" +
+        '<div class="stat"><b>' + LEADS.filter(function (r) { return new Date(r.at).getTime() > week; }).length +
+          "</b><small>New · 7 days</small></div>" +
+        '<div class="stat"><b>' + (counts.waitlist || 0) + "</b><small>On the waitlist</small></div>";
+
+      var isList = LANE === "orders" || LANE === "merch" || LANE === "bookings" || LANE === "waitlist";
+      $("paneList").classList.toggle("on", isList);
+      $("paneWalls").classList.toggle("on", LANE === "walls");
+      $("paneShop").classList.toggle("on", LANE === "shop");
+      $("paneRights").classList.toggle("on", LANE === "rights");
+
+      if (isList) {
+        var rows = LEADS.filter(function (r) { return laneOf(r) === LANE; });
+        $("paneList").innerHTML = rows.length ? rows.map(rowHTML).join("")
+          : '<p class="empty">Nothing in this lane yet.</p>';
+      }
+    }
+
+    $("boLanes").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-lane]");
+      if (!b) return;
+      LANE = b.getAttribute("data-lane");
+      paint();
+      if (LANE === "walls") walls();
+      if (LANE === "shop") shop();
+      if (LANE === "rights") rights();
+    });
+
+    $("paneList").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-st]");
+      if (!b) return;
+      var row = b.closest(".row"), id = row.getAttribute("data-id"), st = b.getAttribute("data-st");
+      var rec = LEADS.filter(function (r) { return String(r.id) === String(id); })[0];
+      if (!rec) return;
+      rec.status = st;
+      setStatus(id, st).then(paint).catch(paint);
+    });
+
+    /* ---------- the walls ---------- */
+    var wallsDone = false;
+    function walls() {
+      if (wallsDone) return; wallsDone = true;
+      fetch("data/gallery.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+        var rows = (j.events || []).map(function (ev) {
+          var n = (ev.media || []).length;
+          return "<tr><td>" + esc(ev.title) + "</td>" +
+            '<td class="dim">' + esc(ev.client || "·") + "</td>" +
+            '<td class="dim">' + esc(ev.date || "·") + "</td>" +
+            "<td" + (n ? ' class="live"' : ' class="dim"') + ">" + (n ? n + " live" : "staged") + "</td>" +
+            '<td><a class="row__meta" style="color:var(--ruby-text);text-decoration:none" href="gallery.html#/' +
+              esc(ev.id) + '">open &#8594;</a></td></tr>';
+        }).join("");
+        $("wallsTbl").innerHTML =
+          "<thead><tr><th>Wall</th><th>Client</th><th>Date</th><th>Media</th><th></th></tr></thead><tbody>" +
+          rows + "</tbody>";
+      }).catch(function () { $("wallsTbl").innerHTML = "<tbody><tr><td>Couldn't read the walls.</td></tr></tbody>"; });
+    }
+
+    /* ---------- the shop ---------- */
+    var shopDone = false;
+    function shop() {
+      if (shopDone) return; shopDone = true;
+      fetch("data/prints.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+        /* Cost and margin used to sit in these columns, read straight out
+           of data/prints.json. That file is downloaded by every visitor who
+           opens the gallery, so the numbers were never private and they are
+           gone from it now. This desk shows what the shop charges; what it
+           pays belongs behind a login, not in a static file. */
+        var s = window.MCC_PRICE ? MCC_PRICE.derive(j) : j;
+        var sizes = (s.sizes || []).map(function (z) {
+          return "<tr><td>" + esc(z.label) + "</td>" +
+            '<td class="live">' + money(z.price) + "</td></tr>";
+        }).join("");
+        var digital = (s.digital || []).map(function (d) {
+          return "<tr><td>" + esc(d.label) + '</td><td class="live">' + money(d.price) + "</td></tr>";
+        }).join("");
+        $("shopTbl").innerHTML =
+          "<thead><tr><th>What</th><th>They pay</th></tr></thead>" +
+          "<tbody>" + sizes + digital + "</tbody>";
+      }).catch(function () { $("shopTbl").innerHTML = "<tbody><tr><td>Couldn't read the ladder.</td></tr></tbody>"; });
+    }
+
+    /* ---------- the rights desk ---------- */
+    /* the flag in the database wins over the JSON baseline; a flip
+       upserts the flag and the store obeys on its next load. Flipping
+       a WALL writes its event id and every frame on it, so the static
+       context and the catalog agree wherever the frame is sold from. */
+    var RIGHTS = { flags: {}, rows: [] };
+    function rights() {
+      Promise.all([
+        fetch("data/prints.json", { cache: "no-cache" }).then(function (r) { return r.json(); }),
+        fetch("data/gallery.json", { cache: "no-cache" }).then(function (r) { return r.json(); }),
+        token().then(function (t) {
+          return fetch(SB + "/rest/v1/rights_flags?select=id,rights,note", {
+            headers: { apikey: KEY, Authorization: "Bearer " + t },
+          }).then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; });
+        }),
+      ]).then(function (all) {
+        RIGHTS.flags = {};
+        (all[2] || []).forEach(function (f) { RIGHTS.flags[f.id] = f.rights; });
+        var photoIds = {};
+        RIGHTS.rows = (all[0].photos || []).map(function (p) {
+          photoIds[p.id] = true;
+          return { id: p.id, title: p.title, kind: "frame", base: p.rights || "editorial", media: [] };
+        });
+        (all[1].events || []).forEach(function (ev) {
+          RIGHTS.rows.push({
+            id: ev.id, title: ev.title, kind: "wall", base: ev.rights || "editorial",
+            media: (ev.media || []).map(function (m) { return m.id; }).filter(function (id) { return !!id; }),
+          });
+        });
+        paintRights();
+      }).catch(function () {
+        $("rightsTbl").innerHTML = "<tbody><tr><td>Couldn't read the rights ledger.</td></tr></tbody>";
+      });
+    }
+    function effRights(row) { return RIGHTS.flags[row.id] || row.base; }
+    function paintRights() {
+      $("rightsTbl").innerHTML =
+        "<thead><tr><th>Work</th><th>Kind</th><th>Class</th><th></th></tr></thead><tbody>" +
+        RIGHTS.rows.map(function (row, i) {
+          var eff = effRights(row);
+          var flagged = !!RIGHTS.flags[row.id] && RIGHTS.flags[row.id] !== row.base;
+          return "<tr><td>" + esc(row.title) + "</td>" +
+            '<td class="dim">' + row.kind + (row.media.length ? " · " + row.media.length + " frames" : "") + "</td>" +
+            "<td" + (eff === "released" ? ' class="live"' : ' class="dim"') + ">" + eff +
+            (flagged ? " · flipped" : "") + "</td>" +
+            '<td><button class="btn-flat" type="button" data-flip-rights="' + i + '">' +
+            (eff === "released" ? "Make editorial" : "Make released") + "</button></td></tr>";
+        }).join("") + "</tbody>";
+    }
+    $("paneRights").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-flip-rights]");
+      if (!b) return;
+      var row = RIGHTS.rows[parseInt(b.getAttribute("data-flip-rights"), 10)];
+      if (!row) return;
+      var to = effRights(row) === "released" ? "editorial" : "released";
+      var stamp = new Date().toISOString();
+      var body = [{ id: row.id, rights: to, note: "flipped from the back office", updated_at: stamp }]
+        .concat(row.media.map(function (mid) {
+          return { id: mid, rights: to, note: "with wall " + row.id, updated_at: stamp };
+        }));
+      b.disabled = true; b.textContent = "Flipping…";
+      token().then(function (t) {
+        return fetch(SB + "/rest/v1/rights_flags", {
+          method: "POST",
+          headers: { apikey: KEY, Authorization: "Bearer " + t, "Content-Type": "application/json",
+            Prefer: "resolution=merge-duplicates,return=minimal" },
+          body: JSON.stringify(body),
+        });
+      }).then(function (r) {
+        if (!r.ok) throw new Error("flags " + r.status);
+        body.forEach(function (f) { RIGHTS.flags[f.id] = f.rights; });
+        paintRights();
+      }).catch(function (e2) {
+        b.disabled = false; b.textContent = "Retry";
+        alert(/404/.test(String(e2)) ?
+          "The rights_flags table isn't there yet. Run supabase/migrations/0006_rights_flags.sql first." :
+          "That flip didn't land: " + String(e2.message || e2));
+      });
+    });
+
+    /* ---------- boot ---------- */
+    function boot() {
+      pull().then(function (rows) {
+        LEADS = rows || [];
+        $("door").hidden = true;
+        $("desk").hidden = false;
+        var em = "";
+        try { em = MCC_SUPA.email() || ""; } catch (e) {}
+        $("boWho").textContent = em || $("boEmail").value.trim() || "the owner";
+        paint();
+      }).catch(function (e) {
+        var m = String(e.message || e);
+        if (m === "not-owner") {
+          fail("That account is signed in, but it isn't the owner, so the desk stays shut.");
+          window.MCC_AUTH.signOut();
+        } else if (m !== "signed out") {
+          fail("Couldn't reach the pile: " + m);
+        }
+        $("door").hidden = false;
+        $("desk").hidden = true;
+        var b = $("boIn"); b.disabled = false; b.textContent = "Open the office →";
+      });
+    }
+
+    // already signed in (magic link landing, or a live session)? go straight in.
+    token().then(function (t) { if (t) boot(); });
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

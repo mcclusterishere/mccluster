@@ -1,0 +1,64 @@
+{
+ "scenes": [
+  {
+   "begin": 0,
+   "src": "assets/video/whip.mp4",
+   "poster": "assets/frames/whip_0001.jpg"
+  },
+  {
+   "begin": 10.0,
+   "src": "assets/video/plates.mp4",
+   "poster": "assets/frames/plates_0001.jpg"
+  },
+  {
+   "begin": 19.5,
+   "src": "assets/video/flipplate.mp4",
+   "poster": "assets/frames/flipplate_0001.jpg"
+  },
+  {
+   "begin": 28.9,
+   "src": "assets/video/moneyglitch.mp4",
+   "poster": "assets/frames/moneyglitch_0001.jpg"
+  },
+  {
+   "begin": 36.622,
+   "src": "assets/video/affix.mp4",
+   "poster": "assets/frames/affix_0001.jpg"
+  },
+  {
+   "begin": 38.59,
+   "src": "assets/video/coffeecam.mp4",
+   "poster": "assets/frames/coffeecam_0001.jpg"
+  },
+  {
+   "begin": 39.57,
+   "src": "assets/video/plates.mp4",
+   "poster": "assets/frames/plates_0001.jpg"
+  },
+  {
+   "begin": 42.613,
+   "src": "assets/video/flipplate.mp4",
+   "poster": "assets/frames/flipplate_0001.jpg"
+  },
+  {
+   "begin": 48.759,
+   "src": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg"
+  },
+  {
+   "begin": 51.607,
+   "src": "assets/video/bussalick.mp4",
+   "poster": "assets/frames/bussalick_0001.jpg"
+  },
+  {
+   "begin": 57.544,
+   "src": "assets/video/moneyglitch.mp4",
+   "poster": "assets/frames/moneyglitch_0001.jpg"
+  },
+  {
+   "begin": 60.708,
+   "src": "assets/video/vauntlive.mp4",
+   "poster": "assets/frames/vauntlive_0001.jpg"
+  }
+ ]
+}

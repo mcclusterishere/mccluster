@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- LOCAL INSPECTION HARNESS for the prop kit. Not linked from the site.
+     Lays every prop in js/uprise-props.js out on a grid so the whole
+     kit can be judged against the reference frames in one picture.
+     ?cols=7&s=0.09&dist=1.0 -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>prop lab</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #cbb7a4; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+    #hud { position: fixed; left: 8px; top: 8px; font: 12px/1.4 ui-monospace, monospace;
+      background: #f7f5ef; border: 2px solid #17130f; padding: 4px 8px; white-space: pre; }
+  </style>
+</head>
+<body data-no-appbar>
+  <canvas id="c"></canvas>
+  <div id="hud"></div>
+  <script type="module">
+    import * as THREE from "./vendor/three.module.min.js";
+    import { OutlineEffect } from "./vendor/three-addons/effects/OutlineEffect.js";
+    import { makeKit, PROP_NAMES, propPalette } from "./js/uprise-props.js";
+    import { H } from "./js/uprise-landmarks.js";
+
+    const q = new URLSearchParams(location.search);
+    const cols = parseInt(q.get("cols") ?? "7", 10);
+    const pitch = parseFloat(q.get("pitch") ?? "16");
+    const only = q.get("only");
+
+    const canvas = document.getElementById("c");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(1);
+    renderer.setSize(innerWidth, innerHeight, false);
+    const effect = new OutlineEffect(renderer, { defaultThickness: 0.0032, defaultColor: [0.09, 0.075, 0.06] });
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xbcd8dc);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x9a8f7e, 2.1));
+    const sun = new THREE.DirectionalLight(0xfff3dd, 1.5);
+    sun.position.set(3, 6, 4); scene.add(sun);
+
+    const P = propPalette(THREE);
+    const g = new THREE.Group();
+    const names = only ? only.split(",") : PROP_NAMES;
+    const K = makeKit(THREE, 7);
+    const rows = Math.ceil(names.length / cols);
+    names.forEach((n, i) => {
+      const cx = (i % cols - (cols - 1) / 2) * pitch;
+      const cz = (Math.floor(i / cols) - (rows - 1) / 2) * pitch;
+      K.add(n, cx, cz, { ry: 0.35 });
+      g.add(H.box(THREE, pitch * 0.9, 0.3, pitch * 0.9, P.concrete, cx, -0.15, cz));
+    });
+    K.flush(g);
+    scene.add(g);
+
+    const span = Math.max(cols, rows) * pitch;
+    const camera = new THREE.PerspectiveCamera(34, innerWidth / innerHeight, 0.1, 4000);
+    const d = span * parseFloat(q.get("dist") ?? "1.15");
+    const el = parseFloat(q.get("el") ?? "22") * Math.PI / 180;
+    camera.position.set(0, Math.sin(el) * d + 6, Math.cos(el) * d);
+    camera.lookAt(0, 3, 0);
+
+    effect.render(scene, camera);
+    renderer.render.call(renderer, scene, camera);
+    requestAnimationFrame(() => effect.render(scene, camera));
+    document.getElementById("hud").textContent =
+      names.length + " props\n" + names.join(" ");
+    window.__tris = renderer.info.render.triangles;
+    window.__draws = renderer.info.render.calls;
+    window.__ready = true;
+  </script>
+</body>
+</html>

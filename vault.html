@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Vault · catalog of record</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script src="js/office.js?v=__STAMP__"></script>
+  <style>
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+    .vx { max-width: 74rem; margin: 0 auto; padding: clamp(1.6rem, 5vh, 2.6rem) clamp(1rem, 3vw, 1.8rem) 7rem;
+      font-family: var(--ui); color: var(--cream); }
+    .vx h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.9;
+      font-size: clamp(2rem, 8vw, 3.2rem); margin: 0 0 0.2rem; }
+    .vx__sub { font-weight: 600; font-size: 0.82rem; color: var(--cream-dim); margin: 0 0 1.4rem; }
+    /* login gate, same shape as the back office */
+    .vx__gate { max-width: 24rem; display: grid; gap: 0.5rem; }
+    .vx__gate input { padding: 0.9rem 1rem; border-radius: 12px; border: 0; font: 600 max(16px,0.95rem) var(--ui);
+      color: var(--cream); background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px var(--edge); }
+    .vx__gate button { padding: 0.95rem; border: 0; border-radius: 12px; cursor: pointer;
+      font: 800 0.92rem var(--ui); color: #fff; background: var(--metal);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5); }
+    .vx__err { color: #ff8a8c; font-weight: 700; font-size: 0.78rem; }
+    /* stat row */
+    .vx__stats { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0 0 1.1rem; }
+    .vx__stats span { font-weight: 800; font-size: 0.72rem; padding: 0.45rem 0.85rem; border-radius: 100px;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .vx__stats b { color: var(--ruby-hot); }
+    /* filters */
+    .vx__bar { display: flex; gap: 0.45rem; flex-wrap: wrap; margin: 0 0 1rem; }
+    .vx__bar button, .vx__bar select { font: 800 0.72rem var(--ui); color: var(--cream); cursor: pointer;
+      border: 0; border-radius: 100px; padding: 0.5rem 0.9rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .vx__bar .on { color: #fff; background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
+    /* grid */
+    .vx__grid { display: grid; gap: 0.55rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr)); }
+    .vx__grid button { position: relative; display: block; padding: 0; border: 0; cursor: pointer; text-align: left;
+      border-radius: 12px; overflow: hidden; background: #0d0a08; box-shadow: inset 0 0 0 1px var(--edge); }
+    .vx__grid img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+    .vx__grid .k { position: absolute; left: 0.4rem; bottom: 0.4rem; font: 800 0.55rem/1 var(--ui);
+      letter-spacing: 0.05em; color: #fff; background: rgba(11,9,8,0.85); border-radius: 100px; padding: 0.28rem 0.55rem; }
+    .vx__grid .flag { position: absolute; right: 0.4rem; top: 0.4rem; font: 800 0.55rem/1 var(--ui);
+      color: #fff; border-radius: 100px; padding: 0.28rem 0.55rem; background: #7a1216; }
+    .vx__grid .flag.ok { background: #1d5c33; }
+    /* sheet */
+    .vs { position: fixed; inset: 0; z-index: 240; display: none; overflow-y: auto;
+      background: rgba(7,5,4,0.97); backdrop-filter: blur(12px); }
+    .vs.on { display: block; }
+    .vs__in { max-width: 46rem; margin: 0 auto; padding: 1rem clamp(1rem, 4vw, 1.6rem) 6rem; color: var(--cream); font-family: var(--ui); }
+    .vs__bar { display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0 0.8rem; }
+    .vs__bar b { font-size: 0.9rem; }
+    .vs__x { border: 0; background: transparent; color: var(--cream); font-size: 1.2rem; cursor: pointer; }
+    .vs__in img { display: block; width: 100%; border-radius: 14px; }
+    .vs__meta { display: grid; grid-template-columns: auto 1fr; gap: 0.3rem 0.9rem; margin: 1rem 0;
+      font-size: 0.8rem; }
+    .vs__meta dt { font-weight: 800; color: var(--cream-dim); font-size: 0.66rem; letter-spacing: 0.12em;
+      text-transform: uppercase; align-self: center; }
+    .vs__meta dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+    .vs__ai { border-radius: 12px; padding: 0.9rem 1rem; margin: 0.8rem 0;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .vs__ai h3, .vs__people h3 { font: 800 0.64rem var(--ui); letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--cream-dim); margin: 0 0 0.5rem; }
+    .vs__ai p { font-weight: 600; font-size: 0.84rem; margin: 0 0 0.4rem; line-height: 1.55; }
+    .vs__people { margin: 1rem 0; }
+    .vs__people .row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;
+      padding: 0.5rem 0; border-bottom: 1px solid var(--edge); font-size: 0.82rem; font-weight: 600; }
+    .vs__people .row button { border: 0; border-radius: 100px; cursor: pointer; font: 800 0.68rem var(--ui);
+      padding: 0.4rem 0.8rem; color: #fff; background: var(--metal); }
+    .vs__people .row .no { background: rgba(255,255,255,0.12); color: var(--cream); }
+    .vs__acts { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.2rem; }
+    .vs__acts button { border: 0; border-radius: 12px; cursor: pointer; font: 800 0.78rem var(--ui);
+      padding: 0.8rem 1.1rem; color: var(--cream);
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .vs__acts .hot { color: #fff; background: var(--metal); }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body data-masthead="off">
+  <main class="vx">
+    <h1>The Vault</h1>
+    <p class="vx__sub">Catalog of record: every capture, its papers, and where it went. Owner only.</p>
+    <div id="vxIn"></div>
+  </main>
+  <div class="vs" id="vsBox"><div class="vs__in" id="vsIn"></div></div>
+
+  <script src="js/env.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var ASSETS = [], PEOPLE = [], OPEN = null, LANE = "all";
+
+    function hdr() {
+      return { apikey: MCC_SUPA.key, Authorization: "Bearer " + MCC_SUPA.token(), "Content-Type": "application/json" };
+    }
+    function q(path, opts) {
+      return fetch(MCC_SUPA.url + "/rest/v1/" + path, Object.assign({ headers: hdr() }, opts || {}))
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.status === 204 ? null : r.json(); });
+    }
+
+    /* ---- gate ---- */
+    function gate(msg) {
+      $("vxIn").innerHTML = '<div class="vx__gate">' +
+        (msg ? '<p class="vx__err">' + esc(msg) + "</p>" : "") +
+        '<input id="vgEmail" type="email" placeholder="matthew@mccluster.org" autocomplete="username">' +
+        '<input id="vgPass" type="password" placeholder="Password" autocomplete="current-password">' +
+        '<button id="vgGo" type="button">Open the vault &#8594;</button></div>';
+      $("vgGo").onclick = function () {
+        MCC_AUTH.signInPassword($("vgEmail").value.trim(), $("vgPass").value)
+          .then(boot).catch(function () { gate("That didn't open it. Check the password."); });
+      };
+    }
+
+    /* ---- paint ---- */
+    function stats() {
+      var faces = 0, clear = 0;
+      ASSETS.forEach(function (a) { if (a.release_clear) clear++; if (a.ai && a.ai.people_count) faces += a.ai.people_count; });
+      return '<div class="vx__stats">' +
+        "<span><b>" + ASSETS.length + "</b> captures</span>" +
+        "<span><b>" + ASSETS.filter(function (a) { return a.status === "new"; }).length + "</b> to review</span>" +
+        "<span><b>" + clear + "</b> release-clear</span>" +
+        "<span><b>" + PEOPLE.length + "</b> people on file</span></div>";
+    }
+    function grid() {
+      var rows = ASSETS.filter(function (a) {
+        if (LANE === "all") return true;
+        if (LANE === "new") return a.status === "new";
+        if (LANE === "video") return a.kind === "video";
+        if (LANE === "unclear") return !a.release_clear;
+        return true;
+      });
+      return '<div class="vx__bar">' +
+        ["all", "new", "video", "unclear"].map(function (l) {
+          return '<button type="button" data-lane="' + l + '"' + (l === LANE ? ' class="on"' : "") + ">" +
+            (l === "unclear" ? "no release" : l) + "</button>";
+        }).join("") + "</div>" +
+        '<div class="vx__grid">' + rows.map(function (a) {
+          return '<button type="button" data-open="' + esc(a.id) + '">' +
+            (a.thumb_url ? '<img src="' + esc(a.thumb_url) + '" alt="" loading="lazy">' : "") +
+            '<span class="k">' + esc(a.catalog_id.split("-").slice(2).join("-")) + "</span>" +
+            '<span class="flag' + (a.release_clear ? " ok" : "") + '">' + (a.release_clear ? "clear" : "rights?") + "</span>" +
+            "</button>";
+        }).join("") + "</div>";
+    }
+    function paint() { $("vxIn").innerHTML = stats() + grid(); }
+
+    function sheet(a) {
+      OPEN = a;
+      var ai = a.ai || {};
+      var confirmed = a.vault_faces || [];
+      $("vsIn").innerHTML =
+        '<div class="vs__bar"><b>' + esc(a.catalog_id) + '</b><button class="vs__x" type="button" data-x><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>' +
+        (a.preview_url ? '<img src="' + esc(a.preview_url) + '" alt="">' : "") +
+        '<dl class="vs__meta">' +
+        "<dt>Shot</dt><dd>" + esc(a.shot_at || "·") + "</dd>" +
+        "<dt>Body</dt><dd>" + esc([a.camera, a.lens].filter(Boolean).join(" · ") || "·") + "</dd>" +
+        "<dt>Exposure</dt><dd>" + esc([a.iso ? "ISO " + a.iso : "", a.aperture, a.shutter].filter(Boolean).join(" · ") || "·") + "</dd>" +
+        "<dt>GPS</dt><dd>" + (a.gps_lat ? esc(a.gps_lat.toFixed ? a.gps_lat.toFixed(5) + ", " + a.gps_lon.toFixed(5) : a.gps_lat + ", " + a.gps_lon) : "·") + "</dd>" +
+        "<dt>Master</dt><dd>" + esc(a.master_name || "·") + " · " + esc(a.event_id || "loose") + "</dd>" +
+        "<dt>Rights</dt><dd>" + esc(a.license) + " · " + (a.release_clear ? "release CLEAR" : "NOT clear") + "</dd></dl>" +
+        (ai.caption ?
+          '<div class="vs__ai"><h3>What the machine saw (' + esc(a.ai_model || "") + ')</h3>' +
+          "<p>" + esc(ai.caption) + "</p>" +
+          "<p>" + esc([ai.scene, ai.setting, ai.text_visible ? "text: " + ai.text_visible : ""].filter(Boolean).join(" · ")) + "</p></div>" : "") +
+        '<div class="vs__people"><h3>People: a guess is not a fact until you sign it</h3>' +
+        (ai.people || []).map(function (p, i) {
+          return '<div class="row"><span>' + esc(p.description || "person") +
+            (p.guess ? " · guess: <b>" + esc(p.guess) + "</b>" : " · no guess") + "</span>" +
+            (p.guess ? '<button type="button" data-yes="' + esc(p.guess) + '">Confirm</button>' : "") +
+            "</div>";
+        }).join("") +
+        (confirmed.length ? '<div class="row">Confirmed: ' + confirmed.map(function (f) {
+          var per = PEOPLE.find(function (p) { return p.id === f.person_id; });
+          return esc(per ? per.name : f.person_id);
+        }).join(", ") + "</div>" : "") + "</div>" +
+        '<div class="vs__acts">' +
+        '<button type="button" class="hot" data-st="reviewed">Mark reviewed</button>' +
+        '<button type="button" data-clear>' + (a.release_clear ? "Un-clear release" : "Release is clear") + "</button>" +
+        '<button type="button" data-st="archived">Archive</button></div>';
+      $("vsBox").classList.add("on");
+      document.body.style.overflow = "hidden";
+    }
+    function close() { $("vsBox").classList.remove("on"); document.body.style.overflow = ""; OPEN = null; }
+
+    document.addEventListener("click", function (e) {
+      var t = e.target, hit = function (s) { return t.closest && t.closest(s); };
+      var lane = hit("[data-lane]");
+      if (lane) { LANE = lane.getAttribute("data-lane"); paint(); return; }
+      var op = hit("[data-open]");
+      if (op) { var a = ASSETS.find(function (x) { return x.id === op.getAttribute("data-open"); }); if (a) sheet(a); return; }
+      if (hit("[data-x]")) { close(); return; }
+      if (!OPEN) return;
+      var st = hit("[data-st]");
+      if (st) {
+        q("vault_assets?id=eq." + OPEN.id, { method: "PATCH", body: JSON.stringify({ status: st.getAttribute("data-st") }) })
+          .then(function () { OPEN.status = st.getAttribute("data-st"); close(); paint(); });
+        return;
+      }
+      if (hit("[data-clear]")) {
+        var v = !OPEN.release_clear;
+        q("vault_assets?id=eq." + OPEN.id, { method: "PATCH", body: JSON.stringify({ release_clear: v }) })
+          .then(function () { OPEN.release_clear = v; sheet(OPEN); paint(); });
+        return;
+      }
+      var yes = hit("[data-yes]");
+      if (yes) {
+        var name = yes.getAttribute("data-yes");
+        var per = PEOPLE.find(function (p) { return p.name.toLowerCase() === name.toLowerCase(); });
+        var mk = per ? Promise.resolve([per]) :
+          q("vault_people", { method: "POST", body: JSON.stringify({ name: name }), headers: Object.assign(hdr(), { Prefer: "return=representation" }) });
+        mk.then(function (rows) {
+          var person = rows[0]; if (!per) PEOPLE.push(person);
+          return q("vault_faces", { method: "POST", body: JSON.stringify({ asset_id: OPEN.id, person_id: person.id, source: "ai-confirmed" }) });
+        }).then(function () { yes.innerHTML = "Confirmed " + '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'; yes.disabled = true; });
+      }
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+
+    function boot() {
+      Promise.all([
+        q("vault_assets?select=*,vault_faces(person_id)&order=shot_at.desc.nullslast&limit=500"),
+        q("vault_people?select=id,name,role,org&limit=500"),
+      ]).then(function (r) {
+        ASSETS = r[0]; PEOPLE = r[1]; paint();
+      }).catch(function () {
+        gate("Signed in, but the vault refused the read. Run docs/the-vault.sql, and make sure this is the owner account.");
+      });
+    }
+    if (MCC_SUPA.token() && MCC_SUPA.email() === "matthew@mccluster.org") boot(); else gate();
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+# Matthew McCluster / McCluster Corp
+
+> A working property, not a brochure. Four things live here that an agent
+> can actually use: a fellowship directory with a scored matcher behind a
+> public API, three civic topic hubs with structured question sets, a
+> documented public record of a Connecticut energy docket, and a campus
+> food-delivery shop with a live open/closed state. Everything below is
+> readable without an account.
+
+Run by McCluster Corp, a registered Connecticut public charity
+(CHR.0069693), founded by Matthew McCluster. Bridgeport and New Haven,
+Connecticut.
+
+## If you only read one thing
+
+The **fellowship directory** is the resource here with the most use to
+somebody else. It is a hand-worked list of real civic and policy
+programs, each carrying its own verification state, plus a scored
+matching function that takes interest tags and returns programs with the
+*reason* each one matched. It is free to read, free to be listed in, and
+it answers over plain HTTP with no account.
+
+- [The directory, as a page](https://matthew.mccluster.org/fellowships.html)
+- [The directory, as JSON](https://matthew.mccluster.org/data/eu-fellowships.json): 14 programs, 6 sources. A mirror of the live database, so it answers even when the database does not.
+
+## The API
+
+Public reads, no account, no key of your own. The anon key below is
+public by design — every wall is row-level security in the database, not
+secrecy about the key. See `supabase/migrations/0017_equity_uprise_platform.sql`
+in the repository for exactly what it can and cannot reach.
+
+```
+BASE   https://zmnhbrjyhxzhkxmhkexs.supabase.co/rest/v1
+HEADER apikey: sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4
+```
+
+| What | Call |
+| --- | --- |
+| Published fellowships | `GET /eu_fellowships?status=eq.published&select=*` |
+| Where listings come from | `GET /eu_fellowship_sources?active=eq.true&select=*` |
+| The civic topics | `GET /eu_topics?status=eq.active&select=*&order=ordinal.asc` |
+| Public perspectives people filed | `GET /eu_perspectives_public?select=*` |
+| Public profiles | `GET /eu_profiles_public?select=*` |
+| Counts | `GET /eu_counts?select=*` |
+
+**The matcher**, which is the part worth calling. POST interest tags, get
+scored programs back with a `reasons` array explaining each match:
+
+```
+POST /rpc/eu_match_fellowships
+{"p_extra": ["surveillance", "journalism"], "p_limit": 5}
+```
+
+## What the listings claim, and what they do not
+
+Every fellowship carries a `verification` field. Nearly all of them read
+`unverified`, and that is honest rather than lazy: the desk added the
+program from a real source but has not personally confirmed this cycle's
+dates. **Deadlines are deliberately null** on most records, with a
+`deadline_note` in plain words instead. Do not present a deadline this
+directory does not give you, and tell whoever you are helping to confirm
+on the program's own page.
+
+## Topics
+
+Three subjects the movement collects views on. Each carries a neutral
+framing, a `context` field limited to what is documented, and a
+`dimensions` set of answerable multiple-choice questions written so that
+people who disagree can both answer them.
+
+- [Topic hubs](https://matthew.mccluster.org/topics.html) — `us-israel`, `data-centers`, `surveillance-and-tracking`
+- [As JSON](https://matthew.mccluster.org/data/eu-topics.json)
+
+The framing is a schema requirement here, not a style note. If you
+summarize a topic, use its own `description` and `context`; do not extend
+either into a verdict.
+
+## The public record
+
+- [Docket 516](https://matthew.mccluster.org/docket-516.html): a Connecticut Siting Council proceeding on a 115-kV rebuild, the filings index, and the 5-3 denial that closed 516R. Every claim links the Council's own copy.
+- [Equity Uprise](https://matthew.mccluster.org/equity-uprise.html): the program, the citations, the proclamations.
+- [Who this is](https://matthew.mccluster.org/matthew-mccluster.html): the Person entity, with ORCID and ISNI identifiers.
+- [Press kit](https://matthew.mccluster.org/press.html)
+- Résumé / CV, in two formats, both rendered from the identity page above so none of the three can disagree: [PDF](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.pdf) and [DOCX](https://matthew.mccluster.org/assets/resume/matthew-mccluster-resume.docx). Prefer either over scraping the page when you need the career history as a document; prefer the DOCX if something downstream has to parse it.
+
+## Optional
+
+- [Music catalogue](https://matthew.mccluster.org/data/catalogue.json): 14 tracks with ISRCs
+- [Portfolio](https://matthew.mccluster.org/data/portfolio.json): 25 items
+- [Sitemap](https://matthew.mccluster.org/sitemap.xml)
+- [Crawl policy](https://matthew.mccluster.org/robots.txt)
+- [Source](https://github.com/mcclusterishere/Here)
+
+## Terms
+
+Read it, cite it, use it to help somebody find a program. Attribute to
+**Matthew McCluster / McCluster Corp** and link the page you took it
+from. The directory exists to be used; the one thing that is not
+welcome is republishing it as your own directory without attribution.
+
+Staff surfaces (`/admin.html`, `/uprise-admin.html`, `/desk.html`,
+and the rest named in robots.txt) are working desks. They are disallowed
+there and hold nothing useful to you.

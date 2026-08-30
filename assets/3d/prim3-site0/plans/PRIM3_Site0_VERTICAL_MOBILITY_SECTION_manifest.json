@@ -1,0 +1,25 @@
+{
+  "schema": "prim3.site0.vertical-mobility-section-manifest.v1",
+  "drawing": "PRIM3_Site0_VERTICAL_MOBILITY_SECTION.svg",
+  "status": "CANONICAL_CONCEPT_SECTION",
+  "served_levels": [
+    "B3",
+    "B2",
+    "B1",
+    "L1",
+    "L2",
+    "L3"
+  ],
+  "systems": [
+    "R1/R2 armored ramps",
+    "V1/V2 aircraft/heavy lifts",
+    "L1 through-road",
+    "L2 drone pad/sky slot"
+  ],
+  "independent_redundancy": [
+    "P1 PRIME external B3-L3 lift",
+    "PRIME direct SOUTH surface escape ramp"
+  ],
+  "sha256": "abbe73941b7b1668dbc04d03b1b153ecbcf97da947f06cdd37ba1d7439de7c7f",
+  "bytes": 9476
+}

@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1440" viewBox="0 0 960 720" role="img" aria-labelledby="prim3-section-title prim3-section-desc">
+      <rect width="960" height="720" fill="#090b0d"/><title id="prim3-section-title">PRIM3 Site 0 vertical mobility section</title>
+      <desc id="prim3-section-desc">Nine-level section showing a continuous tank ramp from basement level three to level two, aircraft lifts from basement level two to level three, and a drone launch slot from level two to the sky.</desc>
+      <defs><style>
+  text{fill:#eef2f3;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700}
+  .orientation,.level-code{font-size:13px}.level-code{fill:#aeb8bd}.secondary-label{fill:#aeb8bd;font-size:10px}
+  .axis-line{stroke:#566068;stroke-width:1.5}.floor-shell{fill:#15191d;stroke:#566068;stroke-width:1.5}
+  .canyon{fill:#101a1f;stroke:#566068;stroke-width:1.5;stroke-dasharray:7 6}.canyon-label{fill:#aeb8bd;font-size:11px}
+  .flight-deck{fill:#14242a;stroke:#566068;stroke-width:1.5}.runway-line{stroke:#eef2f3;stroke-width:2.5;stroke-dasharray:18 12}
+  .road-deck{fill:#242a2f;stroke:#566068;stroke-width:1.5}.road-center{stroke:#d2aa42;stroke-width:3;stroke-dasharray:16 10}
+  .air-hangar{fill:#132228;stroke:#566068;stroke-width:1.5}.armor-vault{fill:#292316;stroke:#566068;stroke-width:1.5}
+  .lift-platform{fill:url(#section-hatch);stroke:#758088;stroke-width:1.5}.drone-pad{fill:#241a2b;stroke:#b77ad8;stroke-width:1.5}
+  .hatch-line{stroke:#aeb8bd;stroke-width:2;opacity:.45}.tank-path{fill:none;stroke:#d2aa42;stroke-width:8;stroke-linejoin:round}
+  .tank-route .route-node,.tank-marker{fill:#d2aa42}.air-path{stroke:#78b5c9;stroke-width:6}.air-platform{fill:#25424c;stroke:#78b5c9;stroke-width:2}
+  .aircraft-route .route-node,.air-marker{fill:#78b5c9}.drone-path{fill:none;stroke:#b77ad8;stroke-width:5;stroke-dasharray:9 6}
+  .drone-route .route-node,.drone-marker{fill:#b77ad8}.legend-label{font-size:10px}
+</style>
+        <marker id="tank-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" class="tank-marker"/></marker>
+        <marker id="air-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" class="air-marker"/></marker>
+        <marker id="drone-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" class="drone-marker"/></marker>
+        <pattern id="section-hatch" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="12" class="hatch-line"/>
+        </pattern>
+      </defs>
+
+      <text x="74" y="30" class="orientation">NORTH / FORMAL FRONT</text>
+      <text x="886" y="30" text-anchor="end" class="orientation">SOUTH / OPERATIONAL FACE</text>
+      <line x1="178" y1="26" x2="782" y2="26" class="axis-line"/>
+
+      <rect x="410" y="42" width="140" height="582" class="canyon"/>
+      <text x="480" y="340" text-anchor="middle" transform="rotate(-90 480 340)" class="canyon-label">CENTRAL MOBILITY CANYON · OPEN VERTICAL EGRESS</text>
+
+      <g class="floor-row">
+        <text x="72" y="82" class="level-code">L4</text>
+        <rect x="126" y="52" width="284" height="58" class="floor-shell"/>
+        <rect x="550" y="52" width="284" height="58" class="floor-shell"/>
+        <text x="268" y="76" text-anchor="middle">COMMAND / CONTROL — WEST</text>
+        <text x="692" y="76" text-anchor="middle">COMMAND / CONTROL — EAST</text>
+        <text x="480" y="102" text-anchor="middle" class="secondary-label">NO ROOF ACROSS FLIGHT SLOT</text>
+      </g>
+
+      <g class="floor-row">
+        <text x="72" y="152" class="level-code">L3</text>
+        <rect x="126" y="122" width="708" height="62" class="flight-deck"/>
+        <line x1="154" y1="153" x2="806" y2="153" class="runway-line"/>
+        <text x="268" y="145" text-anchor="middle">LANDING / LAUNCH DECK</text>
+        <text x="692" y="145" text-anchor="middle">LANDING / LAUNCH DECK</text>
+        <rect x="432" y="126" width="96" height="54" class="lift-platform"/>
+        <text x="480" y="172" text-anchor="middle" class="secondary-label">RETRACTABLE LIFT APERTURE</text>
+      </g>
+
+      <g class="floor-row">
+        <text x="72" y="224" class="level-code">L2</text>
+        <rect x="126" y="194" width="284" height="60" class="floor-shell"/>
+        <rect x="550" y="194" width="284" height="60" class="floor-shell"/>
+        <text x="268" y="218" text-anchor="middle">BUSINESS / CLIENT OPERATIONS</text>
+        <text x="692" y="218" text-anchor="middle">BUSINESS / CLIENT OPERATIONS</text>
+        <rect x="425" y="198" width="110" height="52" class="drone-pad"/>
+        <text x="480" y="232" text-anchor="middle">DRONE PAD</text>
+      </g>
+
+      <g class="floor-row">
+        <text x="72" y="296" class="level-code">L1</text>
+        <rect x="126" y="266" width="708" height="60" class="road-deck"/>
+        <line x1="148" y1="296" x2="812" y2="296" class="road-center"/>
+        <text x="300" y="288" text-anchor="middle">NORTH–SOUTH THROUGH-ROAD</text>
+        <text x="660" y="288" text-anchor="middle">TANK TURNOUT + ROAD CONTROL</text>
+        <rect x="432" y="270" width="96" height="52" class="lift-platform"/>
+      </g>
+
+      <g class="floor-row">
+        <text x="72" y="365" class="level-code">B1</text>
+        <rect x="126" y="336" width="708" height="58" class="floor-shell"/>
+        <text x="268" y="363" text-anchor="middle">LOGISTICS / BLAST LOCKS</text>
+        <text x="692" y="363" text-anchor="middle">RAMP CROSSOVER / SCREENING</text>
+        <rect x="432" y="340" width="96" height="50" class="lift-platform"/>
+      </g>
+
+      <g class="floor-row">
+        <text x="72" y="437" class="level-code">B2</text>
+        <rect x="126" y="406" width="708" height="64" class="air-hangar"/>
+        <text x="270" y="432" text-anchor="middle">AIRCRAFT / DRONE HANGAR</text>
+        <text x="690" y="432" text-anchor="middle">TANK + GROUND SYSTEM STAGING</text>
+        <rect x="432" y="410" width="96" height="56" class="lift-platform"/>
+        <text x="480" y="462" text-anchor="middle" class="secondary-label">TUG-ON / LIFT-UP</text>
+      </g>
+
+      <g class="floor-row">
+        <text x="72" y="511" class="level-code">B3</text>
+        <rect x="126" y="480" width="708" height="64" class="armor-vault"/>
+        <text x="270" y="508" text-anchor="middle">ARMORED VEHICLE VAULT</text>
+        <text x="690" y="508" text-anchor="middle">MAINTENANCE / FUEL-SAFE READY BAY</text>
+        <text x="480" y="538" text-anchor="middle" class="secondary-label">DIRECT DRIVE-ON RAMP START</text>
+      </g>
+
+      <g class="floor-row support-floor">
+        <text x="72" y="580" class="level-code">B4</text>
+        <rect x="126" y="554" width="708" height="48" class="floor-shell"/>
+        <text x="480" y="584" text-anchor="middle">POWER / WATER / ROBOTICS SUPPORT — ISOLATED FROM MOBILITY CORE</text>
+      </g>
+
+      <g class="floor-row support-floor">
+        <text x="72" y="638" class="level-code">B5</text>
+        <rect x="126" y="612" width="708" height="48" class="floor-shell"/>
+        <text x="480" y="642" text-anchor="middle">HARDENED UTILITIES / DEEP RESERVE — NO ROUTINE VEHICLE TRAFFIC</text>
+      </g>
+
+      <g class="route tank-route" data-route-group="tank">
+        <path d="M246 514 L372 514 L704 442 L286 366 L704 296 L286 224" class="tank-path" marker-end="url(#tank-arrow)"/>
+        <circle cx="246" cy="514" r="6" class="route-node"/>
+        <circle cx="704" cy="442" r="6" class="route-node"/>
+        <circle cx="286" cy="366" r="6" class="route-node"/>
+        <circle cx="704" cy="296" r="6" class="route-node"/>
+        <circle cx="286" cy="224" r="6" class="route-node"/>
+        <text x="144" y="692" class="legend-label">ARMORED RAMP · B3 ⇄ B2 ⇄ B1 ⇄ L1 ⇄ L2 · FINAL GRADE / TURNING STUDY REQUIRED</text>
+      </g>
+
+      <g class="route aircraft-route" data-route-group="aircraft">
+        <rect x="442" y="410" width="30" height="56" class="air-platform"/>
+        <rect x="488" y="410" width="30" height="56" class="air-platform"/>
+        <line x1="457" y1="438" x2="457" y2="153" class="air-path" marker-end="url(#air-arrow)"/>
+        <line x1="503" y1="438" x2="503" y2="153" class="air-path" marker-end="url(#air-arrow)"/>
+        <circle cx="457" cy="296" r="6" class="route-node"/>
+        <circle cx="503" cy="224" r="6" class="route-node"/>
+        <text x="548" y="692" class="legend-label">V1 / V2 AIRCRAFT-CARRIER LIFTS · STOPS AT B2, B1, L1, L2 AND L3</text>
+      </g>
+
+      <g class="route drone-route" data-route-group="drone">
+        <path d="M480 224 L480 38" class="drone-path" marker-end="url(#drone-arrow)"/>
+        <circle cx="480" cy="224" r="7" class="route-node"/>
+        <text x="548" y="710" class="legend-label">BUSINESS-PAD DRONE SLOT · INTERLOCKED WITH L3 RUNWAY APERTURE</text>
+      </g>
+
+      <g class="safety-notes">
+        <text x="850" y="82" class="secondary-label">L4 WRAPS SLOT</text>
+        <text x="850" y="152" class="secondary-label">L3 FLIGHT DECK</text>
+        <text x="850" y="224" class="secondary-label">L2 DRONE PAD</text>
+        <text x="850" y="296" class="secondary-label">L1 ROAD JUNCTION</text>
+        <text x="850" y="438" class="secondary-label">B2 AIRCRAFT LOAD</text>
+        <text x="850" y="512" class="secondary-label">B3 TANK DRIVE-ON</text>
+      </g>
+    </svg>

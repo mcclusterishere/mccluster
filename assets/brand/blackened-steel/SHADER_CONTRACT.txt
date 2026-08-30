@@ -1,0 +1,21 @@
+Pseudo-shader contract:
+
+base = sample(baseColor)
+normal = sample(normal)
+rough = sample(roughness)
+metal = sample(metallic)
+ao = sample(ao)
+brush = sample(brushMask)
+grazing = sample(grazingLightMask)
+rubyReflect = sample(rubyReflectionMask)
+
+surface = PBR(base, normal, rough, metal, ao)
+surface += environmentReflection * grazing * brushResponse
+surface += rubyColor * rubyReflect * rubyReflectionIntensity
+
+Rules:
+- black steel should look black until light reveals it
+- the reflection moves; the metal surface does not pulse
+- preserve media dominance
+- use ruby reflection only for semantic active states
+- on low-power/mobile fallback, static texture + one subtle CSS light sweep is enough

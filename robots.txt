@@ -1,0 +1,71 @@
+# ============================================================
+# matthew.mccluster.org
+#
+# Two audiences now: search engines, and agents. They are given the same
+# answer on purpose — see the AI section below for why that is a decision
+# rather than an oversight.
+# ============================================================
+
+User-agent: *
+Allow: /
+
+# the working desks — owner only, never indexed
+Disallow: /admin.html
+Disallow: /crm.html
+Disallow: /vault.html
+Disallow: /lanes.html
+Disallow: /desk.html
+Disallow: /uprise-admin.html
+
+# ============================================================
+# AI CRAWLERS
+#
+# THE POLICY TODAY IS: READ IT.
+#
+# That is deliberate, and it is worth writing down because the obvious
+# move right now looks like the opposite one.
+#
+# Blocking training crawlers only pays if something collects on the other
+# side of the block. Cloudflare's pay-per-crawl turns a refusal into an
+# HTTP 402 and a checkout at the edge — but that runs at the EDGE, and
+# this property is not behind Cloudflare. DNS still answers from the
+# old nameservers. So a Disallow line here would buy exactly nothing
+# today: no payment, no negotiation, just less reach for a directory
+# whose entire purpose is being found by somebody who needs a fellowship.
+#
+# The right sequence is: be maximally legible now, be behind Cloudflare
+# next, and only then decide what a crawl is worth. See
+# docs/agent-web.md for the flip, which is a few lines and one dashboard
+# setting once the DNS move in docs/cloudflare-cutover.md is done.
+#
+# The desks stay closed to everyone regardless.
+# ============================================================
+
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: GoogleOther
+User-agent: Applebot-Extended
+User-agent: meta-externalagent
+User-agent: Bytespider
+User-agent: CCBot
+User-agent: cohere-ai
+User-agent: Diffbot
+User-agent: Amazonbot
+Allow: /
+Disallow: /admin.html
+Disallow: /crm.html
+Disallow: /vault.html
+Disallow: /lanes.html
+Disallow: /desk.html
+Disallow: /uprise-admin.html
+
+# what this site is, and where its resources are, in one file
+# https://llmstxt.org
+Sitemap: https://matthew.mccluster.org/sitemap.xml

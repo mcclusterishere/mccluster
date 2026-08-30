@@ -1,0 +1,234 @@
+/* ============================================================
+   EQUITY UPRISE — THE APP SHELL.
+
+   The program page (equity-uprise.html) is a document: it is finished,
+   it is a record, and it has its own bespoke sections. These are the
+   rooms where the movement is USED — topic hubs, the fellowship
+   explorer, profiles, a dashboard, the desk. They repeat, they hold
+   lists that grow, and they will be edited by whoever is on shift.
+
+   So this is a component sheet, not a page sheet. Everything is built
+   from the flat house tokens in css/style.css (--ink, --cream, --ruby,
+   --edge, --glass-hi, the display and body faces) and inherits the
+   light coat and the reveal system for free. No new fonts, no new
+   images, no skins — the material program was retired by the owner's
+   call on 2026-08-15 and nothing here revives it.
+
+   One prefix: .eua-. The house already owns .eu* on the program page
+   (.euhero, .eufel, .eucites) and a collision there would repaint a
+   finished document by accident.
+   ============================================================ */
+
+/* ---------- the page frame ---------- */
+.eua {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: clamp(4.2rem, 9vh, 6rem) clamp(1.05rem, 4vw, 2rem) 8rem;
+}
+.eua--wide { max-width: 78rem; }
+
+.eua__kicker {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--ruby-hot);
+}
+.eua__kicker img { width: 1.1rem; height: auto; }
+
+.eua h1, .eua__h {
+  font-family: var(--display); font-weight: 400; text-transform: uppercase;
+  line-height: 0.92; letter-spacing: 0.01em;
+  font-size: clamp(2.3rem, 8vw, 4rem);
+  margin: 0.55rem 0 0;
+}
+.eua__lede {
+  color: var(--cream-dim); line-height: 1.7; margin-top: 0.9rem;
+  font-size: clamp(1rem, 2.4vw, 1.12rem); max-width: 46ch;
+}
+.eua__sec { margin-top: clamp(2.6rem, 7vw, 4rem); }
+.eua__sec > h2 {
+  font-family: var(--display); font-weight: 400; text-transform: uppercase;
+  font-size: clamp(1.4rem, 4.4vw, 2.1rem); line-height: 1; margin-bottom: 1rem;
+}
+.eua__note { color: var(--cream-dim); font-size: 0.85rem; line-height: 1.65; margin-top: 0.8rem; }
+.eua__rule { border: 0; border-top: 1px solid var(--edge); margin: 2.2rem 0; }
+
+/* ---------- cards ---------- */
+.eua-grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+
+.eua-card {
+  border: 1px solid var(--edge); border-radius: 16px; background: var(--glass-lo);
+  padding: 1.05rem 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.5rem;
+  transition: border-color 0.3s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease;
+}
+a.eua-card:hover, a.eua-card:focus-visible { border-color: var(--ruby); background: var(--glass-hi); transform: translateY(-2px); }
+.eua-card__eyebrow {
+  font-size: 0.63rem; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ruby-hot);
+}
+.eua-card__h {
+  font-family: var(--display); font-weight: 400; text-transform: uppercase;
+  font-size: 1.22rem; line-height: 1.02; letter-spacing: 0.01em;
+}
+.eua-card__sub { color: var(--cream-dim); font-size: 0.9rem; line-height: 1.6; }
+.eua-card__meta {
+  margin-top: auto; padding-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem;
+  font-size: 0.74rem; color: var(--cream-dim);
+}
+.eua-card__meta b { color: var(--cream); font-weight: 700; }
+
+/* ---------- tags ---------- */
+.eua-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.eua-tag {
+  font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
+  border: 1px solid var(--edge); border-radius: 100px; padding: 0.3em 0.8em;
+  color: var(--cream-dim); background: none; cursor: pointer;
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
+}
+.eua-tag:hover { color: var(--cream); border-color: var(--ruby); }
+.eua-tag.is-on { color: var(--on-ruby); background: var(--ruby); border-color: var(--ruby); }
+.eua-tag--flat { cursor: default; }
+.eua-tag--flat:hover { color: var(--cream-dim); border-color: var(--edge); }
+
+/* The badge that keeps the directory honest. An unverified listing says
+   so on its own card — see supabase/migrations/0018 for why. */
+.eua-badge {
+  font-size: 0.62rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+  border-radius: 100px; padding: 0.28em 0.7em; border: 1px solid currentColor;
+}
+.eua-badge--unverified { color: #d9b96a; }
+.eua-badge--checked { color: #9ec9e5; }
+.eua-badge--verified { color: #9ee5a8; }
+.eua-badge--pending { color: #d9b96a; }
+.eua-badge--live { color: #9ee5a8; }
+/* Five pale pastels, chosen to glow on a near-black card. On the bone coat
+   every one of them lands between 1.2:1 and 1.6:1 against the card behind
+   it — the badge and its border both vanish, and a listing that says
+   UNVERIFIED becomes a listing that says nothing. Whether a fellowship has
+   been checked is exactly the kind of claim that has to survive the theme.
+   Same three hues, taken down until they clear AA on the card (measured
+   against #eeeae1: gold 6.4:1, blue 6.1:1, green 5.5:1). */
+html[data-theme="light"] .eua-badge--unverified,
+html[data-theme="light"] .eua-badge--pending { color: #6a4f0e; }
+html[data-theme="light"] .eua-badge--checked { color: #1d5b7e; }
+html[data-theme="light"] .eua-badge--verified,
+html[data-theme="light"] .eua-badge--live { color: #1f6b31; }
+
+/* ---------- forms ---------- */
+.eua-field { display: block; margin-top: 1rem; }
+.eua-field > span {
+  display: block; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ruby-hot); margin-bottom: 0.4rem;
+}
+.eua-field input[type="text"], .eua-field input[type="email"], .eua-field input[type="url"],
+.eua-field input[type="date"], .eua-field textarea, .eua-field select, .eua-input {
+  width: 100%; padding: 0.85rem 0.95rem; border-radius: 12px;
+  border: 1px solid var(--edge); background: var(--ink-2); color: var(--cream);
+  font-family: var(--body); font-size: 1rem; line-height: 1.5;
+}
+.eua-field textarea { min-height: 8rem; resize: vertical; }
+.eua-field input:focus, .eua-field textarea:focus, .eua-field select:focus {
+  outline: 2px solid var(--ruby-hot); outline-offset: 1px;
+}
+.eua-help { color: var(--cream-dim); font-size: 0.78rem; line-height: 1.6; margin-top: 0.35rem; }
+
+.eua-check { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.7rem; cursor: pointer; }
+.eua-check input { margin-top: 0.25rem; accent-color: var(--ruby); flex: none; }
+.eua-check span { font-size: 0.9rem; line-height: 1.55; color: var(--cream-dim); }
+.eua-check b { color: var(--cream); }
+
+.eua-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.4rem; }
+.eua-actions .btn { padding: 0.9em 2em; font-size: 0.78rem; }
+
+.eua-say { min-height: 1.4em; margin-top: 0.8rem; font-size: 0.88rem; }
+.eua-say.is-ok { color: #9ee5a8; }
+.eua-say.is-bad { color: #f2a49c; }
+
+/* ---------- the scale question (a dimension, rendered) ---------- */
+.eua-dim { border: 1px solid var(--edge); border-radius: 16px; padding: 1rem 1.1rem 1.2rem; margin-top: 1rem; background: var(--glass-lo); }
+.eua-dim__q { font-weight: 700; font-size: 1.02rem; line-height: 1.4; }
+.eua-dim__help { color: var(--cream-dim); font-size: 0.84rem; margin-top: 0.2rem; }
+.eua-dim__opts { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+.eua-opt {
+  border: 1px solid var(--edge); border-radius: 100px; padding: 0.5em 1em;
+  background: none; color: var(--cream-dim); cursor: pointer;
+  font-family: var(--body); font-size: 0.86rem; text-align: left;
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
+}
+.eua-opt:hover { color: var(--cream); border-color: rgba(244, 239, 230, 0.45); }
+.eua-opt.is-on { background: var(--ruby); border-color: var(--ruby); color: var(--on-ruby); }
+
+/* ---------- the conversation ---------- */
+.eua-chat {
+  border: 1px solid var(--edge); border-radius: 18px; background: var(--ink-2);
+  display: flex; flex-direction: column; min-height: 22rem; overflow: hidden;
+}
+.eua-chat__log { flex: 1; padding: 1rem; display: flex; flex-direction: column; gap: 0.7rem; overflow-y: auto; max-height: 28rem; }
+.eua-msg { max-width: 44ch; padding: 0.7rem 0.9rem; border-radius: 14px; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; }
+.eua-msg--agent { background: var(--glass-hi); border: 1px solid var(--edge); align-self: flex-start; }
+.eua-msg--person { background: var(--ruby); color: var(--on-ruby); align-self: flex-end; }
+.eua-msg--system { align-self: center; text-align: center; color: var(--cream-dim); font-size: 0.8rem; max-width: 38ch; }
+.eua-chat__bar { display: flex; gap: 0.5rem; padding: 0.7rem; border-top: 1px solid var(--edge); }
+.eua-chat__bar input { flex: 1; }
+.eua-chat__bar button { flex: none; padding: 0.8em 1.4em; }
+
+/* ---------- the desk ---------- */
+.eua-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.4rem; }
+.eua-tabs button {
+  font-family: var(--body); font-weight: 800; font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
+  border: 1px solid var(--edge); border-radius: 100px; padding: 0.6em 1.2em;
+  background: none; color: var(--cream-dim); cursor: pointer; transition: all 0.25s;
+}
+.eua-tabs button.is-on { background: var(--ruby); border-color: var(--ruby); color: var(--on-ruby); }
+
+.eua-row {
+  border: 1px solid var(--edge); border-radius: 14px; padding: 0.9rem 1rem;
+  margin-top: 0.6rem; background: var(--glass-lo);
+}
+.eua-row__top { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: baseline; justify-content: space-between; }
+.eua-row__t { font-weight: 700; }
+.eua-row__when { font-size: 0.72rem; color: var(--cream-dim); letter-spacing: 0.06em; }
+.eua-row__body { color: var(--cream-dim); font-size: 0.92rem; line-height: 1.65; margin-top: 0.5rem; white-space: pre-wrap; }
+.eua-row__acts { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+.eua-mini {
+  font-family: var(--body); font-weight: 800; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase;
+  border: 1px solid var(--edge); border-radius: 100px; padding: 0.5em 1em;
+  background: none; color: var(--cream-dim); cursor: pointer; transition: all 0.25s;
+}
+.eua-mini:hover { color: var(--cream); border-color: var(--ruby); }
+.eua-mini--go { border-color: rgba(158, 229, 168, 0.5); color: #9ee5a8; }
+.eua-mini--no { border-color: rgba(242, 164, 156, 0.5); color: #f2a49c; }
+
+/* ---------- numbers ---------- */
+.eua-figs { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); margin-top: 1.6rem; }
+.eua-fig { border: 1px solid var(--edge); border-radius: 14px; padding: 0.9rem; text-align: center; }
+.eua-fig b { display: block; font-family: var(--display); font-size: 2rem; line-height: 1; color: var(--cream); }
+.eua-fig span { display: block; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream-dim); margin-top: 0.35rem; }
+
+/* ---------- the honest empty state ---------- */
+.eua-empty {
+  border: 1px dashed var(--edge); border-radius: 16px; padding: 1.6rem 1.2rem;
+  text-align: center; color: var(--cream-dim); font-size: 0.92rem; line-height: 1.65;
+}
+
+/* ---------- gates ---------- */
+.eua-gate {
+  border: 1px solid rgba(229, 56, 59, 0.4); border-radius: 16px;
+  padding: 1.2rem; background: rgba(193, 18, 31, 0.08); margin-top: 1.2rem;
+}
+.eua-gate h3 { font-family: var(--display); font-weight: 400; text-transform: uppercase; font-size: 1.2rem; }
+.eua-gate p { color: var(--cream-dim); font-size: 0.92rem; line-height: 1.65; margin-top: 0.4rem; }
+
+[hidden] { display: none !important; }
+
+/* ---------- light coat ---------- */
+html[data-theme="light"] .eua-card,
+html[data-theme="light"] .eua-row,
+html[data-theme="light"] .eua-dim { background: rgba(26, 20, 13, 0.035); }
+html[data-theme="light"] .eua-msg--agent { background: rgba(26, 20, 13, 0.06); }
+html[data-theme="light"] .eua-field input,
+html[data-theme="light"] .eua-field textarea,
+html[data-theme="light"] .eua-field select { background: #fff; }
+
+@media (max-width: 34rem) {
+  .eua-grid { grid-template-columns: 1fr; }
+  .eua-msg { max-width: 86%; }
+}

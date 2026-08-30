@@ -1,0 +1,569 @@
+{
+ "items": [
+  {
+   "cat": "Videography",
+   "title": "Vaunt: the runway performance",
+   "sub": "Commercial production · performed live with Zakir",
+   "video": "assets/video/vaunt.mp4",
+   "poster": "assets/frames/vaunt_0001.jpg",
+   "group": "On location",
+   "id": "vaunt-the-runway-performance",
+   "no": "01",
+   "role": "Director · Editor",
+   "deliverables": "Finished film · social cutdowns",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "License this cut",
+     "price": "from $150",
+     "note": "Full-res delivery · usage terms by email"
+    },
+    {
+     "label": "Book this package",
+     "price": "from $500",
+     "note": "Same crew, same standard, your story"
+    }
+   ]
+  },
+  {
+   "cat": "Videography",
+   "title": "Vaunt Live: the launch",
+   "sub": "Event coverage · the campaign on its feet",
+   "video": "assets/video/vauntlive.mp4",
+   "poster": "assets/frames/vauntlive_0001.jpg",
+   "group": "On location",
+   "id": "vaunt-live-the-launch",
+   "no": "02",
+   "role": "Director · Editor",
+   "deliverables": "Finished film · social cutdowns",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "License this cut",
+     "price": "from $150",
+     "note": "Full-res delivery · usage terms by email"
+    },
+    {
+     "label": "Book this package",
+     "price": "from $500",
+     "note": "Same crew, same standard, your story"
+    }
+   ]
+  },
+  {
+   "cat": "Videography",
+   "title": "Dealer Plates: the video",
+   "sub": "Music video production",
+   "video": "assets/video/dealer-plates-b-video.mp4",
+   "group": "On location",
+   "id": "dealer-plates-the-video",
+   "no": "03",
+   "role": "Director · Editor",
+   "deliverables": "Finished film · social cutdowns",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "License this cut",
+     "price": "from $150",
+     "note": "Full-res delivery · usage terms by email"
+    },
+    {
+     "label": "Book this package",
+     "price": "from $500",
+     "note": "Same crew, same standard, your story"
+    }
+   ]
+  },
+  {
+   "cat": "Videography",
+   "title": "The red jet",
+   "sub": "AI-built world · aviation & luxury",
+   "video": "assets/video/redjet.mp4",
+   "poster": "assets/frames/redjet_0001.jpg",
+   "group": "The Concept Lab",
+   "id": "the-red-jet",
+   "no": "04",
+   "role": "Director · Editor",
+   "deliverables": "Concept film, built and cut in-house",
+   "location": "The studio",
+   "made": "AI-built world. Directed, prompted, and cut in-house.",
+   "offers": [
+    {
+     "label": "Commission a world like this",
+     "price": "from $300",
+     "note": "AI-built and directed in-house, no location budget needed"
+    }
+   ]
+  },
+  {
+   "cat": "Videography",
+   "title": "The penthouse set",
+   "sub": "AI-built world · nightlife set",
+   "video": "assets/video/daniel.mp4",
+   "poster": "assets/frames/daniel_0001.jpg",
+   "group": "The Concept Lab",
+   "id": "the-penthouse-set",
+   "no": "05",
+   "role": "Director · Editor",
+   "deliverables": "Concept film, built and cut in-house",
+   "location": "The studio",
+   "made": "AI-built world. Directed, prompted, and cut in-house.",
+   "offers": [
+    {
+     "label": "Commission a world like this",
+     "price": "from $300",
+     "note": "AI-built and directed in-house, no location budget needed"
+    }
+   ]
+  },
+  {
+   "cat": "Videography",
+   "title": "Whip Equipped: the fleet",
+   "sub": "AI-built world · automotive story",
+   "video": "assets/video/whip.mp4",
+   "poster": "assets/frames/whip_0001.jpg",
+   "group": "The Concept Lab",
+   "id": "whip-equipped-the-fleet",
+   "no": "06",
+   "role": "Director · Editor",
+   "deliverables": "Concept film, built and cut in-house",
+   "location": "The studio",
+   "made": "AI-built world. Directed, prompted, and cut in-house.",
+   "offers": [
+    {
+     "label": "Commission a world like this",
+     "price": "from $300",
+     "note": "AI-built and directed in-house, no location budget needed"
+    }
+   ]
+  },
+  {
+   "cat": "Videography",
+   "title": "The keynote shoot",
+   "sub": "AI-built world · corporate stage",
+   "video": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg",
+   "group": "The Concept Lab",
+   "id": "the-keynote-shoot",
+   "no": "07",
+   "role": "Director · Editor",
+   "deliverables": "Concept film, built and cut in-house",
+   "location": "The studio",
+   "made": "AI-built world. Directed, prompted, and cut in-house.",
+   "offers": [
+    {
+     "label": "Commission a world like this",
+     "price": "from $300",
+     "note": "AI-built and directed in-house, no location budget needed"
+    }
+   ]
+  },
+  {
+   "cat": "Videography",
+   "title": "The hero film",
+   "sub": "AI-built world · the studio orbit",
+   "video": "assets/video/hero.mp4",
+   "poster": "assets/frames/hero_0001.jpg",
+   "group": "The Concept Lab",
+   "id": "the-hero-film",
+   "no": "08",
+   "role": "Director · Editor",
+   "deliverables": "Concept film, built and cut in-house",
+   "location": "The studio",
+   "made": "AI-built world. Directed, prompted, and cut in-house.",
+   "offers": [
+    {
+     "label": "Commission a world like this",
+     "price": "from $300",
+     "note": "AI-built and directed in-house, no location budget needed"
+    }
+   ]
+  },
+  {
+   "cat": "Videography",
+   "title": "Studio 360",
+   "sub": "AI-built world · the edit bay, all the way around",
+   "video": "assets/video/studio360.mp4",
+   "poster": "assets/frames/studio360_0001.jpg",
+   "group": "The Concept Lab",
+   "id": "studio-360",
+   "no": "09",
+   "role": "Director · Editor",
+   "deliverables": "Concept film, built and cut in-house",
+   "location": "The studio",
+   "made": "AI-built world. Directed, prompted, and cut in-house.",
+   "offers": [
+    {
+     "label": "Commission a world like this",
+     "price": "from $300",
+     "note": "AI-built and directed in-house, no location budget needed"
+    }
+   ]
+  },
+  {
+   "cat": "Videography",
+   "title": "Designer at work",
+   "sub": "AI-built world · process story",
+   "video": "assets/video/designer.mp4",
+   "poster": "assets/frames/designer_0001.jpg",
+   "group": "The Concept Lab",
+   "id": "designer-at-work",
+   "no": "10",
+   "role": "Director · Editor",
+   "deliverables": "Concept film, built and cut in-house",
+   "location": "The studio",
+   "made": "AI-built world. Directed, prompted, and cut in-house.",
+   "offers": [
+    {
+     "label": "Commission a world like this",
+     "price": "from $300",
+     "note": "AI-built and directed in-house, no location budget needed"
+    }
+   ]
+  },
+  {
+   "cat": "Photography",
+   "title": "The Shot Wall: find your photo",
+   "sub": "Event galleries · first one free with a follow",
+   "img": "assets/img/rally/rally-03.jpg",
+   "href": "shots.html",
+   "group": "On assignment",
+   "id": "the-shot-wall-find-your-photo",
+   "no": "11",
+   "role": "Photographer",
+   "deliverables": "Edited gallery · same-week delivery",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Prints",
+     "price": "from $45",
+     "note": "Museum stock, shipped"
+    },
+    {
+     "label": "Full-res license",
+     "price": "from $95",
+     "note": "Digital delivery, usage terms by email"
+    }
+   ]
+  },
+  {
+   "cat": "Photography",
+   "title": "October 5th: the rally",
+   "sub": "Environmental Injustice rally · Bridgeport Creates",
+   "img": "assets/img/rally/rally-01.jpg",
+   "group": "On assignment",
+   "id": "october-5th-the-rally",
+   "no": "12",
+   "role": "Photographer",
+   "deliverables": "Edited gallery · same-week delivery",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Prints",
+     "price": "from $45",
+     "note": "Museum stock, shipped"
+    },
+    {
+     "label": "Full-res license",
+     "price": "from $95",
+     "note": "Digital delivery, usage terms by email"
+    }
+   ]
+  },
+  {
+   "cat": "Photography",
+   "title": "Zion Baptist: the room",
+   "sub": "Community & event photography",
+   "img": "assets/img/rally/rally-02.jpg",
+   "group": "On assignment",
+   "id": "zion-baptist-the-room",
+   "no": "13",
+   "role": "Photographer",
+   "deliverables": "Edited gallery · same-week delivery",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Prints",
+     "price": "from $45",
+     "note": "Museum stock, shipped"
+    },
+    {
+     "label": "Full-res license",
+     "price": "from $95",
+     "note": "Digital delivery, usage terms by email"
+    }
+   ]
+  },
+  {
+   "cat": "Photography",
+   "title": "The march",
+   "sub": "Documentary photography, on the street",
+   "img": "assets/img/rally/rally-03.jpg",
+   "group": "On assignment",
+   "id": "the-march",
+   "no": "14",
+   "role": "Photographer",
+   "deliverables": "Edited gallery · same-week delivery",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Prints",
+     "price": "from $45",
+     "note": "Museum stock, shipped"
+    },
+    {
+     "label": "Full-res license",
+     "price": "from $95",
+     "note": "Digital delivery, usage terms by email"
+    }
+   ]
+  },
+  {
+   "cat": "Photography",
+   "title": "The speakers",
+   "sub": "Stage & press photography",
+   "img": "assets/img/rally/rally-04.jpg",
+   "group": "On assignment",
+   "id": "the-speakers",
+   "no": "15",
+   "role": "Photographer",
+   "deliverables": "Edited gallery · same-week delivery",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Prints",
+     "price": "from $45",
+     "note": "Museum stock, shipped"
+    },
+    {
+     "label": "Full-res license",
+     "price": "from $95",
+     "note": "Digital delivery, usage terms by email"
+    }
+   ]
+  },
+  {
+   "cat": "Photography",
+   "title": "The crowd",
+   "sub": "The people, on the record",
+   "img": "assets/img/rally/rally-05.jpg",
+   "group": "On assignment",
+   "id": "the-crowd",
+   "no": "16",
+   "role": "Photographer",
+   "deliverables": "Edited gallery · same-week delivery",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Prints",
+     "price": "from $45",
+     "note": "Museum stock, shipped"
+    },
+    {
+     "label": "Full-res license",
+     "price": "from $95",
+     "note": "Digital delivery, usage terms by email"
+    }
+   ]
+  },
+  {
+   "cat": "Photography",
+   "title": "I AM HERE: the album cover",
+   "sub": "Art direction & cover design",
+   "img": "assets/img/here-cover.jpg",
+   "group": "Covers & art direction",
+   "id": "here-the-album-cover",
+   "no": "17",
+   "role": "Photographer",
+   "deliverables": "Cover art · final production files",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Commission a cover",
+     "price": "from $250",
+     "note": "Art direction through final files"
+    }
+   ]
+  },
+  {
+   "cat": "Photography",
+   "title": "Heal the 3: the cover",
+   "sub": "Art direction & cover design",
+   "img": "assets/img/heal-the-3-cover.jpg",
+   "group": "Covers & art direction",
+   "id": "heal-the-3-the-cover",
+   "no": "18",
+   "role": "Photographer",
+   "deliverables": "Cover art · final production files",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Commission a cover",
+     "price": "from $250",
+     "note": "Art direction through final files"
+    }
+   ]
+  },
+  {
+   "cat": "Photography",
+   "title": "The uprise still",
+   "sub": "Editorial stills from the civic engine",
+   "img": "assets/img/uprise-still.jpg",
+   "group": "Covers & art direction",
+   "id": "the-uprise-still",
+   "no": "19",
+   "role": "Photographer",
+   "deliverables": "Cover art · final production files",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Commission a cover",
+     "price": "from $250",
+     "note": "Art direction through final files"
+    }
+   ]
+  },
+  {
+   "cat": "Media management",
+   "title": "Equity Uprise: the civic engine",
+   "sub": "Full campaign: rallies, record, outreach. Recognized by two governments",
+   "video": "assets/video/equity.mp4",
+   "href": "equity-uprise.html",
+   "poster": "assets/frames/equity_0001.jpg",
+   "group": "The platforms",
+   "id": "equity-uprise-the-civic-engine",
+   "no": "20",
+   "role": "Strategist · Operator",
+   "deliverables": "Live platform · ongoing operation",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Book the desk",
+     "price": "from $750/mo",
+     "note": "Media management & consulting: the operation behind this"
+    }
+   ]
+  },
+  {
+   "cat": "Media management",
+   "title": "Docket 516: the public archive",
+   "sub": "325 filings archived, explained, and published",
+   "video": "assets/video/docket.mp4",
+   "href": "docket-516.html",
+   "poster": "assets/frames/docket_0001.jpg",
+   "group": "The platforms",
+   "id": "docket-516-the-public-archive",
+   "no": "21",
+   "role": "Strategist · Operator",
+   "deliverables": "Live platform · ongoing operation",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Book the desk",
+     "price": "from $750/mo",
+     "note": "Media management & consulting: the operation behind this"
+    }
+   ]
+  },
+  {
+   "cat": "Media management",
+   "title": "The record & citations",
+   "sub": "Press, proclamations, and the receipts",
+   "video": "assets/video/citations.mp4",
+   "href": "press.html",
+   "poster": "assets/frames/citations_0001.jpg",
+   "group": "The platforms",
+   "id": "the-record-citations",
+   "no": "22",
+   "role": "Strategist · Operator",
+   "deliverables": "Live platform · ongoing operation",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Book the desk",
+     "price": "from $750/mo",
+     "note": "Media management & consulting: the operation behind this"
+    }
+   ]
+  },
+  {
+   "cat": "Media management",
+   "title": "The Feed: the daily record",
+   "sub": "Claims put on the record with sources, filed daily",
+   "video": "assets/video/editors.mp4",
+   "href": "feed.html",
+   "poster": "assets/frames/editors_0001.jpg",
+   "group": "The platforms",
+   "id": "the-feed-the-daily-record",
+   "no": "23",
+   "role": "Strategist · Operator",
+   "deliverables": "Live platform · ongoing operation",
+   "location": "Bridgeport, CT",
+   "made": "Shot on location",
+   "offers": [
+    {
+     "label": "Book the desk",
+     "price": "from $750/mo",
+     "note": "Media management & consulting: the operation behind this"
+    }
+   ]
+  },
+  {
+   "cat": "Media management",
+   "title": "The war room",
+   "sub": "Concept film · how the strategy desk runs",
+   "video": "assets/video/warroom.mp4",
+   "poster": "assets/frames/warroom_0001.jpg",
+   "group": "The operation",
+   "id": "the-war-room",
+   "no": "24",
+   "role": "Strategist · Operator",
+   "deliverables": "Strategy & rollout, from one desk",
+   "location": "Bridgeport, CT",
+   "made": "AI-built world. Directed, prompted, and cut in-house.",
+   "offers": [
+    {
+     "label": "Book the desk",
+     "price": "from $750/mo",
+     "note": "Media management & consulting"
+    }
+   ]
+  },
+  {
+   "cat": "Media management",
+   "title": "The survey",
+   "sub": "Concept film · data-driven outreach",
+   "video": "assets/video/uisurvey.mp4",
+   "poster": "assets/frames/uisurvey_0001.jpg",
+   "group": "The operation",
+   "id": "the-survey",
+   "no": "25",
+   "role": "Strategist · Operator",
+   "deliverables": "Strategy & rollout, from one desk",
+   "location": "Bridgeport, CT",
+   "made": "AI-built world. Directed, prompted, and cut in-house.",
+   "offers": [
+    {
+     "label": "Book the desk",
+     "price": "from $750/mo",
+     "note": "Media management & consulting"
+    }
+   ]
+  }
+ ]
+}

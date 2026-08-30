@@ -1,0 +1,177 @@
+{
+ "pricing": {
+  "note": "Retail lives here, one number per size. Edit a price and the shop repaints on next load, no deploy. Lab cost and margin are tracked at the desk, never in this file: every browser that opens the gallery downloads it.",
+  "roundTo": 5,
+  "floor": 12
+ },
+ "sizes": [
+  {
+   "id": "5x7",
+   "label": "5×7 print",
+   "price": 15
+  },
+  {
+   "id": "8x10",
+   "label": "8×10 print",
+   "price": 25
+  },
+  {
+   "id": "11x14",
+   "label": "11×14 print",
+   "price": 40
+  },
+  {
+   "id": "16x20",
+   "label": "16×20 print",
+   "price": 55
+  },
+  {
+   "id": "24x36",
+   "label": "24×36 print",
+   "price": 85
+  }
+ ],
+ "digital": [
+  {
+   "id": "png",
+   "label": "PNG · personal use",
+   "price": 15,
+   "note": "Full-size PNG · print at home, post it, frame it. No commercial use."
+  },
+  {
+   "id": "fullres",
+   "label": "Full-res + print rights",
+   "price": 40,
+   "note": "Maximum-quality file with personal print rights, delivered by email."
+  },
+  {
+   "id": "raw",
+   "label": "RAW + commercial rights",
+   "price": 250,
+   "note": "The negative itself, with a written commercial license. Delivered within 24h."
+  }
+ ],
+ "shippingNote": "Museum-stock giclée, printed and shipped tracked in the US · shipping calculated on the invoice",
+ "photos": [
+  {
+   "id": "rally-01",
+   "title": "October 5th: the rally",
+   "sub": "Bridgeport Creates · documentary",
+   "src": "assets/img/rally/rally-01.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "rally-02",
+   "title": "Shiloh Baptist: the room",
+   "sub": "Community · event",
+   "src": "assets/img/rally/rally-02.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "rally-03",
+   "title": "The march",
+   "sub": "Documentary · street",
+   "src": "assets/img/rally/rally-03.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "rally-04",
+   "title": "The speakers",
+   "sub": "Stage · press",
+   "src": "assets/img/rally/rally-04.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "rally-05",
+   "title": "The crowd",
+   "sub": "The people, on the record",
+   "src": "assets/img/rally/rally-05.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "here-cover",
+   "title": "I AM HERE: the album cover",
+   "sub": "Art direction",
+   "src": "assets/img/here-cover.jpg",
+   "rights": "released"
+  },
+  {
+   "id": "heal-the-3",
+   "title": "Heal the 3: the cover",
+   "sub": "Art direction",
+   "src": "assets/img/heal-the-3-cover.jpg",
+   "rights": "released"
+  },
+  {
+   "id": "uprise-still",
+   "title": "The uprise still",
+   "sub": "Editorial",
+   "src": "assets/img/uprise-still.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "bnb-01",
+   "title": "Brunch & Beats",
+   "sub": "Future Successors of ATL · Atlanta",
+   "src": "assets/img/gallery/brunch-and-beats/bnb-01.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "bnb-02",
+   "title": "Brunch & Beats",
+   "sub": "Future Successors of ATL · Atlanta",
+   "src": "assets/img/gallery/brunch-and-beats/bnb-02.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "bnb-03",
+   "title": "Brunch & Beats",
+   "sub": "Future Successors of ATL · Atlanta",
+   "src": "assets/img/gallery/brunch-and-beats/bnb-03.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "bnb-04",
+   "title": "Brunch & Beats",
+   "sub": "Future Successors of ATL · Atlanta",
+   "src": "assets/img/gallery/brunch-and-beats/bnb-04.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "bnb-05",
+   "title": "Brunch & Beats",
+   "sub": "Future Successors of ATL · Atlanta",
+   "src": "assets/img/gallery/brunch-and-beats/bnb-05.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "bnb-06",
+   "title": "Brunch & Beats",
+   "sub": "Future Successors of ATL · Atlanta",
+   "src": "assets/img/gallery/brunch-and-beats/bnb-06.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "bnb-07",
+   "title": "Brunch & Beats",
+   "sub": "Future Successors of ATL · Atlanta",
+   "src": "assets/img/gallery/brunch-and-beats/bnb-07.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "candler-01",
+   "title": "Candler Crossing: the groundbreaking",
+   "sub": "DeKalb County · documentary",
+   "src": "assets/img/candler-crossing/candler-01.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "candler-02",
+   "title": "Candler Crossing: shovels down",
+   "sub": "DeKalb County · documentary",
+   "src": "assets/img/candler-crossing/candler-02.jpg",
+   "rights": "editorial"
+  }
+ ],
+ "rightsNote": "editorial = real event, no model releases on file: prints, personal files, and editorial licensing only. released = commercial-clear, releases in the vault."
+}

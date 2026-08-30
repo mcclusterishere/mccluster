@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+<title>HERE Signature Mark v1</title>
+<desc>Industrial HERE wordmark with separate chassis, ruby inlay, and highlight channels.</desc>
+<defs>
+  <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#25282b"/><stop offset=".45" stop-color="#090a0b"/><stop offset="1" stop-color="#17191b"/>
+  </linearGradient>
+  <linearGradient id="ruby" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#5b0013"/><stop offset=".48" stop-color="#d10a32"/><stop offset="1" stop-color="#6e0018"/>
+  </linearGradient>
+</defs>
+
+<!-- CHASSIS: canonical physical letter bodies -->
+<g id="chassis" fill="url(#steel)">
+  <!-- H -->
+  <path d="M70 60h72v90h118V60h72v240h-72v-92H142v92H70z"/>
+  <!-- E -->
+  <path d="M380 60h224v60H452v32h136v56H452v32h152v60H380z"/>
+  <!-- R -->
+  <path d="M650 60h142c82 0 126 36 126 102 0 42-20 71-58 88l72 50h-105l-58-42h-47v42h-72zm72 60v82h65c38 0 58-13 58-41 0-28-20-41-58-41z"/>
+  <!-- E -->
+  <path d="M958 60h224v60h-152v32h136v56h-136v32h152v60H958z"/>
+</g>
+
+<!-- RUBY INLAY: independent emissive channels -->
+<g id="ruby-inlay" fill="url(#ruby)">
+  <rect x="142" y="172" width="118" height="14" rx="7"/>
+  <rect x="452" y="174" width="136" height="12" rx="6"/>
+  <path d="M722 222h67l18 13h-85z"/>
+  <rect x="1030" y="174" width="136" height="12" rx="6"/>
+</g>
+
+<!-- SPECULAR: intended as masked/animated highlight, not permanent glow -->
+<g id="specular" fill="#ffffff" opacity=".14">
+  <rect x="70" y="60" width="262" height="4"/>
+  <rect x="380" y="60" width="224" height="4"/>
+  <rect x="650" y="60" width="268" height="4"/>
+  <rect x="958" y="60" width="224" height="4"/>
+</g>
+
+<!-- ENGRAVING / registration -->
+<g id="engraving" fill="#8b8f93" opacity=".42">
+  <rect x="70" y="318" width="1112" height="2"/>
+  <circle cx="70" cy="319" r="4"/><circle cx="1182" cy="319" r="4"/>
+</g>
+</svg>

@@ -1,0 +1,154 @@
+{
+ "scenes": [
+  {
+   "begin": 0,
+   "src": "assets/video/coffeecam.mp4",
+   "poster": "assets/frames/coffeecam_0001.jpg"
+  },
+  {
+   "begin": 10.4,
+   "src": "assets/video/warroom.mp4",
+   "poster": "assets/frames/warroom_0001.jpg"
+  },
+  {
+   "begin": 17.73,
+   "src": "assets/video/hero.mp4",
+   "poster": "assets/frames/hero_0001.jpg"
+  },
+  {
+   "begin": 27.28,
+   "src": "assets/video/warroom.mp4",
+   "poster": "assets/frames/warroom_0001.jpg"
+  },
+  {
+   "begin": 33.08,
+   "src": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg"
+  },
+  {
+   "begin": 37.86,
+   "src": "assets/video/nightscroll.mp4",
+   "poster": "assets/frames/nightscroll_0001.jpg"
+  },
+  {
+   "begin": 41.37,
+   "src": "assets/video/gmcall.mp4",
+   "poster": "assets/frames/gmcall_0001.jpg"
+  },
+  {
+   "begin": 46.07,
+   "src": "assets/video/street.mp4",
+   "poster": "assets/frames/street_0001.jpg"
+  },
+  {
+   "begin": 49.03,
+   "src": "assets/video/moneyglitch.mp4",
+   "poster": "assets/frames/moneyglitch_0001.jpg"
+  },
+  {
+   "begin": 51.03,
+   "src": "assets/video/whip.mp4",
+   "poster": "assets/frames/whip_0001.jpg"
+  },
+  {
+   "begin": 57.05,
+   "src": "assets/video/redjet.mp4",
+   "poster": "assets/frames/redjet_0001.jpg"
+  },
+  {
+   "begin": 61.03,
+   "src": "assets/video/docket.mp4",
+   "poster": "assets/frames/docket_0001.jpg"
+  },
+  {
+   "begin": 68.95,
+   "src": "assets/video/hero.mp4",
+   "poster": "assets/frames/hero_0001.jpg"
+  },
+  {
+   "begin": 77.03,
+   "src": "assets/video/street.mp4",
+   "poster": "assets/frames/street_0001.jpg"
+  },
+  {
+   "begin": 85.03,
+   "src": "assets/video/whip.mp4",
+   "poster": "assets/frames/whip_0001.jpg"
+  },
+  {
+   "begin": 88.92,
+   "src": "assets/video/street.mp4",
+   "poster": "assets/frames/street_0001.jpg"
+  },
+  {
+   "begin": 95.02,
+   "src": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg"
+  },
+  {
+   "begin": 98.69,
+   "src": "assets/video/daniel.mp4",
+   "poster": "assets/frames/daniel_0001.jpg"
+  },
+  {
+   "begin": 106.89,
+   "src": "assets/video/yachtheli.mp4",
+   "poster": "assets/frames/yachtheli_0001.jpg"
+  },
+  {
+   "begin": 110.9,
+   "src": "assets/video/moneyglitch.mp4",
+   "poster": "assets/frames/moneyglitch_0001.jpg"
+  },
+  {
+   "begin": 113.63,
+   "src": "assets/video/daniel.mp4",
+   "poster": "assets/frames/daniel_0001.jpg"
+  },
+  {
+   "begin": 119.51,
+   "src": "assets/video/nightscroll.mp4",
+   "poster": "assets/frames/nightscroll_0001.jpg"
+  },
+  {
+   "begin": 125.58,
+   "src": "assets/video/warroom.mp4",
+   "poster": "assets/frames/warroom_0001.jpg"
+  },
+  {
+   "begin": 130.19,
+   "src": "assets/video/daniel.mp4",
+   "poster": "assets/frames/daniel_0001.jpg"
+  },
+  {
+   "begin": 138.19,
+   "src": "assets/video/yachtheli.mp4",
+   "poster": "assets/frames/yachtheli_0001.jpg"
+  },
+  {
+   "begin": 142.87,
+   "src": "assets/video/moneyglitch.mp4",
+   "poster": "assets/frames/moneyglitch_0001.jpg"
+  },
+  {
+   "begin": 144.61,
+   "src": "assets/video/editors.mp4",
+   "poster": "assets/frames/editors_0001.jpg"
+  },
+  {
+   "begin": 152.94,
+   "src": "assets/video/hero.mp4",
+   "poster": "assets/frames/hero_0001.jpg"
+  },
+  {
+   "begin": 161.68,
+   "src": "assets/video/daniel.mp4",
+   "poster": "assets/frames/daniel_0001.jpg"
+  },
+  {
+   "begin": 170.31,
+   "src": "assets/video/redjet.mp4",
+   "poster": "assets/frames/redjet_0001.jpg"
+  }
+ ]
+}

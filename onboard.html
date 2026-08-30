@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Onboarding · HERE</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="A few questions, one at a time, and the studio starts your work.">
+  <link rel="canonical" href="https://matthew.mccluster.org/onboard.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/onboard.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>html, body { background: var(--ink); }</style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage">
+
+  <!-- ONE QUESTION PER SCREEN.
+       The steps are data in js/onboard.js, not markup here, so all four
+       service paths share one engine: one set of validation rules, one
+       Back button, one autosave, one progress rail. Adding a question is
+       a row in that table, never a new pane in this file. -->
+  <main class="ob">
+    <p class="ob__k">HERE · Onboarding</p>
+
+    <div class="ob__prog" id="obProg" role="progressbar" aria-valuemin="1" aria-valuenow="1" aria-valuemax="1" aria-label="Onboarding progress">
+      <div class="ob__rail" id="obRail" aria-hidden="true"></div>
+      <div class="ob__segs" id="obSegs" aria-hidden="true"></div>
+      <p class="ob__step" id="obStep">&nbsp;</p>
+    </div>
+
+    <!-- the live question is painted here, one at a time -->
+    <div class="ob__stage" id="obStage" aria-live="polite"></div>
+
+    <div class="ob__nav" id="obNav">
+      <button type="button" class="ob__back" id="obBack" hidden>&larr; Back</button>
+      <button type="button" class="ob__next" id="obNext">Continue</button>
+    </div>
+
+    <p class="ob__note">Your answers save on this device as you go, so you can close this
+      and pick it up later. Never send passwords through this form &mdash; account access is
+      always handed over one on one.</p>
+  </main>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/offers.js?v=__STAMP__"></script>
+  <script src="js/offer-crm.js?v=__STAMP__"></script>
+  <script src="js/onboard.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

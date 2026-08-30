@@ -1,0 +1,347 @@
+{
+ "note": "STAGED: media arrays stay empty until the owner sends assets. Each media item, when it arrives, gets {id,type:'photo'|'video',src,poster?,sell:true} and sellable photos also join data/prints.json.",
+ "events": [
+  {
+   "id": "eu-rally",
+   "kind": "photo",
+   "title": "Equity Uprise Rally",
+   "client": "City of Bridgeport, Connecticut",
+   "venue": "Shiloh Baptist Church",
+   "city": "Bridgeport, CT",
+   "date": "October 5",
+   "about": "October 5th on the ground in Bridgeport: the room at Shiloh Baptist Church, the speakers, the march, and the crowd on the record. Shot for the City of Bridgeport, and recognized on the record with a citation on file.",
+   "tags": [
+    "Photos"
+   ],
+   "media": [
+    {
+     "id": "rally-01",
+     "type": "photo",
+     "src": "assets/img/rally/rally-01.jpg",
+     "sell": true
+    },
+    {
+     "id": "rally-02",
+     "type": "photo",
+     "src": "assets/img/rally/rally-02.jpg",
+     "sell": true
+    },
+    {
+     "id": "rally-03",
+     "type": "photo",
+     "src": "assets/img/rally/rally-03.jpg",
+     "sell": true
+    },
+    {
+     "id": "rally-04",
+     "type": "photo",
+     "src": "assets/img/rally/rally-04.jpg",
+     "sell": true
+    },
+    {
+     "id": "rally-05",
+     "type": "photo",
+     "src": "assets/img/rally/rally-05.jpg",
+     "sell": true
+    }
+   ],
+   "cover": "assets/img/rally/rally-01.jpg",
+   "cited": true,
+   "rights": "editorial"
+  },
+  {
+   "id": "cover-art",
+   "kind": "photo",
+   "title": "Cover Art: I AM HERE & Heal the 3",
+   "client": "McCluster Corp",
+   "date": "Self-directed",
+   "about": "Work I did for myself. The covers for I AM HERE and Heal the 3: art direction, shoot, and design start to finish, under McCluster Corp. Same eye I bring to a client's rollout, pointed at my own.",
+   "tags": [
+    "Art direction",
+    "Album art"
+   ],
+   "media": [
+    {
+     "id": "here-cover",
+     "type": "photo",
+     "src": "assets/img/here-cover.jpg",
+     "sell": true
+    },
+    {
+     "id": "heal-the-3",
+     "type": "photo",
+     "src": "assets/img/heal-the-3-cover.jpg",
+     "sell": true
+    }
+   ],
+   "cover": "assets/img/here-cover.jpg",
+   "rights": "released"
+  },
+  {
+   "id": "brunch-and-beats",
+   "kind": "photo",
+   "title": "Brunch & Beats",
+   "client": "Future Successors of ATL",
+   "venue": "Apartment 4B",
+   "city": "Atlanta, GA",
+   "date": "July 19, 2026",
+   "about": "Brunch & Beats brought the Future Successors of ATL community together over food, music, and real conversation. Future Successors is an Atlanta-based nonprofit that pours into middle- and high-school scholars, building the entrepreneurship, leadership, and real-world skills that bridge the opportunity gap and set young people up for college, careers, and whatever they build next. This is the day on the wall: the room, the people, and the energy behind the mission.",
+   "tags": [
+    "Photos"
+   ],
+   "media": [
+    {
+     "id": "bnb-01",
+     "type": "photo",
+     "src": "assets/img/gallery/brunch-and-beats/bnb-01.jpg",
+     "sell": true
+    },
+    {
+     "id": "bnb-02",
+     "type": "photo",
+     "src": "assets/img/gallery/brunch-and-beats/bnb-02.jpg",
+     "sell": true
+    },
+    {
+     "id": "bnb-03",
+     "type": "photo",
+     "src": "assets/img/gallery/brunch-and-beats/bnb-03.jpg",
+     "sell": true
+    },
+    {
+     "id": "bnb-04",
+     "type": "photo",
+     "src": "assets/img/gallery/brunch-and-beats/bnb-04.jpg",
+     "sell": true
+    },
+    {
+     "id": "bnb-05",
+     "type": "photo",
+     "src": "assets/img/gallery/brunch-and-beats/bnb-05.jpg",
+     "sell": true
+    },
+    {
+     "id": "bnb-06",
+     "type": "photo",
+     "src": "assets/img/gallery/brunch-and-beats/bnb-06.jpg",
+     "sell": true
+    },
+    {
+     "id": "bnb-07",
+     "type": "photo",
+     "src": "assets/img/gallery/brunch-and-beats/bnb-07.jpg",
+     "sell": true
+    }
+   ],
+   "cover": "assets/img/gallery/brunch-and-beats/bnb-01.jpg",
+   "rights": "editorial"
+  },
+  {
+   "id": "hive-museum",
+   "kind": "photo",
+   "title": "The Hive Museum of Arts",
+   "client": "West Haven Management of Georgia",
+   "city": "Atlanta, GA",
+   "date": "July 1, 2025",
+   "tags": [
+    "Photos"
+   ],
+   "media": [],
+   "rights": "editorial"
+  },
+  {
+   "id": "juneteenth-festival",
+   "kind": "photo",
+   "title": "Juneteenth Festival",
+   "venue": "Rainbow Park Amphitheater",
+   "date": "June 13, 2026",
+   "tags": [
+    "Photos"
+   ],
+   "media": [],
+   "client": "DeKalb County",
+   "rights": "editorial"
+  },
+  {
+   "id": "candler-crossing",
+   "kind": "photo",
+   "title": "Candler Crossing: Groundbreaking",
+   "date": "June 11, 2026",
+   "tags": [
+    "Photos"
+   ],
+   "media": [
+    {
+     "id": "candler-01",
+     "type": "photo",
+     "src": "assets/img/candler-crossing/candler-01.jpg",
+     "sell": true
+    },
+    {
+     "id": "candler-02",
+     "type": "photo",
+     "src": "assets/img/candler-crossing/candler-02.jpg",
+     "sell": true
+    }
+   ],
+   "client": "DeKalb County",
+   "venue": "Candler Road at Glenwood Road",
+   "city": "Decatur, GA",
+   "about": "Ground broken on Candler Crossing, the $28.9 million mixed-use development at Candler and Glenwood roads in south DeKalb: a 50,325 sq ft Publix, an 11,200 sq ft retail building, and 2,000 sq ft held for local businesses at reduced rent for five years, plus a plaza, greenspace, walking trail and a rebuilt MARTA stop. Covered for DeKalb County. On the shovels: DeKalb County CEO Lorraine Cochran-Johnson, District 3 Commissioner Nicole Massiah, District 7 Commissioner Dr. LaDena Bolton, Decide DeKalb president and CEO Dorian DeBarr, and Venture South Investments partner Evan Conder.",
+   "cover": "assets/img/candler-crossing/candler-01.jpg",
+   "sources": [
+    "https://www.decaturish.com/business/dekalb-celebrates-groundbreaking-of-candler-crossing-project/article_e6410411-587e-4ca5-a163-cbfd90531c66.html",
+    "https://www.wsbtv.com/news/local/progress-possibility-into-fruition-publix-retail-green-space-coming-dekalb/NCFVCCFYWJATXMZTFGXPK4PRUI/",
+    "https://roughdraftatlanta.com/2026/05/24/decide-dekalb-candler-crossing/"
+   ],
+   "rights": "editorial"
+  },
+  {
+   "id": "nh-scott-poole",
+   "kind": "photo",
+   "title": "N.H. Scott Poole: Opening",
+   "city": "Decatur, GA",
+   "date": "June 6, 2026",
+   "tags": [
+    "Photos"
+   ],
+   "media": [],
+   "client": "DeKalb County",
+   "rights": "editorial"
+  },
+  {
+   "id": "hbm-recaps",
+   "kind": "video",
+   "title": "100 Black Men of DeKalb: Recap Films",
+   "client": "100 Black Men of DeKalb",
+   "tags": [
+    "Video recaps"
+   ],
+   "media": [],
+   "rights": "editorial"
+  },
+  {
+   "id": "emory-tour",
+   "kind": "video",
+   "title": "Emory Hillandale: Hospital Tour",
+   "client": "100 Black Men of South DeKalb",
+   "date": "June 10, 2026",
+   "tags": [
+    "Photos",
+    "Video"
+   ],
+   "media": [],
+   "venue": "Emory Hillandale Hospital",
+   "city": "Lithonia, GA",
+   "about": "100 Black Men of South DeKalb walked Emory Hillandale Hospital: a tour of the facility for the chapter, shot on the floor as it happened.",
+   "rights": "editorial"
+  },
+  {
+   "id": "hundred-wednesdays",
+   "kind": "video",
+   "title": "100 Wednesdays",
+   "client": "100 Black Men of DeKalb",
+   "venue": "Escoviches, Black-owned venue",
+   "date": "July 14",
+   "tags": [
+    "Photos",
+    "Video recap"
+   ],
+   "media": [],
+   "rights": "editorial"
+  },
+  {
+   "id": "dressed-for-success",
+   "kind": "video",
+   "title": "Dressed for Success",
+   "client": "100 Black Men of South DeKalb",
+   "venue": "Dillard's, Stonecrest Mall",
+   "date": "July 16, 2026",
+   "tags": [
+    "Photos",
+    "Long-form film",
+    "Short-form recap"
+   ],
+   "media": [
+    {
+     "id": "dfs-01",
+     "type": "photo",
+     "src": "assets/img/dressed-for-success/dfs-01.jpg"
+    },
+    {
+     "id": "dfs-02",
+     "type": "photo",
+     "src": "assets/img/dressed-for-success/dfs-02.jpg"
+    },
+    {
+     "id": "dfs-03",
+     "type": "photo",
+     "src": "assets/img/dressed-for-success/dfs-03.jpg"
+    },
+    {
+     "id": "dfs-04",
+     "type": "photo",
+     "src": "assets/img/dressed-for-success/dfs-04.jpg"
+    },
+    {
+     "id": "dfs-05",
+     "type": "photo",
+     "src": "assets/img/dressed-for-success/dfs-05.jpg"
+    }
+   ],
+   "cover": "assets/img/dressed-for-success/dfs-01.jpg",
+   "about": "100 Black Men of South DeKalb partnered with Dillard's at Stonecrest Mall to teach young men how to dress: what fashion actually is, and how to carry it. A workshop that ran several hours, on the floor, with the clothes in their hands. Shot start to finish, stills and long-form film.",
+   "rights": "editorial"
+  },
+  {
+   "id": "vaunt-runway",
+   "kind": "video",
+   "title": "Vaunt: The Runway Campaign",
+   "client": "Vaunt",
+   "tags": [
+    "Commercial",
+    "Live performance"
+   ],
+   "media": [
+    {
+     "id": "vaunt-film",
+     "type": "video",
+     "src": "assets/video/vaunt.mp4",
+     "poster": "assets/frames/vaunt_0001.jpg"
+    },
+    {
+     "id": "vauntlive-film",
+     "type": "video",
+     "src": "assets/video/vauntlive.mp4",
+     "poster": "assets/frames/vauntlive_0001.jpg"
+    }
+   ],
+   "rights": "released",
+   "rightsNote": "Release on contract, both models on file"
+  }
+ ],
+ "clients": [
+  {
+   "name": "City of Bridgeport, Connecticut",
+   "cited": true
+  },
+  {
+   "name": "DeKalb County"
+  },
+  {
+   "name": "100 Black Men of DeKalb"
+  },
+  {
+   "name": "Vaunt"
+  },
+  {
+   "name": "Future Successors of ATL"
+  },
+  {
+   "name": "West Haven Management of Georgia"
+  },
+  {
+   "name": "McCluster Corp"
+  }
+ ]
+}

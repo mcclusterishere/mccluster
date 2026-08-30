@@ -1,0 +1,14 @@
+{
+  "name": "mccluster",
+  "private": true,
+  "version": "1.0.0",
+  "description": "HERE. A McCluster Production. The native shell around the platform.",
+  "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "docx": "^9.7.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.0"
+  }
+}

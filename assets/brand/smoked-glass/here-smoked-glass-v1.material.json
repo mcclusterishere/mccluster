@@ -1,0 +1,47 @@
+{
+  "name": "HERE Smoked Glass v1",
+  "version": "1.0.0",
+  "resolution": [
+    2048,
+    2048
+  ],
+  "tileable": true,
+  "workflow": "dielectric transmissive smoked optical glass",
+  "role": "Overlay/backplate material for existing floating and sticky UI",
+  "maps": {
+    "baseColor": "here-smoked-glass-v1-basecolor.png",
+    "normal": "here-smoked-glass-v1-normal.png",
+    "roughness": "here-smoked-glass-v1-roughness.png",
+    "metallic": "here-smoked-glass-v1-metallic.png",
+    "height": "here-smoked-glass-v1-height.png",
+    "ambientOcclusion": "here-smoked-glass-v1-ao.png",
+    "transmissionMask": "here-smoked-glass-v1-transmission-mask.png",
+    "opacityMask": "here-smoked-glass-v1-opacity-mask.png",
+    "thicknessMask": "here-smoked-glass-v1-thickness-mask.png",
+    "fresnelMask": "here-smoked-glass-v1-fresnel-mask.png",
+    "reflectionMask": "here-smoked-glass-v1-reflection-mask.png",
+    "backdropBlurMask": "here-smoked-glass-v1-backdrop-blur-mask.png",
+    "readabilityMask": "here-smoked-glass-v1-readability-mask.png",
+    "rubyReflectionMask": "here-smoked-glass-v1-ruby-reflection-mask.png",
+    "edgePrismMask": "here-smoked-glass-v1-edge-prism-mask.png"
+  },
+  "recommended": {
+    "metalness": 0.0,
+    "ior": 1.5,
+    "transmission": 0.62,
+    "roughnessScale": 1.0,
+    "thickness": 0.1,
+    "attenuationColor": "#0B0C0E",
+    "attenuationDistance": 0.38,
+    "environmentIntensity": 0.65,
+    "backdropBlurPx": 14,
+    "rubyReflectionColor": "#C1121F",
+    "rubyReflectionMax": 0.2
+  },
+  "reskinRules": {
+    "do": "Use on existing sticky/floating overlays where content already needs separation from media.",
+    "doNot": "Do not convert ordinary sections/cards into glass panels. This is not a glassmorphism redesign.",
+    "motion": "Reflections and edge refraction may respond subtly to scroll/pointer/device orientation.",
+    "readability": "Text contrast wins over transparency. Increase optical density dynamically when media behind the glass is bright."
+  }
+}

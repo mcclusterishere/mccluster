@@ -1,0 +1,27 @@
+{
+  "status": "REJECTED_AS_CANONICAL_DESIGN",
+  "artifact": "PRIM3_Site0_Master_Facility_v02.glb",
+  "reason": [
+    "The v02 report described the wrong level program for B1-B5.",
+    "The v02 massing elongated the north-south/front-to-rear axis instead of the east-west/left-to-right axis shown in the approved flight-deck plan.",
+    "The rear station source was treated as an extension behind the fortress instead of as the opposite rear face of one rectangular building.",
+    "L1, L2, B1, B3, B4 and B5 were genericized and no longer matched the established Site 0 architecture.",
+    "The full stair/passenger/freight/V1/V2 bypass logic was not captured."
+  ],
+  "do_not_use_for": [
+    "future massing decisions",
+    "floor-program decisions",
+    "Claude continuation",
+    "production asset approval"
+  ],
+  "historical_geometry_only": {
+    "size_mb": 68.43,
+    "geometry_count": 340,
+    "triangles": 2590466,
+    "vertices": 1490655,
+    "bounds": [[-0.48249998688697815,-0.4749999940395355,-1.136189579963684],[0.48249998688697815,0.6349999904632568,0.5059999823570251]],
+    "extents": [0.9649999737739563,1.1099999845027924,1.6421895623207092]
+  },
+  "canonical_replacement": "PRIM3_Site0_CANONICAL_ARCHITECTURE_v03.json",
+  "next_master": "PRIM3_Site0_Master_Facility_v03.glb"
+}

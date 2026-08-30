@@ -1,0 +1,47 @@
+:root {
+  --here-steel-base: url("./here-blackened-steel-v2-basecolor.png");
+  --here-steel-brush: url("./here-blackened-steel-v2-brush-mask.png");
+  --here-steel-ruby-reflect: url("./here-blackened-steel-v2-ruby-reflection-mask.png");
+}
+
+.here-steel-skin {
+  position: relative;
+  background-color: #090a0b;
+  background-image: var(--here-steel-base);
+  background-size: 32rem 32rem;
+  background-repeat: repeat;
+}
+
+.here-steel-skin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--here-steel-light, .08);
+  background:
+    linear-gradient(
+      var(--here-light-angle, 110deg),
+      transparent 18%,
+      rgba(255,255,255,.09) 42%,
+      rgba(255,255,255,.025) 54%,
+      transparent 72%
+    );
+  mix-blend-mode: screen;
+}
+
+.here-steel-skin[data-active="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #c1121f;
+  opacity: var(--here-ruby-reflect-opacity, .08);
+  -webkit-mask-image: var(--here-steel-ruby-reflect);
+  mask-image: var(--here-steel-ruby-reflect);
+  -webkit-mask-size: 32rem 32rem;
+  mask-size: 32rem 32rem;
+  mix-blend-mode: screen;
+}
+
+/* This class is purely a skin.
+   Do not alter component layout, size, route behavior, labels, or hierarchy. */

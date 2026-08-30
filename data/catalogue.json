@@ -1,0 +1,165 @@
+{
+ "generated_at": "2026-07-09T17:37:58.808Z",
+ "isrc_prefix": "QT6KV",
+ "count": 14,
+ "tracks": [
+  {
+   "slug": "who-did-the-shoot",
+   "title": "Who Did The Shoot",
+   "credit": "",
+   "album": "I AM HERE",
+   "albumSlug": "here",
+   "page": "album.html",
+   "length": "2:10",
+   "available": true,
+   "order": 1,
+   "no": 1
+  },
+  {
+   "slug": "runway-walk",
+   "title": "Runway Walk",
+   "credit": "",
+   "album": "I AM HERE",
+   "albumSlug": "here",
+   "page": "album.html",
+   "length": "1:55",
+   "available": true,
+   "order": 2,
+   "no": 2
+  },
+  {
+   "slug": "write-a-song",
+   "title": "Write a Song",
+   "credit": "",
+   "album": "I AM HERE",
+   "albumSlug": "here",
+   "page": "album.html",
+   "length": "2:17",
+   "available": true,
+   "order": 3,
+   "no": 3
+  },
+  {
+   "slug": "here",
+   "title": "Here",
+   "credit": "",
+   "album": "I AM HERE",
+   "albumSlug": "here",
+   "page": "album.html",
+   "length": "1:36",
+   "available": true,
+   "order": 4,
+   "no": 4
+  },
+  {
+   "slug": "antisocial",
+   "title": "Antisocial",
+   "credit": "",
+   "album": "I AM HERE",
+   "albumSlug": "here",
+   "page": "album.html",
+   "length": "2:57",
+   "available": true,
+   "order": 5,
+   "no": 5
+  },
+  {
+   "slug": "lightroom",
+   "title": "Lightroom",
+   "credit": "",
+   "album": "I AM HERE",
+   "albumSlug": "here",
+   "page": "album.html",
+   "length": "2:12",
+   "available": true,
+   "order": 6,
+   "no": 6
+  },
+  {
+   "slug": "got-wifi",
+   "title": "Got WiFi?",
+   "credit": "The PRIM3 blue-team anthem",
+   "album": "PRIM3",
+   "page": "album.html",
+   "length": "1:32",
+   "available": true,
+   "order": 6,
+   "no": 7
+  },
+  {
+   "slug": "environmental-injustice",
+   "title": "Environmental Injustice",
+   "credit": "ft. Ocho & Evangelist Angel · the Equity Uprise anthem",
+   "album": "Equity Uprise",
+   "page": "album.html",
+   "length": "2:43",
+   "available": true,
+   "order": 7,
+   "no": 8
+  },
+  {
+   "slug": "please-set-me-free",
+   "title": "Please Set Me Free",
+   "credit": "",
+   "album": "Equity Uprise",
+   "page": "album.html",
+   "length": "3:22",
+   "available": true,
+   "no": 9
+  },
+  {
+   "slug": "money-or-the-power",
+   "title": "Money or the Power",
+   "credit": "",
+   "album": "Equity Uprise",
+   "page": "album.html",
+   "length": "",
+   "available": true,
+   "no": 10
+  },
+  {
+   "slug": "vaunt",
+   "title": "Vaunt (Acoustic)",
+   "credit": "The Vaunt Private Flights jingle · guitar by Zakir · from the Vaunt EP (with \"Jet Pass\")",
+   "album": "Vaunt · EP",
+   "page": "album.html",
+   "length": "1:32",
+   "available": true,
+   "order": 8,
+   "no": 11
+  },
+  {
+   "slug": "dealer-plates",
+   "title": "Dealer Plates (A-Side)",
+   "credit": "Prod. Zakir & McCluster",
+   "album": "Whip Equipped",
+   "page": "album.html",
+   "length": "1:37",
+   "available": true,
+   "order": 9,
+   "no": 12
+  },
+  {
+   "slug": "dealer-plates-b",
+   "title": "Dealer Plates (B-Side)",
+   "credit": "Prod. Zakir & McCluster",
+   "album": "Whip Equipped",
+   "page": "album.html",
+   "length": "1:37",
+   "available": true,
+   "order": 10,
+   "no": 13
+  },
+  {
+   "slug": "upset",
+   "title": "Upset",
+   "credit": "Hitman Halo × Raheem × Rahndrx",
+   "album": "Singles",
+   "page": "album.html",
+   "length": "3:04",
+   "available": true,
+   "order": 11,
+   "no": 14
+  }
+ ]
+}

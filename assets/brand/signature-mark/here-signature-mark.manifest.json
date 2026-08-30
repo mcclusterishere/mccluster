@@ -1,0 +1,29 @@
+{
+  "name": "HERE Signature Mark",
+  "version": "1.0.0",
+  "type": "semantic SVG master / 3D extrusion source",
+  "viewBox": "0 0 1200 360",
+  "groups": {
+    "chassis": "blackened-steel physical letter body",
+    "ruby-inlay": "independent Ruby Core emissive channels",
+    "specular": "chrome-edge highlight channel",
+    "engraving": "registration/industrial detail"
+  },
+  "materialBindings": {
+    "chassis": "HERE_BLACKENED_STEEL_v1",
+    "ruby-inlay": "HERE_RUBY_CORE_v1",
+    "specular": "HERE_CHROME_EDGE_v1"
+  },
+  "animation": {
+    "idle": "No global glow. Ruby inlay nearly dormant.",
+    "reveal": "Specular sweep traverses chassis, then ruby inlay ignites left-to-right.",
+    "scroll": "Use camera/light movement on future extruded GLB; SVG fallback may translate a masked highlight.",
+    "active": "Ruby energy may travel only inside ruby-inlay paths."
+  },
+  "3dConversion": {
+    "recommendedExtrusionDepth": 0.035,
+    "bevelDepth": 0.004,
+    "bevelSegments": 3,
+    "note": "Extrude chassis and ruby-inlay as separate meshes so materials and emissive animation remain independent."
+  }
+}

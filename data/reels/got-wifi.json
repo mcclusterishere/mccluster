@@ -1,0 +1,44 @@
+{
+ "scenes": [
+  {
+   "begin": 0,
+   "src": "assets/video/prim3.mp4",
+   "poster": "assets/frames/prim3_0001.jpg"
+  },
+  {
+   "begin": 10.2,
+   "src": "assets/video/bussalick.mp4",
+   "poster": "assets/frames/bussalick_0001.jpg"
+  },
+  {
+   "begin": 20.334,
+   "src": "assets/video/designer.mp4",
+   "poster": "assets/frames/designer_0001.jpg"
+  },
+  {
+   "begin": 30.861,
+   "src": "assets/video/editors.mp4",
+   "poster": "assets/frames/editors_0001.jpg"
+  },
+  {
+   "begin": 44.288,
+   "src": "assets/video/study.mp4",
+   "poster": "assets/frames/study_0001.jpg"
+  },
+  {
+   "begin": 54.102,
+   "src": "assets/video/warroom.mp4",
+   "poster": "assets/frames/warroom_0001.jpg"
+  },
+  {
+   "begin": 63.979,
+   "src": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg"
+  },
+  {
+   "begin": 75.629,
+   "src": "assets/video/studio360.mp4",
+   "poster": "assets/frames/studio360_0001.jpg"
+  }
+ ]
+}

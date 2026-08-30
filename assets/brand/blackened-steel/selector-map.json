@@ -1,0 +1,55 @@
+{
+  "source": "McCluster-Portfolio current interface",
+  "selectors": [
+    {
+      "selector": ".site-head",
+      "use": "structural shell/backplate only",
+      "intensity": "low"
+    },
+    {
+      "selector": ".appbar",
+      "use": "primary mobile navigation chassis without changing geometry",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".head-cta / .btn / .sp__cta",
+      "use": "button housing/edge treatment only",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".mini",
+      "use": "mini-player structural frame around existing layout",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".now__ctl / .now__pp",
+      "use": "control housings and rims; preserve current control positions",
+      "intensity": "low-to-medium"
+    },
+    {
+      "selector": ".sp__pills",
+      "use": "selected/idle pill shells only if legibility remains strong",
+      "intensity": "low"
+    },
+    {
+      "selector": ".sp__rtile",
+      "use": "optional structural backplate, never over artwork",
+      "intensity": "low"
+    },
+    {
+      "selector": ".wantsite__btn",
+      "use": "mechanical housing while retaining current CTA shape and hierarchy",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".sound-toggle / .float-pause",
+      "use": "compact hardware skin",
+      "intensity": "medium"
+    },
+    {
+      "selector": "existing borders/dividers",
+      "use": "replace dead CSS gray with subtle brushed/metal response",
+      "intensity": "low"
+    }
+  ]
+}

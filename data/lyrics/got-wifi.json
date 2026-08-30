@@ -1,0 +1,204 @@
+{
+ "duration_seconds": 92,
+ "language": "en",
+ "userId": "",
+ "file_generated_timestamp": 1783300173,
+ "lyrics_created_timestamp": 1783299166,
+ "plain": "If you got Wi-Fi\nThrow your hands up high\nBet you can't crack it\n\nBlue team defense is my perspective\nAny pen test is gonna be ineffective\n\nEvil twin rogue access\nWireless intrusion prevention system detects it\n\nHack RF sniffs\ns’Why i use shields to filter all of my spectrums\nAnd if they jam spectrums\nFrequency agile networks correct it\n\nCan't blue snarf, blue jack this\nHide my device and do security patches\n\nDisassociation attack, missed\nI'm WPA3 protected\n\nInitialization vectors\nCannot crack my encryption, AES lit\n\nA black hat got a death wish\nYou thought you had a read on my system\nWell you're dyslexic\n\nI'm that guy\nSo really you should never doubt a soul\nWhen I come for you\nPrime hack 5\nMy pineapple 7 router code\nYou gon’ need a few\nPlayin’ with fire\nI don't need to play with firewalls\nPhysical and data sniper\nOSI layers I control\n1 and 2\n\n1 and 2\n1 and 2\n1 and 2\n1 and 2\n1 and 2\n1 and 2\n1 and 2",
+ "id": 147699,
+ "songTitle": "Got WiFi?",
+ "timed": {
+  "line": [
+   {
+    "begin": 0.996681858749,
+    "end": 2.707203427143,
+    "content": "If you got Wi-Fi"
+   },
+   {
+    "begin": 5.843931278634,
+    "end": 7.554452847028,
+    "content": "Throw your hands up high"
+   },
+   {
+    "begin": 14.610564764681,
+    "end": 15.459091211995,
+    "content": "Bet you can't crack it"
+   },
+   {
+    "begin": 20.334961563634,
+    "end": 22.274450586065,
+    "content": "Blue team defense is my perspective"
+   },
+   {
+    "begin": 23.633734396382,
+    "end": 25.600160766347,
+    "content": "Any pen test is gonna be ineffective"
+   },
+   {
+    "begin": 26.145221157851,
+    "end": 27.276589754269,
+    "content": "Evil twin rogue access"
+   },
+   {
+    "begin": 27.563640863926,
+    "end": 29.354974474921,
+    "content": "Wireless intrusion prevention system detects it"
+   },
+   {
+    "begin": 30.861361456536,
+    "end": 31.70988790385,
+    "content": "Hack RF sniffs"
+   },
+   {
+    "begin": 32.019877848515,
+    "end": 34.457707800321,
+    "content": "s’Why i use shields to filter all of my spectrums"
+   },
+   {
+    "begin": 35.082527994288,
+    "end": 35.931054441602,
+    "content": "And if they jam spectrums"
+   },
+   {
+    "begin": 37.076102159814,
+    "end": 39.069465877313,
+    "content": "Frequency agile networks correct it"
+   },
+   {
+    "begin": 39.421966323556,
+    "end": 40.863114416612,
+    "content": "Can't blue snarf, blue jack this"
+   },
+   {
+    "begin": 40.934456297971,
+    "end": 43.170256143274,
+    "content": "Hide my device and do security patches"
+   },
+   {
+    "begin": 44.288997858035,
+    "end": 45.541584518355,
+    "content": "Disassociation attack, missed"
+   },
+   {
+    "begin": 45.727831022788,
+    "end": 48.731345272803,
+    "content": "I'm WPA3 protected"
+   },
+   {
+    "begin": 49.258096685905,
+    "end": 50.147029154519,
+    "content": "Initialization vectors"
+   },
+   {
+    "begin": 51.030279526388,
+    "end": 52.875487832451,
+    "content": "Cannot crack my encryption, AES lit"
+   },
+   {
+    "begin": 54.10261028143,
+    "end": 54.991542750045,
+    "content": "A black hat got a death wish"
+   },
+   {
+    "begin": 55.131911584459,
+    "end": 56.24981150711,
+    "content": "You thought you had a read on my system"
+   },
+   {
+    "begin": 56.404069911346,
+    "end": 57.171784316059,
+    "content": "Well you're dyslexic"
+   },
+   {
+    "begin": 57.468936931041,
+    "end": 58.236651335753,
+    "content": "I'm that guy"
+   },
+   {
+    "begin": 59.086019575177,
+    "end": 60.783072469804,
+    "content": "So really you should never doubt a soul"
+   },
+   {
+    "begin": 61.079804188731,
+    "end": 61.887924614744,
+    "content": "When I come for you"
+   },
+   {
+    "begin": 62.001987445707,
+    "end": 62.715827155352,
+    "content": "Prime hack 5"
+   },
+   {
+    "begin": 63.97914666508,
+    "end": 65.40682608437,
+    "content": "My pineapple 7 router code"
+   },
+   {
+    "begin": 65.603384542155,
+    "end": 66.721284464806,
+    "content": "You gon’ need a few"
+   },
+   {
+    "begin": 66.821668173975,
+    "end": 67.589382578687,
+    "content": "Playin’ with fire"
+   },
+   {
+    "begin": 68.209783364074,
+    "end": 70.485989230678,
+    "content": "I don't need to play with firewalls"
+   },
+   {
+    "begin": 71.233079728684,
+    "end": 72.741571190575,
+    "content": "Physical and data sniper"
+   },
+   {
+    "begin": 73.433945201404,
+    "end": 75.130998096031,
+    "content": "OSI layers I control"
+   },
+   {
+    "begin": 75.629759921461,
+    "end": 76.410942999941,
+    "content": "1 and 2"
+   },
+   {
+    "begin": 78.133670553936,
+    "end": 78.982197001249,
+    "content": "1 and 2"
+   },
+   {
+    "begin": 80.194588088297,
+    "end": 81.04311453561,
+    "content": "1 and 2"
+   },
+   {
+    "begin": 82.551816445529,
+    "end": 83.400342892842,
+    "content": "1 and 2"
+   },
+   {
+    "begin": 84.707014696258,
+    "end": 85.555541143571,
+    "content": "1 and 2"
+   },
+   {
+    "begin": 86.835275599453,
+    "end": 87.683802046766,
+    "content": "1 and 2"
+   },
+   {
+    "begin": 89.381065389421,
+    "end": 90.229591836735,
+    "content": "1 and 2"
+   },
+   {
+    "begin": 91.53626364015,
+    "end": 92.39825876123,
+    "content": "1 and 2"
+   }
+  ]
+ }
+}

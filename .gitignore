@@ -1,0 +1,31 @@
+android/
+ios/
+node_modules/
+package-lock.json
+www/
+dist/
+.env
+.env.*
+!.env.example
+!**/.env.example
+# the services pin their dependencies — CI runs npm ci against these
+!apps/*/package-lock.json
+!packages/*/package-lock.json
+
+# Agent scratch: harnesses, contact sheets and renders. 68MB of it, and
+# this repo publishes to GitHub Pages — none of it belongs on the site.
+scratchpad/
+
+# the native app generates its platform projects from app.json (CNG)
+native/android/
+native/ios/
+native/node_modules/
+native/.expo/
+
+# Site 0: the fitted exterior shell is 47 MB and the repo already carries its
+# source zip at the root. Run _unfinished/site0-game/tools/unpack_shell.py.
+_unfinished/site0-game/game/assets/site0_shell_fitted.glb
+
+# site0/ is generated from _unfinished/site0-game by tools/publish-site0.sh
+# at deploy time. Committing it would be a second copy of the same build.
+/site0/

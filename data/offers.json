@@ -1,0 +1,846 @@
+{
+  "note": "THE OFFER LEDGER: four core offers, seven selectable configurations, one source of truth. Prices live here and nowhere else. Values marked approved:true render as real prices. Values marked approved:false NEVER render a number to a visitor; they render the offer's public_note instead, in polished language, with no warning chip, no filename, no branch name and no developer reasoning. Internal reasoning belongs in docs/sales-redesign/, never on the page. Derived values (Equity base, Equity cap, Runway first-year) are computed by js/offers.js from the formulas below and must never be hardcoded.",
+  "version": "2026-08-10",
+  "approved_by": "McCluster",
+  "currency": "USD",
+  "estimate_disclaimer": "This is an estimate, not the final agreement.",
+  "formulas": {
+    "equity_base": {
+      "expression": "m.amount * equity.base_multiplier",
+      "note": "Equity Uprise cash price is a fraction of the approved standard price. Change the standard price and this moves with it."
+    },
+    "equity_cap": {
+      "expression": "cap_multiplier * 12 * m.amount",
+      "cap_basis": "normal_12_month_service_value",
+      "note": "The cap is never a stored constant. It is the multiplier times the normal twelve-month value of the service at its approved standard price."
+    },
+    "runway_first_year": {
+      "expression": "domain + (12 * recurring)",
+      "note": "The $66 go-live total already contains month one of hosting, and the $33 deposit is that same month paid early so the draft can start before the domain is bought. The first year is the domain plus twelve months of hosting; month one is counted once and the remaining eleven follow it."
+    },
+    "runway_hosting_year": {
+      "expression": "annual.monthly_equivalent * annual.months",
+      "note": "Twelve months of hosting bought together, at the annual rate."
+    },
+    "runway_year_start": {
+      "expression": "domain + (annual.monthly_equivalent * annual.months)",
+      "note": "Going live with the year paid: the domain plus the twelve months. The monthly path's $66 buys the domain and month one only."
+    },
+    "runway_year_saving": {
+      "expression": "(12 * recurring) - (annual.monthly_equivalent * annual.months)",
+      "note": "What paying together saves over twelve months. Never stored — a stored saving is a saving that survives a price change."
+    }
+  },
+  "modes": {
+    "m": {
+      "id": "m",
+      "name": "M Mode",
+      "emblem": "assets/img/m-mark.png",
+      "short": "Pay the standard price. Keep every dollar you make.",
+      "revenue_share": false,
+      "default": true
+    },
+    "equity": {
+      "id": "equity",
+      "name": "Equity Uprise",
+      "emblem": "assets/img/eu-favicon.png",
+      "short": "A lower monthly price, and a time-limited share of eligible connected revenue.",
+      "revenue_share": true,
+      "program_owner": "McCluster Corp",
+      "program_purpose": [
+        "business development",
+        "workforce development",
+        "digital capacity building"
+      ],
+      "not_ownership": true,
+      "approval_required": true,
+      "agreement_required": true,
+      "program_fit_review_required": true,
+      "eligibility": {
+       "note": "WHAT MAKES SOMEBODY ELIGIBLE, and why each one is not negotiable. Equity Uprise is paid out of a share of revenue, so the whole arrangement rests on that revenue being measurable. Every requirement below exists to make it measurable; none of them is a preference.",
+       "requirements": [
+        {
+         "id": "site_built_here",
+         "must": "The website has to be one we built.",
+         "why": "The revenue share is calculated from what the site brings in. On a site somebody else built and hosts, we cannot see the orders, cannot verify a total, and would be asking the customer to self-report the number their own bill is based on. That is not a term either side should accept."
+        },
+        {
+         "id": "traffic_through_the_site",
+         "must": "The connected traffic has to run through that website.",
+         "why": "A link in a bio that goes straight to a third-party checkout is a sale the site never sees. The share is on CONNECTED revenue, and traffic routed around the site is revenue nobody can connect - which ends in an argument about a number instead of a business getting built."
+        },
+        {
+         "id": "payment_rails_connected",
+         "must": "Payments have to run on the rails we connect for you.",
+         "why": "This is the meter. It is what turns 'eligible connected revenue' from a phrase in an agreement into a figure both sides can read off the same screen on the same day."
+        }
+       ],
+       "plain": "To qualify: the website is one we built, your traffic runs through it, and payments run on the rails we connect. That is what makes the revenue countable, and the whole arrangement is priced off a count.",
+       "not_eligible": "A business that wants to keep its existing site, or send its buyers somewhere else to pay, can still work with us - at the standard price, with no revenue share and nothing to measure. That is M Mode, and it is not a lesser door.",
+       "discount_percent": 50
+      },
+      "never_preselected": true,
+      "plain": "No stock. No membership interest. No ownership. Equity Uprise is a time-limited revenue-share agreement. Revenue sharing ends at the earlier of the stated term or the stated cap, whichever comes first. The domain is always paid separately, up front. Participation requires a program-fit review and a signed agreement.",
+      "acknowledgement": "I understand Equity Uprise shares a percentage of eligible connected revenue for a limited term, that it takes no ownership of my business, and that the final terms are set in a signed agreement."
+    }
+  },
+  "revenue_definition": {
+    "working_basis": "Eligible online revenue processed through the connected payment rails used by the website.",
+    "approved": false,
+    "public_note": "What counts as eligible revenue, how it is measured and how it is reported are set with you in discovery and written into the agreement before anything is signed.",
+    "internal_open_terms": [
+      "gross versus net receipts",
+      "processor fees",
+      "taxes",
+      "refunds and chargebacks",
+      "offline transactions",
+      "revenue attribution window",
+      "reporting cadence and disputes",
+      "audit rights",
+      "termination",
+      "data access and export"
+    ]
+  },
+  "offers": [
+    {
+      "id": "runway",
+      "position": 1,
+      "stage": "Take off",
+      "name": "Domain and hosting",
+      "former_name": "Runway",
+      "infrastructure": true,
+      "infrastructure_note": "This is not the fourth service. It is the ground the other three stand on, and it is priced like plumbing rather than like work.",
+      "identity": "legitimacy and access",
+      "tagline": "Icons in the clique. Stop scrolls of death.",
+      "lede": "The runway your business takes off from, and here is what the runway actually is. The domain is your address: yourname.com, rented a year at a time, and it is yours, not a slug hanging off somebody else's platform. The hosting is the ground it sits on: the machine that answers when somebody types that address, kept online, kept secure, kept backed up. Two bills, both mine to run. The website itself I build for free.",
+      "primary": true,
+      "modes": [
+        "m"
+      ],
+      "equity_available": false,
+      "equity_note": "Domain and hosting has no Equity Uprise version. There is no reason to trade a share of your revenue for an address and a machine to keep it online.",
+      "pricing": {
+        "deposit": {
+          "label": "to start the draft",
+          "amount": 33,
+          "cadence": "once",
+          "approved": true,
+          "credited_to": "hosting_first",
+          "line": "Sends the work before the domain. The draft gets built and previewed first, and the $33 is your first month, not an extra fee. It is also the first of the drafts: buying the domain puts you on a draft a month."
+        },
+        "start": {
+          "label": "to go live",
+          "approved": true,
+          "components": [
+            {
+              "id": "domain",
+              "label": "Domain, one year",
+              "amount": 33,
+              "cadence": "once",
+              "approved": true
+            },
+            {
+              "id": "hosting_first",
+              "label": "First month of hosting",
+              "amount": 33,
+              "cadence": "once",
+              "approved": true
+            }
+          ],
+          "total": 66
+        },
+        "recurring": {
+          "label": "hosting, every month after the first",
+          "amount": 33,
+          "cadence": "month",
+          "approved": true
+        },
+        "domain_renewal": {
+          "label": "Domain renewal",
+          "amount": 33,
+          "cadence": "year",
+          "approved": true
+        },
+        "first_year": {
+          "label": "first year, all in",
+          "derived": "runway_first_year",
+          "approved": true,
+          "breakdown": "$33 domain + 12 × $33 hosting"
+        },
+        "annual": {
+          "label": "to go live, year of hosting paid",
+          "approved": true,
+          "monthly_equivalent": 30,
+          "months": 12,
+          "cadence": "once",
+          "note": "The same service. Paying the twelve months together drops the monthly rate from $33 to $30."
+        },
+        "hosting_year": {
+          "label": "hosting, renewed by the year",
+          "approved": true,
+          "cadence": "year",
+          "derived": "runway_hosting_year"
+        }
+      },
+      "drafts": {
+        "name": "A draft a month",
+        "headline": "Buying the domain puts you on a redraw.",
+        "what": "A draft is a fresh cut of your site: new work on the layout, the copy, the photography, whatever the last month showed was not landing. Not a support ticket and not a patch. A draft, made for you, that you either take or leave standing.",
+        "included_with": "domain",
+        "first_payment_is_first_draft": true,
+        "first_year": {
+          "cadence": "month",
+          "count": 12,
+          "line": "Twelve months, twelve drafts. One a month for the first year, starting with the one the deposit paid for."
+        },
+        "after": {
+          "cadence": "quarter",
+          "forever": true,
+          "line": "After the first year it settles to a draft every quarter, and it never stops. Four a year, for as long as the site is hosted here, at no extra charge."
+        },
+        "upgraded": {
+          "cadence": "month",
+          "forever": true,
+          "requires": "anti-social",
+          "line": "On the full management service it never steps down. A draft a month, for as long as the service runs."
+        },
+        "plain": "Nobody else gives you a redesign every month for the price of hosting. That is the whole point: the site is never the one you bought a year ago."
+      },
+      "includes": [
+        "Domain registration, one year",
+        "Hosting",
+        "SSL",
+        "The website build itself, free",
+        "Backups"
+      ],
+      "excludes": [
+        "Ongoing website management",
+        "Ongoing social media management",
+        "Photography",
+        "Video production",
+        "Songwriting",
+        "Campaign strategy"
+      ],
+      "revenue_share_line": "None. You keep 100% of what you make.",
+      "replaces": {
+        "legacy_plan": "hosting",
+        "legacy_price": 87,
+        "public": false,
+        "internal_note": "Domain and hosting replaces the $87/mo Hosting plan for all new customers. The $87 plan is preserved in legacy_plans for grandfathered agreements and existing records. It must not appear in the active new-customer journey."
+      },
+      "next_step": {
+        "label": "Get the address",
+        "href": "onboard.html?offer=runway"
+      },
+      "checkout_step": {
+        "label": "Start the draft for $33",
+        "href": "onboard.html?offer=runway"
+      },
+      "one_line": "Your own address, and a machine that keeps it online.",
+      "checkout": {
+        "note": "domain_search puts the address box in this card. WHICH endings get looked up, and which of them can be bought in one tap, live in public.domain_tlds and not here \u2014 a figure that decides what a card is charged belongs in the same database as every other one. This flag only says the box appears.",
+        "m": {
+          "offering": "domain-hosting-start",
+          "domain_search": true,
+          "label": "Get the address",
+          "after": "Then {recurring}, and the domain renews at $33/year. No revenue share."
+        },
+        "year": {
+          "offering": "domain-hosting-year",
+          "domain_search": true,
+          "label": "Get the address",
+          "after": "$33 domain plus twelve months at $30. Saves {saving} against paying monthly."
+        }
+      },
+      "billing_modes": [
+        "m",
+        "year"
+      ]
+    },
+    {
+      "id": "anti-social",
+      "position": 2,
+      "stage": "Manage",
+      "name": "Anti-Social",
+      "full_name": "Anti-Social Management",
+      "identity": "management and control",
+      "lede": "Your website and your social presence, run as one service. Website management and social management are not separate products here.",
+      "primary": false,
+      "modes": [
+        "m",
+        "equity"
+      ],
+      "equity_available": true,
+      "merged_from": [
+        "Web Management",
+        "Management + Social"
+      ],
+      "pricing": {
+        "m": {
+          "amount": 875,
+          "cadence": "month",
+          "approved": true,
+          "revenue_share_line": "None. You keep 100% of what you make."
+        },
+        "equity": {
+          "derived": "equity_base",
+          "base_multiplier": 0.5,
+          "cadence": "month",
+          "approved": true,
+          "share_percent": 50,
+          "share_basis": "approved eligible connected online revenue",
+          "term_months": 12,
+          "cap": {
+            "multiplier": 10,
+            "basis": "normal_12_month_service_value",
+            "derived": "equity_cap"
+          },
+          "ends_at": "the earlier of the twelve-month term or the cap",
+          "domain_upfront": true
+        }
+      },
+      "includes": [
+        "Website build or transition",
+        "Hosting, SSL and backups",
+        "Routine website edits",
+        "Website maintenance",
+        "Payment-rail connections",
+        "Domain support",
+        "Social account management",
+        "Content scheduling",
+        "Caption and posting support",
+        "Brand-voice maintenance",
+        "Strategy and reporting",
+        "Client approval workflow"
+      ],
+      "excludes": [
+        "Original photography and video shoots: those belong to Who Did the Shoot unless a written content allowance says otherwise"
+      ],
+      "activation": {
+        "name": "The first month",
+        "free": true,
+        "free_note": "The whole management service, every module, for one month at no charge. Not a trial of a cut-down version: the real thing, running.",
+        "length_weeks": 4,
+        "shape": "One module a week. Each one is switched on, working, and producing something you can look at before the next one starts, so by the end of the month you have watched every part of it earn its place instead of being handed a bundle and a bill.",
+        "sprints": [
+          {
+            "week": 1,
+            "id": "website",
+            "name": "The website goes up",
+            "what": "Build, content, domain pointed, live and indexed. The room everything else sends people to.",
+            "permanent": true,
+            "after": "yours. It does not switch off, whatever you decide at the end of the month."
+          },
+          {
+            "week": 2,
+            "id": "inbound",
+            "name": "Inbound turned on",
+            "what": "Automation built into your own backend that works on the traffic coming toward you: search surface, the paths people already take to find somebody doing what you do, and capture at the end of every one of them so an arrival becomes a name and a number.",
+            "permanent": false,
+            "after": "at the end of the free month unless the service continues, and everything it built stays on the record."
+          },
+          {
+            "week": 3,
+            "id": "outbound",
+            "name": "Outbound turned on",
+            "what": "The other direction: automated reach-out and follow-up running from the same backend, so the people worth contacting get contacted and nobody goes cold because a week got busy.",
+            "permanent": false,
+            "after": "at the end of the free month unless the service continues, and everything it built stays on the record."
+          },
+          {
+            "week": 4,
+            "id": "social",
+            "name": "Social activated",
+            "what": "Those same tools pointed at your feeds. Scheduling, posting and the parts of being present online that eat an evening, running without you sitting in them.",
+            "permanent": false,
+            "after": "at the end of the free month unless the service continues, and everything it built stays on the record."
+          }
+        ],
+        "at_the_end": {
+          "prompt": "At the end of the month you decide, once, with a month of evidence instead of a pitch.",
+          "options": [
+            {
+              "id": "upgrade",
+              "name": "Keep it",
+              "what": "Everything stays exactly as it is running. The standard price starts from that month.",
+              "price_from": "anti-social"
+            },
+            {
+              "id": "social-equity",
+              "name": "Keep social, on Equity",
+              "what": "The social module alone stays running, on Equity Uprise: a lower monthly price against a capped, time-limited share of eligible connected revenue. No ownership is taken, and it needs a program-fit review and a signed agreement, so it is arranged rather than clicked.",
+              "price_from": "social",
+              "mode": "equity",
+              "requires_agreement": true
+            },
+            {
+              "id": "cruise",
+              "name": "Cruise",
+              "what": "The three automation modules switch off. The website stays live, stays indexed and stays yours, and you are back to the address and the machine that keeps it online.",
+              "price_from": "runway"
+            }
+          ],
+          "no_trap": "There is no notice period, no cancellation fee, and nothing to phone up and argue about. Cruising is a button, not a negotiation, and the site does not go dark when you press it."
+        }
+      },
+      "next_step": {
+        "label": "Compare the two modes",
+        "href": "onboard.html?offer=anti-social"
+      },
+      "one_line": "Your website and your feeds, run as one service. You never touch a dashboard.",
+      "checkout": {
+        "m": {
+          "offering": "anti-social-m",
+          "label": "Start the free month",
+          "after": "First month free. Billing starts at month two."
+        },
+        "equity": {
+          "onboard": true,
+          "label": "Start the agreement",
+          "after": "Plus {share}% of eligible connected revenue, for up to {term} months or {cap} in share payments, whichever comes first. No ownership taken."
+        }
+      }
+    },
+    {
+      "id": "social",
+      "position": 5,
+      "stage": "Manage",
+      "name": "Social only",
+      "identity": "presence without the whole desk",
+      "standalone_of": "anti-social",
+      "standalone_note": "Not a fifth service on the ladder. It is the week-four module bought on its own, for somebody who wants the feeds run and nothing else, and it exists because that is the module people ask to keep.",
+      "lede": "The social module on its own: scheduling, posting and the automation behind it, running without you sitting in it.",
+      "primary": false,
+      "listed": false,
+      "modes": [
+        "m",
+        "equity"
+      ],
+      "equity_available": true,
+      "pricing": {
+        "m": {
+          "approved": false,
+          "cadence": "month",
+          "public_note": "Priced with you against how many feeds, how often, and how much of it we are producing rather than scheduling. Set in discovery and written into the agreement."
+        },
+        "equity": {
+          "derived": "equity_base",
+          "base_multiplier": 0.5,
+          "cadence": "month",
+          "approved": false,
+          "share_percent": 50,
+          "share_basis": "approved eligible connected online revenue",
+          "term_months": 12,
+          "cap": {
+            "multiplier": 10,
+            "basis": "normal_12_month_service_value",
+            "derived": "equity_cap"
+          },
+          "ends_at": "the earlier of the twelve-month term or the cap",
+          "domain_upfront": true,
+          "public_note": "The Equity Uprise version follows the same arithmetic as the full service: half the monthly price, against a capped share of eligible connected revenue for up to twelve months. The monthly figure lands when the standard price does."
+        }
+      },
+      "includes": [
+        "Social account management",
+        "Content scheduling",
+        "Caption and posting support",
+        "Brand-voice maintenance",
+        "The automation behind all of it"
+      ],
+      "excludes": [
+        "Website management: that is the full service",
+        "Original photography and video shoots"
+      ],
+      "next_step": {
+        "label": "Arrange it",
+        "href": "onboard.html?offer=social"
+      }
+    },
+    {
+      "id": "who-did-the-shoot",
+      "position": 3,
+      "stage": "Create",
+      "name": "Who Did the Shoot",
+      "identity": "visual production",
+      "lede": "The original visual-content service. Photography and video, shot and graded in house.",
+      "primary": false,
+      "modes": [
+        "m",
+        "equity"
+      ],
+      "equity_available": true,
+      "pricing": {
+        "m": {
+          "approved": true,
+          "cadence": "project",
+          "from": 201,
+          "note": "Priced per project, per day or per event. Nothing here is flattened into one unlimited package. Lines marked priced_by golden-33 sit at exactly 67% of the market median in data/market-rates.json — the ceiling, not a target: a line already under it was left alone rather than raised. scripts/golden-check.mjs re-derives every one of them and fails if the ledger drifts above.",
+          "rate_lines": [
+            {
+              "id": "photo-portrait",
+              "label": "Portrait · headshot session",
+              "amount": 285,
+              "unit": "the session"
+            },
+            {
+              "id": "photo-event",
+              "label": "Event coverage",
+              "amount": 201,
+              "unit": "per hour · two-hour minimum",
+              "priced_by": "golden-33",
+              "was": 310,
+              "market_median": 300,
+              "market_checked": "2026-08-29"
+            },
+            {
+              "id": "vid-half",
+              "label": "Video half-day",
+              "amount": 990,
+              "unit": "up to five hours · kit included"
+            },
+            {
+              "id": "vid-full",
+              "label": "Video full-day",
+              "amount": 1600,
+              "unit": "eight hours · kit included"
+            },
+            {
+              "id": "event-film",
+              "label": "Event film",
+              "amount": 2040,
+              "unit": "full day + highlight film"
+            },
+            {
+              "id": "photo-half",
+              "label": "Photo brand half-day",
+              "amount": 938,
+              "unit": "up to four hours",
+              "priced_by": "golden-33",
+              "was": 2210,
+              "market_median": 1400,
+              "market_checked": "2026-08-29"
+            },
+            {
+              "id": "photo-full",
+              "label": "Photo brand full-day",
+              "amount": 1842.50,
+              "unit": "eight hours",
+              "priced_by": "golden-33",
+              "was": 2680,
+              "market_median": 2750,
+              "market_checked": "2026-08-29"
+            },
+            {
+              "id": "music-video",
+              "label": "Music video",
+              "amount": 2740,
+              "unit": "from · one day, one location"
+            },
+            {
+              "id": "brand-film",
+              "label": "Brand film",
+              "amount": 3440,
+              "unit": "shoot + edit · score included"
+            }
+          ]
+        },
+        "equity": {
+          "approved": false,
+          "public_note": "Equity terms structured during discovery.",
+          "public_detail": "Production work is quoted per project, so an Equity Uprise arrangement is built around the specific engagement and written into the agreement.",
+          "internal_note": "No Equity Uprise formula exists for production work. The Anti-Social 50% / 12-month / 10x cap does NOT carry over. Do not fabricate a number or a percentage."
+        }
+      },
+      "includes": [
+        "Photography",
+        "Video production",
+        "Event coverage",
+        "Brand shoots",
+        "Product photography",
+        "Interviews",
+        "Short-form and promotional video",
+        "Editing and grading",
+        "Delivery of final assets"
+      ],
+      "rights_note": "Usage rights are defined by the agreement.",
+      "standalone": true,
+      "next_step": {
+        "label": "Book a shoot",
+        "href": "onboard.html?offer=who-did-the-shoot"
+      },
+      "one_line": "Photography and video, shot and graded in house.",
+      "checkout": {
+        "m": {
+          "offering": "booking-deposit",
+          "label": "Book a date",
+          "after": "A deposit books the date and comes off the total."
+        },
+        "equity": {
+          "onboard": true,
+          "label": "Start the agreement",
+          "after": "Structured in discovery. No ownership taken."
+        }
+      }
+    },
+    {
+      "id": "write-a-song",
+      "position": 4,
+      "stage": "Campaign",
+      "name": "Write a Song",
+      "full_name": "Write a Song Campaign",
+      "identity": "culture and amplification",
+      "lede": "The highest-level cultural campaign. An original song built into a rollout, not a jingle purchase.",
+      "primary": false,
+      "modes": [
+        "m",
+        "equity"
+      ],
+      "equity_available": true,
+      "pricing": {
+        "m": {
+          "approved": true,
+          "cadence": "campaign",
+          "from": 525,
+          "note": "Third-party budgets (influencer, paid media, travel, licensing) are always quoted as separate lines. They are never folded into a single total.",
+          "rate_lines": [
+            {
+              "id": "scoring",
+              "label": "Custom scoring",
+              "amount": 525,
+              "unit": "from · per finished minute"
+            },
+            {
+              "id": "sync",
+              "label": "Sync license",
+              "amount": 875,
+              "unit": "from · web · one year · non-exclusive"
+            },
+            {
+              "id": "jingle",
+              "label": "Jingle · brand anthem",
+              "amount": 1690,
+              "unit": "from · written, produced, yours"
+            },
+            {
+              "id": "campaign-full",
+              "label": "Full creative campaign",
+              "amount": 15750,
+              "unit": "flat · one campaign end to end"
+            }
+          ],
+          "separate_line_items": [
+            "Creative fee",
+            "Production fee",
+            "Influencer budget",
+            "Paid-media budget",
+            "Travel",
+            "Licensing",
+            "Additional content production"
+          ]
+        },
+        "equity": {
+          "approved": false,
+          "public_note": "Equity terms structured during discovery.",
+          "public_detail": "A campaign carries rights, publishing and release terms of its own, so an Equity Uprise arrangement is written specifically for it during discovery.",
+          "internal_note": "No approved Equity campaign formula exists. Publishing splits, master ownership, songwriting splits and licensing terms are undefined and must not be invented."
+        }
+      },
+      "includes": [
+        "Original jingle creation",
+        "Songwriting",
+        "Music-production coordination",
+        "Campaign concept and brand story",
+        "Short-form campaign assets",
+        "Social rollout",
+        "Release planning",
+        "Reporting"
+      ],
+      "conditional": [
+        "Influencer outreach or participation",
+        "Campaign strategy",
+        "Photography and video where expressly included"
+      ],
+      "never_promise": [
+        "Guaranteed virality",
+        "Guaranteed views",
+        "Guaranteed sales",
+        "Guaranteed influencer participation",
+        "Guaranteed platform placement"
+      ],
+      "next_step": {
+        "label": "Start discovery",
+        "href": "onboard.html?offer=write-a-song"
+      },
+      "one_line": "An original song built into a campaign, not a jingle you bought.",
+      "checkout": {
+        "m": {
+          "offering": "booking-deposit",
+          "label": "Start discovery",
+          "after": "A deposit starts the work and comes off the total."
+        },
+        "equity": {
+          "onboard": true,
+          "label": "Start the agreement",
+          "after": "Structured in discovery. No ownership taken."
+        }
+      }
+    }
+  ],
+  "customer_license": {
+    "name": "The customer licence",
+    "headline": "Every customer gets the catalogue.",
+    "lede": "The music is not an upsell here. Anybody on a management service can use the McCluster catalogue in their own business, at no charge, for as long as the service is running. Not a stock-library subscription and not a royalty-free clip: the actual records, licensed from the artist who made them.",
+    "free": true,
+    "granted_by": [
+      {
+        "offer": "anti-social",
+        "modes": [
+          "m",
+          "equity"
+        ]
+      }
+    ],
+    "granted_note": "It comes with the management service, in either mode. Equity Uprise customers get exactly the same grant as M Mode customers.",
+    "term": "For as long as the service is running.",
+    "ends": "The licence runs with the subscription. Stop the service and the grant stops with it, which is the only honest way to give something away: it is a reason to stay, not a hostage. Anything already published stays published; you simply do not add new uses after that.",
+    "covers": [
+      {
+        "id": "website",
+        "name": "On your website",
+        "approved": true,
+        "what": "The catalogue playing on your own site. Background beds, a hero film, a landing page that opens with a record instead of silence."
+      },
+      {
+        "id": "premises",
+        "name": "In your store",
+        "approved": true,
+        "what": "Played in your place of business. A shop, a studio, a salon, a restaurant floor: the room can run the record all day."
+      },
+      {
+        "id": "social",
+        "name": "Under your posts",
+        "approved": true,
+        "what": "Your own social content, on your own accounts, scored with the catalogue. The reels the management service is already making for you land pre-cleared."
+      },
+      {
+        "id": "merch",
+        "name": "The swag, in your store",
+        "approved": false,
+        "public_note": "Stocking and selling McCluster merchandise from your storefront is on the table for customers with a physical location. Which pieces, what the split is and how they are supplied are set with you and written into the agreement."
+      }
+    ],
+    "excludes": [
+      "Reselling or sublicensing the music to anybody else",
+      "Broadcast, cinema and paid media placements, which are quoted on their own",
+      "Anything that puts the recording in a product you sell as a product"
+    ],
+    "delivery": "The files land by email when the service starts: the records themselves, and the written grant naming what you can do with them.",
+    "still_a_desk": "Everybody else licenses the same catalogue the ordinary way, and that desk has not moved."
+  },
+  "journey": [
+    "Take off",
+    "Manage",
+    "Create",
+    "Campaign"
+  ],
+  "adjuncts": {
+    "note": "Not offers. Published, already-approved products that sit either side of the four-offer ladder and are rendered as a subordinate strip, never as competing tiers. They keep their existing prices so no live product is silently withdrawn.",
+    "items": [
+      {
+        "id": "limited-offer",
+        "position": "after",
+        "kicker": "At the top end",
+        "name": "The Limited Offer",
+        "amount": 2800,
+        "unit": "per month · twelve months · three clients ever",
+        "line": "A content day every week, shot, cut and delivered, with the page built and managed and the strategy that makes each week compound.",
+        "approved": true,
+        "internal_note": "Overlaps Anti-Social and Who Did the Shoot. Whether it continues as a separate product alongside the four-offer ladder, or becomes a defined tier of Anti-Social, is an open business decision; see docs/sales-redesign/BRANCH-HARVEST-REPORT.md. Its published price is preserved here so it is not silently withdrawn."
+      }
+    ]
+  },
+  "legacy_plans": {
+    "note": "INTERNAL. Grandfathered agreements and historical records only. These must never render in the active new-customer journey, and existing agreements are never silently repriced. Kept so old records stay readable and so the CRM can map a legacy slug onto a current configuration.",
+    "plans": [
+      {
+        "slug": "hosting",
+        "name": "Hosting",
+        "price": 87,
+        "status": "grandfathered",
+        "succeeded_by": "runway",
+        "note": "Closed to new customers. Runway replaces it."
+      },
+      {
+        "slug": "management",
+        "name": "Web Management",
+        "price": 309,
+        "status": "grandfathered",
+        "succeeded_by": "anti-social",
+        "note": "Closed to new customers. Website management is now part of Anti-Social; $309 priced website management alone and never priced the merged service."
+      },
+      {
+        "slug": "social",
+        "name": "Management + Social",
+        "price": 875,
+        "status": "superseded_by_name",
+        "succeeded_by": "anti-social",
+        "note": "Same price, same scope, renamed. Anti-Social M Mode is the continuation of this plan at $875."
+      }
+    ]
+  },
+  "crm": {
+    "note": "The canonical identifiers a submission carries. legacy_plan preserves the value the CRM and existing records already understand; config/offer/mode are the new canonical identifiers. Both are sent so old records stay readable and new ones are precise.",
+    "configurations": [
+      {
+        "config": "runway",
+        "offer": "runway",
+        "mode": "m",
+        "legacy_plan": "hosting",
+        "label": "Runway"
+      },
+      {
+        "config": "anti-social.m",
+        "offer": "anti-social",
+        "mode": "m",
+        "legacy_plan": "social",
+        "label": "Anti-Social · M Mode"
+      },
+      {
+        "config": "anti-social.equity",
+        "offer": "anti-social",
+        "mode": "equity",
+        "legacy_plan": "social",
+        "label": "Anti-Social · Equity Uprise"
+      },
+      {
+        "config": "who-did-the-shoot.m",
+        "offer": "who-did-the-shoot",
+        "mode": "m",
+        "legacy_plan": null,
+        "label": "Who Did the Shoot · M Mode"
+      },
+      {
+        "config": "who-did-the-shoot.equity",
+        "offer": "who-did-the-shoot",
+        "mode": "equity",
+        "legacy_plan": null,
+        "label": "Who Did the Shoot · Equity Uprise"
+      },
+      {
+        "config": "write-a-song.m",
+        "offer": "write-a-song",
+        "mode": "m",
+        "legacy_plan": null,
+        "label": "Write a Song · M Mode"
+      },
+      {
+        "config": "write-a-song.equity",
+        "offer": "write-a-song",
+        "mode": "equity",
+        "legacy_plan": null,
+        "label": "Write a Song · Equity Uprise"
+      }
+    ]
+  }
+}

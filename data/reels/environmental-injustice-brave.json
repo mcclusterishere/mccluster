@@ -1,0 +1,91 @@
+{
+ "scenes": [
+  {
+   "begin": 0,
+   "src": "assets/video/uprise.mp4",
+   "poster": "assets/frames/uprise_0001.jpg"
+  },
+  {
+   "begin": 13.84,
+   "src": "assets/video/uisurvey.mp4",
+   "poster": "assets/frames/uisurvey_0001.jpg"
+  },
+  {
+   "begin": 25.62,
+   "src": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg"
+  },
+  {
+   "begin": 37.9,
+   "src": "assets/video/landgrab.mp4",
+   "poster": "assets/frames/landgrab_0001.jpg"
+  },
+  {
+   "begin": 45.53,
+   "flip": [
+    "assets/img/rally/rally-01.jpg",
+    "assets/img/rally/rally-02.jpg",
+    "assets/img/rally/rally-03.jpg",
+    "assets/img/rally/rally-04.jpg",
+    "assets/img/rally/rally-05.jpg"
+   ],
+   "every": 0.55
+  },
+  {
+   "begin": 51.64,
+   "src": "assets/video/angel.mp4",
+   "poster": "assets/frames/angel_0001.jpg"
+  },
+  {
+   "begin": 64.64,
+   "src": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg"
+  },
+  {
+   "begin": 71.11,
+   "src": "assets/video/citations.mp4",
+   "poster": "assets/frames/citations_0001.jpg"
+  },
+  {
+   "begin": 77.12,
+   "src": "assets/video/ocho1.mp4",
+   "poster": "assets/frames/ocho1_0001.jpg"
+  },
+  {
+   "begin": 90.08,
+   "src": "assets/video/ocho2.mp4",
+   "poster": "assets/frames/ocho2_0001.jpg"
+  },
+  {
+   "begin": 99.84,
+   "src": "assets/video/ocho3.mp4",
+   "poster": "assets/frames/ocho3_0001.jpg"
+  },
+  {
+   "begin": 115.92,
+   "src": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg"
+  },
+  {
+   "begin": 126.0,
+   "src": "assets/video/angel.mp4",
+   "poster": "assets/frames/angel_0001.jpg"
+  },
+  {
+   "begin": 136.39,
+   "flip": [
+    "assets/img/rally/rally-01.jpg",
+    "assets/img/rally/rally-02.jpg",
+    "assets/img/rally/rally-03.jpg",
+    "assets/img/rally/rally-04.jpg",
+    "assets/img/rally/rally-05.jpg"
+   ],
+   "every": 0.55
+  },
+  {
+   "begin": 143.27,
+   "src": "assets/video/vaunt.mp4",
+   "poster": "assets/frames/vaunt_0001.jpg"
+  }
+ ]
+}

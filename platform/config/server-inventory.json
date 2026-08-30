@@ -1,0 +1,272 @@
+{
+  "version": 1,
+  "network": "here-private",
+  "buildings": [
+    {
+      "code": "bldg-01",
+      "name": "Building 1",
+      "mode": "local_first",
+      "timezone": "America/New_York"
+    },
+    {
+      "code": "bldg-02",
+      "name": "Building 2",
+      "mode": "local_first",
+      "timezone": "America/New_York"
+    },
+    {
+      "code": "bldg-03",
+      "name": "Building 3",
+      "mode": "local_first",
+      "timezone": "America/New_York"
+    },
+    {
+      "code": "bldg-04",
+      "name": "Building 4",
+      "mode": "local_first",
+      "timezone": "America/New_York"
+    },
+    {
+      "code": "bldg-05",
+      "name": "Building 5",
+      "mode": "local_first",
+      "timezone": "America/New_York"
+    },
+    {
+      "code": "bldg-06",
+      "name": "Building 6",
+      "mode": "local_first",
+      "timezone": "America/New_York"
+    },
+    {
+      "code": "bldg-07",
+      "name": "Building 7",
+      "mode": "local_first",
+      "timezone": "America/New_York"
+    },
+    {
+      "code": "bldg-08",
+      "name": "Building 8",
+      "mode": "local_first",
+      "timezone": "America/New_York"
+    },
+    {
+      "code": "bldg-09",
+      "name": "Building 9",
+      "mode": "local_first",
+      "timezone": "America/New_York"
+    },
+    {
+      "code": "bldg-10",
+      "name": "Building 10",
+      "mode": "local_first",
+      "timezone": "America/New_York"
+    }
+  ],
+  "servers": [
+    {
+      "nodeCode": "bldg-01-primary",
+      "role": "building_primary",
+      "buildingCode": "bldg-01",
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "bldg-01-replica",
+      "role": "building_replica",
+      "buildingCode": "bldg-01",
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "bldg-02-primary",
+      "role": "building_primary",
+      "buildingCode": "bldg-02",
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "bldg-02-replica",
+      "role": "building_replica",
+      "buildingCode": "bldg-02",
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "bldg-03-primary",
+      "role": "building_primary",
+      "buildingCode": "bldg-03",
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "bldg-03-replica",
+      "role": "building_replica",
+      "buildingCode": "bldg-03",
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "bldg-04-primary",
+      "role": "building_primary",
+      "buildingCode": "bldg-04",
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "bldg-04-replica",
+      "role": "building_replica",
+      "buildingCode": "bldg-04",
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "bldg-05-primary",
+      "role": "building_primary",
+      "buildingCode": "bldg-05",
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "bldg-05-replica",
+      "role": "building_replica",
+      "buildingCode": "bldg-05",
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "bldg-06-primary",
+      "role": "building_primary",
+      "buildingCode": "bldg-06",
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "bldg-06-replica",
+      "role": "building_replica",
+      "buildingCode": "bldg-06",
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "bldg-07-primary",
+      "role": "building_primary",
+      "buildingCode": "bldg-07",
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "bldg-07-replica",
+      "role": "building_replica",
+      "buildingCode": "bldg-07",
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "bldg-08-primary",
+      "role": "building_primary",
+      "buildingCode": "bldg-08",
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "bldg-08-replica",
+      "role": "building_replica",
+      "buildingCode": "bldg-08",
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "bldg-09-primary",
+      "role": "building_primary",
+      "buildingCode": "bldg-09",
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "bldg-09-replica",
+      "role": "building_replica",
+      "buildingCode": "bldg-09",
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "bldg-10-primary",
+      "role": "building_primary",
+      "buildingCode": "bldg-10",
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "bldg-10-replica",
+      "role": "building_replica",
+      "buildingCode": "bldg-10",
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "central-control-01",
+      "role": "control_plane",
+      "buildingCode": null,
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "central-control-02",
+      "role": "control_plane",
+      "buildingCode": null,
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "central-control-03",
+      "role": "control_plane",
+      "buildingCode": null,
+      "ordinal": 3
+    },
+    {
+      "nodeCode": "central-db-01",
+      "role": "central_database",
+      "buildingCode": null,
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "central-db-02",
+      "role": "central_database",
+      "buildingCode": null,
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "central-db-03",
+      "role": "central_database",
+      "buildingCode": null,
+      "ordinal": 3
+    },
+    {
+      "nodeCode": "central-ops-01",
+      "role": "observability",
+      "buildingCode": null,
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "central-ops-02",
+      "role": "observability",
+      "buildingCode": null,
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "lab-stage-01",
+      "role": "staging",
+      "buildingCode": null,
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "lab-stage-02",
+      "role": "staging",
+      "buildingCode": null,
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "cold-spare-01",
+      "role": "cold_spare",
+      "buildingCode": null,
+      "ordinal": 1
+    },
+    {
+      "nodeCode": "cold-spare-02",
+      "role": "cold_spare",
+      "buildingCode": null,
+      "ordinal": 2
+    },
+    {
+      "nodeCode": "cold-spare-03",
+      "role": "cold_spare",
+      "buildingCode": null,
+      "ordinal": 3
+    }
+  ],
+  "macStudio": {
+    "role": "ai_inference",
+    "memoryGb": 32,
+    "storagePolicy": "models-and-replaceable-cache-on-external-1tb",
+    "requiredForBuildingSafety": false
+  }
+}

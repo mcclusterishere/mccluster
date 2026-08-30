@@ -1,0 +1,220 @@
+{
+ "note": "THE MERCH RACK. Every piece is priced here, in this file: edit a price and the rack repaints on next load, no deploy. Production, costs and the make of each piece are recorded off this file, in the desk notes, because this ledger is served to every browser that opens merch.html.",
+ "pricing": {
+  "note": "Retail is set at the desk and lives here. Shipping is inside the price on purpose: the buyer sees one number and free delivery. setSaving is what a top-and-bottom pair takes off the two single prices.",
+  "setSaving": 10,
+  "floor": 25,
+  "roundTo": 5
+ },
+ "sizes": [
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "2XL",
+  "3XL"
+ ],
+ "colors": [
+  {
+   "id": "black",
+   "label": "Black",
+   "hex": "#0b0908"
+  },
+  {
+   "id": "bone",
+   "label": "Bone",
+   "hex": "#f4efe6"
+  },
+  {
+   "id": "red",
+   "label": "Red",
+   "hex": "#e5383b"
+  }
+ ],
+ "garments": [
+  {
+   "id": "tee",
+   "label": "Heavyweight tee",
+   "spec": "Unisex · washed oversized cotton",
+   "art": "front print",
+   "kind": "top",
+   "price": 40
+  },
+  {
+   "id": "tee-essential",
+   "label": "Essential tee",
+   "spec": "Unisex · 100% cotton, regular fit",
+   "art": "front print",
+   "kind": "top",
+   "price": 35
+  },
+  {
+   "id": "longsleeve",
+   "label": "Long sleeve",
+   "spec": "Unisex · heavyweight cotton, ribbed cuff",
+   "art": "front print",
+   "kind": "top",
+   "price": 45
+  },
+  {
+   "id": "hoodie",
+   "label": "Heavyweight hoodie",
+   "spec": "Unisex · heavyweight fleece, lined hood",
+   "art": "front print",
+   "kind": "top",
+   "price": 65
+  },
+  {
+   "id": "hoodie-fleece",
+   "label": "Oversized hoodie",
+   "spec": "Unisex · oversized fleece",
+   "art": "front print",
+   "kind": "top",
+   "price": 50
+  },
+  {
+   "id": "crewneck",
+   "label": "Crewneck",
+   "spec": "Unisex · brushed fleece",
+   "art": "front print",
+   "kind": "top",
+   "price": 60
+  },
+  {
+   "id": "buttonup",
+   "label": "Button-up shirt",
+   "kind": "top",
+   "spec": "Woven cotton, camp collar",
+   "art": "chest embroidery or back print",
+   "price": 65
+  },
+  {
+   "id": "denim-shirt",
+   "label": "Denim shirt",
+   "kind": "top",
+   "spec": "Washed denim, snap front",
+   "art": "back print",
+   "price": 75
+  },
+  {
+   "id": "jacket",
+   "label": "Work jacket",
+   "kind": "top",
+   "spec": "Structured cotton twill, boxy",
+   "art": "back print",
+   "price": 90
+  },
+  {
+   "id": "trousers",
+   "label": "Pleated trousers",
+   "kind": "bottom",
+   "spec": "Relaxed pleated leg",
+   "art": "hip embroidery",
+   "price": 70
+  },
+  {
+   "id": "jeans",
+   "label": "Jeans",
+   "kind": "bottom",
+   "spec": "Rigid denim, straight leg",
+   "art": "back-pocket detail",
+   "price": 80
+  },
+  {
+   "id": "sweatpant",
+   "label": "Heavyweight sweatpant",
+   "kind": "bottom",
+   "spec": "350 GSM fleece, tapered",
+   "art": "leg print",
+   "price": 60
+  }
+ ],
+ "drops": [
+  {
+   "id": "the-mark",
+   "title": "The Mark",
+   "sub": "The M emblem, worn plain",
+   "art": "assets/img/m-mark.png",
+   "garments": [
+    "tee",
+    "tee-essential",
+    "hoodie",
+    "hoodie-fleece",
+    "crewneck"
+   ],
+   "blurb": "The house mark, nothing else. Black, bone and red — the same three the whole site is built on."
+  },
+  {
+   "id": "equity-uprise",
+   "title": "Equity Uprise",
+   "sub": "The movement, on the record",
+   "art": "assets/img/equity-uprise-logo.webp",
+   "garments": [
+    "tee",
+    "longsleeve",
+    "hoodie"
+   ],
+   "blurb": "The civic fellowship's mark. Worn by the people who showed up on October 5th."
+  },
+  {
+   "id": "here",
+   "title": "I AM HERE",
+   "sub": "The album cover, on cotton",
+   "art": "assets/img/here-cover.jpg",
+   "garments": [
+    "tee",
+    "hoodie-fleece"
+   ],
+   "blurb": "The six-track record, printed full front. The cover art, the way it was shot."
+  },
+  {
+   "id": "a-mccluster-production",
+   "title": "A McCluster Production",
+   "sub": "Crew shirt",
+   "art": "assets/img/m-mark-dark.png",
+   "garments": [
+    "tee-essential",
+    "longsleeve",
+    "crewneck"
+   ],
+   "blurb": "What the crew wears on set. Small mark front, the line across the back."
+  },
+  {
+   "id": "the-suit",
+   "title": "The Set",
+   "sub": "Button-up + pleated trouser",
+   "kind": "set",
+   "art": "assets/img/m-mark.png",
+   "pieces": [
+    "buttonup",
+    "trousers"
+   ],
+   "blurb": "A matching two-piece in house black. Camp collar up top, pleated and relaxed below — the mark small on the chest, nothing shouting."
+  },
+  {
+   "id": "the-denim-set",
+   "title": "The Denim Set",
+   "sub": "Denim shirt + jeans",
+   "kind": "set",
+   "art": "assets/img/m-mark-dark.png",
+   "pieces": [
+    "denim-shirt",
+    "jeans"
+   ],
+   "blurb": "Head-to-toe denim, washed down so it looks worn before you put it on. Snap front, straight leg."
+  },
+  {
+   "id": "the-crew-set",
+   "title": "The Crew Set",
+   "sub": "Work jacket + sweatpant",
+   "kind": "set",
+   "art": "assets/img/equity-uprise-logo.webp",
+   "pieces": [
+    "jacket",
+    "sweatpant"
+   ],
+   "blurb": "What the crew wears when the shoot runs long. Structured twill over 350 GSM fleece."
+  }
+ ]
+}

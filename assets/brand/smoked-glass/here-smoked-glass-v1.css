@@ -1,0 +1,48 @@
+:root {
+  --here-smoked-glass-base: url("./here-smoked-glass-v1-basecolor.png");
+  --here-smoked-glass-ruby: url("./here-smoked-glass-v1-ruby-reflection-mask.png");
+}
+
+.here-smoked-glass {
+  position: relative;
+  background:
+    linear-gradient(rgba(8,9,10,.72), rgba(8,9,10,.64)),
+    var(--here-smoked-glass-base);
+  background-size: auto, 28rem 28rem;
+  backdrop-filter: blur(var(--here-glass-blur, 14px)) saturate(.82);
+  -webkit-backdrop-filter: blur(var(--here-glass-blur, 14px)) saturate(.82);
+  border: 1px solid rgba(255,255,255,.075);
+}
+
+.here-smoked-glass::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background: linear-gradient(
+    var(--here-light-angle, 115deg),
+    rgba(255,255,255,.09),
+    transparent 24%,
+    transparent 74%,
+    rgba(255,255,255,.025)
+  );
+  opacity: var(--here-glass-reflection, .34);
+  mix-blend-mode: screen;
+}
+
+.here-smoked-glass[data-ruby-reflect="true"]::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:#c1121f;
+  opacity:var(--here-ruby-reflection,.06);
+  -webkit-mask-image:var(--here-smoked-glass-ruby);
+  mask-image:var(--here-smoked-glass-ruby);
+  -webkit-mask-size:28rem 28rem;
+  mask-size:28rem 28rem;
+  mix-blend-mode:screen;
+}
+
+/* RESKIN ONLY:
+   Do not add new glass cards or change component geometry to accommodate this material. */

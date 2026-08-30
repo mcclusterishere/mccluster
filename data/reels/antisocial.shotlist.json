@@ -1,0 +1,355 @@
+{
+ "song": "Antisocial",
+ "duration": 176.0,
+ "law": "one scene per bar; clip_seconds ≈ hold (elastic law bends 0.65x-1.5x); LET IT PLAY means a long clip never gets cut",
+ "pricing": {
+  "still_credits": 1.5,
+  "seedance_fast_per_second": 3.5,
+  "remaining_scenes": 14,
+  "remaining_credits_fast": 231.0
+ },
+ "shots": [
+  {
+   "begin": 3.54,
+   "hold": 5.09,
+   "bar": "I'm out here scrollin' and scrollin’",
+   "scene": "coldopen-scroll",
+   "concept": "HAVE: redjet. Boarding the jet opens the record (owner call)",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 8.63,
+   "hold": 3.93,
+   "bar": "Scroll slow, homie",
+   "scene": "nightscroll",
+   "concept": "nightscroll.mp4: in bed on the phone, scroll slow",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 12.56,
+   "hold": 2.25,
+   "bar": "Tryna farm dopamine",
+   "scene": "dopamine-farm",
+   "concept": "dopamine farm v1 rejected (corny). Re-concept with owner reference photos",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5
+  },
+  {
+   "begin": 14.81,
+   "hold": 1.17,
+   "bar": "you feel me?",
+   "scene": "dopamine-farm",
+   "concept": "dopamine farm v1 rejected (corny). Re-concept with owner reference photos",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5
+  },
+  {
+   "begin": 15.98,
+   "hold": 1.71,
+   "bar": "But in truth and reality",
+   "scene": "nightscroll-hold",
+   "concept": "nightscroll face hold, truth and reality",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 17.69,
+   "hold": 4.43,
+   "bar": "I'm antisocial, cause I'm always on social And I wanna feel social, but I'm never really s",
+   "scene": "hook-mirror",
+   "concept": "McCluster lit by phone in a dark mirror, dozens of glowing screens floating around him",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5
+  },
+  {
+   "begin": 22.12,
+   "hold": 4.44,
+   "bar": "I'm antisocial, cause I'm always on social Watchin' everybody glow up, and I just wanna gl",
+   "scene": "gmcall",
+   "concept": "gmcall.mp4: the Orlando Brown airport call",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 26.56,
+   "hold": 4.16,
+   "bar": "I'm antisocial, cause I'm always on social Watchin' people vacate to places I wanna go to",
+   "scene": "peaceful-places",
+   "concept": "HAVE: peaceful-places (still). Phone pouring a glowing beach scene into a dark room, watching people vacate through glass",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 30.72,
+   "hold": 4.57,
+   "bar": "If it sounds like you, I guess I really know you Even though I don't know you, cause it's ",
+   "scene": "dossier",
+   "concept": "the vacation still breathes through this bar (dossier cut: the newspaper-glove clip broke the rhythm)",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 35.29,
+   "hold": 4.2,
+   "bar": "Only way to beat it is to own it So if you're gonna be here, follow me to where the dough ",
+   "scene": "own-it",
+   "concept": "HAVE: ownit. Beckons the camera, shoves the vault door, walks into the gold",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 39.49,
+   "hold": 3.85,
+   "bar": "If you're here religiously, then know this I can help you get more conversions than the Po",
+   "scene": "church",
+   "concept": "church.mp4: here religiously",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 43.34,
+   "hold": 0.76,
+   "bar": "Fo’ sho, kid!",
+   "scene": "fo-sho",
+   "concept": "quick punch-in: grin to camera, finger point, fo' sho kid",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5
+  },
+  {
+   "begin": 44.1,
+   "hold": 4.32,
+   "bar": "Life is a blur when you start to get motion That's why I offer coaching to get you back fo",
+   "scene": "life-blur",
+   "concept": "HAVE: lifeblur. Long-exposure city: McCluster sharp in focus, whole crowd streaking into light trails",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 48.42,
+   "hold": 4.84,
+   "bar": "I’ll drop you a line if you write a note below this And show you the ropes before you get ",
+   "scene": "study",
+   "concept": "study.mp4: drop you a line, write a note",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 53.26,
+   "hold": 4.55,
+   "bar": "When I tell you what the fee is You can love it, you can leave it, as long as you believe",
+   "scene": "coffeecam",
+   "concept": "coffeecam.mp4: the fee, over coffee",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 57.81,
+   "hold": 3.77,
+   "bar": "When I tell you what the fee is You can love it, you can leave it as long as you believe i",
+   "scene": "fee-ledger",
+   "concept": "sliding a folded paper fee across a marble table, eye contact. Love it or leave it",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5
+  },
+  {
+   "begin": 61.58,
+   "hold": 4.5,
+   "bar": "When I tell you what the fee is You can love it, you can leave it as long as you believe i",
+   "scene": "vauntlive",
+   "concept": "vauntlive.mp4",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 66.08,
+   "hold": 4.63,
+   "bar": "When I tell you what the fee is You can love it, you can leave it as long as you believe i",
+   "scene": "fee-walkout",
+   "concept": "McCluster stands, buttons jacket, walks from the table leaving the paper. As long as you believe it",
+   "have": false,
+   "clip_seconds": 5,
+   "credits_fast": 19.0
+  },
+  {
+   "begin": 70.71,
+   "hold": 4.22,
+   "bar": "After a consultation, your team gon' shine like a constellation",
+   "scene": "keynote",
+   "concept": "keynote.mp4: team shine like a constellation",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 74.93,
+   "hold": 4.51,
+   "bar": "Profile optimization can turn your hobby into an occupation",
+   "scene": "constellation",
+   "concept": "HAVE: redjet. Plane mid-air, through the jet window past McCluster (owner call)",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 79.44,
+   "hold": 4.36,
+   "bar": "Stop the procrastination You keep saying you gon' make content, make it",
+   "scene": "studio360",
+   "concept": "HAVE: redjet rides through from 74.93, one continuous shot, no restart",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 83.8,
+   "hold": 4.45,
+   "bar": "This could be a confirmation I ain't no prophet, I just make em, look:",
+   "scene": "make-em-look",
+   "concept": "rapid over-shoulder: editing bay, timeline scrubbing, he turns. I just make em, look",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5
+  },
+  {
+   "begin": 88.25,
+   "hold": 3.8,
+   "bar": "After a consultation, your team gon' shine like a constellation yeah",
+   "scene": "designer",
+   "concept": "designer.mp4",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 92.05,
+   "hold": 4.73,
+   "bar": "Profile optimization can turn your hobby into an occupation and….",
+   "scene": "occupation",
+   "concept": "hobby-to-occupation split frame: bedroom setup morphs into a pro studio around him",
+   "have": false,
+   "clip_seconds": 5,
+   "credits_fast": 19.0
+  },
+  {
+   "begin": 96.78,
+   "hold": 4.12,
+   "bar": "Stop the procrastination You keep saying one day you'll make the content, make it",
+   "scene": "hero",
+   "concept": "hero.mp4",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 100.9,
+   "hold": 4.4,
+   "bar": "This could be a confirmation I ain't no prophet, I just make em go",
+   "scene": "prophet-go",
+   "concept": "crowd shot from stage POV, phones up, he drops the mic hand. Make em go",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5
+  },
+  {
+   "begin": 105.3,
+   "hold": 4.24,
+   "bar": "When I tell you what the fee is You can love it, you can leave it as long as you believe i",
+   "scene": "daniel",
+   "concept": "daniel.mp4: penthouse fee wall",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 109.54,
+   "hold": 4.22,
+   "bar": "When I tell you what the fee is You can love it, you can leave it as long as you believe i",
+   "scene": "fee-vault",
+   "concept": "walking a bank-vault hallway lined with gold records, fee chorus round 2",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5
+  },
+  {
+   "begin": 113.76,
+   "hold": 4.63,
+   "bar": "When I tell you what the fee is You can love it, you can leave it as long as you believe i",
+   "scene": "daniel-hold",
+   "concept": "daniel hold",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 118.39,
+   "hold": 4.0,
+   "bar": "When I tell you what the fee is You can love it, you can leave it as long as you believe i",
+   "scene": "fee-skyline",
+   "concept": "floor-to-ceiling window, city skyline, arms crossed. As long as you believe it",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5,
+   "note": "redjet instrumental takes the frame at 122.39"
+  },
+  {
+   "begin": 138.91,
+   "hold": 4.1,
+   "bar": "When I tell you what the fee is",
+   "scene": "daniel-outro",
+   "concept": "daniel.mp4: fee outro",
+   "have": true,
+   "clip_seconds": null,
+   "credits_fast": null
+  },
+  {
+   "begin": 143.01,
+   "hold": 4.24,
+   "bar": "you can love it or just leave it",
+   "scene": "love-it-leave-it",
+   "concept": "slow push-in, half-smile, shrug. Love it or just leave it",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5
+  },
+  {
+   "begin": 147.25,
+   "hold": 4.39,
+   "bar": "As long as you believe it",
+   "scene": "believe-it",
+   "concept": "congregation hands up in golden light, he conducts. As long as you believe it",
+   "have": false,
+   "clip_seconds": 4,
+   "credits_fast": 15.5
+  },
+  {
+   "begin": 151.64,
+   "hold": 5.68,
+   "bar": "As long as you believe",
+   "scene": "believe-final",
+   "concept": "single spotlight, head bowed, light snaps off on the last word",
+   "have": false,
+   "clip_seconds": 6,
+   "credits_fast": 22.5,
+   "note": "hero credits take the frame at 157.32"
+  }
+ ]
+}

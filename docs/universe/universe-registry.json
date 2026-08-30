@@ -1,0 +1,66 @@
+{
+  "schema": "here.universe-registry/v1",
+  "revision": "2026-08-15",
+  "shell": {
+    "tabBar": "js/tabbar.js",
+    "transitionVeil": ".pt-veil",
+    "auth": "window.MCC_AUTH",
+    "tracking": "window.MCC_TRACK",
+    "stateKeyPrefix": "here.universe"
+  },
+  "playStyles": {
+    "visual": "Decision-tree play: tap a picture/choice, a generated transition clip carries you A to B, you arrive. Level 1 of the game is the decision layer.",
+    "fps": "First-person shooter play: independent engine, pointer lock, WASD. You relearn the game on purpose."
+  },
+  "universes": [
+    {
+      "id": "uprise-world",
+      "title": "Uprise World",
+      "playStyle": "visual",
+      "status": "shelved 2026-08-19 — unfinished and not working; moved off the live site at the owner's request. Nothing was deleted.",
+      "engine": "vendored Three.js toon sphere (_unfinished/uprise-world/uprise-world.js) — gated roadmap, see docs/uprise-world/",
+      "entry": "_unfinished/uprise-world/uprise-world.html",
+      "contract": "docs/uprise-world/UPRISE-WORLD-ROADMAP.md",
+      "stateKey": "here.universe.uprise-world.state",
+      "tab": { "appnav": "uprise", "exists": false },
+      "entrances": [
+        { "id": "uprise.spawn.healed-side", "note": "default start, America side" },
+        { "id": "uprise.deep-end", "note": "far side; unlocked by four check-ins" }
+      ],
+      "portals": [
+        {
+          "id": "the-crossing",
+          "to": "prim3-site0",
+          "trigger": "uprise.all-four-check-ins + seam crossing (onCross → js/uprise-intro.js)",
+          "transition": "cinematic:uprise-intro (exists) → site0.arrival (planned)",
+          "spawnAt": "site0.entrance.north-portal"
+        }
+      ]
+    },
+    {
+      "id": "prim3-site0",
+      "title": "HITMAN PRIM3 SITE 0 — Ground Zero",
+      "playStyle": "fps",
+      "engine": "independent FPS (stack TBD — candidate: vendored Three.js + three-mesh-bvh collision on canonical GLB + World Labs splat vistas)",
+      "entry": "planned:site0.html",
+      "contract": "assets/3d/prim3-site0/AGENTS.md",
+      "designDoc": "docs/universe/SITE-0-GAME-DESIGN.md",
+      "stateKey": "here.universe.prim3-site0.state",
+      "tab": { "appnav": "hitman", "exists": false },
+      "entrances": [
+        { "id": "site0.entrance.north-portal", "note": "L1 north road portal — arrival from The Crossing" },
+        { "id": "site0.entrance.front-gate", "note": "default start: peaceful check-in at the front gate" },
+        { "id": "site0.entrance.selector", "note": "picture-map selector arrival (visual layer over the FPS world)" }
+      ],
+      "portals": [
+        {
+          "id": "the-way-back",
+          "to": "uprise-world",
+          "trigger": "site0.player reaches a registered exit portal",
+          "transition": "planned:generated clip (two-track: batch API / Higgsfield hero)",
+          "spawnAt": "uprise.deep-end"
+        }
+      ]
+    }
+  ]
+}

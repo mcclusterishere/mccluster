@@ -1,0 +1,851 @@
+/* ============================================================
+   THE OFFER LADDER
+   Four core offers, seven selectable configurations. Runway sits
+   on top at full width because it is the front door; Manage,
+   Create and Campaign sit beneath it as the climb.
+
+   Page-specific by design. Nothing here touches css/style.css or
+   any global token — it only consumes them (--sig, --cream,
+   --cream-dim, --ink). Deleting this file removes the ladder and
+   changes nothing else.
+   ============================================================ */
+
+/* ============================================================
+   DAYLIGHT TOKENS.
+
+   This file hardcoded the gold and a handful of cream tints. Those do
+   not flip, so on a page that goes bone in daylight (hire.html) they
+   painted cream-on-bone and gold-on-bone — 1.39:1 for the gold, which
+   is invisible. var(--cream) and var(--cream-dim) were already fine
+   because they are the house text tokens and flip on their own; only
+   the literals were the problem.
+
+   The daylight gold is #6a4f0e, the same value onboard.css uses, so the
+   house keeps one answer rather than two. It measures 6.6:1 on bone. The
+   first pass used #7a5c12, which cleared AA at 5.25:1 but still read faint
+   against the bone — passing and looking right are not the same test.
+   ============================================================ */
+:root {
+  --offer-gold: #e8c877;
+  --offer-quiet: rgba(244,239,230,0.5);
+  --offer-fainter: rgba(244,239,230,0.4);
+  --offer-ghost: rgba(244,239,230,0.24);
+}
+html[data-theme="light"] {
+  --offer-gold: #6a4f0e;
+  --offer-quiet: rgba(26,20,13,0.62);
+  --offer-fainter: rgba(26,20,13,0.52);
+  --offer-ghost: rgba(26,20,13,0.32);
+}
+
+.ladder { margin-top: clamp(3.6rem, 9vh, 5.5rem); }
+.ladder__k { font-size: 0.66rem; letter-spacing: 0.34em; text-transform: uppercase;
+  color: var(--offer-gold); font-weight: 800; }
+.ladder__rule { height: 1px; margin-top: 0.7rem;
+  background: linear-gradient(90deg, rgba(232,200,119,0.5), rgba(232,200,119,0)); }
+
+/* ---------- the journey strip: Establish → Manage → Create → Campaign ---------- */
+.journey { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem;
+  margin-top: 1.5rem; }
+.journey span { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--offer-fainter); }
+.journey span.is-here { color: var(--offer-gold); }
+.journey i { font-style: normal; color: var(--offer-ghost); }
+
+/* ============================================================
+   RUNWAY — the prominent one
+   ============================================================ */
+.runway { position: relative; margin-top: 1.8rem; border-radius: 26px; overflow: hidden;
+  padding: clamp(1.6rem, 5vw, 3rem);
+  background: linear-gradient(158deg, rgba(38,28,20,0.95) 0%, rgba(16,12,10,0.97) 62%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.13), 0 30px 80px -30px rgba(0,0,0,0.95); }
+.runway::before { content: ""; position: absolute; top: -60%; right: -10%; width: 32rem; height: 32rem;
+  pointer-events: none; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(232,200,119,0.16), transparent 72%); }
+
+.runway__head { position: relative; display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: 0.5rem 0.9rem; }
+.runway__stage { font-size: 0.64rem; font-weight: 800; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--offer-gold); }
+.runway__badge { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--offer-quiet);
+  border: 1px solid rgba(244,239,230,0.2); border-radius: 100px; padding: 0.28rem 0.6rem; }
+.runway h2 { position: relative; font-family: var(--sig); text-transform: uppercase;
+  line-height: 0.86; letter-spacing: 0.01em; margin-top: 0.6rem;
+  font-size: clamp(3.4rem, 13vw, 6.4rem); color: var(--cream); }
+.runway__tag { position: relative; margin-top: 0.7rem; color: var(--offer-gold);
+  font-weight: 700; font-size: clamp(0.95rem, 2.6vw, 1.1rem); line-height: 1.5; }
+.runway__lede { position: relative; margin-top: 0.9rem; color: var(--cream-dim);
+  line-height: 1.75; font-size: 1rem; max-width: 36rem; }
+
+/* the money: a receipt, not a price tag */
+.runway__grid { position: relative; margin-top: clamp(1.6rem, 4vw, 2.4rem);
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(1.4rem, 4vw, 2.6rem);
+  align-items: start; }
+@media (min-width: 52rem) { .runway__grid { grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr); } }
+
+.runway__num { font-family: var(--sig); line-height: 0.82; letter-spacing: 0.01em;
+  color: var(--cream); font-size: clamp(4.6rem, 16vw, 8rem); }
+.runway__num sup { font-size: 0.3em; vertical-align: super; color: var(--offer-gold); margin-right: 0.06em; }
+.runway__per { display: block; margin-top: 0.5rem; color: var(--cream-dim); font-weight: 700;
+  font-size: 0.76rem; letter-spacing: 0.22em; text-transform: uppercase; }
+/* when the price is unapproved the slot holds a chip, not a numeral — the
+   display line-box would otherwise leave a hole where the number goes */
+.runway__num.is-pending { font-size: 1rem; line-height: 1.4; }
+
+.receipt { list-style: none; padding: 0; margin: 0; }
+.receipt li { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  padding: 0.8rem 0; border-bottom: 1px solid rgba(244,239,230,0.1);
+  color: var(--cream-dim); font-size: 0.95rem; line-height: 1.5; }
+.receipt li:first-child { border-top: 1px solid rgba(244,239,230,0.1); }
+.receipt li b { color: var(--cream); font-weight: 700; white-space: nowrap;
+  font-variant-numeric: tabular-nums; }
+/* the deposit sits above the line items as the thing you actually pay
+   first, dimmed rather than emphasised so it never competes with the
+   go-live total two rows down: it is the same money, counted once */
+.receipt li.is-first span { color: var(--offer-gold); font-weight: 700; }
+.receipt li.is-first b { color: var(--offer-gold); }
+.receipt li.is-total { border-bottom-color: rgba(232,200,119,0.5); }
+.receipt li.is-total span, .receipt li.is-total b { color: var(--offer-gold); font-weight: 800; }
+.receipt li.is-after b { color: var(--cream); }
+/* the first-year line: the arithmetic is shown, not just the answer */
+.receipt li.is-year { border-bottom: 0; padding-top: 1rem; }
+.receipt li.is-year b { color: var(--cream); font-size: 1.15rem; font-weight: 800; }
+.receipt__math { display: block; margin-top: 0.2rem; font-style: normal;
+  font-size: 0.74rem; letter-spacing: 0.04em; color: var(--offer-quiet); }
+.receipt__note { margin-top: 0.9rem; font-size: 0.82rem; color: var(--cream-dim); line-height: 1.6; }
+.runway__depo { margin-top: 1rem; font-size: 0.84rem; line-height: 1.65; color: var(--cream-dim); }
+.runway__keep { margin-top: 0.9rem; font-size: 0.8rem; font-weight: 700; color: var(--cream-dim);
+  letter-spacing: 0.04em; }
+
+.runway__go { display: inline-block; margin-top: 1.5rem; text-decoration: none;
+  background: #e5383b; color: #fff; font-weight: 800; font-size: 1.04rem;
+  border-radius: 100px; padding: 1.05rem 2.3rem;
+  box-shadow: 0 16px 44px -12px rgba(229,56,59,0.6);
+  transition: transform 0.2s ease; }
+.runway__go:hover { transform: translateY(-2px); }
+.runway__go:focus-visible { outline: 2px solid #e8c877; outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .runway__go { transition: none; } }
+
+/* ============================================================
+   THE CLIMB — the other three, deliberately subordinate
+   ============================================================ */
+.climb { margin-top: clamp(2.4rem, 6vh, 3.4rem); display: grid; gap: 1rem;
+  grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 60rem) { .climb { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.rung { position: relative; border-radius: 18px; padding: clamp(1.1rem, 3vw, 1.5rem);
+  background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+  display: flex; flex-direction: column; }
+.rung__stage { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.28em;
+  text-transform: uppercase; color: rgba(232,200,119,0.85); }
+.rung h3 { font-family: var(--sig); text-transform: uppercase; line-height: 0.94;
+  letter-spacing: 0.02em; margin-top: 0.5rem; color: var(--cream);
+  font-size: clamp(1.5rem, 4.4vw, 1.85rem); }
+.rung__lede { margin-top: 0.6rem; color: var(--cream-dim); font-size: 0.9rem; line-height: 1.65; }
+
+/* the two economic configurations of the same service */
+.modes { display: flex; gap: 0.4rem; margin-top: 1rem; padding: 4px; border-radius: 100px;
+  background: rgba(10,8,7,0.55); box-shadow: inset 0 0 0 1px rgba(244,239,230,0.12); }
+.modes button { flex: 1; -webkit-appearance: none; appearance: none; border: 0; background: none;
+  cursor: pointer; touch-action: manipulation; font-family: inherit;
+  color: var(--cream-dim); font-weight: 800; font-size: 0.68rem; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.55rem 0.4rem; border-radius: 100px;
+  transition: color 0.25s ease, background 0.25s ease; }
+.modes button[aria-selected="true"] { color: #fff;
+  background: linear-gradient(135deg, #e5383b, #a4161a);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28); }
+.modes button:focus-visible { outline: 2px solid #e8c877; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .modes button { transition: none; } }
+
+.rung__body { margin-top: 1rem; flex: 1; }
+.rung__price { font-family: var(--sig); line-height: 0.9; color: var(--cream);
+  font-size: clamp(2.2rem, 7vw, 2.9rem); }
+.rung__price sup { font-size: 0.34em; vertical-align: super; color: var(--offer-gold); margin-right: 0.05em; }
+.rung__per { display: block; margin-top: 0.35rem; color: var(--cream-dim); font-weight: 700;
+  font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; }
+.rung__terms { list-style: none; padding: 0; margin: 0.9rem 0 0; }
+.rung__terms li { display: flex; justify-content: space-between; gap: 0.8rem;
+  padding: 0.5rem 0; border-bottom: 1px solid rgba(244,239,230,0.09);
+  font-size: 0.82rem; color: var(--cream-dim); line-height: 1.45; }
+.rung__terms li b { color: var(--cream); font-weight: 700; text-align: right;
+  font-variant-numeric: tabular-nums; }
+.rung__go { display: inline-block; margin-top: 1.1rem; text-decoration: none;
+  font-weight: 800; font-size: 0.8rem; letter-spacing: 0.06em;
+  color: var(--offer-gold); border-bottom: 1px solid rgba(232,200,119,0.4); padding-bottom: 2px; }
+.rung__go:focus-visible { outline: 2px solid #e8c877; outline-offset: 4px; }
+
+/* ============================================================
+   TERMS SET IN DISCOVERY
+   Where a formula is not yet approved, the slot carries polished
+   sales language and NEVER a number, a warning or a reason. The
+   reasoning lives in docs/sales-redesign/, not on the page.
+   ============================================================ */
+.rung__discovery { font-family: var(--body); font-size: 0.98rem; line-height: 1.5;
+  font-weight: 700; color: var(--cream); letter-spacing: 0.01em;
+  padding: 0.2rem 0 0.1rem; border-left: 2px solid rgba(232,200,119,0.65);
+  padding-left: 0.8rem; }
+.rung__from { font-family: var(--body); font-size: 0.3em; font-weight: 800;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--cream-dim);
+  vertical-align: super; margin-right: 0.35em; }
+.rung__fine { margin-top: 0.85rem; font-size: 0.78rem; line-height: 1.6;
+  color: var(--cream-dim); }
+
+/* the not-ownership disclosure: never small print */
+.disclose { margin-top: clamp(2.4rem, 6vh, 3.4rem);
+  border-top: 1px solid rgba(232,200,119,0.4); padding-top: 1.4rem; }
+.disclose h3 { font-family: var(--sig); text-transform: uppercase; letter-spacing: 0.03em;
+  font-size: 1.2rem; color: var(--cream); }
+.disclose p { margin-top: 0.7rem; color: var(--cream-dim); line-height: 1.75;
+  font-size: 0.95rem; max-width: 44rem; }
+.disclose p b { color: var(--cream); }
+/* ============================================================
+   THE SERVICE CHAPTERS (hire.html)
+   Four chapters, not seven cards. The mode switch lives INSIDE
+   the top three services; Runway leads on width and type scale
+   because it is the entry point — not because a badge says so.
+   There is no "recommended" badge anywhere in this file.
+   ============================================================ */
+.chapters { margin-top: clamp(2rem, 5vh, 3rem); }
+.chapter { position: relative; padding: clamp(1.6rem, 5vw, 3rem) 0;
+  border-top: 1px solid rgba(244,239,230,0.14); }
+.chapter:first-child { border-top: 0; }
+.chapter__no { font-family: var(--sig); font-size: 0.78rem; letter-spacing: 0.3em;
+  color: rgba(232,200,119,0.9); font-weight: 800; }
+/* the chapter numbers are the only gold left holding text on the daylight
+   ground, where the dark-coat gold measures 1.39:1 and simply is not there */
+html[data-theme="light"] .chapter__no { color: var(--offer-gold); }
+.chapter__head { display: grid; gap: 0.5rem 2rem; grid-template-columns: minmax(0, 1fr); }
+.chapter h3 { font-family: var(--sig); text-transform: uppercase; line-height: 0.88;
+  letter-spacing: 0.01em; color: var(--cream); margin-top: 0.4rem;
+  font-size: clamp(2.4rem, 8vw, 4rem); }
+.chapter--lead h3 { font-size: clamp(3.2rem, 12vw, 6rem); }
+.chapter__lede { margin-top: 0.8rem; color: var(--cream-dim); line-height: 1.75;
+  font-size: 1rem; max-width: 40rem; }
+.chapter__grid { margin-top: clamp(1.3rem, 3.5vw, 2rem); display: grid;
+  gap: clamp(1.2rem, 3.5vw, 2.4rem); grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 54rem) { .chapter__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); } }
+
+.chapter__money { font-family: var(--sig); line-height: 0.84; color: var(--cream);
+  font-size: clamp(3.2rem, 11vw, 5rem); }
+.chapter--lead .chapter__money { font-size: clamp(4.4rem, 15vw, 7rem); }
+.chapter__money sup { font-size: 0.3em; vertical-align: super; color: var(--offer-gold); margin-right: 0.06em; }
+.chapter__per { display: block; margin-top: 0.5rem; color: var(--cream-dim); font-weight: 700;
+  font-size: 0.74rem; letter-spacing: 0.2em; text-transform: uppercase; }
+.chapter__go { display: inline-block; margin-top: 1.4rem; text-decoration: none;
+  background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1rem;
+  border-radius: 100px; padding: 1rem 2.1rem;
+  box-shadow: 0 16px 44px -14px rgba(229,56,59,0.6); transition: transform 0.2s ease; }
+.chapter__go:hover { transform: translateY(-2px); }
+.chapter__go:focus-visible { outline: 2px solid #e8c877; outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .chapter__go { transition: none; } }
+
+/* the rate lines for the project services: a list, never a card grid */
+.rates { list-style: none; padding: 0; margin: 0; }
+.rates li { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  padding: 0.7rem 0; border-bottom: 1px solid rgba(244,239,230,0.1); }
+.rates li:first-child { border-top: 1px solid rgba(244,239,230,0.1); }
+.rates__k { color: var(--cream); font-size: 0.92rem; font-weight: 700; }
+.rates__u { display: block; margin-top: 0.15rem; font-size: 0.74rem; font-weight: 500;
+  color: var(--offer-quiet); letter-spacing: 0.02em; }
+.rates li b { color: var(--cream); font-weight: 800; white-space: nowrap;
+  font-variant-numeric: tabular-nums; }
+/* A shoppable rate line carries the package tray's Add button (js/shop.js),
+   which hire.html styles as a static grid child (.hirepage .shop__add). Rather
+   than fight that, the row becomes its own two-column grid: label and price on
+   the first line, the button tucked under the label on the second. */
+.rates li[data-shop] { display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline; row-gap: 0.55rem; }
+.rates li[data-shop] .shop__add { grid-column: 1 / -1; grid-row: auto;
+  position: static; justify-self: start; padding: 0.5em 1.1em; margin: 0;
+  /* the chip is nothing but its outline — as a cream literal it read 1.9:1 on
+     the dark coat and 1.0:1 on bone, so in daylight the Add button had no
+     edge at all. --offer-ghost is the same weight, both ways round. */
+  border: 1px solid var(--offer-ghost); border-radius: 100px;
+  background: var(--glass-lo); color: var(--cream-dim);
+  font: 800 0.6rem var(--body); letter-spacing: 0.18em; text-transform: uppercase;
+  cursor: pointer; }
+.rates li[data-shop] .shop__add:hover { color: var(--cream); border-color: var(--offer-quiet); }
+.rates li[data-shop] .shop__add.is-on { background: var(--ruby-hot); border-color: transparent; color: #fff; }
+.rates li[data-shop] .shop__add:focus-visible { outline: 2px solid var(--offer-gold); outline-offset: 3px; }
+.rates li[data-shop].is-picked { box-shadow: inset 2px 0 0 var(--ruby-hot); padding-left: 0.7rem; }
+
+/* The project services publish nine and four rate lines. In a single column
+   that runs long enough to bury the chapter under it, so once there is room
+   the published-rate list — and only that list, never the Equity terms —
+   flows into two columns. */
+@media (min-width: 62rem) {
+  .rates--lines { display: grid; gap: 0 2rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rates--lines li:nth-child(2) { border-top: 1px solid rgba(244,239,230,0.1); }
+}
+
+.incl { list-style: none; padding: 0; margin: 1.1rem 0 0; display: flex;
+  flex-wrap: wrap; gap: 0.4rem; }
+.incl li { font-size: 0.74rem; color: var(--cream-dim); letter-spacing: 0.02em;
+  border: 1px solid rgba(244,239,230,0.16); border-radius: 100px; padding: 0.32rem 0.7rem; }
+
+/* ============================================================
+   THE MODE COMPARISON — after Contra: one revenue in, two
+   economic outcomes side by side, the shared number in display
+   type. Structure borrowed, finish deliberately not: no neon,
+   no glass, no glow.
+   ============================================================ */
+.compare { margin-top: 1.3rem; display: grid; gap: 0.9rem;
+  grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 40rem) { .compare { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.compare__side { border-radius: 16px; padding: clamp(1rem, 3vw, 1.4rem);
+  background: rgba(255,255,255,0.04); box-shadow: inset 0 0 0 1px rgba(244,239,230,0.1); }
+.compare__side.is-on { background: rgba(229,56,59,0.1);
+  box-shadow: inset 0 0 0 1px rgba(229,56,59,0.5); }
+.compare__k { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.24em;
+  text-transform: uppercase; color: var(--offer-gold); }
+.compare__n { font-family: var(--sig); font-size: clamp(1.9rem, 6vw, 2.5rem);
+  line-height: 0.95; color: var(--cream); margin-top: 0.5rem; }
+.compare__n sup { font-size: 0.34em; vertical-align: super; color: var(--offer-gold); }
+.compare__sub { margin-top: 0.4rem; font-size: 0.78rem; color: var(--cream-dim); line-height: 1.55; }
+
+/* the Equity calculator — after Stripe and Cofounder: inputs on
+   one side, an itemised receipt on the other, band math visible */
+.calc { margin-top: clamp(1.6rem, 4vw, 2.4rem); border-radius: 20px;
+  padding: clamp(1.2rem, 4vw, 2rem);
+  background: linear-gradient(158deg, rgba(38,28,20,0.9), rgba(16,12,10,0.95));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
+.calc h4 { font-family: var(--sig); text-transform: uppercase; color: var(--cream);
+  font-size: clamp(1.3rem, 4vw, 1.8rem); letter-spacing: 0.02em; }
+.calc__lede { margin-top: 0.5rem; color: var(--cream-dim); font-size: 0.88rem; line-height: 1.65;
+  max-width: 40rem; }
+.calc__grid { margin-top: 1.3rem; display: grid; gap: clamp(1.1rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 48rem) { .calc__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.calc__field label { display: block; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--cream-dim); }
+.calc__row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; }
+.calc__row span { font-family: var(--sig); font-size: 1.6rem; color: var(--offer-gold); }
+.calc__field input[type="number"] { flex: 1; min-width: 0; -webkit-appearance: none; appearance: none;
+  background: rgba(10,8,7,0.6); border: 1px solid rgba(244,239,230,0.2); border-radius: 10px;
+  color: var(--cream); font-family: var(--sig); font-size: 1.6rem; padding: 0.5rem 0.7rem; }
+.calc__field input[type="range"] { width: 100%; margin-top: 0.9rem; accent-color: #e5383b; }
+.calc__field input:focus-visible { outline: 2px solid #e8c877; outline-offset: 3px; }
+.calc__hint { margin-top: 0.6rem; font-size: 0.74rem; color: var(--offer-quiet); line-height: 1.5; }
+.calc__note { margin-top: 1.1rem; font-size: 0.78rem; color: var(--cream-dim); line-height: 1.6; }
+
+/* ============================================================
+   THE FIRST MONTH: four weeks, then a fork.
+
+   Read as a rail, not as cards. Cards would put the four modules
+   side by side as equal choices, and they are not choices at all:
+   they arrive in order, one a week. The numeral is the point.
+
+   The one design decision that carries the honesty: week one wears
+   a different marker from the other three, because week one is the
+   only module that survives the decision at the end. If the four
+   looked identical, the page would be implying that everything
+   switches off, which is not what happens and not what is sold.
+   ============================================================ */
+.activate { margin-top: clamp(3.4rem, 9vh, 5.5rem); }
+.activate__k { font-size: 0.62rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--offer-gold); font-weight: 800; }
+.activate h2 { margin-top: 0.7rem; font-family: var(--sig); text-transform: uppercase;
+  line-height: 0.9; font-size: clamp(2.4rem, 9vw, 4.2rem); color: var(--cream); }
+.activate h2 em { font-style: normal; color: #e5383b; }
+.activate__lede { margin-top: 1rem; max-width: 38rem; color: var(--cream);
+  font-size: clamp(1rem, 2.6vw, 1.1rem); line-height: 1.7; }
+.activate__shape { margin-top: 0.8rem; max-width: 42rem; color: var(--cream-dim);
+  font-size: 0.92rem; line-height: 1.75; }
+
+.sprints { list-style: none; margin: clamp(1.8rem, 5vw, 2.6rem) 0 0; padding: 0;
+  display: grid; gap: 0; }
+.sprint { position: relative; padding: 1.4rem 0 1.5rem 2.6rem;
+  border-top: 1px solid rgba(244,239,230,0.14); }
+.sprint:last-child { border-bottom: 1px solid rgba(244,239,230,0.14); }
+/* the rail the weeks hang off */
+.sprint::before { content: ""; position: absolute; left: 0.52rem; top: 0; bottom: 0;
+  width: 1px; background: rgba(244,239,230,0.16); }
+.sprint:first-child::before { top: 1.7rem; }
+.sprint:last-child::before { bottom: auto; height: 1.7rem; }
+.sprint::after { content: ""; position: absolute; left: 0; top: 1.45rem;
+  width: 9px; height: 9px; border-radius: 50%; background: #0a0807;
+  box-shadow: inset 0 0 0 2px rgba(244,239,230,0.45); }
+/* week one is filled, because week one is the one that stays */
+.sprint.is-kept::after { background: var(--offer-gold); box-shadow: 0 0 0 4px rgba(232,200,119,0.16); }
+.sprint__wk { display: block; font-size: 0.6rem; letter-spacing: 0.26em; text-transform: uppercase;
+  font-weight: 800; color: var(--offer-quiet); }
+.sprint b { display: block; margin-top: 0.35rem; font-family: var(--sig); text-transform: uppercase;
+  letter-spacing: 0.02em; font-size: clamp(1.35rem, 4.6vw, 1.9rem); color: var(--cream); }
+.sprint p { margin-top: 0.55rem; max-width: 44rem; color: var(--cream-dim);
+  font-size: 0.9rem; line-height: 1.7; }
+.sprint__after { font-size: 0.8rem; }
+.sprint__after i { font-style: normal; font-weight: 800; letter-spacing: 0.02em; color: var(--cream); }
+.sprint.is-kept .sprint__after i { color: var(--offer-gold); }
+
+.activate__prompt { margin-top: clamp(1.8rem, 5vw, 2.4rem); max-width: 40rem;
+  color: var(--cream); font-weight: 700; font-size: 0.98rem; line-height: 1.7; }
+.exits { margin-top: 1.2rem; display: grid; gap: 0.9rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 42rem) { .exits { grid-template-columns: 1fr 1fr; } }
+.exit { padding: 1.2rem 1.2rem 1.3rem; border-radius: 16px;
+  background: rgba(244,239,230,0.045); box-shadow: inset 0 0 0 1px rgba(244,239,230,0.12); }
+.exit--upgrade { box-shadow: inset 0 0 0 1px rgba(232,200,119,0.42); }
+.exit b { display: block; font-family: var(--sig); text-transform: uppercase;
+  font-size: clamp(1.5rem, 5vw, 2rem); color: var(--cream); letter-spacing: 0.02em; }
+.exit__n { display: block; margin-top: 0.25rem; font-size: 0.72rem; font-weight: 800;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--offer-gold); }
+.exit p { margin-top: 0.7rem; color: var(--cream-dim); font-size: 0.88rem; line-height: 1.7; }
+.activate__notrap { margin-top: 1.1rem; max-width: 42rem; color: var(--cream-dim);
+  font-size: 0.84rem; line-height: 1.7; }
+
+html[data-theme="light"] .sprint,
+html[data-theme="light"] .sprint:last-child { border-color: var(--b1rule); }
+html[data-theme="light"] .exit { background: rgba(20,16,12,0.04); }
+
+/* ============================================================
+   THE REDRAW: three states of one subscription.
+
+   Numbered, because the states are sequential and the third is a
+   consequence of a decision rather than a fourth thing you can buy.
+   The middle one carries the weight: "every quarter, for life" is
+   the promise that outlasts every other line on the page, so it is
+   the one set in the display face at full size.
+   ============================================================ */
+.redraw { margin-top: clamp(3.2rem, 8vh, 5rem); padding: clamp(1.5rem, 5vw, 2.6rem);
+  border-radius: 24px; position: relative; overflow: hidden;
+  background: linear-gradient(158deg, rgba(38,28,20,0.9), rgba(16,12,10,0.96));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
+.redraw__kick { font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--offer-gold); font-weight: 800; }
+.redraw h2 { margin-top: 0.6rem; font-family: var(--sig); text-transform: uppercase;
+  line-height: 0.9; font-size: clamp(2rem, 7.5vw, 3.4rem); color: var(--cream); }
+.redraw__lede { margin-top: 0.9rem; max-width: 42rem; color: var(--cream-dim);
+  font-size: 0.95rem; line-height: 1.75; }
+.redraw__rail { list-style: none; counter-reset: rd; margin: clamp(1.4rem, 4vw, 2rem) 0 0; padding: 0;
+  display: grid; gap: 0.9rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 46rem) { .redraw__rail { grid-template-columns: repeat(3, 1fr); } }
+.redraw__rail li { counter-increment: rd; padding-top: 0.9rem;
+  border-top: 1px solid rgba(232,200,119,0.32); }
+.redraw__k { display: block; font-size: 0.6rem; letter-spacing: 0.24em; text-transform: uppercase;
+  font-weight: 800; color: var(--offer-quiet); }
+.redraw__rail b { display: block; margin-top: 0.4rem; font-family: var(--sig);
+  text-transform: uppercase; letter-spacing: 0.02em; color: var(--cream);
+  font-size: clamp(1.2rem, 3.6vw, 1.6rem); line-height: 1.05; }
+.redraw__rail p { margin-top: 0.5rem; color: var(--cream-dim); font-size: 0.84rem; line-height: 1.65; }
+.redraw__plain { margin-top: 1.3rem; max-width: 40rem; color: var(--cream);
+  font-weight: 700; font-size: 0.92rem; line-height: 1.7; }
+html[data-theme="light"] .redraw { background: rgba(20,16,12,0.05); }
+
+/* the price rides inside the button, so the label reads as one action
+   ("Start the draft $33") rather than a button beside a number */
+.btn__price { display: inline-block; margin-left: 0.45em; padding: 0.12em 0.5em;
+  border-radius: 100px; background: rgba(0,0,0,0.24); font-variant-numeric: tabular-nums; }
+.close__alt { margin-top: 0.9rem; font-size: 0.86rem; }
+.close__alt a { color: var(--cream-dim); text-decoration: underline; text-underline-offset: 3px; }
+.close__alt a:hover { color: var(--cream); }
+
+/* ============================================================
+   THE MODE BUTTONS ARE THE MARKS, NOT THE WORDS.
+
+   Two ways to buy, and both are brands: the M coin is on the bar,
+   the favicon and the masthead, and Equity Uprise has its own mark
+   on its own pages. As words in a pill they read like tab labels.
+   As marks they read like the two houses they are.
+
+   THE TWO MARKS ARE HANDLED DIFFERENTLY ON PURPOSE.
+
+   The M is a house mark and flips with the coat, the same swap
+   css/style.css already does for every other .kicker__mark: light
+   art on ink, dark art on bone.
+
+   The Equity Uprise mark is a navy wordmark belonging to a separate
+   program. Recolouring somebody's logo so it survives our background
+   is the wrong fix, so it keeps its own colour and is given a pale
+   plate of its own to sit on -- on both coats, so the mark looks the
+   same to a client whichever way they read the page.
+   ============================================================ */
+.modes button { display: flex; align-items: center; justify-content: center;
+  min-height: 2.9rem; padding: 0.4rem; }
+.modes__mark { display: block; width: auto; height: 1.35rem; max-width: 100%;
+  object-fit: contain; }
+/* the M coin: house art, flips with the coat */
+.modes button[data-mode="m"] .modes__mark { height: 1.5rem; }
+html[data-theme="light"] .modes button[data-mode="m"] .modes__mark {
+  content: url("../assets/img/m-mark-dark.png"); }
+/* the program's mark keeps its navy and brings its own ground */
+.modes button[data-mode="equity"] .modes__mark { height: 1.05rem;
+  padding: 0.34rem 0.6rem; border-radius: 100px; box-sizing: content-box;
+  background: #f4efe6; }
+/* selected: the ruby fill is the state, so the plate steps back to let
+   the fill read as the selection rather than fighting it */
+.modes button[aria-selected="true"][data-mode="equity"] .modes__mark {
+  background: #fff; box-shadow: 0 2px 10px -2px rgba(0,0,0,0.5); }
+
+/* ============================================================
+   THE CUSTOMER LICENCE.
+
+   The permissions and the exclusions are set in the same voice and
+   at the same weight, on purpose. A grant that shouts what you may
+   do and murmurs what you may not is a grant somebody breaks by
+   accident, and then it is our problem, not theirs.
+
+   Each coverage line wears its state as a word -- Included or
+   Arranged -- rather than a colour, so the difference survives a
+   greyscale print, a colour-blind reader, and a screenshot.
+   ============================================================ */
+.licgrant { margin-top: clamp(3.2rem, 8vh, 5rem); padding: clamp(1.5rem, 5vw, 2.6rem);
+  border-radius: 24px; background: rgba(244,239,230,0.045);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,0.12); }
+.licgrant__k { font-size: 0.6rem; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--offer-gold); font-weight: 800; }
+.licgrant h2 { margin-top: 0.6rem; font-family: var(--sig); text-transform: uppercase;
+  line-height: 0.9; font-size: clamp(2rem, 7.5vw, 3.4rem); color: var(--cream); }
+.licgrant__lede { margin-top: 0.9rem; max-width: 44rem; color: var(--cream-dim);
+  font-size: 0.95rem; line-height: 1.75; }
+
+.licgrant__covers { list-style: none; margin: clamp(1.4rem, 4vw, 2rem) 0 0; padding: 0;
+  display: grid; gap: 0.9rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 46rem) { .licgrant__covers { grid-template-columns: repeat(2, 1fr); } }
+.lic { padding: 1rem 1.1rem 1.1rem; border-radius: 16px;
+  background: rgba(10,8,7,0.4); box-shadow: inset 0 0 0 1px rgba(244,239,230,0.1); }
+.lic__state { display: inline-block; font-size: 0.56rem; letter-spacing: 0.2em;
+  text-transform: uppercase; font-weight: 800; padding: 0.24rem 0.55rem; border-radius: 100px; }
+.lic.is-open .lic__state { color: #0a0807; background: var(--offer-gold); }
+.lic.is-arranged .lic__state { color: var(--cream-dim);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,0.28); }
+.lic b { display: block; margin-top: 0.6rem; font-family: var(--sig); text-transform: uppercase;
+  letter-spacing: 0.02em; color: var(--cream); font-size: clamp(1.15rem, 3.4vw, 1.45rem); }
+.lic p { margin-top: 0.45rem; color: var(--cream-dim); font-size: 0.86rem; line-height: 1.65; }
+
+.licgrant__foot { margin-top: clamp(1.4rem, 4vw, 2rem); display: grid; gap: 1.4rem;
+  grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 46rem) { .licgrant__foot { grid-template-columns: 1fr 1fr; } }
+.licgrant__ft { font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase;
+  font-weight: 800; color: var(--cream); }
+.licgrant__nots { list-style: none; margin: 0.6rem 0 0; padding: 0; }
+.licgrant__nots li { position: relative; padding-left: 1.1rem; margin-top: 0.4rem;
+  color: var(--cream-dim); font-size: 0.86rem; line-height: 1.6; }
+.licgrant__nots li::before { content: ""; position: absolute; left: 0; top: 0.62em;
+  width: 0.6rem; height: 2px; background: rgba(244,239,230,0.42); }
+.licgrant__foot p { margin-top: 0.6rem; color: var(--cream-dim); font-size: 0.86rem; line-height: 1.65; }
+.licgrant__mail { margin-top: 1.3rem; color: var(--cream); font-weight: 700;
+  font-size: 0.9rem; line-height: 1.7; }
+.licgrant__desk { margin-top: 0.6rem; color: var(--cream-dim); font-size: 0.84rem; line-height: 1.65; }
+.licgrant__desk a { color: var(--offer-gold); text-decoration: underline; text-underline-offset: 3px; }
+html[data-theme="light"] .licgrant { background: rgba(20,16,12,0.05); }
+html[data-theme="light"] .lic { background: rgba(255,255,255,0.6); }
+
+/* ============================================================
+   THE LIGHT COAT — panels that were painted dark by hand
+
+   Most of this stylesheet speaks in tokens, so it turns with the
+   house. These few surfaces name a dark colour outright: they were
+   built as raised slabs against the cinema, and when the clock rolls
+   past seven the ground beneath them flips to bone while the slab
+   stays near-black. Text inside them is tokened, so it flips too —
+   dark ink on a dark slab, which is to say nothing at all.
+
+   Each one is re-stated here as the same gesture in daylight: a wash
+   of ink on paper with a hairline to hold the edge, so the panel is
+   still a panel and the words inside it are still words.
+   ============================================================ */
+html[data-theme="light"] .runway {
+  background: linear-gradient(158deg, rgba(26,20,13,0.075) 0%, rgba(26,20,13,0.035) 62%);
+  box-shadow: inset 0 0 0 1px rgba(26,20,13,0.12), 0 26px 60px -34px rgba(26,20,13,0.5); }
+html[data-theme="light"] .runway::before {
+  background: radial-gradient(closest-side, rgba(106,79,14,0.14), transparent 72%); }
+html[data-theme="light"] .runway__badge { border-color: rgba(26,20,13,0.28); }
+
+html[data-theme="light"] .calc {
+  background: linear-gradient(158deg, rgba(26,20,13,0.06), rgba(26,20,13,0.03));
+  box-shadow: inset 0 0 0 1px rgba(26,20,13,0.1); }
+html[data-theme="light"] .calc__field input[type="number"] {
+  background: rgba(255,255,255,0.75); border-color: rgba(26,20,13,0.24); }
+
+/* the timeline bead reads as a hole punched in the page, so it has to
+   be filled with whatever the page is — this asked for --paper, which
+   no stylesheet ever defined, so the rule was dropped as invalid and
+   the bead stayed near-black */
+html[data-theme="light"] .sprint::after { background: #f2ede4;
+  box-shadow: inset 0 0 0 2px rgba(26,20,13,0.45); }
+/* and the rail the beads hang off, drawn in cream for the cinema */
+html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
+
+/* ============================================================
+   THE BUY CARD
+   
+   One price, one sentence, one button. The ladder above still exists
+   for hire.html and onboard.html, where somebody has already decided to
+   read; this is what sits on the page where somebody has decided to
+   buy, and the difference between those two readers is the whole
+   argument for having two shapes.
+
+   Sized so four of them plus a heading fit inside about three phone
+   screens. The old ladder was twelve and a half.
+   ============================================================ */
+
+.buys { display: grid; gap: .7rem; margin-top: clamp(1.4rem, 4vh, 2rem); }
+
+.buy { position: relative; border-radius: 20px; padding: clamp(1.15rem, 4vw, 1.5rem);
+  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+  box-shadow: inset 0 0 0 1px var(--edge), 0 20px 44px -30px rgba(0,0,0,.85); }
+
+/* the front door reads first, so it carries the ruby wash the runway
+   card used to — the emphasis survives, the 1,355 pixels do not */
+.buy:first-child { background: linear-gradient(180deg, rgba(229,56,59,.12), var(--glass-lo)); }
+
+.buy h2 { font-family: var(--sig); text-transform: uppercase; line-height: .94;
+  font-size: clamp(1.5rem, 6.5vw, 2.1rem); margin: 0 0 .35rem; color: var(--cream); }
+
+.buy__one { font: 600 .9rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: 0 0 1rem; max-width: 42ch; }
+
+.buy .modes { margin: 0 0 .9rem; }
+
+.buy__price { display: flex; align-items: baseline; gap: .35rem; flex-wrap: wrap;
+  font-family: var(--sig); color: var(--cream); line-height: .9;
+  font-size: clamp(2.6rem, 12vw, 3.6rem); margin: 0 0 .9rem; }
+.buy__price sup { font-size: .42em; vertical-align: super; opacity: .85; }
+.buy__from { font-family: var(--ui, "Manrope", system-ui, sans-serif); font-style: normal;
+  font-weight: 800; font-size: .26em; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--cream-dim); align-self: center; }
+.buy__per { font-family: var(--ui, "Manrope", system-ui, sans-serif); font-weight: 800;
+  font-size: .2em; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--cream-dim); align-self: flex-end; padding-bottom: .3em; }
+.buy__price--words { font-family: var(--ui, "Manrope", system-ui, sans-serif);
+  font-size: 1rem; font-weight: 800; line-height: 1.4; text-transform: none;
+  color: var(--cream); letter-spacing: 0; }
+
+/* full width, thumb height, and the only red thing in the card */
+.buy__go { display: block; text-align: center; text-decoration: none;
+  padding: 1.05rem 1.2rem; border-radius: 14px; color: #fff; background: var(--metal);
+  font: 800 1rem var(--ui, "Manrope", system-ui, sans-serif);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 12px 30px -16px rgba(229,56,59,.8); }
+.buy__go:active { transform: translateY(1px); }
+
+.buy__after { font: 600 .78rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: .65rem 0 0; }
+
+.buy__disclose { font: 600 .74rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: .7rem 0 0; padding-top: .7rem;
+  box-shadow: inset 0 1px 0 var(--edge); }
+.buy__disclose a { color: var(--ruby-hot); font-weight: 800; text-decoration: none; white-space: nowrap; }
+
+/* two up once there is room for two to be read at a glance */
+@media (min-width: 46rem) {
+  .buys { grid-template-columns: 1fr 1fr; gap: .8rem; }
+  .buy:first-child { grid-column: 1 / -1; }
+  .buy:first-child .buy__price { font-size: clamp(3rem, 7vw, 4.2rem); }
+}
+
+/* THE HOOK — sites-details.html only now.
+   sites.html has no header at all: it opens on the count line and the
+   first card, because a page somebody came to in order to buy should not
+   begin by asking them to read. */
+.buyhero { padding-top: clamp(1.2rem, 4vh, 2.2rem); }
+.buyhero h1 { font-family: var(--sig); text-transform: uppercase; line-height: .88;
+  font-size: clamp(2.6rem, 15vw, 4.4rem); margin: .5rem 0 .6rem; color: var(--cream); }
+.buyhero h1 em { font-style: normal; color: var(--ruby-hot); }
+.buyhero__sub { font: 700 .95rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: 0; max-width: 40ch; }
+
+/* One line out, at the bottom, for the reader who wants the long version. */
+.buyout { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center;
+  margin: clamp(1.6rem, 5vh, 2.4rem) 0 0;
+  font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+.buyout a { color: var(--cream-dim); text-decoration: none; }
+.buyout a:first-child { color: var(--ruby-hot); }
+.buyout span { opacity: .45; }
+
+/* THE TWO MARKS, AS A CHOICE RATHER THAN AS A BUTTON.
+   Inherited .modes sizing made the selected mode a full-width red slab
+   sitting directly above the actual red CTA — two big red things, one of
+   which does nothing when you press it. On a buy card they have to read
+   as a switch: equal halves, and the selected one lifted rather than
+   shouting. */
+.buy .modes { display: grid; grid-template-columns: 1fr 1fr; gap: .25rem;
+  padding: .25rem; border-radius: 999px; background: rgba(0,0,0,.34);
+  box-shadow: inset 0 0 0 1px var(--edge); }
+.buy .modes button { width: 100%; min-height: 3rem; border: 0; cursor: pointer;
+  border-radius: 999px; background: transparent; box-shadow: none;
+  display: flex; align-items: center; justify-content: center; padding: .3rem; }
+.buy .modes button[aria-selected="true"] { background: rgba(255,255,255,.1);
+  box-shadow: inset 0 0 0 1px var(--edge), 0 6px 16px -10px rgba(0,0,0,.9); }
+.buy .modes .modes__mark { width: 26px; height: 26px; opacity: .5; transition: opacity .18s; }
+.buy .modes button[aria-selected="true"] .modes__mark { opacity: 1; }
+
+/* The count line. Small, quiet, and the only thing above the first card. */
+.buys__k { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .22em;
+  text-transform: uppercase; color: var(--cream-dim); margin: 0 0 .5rem; }
+.buys__rule { height: 1px; background: var(--edge); margin: 0 0 1rem; }
+.buys__k, .buys__rule { grid-column: 1 / -1; }
+
+/* A billing period is a word, not a brand mark. See billButton(). */
+.buy .modes--words button { font: 800 .78rem var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); letter-spacing: .02em; min-height: 2.7rem; }
+.buy .modes--words button[aria-selected="true"] { color: var(--cream); }
+
+/* ============================================================
+   BUILT WITH — the client examples.
+
+   These were numbered seats in a countdown: "02 · Yohana Robertson",
+   under a heading that said three builds and never again. The work is
+   real and worth showing; the countdown was a deadline invented to make
+   somebody hurry, and it is gone. A name, what was built, and a link to
+   open the actual thing.
+   ============================================================ */
+
+.madefor { margin-top: clamp(2rem, 6vh, 3rem); }
+.madefor__row { display: grid; gap: .5rem; }
+
+.madefor__one { display: block; text-decoration: none; border-radius: 16px;
+  padding: .95rem 1.05rem; position: relative;
+  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+  box-shadow: inset 0 0 0 1px var(--edge); }
+.madefor__one b { display: block; font-family: var(--sig); text-transform: uppercase;
+  font-size: 1.15rem; line-height: 1; color: var(--cream); margin: 0 0 .25rem; }
+.madefor__one i { display: block; font-style: normal;
+  font: 800 .58rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .18em;
+  text-transform: uppercase; color: var(--ruby-hot); margin: 0 0 .4rem; }
+.madefor__one small { display: block; font: 600 .78rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); }
+.madefor__see { display: inline-block; margin-top: .55rem;
+  font: 800 .7rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream); }
+.madefor__see em { font-style: normal; }
+
+@media (min-width: 46rem) { .madefor__row { grid-template-columns: 1fr 1fr; } }
+
+/* ============================================================
+   THE ADDRESS BOX
+
+   It sits between the price and the button, because that is the
+   order the decision happens in: what it costs, what it is called,
+   then buy. Sized so the whole thing — label, field, three answers —
+   is still shorter than the paragraph it replaced.
+
+   Everything here is inside .buy, so it inherits the card's ground
+   and adds no second surface. A search box that looked like a widget
+   bolted onto a card would read as somebody else's product.
+   ============================================================ */
+
+/* A GRID ITEM'S min-width IS auto, WHICH IS NOT ZERO.
+   .buy is a grid item, so its minimum size is the widest thing inside
+   it that cannot shrink — and a text input's intrinsic width is about
+   twenty characters whatever you set flex to. That pushed the card six
+   pixels past the viewport and put a sideways scroll on a page whose
+   entire job is one thumb, top to bottom. Both ends of the chain have
+   to opt out, not just the field. */
+.buy, .dom, .dom__row { min-width: 0; }
+
+.dom { margin: 0 0 .9rem; }
+
+.dom__lab { display: block; font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif);
+  letter-spacing: .22em; text-transform: uppercase; color: var(--cream-dim); margin: 0 0 .45rem; }
+
+.dom__row { display: flex; gap: .4rem; }
+
+.dom__in { flex: 1 1 auto; min-width: 0; -webkit-appearance: none; appearance: none;
+  border: 0; border-radius: 12px; padding: .85rem .9rem; color: var(--cream);
+  background: rgba(0,0,0,.28); box-shadow: inset 0 0 0 1px var(--edge);
+  font: 700 1rem var(--ui, "Manrope", system-ui, sans-serif); }
+.dom__in::placeholder { color: var(--cream-dim); opacity: .55; font-weight: 600; }
+.dom__in:focus { outline: 0; box-shadow: inset 0 0 0 2px var(--ruby-hot, #e5383b); }
+
+.dom__go { flex: 0 0 auto; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  border-radius: 12px; padding: .85rem 1.1rem; color: var(--cream);
+  background: rgba(255,255,255,.09); box-shadow: inset 0 0 0 1px var(--edge);
+  font: 800 .88rem var(--ui, "Manrope", system-ui, sans-serif); }
+.dom__go:disabled { opacity: .55; cursor: default; }
+.dom__go:focus-visible { outline: 2px solid #e8c877; outline-offset: 2px; }
+
+.dom__say { font: 600 .78rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: .5rem 0 0; min-height: 1.2em; }
+
+.dom__list { display: grid; gap: .35rem; margin: .55rem 0 0; }
+.dom__list:empty { margin: 0; }
+
+/* One answer. The name reads first, the verdict second, the price
+   third — and the price only exists on a row somebody can actually
+   press, so a number never appears next to a name that is taken. */
+.dom__one { display: grid; grid-template-columns: 1fr auto; align-items: center;
+  gap: .1rem .6rem; text-align: left; width: 100%; cursor: pointer;
+  -webkit-appearance: none; appearance: none; border: 0; border-radius: 12px;
+  padding: .7rem .85rem; color: var(--cream); background: rgba(255,255,255,.05);
+  box-shadow: inset 0 0 0 1px var(--edge); font-family: var(--ui, "Manrope", system-ui, sans-serif); }
+.dom__one b { grid-column: 1; font-weight: 800; font-size: .95rem; word-break: break-all; }
+.dom__one i { grid-column: 1; font-style: normal; font-weight: 600; font-size: .74rem;
+  color: var(--cream-dim); line-height: 1.4; }
+.dom__price { grid-column: 2; grid-row: 1 / span 2; font-weight: 800; font-size: .82rem;
+  color: #e8c877; white-space: nowrap; }
+
+.dom__one[aria-pressed="true"] { background: rgba(229,56,59,.16);
+  box-shadow: inset 0 0 0 2px var(--ruby-hot, #e5383b); }
+.dom__one:disabled { cursor: default; opacity: .5; }
+.dom__one:disabled b { text-decoration: line-through; }
+.dom__one:focus-visible { outline: 2px solid #e8c877; outline-offset: 2px; }
+
+/* an ending we can look up but cannot sell in one tap: real, and not
+   pretending to be a button with a price on it */
+.dom__one.is-gone .dom__price { display: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .dom__one { transition: background .18s ease, box-shadow .18s ease; }
+}
+
+.dom__hold { font: 600 .72rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: .5rem 0 0; }
+
+/* ============================================================
+   THE CONVERSATION AS THE FRONT DOOR
+
+   Shown only when js/chatfirst.js has confirmed the live function can
+   actually answer. Until then this whole block is [hidden] and the
+   cards are the page exactly as before.
+   ============================================================ */
+
+.talk { display: grid; margin-top: clamp(1.4rem, 4vh, 2rem); }
+.talk[hidden] { display: none !important; }
+
+.talk__mount { display: block; }
+
+/* The openers. Not a product menu — the cards are the product menu, and
+   they are one link away. These are the four questions a buyer actually
+   arrives with, in their own words. */
+.talk__chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: .75rem 0 0; }
+.talk__chips[hidden] { display: none; }
+.talk__chip {
+  -webkit-appearance: none; appearance: none; cursor: pointer; border: 0;
+  border-radius: 100px; padding: .55rem .9rem;
+  background: rgba(255,255,255,.06); color: var(--cream);
+  box-shadow: inset 0 0 0 1px var(--edge);
+  font: 700 .82rem var(--ui, "Manrope", system-ui, sans-serif);
+  text-align: left;
+}
+.talk__chip:hover { box-shadow: inset 0 0 0 1px var(--edge-hi, rgba(244,239,230,.3)); }
+
+/* A chip that DOES something rather than asking something. It still
+   reads as a chip — a visitor should not have to work out which of
+   their taps is a question and which is a control — but it carries the
+   gold so the two are not identical either. */
+.talk__chip--does { color: #e8c877; box-shadow: inset 0 0 0 1px rgba(232,200,119,.35); }
+.talk__chip:active { transform: translateY(1px); }
+.talk__chip:focus-visible { outline: 2px solid #e8c877; outline-offset: 2px; }
+
+/* The way out for somebody who would rather read. Quiet on purpose: it
+   is a real door, not a second call to action competing with the one
+   above it. */
+.talk__alt {
+  font: 600 .82rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: 1rem 0 0;
+}
+.talk__link {
+  -webkit-appearance: none; appearance: none; border: 0; background: none;
+  cursor: pointer; padding: 0; color: #e8c877;
+  font: 800 .82rem var(--ui, "Manrope", system-ui, sans-serif);
+}
+.talk__link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.talk__link:focus-visible { outline: 2px solid #e8c877; outline-offset: 3px; border-radius: 3px; }
+
+/* When the conversation is the page, the cards that follow it are a
+   second thought rather than the headline, so they lose the ruby wash
+   the front-door card wears when IT is the front door. */
+.is-chatfirst .buy:first-child {
+  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+}

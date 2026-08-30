@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Lanes · distribution control</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script src="js/office.js?v=__STAMP__"></script>
+  <style>
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+    .lx { max-width: 68rem; margin: 0 auto; padding: clamp(1.4rem,4vh,2.4rem) clamp(1rem,3vw,1.8rem) 7rem;
+      font-family: var(--ui); color: var(--cream); }
+    .lx h1 { font-family: var(--sig); text-transform: uppercase; line-height: .9;
+      font-size: clamp(1.9rem,7vw,3rem); margin: 0 0 .2rem; }
+    .lx__sub { font-weight: 600; font-size: .84rem; color: var(--cream-dim); margin: 0 0 1.4rem; max-width: 62ch; line-height: 1.6; }
+    .gate { max-width: 24rem; display: grid; gap: .5rem; }
+    .gate input { padding: .9rem 1rem; border-radius: 12px; border: 0; font: 600 max(16px,.95rem) var(--ui);
+      color: var(--cream); background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--edge); }
+    .gate button { padding: .95rem; border: 0; border-radius: 12px; cursor: pointer;
+      font: 800 .92rem var(--ui); color: #fff; background: var(--metal); }
+    .err { color: #ff8a8c; font-weight: 700; font-size: .78rem; }
+
+    .tally { display: flex; gap: .45rem; flex-wrap: wrap; margin: 0 0 1.2rem; }
+    .tally span { font-weight: 800; font-size: .7rem; padding: .45rem .8rem; border-radius: 99px;
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .tally b { color: var(--ruby-hot); }
+
+    .filters { display: flex; gap: .4rem; flex-wrap: wrap; margin: 0 0 1.1rem; }
+    .filters button { font: 800 .7rem var(--ui); color: var(--cream); cursor: pointer; border: 0;
+      border-radius: 99px; padding: .48rem .85rem;
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .filters .on { color: #fff; background: var(--metal); }
+
+    .lanes { display: grid; gap: .55rem; }
+    .ln { border-radius: 14px; padding: .95rem 1.05rem; position: relative; overflow: hidden;
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .ln::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--ruby-hot); }
+    .ln.is-locked::before { background: repeating-linear-gradient(180deg,var(--cream-dim) 0 3px,transparent 3px 9px); }
+    .ln.is-on::before { background: #1d5c33; }
+    .ln__top { display: grid; grid-template-columns: 1fr auto; gap: .6rem; align-items: start; }
+    .ln__name { font-weight: 800; font-size: 1rem; margin: 0 0 .25rem; }
+    .ln__meta { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; margin: 0; }
+    .pill { font-weight: 800; font-size: .58rem; letter-spacing: .12em; text-transform: uppercase;
+      padding: .24rem .55rem; border-radius: 99px; box-shadow: inset 0 0 0 1px var(--edge); color: var(--cream-dim); }
+    .pill.lock { color: #fff; background: #7a1216; box-shadow: none; }
+    .pill.open { color: #fff; background: #1d5c33; box-shadow: none; }
+    .pill.live { color: #fff; background: var(--metal); box-shadow: none; }
+    .pill.excl { color: var(--ruby-hot); box-shadow: inset 0 0 0 1.5px var(--ruby-hot); }
+    .ln__pct { font-family: var(--sig); font-size: 1.15rem; font-variant-numeric: tabular-nums; color: var(--cream-dim); }
+    .ln__pct.full { color: var(--ruby-hot); }
+    .ln__bar { height: 4px; border-radius: 99px; background: var(--edge); margin: .6rem 0 0; overflow: hidden; }
+    .ln__fill { height: 100%; background: var(--ruby-hot); transition: width .3s; }
+    .ln__more { margin-top: .7rem; display: none; }
+    .ln.is-open .ln__more { display: block; }
+    .ln__want { font-size: .84rem; color: var(--cream-dim); line-height: 1.6; margin: 0 0 .5rem; }
+    .ln__want b { color: var(--cream); }
+    .gates { list-style: none; padding: 0; margin: .6rem 0; display: grid; gap: .3rem; }
+    .gates li { display: grid; grid-template-columns: auto 1fr auto; gap: .55rem; align-items: baseline;
+      font-size: .8rem; padding: .4rem .1rem; border-bottom: 1px solid var(--edge); }
+    .gates .mark { font-weight: 800; }
+    .gates .yes { color: #4ba86a; }
+    .gates .no  { color: #ff8a8c; }
+    .gates small { display: block; color: var(--cream-dim); font-size: .74rem; line-height: 1.5; margin-top: .15rem; }
+    .gates .n { color: var(--cream-dim); font-weight: 800; font-size: .7rem; font-variant-numeric: tabular-nums; }
+    .cred { display: grid; grid-template-columns: repeat(auto-fit,minmax(9rem,1fr)); gap: .4rem; margin: .6rem 0; }
+    .cred label { display: grid; gap: .2rem; font-weight: 800; font-size: .58rem; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--cream-dim); }
+    .cred input, .cred select { padding: .6rem .7rem; border-radius: 9px; border: 0; font: 600 max(16px,.85rem) var(--ui);
+      color: var(--cream); background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px var(--edge); }
+    .acts { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .6rem; }
+    .acts button, .acts a { border: 0; border-radius: 10px; cursor: pointer; text-decoration: none;
+      font: 800 .74rem var(--ui); padding: .55rem .85rem; color: var(--cream);
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .acts .hot { color: #fff; background: var(--metal); box-shadow: none; }
+    .acts .say { color: var(--cream-dim); background: none; box-shadow: none; align-self: center; font-weight: 600; }
+    .house { border-radius: 14px; padding: 1rem; margin: 0 0 1.4rem;
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .house h2 { font: 800 .64rem var(--ui); letter-spacing: .2em; text-transform: uppercase;
+      color: var(--cream-dim); margin: 0 0 .6rem; }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body data-masthead="off">
+  <main class="lx">
+    <h1>The Lanes</h1>
+    <p class="lx__sub">Every distribution lane, locked until the catalog proves it qualifies. Gates count your own frames; nothing opens on a feeling.</p>
+    <div id="lxIn"></div>
+  </main>
+
+  <script src="js/env.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var LANES = [], GATES = [], CREDS = {}, HOUSE = {}, FILTER = "all", OPEN = {};
+
+    function hdr() { return { apikey: MCC_SUPA.key, Authorization: "Bearer " + MCC_SUPA.token(), "Content-Type": "application/json" }; }
+    function q(path, opts) {
+      return fetch(MCC_SUPA.url + "/rest/v1/" + path, Object.assign({ headers: hdr() }, opts || {}))
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.status === 204 ? null : r.json(); });
+    }
+
+    function gate(msg) {
+      $("lxIn").innerHTML = '<div class="gate">' + (msg ? '<p class="err">' + esc(msg) + "</p>" : "") +
+        '<input id="gEmail" type="email" placeholder="matthew@mccluster.org" autocomplete="username">' +
+        '<input id="gPass" type="password" placeholder="Password" autocomplete="current-password">' +
+        '<button id="gGo" type="button">Open the desk &#8594;</button></div>';
+      $("gGo").onclick = function () {
+        MCC_AUTH.signInPassword($("gEmail").value.trim(), $("gPass").value)
+          .then(boot).catch(function () { gate("That didn't open it."); });
+      };
+    }
+
+    function tally() {
+      var open = LANES.filter(function (l) { return l.unlocked; }).length;
+      var on = LANES.filter(function (l) { return l.onboarded; }).length;
+      var cred = LANES.filter(function (l) { return l.has_credentials; }).length;
+      return '<div class="tally">' +
+        "<span><b>" + on + "</b> / " + LANES.length + " onboarded</span>" +
+        "<span><b>" + open + "</b> unlocked</span>" +
+        "<span><b>" + (LANES.length - open) + "</b> locked</span>" +
+        "<span><b>" + cred + "</b> wired</span></div>";
+    }
+
+    function houseCard() {
+      return '<div class="house"><h2>House facts: these unlock the flag gates</h2>' +
+        '<div class="cred">' +
+        '<label>Published bylines<input data-house="bylines" type="number" min="0" value="' + esc(HOUSE.bylines || 0) + '"></label>' +
+        '<label>Portfolio URL<input data-house="portfolio_url" value="' + esc(HOUSE.portfolio_url || "") + '"></label>' +
+        '<label>PLUS ID<input data-house="plus_id" value="' + esc(HOUSE.plus_id || "") + '" placeholder="after PLUS membership"></label>' +
+        '<label>Copyright filed<select data-house="copyright_filed">' +
+          '<option value="false"' + (HOUSE.copyright_filed ? "" : " selected") + '>Not yet</option>' +
+          '<option value="true"' + (HOUSE.copyright_filed ? " selected" : "") + '>Filed</option></select></label>' +
+        "</div>" +
+        '<div class="acts"><button type="button" class="hot" data-savehouse>Save house facts</button>' +
+        '<span class="say">Bylines and a filed registration unlock gates across every lane.</span></div></div>';
+    }
+
+    function laneHTML(l) {
+      var gs = GATES.filter(function (g) { return g.target_id === l.id; });
+      var isOpen = !!OPEN[l.id];
+      var c = CREDS[l.id] || {};
+      return '<div class="ln' + (l.onboarded ? " is-on" : (l.unlocked ? "" : " is-locked")) + (isOpen ? " is-open" : "") + '" data-ln="' + esc(l.id) + '">' +
+        '<div class="ln__top"><div>' +
+          '<h3 class="ln__name">' + esc(l.label) + "</h3>" +
+          '<p class="ln__meta">' +
+            '<span class="pill ' + (l.onboarded ? "live" : l.unlocked ? "open" : "lock") + '">' +
+              (l.onboarded ? "onboarded" : l.unlocked ? "unlocked" : "locked") + "</span>" +
+            '<span class="pill">' + esc(l.lane) + "</span>" +
+            '<span class="pill">' + esc(l.rail) + "</span>" +
+            '<span class="pill">' + esc(l.your_cut) + "</span>" +
+            (l.exclusive ? '<span class="pill excl">exclusive</span>' : "") +
+            (l.has_credentials ? '<span class="pill">wired</span>' : "") +
+          "</p></div>" +
+          '<span class="ln__pct' + (l.pct >= 100 ? " full" : "") + '">' + l.pct + "%</span>" +
+        "</div>" +
+        '<div class="ln__bar"><span class="ln__fill" style="width:' + l.pct + '%"></span></div>' +
+
+        '<div class="ln__more">' +
+          (l.wants ? '<p class="ln__want"><b>What they want:</b> ' + esc(l.wants) + "</p>" : "") +
+          (l.avoid ? '<p class="ln__want"><b>Watch out:</b> ' + esc(l.avoid) + "</p>" : "") +
+          (l.needs ? '<p class="ln__want"><b>To sign up:</b> ' + esc(l.needs) + "</p>" : "") +
+          (gs.length ? "<ul class=\"gates\">" + gs.map(function (g) {
+            return "<li><span class=\"mark " + (g.met ? "yes" : "no") + "\">" + (g.met ? '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px;display:inline-block"><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px;display:inline-block"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>') + "</span>" +
+              "<span>" + esc(g.label) + (g.detail ? "<small>" + esc(g.detail) + "</small>" : "") + "</span>" +
+              '<span class="n">' + g.pct + "%</span></li>";
+          }).join("") + "</ul>" : "") +
+
+          '<div class="cred">' +
+            '<label>Protocol<select data-c="protocol" data-t="' + esc(l.id) + '">' +
+              ["", "sftp", "ftp", "ftps", "https", "none"].map(function (p) {
+                return '<option value="' + p + '"' + (c.protocol === p ? " selected" : "") + ">" + (p || "·") + "</option>";
+              }).join("") + "</select></label>" +
+            '<label>Host<input data-c="host" data-t="' + esc(l.id) + '" value="' + esc(c.host || "") + '" placeholder="sftp.example.com"></label>' +
+            '<label>Username<input data-c="username" data-t="' + esc(l.id) + '" value="' + esc(c.username || "") + '"></label>' +
+            '<label>Secret name<input data-c="secret_ref" data-t="' + esc(l.id) + '" value="' + esc(c.secret_ref || "") + '" placeholder="ADOBE_SFTP_PASS"></label>' +
+            '<label>Account email<input data-c="account_email" data-t="' + esc(l.id) + '" value="' + esc(c.account_email || "") + '"></label>' +
+            '<label>Remote dir<input data-c="remote_dir" data-t="' + esc(l.id) + '" value="' + esc(c.remote_dir || "/") + '"></label>' +
+          "</div>" +
+          '<div class="acts">' +
+            '<button type="button" class="hot" data-savecred="' + esc(l.id) + '">Save credentials</button>' +
+            '<button type="button" data-toggle="' + esc(l.id) + '">' + (l.onboarded ? "Mark not onboarded" : "Mark onboarded") + "</button>" +
+            '<span class="say">Put the password in a GitHub Secret and name it above; safer than storing it here.</span>' +
+          "</div>" +
+        "</div></div>";
+    }
+
+    function paint() {
+      var rows = LANES.filter(function (l) {
+        if (FILTER === "all") return true;
+        if (FILTER === "locked") return !l.unlocked;
+        if (FILTER === "ready") return l.unlocked && !l.onboarded;
+        return l.lane === FILTER;
+      }).sort(function (a, b) { return (a.priority || 99) - (b.priority || 99); });
+
+      $("lxIn").innerHTML = tally() + houseCard() +
+        '<div class="filters">' +
+        ["all", "ready", "locked", "editorial", "microstock", "premium", "aggregator"].map(function (f) {
+          return '<button type="button" data-f="' + f + '"' + (f === FILTER ? ' class="on"' : "") + ">" + f + "</button>";
+        }).join("") + "</div>" +
+        '<div class="lanes">' + rows.map(laneHTML).join("") + "</div>";
+    }
+
+    document.addEventListener("click", function (e) {
+      var t = e.target, hit = function (s) { return t.closest && t.closest(s); };
+      var f = hit("[data-f]"); if (f) { FILTER = f.getAttribute("data-f"); paint(); return; }
+
+      var sh = hit("[data-savehouse]");
+      if (sh) {
+        var body = {};
+        document.querySelectorAll("[data-house]").forEach(function (i) {
+          var k = i.getAttribute("data-house"), v = i.value;
+          body[k] = k === "bylines" ? parseInt(v, 10) || 0 : k === "copyright_filed" ? v === "true" : v;
+        });
+        sh.textContent = "Saving…";
+        q("vault_house?id=eq.1", { method: "PATCH", body: JSON.stringify(body) })
+          .then(boot).catch(function () { sh.textContent = "Failed. Retry"; });
+        return;
+      }
+
+      var sc = hit("[data-savecred]");
+      if (sc) {
+        var id = sc.getAttribute("data-savecred"), row = { target_id: id, updated_at: new Date().toISOString() };
+        document.querySelectorAll('[data-t="' + id + '"]').forEach(function (i) {
+          var v = i.value.trim(); row[i.getAttribute("data-c")] = v === "" ? null : v;
+        });
+        sc.textContent = "Saving…";
+        fetch(MCC_SUPA.url + "/rest/v1/vault_credentials", {
+          method: "POST", headers: Object.assign(hdr(), { Prefer: "resolution=merge-duplicates" }),
+          body: JSON.stringify(row),
+        }).then(function (r) { if (!r.ok) throw 0; OPEN[id] = true; return boot(); })
+          .catch(function () { sc.textContent = "Failed. Retry"; });
+        return;
+      }
+
+      var tg = hit("[data-toggle]");
+      if (tg) {
+        var tid = tg.getAttribute("data-toggle");
+        var cur = LANES.find(function (l) { return l.id === tid; });
+        OPEN[tid] = true;
+        q("vault_targets?id=eq." + tid, { method: "PATCH", body: JSON.stringify({ onboarded: !cur.onboarded }) })
+          .then(boot);
+        return;
+      }
+
+      if (hit("input,select,button,a")) return;
+      var ln = hit("[data-ln]");
+      if (ln) { var i2 = ln.getAttribute("data-ln"); OPEN[i2] = !OPEN[i2]; paint(); }
+    });
+
+    function boot() {
+      return Promise.all([
+        q("vault_lane_readiness?select=*"),
+        q("vault_gate_status?select=*"),
+        q("vault_credentials?select=*"),
+        q("vault_house?select=*&id=eq.1"),
+      ]).then(function (r) {
+        LANES = r[0]; GATES = r[1];
+        CREDS = {}; (r[2] || []).forEach(function (c) { CREDS[c.target_id] = c; });
+        HOUSE = (r[3] || [])[0] || {};
+        paint();
+      }).catch(function () {
+        gate("Signed in, but the lanes refused the read: run the-vault-gates.sql, and make sure this is the owner account.");
+      });
+    }
+    if (MCC_SUPA.token() && MCC_SUPA.email() === "matthew@mccluster.org") boot(); else gate();
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

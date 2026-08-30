@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Shot Wall · find your photo · McCluster</title>
+  <meta name="description" content="I shot the night. Find yourself on the wall. The first photo is free when you follow, the whole pack is a few dollars.">
+  <link rel="canonical" href="https://matthew.mccluster.org/shots.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/manrope-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+    .sw { max-width: 62rem; margin: 0 auto; padding: clamp(3.6rem, 8vh, 5rem) clamp(1.1rem, 4vw, 2rem) 9rem; }
+    .sw__k { font-size: 0.7rem; letter-spacing: 0.32em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
+    .sw h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.88; font-size: clamp(2.6rem, 11vw, 4.4rem); margin: 0.3rem 0 0.4rem; }
+    .sw__sub { font-family: var(--ui); font-weight: 600; color: var(--cream-dim); font-size: 0.95rem; max-width: 46ch; }
+    .sw__deal { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1.4rem 0 1.2rem; }
+    .sw__deal span { font-family: var(--ui); font-weight: 800; font-size: 0.76rem; color: var(--cream);
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13); border-radius: 100px; padding: 0.5rem 0.95rem; }
+    .sw__deal span.gold { color: #fff; background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .swgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr)); gap: 0.7rem; }
+    .ph { position: relative; overflow: hidden; border-radius: 18px; background: #0d0a08; aspect-ratio: 4 / 5;
+      cursor: pointer; isolation: isolate; border: 0; padding: 0; -webkit-appearance: none; appearance: none;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.18), 0 20px 44px -20px rgba(0,0,0,0.9); }
+    .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2;
+      -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+    .ph .wm { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0.9;
+      background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='150'%3E%3Ctext x='6' y='84' font-family='sans-serif' font-size='15' font-weight='800' fill='rgba(255,255,255,0.30)' transform='rotate(-18 110 75)'%3E%C2%A9 MCCLUSTER%3C/text%3E%3C/svg%3E"); }
+    .ph.is-free .wm { display: none; }
+    .ph .yours { position: absolute; top: 0.6rem; left: 0.6rem; z-index: 2; font-family: var(--ui); font-weight: 800;
+      font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: #fff;
+      background: var(--metal); border-radius: 100px; padding: 0.26rem 0.65rem;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); display: none; }
+    .ph.is-free .yours { display: block; }
+    /* THE VIEWER */
+    .vw { position: fixed; inset: 0; z-index: 240; display: none; flex-direction: column;
+      background: rgba(7,5,4,0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    .vw.on { display: flex; }
+    .vw__top { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 1rem; }
+    .vw__top b { font-family: var(--ui); font-weight: 800; font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+    .vw__x { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; width: 2.4rem; height: 2.4rem;
+      border-radius: 100px; color: #fff; font-size: 1.1rem; font-weight: 800;
+      background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18); }
+    .vw__pic { flex: 1; min-height: 0; position: relative; margin: 0 0.8rem; border-radius: 18px; overflow: hidden; isolation: isolate; }
+    .vw__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: -1;
+      -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+    .vw__pic.locked img { -webkit-touch-callout: none; }
+    .vw__pic .wm { position: absolute; inset: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='150'%3E%3Ctext x='6' y='84' font-family='sans-serif' font-size='15' font-weight='800' fill='rgba(255,255,255,0.30)' transform='rotate(-18 110 75)'%3E%C2%A9 MCCLUSTER%3C/text%3E%3C/svg%3E"); }
+    .vw__pic.free .wm { display: none; }
+    .vw__deck { margin: 0.8rem; padding: 0.95rem; border-radius: 22px;
+      background: linear-gradient(180deg, rgba(32,26,21,0.92), rgba(14,11,9,0.95));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 18px 50px -14px rgba(0,0,0,0.85); }
+    .vw__deck b { display: block; font-family: var(--ui); font-weight: 800; font-size: 1rem; color: #fff; }
+    .vw__deck small { display: block; font-family: var(--ui); font-weight: 600; font-size: 0.8rem; color: rgba(255,255,255,0.62); margin-top: 0.25rem; }
+    .vw__deck .row { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+    .vw__deck .row > * { flex: 1; }
+    .vw__deck a, .vw__deck button { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; text-decoration: none; text-align: center; display: block; width: 100%;
+      font-family: var(--ui); font-weight: 800; font-size: 0.88rem; border-radius: 15px; padding: 0.85rem 0.5rem; }
+    .vw__deck .go { background: var(--metal); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .vw__deck .alt { background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
+      color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.15); }
+    .vw__deck input { width: 100%; -webkit-appearance: none; appearance: none; border: 0; margin-top: 0.5rem;
+      font-family: var(--ui); font-weight: 600; font-size: 1rem; color: #fff; border-radius: 13px; padding: 0.75rem 0.9rem;
+      background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
+    .vw__deck input::placeholder { color: rgba(255,255,255,0.4); }
+    .vw__deck .err { color: #e8a68a; font-size: 0.78rem; font-weight: 700; margin: 0.5rem 0 0; }
+    /* THE THREE LANES: the card's front door */
+    .lanes { display: grid; gap: 0.8rem; margin-bottom: 2rem; }
+    .lane { position: relative; overflow: hidden; border-radius: 22px; aspect-ratio: 16 / 7.5; isolation: isolate;
+      display: block; text-decoration: none; color: #fff; background: #0d0a08;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.2), 0 22px 50px -20px rgba(0,0,0,0.9); }
+    .lane img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+    .lane .sc { position: absolute; inset: 0; z-index: -1;
+      background: linear-gradient(100deg, rgba(9,7,5,0.88) 26%, rgba(9,7,5,0.35) 62%, rgba(9,7,5,0.1) 100%); }
+    .lane::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.1) 47%, transparent 58%); }
+    .lane__tx { position: absolute; left: 1.05rem; top: 50%; transform: translateY(-50%); right: 4.4rem; }
+    .lane__tx small { display: block; font-family: var(--ui); font-weight: 800; font-size: 0.58rem;
+      letter-spacing: 0.2em; text-transform: uppercase; color:var(--ruby-text); }
+    .lane__tx b { display: block; font-family: var(--ui); font-weight: 800; font-size: 1.25rem; line-height: 1.1; margin-top: 0.2rem; }
+    .lane__tx span { display: block; font-family: var(--ui); font-weight: 600; font-size: 0.74rem; color: rgba(255,255,255,0.66); margin-top: 0.3rem; }
+    .lane__arr { position: absolute; right: 0.95rem; top: 50%; transform: translateY(-50%);
+      width: 2.5rem; height: 2.5rem; border-radius: 100px; display: grid; place-items: center;
+      font-weight: 800; color: #fff; background: var(--metal);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 10px 24px -10px rgba(229,56,59,0.55); }
+    .sw__h2 { font-family: var(--ui); font-weight: 800; font-size: 0.7rem; letter-spacing: 0.28em;
+      text-transform: uppercase; color: var(--cream-dim); margin: 0 0 0.9rem; }
+    /* event picker */
+    .pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 0.9rem; }
+    .pick a { position: relative; overflow: hidden; border-radius: 20px; aspect-ratio: 16 / 10; isolation: isolate;
+      display: block; text-decoration: none; color: #fff; background: #0d0a08;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), 0 22px 50px -20px rgba(0,0,0,0.9); }
+    .pick img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+    .pick .sc { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(9,7,5,0.05), rgba(9,7,5,0.85)); }
+    .pick b { position: absolute; left: 0.9rem; bottom: 0.8rem; font-family: var(--ui); font-weight: 800; }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage">
+  <main class="sw">
+    <p class="sw__k" id="swK">You were there</p>
+    <h1 id="swTitle">The Shot<br>Wall</h1>
+    <p class="sw__sub" id="swSub">I shot the night. Find yourself.</p>
+    <div class="sw__deal" id="swDeal" hidden>
+      <span class="gold" id="swDealFree">First photo free, just follow me</span>
+      <span id="swDealPack">The whole pack · $5</span>
+    </div>
+    <div class="swgrid" id="swGrid"></div>
+    <div id="swPick"></div>
+  </main>
+
+  <!-- THE VIEWER -->
+  <div class="vw" id="vw">
+    <div class="vw__top"><b id="vwTag">Your shot</b><button class="vw__x" id="vwX" type="button" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    <div class="vw__pic locked" id="vwPic"><img id="vwIm" src="" alt="Your photo" draggable="false"><span class="wm"></span></div>
+    <div class="vw__deck" id="vwDeck"></div>
+  </div>
+
+  <!-- THE BAR -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/crm.js?v=__STAMP__"></script>
+  <script src="js/signals.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var track = function (n, p) { if (window.MCC_TRACK) window.MCC_TRACK(n, p || {}); };
+    var slug = new URLSearchParams(location.search).get("e") || "";
+    var EV = null;
+
+    /* what this device already unlocked at this event */
+    var K = function () { return "mcc_shots_" + (EV ? EV.slug : slug); };
+    function mine() { try { return JSON.parse(localStorage.getItem(K())) || {}; } catch (e) { return {}; } }
+    function bank(o) { try { localStorage.setItem(K(), JSON.stringify(o)); } catch (e) {} }
+
+    document.addEventListener("contextmenu", function (e) {
+      if (e.target && e.target.tagName === "IMG") e.preventDefault();
+    });
+
+    /* ---------- no event picked: the card's front door ---------- */
+    var LANES = [
+      { k: "Lane one", t: "Videography", s: "Brand films · music videos · event coverage",
+        img: "assets/frames/vaunt_0001.jpg", href: "films.html" },
+      { k: "Lane two", t: "Photography", s: "Events · portraits · the Shot Wall",
+        img: "assets/img/rally/rally-02.jpg", href: "prints.html" },
+      { k: "Lane three", t: "Media management & consulting", s: "Your socials · your rollout · run like a label",
+        img: "assets/frames/keynote_0001.jpg", href: "hire.html" },
+    ];
+    function paintPick() {
+      $("swK").textContent = "You tapped the card";
+      $("swTitle").innerHTML = "Pick your<br>lane";
+      $("swSub").textContent = "Three things I do. Watch the work, then lock in, or find your photo from the night below.";
+      track("card_hub_view", {});
+      fetch("data/shots/index.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+        $("swPick").innerHTML =
+          '<div class="lanes">' + LANES.map(function (l) {
+            return '<a class="lane" href="' + l.href + '"><img src="' + esc(l.img) + '" alt="" loading="lazy"><span class="sc"></span>' +
+              '<span class="lane__tx"><small>' + esc(l.k) + "</small><b>" + esc(l.t) + "</b><span>" + esc(l.s) + "</span></span>" +
+              '<span class="lane__arr">&#8594;</span></a>';
+          }).join("") + "</div>" +
+          '<p class="sw__h2">The nights &middot; find your photo</p>' +
+          '<div class="pick">' + (j.events || []).map(function (ev) {
+            return '<a href="shots.html?e=' + esc(ev.slug) + '"><img src="' + esc(ev.cover) + '" alt="" loading="lazy">' +
+              '<span class="sc"></span><b>' + esc(ev.title) + (ev.date ? " · " + esc(ev.date) : "") + "</b></a>";
+          }).join("") + "</div>";
+      });
+    }
+
+    /* ---------- the wall ---------- */
+    function paintWall() {
+      var m = mine();
+      $("swK").textContent = (EV.title + (EV.date ? " · " + EV.date : "")).toUpperCase();
+      $("swSub").textContent = EV.tagline || "I shot the night. Find yourself.";
+      $("swDeal").hidden = false;
+      $("swDealPack").textContent = "The whole pack · $" + (EV.packPrice || 5);
+      if (m.free) $("swDealFree").textContent = "Your free one is unlocked";
+      $("swGrid").innerHTML = (EV.photos || []).map(function (p, i) {
+        var free = m.free === p.id;
+        return '<button class="ph' + (free ? " is-free" : "") + '" type="button" data-i="' + i + '">' +
+          '<img src="' + esc(p.src) + '" alt="Photo ' + (i + 1) + '" loading="lazy" draggable="false">' +
+          '<span class="wm"></span><span class="yours">Yours</span></button>';
+      }).join("");
+      track("shots_view", { event: EV.slug, photos: (EV.photos || []).length });
+    }
+
+    /* ---------- the viewer + the two doors ---------- */
+    var showing = -1;
+    function openViewer(i) {
+      var p = EV.photos[i]; if (!p) return;
+      showing = i;
+      $("vwIm").src = p.src;
+      $("vwTag").textContent = EV.title + " · " + (i + 1) + " / " + EV.photos.length;
+      $("vw").classList.add("on");
+      document.body.style.overflow = "hidden";
+      paintDeck();
+      track("shots_open", { event: EV.slug, photo: p.id });
+    }
+    function closeViewer() {
+      $("vw").classList.remove("on");
+      document.body.style.overflow = "";
+      showing = -1;
+    }
+    $("vwX").addEventListener("click", closeViewer);
+
+    function paintDeck(mode) {
+      var p = EV.photos[showing]; if (!p) return;
+      var m = mine(), deck = $("vwDeck");
+      var isFree = m.free === p.id;
+      $("vwPic").classList.toggle("free", isFree);
+      if (isFree && !mode) {
+        deck.innerHTML = "<b>This one's yours.</b>" +
+          "<small>Long-press the photo and save it. Want every shot from the night? The pack is $" + (EV.packPrice || 5) + ".</small>" +
+          '<div class="row"><button class="go" type="button" data-act="pack">Get the whole pack &#8594;</button>' +
+          '<a class="alt" href="prints.html#/' + p.id + '">Own it in print &#8594;</a></div>';
+        return;
+      }
+      if (mode === "follow") {
+        deck.innerHTML = "<b>Step 1: follow me.</b>" +
+          '<small>Tap through, hit follow, come right back. Then tell me who you are so I can match the follow.</small>' +
+          '<div class="row"><a class="alt" href="https://instagram.com/' + esc(EV.ig || "McClusterishere") + '" target="_blank" rel="noopener">Open Instagram &#8594;</a></div>' +
+          '<input name="ig" placeholder="Your @ on Instagram" maxlength="60" autocapitalize="none">' +
+          '<input name="name" placeholder="Your name" autocomplete="name" maxlength="80">' +
+          '<input name="email" type="email" placeholder="Email (where your photo goes)" autocomplete="email" maxlength="120">' +
+          '<div class="row"><button class="go" type="button" data-act="unlock">I followed, unlock it</button>' +
+          '<button class="alt" type="button" data-act="back">Back</button></div>' +
+          '<p class="err" hidden>Need your @, name, and a real email. That’s the trade.</p>';
+        return;
+      }
+      if (mode === "pack") {
+        var payBtn = EV.pay
+          ? '<a class="go" href="' + esc(EV.pay) + '" target="_blank" rel="noopener" data-act="paylink">Pay $' + (EV.packPrice || 5) + " now &#8594;</a>"
+          : '<button class="go" type="button" data-act="packsend">Send me the pack &#8594;</button>';
+        deck.innerHTML = "<b>The whole pack: $" + (EV.packPrice || 5) + ".</b>" +
+          "<small>Every shot from the night, full quality, straight to your inbox.</small>" +
+          '<input name="name" placeholder="Your name" autocomplete="name" maxlength="80">' +
+          '<input name="email" type="email" placeholder="Email (where the pack goes)" autocomplete="email" maxlength="120">' +
+          '<div class="row">' + payBtn + '<button class="alt" type="button" data-act="back">Back</button></div>' +
+          '<p class="err" hidden>Name and a real email. The pack has to land somewhere.</p>';
+        return;
+      }
+      var freeUsed = !!m.free;
+      deck.innerHTML = "<b>That's you, right?</b>" +
+        "<small>" + (freeUsed
+          ? "Your free one is already unlocked, so this one rides with the pack, $" + (EV.packPrice || 5) + " for everything."
+          : "This one's free. All it costs is a follow. Or take the whole night for $" + (EV.packPrice || 5) + ".") + "</small>" +
+        '<div class="row">' +
+        (freeUsed ? "" : '<button class="go" type="button" data-act="follow">Free with a follow</button>') +
+        '<button class="' + (freeUsed ? "go" : "alt") + '" type="button" data-act="pack">The pack &middot; $' + (EV.packPrice || 5) + "</button>" +
+        "</div>";
+    }
+
+    $("vwDeck").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-act]");
+      if (!b) return;
+      var act = b.getAttribute("data-act");
+      var deck = $("vwDeck");
+      var f = function (n) { var i = deck.querySelector('[name="' + n + '"]'); return i ? i.value.trim() : ""; };
+      var p = EV.photos[showing];
+      if (act === "follow") { paintDeck("follow"); return; }
+      if (act === "pack") { paintDeck("pack"); return; }
+      if (act === "back") { paintDeck(); return; }
+      if (act === "unlock") {
+        var ig = f("ig").replace(/^@/, ""), name = f("name"), email = f("email");
+        var err = deck.querySelector(".err");
+        if (!ig || !name || !/.+@.+\..+/.test(email)) { err.hidden = false; return; }
+        b.disabled = true; b.textContent = "Unlocking…";
+        window.MCC_CRM.send({
+          name: name, email: email, want: "Shot Wall: free photo (follow)",
+          note: "@" + ig + " · " + EV.title + " · photo " + p.id,
+          campaign: EV.slug,
+        }).then(function () {
+          var m = mine(); m.free = p.id; bank(m);
+          track("shots_follow_unlock", { event: EV.slug, photo: p.id });
+          paintWall(); paintDeck();
+        }).catch(function () {
+          b.disabled = false; b.textContent = "I followed, unlock it";
+          err.textContent = "That didn’t go through. Try again in a second.";
+          err.hidden = false;
+        });
+        return;
+      }
+      if (act === "packsend" || act === "paylink") {
+        var nm = f("name"), em = f("email");
+        var er = deck.querySelector(".err");
+        if (!nm || !/.+@.+\..+/.test(em)) { er.hidden = false; if (act === "paylink") e.preventDefault(); return; }
+        if (act === "packsend") { b.disabled = true; b.textContent = "Sending…"; }
+        window.MCC_CRM.send({
+          name: nm, email: em, want: "Shot Wall: full pack ($" + (EV.packPrice || 5) + ")",
+          note: EV.title + " · asked from photo " + p.id + (EV.pay ? " · sent to pay link" : ""),
+          campaign: EV.slug,
+        }).then(function () {
+          track("shots_pack", { event: EV.slug, paylink: !!EV.pay });
+          deck.innerHTML = "<b>On the desk.</b>" +
+            "<small>" + (EV.pay
+              ? "Finish the payment and the pack lands in your inbox right after."
+              : "You’re in. The payment link and your pack hit your email today.") + "</small>" +
+            '<div class="row"><button class="alt" type="button" data-act="done">Done</button></div>';
+        }).catch(function () {
+          if (act === "packsend") { b.disabled = false; b.textContent = "Send me the pack →"; }
+          er.textContent = "That didn’t go through. Try again in a second.";
+          er.hidden = false;
+        });
+        return;
+      }
+      if (act === "done") { closeViewer(); }
+    });
+
+    $("swGrid").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest(".ph");
+      if (b) openViewer(parseInt(b.getAttribute("data-i"), 10));
+    });
+
+    /* ---------- boot ---------- */
+    if (!slug) { paintPick(); }
+    else {
+      fetch("data/shots/" + encodeURIComponent(slug) + ".json", { cache: "no-cache" })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (j) { EV = j; paintWall(); })
+        .catch(function () { paintPick(); });
+    }
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The desk · Equity Uprise</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="assets/img/eu-favicon.png">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/equity-uprise-app.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+</head>
+<body class="songpage" data-masthead="off">
+
+  <main class="eua eua--wide">
+    <p class="eua__kicker">Equity Uprise · The desk</p>
+    <h1>The desk.</h1>
+    <p class="eua__lede" id="who">Checking who you are…</p>
+
+    <!-- Not a wall, a courtesy. The wall is Row Level Security in the
+         database: this page draws only the doors that would open, and
+         every one of them is refused server-side for anyone else. -->
+    <div class="eua-gate" id="gate" hidden>
+      <h3 id="gateH">This room is for the desk</h3>
+      <p id="gateP">Sign in with the account that runs the platform.</p>
+      <div class="eua-actions"><a class="btn btn--ruby" href="account.html">Sign in</a></div>
+    </div>
+
+    <div id="deck" hidden>
+      <div class="eua-tabs" id="tabs">
+        <button data-tab="queue" class="is-on">Perspectives</button>
+        <button data-tab="listings">Listings</button>
+        <button data-tab="threads">Conversations</button>
+        <button data-tab="topics">Topics</button>
+        <button data-tab="people" data-admin="1">People &amp; roles</button>
+        <button data-tab="audit">The log</button>
+      </div>
+
+      <section data-panel="queue">
+        <h2 class="eua__h" style="font-size:1.4rem">Waiting on a reader</h2>
+        <p class="eua__note">Approve puts it on the public page under the terms the person chose. Hide keeps it counted and out of sight. Only the owner can delete anything.</p>
+        <div id="queue"></div>
+      </section>
+
+      <section data-panel="listings" hidden>
+        <h2 class="eua__h" style="font-size:1.4rem">Listings waiting</h2>
+        <p class="eua__note">Open the link before you publish. Verified means somebody actually loaded the program's page and confirmed it is still running — nothing else counts.</p>
+        <div id="listings"></div>
+      </section>
+
+      <section data-panel="threads" hidden>
+        <h2 class="eua__h" style="font-size:1.4rem">Conversations</h2>
+        <p class="eua__note">Threads marked <b>with a person</b> are ones the listener handed over. Those are yours to answer.</p>
+        <div class="eua-tabs" style="margin-top:.8rem">
+          <button class="is-on" data-cstat="human">Handed over</button>
+          <button data-cstat="open">Open</button>
+          <button data-cstat="">All</button>
+        </div>
+        <div id="threads"></div>
+      </section>
+
+      <section data-panel="topics" hidden>
+        <h2 class="eua__h" style="font-size:1.4rem">Topics</h2>
+        <p class="eua__note">Editors can fix wording. Adding, retiring, or re-scoping a topic is the movement's posture, so it is the owner's call and the database refuses anyone else. The listener's own instructions are not editable from any page — they live in the function, on purpose.</p>
+        <div id="topics"></div>
+      </section>
+
+      <section data-panel="people" hidden>
+        <h2 class="eua__h" style="font-size:1.4rem">People &amp; roles</h2>
+        <p class="eua__note">Owner only. An editor is a fellow with duties: they moderate, they edit listings and topic copy, they read conversations. They never change roles, never send anything outbound, never touch the suppression list, and never delete.</p>
+        <div id="people"></div>
+      </section>
+
+      <section data-panel="audit" hidden>
+        <h2 class="eua__h" style="font-size:1.4rem">The log</h2>
+        <p class="eua__note">Append-only by construction — there is no update policy and no delete policy on this table for anyone, including the owner. A log its most powerful user can quietly edit proves nothing.</p>
+        <div id="audit"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/eu-api.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+    function $(id) { return document.getElementById(id); }
+    function when(t) { return t ? new Date(t).toLocaleString() : ""; }
+
+    var ROLE = "visitor";
+
+    EU.role().then(function (r) {
+      ROLE = r;
+      if (r !== "admin" && r !== "editor") {
+        $("who").textContent = "";
+        $("gate").hidden = false;
+        if (EU.uid()) {
+          $("gateH").textContent = "This account isn't on the desk";
+          $("gateP").textContent = "You're signed in, but this account doesn't carry an editor or owner role. If it should, the owner sets that under People & roles.";
+        }
+        return;
+      }
+      $("who").textContent = r === "admin"
+        ? "You're the owner. Everything on this page is yours, including the parts that can't be undone."
+        : "You're an editor. Moderation, listings, topic copy and conversations — the kill switches aren't here.";
+      $("deck").hidden = false;
+      /* the degraded role, drawn honestly: an editor never sees a button
+         the database would refuse them */
+      if (r !== "admin") {
+        document.querySelectorAll("[data-admin]").forEach(function (n) { n.hidden = true; });
+      }
+      drawQueue(); drawListings(); drawThreads("human"); drawTopics(); drawAudit();
+      if (r === "admin") drawPeople();
+    });
+
+    /* ---------- tabs ---------- */
+    $("tabs").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-tab]");
+      if (!b) return;
+      $("tabs").querySelectorAll("button").forEach(function (n) { n.classList.remove("is-on"); });
+      b.classList.add("is-on");
+      document.querySelectorAll("[data-panel]").forEach(function (p) {
+        p.hidden = p.getAttribute("data-panel") !== b.getAttribute("data-tab");
+      });
+    });
+
+    /* ---------- perspectives ---------- */
+    function drawQueue() {
+      EU.desk.queue().then(function (rows) {
+        $("queue").innerHTML = rows.length ? rows.map(function (v) {
+          return '<div class="eua-row"><div class="eua-row__top">' +
+            '<span class="eua-row__t">' + esc(v.topic_slug) + " · " +
+            esc(v.anonymous ? "anonymous" : (v.display_name || "unnamed")) +
+            (v.region ? " · " + esc(v.region) : "") + "</span>" +
+            '<span class="eua-row__when">' + when(v.created_at) + "</span></div>" +
+            '<p class="eua-row__body">' + esc(v.body) + "</p>" +
+            (v.consent_public ? "" : '<p class="eua-row__when">✱ no publishing consent — approving still keeps it off the public view</p>') +
+            '<div class="eua-row__acts">' +
+            '<button class="eua-mini eua-mini--go" data-mod="approved" data-id="' + v.id + '">approve</button>' +
+            '<button class="eua-mini" data-mod="hidden" data-id="' + v.id + '">hide</button>' +
+            '<button class="eua-mini eua-mini--no" data-mod="spam" data-id="' + v.id + '">spam</button>' +
+            "</div></div>";
+        }).join("") : '<p class="eua-empty">Queue is clear.</p>';
+      }).catch(function () {
+        $("queue").innerHTML = '<p class="eua-empty">Could not load the queue.</p>';
+      });
+    }
+
+    $("queue").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-mod]");
+      if (!b) return;
+      b.disabled = true;
+      EU.desk.moderate(b.getAttribute("data-id"), b.getAttribute("data-mod"))
+        .then(drawQueue)
+        .catch(function () { b.disabled = false; });
+    });
+
+    /* ---------- listings ---------- */
+    function drawListings() {
+      EU.desk.pendingFellowships().then(function (rows) {
+        $("listings").innerHTML = rows.length ? rows.map(function (f) {
+          return '<div class="eua-row"><div class="eua-row__top">' +
+            '<span class="eua-row__t">' + esc(f.title) + " · " + esc(f.org || "") + "</span>" +
+            '<span class="eua-row__when">' + esc(f.source) + " · " + when(f.created_at) + "</span></div>" +
+            '<p class="eua-row__body">' + esc(f.summary || f.description || "") + "</p>" +
+            (f.url ? '<p class="eua-row__when"><a href="' + esc(f.url) + '" target="_blank" rel="noopener">' + esc(f.url) + "</a></p>" : "") +
+            (f.deadline_note ? '<p class="eua-row__when">' + esc(f.deadline_note) + "</p>" : "") +
+            '<div class="eua-row__acts">' +
+            '<button class="eua-mini eua-mini--go" data-pub="' + f.id + '">publish</button>' +
+            '<button class="eua-mini" data-check="' + f.id + '">link checked</button>' +
+            '<button class="eua-mini eua-mini--go" data-verify="' + f.id + '">verified</button>' +
+            '<button class="eua-mini eua-mini--no" data-arch="' + f.id + '">archive</button>' +
+            "</div></div>";
+        }).join("") : '<p class="eua-empty">Nothing waiting.</p>';
+      }).catch(function () {
+        $("listings").innerHTML = '<p class="eua-empty">Could not load listings.</p>';
+      });
+    }
+
+    $("listings").addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      var patch = null, id = null;
+      if (b.hasAttribute("data-pub")) { id = b.getAttribute("data-pub"); patch = { status: "published" }; }
+      else if (b.hasAttribute("data-arch")) { id = b.getAttribute("data-arch"); patch = { status: "archived" }; }
+      else if (b.hasAttribute("data-check")) { id = b.getAttribute("data-check"); patch = { verification: "link-checked" }; }
+      else if (b.hasAttribute("data-verify")) {
+        id = b.getAttribute("data-verify");
+        patch = { verification: "verified", verified_at: new Date().toISOString() };
+      }
+      if (!patch) return;
+      b.disabled = true;
+      EU.desk.setFellowship(id, patch)
+        .then(function () { return EU.desk.log("fellowship." + Object.keys(patch)[0], "eu_fellowships", id, patch); })
+        .then(drawListings)
+        .catch(function () { b.disabled = false; });
+    });
+
+    /* ---------- conversations ---------- */
+    function drawThreads(status) {
+      EU.desk.conversations(status || undefined).then(function (rows) {
+        $("threads").innerHTML = rows.length ? rows.map(function (c) {
+          return '<div class="eua-row"><div class="eua-row__top">' +
+            '<span class="eua-row__t">' + esc(c.topic_slug || "General") + " · " + esc(c.status) + "</span>" +
+            '<span class="eua-row__when">' + when(c.last_at) + "</span></div>" +
+            (c.summary ? '<p class="eua-row__body">' + esc(c.summary) + "</p>" : "") +
+            (c.signals && c.signals.interests && c.signals.interests.length
+              ? '<div class="eua-tags" style="margin-top:.5rem">' + c.signals.interests.map(function (t) {
+                  return '<span class="eua-tag eua-tag--flat">' + esc(t) + "</span>";
+                }).join("") + "</div>" : "") +
+            '<div class="eua-row__acts"><button class="eua-mini" data-open="' + c.id + '">read it</button></div>' +
+            '<div data-msgs="' + c.id + '" hidden style="margin-top:.7rem"></div></div>';
+        }).join("") : '<p class="eua-empty">Nothing here.</p>';
+      }).catch(function () {
+        $("threads").innerHTML = '<p class="eua-empty">Could not load conversations.</p>';
+      });
+    }
+
+    document.querySelector('[data-panel="threads"] .eua-tabs').addEventListener("click", function (e) {
+      var b = e.target.closest("[data-cstat]");
+      if (!b) return;
+      this.querySelectorAll("button").forEach(function (n) { n.classList.remove("is-on"); });
+      b.classList.add("is-on");
+      drawThreads(b.getAttribute("data-cstat"));
+    });
+
+    $("threads").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-open]");
+      if (!b) return;
+      var id = b.getAttribute("data-open");
+      var box = document.querySelector('[data-msgs="' + id + '"]');
+      if (!box.hidden) { box.hidden = true; return; }
+      box.hidden = false;
+      box.innerHTML = "<p class='eua-row__when'>loading…</p>";
+      EU.messages(id).then(function (rows) {
+        box.innerHTML = rows.map(function (m) {
+          return '<p class="eua-msg eua-msg--' + (m.role === "person" ? "person" : m.role === "agent" ? "agent" : "system") +
+            '" style="max-width:none">' + esc(m.body) + "</p>";
+        }).join("") || "<p class='eua-row__when'>empty</p>";
+      });
+    });
+
+    /* ---------- topics ---------- */
+    function drawTopics() {
+      EU.desk.topics().then(function (rows) {
+        $("topics").innerHTML = rows.map(function (t) {
+          return '<div class="eua-row"><div class="eua-row__top">' +
+            '<span class="eua-row__t">' + esc(t.name) + " · " + esc(t.slug) + "</span>" +
+            '<span class="eua-row__when">' + esc(t.status) + "</span></div>" +
+            '<label class="eua-field"><span>Tagline</span><input type="text" class="eua-input" data-f="tagline" data-slug="' + esc(t.slug) + '" value="' + esc(t.tagline) + '"></label>' +
+            '<label class="eua-field"><span>How we frame it</span><textarea data-f="description" data-slug="' + esc(t.slug) + '">' + esc(t.description) + "</textarea></label>" +
+            '<label class="eua-field"><span>What is documented</span><textarea data-f="context" data-slug="' + esc(t.slug) + '">' + esc(t.context) + "</textarea></label>" +
+            '<div class="eua-row__acts"><button class="eua-mini eua-mini--go" data-save="' + esc(t.slug) + '">save copy</button>' +
+            (ROLE === "admin"
+              ? '<button class="eua-mini" data-status="' + esc(t.slug) + '" data-to="' + (t.status === "active" ? "paused" : "active") + '">' +
+                (t.status === "active" ? "pause topic" : "reopen topic") + "</button>"
+              : "") +
+            "</div></div>";
+        }).join("");
+      }).catch(function () {
+        $("topics").innerHTML = '<p class="eua-empty">Could not load topics.</p>';
+      });
+    }
+
+    $("topics").addEventListener("click", function (e) {
+      var s = e.target.closest("[data-save]");
+      if (s) {
+        var slug = s.getAttribute("data-save");
+        var patch = { updated_at: new Date().toISOString() };
+        document.querySelectorAll('[data-slug="' + slug + '"]').forEach(function (n) {
+          patch[n.getAttribute("data-f")] = n.value;
+        });
+        s.disabled = true;
+        EU.desk.setTopic(slug, patch)
+          .then(function () { s.disabled = false; s.textContent = "saved"; })
+          .catch(function () { s.disabled = false; s.textContent = "refused"; });
+        return;
+      }
+      var st = e.target.closest("[data-status]");
+      if (st) {
+        EU.desk.setTopic(st.getAttribute("data-status"), { status: st.getAttribute("data-to") }).then(drawTopics);
+      }
+    });
+
+    /* ---------- people ---------- */
+    var ROLES = ["member", "host", "editor", "client", "admin"];
+    function drawPeople() {
+      EU.desk.people().then(function (rows) {
+        $("people").innerHTML = rows.map(function (p) {
+          return '<div class="eua-row"><div class="eua-row__top">' +
+            '<span class="eua-row__t">' + esc(p.display_name) + " · @" + esc(p.handle) + "</span>" +
+            '<span class="eua-row__when">' + esc(p.role) + "</span></div>" +
+            '<div class="eua-row__acts">' + ROLES.map(function (r) {
+              return '<button class="eua-mini' + (p.role === r ? " eua-mini--go" : "") +
+                '" data-role="' + r + '" data-id="' + p.id + '">' + r + "</button>";
+            }).join("") + "</div></div>";
+        }).join("") || '<p class="eua-empty">No profiles yet.</p>';
+      }).catch(function () {
+        $("people").innerHTML = '<p class="eua-empty">Could not load people.</p>';
+      });
+    }
+
+    $("people").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-role]");
+      if (!b) return;
+      b.disabled = true;
+      EU.desk.setRole(b.getAttribute("data-id"), b.getAttribute("data-role"))
+        .then(function () { return EU.desk.log("role.set", "eu_profiles", b.getAttribute("data-id"), { role: b.getAttribute("data-role") }); })
+        .then(drawPeople)
+        .catch(function () { b.disabled = false; });
+    });
+
+    /* ---------- the log ---------- */
+    function drawAudit() {
+      EU.desk.audit().then(function (rows) {
+        $("audit").innerHTML = rows.length ? rows.map(function (a) {
+          return '<div class="eua-row"><div class="eua-row__top">' +
+            '<span class="eua-row__t">' + esc(a.action) + "</span>" +
+            '<span class="eua-row__when">' + esc(a.actor) + " · " + when(a.at) + "</span></div>" +
+            (a.entity ? '<p class="eua-row__when">' + esc(a.entity) + " " + esc(a.entity_id) + "</p>" : "") +
+            "</div>";
+        }).join("") : '<p class="eua-empty">Nothing logged yet.</p>';
+      }).catch(function () {
+        $("audit").innerHTML = '<p class="eua-empty">Could not load the log.</p>';
+      });
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+{
+  "source": "McCluster-Portfolio current interface",
+  "selectors": [
+    {
+      "selector": "--ruby / --ruby-hot semantic accents",
+      "use": "replace flat red treatment with ruby optical behavior",
+      "intensity": "semantic-only"
+    },
+    {
+      "selector": ".sp__pill.is-on",
+      "use": "selected filter state",
+      "intensity": "low"
+    },
+    {
+      "selector": ".spc__prog i",
+      "use": "media progress bar",
+      "intensity": "low-to-medium"
+    },
+    {
+      "selector": ".mini__like.is-on",
+      "use": "liked state only",
+      "intensity": "low"
+    },
+    {
+      "selector": ".now__ic.is-on / .now__like.is-on",
+      "use": "active player state",
+      "intensity": "low"
+    },
+    {
+      "selector": ".now__scrub progress region",
+      "use": "active playback track, not entire slider",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".sound-toggle__dot",
+      "use": "sound enabled status",
+      "intensity": "low"
+    },
+    {
+      "selector": ".scroll-progress span",
+      "use": "scroll progress energy line",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".wantsite__spark / .wantsite__pulse",
+      "use": "existing attention/status accents",
+      "intensity": "low"
+    },
+    {
+      "selector": ".hero__line--accent / existing ruby accents",
+      "use": "retain typography role; use subtle optical edge/refraction only where practical",
+      "intensity": "very-low"
+    },
+    {
+      "selector": ".appbar__tab active state",
+      "use": "selected destination accent without changing nav structure",
+      "intensity": "low"
+    }
+  ]
+}

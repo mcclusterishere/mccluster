@@ -1,0 +1,23 @@
+{
+ "note": "THE DOMAIN REGISTRY: every McCluster property, one ledger. Names marked 'proposed' are working titles, not commitments; nothing hardcodes them. site_id is the key the offerings ledger and campaigns table use.",
+ "properties": [
+  { "site_id": "here",          "host": "matthew.mccluster.org",    "status": "live",     "repo": "mcclusterishere/Here",
+    "former_hosts": ["here.mccluster.org"],
+    "owns": "EVERYTHING PUBLIC. The album world, the studio and its services, the bio and credentials, and the Equity Uprise civic platform. One property, one repo.",
+    "note": "site_id stays 'here' because the offerings ledger and the campaigns table key off it; only the host changed. Renamed here.mccluster.org -> matthew.mccluster.org on 2026-08-17, per the 2026-07-30 owner's call in docs/architecture/subdomain-split.md. The old host is kept alive as a forwarding property built by tools/build-redirects.mjs." },
+  { "site_id": "matthew",       "host": "matthew.mccluster.org", "status": "merged",  "repo": "mcclusterishere/Here",
+    "owns": "Nothing separate any more. This entry used to plan a standalone headquarters property and said 'do not build in Here'; the multi-subdomain split was called off on 2026-07-30 and the headquarters IS the Here repo, now served at this host. Kept as a tombstone so the old instruction is not followed by mistake." },
+  { "site_id": "account",       "host": "account.mccluster.org", "status": "planned",  "repo": "shared backend",
+    "owns": "Central authentication and the customer's single record (docs/shared-accounts-architecture.md)" },
+  { "site_id": "prayer-closet", "host": "prayercloset.mccluster.org", "status": "planned", "repo": "lives inside Here today; spins out per docs/prayer-closet.md",
+    "owns": "The Prayer Closet world: drops, the Inner Room, briefings, editions, and (future) the curated Christian fashion marketplace. Currently served at matthew.mccluster.org/prayer-closet.html; when the subdomain goes live, the Here routes 301 to it" },
+  { "site_id": "equity-uprise", "host": "(proposed) equityuprise or a mccluster.org subdomain", "status": "proposed", "repo": "own property",
+    "owns": "The civic program world: fellowship, docket, feed, rally record" },
+  { "site_id": "heal-the-3",    "host": "(proposed) healthe3.mccluster.org", "status": "proposed", "repo": "own property",
+    "owns": "The Heal the 3 album/program world" },
+  { "site_id": "prim3",         "host": "(proposed) a PRIM3 property",       "status": "proposed", "repo": "own property",
+    "owns": "The PRIM3 study-tapes world" },
+  { "site_id": "whip-equipped", "host": "(proposed) a Whip Equipped property","status": "proposed", "repo": "own property",
+    "owns": "The dealership saga / Whip Equipped LLC commercial world" }
+ ]
+}

@@ -1,0 +1,25 @@
+Pseudo-shader contract:
+
+media = originalMediaTexture
+normal = sample(normal)
+reflection = sample(reflectionMask)
+flare = sample(flareMask)
+edge = sample(edgeRefractionMask)
+dispersion = sample(dispersionMap)
+depth = sample(depthMask)
+ruby = sample(rubyReflectionMask)
+
+uv2 = refractUV(uv, normal, edge * edgeRefractionStrength)
+mediaOptical = chromaticSample(media, uv2, dispersion * dispersionStrength)
+result = mix(media, mediaOptical, opticalIntensity)
+
+result += environmentReflection * reflection * viewAngleResponse
+result += briefLensFlare * flare * eventLightIntensity
+result += rubyEnvironment * ruby * semanticRubyReflection
+
+Rules:
+- original media is always the source of truth
+- never apply a global red color grade
+- never reduce legibility/fidelity just to show refraction
+- scroll should move the virtual light/camera relationship, not smear the media
+- disable dispersion/refraction on constrained devices before reducing media quality

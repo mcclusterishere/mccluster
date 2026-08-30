@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Production House · Matthew McCluster · make your movie</title>
+  <meta name="description" content="Films, photographs, and rollouts, all directed, shot, and run from one desk in Bridgeport. The second face of the McCluster portfolio.">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://matthew.mccluster.org/production.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/manrope-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    /* ============ THE PRODUCTION HOUSE: video-production structure, house blood ============ */
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    :root {
+      --pv-ui: "Manrope", system-ui, -apple-system, sans-serif;
+      --pv-bg: #0b0908; --pv-panel: #17110d; --pv-ink: #f2e9db; --pv-mut: #a08f81;
+      --pv-red: #de3a3a; --pv-gold: #e5383b; --pv-line: rgba(242,233,219,0.12);
+    }
+    html[data-theme="light"] {
+      --pv-bg: #f4f0e9; --pv-panel: #ffffff; --pv-ink: #191210; --pv-mut: #6b6058;
+      --pv-line: rgba(25,18,16,0.14);
+      /* the reds stayed on their dark-coat values and fell under the contrast
+         floor on bone — as label text (--pv-gold) and as the fill behind the
+         white "Book a shoot →" chips (--pv-red). Same daylight reds as the house. */
+      --pv-red: #a30d18; --pv-gold: #a4101a;
+    }
+    html { background: var(--pv-bg); }
+    body.prodhouse { background: var(--pv-bg); color: var(--pv-ink); font-family: var(--pv-ui); }
+    .pv { max-width: 76rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.2rem) 9rem; overflow-x: clip; }
+    /* scroll reveal: everything rises into place */
+    .rv { opacity: 0; transform: translateY(1.6rem); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .rv.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } }
+    /* ---- nav ---- */
+    .pv__nav { display: flex; align-items: center; gap: 0.6rem; padding: 1.2rem 0 0; }
+    .pv__logo { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--pv-ink);
+      font-weight: 800; letter-spacing: 0.16em; font-size: 0.84rem; margin-right: auto; }
+    .pv__logo img { width: 1.6rem; height: 1.6rem; }
+    .pv__moon { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      width: 2.4rem; height: 2.4rem; border-radius: 100px; font-size: 1rem; color: var(--pv-ink);
+      background: var(--pv-panel); box-shadow: inset 0 0 0 1px var(--pv-line); }
+    .pv__hire { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      font-family: var(--pv-ui); font-weight: 800; font-size: 0.84rem; color: #fff; background: var(--pv-red);
+      border-radius: 100px; padding: 0.62rem 1.3rem; box-shadow: 0 14px 30px -12px rgba(222,58,58,0.55); }
+    /* ---- hero ---- */
+    .pvhero { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 1.4rem; align-items: center;
+      padding: clamp(2.2rem, 7vh, 4.5rem) 0 clamp(1.6rem, 5vh, 3rem); }
+    .pvhero__k { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--pv-gold); }
+    .pvhero h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.9; letter-spacing: 0.01em;
+      font-size: clamp(3rem, 12vw, 6rem); margin: 0.4rem 0 0.7rem; overflow: hidden; }
+    .pvhero h1 span { display: block; animation: pvRise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+    .pvhero h1 span + span { animation-delay: 0.12s; }
+    .pvhero h1 .red { color: var(--pv-red); }
+    @keyframes pvRise { from { transform: translateY(110%); } to { transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .pvhero h1 span { animation: none; } }
+    .pvhero__sub { font-weight: 600; color: var(--pv-mut); font-size: 0.95rem; max-width: 38ch; }
+    .pvhero__row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1.3rem; }
+    .pvhero__row .ghost { -webkit-appearance: none; appearance: none; cursor: pointer; touch-action: manipulation;
+      font-family: var(--pv-ui); font-weight: 800; font-size: 0.84rem; color: var(--pv-ink); background: transparent;
+      border: 0; box-shadow: inset 0 0 0 1.5px var(--pv-line); border-radius: 100px; padding: 0.62rem 1.3rem;
+      text-decoration: none; display: inline-block; }
+    /* the capsule showreel: the template's pill, alive */
+    .pvcap { position: relative; border-radius: 1000px; overflow: hidden; aspect-ratio: 7 / 9;
+      max-height: 26rem; justify-self: end; width: min(100%, 21rem); isolation: isolate;
+      box-shadow: inset 0 0 0 1px var(--pv-line), 0 30px 70px -30px rgba(0,0,0,0.8);
+      animation: pvFloat 7s ease-in-out infinite; }
+    @keyframes pvFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -0.7rem; } }
+    @media (prefers-reduced-motion: reduce) { .pvcap { animation: none; } }
+    .pvcap video, .pvcap img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
+    .pvcap::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(160deg, transparent 55%, rgba(11,9,8,0.55) 100%); }
+    .pvcap b { position: absolute; left: 50%; bottom: 1.1rem; transform: translateX(-50%);
+      font-weight: 800; font-size: 0.62rem; letter-spacing: 0.26em; text-transform: uppercase; color: #fff; white-space: nowrap; }
+    .pvstats { display: flex; gap: 1.6rem; flex-wrap: wrap; margin-top: 0.6rem; }
+    .pvstats div b { display: block; font-weight: 800; font-size: 1.35rem; color: var(--pv-ink); }
+    .pvstats div small { font-weight: 700; font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pv-mut); }
+    /* ---- the marquee: the names ride forever ---- */
+    .pvmq { border-top: 1px solid var(--pv-line); border-bottom: 1px solid var(--pv-line);
+      padding: 1rem 0; margin: 1.8rem 0 2.6rem; overflow: hidden; }
+    .pvmq__rail { display: flex; gap: 3rem; width: max-content; animation: pvMq 26s linear infinite; }
+    @keyframes pvMq { to { transform: translateX(-50%); } }
+    @media (prefers-reduced-motion: reduce) { .pvmq__rail { animation: none; } }
+    .pvmq__rail span { font-family: var(--sig); text-transform: uppercase; font-size: 1.3rem; letter-spacing: 0.1em;
+      color: var(--pv-mut); white-space: nowrap; }
+    .pvmq__rail span i { font-style: normal; color: var(--pv-red); margin-right: 3rem; }
+    /* ---- craft row ---- */
+    .pvcraft { text-align: center; margin-bottom: 3rem; }
+    .pvcraft > small { font-weight: 800; font-size: 0.66rem; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pv-gold); }
+    .pvcraft h2 { font-weight: 800; font-size: clamp(1.3rem, 4.4vw, 1.9rem); margin: 0.5rem 0 1.4rem; }
+    .pvcraft__row { display: flex; gap: 1.1rem 2rem; flex-wrap: wrap; justify-content: center; }
+    .pvcraft__row span { display: flex; align-items: center; gap: 0.55rem; font-weight: 700; font-size: 0.86rem; color: var(--pv-ink); }
+    .pvcraft__row i { width: 0.6rem; height: 0.6rem; border-radius: 2px; background: var(--pv-red); transform: rotate(45deg); flex: none; }
+    /* ---- services accordion ---- */
+    .pvsv { margin-bottom: 3.4rem; }
+    .pvsv > small { font-weight: 800; font-size: 0.66rem; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pv-gold); }
+    .pvsv__row { border-top: 1px solid var(--pv-line); }
+    .pvsv__row:last-child { border-bottom: 1px solid var(--pv-line); }
+    .pvsv__head { display: flex; align-items: center; gap: 1rem; width: 100%; -webkit-appearance: none; appearance: none;
+      border: 0; cursor: pointer; touch-action: manipulation; background: transparent; text-align: left;
+      font-family: var(--sig); text-transform: uppercase; color: var(--pv-ink);
+      font-size: clamp(1.5rem, 6vw, 2.6rem); padding: 1.05rem 0.2rem; }
+    .pvsv__head .arr { margin-left: auto; font-family: var(--pv-ui); font-weight: 800; color: var(--pv-mut);
+      transition: transform 0.35s ease, color 0.35s ease; }
+    .pvsv__row.open .pvsv__head .arr { transform: rotate(90deg); color: var(--pv-red); }
+    .pvsv__body { display: grid; grid-template-columns: minmax(8rem, 13rem) 1fr; gap: 1rem; align-items: center;
+      max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), padding 0.5s ease; padding: 0 0.2rem; }
+    .pvsv__row.open .pvsv__body { max-height: 22rem; padding: 0.2rem 0.2rem 1.3rem; }
+    .pvsv__body img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; }
+    .pvsv__body p { font-weight: 600; color: var(--pv-mut); font-size: 0.9rem; margin: 0 0 0.8rem; }
+    .pvsv__body .go { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      font-family: var(--pv-ui); font-weight: 800; font-size: 0.82rem; color: #fff; background: var(--pv-red);
+      border-radius: 100px; padding: 0.55rem 1.2rem; }
+    /* ---- mid CTA ---- */
+    .pvmid { text-align: center; margin: 0 0 3.4rem; }
+    .pvmid p { font-family: var(--sig); text-transform: uppercase; line-height: 1; font-size: clamp(1.7rem, 7vw, 3rem); margin: 0 0 1.1rem; }
+    .pvmid p em { font-style: normal; color: var(--pv-red); }
+    /* ---- the works ---- */
+    .pvwk > small { font-weight: 800; font-size: 0.66rem; letter-spacing: 0.26em; text-transform: uppercase; color: var(--pv-gold); }
+    .pvwk__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.1rem 0 3.2rem; }
+    .pvwk__grid .full { grid-column: 1 / -1; }
+    .pvwk__it { display: block; text-decoration: none; color: var(--pv-ink); }
+    .pvwk__m { position: relative; border-radius: 18px; overflow: hidden; aspect-ratio: 16 / 10; isolation: isolate;
+      background: var(--pv-panel); box-shadow: inset 0 0 0 1px var(--pv-line); }
+    .full .pvwk__m { aspect-ratio: 21 / 9; }
+    .pvwk__m video, .pvwk__m img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;
+      transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .pvwk__it:hover .pvwk__m video, .pvwk__it:hover .pvwk__m img { transform: scale(1.045); }
+    .pvwk__it b { display: block; font-weight: 800; font-size: 0.92rem; margin-top: 0.6rem; }
+    .pvwk__it small { display: block; font-weight: 700; font-size: 0.64rem; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--pv-mut); margin-top: 0.2rem; }
+    /* ---- the word ---- */
+    .pvq { text-align: center; max-width: 44rem; margin: 0 auto 3.4rem; }
+    .pvq .mark { display: inline-grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 8px;
+      background: var(--pv-red); color: #fff; font-weight: 800; font-size: 1.2rem; margin-bottom: 1rem; }
+    .pvq blockquote { font-weight: 800; font-size: clamp(1.05rem, 3.6vw, 1.5rem); line-height: 1.45; margin: 0 0 0.6rem;
+      min-height: 5.5em; transition: opacity 0.45s ease; }
+    .pvq cite { font-style: normal; font-weight: 700; font-size: 0.74rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--pv-mut); }
+    .pvq__dots { display: flex; gap: 0.45rem; justify-content: center; margin-top: 1.1rem; }
+    .pvq__dots button { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; padding: 0;
+      width: 0.55rem; height: 0.55rem; border-radius: 100px; background: var(--pv-line); }
+    .pvq__dots button.on { background: var(--pv-red); }
+    /* ---- the big band ---- */
+    .pvband { position: relative; border-radius: 22px; overflow: hidden; isolation: isolate; margin-bottom: 3.2rem;
+      aspect-ratio: 16 / 8; box-shadow: inset 0 0 0 1px var(--pv-line); }
+    .pvband video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
+    .pvband::after { content: ""; position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(11,9,8,0.75) 100%); }
+    .pvband b { position: absolute; left: 1.2rem; bottom: 1.05rem; z-index: 1; font-family: var(--sig);
+      text-transform: uppercase; font-size: clamp(1.2rem, 5vw, 2rem); color: #fff; }
+    /* ---- footer ---- */
+    .pvfoot { border-top: 1px solid var(--pv-line); padding-top: 1.6rem; display: flex; gap: 1rem; flex-wrap: wrap;
+      align-items: center; justify-content: space-between; font-weight: 600; font-size: 0.8rem; color: var(--pv-mut); }
+    .pvfoot a { color: var(--pv-ink); text-decoration: none; font-weight: 800; }
+    .pvfoot .v1 { color: var(--pv-mut); font-weight: 700; }
+    @media (max-width: 46rem) {
+      .pvhero { grid-template-columns: 1fr; }
+      .pvcap { justify-self: center; }
+      .pvsv__body { grid-template-columns: 1fr; }
+      .pvsv__row.open .pvsv__body { max-height: 34rem; }
+    }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="prodhouse" data-mh-cta="Lock in|hire.html">
+  <main class="pv">
+    <!-- nav -->
+    <!-- the production house bar is retired; the masthead carries the
+         mark and the rooms; 'Lock in' rides it as this page's action -->
+
+    <!-- hero -->
+    <header class="pvhero">
+      <div>
+        <p class="pvhero__k">A McCluster Production · Bridgeport</p>
+        <h1><span>Make your</span><span class="red">movie.</span></h1>
+        <p class="pvhero__sub">Films, photographs, and rollouts, all directed, shot, and run from one desk. You bring the story, I bring the whole machine.</p>
+        <div class="pvhero__row">
+          <button class="pv__hire" type="button" data-lead-sheet="Video / brand film">Book a shoot &#8594;</button>
+          <a class="ghost" href="#pvWorks">Watch the record &#8595;</a>
+        </div>
+        <div class="pvstats">
+          <div><b id="pvCount">25</b><small>Pieces on record</small></div>
+          <div><b>3</b><small>Lanes</small></div>
+          <div><b>2</b><small>Gov. recognitions</small></div>
+        </div>
+      </div>
+      <div class="pvcap">
+        <video muted loop playsinline autoplay preload="metadata" src="assets/video/vaunt.mp4" poster="assets/frames/vaunt_0001.jpg"></video>
+        <b>The showreel &middot; live</b>
+      </div>
+    </header>
+
+    <!-- the names ride forever -->
+    <div class="pvmq" aria-hidden="true">
+      <div class="pvmq__rail" id="pvMq"></div>
+    </div>
+
+    <!-- craft row -->
+    <section class="pvcraft rv">
+      <small>The whole machine</small>
+      <h2>Everything between the idea and the upload.</h2>
+      <div class="pvcraft__row">
+        <span><i></i>Direction</span>
+        <span><i></i>Cinematography</span>
+        <span><i></i>Edit &amp; color</span>
+        <span><i></i>Photography</span>
+        <span><i></i>Strategy &amp; rollout</span>
+      </div>
+    </section>
+
+    <!-- services -->
+    <section class="pvsv rv">
+      <small>Services</small>
+      <div id="pvSv"></div>
+    </section>
+
+    <!-- mid cta -->
+    <section class="pvmid rv">
+      <p>Have a project?<br><em>Let's lock in.</em></p>
+      <button class="pv__hire" type="button" data-lead-sheet="">Send it to the desk &#8594;</button>
+    </section>
+
+    <!-- the works -->
+    <section class="pvwk" id="pvWorks">
+      <small>The record</small>
+      <div class="pvwk__grid" id="pvGrid"></div>
+    </section>
+
+    <!-- the word -->
+    <section class="pvq rv">
+      <span class="mark">&#8220;</span>
+      <blockquote id="pvQ"></blockquote>
+      <cite id="pvQc"></cite>
+      <div class="pvq__dots" id="pvQd"></div>
+    </section>
+
+    <!-- the big band -->
+    <div class="pvband rv">
+      <video muted loop playsinline preload="none" data-src="assets/video/hero.mp4" poster="assets/frames/hero_0001.jpg"></video>
+      <b>Every frame on purpose.</b>
+    </div>
+
+    <!-- footer -->
+    <footer class="pvfoot">
+      <span>A McCluster Production &middot; Bridgeport</span>
+      <a href="https://instagram.com/McClusterishere" target="_blank" rel="noopener">@McClusterishere</a>
+      <a class="v1" href="portfolio.html">The gallery cut of this page &#8594;</a>
+    </footer>
+  </main>
+
+  <!-- THE BAR -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/crm.js?v=__STAMP__"></script>
+  <script src="js/signals.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+
+    /* the light switch retired with this page's own bar; the house
+       masthead is the only chrome on this page now */
+
+    /* the marquee: twice through so the loop never shows a seam */
+    var NAMES = ["Vaunt", "Equity Uprise", "PRIM3", "Docket 516", "Only Us Studios", "WE", "The Shot Wall"];
+    /* the diamond between names is drawn, never typed. Single-quoted
+       attributes on purpose: double quotes would close the string literal
+       and take the whole page's script down with it. */
+    var pip = "<i><svg viewBox='0 0 24 24' aria-hidden='true'"
+      + " style='width:1em;height:1em;vertical-align:-2px;display:inline-block'>"
+      + "<path d='M12 3l9 9-9 9-9-9z' fill='currentColor'/></svg></i>";
+    var run = NAMES.map(function (n) { return "<span>" + pip + esc(n) + "</span>"; }).join("");
+    $("pvMq").innerHTML = run + run;
+
+    /* services accordion: the three lanes, booking built in */
+    var SV = [
+      { t: "Videography", img: "assets/frames/vaunt_0001.jpg", want: "Video / brand film",
+        p: "Brand films, commercials, music videos, event coverage. Shot, cut, and delivered ready to post." },
+      { t: "Photography", img: "assets/img/rally/rally-03.jpg", want: "Photography",
+        p: "Events, portraits, the Shot Wall. I shoot the night, you find yourself in it." },
+      { t: "Media management", img: "assets/frames/keynote_0001.jpg", want: "Media management / consulting",
+        p: "Your socials, your rollout, your strategy, run like a label. Consulting included." },
+    ];
+    $("pvSv").innerHTML = SV.map(function (s, i) {
+      return '<div class="pvsv__row' + (i === 0 ? " open" : "") + '">' +
+        '<button class="pvsv__head" type="button">' + esc(s.t) + '<span class="arr">&#8594;</span></button>' +
+        '<div class="pvsv__body"><img src="' + esc(s.img) + '" alt="" loading="lazy">' +
+        "<div><p>" + esc(s.p) + "</p>" +
+        '<button class="go" type="button" data-lead-sheet="' + esc(s.want) + '">Book it &#8594;</button></div></div></div>';
+    }).join("");
+    $("pvSv").addEventListener("click", function (e) {
+      var h = e.target.closest && e.target.closest(".pvsv__head");
+      if (!h) return;
+      var row = h.parentNode, was = row.classList.contains("open");
+      document.querySelectorAll(".pvsv__row").forEach(function (r) { r.classList.remove("open"); });
+      if (!was) row.classList.add("open");
+    });
+
+    /* the works: best of the record in the template's 2-1-2 rhythm */
+    fetch("data/portfolio.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+      var items = (j.items || []).filter(function (w) { return w.video || w.img; });
+      $("pvCount").textContent = items.length;
+      var picks = ["Vaunt · the runway performance", "Vaunt Live · the launch", "Equity Uprise · the civic engine",
+        "October 5th · the rally", "The red jet", "Docket 516 · the public archive", "The penthouse set",
+        "The keynote shoot", "The Shot Wall · find your photo"];
+      var chosen = picks.map(function (t) { return items.find(function (w) { return w.title === t; }); }).filter(Boolean);
+      $("pvGrid").innerHTML = chosen.map(function (w, i) {
+        var tag = w.href ? "a" : "div";
+        var full = i % 5 === 2 ? " full" : "";
+        return "<" + tag + ' class="pvwk__it rv' + full + '"' + (w.href ? ' href="' + w.href + '"' : "") + ">" +
+          '<span class="pvwk__m">' +
+          (w.video
+            ? '<video muted loop playsinline preload="none" data-src="' + w.video + '"' + (w.poster ? ' poster="' + w.poster + '"' : "") + "></video>"
+            : '<img src="' + w.img + '" alt="" loading="lazy">') +
+          "</span><b>" + esc(w.title) + "</b><small>" + esc(w.sub || "") + "</small></" + tag + ">";
+      }).join("");
+      wire();
+    });
+
+    /* the word: three receipts, cycling */
+    var QS = [
+      { q: "Two governments put the work on the record. The proclamation and the citation hang in the archive.", c: "The Equity Uprise campaign" },
+      { q: "Five people from one event were in the DMs asking for their photos before the night ended.", c: "The Shot Wall" },
+      { q: "One desk runs the shoots, the edits, the rollout, and the record. You talk to the person doing the work.", c: "The operation" },
+    ];
+    var qi = 0, qt = null;
+    function setQ(i) {
+      qi = i;
+      var b = $("pvQ");
+      b.style.opacity = 0;
+      setTimeout(function () {
+        b.textContent = "“" + QS[i].q + "”";
+        $("pvQc").textContent = QS[i].c;
+        b.style.opacity = 1;
+      }, 300);
+      $("pvQd").querySelectorAll("button").forEach(function (d, k) { d.classList.toggle("on", k === i); });
+    }
+    $("pvQd").innerHTML = QS.map(function (_, i) { return '<button type="button" data-q="' + i + '" aria-label="Quote ' + (i + 1) + '"></button>'; }).join("");
+    $("pvQd").addEventListener("click", function (e) {
+      var d = e.target.closest && e.target.closest("[data-q]");
+      if (!d) return;
+      clearInterval(qt); setQ(parseInt(d.getAttribute("data-q"), 10));
+      qt = setInterval(function () { setQ((qi + 1) % QS.length); }, 6000);
+    });
+    $("pvQ").textContent = "“" + QS[0].q + "”"; $("pvQc").textContent = QS[0].c;
+    $("pvQd").querySelector("button").classList.add("on");
+    qt = setInterval(function () { setQ((qi + 1) % QS.length); }, 6000);
+
+    /* reveal + lazy video, one observer each */
+    function wire() {
+      if (!("IntersectionObserver" in window)) {
+        document.querySelectorAll(".rv").forEach(function (el) { el.classList.add("in"); });
+        return;
+      }
+      var rv = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); rv.unobserve(e.target); } });
+      }, { threshold: 0.12 });
+      document.querySelectorAll(".rv").forEach(function (el) { rv.observe(el); });
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          var v = e.target.querySelector ? e.target.querySelector("video[data-src]") : null;
+          if (e.target.matches && e.target.matches(".pvband")) v = e.target.querySelector("video");
+          if (!v) return;
+          if (e.isIntersecting) {
+            if (!v.getAttribute("src") && v.getAttribute("data-src")) { v.src = v.getAttribute("data-src"); v.load(); }
+            var p = v.play(); if (p && p.catch) p.catch(function () {});
+          } else v.pause();
+        });
+      }, { threshold: 0.3 });
+      document.querySelectorAll(".pvwk__it, .pvband").forEach(function (el) { io.observe(el); });
+    }
+    if (window.MCC_TRACK) window.MCC_TRACK("production_view", {});
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

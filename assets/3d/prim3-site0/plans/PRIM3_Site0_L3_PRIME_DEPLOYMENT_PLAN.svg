@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <rect width="1400" height="900" fill="white"/>
+  <g font-family="Arial, sans-serif" fill="#111">
+    <text x="70" y="70" font-size="30" font-weight="700">PRIM3 SITE 0 — L3 PRIME DEPLOYMENT INTERFACE</text>
+    <text x="70" y="105" font-size="18">CANONICAL CORRECTION: P1 FLUSH-DECK ARRIVAL — NO ELEVATED SOUTH ROOF SPUR</text>
+  </g>
+  <g stroke="#111" fill="none">
+    <rect x="120" y="190" width="1160" height="520" stroke-width="5"/>
+    <rect x="150" y="220" width="1100" height="460" stroke-width="1.5"/>
+    <line x1="180" y1="390" x2="1220" y2="390" stroke-width="3"/>
+    <line x1="180" y1="510" x2="1220" y2="510" stroke-width="3"/>
+    <rect x="860" y="250" width="250" height="170" stroke-width="3"/>
+  </g>
+  <g font-family="Arial, sans-serif" fill="#111">
+    <text x="560" y="375" font-size="18">EAST–WEST LAUNCH / TAKEOFF RUN</text>
+    <text x="570" y="495" font-size="18">EAST–WEST RECOVERY / LANDING LANE</text>
+    <text x="905" y="340" font-size="22" font-weight="700">L4 ISLAND</text>
+  </g>
+  <g stroke="#111">
+    <rect x="920" y="690" width="160" height="90" fill="#e5e5e5" stroke-width="4"/>
+    <rect x="920" y="650" width="160" height="60" fill="#f3f3f3" stroke-width="3"/>
+    <rect x="800" y="585" width="280" height="65" fill="#fafafa" stroke-width="2"/>
+    <line x1="920" y1="710" x2="1080" y2="710" stroke-width="7"/>
+  </g>
+  <g font-family="Arial, sans-serif" fill="#111">
+    <text x="951" y="744" font-size="22" font-weight="700">P1</text>
+    <text x="886" y="770" font-size="15">EXTERNAL B3↔L3 HEAVY LIFT</text>
+    <text x="930" y="680" font-size="14">FLUSH DECK TRANSITION</text>
+    <text x="835" y="622" font-size="14">ISOLATED MERGE / STAGING LANE</text>
+  </g>
+  <g stroke="#777" stroke-width="2" stroke-dasharray="10,10" fill="none"><line x1="1000" y1="780" x2="1000" y2="845"/></g>
+  <g font-family="Arial, sans-serif" fill="#444"><text x="1030" y="815" font-size="16">NO ELEVATED BRIDGE / SPUR / SUPPORT PIERS</text></g>
+  <g font-family="Arial, sans-serif" fill="#111"><text x="70" y="835" font-size="15">P1 rises until the lift platform is level with the L3 deck. Heavy equipment rolls/tows directly onto the deck.</text></g>
+</svg>

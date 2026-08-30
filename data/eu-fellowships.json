@@ -1,0 +1,545 @@
+{
+    "note": "MIRROR, NOT SOURCE. supabase/migrations/0018_equity_uprise_seed.sql is the source of truth; this file is exported from it so fellowships.html renders before the database is reachable. Once the desk is adding listings live, the database is ahead of this file and the page prefers it. Regenerate with tools/eu-export-seed.sh.",
+    "sources": [
+        {
+            "id": "campus-offices",
+            "url": "",
+            "kind": "university",
+            "name": "Campus fellowship offices",
+            "note": "Nearly every university has an office whose whole job is this, and their public pages are the best-maintained lists anywhere. Start with the schools people on this platform actually attend.",
+            "active": true
+        },
+        {
+            "id": "host-submitted",
+            "url": "",
+            "kind": "community",
+            "name": "Listed by the people who run it",
+            "note": "A host profile files their own program through fellowships.html. Arrives pending, always.",
+            "active": true
+        },
+        {
+            "id": "idealist",
+            "url": "https://www.idealist.org/",
+            "kind": "directory",
+            "name": "Idealist",
+            "note": "Broad nonprofit listings; fellowships sit among jobs and internships, so it needs filtering.",
+            "active": true
+        },
+        {
+            "id": "opportunity-desk",
+            "url": "https://opportunitydesk.org/",
+            "kind": "directory",
+            "name": "Opportunity Desk",
+            "note": "Heavier on international and youth programs than most U.S. directories.",
+            "active": true
+        },
+        {
+            "id": "profellow",
+            "url": "https://www.profellow.com/",
+            "kind": "directory",
+            "name": "ProFellow",
+            "note": "The database the owner named first. Work it by hand or with permission — their listings are their work product.",
+            "active": true
+        },
+        {
+            "id": "the-desk",
+            "url": "https://matthew.mccluster.org/",
+            "kind": "community",
+            "name": "The desk",
+            "note": "Added by Equity Uprise directly, usually because somebody asked for it.",
+            "active": true
+        }
+    ],
+    "fellowships": [
+        {
+            "org": "TechCongress",
+            "url": "https://www.techcongress.io/",
+            "cost": "free",
+            "slug": "techcongress-fellowship",
+            "title": "Congressional Innovation Fellowship",
+            "region": "US",
+            "remote": false,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "Places technologists inside congressional offices as staff, so that the people writing technology law have somebody in the room who has built the thing.",
+            "audience": [
+                "early-career",
+                "mid-career"
+            ],
+            "duration": "Several months to a year, by track",
+            "location": "Washington, DC",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "technology",
+                "policy",
+                "congress",
+                "civic-tech",
+                "privacy",
+                "ai-policy"
+            ],
+            "source_url": "",
+            "eligibility": "For people with a technical background; tracks differ by career stage.",
+            "topic_slugs": [
+                "surveillance-and-tracking",
+                "data-centers"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Multiple tracks with separate calendars — confirm which one fits before the date matters."
+        },
+        {
+            "org": "Coro",
+            "url": "https://coro.org/",
+            "cost": "free",
+            "slug": "coro-fellowship-public-affairs",
+            "title": "Coro Fellowship in Public Affairs",
+            "region": "US",
+            "remote": false,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "A full-time apprenticeship in how a city actually works: participants rotate through government, business, labor, nonprofits and political campaigns rather than studying any one of them.",
+            "audience": [
+                "early-career"
+            ],
+            "duration": "About nine months",
+            "location": "Several U.S. cities",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "public-affairs",
+                "local-government",
+                "leadership",
+                "organizing",
+                "civic-tech"
+            ],
+            "source_url": "",
+            "eligibility": "Open to people early in their careers; a degree is not required by every site.",
+            "topic_slugs": [
+                "data-centers",
+                "surveillance-and-tracking"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Cycles open and close annually — confirm on the program's own page."
+        },
+        {
+            "org": "Echoing Green",
+            "url": "https://echoinggreen.org/",
+            "cost": "free",
+            "slug": "echoing-green-fellowship",
+            "title": "Echoing Green Fellowship",
+            "region": "GLOBAL",
+            "remote": true,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "Seed funding and support for people starting an organization to solve a problem they have lived with, rather than joining one that already exists.",
+            "audience": [
+                "early-career",
+                "mid-career"
+            ],
+            "duration": "Two years",
+            "location": "Global",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "social-entrepreneurship",
+                "funding",
+                "racial-equity",
+                "leadership",
+                "organizing"
+            ],
+            "source_url": "",
+            "eligibility": "For founders at an early stage of building an organization.",
+            "topic_slugs": [
+                "data-centers",
+                "surveillance-and-tracking"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Applications open on an annual cycle — confirm on the program's own page."
+        },
+        {
+            "org": "ProPublica",
+            "url": "https://www.propublica.org/",
+            "cost": "free",
+            "slug": "propublica-emerging-reporters",
+            "title": "Emerging Reporters Program",
+            "region": "US",
+            "remote": true,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "A stipend and mentorship for student journalists from backgrounds underrepresented in investigative reporting.",
+            "audience": [
+                "students"
+            ],
+            "duration": "An academic year",
+            "location": "Remote",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "journalism",
+                "investigative",
+                "mentorship",
+                "accountability"
+            ],
+            "source_url": "",
+            "eligibility": "For college students pursuing journalism.",
+            "topic_slugs": [
+                "surveillance-and-tracking",
+                "data-centers"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Annual cycle — confirm on ProPublica's own page."
+        },
+        {
+            "org": "Emerson Collective",
+            "url": "https://www.emersoncollective.com/",
+            "cost": "free",
+            "slug": "emerson-collective-fellowship",
+            "title": "Emerson Collective Fellowship",
+            "region": "US",
+            "remote": true,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "Support for people already deep in a body of work on education, immigration, climate or criminal justice, rather than for people starting one.",
+            "audience": [
+                "mid-career"
+            ],
+            "duration": "One year",
+            "location": "United States",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "social-impact",
+                "funding",
+                "criminal-justice",
+                "climate",
+                "education"
+            ],
+            "source_url": "",
+            "eligibility": "By application and, in some cycles, by nomination.",
+            "topic_slugs": [
+                "surveillance-and-tracking",
+                "data-centers"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Cycles are irregular — confirm the program is open before planning around it."
+        },
+        {
+            "org": "U.S. Department of State",
+            "url": "https://us.fulbrightonline.org/",
+            "cost": "free",
+            "slug": "fulbright-us-student",
+            "title": "Fulbright U.S. Student Program",
+            "region": "GLOBAL",
+            "remote": false,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "Study, research or teach abroad for a year on a U.S. government grant. The largest and best-documented route out of the country for people early in their careers.",
+            "audience": [
+                "students",
+                "early-career"
+            ],
+            "duration": "One academic year",
+            "location": "Worldwide",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "international",
+                "research",
+                "education",
+                "diplomacy",
+                "language"
+            ],
+            "source_url": "",
+            "eligibility": "U.S. citizens holding a bachelor's degree by the start of the grant.",
+            "topic_slugs": [
+                "us-israel"
+            ],
+            "verification": "unverified",
+            "deadline_note": "A long annual cycle with campus deadlines months before the national one — start early."
+        },
+        {
+            "org": "Truman Scholarship Foundation",
+            "url": "https://www.truman.gov/",
+            "cost": "free",
+            "slug": "truman-scholarship",
+            "title": "Harry S. Truman Scholarship",
+            "region": "US",
+            "remote": false,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "A graduate funding award for undergraduates who intend to spend their careers in public service, with a summer institute and a network that keeps working long after the money is spent.",
+            "audience": [
+                "students"
+            ],
+            "duration": "Award plus ongoing programming",
+            "location": "United States",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "public-service",
+                "policy",
+                "graduate-funding",
+                "leadership"
+            ],
+            "source_url": "",
+            "eligibility": "U.S. undergraduates in their third year, nominated by their institution.",
+            "topic_slugs": [
+                "us-israel",
+                "data-centers",
+                "surveillance-and-tracking"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Nominations run through campus fellowship offices on a fixed annual calendar — confirm both dates."
+        },
+        {
+            "org": "Connecticut Health Foundation",
+            "url": "https://www.cthealth.org/",
+            "cost": "free",
+            "slug": "ct-health-leadership-fellows",
+            "title": "Health Leadership Fellows",
+            "region": "CT",
+            "remote": false,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "A Connecticut program that trains people to work on health equity in the state — the closest thing on this list to home for the Bridgeport cohort.",
+            "audience": [
+                "early-career",
+                "mid-career"
+            ],
+            "duration": "About a year, part-time",
+            "location": "Connecticut",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "health-equity",
+                "leadership",
+                "connecticut",
+                "local-government",
+                "organizing"
+            ],
+            "source_url": "",
+            "eligibility": "For people working on health and equity in Connecticut.",
+            "topic_slugs": [
+                "data-centers"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Runs in cohorts rather than continuously — confirm whether one is open."
+        },
+        {
+            "org": "Stanford University",
+            "url": "https://knight-hennessy.stanford.edu/",
+            "cost": "free",
+            "slug": "knight-hennessy-scholars",
+            "title": "Knight-Hennessy Scholars",
+            "region": "US",
+            "remote": false,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "Full funding for graduate study at Stanford in any department, built around a leadership program that runs alongside the degree.",
+            "audience": [
+                "students",
+                "early-career"
+            ],
+            "duration": "Up to the length of the degree",
+            "location": "Stanford, California",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "graduate-funding",
+                "leadership",
+                "research",
+                "policy"
+            ],
+            "source_url": "",
+            "eligibility": "Applicants must also apply to a Stanford graduate program.",
+            "topic_slugs": [
+                "us-israel",
+                "data-centers",
+                "surveillance-and-tracking"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Two applications with two calendars — confirm both."
+        },
+        {
+            "org": "Marshall Aid Commemoration Commission",
+            "url": "https://www.marshallscholarship.org/",
+            "cost": "free",
+            "slug": "marshall-scholarship",
+            "title": "Marshall Scholarship",
+            "region": "GLOBAL",
+            "remote": false,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "Graduate study anywhere in the United Kingdom, funded by the British government, for Americans.",
+            "audience": [
+                "students"
+            ],
+            "duration": "One to two years",
+            "location": "United Kingdom",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "graduate-funding",
+                "international",
+                "policy",
+                "research"
+            ],
+            "source_url": "",
+            "eligibility": "U.S. citizens with a bachelor's degree and a strong academic record.",
+            "topic_slugs": [
+                "us-israel"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Campus endorsement precedes the national deadline — confirm both."
+        },
+        {
+            "org": "Mozilla Foundation",
+            "url": "https://foundation.mozilla.org/",
+            "cost": "free",
+            "slug": "mozilla-fellowship",
+            "title": "Mozilla Fellowship",
+            "region": "GLOBAL",
+            "remote": true,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "Support for people working on the health of the internet: privacy, platform accountability, and the public interest in how technology gets built.",
+            "audience": [
+                "mid-career"
+            ],
+            "duration": "Varies by cohort",
+            "location": "Global, largely remote",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "technology",
+                "privacy",
+                "data-rights",
+                "research",
+                "civic-tech",
+                "ai-policy"
+            ],
+            "source_url": "",
+            "eligibility": "Open to technologists, researchers, advocates and policy people.",
+            "topic_slugs": [
+                "surveillance-and-tracking"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Runs intermittently rather than every year — confirm the program is open before planning around it."
+        },
+        {
+            "org": "New America",
+            "url": "https://www.newamerica.org/fellows/",
+            "cost": "free",
+            "slug": "new-america-fellows",
+            "title": "New America Fellows Program",
+            "region": "US",
+            "remote": true,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "Support for writers, journalists and researchers working on a book or a major project about American public problems.",
+            "audience": [
+                "mid-career"
+            ],
+            "duration": "One year",
+            "location": "Washington, DC and remote",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "research",
+                "writing",
+                "journalism",
+                "policy",
+                "technology"
+            ],
+            "source_url": "",
+            "eligibility": "Open to writers and researchers; no advanced degree requirement stated.",
+            "topic_slugs": [
+                "us-israel",
+                "data-centers",
+                "surveillance-and-tracking"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Cycles vary by fellowship track — confirm on the program's own page."
+        },
+        {
+            "org": "Report for America",
+            "url": "https://www.reportforamerica.org/",
+            "cost": "free",
+            "slug": "report-for-america",
+            "title": "Report for America Corps",
+            "region": "US",
+            "remote": false,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "Places reporters in local newsrooms to cover beats that stopped being covered — statehouses, county government, the meetings where the decisions in these topics actually get made.",
+            "audience": [
+                "early-career",
+                "mid-career"
+            ],
+            "duration": "One year, often renewable",
+            "location": "Newsrooms across the U.S.",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "journalism",
+                "local-government",
+                "accountability",
+                "writing"
+            ],
+            "source_url": "",
+            "eligibility": "For working journalists; newsrooms and reporters apply separately.",
+            "topic_slugs": [
+                "data-centers",
+                "surveillance-and-tracking"
+            ],
+            "verification": "unverified",
+            "deadline_note": "Reporter and newsroom calendars differ — confirm the one that applies to you."
+        },
+        {
+            "org": "Rhodes Trust",
+            "url": "https://www.rhodeshouse.ox.ac.uk/",
+            "cost": "free",
+            "slug": "rhodes-scholarship",
+            "title": "Rhodes Scholarship",
+            "region": "GLOBAL",
+            "remote": false,
+            "source": "staff",
+            "status": "published",
+            "stipend": "",
+            "summary": "Graduate study at Oxford, fully funded. The oldest of the international awards and the one with the heaviest campus-endorsement process.",
+            "audience": [
+                "students"
+            ],
+            "duration": "Two years, sometimes three",
+            "location": "Oxford, United Kingdom",
+            "apply_url": "",
+            "source_id": "the-desk",
+            "focus_tags": [
+                "graduate-funding",
+                "international",
+                "leadership",
+                "research"
+            ],
+            "source_url": "",
+            "eligibility": "Age and degree requirements apply and vary by country of application.",
+            "topic_slugs": [
+                "us-israel"
+            ],
+            "verification": "unverified",
+            "deadline_note": "National deadlines differ by constituency, and campus endorsement comes first."
+        }
+    ]
+}

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>landmark harness</title>
+<style>html,body{margin:0;background:#dfe7e6}canvas{display:block}</style></head>
+<body data-no-appbar><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from "./vendor/three.module.min.js";
+import { OutlineEffect } from "./vendor/three-addons/effects/OutlineEffect.js";
+import { build, triangles } from "./js/uprise-landmarks.js";
+
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const effect = new OutlineEffect(renderer, { defaultThickness: 0.008, defaultColor: [0, 0, 0], defaultAlpha: 1 });
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x9fd6cf);   /* the refs' teal sky */
+const cam = new THREE.PerspectiveCamera(38, 16 / 10, 0.05, 400);
+
+scene.add(new THREE.HemisphereLight(0xdff2ee, 0x9a8f80, 1.25));
+const sun = new THREE.DirectionalLight(0xfff2dc, 1.5);
+sun.position.set(-26, 34, 30);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+const cs = sun.shadow.camera;
+cs.left = -30; cs.right = 30; cs.top = 30; cs.bottom = -30; cs.near = 1; cs.far = 140;
+scene.add(sun);
+
+const ground = new THREE.Mesh(new THREE.CircleGeometry(90, 8),
+  new THREE.MeshBasicMaterial({ color: 0xcfd8cd }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02;
+ground.receiveShadow = true;
+scene.add(ground);
+
+let current = null;
+window.LB = {
+  show(slug) {
+    if (current) scene.remove(current);
+    current = build(slug, THREE);
+    scene.add(current);
+    return { tris: triangles(current), footprint: current.userData.footprint,
+             height: current.userData.height };
+  },
+  /* az/el in degrees, dist in world units, aim height fraction of building */
+  cam(az, el, dist, aimY) {
+    const a = az * Math.PI / 180, e = el * Math.PI / 180;
+    cam.position.set(Math.sin(a) * Math.cos(e) * dist, Math.sin(e) * dist, Math.cos(a) * Math.cos(e) * dist);
+    cam.up.set(0, 1, 0);
+    cam.lookAt(0, aimY, 0);
+  },
+  size(w, h) {
+    canvas.width = w; canvas.height = h;
+    canvas.style.width = w + "px"; canvas.style.height = h + "px";
+    renderer.setSize(w, h, false);
+    cam.aspect = w / h; cam.updateProjectionMatrix();
+  },
+  draw() { effect.render(scene, cam); },
+  stats() {
+    let meshes = 0, instanced = 0, mats = new Set();
+    current.traverse(o => {
+      if (o.isInstancedMesh) { instanced++; mats.add(o.material.uuid); }
+      else if (o.isMesh) { meshes++; mats.add(o.material.uuid); }
+    });
+    return { meshes, instanced, drawCalls: meshes + instanced, materials: mats.size };
+  },
+  /* look inside the LOB rotunda: hide the shell, stand in the middle */
+  rotunda(y, dist, el) {
+    const rot = current && current.userData.rotunda;
+    if (!rot) return null;
+    current.traverse(o => { if (o.isMesh || o.isInstancedMesh) o.visible = false; });
+    rot.traverse(o => { if (o.isMesh || o.isInstancedMesh) o.visible = true; });
+    const w = new THREE.Vector3(); rot.getWorldPosition(w);
+    const s0 = current.children[0].scale.x;
+    cam.position.set(w.x, w.y + y * s0, w.z + dist * s0);
+    cam.up.set(0, 1, 0);
+    cam.fov = 70; cam.updateProjectionMatrix();
+    cam.lookAt(w.x, w.y + el * s0, w.z - dist * s0);
+    return { children: rot.children.length };
+  },
+  showAll() { current.traverse(o => { o.visible = true; }); },
+  ready: true
+};
+</script></body></html>

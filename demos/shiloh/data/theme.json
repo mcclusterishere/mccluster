@@ -1,0 +1,25 @@
+{
+  "note": "The ONLY place branding should live. Colors and tagline now come from the church's real site (shilohchurchbpt.org) — the accent is the blue of Shiloh's own stained-glass-window logo. Because manifest.webmanifest and favicons are fetched by the browser before any JavaScript runs, changing colors here also means updating manifest.webmanifest's theme_color/background_color by hand — see docs/MANAGE.md.",
+  "churchName": "Shiloh Baptist Church",
+  "shortName": "Shiloh",
+  "tagline": "Where Christ Is Lifted Up",
+  "website": "https://www.shilohchurchbpt.org",
+  "logo": "assets/media/logo-header.webp",
+  "logoOnDark": "assets/media/logo-footer.webp",
+  "colors": {
+    "shiloh": "#2e5f92",
+    "shilohSky": "#a9c9ef",
+    "navy": "#16283f",
+    "navyDeep": "#0f1c30",
+    "cream": "#f4f1e6",
+    "ink": "#1c261f",
+    "accent": "#2e5f92",
+    "accentSoft": "#9cc3ee",
+    "amber": "#a86a12",
+    "ruby": "#b3324a",
+    "ok": "#2e7d4f",
+    "danger": "#b3261e",
+    "warn": "#a1591f",
+    "line": "#d8d0ba"
+  }
+}

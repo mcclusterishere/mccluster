@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Inbox · every channel</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script src="js/office.js?v=__STAMP__"></script>
+  <style>
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+    .ib { max-width: 52rem; margin: 0 auto; padding: clamp(1rem,3vh,1.8rem) clamp(1rem,4vw,1.6rem) 7rem;
+      font-family: var(--ui); color: var(--cream); }
+
+    .gate { max-width: 24rem; display: grid; gap: .5rem; }
+    .gate input { padding: .9rem 1rem; border-radius: 12px; border: 0; font: 600 max(16px,.95rem) var(--ui);
+      color: var(--cream); background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--edge); }
+    .gate button { padding: .95rem; border: 0; border-radius: 12px; cursor: pointer;
+      font: 800 .92rem var(--ui); color: #fff; background: var(--metal); }
+    .err { color: #ff8a8c; font-weight: 700; font-size: .78rem; }
+    .ok  { color: #8ad9a0; font-weight: 700; font-size: .78rem; }
+
+    .rooms { display: flex; gap: .3rem; margin: 0 0 1.2rem; overflow-x: auto; padding-bottom: .2rem; }
+    .rooms button { flex: 0 0 auto; border: 0; cursor: pointer; border-radius: 10px; padding: .55rem .85rem;
+      font: 800 .68rem var(--ui); letter-spacing: .1em; text-transform: uppercase; color: var(--cream-dim);
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    .rooms .on { color: #fff; background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+
+    .k { font: 800 .6rem var(--ui); letter-spacing: .22em; text-transform: uppercase;
+      color: var(--ruby-hot); margin: 1.4rem 0 .6rem; }
+    .k:first-child { margin-top: 0; }
+
+    .card { border-radius: 16px; padding: .95rem 1.05rem; margin: 0 0 .5rem;
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .card h3 { font: 800 .95rem var(--ui); margin: 0 0 .2rem; }
+    .card p  { font: 600 .8rem/1.6 var(--ui); color: var(--cream-dim); margin: 0; }
+    .card .muted { font: 600 .72rem/1.55 var(--ui); color: var(--cream-dim); }
+    .row { display: flex; align-items: flex-start; gap: .7rem; }
+    .row > :first-child { flex: 1; min-width: 0; }
+
+    .pill { display: inline-block; font: 800 .56rem var(--ui); letter-spacing: .12em; text-transform: uppercase;
+      padding: .22rem .5rem; border-radius: 99px; color: var(--cream-dim);
+      box-shadow: inset 0 0 0 1px var(--edge); margin: 0 .25rem .25rem 0; }
+    .pill.live { color: #8ad9a0; box-shadow: inset 0 0 0 1px rgba(138,217,160,.5); }
+    .pill.dead { color: #ff8a8c; box-shadow: inset 0 0 0 1px rgba(255,138,140,.4); }
+    .pill.warn { color: #f0c674; box-shadow: inset 0 0 0 1px rgba(240,198,116,.45); }
+
+    button.sm { border: 0; cursor: pointer; border-radius: 10px; padding: .5rem .8rem; white-space: nowrap;
+      font: 800 .7rem var(--ui); color: var(--cream);
+      background: linear-gradient(180deg,var(--glass-hi),var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
+    button.sm.go { color: #fff; background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+    button.sm[disabled] { opacity: .5; cursor: default; }
+
+    textarea, input.f, select.f { width: 100%; border: 0; border-radius: 12px; padding: .8rem .9rem;
+      font: 600 max(16px,.88rem)/1.6 var(--ui); color: var(--cream);
+      background: rgba(0,0,0,.34); box-shadow: inset 0 0 0 1px var(--edge); resize: vertical; }
+    textarea { min-height: 6rem; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+
+    .msg { padding: .55rem .8rem; border-radius: 12px; margin: 0 0 .35rem; max-width: 84%;
+      font: 600 .84rem/1.55 var(--ui); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .msg.in  { background: rgba(255,255,255,.07); box-shadow: inset 0 0 0 1px var(--edge); }
+    .msg.out { background: var(--metal); color: #fff; margin-left: auto; }
+    .msg.sys { background: none; box-shadow: none; color: var(--cream-dim); font-size: .7rem;
+      letter-spacing: .1em; text-transform: uppercase; max-width: 100%; text-align: center; }
+    .msg .when { display: block; font: 800 .56rem var(--ui); opacity: .55; margin-top: .25rem; }
+
+    .empty { padding: 2.4rem 1rem; text-align: center; color: var(--cream-dim);
+      font: 600 .85rem/1.6 var(--ui); }
+    .num { font-family: var(--sig); font-size: 1.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
+    @media (max-width: 32rem) { .grid2 { grid-template-columns: 1fr; } }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body data-masthead="off">
+  <main class="ib" id="ib"></main>
+
+  <script src="js/env.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/inbox-desk.js?v=__STAMP__"></script>
+</body>
+</html>

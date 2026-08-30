@@ -1,0 +1,152 @@
+{
+  "note": "The published mirror of the offerings ledger (supabase/migrations/0007_offerings.sql). DISPLAY ONLY: the checkout function reads the database row for the authoritative price and seller; this file just paints the page. Keep the two in step. One seller everywhere: McCluster. Recurring rows carry action:subscribe; the checkout function decides how they bill from offerings.billing_interval, never from this file.",
+  "offerings": [
+    {
+      "slug": "print-5x7",
+      "title": "5×7 print",
+      "short": "Museum-stock giclée, shipped tracked",
+      "price": 15,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "print-8x10",
+      "title": "8×10 print",
+      "short": "Museum-stock giclée, shipped tracked",
+      "price": 25,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "print-11x14",
+      "title": "11×14 print",
+      "short": "Museum-stock giclée, shipped tracked",
+      "price": 40,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "print-16x20",
+      "title": "16×20 print",
+      "short": "Museum-stock giclée, shipped tracked",
+      "price": 55,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "print-24x36",
+      "title": "24×36 print",
+      "short": "Museum-stock giclée, shipped tracked",
+      "price": 85,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "file-png",
+      "title": "PNG · personal use",
+      "short": "Full-size PNG, personal use only",
+      "price": 15,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "file-fullres",
+      "title": "Full-res + print rights",
+      "short": "Maximum-quality file, personal print rights",
+      "price": 40,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "file-raw",
+      "title": "RAW + license",
+      "short": "The negative with a written license",
+      "price": 250,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "booking-deposit",
+      "title": "Booking deposit",
+      "short": "Lock a shoot date. The deposit applies to your project",
+      "price_type": "custom",
+      "min": 100,
+      "max": 10000,
+      "action": "book"
+    },
+    {
+      "slug": "approved-invoice",
+      "title": "Approved invoice",
+      "short": "Pay an invoice issued by the desk",
+      "price_type": "custom",
+      "min": 25,
+      "max": 25000,
+      "action": "buy"
+    },
+    {
+      "slug": "mission-fund-donation",
+      "title": "The Mission Fund",
+      "short": "Charitable support for McCluster Corp programs",
+      "price_type": "custom",
+      "min": 5,
+      "max": 25000,
+      "action": "donate"
+    },
+    {
+      "slug": "domain-hosting-deposit",
+      "title": "Start the draft",
+      "short": "Your first month of hosting, paid early so the site gets built and previewed before you buy the domain. It is credited to that first month, not charged on top of it.",
+      "price": 33,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "domain-hosting-start",
+      "title": "Go live: domain and first month",
+      "short": "Registers your domain for the year and covers the first month of hosting. The website build itself is free.",
+      "price": 66,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "domain-hosting-year",
+      "title": "Go live: domain and the year of hosting",
+      "short": "Registers your domain for the year and pays the twelve months of hosting together, which drops the rate from $33 a month to $30. The website build itself is free.",
+      "price": 393,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "hosting-year",
+      "title": "Hosting, by the year",
+      "short": "Twelve months of hosting, SSL and backups paid together at $30 a month instead of $33. The site and its code are yours either way.",
+      "price": 360,
+      "price_type": "fixed",
+      "action": "buy"
+    },
+    {
+      "slug": "hosting-monthly",
+      "title": "Hosting",
+      "short": "Hosting, SSL and backups, every month after the first. Cancel any time; the site and its code are yours.",
+      "price": 33,
+      "price_type": "fixed",
+      "action": "subscribe"
+    },
+    {
+      "slug": "domain-renewal",
+      "title": "Domain renewal",
+      "short": "Keeps your address registered for another year.",
+      "price": 33,
+      "price_type": "fixed",
+      "action": "subscribe"
+    },
+    {
+      "slug": "anti-social-m",
+      "title": "Anti-Social Management",
+      "short": "Website and social run as one service, with the inbound, outbound and social modules staying on. The first month is free; billing starts at month two.",
+      "price": 875,
+      "price_type": "fixed",
+      "action": "subscribe"
+    }
+  ]
+}

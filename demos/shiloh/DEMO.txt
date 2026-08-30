@@ -1,0 +1,4 @@
+Demo copy of shiloh
+synced: 2026-08-04
+source commit: 21d5a43
+refresh: node scripts/sync-demo.mjs <path> shiloh

@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Your Business Console · McCluster Sites</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="The client console for McCluster Sites: your site, your plan, your change-requests.">
+  <link rel="canonical" href="https://matthew.mccluster.org/console.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    html, body { background: #0a0807; }
+    .cx { max-width: 30rem; margin: 0 auto; padding: clamp(4.6rem, 10vh, 6.5rem) clamp(1.1rem, 4vw, 2rem) 9rem; }
+    .cx__k { font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: #e5383b; font-weight: 800; }
+    .cx h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.92; font-size: clamp(2.4rem, 10vw, 3.4rem); margin-top: 0.4rem; }
+    .cx__sub { color: var(--cream-dim); line-height: 1.7; margin-top: 0.9rem; font-size: 0.95rem; }
+    .cx__card { border: 1px solid rgba(244,239,230,0.14); border-radius: 16px; background: rgba(18,14,11,0.75); padding: 1.15rem 1.15rem 1.3rem; margin-top: 1.4rem; }
+    .cx__lab { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: #e5383b; font-weight: 800; }
+    .cx input, .cx textarea, .cx select { width: 100%; margin-top: 0.6rem; padding: 0.95rem 1rem; border-radius: 12px; border: 1px solid rgba(229,56,59,0.4);
+      background: #16110c; color: var(--cream); font-size: 1rem; font-family: inherit; }
+    .cx__btn { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation; display: block; width: 100%;
+      margin-top: 0.8rem; padding: 1rem; border-radius: 13px; background: #e5383b; color: #fff; font-weight: 800; font-size: 1.02rem; }
+    .cx__btn[disabled] { background: #2a241d; color: #8a8172; }
+    .cx__flip { background: none; border: 0; cursor: pointer; padding: 0; margin-top: 0.9rem; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; }
+    .cx__note { margin-top: 0.8rem; font-size: 0.8rem; color: var(--cream-dim); line-height: 1.6; }
+    .cx__site b { color: var(--cream); font-size: 1.05rem; display: block; }
+    .cx__site small { color: var(--cream-dim); }
+    .cx__site a { color: #e8c877; text-decoration: none; word-break: break-all; }
+    .cx__stat { display: inline-block; margin-top: 0.4rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 800;
+      color: #e8c877; border: 1px solid rgba(232,200,119,0.4); border-radius: 100px; padding: 0.25rem 0.7rem; }
+
+    /* the meter: N of 4 this month */
+    .cx__meter { display: flex; gap: 0.45rem; margin-top: 0.7rem; }
+    .cx__pip { flex: 1; height: 8px; border-radius: 100px; background: rgba(244,239,230,0.12); }
+    .cx__pip.on { background: #e5383b; }
+    .cx__mline { margin-top: 0.5rem; font-size: 0.82rem; color: var(--cream-dim); }
+
+    /* request history */
+    .req { list-style: none; padding: 0; margin: 0.9rem 0 0; display: grid; gap: 0.55rem; }
+    .req li { border: 1px solid rgba(244,239,230,0.1); border-radius: 12px; padding: 0.75rem 0.85rem; background: rgba(10,8,7,0.6); }
+    .req b { color: var(--cream); display: block; font-size: 0.92rem; white-space: pre-wrap; }
+    .req small { color: var(--cream-dim); font-size: 0.76rem; }
+    .req .st { float: right; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 800; color: #e8c877; }
+    .req .st.live { color: #7dc98f; }
+    .req .rep { margin-top: 0.4rem; color: var(--cream-dim); font-size: 0.82rem; border-left: 2px solid rgba(229,56,59,0.45); padding-left: 0.6rem; white-space: pre-wrap; }
+    .cx__out { margin-top: 1rem; background: none; border: 0; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
+    [hidden] { display: none !important; }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage">
+
+  <main class="cx">
+    <p class="cx__k">McCluster Sites · the client desk</p>
+    <h1>Business<br>Console</h1>
+
+    <!-- signed out: the door -->
+    <div class="cx__card" id="cxDoor">
+      <p class="cx__lab">Sign in to your console</p>
+      <p class="cx__sub" style="margin-top:0.5rem">Your site, your plan, and your change-requests live here.
+        New to McCluster Sites? <a href="sites.html" style="color:#e5383b;text-decoration:none">See the offer</a>,
+        then make your profile below and your first request starts the conversation.</p>
+      <input type="email" id="cxEmail" placeholder="Email" autocomplete="email" inputmode="email" maxlength="120">
+      <input type="password" id="cxPass" placeholder="Password" autocomplete="current-password" maxlength="80">
+      <button class="cx__btn" id="cxGo">Sign in</button>
+      <button class="cx__flip" id="cxSend" type="button">No password? Email me a sign-in link</button>
+      <a class="cx__flip" href="account.html" style="margin-left:0.9rem;display:inline-block">New here? Make your profile</a>
+      <p class="cx__note" id="cxMsg"></p>
+    </div>
+
+    <!-- signed in: the desk -->
+    <div id="cxDesk" hidden>
+      <!-- the site card -->
+      <div class="cx__card cx__site" id="cxSite">
+        <p class="cx__lab">Your site</p>
+        <div id="cxSiteBody" style="margin-top:0.5rem"><small>Loading…</small></div>
+      </div>
+
+      <!-- the request box -->
+      <div class="cx__card">
+        <p class="cx__lab">Request a change</p>
+        <div class="cx__meter" id="cxMeter" aria-hidden="true"></div>
+        <p class="cx__mline" id="cxMline">&nbsp;</p>
+        <select id="cxKind">
+          <option value="change">Update text or photos</option>
+          <option value="section">Add or change a section</option>
+          <option value="page">A new page</option>
+          <option value="store">Store / product change</option>
+          <option value="social">Social post</option>
+          <option value="other">Something else</option>
+        </select>
+        <textarea id="cxBody" rows="4" maxlength="4000" placeholder="Say it like you'd text it: what should change, and where. If there are photos or files, we'll reply with where to send them."></textarea>
+        <button class="cx__btn" id="cxFile">Send it to the desk &#8594;</button>
+        <p class="cx__note" id="cxReqMsg">Most requests are live within 48 hours, Monday to Friday. A real person approves every change before it ships.</p>
+      </div>
+
+      <!-- the social desk: only clients on the social tier see this -->
+      <div class="cx__card" id="cxSocial" hidden>
+        <p class="cx__lab">The social desk</p>
+        <p class="cx__sub" style="margin-top:0.5rem">Send the desk your content, video, photos, the moment,
+          and it goes out right, across your platforms, on the plan we set. File it as a request below and mark it
+          <b style="color:var(--cream)">Social post</b>. The self-serve posting console (post to all your
+          feeds from right here) is being wired, and your seat is first in line.</p>
+      </div>
+
+      <!-- the record -->
+      <div class="cx__card">
+        <p class="cx__lab">Your requests</p>
+        <ul class="req" id="cxList"><li><small>Loading…</small></li></ul>
+      </div>
+
+      <p class="cx__note" id="cxBill">Billing runs on one recurring invoice. Questions go to
+        <a href="mailto:matthew@mccluster.org?subject=McCluster%20Sites%20billing" style="color:#e5383b;text-decoration:none">the desk</a>.</p>
+      <button class="cx__out" id="cxOut">Sign out</button>
+    </div>
+  </main>
+
+  <!-- THE BAR -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var el = function (id) { return document.getElementById(id); };
+    var QUOTA = 4;                 /* management default; the client's plan refines it */
+    var LEDGER = null;
+    fetch("data/sites.json?v=__STAMP__").then(function (r) { return r.json(); }).then(function (d) {
+      LEDGER = d;
+      meter(usedThisMonth);
+    }).catch(function () {});
+    function planOf(slug) {
+      var ps = (LEDGER && LEDGER.plans) || [];
+      for (var i = 0; i < ps.length; i++) if (ps[i].slug === slug) return ps[i];
+      return null;
+    }
+    /* the client's tier drives the room: quota, the social desk, billing */
+    function applyPlan(slug) {
+      var p = planOf(slug);
+      if (!p) return;
+      QUOTA = p.requests_per_month || 0;
+      el("cxSocial").hidden = p.slug !== "social";
+      if (p.square) {
+        el("cxBill").innerHTML = 'Billing runs through Square: <a href="' + p.square +
+          '" style="color:#e8c877;text-decoration:none;font-weight:700">manage your plan &#8594;</a>';
+      }
+      meter(usedThisMonth);
+    }
+
+    /* authed PostgREST: the client's token, RLS is the wall */
+    function authed(path, opts) {
+      return window.MCC_SUPA.token().then(function (t) {
+        if (!t) throw new Error("no session");
+        opts = opts || {};
+        opts.headers = Object.assign({
+          "Content-Type": "application/json",
+          apikey: window.MCC_SUPA.key,
+          Authorization: "Bearer " + t,
+        }, opts.headers || {});
+        return fetch(window.MCC_SUPA.url + "/rest/v1/" + path, opts);
+      });
+    }
+
+    var usedThisMonth = 0;
+    function monthStart() {
+      var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
+    }
+    function meter(used) {
+      usedThisMonth = used;
+      var pips = "";
+      for (var i = 0; i < QUOTA; i++) pips += '<span class="cx__pip' + (i < used ? " on" : "") + '"></span>';
+      el("cxMeter").innerHTML = pips;
+      if (!QUOTA) {   /* the Hosting tier: no included changes, per-request billing */
+        el("cxMline").textContent = "Your plan bills changes per request: $29 each, confirmed before any charge. Upgrading to Web Management includes four a month.";
+        return;
+      }
+      var left = Math.max(0, QUOTA - used);
+      el("cxMline").textContent = left
+        ? used + " of " + QUOTA + " requests used this month, " + left + " left."
+        : "All " + QUOTA + " requests used this month. Extras are $29 each, and the desk confirms before any charge.";
+    }
+
+    function paintSite() {
+      authed("site_accounts?select=site_name,site_url,plan,status,started_at").then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      }).then(function (rows) {
+        var s = rows && rows[0];
+        var box = el("cxSiteBody");
+        if (!s) {
+          box.innerHTML = "<b>Your build is in the queue.</b><small>No site on the record yet. " +
+            'if you haven’t walked the <a href="onboard.html" style="color:#e5383b;text-decoration:none">onboarding</a>, ' +
+            "that's the fastest start. Otherwise file a request below and the desk takes it from there.</small>";
+          return;
+        }
+        var p = planOf(s.plan);
+        box.innerHTML = "<b>" + s.site_name + "</b>" +
+          (s.site_url ? '<a href="' + s.site_url + '" target="_blank" rel="noopener">' + s.site_url + "</a>" : "") +
+          '<br><span class="cx__stat">' + (s.status || "building") + "</span>" +
+          (p ? ' <span class="cx__stat">' + p.name + " · $" + p.price + "/mo</span>" : "");
+        applyPlan(s.plan);
+      }).catch(function () {
+        el("cxSiteBody").innerHTML = "<b>The desk is being wired.</b><small>Your site card lands here. " +
+          "Meanwhile requests go straight through below or by email.</small>";
+      });
+    }
+
+    function paintRequests() {
+      authed("site_requests?select=kind,body,status,reply,created_at&order=created_at.desc&limit=24").then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      }).then(function (rows) {
+        rows = rows || [];
+        var used = rows.filter(function (x) { return x.created_at >= monthStart(); }).length;
+        meter(used);
+        var list = el("cxList");
+        if (!rows.length) { list.innerHTML = "<li><small>Nothing filed yet. Your first request starts the record.</small></li>"; return; }
+        list.innerHTML = rows.map(function (x) {
+          var st = (x.status || "new").replace(/_/g, " ");
+          return "<li><span class='st" + (x.status === "live" ? " live" : "") + "'>" + st + "</span>" +
+            "<b>" + esc(x.body).slice(0, 220) + "</b>" +
+            "<small>" + (x.created_at || "").slice(0, 10) + " · " + esc(x.kind || "change") + "</small>" +
+            (x.reply ? "<div class='rep'>" + esc(x.reply) + "</div>" : "") +
+            "</li>";
+        }).join("");
+      }).catch(function () {
+        meter(0);
+        el("cxList").innerHTML = "<li><small>The request desk is being wired. Email " +
+          "<a href='mailto:matthew@mccluster.org?subject=Site%20change%20request' style='color:#e5383b;text-decoration:none'>matthew@mccluster.org</a> " +
+          "and it counts the same.</small></li>";
+      });
+    }
+
+    function esc(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; }
+
+    el("cxFile").addEventListener("click", function () {
+      var body = (el("cxBody").value || "").trim();
+      var m = el("cxReqMsg");
+      if (body.length < 3) { m.textContent = "Say what should change first. A sentence is enough."; return; }
+      var btn = this; btn.disabled = true; btn.textContent = "Sending…";
+      authed("site_requests", {
+        method: "POST",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ kind: el("cxKind").value, body: body }),
+      }).then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        if (window.MCC_TRACK) window.MCC_TRACK("site_request", { kind: el("cxKind").value });
+        el("cxBody").value = "";
+        btn.disabled = false; btn.textContent = "Send it to the desk →";
+        m.textContent = "On the desk. You'll hear back fast. The change ships after a human approves it.";
+        paintRequests();
+      }).catch(function () {
+        btn.disabled = false; btn.textContent = "Send it to the desk →";
+        m.innerHTML = "That didn't go through. The desk may still be getting wired. Email it instead: " +
+          '<a href="mailto:matthew@mccluster.org?subject=Site%20change%20request&body=' + encodeURIComponent(body) +
+          '" style="color:#e5383b;text-decoration:none">send the same request by email &#8594;</a>';
+      });
+    });
+
+    /* ------- the door ------- */
+    var msg = el("cxMsg");
+    el("cxGo").addEventListener("click", function () {
+      var em = (el("cxEmail").value || "").trim();
+      var pw = el("cxPass").value || "";
+      if (!/^\S+@\S+\.\S+$/.test(em) || !pw) { msg.textContent = "Email and password, both."; return; }
+      var btn = this; btn.disabled = true; btn.textContent = "Signing in…";
+      window.MCC_AUTH.signInPassword(em, pw).then(paint).catch(function (e) {
+        btn.disabled = false; btn.textContent = "Sign in";
+        msg.textContent = e.message || "That didn't turn the lock. Check both fields.";
+      });
+    });
+    el("cxSend").addEventListener("click", function () {
+      var em = (el("cxEmail").value || "").trim();
+      if (!/^\S+@\S+\.\S+$/.test(em)) { msg.textContent = "Type the whole email address first."; return; }
+      var btn = this; btn.disabled = true;
+      window.MCC_AUTH.signIn(em).then(function () {
+        msg.textContent = "Sent. Open the link on this device and you land back here, signed in.";
+      }).catch(function () {
+        btn.disabled = false;
+        msg.textContent = "That didn't send. Try again in a minute.";
+      });
+    });
+    el("cxOut").addEventListener("click", function () {
+      if (window.MCC_AUTH && window.MCC_AUTH.signOut) window.MCC_AUTH.signOut();
+      location.reload();
+    });
+
+    function paint() {
+      var u = window.MCC_AUTH && window.MCC_AUTH.user && window.MCC_AUTH.user();
+      el("cxDoor").hidden = !!u;
+      el("cxDesk").hidden = !u;
+      if (!u) return;
+      if (window.MCC_TRACK) window.MCC_TRACK("console_view", {});
+      paintSite();
+      paintRequests();
+    }
+    paint();
+    window.addEventListener("mcc:auth", paint);
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

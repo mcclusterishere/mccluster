@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090909">
+  <title>HERE 3D Asset Lab</title>
+  <meta name="robots" content="noindex,nofollow">
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+  <style>
+    :root{--red:#e2211c;--red2:#9f100c;--ink:#070707;--steel:#1a1d1f;--steel2:#272b2e;--chrome:#c5c9cc;--yellow:#f6c900;--paper:#e8e8e5;--muted:#90969a;--line:rgba(255,255,255,.13)}
+    *{box-sizing:border-box}html{background:#050505;color:var(--paper);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{margin:0;min-height:100vh;background:radial-gradient(circle at 80% -10%,rgba(226,33,28,.18),transparent 34%),linear-gradient(135deg,#080808,#111315 45%,#080808)}button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.2;background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 4px),radial-gradient(circle at 30% 20%,rgba(255,255,255,.06),transparent 28%)}
+    .rail{height:14px;background:repeating-linear-gradient(135deg,#151515 0 18px,var(--yellow) 18px 36px);border-block:2px solid #484b4c;box-shadow:0 2px 10px #000,inset 0 1px rgba(255,255,255,.25)}
+    .shell{max-width:1500px;margin:auto;padding:18px 18px 80px}.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:22px 4px}.eyebrow{font:700 10px/1 monospace;letter-spacing:.22em;color:#b2b8bc;text-transform:uppercase}.brand{margin:7px 0 0;font-size:clamp(26px,5vw,52px);letter-spacing:-.055em;line-height:.9}.brand i{font-style:normal;color:var(--red)}.status-chip{border:1px solid var(--line);background:#141617;padding:9px 12px;font:700 10px monospace;letter-spacing:.12em;text-transform:uppercase}.status-chip:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:7px;box-shadow:0 0 12px var(--red)}
+    .grid{display:grid;grid-template-columns:minmax(310px,.7fr) minmax(380px,1.3fr);gap:14px;margin-top:14px}.panel{position:relative;border:1px solid #383c3e;background:linear-gradient(145deg,rgba(37,41,43,.94),rgba(12,13,14,.97));box-shadow:inset 0 1px rgba(255,255,255,.07),0 20px 60px rgba(0,0,0,.35)}.panel:after{content:"";pointer-events:none;position:absolute;inset:7px;border:1px solid rgba(255,255,255,.035)}.panel-head{position:relative;z-index:1;padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}.panel-title{font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}.serial{font:600 9px monospace;color:#84898c}.controls{position:relative;z-index:1;padding:20px;display:grid;gap:18px}.field label,.upload-label{display:block;margin-bottom:8px;font:700 10px monospace;letter-spacing:.12em;color:#aeb2b4;text-transform:uppercase}.field input,.field select{width:100%;border:1px solid #42474a;background:#090a0a;color:white;padding:12px 13px;outline:none}.field input:focus,.field select:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(226,33,28,.13)}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .drop{position:relative;min-height:235px;border:1px dashed #5b6063;background:linear-gradient(145deg,#101213,#171a1c);display:grid;place-items:center;overflow:hidden;text-align:center}.drop.drag{border-color:var(--yellow)}.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}.drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#090909}.drop-copy{padding:24px}.drop-copy strong{font-size:17px}.drop-copy p{max-width:290px;margin:9px auto 0;color:#8f9598;font-size:12px;line-height:1.5}.drop .remove{position:absolute;right:10px;top:10px;z-index:3;border:1px solid #555;background:#111;color:#fff;width:32px;height:32px;display:none}.drop.has-file .remove{display:block}
+    .primary{border:1px solid #ff5b52;background:linear-gradient(#ee2f28,#ae100b);color:white;padding:15px 16px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;box-shadow:inset 0 1px rgba(255,255,255,.25),0 8px 25px rgba(177,15,11,.25)}.primary:disabled{filter:grayscale(1);opacity:.45;cursor:not-allowed}.tiny{font-size:11px;line-height:1.5;color:#8e9497}.tiny strong{color:#d7d9da}
+    .viewer{min-height:680px;display:flex;flex-direction:column}.stage{position:relative;flex:1;min-height:560px;background:radial-gradient(circle at 50% 40%,#34393c,#111315 47%,#050505 76%);overflow:hidden}.stage:before{content:"";position:absolute;inset:auto 8% 5% 8%;height:20%;background:radial-gradient(ellipse,rgba(0,0,0,.85),transparent 70%);filter:blur(10px)}.stage-grid{position:absolute;inset:0;opacity:.14;background-image:linear-gradient(rgba(255,255,255,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.14) 1px,transparent 1px);background-size:40px 40px;transform:perspective(700px) rotateX(63deg) scale(1.5);transform-origin:bottom}.empty-view{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:30px}.empty-view strong{font-size:clamp(32px,7vw,80px);letter-spacing:-.07em;color:#d1d4d6;opacity:.12}.empty-view p{font:700 10px monospace;letter-spacing:.16em;color:#858b8e;text-transform:uppercase}.stage.ready .empty-view{display:none}model-viewer{width:100%;height:100%;min-height:560px;display:none;--poster-color:transparent}.stage.ready model-viewer{display:block}
+    .hud{position:absolute;left:14px;top:14px;z-index:2;display:grid;gap:6px}.hud span{width:max-content;background:rgba(5,5,5,.72);border:1px solid rgba(255,255,255,.12);padding:6px 8px;font:700 9px monospace;letter-spacing:.1em}.hud .live{color:#ff7068}.viewer-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:9px;align-items:center;justify-content:space-between;flex-wrap:wrap}.ghost{border:1px solid #4b5052;background:#111314;color:#e5e5e5;padding:10px 12px;font-size:11px;font-weight:800;text-transform:uppercase}.ghost[disabled]{opacity:.35;cursor:not-allowed}.download{display:none;text-decoration:none;border:1px solid #f2d22e;background:#e3bf00;color:#090909;padding:10px 13px;font-size:11px;font-weight:900;text-transform:uppercase}.download.show{display:inline-block}
+    .mission{margin-top:14px}.pipeline{padding:18px 20px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.step{border:1px solid var(--line);background:#0c0e0f;padding:13px}.step b{display:block;font:700 9px monospace;color:#777e82;margin-bottom:8px}.step strong{font-size:12px}.step.active{border-color:#a31611;box-shadow:inset 3px 0 var(--red)}.step.done{border-color:#555f58}.step.done strong{color:#b9e5c1}.progress{height:5px;background:#080808;margin:0 20px 18px;overflow:hidden}.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red2),var(--red),#ff6a61);transition:width .35s}.console{margin:0 20px 20px;min-height:84px;max-height:150px;overflow:auto;background:#050505;border:1px solid #282b2d;padding:12px;font:10px/1.7 monospace;color:#9da2a5}.console .ok{color:#a7d7ac}.console .bad{color:#ff716a}.console .gold{color:#eed65a}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}.viewer{min-height:570px}.stage,model-viewer{min-height:470px}.pipeline{grid-template-columns:1fr 1fr}.top{align-items:flex-start;flex-direction:column}}@media(max-width:520px){.shell{padding-inline:10px}.two{grid-template-columns:1fr}.pipeline{grid-template-columns:1fr}.viewer-foot{align-items:stretch}.viewer-foot>*{flex:1;text-align:center}.brand{font-size:37px}}
+  </style>
+</head>
+<body>
+  <div class="rail"></div>
+  <div class="shell">
+    <header class="top">
+      <div><div class="eyebrow">McCluster Is Here! // Private fabrication system</div><h1 class="brand">3D ASSET <i>LAB</i></h1></div>
+      <div class="status-chip" id="providerStatus">Provider offline until configured</div>
+    </header>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-head"><div class="panel-title">01 / Reference Intake</div><div class="serial">HERE-FAB // GLB</div></div>
+        <div class="controls">
+          <div class="drop" id="dropzone">
+            <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Upload reference image">
+            <div class="drop-copy"><strong>DROP REFERENCE IMAGE</strong><p>PNG, JPEG or WebP. A clean isolated front-facing asset gives the reconstruction system the best starting point.</p></div>
+            <img id="imagePreview" alt="Selected reference" hidden>
+            <button class="remove" id="removeImage" type="button" aria-label="Remove image">×</button>
+          </div>
+
+          <div class="field"><label for="apiOrigin">HERE API origin</label><input id="apiOrigin" type="url" placeholder="https://your-here-api.example.com"></div>
+          <div class="field"><label for="adminToken">Private Asset Lab token</label><input id="adminToken" type="password" autocomplete="off" placeholder="Not saved in browser storage"></div>
+          <div class="two">
+            <div class="field"><label for="provider">Provider</label><select id="provider"><option value="tripo">Tripo 3D</option></select></div>
+            <div class="field"><label for="quality">Texture quality</label><select id="quality"><option value="standard">Standard</option><option value="detailed">Detailed</option></select></div>
+          </div>
+          <button class="primary" id="generate" type="button" disabled>Generate rotating GLB</button>
+          <div class="tiny"><strong>Security:</strong> the Tripo API key never enters this page. Your browser talks to HERE; HERE talks to the provider. The admin token stays only in this tab's memory.</div>
+        </div>
+      </section>
+
+      <section class="panel viewer">
+        <div class="panel-head"><div class="panel-title">02 / Live Object Bay</div><div class="serial" id="taskSerial">NO ACTIVE TASK</div></div>
+        <div class="stage" id="stage">
+          <div class="stage-grid"></div>
+          <div class="hud"><span id="hudState">WAITING FOR MODEL</span><span class="live" id="hudProgress">0%</span></div>
+          <div class="empty-view"><div><strong>GLB</strong><p>Generated object will materialize here</p></div></div>
+          <model-viewer id="modelViewer" camera-controls auto-rotate rotation-per-second="18deg" shadow-intensity="1.25" exposure="1.15" environment-image="neutral" interaction-prompt="none" alt="Generated 3D asset"></model-viewer>
+        </div>
+        <div class="viewer-foot">
+          <button class="ghost" id="toggleRotate" type="button" disabled>Pause rotation</button>
+          <button class="ghost" id="resetCamera" type="button" disabled>Reset camera</button>
+          <a class="download" id="downloadModel" target="_blank" rel="noreferrer">Open / Download GLB ↗</a>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel mission">
+      <div class="panel-head"><div class="panel-title">03 / Fabrication Pipeline</div><div class="serial" id="creditReadout">CREDITS —</div></div>
+      <div class="pipeline">
+        <div class="step" id="stepUpload"><b>01</b><strong>Upload reference</strong></div>
+        <div class="step" id="stepQueue"><b>02</b><strong>Queue reconstruction</strong></div>
+        <div class="step" id="stepBuild"><b>03</b><strong>Build + PBR texture</strong></div>
+        <div class="step" id="stepReady"><b>04</b><strong>GLB ready</strong></div>
+      </div>
+      <div class="progress"><i id="progressBar"></i></div>
+      <div class="console" id="console" aria-live="polite">[SYSTEM] Asset Lab ready. Configure the HERE API origin and private token, then load a reference image.</div>
+    </section>
+  </div>
+  <div class="rail"></div>
+
+  <script>
+    (()=>{
+      const $=id=>document.getElementById(id);
+      const els={input:$('imageInput'),preview:$('imagePreview'),drop:$('dropzone'),remove:$('removeImage'),origin:$('apiOrigin'),token:$('adminToken'),quality:$('quality'),generate:$('generate'),console:$('console'),status:$('providerStatus'),serial:$('taskSerial'),hudState:$('hudState'),hudProgress:$('hudProgress'),bar:$('progressBar'),stage:$('stage'),viewer:$('modelViewer'),download:$('downloadModel'),rotate:$('toggleRotate'),reset:$('resetCamera'),credits:$('creditReadout')};
+      let imageDataUrl='',fileName='',pollTimer=null,currentTask='',rotating=true;
+      const log=(text,cls='')=>{const row=document.createElement('div');if(cls)row.className=cls;row.textContent=`[${new Date().toLocaleTimeString()}] ${text}`;els.console.appendChild(row);els.console.scrollTop=els.console.scrollHeight};
+      const api=path=>`${els.origin.value.trim().replace(/\/$/,'')}${path}`;
+      const headers=()=>({'Content-Type':'application/json','x-asset-lab-token':els.token.value});
+      const canGenerate=()=>{els.generate.disabled=!(imageDataUrl&&/^https?:\/\//.test(els.origin.value.trim())&&els.token.value.length>=16)};
+      const mark=(id,state)=>{const el=$(id);el.classList.toggle('active',state==='active');el.classList.toggle('done',state==='done')};
+      const progress=n=>{const value=Math.max(0,Math.min(100,Number(n)||0));els.bar.style.width=`${value}%`;els.hudProgress.textContent=`${Math.round(value)}%`};
+
+      function setImage(file){
+        if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)){log('Rejected file: use PNG, JPEG, or WebP.','bad');return}
+        if(file.size>20*1024*1024){log('Rejected file: maximum reference size is 20 MB.','bad');return}
+        const reader=new FileReader();reader.onload=()=>{imageDataUrl=String(reader.result);fileName=file.name;els.preview.src=imageDataUrl;els.preview.hidden=false;els.drop.classList.add('has-file');mark('stepUpload','done');log(`Reference loaded: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`,'ok');canGenerate()};reader.readAsDataURL(file);
+      }
+      els.input.addEventListener('change',e=>setImage(e.target.files[0]));
+      ['dragenter','dragover'].forEach(type=>els.drop.addEventListener(type,e=>{e.preventDefault();els.drop.classList.add('drag')}));
+      ['dragleave','drop'].forEach(type=>els.drop.addEventListener(type,e=>{e.preventDefault();els.drop.classList.remove('drag')}));
+      els.drop.addEventListener('drop',e=>setImage(e.dataTransfer.files[0]));
+      els.remove.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();imageDataUrl='';fileName='';els.input.value='';els.preview.hidden=true;els.preview.removeAttribute('src');els.drop.classList.remove('has-file');mark('stepUpload','');canGenerate();log('Reference cleared.')});
+      els.origin.addEventListener('input',canGenerate);els.token.addEventListener('input',canGenerate);
+
+      async function checkApi(){
+        if(!/^https?:\/\//.test(els.origin.value.trim()))return;
+        try{const r=await fetch(api('/api/v1/status'));if(!r.ok)throw new Error(`HTTP ${r.status}`);const data=await r.json();els.status.textContent=`HERE API ${data.env||'online'} // Tripo route armed`;log('HERE API connection verified.','ok')}catch(err){els.status.textContent='HERE API unreachable';log(`API check failed: ${err.message}`,'bad')}
+      }
+      els.origin.addEventListener('change',checkApi);
+
+      async function generate(){
+        if(els.generate.disabled)return;clearTimeout(pollTimer);els.generate.disabled=true;currentTask='';progress(2);mark('stepQueue','active');mark('stepBuild','');mark('stepReady','');els.stage.classList.remove('ready');els.download.classList.remove('show');els.rotate.disabled=true;els.reset.disabled=true;els.hudState.textContent='UPLOADING REFERENCE';log('Sending reference through HERE secure provider proxy...','gold');
+        try{
+          const r=await fetch(api('/api/v1/3d/generate'),{method:'POST',headers:headers(),body:JSON.stringify({imageDataUrl,fileName,textureQuality:els.quality.value})});
+          const data=await r.json();if(!r.ok||!data.ok)throw new Error(data.error||`HTTP ${r.status}`);
+          currentTask=data.taskId;els.serial.textContent=currentTask;mark('stepQueue','done');mark('stepBuild','active');progress(8);els.hudState.textContent='RECONSTRUCTING';log(`Provider task created: ${currentTask}`,'ok');poll();
+        }catch(err){fail(err.message)}
+      }
+      els.generate.addEventListener('click',generate);
+
+      async function poll(){
+        try{
+          const r=await fetch(api(`/api/v1/3d/tasks/${encodeURIComponent(currentTask)}`),{headers:{'x-asset-lab-token':els.token.value}});const data=await r.json();if(!r.ok||!data.ok)throw new Error(data.error||`HTTP ${r.status}`);const t=data.task||{};const p=Math.max(8,t.progress||0);progress(p);els.hudState.textContent=String(t.status||'RUNNING').toUpperCase();if(t.creditsConsumed!=null)els.credits.textContent=`CREDITS ${t.creditsConsumed}`;
+          if(t.status==='success'&&t.modelUrl){ready(t);return}if(['failed','cancelled','banned','expired'].includes(t.status)){throw new Error(t.error||`Provider task ${t.status}`)}
+          pollTimer=setTimeout(poll,2500);
+        }catch(err){fail(err.message)}
+      }
+      function ready(t){progress(100);mark('stepBuild','done');mark('stepReady','done');els.hudState.textContent='GLB READY';els.viewer.src=t.modelUrl;els.stage.classList.add('ready');els.download.href=t.modelUrl;els.download.classList.add('show');els.rotate.disabled=false;els.reset.disabled=false;els.generate.disabled=false;log('PBR model ready. GLB loaded into live object bay.','ok')}
+      function fail(message){clearTimeout(pollTimer);els.generate.disabled=false;els.hudState.textContent='FABRICATION FAILED';mark('stepBuild','');log(message,'bad');canGenerate()}
+      els.rotate.addEventListener('click',()=>{rotating=!rotating;els.viewer.autoRotate=rotating;els.rotate.textContent=rotating?'Pause rotation':'Resume rotation'});
+      els.reset.addEventListener('click',()=>{els.viewer.cameraOrbit='auto auto auto';els.viewer.cameraTarget='auto auto auto';els.viewer.fieldOfView='auto'});
+      window.addEventListener('beforeunload',()=>clearTimeout(pollTimer));
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "source": "McCluster-Portfolio current HERE interface",
+  "selectors": [
+    {
+      "selector": ".site-head existing hairline/border details",
+      "use": "tiny edge catch only",
+      "intensity": "very-low"
+    },
+    {
+      "selector": ".appbar icon/rim/separator details",
+      "use": "micro hardware accent; keep black chassis dominant",
+      "intensity": "very-low"
+    },
+    {
+      "selector": ".btn / .head-cta / .sp__cta",
+      "use": "1px-ish bevel/rim or icon hardware only",
+      "intensity": "very-low"
+    },
+    {
+      "selector": ".mini player frame details",
+      "use": "tiny rim around existing shell/controls",
+      "intensity": "very-low"
+    },
+    {
+      "selector": ".now__ctl / .now__pp",
+      "use": "control rim and specular catch",
+      "intensity": "low"
+    },
+    {
+      "selector": ".sound-toggle / .float-pause",
+      "use": "precision control rim",
+      "intensity": "low"
+    },
+    {
+      "selector": "existing separators/dividers",
+      "use": "replace generic gray with controlled metallic hairline where appropriate",
+      "intensity": "very-low"
+    },
+    {
+      "selector": "existing UI icons",
+      "use": "selective hardware treatment only when icon remains legible",
+      "intensity": "very-low"
+    }
+  ]
+}

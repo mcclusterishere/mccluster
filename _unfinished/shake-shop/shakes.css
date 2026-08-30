@@ -1,0 +1,187 @@
+/* ============================================================
+   THE SHAKE RUN — the shop's own components.
+
+   Everything that is just "a card, a form, a row, a badge" already
+   exists in css/equity-uprise-app.css and is used as-is. This sheet
+   only adds the four things a food shop needs that a directory does
+   not: a sign in the window that says OPEN or CLOSED, a menu card you
+   can add to a cart from, a cart that follows you down the page, and a
+   rail that shows an order moving from paid to your door.
+
+   Prefix: .shk-. Built from the same flat house tokens as everything
+   else (--ink, --cream, --ruby, --edge, --glass-lo, --display), so the
+   light coat and the reveal system come free and no new font or image
+   is loaded for any of it.
+   ============================================================ */
+
+/* ---------- the sign in the window ----------
+   The most important element on the page. A person landing here at
+   11pm needs to know in one glance whether anybody is going to walk
+   them a shake, and they should never have to scroll to find out. */
+.shk-sign {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1.1rem;
+  border: 1px solid var(--edge); border-radius: 16px;
+  padding: 0.95rem 1.1rem; margin-top: 1.4rem;
+  background: var(--glass-lo);
+}
+.shk-sign__dot {
+  width: 0.7rem; height: 0.7rem; border-radius: 50%; flex: none;
+  background: var(--cream-dim);
+}
+.shk-sign__state {
+  font-family: var(--display); font-weight: 400; text-transform: uppercase;
+  font-size: 1.35rem; line-height: 1; letter-spacing: 0.02em;
+}
+.shk-sign__detail { color: var(--cream-dim); font-size: 0.88rem; line-height: 1.6; }
+.shk-sign__detail b { color: var(--cream); font-weight: 700; }
+
+.shk-sign.is-open { border-color: rgba(158, 229, 168, 0.45); background: rgba(158, 229, 168, 0.07); }
+.shk-sign.is-open .shk-sign__dot { background: #9ee5a8; box-shadow: 0 0 0 0.35rem rgba(158, 229, 168, 0.18); }
+.shk-sign.is-open .shk-sign__state { color: #9ee5a8; }
+.shk-sign.is-shut { border-color: var(--edge); }
+.shk-sign.is-shut .shk-sign__state { color: var(--cream-dim); }
+
+/* ---------- the menu ---------- */
+.shk-menu { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); margin-top: 1.2rem; }
+
+.shk-item {
+  border: 1px solid var(--edge); border-radius: 16px; background: var(--glass-lo);
+  padding: 1.05rem 1.1rem 1.1rem; display: flex; flex-direction: column; gap: 0.55rem;
+}
+.shk-item__top { display: flex; gap: 0.9rem; align-items: baseline; justify-content: space-between; }
+.shk-item__name {
+  font-family: var(--display); font-weight: 400; text-transform: uppercase;
+  font-size: 1.25rem; line-height: 1.02;
+}
+.shk-item__price { font-weight: 800; font-size: 1rem; flex: none; }
+.shk-item__blurb { color: var(--cream-dim); font-size: 0.9rem; line-height: 1.6; }
+.shk-item__allergen {
+  font-size: 0.74rem; color: #d9b96a; line-height: 1.5;
+}
+
+/* an option group: the same pill language as .eua-opt, in a labelled row */
+.shk-opt { margin-top: 0.35rem; }
+.shk-opt__label {
+  font-size: 0.63rem; font-weight: 800; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ruby-hot); margin-bottom: 0.35rem;
+}
+.shk-opt__row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.shk-pill {
+  border: 1px solid var(--edge); border-radius: 100px; padding: 0.42em 0.95em;
+  background: none; color: var(--cream-dim); cursor: pointer;
+  font-family: var(--body); font-size: 0.82rem; line-height: 1.2;
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
+}
+.shk-pill:hover { color: var(--cream); border-color: rgba(244, 239, 230, 0.45); }
+.shk-pill.is-on { background: var(--ruby); border-color: var(--ruby); color: var(--on-ruby); }
+.shk-pill small { opacity: 0.75; margin-left: 0.35em; }
+
+.shk-item__foot { margin-top: auto; padding-top: 0.7rem; display: flex; gap: 0.6rem; align-items: center; }
+.shk-item__foot .btn { flex: 1; padding: 0.85em 1.2em; font-size: 0.74rem; }
+
+/* the stepper. Big targets: this gets used one-handed, walking. */
+.shk-step { display: inline-flex; align-items: center; border: 1px solid var(--edge); border-radius: 100px; flex: none; }
+.shk-step button {
+  width: 2.4rem; height: 2.4rem; border: 0; background: none; color: var(--cream);
+  font-size: 1.15rem; line-height: 1; cursor: pointer; border-radius: 100px;
+}
+.shk-step button:disabled { opacity: 0.3; cursor: default; }
+.shk-step span { min-width: 1.6rem; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* ---------- the cart ----------
+   Pinned above the tab bar, because the bar is fixed and a cart that
+   hides behind it is a cart nobody checks out from. */
+.shk-cart {
+  position: fixed; left: 0; right: 0; z-index: 60;
+  bottom: calc(var(--appbar-h, 4.6rem) + env(safe-area-inset-bottom, 0px));
+  padding: 0.7rem clamp(0.8rem, 3vw, 1.4rem);
+  background: color-mix(in srgb, var(--ink) 92%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--edge);
+  display: flex; gap: 0.8rem; align-items: center;
+  transform: translateY(130%); transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.shk-cart.is-up { transform: none; }
+.shk-cart__say { flex: 1; min-width: 0; font-size: 0.85rem; line-height: 1.4; }
+.shk-cart__say b { display: block; font-size: 1.05rem; font-weight: 800; }
+.shk-cart__say small { color: var(--cream-dim); }
+.shk-cart .btn { flex: none; padding: 0.9em 1.6em; font-size: 0.74rem; }
+
+/* the cart's own contents, opened in place rather than on a second page */
+.shk-lines { margin-top: 0.8rem; }
+.shk-line {
+  display: flex; gap: 0.7rem; align-items: center;
+  border-bottom: 1px solid var(--edge); padding: 0.7rem 0;
+}
+.shk-line:last-child { border-bottom: 0; }
+.shk-line__t { flex: 1; min-width: 0; }
+.shk-line__t b { display: block; font-weight: 700; }
+.shk-line__t small { color: var(--cream-dim); font-size: 0.78rem; }
+.shk-line__p { font-weight: 800; font-variant-numeric: tabular-nums; flex: none; }
+
+.shk-tot { display: flex; justify-content: space-between; padding: 0.45rem 0; font-size: 0.92rem; }
+.shk-tot--big { font-size: 1.1rem; font-weight: 800; border-top: 1px solid var(--edge); margin-top: 0.4rem; padding-top: 0.8rem; }
+.shk-tot span:last-child { font-variant-numeric: tabular-nums; }
+
+/* ---------- the order rail ----------
+   Four beads: paid, making, on the way, delivered. A customer refreshes
+   this page more than any other, so it says where the order actually is
+   rather than "thanks for your order". */
+.shk-rail { display: flex; margin-top: 1.2rem; }
+.shk-bead { flex: 1; text-align: center; position: relative; padding-top: 1.5rem; }
+.shk-bead::before {
+  content: ""; position: absolute; top: 0.32rem; left: 50%; transform: translateX(-50%);
+  width: 0.85rem; height: 0.85rem; border-radius: 50%;
+  border: 2px solid var(--edge); background: var(--ink);
+}
+.shk-bead::after {
+  content: ""; position: absolute; top: 0.72rem; left: 50%; width: 100%; height: 2px;
+  background: var(--edge);
+}
+.shk-bead:last-child::after { display: none; }
+.shk-bead span { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cream-dim); }
+.shk-bead.is-done::before { background: #9ee5a8; border-color: #9ee5a8; }
+.shk-bead.is-done::after { background: #9ee5a8; }
+.shk-bead.is-done span { color: var(--cream); }
+.shk-bead.is-now::before {
+  background: var(--ruby); border-color: var(--ruby);
+  box-shadow: 0 0 0 0.3rem rgba(193, 18, 31, 0.22);
+}
+.shk-bead.is-now span { color: var(--cream); font-weight: 800; }
+
+/* The house .btn had no disabled coat, because until now nothing in the
+   house drew a button you were not allowed to press. A shop does: the
+   Add button before a size is picked, Checkout while the shop is shut.
+   Scoped to these two pages so no finished page changes underneath. */
+.shk-item .btn:disabled,
+.shk-cart .btn:disabled {
+  opacity: 0.42; cursor: not-allowed; box-shadow: none; transform: none;
+}
+
+/* ---------- the runner's desk ---------- */
+.shk-ticket {
+  border: 1px solid var(--edge); border-left: 3px solid var(--ruby); border-radius: 14px;
+  background: var(--glass-lo); padding: 0.95rem 1.05rem; margin-top: 0.7rem;
+}
+.shk-ticket__top { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; align-items: baseline; justify-content: space-between; }
+.shk-ticket__code { font-family: var(--display); font-size: 1.2rem; letter-spacing: 0.03em; }
+.shk-ticket__when { font-size: 0.72rem; color: var(--cream-dim); letter-spacing: 0.06em; }
+.shk-ticket__where { margin-top: 0.4rem; font-weight: 700; }
+.shk-ticket__where small { display: block; font-weight: 400; color: var(--cream-dim); font-size: 0.82rem; margin-top: 0.15rem; }
+.shk-ticket__items { margin-top: 0.6rem; font-size: 0.9rem; line-height: 1.7; color: var(--cream-dim); }
+.shk-ticket__items b { color: var(--cream); }
+.shk-ticket__acts { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; align-items: center; }
+.shk-ticket__acts a { font-size: 0.72rem; color: var(--cream-dim); text-decoration: underline; }
+.shk-ticket--done { border-left-color: #9ee5a8; opacity: 0.72; }
+
+/* ---------- light coat ---------- */
+html[data-theme="light"] .shk-sign,
+html[data-theme="light"] .shk-item,
+html[data-theme="light"] .shk-ticket { background: rgba(26, 20, 13, 0.035); }
+html[data-theme="light"] .shk-cart { background: color-mix(in srgb, var(--cream) 92%, transparent); }
+html[data-theme="light"] .shk-bead::before { background: var(--cream); }
+
+@media (max-width: 34rem) {
+  .shk-menu { grid-template-columns: 1fr; }
+  .shk-bead span { font-size: 0.6rem; letter-spacing: 0.04em; }
+}

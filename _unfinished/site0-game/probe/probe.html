@@ -1,0 +1,94 @@
+<!doctype html><meta charset=utf-8>
+<script type="importmap">{"imports":{"three":"/vendor/three/three.module.js","three/addons/":"/vendor/three/addons/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const SCALE=273;
+const SURFACE_ROLE=/_FLOOR(_\d+)?$|_DECK$|THROUGH_ROAD(_\d+)?$|ROAD_(NORTH|SOUTH)_GATE$|_MARKING(_\d+)?$|TAKEOFF_RUN(_\d+)?$|LANDING_LANE(_\d+)?$|MERGE_LANE$|_PAD(_\d+)?$|_APRON$|LIFT_PLATFORM_[A-D]$|EGRESS_STAIR|RAMP_LANDING$|^GROUND_PLANE$/;
+const WALL_ROLE=/_ENCLOSURE$|PARTITION|LINTEL|PARAPET|GLAZING|RADOME|ROOF_RING|PEDESTAL|^SHELL_/;
+const SHAFT_ROLE=/PASSENGER_CORE|LIFT_CORE|_WELL$/;
+const STEP=2.0;                       // metres you can step onto rather than into
+// A thick slab is BOTH: you stand on its top and you are stopped by its side.
+// The L1 podium is the case that proves it -- 6.01 m of mass with the drive-
+// through cut through it, so if it is walkable-only the road loses its walls
+// and you stroll out through the building. collide() casts at waist height, so
+// a surface you are standing on top of never blocks you: only its flank does,
+// and only while you are beside it.
+function classify(o){
+  const n=o.name;
+  if(SHAFT_ROLE.test(n)) return {walk:false,solid:false};
+  o.geometry.computeBoundingBox();
+  const h=(o.geometry.boundingBox.max.y-o.geometry.boundingBox.min.y)*SCALE;
+  const wall=WALL_ROLE.test(n);
+  return {walk:!wall&&(SURFACE_ROLE.test(n)||h<=STEP), solid:h>STEP};
+}
+const scene=new THREE.Scene();
+new GLTFLoader().load('/game/assets/prim3_site0_master.glb',gl=>{
+  const root=gl.scene; root.scale.setScalar(SCALE); scene.add(root); root.updateMatrixWorld(true);
+  const walk=[],sol=[],ph=[];
+  root.traverse(o=>{if(!o.isMesh)return;const r=classify(o); if(r.walk)walk.push(o); if(r.solid)sol.push(o); if(!r.walk&&!r.solid)ph.push(o);});
+  const rayD=new THREE.Raycaster(),DOWN=new THREE.Vector3(0,-1,0);
+  const groundAt=(x,y,z)=>{rayD.set(new THREE.Vector3(x,y+2,z),DOWN);rayD.far=400;
+    const h=rayD.intersectObjects(walk,false)[0];return h?{y:h.point.y,n:h.object.name}:null;};
+  const YLVL={'B5':-0.220,'B4':-0.176,'B3':-0.132,'B2':-0.088,'B1':-0.044,'L1':0.0,'L2':0.052,'L3':0.272,'L4':0.340};
+  const out={walk:walk.length,solid:sol.length,phantom:ph.length,probes:[],levels:[]};
+  // spawn + mission waypoints, probed from 30 m above the level
+  const PTS={spawn:[0,-0.37],gate:[0,-0.28],fork:[0,0.255],exitN:[0,0.47],rampW:[-0.36,0.30],rampE:[0.36,0.30],b3:[0,0.25],
+             shaftA:[-0.065,0.27],shaftB:[0.065,0.27],shaftC:[0.065,0.315],shaftD:[-0.065,0.315]};
+  for(const k in PTS){const [x,z]=PTS[k];const g=groundAt(x*SCALE,6,z*SCALE);
+    out.probes.push({pt:k,x:+(x*SCALE).toFixed(1),z:+(z*SCALE).toFixed(1),ground:g?+g.y.toFixed(2):null,on:g?g.n:'NOTHING'});}
+  // every level: is there floor under the middle of each quadrant?
+  for(const L in YLVL){const y=YLVL[L]*SCALE;const row={level:L,y:+y.toFixed(1),hits:[]};
+    for(const [qx,qz] of [[0,0],[0.25,0.15],[-0.25,0.15],[0.25,-0.15],[-0.25,-0.15]]){
+      const g=groundAt(qx*SCALE,y+8,qz*SCALE);
+      row.hits.push(g&&Math.abs(g.y-y)<12?g.n.slice(0,26):(g?'FAR:'+g.y.toFixed(0):'NONE'));}
+    out.levels.push(row);}
+
+  // coverage grid: for each level, what fraction of the hull footprint has
+  // floor within 6 m of that level's height?
+  out.coverage=[];
+  for(const L in YLVL){const y=YLVL[L]*SCALE;let hit=0,tot=0,miss=[];
+    for(let i=0;i<24;i++)for(let j=0;j<24;j++){
+      const x=(-0.44+0.905*i/23)*SCALE, z=(-0.30+0.636*j/23)*SCALE;
+      tot++; const g=groundAt(x,y+6,z);
+      if(g&&Math.abs(g.y-y)<6) hit++; else if(miss.length<6) miss.push([+(x/SCALE).toFixed(2),+(z/SCALE).toFixed(2)]);}
+    out.coverage.push({level:L,pct:+(100*hit/tot).toFixed(1),miss});}
+
+  // Every lift stop the game offers: is there floor to land on?
+  // ride() teleports to the shaft's x/z at the target level's y. If nothing
+  // is under that point the player is dropped into the air.
+  const SHAFTS={A:{x:-0.065,z:0.27,stops:['B4','B3','B2','L1','L2','L3']},
+   B:{x:0.065,z:0.27,stops:['B4','B3','B2','B1','L1','L2']},
+   C:{x:0.065,z:0.315,stops:['B5','B4','B3','B2','B1','L1','L2']},
+   D:{x:-0.065,z:0.315,stops:['B3','L1','L2','L3','L4']},
+   EW:{x:-0.10,z:0.27,stops:['B5','B4','B3','B2','B1','L1','L2']},
+   EE:{x:0.10,z:0.27,stops:['B5','B4','B3','B2','B1','L1','L2']}};
+  out.lifts=[];
+  for(const k in SHAFTS){const sh=SHAFTS[k];
+    for(const st of sh.stops){const y=YLVL[st]*SCALE;
+      const g=groundAt(sh.x*SCALE,y+3,sh.z*SCALE);
+      const drop=g?+(y-g.y).toFixed(1):null;
+      out.lifts.push({shaft:k,stop:st,y:+y.toFixed(1),
+        land:g?g.n.slice(0,30):'NOTHING',drop:drop,
+        ok:!!g&&Math.abs(drop)<4});}}
+
+  // For every stop with no floor at the shaft centre: how far away is the
+  // nearest walkable surface at that level? If it is a few metres, the lift
+  // can open onto a landing beside the shaft instead of into the void.
+  out.landings=[];
+  for(const k in SHAFTS){const sh=SHAFTS[k];
+    for(const st of sh.stops){const y=YLVL[st]*SCALE;
+      const c=groundAt(sh.x*SCALE,y+3,sh.z*SCALE);
+      if(c&&Math.abs(c.y-y)<4) continue;
+      let found=null;
+      for(const rad of [6,10,14,18,22,28,34,42,52]){
+        for(let a=0;a<16&&!found;a++){const th=a*Math.PI/8;
+          const x=sh.x*SCALE+rad*Math.cos(th), z=sh.z*SCALE+rad*Math.sin(th);
+          const g=groundAt(x,y+3,z);
+          if(g&&Math.abs(g.y-y)<4) found={rad,x:+x.toFixed(1),z:+z.toFixed(1),on:g.n.slice(0,30)};}
+        if(found)break;}
+      out.landings.push({shaft:k,stop:st,found});}}
+  document.title='DONE';
+  window.RESULT=out;
+},undefined,e=>{document.title='ERR';window.RESULT={error:String(e)};});
+</script>

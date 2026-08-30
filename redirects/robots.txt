@@ -1,0 +1,7 @@
+# The old host. Every page here is a redirect to matthew.mccluster.org.
+# Crawling is allowed on purpose: a blocked redirect is a redirect
+# nobody follows, and the canonical is how the move gets recorded.
+User-agent: *
+Allow: /
+
+Sitemap: https://matthew.mccluster.org/sitemap.xml

@@ -1,0 +1,192 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>PRIM3 SITE 0 — World Viewer</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;background:#050810;overflow:hidden;font-family:'JetBrains Mono',monospace;color:#e3e7ee}
+  #c{position:fixed;inset:0;display:block;touch-action:none}
+  .hud{position:fixed;z-index:5;pointer-events:none}
+  #top{top:0;left:0;right:0;padding:14px 18px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .tag{font-size:10px;letter-spacing:.22em;color:#22d3ee}
+  h1{font-size:15px;letter-spacing:.08em;margin-top:4px;font-weight:600}
+  .sub{font-size:10px;color:#8b96a8;margin-top:3px;letter-spacing:.06em}
+  #floors{display:flex;flex-direction:column;gap:6px;pointer-events:auto;align-items:flex-end}
+  .fbtn{background:#0c1220;border:1px solid #1a2540;color:#8b96a8;font:inherit;font-size:9.5px;letter-spacing:.14em;padding:8px 12px;cursor:pointer;text-transform:uppercase;text-align:right;min-width:210px}
+  .fbtn:hover{border-color:#22d3ee;color:#22d3ee}
+  .fbtn.on{border-color:#22d3ee;color:#22d3ee;background:rgba(34,211,238,.08)}
+  .fbtn small{display:block;font-size:8px;color:#566275;letter-spacing:.08em;margin-top:2px}
+  #stats{top:auto;bottom:14px;left:14px;font-size:10px;color:#566275;line-height:1.9;letter-spacing:.06em}
+  #stats b{color:#e3e7ee}
+  #bar{bottom:14px;right:14px;display:flex;gap:8px;pointer-events:auto}
+  .btn{background:#0c1220;border:1px solid #1a2540;color:#8b96a8;font:inherit;font-size:9.5px;letter-spacing:.16em;padding:9px 13px;cursor:pointer;text-transform:uppercase}
+  .btn:hover{border-color:#22d3ee;color:#22d3ee}
+  .btn.on{border-color:#22d3ee;color:#22d3ee;background:rgba(34,211,238,.08)}
+  #load{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#050810;transition:opacity .6s}
+  #load .big{font-size:13px;letter-spacing:.3em;color:#22d3ee;margin-bottom:14px}
+  #lbar{width:260px;height:3px;background:#1a2540}
+  #lbar i{display:block;height:100%;width:0;background:#22d3ee;transition:width .2s}
+  #lmsg{font-size:9.5px;color:#566275;letter-spacing:.14em;margin-top:10px}
+  .led{width:7px;height:7px;border-radius:50%;background:#34d399;display:inline-block;margin-right:6px;animation:p 1.5s ease-in-out infinite;box-shadow:0 0 6px #34d399}
+  @keyframes p{50%{opacity:.35}}
+  @media (max-width:640px){ .fbtn{min-width:0} .sub{display:none} }
+</style>
+<script type="importmap">
+{"imports":{
+  "three":"../vendor/three/three.module.js",
+  "three/addons/":"../vendor/three/addons/",
+  "@sparkjsdev/spark":"../vendor/spark.module.js"
+}}
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud" id="top">
+  <div>
+    <div class="tag"><span class="led"></span>WORLD VIEWER — LIVE SPLATS</div>
+    <h1 id="ftitle">PRIM3 SITE 0</h1>
+    <div class="sub" id="fsub">—</div>
+  </div>
+  <div id="floors"></div>
+</div>
+<div class="hud" id="stats">—</div>
+<div class="hud" id="bar">
+  <button class="btn on" id="q500">500K</button>
+  <button class="btn" id="qfull">FULL RES</button>
+  <button class="btn" id="vpano">PANO</button>
+  <button class="btn" id="shot">SHOT</button>
+</div>
+<div id="load"><div class="big">MATERIALIZING WORLD</div><div id="lbar"><i></i></div><div id="lmsg">fetching splats…</div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { SparkRenderer, SplatMesh } from '@sparkjsdev/spark';
+
+const FLOORS = {
+  l3: {
+    title: 'L3 FLIGHT DECK', sub: 'exterior · carrier deck at blue-hour dusk · marble-1.1-plus',
+    spz: { '500K': 'assets/l3/site0_l3_500k.spz', 'FULL RES': 'assets/l3/site0_l3_full_res.spz' },
+    pano: 'assets/l3/site0_l3_pano.jpg',
+    cam: { pos: [120, 60, 160], tgt: [0, 10, 0] },
+  },
+  b3: {
+    title: 'B3 PRIME DEPLOYMENT HALL', sub: 'interior · the master engineer’s floor · V1/V2 bottom stops',
+    spz: { '500K': 'assets/b3/site0_b3_500k.spz', 'FULL RES': 'assets/b3/site0_b3_full_res.spz' },
+    pano: 'assets/b3/site0_b3_pano.jpg',
+    cam: { pos: [26, 12, 34], tgt: [0, 6, 0] },
+  },
+};
+
+const params = new URLSearchParams(location.search);
+let currentFloor = FLOORS[params.get('floor')] ? params.get('floor') : 'l3';
+let currentQ = '500K';
+
+const canvas = document.getElementById('c');
+const loadEl = document.getElementById('load');
+const lbar = document.querySelector('#lbar i');
+const lmsg = document.getElementById('lmsg');
+const statsEl = document.getElementById('stats');
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050810);
+const camera = new THREE.PerspectiveCamera(62, innerWidth/innerHeight, 0.05, 4000);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.06;
+const spark = new SparkRenderer({ renderer });
+scene.add(spark);
+
+/* floor menu */
+const floorsEl = document.getElementById('floors');
+for (const [id, f] of Object.entries(FLOORS)) {
+  const b = document.createElement('button');
+  b.className = 'fbtn' + (id === currentFloor ? ' on' : '');
+  b.id = 'floor-' + id;
+  b.innerHTML = `${f.title}<small>${f.sub}</small>`;
+  b.onclick = () => switchFloor(id);
+  floorsEl.appendChild(b);
+}
+
+let splat = null, panoMesh = null, mode = 'splat';
+async function loadSplat() {
+  const f = FLOORS[currentFloor];
+  lmsg.textContent = `fetching ${f.title} · ${currentQ}…`;
+  loadEl.style.opacity = 1; loadEl.style.display = 'flex';
+  if (splat) { scene.remove(splat); splat.dispose?.(); splat = null; }
+  splat = new SplatMesh({ url: f.spz[currentQ], onProgress: (p) => { lbar.style.width = Math.round(p*100) + '%'; } });
+  await splat.initialized;
+  scene.add(splat);
+  const box = new THREE.Box3().setFromObject(splat);
+  const c = box.getCenter(new THREE.Vector3()); const s = box.getSize(new THREE.Vector3()).length();
+  controls.target.copy(c);
+  camera.position.copy(c).add(new THREE.Vector3(s*0.32, s*0.2, s*0.4));
+  camera.far = Math.max(4000, s*4); camera.updateProjectionMatrix();
+  loadEl.style.opacity = 0; setTimeout(() => loadEl.style.display = 'none', 650);
+  statsEl.innerHTML = `FLOOR <b>${f.title}</b> · SOURCE <b>${currentQ}</b> · span ${s.toFixed(0)}m`;
+}
+function switchFloor(id) {
+  currentFloor = id;
+  history.replaceState(null, '', '?floor=' + id);
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('on'));
+  document.getElementById('floor-' + id).classList.add('on');
+  document.getElementById('ftitle').textContent = FLOORS[id].title;
+  document.getElementById('fsub').textContent = FLOORS[id].sub;
+  if (panoMesh) panoMesh.visible = false;
+  if (mode === 'pano') { mode = 'splat'; document.getElementById('vpano').classList.remove('on'); document.getElementById('q500').classList.add('on'); currentQ = '500K'; }
+  loadSplat();
+}
+function showPano() {
+  const f = FLOORS[currentFloor];
+  if (!panoMesh || panoMesh.userData.src !== f.pano) {
+    if (panoMesh) scene.remove(panoMesh);
+    new THREE.TextureLoader().load(f.pano, (t) => {
+      t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace;
+      panoMesh = new THREE.Mesh(new THREE.SphereGeometry(500, 60, 40), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide }));
+      panoMesh.userData.src = f.pano; scene.add(panoMesh);
+    });
+  } else panoMesh.visible = true;
+}
+document.getElementById('q500').onclick = () => { currentQ = '500K'; mode = 'splat';
+  document.querySelectorAll('#bar .btn').forEach(b=>b.classList.remove('on')); document.getElementById('q500').classList.add('on'); loadSplat(); };
+document.getElementById('qfull').onclick = () => { currentQ = 'FULL RES'; mode = 'splat';
+  document.querySelectorAll('#bar .btn').forEach(b=>b.classList.remove('on')); document.getElementById('qfull').classList.add('on'); loadSplat(); };
+document.getElementById('vpano').onclick = () => { mode = 'pano';
+  document.querySelectorAll('#bar .btn').forEach(b=>b.classList.remove('on')); document.getElementById('vpano').classList.add('on');
+  if (splat) splat.visible = false; showPano(); camera.position.set(0, 12, 0.01); controls.target.set(0, 12, -1); };
+document.getElementById('shot').onclick = () => { renderer.render(scene, camera);
+  const a = document.createElement('a'); a.href = canvas.toDataURL('image/png');
+  a.download = `prim3-${currentFloor}.png`; a.click(); };
+
+const keys = {};
+addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+addEventListener('resize', () => { camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+const clock = new THREE.Clock();
+const fwd = new THREE.Vector3(), right = new THREE.Vector3(), mv = new THREE.Vector3();
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  camera.getWorldDirection(fwd); right.crossVectors(fwd, camera.up).normalize();
+  mv.set(0,0,0);
+  const sp = 42 * dt;
+  if (keys['w']) mv.addScaledVector(fwd, sp);
+  if (keys['s']) mv.addScaledVector(fwd, -sp);
+  if (keys['a']) mv.addScaledVector(right, -sp);
+  if (keys['d']) mv.addScaledVector(right, sp);
+  if (keys['q']) mv.y -= sp; if (keys['e']) mv.y += sp;
+  if (mv.lengthSq() > 0) { camera.position.add(mv); controls.target.add(mv); }
+  controls.update();
+  renderer.render(scene, camera);
+}
+document.getElementById('ftitle').textContent = FLOORS[currentFloor].title;
+document.getElementById('fsub').textContent = FLOORS[currentFloor].sub;
+loadSplat();
+loop();
+</script>
+
+
+</body></html>

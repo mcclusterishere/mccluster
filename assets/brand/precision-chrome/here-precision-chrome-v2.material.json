@@ -1,0 +1,45 @@
+{
+  "name": "HERE Precision Chrome v2",
+  "version": "2.0.0",
+  "resolution": [
+    2048,
+    2048
+  ],
+  "tileable": true,
+  "workflow": "PBR metallic-roughness precision polished metal",
+  "role": "Micro-accent material for bevels, rims, separators, icon hardware and grazing highlights",
+  "maps": {
+    "baseColor": "here-precision-chrome-v2-basecolor.png",
+    "normal": "here-precision-chrome-v2-normal.png",
+    "metallic": "here-precision-chrome-v2-metallic.png",
+    "roughness": "here-precision-chrome-v2-roughness.png",
+    "height": "here-precision-chrome-v2-height.png",
+    "ambientOcclusion": "here-precision-chrome-v2-ao.png",
+    "polishMask": "here-precision-chrome-v2-polish-mask.png",
+    "scratchMask": "here-precision-chrome-v2-scratch-mask.png",
+    "grazingLightMask": "here-precision-chrome-v2-grazing-light-mask.png",
+    "specularProxy": "here-precision-chrome-v2-specular-proxy.png",
+    "highlightBandMask": "here-precision-chrome-v2-highlight-band-mask.png",
+    "rubyReflectionMask": "here-precision-chrome-v2-ruby-reflection-mask.png",
+    "anisotropyDirection": "here-precision-chrome-v2-anisotropy-direction.png",
+    "edgeGlintMask": "here-precision-chrome-v2-edge-glint-mask.png"
+  },
+  "recommended": {
+    "metalness": 1.0,
+    "roughnessScale": 1.0,
+    "normalScale": [
+      0.22,
+      0.22
+    ],
+    "environmentIntensity": 1.15,
+    "anisotropy": 0.16,
+    "rubyReflectionColor": "#C1121F",
+    "rubyReflectionMax": 0.16
+  },
+  "reskinRules": {
+    "do": "Use in very small quantities on existing edges, rims, separators and hardware details.",
+    "doNot": "Do not make cards, backgrounds, nav bars or large surfaces chrome.",
+    "motion": "Chrome is revealed by moving environment/grazing reflections, not animated silver gradients.",
+    "hierarchy": "Chrome should be noticed second or third, never before content."
+  }
+}

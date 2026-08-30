@@ -1,0 +1,45 @@
+{
+  "name": "HERE Blackened Steel v2",
+  "version": "2.0.0",
+  "resolution": [
+    2048,
+    2048
+  ],
+  "tileable": true,
+  "workflow": "PBR metallic-roughness",
+  "role": "Structural skin material for the existing HERE app",
+  "maps": {
+    "baseColor": "here-blackened-steel-v2-basecolor.png",
+    "normal": "here-blackened-steel-v2-normal.png",
+    "metallic": "here-blackened-steel-v2-metallic.png",
+    "roughness": "here-blackened-steel-v2-roughness.png",
+    "height": "here-blackened-steel-v2-height.png",
+    "ambientOcclusion": "here-blackened-steel-v2-ao.png",
+    "brushMask": "here-blackened-steel-v2-brush-mask.png",
+    "scratchMask": "here-blackened-steel-v2-scratch-mask.png",
+    "grazingLightMask": "here-blackened-steel-v2-grazing-light-mask.png",
+    "specularProxy": "here-blackened-steel-v2-specular-proxy.png",
+    "rubyReflectionMask": "here-blackened-steel-v2-ruby-reflection-mask.png",
+    "anisotropyDirection": "here-blackened-steel-v2-anisotropy-direction.png"
+  },
+  "recommended": {
+    "metalness": 0.96,
+    "roughnessScale": 1.0,
+    "normalScale": [
+      0.42,
+      0.42
+    ],
+    "heightScale": 0.004,
+    "environmentIntensity": 0.75,
+    "anisotropy": 0.22,
+    "rubyReflectionColor": "#C1121F",
+    "rubyReflectionIdle": 0.0,
+    "rubyReflectionActive": 0.55
+  },
+  "reskinRules": {
+    "do": "Apply to existing shells, rails, borders, button housings, nav surfaces and structural separators.",
+    "doNot": "Do not turn backgrounds or media areas into giant metal slabs.",
+    "motion": "Move virtual light/environment response across brushing and roughness; do not pulse base color.",
+    "ruby": "Use only as reflected energy in selected active/recessed zones."
+  }
+}

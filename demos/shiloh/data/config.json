@@ -1,0 +1,13 @@
+{
+  "note": "DEMO COPY served from matthew.mccluster.org. Demo mode only: everything a visitor does lives in their own browser and is never sent anywhere. Named staff accounts are stripped and the passcodes are showroom keys, set by scripts/sync-demo.mjs. The client's real passcodes stay in their own repo.",
+  "mode": "demo",
+  "supabaseUrl": "",
+  "supabaseAnonKey": "",
+  "webhookUrl": "",
+  "notifyEmail": "",
+  "adminPasscode": "demo",
+  "editorPasscode": "demo-editor",
+  "demoStaff": [],
+  "applianceUrl": "",
+  "applianceToken": ""
+}

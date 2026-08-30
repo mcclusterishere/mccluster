@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Matthew McCluster — Creative Director, Photographer, Web Designer &amp; Songwriter · Search the record</title>
+  <meta name="description" content="Search everything Matthew McCluster does: creative direction, photography, video, web design, social media management, and original music. Bridgeport CT &amp; Atlanta GA. Five government citations. One search bar, every answer on the record.">
+  <meta name="keywords" content="Matthew McCluster, creative director Connecticut, photographer Bridgeport CT, web designer Connecticut, videographer, social media manager, songwriter, hire McCluster, McCluster Corp, license music">
+  <link rel="canonical" href="https://matthew.mccluster.org/portfolio.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="Matthew McCluster — search the whole record">
+  <meta property="og:description" content="A search engine with one subject. Type a skill, get the receipts: direction, photo, video, web, social, music. Five government citations on file.">
+  <meta property="og:url" content="https://matthew.mccluster.org/portfolio.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+
+  <!-- THE PANEL, declared to the machines that matter.
+       Same Person @id the résumé owns — one entity, never two — plus the
+       site's own @id gaining a SearchAction: this page IS the site search,
+       and the search-term URL is real (?q= prefill below). -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "ProfilePage",
+        "@id": "https://matthew.mccluster.org/portfolio.html#panel",
+        "url": "https://matthew.mccluster.org/portfolio.html",
+        "name": "Matthew McCluster — search the record",
+        "mainEntity": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
+        "about": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://matthew.mccluster.org/#website",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://matthew.mccluster.org/portfolio.html?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Person",
+        "@id": "https://matthew.mccluster.org/#matthew-mccluster",
+        "name": "Matthew McCluster",
+        "jobTitle": ["Creative Director", "Photographer", "Web Designer", "Songwriter"],
+        "knowsAbout": ["Creative direction", "Photography", "Videography", "Web design",
+          "Social media management", "Music production", "Civic technology"],
+        "address": { "@type": "PostalAddress", "addressRegion": "CT", "addressCountry": "US" },
+        "mainEntityOfPage": "https://matthew.mccluster.org/portfolio.html"
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://matthew.mccluster.org/portfolio.html#asked",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Who is Matthew McCluster?",
+            "acceptedAnswer": { "@type": "Answer", "text": "A creative director, photographer, web designer and songwriter working across Connecticut and Georgia. Founder of McCluster Corp, a registered Connecticut public charity, with five government citations and proclamations on the record — three from the Connecticut General Assembly, one from the State of Georgia, one from the City of Bridgeport." }
+          },
+          {
+            "@type": "Question",
+            "name": "What does a consultation with McCluster cost?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Every consultation is free — project, partnership, or role. The Teardown is a separate $585 product: a 45-minute live teardown of your site and socials where you keep the recording and the written punch list, credited in full against the project if you hire him." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I license McCluster's music?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. The I AM HERE catalogue is original, published, and licensable for sync — film, ad, broadcast and web. The licensing desk opens right on the album page and quotes by territory, term and use." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is McCluster open to full-time roles?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — creative director, head of content, and media production roles, plus paid fellowships. Recruiters get the shortest path on the site: two questions, then his calendar. No fee." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    /* ============ THE PANEL: a search engine with one subject ============ */
+    body.panel { background: #0a0807; }
+    .pn { max-width: 74rem; margin: 0 auto;
+      padding: clamp(5.4rem, 10vh, 7rem) clamp(1rem, 4vw, 2.2rem) 9rem; }
+
+    /* ---- the mast: the engine's own brand ---- */
+    .pn__mast { text-align: center; margin-bottom: clamp(1.4rem, 4vh, 2.4rem); }
+    .pn__logo { display: inline-flex; align-items: baseline; gap: .12em;
+      font-family: var(--display); font-size: clamp(2.6rem, 9vw, 4.6rem);
+      line-height: .95; text-transform: uppercase; color: var(--cream); }
+    .pn__logo img { width: .82em; height: .82em; align-self: center; }
+    .pn__logo em { font-style: normal; color: var(--ruby-hot); }
+    .pn__tag { margin: .5rem 0 0; font: 700 .68rem var(--body); letter-spacing: .3em;
+      text-transform: uppercase; color: var(--cream-dim); }
+
+    /* ---- the bar: the whole page answers to it ---- */
+    .pn__bar { position: relative; max-width: 46rem; margin: 0 auto; }
+    .pn__in { width: 100%; padding: 1.05em 3.4em 1.05em 3.2em; border: 0; border-radius: 100px;
+      font: 600 1.02rem var(--body); color: var(--cream);
+      background: rgba(244,239,230,.07);
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.22), 0 24px 60px -24px rgba(0,0,0,.9);
+      transition: box-shadow .25s ease, background .25s ease; }
+    .pn__in::placeholder { color: rgba(244,239,230,.44); }
+    .pn__in:focus { outline: 0; background: rgba(244,239,230,.1);
+      box-shadow: inset 0 0 0 2px var(--ruby-hot), 0 24px 70px -22px rgba(229,56,59,.5); }
+    .pn__glass { position: absolute; left: 1.15em; top: 50%; transform: translateY(-50%);
+      width: 19px; height: 19px; fill: none; stroke: var(--ruby-hot); stroke-width: 2.2;
+      stroke-linecap: round; pointer-events: none; }
+    .pn__slash { position: absolute; right: 1.05em; top: 50%; transform: translateY(-50%);
+      font: 700 .68rem var(--body); color: var(--cream-dim); pointer-events: none;
+      border: 1px solid rgba(244,239,230,.28); border-radius: 6px; padding: .18em .5em; }
+    .pn__chips { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: center;
+      max-width: 46rem; margin: .9rem auto 0; }
+    .pn__chip { cursor: pointer; border: 0; border-radius: 100px; padding: .5em .95em;
+      font: 700 .72rem var(--body); letter-spacing: .04em; color: var(--cream-dim);
+      background: rgba(244,239,230,.06); box-shadow: inset 0 0 0 1px rgba(244,239,230,.14);
+      transition: color .18s, box-shadow .18s; }
+    .pn__chip:hover, .pn__chip:focus-visible { color: var(--cream);
+      box-shadow: inset 0 0 0 1px var(--ruby-hot); }
+    .pn__chip--luck { color: #fff; background: linear-gradient(120deg, var(--ruby), var(--ruby-hot)); }
+
+    /* ---- the floor: results left, the man himself right ---- */
+    .pn__floor { display: grid; grid-template-columns: minmax(0,1fr); gap: 1.6rem;
+      margin-top: clamp(1.6rem, 4vh, 2.6rem); align-items: start; }
+    @media (min-width: 960px) { .pn__floor { grid-template-columns: minmax(0,1fr) 21.5rem; } }
+
+    .pn__count { margin: 0 0 .8rem; font: 600 .74rem var(--body); letter-spacing: .06em;
+      color: var(--cream-dim); }
+    .pn__count b { color: var(--ruby-hot); }
+
+    .pn__hits { display: grid; gap: .55rem; }
+    .pn__hit { display: block; text-decoration: none; padding: .95rem 1.05rem 1rem;
+      border-radius: 14px; background: rgba(244,239,230,.035);
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.09);
+      transition: background .18s ease, box-shadow .18s ease, transform .18s ease; }
+    .pn__hit:hover, .pn__hit.is-hot { background: rgba(229,56,59,.09);
+      box-shadow: inset 0 0 0 1px rgba(229,56,59,.55); transform: translateX(4px); }
+    .pn__kind { display: inline-block; font: 800 .56rem var(--body); letter-spacing: .18em;
+      text-transform: uppercase; color: var(--ruby-hot); margin-bottom: .3rem; }
+    .pn__hit h3 { margin: 0 0 .15rem; font: 800 1.02rem/1.25 var(--body); color: var(--cream); }
+    .pn__url { display: block; font: 600 .7rem var(--body); color: rgba(244,239,230,.45);
+      margin-bottom: .3rem; word-break: break-all; }
+    .pn__hit p { margin: 0; font: 500 .84rem/1.5 var(--body); color: var(--cream-dim); }
+    .pn__hit mark { background: none; color: var(--ruby-hot); font-weight: 800; }
+    .pn__none { padding: 1.4rem 1.1rem; border-radius: 14px; text-align: left;
+      background: rgba(244,239,230,.035); box-shadow: inset 0 0 0 1px rgba(244,239,230,.09);
+      font: 500 .9rem/1.6 var(--body); color: var(--cream-dim); }
+    .pn__none a { color: var(--ruby-hot); font-weight: 800; }
+
+    /* ---- the knowledge panel ---- */
+    .pn__card { border-radius: 20px; overflow: hidden;
+      background: linear-gradient(180deg, rgba(24,18,16,.95), rgba(10,8,7,.97));
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.14), 0 34px 80px -30px rgba(0,0,0,.95); }
+    .pn__face { position: relative; aspect-ratio: 16/9.4; overflow: hidden;
+      background: radial-gradient(120% 130% at 50% 10%, #2a1214 0%, #120c0a 60%, #0a0807 100%); }
+    /* a standing figure in a landscape frame: anchor the HEAD, crop the feet */
+    .pn__face img { position: absolute; left: 50%; top: 3%; transform: translateX(-50%);
+      height: 165%; width: auto; filter: drop-shadow(0 18px 34px rgba(0,0,0,.75)); }
+    .pn__face::after { content: ""; position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 55%, rgba(10,8,7,.92) 96%); }
+    .pn__id { padding: 1.05rem 1.15rem 1.25rem; }
+    .pn__id h2 { margin: 0; font-family: var(--display); font-weight: 400;
+      font-size: 1.7rem; line-height: 1; letter-spacing: .01em; text-transform: uppercase;
+      color: var(--cream); }
+    .pn__role { margin: .3rem 0 .8rem; font: 700 .7rem/1.5 var(--body); letter-spacing: .08em;
+      text-transform: uppercase; color: var(--cream-dim); }
+    .pn__facts { list-style: none; margin: 0 0 1rem; padding: .8rem 0 0;
+      border-top: 1px solid rgba(244,239,230,.12); display: grid; gap: .45rem; }
+    .pn__facts li { font: 500 .8rem/1.45 var(--body); color: var(--cream-dim); }
+    .pn__facts b { color: var(--cream); font-weight: 800; }
+    .pn__facts a { color: var(--ruby-hot); font-weight: 700; text-decoration: none; }
+    .pn__go { display: block; text-align: center; text-decoration: none; border-radius: 100px;
+      padding: .85em 1.2em; font: 800 .74rem var(--body); letter-spacing: .16em;
+      text-transform: uppercase; color: #fff;
+      background: linear-gradient(120deg, var(--ruby), var(--ruby-hot));
+      box-shadow: 0 14px 34px -12px rgba(229,56,59,.8); }
+    .pn__go + .pn__go { margin-top: .5rem; background: rgba(244,239,230,.08);
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.2); color: var(--cream); }
+
+    /* people also ask */
+    .pn__ask { margin-top: 1.2rem; }
+    .pn__ask h4 { margin: 0 0 .5rem; font: 800 .62rem var(--body); letter-spacing: .22em;
+      text-transform: uppercase; color: var(--cream-dim); }
+    .pn__ask details { border-radius: 12px; background: rgba(244,239,230,.04);
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); margin-bottom: .4rem; }
+    .pn__ask summary { cursor: pointer; list-style: none; padding: .75rem .9rem;
+      font: 700 .82rem var(--body); color: var(--cream); position: relative; }
+    .pn__ask summary::after { content: ""; position: absolute; right: .95rem; top: 50%;
+      width: 8px; height: 8px; border-right: 2px solid var(--ruby-hot);
+      border-bottom: 2px solid var(--ruby-hot);
+      transform: translateY(-70%) rotate(45deg); transition: transform .2s ease; }
+    .pn__ask details[open] summary::after { transform: translateY(-30%) rotate(-135deg); }
+    .pn__ask details p { margin: 0; padding: 0 .9rem .85rem;
+      font: 500 .82rem/1.55 var(--body); color: var(--cream-dim); }
+    .pn__ask details p a { color: var(--ruby-hot); font-weight: 700; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pn__hit, .pn__in { transition: none; }
+      .pn__hit:hover, .pn__hit.is-hot { transform: none; }
+    }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage panel" data-mh-cta="Book a call with me|hire.html#book">
+  <main class="pn">
+    <header class="pn__mast">
+      <p class="pn__logo" aria-label="McCluster"><img src="assets/img/m-mark.png" alt="">c<em>Cluster</em></p>
+      <p class="pn__tag">The search engine with one subject</p>
+    </header>
+
+    <div class="pn__bar" role="search">
+      <svg class="pn__glass" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+      <input class="pn__in" id="pnQ" type="search" autocomplete="off" spellcheck="false"
+        placeholder="Search me — try &quot;photographer&quot;, &quot;web design&quot;, &quot;license a song&quot;"
+        aria-label="Search everything Matthew McCluster does">
+      <span class="pn__slash" aria-hidden="true">/</span>
+    </div>
+    <div class="pn__chips" id="pnChips">
+      <button class="pn__chip" type="button" data-q="photography">photography</button>
+      <button class="pn__chip" type="button" data-q="web design">web design</button>
+      <button class="pn__chip" type="button" data-q="video">video</button>
+      <button class="pn__chip" type="button" data-q="social media">social media</button>
+      <button class="pn__chip" type="button" data-q="music">music</button>
+      <button class="pn__chip" type="button" data-q="credentials">credentials</button>
+      <button class="pn__chip pn__chip--luck" type="button" id="pnLuck">I'm feeling blessed</button>
+    </div>
+
+    <div class="pn__floor">
+      <section aria-label="Results">
+        <p class="pn__count" id="pnCount"></p>
+        <div class="pn__hits" id="pnHits" aria-live="polite"></div>
+      </section>
+
+      <!-- THE KNOWLEDGE PANEL: what a search engine would build about him,
+           built by him first -->
+      <aside class="pn__card" aria-label="About Matthew McCluster">
+        <div class="pn__face"><img src="assets/img/mcc-cutout.webp" alt="Matthew McCluster"></div>
+        <div class="pn__id">
+          <h2>Matthew McCluster</h2>
+          <p class="pn__role">Creative Director &middot; Photographer &middot; Web Designer &middot; Songwriter</p>
+          <ul class="pn__facts">
+            <li><b>Based:</b> Bridgeport, CT &amp; Atlanta, GA &middot; remote everywhere</li>
+            <li><b>Founder:</b> McCluster Corp — a registered CT public charity</li>
+            <li><b>On the record:</b> <a href="hire.html" data-cta="panel-receipts">5 government citations &amp; proclamations</a>, incl. three from the CT General Assembly</li>
+            <li><b>Catalogue:</b> <a href="album.html" data-cta="panel-album">I AM HERE</a> — six songs, six films, licensable</li>
+            <li><b>Now flying:</b> The Heat Chart &middot; social, piloted live</li>
+          </ul>
+          <a class="pn__go" href="hire.html#book" data-book data-cta="panel-book">Book a call with me</a>
+          <a class="pn__go" href="matthew-mccluster.html" data-cta="panel-cv">The full r&eacute;sum&eacute;</a>
+
+          <div class="pn__ask">
+            <h4>People also ask</h4>
+            <details>
+              <summary>Who is Matthew McCluster?</summary>
+              <p>A creative director, photographer, web designer and songwriter across Connecticut and Georgia — founder of McCluster Corp, with <a href="hire.html">five government citations</a> on file.</p>
+            </details>
+            <details>
+              <summary>What does a consultation cost?</summary>
+              <p>Every call is free. The Teardown is a $585 product: 45 minutes of live work on your site and socials, and you keep the recording and the punch list. <a href="hire.html#book">It credits in full if you hire him.</a></p>
+            </details>
+            <details>
+              <summary>Can I license his music?</summary>
+              <p>Yes — the catalogue is original, published and cleared for sync. <a href="album.html">The desk opens on the album.</a></p>
+            </details>
+            <details>
+              <summary>Open to full-time roles?</summary>
+              <p>Yes. Recruiters get the shortest path on the site: <a href="hire.html#book">two questions, then the calendar.</a> No fee.</p>
+            </details>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- THE BAR: Music · Equity Uprise · HERE · Prayer Closet · Profile. One tap goes where it says; hold a tab to open its wing. -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <footer class="site-foot">
+    <div class="site-foot__brand"><img class="brand__mark" src="assets/img/m-mark.png" alt="M">cCluster</div>
+    <p class="site-foot__note">&copy; 2026 Matthew McCluster &middot; McCluster Corp. You could love it or leave it, as long as you believe it.</p>
+  </footer>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    /* ============================================================
+       THE INDEX. Every entry is a REAL page with a real description,
+       which makes each result honest anchor text — the same lines a
+       crawler reads are the ones a visitor searches.
+       ============================================================ */
+    var IX = [
+      { k: "Proof", t: "Case study — a dormant page to 37,123 engagements in 15 days", u: "case-designer-kicks.html",
+        d: "Designer Kicks sat at 2.9 engagements a day for two hundred days. Fifteen days after the work started: 37,123, one complaint. The chart and the raw export are on the page.",
+        g: "case study social media management facebook page growth engagement analytics dormant brand reactivation designer kicks proof results numbers" },
+      { k: "Record", t: "Policy work — two state-level pushes in one year", u: "policy.html",
+        d: "Co-authored Georgia's healthy school meals blueprint with the Urban Leadership Fellowship cohort in Atlanta; built the Docket 516 public archive in Connecticut, where the utility's application was denied 5–3. Environmental justice both times.",
+        g: "policy urban leadership fellowship ulf environmental justice research memo blueprint school meals georgia clayton county docket 516 siting council legislation government fellow equity uprise" },
+      { k: "Service", t: "Photography — events, portraits, the Shot Wall", u: "gallery.html",
+        d: "Shot and graded in house: event walls, portraits, product and editorial. Find yourself in the night.",
+        g: "photography photographer photo shoot camera portrait event bridgeport atlanta shot wall picture" },
+      { k: "Service", t: "Web design & build — sites that load fast, rank, and convert", u: "sites.html",
+        d: "Design, build and management from one desk. Three free builds ever — see who got a seat and what they got.",
+        g: "web design website developer build site landing page seo fast webdesign" },
+      { k: "Service", t: "Video & brand film — concept to final cut, score included", u: "index.html#work",
+        d: "Brand films, commercials, music videos and event coverage, directed and cut by one person. See the reel move.",
+        g: "video videographer brand film commercial reel production edit videography" },
+      { k: "Service", t: "Social & media management — channels run like a label", u: "management.html",
+        d: "Strategy, publishing, and the numbers read honestly. The Heat Chart is flying on this desk right now.",
+        g: "social media manager management marketing content strategy instagram tiktok channels heat chart" },
+      { k: "Service", t: "Creative direction — the through-line for the whole brand", u: "hire.html",
+        d: "Build the platform, tell the story, move the product. One person, no handoffs, two governments on the record.",
+        g: "creative director direction brand strategy campaign art director" },
+      { k: "Record", t: "I AM HERE — the album: six songs, six films", u: "album.html",
+        d: "Stream every track, watch the lyric videos, keep the masters offline. Original, published, licensable.",
+        g: "music album songs stream artist songwriter i am here listen record" },
+      { k: "Record", t: "License the catalogue for sync", u: "album.html",
+        d: "Film, ad, broadcast, web: the desk opens on the album and quotes by territory, term and use.",
+        g: "license licensing sync music supervisor clearance song rights" },
+      { k: "Door", t: "Book a call with me", u: "hire.html#book",
+        d: "Every call is free — project, partnership, or role. The $585 Teardown is its own product (credited if you hire). Recruiters: two questions flat.",
+        g: "book hire call consult consultation quote price teardown appointment" },
+      { k: "Door", t: "Hiring for a role? Two questions, then the calendar", u: "hire.html#book",
+        d: "Full-time, contract, fellowship or advisory: the shortest path on the site. No fee — you are the one making the offer.",
+        g: "recruiter role job full-time fulltime hire position fellowship resume candidate" },
+      { k: "Paper", t: "The résumé — every credential, on one page", u: "matthew-mccluster.html",
+        d: "The proclamations, the citations, the charity registration, the ventures, the clients. The long version.",
+        g: "resume cv about credentials bio biography who is experience record" },
+      { k: "Paper", t: "Government citations & proclamations — the receipts", u: "hire.html",
+        d: "Three CT General Assembly citations, a Georgia Governor's proclamation, a City of Bridgeport proclamation. Tap a seal, the real document opens.",
+        g: "credentials citation proclamation government general assembly georgia bridgeport certified proof" },
+      { k: "Paper", t: "Press & media kit", u: "press.html",
+        d: "Fast facts, ready-to-use bios, boilerplate, and every downloadable document a newsroom needs.",
+        g: "press media kit bio boilerplate news journalist download" },
+      { k: "Work", t: "Fly Vaunt — the launch that flew", u: "ecosystem.html?brand=vaunt",
+        d: "First beta influencer for a private aviation brand: launch coverage and an original runway jingle that drove sign-ups pre-launch.",
+        g: "vaunt aviation jet campaign case study launch client work" },
+      { k: "Work", t: "Docket 516 — the campaign that won, on the public record", u: "docket-516.html",
+        d: "325 filings archived and explained in plain English. The Connecticut Siting Council denied the monopole application 5–3 on October 16, 2025 and closed Docket 516R on February 5, 2026.",
+        g: "docket 516 516r civic public record connecticut siting council archive advocacy denied monopoles united illuminating win outcome" },
+      { k: "Work", t: "The McCluster ecosystem — brands, campaigns, partners", u: "ecosystem.html",
+        d: "Equity Uprise, PRIM3, Whip Equipped, the Heat Chart, Vaunt: the whole operating system in one room.",
+        g: "ecosystem brands equity uprise prim3 heat chart clients portfolio work" },
+      { k: "Work", t: "Prayer Closet — limited apparel with meaning in the garment", u: "prayer-closet.html",
+        d: "Season 001: Matthew. Drops with real collaborators and a story stitched behind every piece.",
+        g: "prayer closet apparel clothing merch fashion drops shop" },
+      { k: "Door", t: "The production house", u: "production.html",
+        d: "Films, photographs and rollouts, all directed, shot and run from one desk in Bridgeport.",
+        g: "production house studio bridgeport films rollout" },
+      { k: "Record", t: "Equity Uprise — the program, the record, the fellows", u: "equity-uprise.html",
+        d: "Georgia to Connecticut, 2024 to 2026: a memorandum to Governor Kemp, the $12.6M school-meals blueprint, a Georgia proclamation, the Docket 516R denial, three General Assembly citations, Equity Uprise Human Rights Day, and the nine fellows of the 2025 cohort.",
+        g: "equity uprise fellowship civic nonprofit charity community program record fellows cohort proclamation citation bridgeport georgia kemp ganim docket 516r denied" },
+      { k: "Door", t: "Join the Equity Uprise Policy Fellowship — free", u: "fellowship.html",
+        d: "Sixteen questions in a terminal, then a person reads it. No fee and no automated screen.",
+        g: "fellowship apply join policy free intake equity uprise volunteer organizer" }
+    ];
+
+    var box = document.getElementById("pnHits");
+    var count = document.getElementById("pnCount");
+    var input = document.getElementById("pnQ");
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var rxEsc = function (s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
+
+    /* honest scoring: name beats tag beats description, prefix beats infix */
+    function score(e, toks) {
+      var s = 0, t = e.t.toLowerCase(), g = e.g, d = e.d.toLowerCase();
+      for (var i = 0; i < toks.length; i++) {
+        var q = toks[i], hit = 0;
+        if (t.indexOf(q) === 0) hit = 6; else if (t.indexOf(q) > -1) hit = 4;
+        if ((" " + g + " ").indexOf(" " + q) > -1) hit = Math.max(hit, 5);
+        else if (g.indexOf(q) > -1) hit = Math.max(hit, 3);
+        if (d.indexOf(q) > -1) hit = Math.max(hit, 1);
+        /* long words search by their stem too: "photography" still finds
+           the desk that says "photographs" */
+        if (!hit && q.length > 6) {
+          var st = q.slice(0, 6);
+          if (t.indexOf(st) > -1 || g.indexOf(st) > -1 || d.indexOf(st) > -1) hit = 2;
+        }
+        if (!hit) return 0;              /* every word must land somewhere */
+        s += hit;
+      }
+      return s;
+    }
+
+    function mark(text, toks) {
+      var out = esc(text);
+      toks.forEach(function (q) {
+        if (q.length < 2) return;
+        /* "photographer" must still light "Photography": back the token off
+           to the longest prefix (never shorter than 3) the text carries */
+        for (var cut = q.length; cut >= 3; cut--) {
+          var piece = q.slice(0, cut);
+          if (out.toLowerCase().indexOf(piece) === -1) continue;
+          out = out.replace(new RegExp("(" + rxEsc(esc(piece)) + ")", "ig"), "<mark>$1</mark>");
+          break;
+        }
+      });
+      return out;
+    }
+
+    function paint(q) {
+      var t0 = performance.now();
+      var toks = q.toLowerCase().split(/\s+/).filter(Boolean);
+      var rows = !toks.length ? IX.map(function (e) { return [1, e]; })
+        : IX.map(function (e) { return [score(e, toks), e]; }).filter(function (r) { return r[0] > 0; });
+      rows.sort(function (a, b) { return b[0] - a[0]; });
+
+      if (!rows.length) {
+        box.innerHTML = '<div class="pn__none">Nothing by that name — but if it takes a camera, a stage, a site or a score, it is still in the building. <a href="hire.html#book">Ask me directly &rarr;</a></div>';
+        count.textContent = "0 results — which only means the index is modest, not the man";
+        return;
+      }
+      box.innerHTML = rows.map(function (r, i) {
+        var e = r[1];
+        return '<a class="pn__hit' + (i === 0 && toks.length ? " is-hot" : "") + '" href="' + e.u + '" data-cta="panel-hit">'
+          + '<span class="pn__kind">' + e.k + "</span>"
+          + "<h3>" + mark(e.t, toks) + "</h3>"
+          + '<span class="pn__url">matthew.mccluster.org/' + esc(e.u) + "</span>"
+          + "<p>" + mark(e.d, toks) + "</p></a>";
+      }).join("");
+      var ms = Math.max(1, Math.round(performance.now() - t0));
+      count.innerHTML = "<b>" + rows.length + "</b> result" + (rows.length === 1 ? "" : "s")
+        + " &middot; " + (ms / 1000).toFixed(3) + " seconds &middot; every one of them mine";
+      if (toks.length && window.MCC_TRACK) window.MCC_TRACK("panel_search", { q: q.slice(0, 60), hits: rows.length });
+    }
+
+    var iv;
+    input.addEventListener("input", function () {
+      clearTimeout(iv);
+      iv = setTimeout(function () { paint(input.value.trim()); }, 90);
+    });
+    /* Enter takes the top result — the bar behaves like the bar it imitates */
+    input.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      var top = box.querySelector(".pn__hit");
+      if (top && input.value.trim()) location.href = top.getAttribute("href");
+    });
+    /* "/" focuses from anywhere, like it does on the engines */
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "/" && document.activeElement !== input) { e.preventDefault(); input.focus(); }
+    });
+
+    document.getElementById("pnChips").addEventListener("click", function (e) {
+      var b = e.target.closest("[data-q]");
+      if (!b) return;
+      input.value = b.getAttribute("data-q");
+      paint(input.value);
+      input.focus();
+    });
+    /* the engines have a lucky button; this house is blessed */
+    document.getElementById("pnLuck").addEventListener("click", function () {
+      var e = IX[Math.floor(Math.random() * IX.length)];
+      if (window.MCC_TRACK) window.MCC_TRACK("panel_blessed", { to: e.u });
+      location.href = e.u;
+    });
+
+    /* ?q= makes the SearchAction real: a crawler-visible search URL that
+       lands prefilled and painted */
+    var q0 = new URLSearchParams(location.search).get("q") || "";
+    if (q0) input.value = q0;
+    paint(q0.trim());
+    if (window.MCC_TRACK) window.MCC_TRACK("panel_view", { q: q0.slice(0, 60) });
+  })();
+  </script>
+  <script src="js/crm.js?v=__STAMP__"></script>
+  <script src="js/gate.js?v=__STAMP__"></script>
+  <script src="js/signals.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/knower.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "schema": "prim3.site0.prime-escape-spine-manifest.v2",
+  "asset": "PRIM3_Site0_Prime_Escape_Spine_v02.obj",
+  "status": "CANONICAL_SUPPLEMENT",
+  "revision": "2026-08-14 clean P1 flush-deck interface",
+  "geometry_node_count": 15,
+  "nodes": [
+    "B3_PRIME_HEAVY_DEPLOYMENT_HALL","B3_PRIME_HEAVY_STAGING_APRON","B3_PRIME_SOUTH_BLAST_PORTAL","P1_PRIME_EXTERNAL_HEAVY_LIFT_SHAFT","P1_B3_HEAVY_LIFT_PLATFORM","P1_L3_HEAVY_LIFT_PLATFORM","L3_PRIME_EXTERNAL_LIFT_APRON","L3_PRIME_EMERGENCY_MERGE_LANE","L3_PRIME_FLUSH_DECK_TRANSITION","PRIME_DIRECT_SURFACE_ESCAPE_RAMP","PRIME_ESCAPE_RAMP_WALL_W","PRIME_ESCAPE_RAMP_WALL_E","PRIME_PERIMETER_BYPASS_PORTAL","PRIME_OFFSITE_SURFACE_ESCAPE_STRIP","PRIME_OFFSITE_MARSHALLING_APRON"
+  ],
+  "forbidden_removed_nodes": ["L3_PRIME_ELEVATED_DEPARTURE_SPUR","L3_PRIME_SPUR_SUPPORT_00","L3_PRIME_SPUR_SUPPORT_01","L3_PRIME_SPUR_SUPPORT_02","L3_PRIME_SPUR_SUPPORT_03","L3_PRIME_SPUR_SUPPORT_04","L3_PRIME_SPUR_SUPPORT_05"],
+  "routing": {
+    "to_L3": "B3 Prime hall -> P1 external lift -> L3 flush deck transition -> normal L3 deck circulation",
+    "to_surface": "B3 Prime hall -> direct SOUTH external ramp -> grade beyond primary perimeter -> offsite strip"
+  },
+  "hard_rule": "No elevated bridge/spur from the P1 lift to or beyond the roof. P1 must arrive flush with the SOUTH edge of L3."
+}

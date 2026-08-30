@@ -1,0 +1,468 @@
+@font-face {
+  font-family: "HFAnton";
+  src: url("../assets/fonts/anton-latin-400-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  --hf-red: #ff3030;
+  --hf-hot: #ff4848;
+  --hf-cream: #eee9df;
+  --hf-dock-h: 4.55rem;
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; }
+
+.hf-page {
+  margin: 0;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #050606;
+  color: var(--hf-cream);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.hf-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: .11;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.018) 3px 4px),
+    radial-gradient(circle at 18% 10%, rgba(255,255,255,.07), transparent 26%);
+}
+
+.hf {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: max(.35rem, env(safe-area-inset-top)) 0 calc(var(--hf-dock-h) + .8rem + env(safe-area-inset-bottom));
+  background: #070808;
+}
+
+.hf-world,
+.hf-stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* The exterior is atmosphere, not another card. It keeps the selector tied to
+   the actual carrier-scale Site 0 massing while the level stack owns the UI. */
+.hf-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #070808;
+}
+
+.hf-backdrop img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 46%;
+  filter: grayscale(.65) contrast(1.16) brightness(.22) saturate(.55) blur(.7px);
+  transform: scale(1.035);
+}
+
+.hf-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(2,3,3,.72), rgba(4,5,5,.34) 36%, rgba(3,4,4,.5) 62%, rgba(2,3,3,.88)),
+    radial-gradient(ellipse at center, transparent 0 34%, rgba(0,0,0,.58) 86%);
+}
+
+.hf-stack {
+  z-index: 1;
+  padding: .2rem .35rem .15rem;
+}
+
+.hf-stack__spine {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 1%;
+  bottom: 1%;
+  width: 2.2rem;
+  transform: translateX(-50%);
+  border-left: 1px solid rgba(255,255,255,.055);
+  border-right: 1px solid rgba(255,255,255,.055);
+  background: repeating-linear-gradient(180deg, rgba(255,48,48,.09) 0 1px, transparent 1px 14px);
+  box-shadow: inset 0 0 1.5rem rgba(0,0,0,.8);
+}
+
+.hf-levels {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows:
+    repeat(4, minmax(2.15rem, 1fr))
+    minmax(8.7rem, 27svh)
+    repeat(5, minmax(2.05rem, 1fr));
+  align-items: stretch;
+  justify-items: center;
+  gap: .22rem;
+}
+
+/* These are architectural slices, not cards. Widths deliberately follow the
+   current v03 geometry: tiny offset L4 island, dominant L3 deck, full L1/L2
+   body, B4 horizontal breakout, compact B5 node. */
+.hf-level {
+  appearance: none;
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  border: 1px solid rgba(208,211,212,.16);
+  color: rgba(211,214,215,.58);
+  background:
+    linear-gradient(180deg, rgba(37,40,42,.86), rgba(11,12,13,.94)),
+    repeating-linear-gradient(90deg, transparent 0 7%, rgba(255,255,255,.022) 7% 7.4%);
+  padding: 0 1.05rem 0 3.05rem;
+  text-align: left;
+  cursor: pointer;
+  clip-path: polygon(1.8% 0,98.2% 0,100% 24%,100% 76%,98.2% 100%,1.8% 100%,0 76%,0 24%);
+  filter: grayscale(1) brightness(.58);
+  box-shadow: inset 0 1px rgba(255,255,255,.035), 0 4px 15px rgba(0,0,0,.34);
+  transition: width .18s ease, filter .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hf-level::before,
+.hf-level::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: .5rem;
+  height: 1px;
+  background: currentColor;
+  opacity: .38;
+}
+.hf-level::before { left: .55rem; }
+.hf-level::after { right: .55rem; }
+
+.hf-level__code {
+  position: absolute;
+  left: 1.05rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font: 400 clamp(.92rem, 4.1vw, 1.35rem)/1 HFAnton, Impact, sans-serif;
+  letter-spacing: .04em;
+}
+
+.hf-level__name {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(.42rem, 1.9vw, .62rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+
+.hf-level:focus-visible {
+  outline: 1px solid var(--hf-hot);
+  outline-offset: 2px;
+}
+
+.hf-level.is-active {
+  color: #fff;
+  filter: none;
+  border-color: rgba(255,67,67,.78);
+  background:
+    linear-gradient(90deg, rgba(127,8,13,.92), rgba(40,12,14,.94) 24%, rgba(12,13,14,.97)),
+    repeating-linear-gradient(90deg, transparent 0 7%, rgba(255,255,255,.024) 7% 7.4%);
+  box-shadow:
+    inset 3px 0 var(--hf-red),
+    inset 0 0 1.65rem rgba(255,35,35,.14),
+    0 0 1.25rem rgba(0,0,0,.62);
+  transform: scale(1.008);
+}
+
+.hf-level.is-active .hf-level__code { color: var(--hf-hot); }
+
+.hf-level--l4 { width: 42%; margin-left: 31%; }
+.hf-level--l3 { width: 97%; }
+.hf-level--l2 { width: 90%; }
+.hf-level--l1 { width: 94%; }
+.hf-level--b1 { width: 82%; }
+.hf-level--b2 { width: 88%; }
+.hf-level--b3 { width: 78%; }
+.hf-level--b4 { width: 100%; }
+.hf-level--b5 {
+  width: 66%;
+  border-radius: 34% 34% 13% 13%;
+  clip-path: none;
+}
+
+/* The old top mast now lives INSIDE the selected-level image at grade. The
+   image and the level ID change in place; nothing pushes the page or scrolls. */
+.hf-focus {
+  position: relative;
+  width: min(96vw, 62rem);
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  align-self: stretch;
+  isolation: isolate;
+  background: #0a0b0c;
+  border-top: 1px solid rgba(211,195,160,.6);
+  border-bottom: 1px solid rgba(211,195,160,.6);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.025),
+    0 16px 42px rgba(0,0,0,.58),
+    inset 0 0 2rem rgba(0,0,0,.42);
+}
+
+.hf-focus > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(.7) contrast(1.12) brightness(.67);
+  transition: opacity .14s ease, transform .22s ease, filter .18s ease;
+}
+
+.hf-focus > img.is-swapping {
+  opacity: .16;
+  transform: scale(1.018);
+  filter: grayscale(1) brightness(.3);
+}
+
+.hf-focus__shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.76), rgba(0,0,0,.3) 48%, rgba(0,0,0,.6)),
+    linear-gradient(180deg, rgba(0,0,0,.28), transparent 48%, rgba(0,0,0,.5));
+  pointer-events: none;
+}
+
+.hf-focus__mast {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: .55rem 1rem .95rem;
+  text-shadow: 0 2px 16px #000, 0 0 26px #000;
+  pointer-events: none;
+}
+
+.hf-focus__eyebrow {
+  margin: 0 0 .12rem;
+  font: 700 clamp(.42rem, 1.7vw, .58rem)/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .22em;
+  color: rgba(238,233,223,.76);
+}
+
+.hf-focus h1 {
+  margin: 0;
+  font: 400 clamp(2rem, 10vw, 4.7rem)/.83 HFAnton, Impact, sans-serif;
+  letter-spacing: .025em;
+  color: #f4f0e8;
+}
+
+.hf-focus h1 span { color: var(--hf-red); }
+
+.hf-focus__selected {
+  margin-top: .38rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: .45rem;
+  max-width: 95%;
+}
+
+.hf-focus__selected strong {
+  color: var(--hf-hot);
+  font: 400 clamp(1rem, 4.4vw, 1.6rem)/1 HFAnton, Impact, sans-serif;
+}
+
+.hf-focus__selected span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #f3efe7;
+  font-size: clamp(.46rem, 2vw, .68rem);
+  font-weight: 850;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.hf-grade-line {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  right: 0;
+  bottom: .34rem;
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  color: rgba(225,215,193,.72);
+  font: 700 .39rem/1 ui-monospace, SFMono-Regular, monospace;
+  letter-spacing: .14em;
+  pointer-events: none;
+}
+
+.hf-grade-line::before,
+.hf-grade-line::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(225,215,193,.56));
+}
+.hf-grade-line::after { transform: scaleX(-1); }
+
+.hf-dock {
+  position: fixed;
+  z-index: 60;
+  left: 50%;
+  bottom: max(.42rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(calc(100% - .8rem), 34rem);
+  height: var(--hf-dock-h);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: stretch;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 1.45rem;
+  background: linear-gradient(180deg, rgba(31,30,29,.98), rgba(10,10,10,.99));
+  box-shadow: 0 16px 38px rgba(0,0,0,.72), inset 0 1px rgba(255,255,255,.06);
+}
+
+.hf-dock::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(125deg, transparent 0 8px, rgba(255,255,255,.012) 8px 9px);
+}
+
+.hf-dock a {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .12rem;
+  color: #c1c0bc;
+  text-decoration: none;
+  font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hf-dock a small { font-size: .4rem; letter-spacing: .07em; }
+.hf-dock img { width: 1.45rem; height: 1.45rem; object-fit: contain; }
+.hf-dock__icon { font-size: 1.18rem; line-height: 1; }
+.hf-dock__m img { width: 1.72rem; height: 1.72rem; }
+.hf-dock a.is-current { color: #fff; }
+
+.hf-dock a.is-current::before {
+  content: "";
+  position: absolute;
+  inset: .35rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,48,48,.68), rgba(117,9,13,.72) 55%, transparent 59%);
+  z-index: -1;
+  filter: drop-shadow(0 0 10px rgba(255,34,34,.46));
+}
+
+.hf-dock a.is-current img { width: 1.9rem; height: 1.9rem; }
+
+@media (max-height: 650px) {
+  :root { --hf-dock-h: 4.15rem; }
+  .hf { padding-bottom: calc(var(--hf-dock-h) + .65rem + env(safe-area-inset-bottom)); }
+  .hf-levels {
+    grid-template-rows:
+      repeat(4, minmax(1.85rem, 1fr))
+      minmax(7.4rem, 25svh)
+      repeat(5, minmax(1.8rem, 1fr));
+    gap: .16rem;
+  }
+  .hf-focus h1 { font-size: clamp(1.8rem, 8.5vw, 3.4rem); }
+  .hf-level__name { font-size: .4rem; }
+}
+
+@media (min-width: 800px) {
+  .hf-world { max-width: 84rem; margin: 0 auto; }
+  .hf-stack { padding-left: 2rem; padding-right: 2rem; }
+  .hf-level--l3 { width: 92%; }
+  .hf-level--l2 { width: 86%; }
+  .hf-level--l1 { width: 90%; }
+  .hf-level--b4 { width: 94%; }
+  .hf-focus { width: min(78vw, 62rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; transition: none !important; }
+}
+
+/* ENTER THE FACILITY — the selector's nine levels are the same programme the
+   playable model carries, so the chosen one is handed straight to /site0/.
+   Sized to stay a comfortable tap target down to a 320 px phone. */
+.hf-enter {
+  margin-top: .7rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .16rem;
+  padding: .58rem 1.15rem;
+  border: 1px solid var(--hf-hot);
+  border-radius: 3px;
+  background: rgba(10, 8, 8, .72);
+  color: #f3efe7;
+  text-decoration: none;
+  min-height: 44px;
+  justify-content: center;
+  transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+.hf-enter__go {
+  font: 400 clamp(.82rem, 3.4vw, 1.12rem)/1 HFAnton, Impact, sans-serif;
+  letter-spacing: .12em;
+  color: var(--hf-hot);
+}
+.hf-enter__sub {
+  font-size: clamp(.44rem, 1.9vw, .6rem);
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #b9b1a5;
+}
+.hf-enter__sub b { color: #f3efe7; }
+.hf-enter:hover,
+.hf-enter:focus-visible {
+  background: rgba(10, 8, 8, .92);
+  box-shadow: 0 0 0 1px var(--hf-hot), 0 6px 22px rgba(0, 0, 0, .55);
+  transform: translateY(-1px);
+}
+.hf-enter:focus-visible { outline: 2px solid #f3efe7; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .hf-enter { transition: none; }
+  .hf-enter:hover, .hf-enter:focus-visible { transform: none; }
+}

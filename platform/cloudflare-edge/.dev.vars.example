@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local development. Never commit the real values.
+EDGE_ADMIN_TOKEN=replace-with-a-long-random-secret
+
+# Only needed when the account has never created an R2-backed AI Search
+# instance through the Cloudflare dashboard or Wrangler.
+AI_SEARCH_SERVICE_TOKEN_ID=

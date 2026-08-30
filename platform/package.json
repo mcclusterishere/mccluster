@@ -1,0 +1,26 @@
+{
+  "name": "@mccluster/here-platform",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "dev": "node --watch src/server.mjs",
+    "db:migrate": "node src/migrate.mjs",
+    "start:control": "node src/control-plane.mjs",
+    "start:building": "node src/building-node.mjs",
+    "topology:provision": "node src/provision-topology.mjs",
+    "node:credential": "node src/provision-node-credential.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/s3-request-presigner": "^3.0.0",
+    "@google/genai": "^2.13.0",
+    "express": "^5.2.1",
+    "pg": "^8.22.0",
+    "stripe": "^22.3.2"
+  }
+}

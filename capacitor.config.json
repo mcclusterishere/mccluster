@@ -1,0 +1,12 @@
+{
+  "appId": "org.mccluster.here",
+  "appName": "HERE",
+  "webDir": "www",
+  "backgroundColor": "#0b0908",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -1,0 +1,18 @@
+Pseudo-shader contract:
+
+base = sample(baseColor)
+n = sample(normal)
+r = sample(roughness)
+ao = sample(ao)
+scrollMask = sample(scrollLightMask)
+rubyMask = sample(rubyVeinMask)
+
+surface = PBR(base, n, roughness=r, metalness=0, ao=ao)
+surface += environmentLight * scrollMask * lightAngleResponse
+surface += rubyColor * rubyMask * rubyIntensity
+
+Rules:
+- do not modulate the full baseColor with pulse/sine animation
+- rubyIntensity should be event/scroll-state driven
+- lightAngleResponse should change with virtual light/camera movement
+- keep rubyIntensity at 0 for ordinary resting surfaces

@@ -1,0 +1,48 @@
+{
+  "source_glb": "PRIM3_Site0_v03_ARCHITECTURE_CONTRACT.glb",
+  "source_contract": "PRIM3_Site0_CANONICAL_ARCHITECTURE_v03.json",
+  "conceptual_footprint_m": {
+    "east_west": 1268.0,
+    "north_south": 824.0
+  },
+  "orientation": {
+    "north": "+Z",
+    "south": "-Z",
+    "east": "+X",
+    "west": "-X"
+  },
+  "exact_geometry_nodes_used": [
+    "B2_INDUSTRIAL_PRODUCTION_FLOOR",
+    "B2_HIGH_BAY_0",
+    "B2_HIGH_BAY_1",
+    "B2_HIGH_BAY_2",
+    "B2_HIGH_BAY_3",
+    "STAIR_CORE_A",
+    "PASSENGER_ELEVATOR_A",
+    "FREIGHT_ELEVATOR_A",
+    "STAIR_CORE_B",
+    "PASSENGER_ELEVATOR_B",
+    "FREIGHT_ELEVATOR_B",
+    "STAIR_CORE_C",
+    "PASSENGER_ELEVATOR_C",
+    "FREIGHT_ELEVATOR_C",
+    "STAIR_CORE_D",
+    "PASSENGER_ELEVATOR_D",
+    "FREIGHT_ELEVATOR_D",
+    "V1_HEAVY_TRANSFER_SHAFT",
+    "V2_HEAVY_TRANSFER_SHAFT"
+  ],
+  "design_note": "Canonical envelopes, vertical cores and high-bay positions are geometry-derived. Interior program partitions and circulation are design-development layout inside those fixed envelopes.",
+  "program": [
+    "central heavy manufacturing",
+    "vehicle and mobility production",
+    "android and robotics production",
+    "agricultural and infrastructure equipment",
+    "machine tool and advanced fabrication",
+    "materials receiving and tooling",
+    "power / energy / battery systems",
+    "quality / metrology / validation",
+    "engineering control / operations",
+    "personnel and maintenance support"
+  ]
+}

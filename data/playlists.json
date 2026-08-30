@@ -1,0 +1,107 @@
+{
+ "playlists": [
+  {
+   "slug": "the-films",
+   "name": "The Films",
+   "tag": "Every song with its own music video",
+   "art": "assets/frames/redjet_0001.jpg",
+   "by": "Scene-cut on the bars. Watch the words land.",
+   "tracks": [
+    {
+     "album": "here",
+     "title": "Antisocial"
+    },
+    {
+     "album": "prim3",
+     "title": "Got WiFi?"
+    },
+    {
+     "album": "whip-equipped",
+     "title": "Dealer Plates (A-Side)"
+    },
+    {
+     "album": "equity-uprise",
+     "title": "Environmental Injustice (Brave mix)"
+    },
+    {
+     "album": "equity-uprise",
+     "title": "Please Set Me Free"
+    },
+    {
+     "album": "equity-uprise",
+     "title": "Money or the Power"
+    },
+    {
+     "album": "singles",
+     "title": "Upset"
+    },
+    {
+     "album": "heal-the-3",
+     "title": "Deep End"
+    }
+   ]
+  },
+  {
+   "slug": "the-civic-set",
+   "name": "The Civic Set",
+   "tag": "The fight, on the record",
+   "art": "assets/frames/uprise_0001.jpg",
+   "by": "Equity Uprise and the Heal the 3 sessions, back to back.",
+   "tracks": [
+    {
+     "album": "equity-uprise",
+     "title": "Environmental Injustice"
+    },
+    {
+     "album": "equity-uprise",
+     "title": "Please Set Me Free"
+    },
+    {
+     "album": "equity-uprise",
+     "title": "Money or the Power"
+    },
+    {
+     "album": "heal-the-3",
+     "title": "Deep End"
+    },
+    {
+     "album": "heal-the-3",
+     "title": "Heal the 3rd World"
+    }
+   ]
+  },
+  {
+   "slug": "the-agency-tape",
+   "name": "The Agency Tape",
+   "tag": "The services, behind the lyrics",
+   "art": "assets/frames/keynote_0001.jpg",
+   "by": "The I AM HERE record and the campaign work that scores it.",
+   "tracks": [
+    {
+     "album": "here",
+     "title": "Who Did The Shoot"
+    },
+    {
+     "album": "here",
+     "title": "Runway Walk"
+    },
+    {
+     "album": "here",
+     "title": "Write a Song"
+    },
+    {
+     "album": "vaunt-ep",
+     "title": "Vaunt (Acoustic)"
+    },
+    {
+     "album": "here",
+     "title": "Lightroom"
+    },
+    {
+     "album": "here",
+     "title": "Here"
+    }
+   ]
+  }
+ ]
+}

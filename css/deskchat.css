@@ -1,0 +1,193 @@
+/* ============================================================
+   THE DESK — the chat panel.
+
+   Sits above the app bar and clears it, on every phone including the
+   ones with a home indicator: the bar is 'position: fixed' with its own
+   safe-area padding, so this has to clear the bar AND the inset, not one
+   or the other. That was the bug that put the tab bar in the middle of
+   an iPhone screen once already; it is not being repeated here.
+
+   Both coats are written out. Everything that names a colour names it
+   twice — see docs/light-coat.md for what happens to a panel that only
+   gets painted for the cinema.
+   ============================================================ */
+
+.dsk-launch {
+  position: fixed;
+  right: clamp(0.9rem, 4vw, 1.4rem);
+  /* the bar is ~64px plus its safe-area padding; this clears both */
+  bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
+  z-index: 190;
+  width: 3.4rem; height: 3.4rem; border-radius: 50%;
+  -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  touch-action: manipulation;
+  background: var(--metal, linear-gradient(165deg, #ff5a5c, #b3121b));
+  box-shadow: 0 16px 40px -12px rgba(229, 56, 59, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  display: grid; place-items: center;
+  transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+.dsk-launch:hover { transform: translateY(-2px); }
+.dsk-launch:active { transform: translateY(0) scale(0.96); }
+/* the glyph is decoration: without this it wins the hit test and the
+   BUTTON is what a click has to reach */
+.dsk-launch svg { width: 1.5rem; height: 1.5rem; fill: none; stroke: #fff; stroke-width: 1.7; stroke-linejoin: round; pointer-events: none; }
+.dsk__go svg, .dsk__x svg { pointer-events: none; }
+.dsk-launch:focus-visible { outline: 2px solid var(--cream, #f4efe6); outline-offset: 3px; }
+body.has-appbar .dsk-launch { bottom: calc(6.2rem + env(safe-area-inset-bottom, 0px)); }
+
+/* `hidden` is set in JS to keep the panel shut, and a class rule with
+   `display: flex` beats the UA stylesheet's [hidden] { display: none }.
+   Without this line the panel is permanently open on every page it is on,
+   sitting over the launcher — which is exactly how it shipped the first
+   time and how the click test found it. */
+.dsk[hidden] { display: none; }
+
+.dsk {
+  position: fixed;
+  right: clamp(0.6rem, 3vw, 1.4rem);
+  bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
+  z-index: 191;
+  width: min(23rem, calc(100vw - 1.2rem));
+  max-height: min(30rem, calc(100vh - 12rem));
+  display: flex; flex-direction: column; overflow: hidden;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(32, 26, 21, 0.98), rgba(14, 11, 9, 0.99));
+  box-shadow: 0 30px 80px -18px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.13);
+  font-family: var(--body, "Archivo", system-ui, sans-serif);
+  animation: dskIn 0.26s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+body.has-appbar .dsk { bottom: calc(6.2rem + env(safe-area-inset-bottom, 0px)); }
+@keyframes dskIn { from { opacity: 0; transform: translateY(14px); } }
+@media (prefers-reduced-motion: reduce) { .dsk { animation: none; } .dsk-launch { transition: none; } }
+
+html[data-theme="light"] .dsk {
+  background: linear-gradient(180deg, #fffdf9, #f4efe6);
+  box-shadow: 0 30px 70px -22px rgba(26, 20, 13, 0.42), inset 0 0 0 1px rgba(26, 20, 13, 0.12);
+}
+
+.dsk__top {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.8rem; padding: 0.85rem 0.9rem 0.75rem 1.05rem;
+  border-bottom: 1px solid rgba(244, 239, 230, 0.12);
+}
+html[data-theme="light"] .dsk__top { border-bottom-color: rgba(26, 20, 13, 0.12); }
+.dsk__who { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.dsk__who b { font-size: 0.92rem; font-weight: 800; color: var(--cream, #f4efe6); }
+.dsk__who small { font-size: 0.68rem; font-weight: 600; color: var(--cream-dim, rgba(244, 239, 230, 0.72)); }
+.dsk__x {
+  -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; flex: none;
+  background: transparent; color: var(--cream-dim, rgba(244, 239, 230, 0.72));
+  font-size: 1.5rem; line-height: 1; padding: 0.1rem 0.35rem; border-radius: 8px;
+}
+.dsk__x:hover { color: var(--cream, #f4efe6); }
+.dsk__x:focus-visible { outline: 2px solid var(--ruby-hot, #e5383b); outline-offset: 2px; }
+
+.dsk__list {
+  flex: 1; min-height: 6rem; overflow-y: auto; overscroll-behavior: contain;
+  padding: 0.9rem; display: flex; flex-direction: column; gap: 0.45rem;
+}
+.dsk__m {
+  max-width: 84%; padding: 0.6rem 0.8rem; border-radius: 15px;
+  font-size: 0.87rem; line-height: 1.5; font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.dsk__m--them {
+  align-self: flex-start; border-bottom-left-radius: 5px;
+  background: rgba(244, 239, 230, 0.09); color: var(--cream, #f4efe6);
+}
+html[data-theme="light"] .dsk__m--them { background: rgba(26, 20, 13, 0.07); color: #1a140d; }
+.dsk__m--me {
+  align-self: flex-end; border-bottom-right-radius: 5px;
+  background: var(--ruby, #c1121f); color: #fff;
+}
+.dsk__m a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+.dsk__typing { display: flex; gap: 3px; align-items: center; padding: 0.75rem 0.85rem; }
+.dsk__typing i {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--cream-dim, rgba(244, 239, 230, 0.72));
+  animation: dskDot 1.1s ease-in-out infinite;
+}
+html[data-theme="light"] .dsk__typing i { background: rgba(26, 20, 13, 0.5); }
+.dsk__typing i:nth-child(2) { animation-delay: 0.16s; }
+.dsk__typing i:nth-child(3) { animation-delay: 0.32s; }
+@keyframes dskDot { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dsk__typing i { animation: none; opacity: 0.6; } }
+
+.dsk__bar {
+  display: flex; gap: 0.45rem; align-items: center;
+  padding: 0.7rem 0.75rem 0.8rem;
+  border-top: 1px solid rgba(244, 239, 230, 0.12);
+}
+html[data-theme="light"] .dsk__bar { border-top-color: rgba(26, 20, 13, 0.12); }
+.dsk__in {
+  flex: 1; min-width: 0; -webkit-appearance: none; appearance: none; border: 0;
+  border-radius: 100px; padding: 0.65rem 0.9rem;
+  /* 16px keeps iOS from zooming the whole page when the field takes focus */
+  font-family: inherit; font-size: 16px; font-weight: 500;
+  background: rgba(255, 255, 255, 0.08); color: var(--cream, #f4efe6);
+  box-shadow: inset 0 0 0 1px rgba(244, 239, 230, 0.16);
+}
+.dsk__in::placeholder { color: rgba(244, 239, 230, 0.45); }
+html[data-theme="light"] .dsk__in {
+  background: rgba(255, 255, 255, 0.85); color: #1a140d;
+  box-shadow: inset 0 0 0 1px rgba(26, 20, 13, 0.22);
+}
+html[data-theme="light"] .dsk__in::placeholder { color: rgba(26, 20, 13, 0.5); }
+.dsk__in:focus-visible { outline: 2px solid var(--ruby-hot, #e5383b); outline-offset: 1px; }
+.dsk__go {
+  flex: none; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  touch-action: manipulation; width: 2.4rem; height: 2.4rem; border-radius: 50%;
+  background: var(--ruby, #c1121f); display: grid; place-items: center;
+}
+.dsk__go svg { width: 1.05rem; height: 1.05rem; fill: #fff; }
+.dsk__go:focus-visible { outline: 2px solid var(--cream, #f4efe6); outline-offset: 2px; }
+
+/* On a small phone the panel takes the screen rather than floating in a
+   corner where the keyboard would cover it entirely. */
+@media (max-width: 30rem) {
+  .dsk {
+    right: 0.5rem; left: 0.5rem; width: auto;
+    max-height: min(26rem, calc(100vh - 10rem));
+  }
+}
+
+/* ============================================================
+   THE CONVERSATION AS THE PAGE
+
+   Same widget, different job. In the corner it is an escape hatch you
+   go and find. Here it IS the content, so it loses the corner, the
+   float, the entrance animation and the close button, and takes the
+   height it needs instead of a capped panel height.
+
+   Everything below overrides .dsk rather than restyling its insides —
+   the message rows, the input and the send button are identical in both
+   shapes, which is the point of not forking the widget.
+   ============================================================ */
+
+.dsk--inline {
+  position: static;
+  right: auto; bottom: auto; z-index: auto;
+  width: 100%;
+  max-height: none;
+  /* Tall enough that the conversation is obviously the thing to do, and
+     short enough that the way out from under it is still discoverable.
+     The reference this follows gives the chat the whole viewport; here
+     it stops short of that on purpose, because the line underneath —
+     "rather read than talk?" — is the promise that nobody is trapped in
+     a chatbot, and a promise below the fold is not a promise. */
+  min-height: min(30rem, 58dvh);
+  animation: none;
+  border-radius: 18px;
+}
+body.has-appbar .dsk--inline { bottom: auto; }
+
+.dsk--inline .dsk__list {
+  flex: 1 1 auto;
+  /* the corner panel caps its list; inline, the panel is the cap */
+  max-height: none;
+}
+
+@media (min-width: 46rem) {
+  .dsk--inline { min-height: min(34rem, 58dvh); }
+}

@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Inner Room: read Matthew, keep your notes · Prayer Closet</title>
+  <meta name="description" content="The quiet room behind the Prayer Closet: the chapters each drop is cut from, in the public-domain World English Bible. Read, highlight, save, and keep your notes. Free, always. No purchase opens this door; it is open.">
+  <link rel="canonical" href="https://matthew.mccluster.org/inner-room.html">
+  <link rel="icon" type="image/png" href="assets/img/hm-mark-96.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <meta property="og:title" content="The Inner Room: the chapters behind the garments">
+  <meta property="og:description" content="Read the book the season is cut from. Free, always. Highlight, save, and keep your notes on your own device.">
+  <meta property="og:url" content="https://matthew.mccluster.org/inner-room.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
+  <link rel="preload" href="assets/fonts/playfairdisplay-italic-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; font-style: italic; font-display: swap;
+      src: url("assets/fonts/playfairdisplay-italic-700.woff2") format("woff2"); }
+    :root { --ui: "Manrope", system-ui, sans-serif; --serif: "Playfair Display", Georgia, serif; }
+    body.ir { background: #080605; color: var(--cream); font-family: var(--ui); }
+    .ir__main { max-width: 44rem; margin: 0 auto; padding: clamp(1.6rem, 5vh, 3rem) clamp(1rem, 4vw, 2rem) 9rem; }
+
+    /* ---- the door in ---- */
+    .irh { text-align: center; padding: clamp(1rem, 4vh, 2rem) 0 0; }
+    .irh__door { display: inline-block; width: 2.6rem; height: 3.8rem; border: 1.5px solid var(--cream-dim);
+      border-bottom: 0; border-radius: 2.6rem 2.6rem 0 0; opacity: 0.8; margin-bottom: 1rem; }
+    .irh h1 { font-family: var(--serif); font-style: italic; font-weight: 700;
+      font-size: clamp(1.8rem, 6vw, 2.6rem); margin: 0; }
+    .irh p { font-weight: 600; font-size: 0.86rem; line-height: 1.7; color: var(--cream-dim);
+      max-width: 46ch; margin: 0.7rem auto 0; }
+
+    /* ---- chapter rail ---- */
+    .irc { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin: 1.8rem 0 0; }
+    .irc button { -webkit-appearance: none; appearance: none; cursor: pointer; border: 0;
+      font-family: var(--ui); font-weight: 800; font-size: 0.68rem; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--cream-dim); border-radius: 100px; padding: 0.6rem 1.05rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .irc button.on { color: #fff; background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,0.5); }
+
+    /* ---- the desk row: size, saved ---- */
+    .ird { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+      margin: 1.6rem 0 0.6rem; }
+    .ird__t { font-weight: 800; font-size: 0.64rem; letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--ruby-hot); }
+    .ird__b { display: flex; gap: 0.4rem; }
+    .ird button { -webkit-appearance: none; appearance: none; cursor: pointer; border: 0;
+      font-family: var(--ui); font-weight: 800; font-size: 0.72rem; color: var(--cream);
+      width: 2.2rem; height: 2.2rem; border-radius: 100px;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .ird button.w { width: auto; padding: 0 0.9rem; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .ird button.on { color: #fff; background: var(--metal); }
+
+    /* ---- the text ---- */
+    .irx { font-family: var(--serif); font-weight: 700; font-style: italic;
+      font-size: calc(1.06rem * var(--irsz, 1)); line-height: 1.85; }
+    .irx .v { cursor: pointer; border-radius: 6px; padding: 0.05em 0.12em; transition: background 0.25s; }
+    .irx .v sup { font-family: var(--ui); font-style: normal; font-weight: 800; font-size: 0.55em;
+      color: var(--ruby-hot); margin-right: 0.35em; letter-spacing: 0.05em; }
+    .irx .v.hl { background: rgba(229, 56, 59, 0.16); box-shadow: inset 0 0 0 1px rgba(229,56,59,0.25); }
+    .irx .v.sv sup::after { content: ""; display: inline-block; width: .6em; height: .6em; margin-left: .25em; background: var(--cream-dim); clip-path: polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%); }
+    .irx .v.lit { background: rgba(255, 255, 255, 0.12); }
+    .irx .vnote { display: block; font-family: var(--ui); font-style: normal; font-weight: 600;
+      font-size: 0.78rem; line-height: 1.6; color: var(--cream-dim); margin: 0.4rem 0 0.8rem;
+      border-left: 2px solid var(--ruby-hot); padding-left: 0.8rem; }
+
+    /* ---- the verse desk (appears under a tapped verse) ---- */
+    .vd { display: flex; gap: 0.45rem; flex-wrap: wrap; margin: 0.5rem 0 0.9rem; }
+    .vd button { -webkit-appearance: none; appearance: none; cursor: pointer; border: 0;
+      font-family: var(--ui); font-weight: 800; font-size: 0.62rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--cream); border-radius: 100px; padding: 0.5rem 0.9rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .vd button.on { color: #fff; background: var(--metal); }
+    .vd textarea { width: 100%; min-height: 4.5rem; border-radius: 12px; border: 0; resize: vertical;
+      background: rgba(0,0,0,0.35); box-shadow: inset 0 0 0 1px var(--edge); color: var(--cream);
+      font-family: var(--ui); font-weight: 600; font-size: 0.84rem; line-height: 1.6; padding: 0.8rem 0.9rem; }
+
+    /* ---- chapter walk + the drop tie ---- */
+    .irw { display: flex; justify-content: space-between; gap: 0.8rem; margin-top: 2rem; }
+    .irw button { -webkit-appearance: none; appearance: none; cursor: pointer; border: 0;
+      font-family: var(--ui); font-weight: 800; font-size: 0.66rem; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--cream); border-radius: 100px; padding: 0.75rem 1.2rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .irtie { margin-top: 1.6rem; border-radius: 18px; padding: 1.1rem 1.2rem; display: flex;
+      align-items: center; justify-content: space-between; gap: 1rem; text-decoration: none;
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .irtie b { font-family: var(--sig); text-transform: uppercase; font-size: 1.1rem; }
+    .irtie i { font-style: normal; font-weight: 800; font-size: 0.58rem; letter-spacing: 0.2em;
+      text-transform: uppercase; opacity: 0.8; }
+    .irtie span { font-weight: 800; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; }
+
+    /* ---- saved panel ---- */
+    .irs { margin-top: 1.4rem; border-radius: 18px; padding: 1.1rem 1.2rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .irs[hidden] { display: none; }
+    .irs b { display: block; font-weight: 800; font-size: 0.64rem; letter-spacing: 0.24em;
+      text-transform: uppercase; color: var(--ruby-hot); margin-bottom: 0.7rem; }
+    .irs a { display: block; text-decoration: none; color: var(--cream); font-family: var(--serif);
+      font-style: italic; font-weight: 700; font-size: 0.92rem; line-height: 1.6; padding: 0.45rem 0; }
+    .irs a small { display: block; font-family: var(--ui); font-style: normal; font-weight: 800;
+      font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cream-dim); }
+    .irs .none { font-weight: 600; font-size: 0.8rem; color: var(--cream-dim); }
+
+    .irfoot { margin-top: 2.4rem; text-align: center; font-weight: 600; font-size: 0.7rem;
+      line-height: 1.8; color: var(--cream-dim); }
+    .irfoot a { color: var(--cream); }
+
+    /* ---- the reading thread: how far into the chapter you are ---- */
+    .irp { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 205; pointer-events: none; }
+    .irp i { display: block; height: 100%; width: 0; background: var(--ruby-hot);
+      box-shadow: 0 0 8px rgba(229, 56, 59, 0.6); }
+    /* the chapter breathes in */
+    .irx { transition: opacity 0.45s ease; }
+    .irx.turning { opacity: 0; transition: none; }
+    @media (prefers-reduced-motion: reduce) { .irx, .irx.turning { opacity: 1; transition: none; } }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "The Inner Room: read Matthew",
+    "url": "https://matthew.mccluster.org/inner-room.html",
+    "description": "A quiet scripture reader carrying the chapters of Matthew behind the Prayer Closet season, in the public-domain World English Bible. Free to read: no account, no purchase.",
+    "publisher": { "@id": "https://matthew.mccluster.org/#mccluster-corp" }
+  }
+  </script>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="ir">
+  <div class="irp" aria-hidden="true"><i id="irProg"></i></div>
+  <main class="ir__main">
+
+    <header class="irh">
+      <span class="irh__door" aria-hidden="true"></span>
+      <h1>The Inner Room</h1>
+      <p>&ldquo;Enter into your inner room, and having shut your door, pray to your Father who is in
+        secret.&rdquo; (Matthew 6:6). The chapters the season is cut from live here, whole.
+        Tap a verse to highlight it, save it, or leave yourself a note. Everything stays on
+        your device.</p>
+    </header>
+
+    <nav class="irc" id="irChapters" aria-label="Chapters"></nav>
+
+    <div class="ird">
+      <span class="ird__t" id="irTitle">&nbsp;</span>
+      <div class="ird__b">
+        <button type="button" id="irSzDn" aria-label="Smaller text">A&minus;</button>
+        <button type="button" id="irSzUp" aria-label="Larger text">A+</button>
+        <button type="button" class="w" id="irSaved">Saved</button>
+      </div>
+    </div>
+
+    <section class="irs" id="irSavedPanel" hidden>
+      <b>Saved verses</b>
+      <div id="irSavedList"></div>
+    </section>
+
+    <article class="irx" id="irText" aria-live="polite"></article>
+
+    <div class="irw">
+      <button type="button" id="irPrev">&#8592; Previous chapter</button>
+      <button type="button" id="irNext">Next chapter &#8594;</button>
+    </div>
+
+    <a class="irtie" id="irTie" href="prayer-closet.html" hidden>
+      <span style="display:grid;gap:0.2rem"><i id="irTieK">The drop cut from this chapter</i><b id="irTieT"></b></span>
+      <span>Enter &#8594;</span>
+    </a>
+
+    <p class="irfoot">World English Bible &middot; public domain &middot; free to read, always.
+      No account, no purchase, no gate.<br>
+      <a href="prayer-closet.html">Back into the Closet</a></p>
+  </main>
+
+  <!-- THE BAR -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/signals.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var track = function (n, p) { if (window.MCC_TRACK) window.MCC_TRACK(n, p || {}); };
+
+    /* ---- the shelf: what stays on this device ---- */
+    var K = "mcc_inner_room";
+    function shelf() { try { return JSON.parse(localStorage.getItem(K)) || {}; } catch (e) { return {}; } }
+    function keep(s) { try { localStorage.setItem(K, JSON.stringify(s)); } catch (e) {} }
+    var S = shelf();
+    S.hl = S.hl || {}; S.notes = S.notes || {}; S.saved = S.saved || {}; S.size = S.size || 1;
+
+    var CHAPTERS = [], DROPS = {}, cache = {}, cur = null;
+
+    function sizePaint() {
+      document.documentElement.style.setProperty("--irsz", String(S.size));
+    }
+    sizePaint();
+    $("irSzUp").addEventListener("click", function () { S.size = Math.min(1.5, +(S.size + 0.1).toFixed(2)); keep(S); sizePaint(); });
+    $("irSzDn").addEventListener("click", function () { S.size = Math.max(0.8, +(S.size - 0.1).toFixed(2)); keep(S); sizePaint(); });
+
+    function vkey(ch, v) { return ch + ":" + v; }
+
+    /* ---- render one chapter ---- */
+    var deskFor = null;
+    function paint(ch, focusV) {
+      var data = cache[ch];
+      if (!data) return;
+      var turning = cur !== null && cur !== ch;
+      cur = ch;
+      deskFor = null;
+      if (turning) {
+        var x = $("irText");
+        x.classList.add("turning");
+        requestAnimationFrame(function () { requestAnimationFrame(function () { x.classList.remove("turning"); }); });
+      }
+      document.querySelectorAll(".irc button").forEach(function (b) {
+        b.classList.toggle("on", +b.getAttribute("data-ch") === ch);
+      });
+      $("irTitle").textContent = "Matthew " + ch + " · " + data.verses.length + " verses";
+      $("irText").innerHTML = data.verses.map(function (v) {
+        var k = vkey(ch, v.verse);
+        var cls = "v" + (S.hl[k] ? " hl" : "") + (S.saved[k] ? " sv" : "");
+        var note = S.notes[k] ? '<span class="vnote">' + esc(S.notes[k]) + "</span>" : "";
+        return '<span class="' + cls + '" data-v="' + v.verse + '" id="v' + v.verse + '"><sup>' + v.verse + "</sup>" +
+          esc(v.text.replace(/\s+/g, " ").trim()) + " </span>" + note;
+      }).join("");
+      var d = DROPS[ch];
+      if (d) {
+        $("irTie").hidden = false;
+        $("irTie").href = "closet/" + d.slug + ".html";
+        $("irTieT").textContent = (d.tag || "Drop " + d.no) + ": " + d.title;
+      } else { $("irTie").hidden = true; }
+      var i = CHAPTERS.indexOf(ch);
+      $("irPrev").disabled = i <= 0;
+      $("irNext").disabled = i >= CHAPTERS.length - 1;
+      $("irPrev").style.opacity = i <= 0 ? 0.4 : 1;
+      $("irNext").style.opacity = i >= CHAPTERS.length - 1 ? 0.4 : 1;
+      savedPaint();
+      if (focusV) {
+        var el = document.getElementById("v" + focusV);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("lit");
+          setTimeout(function () { el.classList.remove("lit"); }, 2600);
+        }
+      } else { window.scrollTo({ top: 0 }); }
+      track("inner_room_chapter", { chapter: ch });
+    }
+
+    /* the reading thread follows the scroll */
+    (function () {
+      var bar = $("irProg"), ticking = false;
+      addEventListener("scroll", function () {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function () {
+          var max = document.documentElement.scrollHeight - innerHeight;
+          bar.style.width = (max > 0 ? Math.min(100, (scrollY / max) * 100) : 0).toFixed(1) + "%";
+          ticking = false;
+        });
+      }, { passive: true });
+    })();
+
+    function load(ch, focusV) {
+      if (cache[ch]) { paint(ch, focusV); return; }
+      fetch("data/scripture/matthew-" + ch + ".json", { cache: "force-cache" })
+        .then(function (r) { return r.json(); })
+        .then(function (j) { cache[ch] = j; paint(ch, focusV); })
+        .catch(function () {
+          $("irText").innerHTML = '<p style="font-family:var(--ui);font-style:normal;font-weight:600;font-size:0.85rem;color:var(--cream-dim)">' +
+            "The chapter would not load. Check the connection and try again.</p>";
+        });
+    }
+
+    /* ---- the verse desk ---- */
+    function closeDesk() {
+      var d = document.querySelector(".vd");
+      if (d && d.parentNode) d.parentNode.removeChild(d);
+      deskFor = null;
+    }
+    $("irText").addEventListener("click", function (e) {
+      var v = e.target.closest && e.target.closest(".v");
+      if (!v || e.target.closest(".vd")) return;
+      var num = +v.getAttribute("data-v");
+      if (deskFor === num) { closeDesk(); return; }
+      closeDesk();
+      deskFor = num;
+      var k = vkey(cur, num);
+      var desk = document.createElement("span");
+      desk.className = "vd";
+      desk.innerHTML =
+        '<button type="button" data-act="hl" class="' + (S.hl[k] ? "on" : "") + '">' + (S.hl[k] ? "Unhighlight" : "Highlight") + "</button>" +
+        '<button type="button" data-act="sv" class="' + (S.saved[k] ? "on" : "") + '">' + (S.saved[k] ? "Unsave" : "Save " + '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M12 2.5l2.3 7.2 7.2 2.3-7.2 2.3L12 21.5l-2.3-7.2L2.5 12l7.2-2.3z" fill="currentColor"/></svg>') + "</button>" +
+        '<button type="button" data-act="nt">' + (S.notes[k] ? "Edit note" : "Note") + "</button>";
+      v.insertAdjacentElement("afterend", desk);
+      desk.addEventListener("click", function (ev) {
+        var b = ev.target.closest && ev.target.closest("button[data-act]");
+        if (!b) return;
+        var act = b.getAttribute("data-act");
+        if (act === "hl") {
+          if (S.hl[k]) delete S.hl[k]; else S.hl[k] = 1;
+          keep(S); paint(cur, null); window.scrollTo({ top: window.scrollY });
+          track("inner_room_mark", { k: k, act: "highlight" });
+        } else if (act === "sv") {
+          if (S.saved[k]) delete S.saved[k]; else S.saved[k] = 1;
+          keep(S); paint(cur, null);
+          track("inner_room_mark", { k: k, act: "save" });
+        } else if (act === "nt") {
+          if (desk.querySelector("textarea")) return;
+          var ta = document.createElement("textarea");
+          ta.maxLength = 2000;
+          ta.placeholder = "Your note on verse " + num + ", kept on this device only.";
+          ta.value = S.notes[k] || "";
+          desk.appendChild(ta);
+          ta.focus();
+          ta.addEventListener("input", function () {
+            var val = ta.value.trim();
+            if (val) S.notes[k] = val; else delete S.notes[k];
+            keep(S);
+          });
+          ta.addEventListener("blur", function () { paint(cur, null); });
+        }
+      });
+    });
+
+    /* ---- saved panel ---- */
+    function savedPaint() {
+      var keys = Object.keys(S.saved);
+      var list = $("irSavedList");
+      if (!keys.length) { list.innerHTML = '<span class="none">Nothing saved yet. Tap a verse, then Save.</span>'; return; }
+      list.innerHTML = keys.sort(function (a, b) {
+        var pa = a.split(":").map(Number), pb = b.split(":").map(Number);
+        return pa[0] - pb[0] || pa[1] - pb[1];
+      }).map(function (k) {
+        var p = k.split(":");
+        var text = "";
+        var c = cache[+p[0]];
+        if (c) {
+          var vv = c.verses.filter(function (v) { return v.verse === +p[1]; })[0];
+          if (vv) text = vv.text.replace(/\s+/g, " ").trim();
+          if (text.length > 120) text = text.slice(0, 117) + "…";
+        }
+        return '<a href="#mt' + p[0] + "v" + p[1] + '" data-goto="' + k + '"><small>Matthew ' + p[0] + ":" + p[1] + "</small>" + esc(text) + "</a>";
+      }).join("");
+    }
+    $("irSaved").addEventListener("click", function () {
+      var p = $("irSavedPanel");
+      p.hidden = !p.hidden;
+      $("irSaved").classList.toggle("on", !p.hidden);
+      if (!p.hidden) savedPaint();
+    });
+    $("irSavedList").addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest("[data-goto]");
+      if (!a) return;
+      e.preventDefault();
+      var p = a.getAttribute("data-goto").split(":");
+      load(+p[0], +p[1]);
+    });
+
+    $("irPrev").addEventListener("click", function () {
+      var i = CHAPTERS.indexOf(cur);
+      if (i > 0) load(CHAPTERS[i - 1]);
+    });
+    $("irNext").addEventListener("click", function () {
+      var i = CHAPTERS.indexOf(cur);
+      if (i < CHAPTERS.length - 1) load(CHAPTERS[i + 1]);
+    });
+
+    /* ---- deep links: #mt6, #mt6v33 ---- */
+    function fromHash() {
+      var m = /^#mt(\d+)(?:v(\d+))?$/.exec(location.hash || "");
+      return m ? { ch: +m[1], v: m[2] ? +m[2] : null } : null;
+    }
+    window.addEventListener("hashchange", function () {
+      var h = fromHash();
+      if (h && CHAPTERS.indexOf(h.ch) !== -1) load(h.ch, h.v);
+    });
+
+    /* ---- boot: the season decides which chapters hang here ---- */
+    fetch("data/prayer-closet.json", { cache: "no-cache" })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        (j.drops || []).forEach(function (d) {
+          if (CHAPTERS.indexOf(d.chapter) === -1) CHAPTERS.push(d.chapter);
+          DROPS[d.chapter] = d;
+        });
+        CHAPTERS.sort(function (a, b) { return a - b; });
+        $("irChapters").innerHTML = CHAPTERS.map(function (c) {
+          return '<button type="button" data-ch="' + c + '">Matthew ' + c + "</button>";
+        }).join("");
+        $("irChapters").addEventListener("click", function (e) {
+          var b = e.target.closest && e.target.closest("button[data-ch]");
+          if (b) { load(+b.getAttribute("data-ch")); closeDesk(); }
+        });
+        var h = fromHash();
+        var start = h && CHAPTERS.indexOf(h.ch) !== -1 ? h.ch : CHAPTERS[0];
+        load(start, h && h.v);
+        track("inner_room_open", { chapters: CHAPTERS.join(",") });
+      });
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1725" viewBox="0 0 1600 1150" role="img" aria-labelledby="title desc">
+<title id="title">PRIM3 SITE 0 — B1 PROTECTED TRANSIT FLOOR</title>
+<desc id="desc">OPEN TECHNOLOGY RESEARCH WRAPPED AROUND A SEALED HEAVY-MOBILITY SPINE. Conceptual military-industrial floor plan aligned to the PRIM3 Site 0 canonical 1268 by 824 metre footprint.</desc>
+<defs>
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#273038" stroke-width="1"/></pattern>
+  <pattern id="hazard" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="16" stroke="#d2aa42" stroke-width="5" opacity=".35"/></pattern>
+  <marker id="amber-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#d2aa42"/></marker>
+  <marker id="cyan-arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#54aec4"/></marker>
+  <style>
+    text{font-family:Arial,Helvetica,sans-serif;fill:#eef2f3} .title{font-size:31px;font-weight:900;letter-spacing:1.2px}
+    .subtitle{font-size:13px;font-weight:700;letter-spacing:1.4px;fill:#aeb8bd} .outer{fill:#11161a;stroke:#d5dde0;stroke-width:4}
+    .grid{fill:url(#grid);opacity:.75} .zone{fill:#20272c;stroke:#6e7b83;stroke-width:2} .zone.cool{fill:#14272e;stroke:#54aec4}
+    .zone.warm{fill:#2b2518;stroke:#d2aa42} .zone.violet{fill:#241b2a;stroke:#b77ad8} .zone.red{fill:#2b1b1a;stroke:#bf4c40}
+    .zone-label{font-size:14px;font-weight:800} .micro{font-size:7px;fill:#aeb8bd;font-weight:700} .core{fill:#11161a;stroke:#eef2f3;stroke-width:2}
+    .core-code{font-size:18px;font-weight:900} .canyon{fill:#0b1115;stroke:#54aec4;stroke-width:3;stroke-dasharray:12 8}
+    .canyon-title{font-size:19px;font-weight:900;fill:#54aec4;letter-spacing:1.2px} .ramp{fill:none;stroke:#d2aa42;stroke-width:34;stroke-linecap:round;opacity:.85}
+    .ramp-center{fill:none;stroke:#0b0d0f;stroke-width:3;stroke-dasharray:14 10} .route{fill:none;stroke:#d2aa42;stroke-width:8;marker-end:url(#amber-arrow)}
+    .air-route{fill:none;stroke:#54aec4;stroke-width:8;stroke-dasharray:14 8;marker-end:url(#cyan-arrow)} .lift{fill:url(#hazard);stroke:#54aec4;stroke-width:3}
+    .lift-code{font-size:18px;font-weight:900;fill:#54aec4} .road{fill:#22282c;stroke:#d2aa42;stroke-width:3}
+    .road-line{stroke:#d2aa42;stroke-width:3;stroke-dasharray:18 12} .portal{fill:#bf4c40;stroke:#ffb1a9;stroke-width:2}
+    .dim{stroke:#77848c;stroke-width:1.5} .dim-text{font-size:12px;fill:#aeb8bd;font-weight:700} .note{font-size:11px;fill:#c8d0d4}
+    .legend{font-size:11px;font-weight:800} .rev{font-size:10px;fill:#aeb8bd} .north{font-size:14px;font-weight:900}
+  </style>
+</defs>
+<rect width="1600" height="1150" fill="#090b0d"/>
+<text x="74" y="54" class="title">PRIM3 SITE 0 — B1 PROTECTED TRANSIT FLOOR</text><text x="76" y="81" class="subtitle">OPEN TECHNOLOGY RESEARCH WRAPPED AROUND A SEALED HEAVY-MOBILITY SPINE</text>
+<g transform="translate(1492 38)"><path d="M0 48L18 0L36 48L18 38Z" fill="#eef2f3"/><text x="18" y="68" text-anchor="middle" class="north">N</text></g>
+<line x1="166" y1="126" x2="1434" y2="126" class="dim"/><text x="800" y="118" text-anchor="middle" class="dim-text">1268 m · EAST–WEST LONG AXIS</text>
+<line x1="1460" y1="150" x2="1460" y2="974" class="dim"/><text x="1481" y="562" transform="rotate(90 1481 562)" text-anchor="middle" class="dim-text">824 m · NORTH–SOUTH</text>
+<rect x="166" y="150" width="1268" height="824" rx="24" class="outer"/><rect x="182" y="166" width="1236" height="792" rx="18" class="grid"/>
+<text x="800" y="174" text-anchor="middle" class="dim-text">NORTH · FORMAL FRONT</text><text x="800" y="964" text-anchor="middle" class="dim-text">SOUTH · OPERATIONAL FACE</text>
+
+<rect x="550" y="182" width="500" height="744" rx="18" class="canyon"/>
+<text x="800" y="211" text-anchor="middle" class="canyon-title">CENTRAL MOBILITY CANYON</text>
+<path d="M620 872 C620 760 700 690 700 585 S620 410 620 252" class="ramp"/><path d="M620 872 C620 760 700 690 700 585 S620 410 620 252" class="ramp-center"/>
+<path d="M980 872 C980 760 900 690 900 585 S980 410 980 252" class="ramp"/><path d="M980 872 C980 760 900 690 900 585 S980 410 980 252" class="ramp-center"/>
+<text x="625" y="550" text-anchor="middle" class="zone-label" transform="rotate(-90 625 550)">R1 · UP / BIDIRECTIONAL</text>
+<text x="975" y="550" text-anchor="middle" class="zone-label" transform="rotate(90 975 550)">R2 · DOWN / BIDIRECTIONAL</text>
+<rect x="716" y="470" width="112" height="168" rx="9" class="lift"/><rect x="840" y="470" width="112" height="168" rx="9" class="lift"/>
+<text x="772" y="548" text-anchor="middle" class="lift-code">V1</text><text x="896" y="548" text-anchor="middle" class="lift-code">V2</text>
+<text x="772" y="570" text-anchor="middle" class="micro">AIRCRAFT / HEAVY LIFT</text><text x="896" y="570" text-anchor="middle" class="micro">AIRCRAFT / HEAVY LIFT</text>
+<rect x="205" y="195" width="62" height="62" rx="7" class="core"/><text x="236" y="221" text-anchor="middle" class="core-code">A</text><text x="236" y="240" text-anchor="middle" class="micro">STAIR / PAX / FREIGHT</text><rect x="1333" y="195" width="62" height="62" rx="7" class="core"/><text x="1364" y="221" text-anchor="middle" class="core-code">B</text><text x="1364" y="240" text-anchor="middle" class="micro">STAIR / PAX / FREIGHT</text><rect x="205" y="865" width="62" height="62" rx="7" class="core"/><text x="236" y="891" text-anchor="middle" class="core-code">C</text><text x="236" y="910" text-anchor="middle" class="micro">STAIR / PAX / FREIGHT</text><rect x="1333" y="865" width="62" height="62" rx="7" class="core"/><text x="1364" y="891" text-anchor="middle" class="core-code">D</text><text x="1364" y="910" text-anchor="middle" class="micro">STAIR / PAX / FREIGHT</text><rect x="285" y="205" width="235" height="200" rx="12" class="zone cool"/><text x="402.5" y="299.0" text-anchor="middle" class="zone-label"><tspan x="402.5" dy="0">OPEN TECH LIBRARY</tspan><tspan x="402.5" dy="16">ENERGY / WATER / MATERIALS</tspan></text><rect x="1080" y="205" width="235" height="200" rx="12" class="zone cool"/><text x="1197.5" y="299.0" text-anchor="middle" class="zone-label"><tspan x="1197.5" dy="0">DIGITAL REPOSITORY</tspan><tspan x="1197.5" dy="16">ARCHIVE / SEARCH / CONTROL</tspan></text><rect x="285" y="435" width="235" height="200" rx="12" class="zone"/><text x="402.5" y="529.0" text-anchor="middle" class="zone-label"><tspan x="402.5" dy="0">CLEAN PROTOTYPE LAB</tspan><tspan x="402.5" dy="16">ROBOTICS / OPEN HARDWARE</tspan></text><rect x="1080" y="435" width="235" height="200" rx="12" class="zone"/><text x="1197.5" y="529.0" text-anchor="middle" class="zone-label"><tspan x="1197.5" dy="0">VERIFICATION LAB</tspan><tspan x="1197.5" dy="16">RESILIENT SYSTEMS / QA</tspan></text><rect x="285" y="665" width="235" height="210" rx="12" class="zone"/><text x="402.5" y="764.0" text-anchor="middle" class="zone-label"><tspan x="402.5" dy="0">KNOWLEDGE GALLERY</tspan><tspan x="402.5" dy="16">AGRICULTURE / INFRASTRUCTURE</tspan></text><rect x="1080" y="665" width="235" height="210" rx="12" class="zone"/><text x="1197.5" y="764.0" text-anchor="middle" class="zone-label"><tspan x="1197.5" dy="0">SECURE SERVER VAULT</tspan><tspan x="1197.5" dy="16">DATA / COMMS / CONTINUITY</tspan></text><rect x="665" y="304" width="270" height="86" rx="10" class="zone violet"/><text x="800" y="340" text-anchor="middle" class="zone-label"><tspan x="800" dy="0">SEALED OBSERVATION BRIDGE</tspan><tspan x="800" dy="16">NO HEAVY-VEHICLE STOP</tspan></text><rect x="668" y="708" width="264" height="104" rx="10" class="zone red"/><text x="800" y="748" text-anchor="middle" class="zone-label"><tspan x="800" dy="0">BLAST / CONTAMINATION LOCK</tspan><tspan x="800" dy="16">TRANSIT SCREENING ONLY</tspan></text><path d="M620 884L620 250" class="route"/><path d="M980 884L980 250" class="route"/>
+<rect x="58" y="1018" width="1484" height="104" rx="12" fill="#11161a" stroke="#4f5a61"/>
+<text x="82" y="1047" class="legend">B1 / MOBILITY PACKAGE</text>
+<line x1="82" y1="1066" x2="155" y2="1066" class="route"/><text x="168" y="1070" class="legend">ARMORED DRIVE ROUTE</text>
+<line x1="82" y1="1094" x2="155" y2="1094" class="air-route"/><text x="168" y="1098" class="legend">AIRCRAFT / HEAVY LIFT ROUTE</text>
+<text x="480" y="1048" text-anchor="start" class="note"><tspan x="480" dy="0">01  B1 remains a clean research level; armored traffic is enclosed within the canyon.</tspan></text><text x="480" y="1067" text-anchor="start" class="note"><tspan x="480" dy="0">02  Pedestrian bridges cross above the route without becoming vehicle staging areas.</tspan></text>
+<text x="1518" y="1047" text-anchor="end" class="rev">PRIM3 SITE 0 · CANONICAL v03 MOBILITY REVISION</text>
+<text x="1518" y="1067" text-anchor="end" class="rev">CONCEPT DESIGN · ENGINEERING CLEARANCES TO BE VALIDATED</text>
+<text x="1518" y="1104" text-anchor="end" class="rev">SCALE 1 px = 1 m AT PLAN FIELD · REV 2026-08-14</text>
+</svg>

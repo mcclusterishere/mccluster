@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Policy Fellowship · Equity Uprise</title>
+  <meta name="description" content="The Equity Uprise Policy Fellowship, free to join. Tell the movement what you'd fix first and put your voice on the record.">
+  <link rel="icon" type="image/png" href="assets/img/eu-favicon.png">
+  <!-- Stays out of sitemap.xml on purpose (it is a form, not a document),
+       but it is still reachable and still gets shared with tracking
+       parameters glued on. Without a canonical, every one of those is a
+       separate URL competing with this one. -->
+  <link rel="canonical" href="https://matthew.mccluster.org/fellowship.html">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage" data-mh-cta="Hear the anthem|album.html">
+  <div class="chat__progress" aria-hidden="true"><span id="chatBar"></span></div>
+  <!-- the page's own header is retired: the house masthead carries the
+       mark, the rooms, and this page's action (data-mh-cta) -->
+  <main>
+    <!-- The direction was "more interactive, more graphical, less wordy —
+         I'd rather show them with graphics than have them read." This page
+         opened with an eyebrow, a headline and three solid paragraphs, and
+         it is only 1562px tall, so that WAS the page. It now leads with a
+         band and three figures; the manifesto keeps the sentence that says
+         what this is, and the rest is one disclosure away. Nothing was
+         deleted and nothing partisan came back. -->
+    <section class="felband" aria-labelledby="fel-h">
+      <img class="felband__img" src="assets/frames/citations_0001.jpg" alt="" loading="eager" decoding="async">
+      <span class="felband__veil" aria-hidden="true"></span>
+      <div class="felband__type">
+        <p class="kicker"><img class="kicker__mark" src="assets/img/equity-uprise-logo.webp" alt="" style="filter:none"> Equity Uprise &middot; The Movement</p>
+        <h1 class="manifesto__title" id="fel-h">Equity.<br>Then we <em>rise.</em></h1>
+      </div>
+    </section>
+
+    <ol class="felfigs" aria-label="The fellowship in numbers">
+      <li><b>Free</b><span>to join, now and always</span></li>
+      <li><b id="felQCount">16</b><span>questions in the terminal below</span></li>
+      <li><b>9</b><span>fellows already on the public record</span></li>
+    </ol>
+
+    <section class="manifesto">
+      <p><strong>Equity Uprise walks straight down the middle of the aisle &mdash; not to pick
+        a side, but to unite them.</strong> A movement, not a party: nonpartisan on purpose,
+        because the problems that keep our neighborhoods down were never left or right,
+        and neighbors pitted against each other lose together.</p>
+      <p>The Policy Fellowship is <strong>free</strong>. Answer the terminal. Tell the
+        movement who you are, what you can do, and what you'd fix first. Your first act
+        as a fellow is a vote.</p>
+      <details class="felmore">
+        <summary><span>How we organize</span></summary>
+        <p>We organize with <strong>music and art as political activism</strong>: concerts,
+          events, and culture that educate the masses. And we believe your talent, whatever
+          field it lives in, is a <strong>superpower</strong>. Use your superpowers for good.
+          Rise with the people. Let's take our nation back.</p>
+      </details>
+      <p class="euhonest"><strong>How this actually works.</strong> There is no application
+        server behind this terminal and no automated screen. Your answers stay in this browser
+        while you type, so you can close the tab and pick it back up. When you submit, the page
+        opens your own mail app with the answers filled in, addressed to
+        <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a>, and nothing leaves your
+        device until you press send. <strong>A person reads every one</strong> and replies from that
+        address. You can also download your own copy of the answers before you send anything.
+        The nine fellows of the 2025 cohort are named on the
+        <a href="equity-uprise.html#fellows">Equity Uprise program page</a>.</p>
+      <hr class="manifesto__rule">
+      <p class="manifesto__boot">EQUITY UPRISE // FELLOWSHIP TERMINAL v1.0 &middot; session open</p>
+    </section>
+    <div class="chat term" id="chat">
+      <div class="chat__log" id="chatLog"></div>
+      <div class="chat__input" id="chatInput"></div>
+    </div>
+  </main>
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script>
+    (function () {
+      "use strict";
+      var INTAKE_ENDPOINT = ""; // Apps Script /exec URL when the Sheet backend exists
+
+      var Q = [
+        { id: "name", g: "Identity", ask: "State your full name for the fellowship record.", type: "text", ph: "First Last" },
+        { id: "prefname", g: "Identity", ask: "What should the movement call you?", type: "text", ph: "Preferred name" },
+        { id: "email", g: "Contact", ask: "Email for fellowship communications?", type: "text", ph: "you@example.com", validate: "email" },
+        { id: "phone", g: "Contact", ask: "Phone number (for organizing texts, never sold, never shared).", type: "text", ph: "(555) 555-0100" },
+        { id: "citystate", g: "Contact", ask: "City, state, and ZIP. The movement organizes block by block.", type: "text", ph: "City, ST 00000" },
+        { id: "age", g: "Profile", ask: "Age range?", type: "chips", options: ["Under 18", "18 to 24", "25 to 34", "35 to 49", "50 to 64", "65+"] },
+        { id: "occupation", g: "Profile", ask: "What do you do? Work, school, hustle, all of it.", type: "text", ph: "Occupation / field" },
+        { id: "registered", g: "Civic record", ask: "Are you registered to vote?", type: "chips", options: ["Registered", "Not yet", "Not eligible", "Prefer not to say"] },
+        { id: "priorities", g: "The ballot", ask: "Which policy fronts matter to you? Pick every one that moves you.", type: "multi", options: ["Housing & land rights", "Environmental justice", "Utility accountability", "Education & tech access", "Criminal justice", "Small business & economy", "Healthcare", "Election reform"] },
+        { id: "vote", g: "The ballot", ask: "Your first vote as a fellow: of everything you just picked, which ONE does the movement fight for first?", type: "chips", options: ["Housing & land rights", "Environmental justice", "Utility accountability", "Education & tech access", "Criminal justice", "Small business & economy", "Healthcare", "Election reform"] },
+        { id: "talent", g: "Superpower", ask: "Every fellow has a superpower. Name your talent: music, design, law, code, cooking, speaking, anything.", type: "text", ph: "Your talent" },
+        { id: "talentuse", g: "Superpower", ask: "How would you use that superpower for the movement?", type: "long" },
+        { id: "availability", g: "Boots on ground", ask: "How can you show up?", type: "multi", options: ["Events & concerts", "Canvassing", "Online organizing", "Performing", "Teaching / workshops", "Behind the scenes"] },
+        { id: "socials", g: "Boots on ground", ask: "Social handles or links, if you want them listed beside your name on the cohort roster.", type: "text", ph: "@handle / links" },
+        { id: "why", g: "The why", ask: "Last question, and take your time: why does walking down the middle of the aisle speak to you?", type: "long" },
+        { id: "consent", g: "Agreement", ask: "The fellowship is free. Can the movement contact you about policy work, events, and organizing?", type: "chips", options: ["Yes, count me in", "Only email", "Only major announcements"] },
+      ];
+
+      /* the figure at the top of the page counts THIS array. A number
+         typed into copy is a number that lies the day a question is
+         added or, as happened here, removed. */
+      var qCount = document.getElementById("felQCount");
+      if (qCount) qCount.textContent = String(Q.length);
+
+      var KEY = "eu-fellowship";
+      var answers = {};
+      try { answers = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+      var log = document.getElementById("chatLog");
+      var input = document.getElementById("chatInput");
+      var bar = document.getElementById("chatBar");
+      function track(n, p) { if (window.MCC_TRACK) window.MCC_TRACK(n, p); }
+      function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+      function nextQ() { for (var i = 0; i < Q.length; i++) if (!(Q[i].id in answers)) return Q[i]; return null; }
+      function progress() {
+        var done = Q.filter(function (q) { return q.id in answers; }).length;
+        bar.style.width = Math.round((done / Q.length) * 100) + "%";
+        return { done: done, total: Q.length };
+      }
+      function bubble(cls, html) {
+        var d = document.createElement("div");
+        d.className = "chat__msg " + cls;
+        d.innerHTML = html;
+        log.appendChild(d);
+        return d;
+      }
+
+      function render() {
+        input.innerHTML = "";
+        var q = nextQ();
+        var p = progress();
+        if (!q) return review();
+        bubble("chat__msg--q", '<span class="chat__group">' + q.g + " · " + (p.done + 1) + " / " + p.total + "</span>" + esc(q.ask));
+        window.scrollTo(0, document.body.scrollHeight);
+
+        function submit(val) {
+          if (!val) return;
+          if (q.validate === "email" && !/^\S+@\S+\.\S+$/.test(val)) { alert("That email doesn't parse. Retry."); return; }
+          answers[q.id] = val;
+          localStorage.setItem(KEY, JSON.stringify(answers));
+          bubble("chat__msg--a", esc(val));
+          track("fellowship_answer", { q: q.id, page: "fellowship" });
+          render();
+        }
+
+        if (q.type === "chips" || q.type === "multi") {
+          var wrap = document.createElement("div");
+          wrap.className = "chat__chips";
+          var picked = [];
+          var opts = q.id === "vote" && answers.priorities
+            ? answers.priorities.split(", ").filter(Boolean)
+            : q.options;
+          opts.forEach(function (opt) {
+            var b = document.createElement("button");
+            b.type = "button"; b.className = "chat__chip"; b.textContent = opt;
+            b.addEventListener("click", function () {
+              if (q.type === "chips") return submit(opt);
+              b.classList.toggle("is-picked");
+              var i = picked.indexOf(opt);
+              if (i === -1) picked.push(opt); else picked.splice(i, 1);
+            });
+            wrap.appendChild(b);
+          });
+          input.appendChild(wrap);
+          if (q.type === "multi") {
+            var go = document.createElement("button");
+            go.className = "btn btn--ruby"; go.type = "button"; go.textContent = "Locked in →";
+            go.addEventListener("click", function () { submit(picked.join(", ")); });
+            input.appendChild(go);
+          }
+        } else {
+          var row = document.createElement("div");
+          row.className = "chat__free";
+          var f = document.createElement(q.type === "long" ? "textarea" : "input");
+          if (q.type === "long") f.rows = 3;
+          f.placeholder = q.ph || "Type or talk it out…";
+          row.appendChild(f);
+          var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (SR) {
+            var mic = document.createElement("button");
+            mic.type = "button"; mic.className = "chat__mic"; mic.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            mic.addEventListener("click", function () {
+              var r = new SR();
+              r.lang = "en-US";
+              mic.classList.add("is-live");
+              r.onresult = function (ev) { f.value = (f.value ? f.value + " " : "") + ev.results[0][0].transcript; };
+              r.onend = function () { mic.classList.remove("is-live"); f.focus(); };
+              r.start();
+            });
+            row.appendChild(mic);
+          }
+          var go2 = document.createElement("button");
+          go2.className = "btn btn--ruby"; go2.type = "button"; go2.textContent = "Enter →";
+          go2.addEventListener("click", function () { submit(f.value.trim()); });
+          input.appendChild(row);
+          input.appendChild(go2);
+          f.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter" && q.type !== "long") { ev.preventDefault(); submit(f.value.trim()); }
+          });
+          setTimeout(function () { f.focus(); }, 50);
+        }
+
+        var actions = document.createElement("div");
+        actions.className = "chat__actions";
+        if (Object.keys(answers).length) {
+          var back = document.createElement("button");
+          back.className = "chat__back"; back.type = "button"; back.textContent = "← change last answer";
+          back.addEventListener("click", function () {
+            for (var i = Q.length - 1; i >= 0; i--) {
+              if (Q[i].id in answers) { delete answers[Q[i].id]; break; }
+            }
+            localStorage.setItem(KEY, JSON.stringify(answers));
+            log.innerHTML = "";
+            replay();
+            render();
+          });
+          actions.appendChild(back);
+        }
+        var hint = document.createElement("span");
+        hint.className = "chat__hint";
+        hint.textContent = "The terminal saves on this device. Leave and come back anytime.";
+        actions.appendChild(hint);
+        input.appendChild(actions);
+      }
+
+      function replay() {
+        Q.forEach(function (q) {
+          if (q.id in answers) {
+            bubble("chat__msg--q", '<span class="chat__group">' + q.g + "</span>" + esc(q.ask));
+            bubble("chat__msg--a", esc(answers[q.id]));
+          }
+        });
+      }
+
+      function review() {
+        bar.style.width = "100%";
+        input.innerHTML = "";
+        var card = document.createElement("div");
+        card.className = "chat__review";
+        card.innerHTML = "<h3>Fellowship record: review</h3><dl>" +
+          Q.map(function (q) { return "<dt>" + esc(q.g) + "</dt><dd>" + esc(answers[q.id] || "·") + "</dd>"; }).join("") +
+          "</dl>" +
+          /* the button has to say what it does. With no endpoint wired,
+             pressing it hands the answers to the visitor's own mail app
+             and a person opens the mail at the other end; a button
+             labelled "submit" would be promising a machine that is not
+             there. */
+          "<p class=\"euhonest\">" + (INTAKE_ENDPOINT
+            ? "This goes straight to the fellowship's intake, and a person reads it."
+            : "Nothing is sent from this page. The button below opens your own mail app with every "
+              + "answer above already written out, addressed to matthew@mccluster.org &mdash; you press "
+              + "send, and a person reads it. Prefer to keep a copy first? Download it.") + "</p>";
+        input.appendChild(card);
+        var send = document.createElement("button");
+        send.className = "btn btn--ruby"; send.type = "button"; send.style.marginTop = "1rem";
+        send.textContent = INTAKE_ENDPOINT ? "Submit to the movement" : "Open my mail app and send";
+        send.addEventListener("click", function () {
+          track("fellowship_submit", { vote: answers.vote || "", page: "fellowship" });
+          var lines = ["EQUITY UPRISE · POLICY FELLOWSHIP APPLICATION", ""];
+          Q.forEach(function (q) { lines.push("[" + q.g + "] " + q.ask + "\n> " + (answers[q.id] || "·") + "\n"); });
+          // the record lives in three places: the movement's backend (when the
+          // endpoint is live — it is not wired today, so this falls through
+          // to the applicant's own mail app), this device's browser storage,
+          // and a file the fellow keeps; their words stay theirs
+          try {
+            localStorage.setItem("mcc_fellowship_record", JSON.stringify({ submitted_at: new Date().toISOString(), answers: answers }));
+          } catch (e) {}
+          if (INTAKE_ENDPOINT) {
+            fetch(INTAKE_ENDPOINT, { method: "POST", mode: "no-cors", body: JSON.stringify(Object.assign({ _form: "fellowship" }, answers)) })
+              .then(function () { send.textContent = "Received. Welcome to the uprise."; localStorage.removeItem(KEY); })
+              .catch(function () {});
+          } else {
+            location.href = "mailto:matthew@mccluster.org?subject=" +
+              encodeURIComponent("Policy Fellowship: " + (answers.name || "new fellow")) +
+              "&body=" + encodeURIComponent(lines.join("\n"));
+          }
+        });
+        input.appendChild(send);
+        var keep = document.createElement("button");
+        keep.className = "btn btn--ghost"; keep.type = "button";
+        keep.style.marginTop = "0.8rem"; keep.style.marginLeft = "0.6rem";
+        keep.textContent = "Download my copy";
+        keep.addEventListener("click", function () {
+          var lines2 = ["EQUITY UPRISE · POLICY FELLOWSHIP APPLICATION", "Kept by the applicant · " + new Date().toLocaleString(), ""];
+          Q.forEach(function (q) { lines2.push("[" + q.g + "] " + q.ask + "\n> " + (answers[q.id] || "·") + "\n"); });
+          var a = document.createElement("a");
+          a.href = URL.createObjectURL(new Blob([lines2.join("\n")], { type: "text/plain" }));
+          a.download = "equity-uprise-fellowship-application.txt";
+          a.click();
+          URL.revokeObjectURL(a.href);
+          track("fellowship_download_copy", { page: "fellowship" });
+        });
+        input.appendChild(keep);
+        var reset = document.createElement("button");
+        reset.className = "chat__back"; reset.type = "button"; reset.style.marginTop = "0.8rem";
+        reset.textContent = "wipe the record and start over";
+        reset.addEventListener("click", function () {
+          if (!confirm("Wipe every answer?")) return;
+          answers = {}; localStorage.removeItem(KEY); log.innerHTML = ""; render();
+        });
+        input.appendChild(reset);
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+
+      replay();
+      render();
+    })();
+  </script>
+
+  <!-- THE BAR: Music · Equity Uprise · HERE · Prayer Closet · Profile. One tap goes where it says; hold a tab to open its wing. -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

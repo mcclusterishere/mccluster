@@ -1,0 +1,204 @@
+{
+ "cats": [
+  "Videography",
+  "Photography",
+  "Media management"
+ ],
+ "items": [
+  {
+   "cat": "Videography",
+   "title": "Vaunt · the runway performance",
+   "sub": "Commercial production · performed live with Zakir",
+   "video": "assets/video/vaunt.mp4",
+   "poster": "assets/frames/vaunt_0001.jpg",
+   "group": "On location"
+  },
+  {
+   "cat": "Videography",
+   "title": "Vaunt Live · the launch",
+   "sub": "Event coverage · the campaign on its feet",
+   "video": "assets/video/vauntlive.mp4",
+   "poster": "assets/frames/vauntlive_0001.jpg",
+   "group": "On location"
+  },
+  {
+   "cat": "Videography",
+   "title": "Dealer Plates · the video",
+   "sub": "Music video production",
+   "video": "assets/video/dealer-plates-b-video.mp4",
+   "group": "On location"
+  },
+  {
+   "cat": "Videography",
+   "title": "The red jet",
+   "sub": "AI-built world · aviation & luxury",
+   "video": "assets/video/redjet.mp4",
+   "poster": "assets/frames/redjet_0001.jpg",
+   "group": "The Concept Lab"
+  },
+  {
+   "cat": "Videography",
+   "title": "The penthouse set",
+   "sub": "AI-built world · nightlife set",
+   "video": "assets/video/daniel.mp4",
+   "poster": "assets/frames/daniel_0001.jpg",
+   "group": "The Concept Lab"
+  },
+  {
+   "cat": "Videography",
+   "title": "Whip Equipped · the fleet",
+   "sub": "AI-built world · automotive story",
+   "video": "assets/video/whip.mp4",
+   "poster": "assets/frames/whip_0001.jpg",
+   "group": "The Concept Lab"
+  },
+  {
+   "cat": "Videography",
+   "title": "The keynote shoot",
+   "sub": "AI-built world · corporate stage",
+   "video": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg",
+   "group": "The Concept Lab"
+  },
+  {
+   "cat": "Videography",
+   "title": "The hero film",
+   "sub": "AI-built world · the studio orbit",
+   "video": "assets/video/hero.mp4",
+   "poster": "assets/frames/hero_0001.jpg",
+   "group": "The Concept Lab"
+  },
+  {
+   "cat": "Videography",
+   "title": "Studio 360",
+   "sub": "AI-built world · the edit bay, all the way around",
+   "video": "assets/video/studio360.mp4",
+   "poster": "assets/frames/studio360_0001.jpg",
+   "group": "The Concept Lab"
+  },
+  {
+   "cat": "Videography",
+   "title": "Designer at work",
+   "sub": "AI-built world · process story",
+   "video": "assets/video/designer.mp4",
+   "poster": "assets/frames/designer_0001.jpg",
+   "group": "The Concept Lab"
+  },
+  {
+   "cat": "Photography",
+   "title": "The Shot Wall · find your photo",
+   "sub": "Event galleries · first one free with a follow",
+   "img": "assets/img/rally/rally-03.jpg",
+   "href": "shots.html",
+   "group": "On assignment"
+  },
+  {
+   "cat": "Photography",
+   "title": "October 5th · the rally",
+   "sub": "Environmental Injustice rally · Bridgeport Creates",
+   "img": "assets/img/rally/rally-01.jpg",
+   "group": "On assignment"
+  },
+  {
+   "cat": "Photography",
+   "title": "Zion Baptist · the room",
+   "sub": "Community & event photography",
+   "img": "assets/img/rally/rally-02.jpg",
+   "group": "On assignment"
+  },
+  {
+   "cat": "Photography",
+   "title": "The march",
+   "sub": "Documentary photography, on the street",
+   "img": "assets/img/rally/rally-03.jpg",
+   "group": "On assignment"
+  },
+  {
+   "cat": "Photography",
+   "title": "The speakers",
+   "sub": "Stage & press photography",
+   "img": "assets/img/rally/rally-04.jpg",
+   "group": "On assignment"
+  },
+  {
+   "cat": "Photography",
+   "title": "The crowd",
+   "sub": "The people, on the record",
+   "img": "assets/img/rally/rally-05.jpg",
+   "group": "On assignment"
+  },
+  {
+   "cat": "Photography",
+   "title": "I AM HERE · the album cover",
+   "sub": "Art direction & cover design",
+   "img": "assets/img/here-cover.jpg",
+   "group": "Covers & art direction"
+  },
+  {
+   "cat": "Photography",
+   "title": "Heal the 3 · the cover",
+   "sub": "Art direction & cover design",
+   "img": "assets/img/heal-the-3-cover.jpg",
+   "group": "Covers & art direction"
+  },
+  {
+   "cat": "Photography",
+   "title": "The uprise still",
+   "sub": "Editorial stills from the civic engine",
+   "img": "assets/img/uprise-still.jpg",
+   "group": "Covers & art direction"
+  },
+  {
+   "cat": "Media management",
+   "title": "Equity Uprise · the civic engine",
+   "sub": "Full campaign: rallies, record, outreach, recognized by two governments",
+   "video": "assets/video/equity.mp4",
+   "href": "equity-uprise.html",
+   "poster": "assets/frames/equity_0001.jpg",
+   "group": "The platforms"
+  },
+  {
+   "cat": "Media management",
+   "title": "Docket 516 · the public archive",
+   "sub": "325 filings archived, explained, and published",
+   "video": "assets/video/docket.mp4",
+   "href": "docket-516.html",
+   "poster": "assets/frames/docket_0001.jpg",
+   "group": "The platforms"
+  },
+  {
+   "cat": "Media management",
+   "title": "The record & citations",
+   "sub": "Press, proclamations, and the receipts",
+   "video": "assets/video/citations.mp4",
+   "href": "press.html",
+   "poster": "assets/frames/citations_0001.jpg",
+   "group": "The platforms"
+  },
+  {
+   "cat": "Media management",
+   "title": "The Feed · the daily record",
+   "sub": "Claims put on the record with sources, filed daily",
+   "video": "assets/video/editors.mp4",
+   "href": "feed.html",
+   "poster": "assets/frames/editors_0001.jpg",
+   "group": "The platforms"
+  },
+  {
+   "cat": "Media management",
+   "title": "The war room",
+   "sub": "Concept film · how the strategy desk runs",
+   "video": "assets/video/warroom.mp4",
+   "poster": "assets/frames/warroom_0001.jpg",
+   "group": "The operation"
+  },
+  {
+   "cat": "Media management",
+   "title": "The survey",
+   "sub": "Concept film · data-driven outreach",
+   "video": "assets/video/uisurvey.mp4",
+   "poster": "assets/frames/uisurvey_0001.jpg",
+   "group": "The operation"
+  }
+ ]
+}

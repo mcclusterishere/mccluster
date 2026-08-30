@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Sign in · McCluster</title>
+  <meta name="robots" content="noindex,nofollow">
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#0b0b0c;color:#f4efe6;font-family:system-ui,-apple-system,sans-serif}body{display:grid;place-items:center;min-height:100svh;padding:24px}.card{width:min(92vw,430px);border:1px solid #2d2b28;border-radius:22px;padding:28px;background:#131314;box-shadow:0 24px 70px rgba(0,0,0,.35)}.mark{font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#d9b96a;font-size:.72rem}.card h1{font-size:2.25rem;line-height:1;margin:.75rem 0}.card p{color:#b9b6ac;line-height:1.6}.google{margin-top:24px;min-height:44px}.status{min-height:1.5em;margin-top:16px;font-size:.9rem}.ok{color:#9ee5a8}.bad{color:#f2a49c}.back{display:inline-block;margin-top:18px;color:#d9b96a;text-decoration:none;font-weight:700}
+  </style>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body>
+  <main class="card">
+    <div class="mark">McCluster Platform</div>
+    <h1>Sign in.</h1>
+    <p>One account for your website, app, messaging, domains and client console.</p>
+    <div id="googleButton" class="google"></div>
+    <div id="status" class="status" aria-live="polite">Loading Google sign-in…</div>
+    <a class="back" href="index.html">← Back to HERE</a>
+  </main>
+<script>
+(async function(){
+  const status=document.getElementById('status');
+  const button=document.getElementById('googleButton');
+  const authOrigin=new URLSearchParams(location.search).get('auth')||'https://auth.mccluster.org';
+  function say(text,kind=''){status.textContent=text;status.className='status '+kind;}
+  try{
+    const cfg=await fetch(authOrigin+'/v1/auth/config',{credentials:'include'}).then(r=>{if(!r.ok)throw new Error('Auth service unavailable');return r.json();});
+    if(!cfg.googleClientId) throw new Error('Google login has not been configured yet');
+    while(!window.google?.accounts?.id) await new Promise(r=>setTimeout(r,50));
+    google.accounts.id.initialize({
+      client_id:cfg.googleClientId,
+      callback:async(response)=>{
+        say('Signing you in…');
+        try{
+          const r=await fetch(authOrigin+'/v1/auth/google',{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({credential:response.credential})});
+          const out=await r.json(); if(!r.ok) throw new Error(out.error||'Sign-in failed');
+          say('Signed in. Opening your account…','ok');
+          const next=new URLSearchParams(location.search).get('next')||'account.html';
+          setTimeout(()=>location.assign(next),350);
+        }catch(e){say(e.message,'bad');}
+      }
+    });
+    google.accounts.id.renderButton(button,{theme:'filled_black',size:'large',shape:'pill',text:'continue_with',width:360});
+    say('');
+  }catch(e){say(e.message,'bad');}
+})();
+</script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

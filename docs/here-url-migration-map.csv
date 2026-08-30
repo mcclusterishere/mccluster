@@ -1,0 +1,54 @@
+# HISTORY, NOT A PLAN. Written when the site was here.mccluster.org and a
+# three-way property split (here / matthew / equity-uprise) was intended.
+# That split was called off on 2026-07-30, and on 2026-08-17 the whole
+# property was renamed here.mccluster.org -> matthew.mccluster.org instead.
+# Every "301 planned" row below describes a move that is NOT happening.
+# The old host is kept alive as a forwarding property; see
+# docs/domain-cutover.md and docs/architecture/subdomain-split.md.
+# The old_here_url column is still an accurate record of the pre-rename
+# URL structure, which is why this file is kept unedited below this note.
+old_here_url,new_destination,destination_property,redirect_type,canonical_target,content_owner,migration_status,notes
+/,https://here.mccluster.org/,here,none,https://here.mccluster.org/,here-album,done,Album-first homepage; agency framing removed from title/description/JSON-LD
+/album.html,https://here.mccluster.org/album.html,here,none,https://here.mccluster.org/album.html,here-album,done,Stays; creator desk / Connect onboarding removed from public room
+/tracks/*.html,https://here.mccluster.org/tracks/*.html,here,none,self,here-album,done,New canonical track pages with MusicRecording structured data
+/catalogue.html,https://here.mccluster.org/catalogue.html,here,none,self,here-album,keep,Catalogue of the records; review whether non-HERE albums move to their own properties later
+/license.html,https://here.mccluster.org/license.html,here,none,self,here-album,done,New licensing funnel
+/sponsor.html,https://here.mccluster.org/sponsor.html,here,none,self,here-album,interim-redirect-done,MERGED into /give.html#sponsor (owner: nonprofit framing; one support door with give and sponsor lanes kept distinct on the page)
+/prints.html,https://here.mccluster.org/gallery.html#shop,here,client redirect (hash-preserving),https://here.mccluster.org/gallery.html,mccluster,done,MERGED — the catalog is the shop; stub forwards #/id deep links to gallery.html#/buy/<id>
+/merch.html,https://here.mccluster.org/merch.html,here,none,self,mccluster,interim-redirect-done,MERGED into /prayer-closet.html#theRack (owner: one clothing door; the Closet survives). Drop deep links (#/id) forward intact
+/give.html,https://here.mccluster.org/give.html,here,none,self,mccluster-corp,keep,Charitable support only; moves to the Corp institutional property when it exists
+/pay.html,https://here.mccluster.org/pay.html,here,none,self,mccluster,done,Rewritten offering-driven checkout; pay-anyone retired
+/account.html,https://account.mccluster.org/,shared-accounts,301 planned,https://account.mccluster.org/,mccluster,pending,Moves when central auth lands (docs/shared-accounts-architecture.md)
+/hire.html,https://matthew.mccluster.org/hire,matthew,301 planned,https://matthew.mccluster.org/hire,matthew,pending,General services leave the album property
+/matthew-mccluster.html,https://matthew.mccluster.org/,matthew,301 planned,https://matthew.mccluster.org/,matthew,pending,Becomes the headquarters homepage; entity URLs already point there
+/portfolio.html,https://matthew.mccluster.org/portfolio,matthew,301 planned,https://matthew.mccluster.org/portfolio,matthew,pending,Full portfolio
+/production.html,https://matthew.mccluster.org/production,matthew,301 planned,https://matthew.mccluster.org/production,matthew,pending,Production house
+/management.html,https://matthew.mccluster.org/socials,matthew,301 planned,https://matthew.mccluster.org/socials,matthew,pending,The Socials Room — a service showcase
+/press.html,https://matthew.mccluster.org/press,matthew,301 planned,https://matthew.mccluster.org/press,matthew,pending,Citations and proclamations
+/ecosystem.html,https://matthew.mccluster.org/ecosystem,matthew,301 planned,https://matthew.mccluster.org/ecosystem,matthew,pending,Ecosystem navigation belongs to headquarters
+/verify.html,https://matthew.mccluster.org/verify,matthew,301 planned,https://matthew.mccluster.org/verify,matthew,pending,Credential verification
+/card.html,https://matthew.mccluster.org/card,matthew,301 planned,https://matthew.mccluster.org/card,matthew,pending,The NFC card
+/gallery.html,https://here.mccluster.org/gallery.html,here,none,self,mccluster,done,THE ONE CATALOG — gallery + print shop merged on one page (#shop rail); future photo-property move applies to the whole merged page
+/door.html,https://matthew.mccluster.org/gallery,matthew,301 planned,https://matthew.mccluster.org/gallery,matthew,interim-redirect-done,Interim client redirect to /gallery.html on here (owner consolidation); 301 to final property still planned
+/walls.html,https://matthew.mccluster.org/walls,matthew,301 planned,https://matthew.mccluster.org/walls,matthew,pending,Event wall index
+/walls/eu-rally.html,https://matthew.mccluster.org/walls/eu-rally,matthew,301 planned,self-until-move,matthew,pending,Unrelated event wall
+/walls/cover-art.html,https://here.mccluster.org/walls/cover-art.html,here,none,self,here-album,keep,HERE artwork wall — album property keeps it
+/walls/brunch-and-beats.html,https://matthew.mccluster.org/walls/brunch-and-beats,matthew,301 planned,self-until-move,matthew,pending,Unrelated event wall
+/walls/candler-crossing.html,https://matthew.mccluster.org/walls/candler-crossing,matthew,301 planned,self-until-move,matthew,pending,Unrelated event wall
+/walls/dressed-for-success.html,https://matthew.mccluster.org/walls/dressed-for-success,matthew,301 planned,self-until-move,matthew,pending,Unrelated event wall
+/walls/vaunt-runway.html,https://matthew.mccluster.org/walls/vaunt-runway,matthew,301 planned,self-until-move,matthew,pending,Campaign wall; could join a Vaunt property instead
+/shots.html,https://matthew.mccluster.org/shots,matthew,301 planned,self-until-move,matthew,pending,Shot wall funnel
+/films.html,https://matthew.mccluster.org/films,matthew,301 planned,self-until-move,matthew,pending,Film reel
+/archive.html,https://matthew.mccluster.org/archive,matthew,301 planned,self-until-move,matthew,interim-redirect-done,Interim client redirect to /gallery.html on here (owner consolidation); 301 to final property still planned
+/brand.html,https://matthew.mccluster.org/brand,matthew,301 planned,self-until-move,matthew,interim-redirect-done,Interim client redirect to /ecosystem.html on here (owner consolidation); 301 to final property still planned
+/equity-uprise.html,equity-uprise property (see data/domains.json),equity-uprise,301 planned,self-until-move,equity-uprise,pending,Civic program world gets its own property
+/fellowship.html,equity-uprise property,equity-uprise,301 planned,self-until-move,equity-uprise,pending,Fellowship
+/docket-516.html,equity-uprise property,equity-uprise,301 planned,self-until-move,equity-uprise,pending,Civic archive
+/feed.html,equity-uprise property,equity-uprise,301 planned,self-until-move,equity-uprise,interim-redirect-done,Interim client redirect to /equity-uprise.html on here (owner consolidation); 301 to final property still planned
+/role.html,removed from public,internal,410 planned,none,mccluster,flagged,Provider/talent onboarding — outside collaborators are credits and vendor records not sellers
+/cut.html,removed from public,internal,410 planned,none,mccluster,flagged,Public listing creation (creator cuts) — retire or move behind the owner desk
+/admin.html,https://here.mccluster.org/admin.html,internal,none,noindex,mccluster,keep,Owner back office; noindex
+/crm.html,https://here.mccluster.org/crm.html,internal,none,noindex,mccluster,keep,Owner desk; noindex
+/desk.html,https://here.mccluster.org/desk.html,internal,none,noindex,mccluster,keep,Owner outreach desk; noindex
+/lanes.html,https://here.mccluster.org/lanes.html,internal,none,noindex,mccluster,keep,Distribution lanes; owner-only
+/vault.html,https://here.mccluster.org/vault.html,internal,none,noindex,mccluster,keep,Catalog of record; owner-only

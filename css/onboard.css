@@ -1,0 +1,207 @@
+/* ============================================================
+   ONBOARDING — one question per screen.
+
+   Page-scoped. Consumes the global tokens (--ink, --cream,
+   --cream-dim, --sig) and defines nothing global. Deleting this
+   file removes the onboarding chrome and changes nothing else.
+
+   Shape taken from Squarespace's progressive onboarding (a NAMED
+   step rail, not a bare percentage), Laravel Cloud's segmented
+   progress, and Productboard's workspace completion state.
+   ============================================================ */
+
+:root { --gold: #e8c877; }
+html[data-theme="light"] { --gold: #6a4f0e; }
+
+.ob { max-width: 34rem; margin: 0 auto;
+  padding: clamp(3.4rem, 8vh, 5rem) clamp(1.1rem, 4vw, 2rem) 9rem; }
+.ob__k { font-size: 0.66rem; letter-spacing: 0.34em; text-transform: uppercase;
+  color: var(--gold); font-weight: 800; }
+
+/* ---------- the named rail + segmented progress ---------- */
+.ob__rail { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; margin-top: 1.1rem; }
+.ob__rail span { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.18em;
+  text-transform: uppercase; color: rgba(244,239,230,0.32); }
+.ob__rail span.is-here { color: var(--gold); }
+.ob__rail span.is-done { color: rgba(244,239,230,0.6); }
+/* the rail's two quiet states were written for the dark coat only; on bone
+   they paint bone on bone and the step names vanish. :not(.is-here) matters:
+   without it this rule ties on specificity, wins on order, and takes the gold
+   off the step you are actually standing on. */
+html[data-theme="light"] .ob__rail span:not(.is-here) { color: rgba(26,20,13,0.62); }
+html[data-theme="light"] .ob__rail span.is-done:not(.is-here) { color: rgba(26,20,13,0.78); }
+
+.ob__segs { display: flex; gap: 3px; margin-top: 0.7rem; }
+.ob__segs i { flex: 1; height: 4px; border-radius: 100px; background: rgba(244,239,230,0.14); }
+.ob__segs i.is-done { background: linear-gradient(90deg, #e5383b, var(--gold)); }
+.ob__segs i.is-here { background: var(--gold); }
+.ob__step { margin-top: 0.55rem; font-size: 0.72rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--cream-dim); font-weight: 700; }
+
+/* ---------- the question ---------- */
+.ob__stage { margin-top: 1.4rem; }
+.ob__ctx { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--gold); }
+.ob h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.94;
+  font-size: clamp(1.9rem, 8vw, 2.8rem); color: var(--cream); margin-top: 0.5rem; }
+/* the question carries tabindex="-1" so each new screen is announced and the
+   keyboard lands in the right place. It is never reachable by Tab, so the ring
+   would only ever be decoration — the visible focus states that matter are on
+   the options and the buttons below. */
+.ob h1[tabindex]:focus { outline: none; }
+.ob__sub { color: var(--cream-dim); line-height: 1.7; margin-top: 0.7rem; font-size: 0.94rem; }
+.ob__sub b { color: var(--cream); }
+
+.ob input[type="text"], .ob input[type="email"], .ob input[type="tel"],
+.ob input[type="url"], .ob input[type="date"], .ob input[type="password"], .ob textarea {
+  width: 100%; margin-top: 0.7rem; padding: 0.95rem 1rem; border-radius: 12px;
+  border: 1px solid rgba(244,239,230,0.2); background: var(--ink-2, rgba(10,8,7,0.6));
+  color: var(--cream); font-size: 1rem; font-family: inherit; }
+.ob textarea { resize: vertical; min-height: 6.5rem; }
+.ob input:focus-visible, .ob textarea:focus-visible,
+.ob button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.ob__lbl { display: block; margin-top: 0.9rem; font-size: 0.68rem; font-weight: 800;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--cream-dim); }
+
+/* ---------- option rows: full width, easy to hit on a phone ---------- */
+.pick { display: grid; gap: 0.55rem; margin-top: 0.9rem; }
+.pick > button { text-align: left; cursor: pointer; touch-action: manipulation;
+  border: 1px solid rgba(244,239,230,0.16); border-radius: 14px;
+  background: rgba(255,255,255,0.045); color: var(--cream);
+  padding: 0.9rem 1rem; font-family: inherit; transition: border-color 0.2s ease, background 0.2s ease; }
+.pick > button[aria-pressed="true"] { border-color: #e5383b; background: rgba(229,56,59,0.14);
+  box-shadow: inset 0 0 0 1px #e5383b; }
+.pick b { display: block; font-size: 0.96rem; }
+.pick small { display: block; margin-top: 0.22rem; color: var(--cream-dim);
+  font-size: 0.8rem; line-height: 1.5; }
+.pick .pr { float: right; font-family: var(--sig); font-size: 1.15rem; color: var(--gold); }
+.pick--chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 26rem) { .pick--chips { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.pick--chips > button { text-align: center; padding: 0.7rem 0.5rem; }
+.pick--chips b { font-size: 0.8rem; }
+@media (prefers-reduced-motion: reduce) { .pick > button { transition: none; } }
+
+/* ---------- navigation: Back left, Continue right, every screen ---------- */
+.ob__nav { display: flex; align-items: center; gap: 1rem; margin-top: 1.6rem; }
+.ob__back { background: none; border: 0; cursor: pointer; padding: 0.5rem 0;
+  color: var(--cream-dim); font-size: 0.86rem; font-family: inherit; text-decoration: underline; }
+.ob__next { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  touch-action: manipulation; margin-left: auto; padding: 1rem 2.1rem; border-radius: 100px;
+  background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.02rem; font-family: inherit;
+  box-shadow: 0 14px 40px -12px rgba(229,56,59,0.55); }
+.ob__next[disabled] { background: #2a241d; color: #8a8172; box-shadow: none; cursor: not-allowed; }
+.ob__skip { background: none; border: 0; cursor: pointer; color: var(--cream-dim);
+  font-size: 0.8rem; font-family: inherit; text-decoration: underline; padding: 0.5rem 0; }
+.ob__err { margin-top: 0.8rem; font-size: 0.82rem; color: #ff8a8d; line-height: 1.6; font-weight: 600; }
+.ob__note { margin-top: 0.9rem; font-size: 0.78rem; color: var(--cream-dim); line-height: 1.6; }
+.ob__note a { color: var(--ruby-text); text-decoration: none; }
+
+/* ---------- the money summary ---------- */
+.obsum { margin-top: 1rem; border-radius: 18px; padding: 1.2rem;
+  background: linear-gradient(158deg, rgba(38,28,20,0.9), rgba(16,12,10,0.95));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); }
+.obsum__n { font-family: var(--sig); font-size: clamp(3rem, 13vw, 4.4rem); line-height: 0.85;
+  color: var(--cream); }
+.obsum__n sup { font-size: 0.3em; vertical-align: super; color: var(--gold); }
+.obsum__per { display: block; margin-top: 0.45rem; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--cream-dim); }
+.obsum ul { list-style: none; padding: 0; margin: 1rem 0 0; }
+.obsum li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(244,239,230,0.1); font-size: 0.88rem; color: var(--cream-dim); }
+.obsum li b { color: var(--cream); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.obsum li.is-total b, .obsum li.is-total span { color: var(--gold); font-weight: 800; }
+
+/* ---------- the Equity acknowledgement, on its own screen ---------- */
+.oback { margin-top: 1rem; border-radius: 16px; padding: 1.1rem;
+  background: rgba(255,255,255,0.045); box-shadow: inset 0 0 0 1px rgba(244,239,230,0.14); }
+.oback p { color: var(--cream-dim); line-height: 1.7; font-size: 0.9rem; }
+.oback p + p { margin-top: 0.7rem; }
+.oback b { color: var(--cream); }
+.oback__terms { list-style: none; padding: 0; margin: 1rem 0 0; }
+.oback__terms li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(244,239,230,0.1); font-size: 0.85rem; color: var(--cream-dim); }
+.oback__terms li b { color: var(--cream); text-align: right; }
+.obcheck { display: flex; gap: 0.7rem; align-items: flex-start; margin-top: 1.1rem;
+  cursor: pointer; }
+.obcheck input { flex: none; width: 1.3rem; height: 1.3rem; margin-top: 0.1rem; accent-color: #e5383b; }
+.obcheck span { color: var(--cream); font-size: 0.9rem; line-height: 1.6; }
+
+/* ---------- review ---------- */
+.rev { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.5rem; }
+.rev li { border: 1px solid rgba(244,239,230,0.12); border-radius: 12px; padding: 0.75rem 0.9rem;
+  background: rgba(10,8,7,0.5); color: var(--cream-dim); font-size: 0.86rem; line-height: 1.55;
+  display: flex; gap: 0.8rem; justify-content: space-between; align-items: baseline; }
+.rev li b { color: var(--cream); flex: none; }
+.rev__edit { background: none; border: 0; cursor: pointer; color: var(--gold);
+  font-size: 0.74rem; font-family: inherit; text-decoration: underline; padding: 0; flex: none; }
+
+/* ---------- the workspace completion state (after Productboard) ---------- */
+.ws__hi { font-family: var(--sig); text-transform: uppercase; line-height: 0.92;
+  font-size: clamp(2.1rem, 9vw, 3.1rem); color: var(--cream); }
+.ws__hi em { font-style: normal; color: var(--gold); }
+.ws__card { margin-top: 1.2rem; border-radius: 18px; padding: 1.2rem;
+  background: rgba(255,255,255,0.045); box-shadow: inset 0 0 0 1px rgba(244,239,230,0.14); }
+.ws__head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.ws__head h2 { font-size: 0.95rem; color: var(--cream); font-weight: 800; letter-spacing: 0.02em; }
+.ws__count { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--gold); white-space: nowrap; }
+.ws__list { list-style: none; padding: 0; margin: 0.9rem 0 0; counter-reset: ws; }
+.ws__list li { counter-increment: ws; display: flex; gap: 0.75rem; align-items: flex-start;
+  padding: 0.7rem 0; border-bottom: 1px solid rgba(244,239,230,0.1); }
+.ws__list li::before { content: counter(ws); flex: none; width: 1.45rem; height: 1.45rem;
+  border-radius: 50%; display: grid; place-items: center; font-size: 0.7rem; font-weight: 800;
+  color: var(--cream-dim); box-shadow: inset 0 0 0 1px rgba(244,239,230,0.28); }
+.ws__list li.is-done::before { content: "✓"; color: #0b0908; background: var(--gold);
+  box-shadow: none; }
+.ws__list li.is-done .ws__t { text-decoration: line-through; color: rgba(244,239,230,0.45); }
+.ws__t { color: var(--cream); font-size: 0.9rem; font-weight: 700; }
+.ws__d { display: block; margin-top: 0.15rem; color: var(--cream-dim); font-size: 0.78rem;
+  line-height: 1.5; font-weight: 500; }
+.ws__chain { list-style: none; padding: 0; margin: 0.9rem 0 0; }
+.ws__chain li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.55rem 0;
+  border-bottom: 1px solid rgba(244,239,230,0.1); font-size: 0.84rem; color: var(--cream-dim); }
+.ws__chain li b { color: var(--cream); text-align: right; }
+.ws__go { display: inline-block; margin-top: 1.3rem; text-decoration: none; background: #e5383b;
+  color: #fff; font-weight: 800; font-size: 1rem; border-radius: 100px; padding: 1rem 2.1rem; }
+.ws__go:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.ws__alt { display: block; margin-top: 1rem; color: var(--cream-dim); font-size: 0.84rem; }
+
+[hidden] { display: none !important; }
+
+/* the mode marks in the walk. The picker is a full-width row, so unlike
+   the ladder's pill there is room for the mark AND the name, and someone
+   mid-walk is choosing rather than recognising: the words earn their
+   place here. The Equity Uprise mark keeps its navy on its own plate,
+   the same treatment it gets on the ladder. */
+.pick__mark { display: block; height: 1.5rem; width: auto; margin-bottom: 0.5rem; }
+.pick button[data-v="equity"] .pick__mark { height: 1.05rem; padding: 0.32rem 0.55rem;
+  box-sizing: content-box; border-radius: 100px; background: #f4efe6; }
+
+/* ============================================================
+   THE LIGHT COAT
+
+   Same story as offers.css: surfaces built as raised slabs against
+   the cinema, painted with a literal dark colour, holding tokened
+   text that turns to ink at daybreak. And the hairlines that hold
+   their edges are cream — invisible once the ground is cream too.
+   Re-stated here as ink-on-paper so the panels keep their shape.
+   ============================================================ */
+html[data-theme="light"] .obsum {
+  background: linear-gradient(158deg, rgba(26,20,13,0.06), rgba(26,20,13,0.03));
+  box-shadow: inset 0 0 0 1px rgba(26,20,13,0.1); }
+html[data-theme="light"] .obsum li { border-bottom-color: rgba(26,20,13,0.12); }
+
+html[data-theme="light"] .oback {
+  background: rgba(26,20,13,0.04); box-shadow: inset 0 0 0 1px rgba(26,20,13,0.14); }
+html[data-theme="light"] .oback__terms li { border-bottom-color: rgba(26,20,13,0.12); }
+
+html[data-theme="light"] .rev li {
+  border-color: rgba(26,20,13,0.16); background: rgba(26,20,13,0.04); }
+
+html[data-theme="light"] .pick > button {
+  border-color: rgba(26,20,13,0.18); background: rgba(26,20,13,0.035); }
+
+html[data-theme="light"] .ob__segs i { background: rgba(26,20,13,0.16); }
+
+/* a disabled button still has to read as a button, not as a hole */
+html[data-theme="light"] .ob__next[disabled] { background: #ded6c8; color: #6b6355; }

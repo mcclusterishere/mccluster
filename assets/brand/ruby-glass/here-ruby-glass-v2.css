@@ -1,0 +1,43 @@
+:root {
+  --here-ruby-base: url("./here-ruby-glass-v2-basecolor.png");
+  --here-ruby-active-mask: url("./here-ruby-glass-v2-active-mask.png");
+  --here-ruby-emissive-mask: url("./here-ruby-glass-v2-emissive-mask.png");
+  --here-ruby-color: #c1121f;
+}
+
+.here-ruby-skin {
+  position: relative;
+  background-color: #5a0014;
+  background-image: var(--here-ruby-base);
+  background-size: 24rem 24rem;
+}
+
+.here-ruby-skin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--here-ruby-fresnel, .12);
+  background:
+    radial-gradient(circle at var(--here-light-x, 35%) var(--here-light-y, 28%),
+      rgba(255,255,255,.18),
+      transparent 34%);
+  mix-blend-mode: screen;
+}
+
+.here-ruby-skin[data-active="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #e5383b;
+  opacity: var(--here-ruby-energy, .20);
+  -webkit-mask-image: var(--here-ruby-active-mask);
+  mask-image: var(--here-ruby-active-mask);
+  -webkit-mask-size: 24rem 24rem;
+  mask-size: 24rem 24rem;
+  mix-blend-mode: screen;
+}
+
+/* This is an optical active-state skin, not a red theme.
+   Keep use sparse and semantic. */

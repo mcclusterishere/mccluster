@@ -1,0 +1,161 @@
+{
+ "scenes": [
+  {
+   "begin": 0,
+   "src": "assets/video/moneyglitch.mp4",
+   "poster": "assets/frames/moneyglitch_0001.jpg"
+  },
+  {
+   "begin": 9.0,
+   "src": "assets/video/warroom.mp4",
+   "poster": "assets/frames/warroom_0001.jpg"
+  },
+  {
+   "begin": 18.04,
+   "src": "assets/video/landgrab.mp4",
+   "poster": "assets/frames/landgrab_0001.jpg"
+  },
+  {
+   "begin": 24.93,
+   "flip": [
+    "assets/img/rally/rally-01.jpg",
+    "assets/img/rally/rally-02.jpg",
+    "assets/img/rally/rally-03.jpg",
+    "assets/img/rally/rally-04.jpg",
+    "assets/img/rally/rally-05.jpg"
+   ],
+   "every": 0.55
+  },
+  {
+   "begin": 27.18,
+   "src": "assets/video/equity.mp4",
+   "poster": "assets/frames/equity_0001.jpg"
+  },
+  {
+   "begin": 37.01,
+   "src": "assets/video/church.mp4",
+   "poster": "assets/frames/church_0001.jpg"
+  },
+  {
+   "begin": 41.71,
+   "src": "assets/video/citations.mp4",
+   "poster": "assets/frames/citations_0001.jpg"
+  },
+  {
+   "begin": 46.49,
+   "src": "assets/video/moneyglitch.mp4",
+   "poster": "assets/frames/moneyglitch_0001.jpg"
+  },
+  {
+   "begin": 53.88,
+   "src": "assets/video/ocho1.mp4",
+   "poster": "assets/frames/ocho1_0001.jpg"
+  },
+  {
+   "begin": 62.65,
+   "src": "assets/video/docket.mp4",
+   "poster": "assets/frames/docket_0001.jpg"
+  },
+  {
+   "begin": 67.65,
+   "src": "assets/video/ocho2.mp4",
+   "poster": "assets/frames/ocho2_0001.jpg"
+  },
+  {
+   "begin": 71.86,
+   "src": "assets/video/ocho3.mp4",
+   "poster": "assets/frames/ocho3_0001.jpg"
+  },
+  {
+   "begin": 78.5,
+   "src": "assets/video/church.mp4",
+   "poster": "assets/frames/church_0001.jpg"
+  },
+  {
+   "begin": 83.05,
+   "src": "assets/video/dovedrop.mp4",
+   "poster": "assets/frames/dovedrop_0001.jpg"
+  },
+  {
+   "begin": 86.06,
+   "src": "assets/video/equity.mp4",
+   "poster": "assets/frames/equity_0001.jpg"
+  },
+  {
+   "begin": 95.11,
+   "src": "assets/video/landgrab.mp4",
+   "poster": "assets/frames/landgrab_0001.jpg"
+  },
+  {
+   "begin": 103.9,
+   "src": "assets/video/moneyglitch.mp4",
+   "poster": "assets/frames/moneyglitch_0001.jpg"
+  },
+  {
+   "begin": 113.61,
+   "src": "assets/video/keynote.mp4",
+   "poster": "assets/frames/keynote_0001.jpg"
+  },
+  {
+   "begin": 118.71,
+   "src": "assets/video/citations.mp4",
+   "poster": "assets/frames/citations_0001.jpg"
+  },
+  {
+   "begin": 123.42,
+   "src": "assets/video/equity.mp4",
+   "poster": "assets/frames/equity_0001.jpg"
+  },
+  {
+   "begin": 133.18,
+   "src": "assets/video/street.mp4",
+   "poster": "assets/frames/street_0001.jpg"
+  },
+  {
+   "begin": 142.72,
+   "src": "assets/video/uisurvey.mp4",
+   "poster": "assets/frames/uisurvey_0001.jpg"
+  },
+  {
+   "begin": 152.07,
+   "src": "assets/video/warroom.mp4",
+   "poster": "assets/frames/warroom_0001.jpg"
+  },
+  {
+   "begin": 157.04,
+   "flip": [
+    "assets/img/rally/rally-01.jpg",
+    "assets/img/rally/rally-02.jpg",
+    "assets/img/rally/rally-03.jpg",
+    "assets/img/rally/rally-04.jpg",
+    "assets/img/rally/rally-05.jpg"
+   ],
+   "every": 0.55
+  },
+  {
+   "begin": 165.73,
+   "src": "assets/video/doveflight.mp4",
+   "poster": "assets/frames/doveflight_0001.jpg"
+  },
+  {
+   "begin": 171.6,
+   "src": "assets/video/landgrab.mp4",
+   "poster": "assets/frames/landgrab_0001.jpg"
+  },
+  {
+   "begin": 181.13,
+   "src": "assets/video/moneyglitch.mp4",
+   "poster": "assets/frames/moneyglitch_0001.jpg"
+  },
+  {
+   "begin": 190.37,
+   "src": "assets/video/church.mp4",
+   "poster": "assets/frames/church_0001.jpg"
+  },
+  {
+   "begin": 199.98,
+   "src": "assets/video/equity.mp4",
+   "poster": "assets/frames/equity_0001.jpg"
+  }
+ ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "prim3.site0.mobility-floorplan-manifest.v1",
+  "plan": "PRIM3_Site0_B1_MOBILITY_FLOORPLAN.svg",
+  "level": "B1",
+  "status": "CANONICAL_CONCEPT_PLAN",
+  "source_contract": "PRIM3_Site0_CANONICAL_ARCHITECTURE_v03.json",
+  "source_master": "PRIM3_Site0_Master_Facility_v03.glb",
+  "conceptual_footprint_m": {
+    "east_west": 1268,
+    "north_south": 824
+  },
+  "orientation": {
+    "north": "+Z",
+    "south": "-Z",
+    "east": "+X",
+    "west": "-X"
+  },
+  "mobility_geometry_nodes": [
+    "B1_MOBILITY_CANYON_TRANSIT_GALLERY",
+    "B1_MOBILITY_OBSERVATION_BRIDGE",
+    "V1_B1_HEAVY_LIFT_PLATFORM",
+    "V2_B1_HEAVY_LIFT_PLATFORM",
+    "R1_ARMORED_DRIVE_RAMP_B2_B1",
+    "R2_ARMORED_DRIVE_RAMP_B2_B1"
+  ],
+  "route_logic": "R1/R2 carry tanks and heavy vehicles B3-B2-B1-L1-L2; V1/V2 carry aircraft and oversized loads from B2 through L3 with controlled intermediate stops.",
+  "life_safety_note": "Vehicle ramps and heavy lifts do not replace the four protected A-D life-safety stair cores.",
+  "sha256": "d2e2428459571c9122c923331df87026fda1d6c9232388f21e97d499b2385554",
+  "bytes": 9178
+}

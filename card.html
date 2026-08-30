@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Matthew McCluster · tap card</title>
+  <meta name="description" content="Matthew McCluster, Creative Director and founder of McCluster Corp. Save the contact, see the work, book the job.">
+  <link rel="canonical" href="https://matthew.mccluster.org/card.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="profile">
+  <meta property="og:title" content="Matthew McCluster · Creative Director &amp; Founder">
+  <meta property="og:description" content="Save the contact, see the work, book the job.">
+  <meta property="og:url" content="https://matthew.mccluster.org/card.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
+  <link rel="preload" href="assets/fonts/manrope-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="data/card.json" as="fetch" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script defer src="js/knower.js?v=__STAMP__"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+
+    /* A tap card is read standing up, one-handed, by someone who just met
+       you. Everything is thumb-sized and the first screen answers "who is
+       this and how do I keep them". */
+    .tc { max-width: 27rem; margin: 0 auto; padding: clamp(1.6rem, 5vh, 3rem) clamp(1.1rem, 5vw, 1.6rem) 8rem;
+      font-family: var(--ui); color: var(--cream); }
+
+    .tc__plate { position: relative; border-radius: 26px; overflow: hidden; padding: 1.8rem 1.4rem 1.5rem;
+      text-align: center; background: linear-gradient(180deg, rgba(229,56,59,0.14), rgba(11,9,8,0) 62%), #0d0a08;
+      box-shadow: inset 0 0 0 1px var(--edge), inset 0 1px 0 rgba(255,255,255,0.16), 0 26px 60px -28px rgba(0,0,0,0.95); }
+    .tc__face { width: 6.4rem; height: 6.4rem; margin: 0 auto 1rem; border-radius: 50%; display: grid;
+      place-items: center; background: #0a0807; overflow: hidden;
+      box-shadow: 0 0 0 2px var(--ruby-hot), 0 0 0 6px rgba(229,56,59,0.16), 0 14px 30px -14px rgba(0,0,0,0.9); }
+    .tc__face img { width: 100%; height: 100%; object-fit: cover; }
+    .tc__face img.mark { width: 58%; height: auto; object-fit: contain; }
+    .tc__name { font-family: var(--sig); text-transform: uppercase; line-height: 0.86;
+      font-size: clamp(2.1rem, 10vw, 2.9rem); margin: 0 0 0.5rem; }
+    .tc__title { font-weight: 800; font-size: 0.86rem; color: #fff; margin: 0; }
+    .tc__org { font-weight: 800; font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--ruby-hot); margin: 0.35rem 0 0; }
+    .tc__line { font-weight: 600; font-size: 0.78rem; color: var(--cream-dim); margin: 0.85rem 0 0; line-height: 1.55; }
+    .tc__where { font-weight: 700; font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--cream-dim); margin: 0.4rem 0 0; }
+
+    /* the one button that matters */
+    .tc__save { display: flex; align-items: center; justify-content: center; gap: 0.55rem; width: 100%;
+      margin: 1.2rem 0 0.6rem; padding: 1.05rem 1rem; border: 0; border-radius: 16px; cursor: pointer;
+      touch-action: manipulation; font-family: var(--ui); font-weight: 800; font-size: 1rem; color: #fff;
+      text-decoration: none; background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,0.55),
+      0 16px 34px -16px rgba(229,56,59,0.8); }
+    .tc__save svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 2.1;
+      stroke-linecap: round; stroke-linejoin: round; }
+    .tc__saveNote { font-weight: 600; font-size: 0.68rem; color: var(--cream-dim); text-align: center; margin: 0 0 1.6rem; }
+
+    .tc h2 { font-weight: 800; font-size: 0.64rem; letter-spacing: 0.24em; text-transform: uppercase;
+      color: var(--cream-dim); margin: 1.9rem 0 0.75rem; }
+
+    .tc__reach { display: grid; grid-template-columns: repeat(auto-fit, minmax(6.4rem, 1fr)); gap: 0.55rem; }
+    .tc__reach a { display: grid; gap: 0.3rem; place-items: center; padding: 0.9rem 0.5rem; border-radius: 14px;
+      text-decoration: none; color: var(--cream); text-align: center;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge), inset 0 1px 0 rgba(255,255,255,0.13); }
+    .tc__reach b { font-weight: 800; font-size: 0.76rem; }
+    .tc__reach small { display: block; font-weight: 600; font-size: 0.6rem; color: var(--cream-dim);
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tc__reach svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: var(--ruby-hot); stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round; }
+
+    .tc__doors { display: grid; gap: 0.45rem; }
+    .tc__doors a { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.6rem;
+      padding: 0.85rem 1rem; border-radius: 14px; text-decoration: none; color: var(--cream);
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .tc__doors b { display: block; font-weight: 800; font-size: 0.86rem; }
+    .tc__doors small { display: block; font-weight: 600; font-size: 0.66rem; color: var(--cream-dim); margin-top: 0.1rem; }
+    .tc__doors .go { color: var(--ruby-hot); font-weight: 800; }
+
+    /* the swap: a card you can't hand back is half a card */
+    .tc__swap { border-radius: 18px; padding: 1.1rem; background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .tc__swap p { font-weight: 600; font-size: 0.78rem; color: var(--cream-dim); margin: 0 0 0.85rem; line-height: 1.55; }
+    .tc__swap input, .tc__swap textarea { width: 100%; margin-bottom: 0.5rem; padding: 0.85rem 0.9rem;
+      border-radius: 12px; border: 0; font-family: var(--ui); font-weight: 600; font-size: max(16px, 0.92rem);
+      color: var(--cream); background: rgba(0,0,0,0.42); box-shadow: inset 0 0 0 1px var(--edge); }
+    .tc__swap textarea { resize: vertical; min-height: 4.4rem; }
+    .tc__swap input::placeholder, .tc__swap textarea::placeholder { color: rgba(244,239,230,0.55); }
+    .tc__swap button { width: 100%; padding: 0.95rem; border: 0; border-radius: 12px; cursor: pointer;
+      touch-action: manipulation; font-family: var(--ui); font-weight: 800; font-size: 0.9rem; color: #fff;
+      background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,0.5); }
+    .tc__swap button[disabled] { opacity: 0.6; cursor: default; }
+    .tc__err { color: #ff8a8c; font-weight: 700; font-size: 0.74rem; margin: 0.5rem 0 0; }
+    .tc__ok { font-weight: 800; font-size: 0.9rem; color: var(--cream); margin: 0; }
+    .tc__ok small { display: block; font-weight: 600; font-size: 0.74rem; color: var(--cream-dim); margin-top: 0.35rem; line-height: 1.55; }
+
+    /* pass it on */
+    .tc__pass { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .tc__pass button { padding: 0.9rem 0.6rem; border: 0; border-radius: 13px; cursor: pointer;
+      touch-action: manipulation; font-family: var(--ui); font-weight: 800; font-size: 0.78rem; color: var(--cream);
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .tc__qr { margin-top: 0.6rem; border-radius: 16px; padding: 1.1rem; background: #f4efe6; display: none; }
+    .tc__qr.on { display: block; }
+    .tc__qr img { display: block; width: 100%; max-width: 15rem; height: auto; margin: 0 auto; }
+    .tc__qr p { font-weight: 700; font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: #1a140d; text-align: center; margin: 0.8rem 0 0; }
+
+    .tc__foot { font-weight: 600; font-size: 0.68rem; color: var(--cream-dim); text-align: center;
+      margin: 2rem 0 0; line-height: 1.6; }
+    .tc__foot a { color: var(--cream); }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Matthew McCluster",
+    "jobTitle": "Creative Director & Founder",
+    "email": "matthew@mccluster.org",
+    "url": "https://matthew.mccluster.org/card.html",
+    "worksFor": { "@type": "Organization", "name": "McCluster Corp" },
+    "sameAs": [
+      "https://instagram.com/McClusterishere",
+      "https://youtube.com/@McClusterishere",
+      "https://tiktok.com/@McClusterishere"
+    ]
+  }
+  </script>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body data-masthead="minimal">
+  <main class="tc" id="tc">
+    <div class="tc__plate">
+      <div class="tc__face"><img class="mark" src="assets/img/m-mark.png" alt=""></div>
+      <h1 class="tc__name">Matthew McCluster</h1>
+      <p class="tc__title">Creative Director &amp; Founder</p>
+    </div>
+  </main>
+
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/crm.js?v=__STAMP__"></script>
+  <script src="js/signals.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var track = function (n, p) { if (window.MCC_TRACK) window.MCC_TRACK(n, p || {}); };
+    var CARD = null;
+
+    /* How the card got opened, so the desk can tell a tap from a scan from a
+       link someone forwarded. ?t=nfc rides on the tag, ?t=qr on the print. */
+    var HOW = (new URLSearchParams(location.search).get("t") || "link").toLowerCase();
+    if (["nfc", "qr", "link", "air"].indexOf(HOW) === -1) HOW = "link";
+
+    var ICON = {
+      save: '<svg viewBox="0 0 24 24"><path d="M12 3v11"/><path d="m7.5 10.5 4.5 4 4.5-4"/><path d="M4 17v2.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V17"/></svg>',
+      email: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.8 7 8.2 6 8.2-6"/></svg>',
+      tel: '<svg viewBox="0 0 24 24"><path d="M6.5 3h3l1.6 4-2 1.4a12 12 0 0 0 5.5 5.5l1.4-2 4 1.6v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.2 2 2 0 0 1 6.5 3Z"/></svg>',
+      sms: '<svg viewBox="0 0 24 24"><path d="M20 15.5a2.5 2.5 0 0 1-2.5 2.5H9l-4 3v-3H6.5A2.5 2.5 0 0 1 4 15.5v-8A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5Z"/></svg>',
+      site: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5a17 17 0 0 1 0 17 17 17 0 0 1 0-17Z"/></svg>',
+      instagram: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r="1.1" fill="currentColor" stroke="none"/></svg>',
+      youtube: '<svg viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="m10.5 9.5 5 2.5-5 2.5Z"/></svg>',
+      tiktok: '<svg viewBox="0 0 24 24"><path d="M14 3.5v10.2a3.6 3.6 0 1 1-3-3.55"/><path d="M14 6.2a5 5 0 0 0 4.6 3"/></svg>',
+    };
+
+    function reachHTML() {
+      return (CARD.reach || []).filter(function (r) { return r.href; }).map(function (r) {
+        return '<a href="' + esc(r.href) + '" data-reach="' + esc(r.id) + '">' +
+          (ICON[r.id] || "") + "<b>" + esc(r.label) + "</b><small>" + esc(r.value) + "</small></a>";
+      }).join("");
+    }
+    function socialHTML() {
+      return (CARD.social || []).map(function (s) {
+        return '<a href="' + esc(s.href) + '" target="_blank" rel="noopener" data-reach="' + esc(s.id) + '">' +
+          (ICON[s.id] || "") + "<b>" + esc(s.label) + "</b><small>" + esc(s.handle) + "</small></a>";
+      }).join("");
+    }
+    function doorsHTML() {
+      return (CARD.doors || []).map(function (d) {
+        return '<a href="' + esc(d.href) + '"><span><b>' + esc(d.label) + "</b><small>" + esc(d.sub) +
+          '</small></span><span class="go">&#8594;</span></a>';
+      }).join("");
+    }
+
+    function paint() {
+      var p = CARD.person || {};
+      var face = p.photo
+        ? '<img src="' + esc(p.photo) + '" alt="' + esc(p.full) + '">'
+        : '<img class="mark" src="assets/img/m-mark.png" alt="">';
+
+      document.getElementById("tc").innerHTML =
+        '<div class="tc__plate">' +
+          '<div class="tc__face">' + face + "</div>" +
+          '<h1 class="tc__name">' + esc(p.full) + "</h1>" +
+          '<p class="tc__title">' + esc(p.title) + "</p>" +
+          (p.org ? '<p class="tc__org">' + esc(p.org) + "</p>" : "") +
+          (p.line ? '<p class="tc__line">' + esc(p.line) + "</p>" : "") +
+          (p.where ? '<p class="tc__where">' + esc(p.where) + "</p>" : "") +
+        "</div>" +
+
+        '<a class="tc__save" href="mccluster.vcf" download="' + esc(p.full) + '.vcf" id="tcSave">' +
+          ICON.save + "Save to my contacts</a>" +
+        '<p class="tc__saveNote"><span data-device-phrase="Opens %d’s contact card">Opens your phone’s contact card</span>. Nothing gets installed.</p>' +
+
+        "<h2>Reach me</h2><div class=\"tc__reach\">" + reachHTML() + "</div>" +
+        "<h2>Where I post</h2><div class=\"tc__reach\">" + socialHTML() + "</div>" +
+        "<h2>The doors</h2><div class=\"tc__doors\">" + doorsHTML() + "</div>" +
+
+        ((CARD.swap && CARD.swap.on) ?
+          '<h2>Swap details</h2><div class="tc__swap" id="tcSwap">' +
+            "<p>" + esc(CARD.swap.lede) + "</p>" +
+            '<input name="name" placeholder="Your name" autocomplete="name" maxlength="80">' +
+            '<input name="email" type="email" placeholder="Email" autocomplete="email" maxlength="120">' +
+            '<input name="phone" type="tel" placeholder="Phone (optional)" autocomplete="tel" maxlength="40">' +
+            '<textarea name="note" placeholder="Where we met, what you need" maxlength="600"></textarea>' +
+            "<button type=\"button\" data-swap>Send it over &#8594;</button>" +
+            '<p class="tc__err" hidden></p>' +
+          "</div>" : "") +
+
+        "<h2>Pass it on</h2>" +
+        '<div class="tc__pass">' +
+          '<button type="button" data-share>Share this card</button>' +
+          '<button type="button" data-qr>Show the code</button>' +
+        "</div>" +
+        '<div class="tc__qr" id="tcQR">' +
+          '<img src="assets/nfc/card-qr.svg" alt="QR code linking to this card">' +
+          "<p>" + esc((CARD.url || "").replace(/^https?:\/\//, "")) + "</p>" +
+        "</div>" +
+
+        '<p class="tc__foot">Tapped a card, scanned a code, or got sent a link: ' +
+        "it&rsquo;s the same card, and it&rsquo;s always current.<br>" +
+        '<a href="index.html">matthew.mccluster.org</a></p>';
+    }
+
+    document.addEventListener("click", function (e) {
+      var t = e.target;
+      var hit = function (sel) { return t.closest && t.closest(sel); };
+
+      if (hit("#tcSave")) { track("card_save", { how: HOW }); return; }
+
+      var r = hit("[data-reach]");
+      if (r) { track("card_reach", { to: r.getAttribute("data-reach"), how: HOW }); return; }
+
+      if (hit("[data-qr]")) {
+        var q = document.getElementById("tcQR");
+        q.classList.toggle("on");
+        if (q.classList.contains("on")) { q.scrollIntoView({ behavior: "smooth", block: "center" }); track("card_qr", {}); }
+        return;
+      }
+
+      if (hit("[data-share]")) {
+        var btn = hit("[data-share]");
+        var url = CARD.url || location.href;
+        var data = { title: (CARD.person || {}).full, text: "My card. Save it, it stays current.", url: url };
+        if (navigator.share) {
+          navigator.share(data).then(function () { track("card_share", { via: "native" }); }).catch(function () {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(function () {
+            btn.textContent = "Link copied";
+            setTimeout(function () { btn.textContent = "Share this card"; }, 1800);
+            track("card_share", { via: "clipboard" });
+          }).catch(function () { btn.textContent = url; });
+        } else {
+          btn.textContent = url;
+        }
+        return;
+      }
+
+      var s = hit("[data-swap]");
+      if (s) {
+        var box = document.getElementById("tcSwap");
+        var f = function (n) { var i = box.querySelector('[name="' + n + '"]'); return i ? i.value.trim() : ""; };
+        var name = f("name"), email = f("email"), phone = f("phone"), note = f("note");
+        var err = box.querySelector(".tc__err");
+        if (!name || !/.+@.+\..+/.test(email)) {
+          err.textContent = "A name and a real email. That's all I need to write back.";
+          err.hidden = false; return;
+        }
+        s.disabled = true; s.textContent = "Sending…";
+        window.MCC_CRM.send({
+          name: name, email: email, want: "Card swap",
+          note: "TAP CARD · " + HOW.toUpperCase() + (phone ? " · " + phone : "") + (note ? " · " + note : ""),
+          campaign: "tap-card",
+        }).then(function () {
+          track("card_swap", { how: HOW });
+          box.innerHTML = '<p class="tc__ok">Got it, you&rsquo;re on the desk.' +
+            "<small>I&rsquo;ll come back to you from matthew@mccluster.org. Save mine while you&rsquo;re here " +
+            "so it&rsquo;s a two-way trade.</small></p>";
+        }).catch(function () {
+          s.disabled = false; s.textContent = "Send it over →";
+          err.textContent = "That didn’t go through. Try again in a second.";
+          err.hidden = false;
+        });
+        return;
+      }
+    });
+
+    fetch("data/card.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+      CARD = j;
+      paint();
+      track("card_view", { how: HOW });
+    }).catch(function () {
+      /* The plate in the HTML is the floor: if the JSON never lands, whoever
+         tapped still gets a name and a way to keep it. */
+      document.getElementById("tc").insertAdjacentHTML("beforeend",
+        '<a class="tc__save" href="mccluster.vcf" download>Save to my contacts</a>' +
+        '<p class="tc__saveNote"><a href="mailto:matthew@mccluster.org" style="color:var(--cream)">matthew@mccluster.org</a></p>');
+    });
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

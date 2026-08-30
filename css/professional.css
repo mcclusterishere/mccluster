@@ -1,0 +1,101 @@
+/* ============================================================
+   THE PROFESSIONAL COAT.
+
+   matthew-mccluster.html has two audiences now and they want opposite
+   things. To a visitor arriving from the music or the Closet, it is a
+   room in a creative house and it should look like one. To a hiring
+   manager who clicked the link on a résumé — which is what it is for
+   today — the house is noise, and some of it is worse than noise.
+
+   This sheet is the second reading. It changes tone, never facts: every
+   credential, identifier, date and link on the page is untouched, and
+   every profile link stays in the DOM because each one corroborates a
+   sameAs claim in the JSON-LD. What changes is what a stranger in a
+   hiring seat notices first.
+
+   Loaded only by that page. Nothing else in the house sees it.
+   ============================================================ */
+
+/* ---------- 1. THE SUMMARY WAS SET IN A POSTER FACE ----------
+   css/style.css:738 puts .bio__lede in the display face, uppercase, in
+   ruby. On an album page that is right. Here it means the first
+   paragraph a hiring manager reads — the one carrying five years of
+   infrastructure work — arrives as condensed all-caps in red, which
+   reads as a flyer rather than a professional summary. Long uppercase
+   text is also measurably slower to read: word shapes disappear.
+
+   Sentence case, body face, normal colour. This single rule does more
+   for how the page lands than everything below it. */
+.bio .bio__lede {
+  font-family: var(--body);
+  font-size: clamp(1rem, 1.15vw, 1.09rem);
+  line-height: 1.72;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--cream-dim);
+  max-width: 68ch;
+}
+.bio .bio__lede b { color: var(--cream); font-weight: 700; }
+
+/* ---------- 2. MEASURE ----------
+   Long lines are hard to read and look unconsidered. Cap the column at
+   a comfortable measure rather than letting text run the full desktop. */
+.bio__facts li, .tl .dt li, .bio p { max-width: 78ch; }
+
+/* ---------- 3. THE ROLE LINE CARRIES THE PITCH ---------- */
+.bio__role {
+  font-size: clamp(1rem, 1.2vw, 1.12rem);
+  color: var(--cream);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.bio__k { color: var(--cream-dim); }
+
+/* ---------- 4. SECTION HEADS, QUIETER ----------
+   The display face stays — it is the house's voice and the name at the
+   top should keep it — but section heads drop to a size that organises
+   a document instead of shouting across a poster. */
+.bio h2 {
+  font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  letter-spacing: 0.14em;
+  color: var(--cream);
+  border-bottom: 1px solid var(--edge);
+  padding-bottom: 0.5rem;
+  margin-top: 2.6rem;
+}
+
+/* ---------- 5. IDENTIFIERS READ AS A RECORD, NOT AS PRICES ----------
+   The values were set in the ruby/gold accent, which on a dark card
+   reads like a figure being quoted. A verified identifier is evidence;
+   it should look like evidence. */
+.id a, .id .v { color: var(--cream) !important; font-weight: 600; }
+.id a { border-bottom-color: var(--edge) !important; }
+
+/* ---------- 6. PROFILES: WORK FIRST ----------
+   Every link stays — each corroborates a sameAs in the JSON-LD, and
+   removing any of them weakens the entity claim rather than tidying it.
+   They are reordered in the markup so the professional ones lead, and
+   the rest are set quieter here so a hiring manager's eye lands on
+   LinkedIn, ORCID and ISNI first. */
+.find a[href*="instagram"], .find a[href*="tiktok"], .find a[href*="youtube"] {
+  opacity: 0.62;
+  font-size: 0.84rem;
+}
+.find a[href*="instagram"]:hover, .find a[href*="tiktok"]:hover,
+.find a[href*="youtube"]:hover { opacity: 1; }
+
+/* ---------- 7. THE ACTIONS ----------
+   "Talk to me about a role" is the one that matters on this page, so it
+   keeps the solid treatment and the others step back. */
+.bio__cta .cool { opacity: 0.86; }
+.bio__cta .cool:hover { opacity: 1; }
+
+/* ---------- 8. NO TAB BAR ON THIS PAGE ----------
+   The bar is removed in the markup with data-no-appbar, not here — a
+   nav hidden by CSS still ships to a screen reader and still tabs into
+   focus. This only reclaims the space the bar's padding reserved. */
+body:not(.has-appbar) { padding-bottom: 3rem; }
+
+@media (max-width: 40rem) {
+  .bio .bio__lede { font-size: 1rem; }
+}

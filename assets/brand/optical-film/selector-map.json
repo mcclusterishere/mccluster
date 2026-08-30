@@ -1,0 +1,50 @@
+{
+  "source": "McCluster-Portfolio current HERE interface",
+  "selectors": [
+    {
+      "selector": "hero orbit/video surface",
+      "use": "subtle lens/reflection layer; preserve hero composition and orbit behavior",
+      "intensity": "low"
+    },
+    {
+      "selector": "360 studio / loadout media",
+      "use": "edge refraction + tiny environment reflection only",
+      "intensity": "very-low"
+    },
+    {
+      "selector": "Vaunt brand-collab media scenes",
+      "use": "cinematic optical surface; artwork remains dominant",
+      "intensity": "low"
+    },
+    {
+      "selector": ".sp__bill media/artwork",
+      "use": "film layer over billboard art without tinting or restructuring it",
+      "intensity": "low"
+    },
+    {
+      "selector": ".spc__art img / video",
+      "use": "very subtle highlight/reflection response",
+      "intensity": "very-low"
+    },
+    {
+      "selector": "album art / cover imagery",
+      "use": "tiny lens coating response and edge depth",
+      "intensity": "low"
+    },
+    {
+      "selector": "project thumbnails / portfolio photography",
+      "use": "optional optical finish; no new card geometry",
+      "intensity": "very-low"
+    },
+    {
+      "selector": "fullscreen/now-playing artwork",
+      "use": "reflection and optical depth only; protect image fidelity",
+      "intensity": "low"
+    },
+    {
+      "selector": "existing 360/VR entry surfaces",
+      "use": "enhance transition into immersive media without inventing new portal UI",
+      "intensity": "low"
+    }
+  ]
+}

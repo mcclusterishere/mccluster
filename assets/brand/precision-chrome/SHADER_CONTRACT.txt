@@ -1,0 +1,19 @@
+Pseudo-shader contract:
+
+chrome = PBR(
+  baseColor=sample(baseColor),
+  normal=sample(normal),
+  metalness=sample(metallic),
+  roughness=sample(roughness)
+)
+
+chrome += environmentReflection * sample(grazingLightMask) * viewAngleResponse
+chrome += tinySpecularGlint * sample(edgeGlintMask)
+chrome += rubyEnvironment * sample(rubyReflectionMask) * rubyReflectionIntensity
+
+Rules:
+- environment lighting is the primary source of chrome realism
+- never fake chrome with a permanently bright silver gradient
+- use on narrow geometry only
+- keep ruby as reflected color, never emission
+- disable expensive dynamic response where the detail is too small to perceive

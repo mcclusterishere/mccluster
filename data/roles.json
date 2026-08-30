@@ -1,0 +1,101 @@
+{
+  "note": "The career timeline. Each role gets its own page at role.html?role=<slug>. Credentials arrays are staged empty. Drop in { label, url } once the live credential links are ready and they render automatically.",
+  "roles": [
+    {
+      "slug": "mccluster-corp",
+      "dates": "2025 to Present",
+      "title": "Founder / Digital Program Operator",
+      "org": "McCluster Corp · Equity Uprise",
+      "location": "Connecticut & Georgia",
+      "summary": "Built and runs the digital platform behind a nonprofit cultural, educational, and community-development initiative: the sites, the socials, the campaigns, the movement.",
+      "bullets": [
+        "Built and managed the digital platforms for a nonprofit cultural, educational, and community-development initiative.",
+        "Created outreach content supporting youth engagement, creative programming, civic leadership, and public communication.",
+        "Managed website, social media, digital identity, content, and audience-engagement workflows.",
+        "Developed public-facing messaging for campaigns, community initiatives, recognition materials, and stakeholder communication.",
+        "Organized digital assets, program information, contact lists, and outreach materials.",
+        "Used media, storytelling, and digital platforms to drive community engagement and public visibility."
+      ],
+      "credentials": []
+    },
+    {
+      "slug": "whip-equipped",
+      "dates": "2024 to Present",
+      "title": "Owner-Operator",
+      "org": "Whip Equipped LLC",
+      "location": "Acworth, GA",
+      "summary": "Owns and operates a parts-licensed automotive dealership organized in Acworth, Georgia, and turned the business into a story, producing a mini web series based on it.",
+      "bullets": [
+        "Founded and organized Whip Equipped LLC as a parts-licensed automotive dealership out of Acworth, Georgia in 2024.",
+        "Runs day-to-day operations: sourcing, sales, parts licensing, and compliance.",
+        "Producing a mini web series built around the dealership, scored by the McCluster catalogue (\"Dealer Plates\").",
+        "Bridges the business and the brand: retail operations on one side, media production on the other."
+      ],
+      "credentials": []
+    },
+    {
+      "slug": "freedom",
+      "dates": "January 2021 to 2026",
+      "title": "Digital Marketing & Outreach Platform Manager",
+      "org": "F.R.E.E.D.O.M. Inc.",
+      "location": "Bridgeport, CT",
+      "summary": "Ran the digital front for a community organization: social channels, outreach workflows, weekly live broadcasts, and the media production behind them.",
+      "bullets": [
+        "Managed digital platforms used for outreach, marketing, customer communication, and public engagement.",
+        "Created and maintained social media workflows across Facebook, Instagram, YouTube, LinkedIn, and other channels.",
+        "Supported community outreach by organizing content, announcements, event updates, and public-facing messages.",
+        "Managed customer and community contact workflows for follow-up, program updates, and general communication.",
+        "Coordinated live streaming, recording, and media production support for public programming and weekly broadcasts.",
+        "Improved digital visibility, audience engagement, and communication between the organization and the community.",
+        "Supported staff with platform access, content posting, technical issues, and digital workflow needs.",
+        "Moved traditional outreach and communication processes into modern digital systems."
+      ],
+      "credentials": []
+    },
+    {
+      "slug": "ipc-systems",
+      "dates": "April 2021 to June 2023",
+      "title": "Infrastructure Engineer",
+      "org": "IPC Systems, Inc.",
+      "location": "Fairfield, CT",
+      "summary": "Kept enterprise technology systems reliable under business, technical, and trading-floor pressure.",
+      "bullets": [
+        "Supported enterprise technology systems used by business, technical, and operations teams.",
+        "Troubleshot access, connectivity, platform, and system issues affecting users.",
+        "Assisted with documentation, system coordination, and workflow improvement.",
+        "Worked with cross-functional teams to support reliable digital operations.",
+        "Built experience supporting business systems that demanded strong communication, organization, and technical follow-through."
+      ],
+      "credentials": [
+        { "label": "Infrastructure Associate · Cover Letter", "url": "" }
+      ]
+    },
+    {
+      "slug": "robert-half",
+      "dates": "January 2018 to January 2021",
+      "title": "Desktop Support / IT Support Technician",
+      "org": "Robert Half",
+      "location": "Norwalk, CT",
+      "summary": "The tutorial levels: customer-facing technical support where every user got saved and every ticket got closed.",
+      "bullets": [
+        "Provided customer-facing technical support for hardware, software, desktop, laptop, and business-application issues.",
+        "Helped users with login problems, platform access, software issues, device troubleshooting, and connectivity.",
+        "Communicated technical information clearly to non-technical users.",
+        "Supported technology rollouts, system setup, workstation support, and user training.",
+        "Built a foundation in customer service, troubleshooting, documentation, and user support."
+      ],
+      "credentials": []
+    }
+  ],
+  "certifications": [
+    { "label": "State of Georgia Proclamation · Georgia Youth Innovation & Civic Leadership Week (Gov. Brian P. Kemp)", "date": "Dec 12 to 18, 2025", "url": "assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf" },
+    { "label": "City of Bridgeport Proclamation · Equity Uprise Human Rights Day (Mayor Joseph P. Ganim)", "date": "Dec 10, 2025", "url": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf" },
+    { "label": "State of Connecticut Public Charity Registration · McCluster Corp (CHR.0069693)", "date": "Oct 28, 2025", "url": "assets/credentials/mccluster-corp-public-charity-registration.pdf" },
+    { "label": "IT Bootcamp · CT State Community College (Housatonic)", "date": "Sep 20, 2023", "url": "assets/credentials/ct-state-housatonic-it-bootcamp.pdf" },
+    { "label": "CompTIA ITF+ Certification", "date": "Dec 1, 2022", "url": "assets/credentials/comptia-itf-plus.pdf" },
+    { "label": "DCI Academy · Information Technology Technical Program", "date": "2017 to 2018", "url": "" },
+    { "label": "Employee of the Month · Sovereign Home Health", "date": "Oct 25, 2014", "url": "" },
+    { "label": "Certificate of Completion · New Haven Job Corps", "date": "Oct 17, 2014", "url": "" },
+    { "label": "Certified Nursing Assistant (CNA) · New Haven Job Corps", "date": "Jun 20, 2014", "url": "" }
+  ]
+}

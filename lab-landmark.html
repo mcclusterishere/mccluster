@@ -1,0 +1,112 @@
+<!doctype html>
+<!-- LOCAL INSPECTION HARNESS. Not linked from the site; it exists so a
+     landmark can be looked at from any compass bearing on its own,
+     against its reference photographs, without walking the planet to
+     find it. ?slug=docket-516&az=180&el=18&dist=1.6 -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>landmark lab</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #cbb7a4; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+    #hud { position: fixed; left: 8px; top: 8px; font: 12px/1.4 ui-monospace, monospace;
+      background: #f7f5ef; border: 2px solid #17130f; padding: 4px 8px; white-space: pre; }
+  </style>
+</head>
+<body data-no-appbar>
+  <canvas id="c"></canvas>
+  <div id="hud"></div>
+  <script type="module">
+    import * as THREE from "./vendor/three.module.min.js";
+    import { OutlineEffect } from "./vendor/three-addons/effects/OutlineEffect.js";
+    import { build } from "./js/uprise-landmarks.js";
+    import { buildSite } from "./js/uprise-district.js";
+
+    const q = new URLSearchParams(location.search);
+    const slug = q.get("slug") || "docket-516";
+    const az = parseFloat(q.get("az") ?? "35") * Math.PI / 180;   /* 0 = looking at the FRONT (+Z) */
+    const el = parseFloat(q.get("el") ?? "16") * Math.PI / 180;
+    const distMul = parseFloat(q.get("dist") ?? "1.5");
+    const showN = q.get("north") !== "0";
+
+    const canvas = document.getElementById("c");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(1);
+    renderer.setSize(innerWidth, innerHeight, false);
+    const effect = new OutlineEffect(renderer, { defaultThickness: 0.0032, defaultColor: [0.09, 0.075, 0.06] });
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xbcd8dc);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x9a8f7e, 2.1));
+    const sun = new THREE.DirectionalLight(0xfff3dd, 1.5);
+    sun.position.set(3, 6, 4); scene.add(sun);
+
+    const g = (q.get("site") === "0" ? build(slug, THREE) : buildSite(slug, THREE));
+    let note = slug + " — NOT BUILT";
+    if (g) {
+      scene.add(g);
+      const bb = new THREE.Box3().setFromObject(g);
+      const size = bb.getSize(new THREE.Vector3());
+      const mid = bb.getCenter(new THREE.Vector3());
+      const r = Math.max(size.x, size.y, size.z);
+      const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.01, 500);
+      const d = r * distMul;
+      camera.position.set(
+        mid.x + Math.sin(az) * Math.cos(el) * d,
+        mid.y + Math.sin(el) * d + size.y * 0.15,
+        mid.z + Math.cos(az) * Math.cos(el) * d
+      );
+      if (q.get("cam") === "street") {
+        /* eye height on the opposite sidewalk, the exact vantage the
+           Street View frame was shot from */
+        const S = parseFloat(q.get("s") ?? "0.09");
+        const eye = parseFloat(q.get("eye") ?? "5.6") * S;
+        const back = parseFloat(q.get("back") ?? "62") * S;
+        const side = parseFloat(q.get("side") ?? "-30") * S;
+        const lx = parseFloat(q.get("lx") ?? "0") * S;
+        const lz = parseFloat(q.get("lz") ?? "0") * S;
+        const ly = parseFloat(q.get("ly") ?? "9") * S;
+        camera.fov = parseFloat(q.get("fov") ?? "52"); camera.updateProjectionMatrix();
+        camera.position.set(side, eye, back);
+        camera.lookAt(lx, ly, lz);
+      } else {
+        camera.lookAt(mid.x, mid.y + size.y * 0.12, mid.z);
+      }
+
+      /* a compass needle laid flat, so orientation is checkable in a
+         screenshot rather than argued about */
+      if (showN) {
+        const nd = new THREE.Group();
+        const hdg = -(g.userData.frontBearing ?? 0) * Math.PI / 180;
+        const mk = (col) => new THREE.MeshBasicMaterial({ color: col });
+        const k = Math.min(r, 12); const arm = new THREE.Mesh(new THREE.BoxGeometry(k * 0.02, k * 0.008, k * 0.5), mk(0xb0402f));
+        arm.position.z = k * 0.25; nd.add(arm);
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(k * 0.05, k * 0.12, 4), mk(0xb0402f));
+        tip.position.z = k * 0.56; tip.rotation.x = Math.PI / 2; nd.add(tip);
+        nd.rotation.y = hdg;
+        nd.position.set(mid.x, 0.02, mid.z);
+        scene.add(nd);
+      }
+
+      note = [
+        slug,
+        "footprint " + (g.userData.footprint ?? "?").toString().slice(0, 6),
+        "height " + (g.userData.height ?? "?").toString().slice(0, 6),
+        "bbox " + [size.x, size.y, size.z].map(v => v.toFixed(2)).join(" x "),
+        "frontBearing " + (g.userData.frontBearing ?? "unset") + " deg (compass bearing of +Z)",
+        "streets " + ((g.userData.streets || []).join(" / ") || "none"),
+        "az " + q.get("az") + " el " + q.get("el")
+      ].join("\n");
+
+      effect.render(scene, camera);
+      renderer.render.call(renderer, scene, camera); /* keep a frame in the buffer */
+      requestAnimationFrame(() => effect.render(scene, camera));
+      window.__ready = true;
+    }
+    document.getElementById("hud").textContent = note;
+    window.__tris = renderer.info.render.triangles;
+    window.__draws = renderer.info.render.calls;
+  </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- HERE is the album property. This sitemap carries only the album,
+     its tracks, its films, its products, and its funnels. Everything
+     that used to ride here (hire, civic archive, event walls) is
+     queued for its own property. portfolio.html is the exception by
+     the owner's call: it is the search panel built to pull inbound
+     skill-set traffic, so it rides in the map. The full ledger is
+     docs/here-url-migration-map.csv.
+
+     Noindexed rooms stay out on purpose: the onboarding walk, the client
+     console, and demo.html, which is a viewer that frames somebody else's
+     live site. A page we tell Google to skip does not belong in the map
+     we hand Google. Do not add them back. verify.html is one of those:
+     it carries meta robots noindex, so it is not in this map no matter
+     how much of the Equity Uprise section it belongs to.
+
+     2026-08-08: the Equity Uprise program page and the Docket 516 archive
+     join the map. The paragraph above still describes the plan to move the
+     civic work to its own property one day; until that property exists,
+     the record lives here, it is finished (the Siting Council closed
+     Docket 516R on 2026-02-05), and a finished public record nobody can
+     find is not a record. fellowship.html stays out: it is an intake
+     terminal whose page is a form, reachable in one tap from the program
+     page, and there is no document on it for a crawler to index. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://matthew.mccluster.org/</loc><lastmod>2026-07-28</lastmod><priority>1.0</priority></url>
+  <url><loc>https://matthew.mccluster.org/album.html</loc><lastmod>2026-07-28</lastmod><priority>0.9</priority></url>
+  <url><loc>https://matthew.mccluster.org/portfolio.html</loc><lastmod>2026-08-07</lastmod><priority>0.9</priority></url>
+  <url><loc>https://matthew.mccluster.org/catalogue.html</loc><lastmod>2026-07-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://matthew.mccluster.org/license.html</loc><lastmod>2026-07-28</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/sites.html</loc><lastmod>2026-08-23</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/sites-details.html</loc><lastmod>2026-08-23</lastmod><priority>0.5</priority></url>
+  <url><loc>https://matthew.mccluster.org/gallery.html</loc><lastmod>2026-07-28</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/prayer-closet.html</loc><lastmod>2026-07-28</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/closet/seek-first.html</loc><lastmod>2026-07-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://matthew.mccluster.org/closet/salt-and-light.html</loc><lastmod>2026-07-28</lastmod><priority>0.7</priority></url>
+  <url><loc>https://matthew.mccluster.org/closet/sent.html</loc><lastmod>2026-07-30</lastmod><priority>0.7</priority></url>
+  <url><loc>https://matthew.mccluster.org/inner-room.html</loc><lastmod>2026-07-28</lastmod><priority>0.6</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/eu-rally.html</loc><lastmod>2026-08-05</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/cover-art.html</loc><lastmod>2026-08-05</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/brunch-and-beats.html</loc><lastmod>2026-08-05</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/candler-crossing.html</loc><lastmod>2026-08-05</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/dressed-for-success.html</loc><lastmod>2026-08-05</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/vaunt-runway.html</loc><lastmod>2026-08-05</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/equity-uprise.html</loc><lastmod>2026-08-08</lastmod><priority>0.9</priority></url>
+  <url><loc>https://matthew.mccluster.org/docket-516.html</loc><lastmod>2026-08-08</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/policy.html</loc><lastmod>2026-08-08</lastmod><priority>0.9</priority></url>
+  <url><loc>https://matthew.mccluster.org/policy-memo-dna.html</loc><lastmod>2026-08-08</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/case-designer-kicks.html</loc><lastmod>2026-08-08</lastmod><priority>0.8</priority></url>
+
+  <!-- 2026-08-17: the Equity Uprise platform. The three public rooms ride
+       in the map because each one is a page with its own content that a
+       stranger can read cold — the topic hubs carry the framing and the
+       record, the directory carries the listings, the people page carries
+       the profiles that chose to be public.
+
+       dashboard.html and uprise-admin.html stay out and carry meta robots
+       noindex: one is a signed-in desk and the other is the control plane.
+       Same rule the console and the onboarding walk already follow — a
+       page we tell Google to skip does not belong in the map we hand
+       Google. Do not add them back. -->
+  <url><loc>https://matthew.mccluster.org/topics.html</loc><lastmod>2026-08-17</lastmod><priority>0.9</priority></url>
+  <url><loc>https://matthew.mccluster.org/fellowships.html</loc><lastmod>2026-08-17</lastmod><priority>0.9</priority></url>
+  <url><loc>https://matthew.mccluster.org/profile.html</loc><lastmod>2026-08-17</lastmod><priority>0.6</priority></url>
+
+
+  <!-- 2026-08-17: THE IDENTITY PAGES, which had been left out.
+
+       The scoping note at the top of this file is why: it kept the map to
+       the album property and queued the rest for its own domain one day.
+       The side effect was that matthew-mccluster.html — the page carrying
+       the Person structured data, the ORCID and ISNI identifiers, the
+       proclamations and the credentials, and the one page the name itself
+       should resolve to — was never handed to Google at all. Neither was
+       the press kit that cites it.
+
+       A name is an entity problem before it is a ranking problem, and an
+       entity Google is never pointed at is one it has to infer. These
+       four are the pages that describe who this is; the three below them
+       are substantial rooms that were simply missed.
+
+       fellowship.html still stays out, for the reason already given: it
+       is an intake terminal whose page is a form, with no document on it
+       for a crawler to index. -->
+  <url><loc>https://matthew.mccluster.org/matthew-mccluster.html</loc><lastmod>2026-08-17</lastmod><priority>1.0</priority></url>
+  <url><loc>https://matthew.mccluster.org/press.html</loc><lastmod>2026-08-17</lastmod><priority>0.9</priority></url>
+  <url><loc>https://matthew.mccluster.org/card.html</loc><lastmod>2026-08-17</lastmod><priority>0.7</priority></url>
+  <url><loc>https://matthew.mccluster.org/management.html</loc><lastmod>2026-08-17</lastmod><priority>0.7</priority></url>
+  <url><loc>https://matthew.mccluster.org/hire.html</loc><lastmod>2026-08-17</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/films.html</loc><lastmod>2026-08-17</lastmod><priority>0.7</priority></url>
+  <url><loc>https://matthew.mccluster.org/shots.html</loc><lastmod>2026-08-17</lastmod><priority>0.7</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/eu-rally.html</loc><lastmod>2026-08-17</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/cover-art.html</loc><lastmod>2026-08-17</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/brunch-and-beats.html</loc><lastmod>2026-08-17</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/candler-crossing.html</loc><lastmod>2026-08-17</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/dressed-for-success.html</loc><lastmod>2026-08-17</lastmod><priority>0.8</priority></url>
+  <url><loc>https://matthew.mccluster.org/walls/vaunt-runway.html</loc><lastmod>2026-08-17</lastmod><priority>0.8</priority></url>
+</urlset>

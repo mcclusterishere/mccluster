@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Print Shop moved into the Gallery · McCluster</title>
+  <!-- THE MERGE, finished: the catalog IS the print shop, one page.
+       This stub only forwards. Old deep links (#/rally-01) become
+       gallery.html#/buy/rally-01 so a shared frame still opens its
+       buy sheet; everything else lands on the shop rail. -->
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://matthew.mccluster.org/gallery.html">
+  <script>
+    (function () {
+      var id = (location.hash || "").replace(/^#\//, "");
+      location.replace("gallery.html" + (id ? "#/buy/" + encodeURIComponent(id) : "#shop"));
+    })();
+  </script>
+  <meta http-equiv="refresh" content="0;url=gallery.html#shop">
+</head>
+<body>
+  <p style="font-family:sans-serif;padding:2rem">The Print Shop lives in the Gallery now.
+    <a href="gallery.html#shop">Continue to the catalog</a>.</p>
+</body>
+</html>

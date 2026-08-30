@@ -1,0 +1,349 @@
+{
+ "schema": "prim3.site0.architecture-contract.v3",
+ "status": "CANONICAL_FOR_REBUILD",
+ "revision": "2026-08-19 floor plate rule: only L1/L2 are open to the canyon | 2026-08-14 central vertical mobility canyon + CLEAN P1 flush-deck interface",
+ "supersedes": [
+  "PRIM3_Site0_Master_Facility_v02_report.json as a design/program contract",
+  "The earlier rule that all oversized traffic bypasses B3",
+  "The rejected elevated L3 PRIME departure-spur / roof-bridge concept"
+ ],
+ "note": "The v03 master combines the centered internal Mobility Canyon (R1/R2 armored ramps and V1/V2 aircraft/heavy lifts) with the independent PRIME P1 external B3<->L3 lift and SOUTH B3-to-grade escape ramp. P1 now rises FLUSH with the SOUTH edge of L3. There is no elevated bridge, spur, viaduct, or support-pier route attached to the roof.",
+ "identity": {
+  "project": "HITMAN PRIM3 SITE 0",
+  "asset_type": "nine-layer explorable megastructure / game-production facility",
+  "design_read": "land-based aircraft-carrier / fortified industrial megastructure",
+  "base_asset_rule": "empty environment asset: no baked personnel, vehicles, aircraft, desert, sky, terrain or unrelated scenery"
+ },
+ "coordinate_and_orientation": {
+  "up_axis": "+Y",
+  "east": "+X",
+  "west": "-X",
+  "north_front": "+Z",
+  "south_rear": "-Z",
+  "front_face": "NORTH / formal main entrance",
+  "rear_face": "SOUTH / operational deployment and service face",
+  "critical_rule": "The long architectural axis runs EAST-WEST across the facade and flight deck. Front-to-rear depth is the short axis."
+ },
+ "footprint": {
+  "shape": "oblong rectangle with industrial/chamfered edge articulation; not a square and not a cube",
+  "conceptual_dimensions_m": {
+   "east_west_length": 1268,
+   "north_south_beam": 824
+  },
+  "target_plan_ratio_length_to_beam": 1.539,
+  "visual_rule": "The front and rear are opposite long faces of ONE building. Never append a second building behind it."
+ },
+ "source_asset_merge": {
+  "front_source": {
+   "file": "futuristic+space+fortress+3d+model.glb",
+   "role": "formal NORTH/front identity"
+  },
+  "rear_source": {
+   "file": "futuristic+space+station+3d+model.glb",
+   "role": "SOUTH/rear operational vocabulary"
+  },
+  "merge_method": [
+   "Normalize both source models to the SAME rectangular footprint and deck datum.",
+   "Use the fortress as the NORTH/front identity and station vocabulary as the SOUTH/rear identity.",
+   "Clip/rebuild/retopologize rear vocabulary into the rear half; do not append another complete building.",
+   "Maintain one continuous shell, one continuous L3 deck and aligned vertical cores."
+  ]
+ },
+ "level_stack": {
+  "L4": {
+   "canonical_name": "ISLAND SUPERSTRUCTURE / EXECUTIVE PENTHOUSE / FLIGHT CONTROL",
+   "position": "compact island offset EAST/right on L3",
+   "functions": [
+    "flight control",
+    "command center",
+    "executive/strategic business penthouse",
+    "communications/intelligence",
+    "observation/sensor decks"
+   ],
+   "hard_rules": [
+    "L4 is its own compact volume on L3.",
+    "Do not make the whole roof rise pyramidally into L4."
+   ]
+  },
+  "L3": {
+   "canonical_name": "FLIGHT / LANDING-LAUNCH DECK",
+   "functions": [
+    "east-west launch/takeoff run",
+    "east-west recovery/landing lane",
+    "aircraft movement and staging aprons",
+    "tie-down/equipment zones",
+    "VTOL/helipad near the command island",
+    "V1/V2 aircraft/heavy-equipment transfer aperture",
+    "P1 PRIME external heavy-lift platform at the SOUTH deck edge",
+    "P1 flush-deck transition and isolated merge/staging lane",
+    "service circulation and rescue/fire response access"
+   ],
+   "hard_rules": [
+    "L3 is the dominant mostly uninterrupted carrier-style roof deck.",
+    "Runway axis is EAST-WEST.",
+    "V1/V2 are centered independent aircraft/heavy lifts with controlled B3/B2/B1/L1/L2/L3 stops.",
+    "P1 arrives FLUSH with the SOUTH edge of L3; the raised platform becomes part of the deck surface.",
+    "No elevated PRIME roof bridge, departure spur, viaduct, or support piers may project SOUTH from L3.",
+    "Aircraft/tank-sized equipment may move B3->P1->L3 without entering occupied intermediate floors.",
+    "After leaving P1, equipment uses the normal L3 deck circulation/runway network; it does not use an exterior roof bridge.",
+    "The V1/V2 opening is a controlled retractable aperture."
+   ]
+  },
+  "L2": {
+   "canonical_name": "BUSINESS ADMINISTRATION + AVIATION SUPPORT & AERIAL SECURITY",
+   "business_functions": [
+    "sales division",
+    "trading/deal operations",
+    "executive/admin offices",
+    "client briefing rooms",
+    "product/technology showcase galleries"
+   ],
+   "aviation_support_functions": [
+    "hangar/maintenance support below L3",
+    "UAS support",
+    "deck support",
+    "aerial security coordination",
+    "rescue/fire/flight-deck support"
+   ],
+   "mobility_functions": [
+    "V1/V2 oversized-equipment stops",
+    "R1/R2 ramp terminus and isolated staging deck",
+    "business drone launch/recovery pad beneath retractable slot"
+   ],
+   "hard_rules": [
+    "Business circulation remains protected from heavy-transfer circulation.",
+    "Drone pad/slot remains vertically clear."
+   ]
+  },
+  "L1": {
+   "canonical_name": "GROUND DEFENSE / ENFORCEMENT / COEXISTENCE + SURFACE INTERCONNECTOR",
+   "functions": [
+    "human readiness/barracks",
+    "ASIMOV/android readiness",
+    "defense/security operations",
+    "logistics/receiving",
+    "multi-use transfer hangar",
+    "continuous NORTH-SOUTH tank-capable through-road",
+    "R1/R2 landings",
+    "V1/V2 stop"
+   ],
+   "hard_rules": [
+    "L1 is not the aircraft flight deck.",
+    "Preserve direct heavy-transfer to exterior gate path.",
+    "The central through-road remains continuous NORTH-to-SOUTH."
+   ]
+  },
+  "B1": {
+   "canonical_name": "OPEN TECHNOLOGY RESEARCH VAULT",
+   "functions": [
+    "Open Technology Library",
+    "research wings",
+    "clean prototype/verification labs",
+    "sealed R1/R2 transit spine",
+    "protected canyon observation crossover",
+    "controlled V1/V2 stop"
+   ],
+   "hard_rules": [
+    "B1 is knowledge/research, not a heavy vehicle bay.",
+    "Heavy traffic passes only inside the isolated Mobility Canyon."
+   ]
+  },
+  "B2": {
+   "canonical_name": "INDUSTRIAL PRODUCTION & ADVANCED FABRICATION",
+   "functions": [
+    "aircraft/vehicle assembly",
+    "robotics/android production",
+    "CNC/additive manufacturing",
+    "materials processing",
+    "QA/test",
+    "industrial agriculture/infrastructure equipment",
+    "aircraft tow/taxi apron loading V1/V2",
+    "R1/R2 through-transfer"
+   ],
+   "hard_rules": [
+    "Aircraft use V1/V2; tracked/wheeled heavy vehicles use R1/R2.",
+    "Routes are separated from active production cells."
+   ]
+  },
+  "B3": {
+   "canonical_name": "PRIME COMMAND & SUSTAINMENT + HEAVY DEPLOYMENT (RESTRICTED)",
+   "functions": [
+    "Prime command",
+    "restricted operations",
+    "resident/sustainment support",
+    "Prime heavy-equipment staging",
+    "aircraft-sized emergency tow/staging",
+    "P1 access",
+    "direct SOUTH surface escape-ramp access",
+    "R1/R2 access",
+    "V1/V2 stops",
+    "Mobility Canyon staging/blast lock"
+   ],
+   "hard_rules": [
+    "B3 intentionally handles tank/heavy/aircraft-sized emergency movement.",
+    "Heavy movement is segregated from command/residential/medical/food spaces.",
+    "P1 is external SOUTH and connects B3 directly to L3 without intermediate openings.",
+    "A separate straight SOUTH escape ramp connects B3 to grade beyond the primary perimeter.",
+    "Required life-safety egress stays independent.",
+    "R1/R2 provide continuous internal tank-capable route to L2."
+   ]
+  },
+  "B4": {
+   "canonical_name": "DEEP TRANSIT / INTERFACILITY LOGISTICS",
+   "functions": [
+    "rail/oversize freight transfer",
+    "heavy-lift transfer hall",
+    "tunnel/interfacility logistics",
+    "regional network interfaces"
+   ]
+  },
+  "B5": {
+   "canonical_name": "GLOBAL COORDINATION / RESILIENCE NODE",
+   "functions": [
+    "continuity habitat",
+    "coordination/leadership",
+    "redundant data/comms",
+    "food/agriculture/medical continuity",
+    "utilities/resilience"
+   ]
+  }
+ },
+ "vertical_transport": {
+  "life_safety": "Four physically separated enclosed stair cores A-D continue through the occupied stack.",
+  "passenger": "Passenger elevators align with the four major cores and accessible routes.",
+  "freight": "Freight elevators align vertically and remain distinct from required egress.",
+  "heavy_transfer": {
+   "V1": "centered aircraft/heavy lift serving B3, B2, B1, L1, L2 and L3",
+   "V2": "parallel centered aircraft/heavy lift serving B3, B2, B1, L1, L2 and L3",
+   "R1": "tank/tracked/wheeled switchback ramp B3->B2->B1->L1->L2",
+   "R2": "parallel tank/tracked/wheeled switchback ramp B3->B2->B1->L1->L2",
+   "P1": "dedicated PRIME external SOUTH B3<->L3 lift with flush L3 deck arrival and no intermediate stops",
+   "rule": "V1/V2/R1/R2/P1 are operational mobility systems, not life-safety stairs."
+  },
+  "command_access": "Dedicated L4 island passenger/service core."
+ },
+ "prime_external_deployment_system": {
+  "purpose": "Give B3 an independent heavy route to L3 and a separate heavy route completely outside the gated perimeter.",
+  "B3_heavy_deployment_hall": {
+   "role": "segregated heavy staging/inspection zone",
+   "clearance_target": "aircraft/tank-sized envelope; validate selected design aircraft later"
+  },
+  "P1_external_heavy_lift": {
+   "route": "B3 -> external SOUTH lift -> flush L3 deck edge",
+   "location": "outside the primary SOUTH shell",
+   "platform_target_m": {
+    "length": 40,
+    "width": 24
+   },
+   "clear_height_target_m": 9,
+   "use": [
+    "aircraft under tow",
+    "tanks/tracked vehicles",
+    "heavy autonomous machinery",
+    "large robots",
+    "construction/agricultural machinery"
+   ],
+   "rule": "P1 has B3 and L3 stops only; at L3 the lift platform aligns flush with the deck and becomes a drive/tow surface."
+  },
+  "L3_flush_interface": {
+   "route": "P1 L3 platform -> flush deck transition -> isolated merge/staging lane -> normal L3 deck circulation",
+   "role": "clean aircraft-carrier-style elevator interface",
+   "forbidden": [
+    "elevated SOUTH roof bridge",
+    "elevated departure spur",
+    "support piers beneath a roof spur",
+    "viaduct/ramp suspended from L3 toward the perimeter"
+   ]
+  },
+  "direct_surface_escape_ramp": {
+   "route": "B3 Prime hall -> armored SOUTH portal -> straight external incline -> grade beyond primary perimeter -> offsite marshalling/departure strip",
+   "clear_width_target_m": 45,
+   "clear_height_target_m": 10,
+   "maximum_concept_grade_percent": 5,
+   "operating_note": "Aircraft on incline are under tow/low-speed taxi; takeoff only on exterior surface strip.",
+   "rule": "This surface escape route is independent of the roof/P1 route and does not reconnect to L3."
+  }
+ },
+ "internal_vertical_mobility_system": {
+  "canonical_name": "CENTRAL MOBILITY CANYON",
+  "served_levels": [
+   "B3",
+   "B2",
+   "B1",
+   "L1",
+   "L2",
+   "L3"
+  ],
+  "R1_R2_armored_ramps": {
+   "route": "B3 -> B2 -> B1 -> L1 -> L2",
+   "configuration": "parallel switchback ramps with protected landings and blast/contamination controls"
+  },
+  "V1_V2_aircraft_lifts": {
+   "route": "B3/B2/B1/L1/L2 -> L3",
+   "configuration": "two independent centered carrier lifts with controlled stops and L3 retractable aperture"
+  },
+  "L1_through_road": "straight NORTH-SOUTH tank-capable surface road with controlled gates and ramp turnouts",
+  "L2_business_pad": "secured drone launch/recovery pad and armored demonstration deck separated from offices",
+  "separation_rule": "Command, research, medical and business occupants remain fire/blast/contamination separated from the canyon.",
+  "life_safety_rule": "The Mobility Canyon is not required life-safety egress."
+ },
+ "rear_deployment_system": {
+  "upper_ramp": {
+   "purpose": "drone/UAS/compact-aircraft deployment",
+   "relationship": "integrated SOUTH operational facade; separate from main L3 runway"
+  },
+  "lower_ramp": {
+   "purpose": "general heavy-vehicle/equipment deployment from logistics network",
+   "relationship": "general industrial route; separate from PRIME escape"
+  },
+  "prime_escape_spine": {
+   "components": [
+    "B3 Prime heavy hall",
+    "P1 external lift with FLUSH L3 deck arrival",
+    "straight B3-to-grade SOUTH escape ramp",
+    "offsite surface escape strip"
+   ],
+   "relationship": "P1 and the surface ramp are independent; neither uses an elevated roof bridge."
+  }
+ },
+ "production_asset_rules": [
+  "Keep levels, tower, ramps, lifts, apertures and cores as separately named editable nodes.",
+  "Keep P1, the P1 flush-deck transition, Prime surface ramp and offsite strip separately named/selectable/collidable.",
+  "FORBIDDEN: L3_PRIME_ELEVATED_DEPARTURE_SPUR and L3_PRIME_SPUR_SUPPORT_* geometry.",
+  "Do not destructive-boolean the entire facility into one mesh.",
+  "Keep detailed master separate from optimized web/game LOD derivatives.",
+  "Base production asset remains empty; people/aircraft/vehicles/robots are runtime assets.",
+  "Keep every R1/R2 segment, V1/V2 stop platform, L1 through-road, L2 drone pad and L3 aperture frame separately named.",
+  "Any agent changing Prime routing must update this contract, AGENTS.md, the master manifest, the Prime spec and affected plans in the same commit.",
+  "Only L1 and L2 carry a central void. B3, B2, B1 and L3 are continuous plates penetrated only by named shafts (V1/V2 cores, R1/R2 ramp runs, stair/egress cores, service risers). See floor_plate_rule.",
+  "FORBIDDEN: any central atrium, light well or open canyon edge on B3, B2, B1 or L3."
+ ],
+ "rebuild_required": {
+  "v02_master_status": "REJECTED_AS_CANONICAL_MASSING",
+  "next_asset_version": "PRIM3_Site0_Master_Facility_v03"
+ },
+ "floor_plate_rule": {
+  "added": "2026-08-19",
+  "why": "The contract described the Mobility Canyon as a vertical system but never said which levels are actually OPEN to it. An interior rebuild read 'central canyon, B3 through L3' as 'carve the middle out of every plate', and returned a facility with a full-height hole through all six levels. The exterior was correct; the interior was a shaft. This rule exists so the next rebuild cannot make the same reading.",
+  "rule": "ONLY L1 AND L2 HAVE THE MIDDLE CARVED OUT.",
+  "open_plates": {
+   "levels": [
+    "L1",
+    "L2"
+   ],
+   "meaning": "L1 and L2 are the only levels with a genuine central void: the plate is open around the canyon so heavy movement, the L1 north-south through-road and the L2 drone pad read as one connected volume. This is the two-storey room at the heart of the building."
+  },
+  "solid_plates": {
+   "levels": [
+    "B3",
+    "B2",
+    "B1",
+    "L3"
+   ],
+   "meaning": "Regular continuous floor plates, edge to edge. They are NOT open to the canyon and have NO central atrium.",
+   "penetrations_allowed": "Only the shafts themselves: the V1/V2 lift cores, the R1/R2 ramp runs, stair/egress cores and service risers. Each is a bounded opening with its own floor edge and guarding \u2014 the size of the equipment passing through it, not the size of the room.",
+   "forbidden": "A central void, light well, atrium, mezzanine cut or open canyon edge on B3, B2, B1 or L3. L3 in particular is the flight deck and must stay a mostly uninterrupted carrier-style surface; the only apertures in it are the V1/V2 transfer aperture and the P1 flush-deck platform."
+  },
+  "test": "Section the model north-south through the building centre. There must be exactly one two-level open volume, at L1-L2. If the cut shows daylight from B3 to L3, the plates are wrong."
+ }
+}

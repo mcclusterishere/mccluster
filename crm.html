@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Front Desk: leads, replies, the pipeline</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script src="js/office.js?v=__STAMP__"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+    .fd { max-width: 44rem; margin: 0 auto; padding: clamp(3.6rem, 8vh, 5rem) clamp(1.1rem, 4vw, 2rem) 10rem; font-family: var(--ui); }
+    .fd__k { font-size: 0.7rem; letter-spacing: 0.32em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
+    .fd h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.88; font-size: clamp(2.4rem, 10vw, 4rem); margin: 0.3rem 0 0.5rem; }
+    .fd__sub { font-weight: 600; color: var(--cream-dim); font-size: 0.92rem; }
+    .fd input { width: 100%; margin-top: 0.8rem; padding: 0.85rem 1rem; border: 0; border-radius: 14px;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo)); color: var(--cream);
+      font-family: var(--ui); font-size: 1rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+    .fd .go { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      margin-top: 0.7rem; padding: 0.85rem 1.4rem; border-radius: 100px; background: var(--metal); color: #fff;
+      font-family: var(--ui); font-weight: 800; font-size: 0.95rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .fd__note { margin-top: 0.7rem; font-size: 0.82rem; color: var(--cream-dim); }
+    /* the week, at a glance */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; margin: 1.4rem 0; }
+    .stat { border-radius: 18px; padding: 0.85rem 1rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+    .stat b { display: block; font-size: 1.5rem; font-weight: 800; color: var(--cream); }
+    .stat small { font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 800; color: var(--cream-dim); }
+    /* the pipeline */
+    .lead { border-radius: 20px; padding: 1rem 1.05rem; margin-bottom: 0.7rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+    .lead__top { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+    .lead__top b { font-weight: 800; font-size: 1rem; color: var(--cream); }
+    .lead__want { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color:var(--ruby-text); }
+    .lead__when { margin-left: auto; font-size: 0.72rem; color: var(--cream-dim); }
+    .lead__note { margin-top: 0.45rem; font-size: 0.9rem; line-height: 1.55; color: var(--cream); }
+    .lead__meta { margin-top: 0.45rem; font-size: 0.74rem; color: var(--cream-dim); }
+    .lead__meta .src { display: inline-block; border-radius: 100px; padding: 0.16rem 0.6rem; font-weight: 800;
+      background: rgba(229,56,59,0.16); color:var(--ruby-text); }
+    .lead__meta .src--ads { background: rgba(229,56,59,0.16); color:var(--ruby-text); }
+    .lead__acts { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.7rem; }
+    .lead__acts a, .lead__acts button { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; text-decoration: none; font-family: var(--ui); font-weight: 800; font-size: 0.74rem;
+      border-radius: 100px; padding: 0.42rem 0.85rem; color: var(--cream);
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+    .lead__acts .reply { background: var(--metal); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .lead__acts button.on { background: var(--metal); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .lead.is-closed { opacity: 0.55; }
+    /* the three lanes, on the desk */
+    .lanechips { display: flex; gap: 0.45rem; overflow-x: auto; scrollbar-width: none; margin: 0 0 1rem; }
+    .lanechips::-webkit-scrollbar { display: none; }
+    .lanechips button { flex: none; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; font-family: var(--ui); font-weight: 700; font-size: 0.78rem; color: var(--cream);
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13); border-radius: 100px; padding: 0.5rem 1rem; }
+    .lanechips button.on { color: #fff; font-weight: 800; background: var(--metal);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage" data-masthead="off">
+  <main class="fd">
+    <p class="fd__k">Owner only · the pipeline</p>
+    <h1>The Front<br>Desk</h1>
+
+    <div id="gate">
+      <p class="fd__sub">Sign in and the leads are on the desk: newest first, sources marked, one tap to reply.</p>
+      <input id="email" type="email" placeholder="matthew@mccluster.org" autocomplete="email">
+      <button class="go" id="signin" type="button">Send the sign-in link &#8594;</button>
+      <p class="fd__note" id="gateNote"></p>
+    </div>
+
+    <div id="desk" hidden>
+      <div class="stats">
+        <div class="stat"><b id="stAll">·</b><small>Leads · 7 days</small></div>
+        <div class="stat"><b id="stAds">·</b><small>From ads</small></div>
+        <div class="stat"><b id="stBook">·</b><small>Booked</small></div>
+      </div>
+      <div class="lanechips" id="laneChips">
+        <button type="button" class="on" data-lane="All">All</button>
+        <button type="button" data-lane="Videography">Videography</button>
+        <button type="button" data-lane="Photography">Photography</button>
+        <button type="button" data-lane="Media">Media &amp; consulting</button>
+        <button type="button" data-lane="Other">Other</button>
+      </div>
+      <div id="leads"><p class="fd__sub">Loading the pipeline…</p></div>
+
+      <!-- THE DESIGN VAULT: the three portfolio studies, kept but off the floor -->
+      <p class="fd__sub" style="margin-top:2rem">
+        <b style="color:var(--ruby-text); letter-spacing:0.14em; font-size:0.66rem; text-transform:uppercase;">The design vault</b><br>
+        Portfolio studies, unlisted but alive:
+        <a href="portfolio.html" style="color:var(--cream); font-weight:800;">the gallery</a> ·
+        <a href="production.html" style="color:var(--cream); font-weight:800;">the production house</a> ·
+        <a href="gallery.html" style="color:var(--cream); font-weight:800;">the ledger</a><br>
+        Platform machinery, parked for the far future:
+        <a href="equity-uprise.html" style="color:var(--cream); font-weight:800;">the feed</a> ·
+                <a href="ecosystem.html" style="color:var(--cream); font-weight:800;">the ecosystem</a> ·
+        <a href="verify.html" style="color:var(--cream); font-weight:800;">profiles</a>
+      </p>
+    </div>
+  </main>
+
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+    var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+    var OWNER = "matthew@mccluster.org";
+    var el = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var STATUSES = ["new", "replied", "booked", "closed"];
+
+    function ago(iso) {
+      var m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+      if (m < 60) return m + "m";
+      if (m < 1440) return Math.round(m / 60) + "h";
+      return Math.round(m / 1440) + "d";
+    }
+
+    function authed() {
+      var u = window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user();
+      return u && (u.email || "").toLowerCase() === OWNER ? u : null;
+    }
+
+    el("signin").addEventListener("click", function () {
+      var em = el("email").value.trim() || OWNER;
+      MCC_AUTH.signIn(em).then(function () {
+        el("gateNote").textContent = "The link is in your email. Open it on this device and the desk unlocks.";
+      }).catch(function () {
+        el("gateNote").textContent = "The link didn't send. Try again in a minute.";
+      });
+    });
+
+    function hdrs() {
+      return window.MCC_SUPA.token().then(function (t) {
+        return { "Content-Type": "application/json", apikey: SB_KEY, Authorization: "Bearer " + t };
+      });
+    }
+
+    function setStatus(id, status, card) {
+      hdrs().then(function (h) {
+        return fetch(SB_URL + "/rest/v1/leads?id=eq." + id, {
+          method: "PATCH", headers: h, body: JSON.stringify({ status: status }),
+        });
+      }).then(function (r) {
+        if (!r.ok) return;
+        card.querySelectorAll("[data-st]").forEach(function (b) {
+          b.classList.toggle("on", b.getAttribute("data-st") === status);
+        });
+        card.classList.toggle("is-closed", status === "closed");
+      });
+    }
+
+    /* which lane a lead belongs to, read from what they asked for */
+    function laneOf(r) {
+      var w = ((r.want || "") + " " + (r.page || "")).toLowerCase();
+      if (/video|film|reel/.test(w)) return "Videography";
+      if (/photo|shot/.test(w)) return "Photography";
+      if (/media|consult|web|manage/.test(w)) return "Media";
+      return "Other";
+    }
+    var ROWS = [], LANE = "All";
+
+    function paint(rows) {
+      ROWS = rows;
+      rows = LANE === "All" ? rows : rows.filter(function (r) { return laneOf(r) === LANE; });
+      var wk = Date.now() - 7 * 864e5;
+      var week = rows.filter(function (r) { return new Date(r.at).getTime() > wk; });
+      el("stAll").textContent = week.length;
+      el("stAds").textContent = week.filter(function (r) { return r.gclid || r.source === "google-ads"; }).length;
+      el("stBook").textContent = rows.filter(function (r) { return r.status === "booked"; }).length;
+      if (!rows.length) {
+        el("leads").innerHTML = '<p class="fd__sub">' + (LANE === "All"
+          ? "The desk is clear, no leads yet. They land here the second the site catches one."
+          : "Nothing in this lane yet. It fills the second someone asks.") + "</p>";
+        return;
+      }
+      el("leads").innerHTML = rows.map(function (r) {
+        var ads = r.gclid || r.source === "google-ads";
+        var reply = "mailto:" + encodeURIComponent(r.email) +
+          "?subject=" + encodeURIComponent("Re: your inquiry · McCluster") +
+          "&body=" + encodeURIComponent("Hey " + r.name + ",\n\nGot your note" + (r.want ? " about " + r.want.toLowerCase() : "") + ". I'm on it. ");
+        return '<div class="lead' + (r.status === "closed" ? " is-closed" : "") + '" data-id="' + r.id + '">' +
+          '<div class="lead__top"><b>' + esc(r.name) + "</b>" +
+          (r.want ? '<span class="lead__want">' + esc(r.want) + "</span>" : "") +
+          '<span class="lead__when">' + ago(r.at) + " ago</span></div>" +
+          (r.note ? '<p class="lead__note">' + esc(r.note) + "</p>" : "") +
+          '<p class="lead__meta"><span class="src' + (ads ? " src--ads" : "") + '">' + esc(ads ? "google ads" : r.source || "direct") + "</span>" +
+          (r.campaign ? " · " + esc(r.campaign) : "") + " · " + esc(r.email) + " · from " + esc(r.page || "?") + "</p>" +
+          '<div class="lead__acts">' +
+          '<a class="reply" href="' + reply + '" data-reply>Reply &#8594;</a>' +
+          STATUSES.map(function (st) {
+            return '<button type="button" data-st="' + st + '"' + (r.status === st ? ' class="on"' : "") + ">" + st + "</button>";
+          }).join("") +
+          "</div></div>";
+      }).join("");
+    }
+
+    function load() {
+      hdrs().then(function (h) {
+        return fetch(SB_URL + "/rest/v1/leads?select=*&order=at.desc&limit=200", { headers: h });
+      }).then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(paint)
+        .catch(function () { el("leads").innerHTML = '<p class="fd__sub">Couldn\'t reach the pile. Run docs/crm.sql if you haven\'t, then refresh.</p>'; });
+    }
+
+    el("laneChips").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-lane]");
+      if (!b) return;
+      LANE = b.getAttribute("data-lane");
+      el("laneChips").querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); });
+      paint(ROWS);
+    });
+
+    el("leads").addEventListener("click", function (e) {
+      var card = e.target.closest && e.target.closest(".lead");
+      if (!card) return;
+      var st = e.target.closest("[data-st]");
+      if (st) { setStatus(card.getAttribute("data-id"), st.getAttribute("data-st"), card); return; }
+      if (e.target.closest("[data-reply]")) setStatus(card.getAttribute("data-id"), "replied", card);
+    });
+
+    function boot() {
+      if (authed()) { el("gate").hidden = true; el("desk").hidden = false; load(); }
+    }
+    boot();
+    setTimeout(boot, 800); // the magic-link landing settles a beat after load
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

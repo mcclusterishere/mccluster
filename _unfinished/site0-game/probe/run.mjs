@@ -1,0 +1,10 @@
+const { createRequire } = await import("node:module"); const require = createRequire(import.meta.url); const { chromium } = require(process.env.PW_MODULE);
+const b = await chromium.launch({args:["--no-sandbox","--use-gl=swiftshader","--enable-unsafe-swiftshader"], executablePath: process.env.PW_CHROME});
+const pg = await (await b.newContext({viewport:{width:800,height:600}})).newPage();
+pg.on("pageerror", e => console.log("PAGEERROR", e.message));
+pg.on("console", m => { if(m.type()==='error') console.log("CONSOLE", m.text()); });
+pg.on("requestfailed", r => console.log("REQFAIL", r.url(), r.failure()?.errorText));
+await pg.goto(process.argv[2], {waitUntil:"load"});
+await pg.waitForFunction(()=>window.RESULT, null, {timeout:90000});
+console.log(JSON.stringify(await pg.evaluate(()=>window.RESULT), null, 1));
+await b.close();

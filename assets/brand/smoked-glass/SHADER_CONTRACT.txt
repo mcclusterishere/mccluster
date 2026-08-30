@@ -1,0 +1,23 @@
+Pseudo-shader contract:
+
+glass = dielectricPBR(
+  baseColor = sample(baseColor),
+  normal = sample(normal),
+  roughness = sample(roughness),
+  ior = 1.50,
+  transmission = sample(transmissionMask),
+  thickness = sample(thicknessMask)
+)
+
+glass += environmentReflection * sample(reflectionMask) * viewAngleResponse
+glass += rubyEnvironment * sample(rubyReflectionMask) * semanticRubyReflection
+backgroundBlur *= sample(backdropBlurMask)
+opticalDensity *= adaptiveReadability(mediaLuminance, sample(readabilityMask))
+
+Rules:
+- smoked glass is a separation layer, not the page aesthetic
+- dynamically protect text readability over bright video/photo
+- ruby is reflected light, not internal emission
+- no cyan tint
+- no universal frosted cards
+- preserve existing DOM geometry and interactions

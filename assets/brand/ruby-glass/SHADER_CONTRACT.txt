@@ -1,0 +1,31 @@
+Pseudo-shader contract:
+
+base = sample(baseColor)
+normal = sample(normal)
+rough = sample(roughness)
+transmission = sample(transmissionMask)
+thickness = sample(thicknessMask)
+facet = sample(facetMask)
+fresnel = sample(fresnelMask)
+active = sample(activeMask)
+emissive = sample(emissiveMask)
+
+glass = dielectricPBR(
+  baseColor=base,
+  normal=normal,
+  roughness=rough,
+  ior=1.77,
+  transmission=transmission,
+  thickness=thickness
+)
+
+glass += environmentReflection * facet * fresnel * viewAngleResponse
+glass += rubyColor * emissive * active * semanticIntensity
+glass += briefCausticGlint * sample(causticMask)
+
+Rules:
+- ruby is for existing semantic red states only
+- internal illumination is preferred over outer box-shadow glow
+- no global red tint over media
+- no perpetual flashing
+- flare/caustic effects should be short and rare

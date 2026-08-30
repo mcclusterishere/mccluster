@@ -1,0 +1,64 @@
+{
+ "schema": "prim3.site0.shell-fit.v1",
+ "interior": "prim3_site0_master.glb",
+ "shell": "site0_shell_fitted.glb",
+ "shell_source": "PRIM3+site+zero+perfect+model.glb",
+ "decision": "The interior is the datum. The shell is fitted to it, because game/index.html hard-codes lift shafts and waypoints in model coordinates and moving the geometry would silently desync them.",
+ "transform": {
+  "translation": [
+   2.4e-05,
+   -0.009238,
+   0.044821
+  ],
+  "scale": [
+   1.004,
+   1,
+   1.004
+  ],
+  "clearance": 1.004,
+  "y": "lowered so the shell's OWN floor lands on L1, not its bounding-box base. Measured: the shell's internal floor sits at a median 2.52 m above the base of its bounding box, so aligning boxes put L1's floor 2.52 m BELOW the shell's floor and the player's eye, at 1.86 m, underneath it. See tools/measure_shell_floor.py."
+ },
+ "building_envelope": {
+  "min": [
+   -0.479471,
+   -0.176,
+   -0.403097
+  ],
+  "max": [
+   0.479517,
+   0.4416,
+   0.492741
+  ]
+ },
+ "with_aprons": {
+  "min": [
+   -0.479471,
+   -0.176,
+   -0.52
+  ],
+  "max": [
+   0.479517,
+   0.4416,
+   0.63
+  ],
+  "note": "aprons are outdoor pavement and sit outside the shell by design"
+ },
+ "fitted_shell": {
+  "min": [
+   -0.479961,
+   0,
+   -0.448723
+  ],
+  "max": [
+   0.480009,
+   0.472,
+   0.538365
+  ]
+ },
+ "verified": "every above-ground node except the aprons is inside the fitted shell",
+ "not_loaded_by_default": "1,024,579 verts / 47 MB; game/index.html takes ?shell=1",
+ "shell_floor_m": 2.52,
+ "shell_deck_m": 70.23,
+ "shell_clear_height_m": 67.71,
+ "known_mismatch": "our L1 floor -> L3 deck is 69.90 m against the shell's 67.71 m of clear height, so with the floors aligned our L3 deck plate sits about 2.2 m above the shell's deck. Fixing that needs either a 3.3% vertical squash of the interior or a 3.3% stretch of the shell; neither has been done, because one changes every level height and the other changes the perfect model."
+}

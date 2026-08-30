@@ -1,0 +1,22 @@
+[Unit]
+Description=HERE central control plane
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=here
+Group=here
+WorkingDirectory=/opt/here/platform
+EnvironmentFile=/etc/here/control-plane.env
+ExecStart=/usr/bin/node src/control-plane.mjs
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

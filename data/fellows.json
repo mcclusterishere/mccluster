@@ -1,0 +1,124 @@
+{
+  "note": "The Equity Uprise 2025 fellowship cohort: nine people. Most are named on the City of Bridgeport proclamation 'Equity Uprise Human Rights Day' (Mayor Joseph P. Ganim, December 10, 2025); the proclamation prints a subset, and the founder confirmed the rest. Each entry records whether the proclamation names that person, so the document and the roster are never confused for each other. The founder has confirmed every person here agreed to be listed publicly under their own name. Nobody goes in this file on inference.",
+  "source": {
+    "document": "City of Bridgeport Proclamation — Equity Uprise Human Rights Day",
+    "issuer": "City of Bridgeport, Connecticut",
+    "signedBy": "Joseph P. Ganim, Mayor",
+    "date": "2025-12-10",
+    "scan": "assets/credentials/img/bridgeport-human-rights-day-proclamation.jpg",
+    "doc": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf",
+    "quote": "Equity Uprise 2025, a civic fellowship created by Bridgeport native Matthew McCluster and McCluster Corp, has brought together local artists, educators, technologists, and youth leaders",
+    "scanNote": "The scan on file is cropped at the right margin, so line endings are lost. Names below come from the readable portion plus the founder's direct confirmation of each fellow's stage and legal name."
+  },
+  "fellows": [
+    {
+      "slug": "matthew-mccluster",
+      "stage": "Matthew McCluster",
+      "legal": "Matthew Christian Perry McCluster",
+      "role": "Founder · creative director",
+      "blurb": "Created the fellowship and the record around it. Named on the proclamation as its Bridgeport-native founder.",
+      "onProclamation": true,
+      "cleared": true,
+      "links": [
+        {
+          "label": "The full record",
+          "href": "hire.html"
+        }
+      ]
+    },
+    {
+      "slug": "ashan-voyage",
+      "stage": "Ashan Voyage",
+      "legal": "Xavier Washington",
+      "role": "Artist",
+      "blurb": "Named on the City of Bridgeport proclamation as part of the 2025 fellowship cohort.",
+      "onProclamation": true,
+      "cleared": true,
+      "links": []
+    },
+    {
+      "slug": "ocho-gr8",
+      "stage": "Ocho Gr8",
+      "legal": "Marquis Sample",
+      "role": "Rapper",
+      "blurb": "Carries a writer's split on \"Who Did The Shoot\" on the books.",
+      "onProclamation": true,
+      "cleared": true,
+      "links": [
+        {
+          "label": "Hear the catalogue",
+          "href": "album.html"
+        }
+      ]
+    },
+    {
+      "slug": "angel-kastro",
+      "stage": "Angel Kastro",
+      "legal": "Angel Castellano",
+      "role": "Rapper · singer",
+      "blurb": "Named on the City of Bridgeport proclamation as part of the 2025 fellowship cohort.",
+      "onProclamation": true,
+      "cleared": true,
+      "links": []
+    },
+    {
+      "slug": "pax",
+      "stage": "Pax",
+      "legal": "Paxton Cobb",
+      "role": "Rapper · producer",
+      "blurb": "Named on the City of Bridgeport proclamation as part of the 2025 fellowship cohort.",
+      "onProclamation": true,
+      "cleared": true,
+      "links": []
+    },
+    {
+      "slug": "old-jay",
+      "stage": "Old Jay",
+      "legal": "Jadon Washington",
+      "role": "Artist",
+      "blurb": "Named on the City of Bridgeport proclamation as part of the 2025 fellowship cohort.",
+      "onProclamation": true,
+      "cleared": true,
+      "links": []
+    },
+    {
+      "slug": "stay-tru",
+      "stage": "Stay Tru",
+      "legal": "Kevin Moore",
+      "role": "Artist",
+      "blurb": "Named on the City of Bridgeport proclamation as part of the 2025 fellowship cohort.",
+      "onProclamation": true,
+      "cleared": true,
+      "links": []
+    },
+    {
+      "slug": "eugene-izuazu",
+      "stage": "Eugene Izuazu",
+      "legal": "Eugene Izuazu",
+      "role": "Saxophonist",
+      "blurb": "Saxophonist in the 2025 fellowship cohort, named on the City of Bridgeport proclamation.",
+      "onProclamation": true,
+      "cleared": true,
+      "spellingNote": "Spelling confirmed directly by the founder as Izuazu. The proclamation scan and an earlier page on this site each rendered it differently; this is the corrected form and should not be \"fixed\" back.",
+      "links": []
+    },
+    {
+      "slug": "los-fidel",
+      "stage": "Los Fidel",
+      "legal": "Carlos Burgos",
+      "role": "Rapper",
+      "blurb": "The voice on \"Please Set Me Free\". Part of the full 2025 cohort.",
+      "onProclamation": false,
+      "cleared": true,
+      "rosterNote": "Not in the readable portion of the Bridgeport proclamation. The founder confirmed he is part of the full cohort and gave his name for publication; the cohort is larger than the names the proclamation lists.",
+      "links": [
+        {
+          "label": "Hear \"Please Set Me Free\"",
+          "href": "album.html"
+        }
+      ]
+    }
+  ],
+  "pending": [],
+  "rosterSize": 9
+}

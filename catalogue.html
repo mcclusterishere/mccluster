@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Catalog · the registered discography · McCluster</title>
+  <meta name="description" content="The registered McCluster discography: every song in the QT6KV catalogue, numbered and on the record.">
+  <link rel="canonical" href="https://matthew.mccluster.org/catalogue.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    html, body { background: var(--ink); }
+    .cg { max-width: 40rem; margin: 0 auto; padding: clamp(4.2rem, 8vh, 5.5rem) clamp(1.1rem, 4vw, 2rem) 10rem; }
+    .cg__k { font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
+    .cg h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.9; font-size: clamp(2.6rem, 11vw, 4.2rem); margin-top: 0.35rem; }
+    .cg__sub { color: var(--cream-dim); line-height: 1.7; margin-top: 0.8rem; font-size: 0.95rem; }
+    .cg__sub b { color: var(--cream); }
+    .reg { list-style: none; padding: 0; margin: 1.8rem 0 0; border-top: 1px solid rgba(229,56,59,0.3); }
+    /* One row, three columns that always keep their lanes: the ISRC code,
+       the title, the album. A fixed 2.6rem code column used to be far too
+       narrow for "QT6KV·01", so the code ran straight into the title. */
+    .reg li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: baseline; column-gap: 1.1rem; row-gap: 0.2rem;
+      padding: 0.85rem 0.1rem; border-bottom: 1px solid rgba(244,239,230,0.09); }
+    .reg .no { font-size: 0.72rem; color:var(--ruby-text); font-weight: 800; white-space: nowrap;
+      font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+    .reg .t { color: var(--cream); font-family: var(--display); font-size: 1.05rem; min-width: 0; }
+    .reg .t small { display: block; font-family: var(--body); color: var(--cream-dim); font-size: 0.74rem;
+      margin-top: 0.15rem; line-height: 1.5; }
+    .reg .al { font-size: 0.74rem; color: var(--cream-dim); letter-spacing: 0.06em;
+      text-transform: uppercase; white-space: nowrap; text-align: right; }
+    /* a linked title stays house cream: the red rule underneath carries the
+       affordance, so half the registry no longer reads as a different colour */
+    .reg .t a { color: inherit; text-decoration: underline;
+      text-decoration-color: rgba(229,56,59,0.6); text-underline-offset: 4px; text-decoration-thickness: 2px; }
+    .reg a { color:var(--ruby-text); text-decoration: none; }
+    /* narrow phones: the album tag drops under the title instead of squeezing it */
+    @media (max-width: 34rem) {
+      .reg li { grid-template-columns: auto minmax(0, 1fr); }
+      .reg .al { grid-column: 2; text-align: left; }
+    }
+    .cg__note { margin-top: 1.6rem; color: var(--cream-dim); font-size: 0.82rem; line-height: 1.7; }
+    .cg__note a { color:var(--ruby-text); text-decoration: none; }
+    /* the shelf: tap an album, it plays */
+    .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.9rem; margin-top: 1.6rem; }
+    .shelf a { display: block; text-decoration: none; color: var(--cream); }
+    .shelf .cov { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 14px; background: var(--ink-2);
+      box-shadow: 0 14px 40px -16px rgba(0,0,0,0.9), 0 0 0 1px rgba(229,56,59,0.25); transition: transform 0.15s ease; }
+    .shelf a:hover .cov, .shelf a:active .cov { transform: translateY(-3px); }
+    .shelf b { display: block; font-family: var(--display); font-weight: 400; font-size: 1rem; margin-top: 0.55rem; line-height: 1.15; }
+    .shelf small { color: var(--cream-dim); font-size: 0.74rem; }
+  </style>
+  <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage music-room music-room--catalogue">
+  <main class="cg">
+    <p class="cg__k">QT6KV · the registered catalogue</p>
+    <h1>The Catalog</h1>
+    <p class="cg__sub">Every song on the record: numbered, credited, registered under the
+      <b>QT6KV</b> ISRC prefix of McCluster Corp. The six-track album <b>I AM HERE</b> plays in
+      <a href="album.html" style="color:var(--ruby-text);text-decoration:none">the player</a>.</p>
+    <div class="shelf" id="shelf" aria-label="The albums"></div>
+    <p class="cg__k" style="margin-top:2.4rem">The registry</p>
+    <ul class="reg" id="reg"><li><small style="color:var(--cream-dim)">Loading the registry…</small></li></ul>
+    <p class="cg__note">Written &amp; performed by Matthew McCluster unless credited otherwise.
+      Licensing &amp; sync: <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a></p>
+  </main>
+
+  <!-- THE BAR: Music · Equity Uprise · HERE · Prayer Closet · Profile. One tap goes where it says; hold a tab to open its wing. -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (d) {
+      document.getElementById("shelf").innerHTML = (d.albums || []).map(function (a) {
+        return '<a href="album.html?album=' + a.slug + '" data-cta="shelf-' + a.slug + '">' +
+          '<img class="cov" src="' + a.art + '" alt="" loading="lazy">' +
+          "<b>" + a.name + "</b><small>" + a.tracks.length + (a.tracks.length === 1 ? " track" : " tracks") + "</small></a>";
+      }).join("");
+    }).catch(function () {});
+    fetch("data/catalogue.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (c) {
+      var rows = (c.tracks || []).map(function (t) {
+        /* link on the album's SLUG, never its display name: the album got
+           renamed once (HERE → I AM HERE) and a name comparison silently
+           broke every one of these deep links */
+        var here = (t.albumSlug || "") === "here";
+        return "<li><span class='no'>" + (c.isrc_prefix || "QT6KV") + "·" + String(t.no || t.order || "00").padStart(2, "0") + "</span>" +
+          "<span class='t'>" + (here ? "<a href='album.html'>" + t.title + "</a>" : t.title) +
+          (t.credit ? "<small>" + t.credit + "</small>" : "") + "</span>" +
+          "<span class='al'>" + (t.album || "") + "</span></li>";
+      });
+      document.getElementById("reg").innerHTML = rows.join("") || "<li><small>The registry is warming up.</small></li>";
+    }).catch(function () {
+      document.getElementById("reg").innerHTML = "<li><small style='color:var(--cream-dim)'>The registry is warming up. Check back.</small></li>";
+    });
+    if (window.MCC_TRACK) window.MCC_TRACK("catalogue_view", {});
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

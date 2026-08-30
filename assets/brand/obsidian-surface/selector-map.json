@@ -1,0 +1,50 @@
+{
+  "source": "McCluster-Portfolio current design map",
+  "selectors": [
+    {
+      "selector": "body / root dark surfaces",
+      "use": "very subtle material presence only; avoid overpowering media",
+      "intensity": "low"
+    },
+    {
+      "selector": ".sp__head",
+      "use": "smoked/obsidian backing beneath sticky header gradient",
+      "intensity": "low"
+    },
+    {
+      "selector": ".sp__bill",
+      "use": "optional obsidian border/well treatment while keeping artwork dominant",
+      "intensity": "low"
+    },
+    {
+      "selector": ".spc__art",
+      "use": "only on empty/fallback shells, not over media",
+      "intensity": "very-low"
+    },
+    {
+      "selector": ".mini",
+      "use": "backplate material beneath mini-player",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".now",
+      "use": "background material under existing now-playing gradient",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".site-head",
+      "use": "subtle obsidian/backplate surface",
+      "intensity": "low"
+    },
+    {
+      "selector": ".appbar",
+      "use": "base surface only if nav geometry remains unchanged",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".wantsite / .services / .finale support surfaces",
+      "use": "selectively replace dead flat black only",
+      "intensity": "low-to-medium"
+    }
+  ]
+}

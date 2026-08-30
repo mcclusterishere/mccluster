@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Gallery · Matthew McCluster · photography &amp; film</title>
+  <meta name="description" content="The McCluster gallery: every shoot on the wall. Find the night, own the work. Prints, files, and films.">
+  <link rel="canonical" href="https://matthew.mccluster.org/gallery.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="McCluster">
+  <link rel="preload" href="assets/fonts/manrope-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    /* ============ THE GALLERY: portfogallery structure, house blood ============ */
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    :root {
+      --gx-ui: "Manrope", "Helvetica Neue", system-ui, sans-serif;
+      --gx-bg: #0b0908; --gx-ink: #f2e9db; --gx-mut: #9d8e82;
+      --gx-line: rgba(242,233,219,0.14); --gx-panel: #151009;
+      --gx-red: #de3a3a; --gx-gold: #e5383b;
+    }
+    html[data-theme="light"] {
+      --gx-bg: #f5f1ea; --gx-ink: #171210; --gx-mut: #6b6058;
+      --gx-line: rgba(23,18,16,0.16); --gx-panel: #ffffff;
+      /* the two reds were the only tokens that did not follow the coat over.
+         --gx-gold carries the small caps labels and --gx-red carries both the
+         "The Rack →" links and the white-on-red chips; at their dark values
+         both land in the 3.6-4.4:1 band on this ground, under the floor.
+         These are the same reds css/style.css uses in daylight. */
+      --gx-red: #a30d18; --gx-gold: #a4101a;
+    }
+    html { background: var(--gx-bg); }
+    body.gxwall { background: var(--gx-bg); color: var(--gx-ink); font-family: var(--gx-ui); }
+    .gx { max-width: 78rem; margin: 0 auto; padding: 0 clamp(1.1rem, 4vw, 2.4rem) 9rem; }
+    .rv { opacity: 0; transform: translateY(1.4rem); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    .rv.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } }
+    /* ---- hero ---- */
+    .gxhero { display: grid; grid-template-columns: 1fr auto; gap: 1.4rem; align-items: end;
+      padding: clamp(2rem, 6vh, 4rem) 0 1.6rem; }
+    .gxhero h1 { font-weight: 800; letter-spacing: -0.035em; line-height: 0.98;
+      font-size: clamp(3rem, 12.5vw, 7rem); margin: 0; }
+    .gxhero h1 .dim { color: var(--gx-mut); }
+    .gxhero__aside { max-width: 17rem; font-weight: 600; font-size: 0.82rem; color: var(--gx-mut);
+      line-height: 1.55; padding-bottom: 0.6rem; }
+    /* The headline is enormous by design, so its 1fr column takes whatever
+       it asks for and starves the aside beside it; on a tablet the aside
+       was landing at ~75px, one word per line. Two columns only once the
+       aside can actually hold a sentence. */
+    @media (max-width: 64rem) { .gxhero { grid-template-columns: 1fr; align-items: start; }
+      .gxhero__aside { max-width: 46ch; padding-bottom: 0; } }
+    .gxhero__row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; padding-bottom: 2rem; }
+    .gxhero__row .chip { font-weight: 700; font-size: 0.72rem; color: var(--gx-mut);
+      border-radius: 100px; padding: 0.5rem 1rem; box-shadow: inset 0 0 0 1px var(--gx-line); }
+    .gxhero__row .cta { margin-left: auto; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; font-family: var(--gx-ui); font-weight: 800; font-size: 0.76rem;
+      letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: var(--gx-red);
+      border-radius: 100px; padding: 0.75rem 1.5rem; box-shadow: 0 14px 30px -12px rgba(222,58,58,0.5); }
+    /* ---- the strip: full-bleed staged panels ---- */
+    .gxstrip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+      margin: 0 calc(50% - 50vw) 3rem; }
+    .gxstrip .cell { position: relative; aspect-ratio: 4 / 3; background: var(--gx-panel); overflow: hidden; }
+    .gxstrip .cell b { position: absolute; left: 1rem; right: 1rem; bottom: 0.9rem; font-weight: 800; font-size: 0.78rem;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .gxstrip .cell small { position: absolute; left: 1rem; bottom: 2.4rem; font-weight: 700; font-size: 0.6rem;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--gx-gold); }
+    /* These labels sit straight on the photograph, and a bright frame turns
+       them to mush. The shadow rides with the text, so it works whatever
+       the cover happens to be.
+
+       And they do NOT turn with the house. Everything else on this page
+       flips at daybreak because it sits on the page; these sit on a
+       photograph, and a photograph is dark at noon as well as midnight.
+       Letting them inherit --gx-ink took the titles to near-black and
+       --gx-gold took the dates to a deep red, both laid over a night
+       shot: the strip went silent in light mode while looking correct in
+       dark. Pinned to bone and a warm gold in both coats, over a scrim
+       that guarantees them a ground to sit on. */
+    .gxstrip .cell b, .gxstrip .cell small {
+      text-shadow: 0 1px 3px rgba(0,0,0,0.92), 0 0 14px rgba(0,0,0,0.7); }
+    .gxstrip .cell b { color: #f2e9db; }
+    .gxstrip .cell small { color: #f0b7b7; }
+    /* the scrim: a foot of shade under the caption, so the words never
+       depend on what the photographer pointed the camera at */
+    .gxstrip .cell::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0;
+      height: 45%; pointer-events: none; z-index: 1;
+      background: linear-gradient(180deg, transparent, rgba(6,5,4,0.82)); }
+    .gxstrip .cell b, .gxstrip .cell small { z-index: 2; }
+    .gxstrip .cell::after { content: ""; position: absolute; inset: 0;
+      background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.05) 45%, transparent 60%);
+      animation: gxShimmer 2.8s ease-in-out infinite; }
+    @keyframes gxShimmer { 0% { transform: translateX(-60%); } 100% { transform: translateX(60%); } }
+    @media (prefers-reduced-motion: reduce) { .gxstrip .cell::after { animation: none; } }
+    @media (max-width: 46rem) { .gxstrip { grid-template-columns: 1fr; } .gxstrip .cell { aspect-ratio: 16 / 8; } }
+    /* ---- section labels ---- */
+    .gxlab { font-weight: 700; font-size: 0.72rem; letter-spacing: 0.14em; color: var(--gx-gold); margin: 0 0 1rem; }
+    .gxstate { font-weight: 800; letter-spacing: -0.025em; line-height: 1.08;
+      font-size: clamp(1.8rem, 6.5vw, 3.2rem); margin: 0 0 1.6rem; max-width: 22ch; }
+    /* ---- about ---- */
+    .gxabout { display: grid; grid-template-columns: minmax(10rem, 16rem) 1fr; gap: 2rem; align-items: center;
+      margin-bottom: 3.6rem; }
+    .gxabout > * { min-width: 0; }
+    .gxabout__body { display: grid; grid-template-columns: minmax(9rem, 13rem) 1fr; gap: 1.6rem; align-items: center; }
+    .gxabout__body > * { min-width: 0; }
+    .gxabout figure { margin: 0; position: relative; background: var(--gx-panel); border-radius: 14px; padding: 1.2rem 1.2rem 0; }
+    .gxabout img { display: block; width: 100%; max-width: 13rem; margin: 0 auto; }
+    .gxabout blockquote { margin: 0; font-weight: 600; font-size: 0.92rem; line-height: 1.65; color: var(--gx-mut); max-width: 40ch; }
+    .gxabout .socials { display: flex; gap: 0.5rem; margin-top: 1.1rem; }
+    .gxabout .socials a { font-weight: 800; font-size: 0.72rem; color: var(--gx-ink); text-decoration: none;
+      border-radius: 100px; padding: 0.5rem 1rem; box-shadow: inset 0 0 0 1px var(--gx-line); }
+    @media (max-width: 46rem) { .gxabout, .gxabout__body { grid-template-columns: 1fr; } }
+    /* ---- the clients ---- */
+    .gxcl { margin-bottom: 3rem; }
+    .gxcl__row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .gxcl__row button { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; font-family: var(--gx-ui); font-weight: 700; font-size: 0.78rem;
+      color: var(--gx-ink); background: transparent; border-radius: 100px; padding: 0.6rem 1.1rem;
+      box-shadow: inset 0 0 0 1px var(--gx-line); transition: background 0.25s ease, color 0.25s ease; }
+    .gxcl__row button sup { font-weight: 800; font-size: 0.58rem; color: var(--gx-gold); margin-left: 0.25rem; }
+    .gxcl__row button.on { background: var(--gx-ink); color: var(--gx-bg); box-shadow: none; }
+    /* The selected chip INVERTS the page: bone plate on the dark coat, ink
+       plate in daylight. So its superscript cannot be one red — it has to
+       turn over with the plate. #de3a3a was 3.66:1 on the bone plate and
+       2.3:1 on the ink one, failing on both. */
+    .gxcl__row button.on sup { color: #a30d18; }
+    html[data-theme="light"] .gxcl__row button.on sup { color: #ff5a5c; }
+    .gxcl__row button .seal { color: var(--gx-gold); margin-left: 0.3rem; }
+    .gxcl__cite { font-weight: 600; font-size: 0.74rem; color: var(--gx-mut); margin-top: 0.8rem; }
+    .gxcl__cite a { color: var(--gx-ink); font-weight: 800; text-decoration: none; }
+    /* ---- the walls (event rail) ---- */
+    .gxwalls h2 { font-weight: 800; letter-spacing: -0.03em; font-size: clamp(2rem, 7.5vw, 3.6rem); margin: 0 0 1.4rem; }
+    .gxev { display: block; width: 100%; text-align: left; -webkit-appearance: none; appearance: none; border: 0;
+      cursor: pointer; touch-action: manipulation; background: transparent; color: var(--gx-ink);
+      font-family: var(--gx-ui); padding: 0; margin-bottom: 1.6rem; }
+    /* display:block is load-bearing: this is a <span>, and aspect-ratio is
+       ignored on a non-replaced inline box. Without it the frame collapses
+       to zero height and everything inside it (the chips, the loading line,
+       the year) falls on top of the event title. */
+    .gxev__media { display: block; position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 16 / 8;
+      background: var(--gx-panel); isolation: isolate; box-shadow: inset 0 0 0 1px var(--gx-line); }
+    .gxev__media img, .gxev__media video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
+    .gxev__media .chips { position: absolute; top: 0.85rem; left: 0.85rem; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .gxev__media .chips span { font-weight: 700; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--gx-ink); background: color-mix(in srgb, var(--gx-bg) 72%, transparent);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-radius: 100px; padding: 0.35rem 0.75rem; box-shadow: inset 0 0 0 1px var(--gx-line); }
+    .gxev__media .soon { position: absolute; inset: 0; display: grid; place-items: center; }
+    .gxev__media .soon i { font-style: normal; font-weight: 800; font-size: 0.64rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--gx-mut); }
+    .gxev__media .soon i::before { content: ""; display: inline-block; width: .5em; height: .5em;
+      border-radius: 50%; background: var(--gx-red); margin-right: 0.6rem;
+      animation: gxPulse 1.8s ease-in-out infinite; }
+    @keyframes gxPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    /* This rides on the cover image, and a cover can be anything — a night
+       rooftop or a white studio wall. Grey ink lost it on the dark ones,
+       bone lost it on the light ones. So it stops depending on the
+       photograph altogether and carries its own ground: a dark chip, the
+       same in both coats. */
+    .gxev__media .yr { position: absolute; top: 0.95rem; right: 1rem; font-weight: 700; font-size: 0.68rem;
+      letter-spacing: 0.1em; color: #f2e9db; background: rgba(10,8,7,0.66);
+      border-radius: 100px; padding: 0.22rem 0.55rem; backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px); }
+    .gxev__row { display: flex; align-items: center; gap: 0.9rem; margin-top: 0.7rem; }
+    .gxev__row b { font-weight: 800; font-size: clamp(1rem, 3.4vw, 1.3rem); letter-spacing: -0.01em; }
+    .gxev__row small { display: block; font-weight: 600; font-size: 0.72rem; color: var(--gx-mut); margin-top: 0.15rem; }
+    /* the cards move with poise: slow pan at rest, a lean toward the hand */
+    .gxev { transition-delay: calc(var(--i, 0) * 60ms); }
+    .gxev__media--kb img { animation: gxkb 26s ease-in-out infinite alternate; }
+    .gxev:nth-child(even) .gxev__media--kb img { animation-name: gxkb2; animation-duration: 31s; }
+    @keyframes gxkb { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.09) translate(-1.6%, -1.2%); } }
+    @keyframes gxkb2 { from { transform: scale(1.08) translate(1.4%, 0); } to { transform: scale(1) translate(0, 0); } }
+    .gxev__media { transition: transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease; }
+    .gxev:hover .gxev__media, .gxev:focus-visible .gxev__media { transform: translateY(-6px);
+      box-shadow: inset 0 0 0 1px var(--gx-line), 0 26px 50px -24px color-mix(in srgb, var(--gx-red) 55%, transparent); }
+    .gxev .num { position: absolute; right: .85rem; bottom: .6rem; z-index: 1; font-family: var(--sig, "Anton");
+      font-size: clamp(2.2rem, 7vw, 3.4rem); line-height: 1; color: transparent;
+      -webkit-text-stroke: 1.5px color-mix(in srgb, var(--gx-red) 85%, transparent);
+      opacity: .85; letter-spacing: .02em; pointer-events: none;
+      transition: color .35s ease; }
+    .gxev:hover .num { color: var(--gx-red); }
+    .gxcase__wall { display: inline-block; margin: .3rem 0 1rem; text-decoration: none; color: #fff;
+      background: linear-gradient(165deg, #ff5a5c, #b3121b); border-radius: 99px; padding: .6rem 1.1rem;
+      font-weight: 800; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; }
+    @media (prefers-reduced-motion: reduce) { .gxev__media--kb img { animation: none; } }
+    .gxev__row .arr { margin-left: auto; flex: none; width: 2.4rem; height: 2.4rem; border-radius: 100px;
+      display: grid; place-items: center; color: var(--gx-ink); box-shadow: inset 0 0 0 1px var(--gx-line);
+      font-weight: 800; transition: background 0.3s ease, color 0.3s ease; }
+    @media (hover: hover) { .gxev:hover .arr { background: var(--gx-red); color: #fff; box-shadow: none; } }
+    /* ---- the shop rail: the catalog IS the print shop ---- */
+    .gxshop__note { font-weight: 600; font-size: 0.86rem; color: var(--gx-mut); margin: -0.8rem 0 1.2rem; max-width: 52ch; line-height: 1.6; }
+    .gxshop__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr)); gap: 0.7rem; }
+    .gxsh { position: relative; overflow: hidden; border-radius: 16px; background: var(--gx-panel); aspect-ratio: 4 / 5;
+      cursor: pointer; isolation: isolate; border: 0; padding: 0; -webkit-appearance: none; appearance: none;
+      text-align: left; font-family: var(--gx-ui); box-shadow: inset 0 0 0 1px var(--gx-line); }
+    .gxsh img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2;
+      -webkit-touch-callout: none; user-select: none; transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    @media (hover: hover) { .gxsh:hover img { transform: scale(1.05); } }
+    .gxsh .sc { position: absolute; inset: 0; z-index: 0; background: linear-gradient(180deg, transparent 55%, rgba(9,7,5,0.85) 100%); }
+    .gxsh .tt { position: absolute; left: 0.8rem; right: 0.8rem; bottom: 0.75rem; z-index: 2; color: #fff; }
+    .gxsh .tt b { display: block; font-weight: 800; font-size: 0.88rem; }
+    .gxsh .tt small { display: block; font-weight: 700; font-size: 0.6rem; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(255,255,255,0.62); margin-top: 0.2rem; }
+    .gxsh .from { position: absolute; top: 0.65rem; right: 0.65rem; z-index: 2; font-weight: 800;
+      font-size: 0.6rem; letter-spacing: 0.08em; color: #fff; background: var(--gx-red);
+      border-radius: 100px; padding: 0.3rem 0.65rem; }
+    /* ---- services ---- */
+    .gxsv { margin: 3.4rem 0 0; }
+    .gxsv__blk { display: grid; grid-template-columns: 5rem 1fr; gap: 1.2rem; padding: 1.6rem 0;
+      border-top: 1px solid var(--gx-line); }
+    .gxsv__blk:last-child { border-bottom: 1px solid var(--gx-line); }
+    .gxsv__blk .no { font-weight: 800; font-size: 1.4rem; color: var(--gx-mut); }
+    .gxsv__blk h3 { font-weight: 800; font-size: 1.35rem; margin: 0 0 0.5rem; }
+    .gxsv__blk p { font-weight: 600; font-size: 0.86rem; color: var(--gx-mut); line-height: 1.6; margin: 0 0 0.9rem; max-width: 52ch; }
+    .gxsv__blk ol { margin: 0; padding: 0; list-style: none; counter-reset: svc; font-weight: 700; font-size: 0.84rem; }
+    .gxsv__blk ol li { padding: 0.45rem 0; color: var(--gx-ink); counter-increment: svc; }
+    .gxsv__blk ol li::before { content: counter(svc) ". "; }
+    .gxsv__blk ol li.hi { background: var(--gx-red); color: #fff; border-radius: 8px; padding: 0.55rem 0.8rem;
+      font-weight: 800; letter-spacing: 0.04em; }
+    @media (max-width: 46rem) { .gxsv__blk { grid-template-columns: 1fr; gap: 0.4rem; } }
+    /* ---- let's talk ---- */
+    .gxtalk { text-align: left; margin-top: 4rem; border-top: 1px solid var(--gx-line); padding-top: 2.4rem; }
+    .gxtalk h2 { font-weight: 800; letter-spacing: -0.04em; line-height: 0.95;
+      font-size: clamp(3.4rem, 16vw, 9rem); margin: 0 0 1rem; text-transform: uppercase; }
+    .gxtalk p { font-weight: 600; font-size: 0.86rem; color: var(--gx-mut); margin: 0 0 0.7rem; }
+    .gxtalk .mail { display: flex; align-items: center; gap: 1rem; text-decoration: none; color: var(--gx-ink);
+      font-weight: 800; letter-spacing: -0.02em; font-size: clamp(1.3rem, 5.5vw, 2.6rem); }
+    .gxtalk .mail .arr { flex: none; width: 2.6rem; height: 2.6rem; border-radius: 100px; display: grid;
+      place-items: center; background: var(--gx-red); color: #fff; font-weight: 800; }
+    .gxfoot { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      margin-top: 2.4rem; border-top: 1px solid var(--gx-line); padding-top: 1.1rem;
+      font-weight: 600; font-size: 0.74rem; color: var(--gx-mut); }
+    .gxfoot .pills { display: flex; gap: 0.5rem; }
+    .gxfoot .pills a { font-weight: 800; font-size: 0.7rem; color: var(--gx-ink); text-decoration: none;
+      border-radius: 100px; padding: 0.45rem 0.95rem; box-shadow: inset 0 0 0 1px var(--gx-line); }
+    /* ---- the wall (event detail) ---- */
+    .gxcase { position: fixed; inset: 0; z-index: 240; display: none; overflow-y: auto; background: var(--gx-bg); }
+    .gxcase.on { display: block; }
+    .gxcase__in { max-width: 66rem; margin: 0 auto; padding: 1rem clamp(1.1rem, 4vw, 2rem) 7rem; }
+    .gxcase__bar { display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0 1.2rem; }
+    .gxcase__bar .lab { font-weight: 700; font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gx-gold); }
+    .gxcase__x { margin-left: auto; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; width: 2.4rem; height: 2.4rem; border-radius: 100px; font-size: 1rem;
+      color: var(--gx-ink); background: transparent; box-shadow: inset 0 0 0 1px var(--gx-line); }
+    .gxcase h2 { font-weight: 800; letter-spacing: -0.03em; font-size: clamp(1.9rem, 7vw, 3.4rem); margin: 0 0 0.4rem; }
+    .gxcase__meta { font-weight: 600; font-size: 0.82rem; color: var(--gx-mut); margin-bottom: 1rem; }
+    .gxcase__meta b { color: var(--gx-ink); font-weight: 800; }
+    .gxcase__about { font-weight: 600; font-size: 0.92rem; line-height: 1.68; color: var(--gx-ink);
+      max-width: 54ch; margin: 0 0 1.8rem; }
+    /* the wall shows FULL, uncropped frames, a masonry of natural shapes; tap opens the full preview */
+    .gxgrid { column-width: 11rem; column-gap: 0.6rem; }
+    .gxgrid .ghost { position: relative; aspect-ratio: 4 / 5; border-radius: 12px; background: var(--gx-panel);
+      overflow: hidden; box-shadow: inset 0 0 0 1px var(--gx-line);
+      break-inside: avoid; margin: 0 0 0.6rem; }
+    .gxgrid .ghost::after { content: ""; position: absolute; inset: 0;
+      background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.05) 45%, transparent 60%);
+      animation: gxShimmer 2.8s ease-in-out infinite; }
+    .gxgrid .it { position: relative; display: block; border-radius: 12px; overflow: hidden;
+      isolation: isolate; cursor: zoom-in; box-shadow: inset 0 0 0 1px var(--gx-line);
+      break-inside: avoid; margin: 0 0 0.6rem; }
+    .gxgrid .it img { display: block; width: 100%; height: auto; }
+    /* a film on the wall reads as a film before it's tapped */
+    .gxgrid .it .filmtag { position: absolute; left: 0.5rem; bottom: 0.5rem; z-index: 2;
+      font-family: var(--ui); font-weight: 800; font-size: 0.62rem; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #fff; background: rgba(11,9,8,0.82);
+      border-radius: 100px; padding: 0.3rem 0.66rem;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18); }
+    .gxfilm { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; }
+    .gxfilm iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .gxgrid .it video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: #000; }
+    .gxgrid .it .own { position: absolute; left: 0.6rem; bottom: 0.6rem; font-weight: 800; font-size: 0.62rem;
+      letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: var(--metal, #e5383b);
+      border-radius: 100px; padding: 0.35rem 0.75rem; text-decoration: none; z-index: 2;
+      border: 0; cursor: pointer; font-family: inherit; -webkit-appearance: none; appearance: none;
+      touch-action: manipulation; }
+    /* ---- the lightbox: a frame shown whole ---- */
+    .gxlb { position: fixed; inset: 0; z-index: 300; display: none; background: rgba(5,4,3,0.94);
+      -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    .gxlb.on { display: grid; grid-template-rows: 1fr auto; }
+    .gxlb__x { position: absolute; top: max(0.9rem, env(safe-area-inset-top)); right: 0.9rem; z-index: 2;
+      -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      width: 2.6rem; height: 2.6rem; border-radius: 100px; font-size: 1.05rem; color: #fff;
+      background: rgba(255,255,255,0.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28); }
+    .gxlb__stage { display: grid; place-items: center; overflow: auto; padding: clamp(0.8rem, 4vw, 2rem); min-height: 0; }
+    .gxlb__stage img, .gxlb__stage video { max-width: 100%; max-height: 82vh; width: auto; height: auto;
+      object-fit: contain; border-radius: 8px; box-shadow: 0 30px 80px -30px rgba(0,0,0,0.8); }
+    .gxlb__bar { display: flex; align-items: center; gap: 1rem; justify-content: space-between;
+      padding: 1rem clamp(1rem, 4vw, 2rem) max(1rem, env(safe-area-inset-bottom)); }
+    .gxlb__bar small { color: rgba(255,255,255,0.72); font-weight: 600; font-size: 0.78rem; }
+    .gxlb__bar .own { font-weight: 800; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase;
+      color: #fff; background: var(--gx-red); border-radius: 100px; padding: 0.7rem 1.4rem; text-decoration: none;
+      white-space: nowrap; border: 0; cursor: pointer; font-family: inherit;
+      -webkit-appearance: none; appearance: none; touch-action: manipulation; }
+    .gxwait { margin-top: 1.6rem; max-width: 30rem; }
+    .gxwait b { display: block; font-weight: 800; font-size: 1rem; }
+    .gxwait small { display: block; font-weight: 600; font-size: 0.8rem; color: var(--gx-mut); margin-top: 0.3rem; }
+    .gxwait input { width: 100%; -webkit-appearance: none; appearance: none; border: 0; margin-top: 0.7rem;
+      font-family: var(--gx-ui); font-weight: 600; font-size: 1rem; color: var(--gx-ink); border-radius: 12px;
+      padding: 0.8rem 0.95rem; background: var(--gx-panel); box-shadow: inset 0 0 0 1px var(--gx-line); }
+    .gxwait input::placeholder { color: var(--gx-mut); }
+    .gxwait .go { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      margin-top: 0.7rem; font-family: var(--gx-ui); font-weight: 800; font-size: 0.86rem; color: #fff;
+      background: var(--gx-red); border-radius: 100px; padding: 0.8rem 1.6rem; }
+    .gxwait .err { color: var(--gx-red); font-weight: 700; font-size: 0.76rem; margin: 0.5rem 0 0; }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
+</head>
+<body class="gxwall">
+  <main class="gx">
+    <!-- nav -->
+    <!-- the gallery's own bar is retired; the house masthead
+         (js/masthead.js) carries the mark and the rooms on every page -->
+
+    <!-- hero -->
+    <header class="gxhero">
+      <h1>I&rsquo;m <span class="dim">McCluster</span><br>a photographer<br>&amp; filmmaker.</h1>
+      <p class="gxhero__aside">I shoot the room, the record, and the rollout, because when we build with a creative mind, it lands with meaningful impact.</p>
+    </header>
+    <div class="gxhero__row">
+      <span class="chip">Photography</span>
+      <span class="chip">Videography</span>
+      <span class="chip">Media management</span>
+      <a class="cta" style="text-decoration:none" href="account.html" id="gxProfileHero" data-cta="gallery-profile-hero">Make a profile &middot; own the work &#8594;</a>
+    </div>
+
+    <!-- the strip: three staged panels, edge to edge -->
+    <div class="gxstrip" id="gxStrip" aria-hidden="true"></div>
+
+    <!-- about -->
+    <section class="gxabout rv">
+      <div>
+        <p class="gxlab">/ About me</p>
+        <h2 class="gxstate">Find the night. Own the frame.</h2>
+      </div>
+      <div class="gxabout__body">
+        <figure><img src="assets/img/mcc-cutout.webp" alt="Matthew McCluster"></figure>
+        <div>
+          <blockquote>&ldquo;I&rsquo;m a shooter, but I&rsquo;m more than that. Every event I cover goes on the wall. You find yourself, you own the frame, and the whole night stays on the record.&rdquo;</blockquote>
+          <div class="socials">
+            <a href="https://instagram.com/McClusterishere" target="_blank" rel="noopener">Instagram</a>
+            <a href="album.html">The music</a>
+            <a href="#shop">Prints</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- the clients -->
+    <section class="gxcl rv">
+      <p class="gxlab">/ The clients</p>
+      <h2 class="gxstate">Browse the wall by who booked it.</h2>
+      <div class="gxcl__row" id="gxClients"></div>
+      <p class="gxcl__cite"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px;display:inline-block"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9L4.9 19.1" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Citation on file: the City of Bridgeport work is recognized on the record.
+        <a href="press.html">See the citations &#8594;</a></p>
+    </section>
+
+    <!-- the walls -->
+    <section class="gxwalls" id="gxWalls">
+      <p class="gxlab">/ The walls</p>
+      <h2>Great work, on the wall</h2>
+      <div id="gxRail"></div>
+    </section>
+
+    <!-- the print shop. Same room, same walls: the catalog sells itself -->
+    <section class="gxwalls rv" id="shop">
+      <p class="gxlab">/ The print shop</p>
+      <h2 class="gxstate">The catalog is the shop.</h2>
+      <p class="gxshop__note">Every sellable frame, right here: museum-stock prints shipped tracked,
+        files for personal use, or the RAW with a written license. Tap a frame, pick a format, done.
+        Want it on cotton? <a href="prayer-closet.html#theRack" style="color:var(--gx-red);text-decoration:none;font-weight:800">The Rack &#8594;</a></p>
+      <div class="gxshop__grid" id="gxShop"></div>
+    </section>
+
+    <!-- services -->
+    <section class="gxsv rv">
+      <p class="gxlab">/ My services</p>
+      <h2 class="gxstate">My work is to put your moment on the record.</h2>
+      <div class="gxsv__blk">
+        <span class="no">/01</span>
+        <div><h3>Photography</h3>
+          <p>Events, portraits, ceremonies, festivals, shot on the ground and delivered same week, with every guest able to find their frame on the wall.</p>
+          <ol><li class="hi">Event coverage</li><li>Portraits &amp; press</li><li>Prints, files &amp; licenses</li></ol>
+        </div>
+      </div>
+      <div class="gxsv__blk">
+        <span class="no">/02</span>
+        <div><h3>Videography</h3>
+          <p>Recap films, long-form coverage, and short-form cuts built for the feed. One shoot, every format your rollout needs.</p>
+          <ol><li>Recap films</li><li class="hi">Long-form coverage</li><li>Short-form cuts</li></ol>
+        </div>
+      </div>
+      <div class="gxsv__blk">
+        <span class="no">/03</span>
+        <div><h3>Media management</h3>
+          <p>Your socials, your rollout, your strategy, run like a label, from one desk. Consulting included.</p>
+          <ol><li>Rollout strategy</li><li>Social operations</li><li class="hi">Consulting</li></ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- let's talk -->
+    <section class="gxtalk rv">
+      <h2>Let&rsquo;s talk</h2>
+      <p>Have a moment worth keeping? Tell me about it.</p>
+      <a class="mail" href="mailto:matthew@mccluster.org?subject=Booking%20%E2%80%94%20McCluster">matthew@mccluster.org<span class="arr">&#8594;</span></a>
+      <div class="gxfoot">
+        <span>&copy; 2026 A McCluster Production</span>
+        <span class="pills">
+          <a href="https://instagram.com/McClusterishere" target="_blank" rel="noopener">Instagram</a>
+          <a href="shots.html">Shot Wall</a>
+          <a href="#shop">Print Shop</a>
+          <!-- a real link, in the static HTML: the wall pages route on a
+               hash in here, and a crawler cannot follow a hash. This is the
+               path it takes to find every event page. -->
+          <a href="walls.html">Every wall</a>
+        </span>
+      </div>
+    </section>
+  </main>
+
+  <!-- THE WALL (event detail) -->
+  <div class="gxcase" id="gxCase" role="dialog" aria-label="The wall">
+    <div class="gxcase__in" id="gxCaseIn"></div>
+  </div>
+
+  <!-- THE LIGHTBOX (full-frame preview) -->
+  <div class="gxlb" id="gxLb" role="dialog" aria-label="Full preview" aria-hidden="true">
+    <button class="gxlb__x" type="button" data-lbx aria-label="Close preview"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="gxlb__stage" id="gxLbStage"></div>
+    <div class="gxlb__bar" id="gxLbBar"></div>
+  </div>
+
+  <!-- THE BAR -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/crm.js?v=__STAMP__"></script>
+  <script src="js/signals.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/prices.js?v=__STAMP__"></script>
+  <script src="js/cause.js?v=__STAMP__"></script>
+  <script src="js/counter.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/deskchat.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var track = function (n, p) { if (window.MCC_TRACK) window.MCC_TRACK(n, p || {}); };
+    var EVENTS = [], OPEN = null, FROM = null;
+
+    /* THE SHOP IS THE CATALOG: one page. The full sellable catalog
+       paints right here, every card opens the counter in place, and
+       the retired prints.html forwards its deep links to this room. */
+    var CATALOG = [];
+    function paintShop() {
+      $("gxShop").innerHTML = CATALOG.map(function (p) {
+        return '<button class="gxsh" type="button" data-buy="' + esc(p.id) + '">' +
+          '<img src="' + esc(p.src) + '" alt="' + esc(p.title) + '" loading="lazy" draggable="false">' +
+          '<span class="sc"></span>' +
+          (FROM ? '<span class="from">from $' + FROM + "</span>" : "") +
+          '<span class="tt"><b>' + esc(p.title) + "</b><small>" + esc(p.sub || "") + "</small></span></button>";
+      }).join("");
+    }
+    if (window.MCC_COUNTER) MCC_COUNTER.load().then(function (shop) {
+      FROM = MCC_COUNTER.from();
+      CATALOG = (shop && shop.photos) || [];
+      paintShop();
+      routeHash(); /* a #/buy deep link may have been waiting on the catalog */
+    });
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-buy]");
+      if (!b) return;
+      MCC_COUNTER.open({ id: b.getAttribute("data-buy") }, "gallery-shop");
+      track("prints_open_catalog", { photo: b.getAttribute("data-buy") });
+    });
+    function isPrintId(id) {
+      return CATALOG.some(function (p) { return p.id === id; });
+    }
+    /* one router for the room: event walls, the shop anchor, and buy links */
+    function routeHash() {
+      var h = location.hash || "";
+      if (h === "#shop") {
+        var s = document.getElementById("shop");
+        if (s) s.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      var buy = h.match(/^#\/buy\/(.+)$/);
+      if (buy && window.MCC_COUNTER) { MCC_COUNTER.open({ id: decodeURIComponent(buy[1]) }, "deep-link"); return; }
+      var id = h.replace(/^#\//, "");
+      /* an old prints deep link (#/rally-01) lands on the frame, not a wall */
+      if (id && EVENTS.length && !EVENTS.some(function (e2) { return e2.id === id; }) && isPrintId(id) && window.MCC_COUNTER) {
+        MCC_COUNTER.open({ id: id }, "deep-link");
+      }
+    }
+
+    /* the store knows its buyers: a member sees their own door */
+    (function () {
+      var u = window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user();
+      if (!u) return;
+      var top = $("gxProfileTop"), hero = $("gxProfileHero");
+      if (top) top.textContent = "Your profile →";
+      if (hero) hero.innerHTML = "Signed in. Shop the walls &#8594;";
+    })();
+
+    /* a frame sells from the wall it hangs on; the sheet opens over
+       the lightbox, and closing it puts you right back in the room */
+    function sellFrame(mid) {
+      var m = OPEN && (OPEN.media || []).filter(function (x) { return (x.id || "") === mid; })[0];
+      if (!m || !window.MCC_COUNTER) return;
+      MCC_COUNTER.open({
+        id: m.id, src: m.src,
+        title: (OPEN.title || "") + " · the frame",
+        sub: [OPEN.client, whereLine(OPEN)].filter(Boolean).join(" · "),
+        rights: m.rights || OPEN.rights,
+      }, "gallery");
+    }
+
+    /* the light switch and this room's private bar both retired with
+       the house masthead; nothing local left to wire */
+
+    function whereLine(ev) {
+      return [ev.venue, ev.city, ev.date].filter(Boolean).join(" · ");
+    }
+    function yearOf(ev) {
+      var m = (ev.date || "").match(/\d{4}/);
+      return m ? m[0] : "";
+    }
+
+    /* ---- the strip: first three walls as staged panels ---- */
+    function paintStrip() {
+      $("gxStrip").innerHTML = EVENTS.slice(0, 3).map(function (ev) {
+        var cover = ev.media && ev.media.length && (ev.media[0].poster || ev.media[0].src);
+        return '<div class="cell">' + (cover ? '<img src="' + esc(cover) + '" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">' : "") +
+          "<small>" + esc(ev.date || "On the wall soon") + "</small><b>" + esc(ev.title) + "</b></div>";
+      }).join("");
+    }
+
+    /* ---- the clients ---- */
+    var CLIENT = "All";
+    function paintClients(clients) {
+      var row = [{ name: "All" }].concat(clients || []);
+      $("gxClients").innerHTML = row.map(function (c) {
+        var n = c.name === "All" ? EVENTS.length : EVENTS.filter(function (e) { return e.client === c.name; }).length;
+        return '<button type="button" data-client="' + esc(c.name) + '"' + (c.name === CLIENT ? ' class="on"' : "") + ">" +
+          esc(c.name) + "<sup>" + n + "</sup>" + (c.cited ? '<span class="seal"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px;display:inline-block"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9L4.9 19.1" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : "") + "</button>";
+      }).join("");
+    }
+    $("gxClients").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-client]");
+      if (!b) return;
+      CLIENT = b.getAttribute("data-client");
+      $("gxClients").querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); });
+      paintRail();
+      reveal();
+      track("gallery_client", { client: CLIENT });
+    });
+
+    /* ---- the rail ---- */
+    function paintRail() {
+      var rows = CLIENT === "All" ? EVENTS : EVENTS.filter(function (e) { return e.client === CLIENT; });
+      $("gxRail").innerHTML = rows.map(function (ev, ix) {
+        var cover = ev.media && ev.media.length && (ev.media[0].poster || ev.media[0].src);
+        return '<button class="gxev rv" type="button" data-id="' + esc(ev.id) + '" style="--i:' + (ix % 6) + '">' +
+          '<span class="gxev__media gxev__media--kb">' +
+          '<span class="num" aria-hidden="true">' + ("0" + (ix + 1)).slice(-2) + "</span>" +
+          (cover ? '<img src="' + esc(cover) + '" alt="" loading="lazy">' : '<span class="soon"><i>The wall is loading</i></span>') +
+          '<span class="chips">' + (ev.tags || []).map(function (t) { return "<span>" + esc(t) + "</span>"; }).join("") + "</span>" +
+          (yearOf(ev) ? '<span class="yr">' + (ev.kind === "video" ? "Film" : "Photo") + "/" + yearOf(ev).slice(2) + "</span>" : "") +
+          "</span>" +
+          '<span class="gxev__row"><span><b>' + esc(ev.title) + "</b><small>" +
+          esc([ev.client, whereLine(ev)].filter(Boolean).join(" · ")) + "</small></span>" +
+          '<span class="arr">&#8594;</span></span></button>';
+      }).join("");
+    }
+
+    /* the shoots with a page of their own (built by tools/build-walls.mjs) */
+    var WALLS = { "eu-rally": 1, "cover-art": 1, "brunch-and-beats": 1,
+      "dressed-for-success": 1, "candler-crossing": 1, "vaunt-runway": 1 };
+
+    /* ---- the wall: event detail ---- */
+    function caseHTML(ev) {
+      var has = ev.media && ev.media.length;
+      return '<div class="gxcase__bar"><span class="lab">' + (ev.kind === "video" ? "The film wall" : "The photo wall") + "</span>" +
+        '<button class="gxcase__x" type="button" data-x aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>' +
+        "<h2>" + esc(ev.title) + "</h2>" +
+        '<p class="gxcase__meta">' +
+        (ev.client ? "For <b>" + esc(ev.client) + "</b> · " : "") + esc(whereLine(ev)) +
+        (ev.tags && ev.tags.length ? " · " + esc(ev.tags.join(" · ")) : "") + "</p>" +
+        (WALLS[ev.id] ? '<a class="gxcase__wall" href="walls/' + esc(ev.id) + '.html">Every frame, on the record &#8594;</a>' : "") +
+        (ev.about ? '<p class="gxcase__about">' + esc(ev.about) + "</p>" : "") +
+        '<div class="gxgrid">' +
+        (has
+          ? ev.media.map(function (m) {
+              return '<div class="it" data-media="' + esc(m.id || "") + '">' +
+                (m.type === "film"
+                  /* A long-form cut is streamed, not shipped: a 17-minute
+                     film is far past what a repo will carry, so the wall
+                     holds a poster and the film plays from the channel. */
+                  ? '<img src="' + esc(m.poster || "") + '" alt="" loading="lazy">' +
+                    '<span class="filmtag"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px;display:inline-block;width:.72em;height:.72em"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg> Film' + (m.len ? " &middot; " + esc(m.len) : "") + "</span>"
+                  : m.type === "video"
+                  ? '<video muted loop playsinline preload="none" data-src="' + esc(m.src) + '"' + (m.poster ? ' poster="' + esc(m.poster) + '"' : "") + "></video>"
+                  : '<img src="' + esc(m.src) + '" alt="" loading="lazy">') +
+                (m.sell ? '<button class="own" type="button" data-own="' + esc(m.id) + '">Own it</button>' : "") + "</div>";
+            }).join("")
+          : '<div class="ghost"></div><div class="ghost"></div><div class="ghost"></div><div class="ghost"></div><div class="ghost"></div><div class="ghost"></div>') +
+        "</div>" +
+        (has ? "" :
+          '<div class="gxwait"><b>The wall is loading.</b>' +
+          "<small>These frames are in the edit. Leave your email and you get first look the second they land" +
+          (ev.kind === "photo" ? ". Plus first claim on prints." : ".") + "</small>" +
+          '<input name="gxName" placeholder="Your name" autocomplete="name" maxlength="80">' +
+          '<input name="gxMail" type="email" placeholder="Email" autocomplete="email" maxlength="120">' +
+          '<button class="go" type="button" data-wait>Put me first &#8594;</button>' +
+          '<p class="err" data-err hidden></p></div>');
+    }
+    function openCase(id, push) {
+      var ev = EVENTS.find(function (x) { return x.id === id; });
+      if (!ev) return;
+      OPEN = ev;
+      $("gxCaseIn").innerHTML = caseHTML(ev);
+      $("gxCase").classList.add("on");
+      $("gxCase").scrollTop = 0;
+      document.body.style.overflow = "hidden";
+      if (push !== false) { try { history.pushState(null, "", "#/" + id); } catch (e) {} }
+      track("gallery_wall", { event: id });
+    }
+    function closeCase(push) {
+      $("gxCase").classList.remove("on");
+      document.body.style.overflow = "";
+      OPEN = null;
+      if (push !== false) { try { history.pushState(null, "", location.pathname + location.search); } catch (e) {} }
+    }
+    window.addEventListener("popstate", function () {
+      var id = (location.hash || "").replace(/^#\//, "");
+      if (id && EVENTS.length) openCase(id, false); else closeCase(false);
+    });
+
+    /* ---- the lightbox: the frame shown whole ---- */
+    function lbOpen() { return $("gxLb").classList.contains("on"); }
+    function openLightbox(m) {
+      if (!m) return;
+      $("gxLbStage").innerHTML = m.type === "film"
+        ? '<div class="gxfilm"><iframe src="https://www.youtube-nocookie.com/embed/' + esc(m.youtube) +
+          '?rel=0&amp;autoplay=1" title="' + esc(m.title || (OPEN ? OPEN.title : "Film")) + '" frameborder="0" ' +
+          'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ' +
+          "allowfullscreen></iframe></div>"
+        : m.type === "video"
+        ? '<video src="' + esc(m.src) + '"' + (m.poster ? ' poster="' + esc(m.poster) + '"' : "") + ' controls autoplay loop playsinline></video>'
+        : '<img src="' + esc(m.src) + '" alt="">';
+      $("gxLbBar").innerHTML =
+        "<small>" + esc(OPEN ? OPEN.title : "") + "</small>" +
+        (m.sell
+          ? '<button class="own" type="button" data-own="' + esc(m.id) + '">Own this frame' +
+            (FROM ? " &middot; from $" + FROM : "") + " &#8594;</button>"
+          : "<span></span>");
+      $("gxLb").classList.add("on");
+      $("gxLb").setAttribute("aria-hidden", "false");
+      track("gallery_preview", { event: OPEN && OPEN.id, media: m.id });
+    }
+    function closeLightbox() {
+      $("gxLb").classList.remove("on");
+      $("gxLb").setAttribute("aria-hidden", "true");
+      $("gxLbStage").innerHTML = "";
+    }
+    $("gxLb").addEventListener("click", function (e) {
+      // the buy button opens the counter in place; the frame stays behind it
+      var own = e.target.closest && e.target.closest("[data-own]");
+      if (own) { sellFrame(own.getAttribute("data-own")); return; }
+      if (e.target.closest && e.target.closest("[data-lbx]")) { closeLightbox(); return; }
+      if (!(e.target.closest && e.target.closest(".gxlb__stage img, .gxlb__stage video"))) closeLightbox();
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      if (lbOpen()) { closeLightbox(); return; }
+      if (OPEN) closeCase();
+    });
+
+    $("gxRail").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest(".gxev");
+      if (b) openCase(b.getAttribute("data-id"));
+    });
+    $("gxCase").addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest("[data-x]")) { closeCase(); return; }
+      var own = e.target.closest && e.target.closest("[data-own]");
+      if (own) { sellFrame(own.getAttribute("data-own")); return; }
+      var it = e.target.closest && e.target.closest(".gxgrid .it");
+      if (it) {
+        var mid = it.getAttribute("data-media");
+        var m = OPEN && (OPEN.media || []).filter(function (x) { return (x.id || "") === mid; })[0];
+        if (m) { openLightbox(m); }
+        return;
+      }
+      if (e.target.closest && e.target.closest("[data-wait]")) {
+        var box = $("gxCaseIn");
+        var f = function (n) { var i = box.querySelector('[name="' + n + '"]'); return i ? i.value.trim() : ""; };
+        var name = f("gxName"), email = f("gxMail");
+        var err = box.querySelector("[data-err]");
+        if (!name || !/.+@.+\..+/.test(email)) { err.textContent = "Name and a real email. First look has to land somewhere."; err.hidden = false; return; }
+        var btn = box.querySelector("[data-wait]");
+        btn.disabled = true; btn.textContent = "Locking it…";
+        window.MCC_CRM.send({
+          name: name, email: email, want: "Photography",
+          note: "GALLERY WAITLIST · " + OPEN.title + (OPEN.client ? " (" + OPEN.client + ")" : ""),
+          campaign: "gallery-waitlist",
+        }).then(function () {
+          track("gallery_waitlist", { event: OPEN.id });
+          box.querySelector(".gxwait").innerHTML = "<b>You&rsquo;re first.</b><small>The second this wall goes live, it lands in your inbox.</small>";
+        }).catch(function () {
+          btn.disabled = false; btn.textContent = "Put me first →";
+          err.textContent = "That didn’t go through. Try again in a second.";
+          err.hidden = false;
+        });
+      }
+    });
+
+    /* reveal */
+    function reveal() {
+      if (!("IntersectionObserver" in window)) {
+        document.querySelectorAll(".rv").forEach(function (el) { el.classList.add("in"); });
+        return;
+      }
+      var rv = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); rv.unobserve(e.target); } });
+      }, { threshold: 0.12 });
+      document.querySelectorAll(".rv:not(.in)").forEach(function (el) { rv.observe(el); });
+    }
+
+    fetch("data/gallery.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+      EVENTS = j.events || [];
+      paintStrip();
+      paintClients(j.clients || []);
+      paintRail();
+      reveal();
+      track("gallery_view", { walls: EVENTS.length });
+      var id = (location.hash || "").replace(/^#\//, "");
+      if (id && EVENTS.some(function (e2) { return e2.id === id; })) openCase(id, false);
+      else routeHash();
+    });
+  })();
+  </script>
+<script src="js/intuition.js?v=__STAMP__"></script>
+<script defer src="js/provenance.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

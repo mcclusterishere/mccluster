@@ -1,0 +1,18 @@
+{
+  "providers": [
+    {
+      "id": "mccluster",
+      "slug": "mccluster",
+      "ticker": "MCC",
+      "name": "Matthew McCluster",
+      "roles": ["Photo", "Video", "Web"],
+      "headline": "Creative director · the agency behind I AM HERE",
+      "area": "Connecticut · Georgia · travels",
+      "badgeColor": "#8b5cf6",
+      "photo": "assets/img/offer-hero.jpg",
+      "book": "mailto:matthew@mccluster.org?subject=Booking",
+      "terms": { "price": 100, "unit": "deposit" }
+    }
+  ],
+  "categories": ["Photo", "Video", "Web"]
+}

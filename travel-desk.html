@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Travel Desk — owner console</title>
+  <meta name="robots" content="noindex,nofollow">
+  <style>
+    /* THE DESK. Owner-only console over the Roadshow Worker. Self-contained
+       on purpose: this is a tool, not a room of the site, but it speaks the
+       same language — ink, cream, ruby, Anton, hairlines, no decoration. */
+    :root { --ink:#0a0807; --ink2:#120d0c; --ruby:#c1121f; --hot:#e5383b;
+      --cream:#f4efe6; --dim:rgba(244,239,230,.8); --rule:rgba(244,239,230,.16);
+      --rule-hard:rgba(244,239,230,.38); --ok:#3ddc84; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { background:var(--ink); }
+    body { background:var(--ink); color:var(--cream);
+      font:500 16px/1.55 "Archivo","Helvetica Neue",Arial,sans-serif;
+      -webkit-font-smoothing:antialiased; }
+    @font-face { font-family:"Anton"; src:url("assets/fonts/anton-latin-400-normal.woff2") format("woff2");
+      font-weight:400; font-display:swap; }
+    @font-face { font-family:"Archivo"; src:url("assets/fonts/archivo-latin-400-normal.woff2") format("woff2");
+      font-weight:400; font-display:swap; }
+    @font-face { font-family:"Archivo"; src:url("assets/fonts/archivo-latin-700-normal.woff2") format("woff2");
+      font-weight:700; font-display:swap; }
+    .page { max-width:56rem; margin:0 auto; padding:clamp(1.2rem,4vw,3rem); }
+    h1 { font:400 clamp(2.4rem,7vw,4rem)/0.95 "Anton",Impact,sans-serif;
+      text-transform:uppercase; letter-spacing:.01em; }
+    h2 { font:400 1.4rem/1.1 "Anton",Impact,sans-serif; text-transform:uppercase;
+      letter-spacing:.02em; margin:0 0 .9rem; }
+    h2::before { content:""; display:block; width:2.4rem; height:3px;
+      background:var(--cream); opacity:.35; margin-bottom:.5rem; }
+    .k { font:700 .66rem/1.4 "Archivo",sans-serif; letter-spacing:.22em;
+      text-transform:uppercase; color:var(--dim); }
+    section { margin-top:3rem; }
+    input, select { padding:.85em 1em; border-radius:2px; width:100%;
+      border:1px solid rgba(244,239,230,.25); background:var(--ink2);
+      color:var(--cream); font:500 1rem "Archivo",sans-serif; color-scheme:dark; }
+    input:focus, select:focus { outline:none; border-color:var(--hot); }
+    button { padding:.85em 1.6em; border:0; border-radius:2px; cursor:pointer;
+      background:var(--ruby); color:#fff; font:800 .72rem "Archivo",sans-serif;
+      letter-spacing:.18em; text-transform:uppercase; }
+    button:hover { background:var(--hot); }
+    button.ghost { background:none; border:1px solid rgba(244,239,230,.3);
+      color:var(--cream); }
+    button.ghost:hover { border-color:var(--hot); color:var(--hot); background:none; }
+    button:disabled { opacity:.4; cursor:not-allowed; }
+    .row { display:flex; gap:.7rem; flex-wrap:wrap; align-items:center; }
+    .row > input { flex:1 1 12rem; width:auto; }
+    .status { display:flex; gap:.6rem; align-items:baseline; margin-top:.6rem;
+      font-size:.85rem; color:var(--dim); }
+    .status b { color:var(--cream); }
+    .status .dot { width:8px; height:8px; display:inline-block; }
+    .dot--on { background:var(--ok); } .dot--off { background:var(--hot); }
+    .req { border-top:1px solid var(--rule); padding:1.1rem 0 1.2rem; }
+    .req:last-child { border-bottom:1px solid var(--rule); }
+    .req__head { display:flex; gap:1rem; align-items:baseline; flex-wrap:wrap; }
+    .req__head b { font-size:1.05rem; }
+    .req__head .k { margin-left:auto; }
+    .req__meta { margin:.25rem 0 .5rem; font-size:.84rem; color:var(--dim); }
+    .req__quote { list-style:none; margin:.4rem 0 .6rem; max-width:26rem; }
+    .req__quote li { display:flex; gap:1rem; padding:.3rem 0; font-size:.82rem;
+      color:var(--dim); border-top:1px solid var(--rule); }
+    .req__quote li b { margin-left:auto; color:var(--cream);
+      font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .req__act { display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; margin-top:.6rem; }
+    .req__act input { width:8rem; padding:.6em .8em; font-size:.9rem; }
+    .st { display:inline-block; padding:.2em .7em; border:1px solid currentColor;
+      font:800 .62rem "Archivo",sans-serif; letter-spacing:.18em; text-transform:uppercase; }
+    .st--pending { color:var(--dim); } .st--approved { color:var(--cream); }
+    .st--held { color:#f0b429; } .st--booked, .st--booked-flight { color:var(--ok); }
+    .st--failed { color:var(--hot); }
+    .out { margin-top:.6rem; padding:.7rem .9rem; background:var(--ink2);
+      border:1px solid var(--rule); font-size:.8rem; color:var(--dim);
+      white-space:pre-wrap; word-break:break-word; display:none; }
+    .out.show { display:block; }
+    .out--err { border-color:var(--hot); color:var(--hot); }
+    button.danger { background:none; border:1px solid var(--hot); color:var(--hot); }
+    button.danger:hover { background:var(--hot); color:#fff; }
+    .req__out { margin-top:.5rem; font-size:.82rem; color:var(--dim); display:none; }
+    .req__out[hidden] { display:none; }
+    .req__out:not([hidden]) { display:block; }
+    .req__out--err { color:var(--hot); }
+    .req__quote-tot { border-top:1px solid var(--rule-hard) !important; color:var(--cream); }
+    button, .base button { min-height:44px; }
+    .req__act input[data-cap] { min-height:44px; }
+    .base { display:flex; gap:.7rem; }
+    .base button.on { background:var(--cream); color:var(--ink); }
+    .note { margin-top:.7rem; font-size:.78rem; color:var(--dim); max-width:56ch; }
+    #gateView { display:none; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
+    @media (max-width:560px){ .grid2 { grid-template-columns:1fr; } }
+    .lockline { margin-top:2.6rem; padding-top:1rem; border-top:1px solid var(--rule);
+      font-size:.78rem; color:var(--dim); display:flex; gap:1rem; flex-wrap:wrap; }
+    .lockline button { padding:.5em 1em; font-size:.66rem; min-height:38px; }
+  </style>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body>
+<main class="page">
+
+  <!-- ============ LOGIN ============ -->
+  <div id="loginView">
+    <p class="k">McCluster &middot; owner console</p>
+    <h1>The Travel Desk</h1>
+    <section>
+      <p class="note" style="margin:0 0 1rem">The key never leaves this browser tab: it is held in
+        session storage, sent only to your own worker, and forgotten when the tab closes.</p>
+      <div class="row">
+        <input id="keyIn" type="password" placeholder="Owner key" autocomplete="current-password"
+          aria-label="Owner key">
+        <button id="loginBtn">Unlock</button>
+      </div>
+      <p class="status"><span id="apiDot" class="dot dot--off"></span>
+        <span>Backend: <b id="apiState">checking&hellip;</b></span>
+        <span id="apiUrl" style="opacity:.6"></span></p>
+      <p class="note">Offline is not locked out: the Desk still opens so you can inspect it,
+        every action simply reports the backend it could not reach.</p>
+    </section>
+  </div>
+
+  <!-- ============ THE CONSOLE ============ -->
+  <div id="gateView">
+    <p class="k">McCluster &middot; owner console</p>
+    <h1>The Travel Desk</h1>
+
+    <section>
+      <h2>Where are you?</h2>
+      <p class="note" style="margin:0 0 .8rem">Every quote starts from the active base.
+        Flip it when you land.</p>
+      <div class="base">
+        <button data-base="ct" class="ghost">Connecticut &middot; Bridgeport</button>
+        <button data-base="ga" class="ghost">Georgia &middot; Decatur</button>
+      </div>
+      <div class="out" id="baseOut" role="status" aria-live="polite"></div>
+    </section>
+
+    <section>
+      <h2>The queue</h2>
+      <div class="row" style="margin-bottom:.6rem">
+        <button id="reloadBtn" class="ghost">Reload the queue</button>
+        <span class="status"><span id="qCount"></span></span>
+      </div>
+      <div id="queue"></div>
+      <div class="out" id="queueOut" role="status" aria-live="polite"></div>
+    </section>
+
+    <section>
+      <h2>Traveler profile</h2>
+      <p class="note" style="margin:0 0 .8rem">Set once. Duffel needs it to ticket a real
+        flight. It lives only in the worker's KV &mdash; never in this page, never in the repo.</p>
+      <form id="profileForm" class="grid2" autocomplete="off">
+        <input name="given_name" placeholder="Given name" required>
+        <input name="family_name" placeholder="Family name" required>
+        <input name="born_on" type="date" aria-label="Date of birth" max="2012-01-01" required>
+        <select name="gender" aria-label="Gender per travel document" required>
+          <option value="" disabled selected>Gender (per travel document)</option>
+          <option value="m">M</option><option value="f">F</option>
+        </select>
+        <input name="email" type="email" placeholder="Email" required>
+        <input name="phone_number" type="tel" pattern="\\+?[0-9 ()-]{7,}" placeholder="Phone, +1..." required>
+        <button style="grid-column:1/-1;justify-self:start">Save profile</button>
+      </form>
+      <div class="out" id="profileOut" role="status" aria-live="polite"></div>
+    </section>
+
+    <p class="lockline">
+      <span>Signed in. The key stays in this tab only.</span>
+      <button class="ghost" id="lockBtn">Lock the desk</button>
+    </p>
+  </div>
+
+</main>
+<script>
+(function () {
+  "use strict";
+  /* ?api= points the Desk at any deployment of the worker — the live one,
+     a preview, or the mock used to rehearse. Same-origin by default. */
+  var API = new URLSearchParams(location.search).get("api") || "";
+  var KEY = "";
+  var $ = function (id) { return document.getElementById(id); };
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function money(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
+
+  function call(method, path, body, opts) {
+    opts = opts || {};
+    var headers = {};
+    if (body) headers["content-type"] = "application/json";
+    if (opts.auth && KEY) headers["x-owner-key"] = KEY;
+    return fetch(API + path, {
+      method: method, headers: headers,
+      body: body ? JSON.stringify(body) : undefined,
+    }).then(function (r) {
+      return r.json().catch(function () { return { error: "HTTP " + r.status }; })
+        .then(function (d) { d.__status = r.status; return d; });
+    });
+  }
+  function human(d) {
+    if (typeof d === "string") return d;
+    if (d.error) return d.error;
+    if (d.note) return d.note;
+    if (d.ok) return "Done.";
+    return "Something came back the desk did not expect.";
+  }
+  function show(id, data, isErr) {
+    var el = $(id);
+    el.textContent = human(data);
+    el.classList.toggle("out--err", !!isErr || (data && !!data.error));
+    el.classList.add("show");
+  }
+  function fmtDate(iso) {
+    if (!iso) return "";
+    var d = new Date(iso); if (isNaN(d)) return iso;
+    return d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+  var STLABEL = { pending: "pending", approved: "approved", held: "held, unpaid",
+    "booked-flight": "flight ticketed", booked: "booked", "partially-booked": "partial", failed: "failed" };
+
+  /* ---------- reachability, honestly reported ---------- */
+  $("apiUrl").textContent = API || "(same origin)";
+  call("GET", "/api/travel/base").then(function (d) {
+    var up = d && !d.error && d.__status === 200;
+    $("apiDot").className = "dot " + (up ? "dot--on" : "dot--off");
+    $("apiState").textContent = up ? "reachable · base " + (d.base || "?").toUpperCase()
+      : "unreachable — deploy the worker or pass ?api=";
+  }).catch(function () {
+    $("apiState").textContent = "unreachable — deploy the worker or pass ?api=";
+  });
+
+  /* ---------- login: the key is session-scoped, nothing more ---------- */
+  function unlock() {
+    var candidate = $("keyIn").value.trim();
+    if (!candidate) { $("keyIn").focus(); return; }
+    var btn = $("loginBtn");
+    btn.disabled = true; btn.textContent = "Checking\u2026";
+    KEY = candidate;
+    call("GET", "/api/travel/requests", null, { auth: true }).then(function (d) {
+      btn.disabled = false; btn.textContent = "Unlock";
+      if (d.__status === 200 && d.requests) {
+        try { sessionStorage.setItem("mccDeskKey", KEY); } catch (e) {}
+        $("loginView").style.display = "none";
+        $("gateView").style.display = "block";
+        refreshBase(); paintQueue(d.requests); $("queueOut").classList.remove("show");
+      } else if (d.__status === 403) {
+        KEY = ""; $("keyIn").style.borderColor = "var(--hot)";
+        $("apiState").textContent = "that key was refused by the worker";
+        $("apiDot").className = "dot dot--off"; $("keyIn").focus();
+      } else {
+        KEY = ""; $("apiState").textContent = "could not reach the worker to check the key";
+        $("apiDot").className = "dot dot--off";
+      }
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = "Unlock"; KEY = "";
+      $("apiState").textContent = "could not reach the worker to check the key";
+    });
+  }
+  $("loginBtn").addEventListener("click", unlock);
+  $("keyIn").addEventListener("keydown", function (e) { if (e.key === "Enter") unlock(); });
+  try {
+    var saved = sessionStorage.getItem("mccDeskKey");
+    if (saved) { $("keyIn").value = saved; unlock(); }
+  } catch (e) {}
+  $("lockBtn").addEventListener("click", function () {
+    try { sessionStorage.removeItem("mccDeskKey"); } catch (e) {}
+    location.search = API ? "?api=" + encodeURIComponent(API) : "";
+  });
+
+  /* ---------- the base flip ---------- */
+  function paintBase(base) {
+    document.querySelectorAll("[data-base]").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-base") === base);
+    });
+  }
+  function refreshBase() {
+    call("GET", "/api/travel/base").then(function (d) { if (d.base) paintBase(d.base); });
+  }
+  document.querySelectorAll("[data-base]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      call("POST", "/api/travel/base", { base: b.getAttribute("data-base"), key: KEY }, { auth: true })
+        .then(function (d) {
+          if (d.base) { paintBase(d.base); show("baseOut", "Base is now " + d.base.toUpperCase()); }
+          else show("baseOut", d, true);
+        }).catch(function () { show("baseOut", "Could not reach the worker.", true); });
+    });
+  });
+
+  /* ---------- the queue ---------- */
+  function quoteRows(q) {
+    if (!q || !q.legs) return '<p class="note">No quote priced yet &mdash; approve prices it live.</p>';
+    var h = '<ul class="req__quote">';
+    q.legs.forEach(function (l) {
+      h += "<li>" + esc(l.what) + "<b>" + (l.usd == null ? "at booking" : money(l.usd)) + "</b></li>";
+    });
+    if (q.hotel) h += "<li>" + esc(q.hotel.what) + "<b>"
+      + (q.hotel.usd == null ? "at booking" : money(q.hotel.usd)) + "</b></li>";
+    if (q.totals && q.totals.travel) h += '<li class="req__quote-tot">Travel total (as filed)<b>'
+      + money(q.totals.travel) + "</b></li>";
+    h += "</ul>";
+    return h;
+  }
+
+  function actions(r) {
+    var s = r.status || "pending";
+    var h = '<div class="req__act" data-id="' + esc(r.id) + '">';
+    if (s === "pending" || s === "failed") {
+      h += '<input type="number" min="1" step="1" placeholder="Max $" aria-label="Ceiling in dollars" data-cap>'
+        + '<button data-act="approve">Approve quote</button>';
+    } else if (s === "approved") {
+      var fusd = r.approved && r.approved.flight ? r.approved.flight.usd : 0;
+      h += '<button data-act="purchase">Purchase &middot; hold</button>'
+        + '<button class="danger" data-act="purchase-instant">Ticket now'
+        + (fusd ? " &middot; spends " + money(fusd) : " &middot; spends") + "</button>";
+    } else if (s === "held" || s === "booked-flight") {
+      var due = r.approved && r.approved.hotel ? r.approved.hotel.usd : 0;
+      var fdue = (s === "held" && r.booked && r.booked.flight) ? r.booked.flight.usd : 0;
+      h += '<button class="danger" data-act="pay">Pay now'
+        + (fdue + due ? " &middot; spends " + money(fdue + due) : "") + "</button>";
+    }
+    h += '<p class="req__out" hidden></p></div>';
+    return h;
+  }
+
+  function paintQueue(list) {
+    var host = $("queue");
+    if (!list.length) { host.innerHTML = '<p class="note">Nothing waiting. Good.</p>'; return; }
+    host.innerHTML = list.map(function (r) {
+      var st = esc(r.status || "pending");
+      return '<div class="req">'
+        + '<div class="req__head"><b>' + esc(r.destination) + "</b>"
+        + '<span class="st st--' + st + '">' + esc(STLABEL[st] || st) + "</span>"
+        + '<span class="k">' + esc(r.id) + "</span></div>"
+        + '<p class="req__meta">' + esc(r.date || "date open") + " &middot; "
+        + esc(r.nights) + " night(s) &middot; " + esc(r.name || "no name")
+        + (r.email ? " &middot; " + esc(r.email) : "") + " &middot; filed "
+        + esc((r.created || "").slice(0, 10)) + "</p>"
+        + quoteRows(r.quote)
+        + (r.approved ? '<p class="req__meta">Approved at ' + money(r.approved.total_usd)
+          + " (ceiling " + money(r.approved.max_usd) + ")"
+          + (r.approved.flight && r.approved.flight.holdable ? " &middot; airline allows hold" : "")
+          + "</p>" : "")
+        + (r.approved && r.approved.flight && r.approved.flight.expires_at && (r.status === "approved")
+          ? '<p class="req__meta">Offer expires ' + esc(fmtDate(r.approved.flight.expires_at)) + "</p>" : "")
+        + (r.booked && r.booked.flight ? '<p class="req__meta">Flight '
+          + (r.booked.flight.held ? "HELD, unpaid" : "ticketed") + " &middot; ref "
+          + esc(r.booked.flight.reference || r.booked.flight.order_id)
+          + (r.booked.flight.held && r.booked.flight.pay_by ? " &middot; pay by " + esc(fmtDate(r.booked.flight.pay_by)) : "") + "</p>" : "")
+        + (r.booked && r.booked.hotel_skipped ? '<p class="req__meta">Room not taken: ' + esc(r.booked.hotel_skipped) + "</p>" : "")
+        + (r.booked && r.booked.hotel_error ? '<p class="req__meta">Room error: ' + esc(r.booked.hotel_error) + "</p>" : "")
+        + (r.spend_usd ? '<p class="req__meta">Spent ' + money(r.spend_usd) + " of " + (r.approved ? money(r.approved.max_usd) + " ceiling" : "budget") + "</p>" : "")
+        + (r.booked && r.booked.hotel ? '<p class="req__meta">Room booked &middot; '
+          + esc(r.booked.hotel.name) + " &middot; " + money(r.booked.hotel.usd) + "</p>" : "")
+        + actions(r)
+        + "</div>";
+    }).join("");
+    $("qCount").textContent = list.length + " request" + (list.length === 1 ? "" : "s");
+    Object.keys(LASTMSG).forEach(function (id) {
+      var wrap = host.querySelector('[data-id="' + id + '"]');
+      if (!wrap) return;
+      var el = wrap.querySelector(".req__out");
+      if (!el) return;
+      el.textContent = LASTMSG[id].text;
+      el.classList.toggle("req__out--err", LASTMSG[id].err);
+      el.hidden = false;
+    });
+  }
+
+  function loadQueue() {
+    $("queue").innerHTML = '<p class="note">Loading&hellip;</p>';
+    call("GET", "/api/travel/requests", null, { auth: true }).then(function (d) {
+      if (d.requests) paintQueue(d.requests);
+      else { $("queue").innerHTML = '<p class="note">' + esc(d.error || "Could not load the queue.") + "</p>"; }
+    }).catch(function () {
+      $("queue").innerHTML = '<p class="note">Could not reach the worker at ' + esc(API || "this origin") + ".</p>";
+    });
+  }
+  $("reloadBtn").addEventListener("click", loadQueue);
+  $("queue").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    var cap = e.target.closest("[data-cap]");
+    if (!cap) return;
+    e.preventDefault();
+    var wrap = cap.closest("[data-id]");
+    var b = wrap.querySelector('[data-act="approve"]');
+    if (b) runAction(b, wrap);
+  });
+
+  function runAction(b, wrap) {
+    var id = wrap.getAttribute("data-id");
+    var act = b.getAttribute("data-act");
+    var body = { key: KEY, id: id };
+    var path = "/api/travel/" + act;
+    if (act === "approve") {
+      var cap = wrap.querySelector("[data-cap]");
+      body.max_usd = +cap.value;
+      if (!body.max_usd || body.max_usd < 1) {
+        cap.style.borderColor = "var(--hot)"; cap.focus();
+        outOf(wrap, "Set a ceiling first — the cap is the safety.", true);
+        return;
+      }
+    }
+    if (act === "purchase-instant") { path = "/api/travel/purchase"; body.mode = "instant"; }
+    wrap.querySelectorAll("button").forEach(function (x) { x.disabled = true; });
+    outOf(wrap, "Working\u2026", false);
+    call("POST", path, body, { auth: true }).then(function (d) {
+      /* remember the result for THIS request, then repaint and re-pin it —
+         the queue refresh must never swallow the outcome of a money action */
+      LASTMSG[id] = { text: human(d), err: d && !!d.error };
+      loadQueue();
+    }).catch(function () {
+      wrap.querySelectorAll("button").forEach(function (x) { x.disabled = false; });
+      outOf(wrap, "Could not reach the worker.", true);
+    });
+  }
+  var LASTMSG = {};
+  function outOf(wrap, data, isErr) {
+    var el = wrap.querySelector(".req__out");
+    if (!el) return;
+    el.textContent = human(data);
+    el.classList.toggle("req__out--err", !!isErr);
+    el.hidden = false;
+  }
+  /* spending actions arm on first tap, fire on the second within 4s */
+  var armed = {};
+  $("queue").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-act]");
+    if (!b) return;
+    var wrap = b.closest("[data-id]");
+    var id = wrap.getAttribute("data-id");
+    var danger = b.classList.contains("danger");
+    if (danger) {
+      var akey = id + ":" + b.getAttribute("data-act");
+      if (armed[akey]) { clearTimeout(armed[akey]); delete armed[akey]; runAction(b, wrap); return; }
+      var label = b.innerHTML;
+      b.dataset.label = label;
+      b.textContent = "Tap again to confirm";
+      armed[akey] = setTimeout(function () {
+        delete armed[akey]; if (b.dataset.label) b.innerHTML = b.dataset.label;
+      }, 4000);
+      return;
+    }
+    runAction(b, wrap);
+  });
+
+  /* ---------- the profile ---------- */
+  $("profileForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var body = { key: KEY };
+    new FormData(e.target).forEach(function (v, k) { body[k] = v; });
+    call("POST", "/api/travel/profile", body, { auth: true }).then(function (d) {
+      show("profileOut", d.ok ? "Profile saved to the worker's KV." : d, d && !!d.error);
+    }).catch(function () { show("profileOut", "Could not reach the worker.", true); });
+  });
+})();
+</script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

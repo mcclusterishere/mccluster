@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Live demo · McCluster Sites</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="A look at work the studio built. A demo copy, framed inside the viewer, with a way straight back to the seats.">
+  <link rel="canonical" href="https://matthew.mccluster.org/demo.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    /* THE VIEWER. One bar, and the bar IS the navigation: no tabbar rides
+       this page. Everything the visitor sees comes out of data/sites.json. */
+    :root { --barh: 152px; --footh: 62px; }
+    html, body { background: #0a0807; }
+    body { color: var(--cream); font-family: var(--body); overscroll-behavior: none; }
+    [hidden] { display: none !important; }
+    .kick { font-size: 0.66rem; letter-spacing: 0.34em; text-transform: uppercase; color: #e8c877; font-weight: 800; }
+
+    /* ============ THE BAR ============ */
+    .dv__head { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: #0a0807;
+      padding-top: env(safe-area-inset-top); }
+    .dv__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 0.35rem 0.8rem; padding: 0.35rem clamp(0.6rem, 3vw, 1.4rem);
+      border-bottom: 1px solid rgba(244,239,230,0.16); }
+
+    .dv__ctl { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; padding: 0.4rem 0.7rem;
+      text-decoration: none; border-radius: 100px; font-weight: 800; font-size: 0.66rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--cream); transition: background 0.25s ease, color 0.25s ease; }
+    .dv__ctl i { font-style: normal; color: #e8c877; font-size: 0.95rem; line-height: 1;
+      transition: transform 0.25s ease; }
+    .dv__ctl:hover { background: rgba(244,239,230,0.08); }
+    .dv__ctl:hover i { transform: translateX(-4px); }
+    .dv__ctl--out:hover i { transform: translateX(3px); }
+    .dv__ctl:focus-visible { outline: 2px solid #e8c877; outline-offset: 3px; }
+
+    .dv__title { flex: 1 1 10rem; min-width: 0; text-align: center; }
+    .dv__title .kick { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dv__title h1 { font-family: var(--sig); text-transform: uppercase; letter-spacing: 0.02em;
+      line-height: 1; font-size: clamp(1.05rem, 3.4vw, 1.7rem); color: var(--cream);
+      margin-top: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* narrow: one row of controls, then the title on its own line */
+    @media (max-width: 44rem) {
+      .dv__title { order: 2; flex: 1 1 100%; text-align: left; }
+      .dv__ctl { font-size: 0.6rem; letter-spacing: 0.14em; padding: 0.4rem 0.45rem; }
+    }
+
+    /* ============ THE HONEST LINE + THE SWITCHER ============ */
+    .dv__under { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 0.5rem 1rem; padding: 0.6rem clamp(0.6rem, 3vw, 1.4rem) 0.7rem;
+      background: rgba(18,13,12,0.85); border-bottom: 1px solid rgba(244,239,230,0.09); }
+    .dv__say { flex: 1 1 18rem; min-width: 0; color: var(--cream-dim); font-size: 0.78rem; line-height: 1.55; }
+    .dv__say b { color: var(--cream); }
+
+    .dv__pills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .dv__pill { -webkit-appearance: none; appearance: none; font-family: inherit; cursor: pointer;
+      touch-action: manipulation; border: 1px solid rgba(244,239,230,0.18); background: rgba(10,8,7,0.7);
+      color: var(--cream-dim); border-radius: 100px; padding: 0.5rem 0.9rem; min-height: 36px;
+      font-weight: 800; font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase;
+      transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease; }
+    .dv__pill:hover { color: var(--cream); border-color: rgba(232,200,119,0.6); }
+    .dv__pill[aria-current="true"] { color: #fff; background: linear-gradient(135deg, #e5383b, #a4161a);
+      border-color: transparent; box-shadow: 0 8px 24px -10px rgba(229,56,59,0.8); }
+    .dv__pill:focus-visible { outline: 2px solid #e8c877; outline-offset: 3px; }
+
+    /* ============ THE STAGE ============ */
+    .dv__stage { position: relative; margin-top: var(--barh); margin-bottom: var(--footh);
+      height: 240px; height: max(240px, calc(100vh - var(--barh) - var(--footh)));
+      height: max(240px, calc(100dvh - var(--barh) - var(--footh))); background: #0a0807; }
+    .dv__frame { display: block; width: 100%; height: 100%; border: 0; background: #fff; }
+
+    .dv__veil { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center;
+      gap: 0.9rem; background: #0a0807; z-index: 2; transition: opacity 0.4s ease; }
+    .dv__veil.out { opacity: 0; pointer-events: none; }
+    .dv__shim { width: min(20rem, 60vw); height: 6px; border-radius: 100px; overflow: hidden;
+      background: rgba(244,239,230,0.1); position: relative; }
+    .dv__shim::after { content: ""; position: absolute; inset: 0; border-radius: 100px;
+      background: linear-gradient(90deg, transparent, #e5383b, #e8c877, transparent);
+      transform: translateX(-100%); animation: dvSlide 1.4s ease-in-out infinite; }
+    @keyframes dvSlide { to { transform: translateX(100%); } }
+    @media (prefers-reduced-motion: reduce) { .dv__shim::after { animation: none; transform: none; } }
+    .dv__veil p { color: var(--cream-dim); font-size: 0.7rem; letter-spacing: 0.22em;
+      text-transform: uppercase; font-weight: 700; }
+
+    .dv__card { position: absolute; inset: 0; z-index: 3; background: #0a0807; display: grid;
+      align-content: center; justify-items: start; gap: 0.7rem; padding: clamp(1.2rem, 6vw, 3rem);
+      text-align: left; }
+    .dv__card h2 { font-family: var(--sig); text-transform: uppercase; line-height: 0.92;
+      font-size: clamp(1.7rem, 7vw, 3rem); color: var(--cream); }
+    .dv__card p { color: var(--cream-dim); font-size: 0.92rem; line-height: 1.7; max-width: 30rem; }
+    .dv__card a { display: inline-block; margin-top: 0.5rem; text-decoration: none; background: #e5383b;
+      color: #fff; font-weight: 800; font-size: 0.95rem; border-radius: 100px; padding: 0.85rem 1.7rem;
+      box-shadow: 0 14px 40px -14px rgba(229,56,59,0.7); }
+    .dv__card a:focus-visible { outline: 2px solid #e8c877; outline-offset: 4px; }
+
+    /* ============ THE STRIP ============ */
+    .dv__foot { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; background: #0a0807;
+      border-top: 1px solid rgba(244,239,230,0.16); display: flex; flex-wrap: wrap; align-items: center;
+      justify-content: space-between; gap: 0.4rem 1rem;
+      padding: 0.5rem clamp(0.6rem, 3vw, 1.4rem); padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)); }
+    .dv__seats { color: var(--cream-dim); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+      font-weight: 700; min-width: 0; }
+    .dv__seats b { color: #e8c877; }
+    .dv__cta { display: inline-flex; align-items: center; min-height: 40px; text-decoration: none;
+      background: #e8c877; color: #17110b; font-weight: 800; font-size: 0.68rem; letter-spacing: 0.16em;
+      text-transform: uppercase; border-radius: 100px; padding: 0.55rem 1.2rem;
+      box-shadow: 0 12px 32px -14px rgba(232,200,119,0.8); }
+    .dv__cta:focus-visible { outline: 2px solid #e8c877; outline-offset: 3px; }
+
+    /* the two doors read like doors, and the stage gets the height back */
+    .dv__ctl { font-weight: 800; font-size: 0.76rem; letter-spacing: 0.07em; text-transform: uppercase;
+      border-radius: 100px; box-shadow: inset 0 0 0 1px rgba(244,239,230,0.28); padding: 0.55rem 1rem; }
+    .dv__ctl--out { background: linear-gradient(165deg, #f4d98c, #e8c877); color: #17110b; box-shadow: none; }
+    .dv__title { min-width: 0; flex: 1 1 8rem; }
+    .dv__title h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dv__under { padding-top: 0.15rem; }
+    .dv__say { font-size: 0.72rem; }
+  </style>
+</head>
+<!-- ONE BAR ONLY. js/tabbar.js builds the five-tab capsule for any page that
+     ships without one, which is right everywhere except here: this page is a
+     frame around somebody else's live site, and a second bar floating over it
+     would put our furniture on their storefront. The header below is this
+     page's only navigation. -->
+<body data-no-appbar>
+
+  <!-- THE BAR. This page's only navigation. -->
+  <header class="dv__head" id="dvHead">
+    <div class="dv__bar">
+      <a class="dv__ctl" href="sites.html" id="dvBack"><i aria-hidden="true">&#8592;</i> Back to sites</a>
+      <div class="dv__title">
+        <span class="kick" id="dvKick">Live demo</span>
+        <h1 id="dvName">Loading</h1>
+      </div>
+      <a class="dv__ctl dv__ctl--out" id="dvOpen" href="sites.html" target="_blank" rel="noopener">Open full screen <i aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px;display:inline-block"><path d="M7 17L17 7M9.5 7H17v7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></i></a>
+    </div>
+
+    <div class="dv__under">
+      <p class="dv__say" id="dvSay"><b>This is a real site the studio built.</b> Look around freely.</p>
+      <div class="dv__pills" id="dvPills" role="group" aria-label="The work on this seat" hidden></div>
+    </div>
+  </header>
+
+  <!-- THE STAGE -->
+  <div class="dv__stage" id="dvStage">
+    <iframe class="dv__frame" id="dvFrame" title="Live demo" loading="eager" referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+    <div class="dv__veil" id="dvVeil">
+      <div class="dv__shim" aria-hidden="true"></div>
+      <p id="dvVeilSay" role="status">Loading the demo</p>
+    </div>
+
+    <div class="dv__card" id="dvCard" hidden>
+      <p class="kick" id="dvCardKick">Would not load</p>
+      <h2 id="dvCardHead">The demo will not open here.</h2>
+      <p id="dvCardSay">Some sites refuse to be shown inside another page, and some networks are just slow.
+        Either way, the real thing is one tap away.</p>
+      <a id="dvCardGo" href="sites.html" target="_blank" rel="noopener">Open the site directly</a>
+    </div>
+  </div>
+
+  <!-- THE STRIP -->
+  <footer class="dv__foot" id="dvFoot">
+    <p class="dv__seats" id="dvSeats">Free build with any lane, while seats last.</p>
+    <a class="dv__cta" href="sites.html" data-cta="demo-lanes">Pick your lane</a>
+  </footer>
+
+  <script>
+  (function () {
+    "use strict";
+    function esc(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; }
+    function el(id) { return document.getElementById(id); }
+
+    var WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six"];
+    var TIMEOUT = 12000;
+    var SHELF = [], AT = 0, timer = null, gaveUp = false, token = 0;
+
+    /* the head and the strip are fixed, so the stage is exactly what is left */
+    function measure() {
+      var r = document.documentElement.style;
+      r.setProperty("--barh", el("dvHead").offsetHeight + "px");
+      r.setProperty("--footh", el("dvFoot").offsetHeight + "px");
+    }
+    addEventListener("resize", measure);
+    addEventListener("orientationchange", measure);
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(measure);
+      ro.observe(el("dvHead"));
+      ro.observe(el("dvFoot"));
+    }
+    measure();
+
+    function slugAsked() {
+      var m = /[?&]s=([^&#]*)/.exec(location.search);
+      if (!m) return "";
+      try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+    }
+
+    /* the whole page in one plain message, for when the ledger will not come */
+    function stop(head, say) {
+      el("dvVeil").hidden = true;
+      el("dvFrame").hidden = true;
+      el("dvPills").hidden = true;
+      el("dvCardKick").textContent = "Nothing to show";
+      el("dvCardHead").textContent = head;
+      el("dvCardSay").textContent = say;
+      var go = el("dvCardGo");
+      go.textContent = "Back to the seats";
+      go.href = "sites.html";
+      go.removeAttribute("target");
+      go.removeAttribute("rel");
+      el("dvCard").hidden = false;
+      el("dvName").textContent = "Demo";
+      measure();
+    }
+
+    fetch("data/sites.json?v=__STAMP__").then(function (r) { return r.json(); }).then(function (d) {
+      var all = (d.showcase || []).filter(function (s) { return s && s.slug && s.url; });
+      if (!all.length) {
+        stop("There is no demo to show yet.", "The shelf is empty right now. The seats and the lanes are still on the sales page.");
+        return;
+      }
+
+      /* an unknown or missing slug falls back to the first entry on the shelf */
+      var want = slugAsked();
+      var first = 0;
+      all.forEach(function (s, i) { if (s.slug === want && !first) first = i; });
+      if (want && all[first].slug !== want) first = 0;
+
+      /* the switcher only covers the work sharing that seat */
+      var seat = Number(all[first].seat);
+      SHELF = all.filter(function (s) { return Number(s.seat) === seat; });
+      var start = 0;
+      SHELF.forEach(function (s, i) { if (s.slug === all[first].slug) start = i; });
+
+      if (SHELF.length > 1) {
+        var pills = el("dvPills");
+        pills.hidden = false;
+        SHELF.forEach(function (s, i) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "dv__pill";
+          b.setAttribute("data-slug", s.slug);
+          b.innerHTML = esc(s.name);
+          b.addEventListener("click", function () { show(i); });
+          pills.appendChild(b);
+        });
+      }
+
+      /* the seats line is computed, never typed */
+      var bd = d.build || {};
+      var left = Math.max(0, (Number(bd.seats) || 0) - (Number(bd.taken) || 0));
+      el("dvSeats").innerHTML = left
+        ? "<b>" + esc(WORDS[left] || String(left)) + " seat" + (left === 1 ? "" : "s") + " left.</b> Free build with any lane."
+        : "<b>The free builds are gone.</b> The lanes still stand.";
+
+      show(start);
+      measure();
+    }).catch(function () {
+      stop("The demo shelf would not load.", "Something got in the way of reading the ledger. Try again, or go back and pick a lane.");
+    });
+
+    function show(i) {
+      var s = SHELF[i];
+      if (!s) return;
+      AT = i;
+      gaveUp = false;
+      var mine = ++token;
+
+      el("dvName").textContent = s.name || "The work";
+      el("dvKick").textContent = s.kind ? "Live demo · " + s.kind : "Live demo";
+      document.title = (s.name || "Live demo") + " · Live demo · McCluster Sites";
+
+      var open = el("dvOpen");
+      open.href = s.url;
+      open.setAttribute("aria-label", "Open " + (s.name || "the site") + " full screen in a new tab");
+
+      var go = el("dvCardGo");
+      go.href = s.url;
+      go.textContent = "Open " + (s.name || "the site");
+      go.setAttribute("target", "_blank");
+      go.setAttribute("rel", "noopener");
+
+      var pills = el("dvPills").querySelectorAll(".dv__pill");
+      pills.forEach(function (b, k) {
+        if (k === i) b.setAttribute("aria-current", "true");
+        else b.removeAttribute("aria-current");
+      });
+
+      /* the veil stays up until the frame actually says it loaded */
+      var veil = el("dvVeil");
+      veil.hidden = false;
+      veil.classList.remove("out");
+      el("dvVeilSay").textContent = "Loading " + (s.name || "the demo");
+      el("dvCard").hidden = true;
+
+      /* tell the truth about THIS work. A frozen copy we serve is safe to
+         poke at. A client's live site is their real one, and saying
+         "nothing gets saved" over it would be a lie. */
+      var ours = !/^[a-z]+:\/\//i.test(s.url);
+      var say = el("dvSay");
+      if (say) {
+        say.innerHTML = ours
+          ? "<b>This is a real site the studio built.</b> Look around freely. " +
+            "You are on our copy of it, so nothing you type here is saved or sent anywhere."
+          : "<b>This is a real site the studio built.</b> It is the client's own live site, " +
+            "shown here as it stands, so treat any form on it as the real thing.";
+      }
+
+      var f = el("dvFrame");
+      f.hidden = false;
+      f.title = (s.name || "The work") + (ours ? ", demo copy" : ", the client's live site");
+      f.src = s.url;
+
+      /* if the frame has not reported back by now, say so plainly. Once this
+         card is up it stays up: a late load event here is the browser's own
+         error page, and dropping the veil for it would claim a load that
+         never happened. */
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () {
+        if (mine !== token) return;
+        if (veil.classList.contains("out")) return;
+        gaveUp = true;
+        veil.hidden = true;
+        el("dvCardKick").textContent = "Would not load";
+        el("dvCardHead").textContent = "The demo will not open here.";
+        el("dvCardSay").textContent = "Some sites refuse to be shown inside another page, and some networks are just slow. Either way, the real thing is one tap away.";
+        el("dvCard").hidden = false;
+      }, TIMEOUT);
+
+      /* the address bar keeps up, with no reload */
+      if (history.replaceState) {
+        history.replaceState(null, "", "demo.html?s=" + encodeURIComponent(s.slug));
+      }
+      measure();
+    }
+
+    el("dvFrame").addEventListener("load", function () {
+      if (!el("dvFrame").src) return;
+      if (gaveUp) return;
+      if (timer) { clearTimeout(timer); timer = null; }
+      el("dvCard").hidden = true;
+      var veil = el("dvVeil");
+      veil.classList.add("out");
+      setTimeout(function () { if (veil.classList.contains("out")) veil.hidden = true; }, 420);
+    });
+  })();
+  </script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+ "note": "THE VAULT INTAKE: batches of captures headed for the catalog. Paste Drive links (shared 'Anyone with the link', Viewer), push, and vault-ingest.yml pulls them on a runner, reads the EXIF, builds stamped web derivatives, runs Gemini, and files every capture as a row in Supabase. NOTHING is committed to this repo: originals stay in Drive, derivatives go to Storage, the catalog lives in the database. RAW (.ARW etc.) is welcome here, unlike the gallery intake.",
+ "batches": [
+  {
+   "id": "example-batch",
+   "event": "",
+   "folder": "",
+   "files": [],
+   "done": true,
+   "hint": "Copy this object, give it a real id, point event at a data/gallery.json event id (or leave blank for loose captures), paste a Drive folder or file links, set done:false, push. When the run finishes, flip done:true so the next push doesn't re-scan it (dupes bounce on sha256 anyway, but skipping is faster)."
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+{
+ "slug": "rally",
+ "title": "The Rally",
+ "date": "Bridgeport",
+ "tagline": "I saw you out there. Find yourself.",
+ "ig": "McClusterishere",
+ "packPrice": 5,
+ "pay": "",
+ "photos": [
+  { "id": "rally-01", "src": "assets/img/rally/rally-01.jpg" },
+  { "id": "rally-02", "src": "assets/img/rally/rally-02.jpg" },
+  { "id": "rally-03", "src": "assets/img/rally/rally-03.jpg" },
+  { "id": "rally-04", "src": "assets/img/rally/rally-04.jpg" },
+  { "id": "rally-05", "src": "assets/img/rally/rally-05.jpg" }
+ ]
+}

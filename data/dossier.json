@@ -1,0 +1,226 @@
+{
+  "_readme": [
+    "THE DOSSIER — one source of truth for every application.",
+    "",
+    "Every job, fellowship, grant and scholarship application asks the same",
+    "twenty things in slightly different boxes: a bio at three lengths, a",
+    "mission statement, the legal entity, the recognitions, the references.",
+    "Retyping them is where applying actually dies. This file holds the",
+    "answers once so an application is assembly, not composition.",
+    "",
+    "RULE: nothing goes in here that is not verifiable. Fields marked TODO",
+    "are blank on purpose — an application is the last place to guess, and a",
+    "wrong identifier on a federal form is worse than a missing one.",
+    "",
+    "Anything sensitive (EIN, UEI, CAGE, SAM registration) stays OUT of this",
+    "file. It ships with the public site. Those live in the private desk."
+  ],
+  "updated": "2026-08-08",
+  "person": {
+    "legalName": "Matthew Christian Perry McCluster",
+    "preferredName": "Matthew McCluster",
+    "pronouns": "TODO",
+    "email": "matthew@mccluster.org",
+    "site": "https://matthew.mccluster.org",
+    "profile": "https://matthew.mccluster.org/matthew-mccluster.html",
+    "location": "Connecticut and Georgia, United States",
+    "citizenship": "United States",
+    "school": {
+      "name": "Southern Connecticut State University",
+      "status": "TODO — enrolled / expected graduation / major"
+    },
+    "titles": [
+      "Creative Director",
+      "Photographer",
+      "Web Designer",
+      "Songwriter",
+      "Founder",
+      "Chief and Minister, Apex Kingdom"
+    ]
+  },
+  "organization": {
+    "name": "McCluster Corp",
+    "type": "Connecticut public charity",
+    "charityRegistration": "CHR.0069693",
+    "charityRegisteredOn": "2025-10-28",
+    "programs": [
+      "Equity Uprise",
+      "PRIM3",
+      "M Network",
+      "Street Credit Bureau"
+    ],
+    "secondEntity": {
+      "name": "Whip Equipped LLC",
+      "formed": "2024",
+      "state": "Georgia"
+    },
+    "thirdEntity": {
+      "name": "Apex Kingdom",
+      "what": "Tribal church; Matthew McCluster presides as chief and minister",
+      "chartered": "2025-05-29",
+      "charter": "assets/credentials/apex-kingdom-charter.pdf",
+      "note": "Charter executed and notarized in Connecticut. Cited by the CT General Assembly 2025-10-05."
+    }
+  },
+  "bios": {
+    "fifty": "Matthew McCluster is a creative director, photographer, web designer and songwriter working across Connecticut and Georgia. He founded McCluster Corp, a registered Connecticut public charity, and its civic fellowship Equity Uprise, work recognized in 2025 by the State of Georgia and the City of Bridgeport.",
+    "oneHundred": "Matthew McCluster is an American creative director, photographer, web designer and songwriter working across Connecticut and Georgia. He is the founder of McCluster Corp, a registered Connecticut public charity, and of its civic fellowship Equity Uprise, work recognized in 2025 by the State of Georgia and the City of Bridgeport with official proclamations. He owns and operates Whip Equipped LLC, organized in Acworth, Georgia in 2024. His output spans digital marketing, media production, web and platform development, and the Here / PRIM3 music catalogue, and he is the architect of the Street Credit Bureau reputation platform.",
+    "twoFifty": "TODO — expand the hundred-word bio to 250 once the SCSU details are settled."
+  },
+  "statements": {
+    "mission": "Turn media, policy and technology into one operating system a community can actually use — and prove it in public, with documents anyone can check.",
+    "why": "TODO — the personal statement. Written once, reused everywhere.",
+    "impact": "TODO — the outcomes paragraph, with numbers, once the analytics backend is reporting."
+  },
+  "recognition": [
+    {
+      "title": "Georgia Governor's Proclamation · Georgia Youth Innovation & Civic Leadership Week",
+      "issuer": "State of Georgia, Office of the Governor (Gov. Brian P. Kemp)",
+      "date": "2025-10-27",
+      "doc": "assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf",
+      "proclaims": "December 12-18, 2025 as Georgia Youth Innovation & Civic Leadership Week",
+      "dateNote": "Signed and sealed October 27, 2025; the Week it proclaims is December 12-18, 2025. Earlier records on this site dated it December — the execution date on the document is October 27."
+    },
+    {
+      "title": "City of Bridgeport Proclamation · Equity Uprise Human Rights Day",
+      "issuer": "City of Bridgeport, Office of the Mayor (Mayor Joseph P. Ganim)",
+      "date": "2025-12-10",
+      "doc": "assets/credentials/bridgeport-human-rights-day-proclamation.pdf"
+    },
+    {
+      "title": "Connecticut Public Charity Registration · CHR.0069693",
+      "issuer": "Connecticut Department of Consumer Protection",
+      "date": "2025-10-28",
+      "doc": "assets/credentials/mccluster-corp-public-charity-registration.pdf"
+    },
+    {
+      "title": "Connecticut General Assembly Official Citation · Matthew Christian Perry McCluster",
+      "issuer": "Connecticut General Assembly, State Capitol, Hartford",
+      "date": "2025-10-05",
+      "signedBy": "President Pro Tempore · Speaker of the House · Secretary of the State",
+      "citation": "For 33 years of sustained leadership at the intersection of arts, media, and community organizing. As founder of McCluster Corp and creator of Equity Rise, he unites culture with civic action to advance youth voice, cultural and environmental equity, and religious freedom. His work demonstrates advanced professional mastery and public impact of national and international significance.",
+      "doc": "assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf",
+      "programNote": "The citation names the program Equity Rise. That was the name the fellowship carried in October 2025; it operates as Equity Uprise today. The City of Bridgeport proclamation of December 10, 2025 uses the current name. The quotation above is reproduced exactly as the Assembly wrote it and has not been altered.",
+      "programNow": "Equity Uprise"
+    },
+    {
+      "title": "Connecticut General Assembly Official Citation · McCluster Corp",
+      "issuer": "Connecticut General Assembly, State Capitol, Hartford",
+      "date": "2025-10-05",
+      "citation": "For uniting artists, educators, and civic partners through Equity Rise and year-round programs that advance cultural equity, environmental justice, and religious freedom. The organization delivers measurable public benefit, develops creators, expands access, and convenes cross-sector collaborations with statewide reach and growing international engagement.",
+      "doc": "assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf",
+      "programNote": "The citation names the program Equity Rise. That was the name the fellowship carried in October 2025; it operates as Equity Uprise today. The City of Bridgeport proclamation of December 10, 2025 uses the current name. The quotation above is reproduced exactly as the Assembly wrote it and has not been altered.",
+      "programNow": "Equity Uprise"
+    },
+    {
+      "title": "Connecticut General Assembly Official Citation · Apex Kingdom",
+      "issuer": "Connecticut General Assembly, State Capitol, Hartford",
+      "date": "2025-10-05",
+      "citation": "Apex Kingdom is recognized for advancing cultural heritage, civic education, and community empowerment as a tribal government entity. With international relevance, it preserves tradition and promotes equity through creative advocacy and partnerships. This recognition affirms its standing as a global cultural voice with significance across national and international bodies.",
+      "doc": "assets/credentials/ct-general-assembly-citation-apex-kingdom.pdf"
+    },
+    {
+      "title": "CompTIA ITF+ Certification",
+      "issuer": "CompTIA",
+      "date": "2022-12-01",
+      "doc": "assets/credentials/comptia-itf-plus.pdf",
+      "note": "Candidate ID is on the certificate scan."
+    },
+    {
+      "title": "Certificate of Completion · IT Bootcamp",
+      "issuer": "CT State Community College, Housatonic — Workforce Development & Continuing Education",
+      "date": "2023-09-20",
+      "citation": "24 hours of coursework completed.",
+      "doc": "assets/credentials/ct-state-housatonic-it-bootcamp.pdf"
+    },
+    {
+      "title": "Urban Leadership Fellowship · policy reform cohort",
+      "issuer": "Urban Leadership",
+      "date": "2025",
+      "citation": "Co-author of “A Policy Blueprint for Healthy School Meals in Georgia,” the cohort's final environmental-justice policy presentation, written with Senge Ngalame, Josh Thomas and Brandon Isome.",
+      "scope": "Costs a 20-school Georgia pilot at $12.6M; compares Clayton and Thomas county district demographics and economics; tracks state food-additive legislation (EWG 2025); screens four clean-label vendors against a cost-neutral $3.75 per meal; projects health costs and test-score effects; issues next steps to the Georgia Department of Education and school boards.",
+      "doc": "assets/video/ulf-school-meals-policy.mp4",
+      "note": "Deck marked 2025 Urban Leadership Final Policy Presentation."
+    },
+    {
+      "title": "Policy Memorandum to Governor Brian Kemp · sole author",
+      "issuer": "Independent · submitted as the Urban Leadership Fellowship writing sample",
+      "date": "2024-11-29",
+      "citation": "Opposition to Legislation Mandating DNA Collection from Misdemeanor Offenders: constitutional analysis under Maryland v. King, equity impact on minority and low-income populations, fiscal load, and efficacy in crime reduction.",
+      "doc": "policy-memo-dna.html"
+    }
+  ],
+  "work": [
+    {
+      "client": "The Heat Chart",
+      "role": "Social media pilot",
+      "period": "current",
+      "scope": "Strategy, publishing, analytics"
+    },
+    {
+      "client": "Vaunt Private Flights",
+      "role": "First beta influencer",
+      "period": "2025",
+      "scope": "Launch campaign, original runway jingle"
+    },
+    {
+      "client": "IPC Systems (placed via PeopleSERVE)",
+      "role": "Infrastructure Associate",
+      "period": "2021-04 – 2023-06",
+      "scope": "Data-center transformation of a 5,000 sq ft facility: rack buildout (Ortronics 45U, APC NetShelter 42U), CAT6 and multi/single-mode fiber, Cisco Nexus 9000/4500 networking and DHCP scope configuration, Dell/Oracle/Sun server installs, Windows Server / RedHat / CentOS, PERC RAID, PDUs and environmental monitoring, IPC trading turrets (Touch, Pulse, IQMax, Edge), DoD-standard data destruction (dBAN), ISO-standard e-waste, and instructing new team members",
+      "verification": "Engagement write-up typed by the manager",
+      "doc": "assets/credentials/ipc-data-center-engagement.pdf"
+    },
+    {
+      "client": "F.R.E.E.D.O.M. Inc.",
+      "role": "Digital marketing & outreach platform manager",
+      "period": "2021–2026",
+      "scope": "Channels, outreach workflows, weekly live broadcasts"
+    },
+    {
+      "client": "Shiloh Baptist Church",
+      "role": "Web design and build",
+      "period": "TODO",
+      "scope": "Site"
+    },
+    {
+      "client": "Docket 516",
+      "role": "Civic campaign lead",
+      "period": "TODO",
+      "scope": "Public-record research, archive, publication"
+    }
+  ],
+  "references": [
+    {
+      "name": "TODO",
+      "title": "",
+      "org": "",
+      "email": "",
+      "relationship": ""
+    }
+  ],
+  "seeking": {
+    "roles": [
+      "Creative director",
+      "Director of brand",
+      "Head of content",
+      "Media producer"
+    ],
+    "fellowships": [
+      "Civic technology",
+      "Arts and media",
+      "Social entrepreneurship"
+    ],
+    "grants": [
+      "Civic media",
+      "Arts programming",
+      "Youth and community programs"
+    ],
+    "scholarships": [
+      "Communications",
+      "Media studies",
+      "Computer science"
+    ],
+    "notes": "Paid only. Remote or Connecticut / Georgia."
+  }
+}

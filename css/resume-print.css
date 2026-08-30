@@ -1,0 +1,240 @@
+/* ============================================================
+   THE RÉSUMÉ, ON PAPER.
+
+   The site had no print styles at all. Hitting Cmd+P on any page gave
+   you the dark coat rendered onto white paper: an inch of near-black
+   ink per page, cream text that vanishes, a fixed tab bar stamped over
+   the middle of the type, and three call-to-action buttons that mean
+   nothing to a sheet of paper.
+
+   This sheet exists so matthew-mccluster.html prints as a RÉSUMÉ. It is
+   also exactly what tools/build-resume.mjs renders to PDF, so the file
+   somebody downloads and the page they print are the same document —
+   there is no second copy of the career history to drift.
+
+   Two rules drive everything below:
+
+     1. Paper is not a screen. Black on white, serif-free but real type
+        sizes, no glow, no gradient, no veil.
+     2. A page break must never land inside a job. A résumé that splits
+        "Infrastructure Engineer" from "IPC Systems" across two sheets
+        reads as two half-jobs to whoever is skimming it.
+   ============================================================ */
+
+@media print {
+
+  /* ---------- the coat comes off ---------- */
+  /* The house paints from tokens, and several of them are near-black.
+     Overriding the tokens themselves is cheaper and more complete than
+     chasing every rule that consumes them. */
+  :root, html[data-theme="light"], html[data-theme="dark"] {
+    --ink: #fff;
+    --ink-2: #fff;
+    --cream: #111;
+    --cream-dim: #444;
+    --edge: #c9c9c9;
+    --glass-lo: transparent;
+    --glass-hi: transparent;
+    --ruby: #8a0f18;
+    --ruby-hot: #8a0f18;
+    --ruby-text: #8a0f18;
+  }
+
+  html, body {
+    background: #fff !important;
+    color: #111 !important;
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+
+  /* the page's own furniture, which paper has no use for */
+  .appbar, .mh, .mh__cta, .dk-peek, .pt-veil, .preloader, .wayback,
+  .grain, .site-foot, .dockwalk, .bio__cta, .bio__mark {
+    display: none !important;
+  }
+
+  /* body.has-appbar reserves room for a bar that is no longer there */
+  body, body.has-appbar { padding: 0 !important; margin: 0 !important; }
+
+  /* ---------- the sheet ---------- */
+  @page {
+    size: Letter;
+    margin: 14mm 15mm;
+  }
+
+  .bio {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* ---------- the masthead of the document ---------- */
+  .bio__k {
+    color: #8a0f18 !important;
+    font-size: 7.5pt; letter-spacing: 0.22em; text-transform: uppercase;
+    margin: 0 0 2mm;
+  }
+  .bio h1 {
+    font-size: 23pt !important;
+    line-height: 1.02 !important;
+    margin: 0 !important;
+    color: #111 !important;
+  }
+  .bio__role {
+    font-size: 10.5pt; color: #333 !important;
+    margin: 1.5mm 0 3mm;
+  }
+  .bio__lede {
+    font-size: 9.5pt; color: #222 !important;
+    margin: 0 0 4mm; max-width: none;
+  }
+
+  /* the contact line: hidden on screen, first thing on paper */
+  .rsm-contact {
+    display: block !important;
+    font-size: 9.5pt; color: #222 !important;
+    margin: 0 0 4mm;
+  }
+  .rsm-contact a { color: #222 !important; }
+  .rsm-contact a::after { content: none !important; }
+
+  /* ---------- section heads ---------- */
+  .bio h2 {
+    font-size: 11pt !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #111 !important;
+    border-bottom: 0.5pt solid #bbb;
+    padding-bottom: 1mm;
+    margin: 6mm 0 2.5mm !important;
+    /* a heading alone at the foot of a sheet is an orphan */
+    break-after: avoid; page-break-after: avoid;
+    break-inside: avoid;
+  }
+
+  /* ---------- fact lists ---------- */
+  /* The screen list hangs a red triangle in a 1.1rem gutter via an
+     absolutely-positioned ::before. Zeroing the padding for print without
+     also retiring the marker drew that triangle straight through the first
+     letter of every label — "Full name" printed with the F struck out.
+     Decoration that depends on a gutter has to go when the gutter does. */
+  .bio__facts { margin: 0; padding: 0; list-style: none; display: block !important; }
+  .bio__facts li {
+    margin: 0 0 1.4mm; padding: 0 !important; border: 0 !important;
+    background: none !important;
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  .bio__facts li::before { display: none !important; content: none !important; }
+  .bio__facts li b { color: #111 !important; }
+
+  /* ---------- the career list: the part that must not split ----------
+     The list is .tl on this page. It was matching here only through the
+     :has(.yr) fallback, which is luck rather than intent, so it is named. */
+  .tl, .roles { margin: 0; padding: 0; list-style: none; }
+  .tl li::before { display: none !important; content: none !important; }
+  .tl li, .roles li, li:has(.yr) {
+    break-inside: avoid; page-break-inside: avoid;
+    margin: 0 0 2.6mm; padding: 0; border: 0 !important;
+    background: none !important;
+  }
+  /* the bullets under each role. Real disc markers on paper: a résumé
+     reader scans for them, and the screen's absolutely-positioned dot
+     would need a gutter this sheet does not keep. */
+  .tl .dt {
+    list-style: disc !important;
+    margin: 1mm 0 0 5mm !important; padding: 0 !important;
+    display: block !important;
+  }
+  .tl .dt li {
+    display: list-item !important;
+    margin: 0 0 0.6mm !important; padding: 0 !important;
+    font-size: 9pt; color: #222 !important;
+    break-inside: avoid;
+  }
+  .tl .dt li::before { display: none !important; content: none !important; }
+
+  .yr {
+    display: inline-block; min-width: 30mm;
+    color: #8a0f18 !important; font-weight: 700; font-size: 9pt;
+  }
+  .ti { font-weight: 700; color: #111 !important; }
+  .wh { color: #444 !important; font-size: 9.5pt; }
+
+  /* ---------- identifiers ---------- */
+  .ids {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2mm 6mm;
+  }
+  .id {
+    border: 0 !important; background: none !important; padding: 0 !important;
+    break-inside: avoid;
+    font-size: 9pt;
+  }
+  .id b { color: #111 !important; }
+  .id b::after { content: ": "; }
+  .id a, .id .v { color: #222 !important; text-decoration: none; }
+
+  /* the social row is a screen affordance; the identifiers above are the
+     durable version of the same claim, so paper keeps those and drops it */
+  .find { display: none !important; }
+  .bio h2:has(+ .find) { display: none !important; }
+
+  /* ---------- links ---------- */
+  a { color: #111 !important; text-decoration: none !important; }
+  /* Print the destination for links that leave the document — on paper a
+     link is invisible otherwise.
+     NOT for the identifier block: an ISNI or an ORCID *is* the identifier,
+     resolvable from the number alone, so appending its URL only doubled the
+     line and printed a long grey string nobody types. The number stays. */
+  .bio__lede a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 7.5pt; color: #666;
+    word-break: break-all;
+  }
+
+  /* ---------- the footer of the document ---------- */
+  .bio__foot {
+    margin-top: 6mm !important;
+    padding-top: 2mm;
+    border-top: 0.5pt solid #bbb;
+    font-size: 8pt; color: #555 !important;
+    break-inside: avoid;
+  }
+  .bio__foot a { color: #555 !important; }
+
+  /* the download button is a screen control; on paper you are holding it */
+  .rsm-get { display: none !important; }
+}
+
+/* ============================================================
+   THE DOWNLOAD ROW — on screen.
+   Lives in this file rather than the page's inline <style> so the
+   control and the document it produces stay in one place.
+   ============================================================ */
+/* the print-only contact line has no job on screen */
+.rsm-contact { display: none; }
+
+.rsm-get {
+  display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center;
+  /* it sits under the name now, so it is part of the header block rather
+     than a control marooned at the end of the document */
+  margin: 1.4rem 0 0.4rem;
+}
+.rsm-get__pdf, .rsm-get__doc, .rsm-get__print {
+  font-family: var(--body); font-weight: 800; font-size: 0.72rem;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  border-radius: 100px; padding: 0.85em 1.6em; cursor: pointer;
+  text-decoration: none; border: 1px solid var(--edge);
+  background: none; color: var(--cream);
+  transition: border-color 0.25s, background 0.25s, color 0.25s;
+}
+.rsm-get__pdf {
+  background: var(--ruby); border-color: var(--ruby); color: var(--on-ruby);
+}
+.rsm-get__pdf:hover { background: var(--ruby-hot); border-color: var(--ruby-hot); }
+.rsm-get__pdf small {
+  font-size: 0.86em; opacity: 0.75; margin-left: 0.5em; letter-spacing: 0.1em;
+}
+.rsm-get__doc:hover, .rsm-get__print:hover { border-color: var(--ruby); color: var(--cream); }
+.rsm-get__doc small { font-size: 0.86em; opacity: 0.7; margin-left: 0.5em; letter-spacing: 0.1em; }

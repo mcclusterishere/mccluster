@@ -1,0 +1,47 @@
+{
+  "_readme": [
+    "THE ROADSHOW — config for booking Matthew anywhere on Earth.",
+    "",
+    "Two home bases, one active at a time. The active flag is the fallback",
+    "for the Worker's KV value (key: base) — flip it there from the desk, or",
+    "here with a commit. 'Last logged in' wiring: the desk login handler",
+    "POSTs /api/travel/base so the flag follows Matthew automatically once",
+    "the backend is live.",
+    "",
+    "Policy: travel bills at cost, itemized, no markup hidden in the fee.",
+    "Flights are live quotes (Duffel). Rooms are Hilton-family properties",
+    "only — never a motel. Ground is estimated per-mile/per-minute and",
+    "labeled an estimate. Local jobs (within local_radius_mi of the active",
+    "base) bill ground only: the ride to the venue and back, both ways."
+  ],
+  "active": "ct",
+  "bases": {
+    "ct": {
+      "label": "Connecticut",
+      "name": "Shiloh Baptist Church",
+      "address": "477 Broad Street, Bridgeport, CT 06604",
+      "lat": 41.1723, "lng": -73.1931,
+      "airports": ["HVN", "BDL", "LGA", "JFK", "EWR"]
+    },
+    "ga": {
+      "label": "Georgia",
+      "name": "N.H. Scott Recreation Center",
+      "address": "2230 Tilson Road, Decatur, GA 30032",
+      "lat": 33.7093, "lng": -84.2585,
+      "airports": ["ATL"]
+    }
+  },
+  "policy": {
+    "local_radius_mi": 60,
+    "hotel_brands": ["Hilton", "Hampton", "DoubleTree", "Embassy Suites", "Homewood", "Home2", "Hilton Garden Inn", "Tru", "Canopy", "Curio", "Tapestry", "Waldorf Astoria", "Conrad", "LXR", "Motto", "Signia"],
+    "hotel_floor_note": "Hilton-family properties only",
+    "ground": {
+      "base_usd": 2.5,
+      "per_mile_usd": 1.85,
+      "per_min_usd": 0.45,
+      "minimum_usd": 12,
+      "airport_buffer_pct": 25,
+      "avg_speed_mph": 28
+    }
+  }
+}

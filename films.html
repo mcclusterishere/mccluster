@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Lyric Videos: the catalog, one swipe · McCluster</title>
+  <meta name="description" content="The McCluster catalog as lyric videos: swipe through every record, each one playing its own scene-cut film with the words live on screen.">
+  <link rel="canonical" href="https://matthew.mccluster.org/films.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    html, body { background: #050403; overscroll-behavior-y: contain; }
+    /* the reel: one film per screen, the thumb drives */
+    .fs { height: 100svh; overflow-y: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .fs::-webkit-scrollbar { display: none; }
+    .fc { position: relative; height: 100svh; scroll-snap-align: start; scroll-snap-stop: always; overflow: hidden; background: #0a0807; }
+    .fc video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
+    /* THE DISSOLVE: the outgoing scene freezes, drifts, and burns off */
+    .fc canvas.scene-veil { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; }
+    .fc canvas.scene-veil.is-holding { opacity: 1; } /* the old frame stands guard while the next clip loads */
+    .fc canvas.scene-veil.is-fading { animation: veilburn 0.45s ease forwards; }
+    @keyframes veilburn { from { opacity: 1; } to { opacity: 0; } }
+    .fc video.is-open { animation: filmrise 0.9s ease; }
+    @keyframes filmrise { from { opacity: 0; } to { opacity: 0.85; } }
+    /* THE FLIP: rally photographs cutting on the clock */
+    .fc img.scene-flip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+    .fc img.scene-flip.on { display: block; }
+    .fc__scrim { position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(5,4,3,0.5) 0%, rgba(5,4,3,0.05) 35%, rgba(5,4,3,0.05) 55%, rgba(5,4,3,0.88) 100%); }
+    /* the words ride the film */
+    .fc__lyr { position: absolute; left: 1.1rem; right: 4.6rem; bottom: calc(env(safe-area-inset-bottom, 0px) + 9.6rem); }
+    .fc__lyr p { font-family: var(--display); font-size: clamp(1.2rem, 5.6vw, 1.7rem); line-height: 1.35; color: #e5383b;
+      margin: 0; text-shadow: 0 2px 24px rgba(0,0,0,0.9); transition: opacity 0.25s; min-height: 1.35em; }
+    .fc__meta { position: absolute; left: 1.1rem; right: 4.6rem; bottom: calc(env(safe-area-inset-bottom, 0px) + 5.6rem); }
+    .fc__meta b { display: block; font-family: var(--sig); text-transform: uppercase; font-size: clamp(1.4rem, 6.5vw, 2rem); line-height: 0.95; }
+    .fc__meta small { color: var(--cream-dim); font-size: 0.8rem; }
+    .fc__meta a { color: #e5383b; text-decoration: none; font-weight: 700; }
+    /* the rail: heart · player · share, thumb side */
+    .fc__rail { position: absolute; right: 0.55rem; bottom: calc(env(safe-area-inset-bottom, 0px) + 6.2rem);
+      display: flex; flex-direction: column; gap: 0.9rem; }
+    .fc__rail button, .fc__rail a { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; text-decoration: none;
+      background: rgba(16,12,9,0.72); color: var(--cream); font-size: 1.15rem; border: 1px solid rgba(229,56,59,0.35); }
+    .fc__rail .hrt.on { color: #e5383b; }
+    /* the sound ask: one tap arms the whole reel */
+    .fa { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: rgba(5,4,3,0.55);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    .fa[hidden] { display: none; }
+    .fa div { text-align: center; }
+    .fa b { display: block; font-family: var(--sig); text-transform: uppercase; font-size: clamp(2rem, 9vw, 3rem); line-height: 0.95; }
+    .fa small { color: var(--cream-dim); font-size: 0.9rem; }
+  </style>
+  <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage music-room music-room--films">
+  <main class="fs" id="fs" aria-label="The lyric videos"></main>
+
+  <!-- one tap: the reel gets its sound (autoplay law) -->
+  <div class="fa" id="fa"><div><b>Lyric videos</b><small>Tap for sound. Swipe for the next record.</small></div></div>
+
+  <!-- THE BAR: Music · Equity Uprise · HERE · Prayer Closet · Profile. One tap goes where it says; hold a tab to open its wing. -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <audio id="deck" preload="none"></audio>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  /* ============================================================
+     THE FILM FEED: the catalog, one swipe. Every track is a
+     full-screen card: its film playing, its record on the deck,
+     and the words landing live on the picture. Swipe, and the
+     next record takes the room. One tap arms the sound for the
+     whole ride (the autoplay law).
+     ============================================================ */
+  (function () {
+    "use strict";
+    var fs = document.getElementById("fs");
+    var deck = document.getElementById("deck");
+    var armed = false, cur = -1, TRACKS = [];
+    var lyrCache = {}, reelCache = {};
+    function esc(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; }
+
+    /* the rotation heart (same law as the player) */
+    var ROT_KEY = "mcc_rotation";
+    function rotation() { try { return JSON.parse(localStorage.getItem(ROT_KEY)) || []; } catch (e) { return []; } }
+    function inRot(alb, title) { return rotation().some(function (r) { return r.album === alb && r.title === title; }); }
+    function toggleRot(alb, title) {
+      var r = rotation().filter(function (x) { return !(x.album === alb && x.title === title); });
+      var added = r.length === rotation().length;
+      if (added) r.push({ album: alb, title: title });
+      try { localStorage.setItem(ROT_KEY, JSON.stringify(r)); } catch (e) {}
+      if (window.MCC_TRACK) window.MCC_TRACK(added ? "rotation_add" : "rotation_drop", { track: title });
+      return added;
+    }
+
+    /* the six album titles that license.html has an option for; anything
+       else on the reel simply does not show a licensing door rather than
+       linking at a form that cannot pre-pick it */
+    var LIC = {
+      "Who Did The Shoot": "who-did-the-shoot",
+      "Runway Walk": "runway-walk",
+      "Write a Song": "write-a-song",
+      "Here": "here",
+      "Antisocial": "antisocial",
+      "Lightroom": "lightroom",
+    };
+
+    fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (data) {
+      (data.albums || []).forEach(function (a) {
+        a.tracks.forEach(function (t) {
+          if (t.video || t.reel) TRACKS.push(Object.assign({}, t, { albSlug: a.slug, albName: a.name }));
+        });
+      });
+      fs.innerHTML = TRACKS.map(function (t, i) {
+        return '<section class="fc" data-i="' + i + '">' +
+          '<video muted loop playsinline preload="none"' + (t.poster ? ' poster="' + t.poster + '"' : "") + "></video>" +
+          '<div class="fc__scrim"></div>' +
+          '<div class="fc__lyr"><p></p></div>' +
+          /* THE LICENSING DOOR, moved here.
+             Each of the six album tracks used to own a whole page whose only
+             real job was this one link. license.html already accepts
+             ?track=<slug> and pre-picks the track in its form — its own
+             comment says "arrives pre-picked from a track page" — so the link
+             needed a new home, not a page each. This is the home: the film is
+             playing, the words are on it, and licensing it sits on the same
+             line as the player. It reads as text rather than joining the icon
+             rail, because it is the commercial ask and the track page carried
+             it as a headline button, not a glyph. */
+          '<div class="fc__meta"><b>' + esc(t.title) + "</b><small>" + esc(t.albName) +
+            ' · <a href="album.html?album=' + t.albSlug + '">open in the player →</a>' +
+            (LIC[t.title]
+              ? ' · <a href="license.html?track=' + LIC[t.title] + '" data-cta="film-license">license this track →</a>'
+              : "") +
+            '</small></div>' +
+          '<div class="fc__rail">' +
+            '<button class="hrt' + (inRot(t.albSlug, t.title) ? " on" : "") + '" type="button" data-hrt aria-label="Save"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
+            '<a href="album.html?album=' + t.albSlug + '" aria-label="Open in the player"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M10 18V5l8-2v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="18" r="3" fill="currentColor"/><circle cx="15" cy="16" r="3" fill="currentColor"/></svg></a>' +
+            '<button type="button" data-share aria-label="Share"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M7 17L17 7M9.5 7H17v7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+          "</div></section>";
+      }).join("");
+      watch();
+      activate(0);
+    }).catch(function () {
+      fs.innerHTML = "<section class='fc'><div class='fc__meta'><b>The reel is warming up</b><small>refresh in a moment</small></div></section>";
+    });
+
+    /* one tap, the whole reel gets sound */
+    var fa = document.getElementById("fa");
+    fa.addEventListener("pointerdown", function () {
+      armed = true;
+      fa.hidden = true;
+      if (cur > -1) { deck.play().catch(function () {}); playFilm(cur); }
+      if (window.MCC_TRACK) window.MCC_TRACK("films_armed", {});
+    });
+
+    function card(i) { return fs.querySelector('.fc[data-i="' + i + '"]'); }
+    function playFilm(i) {
+      var v = card(i) && card(i).querySelector("video");
+      if (v) { v.muted = true; var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+    }
+
+    /* the swipe drives the deck: the visible card owns the sound */
+    function watch() {
+      if (!("IntersectionObserver" in window)) return;
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (!e.isIntersecting) {
+            var v0 = e.target.querySelector("video");
+            if (v0) v0.pause();
+            return;
+          }
+          activate(+e.target.getAttribute("data-i"));
+        });
+      }, { threshold: 0.6 });
+      Array.prototype.forEach.call(fs.querySelectorAll(".fc"), function (c) { io.observe(c); });
+    }
+
+    function activate(i) {
+      if (i === cur) { playFilm(i); return; }
+      cur = i;
+      var t = TRACKS[i];
+      var v = card(i).querySelector("video");
+      /* the film: a reel's first scene, or the track's own clip */
+      if (t.reel) {
+        loadReel(t.reel, function (scenes) {
+          if (cur !== i || !scenes || !scenes.length) return;
+          v.dataset.reel = t.reel;
+          delete v.dataset.k;
+          setScene(v, scenes, 0);
+        });
+      } else if (t.video && v.getAttribute("src") !== t.video) {
+        v.loop = true;
+        v.src = t.video; v.load();
+      }
+      playFilm(i);
+      /* the record: from the top, every swipe */
+      deck.src = t.src;
+      deck.currentTime = 0;
+      if (armed) deck.play().catch(function () {});
+      loadLyrics(t.lyrics || "", i);
+      if (window.MCC_TRACK) window.MCC_TRACK("film_view", { track: t.title });
+    }
+
+    /* the words + the scenes ride the deck's clock */
+    function loadLyrics(src, i) {
+      var p = card(i).querySelector(".fc__lyr p");
+      p.textContent = "";
+      if (!src) return;
+      if (lyrCache[src]) return;
+      fetch(src, { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+        var timed = j && j.timed && j.timed.line ? j.timed.line : null;
+        if (!timed && j && j.lines && j.lines.length && j.lines[0].t != null) {
+          timed = j.lines.map(function (l) { return { begin: l.t, content: l.text || "" }; });
+        }
+        if (timed) lyrCache[src] = { t: timed };
+        else if (j && j.plain) {
+          /* the player's second dialect: plain words ride the song's progress */
+          lyrCache[src] = { p: j.plain.split("\n").filter(function (l) { return l.trim(); }) };
+        } else lyrCache[src] = {};
+      }).catch(function () { lyrCache[src] = {}; });
+    }
+    function loadReel(src, cb) {
+      if (reelCache[src]) { cb(reelCache[src]); return; }
+      fetch(src, { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+        reelCache[src] = (j && j.scenes) || [];
+        cb(reelCache[src]);
+      }).catch(function () { cb(null); });
+    }
+    function flipEl(v) {
+      if (!v._flip) {
+        var f = document.createElement("img");
+        f.className = "scene-flip"; f.alt = "";
+        v.parentNode.insertBefore(f, v.parentNode.querySelector(".fc__scrim"));
+        v._flip = f;
+      }
+      return v._flip;
+    }
+    function setScene(v, scenes, k) {
+      k = Math.max(0, Math.min(k, scenes.length - 1));
+      if (+v.dataset.k === k) return;
+      if (v.getAttribute("src")) glide(v);
+      else { /* the opener rises from black */
+        v.classList.remove("is-open"); void v.offsetWidth;
+        v.classList.add("is-open");
+      }
+      v.dataset.k = k;
+      var sc = scenes[k];
+      /* a photo-flip scene: the pictures own the frame, the film rests */
+      if (sc.flip && sc.flip.length) { try { v.pause(); } catch (e) {} setTimeout(function () { burnVeil(v); }, 380); return; }
+      flipEl(v).classList.remove("on");
+      v.loop = false; // the chain never restarts a clip
+      /* fit the clip to its bars: one full play fills the hold */
+      var next = scenes[k + 1];
+      v._hold = next ? Math.max(0.5, next.begin - sc.begin) : 0;
+      if (sc.poster) v.poster = sc.poster;
+      v.src = sc.src; v.load();
+      /* the veil holds until the new frame is truly on screen, no black */
+      v.addEventListener("loadeddata", function () { burnVeil(v); }, { once: true });
+      setTimeout(function () { burnVeil(v); }, 2600);
+      v.muted = true; var p = v.play(); if (p && p.catch) p.catch(function () {});
+    }
+    /* the elastic law: one full play fills the hold (0.65x to 1.5x) */
+    fs.addEventListener("loadedmetadata", function (e) {
+      var v = e.target;
+      if (!v || v.tagName !== "VIDEO") return;
+      v.playbackRate = (v._hold && v.duration)
+        ? Math.max(0.65, Math.min(1.5, v.duration / v._hold)) : 1;
+    }, true);
+    /* a clip ran its length: dissolve into the next scene, never loop.
+       media 'ended' doesn't bubble, so listen in capture. */
+    fs.addEventListener("ended", function (e) {
+      var v = e.target;
+      if (!v || v.tagName !== "VIDEO" || cur < 0) return;
+      var t = TRACKS[cur], scenes = t.reel && reelCache[t.reel];
+      if (!scenes || !scenes.length) return;
+      if (v !== card(cur).querySelector("video")) return;
+      var k = +v.dataset.k || 0;
+      if (k >= scenes.length - 1) return;
+      var time = deck.currentTime, k2 = 0;
+      for (var i = 0; i < scenes.length; i++) if (time >= scenes[i].begin) k2 = i;
+      /* the clip ran long past its bars: catch the chain up to the clock */
+      if (k2 > k) { setScene(v, scenes, k2); return; }
+      /* already a scene ahead of the clock: hold; chaining further would
+         ping-pong the resync and chop the picture */
+      if (k2 < k) return;
+      /* hold the last frame until the anchor; only a long gap chains early */
+      var wait = scenes[k + 1].begin - time;
+      if (wait > 8) setScene(v, scenes, k + 1);
+    }, true);
+    /* the outgoing frame freezes on a veil and burns off; the new scene settles in */
+    function glide(v) {
+      try {
+        var vw = v.videoWidth, vh = v.videoHeight;
+        if (!vw || !vh) return; // no clean frame to hold, so a straight cut beats a warp
+        var veil = v._veil;
+        if (!veil) {
+          veil = v._veil = document.createElement("canvas");
+          veil.className = "scene-veil";
+          v.parentNode.insertBefore(veil, v.nextSibling);
+        }
+        /* freeze the frame exactly as it sat: cover-cropped, no stretch */
+        var cw = v.clientWidth || vw, ch = v.clientHeight || vh;
+        veil.width = cw; veil.height = ch;
+        var s = Math.max(cw / vw, ch / vh);
+        var sw = cw / s, sh = ch / s;
+        veil.getContext("2d").drawImage(v, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, cw, ch);
+        veil.classList.remove("is-fading"); void veil.offsetWidth;
+        veil.classList.add("is-holding");
+      } catch (e) {}
+    }
+    function burnVeil(v) {
+      var veil = v && v._veil;
+      if (!veil || !veil.classList.contains("is-holding")) return;
+      veil.classList.remove("is-holding"); void veil.offsetWidth;
+      veil.classList.add("is-fading");
+    }
+    deck.addEventListener("timeupdate", function () {
+      if (cur < 0) return;
+      var t = TRACKS[cur], time = deck.currentTime;
+      /* the caption: timed words land on their codes; plain words
+         roll with the record's progress, same law as the player */
+      var L = t.lyrics && lyrCache[t.lyrics];
+      if (L) {
+        var want = "";
+        if (L.t && L.t.length) {
+          for (var i = 0; i < L.t.length; i++) if (time >= L.t[i].begin) want = L.t[i].content;
+        } else if (L.p && L.p.length && deck.duration) {
+          want = L.p[Math.min(L.p.length - 1, Math.floor(time / deck.duration * L.p.length))] || "";
+        }
+        var p = card(cur).querySelector(".fc__lyr p");
+        if (p.textContent !== want) p.textContent = want;
+      }
+      /* LET IT PLAY: a clip that's mid-play is untouchable; the anchor
+         takes the frame only once the clip has run its whole length
+         (photo-flips ride the clock; a jump back resyncs) */
+      var scenes = t.reel && reelCache[t.reel];
+      if (scenes && scenes.length) {
+        var k2 = 0;
+        for (var k = 0; k < scenes.length; k++) if (time >= scenes[k].begin) k2 = k;
+        var v2 = card(cur).querySelector("video");
+        var at = v2.dataset.k === undefined ? -1 : +v2.dataset.k;
+        var scAt = at > -1 ? scenes[at] : null;
+        var busy = scAt && !(scAt.flip && scAt.flip.length) &&
+                   v2.getAttribute("src") && !v2.ended && !v2.error;
+        if (at === -1 || k2 < at - 1 || (k2 > at && !busy)) { setScene(v2, scenes, k2); at = +v2.dataset.k; }
+        /* photo-flip scenes ride the clock: quick cuts, scrub-safe */
+        var scN = scenes[at];
+        if (scN && scN.flip && scN.flip.length) {
+          var every = scN.every || 0.55;
+          var fi = Math.floor(Math.max(0, time - scN.begin) / every) % scN.flip.length;
+          var fl = flipEl(v2);
+          if (fl.getAttribute("src") !== scN.flip[fi]) fl.src = scN.flip[fi];
+          fl.classList.add("on");
+          if (!v2.paused) { try { v2.pause(); } catch (e) {} }
+        } else if (v2._flip) v2._flip.classList.remove("on");
+      }
+    });
+    deck.addEventListener("ended", function () {
+      /* the reel rolls on: glide to the next card */
+      var next = card(cur + 1);
+      if (next) next.scrollIntoView({ behavior: "smooth" });
+      else deck.play().catch(function () {});
+    });
+
+    /* the rail */
+    fs.addEventListener("click", function (e) {
+      var h = e.target.closest ? e.target.closest("[data-hrt]") : null;
+      if (h) {
+        var c = h.closest(".fc"), t = TRACKS[+c.getAttribute("data-i")];
+        h.classList.toggle("on", toggleRot(t.albSlug, t.title));
+        return;
+      }
+      var sh = e.target.closest ? e.target.closest("[data-share]") : null;
+      if (sh) {
+        var t2 = TRACKS[+sh.closest(".fc").getAttribute("data-i")];
+        var url = "https://matthew.mccluster.org/films.html";
+        if (navigator.share) navigator.share({ title: t2.title + " · McCluster", text: t2.title + " · the film", url: url }).catch(function () {});
+        else { try { navigator.clipboard.writeText(url); } catch (e2) {} }
+        if (window.MCC_TRACK) window.MCC_TRACK("film_share", { track: t2.title });
+      }
+    });
+
+    if (window.MCC_TRACK) window.MCC_TRACK("films_view", {});
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

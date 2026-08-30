@@ -1,0 +1,92 @@
+{
+    "note": "MIRROR, NOT SOURCE. supabase/migrations/0019_shake_delivery.sql is the source of truth; this file is exported from its seed so the shop window paints before the database answers. The MENU falls back to this. The open/closed state never does — see js/shakes.js. Once the desk is editing the menu live, the database is ahead of this file and the page prefers it.",
+    "service_area": "Southern Connecticut State University campus, New Haven. Delivery is a pick from the stop list plus a room, never a free-text address.",
+    "stops": [],
+    "stops_note": "Deliberately empty. Building names are added from the runner's desk by the person who actually walks to them; a guessed name sends a shake to the wrong door.",
+    "products": [
+        {
+            "slug": "house-shake",
+            "name": "The House Shake",
+            "blurb": "Vanilla base, whatever fruit is good that week.",
+            "price_cents": 700,
+            "category": "shake",
+            "allergens": "",
+            "available": true,
+            "ordinal": 1,
+            "options": [
+                {
+                    "key": "size",
+                    "label": "Size",
+                    "required": true,
+                    "choices": [
+                        { "value": "16", "label": "16 oz", "delta_cents": 0 },
+                        { "value": "24", "label": "24 oz", "delta_cents": 200 }
+                    ]
+                },
+                {
+                    "key": "addin",
+                    "label": "Add-in",
+                    "required": false,
+                    "choices": [
+                        { "value": "none", "label": "None", "delta_cents": 0 },
+                        { "value": "peanut-butter", "label": "Peanut butter", "delta_cents": 100 },
+                        { "value": "protein", "label": "Protein scoop", "delta_cents": 150 }
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "chocolate-malt",
+            "name": "Chocolate Malt",
+            "blurb": "Thick. Bring a spoon.",
+            "price_cents": 750,
+            "category": "shake",
+            "allergens": "",
+            "available": true,
+            "ordinal": 2,
+            "options": [
+                {
+                    "key": "size",
+                    "label": "Size",
+                    "required": true,
+                    "choices": [
+                        { "value": "16", "label": "16 oz", "delta_cents": 0 },
+                        { "value": "24", "label": "24 oz", "delta_cents": 200 }
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "strawberry",
+            "name": "Strawberry",
+            "blurb": "Real strawberries, not syrup.",
+            "price_cents": 750,
+            "category": "shake",
+            "allergens": "",
+            "available": true,
+            "ordinal": 3,
+            "options": [
+                {
+                    "key": "size",
+                    "label": "Size",
+                    "required": true,
+                    "choices": [
+                        { "value": "16", "label": "16 oz", "delta_cents": 0 },
+                        { "value": "24", "label": "24 oz", "delta_cents": 200 }
+                    ]
+                }
+            ]
+        },
+        {
+            "slug": "extra-shot",
+            "name": "Extra protein scoop",
+            "blurb": "On the side.",
+            "price_cents": 150,
+            "category": "extra",
+            "allergens": "",
+            "available": true,
+            "ordinal": 10,
+            "options": []
+        }
+    ]
+}

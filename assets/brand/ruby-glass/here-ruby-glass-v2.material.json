@@ -1,0 +1,53 @@
+{
+  "name": "HERE Ruby Glass v2",
+  "version": "2.0.0",
+  "resolution": [
+    2048,
+    2048
+  ],
+  "tileable": true,
+  "workflow": "dielectric transmissive gemstone",
+  "role": "Active-state and embedded-energy material for the current HERE app",
+  "maps": {
+    "baseColor": "here-ruby-glass-v2-basecolor.png",
+    "normal": "here-ruby-glass-v2-normal.png",
+    "roughness": "here-ruby-glass-v2-roughness.png",
+    "height": "here-ruby-glass-v2-height.png",
+    "ambientOcclusion": "here-ruby-glass-v2-ao.png",
+    "metallic": "here-ruby-glass-v2-metallic.png",
+    "transmissionMask": "here-ruby-glass-v2-transmission-mask.png",
+    "thicknessMask": "here-ruby-glass-v2-thickness-mask.png",
+    "emissive": "here-ruby-glass-v2-emissive.png",
+    "emissiveMask": "here-ruby-glass-v2-emissive-mask.png",
+    "activeMask": "here-ruby-glass-v2-active-mask.png",
+    "inclusionMask": "here-ruby-glass-v2-inclusion-mask.png",
+    "facetMask": "here-ruby-glass-v2-facet-mask.png",
+    "fresnelMask": "here-ruby-glass-v2-fresnel-mask.png",
+    "causticMask": "here-ruby-glass-v2-caustic-mask.png",
+    "flareMask": "here-ruby-glass-v2-flare-mask.png"
+  },
+  "recommended": {
+    "metalness": 0.0,
+    "ior": 1.77,
+    "transmission": 0.7,
+    "thickness": 0.16,
+    "attenuationColor": "#520010",
+    "attenuationDistance": 0.5,
+    "roughnessScale": 1.0,
+    "normalScale": [
+      0.35,
+      0.35
+    ],
+    "environmentIntensity": 0.95,
+    "emissiveColor": "#C1121F",
+    "emissiveIdle": 0.0,
+    "emissiveActive": 1.7,
+    "emissivePeak": 3.8
+  },
+  "reskinRules": {
+    "do": "Use where the existing UI already uses red for semantic emphasis, playback, progress, active nav, selected controls or key transitions.",
+    "doNot": "Do not add ruby panels, red backgrounds, or global glows that do not already exist conceptually.",
+    "motion": "Move internal light/refraction through activeMask and emissiveMask. Let facet/fresnel response change with viewing angle.",
+    "media": "Ruby should support media, not tint photos/video red."
+  }
+}

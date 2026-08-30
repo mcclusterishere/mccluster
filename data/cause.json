@@ -1,0 +1,95 @@
+{
+ "note": "QUIET MODE: the public page (give.html) renders a single support door and none of the data below. The six-fund meters, per-album goals, and reserve-split language come back ONLY when governance, custody, accounting, and reporting are publishable. Until then this file is the private books.",
+ "link": "https://square.link/u/MBVeuzoo?src=support",
+ "charity": {
+  "name": "McCluster Corp",
+  "registration": "Connecticut-registered charitable organization",
+  "expires": "2026-09-30",
+  "note": "The license clock lives in js/cause.js (EXPIRES). Renew the registration, move the date, and the fund reopens. The site flips itself either way."
+ },
+ "allocation": {
+  "reserve": 0.33,
+  "reserveLabel": "33%: the program reserve, held in Bitcoin",
+  "reinvest": 0.67,
+  "reinvestLabel": "67%: reinvested directly into the programs"
+ },
+ "goalNote": "Goals are $1,000,000 per album. Each album is a program. 'raised' is updated by hand (or later by the Square webhook); the meter never lies upward.",
+ "linkNote": "Every fund uses the live mission-fund Square link until its own per-album donation link is created. Paste each new link into 'link' and the meters route themselves.",
+ "funds": [
+  {
+   "id": "here",
+   "album": "I AM HERE",
+   "art": "assets/img/here-cover.jpg",
+   "goal": 1000000,
+   "raised": 0,
+   "link": "https://square.link/u/MBVeuzoo?src=fund-here",
+   "programs": [
+    "Videography",
+    "Photography",
+    "Fashion & runway"
+   ],
+   "line": "The flagship. The album that says who did the shoot funds the people learning to."
+  },
+  {
+   "id": "heal-the-3",
+   "album": "Heal the 3",
+   "art": "assets/img/heal-the-3-cover.jpg",
+   "goal": 1000000,
+   "raised": 0,
+   "link": "https://square.link/u/MBVeuzoo?src=fund-heal-the-3",
+   "programs": [
+    "Community wellness & healing"
+   ],
+   "line": "The EP with VVS Madè. Healing, funded."
+  },
+  {
+   "id": "equity-uprise",
+   "album": "Equity Uprise",
+   "art": "assets/img/equity-uprise-logo.webp",
+   "goal": 1000000,
+   "raised": 0,
+   "link": "https://square.link/u/MBVeuzoo?src=fund-equity-uprise",
+   "programs": [
+    "Civic engagement",
+    "Environmental justice"
+   ],
+   "line": "The civic anthems, recognized on the record by two governments."
+  },
+  {
+   "id": "prim3",
+   "album": "PRIM3",
+   "art": "assets/img/prim3-logo.png",
+   "goal": 1000000,
+   "raised": 0,
+   "link": "https://square.link/u/MBVeuzoo?src=fund-prim3",
+   "programs": [
+    "Study & tech mentorship"
+   ],
+   "line": "The study tapes. The blue team gets funded."
+  },
+  {
+   "id": "vaunt-ep",
+   "album": "Vaunt · EP",
+   "art": "assets/img/vaunt-logo.webp",
+   "goal": 1000000,
+   "raised": 0,
+   "link": "https://square.link/u/MBVeuzoo?src=fund-vaunt-ep",
+   "programs": [
+    "(program not yet named. never publish)"
+   ],
+   "line": "The campaign jingle."
+  },
+  {
+   "id": "whip-equipped",
+   "album": "Whip Equipped",
+   "art": "assets/img/wing-whip-poster.jpg",
+   "goal": 1000000,
+   "raised": 0,
+   "link": "https://square.link/u/MBVeuzoo?src=fund-whip-equipped",
+   "programs": [
+    "(program not yet named. never publish)"
+   ],
+   "line": "The dealership saga."
+  }
+ ]
+}

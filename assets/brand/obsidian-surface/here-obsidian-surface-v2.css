@@ -1,0 +1,44 @@
+:root {
+  --here-obsidian-base: url("./here-obsidian-surface-v2-basecolor.png");
+  --here-obsidian-ruby-mask: url("./here-obsidian-surface-v2-ruby-vein-mask.png");
+  --here-obsidian-scroll-mask: url("./here-obsidian-surface-v2-scroll-light-mask.png");
+  --here-ruby: #c1121f;
+}
+
+.here-obsidian-surface {
+  position: relative;
+  background-color: #0a0807;
+  background-image: var(--here-obsidian-base);
+  background-size: 36rem 36rem;
+  background-repeat: repeat;
+}
+
+.here-obsidian-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .10;
+  background:
+    radial-gradient(circle at var(--here-light-x, 50%) var(--here-light-y, 35%),
+      rgba(255,255,255,.08),
+      transparent 42%);
+  mix-blend-mode: screen;
+}
+
+.here-obsidian-surface[data-ruby-active="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--here-ruby);
+  opacity: var(--here-ruby-opacity, .18);
+  -webkit-mask-image: var(--here-obsidian-ruby-mask);
+  mask-image: var(--here-obsidian-ruby-mask);
+  -webkit-mask-size: 36rem 36rem;
+  mask-size: 36rem 36rem;
+  mix-blend-mode: screen;
+}
+
+/* IMPORTANT:
+   This class is a skin. Do not change layout, dimensions, hierarchy or semantic structure. */

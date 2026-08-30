@@ -1,0 +1,38 @@
+{
+ "note": "THE INTAKE: where a Drive link becomes a wall. Paste share links here, push, and .github/workflows/fetch-wall.yml pulls them on a GitHub runner (which can reach Drive; the build sandbox can't), web-lights them, strips the EXIF, and writes them into data/gallery.json. Every event id here must already exist in data/gallery.json. Sharing on the Drive folder or file MUST be 'Anyone with the link' with 'Viewer' access, or the runner gets a login page instead of a photo.",
+ "walls": [
+  {
+   "event": "candler-crossing",
+   "prefix": "candler",
+   "folder": "https://drive.google.com/drive/folders/1j1brs5nknJYJdaKrGpLa2keRjFUiZ7q9",
+   "files": [],
+   "cover": 1,
+   "sell": true,
+   "hint": "Put ONE Drive folder link in \"folder\", or a list of individual file links in \"files\"; either works, both together is fine. \"cover\" is which photo (1-based, after sorting) becomes the event's cover. \"sell\" puts the wall in the print shop."
+  },
+  {
+   "event": "dressed-for-success",
+   "prefix": "dfs",
+   "folder": "",
+   "files": [
+    "https://drive.google.com/file/d/15NjWqtTAKM6ACWTAMm7R-OMvCmbErMGl/view?usp=drivesdk",
+    "https://drive.google.com/file/d/1maa6-2EIjce-fjwYBwrd91Lw028UVKut/view?usp=drivesdk",
+    "https://drive.google.com/file/d/14OLmcad9W8YDpilaSo87oYpND5IAkmGJ/view?usp=drivesdk",
+    "https://drive.google.com/file/d/1LRYFJW27E1wXUsE1A_wzKRlgdlyufVdc/view?usp=drivesdk",
+    "https://drive.google.com/file/d/1RCh7oL5Lc2jaIv8pCxNNQRFGWnP7gnTb/view?usp=drivesdk"
+   ],
+   "cover": 1,
+   "sell": false,
+   "sellNote": "Print sales OFF. The frames are of young people at a mentoring programme, and putting children's photographs on public sale is a different thing from showing the work. Flip to true once the chapter confirms the releases cover commercial sale."
+  },
+  {
+   "event": "emory-tour",
+   "prefix": "emory",
+   "folder": "https://drive.google.com/drive/folders/1NpLoT1A_oSz003FM-MX7MCPwbIe2zBk5",
+   "files": [],
+   "cover": 1,
+   "sell": false,
+   "sellNote": "Print sales OFF, same reasoning as Dressed for Success: a chapter event that may carry young members, and a hospital interior on top of it. Flip once the frames are looked at and the chapter signs off."
+  }
+ ]
+}

@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Your dashboard · Equity Uprise</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Your Equity Uprise dashboard: what you've said, what you're applying to, and what the directory thinks fits you.">
+  <link rel="icon" type="image/png" href="assets/img/eu-favicon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/equity-uprise-app.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+</head>
+<body class="songpage" data-mh-cta="The directory|fellowships.html">
+
+  <main class="eua">
+    <p class="eua__kicker"><img src="assets/img/equity-uprise-logo.webp" alt="" style="filter:none"> Equity Uprise</p>
+    <h1 id="hi">Your desk.</h1>
+    <p class="eua__lede" id="lede">Everything you've said, everything you're chasing, and what the directory thinks fits you.</p>
+
+    <div class="eua-gate" id="gate" hidden>
+      <h3>Sign in to see your desk</h3>
+      <p>One account across the house. If you've only ever dropped a perspective anonymously, there's nothing here yet — and that's fine, that was the point.</p>
+      <div class="eua-actions">
+        <a class="btn btn--ruby" href="account.html">Sign in</a>
+        <a class="btn btn--ghost" href="topics.html">Say something first</a>
+      </div>
+    </div>
+
+    <div id="deck" hidden>
+
+      <!-- profile completeness, stated plainly -->
+      <div class="eua-gate" id="nudge" hidden>
+        <h3>Your profile is thin</h3>
+        <p id="nudgeWhy"></p>
+        <div class="eua-actions"><a class="btn btn--ruby" href="profile.html?edit=1">Fill it in</a></div>
+      </div>
+
+      <!-- matched -->
+      <section class="eua__sec">
+        <h2>What fits you</h2>
+        <p class="eua__note" style="margin-top:0">Scored on what you said you care about and the topics you've spoken on. Every card says why it matched.</p>
+        <div id="matched" style="margin-top:1rem"><p class="eua-empty">Working it out…</p></div>
+      </section>
+
+      <!-- tracker -->
+      <section class="eua__sec">
+        <h2>What you're applying to</h2>
+        <p class="eua__note" style="margin-top:0">A list of programs is a bookmark folder. A list with a stage and a date is a plan. Nobody else can read this — not even an editor.</p>
+        <div id="apps" style="margin-top:1rem"></div>
+
+        <details style="margin-top:1rem">
+          <summary style="cursor:pointer;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:.72rem;color:var(--ruby-hot)">Add one by hand</summary>
+          <form id="appForm" style="margin-top:.8rem">
+            <div style="display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr))">
+              <label class="eua-field"><span>Program</span><input type="text" id="aTitle" required></label>
+              <label class="eua-field"><span>Stage</span>
+                <select id="aStage">
+                  <option value="interested">Interested</option>
+                  <option value="drafting">Drafting</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="interview">Interview</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="declined">Declined</option>
+                  <option value="withdrawn">Withdrawn</option>
+                </select></label>
+              <label class="eua-field"><span>Due</span><input type="date" id="aDue"></label>
+            </div>
+            <label class="eua-field"><span>Notes</span><textarea id="aNotes" style="min-height:4rem"></textarea></label>
+            <div class="eua-actions"><button class="btn btn--ghost" type="submit">Add it</button></div>
+            <p class="eua-say" id="aSay" aria-live="polite"></p>
+          </form>
+        </details>
+      </section>
+
+      <!-- saved -->
+      <section class="eua__sec">
+        <h2>Saved</h2>
+        <div class="eua-grid" id="saved"></div>
+      </section>
+
+      <!-- what you said -->
+      <section class="eua__sec">
+        <h2>What you've said</h2>
+        <div id="mine"></div>
+      </section>
+
+      <!-- threads -->
+      <section class="eua__sec">
+        <h2>Your conversations</h2>
+        <div id="threads"></div>
+      </section>
+
+      <!-- the guidance, which is not a database problem -->
+      <section class="eua__sec">
+        <h2>How to actually get one</h2>
+        <div class="eua-grid">
+          <div class="eua-card"><span class="eua-card__eyebrow">One</span><span class="eua-card__h">Start a year early</span>
+            <span class="eua-card__sub">The big ones run on a campus endorsement first and a national deadline months later. By the time you see the national date, the real one has passed.</span></div>
+          <div class="eua-card"><span class="eua-card__eyebrow">Two</span><span class="eua-card__h">Confirm at the source</span>
+            <span class="eua-card__sub">Every listing here says whether anyone checked it. Unverified means unverified — open the program's own page before you plan around a date.</span></div>
+          <div class="eua-card"><span class="eua-card__eyebrow">Three</span><span class="eua-card__h">Write the specific thing</span>
+            <span class="eua-card__sub">A fellowship application is not a résumé. It's an argument that you will do a particular piece of work, and that this program is why it becomes possible.</span></div>
+          <div class="eua-card"><span class="eua-card__eyebrow">Four</span><span class="eua-card__h">Ask the last cohort</span>
+            <span class="eua-card__sub">Most programs publish who got in. They answer email more often than you'd think, and they will tell you what the readers actually cared about.</span></div>
+          <div class="eua-card"><span class="eua-card__eyebrow">Five</span><span class="eua-card__h">Apply to more than one</span>
+            <span class="eua-card__sub">These are lotteries with a skill component. Three good applications beat one perfect one, and the second is always faster to write than the first.</span></div>
+          <div class="eua-card"><span class="eua-card__eyebrow">Six</span><span class="eua-card__h">Ask for a person</span>
+            <span class="eua-card__sub">The desk reads drafts. Say so in any conversation on this site and it gets handed to somebody who will.</span></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/eu-api.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+    function $(id) { return document.getElementById(id); }
+
+    if (!EU.uid()) { $("gate").hidden = false; return; }
+    $("deck").hidden = false;
+
+    var FELLOWS = {};
+
+    EU.me().then(function (p) {
+      if (!p) {
+        $("nudge").hidden = false;
+        $("nudgeWhy").textContent = "You don't have a profile yet, so nothing can be matched to you. It takes about two minutes.";
+        return;
+      }
+      $("hi").textContent = (p.display_name ? p.display_name.split(" ")[0] + "'s" : "Your") + " desk.";
+      var missing = [];
+      if (!(p.interests || []).length) missing.push("what you care about");
+      if (!p.goals) missing.push("what you're trying to do next");
+      if (!p.region) missing.push("your region");
+      if (missing.length) {
+        $("nudge").hidden = false;
+        $("nudgeWhy").textContent = "Matching runs on " + missing.join(", ") + " — and that part is still empty.";
+      }
+    });
+
+    /* ---------- matched ---------- */
+    EU.match([], 8).then(function (rows) {
+      if (!rows || !rows.length) {
+        $("matched").innerHTML = '<p class="eua-empty">Nothing matched yet. Add interests to <a href="profile.html?edit=1">your profile</a> or <a href="topics.html">speak on a topic</a> — both feed the same match.</p>';
+        return;
+      }
+      $("matched").innerHTML = '<div class="eua-grid">' + rows.map(function (m) {
+        return '<a class="eua-card" href="' + esc(m.url || "#") + '" target="_blank" rel="noopener">' +
+          '<span class="eua-card__eyebrow">' + esc(m.org || "Program") + "</span>" +
+          '<span class="eua-card__h">' + esc(m.title) + "</span>" +
+          '<span class="eua-card__sub">' + esc(m.summary || "") + "</span>" +
+          '<span class="eua-card__sub" style="color:var(--ruby-hot);font-size:.8rem">' + esc((m.reasons || []).join(" · ")) + "</span>" +
+          '<span class="eua-card__meta"><button class="eua-mini" type="button" data-add="' + esc(m.title) + '">Track it</button></span></a>';
+      }).join("") + "</div>";
+    });
+
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-add]");
+      if (!b) return;
+      e.preventDefault();
+      EU.track({ title: b.getAttribute("data-add"), stage: "interested" }).then(drawApps);
+    });
+
+    /* ---------- the tracker ---------- */
+    var STAGES = ["interested", "drafting", "submitted", "interview", "accepted", "declined", "withdrawn"];
+    function drawApps() {
+      EU.applications().then(function (rows) {
+        if (!rows.length) {
+          $("apps").innerHTML = '<p class="eua-empty">Nothing tracked yet. Hit “Track it” on anything above, or add one by hand.</p>';
+          return;
+        }
+        $("apps").innerHTML = rows.map(function (a) {
+          var due = a.due_on ? new Date(a.due_on) : null;
+          var soon = due && (due - new Date()) < 1000 * 60 * 60 * 24 * 21 && (due - new Date()) > 0;
+          return '<div class="eua-row"><div class="eua-row__top">' +
+            '<span class="eua-row__t">' + esc(a.title || "Untitled") + "</span>" +
+            '<span class="eua-row__when">' + (due ? (soon ? "⚑ due " : "due ") + due.toLocaleDateString() : "no date") + "</span></div>" +
+            (a.notes ? '<p class="eua-row__body">' + esc(a.notes) + "</p>" : "") +
+            '<div class="eua-row__acts">' +
+            STAGES.map(function (s) {
+              return '<button class="eua-mini' + (a.stage === s ? " eua-mini--go" : "") +
+                '" type="button" data-stage="' + s + '" data-id="' + a.id + '">' + s + "</button>";
+            }).join("") +
+            '<button class="eua-mini eua-mini--no" type="button" data-drop="' + a.id + '">remove</button>' +
+            "</div></div>";
+        }).join("");
+      });
+    }
+    drawApps();
+
+    $("apps").addEventListener("click", function (e) {
+      var s = e.target.closest("[data-stage]");
+      if (s) {
+        EU.track({ id: s.getAttribute("data-id"), stage: s.getAttribute("data-stage") }).then(drawApps);
+        return;
+      }
+      var d = e.target.closest("[data-drop]");
+      if (d) EU.untrack(d.getAttribute("data-drop")).then(drawApps);
+    });
+
+    $("appForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      EU.track({
+        title: $("aTitle").value.trim(),
+        stage: $("aStage").value,
+        due_on: $("aDue").value || null,
+        notes: $("aNotes").value.trim(),
+      }).then(function () {
+        $("aSay").className = "eua-say is-ok"; $("aSay").textContent = "Added.";
+        $("appForm").reset(); drawApps();
+      }).catch(function () {
+        $("aSay").className = "eua-say is-bad"; $("aSay").textContent = "That didn't save.";
+      });
+    });
+
+    /* ---------- saved ---------- */
+    EU.fellowships({ limit: 200 }).then(function (res) {
+      res.rows.forEach(function (f) { FELLOWS[f.id] = f; });
+      return EU.saves();
+    }).then(function (rows) {
+      $("saved").innerHTML = rows.length
+        ? rows.map(function (s) {
+            var f = FELLOWS[s.fellowship_id];
+            if (!f) return "";
+            return '<a class="eua-card" href="' + esc(f.url || "#") + '" target="_blank" rel="noopener">' +
+              '<span class="eua-card__eyebrow">' + esc(f.org || "") + "</span>" +
+              '<span class="eua-card__h">' + esc(f.title) + "</span>" +
+              '<span class="eua-card__sub">' + esc(f.summary || "") + "</span></a>";
+          }).join("")
+        : '<p class="eua-empty">Nothing saved.</p>';
+    });
+
+    /* ---------- what you said ----------
+       Your own perspectives include the ones still in the queue, so this
+       reads the TABLE and not the public view. RLS returns only yours —
+       the policy is eu_perspectives_mine in 0017. */
+    (function myVoices() {
+      window.MCC_SUPA.token().then(function (t) {
+        if (!t) return null;
+        return fetch(window.MCC_SUPA.url + "/rest/v1/eu_perspectives?select=*&order=created_at.desc&limit=40", {
+          headers: { apikey: window.MCC_SUPA.key, Authorization: "Bearer " + t },
+        }).then(function (r) { return r.ok ? r.json() : []; });
+      }).then(function (rows) {
+        rows = rows || [];
+        $("mine").innerHTML = rows.length
+          ? rows.map(function (v) {
+              var state = v.status === "approved" ? '<span class="eua-badge eua-badge--live">On the record</span>'
+                : v.status === "new" ? '<span class="eua-badge eua-badge--pending">Waiting on a reader</span>'
+                : '<span class="eua-badge eua-badge--unverified">' + esc(v.status) + "</span>";
+              return '<div class="eua-row"><div class="eua-row__top">' +
+                '<a class="eua-row__t" href="topics.html?topic=' + encodeURIComponent(v.topic_slug) + '">' + esc(v.topic_slug) + "</a>" +
+                "<span>" + state + "</span></div>" +
+                '<p class="eua-row__body">' + esc(v.body) + "</p></div>";
+            }).join("")
+          : '<p class="eua-empty">Nothing yet. <a href="topics.html">Say something.</a></p>';
+      }).catch(function () {
+        $("mine").innerHTML = '<p class="eua-empty">Couldn\'t load your perspectives right now.</p>';
+      });
+    })();
+
+    /* ---------- threads ---------- */
+    EU.threads().then(function (rows) {
+      $("threads").innerHTML = rows.length
+        ? rows.map(function (c) {
+            return '<div class="eua-row"><div class="eua-row__top">' +
+              '<span class="eua-row__t">' + esc(c.topic_slug || "General") + "</span>" +
+              '<span class="eua-row__when">' + (c.status === "human" ? "with a person" : c.status) + " · " +
+              new Date(c.last_at).toLocaleDateString() + "</span></div>" +
+              (c.summary ? '<p class="eua-row__body">' + esc(c.summary) + "</p>" : "") + "</div>";
+          }).join("")
+        : '<p class="eua-empty">No conversations yet.</p>';
+    });
+  })();
+  </script>
+</body>
+</html>

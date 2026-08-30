@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>The Socials Room · media management, on the wall · McCluster</title>
+  <meta name="description" content="The media-management gallery: every platform Matthew McCluster runs, socials, rollouts, public archives, and the daily record, hung like a show. Walk the room, then book the desk.">
+  <link rel="canonical" href="https://matthew.mccluster.org/management.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:title" content="The Socials Room: media management, on the wall">
+  <meta property="og:description" content="Every platform the desk runs, hung like a show.">
+  <meta property="og:url" content="https://matthew.mccluster.org/management.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/og-card.jpg">
+  <link rel="preload" href="assets/fonts/playfairdisplay-italic-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/manrope-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; font-style: italic; font-display: swap;
+      src: url("assets/fonts/playfairdisplay-italic-700.woff2") format("woff2"); }
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif;
+      --serif: "Playfair Display", Georgia, serif; }
+
+    html, body { height: 100%; }
+    body.sr { margin: 0; background: #060504; color: var(--cream); font-family: var(--ui);
+      overflow: hidden; -webkit-tap-highlight-color: transparent; }
+
+    /* ---------- the counting circle: the room doesn't open until it's hung ---------- */
+    .ldr { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center;
+      background: #060504; transition: opacity 0.8s ease, visibility 0.8s; }
+    .ldr.done { opacity: 0; visibility: hidden; }
+    .ldr__in { position: relative; width: min(72vw, 26rem); aspect-ratio: 1; border-radius: 50%;
+      border: 1px solid rgba(244, 239, 230, 0.4); display: grid; place-items: center; }
+    .ldr__tx { text-align: center; display: grid; gap: 0.6rem; }
+    .ldr__tx b { font-family: var(--serif); font-style: italic; font-weight: 700;
+      font-size: clamp(1.5rem, 5vw, 2.4rem); letter-spacing: 0.02em; }
+    .ldr__tx span { font-weight: 800; font-size: 0.72rem; letter-spacing: 0.18em; color: var(--cream-dim); }
+
+    /* ---------- the top line ---------- */
+    .sr__top { position: fixed; top: 0; left: 0; right: 0; z-index: 6; display: flex;
+      align-items: center; justify-content: space-between; gap: 1rem;
+      padding: clamp(0.9rem, 2.6vh, 1.5rem) clamp(1rem, 3vw, 2rem); }
+    .sr__top a { text-decoration: none; }
+    .sr__back, .sr__hire { font-weight: 800; font-size: 0.62rem; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--cream-dim); white-space: nowrap;
+      transition: color 0.3s ease; }
+    .sr__back:hover, .sr__hire:hover { color: var(--cream); }
+    .sr__tag { margin: 0 auto; font-weight: 600; font-size: clamp(0.7rem, 1.8vw, 0.85rem);
+      color: var(--cream-dim); text-align: center; }
+    .sr__tag a { color: var(--cream); font-weight: 800; }
+    @media (max-width: 46rem) { .sr__tag { display: none; } }
+
+    /* ---------- the word on the wall ---------- */
+    .sr__word { position: fixed; left: 50%; top: 44%; transform: translate(-50%, -58%); z-index: 1;
+      font-family: var(--serif); font-style: italic; font-weight: 700; text-transform: uppercase;
+      font-size: clamp(5.4rem, 23vw, 21rem); letter-spacing: 0.02em; line-height: 1;
+      white-space: nowrap; color: var(--cream); user-select: none; pointer-events: none; }
+
+    /* ---------- the ring: six walls on one cylinder ---------- */
+    .sr__stage { position: fixed; inset: 0; z-index: 2; display: grid; place-items: center;
+      perspective: 1500px; opacity: 0; transition: opacity 1s ease; touch-action: pan-y;
+      cursor: grab; }
+    .sr__stage.go { opacity: 1; }
+    .sr__stage.grabbing { cursor: grabbing; }
+    .sr__ring { position: relative; transform-style: preserve-3d;
+      transition: transform 0.85s cubic-bezier(0.22, 0.7, 0.2, 1); }
+    .sr__ring.drag { transition: none; }
+    .pane { position: absolute; top: 50%; left: 50%; display: block; overflow: visible;
+      backface-visibility: hidden; text-decoration: none; }
+    .pane img { display: block; width: 100%; height: 100%; object-fit: cover;
+      transition: opacity 0.6s ease, filter 0.6s ease; }
+    .pane .ph { display: block; width: 100%; height: 100%; overflow: hidden;
+      background: #12100e; box-shadow: 0 40px 90px -35px rgba(0, 0, 0, 0.95);
+      -webkit-box-reflect: below 10px linear-gradient(transparent 58%, rgba(0, 0, 0, 0.32)); }
+    .pane:not(.on) img { opacity: 0.5; filter: saturate(0.6) brightness(0.7); }
+    .pane.on img { opacity: 1; filter: none; }
+    .pane:focus-visible { outline: 2px solid var(--ruby-hot); outline-offset: 6px; }
+
+    /* the sitting word over the active wall, Aikawa-style */
+    .sr__ovl { position: fixed; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 3;
+      margin: 0; font-family: var(--serif); font-style: italic; font-weight: 700;
+      font-size: clamp(2rem, 7.5vw, 5.4rem); line-height: 1; color: #fff;
+      mix-blend-mode: overlay; opacity: 0.9; pointer-events: none; white-space: nowrap;
+      transition: opacity 0.4s ease; }
+    .sr__ovl.swap { opacity: 0; }
+
+    /* ---------- the pill: where you are, and the way around ---------- */
+    .sr__pill { position: fixed; left: 50%; bottom: clamp(1.1rem, 4vh, 2.2rem);
+      transform: translateX(-50%); z-index: 6; display: flex; align-items: center; gap: 0.85rem;
+      background: rgba(18, 16, 14, 0.72); backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px); border-radius: 100px; padding: 0.5rem 0.6rem 0.5rem 0.5rem;
+      box-shadow: inset 0 0 0 1px var(--edge), 0 24px 50px -24px rgba(0, 0, 0, 0.9);
+      opacity: 0; translate: 0 0.8rem; transition: opacity 0.8s ease 0.35s, translate 0.8s ease 0.35s; }
+    .sr__pill.go { opacity: 1; translate: 0 0; }
+    .sr__pill img { width: 2.5rem; height: 2.5rem; border-radius: 100px; object-fit: cover; }
+    .sr__pill .tt { display: grid; gap: 0.15rem; min-width: 9rem; }
+    .sr__pill .tt b { font-weight: 800; font-size: 0.8rem; line-height: 1.2; }
+    .sr__pill .tt span { font-weight: 600; font-size: 0.62rem; letter-spacing: 0.14em;
+      color: var(--cream-dim); }
+    .sr__pill button { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; width: 2.5rem; height: 2.5rem; border-radius: 100px;
+      display: grid; place-items: center; font-size: 1rem; color: var(--cream);
+      background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px var(--edge);
+      transition: background 0.3s ease; }
+    .sr__pill button:hover { background: rgba(255, 255, 255, 0.16); }
+    @media (max-width: 46rem) { .sr__pill .tt { min-width: 0; } .sr__pill .tt span { display: none; } }
+
+    /* the standing invitation, off to the side on big rooms */
+    .sr__cta { position: fixed; right: clamp(1rem, 3vw, 2rem); bottom: clamp(1.2rem, 4.2vh, 2.3rem);
+      z-index: 5; font-weight: 800; font-size: 0.62rem; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--cream-dim); text-decoration: none;
+      border-bottom: 1px solid transparent; padding-bottom: 0.2rem;
+      transition: color 0.3s ease, border-color 0.3s ease; }
+    .sr__cta:hover { color: var(--cream); border-color: var(--ruby-hot); }
+    @media (max-width: 62rem) { .sr__cta { display: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ldr { display: none; }
+      .sr__stage { opacity: 1; transition: none; }
+      .sr__ring { transition: none; }
+      .sr__pill { opacity: 1; translate: 0 0; transition: none; }
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "The Socials Room: media management by Matthew McCluster",
+    "url": "https://matthew.mccluster.org/management.html",
+    "author": { "@type": "Person", "@id": "https://matthew.mccluster.org/#matthew-mccluster",
+      "name": "Matthew McCluster", "url": "https://matthew.mccluster.org/matthew-mccluster.html" },
+    "hasPart": [
+      { "@type": "WebPage", "name": "Equity Uprise: the civic engine", "url": "https://matthew.mccluster.org/equity-uprise.html" },
+      { "@type": "WebPage", "name": "Docket 516: the public archive", "url": "https://matthew.mccluster.org/docket-516.html" },
+      { "@type": "WebPage", "name": "The record & citations", "url": "https://matthew.mccluster.org/press.html" },
+      { "@type": "WebPage", "name": "The Feed: the daily record", "url": "https://matthew.mccluster.org/feed.html" }
+    ]
+  }
+  </script>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="sr">
+
+  <!-- the counting circle -->
+  <div class="ldr" id="ldr" aria-hidden="true">
+    <div class="ldr__in">
+      <div class="ldr__tx">
+        <b>McCluster</b>
+        <span id="ldrPct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- the Socials Room's private top line is retired; the house
+       masthead carries the mark and the rooms here too -->
+
+  <!-- the word on the wall -->
+  <span class="sr__word" aria-hidden="true">Socials</span>
+
+  <!-- the ring -->
+  <main class="sr__stage" id="stage" aria-label="The media-management gallery">
+    <div class="sr__ring" id="ring"></div>
+    <h1 class="sr__ovl" id="ovl"></h1>
+  </main>
+
+  <!-- the pill -->
+  <nav class="sr__pill" id="pill" aria-label="Walk the room">
+    <img id="pillThumb" src="assets/frames/equity_0001.jpg" alt="">
+    <span class="tt"><b id="pillTitle"></b><span id="pillSub"></span></span>
+    <button type="button" id="prev" aria-label="Previous wall">&#8592;</button>
+    <button type="button" id="next" aria-label="Next wall">&#8594;</button>
+  </nav>
+
+  <a class="sr__cta" href="hire.html">Book media management &#8594;</a>
+
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/signals.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    /* THE SOCIALS ROOM: the media-management record, hung on one
+       revolving cylinder. Every wall is a platform the desk actually
+       runs; the two concept films sell the same service. */
+    var WALLS = [
+      { word: "Uprise", title: "Equity Uprise", sub: "The civic engine · recognized by two governments",
+        href: "equity-uprise.html", img: "assets/frames/equity_0001.jpg" },
+      { word: "Docket", title: "Docket 516", sub: "325 filings archived, explained & published",
+        href: "docket-516.html", img: "assets/frames/docket_0001.jpg" },
+      { word: "Press", title: "The record & citations", sub: "Press, proclamations & the receipts",
+        href: "press.html", img: "assets/frames/citations_0001.jpg" },
+      { word: "Feed", title: "The Feed", sub: "Claims on the record, filed daily",
+        href: "feed.html", img: "assets/frames/editors_0001.jpg" },
+      { word: "War room", title: "The war room", sub: "Concept film · how the strategy desk runs",
+        href: "hire.html", img: "assets/frames/warroom_0001.jpg" },
+      { word: "Survey", title: "The survey", sub: "Concept film · data-driven outreach",
+        href: "hire.html", img: "assets/frames/uisurvey_0001.jpg" }
+    ];
+
+    var N = WALLS.length, STEP = 360 / N;
+    var ring = document.getElementById("ring");
+    var stage = document.getElementById("stage");
+    var ovl = document.getElementById("ovl");
+    var pill = document.getElementById("pill");
+    var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* build the six walls */
+    var panes = WALLS.map(function (w, i) {
+      var a = document.createElement("a");
+      a.className = "pane";
+      a.href = w.href;
+      a.setAttribute("aria-label", w.title + ": " + w.sub);
+      a.innerHTML = '<span class="ph"><img src="' + w.img + '" alt=""></span>';
+      a.dataset.i = i;
+      ring.appendChild(a);
+      return a;
+    });
+
+    var angle = 0, active = 0, radius = 0, restT = null, ready = false;
+
+    function size() {
+      var W = Math.min(innerWidth * 0.62, 640);
+      var H = W * 9 / 16;
+      radius = Math.round((W / 2) / Math.tan(Math.PI / N));
+      panes.forEach(function (p, i) {
+        p.style.width = W + "px";
+        p.style.height = H + "px";
+        p.style.margin = (-H / 2) + "px 0 0 " + (-W / 2) + "px";
+        p.style.transform = "rotateY(" + (i * STEP) + "deg) translateZ(" + radius + "px)";
+      });
+      paint();
+    }
+
+    function paint() {
+      ring.style.transform = "translateZ(" + (-radius) + "px) rotateY(" + angle + "deg)";
+    }
+
+    function setActive(i, silent) {
+      i = ((i % N) + N) % N;
+      if (i === active && silent && ready) return;
+      ready = true;
+      active = i;
+      panes.forEach(function (p, k) { p.classList.toggle("on", k === active); });
+      ovl.classList.add("swap");
+      setTimeout(function () {
+        ovl.textContent = WALLS[active].word;
+        ovl.classList.remove("swap");
+      }, silent ? 0 : 200);
+      document.getElementById("pillThumb").src = WALLS[active].img;
+      document.getElementById("pillTitle").textContent = WALLS[active].title;
+      document.getElementById("pillSub").textContent =
+        ("0" + (active + 1)) + " / 0" + N + " · " + WALLS[active].sub;
+    }
+
+    function goTo(i, silent) {
+      setActive(i, silent);
+      /* rotate by the shortest road, even past the 0/360 seam */
+      var want = -active * STEP;
+      var diff = ((want - angle) % 360 + 540) % 360 - 180;
+      angle += diff;
+      paint();
+      rest();
+    }
+
+    /* the room drifts on its own until somebody reaches for it */
+    var drift = null;
+    function wander() {
+      if (reduced) return;
+      clearInterval(drift);
+      drift = setInterval(function () { goTo(active + 1, false); }, 5000);
+    }
+    function rest() {
+      clearInterval(drift);
+      clearTimeout(restT);
+      restT = setTimeout(wander, 12000);
+    }
+
+    document.getElementById("prev").addEventListener("click", function () { goTo(active - 1); });
+    document.getElementById("next").addEventListener("click", function () { goTo(active + 1); });
+    addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") goTo(active - 1);
+      if (e.key === "ArrowRight") goTo(active + 1);
+    });
+
+    /* grab the cylinder and turn it by hand */
+    var down = null, moved = false;
+    stage.addEventListener("pointerdown", function (e) {
+      if (e.target.closest(".sr__pill")) return;
+      down = { x: e.clientX, a: angle };
+      moved = false;
+      ring.classList.add("drag");
+      stage.classList.add("grabbing");
+      rest();
+    });
+    addEventListener("pointermove", function (e) {
+      if (!down) return;
+      var dx = e.clientX - down.x;
+      if (Math.abs(dx) > 6) moved = true;
+      angle = down.a + dx * 0.22;
+      paint();
+      setActive(Math.round(-angle / STEP), true);
+    });
+    addEventListener("pointerup", function () {
+      if (!down) return;
+      down = null;
+      ring.classList.remove("drag");
+      stage.classList.remove("grabbing");
+      goTo(Math.round(-angle / STEP), true);
+    });
+
+    /* a wall you're facing opens; a wall on the curve comes to you first */
+    panes.forEach(function (p) {
+      p.addEventListener("click", function (e) {
+        if (moved) { e.preventDefault(); return; }
+        var i = +p.dataset.i;
+        if (i !== active) { e.preventDefault(); goTo(i); return; }
+        if (window.MCC_TRACK) window.MCC_TRACK("socials_room_open", { wall: WALLS[i].title });
+        if (window.MCC_SIGNALS) window.MCC_SIGNALS.log("socials_room_open", WALLS[i].title, 2);
+      });
+    });
+
+    /* the sideways wheel walks the room too */
+    var wheelT = null;
+    addEventListener("wheel", function (e) {
+      var d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+      if (!d) return;
+      e.preventDefault();
+      angle -= d * 0.12;
+      ring.classList.add("drag");
+      paint();
+      setActive(Math.round(-angle / STEP), true);
+      clearTimeout(wheelT);
+      wheelT = setTimeout(function () {
+        ring.classList.remove("drag");
+        goTo(Math.round(-angle / STEP), true);
+      }, 180);
+      rest();
+    }, { passive: false });
+
+    /* the counting circle: the room opens when every wall is hung */
+    var pct = document.getElementById("ldrPct");
+    var ldr = document.getElementById("ldr");
+    var loaded = 0, opened = false;
+    function open() {
+      if (opened) return;
+      opened = true;
+      ldr.classList.add("done");
+      /* swing in from around the corner, then settle on wall one */
+      if (!reduced) {
+        ring.classList.add("drag");
+        angle = -STEP * 2;
+        paint();
+        void ring.offsetWidth;
+        ring.classList.remove("drag");
+      }
+      angle = 0;
+      stage.classList.add("go");
+      paint();
+      goTo(0, true);
+      pill.classList.add("go");
+      wander();
+      if (window.MCC_TRACK) window.MCC_TRACK("socials_room_view", {});
+    }
+    WALLS.forEach(function (w) {
+      var im = new Image();
+      im.onload = im.onerror = function () {
+        loaded++;
+        pct.textContent = Math.round(loaded / N * 100) + "%";
+        if (loaded === N) setTimeout(open, 350);
+      };
+      im.src = w.img;
+    });
+    /* nobody waits on a slow wall forever */
+    setTimeout(open, 3500);
+
+    size();
+    setActive(0, true);
+    addEventListener("resize", size);
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

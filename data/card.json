@@ -1,0 +1,41 @@
+{
+  "note": "THE TAP CARD: one record, three surfaces. card.html renders from this file, tools/vcard.mjs derives mccluster.vcf from it, and the QR in assets/nfc/ points at the page. Edit here and re-run `node tools/vcard.mjs`; nothing about the card is typed twice.",
+  "url": "https://matthew.mccluster.org/card.html",
+  "person": {
+    "first": "Matthew",
+    "last": "McCluster",
+    "full": "Matthew McCluster",
+    "known": "McCluster",
+    "title": "Creative Director & Founder",
+    "org": "McCluster Corp",
+    "line": "Photography · Film · Web · Records",
+    "where": "Bridgeport, CT · Acworth, GA",
+    "photo": "",
+    "photoNote": "Drop a headshot at assets/img/card-portrait.jpg and put that path here. Left empty on purpose: the house mark stands in rather than using a frame from a night shoot as a business-card face."
+  },
+  "reach": [
+    { "id": "email", "label": "Email", "value": "matthew@mccluster.org", "href": "mailto:matthew@mccluster.org", "vcard": "EMAIL" },
+    { "id": "tel", "label": "Call", "value": "", "href": "", "vcard": "TEL",
+      "hint": "Left blank on purpose: no phone number appears anywhere in this repo, so nothing was invented. Fill in value and href (tel:+15551234567) and both the card and the vCard pick it up." },
+    { "id": "sms", "label": "Text", "value": "", "href": "", "vcard": "",
+      "hint": "Same number as above, as sms:+15551234567." },
+    { "id": "site", "label": "The site", "value": "matthew.mccluster.org", "href": "https://matthew.mccluster.org/", "vcard": "URL" }
+  ],
+  "social": [
+    { "id": "instagram", "label": "Instagram", "handle": "@McClusterishere", "href": "https://instagram.com/McClusterishere" },
+    { "id": "youtube", "label": "YouTube", "handle": "@McClusterishere", "href": "https://youtube.com/@McClusterishere" },
+    { "id": "tiktok", "label": "TikTok", "handle": "@McClusterishere", "href": "https://tiktok.com/@McClusterishere" }
+  ],
+  "doors": [
+    { "label": "Book the work", "sub": "Rates, lanes, availability", "href": "hire.html" },
+    { "label": "The gallery", "sub": "Events, rallies, the walls", "href": "gallery.html" },
+    { "label": "The print shop", "sub": "Buy a photograph", "href": "prints.html" },
+    { "label": "The rack", "sub": "Clothing, cut to order", "href": "merch.html" },
+    { "label": "The record", "sub": "I AM HERE · six tracks", "href": "album.html" },
+    { "label": "Who I am", "sub": "Credentials, on the record", "href": "matthew-mccluster.html" }
+  ],
+  "swap": {
+    "on": true,
+    "lede": "Now you. Leave yours and it lands on my desk, not in a pile of paper."
+  }
+}

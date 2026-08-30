@@ -1,0 +1,16 @@
+BEGIN:VCARD
+VERSION:3.0
+N:McCluster;Matthew;;;
+FN:Matthew McCluster
+ORG:McCluster Corp
+TITLE:Creative Director & Founder
+EMAIL;TYPE=INTERNET,WORK,PREF:matthew@mccluster.org
+URL;TYPE=WORK:https://matthew.mccluster.org/
+URL;TYPE=HOME:https://matthew.mccluster.org/card.html
+X-SOCIALPROFILE;TYPE=instagram:https://instagram.com/McClusterishere
+X-SOCIALPROFILE;TYPE=youtube:https://youtube.com/@McClusterishere
+X-SOCIALPROFILE;TYPE=tiktok:https://tiktok.com/@McClusterishere
+NOTE:Photography · Film · Web · Records — Bridgeport\, CT · Acworth\,
+  GA
+REV:2026-08-17T22:24:23Z
+END:VCARD

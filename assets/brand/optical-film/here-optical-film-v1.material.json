@@ -1,0 +1,52 @@
+{
+  "name": "HERE Optical Film v1",
+  "version": "1.0.0",
+  "resolution": [
+    2048,
+    2048
+  ],
+  "tileable": true,
+  "workflow": "transparent optical media-surface overlay",
+  "role": "Cinematic optical treatment for the existing photography, video, album art and 360 media without changing their layout",
+  "maps": {
+    "baseColor": "here-optical-film-v1-basecolor.png",
+    "normal": "here-optical-film-v1-normal.png",
+    "roughness": "here-optical-film-v1-roughness.png",
+    "transmissionMask": "here-optical-film-v1-transmission-mask.png",
+    "opacityMask": "here-optical-film-v1-opacity-mask.png",
+    "reflectionMask": "here-optical-film-v1-reflection-mask.png",
+    "flareMask": "here-optical-film-v1-flare-mask.png",
+    "edgeRefractionMask": "here-optical-film-v1-edge-refraction-mask.png",
+    "dispersionMap": "here-optical-film-v1-dispersion-map.png",
+    "highlightMask": "here-optical-film-v1-highlight-mask.png",
+    "dustMask": "here-optical-film-v1-dust-mask.png",
+    "depthMask": "here-optical-film-v1-depth-mask.png",
+    "rubyReflectionMask": "here-optical-film-v1-ruby-reflection-mask.png",
+    "readabilityMask": "here-optical-film-v1-readability-mask.png",
+    "ambientOcclusion": "here-optical-film-v1-ao.png",
+    "metallic": "here-optical-film-v1-metallic.png",
+    "height": "here-optical-film-v1-height.png"
+  },
+  "recommended": {
+    "metalness": 0.0,
+    "ior": 1.46,
+    "transmission": 0.9,
+    "roughnessScale": 1.0,
+    "opacity": 0.1,
+    "normalScale": [
+      0.14,
+      0.14
+    ],
+    "environmentIntensity": 0.55,
+    "dispersionStrength": 0.0035,
+    "edgeRefractionStrength": 0.012,
+    "rubyReflectionColor": "#C1121F",
+    "rubyReflectionMax": 0.08
+  },
+  "reskinRules": {
+    "do": "Layer over existing media only where it adds physical lens/projection depth.",
+    "doNot": "Do not crop, recolor, replace, obscure or recompose the original media to show off the effect.",
+    "motion": "Reflections, flare, edge refraction and parallax may react to scroll/viewing angle. Media content itself stays stable unless its existing behavior already moves.",
+    "performance": "Disable dispersion/refraction first on low-power devices; preserve media playback and scrolling performance."
+  }
+}

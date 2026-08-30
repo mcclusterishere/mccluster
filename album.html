@@ -1,0 +1,1499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>I AM HERE: the album · Matthew McCluster</title>
+  <meta name="description" content="I AM HERE: the six-song album by Matthew McCluster, playing in its own player: Who Did The Shoot, Lightroom, Runway Walk, Write a Song, Here, Antisocial. Have no fear, McCluster is here.">
+  <meta name="keywords" content="I AM HERE album, Matthew McCluster, Who Did The Shoot, Antisocial, Lightroom, Runway Walk">
+  <link rel="canonical" href="https://matthew.mccluster.org/album.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="McCluster">
+  <meta name="theme-color" content="#0a0807">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:type" content="music.album">
+  <meta property="og:title" content="I AM HERE: the album">
+  <meta property="og:description" content="Six songs. One player. Have no fear, McCluster is here.">
+  <meta property="og:url" content="https://matthew.mccluster.org/album.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/here-cover.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://matthew.mccluster.org/assets/img/here-cover.jpg">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "MusicAlbum",
+        "@id": "https://matthew.mccluster.org/#album",
+        "name": "I AM HERE",
+        "albumProductionType": "https://schema.org/StudioAlbum",
+        "numTracks": 6,
+        "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" },
+        "image": "https://matthew.mccluster.org/assets/img/here-cover.jpg",
+        "track": {
+          "@type": "ItemList",
+          "numberOfItems": 6,
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "item": { "@type": "MusicRecording", "name": "Who Did The Shoot", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 2, "item": { "@type": "MusicRecording", "name": "Runway Walk", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 3, "item": { "@type": "MusicRecording", "name": "Write a Song", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 4, "item": { "@type": "MusicRecording", "name": "Here", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 5, "item": { "@type": "MusicRecording", "name": "Antisocial", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } },
+            { "@type": "ListItem", "position": 6, "item": { "@type": "MusicRecording", "name": "Lightroom", "url": "https://matthew.mccluster.org/films.html", "byArtist": { "@id": "https://matthew.mccluster.org/#matthew-mccluster" }, "inAlbum": { "@id": "https://matthew.mccluster.org/#album" } } }
+          ]
+        }
+      }
+        ]
+  }
+  </script>
+
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script defer src="js/knower.js?v=__STAMP__"></script>
+  <style>
+    /* the app voice: Manrope, the same clean grotesk the streaming decks
+       speak, for rows, dials, and meta; the display face keeps the titles */
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+    html, body { background: #0a0807; }
+    /* the wash: a warm pulse-tinted gradient behind the shelf, so the page
+       has depth even before a record fills the room */
+    body.songpage { background:
+      radial-gradient(140% 58% at 50% -10%, color-mix(in srgb, var(--pulse) 18%, transparent), transparent 62%),
+      radial-gradient(130% 46% at 50% 116%, color-mix(in srgb, var(--pulse) 9%, transparent), transparent 58%),
+      linear-gradient(180deg, #0d0a08 0%, #0a0807 42%, #070605 100%);
+      background-attachment: fixed; }
+    /* THE GLASS: surfaces pour light: a gradient fill and a catchlight
+       riding the top edge, so everything reads dimensional, not painted */
+    .hr { max-width: 44rem; margin: 0 auto; padding: clamp(4.2rem, 8vh, 5.5rem) clamp(1.1rem, 4vw, 2rem) 12rem;
+      position: relative; z-index: 2; }
+
+    /* THE ROOM: the record's film behind everything */
+    .room { position: fixed; inset: 0; z-index: 0; opacity: 0; transition: opacity 1.2s ease; }
+    .room.is-on { opacity: 1; }
+    .room video { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover;
+      filter: blur(26px) saturate(1.15) brightness(0.6); }
+    .room__scrim { position: absolute; inset: 0;
+      background: radial-gradient(120% 90% at 50% 0%, rgba(10,8,7,0.35) 0%, rgba(10,8,7,0.82) 68%, rgba(10,8,7,0.96) 100%); }
+    /* DAYLIGHT: the room still comes on, it just comes on the other way.
+
+       The scrim was ink at up to 0.96 and the film was dimmed to 0.6
+       brightness to sit under it — correct on the dark coat, where pressing
+       play takes the house lights down and the record's film glows behind
+       the page. On bone that same wash dropped near-opaque ink over the
+       whole page, so the moment a track started, light mode turned into
+       dark mode: "I AM HERE" went near-black on near-black and the page
+       read as if the theme had been thrown.
+
+       So the room is not removed — it is the best thing on this page. It is
+       inverted. The lights come UP: the film is lifted instead of dimmed and
+       the wash is bone, which keeps the ink type legible over it while the
+       record still plays behind the whole room. */
+    html[data-theme="light"] .room video {
+      filter: blur(26px) saturate(1.08) brightness(1.14); }
+    html[data-theme="light"] .room__scrim {
+      background: radial-gradient(120% 90% at 50% 0%, rgba(242,237,228,0.62) 0%, rgba(242,237,228,0.9) 68%, rgba(242,237,228,0.97) 100%); }
+    @media (prefers-reduced-motion: reduce) { .room { display: none; } }
+
+    /* THE PULSE: the career wears a color: growing blue, trending gold,
+       cooling amber, viral violet. One variable, everything breathes. */
+    :root { --pulse: #e5383b; }
+    body[data-pulse="growing"] { --pulse: #e5383b; }
+    body[data-pulse="trending"] { --pulse: #e5383b; }
+    body[data-pulse="cooling"] { --pulse: #e5383b; }
+    body[data-pulse="viral"] { --pulse: #e5383b; }
+
+    /* the mode switch: quiet dark pills, the live one filled, no strokes */
+    .mode { display: inline-flex; gap: 3px; border-radius: 100px; padding: 3px; margin-bottom: 1.4rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.035));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+    .mode button { -webkit-appearance: none; appearance: none; border: 0; background: none; cursor: pointer; touch-action: manipulation;
+      color: var(--cream-dim); font-family: var(--ui); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.55rem 1.1rem; border-radius: 100px; }
+    .mode button.on { background: var(--metal); color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
+
+    .spark__d { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--cream-dim); margin-top: 0.35rem; }
+    .tops { list-style: none; margin: 0; padding: 0; }
+    .tops li { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.3rem 0; font-size: 0.9rem; }
+    .tops .n { color: var(--pulse); font-weight: 800; font-size: 0.72rem; width: 1.1rem; }
+    .tops .t { color: var(--cream); flex: 1; font-family: var(--display); }
+    .tops .c { color: var(--cream-dim); font-size: 0.76rem; font-variant-numeric: tabular-nums; }
+    .srcs { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .srcs span { border: 1px solid rgba(229,56,59,0.4); border-radius: 100px; padding: 0.32rem 0.75rem;
+      font-size: 0.74rem; color: var(--cream); }
+    .srcs b { color: var(--pulse); font-weight: 800; }
+
+    /* the sleeve */
+    .alb { display: flex; gap: 1.2rem; align-items: flex-end; }
+    .alb__art { width: clamp(120px, 34vw, 190px); aspect-ratio: 1; object-fit: cover; border-radius: 20px;
+      box-shadow: 0 22px 56px -18px rgba(0,0,0,0.95); }
+    .alb__k { font-size: 0.68rem; letter-spacing: 0.3em; text-transform: uppercase; color: #e5383b; font-weight: 800; }
+    .alb h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.85; font-size: clamp(3.2rem, 16vw, 6rem); margin: 0.25rem 0 0.2rem; }
+    .alb__by { color: var(--cream-dim); font-size: 0.9rem; }
+    .alb__by b { color: var(--cream); }
+    .alb__play svg { width: 0.85em; height: 0.85em; fill: currentColor; margin-right: 0.45em; vertical-align: -8%; }
+    .alb__play { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      display: inline-flex; align-items: center; gap: 0.55rem; margin-top: 0.9rem; padding: 0.8rem 1.5rem; border-radius: 100px;
+      background: var(--metal);
+      color: #fff; font-family: var(--ui); font-weight: 800; font-size: 0.98rem;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 14px 36px -14px rgba(229,56,59,0.6); }
+    .alb__play:active { transform: translateY(1px); }
+
+    /* the record: soft app rows with the art up front; the playing row
+       becomes a glowing card in the career's color, the way the streaming
+       decks light their now-playing row */
+    .tr { list-style: none; padding: 0; margin: 2rem 0 0; }
+    .tr li { position: relative; display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0.65rem;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation; border-radius: 16px; overflow: hidden; margin-bottom: 0.35rem; }
+    .tr li:hover { background: rgba(244,239,230,0.05); }
+    .tr .th { flex: none; width: 46px; height: 46px; border-radius: 11px; background: #1a140f center/cover no-repeat;
+      box-shadow: 0 6px 18px -8px rgba(0,0,0,0.9); }
+    .tr li.on::before { content: ""; position: absolute; inset: 0; z-index: -1;
+      background: linear-gradient(105deg,
+        color-mix(in srgb, var(--pulse) 46%, #14100b) 0%,
+        color-mix(in srgb, var(--pulse) 16%, #14100b) 78%); }
+    .tr li.on { box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 14px 38px -14px color-mix(in srgb, var(--pulse) 65%, transparent); }
+    .tr .n { font-family: var(--ui); font-size: 0.72rem; color: var(--cream-dim); font-weight: 800; width: 1.15rem; text-align: right; flex: none; }
+    .tr .t { font-family: var(--ui); font-weight: 800; font-size: 0.98rem; color: var(--cream); flex: 1; line-height: 1.2; min-width: 0; }
+    .tr .t small { display: block; font-family: var(--ui); font-weight: 600; font-size: 0.74rem; color: var(--cream-dim); margin-top: 0.14rem; }
+    .tr .d { flex: none; font-family: var(--ui); font-size: 0.74rem; color: var(--cream-dim); font-variant-numeric: tabular-nums; }
+    .tr .hrt { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      flex: none; width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.035));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+      display: grid; place-items: center; color: rgba(244,239,230,0.4);
+      font-size: 0.95rem; line-height: 1; padding: 0; }
+    .tr .hrt svg { width: 15px; height: 15px; display: block; margin: auto; fill: none;
+      stroke: currentColor; stroke-width: 2; }
+    .tr .hrt.on svg { fill: currentColor; stroke: none; }
+    .tr .hrt.on { color: var(--pulse); background: color-mix(in srgb, var(--pulse) 18%, transparent); }
+    .tr li.on .t, .tr li.on .n { color: #fff; }
+    .tr li.on .t small, .tr li.on .d { color: rgba(255,255,255,0.75); }
+    .tr li.on .hrt { background: rgba(0,0,0,0.22); }
+    .tr .eq { flex: none; width: 18px; height: 14px; display: none; align-items: flex-end; gap: 2px; }
+    .tr .eq i { width: 3px; background: #fff; border-radius: 2px; animation: eq 0.9s ease-in-out infinite; }
+    .tr .eq i:nth-child(2) { animation-delay: 0.25s; } .tr .eq i:nth-child(3) { animation-delay: 0.5s; }
+    .tr li.on.playing .eq { display: flex; }
+    @keyframes eq { 0%,100% { height: 4px; } 50% { height: 14px; } }
+
+    /* the deck: the mini player riding above the bar */
+    .deckbar { position: fixed; left: 50%; transform: translateX(-50%); width: min(30rem, calc(100vw - 1.2rem));
+      bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 60;
+      border: 0; border-radius: 22px;
+      background: linear-gradient(180deg, rgba(32,26,21,0.88), rgba(14,11,9,0.92));
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 18px 50px -14px rgba(0,0,0,0.85);
+      overflow: hidden; transition: opacity 0.25s, transform 0.25s; }
+    .deckbar[data-off="1"] { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(12px); }
+    .deckbar__seek { display: block; width: 100%; height: 14px; padding: 6px 0 4px; background: none; border: 0; cursor: pointer; }
+    .deckbar__seek i { display: block; height: 3px; background: rgba(244,239,230,0.14); border-radius: 2px; overflow: hidden; }
+    .deckbar__seek b { display: block; height: 100%; width: 0; background: var(--pulse); }
+    .deckbar__row { display: flex; align-items: center; gap: 0.7rem; padding: 0.1rem 0.8rem 0.65rem; }
+    .deckbar__art { width: 40px; height: 40px; border-radius: 11px; object-fit: cover; flex: none; }
+    .deckbar__meta { flex: 1; min-width: 0; }
+    .deckbar__meta b { display: block; font-family: var(--ui); font-weight: 800; color: var(--cream); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .deckbar__meta small { font-family: var(--ui); color: var(--cream-dim); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+    /* the words ride the deck: the live bar, right on the mini player */
+    .deckbar__lyr { display: block; color: var(--pulse); font-size: 0.74rem; font-family: var(--display);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: normal; }
+    .deckbar__lyr:empty { display: none; }
+    .deckbar button.tp { -webkit-appearance: none; appearance: none; border: 0; background: none; cursor: pointer; touch-action: manipulation;
+      color: var(--cream); width: 40px; height: 40px; display: grid; place-items: center; flex: none; }
+    .deckbar button.tp svg { width: 20px; height: 20px; fill: currentColor; }
+    .deckbar button.tp--play { background: var(--metal); color: #fff; border-radius: 50%;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
+
+    /* THE TOP ROW + THE GREETING: the app opens like an app */
+    .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; }
+    .top__ava { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: #1a140f; }
+    .top__acts { display: flex; gap: 0.55rem; }
+    .top__circle { width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.13), rgba(255,255,255,0.045));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 8px 20px -10px rgba(0,0,0,0.85);
+      display: grid; place-items: center; color: var(--cream); text-decoration: none; }
+    .top__circle svg { width: 19px; height: 19px; stroke: currentColor; stroke-width: 1.9; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .greet { font-family: var(--ui); font-weight: 800; font-size: clamp(1.75rem, 7.4vw, 2.4rem); letter-spacing: -0.02em; line-height: 1.05; }
+    .greet__sub { font-family: var(--ui); font-weight: 600; color: var(--cream-dim); font-size: 0.9rem; margin: 0.35rem 0 1.3rem; }
+
+    /* THE CHIPS: filled when live, quiet when not */
+    .chips { display: flex; gap: 0.5rem; overflow-x: auto; scrollbar-width: none; margin: 2rem 0 0.4rem; }
+    .chips::-webkit-scrollbar { display: none; }
+    .chips button { flex: none; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      font-family: var(--ui); font-weight: 700; font-size: 0.82rem; color: var(--cream);
+      background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.045));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13);
+      border-radius: 100px; padding: 0.55rem 1.1rem; }
+    .chips button.on { color: #fff; font-weight: 800; background: var(--metal);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 10px 24px -10px rgba(229,56,59,0.55); }
+
+    /* THE CURATED CARDS: big color blocks, a filled play chip pours the taste */
+    .feat { display: flex; gap: 0.9rem; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 0.6rem;
+      scroll-snap-type: x proximity; scrollbar-width: none; }
+    .feat::-webkit-scrollbar { display: none; }
+    .feat__card { flex: none; width: min(76vw, 18.5rem); scroll-snap-align: start; cursor: pointer;
+      position: relative; overflow: hidden; isolation: isolate;
+      border-radius: 22px; color: #fff; padding: 1.15rem 1.15rem 1rem; background: #0d0a08;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.24),
+        0 26px 56px -20px rgba(0,0,0,0.92); }
+    .feat__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+    .feat__smoke { position: absolute; inset: 0; z-index: -1;
+      background: linear-gradient(168deg, rgba(9,7,5,0.28) 0%, rgba(9,7,5,0.58) 52%, rgba(9,7,5,0.85) 100%);
+      backdrop-filter: blur(5px) saturate(1.15); -webkit-backdrop-filter: blur(5px) saturate(1.15); }
+    /* the pane: one hard diagonal streak, like light across real glass */
+    .feat__card::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(115deg, transparent 32%, rgba(255,255,255,0.16) 44%, rgba(255,255,255,0.03) 52%, transparent 62%); }
+    .feat__card > b { display: block; font-family: var(--ui); font-weight: 800; font-size: 1.3rem; line-height: 1.1;
+      text-shadow: 0 1px 14px rgba(0,0,0,0.6); }
+    .feat__card > small { display: block; font-family: var(--ui); font-weight: 700; font-size: 0.68rem;
+      letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.62);
+      margin-top: 0.35rem; min-height: 2.4em; }
+    .feat__acts { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.8rem; }
+    .feat__play { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      width: 48px; height: 48px; border-radius: 50%; color: #fff;
+      background: var(--metal);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 12px 26px -10px rgba(0,0,0,0.75);
+      display: grid; place-items: center; }
+    .feat__play svg { width: 20px; height: 20px; fill: currentColor; }
+    .feat__n { font-family: var(--ui); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: rgba(255,255,255,0.6); margin-left: auto; }
+
+    /* THE PLAYLIST ROWS: thumb, name, a circular chip for the taste */
+    .lib { margin-top: 2.6rem; }
+    .lib__k { font-family: var(--ui); font-weight: 800; font-size: 1.05rem; color: var(--cream);
+      text-transform: none; letter-spacing: 0; margin: 1.4rem 0 0.7rem; }
+    .pll { display: flex; align-items: center; gap: 0.85rem; padding: 0.55rem 0.5rem; border-radius: 16px; cursor: pointer; }
+    .pll:hover { background: rgba(244,239,230,0.05); }
+    .pll.is-here { background: rgba(244,239,230,0.06); }
+    .pll__art { flex: none; width: 52px; height: 52px; border-radius: 14px; object-fit: cover; background: #1a140f;
+      box-shadow: 0 6px 18px -8px rgba(0,0,0,0.9); }
+    .pll__t { flex: 1; min-width: 0; font-family: var(--ui); }
+    .pll__t b { display: block; font-weight: 800; font-size: 0.95rem; color: var(--cream);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pll__t small { display: block; font-weight: 600; font-size: 0.74rem; color: var(--cream-dim); margin-top: 0.1rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pll__play { flex: none; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      width: 44px; height: 44px; border-radius: 50%; color: var(--cream);
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 8px 20px -10px rgba(0,0,0,0.8);
+      display: grid; place-items: center; }
+    .pll__play svg { width: 17px; height: 17px; fill: currentColor; }
+    .pll__play.on { background: var(--pulse); color: #fff; }
+
+    .hr__foot { margin-top: 4.5rem; border-top: 1px solid rgba(229,56,59,0.22); padding-top: 1.3rem;
+      color: var(--cream-dim); font-size: 0.82rem; line-height: 1.8; }
+    .hr__foot a { color: #e5383b; text-decoration: none; }
+    /* DAYLIGHT: #e5383b is the cinema red — 3.6:1 on bone, which is fine
+       for a display line and under the floor for a 13px footer link. On the
+       light coat these take --music-ruby, the same red already taken down
+       for this page's ground. Same for the small-caps eyebrow: it is 11px,
+       so it needs the darker red too. */
+    html[data-theme="light"] .hr__foot a,
+    html[data-theme="light"] .alb__k { color: var(--music-ruby, #a4101a); }
+
+    /* THE NOW SHEET: a regular player window: the art card in the
+       middle carries the film AND the words; the dials sit below */
+    .now { position: fixed; inset: 0; z-index: 210; background: #0a0807; display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.2, 0.9, 0.2, 1);
+      transform: translateY(6%); }
+    .now[data-on="1"] { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .now__head { display: flex; align-items: center; gap: 0.8rem;
+      padding: calc(env(safe-area-inset-top, 0px) + 0.9rem) 1.1rem 0.4rem; }
+    .now__down { -webkit-appearance: none; appearance: none; border: 0; background: rgba(244,239,230,0.08);
+      color: var(--cream); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; touch-action: manipulation; }
+    .now__down svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2.2; fill: none; stroke-linecap: round; }
+    .now__from { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--cream-dim); font-weight: 800; }
+    /* the art window: the record's film with the words inside its frame */
+    .now__art { position: relative; width: min(88vw, 24rem); flex: 1; min-height: 0; max-height: 52vh;
+      margin: 0.9rem auto 0; border-radius: 24px; overflow: hidden; background: #14100c;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 26px 74px -20px rgba(0,0,0,0.95),
+        0 0 100px -40px color-mix(in srgb, var(--pulse) 55%, transparent); }
+    .now__art::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 30%; z-index: 6; pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,0.09), transparent); }
+    .now__film { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+    /* THE DISSOLVE: the outgoing scene freezes, drifts, and burns off
+       while the new one breathes in underneath */
+    canvas.scene-veil { position: absolute; inset: 0; width: 100%; height: 100%;
+      pointer-events: none; opacity: 0; }
+    canvas.scene-veil.is-holding { opacity: 1; } /* the old frame stands guard while the next clip loads */
+    canvas.scene-veil.is-fading { animation: veilburn 0.45s ease forwards; }
+    @keyframes veilburn { from { opacity: 1; } to { opacity: 0; } }
+    .now__film.is-open { animation: filmrise 0.9s ease; }
+    @keyframes filmrise { from { opacity: 0; } to { opacity: 0.8; } }
+    /* THE FLIP: rally photographs cutting on the clock */
+    .now__flip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+    .now__flip.on { display: block; }
+    .now__scrim { position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(6,5,4,0.42) 0%, rgba(6,5,4,0.12) 40%, rgba(6,5,4,0.78) 100%); }
+    .now__lyr { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 1.1rem 1.1rem 46%; mask-image: linear-gradient(180deg, transparent 0, #000 1.6rem, #000 74%, transparent 100%);
+      -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 1.6rem, #000 74%, transparent 100%); }
+    .now__lyr p { font-family: var(--ui); font-weight: 800; font-size: clamp(1.02rem, 4.2vw, 1.4rem); line-height: 1.42;
+      color: rgba(244,239,230,0.42); margin: 0 0 0.75em; transition: color 0.3s ease, transform 0.3s ease; transform-origin: left center;
+      text-shadow: 0 1px 10px rgba(0,0,0,0.7); }
+    .now__lyr p.is-live { color: #fff; transform: scale(1.03); text-shadow: 0 2px 22px rgba(0,0,0,0.85); }
+    .now__lyr .now__none { font-family: var(--body); font-size: 0.9rem; color: var(--cream-dim); }
+    .now__meta { padding: 1rem 1.3rem 0; text-align: center; }
+    .now__title { font-family: var(--sig); text-transform: uppercase; line-height: 0.9; font-size: clamp(1.7rem, 7.5vw, 2.5rem); }
+    .now__by { font-family: var(--ui); font-weight: 600; color: var(--cream-dim); font-size: 0.85rem; margin-top: 0.25rem; }
+    .now__deck { padding: 0.6rem 1.4rem calc(env(safe-area-inset-bottom, 0px) + 1.2rem); }
+    /* the dial: a thin line with a round thumb riding the played edge */
+    .now__seek { display: block; width: 100%; height: 20px; padding: 8px 0; background: none; border: 0; cursor: pointer; }
+    .now__seek i { display: block; height: 4px; background: rgba(244,239,230,0.16); border-radius: 3px; }
+    .now__seek b { position: relative; display: block; height: 100%; width: 0; background: var(--pulse); border-radius: 3px; }
+    .now__seek b::after { content: ""; position: absolute; right: -6px; top: 50%; transform: translateY(-50%);
+      width: 13px; height: 13px; border-radius: 50%; background: var(--pulse);
+      box-shadow: 0 0 0 3px rgba(10,8,7,0.55), 0 2px 8px rgba(0,0,0,0.6); }
+    /* THE FILAMENT: when the waveform decodes, the line becomes the record */
+    .now__seek.wave-on { height: 48px; padding: 4px 0; position: relative; }
+    .now__seek.wave-on i { display: none; }
+    .now__seek.wave-on canvas { position: absolute; inset: 4px 0; width: 100%; height: calc(100% - 8px); display: block; }
+    html.sig-live .now__seek.wave-on canvas { filter: drop-shadow(0 0 calc(3px + var(--amp, 0) * 9px)
+      color-mix(in srgb, var(--pulse, #e5383b) 60%, transparent)); }
+    .now__times { display: flex; justify-content: space-between; font-family: var(--ui); font-size: 0.72rem; color: var(--cream-dim);
+      font-variant-numeric: tabular-nums; margin-top: 0.15rem; }
+    /* the transport: soft circular chips either side of the filled play */
+    .now__tp { display: flex; align-items: center; justify-content: center; gap: 1.6rem; margin-top: 0.55rem; }
+    .now__tp button { -webkit-appearance: none; appearance: none; border: 0; color: var(--cream);
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 10px 24px -12px rgba(0,0,0,0.85);
+      width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; touch-action: manipulation; }
+    .now__tp button svg { width: 22px; height: 22px; fill: currentColor; }
+    .now__tp .now__play { color: #fff; width: 68px; height: 68px;
+      background: var(--metal);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.65), 0 18px 48px -14px rgba(229,56,59,0.6); }
+    .now__tp .now__play svg { width: 30px; height: 30px; }
+    /* THE ECOSYSTEM: the song is the hub: credits, the record, the doors */
+    .now__eco { padding: 0.55rem 1.3rem 0; text-align: center; }
+    .now__cred { color: var(--cream-dim); font-size: 0.74rem; line-height: 1.5; min-height: 1em; }
+    .now__doors { display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .now__doors a, .now__doors button { text-decoration: none; color: var(--cream); font-family: var(--ui); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+      background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.04));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13);
+      border-radius: 100px; padding: 0.45rem 0.9rem; }
+    .now__doors a:active, .now__doors button:active { background: rgba(229,56,59,0.15); }
+    /* THE GALLERY: light mode repaints the shelf in bone and ink; the
+       smoked-glass cards and the now sheet stay cinema-dark on purpose */
+    html[data-theme="light"] body.songpage { background:
+      radial-gradient(140% 58% at 50% -10%, color-mix(in srgb, var(--pulse) 22%, transparent), transparent 62%),
+      linear-gradient(180deg, #f5f1e9 0%, #eee8db 100%);
+      background-attachment: fixed; }
+    /* THE DARK ISLANDS: the now sheet keeps its cinema coat in daylight, so
+       the ink inside it must stay cream. Re-scoping the tokens fixes every
+       descendant at once — titles, times, credits, doors — instead of
+       chasing each one and missing four. */
+    html[data-theme="light"] .now {
+      --cream: #f4efe6;
+      --cream-dim: rgba(244,239,230,0.82);
+      color: #f4efe6; }
+    html[data-theme="light"] .now__from,
+    html[data-theme="light"] .now__by,
+    html[data-theme="light"] .now__times,
+    html[data-theme="light"] .now__cred { color: rgba(244,239,230,0.82); }
+    html[data-theme="light"] .now__seek i { background: rgba(244,239,230,0.16); }
+    html[data-theme="light"] .top__circle,
+    html[data-theme="light"] .chips button:not(.on),
+    html[data-theme="light"] .tr .hrt,
+    html[data-theme="light"] .pll__play {
+      background: linear-gradient(180deg, rgba(26,20,13,0.075), rgba(26,20,13,0.035));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.65); color: var(--cream); }
+    html[data-theme="light"] .mode {
+      background: linear-gradient(180deg, rgba(26,20,13,0.075), rgba(26,20,13,0.035));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    html[data-theme="light"] .tr li:hover, html[data-theme="light"] .pll:hover { background: rgba(26,20,13,0.05); }
+    html[data-theme="light"] .tr .hrt { color: rgba(26,20,13,0.45); }
+    html[data-theme="light"] .deckbar {
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(243,238,229,0.94));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 18px 50px -14px rgba(26,20,13,0.35); }
+    html[data-theme="light"] .hr__foot { border-top-color: rgba(26,20,13,0.16); }
+  </style>
+
+  <style>
+    /* ============ THE SIGNAL — the room moves with the record ============
+       A single analyser on the deck feeds a light field, the EQ, and an
+       --amp variable the chrome breathes with. If WebAudio refuses (old
+       Safari, odd stacks), playback is untouched and the room falls back
+       to a gentler clockwork sway — the music never pays for the light. */
+    #signal { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1;
+      pointer-events: none; /* a canvas keeps its intrinsic size under inset:0 —
+      the room renders at 60% and stretches to the walls */
+      mix-blend-mode: screen; opacity: 0; transition: opacity 1.1s ease; }
+    html.sig-live #signal { opacity: 1; }
+    html[data-theme="light"] #signal { mix-blend-mode: multiply; opacity: 0; }
+    html[data-theme="light"].sig-live #signal { opacity: .35; }
+    /* inside the open sheet the room is dark again: screen, at full strength */
+    html[data-theme="light"].sheet-open #signal { mix-blend-mode: screen; }
+    html[data-theme="light"].sheet-open.sig-live #signal { opacity: 1; }
+
+    /* the EQ stops pretending: bars ride real bands when the signal is up */
+    html.sig-live .tr .eq i { animation: none; }
+
+    /* the playing row and the play key breathe with the record */
+    html.sig-live .tr li.on { box-shadow: inset 0 1px 0 rgba(255,255,255,0.3),
+      0 14px calc(26px + var(--amp, 0) * 34px) -12px color-mix(in srgb, var(--pulse) 78%, transparent); }
+    html.sig-live .now__play { box-shadow: 0 0 calc(10px + var(--amp, 0) * 52px) 0
+      color-mix(in srgb, var(--pulse, #e5383b) 55%, transparent); transition: box-shadow .08s linear; }
+    html.sig-live #nowSeekFill { box-shadow: 0 0 calc(6px + var(--amp, 0) * 22px) 0
+      color-mix(in srgb, var(--pulse, #e5383b) 70%, transparent); }
+
+    /* the cover leans toward the hand — fine pointers only */
+    @media (hover: hover) and (pointer: fine) {
+      .alb { perspective: 900px; }
+      .alb__art { transition: transform .22s cubic-bezier(.2,.7,.2,1), box-shadow .22s ease; will-change: transform; }
+      .alb__art.tilting { transition: transform .05s linear; }
+    }
+    @media (prefers-reduced-motion: reduce) { #signal { display: none; } }
+
+    /* ============ THE PREMIERE — the site doesn't load, it opens ============ */
+    #prem { position: fixed; inset: 0; z-index: 400; background: #050403; display: grid;
+      place-items: center; cursor: pointer; }
+    #prem .in { text-align: center; padding: 1rem; }
+    #prem img { width: clamp(52px, 9vw, 84px); height: auto; opacity: 0;
+      animation: premMark 1s cubic-bezier(.2,.7,.2,1) .1s forwards; }
+    #prem .k { font: 800 .62rem var(--ui); letter-spacing: .55em; text-transform: uppercase;
+      color: rgba(244,239,230,.6); margin: 1.1rem 0 .4rem; opacity: 0;
+      animation: premUp .7s ease .55s forwards; }
+    #prem .t { font-family: var(--sig); text-transform: uppercase; color: #f4efe6;
+      font-size: clamp(3rem, 14vw, 8rem); line-height: .84; }
+    #prem .t span { display: inline-block; opacity: 0; transform: translateY(.35em);
+      animation: premUp .55s cubic-bezier(.2,.7,.2,1) forwards; }
+    #prem .seam { width: 0; height: 2px; background: var(--pulse, #e5383b); margin: 1rem auto 0;
+      animation: premSeam .6s cubic-bezier(.2,.7,.2,1) 1.35s forwards; }
+    #prem.out { animation: premOut .7s ease forwards; }
+    @keyframes premMark { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+    @keyframes premUp { from { opacity: 0; transform: translateY(.35em); } to { opacity: 1; transform: none; } }
+    @keyframes premSeam { to { width: min(46vw, 320px); } }
+    @keyframes premOut { to { opacity: 0; visibility: hidden; } }
+
+    /* ============ MONUMENT TYPE ============ */
+    .alb h1 { font-size: clamp(3.6rem, 19vw, 8.4rem); letter-spacing: .005em; }
+    .alb h1 .ch { display: inline-block; opacity: 0; transform: translateY(.3em);
+      transition: opacity .5s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
+    .alb h1.set .ch { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      #prem { display: none; }
+      .alb h1 .ch { opacity: 1; transform: none; transition: none; }
+    }
+
+    /* ============ THE LABEL — distribution, seated on the record ============ */
+    .lrail { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+    .lrail:empty { display: none; }
+    .lrail__b { -webkit-appearance: none; appearance: none; cursor: pointer; touch-action: manipulation;
+      border: 0; border-radius: 99px; padding: .6rem 1.05rem; background: transparent;
+      color: var(--cream); font: 800 .66rem var(--ui); letter-spacing: .09em; text-transform: uppercase;
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.28); transition: box-shadow .2s ease, color .2s ease; }
+    .lrail__b:hover { box-shadow: inset 0 0 0 1px rgba(244,239,230,.6); }
+    .lrail__b--done { color: #fff; background: linear-gradient(165deg,#ff5a5c,#b3121b);
+      box-shadow: none; cursor: default; }
+    html[data-theme="light"] .lrail__b:not(.lrail__b--done) { box-shadow: inset 0 0 0 1px rgba(20,16,12,.3); }
+
+    .lsheet { position: fixed; inset: auto 0 0 0; z-index: 340; background: rgba(10,8,7,.97);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+      border: 1px solid rgba(244,239,230,.16); border-bottom: 0; border-radius: 22px 22px 0 0;
+      padding: 1.3rem clamp(1.1rem,4vw,2rem) calc(1.3rem + env(safe-area-inset-bottom,0px));
+      transform: translateY(103%); transition: transform .45s cubic-bezier(.2,.7,.2,1);
+      max-width: 560px; margin: 0 auto; }
+    .lsheet.on { transform: none; }
+    .lsheet h3 { font-family: var(--sig); text-transform: uppercase; font-size: 1.5rem;
+      letter-spacing: .01em; margin: 0 0 .6rem; }
+    .lsheet ol { margin: .2rem 0 .8rem 1.1rem; padding: 0; font: 500 .92rem/1.7 var(--ui); }
+    .lsheet__fine { font: 500 .8rem/1.6 var(--ui); opacity: .62; margin: .2rem 0 .9rem; }
+    .lsheet__code { width: 100%; resize: none; border-radius: 12px; border: 1px solid rgba(244,239,230,.2);
+      background: rgba(0,0,0,.5); color: var(--cream); font: 500 .78rem/1.5 ui-monospace,Menlo,monospace;
+      padding: .7rem .8rem; margin: 0 0 .8rem; }
+    .lsheet__x { position: absolute; top: .9rem; right: 1rem; -webkit-appearance: none; appearance: none;
+      border: 0; background: transparent; color: inherit; opacity: .6; font: 800 .64rem var(--ui);
+      letter-spacing: .09em; text-transform: uppercase; cursor: pointer; padding: .4rem .5rem; }
+    html[data-theme="light"] .lsheet { background: rgba(247,243,236,.97); border-color: rgba(20,16,12,.18); }
+    html[data-theme="light"] .lsheet__code { background: rgba(255,255,255,.7); color: #141009;
+      border-color: rgba(20,16,12,.2); }
+
+    .ltoast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom,0px));
+      transform: translate(-50%,16px); z-index: 360; background: rgba(10,8,7,.96); color: var(--cream);
+      border: 1px solid rgba(244,239,230,.2); border-radius: 99px; padding: .65rem 1.1rem;
+      font: 700 .74rem var(--ui); letter-spacing: .02em; opacity: 0; pointer-events: none;
+      transition: opacity .3s ease, transform .3s ease; max-width: 88vw; text-align: center; }
+    .ltoast.on { opacity: 1; transform: translate(-50%,0); }
+    html[data-theme="light"] .ltoast { background: rgba(247,243,236,.97); color: #141009;
+      border-color: rgba(20,16,12,.18); }
+
+    .now__tp .now__side { opacity: .55; }
+    .now__tp .now__side:hover { opacity: .9; }
+    .now__tp .now__side svg { width: 19px; height: 19px; fill: none; stroke: currentColor;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .now__doors #nowNap { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; }
+    .now__doors #nowNap.on { color: #fff; background: linear-gradient(165deg,#ff5a5c,#b3121b); }
+  </style>
+  <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
+</head>
+<body class="songpage music-room music-room--album">
+  <!-- THE ROOM: the page lives inside the playing record's film:
+       blurred, dimmed, scene-cutting with the reels. Spotify shows
+       you a list; this room shows you the world of the song. -->
+  <div class="room" aria-hidden="true">
+    <video id="roomFilm" muted loop playsinline preload="none"></video>
+    <div class="room__scrim"></div>
+  </div>
+
+  <main class="hr">
+    <!-- THE TOP ROW: the face, the search, the saves: the app opens like an app -->
+    <header class="top">
+      <img class="top__ava" src="assets/img/m-mark.png" alt="McCluster">
+      <div class="top__acts">
+        <a class="top__circle" href="catalogue.html" aria-label="The catalog">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        </a>
+        <a class="top__circle" href="album.html?playlist=my-rotation" aria-label="My Rotation">
+          <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.6-9-9c-1.2-2.7 0.6-6 3.8-6 2 0 3.4 1.2 5.2 3.2C13.8 6.2 15.2 5 17.2 5c3.2 0 5 3.3 3.8 6-2 4.4-9 9-9 9z"/></svg>
+        </a>
+        <button class="top__circle" id="themeFlip" type="button" aria-label="Light or dark">
+          <svg viewBox="0 0 24 24"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
+        </button>
+      </div>
+    </header>
+    <div class="greet">Have no fear.</div>
+    <p class="greet__sub">McCluster is here. The whole catalog, one room.</p>
+
+    <!-- THE BACKEND is retired from the public room. One seller lives
+         here; provider desks, Connect onboarding, and personal pay
+         links are gone from the customer-facing album. The owner's
+         command center is admin.html. -->
+
+
+    <!-- THE SHELF FRONT: the chips filter, the curated cards preview on tap -->
+    <div class="chips" id="chips" role="tablist" aria-label="Filter">
+      <button type="button" class="on" data-chip="all">All</button>
+      <button type="button" data-chip="albums">Albums</button>
+      <button type="button" data-chip="playlists">Playlists</button>
+    </div>
+    <section id="featWrap" aria-label="Curated">
+      <p class="lib__k">Curated by the house</p>
+      <div class="feat" id="featRail"></div>
+    </section>
+
+    <header class="alb" data-drift style="--drift:8">
+      <img class="alb__art" id="albArt" src="assets/img/here-cover.jpg" alt="Album art">
+      <div>
+        <p class="alb__k" id="albTag" data-daypart="The album">The album</p>
+        <h1 id="albName">I AM HERE</h1>
+        <p class="alb__by">by <b>Matthew McCluster</b> · <span id="albBy">Have no fear.</span></p>
+        <button class="alb__play" id="playAll" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>
+        <!-- THE LABEL RAIL: install it, download it, syndicate it -->
+        <div class="lrail" id="labelRail" aria-label="The label"></div>
+      </div>
+    </header>
+
+    <section id="album" aria-label="The album">
+      <ul class="tr" id="tracks"></ul>
+      <audio id="deck" preload="metadata"></audio>
+    </section>
+
+    <!-- THE PLAYLISTS: app rows: tap the chip for a taste, tap the row to enter -->
+    <section class="lib" id="plWrap" aria-label="The playlists">
+      <p class="lib__k">The playlists</p>
+      <div id="plList"></div>
+    </section>
+
+    <footer class="hr__foot">
+      Every track written &amp; performed by Matthew McCluster · QT6KV catalogue.<br>
+      <a href="index.html">The film</a> ·
+      <a href="hire.html">Hire the agency</a> ·
+      <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a><br>
+      © 2026 Matthew McCluster · McCluster Corp.
+    </footer>
+  </main>
+
+  <!-- THE NOW SHEET: the record, opened up -->
+  <div class="now" id="now" data-on="0" role="dialog" aria-label="Now playing">
+    <div class="now__head">
+      <button class="now__down" id="nowDown" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg>
+      </button>
+      <span class="now__from" id="nowFrom">Playing from I AM HERE</span>
+    </div>
+    <div class="now__art">
+      <video class="now__film" id="nowFilm" muted loop playsinline preload="none"></video>
+      <div class="now__scrim" aria-hidden="true"></div>
+      <div class="now__lyr" id="nowLyr"><p class="now__none">…</p></div>
+    </div>
+    <div class="now__meta">
+      <div class="now__title" id="nowTitle">·</div>
+      <p class="now__by">Matthew McCluster</p>
+    </div>
+    <div class="now__deck">
+      <button class="now__seek" id="nowSeek" type="button" aria-label="Seek"><i><b id="nowSeekFill"></b></i></button>
+      <div class="now__times"><span id="nowT0">0:00</span><span id="nowT1">-:--</span></div>
+      <div class="now__tp">
+        <button class="now__side" id="nowShare" type="button" aria-label="Share this record"><svg viewBox="0 0 24 24"><path d="M12 15V4"/><path d="M8.5 7.5L12 4l3.5 3.5"/><path d="M5 12v8h14v-8"/></svg></button>
+        <button id="nowPrev" type="button" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5v14l-10-7z"/></svg></button>
+        <button class="now__play" id="nowPlay" type="button" aria-label="Play or pause"><svg id="nowPlayIc" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button>
+        <button id="nowNext" type="button" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M18 5h-2.5v14H18zM4 5v14l10-7z"/></svg></button>
+        <button class="now__side" id="nowBeam" type="button" aria-label="Play on another screen" hidden><svg viewBox="0 0 24 24"><path d="M3 6h18v12h-7"/><path d="M3 10a10 10 0 0 1 8 8"/><path d="M3 14a6 6 0 0 1 4.5 4.5"/><path d="M3 18h.5"/></svg></button>
+      </div>
+      <!-- the song is the hub: who made it, where it's registered, the doors around it -->
+      <div class="now__eco">
+        <p class="now__cred" id="nowCred"></p>
+        <div class="now__doors">
+          <a href="license.html" id="ecoLic" data-license="who-did-the-shoot">License this track</a>
+          <a href="catalogue.html" id="ecoReg">On the record</a>
+          <a href="pay.html" id="ecoOwn">Tip the artist</a>
+          <a href="hire.html" id="ecoHire">Book the studio</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- the deck: the mini player that rides above the bar -->
+  <div class="deckbar" id="deckbar" data-off="1">
+    <button class="deckbar__seek" id="seek" type="button" aria-label="Seek"><i><b id="seekFill"></b></i></button>
+    <div class="deckbar__row">
+      <img class="deckbar__art" src="assets/img/here-cover.jpg" alt="">
+      <div class="deckbar__meta"><b id="npTitle">·</b><small id="npTime">0:00 · I AM HERE</small><small class="deckbar__lyr" id="npLyr"></small></div>
+      <button class="tp" id="tpPrev" type="button" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM20 5v14l-10-7z"/></svg></button>
+      <button class="tp tp--play" id="tpPlay" type="button" aria-label="Play or pause"><svg id="tpPlayIc" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button>
+      <button class="tp" id="tpNext" type="button" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M18 5h-2.5v14H18zM4 5v14l10-7z"/></svg></button>
+    </div>
+  </div>
+
+  <!-- THE BAR · Music · HERE · Prayer Closet · Profile. One tap goes where it says; hold a tab to open its wing. -->
+  <!-- THE ROOM: fans speak under the record -->
+  <div data-comments="the-album"></div>
+
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/env.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/comments.js?v=__STAMP__"></script>
+  <script src="js/payments.js?v=__STAMP__"></script>
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script>
+  /* ============================================================
+     THE I AM HERE PLAYER: the album's own Spotify.
+     One deck, a queue of six, transport controls, a seek bar,
+     lock-screen controls (Media Session), and a memory: it saves
+     where you were (mcc_here_radio) and resumes when you return.
+     The bar's Music tab mirrors it: once for the sound, and when
+     it's playing, once hushes it (the old law).
+     ============================================================ */
+  (function () {
+    "use strict";
+    var Q0 = new URLSearchParams(location.search);
+    var ALBUM = (Q0.get("album") || "here").toLowerCase();
+    var PL = (Q0.get("playlist") || "").toLowerCase();
+    var TRACK = Q0.get("track") || ""; /* a creator cut, straight from the database */
+    var INLINE = {}; /* the cut's lyrics + reel ride the row, not files */
+    var deck = document.getElementById("deck");
+    var rows = [];
+    function esc(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; }
+
+    /* THE ROTATION: the local heart: saved songs, this device's playlist */
+    var ROT_KEY = "mcc_rotation";
+    function rotation() { try { return JSON.parse(localStorage.getItem(ROT_KEY)) || []; } catch (e) { return []; } }
+    function inRotation(alb, title) { return rotation().some(function (r) { return r.album === alb && r.title === title; }); }
+    function toggleRotation(alb, title) {
+      var r = rotation().filter(function (x) { return !(x.album === alb && x.title === title); });
+      var added = r.length === rotation().length;
+      if (added) r.push({ album: alb, title: title });
+      try { localStorage.setItem(ROT_KEY, JSON.stringify(r)); } catch (e) {}
+      if (window.MCC_TRACK) window.MCC_TRACK(added ? "rotation_add" : "rotation_drop", { track: title });
+      return added;
+    }
+
+    /* one track, dressed with its album (playlists cross album lines) */
+    function findTrack(data, ref) {
+      var out = null;
+      (data.albums || []).forEach(function (a) {
+        if (a.slug !== ref.album) return;
+        a.tracks.forEach(function (t) {
+          if (t.title === ref.title) {
+            out = Object.assign({}, t, { albSlug: a.slug, albName: a.name, art: a.art });
+          }
+        });
+      });
+      return out;
+    }
+    function allTracks(data) {
+      var q = [];
+      (data.albums || []).forEach(function (a) {
+        a.tracks.forEach(function (t) { q.push(Object.assign({}, t, { albSlug: a.slug, albName: a.name, art: a.art })); });
+      });
+      return q;
+    }
+    function resolvePlaylist(data, pls, slug) {
+      if (slug === "everything") {
+        var q = allTracks(data);
+        return { slug: slug, name: "Everything", tag: "The whole catalog · " + q.length + " tracks",
+          by: "Every record in the system, front to back.", art: "assets/img/here-cover.jpg", queue: q };
+      }
+      if (slug === "my-rotation") {
+        var q2 = rotation().map(function (r) { return findTrack(data, r); }).filter(Boolean);
+        return q2.length ? { slug: slug, name: "My Rotation", tag: "Saved on this device · " + q2.length + (q2.length === 1 ? " track" : " tracks"),
+          by: "The songs you hearted.", art: "assets/img/m-mark.png", queue: q2 } : null;
+      }
+      var pl = null;
+      (pls && pls.playlists || []).forEach(function (p) { if (p.slug === slug) pl = p; });
+      if (!pl) return null;
+      var q3 = (pl.tracks || []).map(function (r) { return findTrack(data, r); }).filter(Boolean);
+      return q3.length ? { slug: pl.slug, name: pl.name, tag: pl.tag || (q3.length + " tracks"), by: pl.by || "", art: pl.art, queue: q3 } : null;
+    }
+
+    /* title -> the slug license.html pre-picks in its Track select. This
+       used to double as the path to a per-track page; those pages are gone
+       and this is the half that was actually earning its keep. */
+    var LIC_SLUG = {
+      "Who Did The Shoot": "who-did-the-shoot", "Runway Walk": "runway-walk",
+      "Write a Song": "write-a-song", "Here": "here",
+      "Antisocial": "antisocial", "Lightroom": "lightroom",
+    };
+
+    function trackRow(t, i) {
+      return '<li data-src="' + t.src + '"' +
+        (t.video ? ' data-video="' + t.video + '"' : "") +
+        (t.poster ? ' data-poster="' + t.poster + '"' : "") +
+        (t.lyrics ? ' data-lyrics="' + t.lyrics + '"' : "") +
+        (t.reel ? ' data-reel="' + t.reel + '"' : "") +
+        (t.art ? ' data-art="' + t.art + '"' : "") +
+        (t.pulse ? ' data-pulse="' + t.pulse + '"' : "") +
+        (t.poster ? ' style="--row-art:url(\'' + t.poster + '\')"' : "") +
+        ' data-albslug="' + esc(t.albSlug || ALBUM) + '"' +
+        ' data-title="' + esc(t.title) + '">' +
+        '<span class="n">' + (i + 1) + "</span>" +
+        '<span class="th"' + (t.poster ? ' style="background-image:url(' + t.poster + ')"' : "") + "></span>" +
+        '<span class="t">' + esc(t.title) +
+        '<small>' + esc(t.sub || t.albName || "") + '<span data-plays></span></small></span>' +
+        '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
+        '<button class="hrt" type="button" data-hrt aria-label="Save to My Rotation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
+        '<span class="d">-:--</span>' +
+        /* The row used to carry an arrow out to a per-track page. Those
+           pages are gone: their one real job was a licensing link that
+           license.html already served, and the film they showed is the
+           lyric reel on films.html. The row plays the record, which is what
+           a shelf is for. */
+        "</li>";
+    }
+
+    function boot(data, pls, ct) {
+      var head = null, queue = null;
+      if (ct) {
+        INLINE = { lyrics: ct.lyrics || null, reel: ct.reel || null };
+        ALBUM = "ct:" + ct.id;
+        head = { name: ct.title, tag: "A creator cut · the cutting room", by: ct.artist || "",
+          art: ct.poster_url || "assets/img/m-mark.png" };
+        queue = [{ title: ct.title, sub: ct.artist || "", src: ct.audio_url,
+          poster: ct.poster_url || "", lyrics: ct.lyrics ? "@inline" : "", reel: ct.reel ? "@inline" : "",
+          albSlug: ALBUM, albName: ct.artist || "", art: ct.poster_url || "" }];
+      }
+      if (!queue && PL) {
+        var got = resolvePlaylist(data, pls, PL);
+        if (got) { head = got; queue = got.queue; ALBUM = "pl:" + got.slug; }
+        else PL = "";
+      }
+      if (!queue) {
+        var alb = null;
+        (data.albums || []).forEach(function (a) { if (a.slug === ALBUM) alb = a; });
+        if (!alb) alb = data.albums[0];
+        ALBUM = alb.slug;
+        head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art };
+        queue = alb.tracks.map(function (t) { return Object.assign({}, t, { albSlug: alb.slug, albName: "", art: alb.art }); });
+      }
+      document.getElementById("albArt").src = head.art;
+      if (window.MCC_ENV && !PL) window.MCC_ENV.mount(document.getElementById("albArt"), ALBUM);
+      document.getElementById("albName").textContent = head.name;
+      document.getElementById("albTag").textContent = head.tag;
+      document.getElementById("albBy").textContent = head.by || "";
+      document.getElementById("nowFrom").textContent = "Playing from " + head.name;
+      document.querySelector(".deckbar__art").src = head.art;
+      document.getElementById("tracks").innerHTML = queue.map(trackRow).join("");
+      rows = Array.prototype.slice.call(document.querySelectorAll("#tracks li"));
+      paintHearts();
+      buildRails(data, pls);
+      fetchPlays();
+      init();
+    }
+    var CRED = {}; /* title → credit line, from the QT6KV registry */
+    Promise.all([
+      fetch("data/albums.json", { cache: "no-cache" }).then(function (r) { return r.json(); }),
+      fetch("data/playlists.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).catch(function () { return null; }),
+      fetch("data/catalogue.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).catch(function () { return null; }),
+      Promise.resolve().then(function () {
+        if (!TRACK) return null;
+        return fetch(SB_URL + "/rest/v1/creator_tracks?id=eq." + encodeURIComponent(TRACK) + "&select=*&limit=1", {
+          headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY },
+        }).then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (rows) { return rows && rows[0] ? rows[0] : null; })
+          .catch(function () { return null; });
+      }),
+    ]).then(function (all) {
+      ((all[2] && all[2].tracks) || []).forEach(function (t) { if (t.credit) CRED[t.title.toLowerCase()] = t.credit; });
+      boot(all[0], all[1], all[3]);
+    }).catch(function () {
+        document.getElementById("tracks").innerHTML = "<li><span class='t'>The shelf is warming up. Refresh in a moment.</span></li>";
+      });
+
+    /* ============================================================
+       THE TWO MODES: RETIRED. This room has one seller and one
+       audience: the listener. The provider desk (Stripe Connect
+       onboarding, payout tiles, personal pay links, creator premium)
+       is removed from the public application; the owner's command
+       center is admin.html. The functions below stay defined but
+       unreachable until the file is fully slimmed. A stored
+       creator-mode flag from the old build is cleared on sight.
+       ============================================================ */
+    try { localStorage.removeItem("mcc_mode"); } catch (e) {}
+
+    /* hearts: painted from the rotation, toggled in place */
+    function paintHearts() {
+      rows.forEach(function (row) {
+        var b = row.querySelector("[data-hrt]");
+        if (b) b.classList.toggle("on", inRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
+      });
+    }
+    document.getElementById("tracks").addEventListener("click", function (e) {
+      var b = e.target.closest ? e.target.closest("[data-hrt]") : null;
+      if (!b) return;
+      e.stopPropagation(); e.preventDefault();
+      var row = b.closest("li");
+      b.classList.toggle("on", toggleRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
+    }, true);
+
+    /* THE COUNTER: plays read back from the platform's first-party
+       analytics mirror (the same events GA4 counts land in the events
+       table; docs/play-counts.sql exposes totals-only). Silent until
+       the owner pastes the RPC. No counts beats wrong counts. */
+    var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+    var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+    function fmtPlays(n) { return (n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "K" : n) + (n === 1 ? " play" : " plays"); }
+    function paintPlays(list) {
+      var byTitle = {};
+      list.forEach(function (r) { if (r.track) byTitle[r.track.toLowerCase()] = r.plays; });
+      rows.forEach(function (row) {
+        var n = byTitle[(row.getAttribute("data-title") || "").toLowerCase()];
+        var s = row.querySelector("[data-plays]");
+        if (s && n != null) s.textContent = (row.querySelector("small").textContent ? " · " : "") + fmtPlays(+n);
+      });
+    }
+    function fetchPlays() {
+      try {
+        var c = JSON.parse(localStorage.getItem("mcc_plays_cache") || "null");
+        if (c && c.rows) paintPlays(c.rows);
+      } catch (e) {}
+      fetch(SB_URL + "/rest/v1/rpc/play_counts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SB_KEY, Authorization: "Bearer " + SB_KEY },
+        body: "{}",
+      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (list) {
+        if (!list || !list.length) return;
+        paintPlays(list);
+        try { localStorage.setItem("mcc_plays_cache", JSON.stringify({ at: Date.now(), rows: list })); } catch (e) {}
+      }).catch(function () {});
+    }
+
+    /* THE SHELF FRONT: the curated cards + playlist rows, with THE TASTE:
+       the play chip on any card pours its first record straight into your
+       ear, no navigation. Tap the card itself to walk in. */
+    var PLAY_IC = '<svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>';
+    var PAUSE_IC = '<svg viewBox="0 0 24 24"><path d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>';
+    var pv = new Audio(); pv.preload = "none"; var pvKey = "";
+    function pvStop() {
+      try { pv.pause(); } catch (e) {}
+      pvKey = "";
+      document.querySelectorAll("[data-pv].on").forEach(function (b) { b.classList.remove("on"); b.innerHTML = PLAY_IC; });
+    }
+    pv.addEventListener("ended", pvStop);
+    deck.addEventListener("play", pvStop); // the deck takes the floor back
+    function pvGo(btn) {
+      var key = btn.getAttribute("data-pv");
+      if (pvKey === key) { pvStop(); return; }
+      pvStop();
+      try { deck.pause(); } catch (e) {}
+      pv.src = btn.getAttribute("data-src");
+      var p = pv.play(); if (p && p.catch) p.catch(function () {});
+      pvKey = key; btn.classList.add("on"); btn.innerHTML = PAUSE_IC;
+      if (window.MCC_TRACK) window.MCC_TRACK("shelf_preview", { key: key });
+    }
+    function buildRails(data, pls) {
+      var feat = document.getElementById("featRail");
+      if (feat) feat.innerHTML = (data.albums || []).map(function (a) {
+        var first = a.tracks[0] || {};
+        return '<div class="feat__card" data-open="album.html?album=' + a.slug + '">' +
+          '<img class="feat__bg" src="' + a.art + '" alt="" loading="lazy"><span class="feat__smoke"></span>' +
+          "<b>" + esc(a.name) + "</b><small>" + esc(a.by || a.tag || "") + "</small>" +
+          '<div class="feat__acts">' +
+          '<button class="feat__play" type="button" data-pv="alb:' + a.slug + '" data-src="' + first.src + '" aria-label="Preview ' + esc(a.name) + '">' + PLAY_IC + "</button>" +
+          '<span class="feat__n">' + a.tracks.length + (a.tracks.length === 1 ? " track" : " tracks") + "</span>" +
+          "</div></div>";
+      }).join("");
+      var tf = document.getElementById("themeFlip");
+      /* the light coat is retired; nothing to flip, so retire the control */
+      if (tf && window.MCC_THEME && !MCC_THEME.dual) { tf.hidden = true; }
+      else if (tf && window.MCC_THEME) { tf.addEventListener("click", function () { MCC_THEME.flip(); }); }
+      var items = [{ slug: "everything", name: "Everything", tag: allTracks(data).length + " tracks", art: "assets/img/here-cover.jpg" }]
+        .concat((pls && pls.playlists) || []);
+      if (rotation().length) items.push({ slug: "my-rotation", name: "My Rotation", tag: rotation().length + " saved", art: "assets/img/m-mark.png" });
+      var list = document.getElementById("plList");
+      if (list) list.innerHTML = items.map(function (p) {
+        var got = resolvePlaylist(data, pls, p.slug);
+        var first = got && got.queue[0] ? got.queue[0].src : "";
+        return '<div class="pll' + (PL === p.slug ? " is-here" : "") + '" data-open="album.html?playlist=' + p.slug + '">' +
+          '<img class="pll__art" src="' + p.art + '" alt="" loading="lazy">' +
+          '<span class="pll__t"><b>' + esc(p.name) + "</b><small>" + esc(p.tag || "") + "</small></span>" +
+          (first ? '<button class="pll__play" type="button" data-pv="pl:' + p.slug + '" data-src="' + first + '" aria-label="Preview ' + esc(p.name) + '">' + PLAY_IC + "</button>" : "") +
+          "</div>";
+      }).join("");
+      /* one hand on the whole shelf: chips filter, plays preview, cards open */
+      document.querySelectorAll("#featRail, #plList").forEach(function (zone) {
+        zone.addEventListener("click", function (e) {
+          var b = e.target.closest && e.target.closest("[data-pv]");
+          if (b) { e.stopPropagation(); pvGo(b); return; }
+          var c = e.target.closest && e.target.closest("[data-open]");
+          if (c) location.href = c.getAttribute("data-open");
+        });
+      });
+      var chips = document.getElementById("chips");
+      if (chips) chips.addEventListener("click", function (e) {
+        var b = e.target.closest && e.target.closest("[data-chip]");
+        if (!b) return;
+        chips.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); });
+        var w = b.getAttribute("data-chip");
+        document.getElementById("featWrap").hidden = w === "playlists";
+        document.getElementById("plWrap").hidden = w === "albums";
+      });
+    }
+    function init() {
+    var bar = document.getElementById("deckbar");
+    var KEY = "mcc_here_radio";
+    var cur = -1;
+
+    var fmt = function (s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+    var el = function (id) { return document.getElementById(id); };
+
+    /* durations on the rows: metadata only, one probe per track */
+    rows.forEach(function (row) {
+      var probe = new Audio();
+      probe.preload = "metadata";
+      probe.src = row.getAttribute("data-src");
+      probe.addEventListener("loadedmetadata", function () {
+        row.querySelector(".d").textContent = fmt(probe.duration);
+        probe.src = "";
+      });
+    });
+
+    function announce(playing) {
+      window.dispatchEvent(new CustomEvent("mcc:nowplaying", {
+        detail: { title: cur > -1 ? rows[cur].getAttribute("data-title") : "I AM HERE", href: "#np", playing: !!playing },
+      }));
+    }
+    function save() {
+      try { localStorage.setItem(KEY, JSON.stringify({ album: ALBUM, i: cur, t: deck.currentTime || 0, paused: deck.paused })); } catch (e) {}
+      pocket();
+    }
+
+    /* THE POCKET HANDOFF. Everything the corner player on every other page
+       needs to rebuild this exact moment: the file, the film, the lyric
+       sheet, the title, the second, and whether it was still running when
+       they walked. js/pip.js reads it; the album never shows the pocket
+       itself, because the real player is right here. */
+    function pocket() {
+      if (!window.MCC_POCKET) return;
+      if (cur < 0) { window.MCC_POCKET.clear(); return; }
+      var row = rows[cur];
+      if (!row) return;
+      window.MCC_POCKET.save({
+        src: row.getAttribute("data-src") || "",
+        video: row.getAttribute("data-video") || "",
+        poster: row.getAttribute("data-poster") || "",
+        lyrics: row.getAttribute("data-lyrics") || "",
+        title: row.getAttribute("data-title") || "",
+        album: row.getAttribute("data-albslug") || ALBUM,
+        t: deck.currentTime || 0,
+        playing: !deck.paused,
+        at: Date.now(),
+      });
+    }
+    /* a walk-away mid-song must bank the true second, not the last 8th tick */
+    window.addEventListener("pagehide", pocket);
+    function paintRows() {
+      rows.forEach(function (r, i) {
+        r.classList.toggle("on", i === cur);
+        r.classList.toggle("playing", i === cur && !deck.paused);
+      });
+    }
+    function paintDeck() {
+      if (cur < 0) { bar.dataset.off = "1"; return; }
+      bar.dataset.off = "0";
+      el("npTitle").textContent = rows[cur].getAttribute("data-title");
+      el("npTime").textContent = fmt(deck.currentTime) + " · " + (deck.duration ? fmt(deck.duration) : "I AM HERE");
+      el("seekFill").style.width = deck.duration ? (deck.currentTime / deck.duration * 100) + "%" : "0";
+      el("tpPlayIc").innerHTML = deck.paused ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
+    }
+    function media() {
+      if (!("mediaSession" in navigator) || cur < 0) return;
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: rows[cur].getAttribute("data-title"),
+        artist: "Matthew McCluster",
+        album: document.getElementById("albName").textContent,
+        artwork: [{ src: rows[cur].getAttribute("data-art") || document.getElementById("albArt").src, type: "image/jpeg" }],
+      });
+    }
+    function load(i, at) {
+      cur = (i + rows.length) % rows.length;
+      deck.src = rows[cur].getAttribute("data-src");
+      /* the track's own grade: chamber silk, glows and filament all follow */
+      document.documentElement.style.setProperty("--pulse",
+        rows[cur].getAttribute("data-pulse") || "#e5383b");
+      /* the license desk takes this record's name — one door, right here */
+      var licEl = document.getElementById("ecoLic");
+      if (licEl) {
+        var licTitle = rows[cur].getAttribute("data-title");
+        var licSlug = LIC_SLUG[licTitle];
+        /* the href stays real for a new tab or no-JS; the desk opens in place */
+        licEl.href = "license.html" + (licSlug ? "?track=" + licSlug : "");
+        licEl.setAttribute("data-license", licSlug || "other");
+        licEl.setAttribute("data-license-title", licTitle || "");
+      }
+      if (at) deck.currentTime = at;
+      var art = rows[cur].getAttribute("data-art");
+      if (art) document.querySelector(".deckbar__art").src = art;
+      /* the room takes the record: film, scenes, and words load with
+         the track; the whole page becomes the song's world */
+      loadReel(rows[cur].getAttribute("data-reel") || "");
+      setRoom(rows[cur].getAttribute("data-video") || "", rows[cur].getAttribute("data-poster") || "");
+      loadLyrics(rows[cur].getAttribute("data-lyrics") || "");
+      media(); paintRows(); paintDeck();
+    }
+    function play(i, at) {
+      if (i !== undefined && i !== cur) load(i, at);
+      else if (cur < 0) load(0, at);
+      deck.play().catch(function () {});
+      if (window.MCC_TRACK) window.MCC_TRACK("album_play", { track: rows[cur].getAttribute("data-title"), album: ALBUM });
+    }
+    function next() { play(cur + 1); }
+    function prev() { if (deck.currentTime > 4) { deck.currentTime = 0; return; } play(cur - 1); }
+
+    rows.forEach(function (row, i) {
+      row.addEventListener("click", function () {
+        if (i === cur && !deck.paused) { deck.pause(); return; }
+        play(i);
+      });
+    });
+    el("playAll").addEventListener("click", function () {
+      if (cur > -1 && !deck.paused) { deck.pause(); return; }
+      play(cur > -1 ? cur : 0);
+    });
+    el("tpPlay").addEventListener("click", function () { if (deck.paused) play(); else deck.pause(); });
+    el("tpNext").addEventListener("click", next);
+    el("tpPrev").addEventListener("click", prev);
+    el("seek").addEventListener("click", function (e) {
+      if (!deck.duration) return;
+      var r = this.getBoundingClientRect();
+      deck.currentTime = ((e.clientX - r.left) / r.width) * deck.duration;
+    });
+
+    var ICO_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>';
+    var ICO_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
+    deck.addEventListener("play", function () { paintRows(); paintDeck(); announce(true); save();
+      el("playAll").innerHTML = ICO_PAUSE + "Pause"; roomPlay(true); });
+    deck.addEventListener("pause", function () { paintRows(); paintDeck(); announce(false); save();
+      el("playAll").innerHTML = ICO_PLAY + "Play"; roomPlay(false); });
+    var tick = 0;
+    deck.addEventListener("timeupdate", function () { paintDeck(); roomTick(); if (++tick % 8 === 0) save(); });
+    deck.addEventListener("ended", function () { next(); }); // the record keeps spinning, wraps at the end
+    window.addEventListener("pagehide", save);
+
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.setActionHandler("play", function () { play(); });
+      navigator.mediaSession.setActionHandler("pause", function () { deck.pause(); });
+      navigator.mediaSession.setActionHandler("previoustrack", prev);
+      navigator.mediaSession.setActionHandler("nexttrack", next);
+      try { navigator.mediaSession.setActionHandler("seekto", function (d) { if (d.seekTime != null) deck.currentTime = d.seekTime; }); } catch (e) {}
+    }
+
+    /* the memory: pick up exactly where you left off (paused, ready) */
+    try {
+      var r0 = JSON.parse(localStorage.getItem(KEY));
+      /* COMING BACK FROM THE POCKET. If the corner player kept the record
+         moving on another page, its second is newer than the one this album
+         banked on the way out — so it wins, and the listener lands exactly
+         where the music actually is rather than where they left this page. */
+      var pk = window.MCC_POCKET && window.MCC_POCKET.read();
+      if (pk && pk.title) {
+        var at = rows.findIndex(function (r) { return r.getAttribute("data-title") === pk.title; });
+        if (at > -1) {
+          var drift = pk.playing && pk.at ? Math.min(30, (Date.now() - pk.at) / 1000) : 0;
+          load(at, (pk.t || 0) + drift);
+          r0 = null;
+        }
+      }
+      if (r0 && r0.album === ALBUM && r0.i > -1 && r0.i < rows.length) load(r0.i, r0.t || 0);
+    } catch (e) {}
+
+    /* THE DISSOLVE, no black allowed: freeze the outgoing frame on a
+       veil and HOLD it at full strength while the next clip loads; only
+       when the new frame is actually on screen does the veil burn off.
+       The eye never sees the load. */
+    function glide(v) {
+      try {
+        var vw = v.videoWidth, vh = v.videoHeight;
+        if (!vw || !vh) return; // no clean frame to hold; a straight cut beats a warp
+        var veil = v._veil;
+        if (!veil) {
+          veil = v._veil = document.createElement("canvas");
+          veil.className = "scene-veil";
+          v.parentNode.insertBefore(veil, v.nextSibling);
+        }
+        /* freeze the frame exactly as it sat: cover-cropped, no stretch */
+        var cw = v.clientWidth || vw, ch = v.clientHeight || vh;
+        veil.width = cw; veil.height = ch;
+        var s = Math.max(cw / vw, ch / vh);
+        var sw = cw / s, sh = ch / s;
+        veil.getContext("2d").drawImage(v, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, cw, ch);
+        veil.classList.remove("is-fading"); void veil.offsetWidth;
+        veil.classList.add("is-holding");
+      } catch (e) {}
+    }
+    function burnVeil() {
+      var veil = nowFilm._veil;
+      if (!veil || !veil.classList.contains("is-holding")) return;
+      veil.classList.remove("is-holding"); void veil.offsetWidth;
+      veil.classList.add("is-fading");
+    }
+
+    /* ---------- THE ROOM: the page inside the record's film ---------- */
+    var room = document.querySelector(".room"), roomFilm = el("roomFilm"), roomSrc = "";
+    function setRoom(src, poster) {
+      if (!roomFilm) return;
+      if (!src) { room.classList.remove("is-on"); try { roomFilm.pause(); } catch (e) {} return; }
+      if (roomSrc !== src) {
+        roomSrc = src;
+        if (poster) roomFilm.poster = poster;
+        roomFilm.src = src;
+        roomFilm.load();
+      }
+      room.classList.add("is-on");
+      if (!deck.paused) { var p = roomFilm.play(); if (p && p.catch) p.catch(function () {}); }
+    }
+    function roomPlay(on) {
+      if (!roomFilm || !roomSrc) return;
+      if (on) { var p = roomFilm.play(); if (p && p.catch) p.catch(function () {}); }
+      else { try { roomFilm.pause(); } catch (e) {} }
+    }
+    /* the room rides the song clock: reels scene-cut the walls, and
+       the live bar lands on the deck, sheet open or not */
+    function roomTick() {
+      if (cur < 0) return;
+      if (reelScenes && reelScenes.length) {
+        var sc = reelScenes[0];
+        for (var i = 0; i < reelScenes.length; i++) if (deck.currentTime >= reelScenes[i].begin) sc = reelScenes[i];
+        setRoom(sc.src, sc.poster);
+      }
+      var line = "", t = deck.currentTime;
+      if (lyrTimed && lyrTimed.length) {
+        for (var k = 0; k < lyrTimed.length; k++) if (t >= lyrTimed[k].begin) line = lyrTimed[k].content;
+      } else if (lyrPlain && deck.duration && lyrLines.length) {
+        var idx = Math.min(lyrLines.length - 1, Math.floor(t / deck.duration * lyrLines.length));
+        line = lyrLines[idx] ? lyrLines[idx].textContent : "";
+      }
+      var n = el("npLyr");
+      if (n && n.textContent !== line) n.textContent = line;
+    }
+
+    /* ---------- THE NOW SHEET: the record, opened up ---------- */
+    var now = el("now"), nowFilm = el("nowFilm"), nowLyr = el("nowLyr");
+    var lyrCache = {}, lyrTimed = null, lyrPlain = false, lyrLines = [];
+    function sheetOn() { return now.dataset.on === "1"; }
+    function openSheet() {
+      if (cur < 0) return;
+      var row = rows[cur];
+      now.dataset.on = "1";
+      el("nowTitle").textContent = row.getAttribute("data-title");
+      el("nowCred").textContent = CRED[(row.getAttribute("data-title") || "").toLowerCase()] ||
+        "Written & performed by Matthew McCluster · QT6KV";
+      var reelSrc = row.getAttribute("data-reel") || "";
+      loadReel(reelSrc);
+      if (!reelSrc) {
+        var v = row.getAttribute("data-video") || "";
+        nowFilm.poster = row.getAttribute("data-poster") || "";
+        if (v && nowFilm.getAttribute("src") !== v) {
+          nowFilm.src = v;
+          nowFilm.load();
+        }
+      }
+      nowFilm.muted = true;
+      if (!deck.paused) { var pr = nowFilm.play(); if (pr && pr.catch) pr.catch(function () {}); }
+      loadLyrics(row.getAttribute("data-lyrics") || "");
+      paintSheet();
+      if (window.MCC_TRACK) window.MCC_TRACK("now_sheet_open", { track: row.getAttribute("data-title") });
+    }
+    function closeSheet() {
+      now.dataset.on = "0";
+      try { nowFilm.pause(); } catch (e) {}
+    }
+    /* THE CHAIN: the scrub dial is still the master clock, but no clip
+       ever loops, and no clip gets cut. Each scene plays its film
+       through ONCE, all the way; a lyric anchor takes the frame only
+       after the clip has run its whole length. Scrub and it resyncs. */
+    var reelScenes = null, reelCache = {}, sceneIdx = -1, sceneBegin = 0, sceneSrc = "";
+    function loadReel(src) {
+      reelScenes = null; sceneIdx = -1; sceneBegin = 0; sceneSrc = "";
+      nowFilm.loop = true; // single-video tracks keep their ambience loop
+      if (src === "@inline") {
+        reelScenes = (INLINE.reel && INLINE.reel.scenes) || null;
+        if (reelScenes) nowFilm.loop = false;
+        return;
+      }
+      if (!src) return;
+      if (reelCache[src]) { reelScenes = reelCache[src]; nowFilm.loop = false; return; }
+      fetch(src, { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+        reelCache[src] = (j && j.scenes) || null;
+        reelScenes = reelCache[src];
+        if (reelScenes) nowFilm.loop = false;
+        syncFilm(true);
+      }).catch(function () {});
+    }
+    function idxFor(t) {
+      var k = 0;
+      for (var i = 0; i < reelScenes.length; i++) if (t >= reelScenes[i].begin) k = i;
+      return k;
+    }
+    function flipEl() {
+      if (!nowFilm._flip) {
+        var f = document.createElement("img");
+        f.className = "now__flip"; f.alt = "";
+        nowFilm.parentNode.insertBefore(f, nowFilm.parentNode.querySelector(".now__scrim"));
+        nowFilm._flip = f;
+      }
+      return nowFilm._flip;
+    }
+    function setScene(k) {
+      k = Math.max(0, Math.min(k, reelScenes.length - 1));
+      if (k === sceneIdx) return;
+      var sc = reelScenes[k];
+      var wasOn = sceneIdx > -1; // the first scene arrives clean, no veil
+      sceneIdx = k; sceneBegin = sc.begin; sceneSrc = sc.src || "";
+      if (wasOn) glide(nowFilm);
+      else { /* the opener rises from black, same welcome the jet gets later */
+        nowFilm.classList.remove("is-open"); void nowFilm.offsetWidth;
+        nowFilm.classList.add("is-open");
+      }
+      /* a photo-flip scene: the pictures own the frame, the film rests */
+      if (sc.flip && sc.flip.length) { try { nowFilm.pause(); } catch (e) {} setTimeout(burnVeil, 380); return; }
+      flipEl().classList.remove("on");
+      nowFilm.loop = false;
+      /* fit the clip to its bars: one full play fills the hold */
+      var next = reelScenes[k + 1];
+      nowFilm._hold = next ? Math.max(0.5, next.begin - sc.begin) : 0;
+      nowFilm.poster = sc.poster || "";
+      nowFilm.src = sc.src;
+      nowFilm.load();
+      /* the veil holds until the new frame is truly on screen */
+      nowFilm.addEventListener("loadeddata", burnVeil, { once: true });
+      setTimeout(burnVeil, 2600); // never hold a dead frame forever
+      if (!deck.paused) { var p0 = nowFilm.play(); if (p0 && p0.catch) p0.catch(function () {}); }
+    }
+    function syncFilm(hard, jump) {
+      if (!sheetOn()) return;
+      if (reelScenes && reelScenes.length) {
+        var k = idxFor(deck.currentTime);
+        /* LET IT PLAY: a clip that's mid-play is untouchable; the anchor
+           takes the frame only once the clip has run its whole length
+           (photo-flips ride the clock; a real scrub still resyncs) */
+        var scHere = sceneIdx > -1 ? reelScenes[sceneIdx] : null;
+        var busy = scHere && !(scHere.flip && scHere.flip.length) &&
+                   nowFilm.getAttribute("src") && !nowFilm.ended && !nowFilm.error;
+        if (sceneIdx === -1 || k < sceneIdx - 1 || (jump && k !== sceneIdx) ||
+            (k > sceneIdx && !busy)) setScene(k);
+        /* a photo-flip scene rides the song clock: quick cuts, scrub-safe */
+        var scN = reelScenes[sceneIdx];
+        if (scN && scN.flip && scN.flip.length) {
+          var every = scN.every || 0.55;
+          var fi = Math.floor(Math.max(0, deck.currentTime - scN.begin) / every) % scN.flip.length;
+          var fl = flipEl();
+          if (fl.getAttribute("src") !== scN.flip[fi]) fl.src = scN.flip[fi];
+          fl.classList.add("on");
+          if (!nowFilm.paused) { try { nowFilm.pause(); } catch (e) {} }
+          return;
+        }
+        if (nowFilm._flip) nowFilm._flip.classList.remove("on");
+        if (hard && nowFilm.duration) {
+          try {
+            nowFilm.currentTime = Math.max(0, Math.min(
+              (deck.currentTime - sceneBegin) * (nowFilm.playbackRate || 1), nowFilm.duration - 0.05));
+          } catch (e) {}
+        }
+        if (deck.paused && !nowFilm.paused) nowFilm.pause();
+        if (!deck.paused && nowFilm.paused && !nowFilm.ended) { var p1 = nowFilm.play(); if (p1 && p1.catch) p1.catch(function () {}); }
+        return;
+      }
+      /* a single-film track: the old scene-relative loop ride */
+      if (!nowFilm.duration) return;
+      var want = Math.max(0, deck.currentTime) % nowFilm.duration;
+      var drift = Math.abs(nowFilm.currentTime - want);
+      if (hard || drift > 0.4) { try { nowFilm.currentTime = want; } catch (e) {} }
+      if (deck.paused && !nowFilm.paused) nowFilm.pause();
+      if (!deck.paused && nowFilm.paused) { var p = nowFilm.play(); if (p && p.catch) p.catch(function () {}); }
+    }
+    /* the clip ran its length: HOLD the last frame (the face stays up)
+       until the next anchor pulls the scene in. Only a long dead gap
+       (over ~8s) chains early, because motion beats a frozen minute. */
+    nowFilm.addEventListener("ended", function () {
+      if (!(reelScenes && reelScenes.length && sceneIdx > -1 && sceneIdx < reelScenes.length - 1 && !deck.paused)) return;
+      var k = idxFor(deck.currentTime);
+      /* the clip ran long past its bars: catch the chain up to the clock */
+      if (k > sceneIdx) { setScene(k); return; }
+      /* already a scene ahead of the clock: the frame holds; chaining
+         further would ping-pong the resync and chop the picture */
+      if (k < sceneIdx) return;
+      var wait = reelScenes[sceneIdx + 1].begin - deck.currentTime;
+      if (wait > 8) setScene(sceneIdx + 1);
+      /* otherwise: the final frame holds, the anchor does the switching */
+    });
+    deck.addEventListener("seeked", function () { syncFilm(true, true); });
+    deck.addEventListener("play", function () { syncFilm(false); });
+    deck.addEventListener("pause", function () { syncFilm(false); });
+    deck.addEventListener("timeupdate", function () { syncFilm(false); });
+    nowFilm.addEventListener("loadedmetadata", function () {
+      /* the elastic law: slow or speed the clip so one full play fits
+         the bars it was cut for (never past a gentle 0.65x to 1.5x) */
+      nowFilm.playbackRate = (reelScenes && nowFilm._hold && nowFilm.duration)
+        ? Math.max(0.65, Math.min(1.5, nowFilm.duration / nowFilm._hold)) : 1;
+      /* soft sync: a fresh clip opens on its FIRST frame, never mid-way */
+      syncFilm(false);
+    });
+    function loadLyrics(src) {
+      lyrTimed = null; lyrPlain = false; lyrLines = [];
+      if (src === "@inline") { paintLyrics(INLINE.lyrics || null); return; }
+      if (!src) {
+        nowLyr.innerHTML = "<p class='now__none'>The words land here soon. For now, let the record talk.</p>";
+        return;
+      }
+      if (lyrCache[src]) { paintLyrics(lyrCache[src]); return; }
+      nowLyr.innerHTML = "<p class='now__none'>…</p>";
+      fetch(src, { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+        lyrCache[src] = j; paintLyrics(j);
+      }).catch(function () {
+        nowLyr.innerHTML = "<p class='now__none'>The words land here soon.</p>";
+      });
+    }
+    function paintLyrics(j) {
+      var timed = j && j.timed && j.timed.line && j.timed.line.length ? j.timed.line : null;
+      if (!timed && j && j.lines && j.lines.length && j.lines[0].t != null) {
+        timed = j.lines.map(function (l) { return { begin: l.t, content: l.text || l.line || "" }; });
+      }
+      if (timed) {
+        lyrTimed = timed;
+        nowLyr.innerHTML = timed.map(function (l) { return "<p>" + l.content + "</p>"; }).join("");
+      } else if (j && j.plain) {
+        lyrPlain = true;
+        nowLyr.innerHTML = j.plain.split("\n").map(function (l) { return "<p>" + l + "</p>"; }).join("");
+      } else {
+        nowLyr.innerHTML = "<p class='now__none'>The words land here soon.</p>";
+      }
+      lyrLines = Array.prototype.slice.call(nowLyr.querySelectorAll("p"));
+      nowLyr.scrollTop = 0;
+    }
+    function paintSheet() {
+      if (!sheetOn()) return;
+      el("nowT0").textContent = fmt(deck.currentTime);
+      /* the premium read: what's LEFT, counting down */
+      el("nowT1").textContent = deck.duration ? "-" + fmt(Math.max(0, deck.duration - deck.currentTime)) : "-:--";
+      el("nowSeekFill").style.width = deck.duration ? (deck.currentTime / deck.duration * 100) + "%" : "0";
+      el("nowPlayIc").innerHTML = deck.paused ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/>';
+      /* the words ride the music: timed lines light up; plain lyrics
+         roll with the song's progress */
+      if (lyrTimed && lyrLines.length) {
+        var t = deck.currentTime, live = -1;
+        for (var i = 0; i < lyrTimed.length; i++) if (t >= lyrTimed[i].begin) live = i;
+        lyrLines.forEach(function (p, i2) { p.classList.toggle("is-live", i2 === live); });
+        if (live > -1) {
+          var target = lyrLines[live];
+          nowLyr.scrollTo({ top: target.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
+        }
+      } else if (lyrPlain && deck.duration && lyrLines.length) {
+        var prog = deck.currentTime / deck.duration;
+        var live2 = Math.min(lyrLines.length - 1, Math.floor(prog * lyrLines.length));
+        lyrLines.forEach(function (p, i3) { p.classList.toggle("is-live", i3 === live2); });
+        var target2 = lyrLines[live2];
+        if (target2) nowLyr.scrollTo({ top: target2.offsetTop - nowLyr.clientHeight * 0.32, behavior: "smooth" });
+      }
+    }
+    /* tap the PLAYING row again: instead of pausing, the record opens up
+       (capture phase, stopping the old pause-on-retap underneath) */
+    rows.forEach(function (row, i) {
+      row.addEventListener("click", function (e) {
+        if (i === cur && !deck.paused) { e.stopPropagation(); openSheet(); }
+      }, true);
+    });
+    el("deckbar").querySelector(".deckbar__meta").addEventListener("click", openSheet);
+    el("deckbar").querySelector(".deckbar__art").addEventListener("click", openSheet);
+    el("nowDown").addEventListener("click", closeSheet);
+    el("nowPlay").addEventListener("click", function () { if (deck.paused) play(); else deck.pause(); });
+    el("nowNext").addEventListener("click", function () { next(); setTimeout(openSheet, 60); });
+    el("nowPrev").addEventListener("click", function () { prev(); setTimeout(openSheet, 60); });
+    el("nowSeek").addEventListener("click", function (e) {
+      if (!deck.duration) return;
+      var r = this.getBoundingClientRect();
+      deck.currentTime = ((e.clientX - r.left) / r.width) * deck.duration;
+    });
+    deck.addEventListener("timeupdate", paintSheet);
+    deck.addEventListener("play", paintSheet);
+    deck.addEventListener("pause", paintSheet);
+
+    /* the bar's Music tab: once for the sound (the old law) */
+    window.MCC_NP_PLAY = function () { play(); };
+    window.MCC_NP_PAUSE = function () { deck.pause(); };
+    announce(false);
+    if (window.MCC_TRACK) window.MCC_TRACK("here_view", { album: ALBUM });
+    }
+  })();
+  </script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/deskchat.js?v=__STAMP__"></script>
+  <script src="js/chamber.js?v=__STAMP__"></script>
+  <script src="js/label.js?v=__STAMP__"></script>
+  <script src="js/crm.js?v=__STAMP__"></script>
+  <script src="js/signals.js?v=__STAMP__"></script>
+  <script src="js/licensedesk.js?v=__STAMP__"></script>
+  <script src="js/filament.js?v=__STAMP__"></script>
+  <script src="js/gyro.js?v=__STAMP__"></script>
+  <script src="js/intuition.js?v=__STAMP__"></script>
+  <script src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+{
+  "note": "MCCLUSTER SITES. One web product, two ways to structure it. M Mode is the standard studio lane. Equity Uprise is the McCluster Corp business/workforce-development program lane. Social media management is not bundled into the web subscription; it is separately scoped labor. Prices are display only until payment rails are explicitly connected.",
+  "service": {
+    "name": "McCluster Sites",
+    "tag": "Your website, run by the studio"
+  },
+  "top_level_lanes": [
+    {
+      "slug": "web",
+      "name": "Web",
+      "line": "Build, hosting, payment rails, maintenance and website changes."
+    },
+    {
+      "slug": "media",
+      "name": "Photo + Video",
+      "line": "Photography, videography, event coverage, brand films and edits."
+    },
+    {
+      "slug": "music",
+      "name": "Music",
+      "line": "Songwriting, jingles, original scoring and direct licensing."
+    }
+  ],
+  "build": {
+    "seats": 3,
+    "taken": 2,
+    "taken_by": "Shiloh Baptist Church",
+    "price_min": 4950,
+    "price_max": 15000
+  },
+  "deal_modes": {
+    "paid": {
+      "slug": "paid",
+      "name": "M Mode",
+      "display_name": "Paid",
+      "emblem": "assets/img/m-mark.png",
+      "short": "Standard studio service. Pay the monthly rate and keep 100% of your revenue.",
+      "channel": "M",
+      "not_ownership": true
+    },
+    "equity": {
+      "slug": "equity",
+      "name": "Equity Uprise",
+      "display_name": "Equity Mode",
+      "emblem": "assets/img/eu-favicon.png",
+      "short": "A McCluster Corp business/workforce-development program lane with a lower monthly cash price and a time-limited revenue share.",
+      "program_owner": "McCluster Corp",
+      "program_name": "Equity Uprise",
+      "program_purpose": [
+        "business development",
+        "workforce development",
+        "digital capacity building"
+      ],
+      "separate_program_accounting": true,
+      "term_months": 12,
+      "share_percent": 50,
+      "monthly_discount_percent": 50,
+      "cap_multiplier": 10,
+      "cap_basis": "normal 12-month service value",
+      "revenue_basis": "eligible online revenue processed through the connected payment rails used by the website",
+      "domain_upfront": true,
+      "not_ownership": true,
+      "approval_required": true,
+      "agreement_required": true,
+      "program_fit_review_required": true,
+      "plain": "No stock. No membership interest. No ownership. Equity Uprise is a time-limited revenue-share service/program agreement. Revenue sharing ends at the earlier of the stated term or the stated cap. The domain is always paid separately up front. Participation requires program-fit review and a signed agreement."
+    }
+  },
+  "showcase_note": "A taken seat with work in this list becomes a demo door.",
+  "showcase": [
+    {
+      "seat": 1,
+      "slug": "shiloh",
+      "name": "Shiloh Baptist Church",
+      "kind": "The app",
+      "line": "An installable church app: service times, a prayer wall, events with RSVPs, giving, and a live stream.",
+      "url": "demos/shiloh/index.html"
+    },
+    {
+      "seat": 2,
+      "slug": "yohana",
+      "name": "Yohana Robertson",
+      "kind": "The lead engine",
+      "line": "A Bridgeport real estate agent with no listings yet, so the site is built to win them: rental enquiries, landlords and prospective sellers captured and followed up, with the listings shelf dark until there is something to put on it.",
+      "url": "https://mcclusterishere.github.io/Yohana-The-Realtor/"
+    }
+  ],
+  "plans": [
+    {
+      "slug": "web",
+      "name": "Web",
+      "price": 309,
+      "per": "month",
+      "line": "One website subscription. The build, hosting and ongoing website management live together.",
+      "featured": true,
+      "requests_per_month": 4,
+      "includes": [
+        "Custom website build while a founding build seat is available",
+        "Hosting, SSL, uptime monitoring and backups",
+        "Domain and payment-rail wiring",
+        "Four focused website changes each month",
+        "Human approval before changes ship",
+        "Client console for requests and status"
+      ],
+      "excludes": [
+        "Domain registration or renewal",
+        "Ongoing social media management",
+        "Ad spend",
+        "Major redesigns, stores or custom application features"
+      ],
+      "square": "",
+      "equity": {
+        "eligible": true,
+        "monthly_price": 154.5,
+        "share_percent": 50,
+        "term_months": 12,
+        "normal_annual_value": 3708,
+        "cap_multiplier": 10,
+        "revenue_share_cap": 37080,
+        "cap_rule": "Revenue sharing ends at the earlier of 12 months or $37,080 in revenue-share payments."
+      }
+    }
+  ],
+  "terms": [
+    "There is one Web subscription, not separate hosting, management and social tiers.",
+    "The domain is always a separate up-front purchase or renewal.",
+    "M Mode is $309 per month and the client keeps 100% of business revenue.",
+    "Equity Uprise is $154.50 per month plus 50% of eligible connected online revenue, subject to program-fit review and a signed agreement.",
+    "Equity Uprise revenue sharing ends at the earlier of 12 months or $37,080 in revenue-share payments, which is 10 times the normal 12-month Web service value.",
+    "Equity Uprise is not stock, membership interest or ownership in the participating business.",
+    "Social media management is not included in Web. It is separately scoped because ongoing posting, strategy, community management and reporting are ongoing labor.",
+    "A website request is one focused change using content you supply. Major redesigns, stores and custom application features are quoted separately.",
+    "Most normal website requests target about 48 hours, Monday to Friday.",
+    "Your site's files can be handed over if the relationship ends; there are no hostage fees."
+  ]
+}

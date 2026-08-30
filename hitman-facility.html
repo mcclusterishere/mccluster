@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>HITMAN Facility · Prim3 Site 0</title>
+  <meta name="description" content="Enter HITMAN Prim3 Site 0: a playable nine-layer architectural interface from the L4 island to the B5 resilience node.">
+  <link rel="canonical" href="https://matthew.mccluster.org/hitman-facility.html">
+  <link rel="icon" type="image/png" href="assets/img/hm-mark-96.png">
+  <meta name="theme-color" content="#070707">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/hitman-facility.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script src="js/hitman-facility.js?v=__STAMP__" defer></script>
+</head>
+<body class="hf-page">
+  <main class="hf" id="facility" data-active-level="L1">
+    <section class="hf-world" aria-labelledby="facility-title">
+      <div class="hf-backdrop" aria-hidden="true">
+        <img src="assets/hitman/facility-front.webp" alt="">
+      </div>
+
+      <section class="hf-stack" aria-label="HITMAN Prim3 Site 0 vertical level selector">
+        <div class="hf-stack__spine" aria-hidden="true"></div>
+        <div class="hf-levels" role="list">
+          <button class="hf-level hf-level--l4" type="button" data-level="L4" role="listitem" aria-pressed="false">
+            <span class="hf-level__code">L4</span><span class="hf-level__name">Island / Flight Control</span>
+          </button>
+          <button class="hf-level hf-level--l3" type="button" data-level="L3" role="listitem" aria-pressed="false">
+            <span class="hf-level__code">L3</span><span class="hf-level__name">Flight / Landing-Launch Deck</span>
+          </button>
+          <button class="hf-level hf-level--l2" type="button" data-level="L2" role="listitem" aria-pressed="false">
+            <span class="hf-level__code">L2</span><span class="hf-level__name">Business + Aviation Support</span>
+          </button>
+          <button class="hf-level hf-level--l1 is-active" type="button" data-level="L1" role="listitem" aria-pressed="true">
+            <span class="hf-level__code">L1</span><span class="hf-level__name">Ground Defense / Enforcement</span>
+          </button>
+
+          <figure class="hf-focus" aria-live="polite" aria-label="L1 Ground Defense and Enforcement selected">
+            <img id="hf-plan-img" src="assets/hitman/level-l1.webp" alt="L1 Ground Defense and Enforcement preview">
+            <div class="hf-focus__shade" aria-hidden="true"></div>
+            <figcaption class="hf-focus__mast">
+              <p class="hf-focus__eyebrow">HITMAN FACILITY</p>
+              <h1 id="facility-title">PRIM<span>3</span> SITE <span>0</span></h1>
+              <div class="hf-focus__selected">
+                <strong id="hf-selected-code">L1</strong>
+                <span id="hf-selected-name">GROUND DEFENSE / ENFORCEMENT</span>
+              </div>
+              <a class="hf-enter" id="hf-enter" href="site0/?level=L1">
+                <span class="hf-enter__go">ENTER THE FACILITY</span>
+                <span class="hf-enter__sub">walk <b id="hf-enter-code">L1</b> in 3D · WASD</span>
+              </a>
+            </figcaption>
+            <div class="hf-grade-line" aria-hidden="true"><span>GRADE 00</span></div>
+          </figure>
+
+          <button class="hf-level hf-level--b1" type="button" data-level="B1" role="listitem" aria-pressed="false">
+            <span class="hf-level__code">B1</span><span class="hf-level__name">Open Technology Research Vault</span>
+          </button>
+          <button class="hf-level hf-level--b2" type="button" data-level="B2" role="listitem" aria-pressed="false">
+            <span class="hf-level__code">B2</span><span class="hf-level__name">Industrial Production / Fabrication</span>
+          </button>
+          <button class="hf-level hf-level--b3" type="button" data-level="B3" role="listitem" aria-pressed="false">
+            <span class="hf-level__code">B3</span><span class="hf-level__name">Prime Command / Sustainment</span>
+          </button>
+          <button class="hf-level hf-level--b4" type="button" data-level="B4" role="listitem" aria-pressed="false">
+            <span class="hf-level__code">B4</span><span class="hf-level__name">Deep Transit / Interfacility Logistics</span>
+          </button>
+          <button class="hf-level hf-level--b5" type="button" data-level="B5" role="listitem" aria-pressed="false">
+            <span class="hf-level__code">B5</span><span class="hf-level__name">Global Coordination / Resilience</span>
+          </button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <nav class="hf-dock" aria-label="HITMAN facility navigation">
+    <a href="index.html" aria-label="Return to HERE"><span class="hf-dock__icon">▶</span><small>HERE</small></a>
+    <a href="equity-uprise.html"><span class="hf-dock__icon">E↗</span><small>UPRISE</small></a>
+    <a href="index.html" class="hf-dock__m"><img src="assets/img/m-mark.png" alt="McCluster"><small>M</small></a>
+    <a href="hitman-facility.html" class="is-current"><img src="assets/img/hm-mark-96.png" alt="HITMAN"><small>HITMAN</small></a>
+    <a href="account.html"><span class="hf-dock__icon">♙</span><small>PROFILE</small></a>
+  </nav>
+</body>
+</html>

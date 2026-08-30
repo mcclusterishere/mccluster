@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Prayer Closet: limited apparel with meaning behind the garment · McCluster</title>
+  <meta name="description" content="Prayer Closet is a curated closet of limited-edition clothing. Browse the drops, meet the collaborators, and discover the story stitched behind every garment. Season 001: Matthew.">
+  <link rel="canonical" href="https://matthew.mccluster.org/prayer-closet.html">
+  <link rel="icon" type="image/png" href="assets/img/hm-mark-96.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <meta property="og:title" content="Prayer Closet: the drops carry more than the fabric">
+  <meta property="og:description" content="Limited apparel, real collaborators, and a story behind every garment. Enter the closet.">
+  <meta property="og:url" content="https://matthew.mccluster.org/prayer-closet.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/hm-mark.png">
+  <link rel="preload" href="assets/fonts/playfairdisplay-italic-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/manrope-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/img/hm-mark.png" as="image">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Playfair Display"; font-weight: 700; font-style: italic; font-display: swap;
+      src: url("assets/fonts/playfairdisplay-italic-700.woff2") format("woff2"); }
+    :root { --ui: "Manrope", system-ui, sans-serif; --serif: "Playfair Display", Georgia, serif; }
+    body.pc { background: #080605; color: var(--cream); font-family: var(--ui); }
+    .pc { max-width: 72rem; margin: 0 auto; padding: clamp(1.6rem, 5vh, 3rem) clamp(1rem, 4vw, 2rem) 9rem; }
+
+    /* ---- the reveal: rooms rise as you arrive at them ---- */
+    .rv { opacity: 0; transform: translateY(1.1rem); }
+    .rv.on { opacity: 1; transform: none; transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; } }
+
+    /* ---- hero: the closet door, fashion first ---- */
+    .pch { position: relative; border-radius: 26px; overflow: hidden; isolation: isolate;
+      min-height: clamp(24rem, 66vh, 36rem); display: grid; align-content: end;
+      padding: clamp(1.4rem, 4vw, 2.6rem); box-shadow: 0 46px 100px -42px rgba(0,0,0,0.95), inset 0 0 0 1px var(--edge); }
+    .pch__field { position: absolute; inset: 0; z-index: -3; }
+    /* a real garment, when there is one; the gradient underneath stays as the fallback */
+    .pch__field img, .gmt__field img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pch__field img { object-position: center 12%; }
+    /* over photography: the watermark and sheen read as haze, so dial them
+       back, and the copy gets a real bed to sit on. Without the scrim the
+       headline lands straight on the garment's own chest print. */
+    .pch.has-photo .pch__wm { opacity: 0.05; }
+    .pch.has-photo::before { opacity: 0.4; }
+    .pch.has-photo { min-height: clamp(27rem, 70vh, 38rem); }
+    .pch.has-photo::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      background: linear-gradient(180deg, rgba(8,6,5,0.12) 0%, rgba(8,6,5,0.02) 20%,
+        rgba(8,6,5,0.42) 38%, rgba(8,6,5,0.82) 56%, rgba(8,6,5,0.95) 74%, rgba(8,6,5,0.98) 100%); }
+    /* the sheen that breathes across the door */
+    .pch::before { content: ""; position: absolute; inset: -40% -60%; z-index: -1; pointer-events: none;
+      background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.14) 50%, transparent 58%);
+      animation: pcSheen 9s ease-in-out infinite; }
+    @keyframes pcSheen { 0%, 55%, 100% { transform: translateX(-38%); } 78% { transform: translateX(38%); } }
+    @media (prefers-reduced-motion: reduce) { .pch::before { animation: none; } }
+    .pch__wm { position: absolute; right: -0.06em; top: -0.14em; z-index: -2; font-family: var(--serif);
+      font-style: italic; font-weight: 700; font-size: clamp(7rem, 26vw, 19rem); line-height: 1;
+      opacity: 0.14; user-select: none; pointer-events: none; will-change: transform; }
+    .pch__em { position: absolute; left: clamp(1.4rem, 4vw, 2.6rem); top: clamp(1.3rem, 4vw, 2.4rem);
+      display: flex; align-items: center; gap: 0.7rem; }
+    .pch__em img { width: clamp(2.6rem, 7vw, 3.6rem); height: auto; display: block;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,0.55)); }
+    .pch__em b { font-weight: 800; font-size: 0.6rem; letter-spacing: 0.34em; text-transform: uppercase; opacity: 0.85; }
+    .pch__k { font-weight: 800; font-size: 0.64rem; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.75; }
+    .pch h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.88;
+      font-size: clamp(3rem, 12vw, 6.4rem); margin: 0.25rem 0 0.4rem; }
+    .pch__sub { font-family: var(--serif); font-style: italic; font-weight: 700;
+      font-size: clamp(1rem, 2.8vw, 1.4rem); opacity: 0.9; }
+    .pch__meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .pch__meta span { font-weight: 800; font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+      border-radius: 100px; padding: 0.42rem 0.85rem; box-shadow: inset 0 0 0 1px currentColor; opacity: 0.85;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .pch__meta span.live { position: relative; padding-left: 1.6rem; }
+    .pch__meta span.live::before { content: ""; position: absolute; left: 0.75rem; top: 50%; margin-top: -0.16rem;
+      width: 0.32rem; height: 0.32rem; border-radius: 100px; background: currentColor; animation: pcPulse 2s ease-in-out infinite; }
+    @keyframes pcPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    @media (prefers-reduced-motion: reduce) { .pch__meta span.live::before { animation: none; } }
+    .pch__cta { justify-self: start; margin-top: 1.3rem; text-decoration: none; font-weight: 800;
+      font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; color: #fff;
+      background: var(--metal); border-radius: 100px; padding: 0.95rem 1.8rem;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 14px 34px -14px rgba(229,56,59,0.6);
+      transition: transform 0.3s cubic-bezier(0.2,0.7,0.2,1), box-shadow 0.3s ease; }
+    @media (hover:hover) { .pch__cta:hover { transform: translateY(-2px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 20px 44px -14px rgba(229,56,59,0.75); } }
+
+    /* ---- the runway line: season phrases on a slow walk ---- */
+    .tick { margin: clamp(1.3rem, 4vh, 2.2rem) calc(50% - 50vw) 0; overflow: hidden;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+    .tick__in { display: inline-flex; white-space: nowrap; will-change: transform;
+      animation: tickWalk 46s linear infinite; }
+    .tick:hover .tick__in { animation-play-state: paused; }
+    @keyframes tickWalk { to { transform: translateX(-50%); } }
+    @media (prefers-reduced-motion: reduce) { .tick__in { animation: none; } }
+    .tick__in span { font-family: var(--sig); text-transform: uppercase; font-size: clamp(1.15rem, 3.4vw, 1.7rem);
+      padding: 0.35rem 1.4rem; opacity: 0.55; letter-spacing: 0.04em; }
+    .tick__in i { font-style: normal; color: var(--ruby-hot); align-self: center; font-size: 0.8em; opacity: 0.9; }
+
+    /* ---- section furniture ---- */
+    .pcs { margin-top: clamp(2.4rem, 7vh, 4rem); }
+    .pcs__k { font-weight: 800; font-size: 0.66rem; letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--ruby-hot); margin: 0 0 0.35rem; }
+    .pcs__t { font-family: var(--serif); font-style: italic; font-weight: 700;
+      font-size: clamp(1.4rem, 4.4vw, 2.2rem); margin: 0 0 1.2rem; }
+
+    /* ---- the rail: garments as exhibits, not tiles ---- */
+    .railwrap { position: relative; }
+    .rail { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(15rem, 42vw, 21rem);
+      gap: 1rem; overflow-x: auto; padding: 0.6rem 0.2rem 1.2rem; scroll-snap-type: x mandatory;
+      scrollbar-width: none; cursor: grab;
+      -webkit-mask-image: linear-gradient(90deg, #000 94%, transparent);
+      mask-image: linear-gradient(90deg, #000 94%, transparent); }
+    .rail.dragging { cursor: grabbing; scroll-snap-type: none; }
+    .rail::-webkit-scrollbar { display: none; }
+    .raildots { display: flex; gap: 0.45rem; justify-content: center; margin-top: 0.2rem; }
+    .raildots i { width: 0.4rem; height: 0.4rem; border-radius: 100px; background: var(--cream-dim);
+      opacity: 0.35; transition: opacity 0.3s, transform 0.3s, background 0.3s; }
+    .raildots i.on { opacity: 1; background: var(--ruby-hot); transform: scale(1.25); }
+    .gmt { position: relative; scroll-snap-align: start; border-radius: 22px; overflow: hidden;
+      isolation: isolate; aspect-ratio: 4 / 5.4; display: grid; align-content: end; text-decoration: none;
+      padding: 1.2rem; box-shadow: inset 0 0 0 1px var(--edge), 0 34px 74px -34px rgba(0,0,0,0.95);
+      transition: transform 0.5s cubic-bezier(0.2,0.7,0.2,1), box-shadow 0.5s ease; will-change: transform; }
+    @media (hover:hover) { .gmt:hover { box-shadow: inset 0 0 0 1px var(--edge), 0 46px 90px -34px rgba(0,0,0,0.98); } }
+    .gmt__field { position: absolute; inset: 0; z-index: -2; }
+    /* the pointer's light on the fabric */
+    .gmt::after { content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; pointer-events: none;
+      background: radial-gradient(38% 34% at var(--mx, 50%) var(--my, 40%), rgba(255,255,255,0.22), transparent 70%);
+      transition: opacity 0.4s ease; }
+    @media (hover:hover) { .gmt:hover::after { opacity: 1; } }
+    .gmt__hang { position: absolute; left: 50%; top: 12%; transform: translateX(-50%); z-index: -1; opacity: 0.5; }
+    /* the hanger is the "no photography yet" signal; a photographed drop drops it */
+    .gmt.has-photo .gmt__hang { display: none; }
+    .gmt.has-photo { box-shadow: inset 0 0 0 1px var(--edge), 0 34px 74px -34px rgba(0,0,0,0.95),
+      inset 0 -7rem 5rem -2.5rem rgba(8,6,5,0.9); }
+    .gmt__no { font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 0.95rem; opacity: 0.7; }
+    .gmt__phrase { font-family: var(--sig); text-transform: uppercase; line-height: 0.92;
+      font-size: clamp(1.5rem, 5vw, 2.1rem); margin: 0.2rem 0 0.3rem; }
+    .gmt__sup { font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 0.9rem; opacity: 0.85; }
+    .gmt__row { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.8rem;
+      font-weight: 800; font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.8; }
+    .gmt__st { border-radius: 100px; padding: 0.32rem 0.7rem; box-shadow: inset 0 0 0 1px currentColor; }
+
+    /* ---- collaborators ---- */
+    .col { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 0.9rem; }
+    .col a { display: flex; align-items: center; gap: 0.9rem; text-decoration: none; color: var(--cream);
+      border-radius: 18px; padding: 1rem 1.1rem; background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 0 0 1px var(--edge); transition: transform 0.4s cubic-bezier(0.2,0.7,0.2,1), box-shadow 0.4s ease; }
+    @media (hover:hover) { .col a:hover { transform: translateY(-3px);
+      box-shadow: inset 0 0 0 1px var(--edge), 0 20px 44px -20px rgba(0,0,0,0.9); } }
+    .col img, .col .col__ph { width: 2.9rem; height: 2.9rem; border-radius: 12px; object-fit: contain;
+      background: rgba(255,255,255,0.06); flex: none; padding: 0.2rem; }
+    .col .col__ph { display: grid; place-items: center; font-family: var(--sig); font-size: 1.05rem; }
+    .col b { display: block; font-weight: 800; font-size: 0.92rem; }
+    .col small { display: block; font-weight: 600; font-size: 0.7rem; color: var(--cream-dim); margin-top: 0.15rem; }
+
+    /* ---- the giving door: sow into the season ---- */
+    .sow { display: grid; gap: 1rem; grid-template-columns: auto 1fr; align-items: center;
+      border-radius: 22px; padding: clamp(1.3rem, 4vw, 2rem);
+      background: linear-gradient(135deg, rgba(229,56,59,0.12), rgba(255,255,255,0.035) 55%, transparent);
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .sow img { width: clamp(3.4rem, 9vw, 4.6rem); height: auto; opacity: 0.95;
+      filter: drop-shadow(0 8px 22px rgba(0,0,0,0.55)); }
+    .sow__t { font-family: var(--serif); font-style: italic; font-weight: 700; font-size: clamp(1.15rem, 3.4vw, 1.55rem); }
+    .sow p { font-weight: 600; font-size: 0.84rem; line-height: 1.7; color: var(--cream-dim);
+      max-width: 52ch; margin: 0.4rem 0 0; }
+    .sow a { display: inline-block; margin-top: 0.9rem; text-decoration: none; font-weight: 800;
+      font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: #fff;
+      background: var(--metal); border-radius: 100px; padding: 0.8rem 1.5rem;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
+    .sow small { display: block; margin-top: 0.8rem; font-weight: 700; font-size: 0.66rem;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream-dim); }
+    @media (max-width: 34rem) { .sow { grid-template-columns: 1fr; } }
+
+    /* ---- the Inner Room: a quieter doorway, low on the page ---- */
+    .inner { margin-top: clamp(2.6rem, 8vh, 4.4rem); display: grid; justify-items: center; text-align: center;
+      border-radius: 24px; padding: clamp(2rem, 6vw, 3.4rem);
+      background: linear-gradient(180deg, rgba(255,255,255,0.045), transparent);
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .inner__door { width: 3.2rem; height: 4.6rem; border: 1.5px solid var(--cream-dim);
+      border-bottom: 0; border-radius: 3.2rem 3.2rem 0 0; margin-bottom: 1.1rem; opacity: 0.8; position: relative; }
+    .inner__door::after { content: ""; position: absolute; inset: 0.5rem 0.5rem 0; border-radius: 2.6rem 2.6rem 0 0;
+      background: radial-gradient(60% 50% at 50% 20%, rgba(255,255,255,0.12), transparent 75%); }
+    .inner__t { font-family: var(--serif); font-style: italic; font-weight: 700;
+      font-size: clamp(1.3rem, 4vw, 1.8rem); }
+    .inner p { font-weight: 600; font-size: 0.86rem; color: var(--cream-dim); max-width: 44ch;
+      line-height: 1.7; margin: 0.6rem 0 1.2rem; }
+    .inner a { text-decoration: none; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--cream); border-bottom: 1px solid var(--ruby-hot);
+      padding-bottom: 0.3rem; }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Prayer Closet · Season 001: Matthew",
+    "url": "https://matthew.mccluster.org/prayer-closet.html",
+    "description": "A curated closet of limited-edition clothing collections. Each garment opens into its story, its collaborator, and the chapter behind it.",
+    "publisher": { "@id": "https://matthew.mccluster.org/#mccluster-corp" }
+  }
+  </script>
+  <style>
+  /* ---- THE RACK, folded into the Closet (from merch.html) ---- */
+
+    @font-face { font-family: "Manrope"; font-weight: 400; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap;
+      src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; }
+    .mr { max-width: 62rem; margin: 0 auto; padding: clamp(3.6rem, 8vh, 5rem) clamp(1.1rem, 4vw, 2rem) 9rem; }
+    .mr__k { font-size: 0.7rem; letter-spacing: 0.32em; text-transform: uppercase; color: #e5383b; font-weight: 800; }
+    .mr h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.88;
+      font-size: clamp(2.6rem, 11vw, 4.4rem); margin: 0.3rem 0 0.4rem; }
+    .mr__sub { font-family: var(--ui); font-weight: 600; color: var(--cream-dim); font-size: 0.95rem; max-width: 50ch; line-height: 1.6; }
+    .mr__tiers { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1.4rem 0 1.8rem; }
+    .mr__tiers span { font-family: var(--ui); font-weight: 800; font-size: 0.74rem; color: var(--cream);
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13); border-radius: 100px; padding: 0.5rem 0.95rem; }
+    .mr__tiers span.hot { color: #fff; background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    /* ---- the rack ---- */
+    .rack { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 0.9rem; }
+    .drop { display: block; width: 100%; text-align: left; -webkit-appearance: none; appearance: none; border: 0;
+      cursor: pointer; touch-action: manipulation; font-family: var(--ui); color: var(--cream); padding: 0;
+      background: transparent; }
+    .drop__art { display: block; position: relative; aspect-ratio: 1 / 1; border-radius: 18px; overflow: hidden;
+      isolation: isolate; background: #0d0a08; display: grid; place-items: center; padding: 2.2rem;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.18), 0 20px 44px -20px rgba(0,0,0,0.9); }
+    .drop__art img { max-width: 68%; max-height: 68%; width: auto; height: auto; object-fit: contain;
+      -webkit-user-select: none; user-select: none;
+      transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+    @media (hover: hover) { .drop:hover .drop__art img { transform: scale(1.06); } }
+    .drop__art .from { position: absolute; top: 0.7rem; right: 0.7rem; font-weight: 800; font-size: 0.62rem;
+      letter-spacing: 0.08em; color: #fff; background: var(--metal);
+      border-radius: 100px; padding: 0.3rem 0.7rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
+    .drop__art .soon { position: absolute; left: 0.7rem; top: 0.7rem; font-weight: 800; font-size: 0.6rem;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--cream-dim);
+      background: rgba(11,9,8,0.72); border-radius: 100px; padding: 0.3rem 0.7rem; }
+    .drop b { display: block; font-weight: 800; font-size: 0.98rem; margin-top: 0.7rem; }
+    .drop small { display: block; font-weight: 700; font-size: 0.66rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--cream-dim); margin-top: 0.2rem; }
+    /* ---- the counter ---- */
+    .bs { position: fixed; inset: 0; z-index: 240; display: none; overflow-y: auto;
+      background: rgba(7,5,4,0.97); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    .bs.on { display: block; }
+    .bs__in { max-width: 34rem; margin: 0 auto; padding: 1rem clamp(1rem, 4vw, 1.6rem) 7rem; font-family: var(--ui); color: #fff; }
+    .bs__bar { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0 0.9rem; }
+    .bs__bar b { font-weight: 800; font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+    .bs__x { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; width: 2.4rem; height: 2.4rem;
+      border-radius: 100px; color: #fff; font-size: 1rem; font-weight: 800;
+      background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18); }
+    .bs__pic { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 16 / 10; isolation: isolate;
+      background: #0d0a08; display: grid; place-items: center; padding: 1.6rem; }
+    .bs__pic img { max-width: 60%; max-height: 80%; width: auto; height: auto; object-fit: contain; }
+    .bs h2 { font-weight: 800; font-size: 1.3rem; margin: 0.9rem 0 0.1rem; }
+    .bs__sub { font-weight: 600; font-size: 0.82rem; color: rgba(255,255,255,0.6); line-height: 1.6; }
+    .bs h3 { font-weight: 800; font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase; color: #e5383b; margin: 1.3rem 0 0.6rem; }
+    .bs__opt { display: block; width: 100%; text-align: left; -webkit-appearance: none; appearance: none; border: 0;
+      cursor: pointer; touch-action: manipulation; font-family: var(--ui); color: #fff; border-radius: 14px;
+      padding: 0.85rem 1rem; margin-bottom: 0.5rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
+    .bs__opt.on { box-shadow: inset 0 0 0 2px #de3a3a; }
+    .bs__opt b { font-weight: 800; font-size: 0.9rem; }
+    .bs__opt .p { float: right; font-weight: 800; color: #e5383b; }
+    .bs__opt small { display: block; font-weight: 500; font-size: 0.74rem; color: rgba(255,255,255,0.55); margin-top: 0.2rem; }
+    /* size + colour chips */
+    .chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .chips button { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      font-family: var(--ui); font-weight: 800; font-size: 0.78rem; color: #fff; border-radius: 100px;
+      min-width: 3rem; padding: 0.55rem 0.9rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
+    .chips button.on { background: var(--metal); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .chips .sw { display: inline-block; width: 0.85rem; height: 0.85rem; border-radius: 100px; margin-right: 0.45rem;
+      vertical-align: -1px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); }
+    .bs input { width: 100%; -webkit-appearance: none; appearance: none; border: 0; margin-top: 0.5rem;
+      font-family: var(--ui); font-weight: 600; font-size: 1rem; color: #fff; border-radius: 13px; padding: 0.8rem 0.95rem;
+      background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
+    .bs input::placeholder { color: rgba(255,255,255,0.4); }
+    .bs__go { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation;
+      width: 100%; margin-top: 0.8rem; font-family: var(--ui); font-weight: 800; font-size: 0.95rem; color: #fff;
+      background: var(--metal); border-radius: 100px; padding: 0.95rem; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .bs__go[disabled] { opacity: 0.5; }
+    .bs__err { color: #ff8b8b; font-weight: 700; font-size: 0.78rem; margin: 0.5rem 0 0; }
+    .bs__note { font-weight: 600; font-size: 0.74rem; color: rgba(255,255,255,0.5); margin: 0.6rem 0 0; line-height: 1.6; }
+    .bs__total { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.95rem;
+      border-top: 1px solid rgba(255,255,255,0.14); margin-top: 1.1rem; padding-top: 0.8rem; }
+    .bs__done b { display: block; font-weight: 800; font-size: 1.1rem; }
+    .bs__done small { display: block; font-weight: 500; font-size: 0.84rem; color: rgba(255,255,255,0.6); margin-top: 0.4rem; line-height: 1.5; }
+    .mr__foot { margin-top: 2.4rem; border-radius: 16px; padding: 1rem 1.1rem;
+      background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+      font-weight: 600; font-size: 0.8rem; color: var(--cream-dim); line-height: 1.7; }
+    .mr__foot a { color: #e5383b; text-decoration: none; font-weight: 800; }
+  
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
+</head>
+<body class="pc">
+  <main class="pc">
+
+    <!-- HERO: the current drop wears the door -->
+    <section class="pch" id="pcHero">
+      <span class="pch__field" id="pcHeroField" aria-hidden="true"></span>
+      <span class="pch__wm" id="pcHeroWm" aria-hidden="true"></span>
+      <span class="pch__em"><img src="assets/img/hm-mark.png" alt="" width="512" height="512"><b>Prayer&nbsp;Closet</b></span>
+      <p class="pch__k" id="pcHeroK">Prayer Closet · Season 001: Matthew</p>
+      <h1 id="pcHeroT">The Closet</h1>
+      <p class="pch__sub" id="pcHeroS">Limited pieces. Real collaborators. A story behind every garment.</p>
+      <div class="pch__meta" id="pcHeroM"></div>
+      <a class="pch__cta" id="pcHeroCta" href="#closetRail">Enter the Closet &#8594;</a>
+    </section>
+
+    <!-- THE RUNWAY LINE: the season walks -->
+    <div class="tick" aria-hidden="true"><div class="tick__in" id="pcTick"></div></div>
+
+    <!-- INSIDE THE CLOSET: the rail -->
+    <section class="pcs rv" id="closetRail">
+      <p class="pcs__k">Inside the Closet</p>
+      <h2 class="pcs__t">Season 001: the Matthew drops.</h2>
+      <div class="railwrap">
+        <div class="rail" id="pcRail"></div>
+        <div class="raildots" id="pcDots" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- COMING INTO THE CLOSET -->
+    <section class="pcs rv" id="pcComingWrap" hidden>
+      <p class="pcs__k">Coming into the Closet</p>
+      <h2 class="pcs__t">On the way. Not everything shows its face yet.</h2>
+      <div class="railwrap"><div class="rail" id="pcComing"></div></div>
+    </section>
+
+    <!-- COLLABORATIONS -->
+    <section class="pcs rv">
+      <p class="pcs__k">Collaborations</p>
+      <h2 class="pcs__t">The hands on the work.</h2>
+      <div class="col" id="pcCol"></div>
+    </section>
+
+
+    <!-- THE RACK: everyday wear, folded in from merch.html -->
+    <section class="pcs rv" id="theRack">
+      <p class="pcs__k">The Rack</p>
+      <h2 class="pcs__t">Everyday wear, printed to order.</h2>
+      <div class="mr__tiers" id="mrTiers"></div>
+      <div class="rack" id="mrRack"></div>
+    </section>
+
+    <!-- THE GIVING DOOR -->
+    <section class="pcs rv" id="pcSowWrap" hidden>
+      <p class="pcs__k">Sow</p>
+      <h2 class="pcs__t">Move the season forward.</h2>
+      <div class="sow" id="pcSow"></div>
+    </section>
+
+    <!-- THE INNER ROOM: the quiet doorway -->
+    <section class="inner rv">
+      <span class="inner__door" aria-hidden="true"></span>
+      <p class="inner__t">The Inner Room</p>
+      <p>Behind the garments there is a quieter room: the chapters each drop is cut from,
+        a place to read, study, pray, and keep your notes. No purchase opens it; it is open.</p>
+      <a href="inner-room.html">Step inside &#8594;</a>
+    </section>
+  </main>
+
+<!-- THE COUNTER -->
+  <div class="bs" id="mrBuy" role="dialog" aria-label="Order this piece">
+    <div class="bs__in" id="mrBuyIn"></div>
+  </div>
+
+  <!-- THE BAR -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="sites.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
+      <span>Chat</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/signals.js?v=__STAMP__"></script>
+  <script src="js/crm.js?v=__STAMP__"></script>
+  <script src="js/prices.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/deskchat.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var track = function (n, p) { if (window.MCC_TRACK) window.MCC_TRACK(n, p || {}); };
+    var CALM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var FINE = matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+    var STATUS = { concept: "Concept", preview: "Preview", "coming-soon": "Coming soon",
+      live: "Live now", "sold-out": "Sold out", archived: "Archive" };
+    /* an open Square preorder outranks the quiet statuses on every chip */
+    function preOpen(d) {
+      return d.status !== "live" && d.status !== "sold-out" && d.preorder && d.preorder.square;
+    }
+    function stName(d) { return preOpen(d) ? "Preorder open" : (STATUS[d.status] || d.status); }
+
+    function field(c) {
+      /* the color IS the campaign until photography lands: an editorial
+         color field with a soft garment-shaped glow, never a fake photo */
+      return 'background:' +
+        'radial-gradient(120% 90% at 50% 18%, ' + c.hex + ' 0%, color-mix(in srgb, ' + c.hex + ' 72%, #000) 58%, ' +
+        'color-mix(in srgb, ' + c.hex + ' 38%, #000) 100%);color:' + c.ink;
+    }
+    /* the picture, when the ledger has one, layered over the color field so a
+       missing file simply falls back to the gradient (no onerror needed) */
+    function photo(src, alt) {
+      return src ? '<img src="' + esc(src) + '" alt="' + esc(alt || "") + '" loading="lazy" decoding="async">' : "";
+    }
+    function hanger(ink) {
+      return '<svg class="gmt__hang" width="86" height="60" viewBox="0 0 86 60" fill="none" aria-hidden="true">' +
+        '<path d="M43 8a6 6 0 1 1 6-6" stroke="' + ink + '" stroke-width="2.4"/>' +
+        '<path d="M43 8 82 34a4 4 0 0 1-2.4 7.2H6.4A4 4 0 0 1 4 34z" stroke="' + ink + '" stroke-width="2.4"/></svg>';
+    }
+
+    function gmtCard(d) {
+      var shot = d.cover || "";
+      return '<a class="gmt' + (shot ? " has-photo" : "") + '" href="closet/' + esc(d.slug) + '.html" style="' +
+        field(d.color) + '" data-drop="' + esc(d.slug) + '">' +
+        '<span class="gmt__field" aria-hidden="true">' + photo(shot, d.title + ", " + d.garment) + "</span>" +
+        (shot ? "" : hanger(d.color.ink)) +
+        '<span class="gmt__no">' + esc(d.tag || "Drop " + d.no) + ' · ' + esc(d.color.name) + '</span>' +
+        '<span class="gmt__phrase">' + esc(d.phrase) + '</span>' +
+        '<span class="gmt__sup">' + esc(d.support) + '</span>' +
+        '<span class="gmt__row"><span class="gmt__st">' + esc(stName(d)) + '</span>' +
+        '<span>' + esc(d.reference) + '</span></span></a>';
+    }
+
+    /* ---- the reveal: sections rise on arrival ---- */
+    function revealAll() {
+      var els = document.querySelectorAll(".rv");
+      if (CALM || !("IntersectionObserver" in window)) {
+        els.forEach(function (el) { el.classList.add("on"); });
+        return;
+      }
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); }
+        });
+      }, { rootMargin: "0px 0px -8% 0px" });
+      els.forEach(function (el) { io.observe(el); });
+    }
+
+    /* ---- the fabric answers the hand: tilt + light ---- */
+    function dress(card) {
+      if (!FINE || CALM) return;
+      card.addEventListener("pointermove", function (e) {
+        var r = card.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+        card.style.setProperty("--mx", (x * 100).toFixed(1) + "%");
+        card.style.setProperty("--my", (y * 100).toFixed(1) + "%");
+        card.style.transform = "perspective(60rem) rotateX(" + ((0.5 - y) * 6).toFixed(2) + "deg)" +
+          " rotateY(" + ((x - 0.5) * 7).toFixed(2) + "deg) translateY(-0.35rem)";
+      });
+      card.addEventListener("pointerleave", function () {
+        card.style.transform = "";
+      });
+    }
+
+    /* ---- rail dots + a hand on the rail ---- */
+    function railDots(rail, dots) {
+      if (!dots) return;
+      var cards = rail.querySelectorAll(".gmt");
+      if (cards.length < 2) { dots.hidden = true; return; }
+      dots.innerHTML = Array.prototype.map.call(cards, function () { return "<i></i>"; }).join("");
+      var paint = function () {
+        var w = cards[0].offsetWidth + 16;
+        var at = Math.min(cards.length - 1, Math.round(rail.scrollLeft / w));
+        dots.querySelectorAll("i").forEach(function (d, i) { d.classList.toggle("on", i === at); });
+      };
+      rail.addEventListener("scroll", paint, { passive: true });
+      paint();
+    }
+    function railHand(rail) {
+      if (!FINE) return;
+      var down = false, sx = 0, sl = 0, moved = false;
+      rail.addEventListener("pointerdown", function (e) {
+        down = true; moved = false; sx = e.clientX; sl = rail.scrollLeft;
+      });
+      rail.addEventListener("pointermove", function (e) {
+        if (!down) return;
+        if (Math.abs(e.clientX - sx) > 6) { moved = true; rail.classList.add("dragging"); }
+        if (moved) rail.scrollLeft = sl - (e.clientX - sx);
+      });
+      ["pointerup", "pointerleave"].forEach(function (ev) {
+        rail.addEventListener(ev, function () { down = false; setTimeout(function () { rail.classList.remove("dragging"); }, 40); });
+      });
+      rail.addEventListener("click", function (e) { if (moved) { e.preventDefault(); moved = false; } }, true);
+    }
+
+    /* ---- the watermark drifts as you descend ---- */
+    function parallax() {
+      if (CALM) return;
+      var wm = $("pcHeroWm"), ticking = false;
+      addEventListener("scroll", function () {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function () {
+          wm.style.transform = "translateY(" + Math.min(120, scrollY * 0.14).toFixed(1) + "px)";
+          ticking = false;
+        });
+      }, { passive: true });
+    }
+
+    fetch("data/prayer-closet.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+      var drops = j.drops || [];
+      /* the hero wears the most-forward drop: live > preview > coming-soon */
+      var lead = drops.filter(function (d) { return d.status === "live"; })[0] ||
+                 drops.filter(function (d) { return d.status === "preview"; })[0] || drops[0];
+      if (lead) {
+        $("pcHero").style.cssText += field(lead.color);
+        $("pcHeroField").style.cssText = "";
+        if (lead.cover) {
+          $("pcHeroField").innerHTML = photo(lead.cover, lead.title + ", " + lead.garment);
+          $("pcHero").classList.add("has-photo");
+        }
+        $("pcHeroWm").textContent = "M" + lead.chapter;
+        $("pcHeroK").textContent = "Prayer Closet · " + j.season.name.replace("SEASON", "Season") +
+          " · " + (lead.tag || "Drop " + lead.no);
+        $("pcHeroT").textContent = lead.phrase;
+        $("pcHeroS").textContent = lead.support + ", with " +
+          ((j.collaborators || []).filter(function (c) { return c.id === lead.collaborator; })[0] || {}).name;
+        var chips = [lead.garment, lead.color.name, lead.reference].map(function (m) { return "<span>" + esc(m) + "</span>"; });
+        chips.unshift('<span class="live">' + esc(stName(lead)) + "</span>");
+        $("pcHeroM").innerHTML = chips.join("");
+        $("pcHeroCta").href = "closet/" + lead.slug + ".html";
+        $("pcHeroCta").innerHTML = (lead.status === "live" ? "Enter the Drop"
+          : preOpen(lead) ? "Preorder" + (lead.preorder.deposit ? " &middot; $" + lead.preorder.deposit : "")
+          : "Enter the Closet") + " &#8594;";
+      }
+
+      /* the runway line: every phrase the season carries, on a slow walk */
+      var walk = drops.map(function (d) { return esc(d.phrase); });
+      walk.push(esc(j.season.name.replace("SEASON", "Season").replace("\u2014", "·")));
+      /* the four-point star between phrases is drawn, never typed. Its
+         attributes are single-quoted on purpose: double quotes would close
+         this string literal and take the whole page's script down with it. */
+      var star = "<i><svg viewBox='0 0 24 24' aria-hidden='true'"
+        + " style='width:1em;height:1em;vertical-align:-2px;display:inline-block'>"
+        + "<path d='M12 2.5l2.3 7.2 7.2 2.3-7.2 2.3L12 21.5l-2.3-7.2L2.5 12l7.2-2.3z'"
+        + " fill='currentColor'/></svg></i>";
+      var half = walk.map(function (w) { return "<span>" + w + "</span>" + star; }).join("");
+      $("pcTick").innerHTML = half + half;
+
+      /* the rail carries what can be seen; concepts stay in the coming rack */
+      var showing = drops.filter(function (d) { return d.status !== "concept"; });
+      var coming = drops.filter(function (d) { return d.status === "concept"; });
+      $("pcRail").innerHTML = showing.map(gmtCard).join("");
+      if (coming.length) {
+        $("pcComingWrap").hidden = false;
+        $("pcComing").innerHTML = coming.map(function (d) {
+          /* a preview keeps its mystery: number, chapter, color, no phrases */
+          return '<a class="gmt" href="closet/' + esc(d.slug) + '.html" style="' + field(d.color) + '">' +
+            hanger(d.color.ink) +
+            '<span class="gmt__no">' + esc(d.tag || "Drop " + d.no) + '</span>' +
+            '<span class="gmt__phrase">' + esc(d.title) + '</span>' +
+            '<span class="gmt__sup">A ' + esc(d.color.name.toLowerCase()) + ' set · ' + esc(d.reference) + '</span>' +
+            '<span class="gmt__row"><span class="gmt__st">In the making</span></span></a>';
+        }).join("");
+      }
+
+      $("pcCol").innerHTML = (j.collaborators || []).map(function (c) {
+        /* no invented marks: a collaborator without an official logo file
+           is set in type until the real one lands */
+        var face = c.logo ? '<img src="' + esc(c.logo) + '" alt="">' :
+          '<span class="col__ph" aria-hidden="true">' + esc((c.name || "?").charAt(0)) + "</span>";
+        var href = (c.links && c.links[0] && c.links[0].href) || "prayer-closet.html";
+        return '<a href="' + esc(href) + '">' + face + "<span><b>" + esc(c.name) + "</b><small>" +
+          esc(c.role) + "</small></span></a>";
+      }).join("");
+
+      /* the giving door: Square carries the gift; the ledger opens the door */
+      var give = j.season && j.season.give;
+      if (give) {
+        $("pcSowWrap").hidden = false;
+        $("pcSow").innerHTML =
+          '<img src="' + esc(j.season.emblem || "assets/img/hm-mark.png") + '" alt="">' +
+          '<div><p class="sow__t">' + esc(give.label) + "</p><p>" + esc(give.line) + "</p>" +
+          (give.square
+            ? '<a href="' + esc(give.square) + '" data-sow rel="noopener">Give through Square &#8594;</a>'
+            : '<small>The giving door opens shortly. The Square link is being set at the desk.</small>') +
+          "</div>";
+      }
+
+      /* dress the room */
+      document.querySelectorAll(".gmt").forEach(dress);
+      railDots($("pcRail"), $("pcDots"));
+      document.querySelectorAll(".rail").forEach(railHand);
+      revealAll();
+      parallax();
+
+      track("closet_view", { season: j.season.id, drops: drops.length });
+    });
+
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest("[data-drop]");
+      if (a) track("closet_open_drop", { drop: a.getAttribute("data-drop") });
+      if (e.target.closest && e.target.closest("[data-sow]")) track("closet_sow_click", {});
+    });
+  })();
+  </script>
+<script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
+    var track = function (n, p) { if (window.MCC_TRACK) window.MCC_TRACK(n, p || {}); };
+    var RACK = null, OPEN = null, PICK = 0, SIZE = "", COLOR = "";
+    /* A set is open when SET holds its priced shape; SETSIZES carries one
+       chosen size per piece, in the same order the pieces are listed. */
+    var SET = null, SETSIZES = [];
+
+    function money(n) { return "$" + n; }
+    /* A drop lists its pieces under "garments"; a set lists them under
+       "pieces". Reading both means a set still degrades into an ordinary
+       piece-picker if it ever fails to price, instead of opening empty. */
+    function garmentsFor(drop) {
+      var ids = drop.garments || drop.pieces || [];
+      return (RACK.garments || []).filter(function (g) { return ids.indexOf(g.id) !== -1; });
+    }
+    /* A cap has one size; shirts have the run. */
+    function sizesFor(g) { return g.id === "cap" ? ["One size"] : (RACK.sizes || []); }
+
+    function paint() {
+      var from = window.MCC_PRICE ? MCC_PRICE.rackFrom(RACK) : null;
+      $("mrTiers").innerHTML =
+        '<span class="hot">Tees from ' + money(from || 0) + "</span>" +
+        "<span>Printed to order</span>" +
+        "<span>Shipping included</span>";
+      $("mrRack").innerHTML = (RACK.drops || []).map(function (d) {
+        var set = d.kind === "set" && window.MCC_PRICE ? MCC_PRICE.setPrice(RACK, d) : null;
+        var gs = garmentsFor(d);
+        var low = set ? set.price
+          : gs.length ? Math.min.apply(null, gs.map(function (g) { return g.price; })) : null;
+        return '<button class="drop" type="button" data-drop="' + esc(d.id) + '">' +
+          '<span class="drop__art">' +
+          '<img src="' + esc(d.art) + '" alt="' + esc(d.title) + '" loading="lazy" draggable="false">' +
+          (low ? '<span class="from">' + (set ? "" : "from ") + money(low) + "</span>" : "") +
+          (set ? '<span class="soon">Two-piece set</span>' : "") +
+          "</span>" +
+          "<b>" + esc(d.title) + "</b><small>" + esc(d.sub || "") + "</small></button>";
+      }).join("");
+    }
+
+    /* A set is bought as one thing: both pieces, one price, a size each.
+       because a matching two-piece is the point, not two separate buys. */
+    function setSheetHTML(d, set) {
+      return '<div class="bs__bar"><b>Order the set</b><button class="bs__x" type="button" data-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>' +
+        '<div class="bs__pic"><img src="' + esc(d.art) + '" alt=""></div>' +
+        "<h2>" + esc(d.title) + "</h2>" +
+        '<p class="bs__sub">' + esc(d.blurb || d.sub || "") + "</p>" +
+
+        "<h3>What comes in it</h3><div>" +
+        set.pieces.map(function (g) {
+          return '<div class="bs__opt" style="cursor:default">' +
+            '<span class="p">' + money(g.price) + "</span><b>" + esc(g.label) + "</b>" +
+            "<small>" + esc(g.spec || "") + "</small></div>";
+        }).join("") +
+        '<p class="bs__note">Bought separately that is ' + money(set.full) +
+        ". As a set it is " + money(set.price) + ". You save " + money(set.saved) +
+        ", because a two-piece ships as one parcel.</p></div>" +
+
+        set.pieces.map(function (g, i) {
+          var sizes = sizesFor(g);
+          return "<h3>" + esc(g.label) + ": size</h3>" +
+            '<div class="chips" data-sizes="' + i + '">' +
+            sizes.map(function (sz) {
+              return '<button type="button" data-setsize="' + i + '" data-size="' + esc(sz) + '"' +
+                (sz === (SETSIZES[i] || "") ? ' class="on"' : "") + ">" + esc(sz) + "</button>";
+            }).join("") + "</div>";
+        }).join("") +
+
+        "<h3>Colour</h3><div class=\"chips\" data-colors>" +
+        (RACK.colors || []).map(function (c) {
+          return '<button type="button" data-color="' + esc(c.id) + '"' + (c.id === COLOR ? ' class="on"' : "") + ">" +
+            '<span class="sw" style="background:' + esc(c.hex) + '"></span>' + esc(c.label) + "</button>";
+        }).join("") + "</div>" +
+
+        "<h3>Where it goes</h3>" +
+        '<input name="name" placeholder="Your name" autocomplete="name" maxlength="80">' +
+        '<input name="email" type="email" placeholder="Email" autocomplete="email" maxlength="120">' +
+        '<input name="addr" placeholder="Street address" autocomplete="street-address" maxlength="160">' +
+        '<input name="city" placeholder="City, State, ZIP" maxlength="120">' +
+        '<div class="bs__total"><span>Total today</span><span data-total>' + money(set.price) + "</span></div>" +
+        '<button class="bs__go" type="button" data-order>Place the order &#8594;</button>' +
+        '<p class="bs__note">Shipping is already in that price. Nothing gets added at the end.' +
+        " You pay nothing on this screen: the invoice lands in your email today, and the set is made" +
+        " and shipped once it clears. Cut to order, so allow a few days before it moves.</p>" +
+        '<p class="bs__err" hidden></p>';
+    }
+
+    function sheetHTML(d) {
+      var gs = garmentsFor(d);
+      var g = gs[PICK] || gs[0];
+      var sizes = sizesFor(g);
+      return '<div class="bs__bar"><b>Order this piece</b><button class="bs__x" type="button" data-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>' +
+        '<div class="bs__pic"><img src="' + esc(d.art) + '" alt=""></div>' +
+        "<h2>" + esc(d.title) + "</h2>" +
+        '<p class="bs__sub">' + esc(d.blurb || d.sub || "") + "</p>" +
+
+        "<h3>Pick the piece</h3><div data-opts>" +
+        gs.map(function (x, i) {
+          return '<button class="bs__opt' + (i === PICK ? " on" : "") + '" type="button" data-opt="' + i + '">' +
+            '<span class="p">' + money(x.price) + "</span><b>" + esc(x.label) + "</b>" +
+            "<small>" + esc(x.spec || "") + (x.art ? " · " + esc(x.art) : "") + "</small></button>";
+        }).join("") + "</div>" +
+
+        "<h3>Size</h3><div class=\"chips\" data-sizes>" +
+        sizes.map(function (s) {
+          return '<button type="button" data-size="' + esc(s) + '"' + (s === SIZE ? ' class="on"' : "") + ">" + esc(s) + "</button>";
+        }).join("") + "</div>" +
+
+        "<h3>Colour</h3><div class=\"chips\" data-colors>" +
+        (RACK.colors || []).map(function (c) {
+          return '<button type="button" data-color="' + esc(c.id) + '"' + (c.id === COLOR ? ' class="on"' : "") + ">" +
+            '<span class="sw" style="background:' + esc(c.hex) + '"></span>' + esc(c.label) + "</button>";
+        }).join("") + "</div>" +
+
+        "<h3>Where it goes</h3>" +
+        '<input name="name" placeholder="Your name" autocomplete="name" maxlength="80">' +
+        '<input name="email" type="email" placeholder="Email" autocomplete="email" maxlength="120">' +
+        '<input name="addr" placeholder="Street address" autocomplete="street-address" maxlength="160">' +
+        '<input name="city" placeholder="City, State, ZIP" maxlength="120">' +
+        '<div class="bs__total"><span>Total today</span><span data-total>' + money(g.price) + "</span></div>" +
+        '<button class="bs__go" type="button" data-order>Place the order &#8594;</button>' +
+        '<p class="bs__note">Shipping is already in that price. Nothing gets added at the end.' +
+        " You pay nothing on this screen: the invoice lands in your email today, and the piece is printed" +
+        " and shipped once it clears. Printed to order, so allow a few days before it moves.</p>" +
+        '<p class="bs__err" hidden></p>';
+    }
+
+    function openSheet(id, push) {
+      var d = (RACK.drops || []).filter(function (x) { return x.id === id; })[0];
+      if (!d) return;
+      OPEN = d; PICK = 0;
+      COLOR = (RACK.colors && RACK.colors[0] && RACK.colors[0].id) || "";
+      SET = d.kind === "set" && window.MCC_PRICE ? MCC_PRICE.setPrice(RACK, d) : null;
+      if (SET) {
+        SETSIZES = SET.pieces.map(function (p) { return p.id === "cap" ? "One size" : "L"; });
+        $("mrBuyIn").innerHTML = setSheetHTML(d, SET);
+      } else {
+        SETSIZES = [];
+        var g = garmentsFor(d)[0];
+        SIZE = g && g.id === "cap" ? "One size" : "L";
+        $("mrBuyIn").innerHTML = sheetHTML(d);
+      }
+      $("mrBuy").classList.add("on");
+      $("mrBuy").scrollTop = 0;
+      document.body.style.overflow = "hidden";
+      if (push !== false) { try { history.pushState(null, "", "#/" + id); } catch (e) {} }
+      track("merch_open", { drop: id });
+    }
+    function closeSheet(push) {
+      $("mrBuy").classList.remove("on");
+      document.body.style.overflow = "";
+      OPEN = null;
+      if (push !== false) { try { history.pushState(null, "", location.pathname + location.search); } catch (e) {} }
+    }
+    window.addEventListener("popstate", function () {
+      var id = (location.hash || "").replace(/^#\//, "");
+      if (id && RACK) openSheet(id, false); else closeSheet(false);
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && OPEN) closeSheet(); });
+
+    $("mrRack").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-drop]");
+      if (b) openSheet(b.getAttribute("data-drop"));
+    });
+
+    $("mrBuy").addEventListener("click", function (e) {
+      var box = $("mrBuyIn");
+      if (e.target.closest && e.target.closest("[data-close]")) { closeSheet(); return; }
+
+      var opt = e.target.closest && e.target.closest("[data-opt]");
+      if (opt) {
+        PICK = parseInt(opt.getAttribute("data-opt"), 10);
+        // a cap has no size run, so re-render so the chips match the piece
+        $("mrBuyIn").innerHTML = sheetHTML(OPEN);
+        var g = garmentsFor(OPEN)[PICK];
+        if (g && g.id === "cap") { SIZE = "One size"; $("mrBuyIn").innerHTML = sheetHTML(OPEN); }
+        return;
+      }
+      /* A set has one size row per piece, so the chosen chip is scoped to its
+         own row. Otherwise picking a trouser size would clear the shirt's. */
+      var ssz = e.target.closest && e.target.closest("[data-setsize]");
+      if (ssz) {
+        var i = parseInt(ssz.getAttribute("data-setsize"), 10);
+        SETSIZES[i] = ssz.getAttribute("data-size");
+        box.querySelectorAll('[data-sizes="' + i + '"] button').forEach(function (x) { x.classList.toggle("on", x === ssz); });
+        return;
+      }
+      var sz = e.target.closest && e.target.closest("[data-size]");
+      if (sz) {
+        SIZE = sz.getAttribute("data-size");
+        box.querySelectorAll("[data-sizes] button").forEach(function (x) { x.classList.toggle("on", x === sz); });
+        return;
+      }
+      var col = e.target.closest && e.target.closest("[data-color]");
+      if (col) {
+        COLOR = col.getAttribute("data-color");
+        box.querySelectorAll("[data-colors] button").forEach(function (x) { x.classList.toggle("on", x === col); });
+        return;
+      }
+
+      if (e.target.closest && e.target.closest("[data-order]")) {
+        var f = function (n) { var i = box.querySelector('[name="' + n + '"]'); return i ? i.value.trim() : ""; };
+        var name = f("name"), email = f("email"), addr = f("addr"), city = f("city");
+        var err = box.querySelector(".bs__err");
+        if (!name || !/.+@.+\..+/.test(email)) { err.textContent = "Name and a real email. The order has to land somewhere."; err.hidden = false; return; }
+        if (!addr || !city) { err.textContent = "Clothes need somewhere to ship to."; err.hidden = false; return; }
+        var colorLabel = ((RACK.colors || []).filter(function (c) { return c.id === COLOR; })[0] || {}).label || COLOR;
+
+        /* One order shape, two ways in: a single piece, or a set that names
+           both pieces and the size each. The desk parses the same line. */
+        var what, price, note, made, ev;
+        if (SET) {
+          if (SET.pieces.some(function (p, n) { return !SETSIZES[n]; })) {
+            err.textContent = "Pick a size for both pieces."; err.hidden = false; return;
+          }
+          var worn = SET.pieces.map(function (p, n) { return p.label + " " + SETSIZES[n]; }).join(" + ");
+          what = worn + " · " + colorLabel;
+          price = SET.price;
+          note = "THE RACK · " + OPEN.id + " · SET · " + worn + " · " + colorLabel +
+            " (" + money(price) + ") · SHIP TO: " + addr + ", " + city;
+          made = "cut and shipped";
+          ev = { drop: OPEN.id, set: true, pieces: SET.pieces.map(function (p) { return p.id; }).join("+"),
+                 sizes: SETSIZES.join("+"), color: COLOR, price: price };
+        } else {
+          var g2 = garmentsFor(OPEN)[PICK];
+          if (!SIZE) { err.textContent = "Pick a size."; err.hidden = false; return; }
+          what = g2.label + " · " + SIZE + " · " + colorLabel;
+          price = g2.price;
+          note = "THE RACK · " + OPEN.id + " · " + g2.label + " · " + SIZE + " · " + colorLabel +
+            " (" + money(price) + ") · SHIP TO: " + addr + ", " + city;
+          made = "printed and shipped";
+          ev = { drop: OPEN.id, garment: g2.id, size: SIZE, color: COLOR, price: price };
+        }
+
+        var btn = box.querySelector("[data-order]");
+        btn.disabled = true; btn.textContent = "Placing…";
+        window.MCC_CRM.send({
+          name: name, email: email, want: "Merch", note: note, campaign: "merch-shop",
+        }).then(function () {
+          track("merch_order", ev);
+          box.innerHTML = '<div class="bs__bar"><b>Order placed</b><button class="bs__x" type="button" data-close><svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>' +
+            '<div class="bs__done" style="margin-top:1rem"><b>It&rsquo;s on the desk.</b>' +
+            "<small>Your invoice for <b>" + esc(what) +
+            " at " + money(price) + "</b> lands in your email today. It gets " + made + " once it clears.</small></div>";
+        }).catch(function () {
+          btn.disabled = false; btn.textContent = "Place the order →";
+          err.textContent = "That didn’t go through. Try again in a second.";
+          err.hidden = false;
+        });
+      }
+    });
+
+    fetch("data/merch.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
+      RACK = window.MCC_PRICE ? MCC_PRICE.deriveMerch(j) : j;
+      paint();
+      track("merch_view", { drops: (RACK.drops || []).length });
+      var id = (location.hash || "").replace(/^#\//, "");
+      if (id) openSheet(id, false);
+    });
+  })();
+  </script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

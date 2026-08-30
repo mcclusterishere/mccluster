@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Uprise World &middot; walk the record &middot; Equity Uprise</title>
+  <meta name="description" content="A small planet with one half standing and one half burning. You start on the healed side — America. Play a fellow, check in at four real landmarks in Connecticut and Georgia, and open the Deep End: the far side of the world, still on fire. Every place is tied to a real document from the Equity Uprise record.">
+  <link rel="icon" type="image/png" href="assets/img/eu-favicon.png">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <style>
+    /* The world takes the screen; everything else is a layer on it.
+       The chrome follows the same rule as the render: flat white
+       cards, black hand-lettered text, one ink-weight border. */
+    .uw { position: fixed; inset: 0; background: #cbb7a4; }
+    .uw__c { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+    .uw--drag .uw__c { cursor: grabbing; }
+    .uw__hud { position: fixed; left: 0; right: 0; top: 0;
+      padding: max(1rem, env(safe-area-inset-top)) 1.1rem 0;
+      display: flex; gap: .6rem; align-items: flex-start; justify-content: space-between;
+      pointer-events: none; z-index: 4; }
+    .uw__badge { background: #f7f5ef; border: 2px solid #17130f; border-radius: 10px;
+      padding: .42rem .74rem; color: #17130f; font-size: .8rem; font-weight: 700;
+      letter-spacing: .04em; box-shadow: 2px 3px 0 rgba(23,19,15,.9); }
+    .uw__badge b { color: #b0402f; }
+    /* the drag ring: it shows up wherever the finger or cursor lands,
+       because the control is "press anywhere and pull", not a pad
+       bolted into one corner */
+    .uw__ring { position: fixed; left: 0; top: 0; width: 156px; height: 156px;
+      margin: -78px 0 0 -78px; border-radius: 50%; border: 2px solid rgba(23,19,15,.5);
+      background: rgba(247,245,239,.14); z-index: 5; pointer-events: none;
+      opacity: 0; transition: opacity .15s ease; }
+    .uw__ring::after { content: ""; position: absolute; left: 50%; top: 50%;
+      width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%;
+      background: #f7f5ef; border: 2px solid #17130f;
+      transform: translate(var(--dx,0px), var(--dy,0px)); }
+    .uw--drag .uw__ring { opacity: 1; }
+    @media (prefers-reduced-motion: reduce) { .uw__ring { transition: none; } }
+    /* the check-in card, drawn like the refs' dialogue box */
+    .uw__card { position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: max(1.4rem, env(safe-area-inset-bottom)); width: min(92vw, 36rem);
+      background: #f7f5ef; color: #17130f; border: 3px solid #17130f; border-radius: 14px;
+      padding: 1rem 1.1rem .9rem; z-index: 6; box-shadow: 4px 6px 0 rgba(23,19,15,.85); }
+    .uw__card[hidden] { display: none; }
+    .uw__card p { margin: .25rem 0; }
+    .uw__k { position: absolute; top: -1.05rem; left: 1rem; background: #b0402f; color: #f7f5ef;
+      border: 3px solid #17130f; border-radius: 8px; padding: .1rem .6rem;
+      font-size: .7rem; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; }
+    .uw__card h2 { font-family: var(--display, inherit); font-weight: 400; text-transform: uppercase;
+      font-size: 1.45rem; margin: .35rem 0 .35rem; color: #17130f; }
+    .uw__card small { color: rgba(23,19,15,.66); }
+    .uw__card a { color: #17130f; font-weight: 700; text-decoration-thickness: 2px; }
+    .uw__x { float: right; background: #f7f5ef; border: 2px solid #17130f; border-radius: 8px;
+      color: #17130f; font-size: 1rem; line-height: 1; padding: .18rem .42rem; cursor: pointer; }
+
+    /* ---- the errand ----
+       The keeper's card sits ABOVE the document card rather than
+       replacing it, so a person talking and the evidence they are
+       talking about can be on screen together without one reading as
+       the other. On a phone the two stack and the document keeps the
+       bottom, because that is the thing worth reading. */
+    /* --stack is the measured height of the document card, set from
+       JS whenever either card changes. Guessing a fixed offset put
+       the keeper's card straight through the CHECKED IN tag the
+       moment a document ran to three lines, and the card's height is
+       content-dependent by design, so it has to be measured rather
+       than assumed. The fallback covers the frame before the first
+       measurement lands. */
+    .uw__say { position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: calc(max(1.4rem, env(safe-area-inset-bottom)) + var(--stack, 12rem) + 1.6rem);
+      width: min(92vw, 32rem); background: #17130f; color: #f7f5ef;
+      border: 3px solid #17130f; border-radius: 14px; padding: .8rem 1rem .85rem;
+      z-index: 7; box-shadow: 4px 6px 0 rgba(23,19,15,.5); }
+    .uw__say[hidden] { display: none; }
+    .uw__say p { margin: .2rem 0; }
+    .uw__say__who { font-size: .72rem; letter-spacing: .16em; text-transform: uppercase;
+      color: #e2b23f; }
+    .uw__say__line { font-size: 1.02rem; line-height: 1.45; }
+    .uw__say__with { font-size: .74rem; line-height: 1.4; color: rgba(247,245,239,.62);
+      border-top: 1px solid rgba(247,245,239,.18); margin-top: .5rem; padding-top: .4rem; }
+    .uw__say__with[hidden] { display: none; }
+    .uw__say .uw__x { background: #17130f; border-color: #f7f5ef; color: #f7f5ef; }
+
+    .uw__carry { position: fixed; left: 50%; transform: translateX(-50%);
+      top: max(4.6rem, calc(env(safe-area-inset-top) + 4.2rem));
+      background: #e2b23f; color: #17130f; border: 3px solid #17130f; border-radius: 10px;
+      padding: .35rem .8rem; z-index: 5; font-size: .82rem;
+      box-shadow: 3px 4px 0 rgba(23,19,15,.85); display: flex; gap: .5rem; align-items: baseline; }
+    .uw__carry[hidden] { display: none; }
+    .uw__carry__k { font-size: .64rem; letter-spacing: .18em; text-transform: uppercase; opacity: .75; }
+    .uw__carry__to { opacity: .8; }
+    @media (max-width: 30rem) {
+      .uw__carry { font-size: .74rem; max-width: 92vw; }
+    }
+    /* the floor: shown when the world cannot run, and always in the markup */
+    /* the floor is the page ground, not the game's dark canvas, so its text
+       follows the coat — pinned cream it read bone-on-bone in daylight and the
+       whole no-WebGL fallback (the record itself) went blank */
+    .uw__floor { position: relative; z-index: 2; max-width: 46rem; margin: 0 auto;
+      padding: clamp(2rem,7vh,5rem) 1.2rem; color: var(--cream); }
+    .uw--on .uw__floor { position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; overflow: hidden; }
+
+    /* ============================================================
+       THE CROSSING — the title sequence that plays once, the first
+       time the seam lets you through onto the Deep End. The cover
+       is held as an inked plate, then it becomes a globe that
+       turns until the burning side faces you, with the title over
+       it. js/uprise-intro.js drives all of it; this is its clothes.
+       ============================================================ */
+    .uw--cine .uw__hud, .uw--cine .uw__ring, .uw--cine .uw__card,
+    .uw--cine .uw__say, .uw--cine .uw__carry {
+      opacity: 0; visibility: hidden; transition: opacity .3s ease; }
+    .uwi { position: fixed; inset: 0; z-index: 40; background: #17130f; color: #f4efe6;
+      display: grid; place-items: center; overflow: hidden; isolation: isolate;
+      opacity: 0; transition: opacity .4s ease; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; }
+    .uwi--in { opacity: 1; }
+    .uwi--out { opacity: 0; transition: opacity .9s ease; }
+    /* the globe sits behind everything and is only uncovered when
+       the plate dissolves off it */
+    .uwi__gl { position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0; transition: opacity 1s ease; }
+    .uwi--globe .uwi__gl { opacity: 1; }
+    /* The field, drawn the way the reference title screen draws
+       its own: a FLAT colour, a soft wash behind the planet, and a
+       scatter of small torn chips with hard edges — ash and ember
+       here instead of clouds, because this is the burning side.
+       No blur, no photograph, no gradient doing the work. */
+    .uwi__vig { position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(46% 40% at 50% 47%, rgba(232,200,119,.20), rgba(232,200,119,.06) 55%, rgba(232,200,119,0) 74%),
+        radial-gradient(120% 100% at 50% 50%, rgba(23,19,15,0) 40%, rgba(23,19,15,.55) 78%, rgba(10,8,7,.92) 100%); }
+    .uwi__grain { position: absolute; inset: 0; pointer-events: none; opacity: .62;
+      background-image:
+        url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Cg fill='%23f4efe6' fill-opacity='.12'%3E%3Cpath d='M38 62l26-9 21 6-8 13-28 4z'/%3E%3Cpath d='M168 18l22-5 10 7-13 9-21-3z'/%3E%3Cpath d='M300 34l34-6 12 9-19 11-27-4z'/%3E%3Cpath d='M448 150l22-5 9 8-14 9-19-4z'/%3E%3Cpath d='M104 226l30-7 16 8-11 11-33-3z'/%3E%3Cpath d='M392 300l25-6 13 7-13 11-25-4z'/%3E%3Cpath d='M60 392l38-9 17 9-14 13-39-5z'/%3E%3Cpath d='M268 452l28-6 11 8-16 10-23-4z'/%3E%3Cpath d='M456 424l19-4 8 6-11 8-16-3z'/%3E%3Cpath d='M180 120l18-4 8 6-10 8-16-3z'/%3E%3C/g%3E%3Cg fill='%23e8c877' fill-opacity='.16'%3E%3Cpath d='M212 268l12-3 6 5-8 6-10-2z'/%3E%3Cpath d='M356 196l10-2 5 4-7 5-8-2z'/%3E%3Cpath d='M126 352l11-3 5 5-7 5-9-2z'/%3E%3C/g%3E%3Cg fill='%23e5383b' fill-opacity='.14'%3E%3Cpath d='M492 262l9-2 4 4-6 4-7-2z'/%3E%3Cpath d='M22 172l10-2 4 4-6 5-8-2z'/%3E%3C/g%3E%3C/svg%3E"),
+        repeating-linear-gradient(180deg, rgba(244,239,230,.045) 0 1px, rgba(0,0,0,0) 1px 3px);
+      background-size: 900px 900px, auto; }
+    /* letterbox */
+    .uwi__bar { position: absolute; left: 0; right: 0; top: 0; height: 9vh; background: #17130f;
+      z-index: 6; transform: translateY(-101%);
+      transition: transform .55s cubic-bezier(.2,.85,.25,1); }
+    .uwi__bar--b { top: auto; bottom: 0; transform: translateY(101%); }
+    .uwi--in .uwi__bar { transform: none; }
+    .uwi--out .uwi__bar { transform: translateY(-101%); }
+    .uwi--out .uwi__bar--b { transform: translateY(101%); }
+    /* THE PLATE: the album cover, framed and held */
+    .uwi__stage { grid-area: 1 / 1; z-index: 3; display: flex; flex-direction: column;
+      align-items: center; gap: 1.1rem; padding: 0 1.1rem; pointer-events: none;
+      opacity: 0; transform: scale(.955);
+      transition: opacity .85s ease, transform 1.6s cubic-bezier(.16,.72,.2,1); }
+    .uwi--plate .uwi__stage { opacity: 1; transform: none; }
+    .uwi--globe .uwi__stage { opacity: 0; transform: scale(1.16);
+      transition: opacity .95s ease, transform 1.6s cubic-bezier(.5,0,.85,.4); }
+    /* the frame reserves its own square, so it never collapses to a
+       hairline while the cover is still on the wire */
+    .uwi__plate { margin: 0; width: min(62vmin, 30rem); aspect-ratio: 1 / 1;
+      background: #0a0807; border: 3px solid #f4efe6;
+      box-shadow: 12px 14px 0 rgba(0,0,0,.72), 0 0 0 1px #17130f; }
+    .uwi__plate img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .uwi__cap { display: flex; flex-direction: column; align-items: center; gap: .55rem;
+      text-align: center; }
+    .uwi__tag { background: #e5383b; color: #f4efe6; border: 3px solid #17130f; border-radius: 8px;
+      padding: .16rem .72rem; font-size: .68rem; font-weight: 700; letter-spacing: .2em;
+      text-transform: uppercase; box-shadow: 3px 4px 0 rgba(0,0,0,.8); }
+    .uwi__capline { font-size: .88rem; color: rgba(244,239,230,.82); }
+    /* THE TYPE: the site's display face, inked and offset the way
+       the cards are, sitting over the turning world */
+    .uwi__type { grid-area: 1 / 1; z-index: 5; text-align: center; padding: 0 1.1rem;
+      position: relative; pointer-events: none; opacity: 0; transform: translateY(16px);
+      transition: opacity .8s ease, transform 1s cubic-bezier(.16,.72,.2,1); }
+    /* a soft ink scrim under the type only — the world behind stays
+       lit, the words stay readable over whatever is turning */
+    .uwi__type::before { content: ""; position: absolute; z-index: -1;
+      left: 50%; top: 50%; width: 155%; height: 200%; transform: translate(-50%,-50%);
+      background: radial-gradient(52% 46% at 50% 50%, rgba(23,19,15,.70), rgba(23,19,15,.32) 58%, rgba(23,19,15,0) 78%); }
+    .uwi--title .uwi__type { opacity: 1; transform: none; }
+    .uwi__h { font-family: var(--display, Impact, "Arial Narrow", sans-serif); font-weight: 400;
+      text-transform: uppercase; font-size: clamp(2.6rem, 12.5vw, 8.5rem); line-height: .9;
+      letter-spacing: .015em; margin: 0; color: #f4efe6;
+      text-shadow: -3px 0 0 #17130f, 3px 0 0 #17130f, 0 -3px 0 #17130f, 0 3px 0 #17130f,
+        -3px -3px 0 #17130f, 3px -3px 0 #17130f, -3px 3px 0 #17130f, 3px 3px 0 #17130f,
+        9px 11px 0 rgba(23,19,15,.92); }
+    .uwi__sub { font-family: var(--display, Impact, "Arial Narrow", sans-serif); font-weight: 400;
+      text-transform: uppercase; font-size: clamp(.95rem, 3.4vw, 1.9rem); letter-spacing: .42em;
+      text-indent: .42em; margin: .85rem 0 0; color: #e8c877;
+      text-shadow: -2px 0 0 #17130f, 2px 0 0 #17130f, 0 -2px 0 #17130f, 0 2px 0 #17130f,
+        -2px -2px 0 #17130f, 2px -2px 0 #17130f, -2px 2px 0 #17130f, 2px 2px 0 #17130f,
+        5px 6px 0 rgba(23,19,15,.9); }
+    .uwi__line { max-width: 34rem; margin: 1.15rem auto 0; font-size: .92rem; line-height: 1.5;
+      color: rgba(244,239,230,.88); text-shadow: 0 2px 8px rgba(23,19,15,.95); }
+    .uwi__line i { color: #e8c877; font-style: italic; padding-right: .14em; }
+    /* out, always, at any moment */
+    .uwi__skip { position: absolute; z-index: 8;
+      right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom));
+      background: #f7f5ef; color: #17130f; border: 2px solid #17130f; border-radius: 10px;
+      padding: .42rem .82rem; font: inherit; font-size: .74rem; font-weight: 700;
+      letter-spacing: .16em; text-transform: uppercase; cursor: pointer;
+      box-shadow: 2px 3px 0 rgba(0,0,0,.85); opacity: 0; transition: opacity .5s ease .7s; }
+    .uwi--in .uwi__skip { opacity: 1; }
+    .uwi--out .uwi__skip { opacity: 0; transition: opacity .2s ease; }
+    .uwi__sr { position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; overflow: hidden; }
+    /* reduced motion: nothing spins, nothing slides, nothing
+       scales. The cover cross-fades to the title card. */
+    @media (prefers-reduced-motion: reduce) {
+      .uwi__bar { transition: none; transform: none; }
+      .uwi--out .uwi__bar, .uwi--out .uwi__bar--b { transform: none; }
+      .uwi__stage, .uwi--plate .uwi__stage, .uwi--globe .uwi__stage,
+      .uwi__type, .uwi--title .uwi__type { transform: none;
+        transition: opacity .6s ease; }
+    }
+  </style>
+  <!-- THE TWO VISUAL SYSTEMS ARE ISOLATED, ON THE OWNER'S CALL.
+
+       Uprise World is a three.js scene with its own lighting, its own
+       palette and its own material model. HERE Material System 2.0 is a
+       skin for the flat interface. They are not one system with two
+       renderers, and blending them means the world's look starts
+       drifting every time a UI material is retuned.
+
+       This page carried css/here-material.css for one commit because a
+       bulk wiring pass added it to every page with the bar. Removed on
+       purpose. Nothing in js/uprise-*.js has ever referenced
+       assets/brand/, and nothing should. -->
+</head>
+<body class="eupage">
+  <div class="uw" id="uwRoot">
+    <canvas class="uw__c" id="uwCanvas" aria-label="Uprise World"></canvas>
+  </div>
+
+  <div class="uw__hud" aria-live="polite">
+    <span class="uw__badge">UPRISE WORLD &middot; <b id="uwCount">0 / 4</b> checked in</span>
+    <span class="uw__badge" id="uwHint">Press and drag anywhere to walk</span>
+  </div>
+  <div class="uw__ring" id="uwRing" aria-hidden="true"></div>
+
+  <!-- WHAT YOU ARE CARRYING. Hidden until a keeper hands you
+       something, because an empty slot on screen from the first frame
+       reads as a broken feature rather than an empty hand. -->
+  <div class="uw__carry" id="uwCarry" hidden aria-live="polite">
+    <span class="uw__carry__k" id="uwCarryK">Carrying</span>
+    <b id="uwCarryL"></b>
+    <span class="uw__carry__to">for <span id="uwCarryT"></span></span>
+  </div>
+
+  <!-- A KEEPER SPEAKING. Its own card, kept clear of the document
+       card: one is a person talking to you, the other is the
+       evidence, and stacking them would make the record look like
+       dialogue. -->
+  <div class="uw__say" id="uwSay" hidden>
+    <button class="uw__x" id="uwSayX" type="button" aria-label="Close">&#215;</button>
+    <p class="uw__say__who"><b id="uwSayN"></b><span id="uwSayR"></span></p>
+    <p class="uw__say__with" id="uwSayW" hidden></p>
+    <p class="uw__say__line" id="uwSayL"></p>
+  </div>
+
+  <div class="uw__card" id="uwCard" hidden>
+    <button class="uw__x" id="uwCardX" type="button" aria-label="Close">&#215;</button>
+    <p class="uw__k" id="uwCardK"></p>
+    <h2 id="uwCardH"></h2>
+    <p id="uwCardB"></p>
+    <p><small id="uwCardM"></small></p>
+    <p id="uwCardL"></p>
+  </div>
+
+  <!-- THE FLOOR. This is the page with WebGL off, on a device that
+       cannot run it, or to a crawler. The record is never behind the
+       game. -->
+  <main class="uw__floor">
+    <p class="kicker"><img class="kicker__mark" src="assets/img/equity-uprise-logo.webp" alt="" style="filter:none"> Uprise World</p>
+    <h1>Walk the record.</h1>
+    <p>A small planet: one half standing, one half burning, a gold seam between them.
+      You start on the side that is standing &mdash; America. You play a fellow. Four
+      landmarks sit here, in Connecticut and Georgia, each one a real place tied to a
+      real document. Check in at all four and the seam opens onto <b>the Deep End</b>,
+      also called <b>the Three</b>: the far side of the world, Ukraine and Russia, still
+      on fire. You do not start in the wreckage. You earn your way to it.</p>
+    <p><b>If the world does not load</b> &mdash; an older phone, WebGL switched off, or a
+      slow connection &mdash; nothing is lost. Every document in it lives on the
+      <a href="equity-uprise.html">Equity Uprise record</a>, in full, with the scans.</p>
+    <ul>
+      <li><b>Bridgeport City Hall</b>, 45 Lyon Terrace &mdash; the City of Bridgeport
+        proclamation of Equity Uprise Human Rights Day, December 10, 2025.</li>
+      <li><b>Connecticut State Capitol</b>, Hartford &mdash; three General Assembly
+        citations, October 5, 2025.</li>
+      <li><b>Georgia State Capitol</b>, Atlanta &mdash; the Governor's proclamation of
+        Georgia Youth Innovation &amp; Civic Leadership Week, signed October 27, 2025.</li>
+      <li><b>Shiloh Baptist Church and the transmission corridor</b> &mdash; Connecticut
+        Siting Council Docket 516, denied 5&ndash;3 on October 16, 2025 and closed on
+        February 5, 2026.</li>
+    </ul>
+    <p><a href="equity-uprise.html">Back to the Equity Uprise record &#8594;</a></p>
+  </main>
+
+  <script type="module">
+    const root = document.getElementById("uwRoot");
+    const el = (id) => document.getElementById(id);
+    let live = false;
+    try {
+      const c = document.createElement("canvas");
+      live = !!(c.getContext("webgl2") || c.getContext("webgl"));
+    } catch (e) { live = false; }
+
+    if (!live) {
+      root.hidden = true;
+      document.querySelector(".uw__hud").hidden = true;
+      el("uwRing").hidden = true;
+    } else {
+      document.body.classList.add("uw--on");
+      const { mount } = await import("./js/uprise-world.js?v=__STAMP__");
+      const card = el("uwCard");
+      el("uwCardX").addEventListener("click", () => { card.hidden = true; });
+
+      const say = el("uwSay"), carry = el("uwCarry");
+      el("uwSayX").addEventListener("click", () => { say.hidden = true; });
+
+      /* The carry badge is derived from errand state rather than set
+         at the moment of handover, so it stays right if the state is
+         ever changed from anywhere else — the harness does exactly
+         that. */
+      /* You may hold all three honours at once, so this reads a list.
+         The count is spelled out rather than implied — the three
+         Connecticut citations travel as one item, and a bare "3"
+         next to them would read as the number of citations rather
+         than the number of documents in hand. */
+      function paintCarry(st) {
+        const held = (st && st.carrying) || [];
+        if (!held.length) { carry.hidden = true; return; }
+        el("uwCarryK").textContent = held.length > 1 ? "Carrying " + held.length : "Carrying";
+        el("uwCarryL").textContent = held.map((c) => c.label).join(" · ");
+        el("uwCarryT").textContent = held[0].toName || held[0].to;
+        carry.hidden = false;
+      }
+
+      /* Measure the document card so the keeper's card can sit clear
+         of it — including clear of the CHECKED IN tag, which hangs
+         above the card's own box. Runs after paint so the height is
+         the laid-out one and not the pre-reflow zero. */
+      function restack() {
+        requestAnimationFrame(() => {
+          const h = card.hidden ? 0 : card.offsetHeight + 18;
+          document.documentElement.style.setProperty("--stack", h + "px");
+        });
+      }
+      el("uwCardX").addEventListener("click", restack);
+      el("uwSayX").addEventListener("click", restack);
+      addEventListener("resize", restack);
+
+      /* the ring is pure feedback — the engine owns the input, this
+         only draws where the drag started and how far it has gone */
+      const canvas = el("uwCanvas"), ring = el("uwRing");
+      let dragId = -1, ox = 0, oy = 0;
+      canvas.addEventListener("pointerdown", (e) => {
+        dragId = e.pointerId; ox = e.clientX; oy = e.clientY;
+        ring.style.left = ox + "px"; ring.style.top = oy + "px";
+        ring.style.setProperty("--dx", "0px"); ring.style.setProperty("--dy", "0px");
+        document.body.classList.add("uw--drag");
+      });
+      canvas.addEventListener("pointermove", (e) => {
+        if (e.pointerId !== dragId) return;
+        let dx = e.clientX - ox, dy = e.clientY - oy;
+        const len = Math.hypot(dx, dy);
+        if (len > 78) { ox += dx * (len - 78) / len; oy += dy * (len - 78) / len;
+          dx *= 78 / len; dy *= 78 / len;
+          ring.style.left = ox + "px"; ring.style.top = oy + "px"; }
+        ring.style.setProperty("--dx", dx.toFixed(1) + "px");
+        ring.style.setProperty("--dy", dy.toFixed(1) + "px");
+      });
+      const off = () => { dragId = -1; document.body.classList.remove("uw--drag"); };
+      canvas.addEventListener("pointerup", off);
+      canvas.addEventListener("pointercancel", off);
+      canvas.addEventListener("lostpointercapture", off);
+
+      /* THE CROSSING. The engine calls this the first frame the
+         player's own footing goes over to the scorched side with
+         all four check-ins made. The sequence is a separate
+         module so nothing about it can be in the way of the
+         world loading, and it is loaded only at the moment it is
+         actually needed. If it fails to load or to run, the
+         player is simply on the Deep End, which is where they
+         were going. */
+      let crossed = false;
+      function theCrossing() {
+        if (crossed) return;
+        crossed = true;
+        el("uwHint").textContent = "The Deep End \u2014 the Three";
+        card.hidden = true;
+        import("./js/uprise-intro.js?v=__STAMP__")
+          .then((m) => m.playIntro())
+          .catch(() => { document.body.classList.remove("uw--cine"); });
+      }
+      const world = await mount(canvas, {
+        onCross: theCrossing,
+        onCheckIn(L, done, total) {
+          el("uwCount").textContent = done + " / " + total;
+          el("uwCardK").textContent = "Checked in";
+          el("uwCardH").textContent = L.name;
+          el("uwCardB").textContent = L.document || "";
+          el("uwCardM").textContent = [L.address, L.documentIssuer].filter(Boolean).join(" · ");
+          el("uwCardL").innerHTML = L.doc
+            ? '<a href="' + L.doc + '" target="_blank" rel="noopener">Open the document</a>'
+            : '<a href="equity-uprise.html">See it on the record</a>';
+          card.hidden = false;
+          restack();
+          if (done === total) el("uwHint").textContent = "The Deep End is open \u2014 cross the seam";
+        },
+
+        /* A KEEPER SPEAKING. The engine has already done the exchange
+           by the time this runs \u2014 took what was theirs, handed over
+           what they had \u2014 so this only has to say what happened. The
+           carry badge is the one piece of state the player needs to
+           hold in their head, so it lives at the top of the screen
+           and not in this card, which they will dismiss. */
+        onTalk(ev, st) {
+          const K = ev.keeper;
+          /* Named officials get name · title. A site with no confirmed
+             name shows the place instead of inventing a person. */
+          el("uwSayN").textContent = K.name || K.role;
+          el("uwSayR").textContent = K.name
+            ? (K.title ? " · " + K.title : (K.role ? " · " + K.role : ""))
+            : "";
+          el("uwSayL").textContent = ev.line;
+
+          /* Everyone else printed on the same document, listed by name
+             and seat — the citation was introduced by nine members and
+             a card that named only the Speaker would undercount it. */
+          const w = el("uwSayW"), del = K.delegation || [];
+          if (del.length) {
+            w.textContent = "With " + del.map((p) => p.name + (p.seat ? ", " + p.seat : "")).join("; ");
+            w.hidden = false;
+          } else { w.hidden = true; }
+
+          say.hidden = false;
+          restack();
+          paintCarry(st);
+        },
+        onLeave() { say.hidden = true; }
+      });
+      /* the checkers drive it without hands */
+      window.uwWorld = world;
+
+      /* ?intro=1 plays the crossing sequence straight away, without
+         playing the four check-ins first. It is there so the title
+         sequence can be looked at and reviewed on its own — a
+         cutscene nobody can summon is a cutscene nobody can judge.
+         The engine's own trip wire is unchanged, and still the only
+         thing that fires it in ordinary play. */
+      if (new URLSearchParams(location.search).get("intro") === "1") theCrossing();
+    }
+  </script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+</body>
+</html>

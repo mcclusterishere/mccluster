@@ -1,0 +1,50 @@
+{
+  "source": "McCluster-Portfolio current HERE interface",
+  "selectors": [
+    {
+      "selector": ".sp__head",
+      "use": "primary sticky streaming header backplate",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".mini",
+      "use": "floating mini-player optical layer above media",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".now__head / now-playing floating controls",
+      "use": "only existing overlay/control regions",
+      "intensity": "low-to-medium"
+    },
+    {
+      "selector": ".appbar",
+      "use": "optional optical top layer over Blackened Steel chassis; preserve geometry",
+      "intensity": "low"
+    },
+    {
+      "selector": ".sound-toggle",
+      "use": "compact floating control backing",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".float-pause",
+      "use": "compact floating control backing",
+      "intensity": "medium"
+    },
+    {
+      "selector": ".sp__pills",
+      "use": "individual pills only where current transparency already exists",
+      "intensity": "low"
+    },
+    {
+      "selector": "existing modal/sheet overlays",
+      "use": "surface behind semantic HTML, not replacement layout",
+      "intensity": "medium"
+    },
+    {
+      "selector": "hero HUD/overlay elements",
+      "use": "only if current HUD already has a translucent backing",
+      "intensity": "very-low"
+    }
+  ]
+}

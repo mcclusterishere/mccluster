@@ -1,0 +1,923 @@
+{
+ "note": "Geometry is the Kimi build's, untouched. Names are the repo master's programme. 'coined' marks a name derived in the master's style because the master had no counterpart.",
+ "renamed": 183,
+ "coined": 87,
+ "unmapped": [],
+ "mapping": [
+  {
+   "kimi": "ARCH_L1_ROOM_SEC-C | GROUND OPS CONTROL \u2014 floor",
+   "master": "L1_DEFENSE_SECURITY",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_ROOM_HR-03 | ARMORY / EQUIP ISSUE \u2014 floor",
+   "master": "L1_ARMORY_EQUIPMENT_ISSUE",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROOM_GD-01 | GROUND VEHICLE READINESS \u2014 floor",
+   "master": "L1_ASIMOV_ANDROID_READINESS",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_ROOM_SEC-E | GATE CONTROL \u2014 SOUTH PORTAL \u2014 floor",
+   "master": "L1_DEFENSE_SECURITY_SOUTH_GATE",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROOM_HR-05 | MEDICAL / READINESS \u2014 floor",
+   "master": "L1_HUMAN_READINESS",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_ROOM_LG-01 | LOGISTICS / RECEIVING \u2014 floor",
+   "master": "L1_LOGISTICS_RECEIVING",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_ROOMWALL",
+   "master": "L1_ROOM_PARTITION",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROOMWALL_1",
+   "master": "L1_ROOM_PARTITION_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROOMWALL_2",
+   "master": "L1_ROOM_PARTITION_02",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROOMWALL_3",
+   "master": "L1_ROOM_PARTITION_03",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#0",
+   "master": "L1_GROUND_DEFENSE_FLOOR",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#1",
+   "master": "L1_GROUND_DEFENSE_FLOOR_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#2",
+   "master": "L1_GROUND_DEFENSE_FLOOR_02",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#3",
+   "master": "L1_GROUND_DEFENSE_FLOOR_03",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#4",
+   "master": "L1_GROUND_DEFENSE_FLOOR_04",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#5",
+   "master": "L1_GROUND_DEFENSE_FLOOR_05",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#6",
+   "master": "L1_GROUND_DEFENSE_FLOOR_06",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#7",
+   "master": "L1_GROUND_DEFENSE_FLOOR_07",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#8",
+   "master": "L1_GROUND_DEFENSE_FLOOR_08",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#9",
+   "master": "L1_GROUND_DEFENSE_FLOOR_09",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_LOW | center drive-through, six cut-in rooms#10",
+   "master": "L1_GROUND_DEFENSE_FLOOR_10",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_PODIUM_UPPER | lintel band",
+   "master": "L1_GROUND_DEFENSE_LINTEL",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD | center road surface#0",
+   "master": "L1_NORTH_SOUTH_THROUGH_ROAD",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_ROAD | center road surface#1",
+   "master": "L1_NORTH_SOUTH_THROUGH_ROAD_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_ROAD | center road surface#2",
+   "master": "L1_NORTH_SOUTH_THROUGH_ROAD_02",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_APRON_S",
+   "master": "L1_ROAD_SOUTH_GATE",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_APRON_N",
+   "master": "L1_ROAD_NORTH_GATE",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK",
+   "master": "L1_THROUGH_ROAD_MARKING",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_1",
+   "master": "L1_THROUGH_ROAD_MARKING_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_2",
+   "master": "L1_THROUGH_ROAD_MARKING_02",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_3",
+   "master": "L1_THROUGH_ROAD_MARKING_03",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_4",
+   "master": "L1_THROUGH_ROAD_MARKING_04",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_5",
+   "master": "L1_THROUGH_ROAD_MARKING_05",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_6",
+   "master": "L1_THROUGH_ROAD_MARKING_06",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_7",
+   "master": "L1_THROUGH_ROAD_MARKING_07",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_8",
+   "master": "L1_THROUGH_ROAD_MARKING_08",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_9",
+   "master": "L1_THROUGH_ROAD_MARKING_09",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_10",
+   "master": "L1_THROUGH_ROAD_MARKING_10",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_11",
+   "master": "L1_THROUGH_ROAD_MARKING_11",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_12",
+   "master": "L1_THROUGH_ROAD_MARKING_12",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_13",
+   "master": "L1_THROUGH_ROAD_MARKING_13",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_14",
+   "master": "L1_THROUGH_ROAD_MARKING_14",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_15",
+   "master": "L1_THROUGH_ROAD_MARKING_15",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_16",
+   "master": "L1_THROUGH_ROAD_MARKING_16",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_17",
+   "master": "L1_THROUGH_ROAD_MARKING_17",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_18",
+   "master": "L1_THROUGH_ROAD_MARKING_18",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_19",
+   "master": "L1_THROUGH_ROAD_MARKING_19",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_20",
+   "master": "L1_THROUGH_ROAD_MARKING_20",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_21",
+   "master": "L1_THROUGH_ROAD_MARKING_21",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_22",
+   "master": "L1_THROUGH_ROAD_MARKING_22",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_23",
+   "master": "L1_THROUGH_ROAD_MARKING_23",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_24",
+   "master": "L1_THROUGH_ROAD_MARKING_24",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_ROAD_MARK_25",
+   "master": "L1_THROUGH_ROAD_MARKING_25",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_MAIN_HULL | solid support volume",
+   "master": "SHELL_MAIN_RECTANGLE",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L2_GLASSBAND | ribbon glazing",
+   "master": "L2_BUSINESS_RIBBON_GLAZING",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L2_GLASSBAND | ribbon glazing_1",
+   "master": "L2_BUSINESS_RIBBON_GLAZING_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L2_GLASSBAND | ribbon glazing_2",
+   "master": "L2_BUSINESS_RIBBON_GLAZING_02",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_HULL_REVEAL | panel line",
+   "master": "SHELL_PANEL_REVEAL",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_HULL_REVEAL | panel line_1",
+   "master": "SHELL_PANEL_REVEAL_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_HULL_BULWARK_STRAKE",
+   "master": "SHELL_BULWARK_STRAKE",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L2_FLOOR | business deck",
+   "master": "L2_BUSINESS_AVIATION_FLOOR",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L2_RM_RECEPTION",
+   "master": "L2_NORTH_BUSINESS_SALES_TRADING",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L2_RM_OFFICES",
+   "master": "L2_NORTH_BUSINESS_OFFICES",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L2_RM_ADMIN",
+   "master": "L2_NORTH_BUSINESS_ADMIN",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L2_RM_HANGAR SUPPORT",
+   "master": "L2_SOUTH_AVIATION_SUPPORT",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L2_RM_AIRCRAFT INSPECTION",
+   "master": "L2_SOUTH_AVIATION_INSPECTION",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L2_RM_UAS SUPPORT",
+   "master": "L2_BUSINESS_DRONE_LAUNCH_PAD",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L2_RM_PARTS",
+   "master": "L2_SOUTH_AVIATION_PARTS",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L2_DIVIDE | controlled divide wall",
+   "master": "L2_ARMORED_DEMONSTRATION_STAGING_DECK",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_FLIGHTDECK",
+   "master": "L3_FLIGHT_DECK",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_PARAPET",
+   "master": "L3_FLIGHT_DECK_PARAPET",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline",
+   "master": "L3_LAUNCH_TAKEOFF_RUN",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_1",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_2",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_02",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_3",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_03",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_4",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_04",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_5",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_05",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_6",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_06",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_7",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_07",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_8",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_08",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_9",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_09",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_10",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_10",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_11",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_11",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_12",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_12",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_13",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_13",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_MARKING | centerline_14",
+   "master": "L3_LAUNCH_TAKEOFF_RUN_14",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_LIFTPAD_V1",
+   "master": "L3_V1_HEAVY_TRANSFER_PAD",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_LIFTPAD_V1_TRIM",
+   "master": "L3_V1_HEAVY_TRANSFER_PAD_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_LIFTPAD_V2",
+   "master": "L3_V2_HEAVY_TRANSFER_PAD",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_LIFTPAD_V2_TRIM",
+   "master": "L3_V2_HEAVY_TRANSFER_PAD_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_HELIPAD",
+   "master": "L3_RECOVERY_LANDING_LANE",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_HELIPAD_RING",
+   "master": "L3_RECOVERY_LANDING_LANE_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_A_PAD | A-lift deck stop",
+   "master": "L3_PRIME_EXTERNAL_LIFT_APRON",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L3_B_PAD | B-lift deck stop",
+   "master": "L3_PRIME_EMERGENCY_MERGE_LANE",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L4_TOWER_BASE",
+   "master": "L4_ISLAND_PEDESTAL",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L4_TOWER_GLASS_1",
+   "master": "L4_ISLAND_GLAZING",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L4_TOWER_MID | executive penthouse",
+   "master": "L4_EXECUTIVE_FLIGHT_CONTROL_BASE",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L4_TOWER_GLASS_2",
+   "master": "L4_ISLAND_GLAZING_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L4_CAB | flight control",
+   "master": "L4_FLIGHT_CONTROL",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L4_CAB_GLASS",
+   "master": "L4_FLIGHT_CONTROL_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L4_ROOF_RING",
+   "master": "L4_ISLAND_ROOF_RING",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L4_RADOME_1",
+   "master": "L4_ISLAND_RADOME",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L4_RADOME_2",
+   "master": "L4_ISLAND_RADOME_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L4_MAST_1",
+   "master": "L4_ISLAND_MAST",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L4_MAST_2",
+   "master": "L4_ISLAND_MAST_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L4_MAST_3",
+   "master": "L4_ISLAND_MAST_02",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L4_FLOOR | penthouse level",
+   "master": "L4_ISLAND_PENTHOUSE_FLOOR",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L4_OPS_FLOOR",
+   "master": "L4_COMMAND_CENTER",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_L1_LAMPMAST_1",
+   "master": "L1_ROAD_LAMP_MAST",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_LAMPMAST_2",
+   "master": "L1_ROAD_LAMP_MAST_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_LAMPMAST_3",
+   "master": "L1_ROAD_LAMP_MAST_02",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_L1_LAMPMAST_4",
+   "master": "L1_ROAD_LAMP_MAST_03",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_B1_FLOOR | B1 slab",
+   "master": "B1_OPEN_TECH_RESEARCH_FLOOR",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B1_WALLS",
+   "master": "B1_OPEN_TECH_RESEARCH_ENCLOSURE",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_B1_RM_LIBRARY SPINE",
+   "master": "B1_CENTRAL_OPEN_TECH_LIBRARY",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B1_RM_ARCHIVES",
+   "master": "B1_RESEARCH_WING_0",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B1_RM_ROBOTICS WING",
+   "master": "B1_RESEARCH_WING_1",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B1_RM_CLEAN PROTOTYPE",
+   "master": "B1_RESEARCH_WING_2",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B2_FLOOR | B2 slab",
+   "master": "B2_INDUSTRIAL_PRODUCTION_FLOOR",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B2_WALLS",
+   "master": "B2_INDUSTRIAL_PRODUCTION_ENCLOSURE",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_B2_RM_HIGH-BAY MANUFACTURING",
+   "master": "B2_HIGH_BAY_0",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B2_RM_MATERIALS STAGING",
+   "master": "B2_HIGH_BAY_1",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B2_RM_MACHINING",
+   "master": "B2_HIGH_BAY_2",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B2_RM_VEHICLE ASSEMBLY",
+   "master": "B2_HIGH_BAY_3",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B3_FLOOR | B3 slab",
+   "master": "B3_PRIME_COMMAND_SUSTAINMENT_FLOOR",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B3_WALLS",
+   "master": "B3_PRIME_COMMAND_SUSTAINMENT_ENCLOSURE",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_B3_RM_PRIME COMMAND",
+   "master": "B3_PRIME_COMMAND_CORE",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B3_RM_COMMON / GALLEY",
+   "master": "B3_MEDICAL_FOOD_EAST",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B3_RM_PROTOTYPE CUSTODY",
+   "master": "B3_ARMORED_VAULT_WEST",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B3_RM_SECURE COMMS",
+   "master": "B3_SUSTAINMENT_WEST",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B4_FLOOR | B4 slab",
+   "master": "B4_DEEP_TRANSIT_LOGISTICS_FLOOR",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B4_WALLS",
+   "master": "B4_DEEP_TRANSIT_LOGISTICS_ENCLOSURE",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_B4_RM_INTERMODAL TRANSFER HALL",
+   "master": "B4_INTERFACILITY_TRANSFER_HALL",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B4_RM_HEAVY TRANSFER TERMINUS",
+   "master": "B4_WEST_TUNNEL",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B4_RM_TUNNEL DISPATCH",
+   "master": "B4_EAST_TUNNEL",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B5_FLOOR | B5 slab",
+   "master": "B5_GLOBAL_COORDINATION_RESILIENCE_FLOOR",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B5_WALLS",
+   "master": "B5_GLOBAL_COORDINATION_RESILIENCE_ENCLOSURE",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_B5_RM_CONTINUITY LEADERSHIP",
+   "master": "B5_COORDINATION_CORE",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B5_RM_HEALTH / MEDICAL",
+   "master": "B5_HABITAT_EAST",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B5_RM_AGRICULTURE / FOOD",
+   "master": "B5_RESILIENCE_AGRICULTURE",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_B5_RM_RESIDENT HABITAT",
+   "master": "B5_HABITAT_WEST",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B3_RAMP_W | helical ramp L1 to B3",
+   "master": "B3_R1_ARMORED_RAMP_LANDING",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B3_WELL_W",
+   "master": "B3_R1_RAMP_WELL",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_B3_RAMP_E | helical ramp L1 to B3",
+   "master": "B3_R2_ARMORED_RAMP_LANDING",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_B3_WELL_E",
+   "master": "B3_R2_RAMP_WELL",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_CORE_A | corner post",
+   "master": "VERTICAL_PASSENGER_CORE_A",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_A | corner post_1",
+   "master": "VERTICAL_PASSENGER_CORE_A_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_A | corner post_2",
+   "master": "VERTICAL_PASSENGER_CORE_A_02",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_A | corner post_3",
+   "master": "VERTICAL_PASSENGER_CORE_A_03",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_B | corner post",
+   "master": "VERTICAL_PASSENGER_CORE_B",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_B | corner post_1",
+   "master": "VERTICAL_PASSENGER_CORE_B_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_B | corner post_2",
+   "master": "VERTICAL_PASSENGER_CORE_B_02",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_B | corner post_3",
+   "master": "VERTICAL_PASSENGER_CORE_B_03",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_C | corner post",
+   "master": "VERTICAL_PASSENGER_CORE_C",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_C | corner post_1",
+   "master": "VERTICAL_PASSENGER_CORE_C_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_C | corner post_2",
+   "master": "VERTICAL_PASSENGER_CORE_C_02",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_C | corner post_3",
+   "master": "VERTICAL_PASSENGER_CORE_C_03",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_D | corner post",
+   "master": "VERTICAL_PASSENGER_CORE_D",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_D | corner post_1",
+   "master": "VERTICAL_PASSENGER_CORE_D_01",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_D | corner post_2",
+   "master": "VERTICAL_PASSENGER_CORE_D_02",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_D | corner post_3",
+   "master": "VERTICAL_PASSENGER_CORE_D_03",
+   "coined": false
+  },
+  {
+   "kimi": "ARCH_CORE_EW | corner post",
+   "master": "FREIGHT_HEAVY_LIFT_CORE_WEST",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_CORE_EW | corner post_1",
+   "master": "FREIGHT_HEAVY_LIFT_CORE_WEST_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_CORE_EW | corner post_2",
+   "master": "FREIGHT_HEAVY_LIFT_CORE_WEST_02",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_CORE_EW | corner post_3",
+   "master": "FREIGHT_HEAVY_LIFT_CORE_WEST_03",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_CORE_EE | corner post",
+   "master": "FREIGHT_HEAVY_LIFT_CORE_EAST",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_CORE_EE | corner post_1",
+   "master": "FREIGHT_HEAVY_LIFT_CORE_EAST_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_CORE_EE | corner post_2",
+   "master": "FREIGHT_HEAVY_LIFT_CORE_EAST_02",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_CORE_EE | corner post_3",
+   "master": "FREIGHT_HEAVY_LIFT_CORE_EAST_03",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_LIFT_A | ride pad",
+   "master": "V1_HEAVY_LIFT_PLATFORM_A",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_LIFT_B | ride pad",
+   "master": "V2_HEAVY_LIFT_PLATFORM_B",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_LIFT_C | ride pad",
+   "master": "V1_HEAVY_LIFT_PLATFORM_C",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_LIFT_D | ride pad",
+   "master": "V2_HEAVY_LIFT_PLATFORM_D",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_STAIR_EW_B5_B4 | egress ramp",
+   "master": "EGRESS_STAIR_WEST",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_STAIR_EW_B4_B3 | egress ramp",
+   "master": "EGRESS_STAIR_WEST_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_STAIR_EW_B3_B2 | egress ramp",
+   "master": "EGRESS_STAIR_WEST_02",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_STAIR_EW_B2_B1 | egress ramp",
+   "master": "EGRESS_STAIR_WEST_03",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_STAIR_EW_B1_L1 | egress ramp",
+   "master": "EGRESS_STAIR_WEST_04",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_STAIR_EE_B5_B4 | egress ramp",
+   "master": "EGRESS_STAIR_EAST",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_STAIR_EE_B4_B3 | egress ramp",
+   "master": "EGRESS_STAIR_EAST_01",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_STAIR_EE_B3_B2 | egress ramp",
+   "master": "EGRESS_STAIR_EAST_02",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_STAIR_EE_B2_B1 | egress ramp",
+   "master": "EGRESS_STAIR_EAST_03",
+   "coined": true
+  },
+  {
+   "kimi": "ARCH_STAIR_EE_B1_L1 | egress ramp",
+   "master": "EGRESS_STAIR_EAST_04",
+   "coined": true
+  }
+ ]
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "prim3.site0.plan-manifest.v2",
+  "drawing": "PRIM3_Site0_PRIME_ESCAPE_SPINE_SECTION.svg",
+  "revision": "2026-08-14 clean P1 flush-deck correction",
+  "routes": {
+    "P1": "B3 -> external lift -> flush L3 deck",
+    "surface_escape": "B3 -> SOUTH external incline -> grade beyond perimeter -> offsite strip"
+  },
+  "rule": "The two routes are independent; neither creates an elevated L3 bridge/spur."
+}

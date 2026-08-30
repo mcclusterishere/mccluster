@@ -1,0 +1,42 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "here-agent-platform",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "R2_BUCKET_NAME": "mccluster-assets",
+    "AI_SEARCH_NAMESPACE": "default",
+    "ALLOWED_ORIGINS": "https://matthew.mccluster.org"
+  },
+  "r2_buckets": [
+    {
+      "binding": "TENANT_CONTENT",
+      "bucket_name": "mccluster-assets"
+    }
+  ],
+  "ai_search_namespaces": [
+    {
+      "binding": "AI_SEARCH",
+      "namespace": "default",
+      "remote": true
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "HereTenantAgent",
+        "class_name": "HereTenantAgent"
+      }
+    ]
+  },
+  "exports": {
+    "HereTenantAgent": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  }
+}

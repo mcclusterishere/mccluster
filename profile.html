@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Profile · Equity Uprise</title>
+  <meta name="description" content="An Equity Uprise profile: what someone cares about, what they're trying to do next, and how to find them. Public to read, controlled by the person it belongs to.">
+  <link rel="canonical" href="https://matthew.mccluster.org/profile.html">
+  <link rel="icon" type="image/png" href="assets/img/eu-favicon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="People on Equity Uprise">
+  <meta property="og:description" content="Profiles on the Equity Uprise platform: what people care about and what they're trying to do next. Public to read, controlled by the person they belong to.">
+  <meta property="og:url" content="https://matthew.mccluster.org/profile.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/uprise-still.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": "https://matthew.mccluster.org/profile.html#page",
+        "url": "https://matthew.mccluster.org/profile.html",
+        "name": "People on Equity Uprise",
+        "description": "Public profiles on the Equity Uprise platform.",
+        "isPartOf": { "@id": "https://matthew.mccluster.org/#website" },
+        "publisher": { "@id": "https://matthew.mccluster.org/#mccluster-corp" },
+        "inLanguage": "en-US"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://matthew.mccluster.org/" },
+          { "@type": "ListItem", "position": 2, "name": "Equity Uprise", "item": "https://matthew.mccluster.org/equity-uprise.html" },
+          { "@type": "ListItem", "position": 3, "name": "People", "item": "https://matthew.mccluster.org/profile.html" }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/equity-uprise-app.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+</head>
+<body class="songpage" data-mh-cta="Your dashboard|dashboard.html">
+
+  <main class="eua">
+
+    <!-- ============ somebody's public profile ============ -->
+    <section id="pubView" hidden>
+      <p class="eua__kicker" id="pKind">Equity Uprise</p>
+      <h1 id="pName">—</h1>
+      <p class="eua__lede" id="pHeadline"></p>
+      <p class="eua-row__when" id="pWhere"></p>
+
+      <div class="eua__sec">
+        <p style="line-height:1.75;color:var(--cream-dim)" id="pBio"></p>
+        <div class="eua-tags" id="pTags" style="margin-top:1rem"></div>
+        <div class="eua-tags" id="pLinks" style="margin-top:1rem"></div>
+      </div>
+
+      <div class="eua__sec" id="pGoalsWrap" hidden>
+        <h2>What they're trying to do</h2>
+        <p style="line-height:1.75;color:var(--cream-dim)" id="pGoals"></p>
+      </div>
+
+      <div class="eua__sec">
+        <h2>On the record</h2>
+        <div id="pVoices"><p class="eua-empty">Loading…</p></div>
+      </div>
+    </section>
+
+    <!-- ============ the directory of people ============ -->
+    <section id="dirView" hidden>
+      <p class="eua__kicker"><img src="assets/img/equity-uprise-logo.webp" alt="" style="filter:none"> Equity Uprise · People</p>
+      <h1>Who's here.</h1>
+      <p class="eua__lede">Everyone below chose to be public. What they care about is what the fellowship matching runs on — which is the whole reason to fill one in.</p>
+      <div class="eua-actions">
+        <a class="btn btn--ruby" href="profile.html?edit=1">Make yours</a>
+      </div>
+      <div class="eua-grid eua__sec" id="dirList"></div>
+    </section>
+
+    <!-- ============ your own profile ============ -->
+    <section id="editView" hidden>
+      <p class="eua__kicker">Your profile</p>
+      <h1>Public to read.<br>Yours to <em>control.</em></h1>
+      <p class="eua__lede">Everything on this page is shown to anyone unless you say otherwise. Nothing that could be used to <em>reach</em> you is on it — that lives on the next card down, and no editor can read it.</p>
+
+      <div class="eua-gate" id="editGate">
+        <h3>You'll need to sign in</h3>
+        <p>One account across the whole house — the same one that runs your client console and your card.</p>
+        <div class="eua-actions"><a class="btn btn--ruby" href="account.html">Sign in</a></div>
+      </div>
+
+      <form id="editForm" hidden>
+        <div style="display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))">
+          <label class="eua-field"><span>Handle</span><input type="text" id="eHandle" required
+            pattern="[A-Za-z0-9][A-Za-z0-9._-]{1,38}" placeholder="ashan-voyage">
+            <span class="eua-help">Your address here: profile.html?p=your-handle</span></label>
+          <label class="eua-field"><span>Display name</span><input type="text" id="eName" required></label>
+        </div>
+        <label class="eua-field"><span>One line about you</span><input type="text" id="eHeadline" maxlength="160"></label>
+        <label class="eua-field"><span>The longer version</span><textarea id="eBio"></textarea></label>
+
+        <div style="display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))">
+          <label class="eua-field"><span>Where you are</span><input type="text" id="eLoc" placeholder="Bridgeport, CT"></label>
+          <label class="eua-field"><span>Region code, for matching</span><input type="text" id="eRegion" placeholder="CT"></label>
+        </div>
+        <label class="eua-check"><input type="checkbox" id="eShowLoc">
+          <span><b>Show where I am on my public profile.</b> Off by default. The region code is used for matching either way and is never printed as an address.</span></label>
+
+        <label class="eua-field"><span>What you care about, comma separated</span>
+          <input type="text" id="eInterests" placeholder="surveillance, housing, journalism">
+          <span class="eua-help">These are the tags the fellowship matching actually runs on. Be specific.</span></label>
+
+        <label class="eua-field"><span>What you're trying to do next</span><textarea id="eGoals" style="min-height:5rem"></textarea></label>
+
+        <label class="eua-field"><span>Open to</span>
+          <select id="eOpenTo" multiple size="5" style="height:auto">
+            <option value="fellowships">Fellowships and programs</option>
+            <option value="organizing">Organizing</option>
+            <option value="speaking">Speaking</option>
+            <option value="mentoring">Mentoring others</option>
+            <option value="hiring">Being hired</option>
+          </select></label>
+
+        <label class="eua-field"><span>Links, one per line — label | url</span>
+          <textarea id="eLinks" style="min-height:5rem" placeholder="My work | https://example.org"></textarea></label>
+
+        <label class="eua-field"><span>Who can see this profile</span>
+          <select id="eVis">
+            <option value="public">Public — anyone can read it</option>
+            <option value="unlisted">Unlisted — only people with the link</option>
+            <option value="private">Private — only me and the desk</option>
+          </select></label>
+
+        <label class="eua-check"><input type="checkbox" id="eHost">
+          <span><b>I run a fellowship or program.</b> Turns on the listing form on the directory page. Your listings still go through the queue.</span></label>
+
+        <div class="eua-actions"><button class="btn btn--ruby" type="submit">Save profile</button>
+          <a class="btn btn--ghost" id="eViewLink" href="#">View it public</a></div>
+        <p class="eua-say" id="eSay" aria-live="polite"></p>
+      </form>
+
+      <!-- the private card -->
+      <div class="eua__sec" id="contactWrap" hidden>
+        <h2>How to reach you</h2>
+        <p class="eua__note" style="margin-top:0">A separate table with a separate wall. Editors — fellows helping run the platform — cannot read any of this. Only you and the owner can.</p>
+        <form id="contactForm">
+          <div style="display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))">
+            <label class="eua-field"><span>Email</span><input type="email" id="cEmail" autocomplete="email"></label>
+            <label class="eua-field"><span>Phone</span><input type="text" id="cPhone" autocomplete="tel"></label>
+          </div>
+          <label class="eua-check"><input type="checkbox" id="cEmailOpt"><span>Email me about programs and deadlines that fit what I said I care about.</span></label>
+          <label class="eua-check"><input type="checkbox" id="cSmsOpt"><span>Text me. Nothing is sent until you say yes here, and one word stops it forever.</span></label>
+          <div class="eua-actions"><button class="btn btn--ghost" type="submit">Save contact</button></div>
+          <p class="eua-say" id="cSay" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <p class="eua__note eua__sec">Equity Uprise is a program of McCluster Corp, founded by
+      <a href="matthew-mccluster.html">Matthew McCluster</a>. Its
+      <a href="equity-uprise.html">public record and 2025 fellowship cohort</a> are on the
+      program page.</p>
+
+  </main>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/eu-api.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+    function $(id) { return document.getElementById(id); }
+    var params = new URLSearchParams(location.search);
+    var handle = params.get("p");
+    var wantEdit = params.get("edit") === "1";
+
+    /* ---------- somebody's profile ---------- */
+    /* A profile lives at profile.html?p=handle, and the canonical in the
+       head names the bare directory — correct for the directory, wrong for
+       a person, because it tells Google every profile is really the same
+       page and none of them should be indexed on their own. So a rendered
+       profile re-points its own canonical, og:url and title at itself. On
+       a static host this is the best available: Google does read
+       JS-updated canonicals, just less eagerly than server-rendered ones. */
+    function retarget(handle) {
+      var url = "https://matthew.mccluster.org/profile.html?p=" + encodeURIComponent(handle);
+      var c = document.querySelector('link[rel="canonical"]');
+      if (c) c.setAttribute("href", url);
+      var og = document.querySelector('meta[property="og:url"]');
+      if (og) og.setAttribute("content", url);
+    }
+
+    function drawPublic(p) {
+      $("pubView").hidden = false;
+      retarget(p.handle);
+      document.title = p.display_name + " · Equity Uprise";
+      $("pKind").textContent = p.kind === "organization" ? "Organization" : (p.role === "host" ? "Runs a program" : "Equity Uprise");
+      $("pName").textContent = p.display_name;
+      $("pHeadline").textContent = p.headline || "";
+      $("pWhere").textContent = p.location || "";
+      $("pBio").textContent = p.bio || "";
+      $("pTags").innerHTML = (p.interests || []).map(function (t) {
+        return '<a class="eua-tag eua-tag--flat" href="fellowships.html">' + esc(t) + "</a>";
+      }).join("");
+      $("pLinks").innerHTML = (p.links || []).map(function (l) {
+        return '<a class="eua-tag" href="' + esc(l.href) + '" target="_blank" rel="noopener">' + esc(l.label || l.href) + "</a>";
+      }).join("");
+      if (p.goals) { $("pGoalsWrap").hidden = false; $("pGoals").textContent = p.goals; }
+
+      EU.voices(null, 40).then(function (rows) {
+        var mine = rows.filter(function (v) { return v.handle === p.handle; });
+        $("pVoices").innerHTML = mine.length
+          ? mine.map(function (v) {
+              return '<div class="eua-row"><div class="eua-row__top">' +
+                '<a class="eua-row__t" href="topics.html?topic=' + encodeURIComponent(v.topic_slug) + '">' + esc(v.topic_slug) + "</a>" +
+                '<span class="eua-row__when">' + new Date(v.created_at).toLocaleDateString() + "</span></div>" +
+                '<p class="eua-row__body">' + esc(v.body) + "</p></div>";
+            }).join("")
+          : '<p class="eua-empty">Nothing public on the record yet.</p>';
+      });
+    }
+
+    /* ---------- the people directory ---------- */
+    function drawDirectory() {
+      $("dirView").hidden = false;
+      EU.directory(60).then(function (rows) {
+        $("dirList").innerHTML = rows.length
+          ? rows.map(function (p) {
+              return '<a class="eua-card" href="profile.html?p=' + encodeURIComponent(p.handle) + '">' +
+                '<span class="eua-card__eyebrow">' + esc(p.role === "host" ? "Runs a program" : p.kind) + "</span>" +
+                '<span class="eua-card__h">' + esc(p.display_name) + "</span>" +
+                '<span class="eua-card__sub">' + esc(p.headline || "") + "</span>" +
+                '<span class="eua-card__meta">' + (p.interests || []).slice(0, 3).map(function (t) {
+                  return '<span class="eua-tag eua-tag--flat">' + esc(t) + "</span>";
+                }).join("") + "</span></a>";
+            }).join("")
+          : '<p class="eua-empty">Nobody public yet. <a href="profile.html?edit=1">Be first.</a></p>';
+      });
+    }
+
+    /* ---------- your own ---------- */
+    function drawEditor() {
+      $("editView").hidden = false;
+      if (!EU.uid()) return;
+      $("editGate").hidden = true;
+      $("editForm").hidden = false;
+      $("contactWrap").hidden = false;
+
+      EU.me().then(function (p) {
+        if (!p) return;
+        $("eHandle").value = p.handle || "";
+        $("eName").value = p.display_name || "";
+        $("eHeadline").value = p.headline || "";
+        $("eBio").value = p.bio || "";
+        $("eLoc").value = p.location || "";
+        $("eRegion").value = p.region || "";
+        $("eShowLoc").checked = !!p.show_location;
+        $("eInterests").value = (p.interests || []).join(", ");
+        $("eGoals").value = p.goals || "";
+        $("eVis").value = p.visibility || "public";
+        $("eHost").checked = p.role === "host";
+        $("eLinks").value = (p.links || []).map(function (l) { return (l.label || "") + " | " + (l.href || ""); }).join("\n");
+        Array.prototype.slice.call($("eOpenTo").options).forEach(function (o) {
+          o.selected = (p.open_to || []).indexOf(o.value) > -1;
+        });
+        $("eViewLink").href = "profile.html?p=" + encodeURIComponent(p.handle || "");
+      });
+
+      EU.contact().then(function (c) {
+        if (!c) return;
+        $("cEmail").value = c.email || "";
+        $("cPhone").value = c.phone || "";
+        $("cEmailOpt").checked = !!c.email_optin;
+        $("cSmsOpt").checked = !!c.sms_optin;
+      });
+    }
+
+    $("editForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var say = $("eSay");
+      say.className = "eua-say"; say.textContent = "Saving…";
+      var links = $("eLinks").value.split("\n").map(function (line) {
+        var bits = line.split("|");
+        if (bits.length < 2) return null;
+        return { label: bits[0].trim(), href: bits.slice(1).join("|").trim() };
+      }).filter(Boolean);
+
+      EU.saveProfile({
+        handle: $("eHandle").value.trim().toLowerCase(),
+        display_name: $("eName").value.trim(),
+        headline: $("eHeadline").value.trim(),
+        bio: $("eBio").value.trim(),
+        location: $("eLoc").value.trim(),
+        region: $("eRegion").value.trim().toUpperCase(),
+        show_location: $("eShowLoc").checked,
+        interests: $("eInterests").value.split(",").map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean),
+        goals: $("eGoals").value.trim(),
+        open_to: Array.prototype.slice.call($("eOpenTo").selectedOptions).map(function (o) { return o.value; }),
+        links: links,
+        visibility: $("eVis").value,
+        role: $("eHost").checked ? "host" : undefined,
+      }).then(function () {
+        say.className = "eua-say is-ok"; say.textContent = "Saved.";
+        $("eViewLink").href = "profile.html?p=" + encodeURIComponent($("eHandle").value.trim().toLowerCase());
+      }).catch(function (err) {
+        say.className = "eua-say is-bad";
+        say.textContent = /duplicate|unique/i.test(String(err))
+          ? "That handle is taken. Try another."
+          : /handle_shape/i.test(String(err))
+            ? "Handles are letters, numbers, dots, dashes and underscores — 2 to 39 of them."
+            : "That didn't save. Check the handle and try again.";
+      });
+    });
+
+    $("contactForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var say = $("cSay");
+      say.className = "eua-say"; say.textContent = "Saving…";
+      EU.saveContact({
+        email: $("cEmail").value.trim(),
+        phone: $("cPhone").value.trim(),
+        email_optin: $("cEmailOpt").checked,
+        sms_optin: $("cSmsOpt").checked,
+      }).then(function () {
+        say.className = "eua-say is-ok"; say.textContent = "Saved. Only you and the owner can read this.";
+      }).catch(function () {
+        say.className = "eua-say is-bad"; say.textContent = "That didn't save. Save your profile first, then try again.";
+      });
+    });
+
+    /* ---------- route ---------- */
+    if (handle) {
+      EU.profile(handle).then(function (p) {
+        if (p) drawPublic(p);
+        else {
+          $("dirView").hidden = false;
+          $("dirList").innerHTML = '<p class="eua-empty">No public profile at that handle.</p>';
+          drawDirectory();
+        }
+      });
+    } else if (wantEdit || EU.uid()) {
+      drawEditor();
+    } else {
+      drawDirectory();
+    }
+  })();
+  </script>
+</body>
+</html>

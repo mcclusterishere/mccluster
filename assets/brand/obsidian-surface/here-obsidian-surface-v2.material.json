@@ -1,0 +1,46 @@
+{
+  "name": "HERE Obsidian Surface v2",
+  "version": "2.0.0",
+  "resolution": [
+    2048,
+    2048
+  ],
+  "tileable": true,
+  "workflow": "PBR metallic-roughness dielectric stone",
+  "role": "Primary structural surface material for the existing HERE app reskin",
+  "maps": {
+    "baseColor": "here-obsidian-surface-v2-basecolor.png",
+    "normal": "here-obsidian-surface-v2-normal.png",
+    "roughness": "here-obsidian-surface-v2-roughness.png",
+    "height": "here-obsidian-surface-v2-height.png",
+    "ambientOcclusion": "here-obsidian-surface-v2-ao.png",
+    "metallic": "here-obsidian-surface-v2-metallic.png",
+    "veinMask": "here-obsidian-surface-v2-vein-mask.png",
+    "rubyVeinMask": "here-obsidian-surface-v2-ruby-vein-mask.png",
+    "scrollLightMask": "here-obsidian-surface-v2-scroll-light-mask.png",
+    "specularProxy": "here-obsidian-surface-v2-specular-proxy.png",
+    "clearcoatMask": "here-obsidian-surface-v2-clearcoat-mask.png"
+  },
+  "recommended": {
+    "metalness": 0.0,
+    "roughnessScale": 1.0,
+    "normalScale": [
+      0.45,
+      0.45
+    ],
+    "heightScale": 0.01,
+    "clearcoat": 0.35,
+    "clearcoatRoughness": 0.14,
+    "environmentIntensity": 0.55,
+    "rubyEmissionColor": "#C1121F",
+    "rubyEmissionIdle": 0.0,
+    "rubyEmissionActive": 1.6,
+    "rubyEmissionPeak": 3.5
+  },
+  "reskinRules": {
+    "do": "Apply to existing dark surfaces while preserving layout and content hierarchy.",
+    "doNot": "Do not wrap every section in new geometry. Do not replace media-first areas with marble blocks.",
+    "motion": "Move light/camera response across normal, roughness and scrollLightMask. Keep stone itself physically stable.",
+    "ruby": "Ruby may appear only through rubyVeinMask when context already supports a red accent or active transition."
+  }
+}
