@@ -227,6 +227,30 @@
       "box-shadow:inset 0 1px 0 rgba(255,255,255,0.55),0 14px 34px -14px rgba(229,56,59,0.55);" +
       "transition:transform 0.3s cubic-bezier(0.2,0.7,0.2,1)}" +
     "@media (hover:hover){.clm button[type=submit]:hover,.clm .clm__go:hover{transform:translateY(-2px)}}" +
+    /* TWO THINGS TO BUY, SIDE BY SIDE. The row is a grid rather than a pair
+       of inline pills: each card carries a price, a name and a line, so the
+       choice is made by reading it, not by hovering it. It goes one-up on a
+       phone so neither option is the small one. */
+    ".clm__buys{display:grid;gap:0.7rem;margin-top:1.3rem;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))}" +
+    ".clm .clm__buys .clm__go{display:grid;gap:0.15rem;text-align:left;padding:1rem 1.2rem;border-radius:18px;letter-spacing:0.04em;text-transform:none;font-size:0.95rem}" +
+    ".clm__buys .clm__go b{font-family:var(--serif);font-style:italic;font-size:1.5rem;letter-spacing:0;line-height:1}" +
+    ".clm__buys .clm__go span{font-weight:800;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;opacity:0.9}" +
+    ".clm__buys .clm__go small{font-weight:500;font-size:0.76rem;opacity:0.75;letter-spacing:0}" +
+    /* the second option is the same door, quieter: one primary per screen */
+    ".clm .clm__buys .clm__go--alt{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.34)}" +
+    /* the three colorways: chips, because only one has been photographed and
+       a tinted photograph would be a promise the shot cannot keep */
+    /* the kicker was a 100%-basis flex item among wrapping chips, and it
+       still got squeezed onto a shared line. A label above a row is two
+       blocks, so it is built as two blocks and cannot be squeezed at all. */
+    ".clm__ways{margin-top:1.2rem}" +
+    ".clm__waysk{margin:0 0 0.55rem;font-weight:800;font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;opacity:0.55}" +
+    ".clm__wayrow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:0.5rem}" +
+    ".clm__way{display:inline-flex;align-items:center;gap:0.5em;font-weight:700;font-size:0.78rem;" +
+      "border-radius:100px;padding:0.4em 0.9em 0.4em 0.45em;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.22)}" +
+    ".clm__way i{width:1.05rem;height:1.05rem;border-radius:100px;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.35)}" +
+    ".clm__way small{font-weight:800;font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;opacity:0.6}" +
+    ".clm__way.is-shot{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.5)}" +
     ".clm__alt{display:block;margin-top:1rem;font-weight:700;font-size:0.7rem;color:inherit;opacity:0.8}" +
     ".clm__ok,.clm__err{font-weight:700;font-size:0.82rem;margin-top:0.9rem}" +
     ".clm__ok{color:inherit}.clm__err{color:var(--ruby-hot)}" +
@@ -304,6 +328,47 @@
     return null;
   }
 
+  /* WHAT THERE IS TO BUY.
+
+     A drop used to be one thing at one price, so `preorder` carried one
+     link. This one is a hoodie at one price and a hoodie-and-jogger set at
+     another, and a room that shows a single button has to pick which
+     customer to lose. `options` is the list; each entry answers checkoutOf()
+     on its own, so one option can move to Shopify while the other is still
+     on Square.
+
+     A drop with no `options` falls back to the single link, which is the
+     shape every other drop in this ledger has ever had. */
+  /* THE THREE COLORWAYS.
+
+     One garment, three colors, and only one of them has been photographed.
+     The swatches say which is which and mark the shot one, rather than the
+     page implying three sets of shots it does not have -- a color chip is an
+     honest promise, a tinted photograph is not. The buyer names their
+     colorway at checkout, so these are here to be read, not clicked. */
+  function colorwaysHtml(d) {
+    var cw = d.colorways || [];
+    if (cw.length < 2) return "";
+    return '<div class="clm__ways"><p class="clm__waysk">Three colorways &middot; name yours at checkout</p>' +
+      '<div class="clm__wayrow">' + cw.map(function (c) {
+        return '<span class="clm__way' + (c.shot ? " is-shot" : "") + '">' +
+          '<i style="background:' + esc(c.hex) + '"></i>' + esc(c.name) +
+          (c.shot ? " <small>shown</small>" : "") + "</span>";
+      }).join("") + "</div></div>";
+  }
+
+  function buysOf(pre) {
+    if (!pre) return [];
+    var opts = (pre.options || []).map(function (o) {
+      var c = checkoutOf(o);
+      return c ? { id: o.id, label: o.label, price: o.price, note: o.note, via: c.via, viaId: c.id, href: c.href } : null;
+    }).filter(Boolean);
+    if (opts.length) return opts;
+    var one = checkoutOf(pre);
+    return one ? [{ id: "only", label: "Preorder", price: pre.deposit, note: null,
+                    via: one.via, viaId: one.id, href: one.href }] : [];
+  }
+
   fetch(ROOT + "data/prayer-closet.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
     var drops = j.drops || [];
     var idx = -1;
@@ -331,7 +396,11 @@
       var k = document.getElementById("dphK");
       if (k) k.textContent = "Prayer Closet · " + (d.tag || "Drop " + d.no) + " · " + (STATUS[d.status] || d.status);
       var meta = document.getElementById("dphMeta");
-      if (meta) meta.innerHTML = [d.garment, d.color.name, d.reference,
+      /* a drop with three colorways has no single colour to name here, so
+         the strip counts them and the swatches downstairs do the naming */
+      var wayLabel = (d.colorways && d.colorways.length > 1)
+        ? d.colorways.length + " colorways" : d.color.name;
+      if (meta) meta.innerHTML = [d.garment, wayLabel, d.reference,
         colab.name ? "with " + colab.name : null].filter(Boolean).map(function (m) {
           return "<span>" + esc(m) + "</span>"; }).join("");
     }
@@ -433,8 +502,9 @@
     var live = d.status === "live" && d.offering;
     var soldOut = d.status === "sold-out";
     var pre = d.preorder || {};
-    var buy = checkoutOf(pre);
-    var preLive = !!buy;
+    var buys = buysOf(pre);
+    var buy = buys[0] || null;          // the room's voice follows the first option
+    var preLive = buys.length > 0;
     var sizes = d.sizes || [];
     var sizesHtml = sizes.length ?
       '<div class="sizes" id="clmSizes" role="group" aria-label="Size">' + sizes.map(function (s) {
@@ -450,15 +520,23 @@
     } else if (preLive) {
       /* the honesty layer: a preorder states its terms where the money moves.
          Ledger-driven: set preorder.terms (array of strings) to override. */
-      var sizeLine = buy.id === "shopify"
-        /* on the store the variant IS the size, so it is picked before the
-           money moves; the email step below only ever existed because a
-           Square payment link cannot carry one */
-        ? "<b>Sizing:</b> pick your size at checkout (" + (sizes[0] || "S") + " to " + (sizes[sizes.length - 1] || "2XL") + ")"
-        : "<b>Sizing &amp; customization:</b> chosen by email right after checkout (" +
-          (sizes[0] || "S") + " to " + (sizes[sizes.length - 1] || "2XL") + ")";
+      /* THE SIZING LINE HAS TO DESCRIBE THE CHECKOUT THAT IS ACTUALLY OPEN.
+
+         It promised "chosen by email right after checkout" for years, which
+         was true of a bare Square payment link and of nothing else. Shopify
+         takes the size as a variant; Square takes it too once the link
+         carries custom fields, which these now do. So the email step is
+         claimed only where the ledger has not been told otherwise -- a
+         promise of a step that no longer happens is worse than no promise. */
+      var range = (sizes[0] || "S") + " to " + (sizes[sizes.length - 1] || "2XL");
+      var atCheckout = buy.viaId === "shopify" || pre.sizeAtCheckout !== false;
+      var sizeLine = atCheckout
+        ? "<b>Size &amp; colorway:</b> both chosen at checkout (" + range + ")"
+        : "<b>Sizing &amp; customization:</b> chosen by email right after checkout (" + range + ")";
       var terms = (pre.terms && pre.terms.length) ? pre.terms : [
-        "<b>What ships:</b> " + esc(d.garment) + " in " + esc(d.color.name) + ", every placement on the tech pack above",
+        "<b>What ships:</b> " + esc(d.garment) + " in " +
+          ((d.colorways && d.colorways.length > 1) ? "the colorway you pick" : esc(d.color.name)) +
+          ", every placement on the tech pack above",
         "<b>When:</b> about four weeks from order to door. Tracking lands in your email",
         sizeLine,
         "<b>Change of heart:</b> full refund any time before your set ships. One email does it",
@@ -469,7 +547,14 @@
           : "The set is in production. A preorder holds your edition before the rail opens. Checkout runs through " +
             buy.via + ", and the house ships the moment the garments land.") + "</p>" +
         (pre.deposit ? '<span class="clm__dep">' + money(pre.deposit) + "<small>preorder &middot; through " + buy.via + "</small></span>" : "") +
-        '<a class="clm__go" style="margin-top:1.3rem" id="clmBuy" href="' + esc(buy.href) + '" rel="noopener">Preorder through ' + buy.via + ' &#8594;</a>' +
+        colorwaysHtml(d) +
+        '<div class="clm__buys">' + buys.map(function (o, i) {
+          return '<a class="clm__go' + (i ? " clm__go--alt" : "") + '" data-buy="' + esc(o.id) +
+            '" href="' + esc(o.href) + '" rel="noopener">' +
+            (o.price ? '<b>' + money(o.price) + "</b>" : "") +
+            "<span>" + esc(o.label) + "</span>" +
+            (o.note ? "<small>" + esc(o.note) + "</small>" : "") + "</a>";
+        }).join("") + "</div>" +
         '<span class="clm__alt">Not ready? <a href="#" id="clmClaimAlt" style="color:inherit">Put your name on the list instead</a>.</span>' +
         '<div id="clmClaimWrap" hidden>' + sizesHtml +
         '<form id="clmForm"><input name="name" placeholder="Your name" autocomplete="name" maxlength="80" required>' +
@@ -630,9 +715,13 @@
     });
 
     /* ----- preorder: whichever checkout the ledger named carries it ----- */
-    var sq = document.getElementById("clmBuy");
-    if (sq) sq.addEventListener("click", function () {
-      track("closet_preorder_click", { drop: d.slug, via: buy.id, deposit: pre.deposit || null });
+    var buyRow = document.querySelector(".clm__buys");
+    if (buyRow) buyRow.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest("[data-buy]");
+      if (!a) return;
+      var pick = buys.filter(function (o) { return o.id === a.getAttribute("data-buy"); })[0];
+      track("closet_preorder_click", { drop: d.slug, option: pick && pick.id,
+        price: pick && pick.price, via: pick && pick.viaId });
     });
     var alt = document.getElementById("clmClaimAlt");
     if (alt) alt.addEventListener("click", function (e) {
@@ -671,6 +760,6 @@
     });
 
     track("closet_drop_view", { drop: d.slug, status: d.status, chapter: d.chapter,
-      preorder: preLive, via: buy ? buy.id : null });
+      preorder: preLive, options: buys.length, via: buy ? buy.viaId : null });
   }).catch(function () {});
 })();

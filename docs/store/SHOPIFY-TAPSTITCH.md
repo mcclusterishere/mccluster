@@ -60,14 +60,29 @@ Verified in a browser, not assumed:
 - The Acquire room replaces first-claim capture with a live checkout
   button reading **Preorder through the store →**.
 - The deposit chip reads `$333 · preorder · through the store`.
-- The sizing term rewrites itself from *"chosen by email right after
-  checkout"* to **"pick your size at checkout (S to 2XL)"** — because on
-  Shopify the variant is the size, and the email step only ever existed
-  because a Square payment link cannot carry one. Leaving that line
-  wrong would be the site promising a step that no longer happens.
+- The sizing term describes the checkout that is actually open. It used
+  to promise *"chosen by email right after checkout"*, which was true of
+  a bare payment link and of nothing else. The live Square links now
+  carry size and colorway as custom fields, and Shopify takes size as a
+  variant, so the line reads **"size & colorway: both chosen at
+  checkout."** A site that promises a step which no longer happens is
+  worse than one that says nothing.
 
-`shopify` outranks `square`, so switching a drop over is one paste and
-never a delete. Drop 001 keeps its Square link underneath as a fallback.
+`shopify` outranks `square` on each option, so switching over is one
+paste and never a delete. The Square links stay underneath as fallback.
+
+## Two prices, one drop
+
+The drop sells as a hoodie ($66) or a full set ($120), so `preorder`
+carries an `options` list rather than a single link — each entry with its
+own price and its own `square`/`shopify` pair. **One option can move to
+Shopify while the other stays on Square.** A drop with no `options` falls
+back to the single `preorder.square` shape.
+
+Square caps a payment link at **two custom fields, 50 characters each**,
+which is why the set's link asks one combined "Sizes: hoodie / joggers"
+question instead of two separate ones. On Shopify this stops being a
+constraint — sizes become real variants.
 
 ## The order flow once it is live
 

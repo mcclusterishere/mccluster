@@ -4,7 +4,7 @@
  "season": {
   "id": "season-001",
   "name": "SEASON 001: MATTHEW",
-  "line": "Three drops, three chapters, one Gospel, cut in threes for the Trinity. The garment attracts the eye; the Word gives it meaning.",
+  "line": "One drop, three colorways, cut from Matthew 10. The garment attracts the eye; the Word gives it meaning.",
   "gospel": "Matthew",
   "translation": {
    "code": "web",
@@ -33,350 +33,11 @@
  },
  "drops": [
   {
-   "slug": "seek-first",
-   "no": "001",
-   "tag": "Halo Drop 1/3",
-   "title": "SEEK FIRST",
-   "garment": "Heavyweight hoodie + jogger set · oversized fit, 100% cotton",
-   "phrase": "Kingdom Steppa",
-   "support": "Seek First the Kingdom",
-   "reference": "Matthew 6:33",
-   "book": "matthew",
-   "chapter": 6,
-   "theme": [
-    "Priorities",
-    "Provision",
-    "Trust",
-    "Kingdom"
-   ],
-   "color": {
-    "name": "Washed Blue",
-    "hex": "#476990",
-    "ink": "#f4efe6",
-    "note": "washed indigo denim-blue. Premium heavyweight 100% cotton, oversized fit, DTG print (sampled off the production mockup, revision 2, 2026-07-30)"
-   },
-   "cover": "assets/img/closet/seek-first/sf-card.jpg",
-   "coverW": 663,
-   "coverH": 895,
-   "media": [
-    {
-     "id": "sf-front",
-     "type": "photo",
-     "role": "front",
-     "src": "assets/img/closet/seek-first/sf-front.jpg",
-     "w": 732,
-     "h": 895,
-     "note": "Front: the Kingdom Steppa crest, sleeve hits, and the hip reticle"
-    },
-    {
-     "id": "sf-back",
-     "type": "photo",
-     "role": "back",
-     "src": "assets/img/closet/seek-first/sf-back.jpg",
-     "w": 718,
-     "h": 895,
-     "note": "Back: the HM AMMO halo mark"
-    },
-    {
-     "id": "sf-crest",
-     "type": "photo",
-     "role": "detail",
-     "src": "assets/img/closet/seek-first/sf-crest.jpg",
-     "w": 266,
-     "h": 262,
-     "note": "Front chest, the Kingdom Steppa crest: armor over an open Bible at Matthew 6"
-    },
-    {
-     "id": "sf-mark",
-     "type": "photo",
-     "role": "detail",
-     "src": "assets/img/closet/seek-first/sf-mark.jpg",
-     "w": 440,
-     "h": 402,
-     "note": "Full back: HM AMMO, the halo mark"
-    },
-    {
-     "id": "sf-sword",
-     "type": "photo",
-     "role": "detail",
-     "src": "assets/img/closet/seek-first/sf-sword.jpg",
-     "w": 192,
-     "h": 434,
-     "note": "Sleeve: the WAR ROOM sword"
-    },
-    {
-     "id": "sf-sleeve",
-     "type": "photo",
-     "role": "detail",
-     "src": "assets/img/closet/seek-first/sf-sleeve.jpg",
-     "w": 194,
-     "h": 474,
-     "note": "Sleeve: SEEK FIRST, under the jet"
-    },
-    {
-     "id": "sf-33",
-     "type": "photo",
-     "role": "detail",
-     "src": "assets/img/closet/seek-first/sf-33.jpg",
-     "w": 188,
-     "h": 144,
-     "note": "Front hip: the 33 reticle (Matthew 6:33)"
-    },
-    {
-     "id": "sf-fabric",
-     "type": "photo",
-     "role": "detail",
-     "src": "assets/img/closet/seek-first/sf-fabric.jpg",
-     "w": 220,
-     "h": 210,
-     "note": "The cloth: washed heavyweight cotton"
-    }
-   ],
-   "status": "preview",
-   "collaborator": "hitman",
-   "editionQty": null,
-   "price": null,
-   "offering": null,
-   "preorder": {
-    "deposit": 333,
-    "shopify": null,
-    "square": "https://square.link/u/1FiIyL0C",
-    "how": "Enter $333 at Square, then answer your receipt email with your size and customization choices; the desk takes it from there. Custom drop set, about four weeks from order to door.",
-    "note": "LIVE on Square: the 'Hitman Halo Drop 1/3' link (customer-enters-amount type; the description on Square names $333). TO MOVE THIS DROP TO THE STORE: paste the Shopify product URL into `shopify` above. It outranks `square` on next load with no code change — the button, the deposit chip and the terms all re-word themselves, and the sizing line stops promising an email because the store takes the size at checkout. Leave the Square link where it is; it is the fallback, not a conflict. terms: null uses the standard honesty block; set an array of strings to override.",
-    "terms": null
-   },
-   "sizes": [
-    "S",
-    "M",
-    "L",
-    "XL",
-    "2XL"
-   ],
-   "fulfillment": [
-    "direct",
-    "finished"
-   ],
-   "line": "The opener. Provision without panic. The drop about what comes first.",
-   "why": "Matthew 6 is the chapter about untangling worry from want. The set wears the answer on the chest: seek first, and the rest follows the walk.",
-   "briefing": {
-    "mission": "Get the order right. Kingdom first, then watch worry lose its job.",
-    "points": [
-     {
-      "k": "The secret place",
-      "ref": "Matthew 6:6",
-      "v": 6,
-      "p": "The chapter names the closet itself: pray with the door shut, seen only by the Father. Everything this brand hangs on starts in that room."
-     },
-     {
-      "k": "Two masters",
-      "ref": "Matthew 6:24",
-      "v": 24,
-      "p": "You can't serve God and money. A garment that hangs in a store and still says it is the whole tension of the drop: own things without being owned."
-     },
-     {
-      "k": "Birds and lilies",
-      "ref": "Matthew 6:26-29",
-      "v": 26,
-      "p": "Provision without panic. The birds don't stockpile and the lilies out-dress a king. The argument against worry is the Father's track record."
-     },
-     {
-      "k": "Seek first",
-      "ref": "Matthew 6:33",
-      "v": 33,
-      "p": "The order of operations on the back of the set: kingdom first, righteousness first, and 'all these things' get added, not chased."
-     }
-    ],
-    "questions": [
-     "What actually comes first in your week? Check the calendar, not the intentions.",
-     "Where does worry currently do your deciding for you?",
-     "What would 'seek first' change about tomorrow morning, concretely?"
-    ],
-    "prayer": "Father, order me. Put first in me what You put first, and quiet what worry keeps loud. I'll seek the Kingdom. You handle the rest. Amen."
-   },
-   "placements": [
-    {
-     "id": "sf-chest",
-     "area": "front",
-     "method": "dtg",
-     "phrase": "Kingdom Steppa",
-     "productionNotes": "front chest crest: body armor over an open Bible at Matthew 6, a magazine resting on the page, halo above, KINGDOM STEPPA lockup below",
-     "art": "assets/img/closet/art/kingdom-steppa-crest.png"
-    },
-    {
-     "id": "sf-back",
-     "area": "back",
-     "method": "dtg",
-     "phrase": "HM · AMMO",
-     "productionNotes": "full back: the halo mark, oversized",
-     "art": "assets/img/hm-mark.png"
-    },
-    {
-     "id": "sf-sleeve-l",
-     "area": "left-sleeve",
-     "method": "dtg",
-     "phrase": "SEEK FIRST",
-     "productionNotes": "vertical, under the jet glyph · print master is the black artwork (seek-first-print.png)",
-     "art": "assets/img/closet/art/seek-first.png"
-    },
-    {
-     "id": "sf-sleeve-r",
-     "area": "right-sleeve",
-     "method": "dtg",
-     "phrase": "WAR ROOM",
-     "productionNotes": "the halo sword, running the sleeve",
-     "art": "assets/img/closet/art/war-room-sword.png"
-    },
-    {
-     "id": "sf-hip",
-     "area": "pocket",
-     "method": "dtg",
-     "phrase": "33",
-     "productionNotes": "reticle over the pocket, Matthew 6:33",
-     "art": "assets/img/closet/art/reticle-33.png"
-    },
-    {
-     "id": "sf-leg-r",
-     "area": "right-leg",
-     "method": "dtg",
-     "phrase": "Kingdom Steppa",
-     "productionNotes": "jogger right leg: the set's other half, not yet photographed"
-    },
-    {
-     "id": "sf-label",
-     "area": "inside-label",
-     "method": "dtg",
-     "phrase": "PRAYER CLOSET · HM-MT6",
-     "productionNotes": "QR to /closet/seek-first.html rides here"
-    }
-   ]
-  },
-  {
-   "slug": "salt-and-light",
-   "no": "002",
-   "tag": "Halo Drop 2/3",
-   "title": "SALT & LIGHT",
-   "garment": "Heavyweight hoodie + jogger set",
-   "phrase": "Most High Fashion",
-   "support": "Light of the World",
-   "reference": "Matthew 5:14-16",
-   "book": "matthew",
-   "chapter": 5,
-   "theme": [
-    "Identity",
-    "Character",
-    "Influence",
-    "Visibility"
-   ],
-   "color": {
-    "name": "Black",
-    "hex": "#0d0b0a",
-    "ink": "#f4efe6",
-    "note": "black"
-   },
-   "status": "coming-soon",
-   "collaborator": "hitman",
-   "editionQty": null,
-   "price": null,
-   "offering": null,
-   "preorder": {
-    "deposit": null,
-    "shopify": null,
-    "square": null,
-    "note": "ADMIN: this drop has no checkout yet, so its room is on first-claim capture. Fill in ONE of the two above and it goes live on next load, no deploy: `shopify` with the product URL from the Shopify store TapStitch fulfils from (preferred — it takes the size at checkout and the garment is made and shipped automatically), or `square` with a payment link from Square Dashboard → Payment Links (sizes then come back by email and the production order is placed by hand). Set `deposit` in dollars either way; the checkout owns the real price and the page only displays this number. terms: null uses the standard honesty block; set an array of strings to override.",
-    "terms": null
-   },
-   "sizes": [
-    "S",
-    "M",
-    "L",
-    "XL",
-    "2XL"
-   ],
-   "fulfillment": [
-    "direct",
-    "finished"
-   ],
-   "line": "The black set. A city on a hill can't be hidden. Neither can this.",
-   "why": "Matthew 5 names who the wearer already is: salt that keeps its taste, light that isn't for hiding. The darkest colorway carries the brightest claim on purpose.",
-   "briefing": {
-    "mission": "Know what you already are: salt that keeps its taste, light that was never meant to hide.",
-    "points": [
-     {
-      "k": "Blessed are…",
-      "ref": "Matthew 5:3-10",
-      "v": 3,
-      "p": "The Beatitudes flip the scoreboard before the chapter asks for anything: the poor in spirit, the mourners, the meek: blessed first, assigned second."
-     },
-     {
-      "k": "Salt of the earth",
-      "ref": "Matthew 5:13",
-      "v": 13,
-      "p": "Flavor and preservation. The warning isn't about failing. It's about going bland and calling it blending in."
-     },
-     {
-      "k": "A city on a hill",
-      "ref": "Matthew 5:14-16",
-      "v": 14,
-      "p": "Visibility is the design, not the accident. Let the light land where people see it, and let the credit travel up, not out."
-     },
-     {
-      "k": "But I tell you",
-      "ref": "Matthew 5:21-44",
-      "v": 21,
-      "p": "Six times the chapter takes the law deeper: anger, honesty, retaliation, enemies. The standard moves from the hands to the heart."
-     }
-    ],
-    "questions": [
-     "Where have you dimmed on purpose, and who taught you to?",
-     "Salt works by contact. Where does your life actually touch people who taste the difference?",
-     "Which 'but I tell you' lands hardest on you right now?"
-    ],
-    "prayer": "God, keep the taste in me. Set my light where You want it seen, and let the glory travel past me to You. Amen."
-   },
-   "placements": [
-    {
-     "id": "sl-chest",
-     "area": "front",
-     "method": "dtg",
-     "phrase": "Most High Fashion",
-     "productionNotes": "front chest"
-    },
-    {
-     "id": "sl-back",
-     "area": "back",
-     "method": "dtg",
-     "phrase": "Light of the World · Matthew 5:14",
-     "productionNotes": "full back"
-    },
-    {
-     "id": "sl-sleeve-r",
-     "area": "right-sleeve",
-     "method": "dtg",
-     "phrase": "SALT & LIGHT",
-     "productionNotes": ""
-    },
-    {
-     "id": "sl-leg-l",
-     "area": "left-leg",
-     "method": "dtg",
-     "phrase": "MT 5:14-16",
-     "productionNotes": "jogger left leg"
-    },
-    {
-     "id": "sl-label",
-     "area": "inside-label",
-     "method": "dtg",
-     "phrase": "PRAYER CLOSET · HM-MT5",
-     "productionNotes": ""
-    }
-   ]
-  },
-  {
    "slug": "sent",
-   "no": "003",
-   "tag": "Halo Drop 3/3",
+   "no": "001",
+   "tag": "The Halo Drop",
    "title": "SENT",
-   "garment": "Heavyweight hoodie + jogger set",
+   "garment": "Heavyweight hoodie · oversized fleece. Joggers in the full set",
    "phrase": "Heav Yeah",
    "support": "Wise as Serpents. Innocent as Doves.",
    "reference": "Matthew 10:16",
@@ -417,16 +78,35 @@
      "note": "Back: the M chevron over the HM AMMO halo mark"
     }
    ],
-   "status": "coming-soon",
+   "status": "preview",
    "collaborator": "hitman",
    "editionQty": null,
    "price": null,
    "offering": null,
    "preorder": {
+    "options": [
+     {
+      "id": "hoodie",
+      "label": "The hoodie",
+      "price": 66,
+      "square": "https://square.link/u/DhtsVxFW",
+      "shopify": null,
+      "note": "Hoodie only, any of the three colorways."
+     },
+     {
+      "id": "set",
+      "label": "The full set",
+      "price": 120,
+      "square": "https://square.link/u/qqDcUQS7",
+      "shopify": null,
+      "note": "Hoodie and joggers together."
+     }
+    ],
     "deposit": null,
     "shopify": null,
-    "square": null,
-    "note": "ADMIN: this drop has no checkout yet, so its room is on first-claim capture. Fill in ONE of the two above and it goes live on next load, no deploy: `shopify` with the product URL from the Shopify store TapStitch fulfils from (preferred — it takes the size at checkout and the garment is made and shipped automatically), or `square` with a payment link from Square Dashboard → Payment Links (sizes then come back by email and the production order is placed by hand). Set `deposit` in dollars either way; the checkout owns the real price and the page only displays this number. terms: null uses the standard honesty block; set an array of strings to override.",
+    "square": "https://square.link/u/DhtsVxFW",
+    "how": "Preorder now, made to order. Size and colorway are chosen at checkout, so nothing has to come back by email. About four weeks from order to door.",
+    "note": "LIVE on Square: two Quick Pay links created 2026-08-30 on location LYTBAM2H7536B. Both ask for the shipping address and carry two custom fields (size, colorway), which is why the standard terms no longer promise an email for sizing. TO MOVE TO SHOPIFY LATER: fill `shopify` on an option and it outranks that option's `square` on next load, no code change. terms: null uses the standard honesty block; set an array of strings to override.",
     "terms": null
    },
    "sizes": [
@@ -441,7 +121,7 @@
     "finished"
    ],
    "line": "The field set. Sent out sharp and clean, both at once.",
-   "why": "Matthew 10 is marching orders: go, travel light, be shrewd without losing your innocence. Olive drab because the mission is real.",
+   "why": "Matthew 10 is marching orders: go, travel light, be shrewd without losing your innocence. Washed black, washed blue, black — three colorways of one field set, because the mission is real and it is one mission.",
    "briefing": {
     "mission": "Marching orders: go light, go wise, go anyway.",
     "points": [
@@ -526,6 +206,29 @@
      "method": "dtg",
      "phrase": "PRAYER CLOSET · HM-MT10",
      "productionNotes": ""
+    }
+   ],
+   "colorways": [
+    {
+     "id": "washed-black",
+     "name": "Washed Black",
+     "hex": "#3a3a3c",
+     "ink": "#f4efe6",
+     "shot": true
+    },
+    {
+     "id": "washed-blue",
+     "name": "Washed Blue",
+     "hex": "#476990",
+     "ink": "#f4efe6",
+     "shot": false
+    },
+    {
+     "id": "black",
+     "name": "Black",
+     "hex": "#0d0b0a",
+     "ink": "#f4efe6",
+     "shot": false
     }
    ]
   }

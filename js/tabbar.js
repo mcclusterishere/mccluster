@@ -269,7 +269,6 @@
        served any more — see _unfinished/README.md. */
     "sites.html": "sites",
     "prayer-closet.html": "sites", "inner-room.html": "sites",
-    "seek-first.html": "sites", "salt-and-light.html": "sites",
     "sent.html": "sites", "give.html": "sites"
     /* policy.html and policy-memo-dna.html carry the bar now but claim no
        wing: the site's own ledger files them under matthew, and neither page

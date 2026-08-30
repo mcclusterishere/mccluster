@@ -258,11 +258,12 @@ html { scroll-behavior: smooth; }
        itself is listed under "The house" with the rest of the studio, not
        repeated here — the group is named for what is peculiar to it. */
     { group: "The Closet", rooms: [
-      { href: "prayer-closet.html",        label: "The Closet: Season 001" },
-      { href: "closet/seek-first.html",    label: "Halo Drop 1/3 · Seek First" },
-      { href: "closet/salt-and-light.html", label: "Halo Drop 2/3 · Salt & Light" },
-      { href: "closet/sent.html",          label: "Halo Drop 3/3 · Sent" },
-      { href: "inner-room.html",           label: "The Inner Room: read & pray" },
+      { href: "prayer-closet.html",  label: "The Closet: Season 001" },
+      /* Season 001 was three drops and is one, in three colorways, by the
+         owner's call. Seek First and Salt & Light are retired; their rooms
+         and their redirects are gone with them. */
+      { href: "closet/sent.html",    label: "The Halo Drop · Heav'Yeah" },
+      { href: "inner-room.html",     label: "The Inner Room: read & pray" },
     ] },
     { group: "The house", rooms: [
       { href: "hire.html",      label: "Hire the desk" },

@@ -146,13 +146,37 @@ page edits, no redeploy-per-drop; surfaces repaint on next load.
   working because they encode the drop slug, not the host. Until then,
   everything serves from matthew.mccluster.org.
 
-## Season 001, Matthew · three drops, for the Trinity
+## Season 001, Matthew · one drop, three colorways
 
-| # | Drop | Phrase | Chapter | Colorway | Status |
-|---|---|---|---|---|---|
-| Halo Drop 1/3 | SEEK FIRST | Kingdom Steppa | Mt 6 | **Washed Blue** | **Preorder live**: $333 via Square ("Hitman Halo Drop 1/3") · photographed |
-| Halo Drop 2/3 | SALT & LIGHT | Most High Fashion | Mt 5 | Black | Coming soon: first-claim capture |
-| Halo Drop 3/3 | SENT | Heav Yeah | Mt 10 | Olive | Coming soon: first-claim capture |
+The season was three drops. The owner cut it to one on 2026-08-30:
+**SENT / Heav'Yeah**, in three colorways. SEEK FIRST and SALT & LIGHT are
+retired — their ledger entries, their rooms (`closet/seek-first.html`,
+`closet/salt-and-light.html`) and their redirects are removed. Seek
+First's photography is still in `assets/img/closet/seek-first/`, kept
+because it is real work and costs nothing to leave; delete it whenever.
+
+| Drop | Phrase | Chapter | Colorways | Status |
+|---|---|---|---|---|
+| The Halo Drop · SENT | Heav Yeah | Mt 10 | **Washed Black** (photographed) · Washed Blue · Black | **Preorder live**, two prices |
+
+**The prices**, and the two Square links carrying them (created
+2026-08-30, location `LYTBAM2H7536B`):
+
+| What | Price | Link |
+|---|---|---|
+| The hoodie | **$66** | `https://square.link/u/DhtsVxFW` |
+| The full set, hoodie + joggers | **$120** | `https://square.link/u/qqDcUQS7` |
+
+Both ask for the shipping address and carry two custom fields — size and
+colorway — so the buyer names both at checkout. That is why the drop
+room's standard terms no longer promise an email for sizing: the step
+does not happen any more. See `sizeAtCheckout` in the ledger if a future
+link ever goes back to a bare payment link.
+
+The ledger models this as `preorder.options`: a list, each entry with its
+own price and its own `square` / `shopify` pair, so one option can move to
+a Shopify store while the other stays on Square. A drop with no `options`
+falls back to the single `preorder.square` every earlier drop used.
 
 **The bench:** COMMISSION (Mt 28, Stone) sits whole in the ledger's
 `benched` array, off every surface, one move away from re-hanging
