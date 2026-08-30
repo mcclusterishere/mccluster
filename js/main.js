@@ -1493,11 +1493,19 @@
     });
   })();
 
-  /* The brand mark's 3D spin stood here. Its only target on this page was
-     the little M in the site footer, and the footer is gone — so the tween
-     was warning "target .brand__mark not found" on every load and animating
-     nothing. The masthead styles a .brand__mark of its own; if one ever
-     lands on this page again, the spin comes back with it. */
+  /* ---------------- brand mark: 3D spin with the scroll ---------------- */
+  /* Its only target on this page is the little M at the head of the footer,
+     so it went quiet for exactly as long as the footer was gone — and warned
+     "target .brand__mark not found" on every load while it was. The guard is
+     cheap and the page is one edit away from losing the mark again. */
+  if (document.querySelector(".brand__mark")) {
+    gsap.set(".brand__mark", { transformPerspective: 480 });
+    gsap.to(".brand__mark", {
+      rotationY: 1080,
+      ease: "none",
+      scrollTrigger: { start: 0, end: "max", scrub: 0.6 },
+    });
+  }
 
   /* ---------------- debug handle (used by the verification harness) ---------------- */
   window.__MCC = {
