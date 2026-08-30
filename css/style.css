@@ -316,7 +316,12 @@ html[data-theme="light"] .sound-toggle{border-color:rgba(26,20,13,0.3)}
    is still pinned, and it rides above it — so the night scroll DISSOLVES in
    over the fly-through instead of sliding up with an edge. js/main.js fades
    .services .command__sticky in across the first slice of this section's
-   own scroll; the two films now hand the screen over without a seam. */
+   own scroll; the two films now hand the screen over without a seam.
+   That same file also HOLDS the night scroll on its opening frame for the
+   length of the dissolve — the shot starts above the cloud line, coming out
+   of the aircraft, and it was being scrubbed away behind an opacity still
+   climbing out of zero. The length here and the trigger's end distance are
+   a pair: see PB_HANDOVER in js/main.js before changing either. */
 .services{position:relative;z-index:2;min-height:220svh;margin-top:-100svh}
 .services .command__sticky{position:sticky;top:0;height:100svh;opacity:0}
 .services .command__count{display:none}
@@ -2241,14 +2246,22 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
 }
 
 /* ============================================================
-   THE BRIEFING — two rules, three seconds, then the cabin is yours.
+   THE BRIEFING — the rules, three seconds, then the cabin is yours.
    The old card stacked a caution triangle, a compass rose and
    flashing red text and still said nothing quickly. This one is a
    single pane of dark glass with the operator's mark on it.
+
+   It was also a 23rem chip floating in the middle of a film, and
+   it read like a cookie notice: small, polite, skippable. Nobody
+   skips it now — the page is parked behind it — so it takes the
+   room it needs: a headline you cannot scroll past, one line of
+   why, and the three rules under that. Bigger is the whole point;
+   the card is the only thing to look at for three seconds, so it
+   should look like it knows that.
    ============================================================ */
 .vrbrief { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center;
-  padding: 1.2rem; opacity: 0; visibility: hidden;
-  background: rgba(6,5,4,.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  padding: 1.1rem; opacity: 0; visibility: hidden;
+  background: rgba(6,5,4,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   transition: opacity .5s ease, visibility .5s; pointer-events: none; }
 .vrbrief.is-on { opacity: 1; visibility: visible; pointer-events: auto; }
 .vrbrief.is-gone { opacity: 0; visibility: hidden; pointer-events: none; }
@@ -2260,45 +2273,81 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
    (the entrance animation fills forwards, so it has to be cleared before
    a transform of ours can land) */
 .vrbrief.is-ready .vrbrief__card { pointer-events: none; animation: none;
-  transform: scale(.95); opacity: .94; transition: transform .45s cubic-bezier(.2,.7,.2,1), opacity .45s ease; }
+  transform: scale(.9); opacity: .92; transition: transform .45s cubic-bezier(.2,.7,.2,1), opacity .45s ease; }
 .vrbrief.is-ready .vrbrief__go { pointer-events: auto; }
+/* released, the card stops shouting the parts that were only for the hold */
+.vrbrief.is-ready .vrbrief__lede { opacity: 0; }
 
-.vrbrief__card { position: relative; width: min(23rem, 88vw); text-align: center;
-  padding: 1.5rem 1.4rem 1.3rem; border-radius: 22px; color: var(--cream);
-  background: linear-gradient(180deg, rgba(22,17,15,.94), rgba(10,8,7,.96));
-  box-shadow: inset 0 0 0 1px rgba(244,239,230,.14), inset 0 1px 0 rgba(255,255,255,.1),
-    0 34px 80px -28px rgba(0,0,0,.95);
-  animation: vrBriefIn .55s cubic-bezier(.2,.7,.2,1) both; }
-@keyframes vrBriefIn { from { opacity: 0; transform: translateY(14px) scale(.97); }
+.vrbrief__card { position: relative; width: min(34rem, 94vw); max-height: 100%; overflow: auto;
+  text-align: center; padding: 1.9rem 1.7rem 1.7rem; border-radius: 26px; color: var(--cream);
+  background: linear-gradient(180deg, rgba(24,18,16,.96), rgba(9,7,6,.975));
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.16), inset 0 1px 0 rgba(255,255,255,.12),
+    0 44px 110px -30px rgba(0,0,0,.98);
+  animation: vrBriefIn .6s cubic-bezier(.16,1.03,.3,1) both,
+             vrBriefBreathe 2.6s ease-in-out .6s infinite; }
+@keyframes vrBriefIn { from { opacity: 0; transform: translateY(20px) scale(.9); }
                        to { opacity: 1; transform: none; } }
-.vrbrief__logo { width: 46px; height: 46px; border-radius: 12px; object-fit: cover;
-  box-shadow: 0 0 0 1px rgba(244,239,230,.18); }
-.vrbrief__k { margin: .7rem 0 1.1rem; font: 800 .6rem var(--body); letter-spacing: .26em;
+/* the pane is dark and still; one slow lit edge keeps the card alive on it
+   without another thing blinking at the visitor */
+@keyframes vrBriefBreathe {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(244,239,230,.16), inset 0 1px 0 rgba(255,255,255,.12),
+               0 44px 110px -30px rgba(0,0,0,.98); }
+  50%      { box-shadow: inset 0 0 0 1px rgba(248,76,10,.5), inset 0 1px 0 rgba(255,255,255,.14),
+               0 44px 110px -30px rgba(0,0,0,.98), 0 0 44px -6px rgba(248,76,10,.42); }
+}
+.vrbrief__logo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(244,239,230,.2); }
+.vrbrief__k { margin: .75rem 0 .5rem; font: 800 .63rem var(--body); letter-spacing: .28em;
   text-transform: uppercase; color: rgba(244,239,230,.62); }
+
+/* THE LINE THEY ACTUALLY READ. Display face, two stacked lines, the
+   second one in the operator's colour: the rule and the invitation, in
+   the order the visitor needs them. */
+.vrbrief__title { margin: 0 0 .6rem; font-family: var(--display); font-weight: 400;
+  font-size: clamp(1.7rem, 6.8vw, 2.9rem); line-height: .98; letter-spacing: .012em;
+  text-transform: uppercase; color: #fff; }
+.vrbrief__title span { display: block; }
+.vrbrief__title span + span { color: var(--vaunt); }
+.vrbrief__lede { margin: 0 auto 1.15rem; max-width: 29rem;
+  font: 500 .95rem/1.45 var(--body); color: var(--cream-dim); transition: opacity .4s ease; }
+
 .vrbrief__rules { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; text-align: left; }
-.vrbrief__rules li { display: flex; align-items: center; gap: .75rem;
-  padding: .7rem .85rem; border-radius: 13px; background: rgba(244,239,230,.05);
-  box-shadow: inset 0 0 0 1px rgba(244,239,230,.09); }
-.vrbrief__rules svg { flex: none; width: 22px; height: 22px; fill: none; stroke: var(--ruby-hot);
+.vrbrief__rules li { display: flex; align-items: center; gap: .8rem;
+  padding: .8rem .95rem; border-radius: 15px; background: rgba(244,239,230,.06);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); }
+.vrbrief__rules svg { flex: none; width: 25px; height: 25px; fill: none; stroke: var(--ruby-hot);
   stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.vrbrief__rules span { font: 500 .92rem var(--body); color: var(--cream-dim); }
+.vrbrief__rules span { font: 500 1rem/1.3 var(--body); color: var(--cream-dim); }
 .vrbrief__rules b { color: var(--cream); font-weight: 800; }
 
-.vrbrief__count { display: grid; place-items: center; width: 62px; height: 62px; margin: 1.1rem auto .2rem;
+.vrbrief__count { display: grid; place-items: center; width: 74px; height: 74px; margin: 1.15rem auto .2rem;
   border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(244,239,230,.16); position: relative; }
 .vrbrief__count::after { content: ""; position: absolute; inset: -2px; border-radius: 50%;
   border: 2px solid transparent; border-top-color: var(--ruby-hot);
   animation: vrBriefSpin 1s linear infinite; }
-.vrbrief__count b { font-family: var(--display); font-size: 2rem; line-height: 1; color: #f4efe6;
+.vrbrief__count b { font-family: var(--display); font-size: 2.5rem; line-height: 1; color: #f4efe6;
   animation: vrBriefTick .95s ease-out; }
 @keyframes vrBriefSpin { to { transform: rotate(360deg); } }
 @keyframes vrBriefTick { from { transform: scale(1.5); opacity: .3; } to { transform: none; opacity: 1; } }
 
-.vrbrief__go { display: none; margin: 1rem auto 0; -webkit-appearance: none; appearance: none;
-  border: 0; cursor: pointer; border-radius: 99px; padding: .8rem 1.5rem; background: var(--metal);
-  color: #fff; font: 800 .72rem var(--body); letter-spacing: .14em; text-transform: uppercase; }
+.vrbrief__go { display: none; margin: 1.1rem auto 0; -webkit-appearance: none; appearance: none;
+  border: 0; cursor: pointer; border-radius: 99px; padding: .95rem 1.9rem; background: var(--metal);
+  color: #fff; font: 800 .8rem var(--body); letter-spacing: .16em; text-transform: uppercase; }
 .vrbrief.is-ready .vrbrief__count { display: none; }
 .vrbrief.is-ready .vrbrief__go { display: block; }
+
+/* a short viewport (landscape phones, small laptops) gets the same card
+   with the trimmings taken off, rather than a card that runs off the pane */
+@media (max-height: 720px) {
+  .vrbrief__card { padding: 1.35rem 1.3rem 1.2rem; }
+  .vrbrief__logo { width: 42px; height: 42px; }
+  .vrbrief__title { font-size: clamp(1.4rem, 5vw, 1.9rem); }
+  .vrbrief__lede { display: none; }
+  .vrbrief__rules li { padding: .6rem .8rem; }
+  .vrbrief__rules span { font-size: .92rem; }
+  .vrbrief__count { width: 58px; height: 58px; margin-top: .85rem; }
+  .vrbrief__count b { font-size: 1.9rem; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .vrbrief__card { animation: none; }
