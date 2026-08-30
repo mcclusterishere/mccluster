@@ -661,10 +661,12 @@
      without flying out of it, so nobody did.
 
      The cabin now holds the page for as long as you are in it. The two
-     doors are the two doors on screen: Back to the card, and Land. (The
-     brand mark up top and the Escape key release it too, because a room
-     with no key is a trap, not a room.) With the page frozen, a drag is
-     unambiguously a look, and the briefing has a reader.
+     doors are the two doors on screen: Back to the card, and Land. Escape
+     lands it too, because a room with no key that is not a pixel is a
+     trap, not a room. (releaseAndGoTop below is a third door, wired to a
+     masthead brand mark that this page does not currently render — it
+     costs nothing and it works the moment one does.) With the page frozen,
+     a drag is unambiguously a look, and the briefing has a reader.
 
      Lenis owns this page's scrolling (wheel AND touch, via syncTouch), so
      stopping it is most of the job; the native listeners are the belt to
@@ -1071,9 +1073,11 @@
     duration: 1, ease: "power4.out", stagger: 0.05,
     scrollTrigger: { trigger: "#book", start: "top 70%" },
   });
-  gsap.from(".finale__actions .btn", {
-    y: 40, opacity: 0, duration: 0.8, ease: "power3.out", stagger: 0.12,
-    scrollTrigger: { trigger: ".finale__actions", start: "top 92%" },
+  /* the four buttons this staggered are gone — one room stands where they
+     did (js/lockroom.js), so there is one thing to bring in, not four */
+  gsap.from(".lockroom", {
+    y: 40, opacity: 0, duration: 0.8, ease: "power3.out",
+    scrollTrigger: { trigger: "#book", start: "top 78%" },
   });
 
   // magnetic buttons
@@ -1139,8 +1143,6 @@
     var zones = [
       { sel: "#hero", track: HOUSE_TRACK },
       { sel: "#pillars", track: HOUSE_TRACK },
-      { sel: "#uprise", track: HOUSE_TRACK },
-      { sel: "#wings", track: HOUSE_TRACK },
       { sel: "#work", track: HOUSE_TRACK },
       { sel: "#book", track: HOUSE_TRACK },
     ];
@@ -1471,25 +1473,31 @@
         onEnter: function () { track("section_view", { section: sel.slice(1), page: "home" }); },
       });
     });
-    // CTAs, song gates, and nav clicks
-    document.querySelectorAll(".head-cta, .finale__actions .btn, .song-gate, .site-foot a, a[data-cta]").forEach(function (el) {
-      el.addEventListener("click", function () {
-        track("cta_click", {
-          label: (el.textContent || "").trim().slice(0, 60),
-          href: el.getAttribute("href") || "",
-          page: "home",
-        });
+    /* CTAs, song gates, and nav clicks.
+
+       This was a querySelectorAll at load, which counted only the doors
+       that were already in the markup — and two of the five selectors
+       (.finale__actions .btn, .site-foot a) now match nothing at all,
+       while the door the room hands you after a brief is written later
+       and was never counted. One delegated listener counts whatever is
+       on the page when the tap lands. */
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest) return;
+      var el = e.target.closest(".head-cta, .song-gate, a[data-cta]");
+      if (!el) return;
+      track("cta_click", {
+        label: (el.textContent || "").trim().slice(0, 60),
+        href: el.getAttribute("href") || "",
+        page: "home",
       });
     });
   })();
 
-  /* ---------------- brand mark: 3D spin with the scroll, flashing ---------------- */
-  gsap.set(".brand__mark", { transformPerspective: 480 });
-  gsap.to(".brand__mark", {
-    rotationY: 1080,
-    ease: "none",
-    scrollTrigger: { start: 0, end: "max", scrub: 0.6 },
-  });
+  /* The brand mark's 3D spin stood here. Its only target on this page was
+     the little M in the site footer, and the footer is gone — so the tween
+     was warning "target .brand__mark not found" on every load and animating
+     nothing. The masthead styles a .brand__mark of its own; if one ever
+     lands on this page again, the spin comes back with it. */
 
   /* ---------------- debug handle (used by the verification harness) ---------------- */
   window.__MCC = {
@@ -1500,39 +1508,12 @@
     loadedMax: function (k) { return sequences[k || "hero"].loadedMax; },
   };
 
-  /* ---------------- Square gates: subscribe + paid inquiry call ---------------- */
-  (function () {
-    function wire(id, entry, pendingText) {
-      var btn = document.getElementById(id);
-      if (!btn) return;
-      if (entry && entry.link) {
-        btn.href = entry.link;
-        btn.target = "_blank";
-        btn.rel = "noopener";
-        btn.addEventListener("click", function () {
-          if (window.MCC_TRACK) window.MCC_TRACK("cta_click", { label: id === "subscribeBtn" ? "subscribe-home" : "book-call-home", page: "home" });
-        });
-      } else if (id === "bookCallBtn") {
-        // no calendar yet: a working booking email beats a dead button
-        btn.href = "mailto:matthew@mccluster.org?subject=" +
-          encodeURIComponent("Book a Paid Call · McCluster") +
-          "&body=" + encodeURIComponent("I'd like to book a paid discovery call. Here's what I'm looking to do:\n\n");
-        btn.addEventListener("click", function () {
-          if (window.MCC_TRACK) window.MCC_TRACK("cta_click", { label: "book-call-home", page: "home" });
-        });
-      } else {
-        btn.classList.add("is-pending");
-        btn.addEventListener("click", function (e) {
-          e.preventDefault();
-          btn.textContent = pendingText;
-        });
-      }
-    }
-    var pay = window.PAYMENTS || {};
-    wire("subscribeBtn", pay.subscribe, "Subscriptions open soon");
-    wire("bookCallBtn", pay.bookcall, "Booking opens soon");
-    wire("bookCallStat", pay.bookcall, "Booking opens soon");
-  })();
+  /* The Square gates stood here, wiring Book a call, Subscribe and the
+     stat-block booking button to window.PAYMENTS. All three lived inside
+     .finale__actions, which the room replaced, and this file only ever
+     loads on the home page — so the whole block had nothing left to find.
+     js/payments.js still carries the entries; hire.html and the pay page
+     are where they are spent now. */
 
   /* ---------------- anchor links through Lenis ---------------- */
   document.querySelectorAll('a[href^="#"]').forEach(function (a) {
