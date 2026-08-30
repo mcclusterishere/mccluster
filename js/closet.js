@@ -251,6 +251,25 @@
     ".clm__way i{width:1.05rem;height:1.05rem;border-radius:100px;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.35)}" +
     ".clm__way small{font-weight:800;font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;opacity:0.6}" +
     ".clm__way.is-shot{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.5)}" +
+    /* THE MARKS. A reading list, not a tile grid: the artwork sits beside
+       the meaning and the verse sits under it, at a measure somebody will
+       actually finish. Emblems are transparent artwork on a dark page, so
+       they need no frame — only room. */
+    ".mrk{display:grid;gap:1.6rem;margin-top:1.6rem}" +
+    ".mrk__row{display:grid;grid-template-columns:7.5rem 1fr;gap:clamp(1rem,3vw,1.8rem);align-items:start}" +
+    ".mrk__art{display:grid;place-items:center;min-height:6rem}" +
+    ".mrk__art img{max-width:100%;max-height:8.5rem;width:auto;height:auto;" +
+      "filter:drop-shadow(0 10px 26px rgba(0,0,0,0.7))}" +
+    ".mrk__txt b{display:block;font-family:var(--ui);font-weight:800;font-size:0.72rem;" +
+      "letter-spacing:0.2em;text-transform:uppercase;color:var(--ruby-hot)}" +
+    ".mrk__txt p{margin:0.45rem 0 0;font-size:1rem;line-height:1.6;opacity:0.9}" +
+    ".mrk__v{margin:0.85rem 0 0;padding:0.75rem 0 0.1rem 1rem;border-left:2px solid rgba(229,56,59,0.55);" +
+      "font-family:var(--serif);font-style:italic;font-size:1.02rem;line-height:1.55;opacity:0.92}" +
+    ".mrk__v span{display:block;margin-bottom:0.3rem;font-family:var(--ui);font-style:normal;" +
+      "font-weight:800;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;opacity:0.6}" +
+    ".mrk__tr{margin-top:1.8rem;font-size:0.78rem;opacity:0.45}" +
+    "@media (max-width:640px){.mrk__row{grid-template-columns:1fr;gap:0.9rem}" +
+      ".mrk__art{justify-items:start;min-height:0}.mrk__art img{max-height:7rem}}" +
     ".clm__alt{display:block;margin-top:1rem;font-weight:700;font-size:0.7rem;color:inherit;opacity:0.8}" +
     ".clm__ok,.clm__err{font-weight:700;font-size:0.82rem;margin-top:0.9rem}" +
     ".clm__ok{color:inherit}.clm__err{color:var(--ruby-hot)}" +
@@ -389,12 +408,12 @@
         '<span class="dph__wm" aria-hidden="true">M' + d.chapter + "</span>" +
         (heroShot ? '<span class="dph__field" aria-hidden="true">' + photo(heroShot, d.title + " · " + d.garment) + "</span>"
                   : hanger(d.color.ink)) +
-        '<span class="dph__em"><img src="' + esc(emblem) + '" alt=""><b>Prayer&nbsp;Closet</b></span>' +
+        '<span class="dph__em"><img src="' + esc(emblem) + '" alt=""><b>Hitman&nbsp;Halo</b></span>' +
         '<button class="dph__share" type="button" id="dphShare">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2.6"/><circle cx="17.5" cy="5.5" r="2.6"/><circle cx="17.5" cy="18.5" r="2.6"/><path d="M8.3 10.7l6.9-4M8.3 13.3l6.9 4"/></svg>' +
         "<span>Share</span></button>");
       var k = document.getElementById("dphK");
-      if (k) k.textContent = "Prayer Closet · " + (d.tag || "Drop " + d.no) + " · " + (STATUS[d.status] || d.status);
+      if (k) k.textContent = "Hitman Halo · " + (d.tag || "Drop " + d.no) + " · " + (STATUS[d.status] || d.status);
       var meta = document.getElementById("dphMeta");
       /* a drop with three colorways has no single colour to name here, so
          the strip counts them and the swatches downstairs do the naming */
@@ -477,6 +496,37 @@
       "<p>" + esc(d.why) + "</p>" +
       '<div class="dph__meta" style="margin-top:1rem">' + (d.theme || []).map(function (t) {
         return "<span>" + esc(t) + "</span>"; }).join("") + "</div></section>";
+
+    /* THE MARKS. Every graphic on this garment carries a meaning and a
+       verse, and until now both lived in the owner's head — which is the
+       one place a meaning cannot survive. Each mark shows its own artwork,
+       what it means, and the scripture it is standing on, quoted exactly
+       from the same public-domain translation the chapter rooms serve.
+
+       It reads as a list rather than a grid on purpose: this is the part of
+       the page somebody actually stops and reads, and a verse set in a tile
+       is a verse nobody finishes. */
+    var emb = j.emblems || [];
+    var embHtml = emb.length ?
+      '<section class="dsc rv" id="marks">' +
+      '<p class="dsc__k">The Marks</p>' +
+      '<h2 class="dsc__t">Nothing on it is decoration.</h2>' +
+      '<div class="mrk">' + emb.map(function (e) {
+        return '<article class="mrk__row">' +
+          '<span class="mrk__art"><img src="' + ROOT + esc(e.art) + '" alt="' + esc(e.name) +
+            '" width="' + (e.w || 0) + '" height="' + (e.h || 0) + '" loading="lazy" decoding="async"></span>' +
+          '<div class="mrk__txt">' +
+            "<b>" + esc(e.name) + "</b>" +
+            "<p>" + esc(e.meaning) + "</p>" +
+            (e.scripture || []).map(function (v) {
+              return '<blockquote class="mrk__v"><span>' + esc(v.ref) + "</span>" +
+                     esc(v.text) + "</blockquote>";
+            }).join("") +
+          "</div></article>";
+      }).join("") + "</div>" +
+      '<p class="mrk__tr">Scripture: World English Bible, public domain &middot; ' +
+      'the same text the chapter rooms serve.</p>' +
+      "</section>" : "";
 
     var briefHtml = b.mission ?
       '<section class="dsc rv" id="briefing">' +
@@ -626,7 +676,7 @@
       return '<a href="#' + s[0] + '">' + s[1] + "</a>"; }).join("") + "</nav>";
 
     document.getElementById("dropBody").innerHTML =
-      cmpHtml + lookHtml + msgHtml + wordShell + briefHtml + cloHtml + clmHtml + nxHtml;
+      cmpHtml + lookHtml + msgHtml + embHtml + wordShell + briefHtml + cloHtml + clmHtml + nxHtml;
 
     /* ----- the Word itself, from the house copy of the WEB ----- */
     fetch(ROOT + "data/scripture/" + d.book + "-" + d.chapter + ".json", { cache: "force-cache" })

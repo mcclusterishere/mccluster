@@ -97,7 +97,7 @@
          Chat did not lose anything: it is the second slot of this wing,
          one hold away, with the Inner Room and Give. */
       '<a class="appbar__tab" href="' + ROOT + 'prayer-closet.html" data-appnav="sites">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true">' + HANGER + '</svg><span>Closet</span></a>' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true">' + HANGER + '</svg><span>Hitman</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'account.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
         '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Profile</span></a>';
@@ -209,7 +209,7 @@
            tooltip. Prices are not typed here any more; the conversation
            quotes them from the ledger, and the Closet quotes them from
            whatever checkout carries the drop. */
-        ["prayer-closet.html", "hang", "The Closet", { title: "Prayer Closet",
+        ["prayer-closet.html", "hang", "Hitman Halo", { title: "Hitman Halo",
           sub: "Limited drops with meaning behind the garment. Season 001 cuts three hoodie-and-jogger sets from the book of Matthew." }],
         ["sites.html", "chat", "Chat", { title: "Talk to the desk",
           sub: "Ask what it costs, check whether your address is free, and buy it in the same conversation. A person reads all of it." }],

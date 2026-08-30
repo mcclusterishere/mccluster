@@ -257,12 +257,12 @@ html { scroll-behavior: smooth; }
        files them together: one column of the bar, one group here. Sites
        itself is listed under "The house" with the rest of the studio, not
        repeated here — the group is named for what is peculiar to it. */
-    { group: "The Closet", rooms: [
-      { href: "prayer-closet.html",  label: "The Closet: Season 001" },
+    { group: "Hitman Halo", rooms: [
+      { href: "prayer-closet.html",  label: "Hitman Halo: Season 001" },
       /* Season 001 was three drops and is one, in three colorways, by the
          owner's call. Seek First and Salt & Light are retired; their rooms
          and their redirects are gone with them. */
-      { href: "closet/sent.html",    label: "The Halo Drop · Heav'Yeah" },
+      { href: "closet/sent.html",    label: "The Hitman Halo Drop · Heav'Yeah" },
       { href: "inner-room.html",     label: "The Inner Room: read & pray" },
     ] },
     { group: "The house", rooms: [

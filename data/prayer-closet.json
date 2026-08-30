@@ -4,7 +4,7 @@
  "season": {
   "id": "season-001",
   "name": "SEASON 001: MATTHEW",
-  "line": "One drop, three colorways, cut from Matthew 10. The garment attracts the eye; the Word gives it meaning.",
+  "line": "One drop, three colorways, cut from Matthew 10. Every mark on it carries a meaning and a verse — the garment attracts the eye, the Word gives it weight.",
   "gospel": "Matthew",
   "translation": {
    "code": "web",
@@ -396,8 +396,8 @@
    "name": "Hitman Halo",
    "role": "Artist · collection collaborator",
    "logo": "assets/img/hm-mark.png",
-   "logoNote": "THE OFFICIAL HITMAN MARK: landed 2026-07-30 (HM monogram, the round, the halo). This file is the only HM mark any surface may use; never regenerate or substitute it.",
-   "bio": "Featured on the record: 'Upset' (Hitman Halo × Raheem × Rahndrx) lives in the McCluster catalogue. In the Closet, the Hitman identity reads as purpose, commission, discipline, precision, mission, transformation, and service.",
+   "logoNote": "THE OFFICIAL HITMAN MARK: the HM monogram with the round through it, under the halo. This file is the only HM mark any surface may use; never regenerate or substitute it. PENDING: a new mark is on its way from the owner and replaces this file in place, so every surface that already points here picks it up with no other change.",
+   "bio": "Featured on the record: 'Upset' (Hitman Halo × Raheem × Rahndrx) lives in the McCluster catalogue. On this drop the Hitman identity reads as purpose, commission, discipline, precision, mission, transformation, and service.",
    "drops": [
     "seek-first",
     "salt-and-light",
@@ -430,7 +430,7 @@
    "name": "McCluster Corp",
    "role": "The house",
    "logo": "assets/img/m-mark.png",
-   "bio": "The house behind the Closet: production, fulfillment of finished editions, and the desk every drop ships from.",
+   "bio": "The house behind the drop: production, fulfillment of finished editions, and the desk every drop ships from.",
    "drops": [
     "seek-first",
     "salt-and-light",
@@ -445,5 +445,140 @@
    ]
   }
  ],
- "benchNote": "THE BENCH: Season 001 runs three drops (the Trinity). COMMISSION (Mt 28) is kept whole here, off every surface; move it back into drops[] (or open Season 002 with it) and it re-hangs on next load."
+ "benchNote": "THE BENCH: Season 001 runs three drops (the Trinity). COMMISSION (Mt 28) is kept whole here, off every surface; move it back into drops[] (or open Season 002 with it) and it re-hangs on next load.",
+ "emblems": [
+  {
+   "id": "m",
+   "name": "The M",
+   "art": "assets/img/closet/emblems/m-emblem.webp",
+   "w": 991,
+   "h": 1000,
+   "meaning": "The house mark. Steel and ruby, cut as a chevron: the name everything else on the garment is made under.",
+   "scripture": [
+    {
+     "ref": "Revelation 2:17",
+     "text": "He who has an ear, let him hear what the Spirit says to the assemblies. To him who overcomes, to him I will give of the hidden manna, and I will give him a white stone, and on the stone a new name written, which no one knows but he who receives it."
+    }
+   ],
+   "note": "The mark is white stone with the name cut into it. That is the verse, literally."
+  },
+  {
+   "id": "heav-yeah",
+   "name": "Heav' Yeah",
+   "art": "assets/img/closet/emblems/heav-yeah.webp",
+   "w": 1200,
+   "h": 900,
+   "meaning": "The front crest, and the whole point of the drop. It replaces the idiom 'hell yeah', because the answer is never yes to hell. The yes only ever goes one direction.",
+   "scripture": [
+    {
+     "ref": "2 Corinthians 1:20",
+     "text": "For however many are the promises of God, in him is the “Yes.” Therefore also through him is the “Amen”, to the glory of God through us."
+    },
+    {
+     "ref": "Matthew 5:37",
+     "text": "But let your ‘Yes’ be ‘Yes’ and your ‘No’ be ‘No.’ Whatever is more than these is of the evil one."
+    }
+   ],
+   "note": "Two verses because it is two claims: Christ is the Yes (2 Cor 1:20), and what you say yes to is not a small thing (Mt 5:37). Changing an idiom is a speech act, and Matthew 5 is the speech verse."
+  },
+  {
+   "id": "seek-first",
+   "name": "Seek First the Kingdom",
+   "art": "assets/img/closet/emblems/seek-first.webp",
+   "w": 486,
+   "h": 1000,
+   "meaning": "The left sleeve. The order of operations for a whole life, stacked vertically so you read it top to bottom like a command.",
+   "scripture": [
+    {
+     "ref": "Matthew 6:33",
+     "text": "But seek first God’s Kingdom, and his righteousness; and all these things will be given to you as well."
+    }
+   ],
+   "note": "Printed on the garment with the reference already on it."
+  },
+  {
+   "id": "drone",
+   "name": "The Overwatch",
+   "art": "assets/img/closet/emblems/drone.webp",
+   "w": 700,
+   "h": 273,
+   "meaning": "The drone at the top of the sleeve lockup. Not a weapon here — an eye. Something above you that does not blink, and is on your side.",
+   "scripture": [
+    {
+     "ref": "2 Chronicles 16:9",
+     "text": "For Yahweh’s eyes run back and forth throughout the whole earth, to show himself strong in the behalf of them whose heart is perfect toward him."
+    }
+   ],
+   "note": "Cut from the head of the Seek First lockup. Showing the whole lockup for all three of its marks said nothing; each one carries the part it is."
+  },
+  {
+   "id": "star",
+   "name": "The Morning Star",
+   "art": "assets/img/closet/emblems/star.webp",
+   "w": 700,
+   "h": 410,
+   "meaning": "The interlaced six-point star in its compass, at the foot of the sleeve. A figure that is drawn from one unbroken band and keeps returning through itself.",
+   "scripture": [
+    {
+     "ref": "Revelation 22:16",
+     "text": "I, Jesus, have sent my angel to testify these things to you for the assemblies. I am the root and the offspring of David; the Bright and Morning Star."
+    }
+   ],
+   "note": "Root and offspring at once — the same line arriving from both ends, which is what the interlace draws. If the intent behind it was replication rather than the star of David, 2 Timothy 2:2 is the verse instead: what you were taught, commit to faithful people who will teach others also."
+  },
+  {
+   "id": "war-peace",
+   "name": "War and Peace",
+   "art": "assets/img/closet/emblems/war-peace.webp",
+   "w": 622,
+   "h": 700,
+   "meaning": "The twin slash on both sleeves. Two bars, two seasons: wartime and peacetime. You do not get to pick which one you are in, only how you carry it.",
+   "scripture": [
+    {
+     "ref": "Ecclesiastes 3:8",
+     "text": "a time to love, and a time to hate; a time for war, and a time for peace."
+    }
+   ],
+   "note": "Two lines for the two times. The verse is one sentence with the same shape."
+  },
+  {
+   "id": "thirty-three",
+   "name": "33",
+   "art": "assets/img/closet/emblems/thirty-three.webp",
+   "w": 896,
+   "h": 900,
+   "meaning": "The number in the crown of thorns. The age He was when it finished — and the chapter and verse of the sleeve, Matthew 6:33. The drop's own arithmetic: the number is the age and the address at the same time.",
+   "scripture": [
+    {
+     "ref": "John 19:30",
+     "text": "When Jesus therefore had received the vinegar, he said, “It is finished.” He bowed his head, and gave up his spirit."
+    },
+    {
+     "ref": "Matthew 27:29",
+     "text": "They braided a crown of thorns and put it on his head, and a reed in his right hand; and they kneeled down before him, and mocked him, saying, “Hail, King of the Jews!”"
+    }
+   ],
+   "note": "The wreath is the crown of thorns (Mt 27:29); the number is what it cost (Jn 19:30)."
+  },
+  {
+   "id": "hitman",
+   "name": "The Hitman Halo",
+   "art": "assets/img/hm-mark.png",
+   "w": 512,
+   "h": 512,
+   "meaning": "The HM with the round through it, under the halo. The name is a provocation on purpose: a hitman takes a contract and does not miss. The halo says whose contract, and the scripture says what the target is — and is not.",
+   "scripture": [
+    {
+     "ref": "Ephesians 6:12",
+     "text": "For our wrestling is not against flesh and blood, but against the principalities, against the powers, against the world’s rulers of the darkness of this age, and against the spiritual forces of wickedness in the heavenly places."
+    },
+    {
+     "ref": "2 Corinthians 10:4",
+     "text": "for the weapons of our warfare are not of the flesh, but mighty before God to the throwing down of strongholds,"
+    }
+   ],
+   "note": "ART PENDING: the new HM mark is on its way and replaces assets/img/hm-mark.png here. Ephesians 6:12 is load-bearing for this mark — it is the verse that says the target is never a person, which is the only thing that makes the name wearable."
+  }
+ ],
+ "emblemsNote": "EVERY MARK ON THE GARMENT MEANS SOMETHING, and the meaning is carried here rather than in anyone's memory. Scripture is World English Bible, public domain, the same translation the chapter rooms serve. Quote it exactly or not at all."
 }
