@@ -585,17 +585,30 @@
       (give && give.square ? '<span class="clm__sow">Or simply sow into the season &mdash; <a href="' + esc(give.square) + '" data-sow rel="noopener">give through Square &#8594;</a></span>' : "") +
       "</div></section>";
 
-    var prev = drops[(idx + drops.length - 1) % drops.length];
-    var next = drops[(idx + 1) % drops.length];
-    var nxHtml =
-      '<section class="dsc rv"><div class="dnx">' +
-      '<a href="' + esc(prev.slug) + '.html" style="' + field(prev.color) + '">' +
-        (prev.cover ? '<span class="dnxf" aria-hidden="true">' + photo(prev.cover, "") + "</span>" : "") +
-        '<i>&#8592; ' + esc(prev.tag || "Drop " + prev.no) + "</i><b>" + esc(prev.title) + "</b></a>" +
-      '<a href="' + esc(next.slug) + '.html" style="' + field(next.color) + '">' +
-        (next.cover ? '<span class="dnxf" aria-hidden="true">' + photo(next.cover, "") + "</span>" : "") +
-        '<i>' + esc(next.tag || "Drop " + next.no) + " &#8594;</i><b>" + esc(next.title) + "</b></a>" +
-      '</div><a class="dnx--home" href="' + ROOT + 'prayer-closet.html">Back into the Closet</a></section>';
+    /* THE WALK-ON, when there is somewhere to walk on to.
+
+       prev and next wrap around the drop list, which was right for a season
+       of three and absurd for a season of one: both arrows resolved to the
+       drop you are standing on, so the page offered you two doors back into
+       itself. With a single drop the pair is dropped and only the way back
+       into the Closet is drawn. */
+    var nxHtml;
+    if (drops.length > 1) {
+      var prev = drops[(idx + drops.length - 1) % drops.length];
+      var next = drops[(idx + 1) % drops.length];
+      nxHtml =
+        '<section class="dsc rv"><div class="dnx">' +
+        '<a href="' + esc(prev.slug) + '.html" style="' + field(prev.color) + '">' +
+          (prev.cover ? '<span class="dnxf" aria-hidden="true">' + photo(prev.cover, "") + "</span>" : "") +
+          '<i>&#8592; ' + esc(prev.tag || "Drop " + prev.no) + "</i><b>" + esc(prev.title) + "</b></a>" +
+        '<a href="' + esc(next.slug) + '.html" style="' + field(next.color) + '">' +
+          (next.cover ? '<span class="dnxf" aria-hidden="true">' + photo(next.cover, "") + "</span>" : "") +
+          '<i>' + esc(next.tag || "Drop " + next.no) + " &#8594;</i><b>" + esc(next.title) + "</b></a>" +
+        '</div><a class="dnx--home" href="' + ROOT + 'prayer-closet.html">Back into the Closet</a></section>';
+    } else {
+      nxHtml = '<section class="dsc rv"><a class="dnx--home" href="' + ROOT +
+        'prayer-closet.html">Back into the Closet</a></section>';
+    }
 
     var wordShell =
       '<section class="dsc rv" id="chapter"><div class="word">' +

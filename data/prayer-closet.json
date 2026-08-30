@@ -53,7 +53,7 @@
     "name": "Washed Black",
     "hex": "#3a3a3c",
     "ink": "#f4efe6",
-    "note": "washed black / charcoal. Heavyweight oversized fleece, DTG print (sampled off the production mockup). This entry read olive before the mockup landed; the garment is the source of truth once it exists."
+    "note": "washed black / charcoal. Heavyweight oversized fleece, DTG print, sampled off the production photography (four views, 2026-08-30). This entry read olive before the garment existed; the garment is the source of truth once it does."
    },
    "cover": "assets/img/closet/sent/sent-card.jpg",
    "coverW": 663,
@@ -64,18 +64,36 @@
      "type": "photo",
      "role": "front",
      "src": "assets/img/closet/sent/sent-front.jpg",
-     "w": 1024,
-     "h": 1024,
-     "note": "Front: the Heav'Yeah crest — winged cross with the halo ring, and the season's two other phrases running the sleeves"
+     "w": 1254,
+     "h": 1254,
+     "note": "Front: the Heav'Yeah crest — winged cross, halo ring and barbed wire — with both sleeve prints in view"
     },
     {
      "id": "st-back",
      "type": "photo",
      "role": "back",
      "src": "assets/img/closet/sent/sent-back.jpg",
-     "w": 1024,
-     "h": 1024,
-     "note": "Back: the M chevron over the HM AMMO halo mark"
+     "w": 1254,
+     "h": 1254,
+     "note": "Back: the M chevron in steel and ruby over the HM AMMO halo mark, bullet through the H"
+    },
+    {
+     "id": "st-left",
+     "type": "photo",
+     "role": "detail",
+     "src": "assets/img/closet/sent/sent-left.jpg",
+     "w": 1254,
+     "h": 1254,
+     "note": "Left sleeve: SEEK FIRST THE KINGDOM OF GOD, stacked under the crossed-spear hit"
+    },
+    {
+     "id": "st-right",
+     "type": "photo",
+     "role": "detail",
+     "src": "assets/img/closet/sent/sent-right.jpg",
+     "w": 1254,
+     "h": 1254,
+     "note": "Right sleeve: MOST HIGH FASHION, stacked under the twin-diamond hit"
     }
    ],
    "status": "preview",
@@ -214,7 +232,8 @@
      "name": "Washed Black",
      "hex": "#3a3a3c",
      "ink": "#f4efe6",
-     "shot": true
+     "shot": true,
+     "note": "The photographed colorway: all four views on this drop are Washed Black."
     },
     {
      "id": "washed-blue",
