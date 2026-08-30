@@ -387,11 +387,34 @@
     "Wisdom"
    ],
    "color": {
-    "name": "Olive",
-    "hex": "#4a4a38",
+    "name": "Washed Black",
+    "hex": "#3a3a3c",
     "ink": "#f4efe6",
-    "note": "olive / charcoal, final colorway locked before production"
+    "note": "washed black / charcoal. Heavyweight oversized fleece, DTG print (sampled off the production mockup). This entry read olive before the mockup landed; the garment is the source of truth once it exists."
    },
+   "cover": "assets/img/closet/sent/sent-card.jpg",
+   "coverW": 663,
+   "coverH": 895,
+   "media": [
+    {
+     "id": "st-front",
+     "type": "photo",
+     "role": "front",
+     "src": "assets/img/closet/sent/sent-front.jpg",
+     "w": 1024,
+     "h": 1024,
+     "note": "Front: the Heav'Yeah crest — winged cross with the halo ring, and the season's two other phrases running the sleeves"
+    },
+    {
+     "id": "st-back",
+     "type": "photo",
+     "role": "back",
+     "src": "assets/img/closet/sent/sent-back.jpg",
+     "w": 1024,
+     "h": 1024,
+     "note": "Back: the M chevron over the HM AMMO halo mark"
+    }
+   ],
    "status": "coming-soon",
    "collaborator": "hitman",
    "editionQty": null,
@@ -465,6 +488,20 @@
      "method": "dtg",
      "phrase": "Wise as Serpents. Innocent as Doves. · Matthew 10:16",
      "productionNotes": "full back"
+    },
+    {
+     "id": "st-sleeve-l",
+     "area": "left-sleeve",
+     "method": "dtg",
+     "phrase": "Seek First the Kingdom of God",
+     "productionNotes": "left sleeve, stacked under a slash hit · drop 001's phrase"
+    },
+    {
+     "id": "st-sleeve-r",
+     "area": "right-sleeve",
+     "method": "dtg",
+     "phrase": "Most High Fashion",
+     "productionNotes": "right sleeve, stacked under a slash hit · drop 002's phrase"
     },
     {
      "id": "st-hood",
