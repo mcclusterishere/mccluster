@@ -1,5 +1,5 @@
 {
- "note": "PRAYER CLOSET: the season ledger. This file IS the admin panel: names (tag), statuses, colors, pricing, placements, and collaborators all edit here and every closet surface repaints on next load. No deploy per drop. Drop statuses: concept | preview | coming-soon | live | sold-out | archived. Prices stay null until garments are real (the house never sells what it can't ship); when a drop goes live, wire its offering slug and flip status.",
+ "note": "PRAYER CLOSET: the season ledger. This file IS the admin panel: names (tag), statuses, colors, pricing, placements, and collaborators all edit here and every closet surface repaints on next load. No deploy per drop. Drop statuses: concept | preview | coming-soon | live | sold-out | archived. Prices stay null until garments are real (the house never sells what it can't ship); when a drop goes live, wire its offering slug and flip status. CHECKOUT: each drop's preorder block carries `shopify` and `square`. Shopify wins when both are set, so a drop moves to the store by pasting one link and never by deleting another. See js/closet.js checkoutOf() and docs/store/SHOPIFY-TAPSTITCH.md.",
  "editionFormat": "HM-MT{chapter}-{drop}-{serial}, e.g. HM-MT6-001-0084. The registry itself is Phase 3 (see docs/prayer-closet.md).",
  "season": {
   "id": "season-001",
@@ -139,9 +139,10 @@
    "offering": null,
    "preorder": {
     "deposit": 333,
+    "shopify": null,
     "square": "https://square.link/u/1FiIyL0C",
     "how": "Enter $333 at Square, then answer your receipt email with your size and customization choices; the desk takes it from there. Custom drop set, about four weeks from order to door.",
-    "note": "LIVE: the 'Hitman Halo Drop 1/3' Square link (customer-enters-amount type; the description on Square names $333). Swap for an item-type link with a fixed $333 price and S to 2XL variants when convenient. Same slot, no code change. terms: null uses the standard honesty block (what ships, four-week window, email sizing, full refund before ship, support address); set an array of strings to override per drop.",
+    "note": "LIVE on Square: the 'Hitman Halo Drop 1/3' link (customer-enters-amount type; the description on Square names $333). TO MOVE THIS DROP TO THE STORE: paste the Shopify product URL into `shopify` above. It outranks `square` on next load with no code change — the button, the deposit chip and the terms all re-word themselves, and the sizing line stops promising an email because the store takes the size at checkout. Leave the Square link where it is; it is the fallback, not a conflict. terms: null uses the standard honesty block; set an array of strings to override.",
     "terms": null
    },
    "sizes": [
@@ -279,8 +280,9 @@
    "offering": null,
    "preorder": {
     "deposit": null,
+    "shopify": null,
     "square": null,
-    "note": "ADMIN: paste this drop's Square payment link (Square Dashboard → Payment Links) and set the deposit amount in dollars; the Acquire room flips from first-claim to a live Square preorder on next load. Square owns the price; the page only displays it. terms: null uses the standard honesty block (what ships, four-week window, email sizing, full refund before ship, support address); set an array of strings to override per drop.",
+    "note": "ADMIN: this drop has no checkout yet, so its room is on first-claim capture. Fill in ONE of the two above and it goes live on next load, no deploy: `shopify` with the product URL from the Shopify store TapStitch fulfils from (preferred — it takes the size at checkout and the garment is made and shipped automatically), or `square` with a payment link from Square Dashboard → Payment Links (sizes then come back by email and the production order is placed by hand). Set `deposit` in dollars either way; the checkout owns the real price and the page only displays this number. terms: null uses the standard honesty block; set an array of strings to override.",
     "terms": null
    },
    "sizes": [
@@ -422,8 +424,9 @@
    "offering": null,
    "preorder": {
     "deposit": null,
+    "shopify": null,
     "square": null,
-    "note": "ADMIN: paste this drop's Square payment link (Square Dashboard → Payment Links) and set the deposit amount in dollars; the Acquire room flips from first-claim to a live Square preorder on next load. Square owns the price; the page only displays it. terms: null uses the standard honesty block (what ships, four-week window, email sizing, full refund before ship, support address); set an array of strings to override per drop.",
+    "note": "ADMIN: this drop has no checkout yet, so its room is on first-claim capture. Fill in ONE of the two above and it goes live on next load, no deploy: `shopify` with the product URL from the Shopify store TapStitch fulfils from (preferred — it takes the size at checkout and the garment is made and shipped automatically), or `square` with a payment link from Square Dashboard → Payment Links (sizes then come back by email and the production order is placed by hand). Set `deposit` in dollars either way; the checkout owns the real price and the page only displays this number. terms: null uses the standard honesty block; set an array of strings to override.",
     "terms": null
    },
    "sizes": [

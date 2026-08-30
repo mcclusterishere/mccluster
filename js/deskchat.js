@@ -243,14 +243,13 @@ window.MCC_DESK = (function () {
     document.addEventListener("DOMContentLoaded", boot);
   } else { boot(); }
 
-  document.addEventListener("click", function (e) {
-    var a = e.target.closest && e.target.closest('a[data-appnav="sites"]');
-    if (!a) return;
-    if (onChatPage()) return;
-    e.preventDefault();
-    e.stopPropagation();
-    location.href = chatHref();
-  }, true);
+  /* A capture-phase interceptor on a[data-appnav="sites"] stood here: it
+     took the fifth tab's tap on every page and sailed to chat.html. That
+     tab is the Prayer Closet now, so the interceptor would have quietly
+     sent every tap on a hanger to the chat room -- and it ran in the
+     capture phase, ahead of the bar's own handler, so the bar could not
+     have overruled it. Chat keeps its door: the wing's second slot, and
+     the Chat tab on any page that still writes one by hand. */
 
   return { open: open, close: close, boot: boot, inline: function () { return inline; } };
 })();

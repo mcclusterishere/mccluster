@@ -44,10 +44,19 @@
     '<path d="M5.2 5.6h13.6a1.4 1.4 0 0 1 1.4 1.4v8.4H3.8V7a1.4 1.4 0 0 1 1.4-1.4z"/>' +
     '<path d="M2.2 15.4h19.6l-1 2a1.6 1.6 0 0 1-1.5.9H4.7a1.6 1.6 0 0 1-1.5-.9z"/>';
 
-  /* THE FIFTH TAB IS A CONVERSATION NOW, NOT A CATALOGUE.
-     The laptop said "here is a page of things"; the bubble says "ask me".
-     LAPTOP is kept because the wing's icon map still names it, and a
-     glyph nobody draws is cheaper than a lookup that returns nothing. */
+  /* THE FIFTH TAB IS THE STORE AGAIN.
+     The laptop said "here is a page of things"; the bubble said "ask me";
+     the hanger says "there is something here to buy". The home page's own
+     Lock In room is the conversation now, so the bar no longer has to be
+     the way to one. LAPTOP and CHAT are both kept because the wing's icon
+     map still names them, and a glyph nobody draws is cheaper than a
+     lookup that returns nothing.
+     Same 24-grid as ICONS.hang below, which is this same drawing: the tab
+     and its wing slot are one glyph, as the laptop and the bubble were. */
+  var HANGER =
+    '<path d="M12 6a2 2 0 1 1 2-2"/>' +
+    '<path d="M12 6l8.2 5.8a1.5 1.5 0 0 1-.9 2.7H4.7a1.5 1.5 0 0 1-.9-2.7z"/>' +
+    '<path d="M6.5 14.5V20M17.5 14.5V20"/>';
   var CHAT =
     '<path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/>' +
     '<path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/>';
@@ -73,17 +82,22 @@
         eqSvg(false) + '<span>Equity Uprise</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
-      /* THE FIFTH TAB IS THE STUDIO.
-         This column has changed hands twice. It carried the halo and
-         opened the Prayer Closet; the shake run took it on 2026-08-17;
-         the owner shelved the shake shop on 2026-08-19 and gave the
-         column to McCluster Sites, which is the thing on this site that
-         actually takes money from strangers today. It wears a laptop.
+      /* THE FIFTH COLUMN GOES HOME.
+         It has changed hands four times. It carried the halo and opened
+         the Prayer Closet; the shake run took it on 2026-08-17; the owner
+         shelved the shake shop on 2026-08-19 and gave the column to
+         McCluster Sites; Chat took it after that.
 
-         The Closet did not lose anything either time: it is the second
-         slot of this wing, one hold away, with the Inner Room and Give. */
-      '<a class="appbar__tab" href="' + ROOT + 'sites.html" data-appnav="sites">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true">' + CHAT + '</svg><span>Chat</span></a>' +
+         It is the Closet's again, by the owner's call. The reason the
+         column went to a conversation was that the conversation was the
+         thing on this site that took money from strangers — and the home
+         page now opens with its own Lock In room, so the bar is no longer
+         the only door to one. What the bar was missing was the store.
+
+         Chat did not lose anything: it is the second slot of this wing,
+         one hold away, with the Inner Room and Give. */
+      '<a class="appbar__tab" href="' + ROOT + 'prayer-closet.html" data-appnav="sites">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true">' + HANGER + '</svg><span>Closet</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'account.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
         '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Profile</span></a>';
@@ -185,18 +199,20 @@
        The Closet, the Inner Room and Give keep their slots exactly as they
        were, so nothing that was one tap away has become unreachable. */
     sites: {
-      home: "sites.html",
+      home: "prayer-closet.html",
       slots: [
         /* The wing's first slot is the same door the tab is, so it says
-           the same thing. The old copy also carried "$87 a month", which
-           is not a price this business has charged for a long time --
+           the same thing -- which is why these two swapped places when the
+           column did. The Chat copy also used to carry "$87 a month",
+           which is not a price this business has charged for a long time:
            the kind of number that only survives because nobody reads a
            tooltip. Prices are not typed here any more; the conversation
-           quotes them from the ledger. */
-        ["sites.html", "chat", "Chat", { title: "Talk to the desk",
-          sub: "Ask what it costs, check whether your address is free, and buy it in the same conversation. A person reads all of it." }],
+           quotes them from the ledger, and the Closet quotes them from
+           whatever checkout carries the drop. */
         ["prayer-closet.html", "hang", "The Closet", { title: "Prayer Closet",
           sub: "Limited drops with meaning behind the garment. Season 001 cuts three hoodie-and-jogger sets from the book of Matthew." }],
+        ["sites.html", "chat", "Chat", { title: "Talk to the desk",
+          sub: "Ask what it costs, check whether your address is free, and buy it in the same conversation. A person reads all of it." }],
         ["inner-room.html", "lamp", "Inner Room", { title: "The Inner Room",
           sub: "The chapters behind the garments: read, study, pray, keep your notes. Free, always; no purchase opens this door." }],
         ["give.html", "gift", "Give", { title: "Support the work",
@@ -529,17 +545,13 @@
        it), so hold-to-open-the-music-wing is untouched. */
     var dest = w ? w.home : (slot || a.getAttribute("href"));
 
-    /* THE CHAT TAB OPENS THE CHAT, RATHER THAN SAILING TO A PAGE THAT
-       HAS ONE. Twelve pages already carry the desk widget; on those,
-       navigating away to go and talk is a page load for nothing, and it
-       loses whatever the visitor was reading. Where the widget is not
-       loaded the tab still sails to sites.html, which is the
+    /* This column used to open the desk widget in place instead of sailing
+       anywhere, because the tab WAS Chat. It is the Closet now, and a tab
+       that opens a chat panel when it is drawn as a hanger is the worst
+       kind of surprise -- so the branch is gone and the tap sails to the
+       store like every other tab sails to its room. Chat is the wing's
+       second slot, and that slot still lands on sites.html, which is the
        conversation with a page around it. */
-    if (key === "sites" && window.MCC_DESK && typeof window.MCC_DESK.open === "function") {
-      window.MCC_DESK.open();
-      if (window.MCC_TRACK) window.MCC_TRACK("chat_open", { from: "appbar" });
-      return;
-    }
 
     if (key === "music" && onPage(dest) &&
         typeof window.MCC_NP_PLAY === "function" &&

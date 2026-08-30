@@ -9,11 +9,24 @@
    free to every visitor: no purchase ever opens or closes it.
    Flip a drop's status in the JSON and this room repaints on the
    next load, no deploy per drop.
-   COMMERCE: when the ledger carries a Square payment link for a
-   drop (preorder.square) the Acquire room flips from first-claim
-   capture to a live Square preorder. Square owns the price; the
-   page only displays it. The season's giving door works the same
-   way (season.give.square).
+   COMMERCE: when the ledger carries a checkout link for a drop the
+   Acquire room flips from first-claim capture to a live preorder.
+   Two carriers, and the ledger picks by which key it fills in:
+
+     preorder.shopify  a product or cart URL on the Shopify store
+                       that TapStitch fulfils from. Sizes and
+                       variants are chosen AT checkout, and the
+                       garment is made and shipped automatically.
+     preorder.square   a Square payment link. Sizes come back by
+                       email afterwards and the house places the
+                       production order by hand.
+
+   Shopify wins when both are set, so the store can be switched on
+   for a drop without deleting the Square link that was carrying
+   it. Neither one is ever priced here: the checkout owns the
+   price and this page only names the deposit the ledger records.
+   The season's giving door stays on Square (season.give.square) --
+   that is the nonprofit's register, not the store's.
    ============================================================ */
 (function () {
   "use strict";
@@ -272,6 +285,25 @@
     return "$" + (Math.round(n * 100) / 100).toLocaleString("en-US");
   }
 
+  /* WHICH CHECKOUT IS CARRYING THIS DROP.
+
+     One question, asked in one place, so the button, the deposit chip, the
+     terms and the analytics can never disagree about where the money goes.
+     Returns null when the ledger names no checkout at all, which is what
+     puts the room back on first-claim capture.
+
+     Shopify outranks Square deliberately. Switching a drop over to the
+     store is then a matter of pasting one link, not of remembering to
+     clear the other one first -- and a half-finished switch fails towards
+     the store that can actually take a size, rather than towards a payment
+     link that cannot. */
+  function checkoutOf(pre) {
+    if (!pre) return null;
+    if (pre.shopify) return { id: "shopify", via: "the store", href: pre.shopify };
+    if (pre.square) return { id: "square", via: "Square", href: pre.square };
+    return null;
+  }
+
   fetch(ROOT + "data/prayer-closet.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
     var drops = j.drops || [];
     var idx = -1;
@@ -401,7 +433,8 @@
     var live = d.status === "live" && d.offering;
     var soldOut = d.status === "sold-out";
     var pre = d.preorder || {};
-    var preLive = !!pre.square;
+    var buy = checkoutOf(pre);
+    var preLive = !!buy;
     var sizes = d.sizes || [];
     var sizesHtml = sizes.length ?
       '<div class="sizes" id="clmSizes" role="group" aria-label="Size">' + sizes.map(function (s) {
@@ -417,18 +450,26 @@
     } else if (preLive) {
       /* the honesty layer: a preorder states its terms where the money moves.
          Ledger-driven: set preorder.terms (array of strings) to override. */
+      var sizeLine = buy.id === "shopify"
+        /* on the store the variant IS the size, so it is picked before the
+           money moves; the email step below only ever existed because a
+           Square payment link cannot carry one */
+        ? "<b>Sizing:</b> pick your size at checkout (" + (sizes[0] || "S") + " to " + (sizes[sizes.length - 1] || "2XL") + ")"
+        : "<b>Sizing &amp; customization:</b> chosen by email right after checkout (" +
+          (sizes[0] || "S") + " to " + (sizes[sizes.length - 1] || "2XL") + ")";
       var terms = (pre.terms && pre.terms.length) ? pre.terms : [
         "<b>What ships:</b> " + esc(d.garment) + " in " + esc(d.color.name) + ", every placement on the tech pack above",
         "<b>When:</b> about four weeks from order to door. Tracking lands in your email",
-        "<b>Sizing &amp; customization:</b> chosen by email right after checkout (S to 2XL)",
+        sizeLine,
         "<b>Change of heart:</b> full refund any time before your set ships. One email does it",
         "<b>A person answers:</b> matthew@mccluster.org",
       ];
       clmBody =
         "<p>" + (pre.how ? esc(pre.how)
-          : "The set is in production. A preorder holds your edition before the rail opens. Checkout runs through Square, and the house ships the moment the garments land.") + "</p>" +
-        (pre.deposit ? '<span class="clm__dep">' + money(pre.deposit) + "<small>preorder &middot; through Square</small></span>" : "") +
-        '<a class="clm__go" style="margin-top:1.3rem" id="clmSquare" href="' + esc(pre.square) + '" rel="noopener">Preorder through Square &#8594;</a>' +
+          : "The set is in production. A preorder holds your edition before the rail opens. Checkout runs through " +
+            buy.via + ", and the house ships the moment the garments land.") + "</p>" +
+        (pre.deposit ? '<span class="clm__dep">' + money(pre.deposit) + "<small>preorder &middot; through " + buy.via + "</small></span>" : "") +
+        '<a class="clm__go" style="margin-top:1.3rem" id="clmBuy" href="' + esc(buy.href) + '" rel="noopener">Preorder through ' + buy.via + ' &#8594;</a>' +
         '<span class="clm__alt">Not ready? <a href="#" id="clmClaimAlt" style="color:inherit">Put your name on the list instead</a>.</span>' +
         '<div id="clmClaimWrap" hidden>' + sizesHtml +
         '<form id="clmForm"><input name="name" placeholder="Your name" autocomplete="name" maxlength="80" required>' +
@@ -588,10 +629,10 @@
       sizeWrap.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === btn); });
     });
 
-    /* ----- preorder: Square carries the money ----- */
-    var sq = document.getElementById("clmSquare");
+    /* ----- preorder: whichever checkout the ledger named carries it ----- */
+    var sq = document.getElementById("clmBuy");
     if (sq) sq.addEventListener("click", function () {
-      track("closet_preorder_click", { drop: d.slug, deposit: pre.deposit || null });
+      track("closet_preorder_click", { drop: d.slug, via: buy.id, deposit: pre.deposit || null });
     });
     var alt = document.getElementById("clmClaimAlt");
     if (alt) alt.addEventListener("click", function (e) {
@@ -629,6 +670,7 @@
       if (e.target.closest && e.target.closest("[data-sow]")) track("closet_sow_click", { from: d.slug });
     });
 
-    track("closet_drop_view", { drop: d.slug, status: d.status, chapter: d.chapter, preorder: preLive });
+    track("closet_drop_view", { drop: d.slug, status: d.status, chapter: d.chapter,
+      preorder: preLive, via: buy ? buy.id : null });
   }).catch(function () {});
 })();
