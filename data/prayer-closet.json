@@ -395,8 +395,8 @@
    "id": "hitman",
    "name": "Hitman Halo",
    "role": "Artist · collection collaborator",
-   "logo": "assets/img/hm-mark.png",
-   "logoNote": "THE OFFICIAL HITMAN MARK: the HM monogram with the round through it, under the halo. This file is the only HM mark any surface may use; never regenerate or substitute it. PENDING: a new mark is on its way from the owner and replaces this file in place, so every surface that already points here picks it up with no other change.",
+   "logo": "assets/img/hm-mark-wide.webp",
+   "logoNote": "THE OFFICIAL HITMAN MARK, landed 2026-08-30: the HM with the AMMO round between the letters under the halo. Three cuts of one artwork — hm-mark-wide.webp (the full mark, for the bar, the emblem row and the hero), hm-mark.png (512 square, for share cards and anything expecting a square), hm-mark-96.png (the favicon). This is the only HM mark any surface may use; never regenerate or substitute it.",
    "bio": "Featured on the record: 'Upset' (Hitman Halo × Raheem × Rahndrx) lives in the McCluster catalogue. On this drop the Hitman identity reads as purpose, commission, discipline, precision, mission, transformation, and service.",
    "drops": [
     "seek-first",
@@ -563,10 +563,10 @@
   {
    "id": "hitman",
    "name": "The Hitman Halo",
-   "art": "assets/img/hm-mark.png",
-   "w": 512,
-   "h": 512,
-   "meaning": "The HM with the round through it, under the halo. The name is a provocation on purpose: a hitman takes a contract and does not miss. The halo says whose contract, and the scripture says what the target is — and is not.",
+   "art": "assets/img/hm-mark-wide.webp",
+   "w": 1200,
+   "h": 850,
+   "meaning": "The HM with the round between the letters, under the halo. The name is a provocation on purpose: a hitman takes a contract and does not miss. The halo says whose contract. The scripture says what the target is — and is not.",
    "scripture": [
     {
      "ref": "Ephesians 6:12",
@@ -577,7 +577,7 @@
      "text": "for the weapons of our warfare are not of the flesh, but mighty before God to the throwing down of strongholds,"
     }
    ],
-   "note": "ART PENDING: the new HM mark is on its way and replaces assets/img/hm-mark.png here. Ephesians 6:12 is load-bearing for this mark — it is the verse that says the target is never a person, which is the only thing that makes the name wearable."
+   "note": "Ephesians 6:12 is load-bearing for this mark: it is the verse that says the target is never a person, which is the only thing that makes the name wearable. The AMMO headstamp on the round is the house's own."
   }
  ],
  "emblemsNote": "EVERY MARK ON THE GARMENT MEANS SOMETHING, and the meaning is carried here rather than in anyone's memory. Scripture is World English Bible, public domain, the same translation the chapter rooms serve. Quote it exactly or not at all."

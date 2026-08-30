@@ -1810,6 +1810,11 @@ html.is-installed .getapp,html.is-installed .getapp-pill{display:none !important
 .app-crumb{position:fixed;top:calc(0.8rem + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:210;padding:0.45em 1.1em;border-radius:100px;text-decoration:none;background:rgba(10,8,7,0.75);backdrop-filter:blur(8px);border:1px solid rgba(229,56,59,0.5);color:var(--cream);font-size:0.78rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase}
 .app-crumb:hover{background:rgba(193,18,31,0.4)}
 .appbar__m{width:1.75rem;height:1.75rem;object-fit:contain;display:block}
+/* THE HM RIDES ON ITS HEIGHT, not on a square. The mark is 1.4:1 and the
+   bar already carries a wide icon (the EQ glyph is nearly 2:1), so matching
+   the other tabs' height and letting the width follow keeps every tab's
+   optical weight equal without squashing a logo into a box it is not. */
+.appbar__hm{height:2rem;width:auto;max-width:3.1rem;object-fit:contain;display:block;margin-block:-0.12rem}
 html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m{content:url("../assets/img/m-mark-dark.png")}
 /* the fifth tab wore the halo PNG, which needed a bigger box than the M
    coin (baked-in transparent margin) and a dark pill under it on the light
