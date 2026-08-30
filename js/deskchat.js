@@ -23,6 +23,11 @@
    switched off, the launcher never draws. A chat bubble that opens onto
    an error is worse than no bubble: it promises a person and delivers a
    spinner.
+
+   THE TAB OPENS A PAGE NOW. A tap on Chat used to pop the corner panel
+   on whatever page you were standing on. The owner asked for a room:
+   chat.html is that room. open() on any other page sails there. The
+   corner launcher is gone with it — the tab is the door.
    ============================================================ */
 window.MCC_DESK = (function () {
   /* true when this page hosts the conversation itself rather than
@@ -39,9 +44,6 @@ window.MCC_DESK = (function () {
     return window.MCC_SUPA && window.MCC_SUPA.url ? window.MCC_SUPA : null;
   }
 
-  /* The visitor key. 32 url-safe characters from crypto, which is what
-     the function validates against — a key it did not issue in that shape
-     is refused rather than given a thread. */
   function visitorKey() {
     var k = null;
     try { k = localStorage.getItem(KEY_STORE); } catch (e) {}
@@ -56,9 +58,6 @@ window.MCC_DESK = (function () {
   function call(action, extra) {
     var S = supa();
     if (!S) return Promise.reject(new Error("no backend"));
-    // WHOSE inbox this chat belongs to. One deployment now serves more
-    // than one site, so the widget says which; window.MCC_ORG lets a
-    // customer's page set their own without a second build of this file.
     var body = {
       action: action,
       org: window.MCC_ORG || "mccluster",
@@ -76,18 +75,12 @@ window.MCC_DESK = (function () {
     });
   }
 
-  /* ---------- drawing ---------- */
-
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
 
-  /* Bare URLs become links, and nothing else in a message is ever treated
-     as markup. The bot's replies are owner-authored, but a message body
-     also comes back from the database, and one day from a webhook — so
-     this escapes first and linkifies second, never the other way round. */
   function withLinks(s) {
     return esc(s).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)"'])/g, function (u) {
       return '<a href="' + u + '" rel="noopener">' + u + "</a>";
@@ -127,8 +120,6 @@ window.MCC_DESK = (function () {
     } else if (!on && t) { t.remove(); }
   }
 
-  /* ---------- talking ---------- */
-
   function say() {
     if (sending || !input) return;
     var text = input.value.trim();
@@ -141,9 +132,6 @@ window.MCC_DESK = (function () {
       .then(function (r) {
         typing(false);
         (r.replies || []).forEach(function (rep, i) {
-          /* the delay is cosmetic and small: it keeps two scripted lines
-             from landing in the same frame, which reads as a form
-             submission rather than an answer */
           setTimeout(function () { push({ direction: "out", body: rep.body }); }, i * 550);
         });
       })
@@ -154,7 +142,24 @@ window.MCC_DESK = (function () {
       .then(function () { sending = false; });
   }
 
+  function chatHref() {
+    var scripts = document.getElementsByTagName("script");
+    for (var i = 0; i < scripts.length; i++) {
+      var src = scripts[i].src || "";
+      if (src.indexOf("js/deskchat.js") !== -1) return src.replace(/js\/deskchat\.js.*$/, "") + "chat.html";
+    }
+    return "chat.html";
+  }
+
+  function onChatPage() {
+    return location.pathname.split("/").pop() === "chat.html";
+  }
+
   function open() {
+    if (!inline && !onChatPage()) {
+      location.href = chatHref();
+      return;
+    }
     if (!root) return;
     root.hidden = false;
     root.classList.add("is-open");
@@ -166,26 +171,13 @@ window.MCC_DESK = (function () {
   }
 
   function close() {
-    if (!root || inline) return;      // nothing to fold away to
-
+    if (!root || inline) return;
     root.classList.remove("is-open");
     root.hidden = true;
     try { sessionStorage.removeItem(OPEN_STORE); } catch (e) {}
     if (launcher) launcher.focus();
   }
 
-  /* WHERE THE CHAT LIVES.
-
-     By default this is a bubble in the corner: a thing you can go and
-     find when the page has not answered your question. On a page that
-     puts the conversation FIRST, that is the wrong shape entirely — the
-     chat is not an escape hatch there, it is the content. A page marks
-     the spot with [data-desk-inline] and the same widget mounts into it
-     with no launcher, no corner, and no way to dismiss it, because there
-     is nothing behind it to dismiss it back to.
-
-     One widget, two shapes. Forking it would mean two send paths and one
-     of them going stale. */
   function host() {
     return document.querySelector("[data-desk-inline]");
   }
@@ -195,17 +187,10 @@ window.MCC_DESK = (function () {
 
     if (slot) {
       inline = true;
+    } else if (onChatPage()) {
+      inline = true;
     } else {
-      launcher = document.createElement("button");
-      launcher.className = "dsk-launch";
-      launcher.type = "button";
-      launcher.setAttribute("aria-label", "Open the desk chat");
-      launcher.innerHTML =
-        '<svg viewBox="0 0 24 24" aria-hidden="true">' +
-        '<path d="M20.5 12.2c0 4-3.8 7.2-8.5 7.2a10 10 0 0 1-2.6-.34L4.6 20.7l1.3-3.6A6.9 6.9 0 0 1 3.5 12.2C3.5 8.2 7.3 5 12 5s8.5 3.2 8.5 7.2z"/>' +
-        "</svg>";
-      launcher.addEventListener("click", open);
-      document.body.appendChild(launcher);
+      return;
     }
 
     root = document.createElement("section");
@@ -236,10 +221,6 @@ window.MCC_DESK = (function () {
     });
   }
 
-  /* ---------- boot ----------
-     The channel row is asked FIRST, before anything is drawn. If the
-     owner switches the site channel off in the database, the launcher
-     never appears — the off switch is real, not cosmetic. */
   function boot() {
     if (booted) return;
     if (document.body.hasAttribute("data-no-desk")) return;
@@ -254,16 +235,22 @@ window.MCC_DESK = (function () {
         if (!rows || !rows.length || !rows[0].enabled) return;
         build();
         if (inline) { open(); return; }
-        var wasOpen = null;
-        try { wasOpen = sessionStorage.getItem(OPEN_STORE); } catch (e) {}
-        if (wasOpen) open();
       })
-      .catch(function () { /* fail quiet: no bubble is better than a broken one */ });
+      .catch(function () {});
   }
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);
   } else { boot(); }
+
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[data-appnav="sites"]');
+    if (!a) return;
+    if (onChatPage()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    location.href = chatHref();
+  }, true);
 
   return { open: open, close: close, boot: boot, inline: function () { return inline; } };
 })();
