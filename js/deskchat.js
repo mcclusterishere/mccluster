@@ -1,10 +1,9 @@
-/* HITMAN HALO shop bridge.
-   The shared tab bar still calls this column "sites" internally because
-   that key is woven through the five-wing navigation. Publicly, however,
-   this door is HITMAN HALO and it goes straight to the clothing rack.
-
-   Keep the original desk chat alive in deskchat-core.js so explicit chat
-   surfaces elsewhere on the site continue to work. */
+/* HITMAN bottom-tab bridge.
+   tabbar.js still builds the fourth column with the legacy internal key
+   "sites". This bridge changes the actual rendered bottom tab itself:
+   HITMAN is the public tab, and a normal tap goes straight to the clothing
+   rack. The original desk chat is preserved in deskchat-core.js for pages
+   that explicitly use chat; it no longer owns this bottom-nav position. */
 (function () {
   "use strict";
 
@@ -13,26 +12,16 @@
   var ROOT = src ? src.replace(/js\/deskchat\.js.*$/, "") : "";
   var SHOP = ROOT + "prayer-closet.html#theRack";
   var MARK = ROOT + "assets/img/hm-mark-96.png";
-  var HOLD_MS = 430;
-  var downAt = 0;
-  var downShop = false;
 
   window.MCC_HITMAN_SHOP = SHOP;
 
-  function setLabel(a, text) {
+  function setLabel(a) {
     var span = a.querySelector("span");
     if (span) {
-      if (span.textContent !== text) span.textContent = text;
+      span.textContent = "HITMAN";
       return;
     }
-    var nodes = a.childNodes;
-    for (var i = 0; i < nodes.length; i++) {
-      if (nodes[i].nodeType === 3 && nodes[i].nodeValue.trim()) {
-        if (nodes[i].nodeValue.trim() !== text) nodes[i].nodeValue = text;
-        return;
-      }
-    }
-    a.appendChild(document.createTextNode(text));
+    a.appendChild(document.createElement("span")).textContent = "HITMAN";
   }
 
   function setMark(a) {
@@ -46,76 +35,60 @@
       if (old) old.parentNode.replaceChild(img, old);
       else a.insertBefore(img, a.firstChild);
     }
-    if (img.getAttribute("src") !== MARK) img.setAttribute("src", MARK);
+    img.src = MARK;
   }
 
-  function markShop(a, label) {
+  function makeHitman(a) {
     if (!a) return;
-    if (a.getAttribute("href") !== SHOP) a.setAttribute("href", SHOP);
-    a.setAttribute("aria-label", "Hitman Halo shop");
-    a.setAttribute("data-hitman-shop", "1");
-    setLabel(a, label || "Hitman");
+    a.href = SHOP;
+    a.setAttribute("data-appnav", "hitman");
+    a.setAttribute("data-hitman-tab", "1");
+    a.setAttribute("aria-label", "HITMAN clothing shop");
+    setLabel(a);
     setMark(a);
+
+    var page = location.pathname.split("/").pop();
+    if (page === "prayer-closet.html") a.classList.add("is-here");
   }
 
   function patch() {
-    var tabs = document.querySelectorAll('.appbar [data-appnav="sites"]');
-    for (var i = 0; i < tabs.length; i++) markShop(tabs[i], "Hitman");
+    /* Catch the legacy fourth tab on first paint, and the HITMAN version on
+       subsequent bar restores/mutations. */
+    var tabs = document.querySelectorAll('.appbar [data-appnav="sites"], .appbar [data-hitman-tab="1"]');
+    for (var i = 0; i < tabs.length; i++) makeHitman(tabs[i]);
 
-    /* When the sites wing is held open, its legacy first slot used to say
-       Chat. Do not let that old label flash back into the live navigation. */
+    /* If the old Sites/Chat wing is ever painted by a stale cached copy of
+       tabbar.js, turn that visible slot into the same shop door instead of
+       letting Chat reappear in the bottom navigation. */
     var slots = document.querySelectorAll(".appbar a[data-dock]");
     for (var j = 0; j < slots.length; j++) {
       var dock = slots[j].getAttribute("data-dock") || "";
       var href = slots[j].getAttribute("href") || "";
       if (/sites\.html(?:$|[#?])/.test(dock) || /sites\.html(?:$|[#?])/.test(href)) {
-        markShop(slots[j], "Hitman");
         slots[j].setAttribute("data-dock", SHOP);
+        slots[j].href = SHOP;
+        slots[j].setAttribute("data-hitman-tab", "1");
+        setLabel(slots[j]);
+        setMark(slots[j]);
       }
     }
   }
-
-  function isShopAnchor(a) {
-    return !!(a && (a.getAttribute("data-hitman-shop") === "1" ||
-      a.getAttribute("data-appnav") === "sites" ||
-      a.getAttribute("data-dock") === SHOP));
-  }
-
-  /* tabbar.js deliberately intercepts its own links and, for the old sites
-     key, opens chat. Capture a normal tap first so HITMAN actually shops.
-     A held press is left alone so the wing gesture still works. */
-  document.addEventListener("pointerdown", function (e) {
-    var a = e.target.closest && e.target.closest("a");
-    downShop = isShopAnchor(a);
-    downAt = downShop ? Date.now() : 0;
-  }, true);
-
-  document.addEventListener("click", function (e) {
-    var a = e.target.closest && e.target.closest("a");
-    if (!isShopAnchor(a)) return;
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if (downShop && downAt && Date.now() - downAt >= HOLD_MS) return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    location.assign(SHOP);
-  }, true);
 
   function bootPatch() {
     patch();
     var bar = document.querySelector(".appbar");
     if (bar && window.MutationObserver) {
-      new MutationObserver(function () { patch(); }).observe(bar, { childList: true, subtree: true });
+      new MutationObserver(patch).observe(bar, { childList: true, subtree: true });
     }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootPatch);
   else bootPatch();
 
-  /* Preserve the desk for places that explicitly ask for it. It is no
-     longer the fourth-tab destination. */
+  /* Keep the desk implementation available to explicit chat surfaces. */
   var core = document.createElement("script");
   core.src = ROOT + "js/deskchat-core.js" + (src.indexOf("?") > -1 ? src.slice(src.indexOf("?")) : "");
   core.onload = patch;
-  core.onerror = function () { console.error("[Hitman Halo] desk chat core failed to load"); };
+  core.onerror = function () { console.error("[HITMAN] desk chat core failed to load"); };
   (document.head || document.documentElement).appendChild(core);
 })();
