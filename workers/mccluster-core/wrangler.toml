@@ -1,0 +1,16 @@
+name = "mccluster-core"
+main = "src/index.js"
+compatibility_date = "2026-08-31"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGIN = "*"
+MCCLUSTER_SUPABASE_PROJECT_REF = "zmnhbrjyhxzhkxmhkexs"
+
+# Production secrets belong in Cloudflare, never source:
+#   wrangler secret put SUPABASE_URL
+#   wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+#   wrangler secret put STRIPE_SECRET_KEY
+#
+# Recommended production route after api.mccluster.org is configured:
+# routes = [{ pattern = "api.mccluster.org/*", zone_name = "mccluster.org" }]
