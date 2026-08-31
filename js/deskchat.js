@@ -1,256 +1,121 @@
-/* ============================================================
-   THE DESK — the chat on this site.
+/* HITMAN HALO shop bridge.
+   The shared tab bar still calls this column "sites" internally because
+   that key is woven through the five-wing navigation. Publicly, however,
+   this door is HITMAN HALO and it goes straight to the clothing rack.
 
-   Of everything the owner asked to connect, this is the one channel
-   that needs nobody's permission: no app review, no business
-   verification, no per-message fee. A visitor is already here and
-   already interested. docs/social-connections.md is the checked account
-   of why the others are harder, and what each one actually allows.
-
-   IT DOES NOT OWN A SESSION, and it does not want one. A visitor talking
-   to the desk is anonymous: the widget mints a random key, keeps it in
-   localStorage, and that key IS the identity. No email is asked for, no
-   account is needed, nothing is set that a cookie banner would have to
-   confess to. If the visitor clears their browser they are a new person,
-   which is the correct trade for asking them for nothing.
-
-   IT NEVER WRITES A MESSAGE. Every write goes through the `inbox` edge
-   function on the service role. The browser says what its own visitor
-   typed; it cannot set `direction`, cannot mark anything delivered, and
-   cannot read another thread — the RLS has no policy that would let it.
-
-   IT FAILS QUIET. If Supabase is unreachable, or the site channel is
-   switched off, the launcher never draws. A chat bubble that opens onto
-   an error is worse than no bubble: it promises a person and delivers a
-   spinner.
-
-   THE TAB OPENS A PAGE NOW. A tap on Chat used to pop the corner panel
-   on whatever page you were standing on. The owner asked for a room:
-   chat.html is that room. open() on any other page sails there. The
-   corner launcher is gone with it — the tab is the door.
-   ============================================================ */
-window.MCC_DESK = (function () {
-  /* true when this page hosts the conversation itself rather than
-     offering it from the corner. Set once, in build(). */
-  var inline = false;
+   Keep the original desk chat alive in deskchat-core.js so explicit chat
+   surfaces elsewhere on the site continue to work. */
+(function () {
   "use strict";
 
-  var KEY_STORE = "mcc_desk_key";
-  var OPEN_STORE = "mcc_desk_open";
-  var root = null, list = null, input = null, launcher = null;
-  var booted = false, sending = false;
+  var self = document.currentScript;
+  var src = self && self.src ? self.src : "";
+  var ROOT = src ? src.replace(/js\/deskchat\.js.*$/, "") : "";
+  var SHOP = ROOT + "prayer-closet.html#theRack";
+  var MARK = ROOT + "assets/img/hm-mark-96.png";
+  var HOLD_MS = 430;
+  var downAt = 0;
+  var downShop = false;
 
-  function supa() {
-    return window.MCC_SUPA && window.MCC_SUPA.url ? window.MCC_SUPA : null;
-  }
+  window.MCC_HITMAN_SHOP = SHOP;
 
-  function visitorKey() {
-    var k = null;
-    try { k = localStorage.getItem(KEY_STORE); } catch (e) {}
-    if (k && /^[A-Za-z0-9_-]{16,64}$/.test(k)) return k;
-    var b = new Uint8Array(24);
-    (window.crypto || window.msCrypto).getRandomValues(b);
-    k = btoa(String.fromCharCode.apply(null, b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    try { localStorage.setItem(KEY_STORE, k); } catch (e) {}
-    return k;
-  }
-
-  function call(action, extra) {
-    var S = supa();
-    if (!S) return Promise.reject(new Error("no backend"));
-    var body = {
-      action: action,
-      org: window.MCC_ORG || "mccluster",
-      visitor_key: visitorKey(),
-      page: location.pathname,
-    };
-    for (var k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) body[k] = extra[k];
-    return fetch(S.url + "/functions/v1/inbox", {
-      method: "POST",
-      headers: { "content-type": "application/json", apikey: S.key, Authorization: "Bearer " + S.key },
-      body: JSON.stringify(body),
-    }).then(function (r) {
-      if (!r.ok) throw new Error("desk " + r.status);
-      return r.json();
-    });
-  }
-
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-
-  function withLinks(s) {
-    return esc(s).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)"'])/g, function (u) {
-      return '<a href="' + u + '" rel="noopener">' + u + "</a>";
-    });
-  }
-
-  function bubble(m) {
-    var mine = m.direction === "in";
-    var li = document.createElement("div");
-    li.className = "dsk__m " + (mine ? "dsk__m--me" : "dsk__m--them");
-    li.innerHTML = withLinks(m.body);
-    return li;
-  }
-
-  function paint(messages) {
-    if (!list) return;
-    list.innerHTML = "";
-    (messages || []).forEach(function (m) { list.appendChild(bubble(m)); });
-    list.scrollTop = list.scrollHeight;
-  }
-
-  function push(m) {
-    if (!list) return;
-    list.appendChild(bubble(m));
-    list.scrollTop = list.scrollHeight;
-  }
-
-  function typing(on) {
-    if (!list) return;
-    var t = list.querySelector(".dsk__typing");
-    if (on && !t) {
-      t = document.createElement("div");
-      t.className = "dsk__m dsk__m--them dsk__typing";
-      t.innerHTML = "<i></i><i></i><i></i>";
-      list.appendChild(t);
-      list.scrollTop = list.scrollHeight;
-    } else if (!on && t) { t.remove(); }
-  }
-
-  function say() {
-    if (sending || !input) return;
-    var text = input.value.trim();
-    if (!text) return;
-    input.value = "";
-    sending = true;
-    push({ direction: "in", body: text });
-    typing(true);
-    call("say", { body: text })
-      .then(function (r) {
-        typing(false);
-        (r.replies || []).forEach(function (rep, i) {
-          setTimeout(function () { push({ direction: "out", body: rep.body }); }, i * 550);
-        });
-      })
-      .catch(function () {
-        typing(false);
-        push({ direction: "out", body: "That did not send. Email matthew@mccluster.org and it will reach him directly." });
-      })
-      .then(function () { sending = false; });
-  }
-
-  function chatHref() {
-    var scripts = document.getElementsByTagName("script");
-    for (var i = 0; i < scripts.length; i++) {
-      var src = scripts[i].src || "";
-      if (src.indexOf("js/deskchat.js") !== -1) return src.replace(/js\/deskchat\.js.*$/, "") + "chat.html";
-    }
-    return "chat.html";
-  }
-
-  function onChatPage() {
-    return location.pathname.split("/").pop() === "chat.html";
-  }
-
-  function open() {
-    if (!inline && !onChatPage()) {
-      location.href = chatHref();
+  function setLabel(a, text) {
+    var span = a.querySelector("span");
+    if (span) {
+      if (span.textContent !== text) span.textContent = text;
       return;
     }
-    if (!root) return;
-    root.hidden = false;
-    root.classList.add("is-open");
-    if (!inline) { try { sessionStorage.setItem(OPEN_STORE, "1"); } catch (e) {} }
-    if (input) input.focus();
-    call("open", {}).then(function (r) {
-      if (r.messages && r.messages.length) paint(r.messages);
-    }).catch(function () {});
-  }
-
-  function close() {
-    if (!root || inline) return;
-    root.classList.remove("is-open");
-    root.hidden = true;
-    try { sessionStorage.removeItem(OPEN_STORE); } catch (e) {}
-    if (launcher) launcher.focus();
-  }
-
-  function host() {
-    return document.querySelector("[data-desk-inline]");
-  }
-
-  function build() {
-    var slot = host();
-
-    if (slot) {
-      inline = true;
-    } else if (onChatPage()) {
-      inline = true;
-    } else {
-      return;
+    var nodes = a.childNodes;
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].nodeType === 3 && nodes[i].nodeValue.trim()) {
+        if (nodes[i].nodeValue.trim() !== text) nodes[i].nodeValue = text;
+        return;
+      }
     }
-
-    root = document.createElement("section");
-    root.className = inline ? "dsk dsk--inline" : "dsk";
-    root.hidden = !inline;
-    root.setAttribute("aria-label", "Chat with the desk");
-    root.innerHTML =
-      '<header class="dsk__top">' +
-        '<span class="dsk__who"><b>The desk</b><small>A person reads everything here</small></span>' +
-        (inline ? "" : '<button class="dsk__x" type="button" aria-label="Close the chat">&times;</button>') +
-      "</header>" +
-      '<div class="dsk__list" role="log" aria-live="polite"></div>' +
-      '<form class="dsk__bar">' +
-        '<input class="dsk__in" type="text" autocomplete="off" placeholder="Say something…" aria-label="Your message" maxlength="2000">' +
-        '<button class="dsk__go" type="submit" aria-label="Send">' +
-          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5L20 4l-7 16-2.3-6.4z"/></svg>' +
-        "</button>" +
-      "</form>";
-    (slot || document.body).appendChild(root);
-
-    list = root.querySelector(".dsk__list");
-    input = root.querySelector(".dsk__in");
-    var x = root.querySelector(".dsk__x");
-    if (x) x.addEventListener("click", close);
-    root.querySelector(".dsk__bar").addEventListener("submit", function (e) { e.preventDefault(); say(); });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && root && !inline && !root.hidden) close();
-    });
+    a.appendChild(document.createTextNode(text));
   }
 
-  function boot() {
-    if (booted) return;
-    if (document.body.hasAttribute("data-no-desk")) return;
-    var S = supa();
-    if (!S) return;
-    booted = true;
-    fetch(S.url + "/rest/v1/inbox_channels?key=eq.site&select=enabled", {
-      headers: { apikey: S.key, Authorization: "Bearer " + S.key },
-    })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (rows) {
-        if (!rows || !rows.length || !rows[0].enabled) return;
-        build();
-        if (inline) { open(); return; }
-      })
-      .catch(function () {});
+  function setMark(a) {
+    var img = a.querySelector("img.appbar__m");
+    if (!img) {
+      img = document.createElement("img");
+      img.className = "appbar__m";
+      img.alt = "";
+      img.setAttribute("aria-hidden", "true");
+      var old = a.querySelector("svg");
+      if (old) old.parentNode.replaceChild(img, old);
+      else a.insertBefore(img, a.firstChild);
+    }
+    if (img.getAttribute("src") !== MARK) img.setAttribute("src", MARK);
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else { boot(); }
-
-  document.addEventListener("click", function (e) {
-    var a = e.target.closest && e.target.closest('a[data-appnav="sites"]');
+  function markShop(a, label) {
     if (!a) return;
-    if (onChatPage()) return;
-    e.preventDefault();
-    e.stopPropagation();
-    location.href = chatHref();
+    if (a.getAttribute("href") !== SHOP) a.setAttribute("href", SHOP);
+    a.setAttribute("aria-label", "Hitman Halo shop");
+    a.setAttribute("data-hitman-shop", "1");
+    setLabel(a, label || "Hitman");
+    setMark(a);
+  }
+
+  function patch() {
+    var tabs = document.querySelectorAll('.appbar [data-appnav="sites"]');
+    for (var i = 0; i < tabs.length; i++) markShop(tabs[i], "Hitman");
+
+    /* When the sites wing is held open, its legacy first slot used to say
+       Chat. Do not let that old label flash back into the live navigation. */
+    var slots = document.querySelectorAll(".appbar a[data-dock]");
+    for (var j = 0; j < slots.length; j++) {
+      var dock = slots[j].getAttribute("data-dock") || "";
+      var href = slots[j].getAttribute("href") || "";
+      if (/sites\.html(?:$|[#?])/.test(dock) || /sites\.html(?:$|[#?])/.test(href)) {
+        markShop(slots[j], "Hitman");
+        slots[j].setAttribute("data-dock", SHOP);
+      }
+    }
+  }
+
+  function isShopAnchor(a) {
+    return !!(a && (a.getAttribute("data-hitman-shop") === "1" ||
+      a.getAttribute("data-appnav") === "sites" ||
+      a.getAttribute("data-dock") === SHOP));
+  }
+
+  /* tabbar.js deliberately intercepts its own links and, for the old sites
+     key, opens chat. Capture a normal tap first so HITMAN actually shops.
+     A held press is left alone so the wing gesture still works. */
+  document.addEventListener("pointerdown", function (e) {
+    var a = e.target.closest && e.target.closest("a");
+    downShop = isShopAnchor(a);
+    downAt = downShop ? Date.now() : 0;
   }, true);
 
-  return { open: open, close: close, boot: boot, inline: function () { return inline; } };
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("a");
+    if (!isShopAnchor(a)) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (downShop && downAt && Date.now() - downAt >= HOLD_MS) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    location.assign(SHOP);
+  }, true);
+
+  function bootPatch() {
+    patch();
+    var bar = document.querySelector(".appbar");
+    if (bar && window.MutationObserver) {
+      new MutationObserver(function () { patch(); }).observe(bar, { childList: true, subtree: true });
+    }
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootPatch);
+  else bootPatch();
+
+  /* Preserve the desk for places that explicitly ask for it. It is no
+     longer the fourth-tab destination. */
+  var core = document.createElement("script");
+  core.src = ROOT + "js/deskchat-core.js" + (src.indexOf("?") > -1 ? src.slice(src.indexOf("?")) : "");
+  core.onload = patch;
+  core.onerror = function () { console.error("[Hitman Halo] desk chat core failed to load"); };
+  (document.head || document.documentElement).appendChild(core);
 })();
