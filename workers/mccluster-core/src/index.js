@@ -85,6 +85,48 @@ export default{async fetch(req,env){
       });
     }
 
+    /**
+     * A licensing brief from the HERE app's licence desk.
+     *
+     * The app used to render a receipt and a reference number without sending
+     * anything anywhere, so the customer was told their brief was filed when
+     * it had not been. This is the endpoint that makes that true: the row is
+     * written first, and the reference the app displays is the one returned
+     * from here.
+     */
+    if(path==='/v1/licensing/briefs'&&req.method==='POST'){
+      const body=await req.json().catch(()=>({}));
+      const email=String(body.email||'').trim().toLowerCase();
+      const who=String(body.who||'').trim();
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))return fail(env,'A reachable email address is required',422);
+      if(who.length<2)return fail(env,'Tell us who the licence is for',422);
+      if(!body.track_slug)return fail(env,'Name the track you want to license',422);
+
+      const reference=`QT6KV-${crypto.randomUUID().slice(0,8).toUpperCase()}`;
+      const row={
+        reference,
+        track_slug:String(body.track_slug).slice(0,80),
+        use_case:String(body.use||'').slice(0,80)||null,
+        term:String(body.term||'').slice(0,80)||null,
+        requester_name:who.slice(0,120),
+        requester_email:email.slice(0,200),
+        note:String(body.note||'').slice(0,4000)||null,
+        source:'here-app',
+        status:'received'
+      };
+      const res=await fetch(`${env.SUPABASE_URL}/rest/v1/licensing_briefs`,{
+        method:'POST',
+        headers:{...sbHeaders(env),Prefer:'return=representation'},
+        body:JSON.stringify(row)
+      });
+      if(!res.ok){
+        const detail=await res.text().catch(()=>null);
+        return fail(env,'We could not file your brief. Nothing was sent — please try again.',502,detail);
+      }
+      const saved=(await res.json().catch(()=>[]))?.[0]||row;
+      return reply(env,{reference:saved.reference,status:saved.status},201);
+    }
+
     return fail(env,'Not found',404);
   }catch(error){return fail(env,error.message||'McCluster Core request failed',error.status||500,error.detail)}
 }};

@@ -27,6 +27,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { album, trackBySlug } from '../../src/content';
+import { fileBrief } from '../../src/desk';
 import { color, family, radius, space, type, MIN_TOUCH } from '../../src/theme';
 
 const USES = [
@@ -54,7 +55,10 @@ export default function LicenseScreen() {
   const [who, setWho] = useState('');
   const [email, setEmail] = useState('');
   const [note, setNote] = useState('');
-  const [sent, setSent] = useState(false);
+  /** The server's reference, set only once the brief is genuinely filed. */
+  const [filed, setFiled] = useState<{ reference: string } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   /* the inherited track wins if the visitor arrived from a room */
   React.useEffect(() => {
@@ -66,7 +70,20 @@ export default function LicenseScreen() {
     [use, term, who, email],
   );
 
-  if (sent) return <Receipt onDone={() => router.back()} trackSlug={trackSlug} />;
+  if (filed) return <Receipt onDone={() => router.back()} trackSlug={trackSlug} reference={filed.reference} />;
+
+  async function send() {
+    if (!ready || sending) return;
+    setSending(true);
+    setError(null);
+    try {
+      setFiled(await fileBrief({ trackSlug, use: use!, term: term!, who, email, note }));
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : 'Your brief was not sent. Please try again.');
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <KeyboardAvoidingView
@@ -155,16 +172,21 @@ export default function LicenseScreen() {
 
       {/* the primary action stays reachable, above the bar, always */}
       <View style={[s.dock, { paddingBottom: space.md }]}>
+        {error ? (
+          <Text style={s.error} accessibilityLiveRegion="polite">
+            {error}
+          </Text>
+        ) : null}
         <Pressable
-          disabled={!ready}
-          onPress={() => setSent(true)}
-          style={[s.send, !ready && s.sendOff]}
+          disabled={!ready || sending}
+          onPress={send}
+          style={[s.send, (!ready || sending) && s.sendOff]}
           accessibilityRole="button"
           accessibilityLabel="Send the brief"
-          accessibilityState={{ disabled: !ready }}
+          accessibilityState={{ disabled: !ready || sending, busy: sending }}
         >
-          <Text style={[s.sendText, !ready && s.sendTextOff]}>
-            {ready ? 'Send it to the desk' : 'Answer all four'}
+          <Text style={[s.sendText, (!ready || sending) && s.sendTextOff]}>
+            {sending ? 'Sending…' : ready ? 'Send it to the desk' : 'Answer all four'}
           </Text>
         </Pressable>
       </View>
@@ -226,7 +248,7 @@ function Option({
   );
 }
 
-function Receipt({ trackSlug, onDone }: { trackSlug: string; onDone: () => void }) {
+function Receipt({ trackSlug, onDone, reference }: { trackSlug: string; onDone: () => void; reference: string }) {
   const insets = useSafeAreaInsets();
   const t = trackBySlug(trackSlug);
   return (
@@ -238,7 +260,7 @@ function Receipt({ trackSlug, onDone }: { trackSlug: string; onDone: () => void 
         quote back, usually the same day. Nothing is licensed until you sign.
       </Text>
       <View style={s.receiptCard}>
-        <Text style={s.receiptRef}>REF QT6KV·{Date.now().toString().slice(-6)}</Text>
+        <Text style={s.receiptRef}>REF {reference}</Text>
       </View>
       <Pressable onPress={onDone} style={s.send} accessibilityRole="button">
         <Text style={s.sendText}>Back to the record</Text>
@@ -334,6 +356,7 @@ const s = StyleSheet.create({
   sendOff: { backgroundColor: color.field },
   sendText: { ...type.row, fontFamily: family(700), color: '#fff' },
   sendTextOff: { color: color.fainter },
+  error: { ...type.sub, color: color.ruby, marginBottom: space.sm, textAlign: 'center' },
 
   receiptTitle: { ...type.display, color: color.paper, marginTop: space.md },
   receiptBody: { ...type.body, color: color.quiet, marginTop: space.lg },
