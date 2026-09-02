@@ -90,9 +90,8 @@
   var heroChars = splitLines("#heroTitle");
   var finaleChars = splitLines("#finaleTitle");
 
-  // start hidden until the preloader hands off
-  gsap.set(heroChars, { yPercent: 120, opacity: 0, rotate: 6 });
-  gsap.set(".hero .reveal-line > span", { yPercent: 110, opacity: 0 });
+  /* Do NOT hide the titles. Empty opacity-0 letters on a dark canvas is
+     the blackout. The orbit still scrubs them later. */
 
   /* ---------------- scroll-scrubbed frame sequences ---------------- */
   function pad4(n) { return String(n).padStart(4, "0"); }
@@ -301,7 +300,9 @@
   var preMarkR = document.querySelector(".preloader__piece--r");
 
   function setCount(v) {
+    if (!preCount) return;
     preCount.textContent = String(Math.round(v)).padStart(3, "0");
+    if (!preloader) return;
     // two-stage escalation: ignite at 50%, second hit near the end
     preloader.classList.toggle("is-hot", v >= 50);
     preloader.classList.toggle("is-blazing", v >= 85);

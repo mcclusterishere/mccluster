@@ -17,7 +17,7 @@
    by slicing the kept copy by hand. A record not in the vault
    streams from the network exactly as it always did.
    ============================================================ */
-var V = "mcc-unblack-1-__STAMP__";
+var V = "mcc-unblack-2-__STAMP__";
 var VAULT = "mcc-vault-v1";
 
 self.addEventListener("install", function () { self.skipWaiting(); });

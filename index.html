@@ -146,14 +146,8 @@
   <script src="js/theme.js?v=__STAMP__"></script>
   <noscript><style>.preloader{display:none!important}</style></noscript>
   <style>
-    /* FAIL-OPEN: the curtain cannot hold the house hostage. After ~2.2s it
-       is gone even if JS never runs. JS still dismisses it earlier. */
-    .preloader{animation:mccPreOut 2.2s ease 0.05s forwards}
-    .preloader.is-done{opacity:0;visibility:hidden;pointer-events:none;animation:none}
-    @keyframes mccPreOut{
-      0%,78%{opacity:1;visibility:visible}
-      100%{opacity:0;visibility:hidden;pointer-events:none}
-    }
+    /* NO CURTAIN. First paint is the house, not a black gate. */
+    .preloader{display:none!important;opacity:0;visibility:hidden;pointer-events:none;animation:none}
     .hero__poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
     .hero__line--accent{color:var(--ruby-hot,#e5383b)}
     /* the case rail: flat cards between films */
@@ -200,23 +194,9 @@
      keeps its own action; this attribute is per-page. -->
 <body>
 
-  <!-- PRELOADER -->
-  <div class="preloader" id="preloader" aria-hidden="true">
-    <div class="preloader__inner">
-      <div class="preloader__mark" id="preMark">
-        <img class="preloader__piece preloader__piece--l" src="assets/img/m-mark.png" alt="">
-        <img class="preloader__piece preloader__piece--r" src="assets/img/m-mark.png" alt="">
-      </div>
-      <div class="preloader__count"><span id="preCount">000</span><span class="preloader__pct">%</span></div>
-      <div class="preloader__label">McCluster · rolling the set</div>
-      <div class="preloader__skip">Tap anywhere to enter &#8594;</div>
-      <div class="zencue">
-        <span class="zencue__orb" aria-hidden="true"></span>
-        <p class="zencue__title">The Physiological Sigh</p>
-        <p class="zencue__msg">Two quick breaths in through the nose, one long exhale out. The wait is yours if you want it.</p>
-      </div>
-    </div>
-  </div>
+  <!-- PRELOADER retired: a first-paint black curtain is a broken site.
+       The house is already on screen. Keep the node so old JS can no-op. -->
+  <div class="preloader is-done" id="preloader" hidden aria-hidden="true"></div>
 
   <!-- FILM GRAIN -->
 
