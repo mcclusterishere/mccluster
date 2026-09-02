@@ -85,19 +85,14 @@ jobs:
           readers=[]; tags=[]
           for i,url in enumerate(urls):
               tag=f'source{i}'; tags.append(tag)
-              # COPC is spatially indexed. Passing the AOI into the reader makes
-              # range requests only for intersecting octree nodes instead of
-              # downloading/decoding the complete source tile.
               readers.append({'type':'readers.copc','filename':url,'bounds':bounds,'tag':tag})
           stages=list(readers)
           if len(tags)>1:
-              stages.append({'type':'filters.merge','inputs':tags,'tag':'site'})
-              writer_input=['site']
+              stages.append({'type':'filters.merge','inputs':tags,'tag':'site'}); writer_input=['site']
           else: writer_input=[tags[0]]
           stages.append({'type':'writers.copc','inputs':writer_input,'filename':'data/s477/lidar/generated/s477-preliminary-site.copc.laz','forward':'all'})
           Path('/tmp/s477-crop.json').write_text(json.dumps({'pipeline':stages},indent=2)+'\n')
           PY
-          cat /tmp/s477-crop.json
           pdal pipeline /tmp/s477-crop.json
           pdal info --summary data/s477/lidar/generated/s477-preliminary-site.copc.laz > data/s477/lidar/generated/s477-preliminary-site-summary.json
 
@@ -159,4 +154,8 @@ jobs:
           git add data/s477/lidar/generated
           if git diff --cached --quiet; then echo "No generated changes to commit."; exit 0; fi
           git commit -m "Generate S477 real NOAA LiDAR site crop"
+          # The Smart Church branch may move while a geospatial job is running.
+          # Rebase this data-only commit onto the newest branch tip before publish.
+          git fetch origin feature/s477-smart-church
+          git rebase origin/feature/s477-smart-church
           git push origin HEAD:feature/s477-smart-church
