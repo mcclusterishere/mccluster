@@ -1,0 +1,35 @@
+{
+  "note": "Live McCluster Sites clients and their plan state. Display plus control-plane seed. Auth accounts are created in Supabase by the studio.",
+  "clients": [
+    {
+      "slug": "shiloh",
+      "name": "Shiloh Baptist Church",
+      "status": "active",
+      "plan": "web",
+      "url": "demos/shiloh/index.html"
+    },
+    {
+      "slug": "yohana",
+      "name": "Yohana Robertson",
+      "status": "active",
+      "plan": "web",
+      "url": "https://mcclusterishere.github.io/Yohana-The-Realtor/"
+    },
+    {
+      "slug": "jay-johnson",
+      "name": "Jay Johnson",
+      "status": "active",
+      "plan": "web",
+      "plan_label": "McCluster Sites · Web",
+      "kind": "Community connector",
+      "city": "Atlanta",
+      "domain": "jnhelevate.com",
+      "url": "https://jnhelevate.com/",
+      "repo": "mcclusterishere/Welgen",
+      "login": "https://jnhelevate.com/admin/",
+      "layer": "https://matthew.mccluster.org/account.html",
+      "editor": "client-owned backend at /admin Site tab",
+      "line": "Public profile, Jay Connect PWA, and a signed-in backend where Jay edits pages, copy, photos and videos."
+    }
+  ]
+}
