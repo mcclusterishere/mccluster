@@ -41,36 +41,40 @@ jobs:
           curl --fail --location --retry 4 --retry-delay 2 "$INDEX_URL" -o /tmp/ct-lidar-index.gpkg
           ogrinfo -ro -so /tmp/ct-lidar-index.gpkg > data/s477/lidar/generated/noaa-tile-index-info.txt
 
-          # Preliminary S477 AOI in NAD83(2011) / UTM 18N. This is a real
-          # buffered site crop, not yet the final parcel mask.
           ogr2ogr -f GeoJSON /tmp/s477-source-tiles.geojson /tmp/ct-lidar-index.gpkg \
             -spat 651890 4559070 652150 4559335 -spat_srs EPSG:6347 \
             -t_srs EPSG:6347
 
           python - <<'PY'
           import json, re
-          from pathlib import Path
+          from pathlib import Path, PurePosixPath
 
           fc=json.loads(Path('/tmp/s477-source-tiles.geojson').read_text())
-          urls=[]
+          candidates=[]
           for feature in fc.get('features',[]):
               for value in (feature.get('properties') or {}).values():
-                  if not isinstance(value,str):
-                      continue
-                  for candidate in re.findall(r'https?://[^\s"\']+|[^\s"\']+\.copc\.laz|[^\s"\']+\.laz', value, flags=re.I):
+                  if not isinstance(value,str): continue
+                  for candidate in re.findall(r'https?://[^\s"\']+|[^\s"\']+\.copc\.laz|[^\s"\']+\.laz',value,flags=re.I):
                       candidate=candidate.rstrip('),;')
-                      if candidate.lower().endswith(('.copc.laz','.laz')):
-                          urls.append(candidate)
-          clean=[]
-          for u in urls:
-              if not u.startswith('http'):
-                  # The NOAA tile index normally stores a URL. Keep this
-                  # fallback deterministic if it stores a relative object key.
-                  u='https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/'+u.lstrip('/')
-              if u not in clean: clean.append(u)
+                      if not candidate.lower().endswith(('.copc.laz','.laz')): continue
+                      if not candidate.startswith('http'):
+                          candidate='https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/'+candidate.lstrip('/')
+                      candidates.append(candidate)
+
+          # NOAA's tile index currently exposes both legacy root URLs and the
+          # live BLOCK URLs for some tiles. Group by basename and prefer the
+          # BLOCK path. This prevents stale duplicate keys from breaking PDAL.
+          by_name={}
+          for u in candidates:
+              name=PurePosixPath(u.split('?',1)[0]).name
+              current=by_name.get(name)
+              if current is None or ('/BLOCK' in u.upper() and '/BLOCK' not in current.upper()):
+                  by_name[name]=u
+          clean=sorted(by_name.values())
           if not clean:
               print(json.dumps(fc,indent=2)[:12000])
               raise SystemExit('Tile index query returned no LAZ/COPC URL fields')
+
           Path('/tmp/s477-tile-urls.json').write_text(json.dumps(clean,indent=2)+'\n')
           Path('data/s477/lidar/generated/source-tiles.json').write_text(json.dumps({
               'sourceIndex':'https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/tileindex_CT_statewide_m10296.gpkg',
@@ -79,7 +83,7 @@ jobs:
               'tileCount':len(clean),
               'tiles':clean
           },indent=2)+'\n')
-          print('Resolved',len(clean),'source tile(s)')
+          print('Resolved',len(clean),'live source tile(s)')
           print('\n'.join(clean))
           PY
 
@@ -91,29 +95,17 @@ jobs:
           import json
           from pathlib import Path
           urls=json.loads(Path('/tmp/s477-tile-urls.json').read_text())
-          readers=[]
-          tags=[]
+          readers=[]; tags=[]
           for i,url in enumerate(urls):
-              tag=f'source{i}'
-              tags.append(tag)
+              tag=f'source{i}'; tags.append(tag)
               readers.append({'type':'readers.copc','filename':url,'tag':tag})
           stages=list(readers)
           if len(tags)>1:
-              stages.append({'type':'filters.merge','inputs':tags,'tag':'merged'})
-              crop_input='merged'
-          else:
-              crop_input=tags[0]
+              stages.append({'type':'filters.merge','inputs':tags,'tag':'merged'}); crop_input='merged'
+          else: crop_input=tags[0]
           stages += [
-              {
-                'type':'filters.crop',
-                'inputs':[crop_input],
-                'bounds':'([651890,652150],[4559070,4559335])'
-              },
-              {
-                'type':'writers.copc',
-                'filename':'data/s477/lidar/generated/s477-preliminary-site.copc.laz',
-                'forward':'all'
-              }
+              {'type':'filters.crop','inputs':[crop_input],'bounds':'([651890,652150],[4559070,4559335])'},
+              {'type':'writers.copc','filename':'data/s477/lidar/generated/s477-preliminary-site.copc.laz','forward':'all'}
           ]
           Path('/tmp/s477-crop.json').write_text(json.dumps({'pipeline':stages},indent=2)+'\n')
           PY
@@ -158,20 +150,17 @@ jobs:
               for x,y,z,c in rows: f.write(struct.pack('<ffff',x-origin_xy[0],y-origin_xy[1],z-z0,c))
           sources=json.loads(Path('data/s477/lidar/generated/source-tiles.json').read_text())
           payload={
-              'project':'S477',
-              'status':'preliminary-buffered-real-crop',
+              'project':'S477','status':'preliminary-buffered-real-crop',
               'source':'NOAA 2023 Connecticut classified LiDAR dataset 10296, resolved through official tile-index GeoPackage',
-              'sourceTiles':sources['tiles'],
-              'crs':'NAD83(2011) / UTM zone 18N',
+              'sourceTiles':sources['tiles'],'crs':'NAD83(2011) / UTM zone 18N',
               'cropBoundsMeters':{'minX':651890,'maxX':652150,'minY':4559070,'maxY':4559335},
               'cropSizeMeters':{'width':260,'height':265},
               'approxCenterWgs84':{'lat':41.1699104309082,'lon':-73.1877975463867},
               'originUtm':{'x':origin_xy[0],'y':origin_xy[1],'z':z0},
-              'pointCount':len(rows),
-              'strideBytes':16,
+              'pointCount':len(rows),'strideBytes':16,
               'layout':['xOffsetMeters','yOffsetMeters','zOffsetMeters','classification'],
               'binary':'s477-site-points.bin',
-              'note':'This is an actual NOAA point-cloud crop around S477 using a 260 m x 265 m preliminary buffer. It will be clipped again to the authoritative parcel/building geometry when City GIS records are received.'
+              'note':'Actual NOAA point-cloud crop around S477 using a 260 m x 265 m preliminary buffer. It will be clipped again to authoritative parcel/building geometry when City GIS records are received.'
           }
           meta.write_text(json.dumps(payload,indent=2)+'\n')
           print(f'Wrote {len(rows):,} browser points')
@@ -191,9 +180,6 @@ jobs:
           git config user.name "S477 Data Pipeline"
           git config user.email "actions@users.noreply.github.com"
           git add data/s477/lidar/generated
-          if git diff --cached --quiet; then
-            echo "No generated changes to commit."
-            exit 0
-          fi
+          if git diff --cached --quiet; then echo "No generated changes to commit."; exit 0; fi
           git commit -m "Generate S477 real NOAA LiDAR site crop"
           git push origin HEAD:feature/s477-smart-church
