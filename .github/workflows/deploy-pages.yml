@@ -1,0 +1,66 @@
+name: Deploy live site from McCluster
+
+# The live website ships from THIS repo.
+# Do not run the old deploy in mcclusterishere/Here.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Stamp asset versions so every deploy busts browser caches
+        run: |
+          find . -path ./node_modules -prune -o -path ./apps -prune -o \
+            \( -name '*.html' -o -name 'sw.js' \) -print0 \
+            | xargs -0 sed -i "s/__STAMP__/${GITHUB_SHA::12}/g"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "Stamp asset versions for deploy" --allow-empty
+
+      - name: Promote the Site 0 game into the web root
+        env:
+          STAMP: ${{ github.sha }}
+        run: |
+          if [ -x ./tools/publish-site0.sh ]; then
+            ./tools/publish-site0.sh
+            git add -f site0 || true
+          fi
+
+      - name: Strip the internals out of the published tree
+        run: |
+          rm -rf docs packages apps scripts supabase .github tests node_modules redirects tools _unfinished workers
+          rm -f README.md capacitor.config.json wrangler.toml wrangler.jsonc AGENTS.md CLAUDE.md CODEX.md GEMINI.md
+          git add -A
+          git commit -m "Publish: web root only, internals stripped" --allow-empty
+
+          fail=0
+          if grep -rniE 'tapstitch|printful|printify|gelato|apliiq|teespring|gooten|customcat' \
+               --exclude-dir=.git . ; then
+            echo "::error::a maker is named in the published tree"
+            fail=1
+          fi
+          if grep -rnE '"(blank|cost|markup|printMarkup|landed|handling|printCost)"[[:space:]]*:[[:space:]]*[0-9]' \
+               data/ ; then
+            echo "::error::a public ledger carries a cost"
+            fail=1
+          fi
+          [ "$fail" = 0 ] || exit 1
+
+      - name: Push to gh-pages
+        run: git push origin HEAD:refs/heads/gh-pages --force
