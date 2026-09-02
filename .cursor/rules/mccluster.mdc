@@ -6,9 +6,10 @@ alwaysApply: true
 McCluster is the backend and the control plane.
 
 - Control repo: mcclusterishere/mccluster
-- Cloudflare project: mccluster (public edge matthew.mccluster.org / mccluster.org)
-- Worker: mccluster-core (api.mccluster.org)
+- Cloudflare Worker: mccluster (api.mccluster.org)
+- Public edge: matthew.mccluster.org / mccluster.org
 - Data: Supabase zmnhbrjyhxzhkxmhkexs
+- There is no Worker named mccluster-core. Do not create one.
 - Do not create a competing auth, database, social, billing, or admin stack
 - Do not auto-push CI onto feature branches
 - Do not rewrite index.html or revive rejected visual systems
