@@ -14,9 +14,15 @@
    Two carriers, and the ledger picks by which key it fills in:
 
      preorder.shopify  a product or cart URL on the Shopify store
-                       that TapStitch fulfils from. Sizes and
-                       variants are chosen AT checkout, and the
-                       garment is made and shipped automatically.
+                       the maker fulfils from. Sizes and variants
+                       are chosen AT checkout, and the garment is
+                       made and shipped automatically.
+                       (The maker is never named in this tree: the
+                       publish gate greps for it and fails the
+                       build. Who prints the blanks is a supply
+                       detail, not a thing a buyer needs. The
+                       runbook that does name it lives in docs/,
+                       which is stripped before publish.)
      preorder.square   a Square payment link. Sizes come back by
                        email afterwards and the house places the
                        production order by hand.
