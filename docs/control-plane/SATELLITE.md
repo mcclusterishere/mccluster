@@ -7,9 +7,12 @@ Canonical law lives in the control repo. If this file and that file disagree, th
 - Control repo: https://github.com/mcclusterishere/mccluster
 - Agent law: https://github.com/mcclusterishere/mccluster/blob/main/AGENTS.md
 - Ecosystem map: https://github.com/mcclusterishere/mccluster/blob/main/docs/control-plane/ECOSYSTEM.md
-- Cloudflare project: `mccluster` (public edge `matthew.mccluster.org` / `mccluster.org`)
-- Worker: `mccluster-core` (`api.mccluster.org`)
+- Cloudflare project / Worker: `mccluster`
+- Public edge: `matthew.mccluster.org` / `mccluster.org`
+- API: `https://api.mccluster.org`
 - Data: Supabase `zmnhbrjyhxzhkxmhkexs`
+
+There is no Worker named `mccluster-core`. Do not create one.
 
 ## What you are allowed to do here
 
@@ -19,7 +22,7 @@ Canonical law lives in the control repo. If this file and that file disagree, th
 
 ## What you must not do
 
-- Create a new auth, database, admin, billing, or social scheduler.
+- Create a new auth, database, admin, billing, Worker, or social scheduler.
 - Auto-push GitHub Actions onto a feature branch (`git push` from CI onto an open PR).
 - Rewrite `index.html` or a shipping page unless the owner named that file.
 - "Rebuild the backend" inside this repo. The backend is McCluster.

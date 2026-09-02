@@ -3,7 +3,7 @@
     "github": "mcclusterishere/mccluster",
     "org": "McCluster-Corp",
     "cloudflareProject": "mccluster",
-    "cloudflareWorker": "mccluster-core",
+    "cloudflareWorker": "mccluster",
     "publicDomain": "matthew.mccluster.org",
     "apexDomain": "mccluster.org",
     "apiDomain": "api.mccluster.org",
