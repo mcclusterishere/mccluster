@@ -1,31 +1,18 @@
 # Cloudflare Git integration looks at the repository ROOT.
-# Previous Workers Builds checks failed in ~0s because this file was missing
-# and the Git-linked project is named `mccluster`.
-#
-# Split:
-#   - This file → Cloudflare project `mccluster` (Worker entry for the API,
-#     so Git integration has a valid Worker name).
-#   - Static public site → matthew.mccluster.org / mccluster.org
-#     (Pages or the existing CNAME). Do NOT upload the whole git tree
-#     (3D + LiDAR) as Workers Assets.
-#   - Dedicated Worker project name remains `mccluster-core`
-#     (workers/mccluster-core/wrangler.toml). Keep both names in sync.
+# Worker API is mccluster-core. Do not upload this tree as Workers Assets.
 
 name = "mccluster"
 main = "workers/mccluster-core/src/index.js"
-compatibility_date = "2026-08-31"
+compatibility_date = "2026-09-02"
+compatibility_flags = [ "nodejs_compat" ]
 workers_dev = true
 
+[observability]
+enabled = true
+
 [vars]
-ALLOWED_ORIGIN = "*"
+ALLOWED_ORIGINS = "https://matthew.mccluster.org,https://mccluster.org,http://localhost:8787,http://127.0.0.1:8787,http://localhost:5500,http://127.0.0.1:5500"
 MCCLUSTER_SUPABASE_PROJECT_REF = "zmnhbrjyhxzhkxmhkexs"
 PUBLIC_ORIGIN = "https://matthew.mccluster.org"
 APEX_ORIGIN = "https://mccluster.org"
-
-# Production secrets stay in Cloudflare, never in git:
-#   wrangler secret put SUPABASE_URL
-#   wrangler secret put SUPABASE_SERVICE_ROLE_KEY
-#   wrangler secret put STRIPE_SECRET_KEY
-#
-# After api.mccluster.org DNS exists:
-# routes = [{ pattern = "api.mccluster.org/*", zone_name = "mccluster.org" }]
+ALLOW_DEMO_IDENTITIES = "false"
