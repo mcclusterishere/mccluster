@@ -203,7 +203,12 @@
         ? '<img class="modes__mark" src="' + esc(STAMP ? md.emblem + "?v=" + STAMP : md.emblem) +
           '" alt="" width="40" height="40" decoding="async">'
         : "") +
-      '<span class="sr-only">' + esc(md.name) + "</span>" +
+      /* THE MARK ALONE WAS NOT A LABEL. At 26px the Equity wordmark read
+         as a grey smudge and the segment looked broken rather than
+         unselected. The mark still carries the programme -- that
+         distinction from a billing period is real -- but a person has to
+         be able to read which half they are pressing. */
+      '<span class="modes__word">' + esc(md.name) + "</span>" +
     "</button>";
   }
 
@@ -720,6 +725,40 @@
       ' aria-controls="bpanel-' + esc(o.id) + '">' + esc(label) + "</button>";
   }
 
+  /* WHAT THE CARD IS, BEFORE WHAT IT COSTS.
+     The ledger already says where each offer sits in the journey and what
+     it is for. Both were only readable on the details page, so every card
+     opened on a name with no bearing. */
+  function eyebrow(o) {
+    var bits = [o.stage, o.identity].filter(Boolean);
+    if (!bits.length) return "";
+    return '<p class="buy__eyebrow">' + esc(bits.join(" \u00b7 ")) + "</p>";
+  }
+
+  /* THE SAME NUMBER OF LINES ON EVERY CARD.
+     The ledger carries five to twelve inclusions per offer. Printing all
+     of them made one card tower over its neighbour and left the other
+     three looking thin, so every card shows the same five and says how
+     many more there are. The count is read, never typed. */
+  var INCLUDE_LINES = 5;
+
+  function includesList(o) {
+    var items = (Array.isArray(o.includes) ? o.includes : []).filter(Boolean);
+    if (!items.length) return "";
+    var shown = items.slice(0, INCLUDE_LINES);
+    var rest = items.length - shown.length;
+    return '<div class="buy__inc">' +
+      '<p class="buy__inck">What you get</p>' +
+      '<ul class="buy__list">' +
+        shown.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") +
+      "</ul>" +
+      (rest > 0
+        ? '<a class="buy__more" href="sites-details.html#' + esc(o.id) + '">' +
+            "And " + rest + " more &rarr;</a>"
+        : "") +
+    "</div>";
+  }
+
   function renderBuy(L, o) {
     var billing = o.billing_modes || null;
     var modes = (billing || o.modes || ["m"]).filter(function (m) { return (o.checkout || {})[m]; });
@@ -733,12 +772,14 @@
       : "";
 
     return '<article class="buy" data-offer="' + esc(o.id) + '">' +
+      eyebrow(o) +
       "<h2>" + esc(o.name) + "</h2>" +
       '<p class="buy__one">' + esc(o.one_line || o.tagline || "") + "</p>" +
       toggle +
       '<div class="buy__body" id="bpanel-' + esc(o.id) + '"' +
         (modes.length > 1 ? ' role="tabpanel" aria-labelledby="btab-' + esc(o.id) + '-' + esc(modes[0]) + '"' : "") +
         ">" + buyBody(L, o, modes[0]) + "</div>" +
+      includesList(o) +
     "</article>";
   }
 

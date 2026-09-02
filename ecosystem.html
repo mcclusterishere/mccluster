@@ -134,6 +134,7 @@
           /* a ?brand= link from anywhere else opens straight into that entry */
           var want = new URLSearchParams(location.search).get("brand");
           if (want && BRANDS[want]) open(want);
+          else openFromHash();
         })
         .catch(function () {
           root.innerHTML = '<section class="ecoseg"><p class="ecoseg__blurb">Couldn\'t load the ecosystem. Try again in a moment.</p></section>';
@@ -178,6 +179,9 @@
 
         modal.hidden = false;
         document.body.classList.add("eco-locked");
+        if (location.hash.replace(/^#/, "") !== slug) {
+          history.replaceState(null, "", "#" + encodeURIComponent(slug));
+        }
         var f = modal.querySelector(".ecomodal__x");
         if (f) f.focus();
         track("eco_open", { brand: slug });
@@ -186,8 +190,27 @@
       function close() {
         modal.hidden = true;
         document.body.classList.remove("eco-locked");
+        if (location.hash) {
+          history.replaceState(null, "", location.pathname + location.search);
+        }
         if (lastFocus && lastFocus.focus) lastFocus.focus();
       }
+
+      /* A BRAND IS A PLACE NOW, NOT JUST A TAP.
+         The fourth column of the bar points at #whip-equipped, so the hash
+         has to open the panel it names -- otherwise the tab lands on a
+         wall of segments and asks the visitor to find the dealership
+         themselves. Opening one also writes the hash, so what is on screen
+         is what gets shared. */
+      function openFromHash() {
+        var slug = decodeURIComponent((location.hash || "").replace(/^#/, ""));
+        if (slug && BRANDS[slug]) {
+          open(slug);
+          var card = root.querySelector('[data-eco="' + slug.replace(/"/g, '\\"') + '"]');
+          if (card && card.scrollIntoView) card.scrollIntoView({ block: "center" });
+        }
+      }
+      window.addEventListener("hashchange", openFromHash);
 
       root.addEventListener("click", function (e) {
         var t = e.target.closest("[data-eco]");
@@ -224,9 +247,9 @@
       <img class="appbar__m" src="assets/img/m-mark.png" alt="">
       <span>HERE</span>
     </a>
-    <a class="appbar__tab" href="prayer-closet.html" data-appnav="sites">
-      <img class="appbar__hm" src="assets/img/hm-mark-bar.webp" alt="">
-      <span>Hitman</span>
+    <a class="appbar__tab" href="ecosystem.html#whip-equipped" data-appnav="sites">
+      <img class="appbar__we" src="assets/img/we-logo.webp" alt="">
+      <span>Whip</span>
     </a>
     <a class="appbar__tab" href="account.html" data-appnav="profile">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
