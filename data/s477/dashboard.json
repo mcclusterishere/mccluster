@@ -1,5 +1,5 @@
 {
-  "version": "2026-09-02-v1",
+  "version": "2026-09-02-v2",
   "capital": {
     "subtotal": 126080.92,
     "contingency": 12608.092,
@@ -23,7 +23,7 @@
     {"label":"Legacy compute","value":"10","unit":"R620 servers","state":"inventory","detail":"Per-node survey still required"},
     {"label":"Video reference","value":"30","unit":"planned installed","state":"reference-design","detail":"33 provisioned incl. spares"},
     {"label":"Controlled openings","value":"4","unit":"exterior openings","state":"field-check","detail":"3 single + 1 double"},
-    {"label":"Open survey gates","value":"12","unit":"gates","state":"open","detail":"Design freeze cannot close yet"}
+    {"label":"LiDAR site crop","value":"1.89M","unit":"source points","state":"verified","detail":"NOAA dataset 10296 · 260 m × 265 m buffered AOI"}
   ],
   "lidar": {
     "label":"2023 Connecticut LiDAR",
@@ -32,15 +32,19 @@
     "tileSize":"2,500 ft × 2,500 ft",
     "approxFullDataset":"4.1 TB",
     "acquisition":"Mar 22 – May 7, 2023",
-    "status":"Official source connected · S477 parcel-accurate crop pending",
-    "viewer":"https://coast.noaa.gov/lidar/viewer/v/noaapotree.html?r=https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/entwine/geoid18/10296/ept.json",
+    "status":"S477 real NOAA crop generated · parcel-mask refinement pending",
+    "siteSourcePoints":1892482,
+    "browserPoints":120000,
+    "siteCopcBytes":10156030,
+    "crop":"260 m × 265 m",
+    "viewer":"s477-lidar.html",
     "catalog":"https://www.fisheries.noaa.gov/inport/item/75570"
   },
   "records": {
-    "status":"Request sent",
+    "status":"Requests sent",
     "sent":"2026-09-02",
-    "to":"City of Bridgeport Building Department",
-    "ask":"Complete property jacket, floor plans, permit drawings, life-safety/MEP plans, dimensional records and City-held spatial records.",
-    "publishedSearchWindow":"7–10 business days minimum"
+    "to":"Bridgeport Building, Assessor, Zoning and GIS",
+    "ask":"Complete property jacket, floor plans, field card/building sketch, site/zoning plans, parcel geometry, dimensional records and relevant City-held spatial records.",
+    "publishedSearchWindow":"7–10 business days minimum for Building Department record searches"
   }
 }
