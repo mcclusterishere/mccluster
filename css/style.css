@@ -1817,12 +1817,20 @@ html.is-installed .getapp,html.is-installed .getapp-pill{display:none !important
    the other tabs' height and letting the width follow keeps every tab's
    optical weight equal without squashing a logo into a box it is not. */
 .appbar__hm{height:2rem;width:auto;max-width:3.1rem;object-fit:contain;display:block;margin-block:-0.12rem}
-/* Whip Equipped took the fourth slot while the drop is put away, and it
-   takes it as the key rather than the logo: a wide cream lockup fought
-   the red coin the active tab sits on, and the key is the one glyph
-   that says whip without needing to be read. Drawn as the bar's own
-   stroked SVG, so it inherits the tab's colour and active state like
-   every other icon up there. */
+/* the mark in the bar is the app icon itself, tightened. The real tile
+   pads the wrench for a home screen; at 28px that padding is all you can
+   see, so assets/img/we-mark-bar.webp is the same icon with the air
+   taken out. It keeps its black plate on purpose -- on the accent coin
+   the plate is what gives the wrench something to read against. */
+.appbar__we {
+  height: 1.65rem;
+  width: 1.65rem;
+  object-fit: contain;
+  display: block;
+  border-radius: 0.42rem;
+  margin-block: -0.05rem;
+}
+
 html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m{content:url("../assets/img/m-mark-dark.png")}
 /* the fifth tab wore the halo PNG, which needed a bigger box than the M
    coin (baked-in transparent margin) and a dark pill under it on the light

@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="en" data-theme-lock="dark">
+<html lang="en" data-brand="whip">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Whip Equipped &middot; three apps, one account</title>
   <meta name="description" content="Whip Equipped LLC is a parts-licensed dealership in Acworth, Georgia, and a mobility application family: Rider, Driver and Rentals. Three apps, one McCluster account, one ledger.">
   <link rel="canonical" href="https://matthew.mccluster.org/whip.html">
-  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="icon" type="image/webp" href="assets/img/we-mark-bar.webp">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0b0908">
+  <meta name="theme-color" content="#060505">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="McCluster">
+  <meta name="apple-mobile-web-app-title" content="Whip Equipped">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Whip Equipped. Three apps, one account.">
   <meta property="og:description" content="Rider, Driver and Rentals: one mobility family on the McCluster account system, run out of a parts-licensed dealership in Acworth, Georgia.">
@@ -21,115 +21,8 @@
 
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/whip.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
-  <style>
-    html, body { background: #0a0807; }
-    .st { max-width: 64rem; margin: 0 auto;
-      padding: clamp(4.6rem, 10vh, 7rem) clamp(1.1rem, 4vw, 2rem) 9rem; }
-
-    /* ---------- the head of the page ---------- */
-    .wtop { position: relative; border-radius: 16px; overflow: hidden;
-      box-shadow: inset 0 0 0 1px var(--edge); }
-    .wtop__shot { position: absolute; inset: 0; width: 100%; height: 100%;
-      object-fit: cover; opacity: .3; }
-    .wtop__in { position: relative; padding: clamp(1.5rem, 5vw, 2.6rem);
-      background: linear-gradient(180deg, rgba(10,8,7,.55), rgba(10,8,7,.93) 72%); }
-    .wtop__logo { height: 1.35rem; width: auto; display: block; margin: 0 0 1rem;
-      padding: .3rem .55rem; border-radius: 100px; background: #f4efe6;
-      box-sizing: content-box; align-self: start; }
-    .wk { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .22em;
-      text-transform: uppercase; color: var(--ruby-hot); margin: 0 0 .55rem; }
-    .wtop h1 { font-family: var(--sig); text-transform: uppercase; line-height: .88;
-      font-size: clamp(2.4rem, 10vw, 4.2rem); margin: 0 0 .8rem; color: var(--cream);
-      text-wrap: balance; }
-    .wtop h1 em { font-style: normal; color: var(--ruby-hot); }
-    .wtop__lede { font: 600 .98rem/1.6 var(--ui, "Manrope", system-ui, sans-serif);
-      color: var(--cream-dim); margin: 0; max-width: 46ch; }
-    .wtop__facts { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1.2rem 0 0; padding: 0;
-      list-style: none; }
-    .wtop__facts li { font: 700 .7rem var(--ui, "Manrope", system-ui, sans-serif);
-      color: var(--cream-dim); padding: .38rem .6rem; border-radius: 6px;
-      box-shadow: inset 0 0 0 1px var(--edge); }
-
-    /* ---------- the three apps ---------- */
-    .wsec { margin-top: clamp(2rem, 6vh, 3rem); }
-    .wsec__rule { height: 1px; background: var(--edge); margin: .55rem 0 1.1rem; }
-
-    .apps { display: grid; gap: .7rem; align-items: stretch; }
-    @media (min-width: 52rem) { .apps { grid-template-columns: repeat(3, 1fr); } }
-
-    .app { display: flex; flex-direction: column; text-align: left; width: 100%;
-      -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
-      background: var(--glass-lo); box-shadow: inset 0 0 0 1px var(--edge);
-      border-radius: 14px; padding: clamp(1.15rem, 3.4vw, 1.4rem);
-      color: inherit; font: inherit; transition: box-shadow .16s ease, background .16s ease; }
-    .app:hover, .app:focus-visible { background: rgba(255,255,255,.045);
-      box-shadow: inset 0 0 0 1px rgba(229,56,59,.5); outline: none; }
-    .app__role { font: 800 .6rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .19em;
-      text-transform: uppercase; color: var(--ruby-hot); margin: 0 0 .5rem; }
-    .app h3 { font-family: var(--sig); text-transform: uppercase; line-height: .95;
-      font-size: clamp(1.35rem, 4.6vw, 1.75rem); margin: 0 0 .45rem; color: var(--cream); }
-    .app__one { font: 600 .85rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
-      color: var(--cream-dim); margin: 0 0 1rem; }
-    .app__foot { margin-top: auto; padding-top: .95rem; box-shadow: inset 0 1px 0 var(--edge);
-      display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
-    .plats { display: flex; gap: .3rem; }
-    .plat { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .1em;
-      text-transform: uppercase; color: var(--cream-dim); padding: .28rem .45rem;
-      border-radius: 5px; box-shadow: inset 0 0 0 1px var(--edge); }
-    .app__open { font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif);
-      color: var(--ruby-hot); white-space: nowrap; }
-
-    /* ---------- the preview ---------- */
-    .wprev { position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center;
-      background: rgba(6,5,4,.76); backdrop-filter: blur(6px); padding: 0; }
-    .wprev[hidden] { display: none; }
-    .wprev__card { width: min(38rem, 100%); max-height: 88vh; overflow-y: auto;
-      background: #12100f; box-shadow: inset 0 0 0 1px var(--edge);
-      border-radius: 18px 18px 0 0; padding: clamp(1.3rem, 4vw, 2rem);
-      padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); }
-    @media (min-width: 44rem) {
-      .wprev { place-items: center; padding: 1.5rem; }
-      .wprev__card { border-radius: 18px; }
-    }
-    .wprev__x { float: right; -webkit-appearance: none; appearance: none; border: 0;
-      background: rgba(255,255,255,.07); color: var(--cream); cursor: pointer;
-      width: 2.1rem; height: 2.1rem; border-radius: 50%; font-size: 1.1rem; line-height: 1; }
-    .wprev h2 { font-family: var(--sig); text-transform: uppercase; line-height: .92;
-      font-size: clamp(1.9rem, 7vw, 2.6rem); margin: .2rem 0 .5rem; color: var(--cream); }
-    .wprev__tag { font: 600 .95rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
-      color: var(--cream-dim); margin: 0 0 1.2rem; }
-    .wprev__k { font: 800 .58rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .2em;
-      text-transform: uppercase; color: var(--cream-dim); margin: 1.3rem 0 .6rem;
-      padding-top: 1rem; box-shadow: inset 0 1px 0 var(--edge); }
-    .wprev ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .38rem; }
-    .wprev ul li { position: relative; padding-left: 1.05rem;
-      font: 600 .84rem/1.5 var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-    .wprev ul li::before { content: ""; position: absolute; left: 0; top: .55em;
-      width: .3rem; height: .3rem; border-radius: 50%; background: var(--ruby-hot); opacity: .8; }
-    .builds { display: grid; gap: .4rem; }
-    .build { display: flex; align-items: center; justify-content: space-between; gap: .7rem;
-      padding: .7rem .85rem; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--edge); }
-    .build b { font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream); }
-    .build code { font: 700 .72rem var(--mono, ui-monospace, Menlo, monospace);
-      color: var(--cream-dim); }
-    .build a { font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif);
-      color: var(--ruby-hot); text-decoration: none; white-space: nowrap; }
-    .status { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .09em;
-      text-transform: uppercase; white-space: nowrap; }
-    .status--build { color: #d99a3c; }
-    .status--live { color: #5fae7d; }
-    .status--gone { color: var(--cream-dim); }
-    .wprev__note { font: 600 .78rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
-      color: var(--cream-dim); margin: 1.1rem 0 0; }
-    .wprev__note a { color: var(--ruby-hot); font-weight: 800; text-decoration: none; }
-
-    .wout { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center;
-      margin: clamp(1.8rem, 5vh, 2.6rem) 0 calc(3.5rem + env(safe-area-inset-bottom, 0px));
-      font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-    .wout a { color: var(--ruby-hot); text-decoration: none; }
-    .wout span { opacity: .45; }
-  </style>
 </head>
 <body>
 
@@ -142,7 +35,7 @@
     <header class="wtop">
       <img class="wtop__shot" src="assets/frames/whip_0001.jpg" alt="" decoding="async">
       <div class="wtop__in">
-        <img class="wtop__logo" src="assets/img/we-logo.webp" alt="Whip Equipped">
+        <img class="wtop__logo" src="assets/img/we-logo-dark.webp" alt="Whip Equipped" width="458" height="160">
         <p class="wk">Whip Equipped LLC &middot; Acworth, Georgia</p>
         <h1>Three apps.<br><em>One account.</em></h1>
         <p class="wtop__lede">A parts-licensed dealership that became a network. The lot
@@ -190,7 +83,7 @@
       <span>HERE</span>
     </a>
     <a class="appbar__tab" href="whip.html" data-appnav="sites">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="14" r="4"/><path d="M11 11L20 2"/><path d="M17 5l2.5 2.5M14.5 7.5L17 10"/></svg>
+      <img class="appbar__we" src="assets/img/we-mark-bar.webp" alt="">
       <span>Whip</span>
     </a>
     <a class="appbar__tab" href="account.html" data-appnav="profile">
@@ -229,6 +122,7 @@
         key: "rider",
         role: "The passenger side",
         name: "Whip Equipped",
+        short: "Rider",
         one: "Hail a whip, watch it come, pay in the app.",
         does: [
           "Request a ride and follow the car in",
@@ -241,6 +135,7 @@
         key: "driver",
         role: "The earning side",
         name: "Whip Equipped Driver",
+        short: "Driver",
         one: "Take the trip, see the split, get paid out.",
         does: [
           "Go on shift and take dispatched trips",
@@ -253,6 +148,7 @@
         key: "rentals",
         role: "The lot",
         name: "Whip Equipped Rentals",
+        short: "Rentals",
         one: "Rent from the dealership itself, by the day.",
         does: [
           "Book a vehicle off the lot for a day or a week",
@@ -287,7 +183,7 @@
           : '<span class="plat">iOS</span><span class="plat">Web</span>';
         return '<button class="app" type="button" data-app="' + esc(p.key) + '">' +
           '<p class="app__role">' + esc(p.role) + "</p>" +
-          "<h3>" + esc(p.name) + "</h3>" +
+          "<h3>" + esc(p.short || p.name) + "</h3>" +
           '<p class="app__one">' + esc(p.one) + "</p>" +
           '<span class="app__foot">' +
             '<span class="plats">' + plats + "</span>" +

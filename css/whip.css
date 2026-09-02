@@ -1,0 +1,231 @@
+/* ============================================================
+   WHIP EQUIPPED — the brand coat.
+
+   The fourth column is a different company. McCluster Corp is Anton on
+   ink with a ruby accent; Whip Equipped LLC is a black app tile with a
+   wrench running amber into red, and a heavy neutral grotesque wordmark.
+   Walking into this section should feel like walking into a different
+   building, and every colour here is lifted off the logo itself:
+
+     amber  #f3ab6b   the light end of the wrench, top-left
+     flame  #ea6b4b   the middle of the shaft, and the working accent
+     red    #dc3f2c   the head of the wrench, upper right
+     deep   #b8301f   the shadow side, for pressed and hovered states
+
+   HOW IT WORKS. The house styles everything from tokens, so this file
+   redefines the tokens rather than restyling components: put
+   data-brand="whip" on <html> and the bar, the active coin, every link
+   and every call to action turn over with it. Nothing here is scoped to
+   one page, so any page that wants the coat can wear it.
+
+   IT SURVIVES THE THEME SWITCH. whip.html deliberately does not pin
+   itself to the cinema coat -- flip the site to daylight and this stays
+   Whip Equipped, in a palette mixed for a light ground rather than the
+   same colours dimmed. Both coats are written out below.
+   ============================================================ */
+
+html[data-brand="whip"] {
+  --we-amber: #f3ab6b;
+  --we-flame: #ea6b4b;
+  --we-red: #dc3f2c;
+  --we-deep: #b8301f;
+
+  /* the house tokens, re-pointed */
+  --ruby-hot: var(--we-flame);
+  --ruby: var(--we-red);
+  --ruby-text: var(--we-flame);
+  --metal: linear-gradient(165deg, #f6b478 0%, #ea6b4b 34%, #c2331f 60%, #f2a065 100%);
+  --on-ruby: #100b09;
+
+  /* the ground goes to the tile's own black, and the neutrals warm with it */
+  --ink: #060505;
+  --ink-2: #100c0b;
+  --cream: #f6f1e9;
+  --cream-dim: rgba(246, 241, 233, 0.82);
+  --glass-hi: rgba(255, 244, 236, 0.11);
+  --glass-lo: rgba(255, 244, 236, 0.042);
+  --edge: rgba(255, 240, 230, 0.15);
+
+  /* THE VOICE. The wordmark is a heavy neutral grotesque, not a
+     condensed poster face, so the display type changes with the coat.
+     Archivo is already in the house and already loaded; at 700 with the
+     tracking pulled in it stands where Anton stands, in Whip Equipped's
+     accent rather than McCluster's. */
+  --sig: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --we-sig-weight: 700;
+  --we-sig-track: -0.028em;
+}
+
+html[data-brand="whip"][data-theme="light"] {
+  /* the same wrench, mixed for paper: the flame is too light to carry
+     text on cream, so the accent walks toward the head of the wrench */
+  --ruby-hot: #c74423;
+  --ruby: #a8331a;
+  --ruby-text: #a8331a;
+  --metal: linear-gradient(165deg, #ef8a52 0%, #d9512c 36%, #a8331a 62%, #ec9257 100%);
+  --on-ruby: #fff8f2;
+
+  --ink: #f7f4ef;
+  --ink-2: #efe9e0;
+  --cream: #171210;
+  --cream-dim: rgba(23, 18, 16, 0.72);
+  --glass-hi: rgba(23, 18, 16, 0.075);
+  --glass-lo: rgba(23, 18, 16, 0.032);
+  --edge: rgba(23, 18, 16, 0.15);
+}
+
+/* the display face is the coat's, so anything set in it takes the coat's
+   weight and tracking too -- Anton needs neither and Archivo needs both */
+html[data-brand="whip"] h1,
+html[data-brand="whip"] h2,
+html[data-brand="whip"] h3,
+html[data-brand="whip"] .wtop h1,
+html[data-brand="whip"] .app h3 {
+  font-weight: var(--we-sig-weight);
+}
+
+/* the coin under the active tab glows ruby in the house stylesheet, and
+   that colour is written into the shadow rather than taken from a token */
+html[data-brand="whip"] .appbar__tab.is-here,
+html[data-brand="whip"] .appbar__tab.is-active {
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 10px 26px -8px rgba(234, 107, 75, 0.66);
+}
+
+/* ============================================================
+   THE PAGE.
+   ============================================================ */
+
+html[data-brand="whip"] body { background: var(--ink); }
+
+.st {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: clamp(4.6rem, 10vh, 7rem) clamp(1.1rem, 4vw, 2rem) 9rem;
+}
+
+/* ---------- the head ---------- */
+.wtop { position: relative; border-radius: 16px; overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--edge); }
+.wtop__shot { position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; opacity: .34; }
+html[data-theme="light"] .wtop__shot { opacity: .16; }
+.wtop__in { position: relative; padding: clamp(1.5rem, 5vw, 2.6rem);
+  background: linear-gradient(180deg, rgba(6,5,5,.5), rgba(6,5,5,.94) 74%); }
+html[data-theme="light"] .wtop__in {
+  background: linear-gradient(180deg, rgba(247,244,239,.66), rgba(247,244,239,.95) 74%); }
+
+/* THE LOCKUP TURNS WITH THE COAT. The wordmark is black, which is
+   correct on paper and invisible on the tile's own ground, so the dark
+   coat gets a cut with the type knocked to cream and the wrench left
+   exactly as it is. Nobody's logo is recoloured; one of them is
+   reversed, which is what a reversed lockup is for. */
+.wtop__logo { height: 2.15rem; width: auto; display: block; margin: 0 0 1.15rem;
+  content: url("../assets/img/we-logo-dark.webp"); }
+html[data-theme="light"] .wtop__logo { content: url("../assets/img/we-logo.webp"); }
+
+.wk { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .22em;
+  text-transform: uppercase; color: var(--ruby-hot); margin: 0 0 .55rem; }
+.wtop h1 { font-family: var(--sig); text-transform: uppercase; line-height: .92;
+  font-size: clamp(2.2rem, 8.4vw, 3.9rem); margin: 0 0 .8rem; color: var(--cream);
+  text-wrap: balance; }
+.wtop h1 em { font-style: normal;
+  background: linear-gradient(96deg, var(--we-amber), var(--we-red) 72%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+html[data-theme="light"] .wtop h1 em {
+  background: linear-gradient(96deg, #d9662f, #a8331a 72%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.wtop__lede { font: 600 .98rem/1.6 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: 0; max-width: 46ch; }
+.wtop__facts { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1.2rem 0 0; padding: 0;
+  list-style: none; }
+.wtop__facts li { font: 700 .7rem var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); padding: .38rem .6rem; border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--edge); }
+
+/* ---------- the three apps ---------- */
+.wsec { margin-top: clamp(2rem, 6vh, 3rem); }
+.wsec__rule { height: 1px; background: var(--edge); margin: .55rem 0 1.1rem; }
+
+.apps { display: grid; gap: .7rem; align-items: stretch; }
+@media (min-width: 52rem) { .apps { grid-template-columns: repeat(3, 1fr); } }
+
+.app { display: flex; flex-direction: column; text-align: left; width: 100%;
+  -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  background: var(--glass-lo); box-shadow: inset 0 0 0 1px var(--edge);
+  border-radius: 14px; padding: clamp(1.15rem, 3.4vw, 1.4rem);
+  color: inherit; font: inherit; transition: box-shadow .16s ease, background .16s ease; }
+.app:hover, .app:focus-visible { background: var(--glass-hi);
+  box-shadow: inset 0 0 0 1px var(--ruby-hot); outline: none; }
+.app__role { font: 800 .6rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .19em;
+  text-transform: uppercase; color: var(--ruby-hot); margin: 0 0 .5rem; }
+/* the card carries the one word that separates the three; -0.028em is
+   right on a 4rem headline and closes the word gap on a short one */
+.app h3 { font-family: var(--sig); text-transform: uppercase; line-height: 1;
+  font-size: clamp(1.6rem, 5vw, 2.05rem); margin: 0 0 .5rem; color: var(--cream);
+  letter-spacing: -0.012em; }
+.app__one { font: 600 .85rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: 0 0 1rem; }
+.app__foot { margin-top: auto; padding-top: .95rem; box-shadow: inset 0 1px 0 var(--edge);
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+.plats { display: flex; gap: .3rem; }
+.plat { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--cream-dim); padding: .28rem .45rem;
+  border-radius: 5px; box-shadow: inset 0 0 0 1px var(--edge); }
+.app__open { font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--ruby-hot); white-space: nowrap; }
+
+/* ---------- the preview ---------- */
+.wprev { position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center;
+  background: rgba(4,3,3,.78); backdrop-filter: blur(6px); padding: 0; }
+html[data-theme="light"] .wprev { background: rgba(60,48,42,.42); }
+.wprev[hidden] { display: none; }
+.wprev__card { width: min(38rem, 100%); max-height: 88vh; overflow-y: auto;
+  background: var(--ink-2); box-shadow: inset 0 0 0 1px var(--edge);
+  border-radius: 18px 18px 0 0; padding: clamp(1.3rem, 4vw, 2rem);
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 44rem) {
+  .wprev { place-items: center; padding: 1.5rem; }
+  .wprev__card { border-radius: 18px; }
+}
+.wprev__x { float: right; -webkit-appearance: none; appearance: none; border: 0;
+  background: var(--glass-hi); color: var(--cream); cursor: pointer;
+  width: 2.1rem; height: 2.1rem; border-radius: 50%; font-size: 1.1rem; line-height: 1; }
+.wprev h2 { font-family: var(--sig); text-transform: uppercase; line-height: 1;
+  font-size: clamp(1.6rem, 6vw, 2.2rem); margin: .2rem 0 .5rem; color: var(--cream); }
+.wprev__tag { font: 600 .95rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: 0 0 1.2rem; }
+.wprev__k { font: 800 .58rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .2em;
+  text-transform: uppercase; color: var(--cream-dim); margin: 1.3rem 0 .6rem;
+  padding-top: 1rem; box-shadow: inset 0 1px 0 var(--edge); }
+.wprev ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .38rem; }
+.wprev ul li { position: relative; padding-left: 1.05rem;
+  font: 600 .84rem/1.5 var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+.wprev ul li::before { content: ""; position: absolute; left: 0; top: .55em;
+  width: .3rem; height: .3rem; border-radius: 50%; background: var(--ruby-hot); }
+.builds { display: grid; gap: .4rem; }
+.build { display: flex; align-items: center; justify-content: space-between; gap: .7rem;
+  padding: .7rem .85rem; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--edge); }
+.build b { font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream); }
+.build code { font: 700 .72rem ui-monospace, Menlo, monospace; color: var(--cream-dim); }
+.build a { font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--ruby-hot); text-decoration: none; white-space: nowrap; }
+.status { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .09em;
+  text-transform: uppercase; white-space: nowrap; }
+.status--build { color: var(--we-amber); }
+html[data-theme="light"] .status--build { color: #9a6212; }
+.status--live { color: #5fae7d; }
+.status--gone { color: var(--cream-dim); }
+.wprev__note { font: 600 .78rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: 1.1rem 0 0; }
+.wprev__note a { color: var(--ruby-hot); font-weight: 800; text-decoration: none; }
+
+.wout { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center;
+  margin: clamp(1.8rem, 5vh, 2.6rem) 0 calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+.wout a { color: var(--ruby-hot); text-decoration: none; }
+.wout span { opacity: .45; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app { transition: none; }
+}
