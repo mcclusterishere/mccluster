@@ -8,7 +8,29 @@
 (function () {
   "use strict";
 
-  gsap.registerPlugin(ScrollTrigger);
+  /* FAIL-OPEN: if GSAP/Lenis never arrive or this file throws, the curtain
+     still lifts. CSS also hides #preloader after ~2.2s; this is the JS twin. */
+  var preloaderEl = document.getElementById("preloader");
+  function liftGate() {
+    if (!preloaderEl) return;
+    if (preloaderEl.classList.contains("is-done")) return;
+    if (preloaderEl.style.display === "none") return;
+    preloaderEl.classList.add("is-done");
+    preloaderEl.setAttribute("aria-hidden", "true");
+    document.querySelectorAll(".hero__line .ch, .hero .reveal-line > span").forEach(function (el) {
+      el.style.opacity = "1";
+      el.style.transform = "none";
+    });
+  }
+  setTimeout(liftGate, 2400);
+
+  if (typeof gsap === "undefined") return;
+  try {
+    gsap.registerPlugin(ScrollTrigger);
+  } catch (e) {
+    liftGate();
+    return;
+  }
 
   var prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -19,17 +41,35 @@
      kills the pinned-section jitter iOS gets on native momentum. A
      firmer syncTouchLerp keeps the page pinned to the finger, and a
      calmer inertia stops the coast sooner after a flick. */
-  var lenis = new Lenis({
-    duration: 0.85,
-    easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
-    smoothWheel: !prefersReduced,
-    syncTouch: !prefersReduced,
-    syncTouchLerp: 0.14,
-    touchInertiaMultiplier: 22,
-  });
-  lenis.on("scroll", ScrollTrigger.update);
-  gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
-  gsap.ticker.lagSmoothing(0);
+  var lenis;
+  if (typeof Lenis === "function") {
+    lenis = new Lenis({
+      duration: 0.85,
+      easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+      smoothWheel: !prefersReduced,
+      syncTouch: !prefersReduced,
+      syncTouchLerp: 0.14,
+      touchInertiaMultiplier: 22,
+    });
+    lenis.on("scroll", typeof ScrollTrigger !== "undefined" ? ScrollTrigger.update : function () {});
+    gsap.ticker.add(function (time) { lenis.raf(time * 1000); });
+    gsap.ticker.lagSmoothing(0);
+  } else {
+    lenis = {
+      on: function () {},
+      scrollTo: function (t) {
+        if (typeof t === "number") window.scrollTo(0, t);
+        else {
+          var el = typeof t === "string" ? document.querySelector(t) : t;
+          if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth" });
+        }
+      },
+      stop: function () {},
+      start: function () {},
+    };
+  }
+
+  try {
 
   /* ---------------- letter splitting ---------------- */
   function splitLines(rootSel) {
@@ -134,7 +174,11 @@
   /* ---------------- mouse parallax hookups ----------------
      Each slide hands its local progress to the parallax layer;
      near a film's final frame the scene starts following the cursor. */
-  var PAR = window.MCC_PARALLAX;
+  var PAR = window.MCC_PARALLAX || {
+    attach: function () { return null; },
+    set: function () {},
+    ramp: function () { return 0; },
+  };
   function parCanvas(seqKey, opts) {
     var s = sequences[seqKey];
     return s ? PAR.attach(s.canvas, opts || { depth: 15, tilt: 2.4, push: 0.06 }) : null;
@@ -248,7 +292,7 @@
     setTimeout(function () {
       if (window.__MCC_ENTER) window.__MCC_ENTER();
       else finishPreloader();
-    }, 8000);
+    }, 2400);
   }
   var preCount = document.getElementById("preCount");
   var shown = { v: 0 };
@@ -283,13 +327,15 @@
       introReveal();
       return;
     }
+    function done() {
+      if (preloader) preloader.classList.add("is-done");
+      introReveal();
+    }
+    if (typeof gsap === "undefined") { done(); return; }
     gsap.to(shown, {
       v: 100, duration: 0.5, ease: "power2.out",
       onUpdate: function () { setCount(shown.v); },
-      onComplete: function () {
-        preloader.classList.add("is-done");
-        introReveal();
-      },
+      onComplete: done,
     });
   }
 
@@ -1469,4 +1515,7 @@
       }
     });
   });
+  } catch (err) {
+    liftGate();
+  }
 })();

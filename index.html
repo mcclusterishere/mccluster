@@ -144,7 +144,18 @@
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
+  <noscript><style>.preloader{display:none!important}</style></noscript>
   <style>
+    /* FAIL-OPEN: the curtain cannot hold the house hostage. After ~2.2s it
+       is gone even if JS never runs. JS still dismisses it earlier. */
+    .preloader{animation:mccPreOut 2.2s ease 0.05s forwards}
+    .preloader.is-done{opacity:0;visibility:hidden;pointer-events:none;animation:none}
+    @keyframes mccPreOut{
+      0%,78%{opacity:1;visibility:visible}
+      100%{opacity:0;visibility:hidden;pointer-events:none}
+    }
+    .hero__poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
+    .hero__line--accent{color:var(--ruby-hot,#e5383b)}
     /* the case rail: flat cards between films */
     .case { position: relative; min-height: 92svh; display: grid; align-items: end; overflow: hidden; }
     .case__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
@@ -249,8 +260,9 @@
     <!-- ============ HERO ORBIT ============ -->
     <section class="hero" id="hero">
       <div class="hero__sticky">
+        <img class="hero__poster" src="assets/frames/hero_0001.jpg" alt="" width="1920" height="1080" decoding="async" aria-hidden="true">
         <canvas id="orbitCanvas" aria-label="Matthew McCluster in a production studio, camera orbiting"></canvas>
-        <video id="heroFallback" class="hero__fallback" muted loop playsinline preload="none">
+        <video id="heroFallback" class="hero__fallback" muted loop playsinline preload="metadata" poster="assets/frames/hero_0001.jpg">
           <source src="assets/video/hero.mp4" type="video/mp4">
           <source src="assets/video/hero.webm" type="video/webm">
         </video>
@@ -259,8 +271,8 @@
         <div class="hero__content" data-drift style="--drift:14">
           <p class="hero__eyebrow reveal-line"><span>Direction · Photo · Web · Music</span></p>
           <h1 class="hero__title" id="heroTitle">
-            <span class="hero__line" data-word="McCLUSTER"></span>
-            <span class="hero__line hero__line--accent" data-word="CORP"></span>
+            <span class="hero__line" data-word="McCLUSTER">McCLUSTER</span>
+            <span class="hero__line hero__line--accent" data-word="CORP">CORP</span>
           </h1>
           <p class="hero__sub reveal-line"><span><em class="bracket">[</em> Matthew McCluster <em class="bracket">]</em></span></p>
 
@@ -477,8 +489,8 @@
       <div class="finale__inner">
         <p class="kicker kicker--center">"Deposit, lock the day in."</p>
         <h2 class="finale__title" id="finaleTitle">
-          <span class="hero__line" data-word="LOCK"></span>
-          <span class="hero__line hero__line--accent" data-word="IN"></span>
+          <span class="hero__line" data-word="LOCK">LOCK</span>
+          <span class="hero__line hero__line--accent" data-word="IN">IN</span>
         </h2>
         <div class="finale__actions">
           <a class="btn btn--ruby magnetic" id="bookCallBtn" href="#">Book a call</a>
