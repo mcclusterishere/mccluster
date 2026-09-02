@@ -1,0 +1,39 @@
+{
+  "project": "S477",
+  "status": "preliminary-buffered-real-crop",
+  "source": "NOAA 2023 Connecticut classified LiDAR dataset 10296, resolved through official tile-index GeoPackage",
+  "sourceTiles": [
+    "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/BLOCK2/20230327_875620_ne.copc.laz",
+    "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/BLOCK2/20230327_875620_se.copc.laz"
+  ],
+  "crs": "NAD83(2011) / UTM zone 18N",
+  "cropBoundsMeters": {
+    "minX": 651890,
+    "maxX": 652150,
+    "minY": 4559070,
+    "maxY": 4559335
+  },
+  "cropSizeMeters": {
+    "width": 260,
+    "height": 265
+  },
+  "approxCenterWgs84": {
+    "lat": 41.1699104309082,
+    "lon": -73.1877975463867
+  },
+  "originUtm": {
+    "x": 652020.3704419786,
+    "y": 4559201.911294786,
+    "z": 1.61
+  },
+  "pointCount": 120000,
+  "strideBytes": 16,
+  "layout": [
+    "xOffsetMeters",
+    "yOffsetMeters",
+    "zOffsetMeters",
+    "classification"
+  ],
+  "binary": "s477-site-points.bin",
+  "note": "Actual NOAA point-cloud crop around S477 using a 260 m x 265 m preliminary buffer. It will be clipped again to authoritative parcel/building geometry when City GIS records are received."
+}

@@ -1,0 +1,3 @@
+INFO: Open of `/tmp/ct-lidar-index.gpkg'
+      using driver `GPKG' successful.
+1: tileindex_CT_statewide_m10296 (Polygon)

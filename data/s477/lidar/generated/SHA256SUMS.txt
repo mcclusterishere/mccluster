@@ -1,0 +1,2 @@
+5d92a4fa8f2feedc40e8402f2454ae04faecec3a6eea8057e5628349c841a161  data/s477/lidar/generated/s477-preliminary-site.copc.laz
+b21e0455c6f50247a6d998c379541c7c7edb20be2a74a535123f6664d5230a01  data/s477/lidar/generated/s477-site-points.bin
