@@ -1817,6 +1817,10 @@ html.is-installed .getapp,html.is-installed .getapp-pill{display:none !important
    the other tabs' height and letting the width follow keeps every tab's
    optical weight equal without squashing a logo into a box it is not. */
 .appbar__hm{height:2rem;width:auto;max-width:3.1rem;object-fit:contain;display:block;margin-block:-0.12rem}
+/* Whip Equipped took the fourth slot while the drop is put away. Its
+   logo is a wide lockup rather than a coin, so it gets its own box:
+   shorter, wider, and centred on the same optical line as the M. */
+.appbar__we{height:1.05rem;width:auto;max-width:3.1rem;object-fit:contain;display:block;padding:0.2rem 0.34rem;border-radius:100px;box-sizing:content-box;background:#f4efe6;margin-block:0.1rem}
 html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m{content:url("../assets/img/m-mark-dark.png")}
 /* the fifth tab wore the halo PNG, which needed a bigger box than the M
    coin (baked-in transparent margin) and a dark pill under it on the light

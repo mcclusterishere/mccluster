@@ -581,23 +581,52 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
    screens. The old ladder was twelve and a half.
    ============================================================ */
 
-.buys { display: grid; gap: .7rem; margin-top: clamp(1.4rem, 4vh, 2rem); }
+/* ============================================================
+   THE FOUR CARDS.
 
-.buy { position: relative; border-radius: 20px; padding: clamp(1.15rem, 4vw, 1.5rem);
-  background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo));
-  box-shadow: inset 0 0 0 1px var(--edge), 0 20px 44px -30px rgba(0,0,0,.85); }
+   What was wrong with them: the row of four was really two rows of
+   mismatched blocks — 478px beside 363px — because each card ended
+   wherever its own content ran out. Every card wore the same 20px radius
+   and the same drop shadow, so nothing led. The mode switch was two
+   logos at 26px with no words, which reads as a broken image rather than
+   a choice. And the emphasis rule for the front door was written
+   `.buy:first-child`, which never matched: the count line and the rule
+   are the first children of .buys, so the ruby wash and the full-width
+   span were dead code from the day they were written.
 
-/* the front door reads first, so it carries the ruby wash the runway
-   card used to — the emphasis survives, the 1,355 pixels do not */
-.buy:first-child { background: linear-gradient(180deg, rgba(229,56,59,.12), var(--glass-lo)); }
+   What holds now: one card is a column, and the inclusions list is
+   pushed to the foot of it, so four cards of different lengths all put
+   their last line on the same baseline. Chrome is spent by role — a
+   ruby edge on the front door, a hairline on the rest — instead of a
+   shadow on everything.
+   ============================================================ */
 
-.buy h2 { font-family: var(--sig); text-transform: uppercase; line-height: .94;
-  font-size: clamp(1.5rem, 6.5vw, 2.1rem); margin: 0 0 .35rem; color: var(--cream); }
+.buys { display: grid; gap: .75rem; margin-top: clamp(1.4rem, 4vh, 2rem);
+  align-items: stretch;
+  /* the app bar is fixed; without this the last line of the last card
+     reads through it */
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)); }
 
-.buy__one { font: 600 .9rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
-  color: var(--cream-dim); margin: 0 0 1rem; max-width: 42ch; }
+.buy { position: relative; display: flex; flex-direction: column;
+  border-radius: 14px; padding: clamp(1.2rem, 3.4vw, 1.45rem);
+  background: var(--glass-lo); box-shadow: inset 0 0 0 1px var(--edge); }
 
-.buy .modes { margin: 0 0 .9rem; }
+/* the front door leads with an edge, not a wash. :first-of-type, because
+   the count line and the rule get :first-child. */
+.buy:first-of-type { box-shadow: inset 0 0 0 1px var(--edge), inset 0 3px 0 0 var(--ruby-hot); }
+
+.buy__eyebrow { font: 800 .6rem/1.3 var(--ui, "Manrope", system-ui, sans-serif);
+  letter-spacing: .17em; text-transform: uppercase; color: var(--ruby-hot);
+  margin: 0 0 .5rem; }
+
+.buy h2 { font-family: var(--sig); text-transform: uppercase; line-height: .95;
+  font-size: clamp(1.45rem, 5vw, 1.9rem); margin: 0 0 .4rem; color: var(--cream);
+  letter-spacing: .004em; }
+
+.buy__one { font: 600 .875rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: 0 0 1rem; max-width: 40ch; }
+
+.buy .modes { margin: 0 0 1rem; }
 
 .buy__price { display: flex; align-items: baseline; gap: .35rem; flex-wrap: wrap;
   font-family: var(--sig); color: var(--cream); line-height: .9;
@@ -613,11 +642,13 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
   font-size: 1rem; font-weight: 800; line-height: 1.4; text-transform: none;
   color: var(--cream); letter-spacing: 0; }
 
-/* full width, thumb height, and the only red thing in the card */
+/* full width, thumb height, and the only red thing in the card. Flat:
+   the gloss-and-glow lozenge was the single cheapest object on the page. */
 .buy__go { display: block; text-align: center; text-decoration: none;
-  padding: 1.05rem 1.2rem; border-radius: 14px; color: #fff; background: var(--metal);
-  font: 800 1rem var(--ui, "Manrope", system-ui, sans-serif);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 12px 30px -16px rgba(229,56,59,.8); }
+  padding: .95rem 1.2rem; border-radius: 10px; color: #fff; background: var(--ruby-hot);
+  font: 800 .95rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .01em;
+  transition: background .16s ease; }
+.buy__go:hover, .buy__go:focus-visible { background: var(--ruby-hot); filter: brightness(1.09); }
 .buy__go:active { transform: translateY(1px); }
 
 .buy__after { font: 600 .78rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
@@ -628,12 +659,16 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
   box-shadow: inset 0 1px 0 var(--edge); }
 .buy__disclose a { color: var(--ruby-hot); font-weight: 800; text-decoration: none; white-space: nowrap; }
 
-/* two up once there is room for two to be read at a glance */
+/* two up once there is room for two to be read at a glance, four up once
+   the whole offer can be read without scrolling past it */
 @media (min-width: 46rem) {
   .buys { grid-template-columns: 1fr 1fr; gap: .8rem; }
-  .buy:first-child { grid-column: 1 / -1; }
-  .buy:first-child .buy__price { font-size: clamp(3rem, 7vw, 4.2rem); }
 }
+/* Four across was tried and taken back out. The reading column here is
+   about 960px, so a fourth column leaves each card 230px wide — narrow
+   enough that the switch rendered "M M..." and "EQ...", which is the
+   exact illegibility this pass set out to fix. Two up is the widest
+   arrangement this container can actually carry. */
 
 /* THE HOOK — sites-details.html only now.
    sites.html has no header at all: it opens on the count line and the
@@ -660,16 +695,42 @@ html[data-theme="light"] .sprint::before { background: rgba(26,20,13,0.18); }
    which does nothing when you press it. On a buy card they have to read
    as a switch: equal halves, and the selected one lifted rather than
    shouting. */
-.buy .modes { display: grid; grid-template-columns: 1fr 1fr; gap: .25rem;
-  padding: .25rem; border-radius: 999px; background: rgba(0,0,0,.34);
+.buy .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+  padding: 2px; border-radius: 10px; background: rgba(0,0,0,.34);
   box-shadow: inset 0 0 0 1px var(--edge); }
-.buy .modes button { width: 100%; min-height: 3rem; border: 0; cursor: pointer;
-  border-radius: 999px; background: transparent; box-shadow: none;
-  display: flex; align-items: center; justify-content: center; padding: .3rem; }
-.buy .modes button[aria-selected="true"] { background: rgba(255,255,255,.1);
-  box-shadow: inset 0 0 0 1px var(--edge), 0 6px 16px -10px rgba(0,0,0,.9); }
-.buy .modes .modes__mark { width: 26px; height: 26px; opacity: .5; transition: opacity .18s; }
+.buy .modes button { width: 100%; min-height: 2.6rem; border: 0; cursor: pointer;
+  border-radius: 8px; background: transparent; box-shadow: none;
+  display: flex; align-items: center; justify-content: center; gap: .4rem;
+  padding: .3rem .45rem; min-width: 0; transition: background .16s ease, color .16s ease; }
+.buy .modes button[aria-selected="true"] { background: rgba(255,255,255,.085);
+  box-shadow: inset 0 0 0 1px var(--edge); }
+/* the mark keeps its own proportions here. Capping its width squashed
+   the Equity wordmark inside its own plate, which is what made the
+   unselected half look like a broken image. */
+.buy .modes .modes__mark { width: auto; height: .95rem; max-width: none; flex: none;
+  opacity: .5; transition: opacity .18s; }
+.buy .modes button[data-mode="equity"] .modes__mark { height: .72rem;
+  padding: .26rem .42rem; }
 .buy .modes button[aria-selected="true"] .modes__mark { opacity: 1; }
+.modes__word { font: 800 .68rem var(--ui, "Manrope", system-ui, sans-serif);
+  letter-spacing: .045em; color: var(--cream-dim); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
+.buy .modes button[aria-selected="true"] .modes__word { color: var(--cream); }
+
+/* WHAT YOU GET — pushed to the foot of the card, which is what makes
+   four cards of different lengths end on one line. */
+.buy__inc { margin-top: auto; }
+.buy__inck { font: 800 .58rem var(--ui, "Manrope", system-ui, sans-serif);
+  letter-spacing: .2em; text-transform: uppercase; color: var(--cream-dim);
+  margin: 0 0 .55rem; padding-top: .95rem; box-shadow: inset 0 1px 0 var(--edge); }
+.buy__list { list-style: none; margin: 0; padding: 0; display: grid; gap: .34rem; }
+.buy__list li { position: relative; padding-left: 1.05rem;
+  font: 600 .8rem/1.45 var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+.buy__list li::before { content: ""; position: absolute; left: 0; top: .52em;
+  width: .3rem; height: .3rem; border-radius: 50%; background: var(--ruby-hot); opacity: .75; }
+.buy__more { display: inline-block; margin: .6rem 0 0; text-decoration: none;
+  font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--ruby-hot); }
+.buy__more:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* The count line. Small, quiet, and the only thing above the first card. */
 .buys__k { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .22em;
