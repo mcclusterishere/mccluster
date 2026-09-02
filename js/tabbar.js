@@ -44,10 +44,19 @@
     '<path d="M5.2 5.6h13.6a1.4 1.4 0 0 1 1.4 1.4v8.4H3.8V7a1.4 1.4 0 0 1 1.4-1.4z"/>' +
     '<path d="M2.2 15.4h19.6l-1 2a1.6 1.6 0 0 1-1.5.9H4.7a1.6 1.6 0 0 1-1.5-.9z"/>';
 
-  /* THE FIFTH TAB IS A CONVERSATION NOW, NOT A CATALOGUE.
-     The laptop said "here is a page of things"; the bubble says "ask me".
-     LAPTOP is kept because the wing's icon map still names it, and a
-     glyph nobody draws is cheaper than a lookup that returns nothing. */
+  /* THE FIFTH TAB WEARS THE REAL MARK.
+     The laptop said "here is a page of things"; the bubble said "ask me";
+     the hanger said "there is something here to buy". None of them was the
+     brand. The tab is Hitman Halo now and it carries the actual HM — the
+     round between the letters, under the halo — as artwork rather than as
+     a line drawing of one, because that mark is the whole identity and a
+     traced approximation of it would be a worse version of something that
+     already exists.
+     Its wing slot keeps a glyph (ICONS.halo): the full mark is chrome,
+     glow and an AMMO headstamp, and at the 24px of a wing list all of that
+     collapses into mud. LAPTOP and CHAT stay because the icon map still
+     names them, and a glyph nobody draws is cheaper than a lookup that
+     returns nothing. */
   var CHAT =
     '<path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/>' +
     '<path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/>';
@@ -73,17 +82,23 @@
         eqSvg(false) + '<span>Equity Uprise</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'index.html" data-appnav="home">' +
         '<img class="appbar__m" src="' + ROOT + 'assets/img/m-mark.png" alt=""><span>HERE</span></a>' +
-      /* THE FIFTH TAB IS THE STUDIO.
-         This column has changed hands twice. It carried the halo and
-         opened the Prayer Closet; the shake run took it on 2026-08-17;
-         the owner shelved the shake shop on 2026-08-19 and gave the
-         column to McCluster Sites, which is the thing on this site that
-         actually takes money from strangers today. It wears a laptop.
+      /* THE FIFTH COLUMN GOES HOME.
+         It has changed hands four times. It carried the halo and opened
+         the Prayer Closet; the shake run took it on 2026-08-17; the owner
+         shelved the shake shop on 2026-08-19 and gave the column to
+         McCluster Sites; Chat took it after that.
 
-         The Closet did not lose anything either time: it is the second
-         slot of this wing, one hold away, with the Inner Room and Give. */
-      '<a class="appbar__tab" href="' + ROOT + 'sites.html" data-appnav="sites">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true">' + CHAT + '</svg><span>Chat</span></a>' +
+         It is the Closet's again, by the owner's call. The reason the
+         column went to a conversation was that the conversation was the
+         thing on this site that took money from strangers — and the home
+         page now opens with its own Lock In room, so the bar is no longer
+         the only door to one. What the bar was missing was the store.
+
+         Chat did not lose anything: it is the second slot of this wing,
+         one hold away, with the Inner Room and Give. */
+      '<a class="appbar__tab" href="' + ROOT + 'prayer-closet.html" data-appnav="sites">' +
+        '<img class="appbar__hm" src="' + ROOT + 'assets/img/hm-mark-bar.webp" alt="">' +
+        '<span>Hitman</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'account.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
         '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Profile</span></a>';
@@ -185,18 +200,20 @@
        The Closet, the Inner Room and Give keep their slots exactly as they
        were, so nothing that was one tap away has become unreachable. */
     sites: {
-      home: "sites.html",
+      home: "prayer-closet.html",
       slots: [
         /* The wing's first slot is the same door the tab is, so it says
-           the same thing. The old copy also carried "$87 a month", which
-           is not a price this business has charged for a long time --
+           the same thing -- which is why these two swapped places when the
+           column did. The Chat copy also used to carry "$87 a month",
+           which is not a price this business has charged for a long time:
            the kind of number that only survives because nobody reads a
            tooltip. Prices are not typed here any more; the conversation
-           quotes them from the ledger. */
+           quotes them from the ledger, and the Closet quotes them from
+           whatever checkout carries the drop. */
+        ["prayer-closet.html", "halo", "Hitman Halo", { title: "Hitman Halo",
+          sub: "Limited drops with meaning behind the garment. Season 001 cuts three hoodie-and-jogger sets from the book of Matthew." }],
         ["sites.html", "chat", "Chat", { title: "Talk to the desk",
           sub: "Ask what it costs, check whether your address is free, and buy it in the same conversation. A person reads all of it." }],
-        ["prayer-closet.html", "hang", "The Closet", { title: "Prayer Closet",
-          sub: "Limited drops with meaning behind the garment. Season 001 cuts three hoodie-and-jogger sets from the book of Matthew." }],
         ["inner-room.html", "lamp", "Inner Room", { title: "The Inner Room",
           sub: "The chapters behind the garments: read, study, pray, keep your notes. Free, always; no purchase opens this door." }],
         ["give.html", "gift", "Give", { title: "Support the work",
@@ -253,7 +270,6 @@
        served any more — see _unfinished/README.md. */
     "sites.html": "sites",
     "prayer-closet.html": "sites", "inner-room.html": "sites",
-    "seek-first.html": "sites", "salt-and-light.html": "sites",
     "sent.html": "sites", "give.html": "sites"
     /* policy.html and policy-memo-dna.html carry the bar now but claim no
        wing: the site's own ledger files them under matthew, and neither page
@@ -277,6 +293,11 @@
     folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     news: '<rect x="3" y="4.5" width="15" height="15" rx="2"/><path d="M18 8h1.5a1.5 1.5 0 0 1 1.5 1.5V17a2.5 2.5 0 0 1-2.5 2.5H5"/><path d="M6.5 8.5h8M6.5 12h8M6.5 15.5h5"/>',
     desk: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/>',
+    /* the round under the halo: the HM mark's silhouette, reduced to the
+       two shapes that still read at 24px */
+    halo: '<ellipse cx="12" cy="4.1" rx="5.2" ry="1.9"/>' +
+      '<path d="M12 6.6 14.1 11v7.2a2.1 2.1 0 0 1-2.1 2.1 2.1 2.1 0 0 1-2.1-2.1V11z"/>' +
+      '<path d="M9.9 15.3h4.2"/>',
     hang: '<path d="M12 6a2 2 0 1 1 2-2"/><path d="M12 6l8.2 5.8a1.5 1.5 0 0 1-.9 2.7H4.7a1.5 1.5 0 0 1-.9-2.7z"/><path d="M6.5 14.5V20M17.5 14.5V20"/>',
     shot: '<path d="M3 8.5a2 2 0 0 1 2-2h2.2l1.3-2h6.8l1.3 2H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.8" r="3.6"/>',
     lamp: '<path d="M12 20V7"/><path d="M12 7c-2.6-2.2-5.6-2.6-8-2v12c2.4-.6 5.4-.2 8 2 2.6-2.2 5.6-2.6 8-2V5c-2.4-.6-5.4-.2-8 2z"/>',
@@ -529,17 +550,13 @@
        it), so hold-to-open-the-music-wing is untouched. */
     var dest = w ? w.home : (slot || a.getAttribute("href"));
 
-    /* THE CHAT TAB OPENS THE CHAT, RATHER THAN SAILING TO A PAGE THAT
-       HAS ONE. Twelve pages already carry the desk widget; on those,
-       navigating away to go and talk is a page load for nothing, and it
-       loses whatever the visitor was reading. Where the widget is not
-       loaded the tab still sails to sites.html, which is the
+    /* This column used to open the desk widget in place instead of sailing
+       anywhere, because the tab WAS Chat. It is the Closet now, and a tab
+       that opens a chat panel when it is drawn as a hanger is the worst
+       kind of surprise -- so the branch is gone and the tap sails to the
+       store like every other tab sails to its room. Chat is the wing's
+       second slot, and that slot still lands on sites.html, which is the
        conversation with a page around it. */
-    if (key === "sites" && window.MCC_DESK && typeof window.MCC_DESK.open === "function") {
-      window.MCC_DESK.open();
-      if (window.MCC_TRACK) window.MCC_TRACK("chat_open", { from: "appbar" });
-      return;
-    }
 
     if (key === "music" && onPage(dest) &&
         typeof window.MCC_NP_PLAY === "function" &&

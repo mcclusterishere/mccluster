@@ -547,27 +547,42 @@
     var parPillars = parCanvas("pillarsbg");
     var parPanelsPB = PAR.attach(document.querySelector("#pillars .command__panels"), { depth: -7 });
     var pillarsStage = document.querySelector("#pillars .command__sticky");
+    /* THE HANDOVER, and how much of the night scroll it was eating.
+
+       The section is pulled up a screen (see .services in css/style.css) so
+       it begins while the Vaunt fly-through is still pinned, and the stage
+       dissolves in over the first slice — the two films are one transition,
+       and a hard join was cutting it in half.
+
+       But the film was ALSO being scrubbed from frame zero across that same
+       slice, behind an opacity still climbing out of nothing. By the time
+       the night scroll was actually on screen it was a third of the way in:
+       the opening beat — the descent out of the aircraft, which is the whole
+       reason this shot follows the jet — had already played to nobody. The
+       cut read as a non-sequitur because its first sentence was missing.
+
+       So the film now HOLDS on its opening frame for the length of the
+       dissolve and only starts moving once it owns the screen. You watch it
+       come out of the plane. The scrub is remapped onto what is left, and
+       the section is lengthened to match so the descent plays at the same
+       pace it always did rather than being sped up to fit. */
+    var PB_HANDOVER = 0.19;   // the dissolve: film held, opacity climbing
     ScrollTrigger.create({
       trigger: "#pillars",
       start: "top top",
-      end: "+=140%",
+      end: "+=172%",   // 140% of scrub, plus the held dissolve in front of it
       scrub: true,
       pin: "#pillars .command__sticky",
       pinSpacing: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
       onUpdate: function (st) {
-        pillarsBg.target = st.progress * (pillarsBg.count - 1 || 0);
+        var q = clamp01((st.progress - PB_HANDOVER) / (1 - PB_HANDOVER));
+        pillarsBg.target = q * (pillarsBg.count - 1 || 0);
         var ps = st.isActive ? PAR.ramp(st.progress) : 0;
         PAR.set(parPillars, ps);
         PAR.set(parPanelsPB, ps);
-        /* THE HANDOVER. The section is pulled up a screen (see .services in
-           css/style.css) so it begins while the Vaunt fly-through is still
-           pinned. Fading the stage in across the first slice dissolves the
-           night scroll over the jet instead of sliding it up with a hard
-           edge — the two films are one transition, and the join was cutting
-           it in half. */
-        pillarsStage.style.opacity = clamp01(st.progress / 0.32);
+        pillarsStage.style.opacity = clamp01(st.progress / PB_HANDOVER);
       },
       onToggle: function (st) {
         if (!st.isActive) { PAR.set(parPillars, 0); PAR.set(parPanelsPB, 0); }
@@ -684,56 +699,107 @@
   applyCommand(0);
 
   /* ---- the 360 band: between the runway performance and the fly-through,
-         the real inside-the-jet film takes over. Drag in any direction to
-         look around; scroll passes through freely. Land just glides you
-         to the far side if you'd rather jump. ---- */
-  /* The scroll seizure is retired: the 360 band plays while you're in
-     it and lets you pass whenever you like. Browsing is never compliance. */
-  /* THE HOLD. lockPageScroll was an empty stub, so nothing was ever
-     actually frozen. Lenis owns this page's scrolling (wheel AND touch,
-     via syncTouch), so stopping it is most of the job; the native
-     listeners are the belt to its braces on engines that still bubble a
-     gesture through. */
+         the real inside-the-jet film takes over. ---- */
+  /* THE CABIN IS A ROOM, NOT A CORRIDOR.
+
+     The band used to let a scroll carry straight through it, which meant
+     the one gesture a phone uses to look around — a thumb dragged up the
+     glass — was also the gesture that left. You could not study the cabin
+     without flying out of it, so nobody did.
+
+     The cabin now holds the page for as long as you are in it. The two
+     doors are the two doors on screen: Back to the card, and Land. Escape
+     lands it too, because a room with no key that is not a pixel is a
+     trap, not a room. (releaseAndGoTop below is a third door, wired to a
+     masthead brand mark that this page does not currently render — it
+     costs nothing and it works the moment one does.) With the page frozen,
+     a drag is unambiguously a look, and the briefing has a reader.
+
+     Lenis owns this page's scrolling (wheel AND touch, via syncTouch), so
+     stopping it is most of the job; the native listeners are the belt to
+     its braces on engines that still bubble a gesture through, and the
+     scroll pin catches the one input neither covers — a hand on the
+     desktop scrollbar. */
   var holdGuard = function (e) { e.preventDefault(); };
+  var SCROLL_KEYS = {
+    ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1,
+    PageUp: 1, PageDown: 1, Home: 1, End: 1, " ": 1, Spacebar: 1,
+  };
+  var holdKeyGuard = function (e) {
+    // the cabin's own controls keep the keyboard; only scrolling is off
+    var tag = (e.target && e.target.tagName) || "";
+    if (e.key === "Tab" || e.key === "Enter") return;
+    if (e.key === " " && /^(BUTTON|A|INPUT|TEXTAREA)$/.test(tag)) return;
+    if (SCROLL_KEYS[e.key]) e.preventDefault();
+  };
+  var holdY = 0;
+  var holdPin = function () {
+    // the scrollbar and the browser's own anchoring do not go through Lenis
+    if (Math.abs(window.scrollY - holdY) > 1) window.scrollTo(0, holdY);
+  };
+  var holdResync = function () {
+    /* a rotate, a toolbar collapse or a ScrollTrigger refresh moves the page
+       out from under the pin. Re-anchor to wherever the browser has just put
+       us; the alternative is snapping the visitor back to a y that no longer
+       means anything. */
+    setTimeout(function () { if (holding) holdY = window.scrollY; }, 150);
+  };
+  var holding = false;
   function holdEverything(on) {
+    on = !!on;
+    if (on === holding) return;
+    holding = on;
     try { on ? lenis.stop() : lenis.start(); } catch (e) {}
     if (on) {
+      holdY = window.scrollY;
       window.addEventListener("wheel", holdGuard, { passive: false });
       window.addEventListener("touchmove", holdGuard, { passive: false });
+      window.addEventListener("keydown", holdKeyGuard, { passive: false });
+      window.addEventListener("scroll", holdPin, { passive: true });
+      window.addEventListener("resize", holdResync);
+      window.addEventListener("orientationchange", holdResync);
     } else {
       window.removeEventListener("wheel", holdGuard, { passive: false });
       window.removeEventListener("touchmove", holdGuard, { passive: false });
+      window.removeEventListener("keydown", holdKeyGuard, { passive: false });
+      window.removeEventListener("scroll", holdPin, { passive: true });
+      window.removeEventListener("resize", holdResync);
+      window.removeEventListener("orientationchange", holdResync);
     }
   }
-  function lockPageScroll() {}
+  function lockPageScroll(on) { holdEverything(on); }
   var workVR = {
     el: document.getElementById("workVR"),
-    viewer: null, live: false, landing: false, band: [0.40, 0.50],
+    viewer: null, live: false, landing: false, held: false, lastP: null,
+    band: [0.40, 0.50],
   };
   function workVRSet(p) {
     if (!workVR.el || !window.VR360) return;
-    /* THE CABIN GIVES THE SCREEN BACK.
+    /* WHO DECIDES THE CABIN IS OVER.
 
-       This read `inBand || workVR.live`, which made the state its own reason
-       to persist: the moment you scrolled into the band, `live` went true,
-       and from then on `on` was true no matter where the page was, because
-       `live` was true. Nothing in the scroll could ever clear it.
+       Not the scroll: the scroll is frozen the moment you arrive. The old
+       version asked the scroll position on every frame and let a hair of
+       overshoot end the band, which is exactly the behaviour that made the
+       cabin something you fell through instead of somewhere you stood.
 
-       So the 360 cabin painted itself over the fly-through for the whole
-       rest of the section, and stayed over the page all the way back up to
-       the masthead. Two of the three Vaunt scenes — the runway film going
-       in and the fly-through coming out — were unreachable by scrolling.
-       The only exits were the two buttons inside the cabin, which is why
-       the section only worked if you pressed them.
+       So arrival latches `held`, and only a door clears it — Back to the
+       card, Land, the brand mark, Escape. Everything routes through
+       leaveCabin(), so there is one place the latch can be dropped and no
+       way to forget it. (The old failure mode was the opposite of a latch
+       with no key: `live` was its own reason to stay true, so nothing could
+       ever clear it. A named latch that exactly one function clears is the
+       fix for both.)
 
-       Leaving the band now ends the band. The margin keeps what the old
-       comment was actually after — a scroll that overshoots the edge by a
-       hair should not blink the cabin out — without making it permanent. */
-    var EXIT = 0.05;
+       THE FLING. The band is a tenth of the section — a hard flick can step
+       clean over it between two frames, and then the cabin, the briefing and
+       the whole 360 film never happen at all. A step that jumps the entire
+       room on the way down counts as walking into it. */
     var inBand = p >= workVR.band[0] && p <= workVR.band[1];
-    var stillNear = workVR.live &&
-      p >= workVR.band[0] - EXIT && p <= workVR.band[1] + EXIT;
-    var on = !workVR.landing && (inBand || stillNear);
+    var prevP = workVR.lastP;
+    var vaulted = prevP !== null && prevP < workVR.band[0] && p > workVR.band[1];
+    workVR.lastP = p;
+    if (!workVR.landing && (inBand || vaulted)) workVR.held = true;
+    var on = workVR.held && !workVR.landing;
     // mount well before the band so the poster is up and the film is
     // buffered by the time the look-around takes the screen
     if (!workVR.viewer && p >= 0.12) {
@@ -829,10 +895,13 @@
     }, 4200);
   }
 
-  /* THE THREE SECONDS. Everything holds — scroll, drag, the side buttons —
-     while the count runs, because rules are only worth writing if they get
-     read. At zero the pane stops swallowing the cabin, the flight is the
-     visitor's, and the cabin says so. Runs once per visit. */
+  /* THE THREE SECONDS. The drag and the side buttons hold while the count
+     runs, because rules are only worth writing if they get read. The page
+     itself is already frozen — the cabin took the scroll on the way in and
+     keeps it until you take a door — so the count no longer has to grab and
+     hand back a lock it does not own. At zero the pane stops swallowing the
+     cabin, the flight is the visitor's, and the cabin says so. Runs once per
+     visit. */
   function runBriefing() {
     if (workVR.briefed) return;
     workVR.briefed = true;
@@ -843,7 +912,6 @@
     if (row && phoneCanTilt()) row.hidden = false;
     card.classList.add("is-on");
     card.classList.remove("is-ready", "is-gone");
-    holdEverything(true);
     // arm on entry where no gesture is required; iOS waits for the first tap
     if (workVR.viewer && !workVR.viewer.enableGyro.needsGesture) armCabinMotion();
     if (window.MCC_TRACK) window.MCC_TRACK("vr_brief", { page: "home" });
@@ -857,7 +925,6 @@
         return;
       }
       clearInterval(iv);
-      holdEverything(false);
       workVR.briefReady = true;
       // when the phone handed over its motion, the announcement IS the
       // release and it says more than the button would — so the card steps
@@ -906,17 +973,29 @@
     },
   });
 
-  // one true exit that always works: the brand mark (and the Back-to-top
-  // button inside the band) releases any lock and flies home
-  function releaseAndGoTop() {
+  /* THE DOORS. The cabin holds the page, so leaving is never something the
+     scroll does by accident — it is something a door does on purpose. All of
+     them come through here: the latch is dropped, the film is paused, the
+     scroll is handed back, and only then does the page glide anywhere. One
+     function, so a new door cannot be added that forgets the latch. */
+  function leaveCabin(y, duration, tag) {
     workVR.landing = true;
     workVR.live = false;
+    workVR.held = false;
     if (workVR.el) workVR.el.classList.remove("is-live");
     if (workVR.viewer) workVR.viewer.pause();
     lockPageScroll(false);
-    lenis.scrollTo(0, { duration: 1.2 });
-    setTimeout(function () { workVR.landing = false; }, 1600);
+    var done = function () { workVR.landing = false; };
+    lenis.scrollTo(y, { duration: duration, onComplete: done });
+    // if the glide is cut short — a hand on the wheel mid-flight — re-arm anyway
+    setTimeout(done, duration * 1000 + 600);
+    if (tag && window.MCC_TRACK) window.MCC_TRACK(tag, { page: "home" });
   }
+  function workProgressY(q) { return workST.start + (workST.end - workST.start) * q; }
+
+  // one true exit that always works: the brand mark (and the Back-to-top
+  // button inside the band) releases any lock and flies home
+  function releaseAndGoTop() { leaveCabin(0, 1.2); }
   var brandHome = document.querySelector(".site-head .brand");
   if (brandHome) brandHome.addEventListener("click", function (e) {
     e.preventDefault();
@@ -927,35 +1006,33 @@
   // collab card that boarded you, right at the top of the section
   var workTop = document.getElementById("workVRTop");
   if (workTop) workTop.addEventListener("click", function () {
-    workVR.landing = true;
-    workVR.live = false;
-    if (workVR.el) workVR.el.classList.remove("is-live");
-    if (workVR.viewer) workVR.viewer.pause();
-    lockPageScroll(false);
-    var y = workST.start + (workST.end - workST.start) * 0.02;
-    lenis.scrollTo(y, { duration: 1.0, onComplete: function () { workVR.landing = false; } });
-    setTimeout(function () { workVR.landing = false; }, 1600); // if the glide is cut short
-    if (window.MCC_TRACK) window.MCC_TRACK("vr_back_to_card", { page: "home" });
+    leaveCabin(workProgressY(0.02), 1.0, "vr_back_to_card");
   });
 
-  // Land: the only way out while scroll is locked. Touches down right at the
-  // start of the fly-through film, the jet in open air, then hands the
-  // scroll back to the user; no auto-ride to the end of the section.
+  /* Land: the way out. Touches down at the start of the fly-through film,
+     the jet in open air, then hands the scroll back; no auto-ride to the end
+     of the section.
+
+     It sets you down 3% clear of the band rather than the old half a
+     percent. Half a percent was a few pixels: the cabin now re-latches the
+     moment you are inside it, so landing on its doormat meant the smallest
+     scroll back up put you straight back in the jet. And if a fling carried
+     you past the room before the latch caught, Land never glides backwards
+     into the film you already scrolled through — it just opens the door. */
   var workSkip = document.getElementById("workVRSkip");
   if (workSkip) workSkip.addEventListener("click", function () {
-    workVR.landing = true;
-    workVR.live = false;
-    if (workVR.el) workVR.el.classList.remove("is-live");
-    if (workVR.viewer) workVR.viewer.pause();
-    lockPageScroll(false);
-    var y = workST.start + (workST.end - workST.start) * (workVR.band[1] + 0.005);
-    lenis.scrollTo(y, {
-      duration: 0.9,
-      onComplete: function () { workVR.landing = false; },
-    });
-    // if the glide is interrupted before onComplete, re-arm the band anyway
-    setTimeout(function () { workVR.landing = false; }, 1400);
-    if (window.MCC_TRACK) window.MCC_TRACK("vr_skip", { page: "home" });
+    var q = Math.max(workVR.band[1] + 0.03, workST.progress);
+    leaveCabin(workProgressY(q), 0.9, "vr_skip");
+  });
+
+  /* THE KEY TO THE ROOM. The cabin holds the scroll, so the two on-screen
+     doors are the way out — but a sealed room needs a key that is not a
+     pixel. Escape lands the jet, the same as pressing Land. */
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape" && e.key !== "Esc") return;
+    if (!workVR.live || !workVR.briefReady || !workSkip) return;
+    e.preventDefault();
+    workSkip.click();
   });
 
   /* ---- the sound beacon: someone is dragging the 360 with the sound off.
@@ -1043,9 +1120,11 @@
     duration: 1, ease: "power4.out", stagger: 0.05,
     scrollTrigger: { trigger: "#book", start: "top 70%" },
   });
-  gsap.from(".finale__actions .btn", {
-    y: 40, opacity: 0, duration: 0.8, ease: "power3.out", stagger: 0.12,
-    scrollTrigger: { trigger: ".finale__actions", start: "top 92%" },
+  /* the four buttons this staggered are gone — one room stands where they
+     did (js/lockroom.js), so there is one thing to bring in, not four */
+  gsap.from(".lockroom", {
+    y: 40, opacity: 0, duration: 0.8, ease: "power3.out",
+    scrollTrigger: { trigger: "#book", start: "top 78%" },
   });
 
   // magnetic buttons
@@ -1111,8 +1190,6 @@
     var zones = [
       { sel: "#hero", track: HOUSE_TRACK },
       { sel: "#pillars", track: HOUSE_TRACK },
-      { sel: "#uprise", track: HOUSE_TRACK },
-      { sel: "#wings", track: HOUSE_TRACK },
       { sel: "#work", track: HOUSE_TRACK },
       { sel: "#book", track: HOUSE_TRACK },
     ];
@@ -1443,25 +1520,39 @@
         onEnter: function () { track("section_view", { section: sel.slice(1), page: "home" }); },
       });
     });
-    // CTAs, song gates, and nav clicks
-    document.querySelectorAll(".head-cta, .finale__actions .btn, .song-gate, .site-foot a, a[data-cta]").forEach(function (el) {
-      el.addEventListener("click", function () {
-        track("cta_click", {
-          label: (el.textContent || "").trim().slice(0, 60),
-          href: el.getAttribute("href") || "",
-          page: "home",
-        });
+    /* CTAs, song gates, and nav clicks.
+
+       This was a querySelectorAll at load, which counted only the doors
+       that were already in the markup — and two of the five selectors
+       (.finale__actions .btn, .site-foot a) now match nothing at all,
+       while the door the room hands you after a brief is written later
+       and was never counted. One delegated listener counts whatever is
+       on the page when the tap lands. */
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest) return;
+      var el = e.target.closest(".head-cta, .song-gate, a[data-cta]");
+      if (!el) return;
+      track("cta_click", {
+        label: (el.textContent || "").trim().slice(0, 60),
+        href: el.getAttribute("href") || "",
+        page: "home",
       });
     });
   })();
 
-  /* ---------------- brand mark: 3D spin with the scroll, flashing ---------------- */
-  gsap.set(".brand__mark", { transformPerspective: 480 });
-  gsap.to(".brand__mark", {
-    rotationY: 1080,
-    ease: "none",
-    scrollTrigger: { start: 0, end: "max", scrub: 0.6 },
-  });
+  /* ---------------- brand mark: 3D spin with the scroll ---------------- */
+  /* Its only target on this page is the little M at the head of the footer,
+     so it went quiet for exactly as long as the footer was gone — and warned
+     "target .brand__mark not found" on every load while it was. The guard is
+     cheap and the page is one edit away from losing the mark again. */
+  if (document.querySelector(".brand__mark")) {
+    gsap.set(".brand__mark", { transformPerspective: 480 });
+    gsap.to(".brand__mark", {
+      rotationY: 1080,
+      ease: "none",
+      scrollTrigger: { start: 0, end: "max", scrub: 0.6 },
+    });
+  }
 
   /* ---------------- debug handle (used by the verification harness) ---------------- */
   window.__MCC = {
@@ -1472,39 +1563,12 @@
     loadedMax: function (k) { return sequences[k || "hero"].loadedMax; },
   };
 
-  /* ---------------- Square gates: subscribe + paid inquiry call ---------------- */
-  (function () {
-    function wire(id, entry, pendingText) {
-      var btn = document.getElementById(id);
-      if (!btn) return;
-      if (entry && entry.link) {
-        btn.href = entry.link;
-        btn.target = "_blank";
-        btn.rel = "noopener";
-        btn.addEventListener("click", function () {
-          if (window.MCC_TRACK) window.MCC_TRACK("cta_click", { label: id === "subscribeBtn" ? "subscribe-home" : "book-call-home", page: "home" });
-        });
-      } else if (id === "bookCallBtn") {
-        // no calendar yet: a working booking email beats a dead button
-        btn.href = "mailto:matthew@mccluster.org?subject=" +
-          encodeURIComponent("Book a Paid Call · McCluster") +
-          "&body=" + encodeURIComponent("I'd like to book a paid discovery call. Here's what I'm looking to do:\n\n");
-        btn.addEventListener("click", function () {
-          if (window.MCC_TRACK) window.MCC_TRACK("cta_click", { label: "book-call-home", page: "home" });
-        });
-      } else {
-        btn.classList.add("is-pending");
-        btn.addEventListener("click", function (e) {
-          e.preventDefault();
-          btn.textContent = pendingText;
-        });
-      }
-    }
-    var pay = window.PAYMENTS || {};
-    wire("subscribeBtn", pay.subscribe, "Subscriptions open soon");
-    wire("bookCallBtn", pay.bookcall, "Booking opens soon");
-    wire("bookCallStat", pay.bookcall, "Booking opens soon");
-  })();
+  /* The Square gates stood here, wiring Book a call, Subscribe and the
+     stat-block booking button to window.PAYMENTS. All three lived inside
+     .finale__actions, which the room replaced, and this file only ever
+     loads on the home page — so the whole block had nothing left to find.
+     js/payments.js still carries the entries; hire.html and the pay page
+     are where they are spent now. */
 
   /* ---------------- anchor links through Lenis ---------------- */
   document.querySelectorAll('a[href^="#"]').forEach(function (a) {
@@ -1517,6 +1581,16 @@
     });
   });
   } catch (err) {
+    /* The whole scroll engine sits inside that try. That is the right call —
+       one bad selector must not leave the page under a black gate — but a
+       catch that only lifts the gate makes a broken engine LOOK like a
+       working static page, which is how the last blackout hid for a week.
+       So it fails loudly: the page still opens, and the reason is on the
+       console and on window.__MCC_ERR for anyone standing at the keyboard. */
+    try {
+      window.__MCC_ERR = { message: String(err && err.message || err), stack: err && err.stack || null };
+      if (window.console && console.error) console.error("[mcc] scroll engine stopped:", err);
+    } catch (e) {}
     liftGate();
   }
 })();

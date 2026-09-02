@@ -9,11 +9,30 @@
    free to every visitor: no purchase ever opens or closes it.
    Flip a drop's status in the JSON and this room repaints on the
    next load, no deploy per drop.
-   COMMERCE: when the ledger carries a Square payment link for a
-   drop (preorder.square) the Acquire room flips from first-claim
-   capture to a live Square preorder. Square owns the price; the
-   page only displays it. The season's giving door works the same
-   way (season.give.square).
+   COMMERCE: when the ledger carries a checkout link for a drop the
+   Acquire room flips from first-claim capture to a live preorder.
+   Two carriers, and the ledger picks by which key it fills in:
+
+     preorder.shopify  a product or cart URL on the Shopify store
+                       the maker fulfils from. Sizes and variants
+                       are chosen AT checkout, and the garment is
+                       made and shipped automatically.
+                       (The maker is never named in this tree: the
+                       publish gate greps for it and fails the
+                       build. Who prints the blanks is a supply
+                       detail, not a thing a buyer needs. The
+                       runbook that does name it lives in docs/,
+                       which is stripped before publish.)
+     preorder.square   a Square payment link. Sizes come back by
+                       email afterwards and the house places the
+                       production order by hand.
+
+   Shopify wins when both are set, so the store can be switched on
+   for a drop without deleting the Square link that was carrying
+   it. Neither one is ever priced here: the checkout owns the
+   price and this page only names the deposit the ledger records.
+   The season's giving door stays on Square (season.give.square) --
+   that is the nonprofit's register, not the store's.
    ============================================================ */
 (function () {
   "use strict";
@@ -214,6 +233,49 @@
       "box-shadow:inset 0 1px 0 rgba(255,255,255,0.55),0 14px 34px -14px rgba(229,56,59,0.55);" +
       "transition:transform 0.3s cubic-bezier(0.2,0.7,0.2,1)}" +
     "@media (hover:hover){.clm button[type=submit]:hover,.clm .clm__go:hover{transform:translateY(-2px)}}" +
+    /* TWO THINGS TO BUY, SIDE BY SIDE. The row is a grid rather than a pair
+       of inline pills: each card carries a price, a name and a line, so the
+       choice is made by reading it, not by hovering it. It goes one-up on a
+       phone so neither option is the small one. */
+    ".clm__buys{display:grid;gap:0.7rem;margin-top:1.3rem;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))}" +
+    ".clm .clm__buys .clm__go{display:grid;gap:0.15rem;text-align:left;padding:1rem 1.2rem;border-radius:18px;letter-spacing:0.04em;text-transform:none;font-size:0.95rem}" +
+    ".clm__buys .clm__go b{font-family:var(--serif);font-style:italic;font-size:1.5rem;letter-spacing:0;line-height:1}" +
+    ".clm__buys .clm__go span{font-weight:800;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;opacity:0.9}" +
+    ".clm__buys .clm__go small{font-weight:500;font-size:0.76rem;opacity:0.75;letter-spacing:0}" +
+    /* the second option is the same door, quieter: one primary per screen */
+    ".clm .clm__buys .clm__go--alt{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.34)}" +
+    /* the three colorways: chips, because only one has been photographed and
+       a tinted photograph would be a promise the shot cannot keep */
+    /* the kicker was a 100%-basis flex item among wrapping chips, and it
+       still got squeezed onto a shared line. A label above a row is two
+       blocks, so it is built as two blocks and cannot be squeezed at all. */
+    ".clm__ways{margin-top:1.2rem}" +
+    ".clm__waysk{margin:0 0 0.55rem;font-weight:800;font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;opacity:0.55}" +
+    ".clm__wayrow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:0.5rem}" +
+    ".clm__way{display:inline-flex;align-items:center;gap:0.5em;font-weight:700;font-size:0.78rem;" +
+      "border-radius:100px;padding:0.4em 0.9em 0.4em 0.45em;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.22)}" +
+    ".clm__way i{width:1.05rem;height:1.05rem;border-radius:100px;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.35)}" +
+    ".clm__way small{font-weight:800;font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;opacity:0.6}" +
+    ".clm__way.is-shot{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,0.5)}" +
+    /* THE MARKS. A reading list, not a tile grid: the artwork sits beside
+       the meaning and the verse sits under it, at a measure somebody will
+       actually finish. Emblems are transparent artwork on a dark page, so
+       they need no frame — only room. */
+    ".mrk{display:grid;gap:1.6rem;margin-top:1.6rem}" +
+    ".mrk__row{display:grid;grid-template-columns:7.5rem 1fr;gap:clamp(1rem,3vw,1.8rem);align-items:start}" +
+    ".mrk__art{display:grid;place-items:center;min-height:6rem}" +
+    ".mrk__art img{max-width:100%;max-height:8.5rem;width:auto;height:auto;" +
+      "filter:drop-shadow(0 10px 26px rgba(0,0,0,0.7))}" +
+    ".mrk__txt b{display:block;font-family:var(--ui);font-weight:800;font-size:0.72rem;" +
+      "letter-spacing:0.2em;text-transform:uppercase;color:var(--ruby-hot)}" +
+    ".mrk__txt p{margin:0.45rem 0 0;font-size:1rem;line-height:1.6;opacity:0.9}" +
+    ".mrk__v{margin:0.85rem 0 0;padding:0.75rem 0 0.1rem 1rem;border-left:2px solid rgba(229,56,59,0.55);" +
+      "font-family:var(--serif);font-style:italic;font-size:1.02rem;line-height:1.55;opacity:0.92}" +
+    ".mrk__v span{display:block;margin-bottom:0.3rem;font-family:var(--ui);font-style:normal;" +
+      "font-weight:800;font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;opacity:0.6}" +
+    ".mrk__tr{margin-top:1.8rem;font-size:0.78rem;opacity:0.45}" +
+    "@media (max-width:640px){.mrk__row{grid-template-columns:1fr;gap:0.9rem}" +
+      ".mrk__art{justify-items:start;min-height:0}.mrk__art img{max-height:7rem}}" +
     ".clm__alt{display:block;margin-top:1rem;font-weight:700;font-size:0.7rem;color:inherit;opacity:0.8}" +
     ".clm__ok,.clm__err{font-weight:700;font-size:0.82rem;margin-top:0.9rem}" +
     ".clm__ok{color:inherit}.clm__err{color:var(--ruby-hot)}" +
@@ -272,6 +334,66 @@
     return "$" + (Math.round(n * 100) / 100).toLocaleString("en-US");
   }
 
+  /* WHICH CHECKOUT IS CARRYING THIS DROP.
+
+     One question, asked in one place, so the button, the deposit chip, the
+     terms and the analytics can never disagree about where the money goes.
+     Returns null when the ledger names no checkout at all, which is what
+     puts the room back on first-claim capture.
+
+     Shopify outranks Square deliberately. Switching a drop over to the
+     store is then a matter of pasting one link, not of remembering to
+     clear the other one first -- and a half-finished switch fails towards
+     the store that can actually take a size, rather than towards a payment
+     link that cannot. */
+  function checkoutOf(pre) {
+    if (!pre) return null;
+    if (pre.shopify) return { id: "shopify", via: "the store", href: pre.shopify };
+    if (pre.square) return { id: "square", via: "Square", href: pre.square };
+    return null;
+  }
+
+  /* WHAT THERE IS TO BUY.
+
+     A drop used to be one thing at one price, so `preorder` carried one
+     link. This one is a hoodie at one price and a hoodie-and-jogger set at
+     another, and a room that shows a single button has to pick which
+     customer to lose. `options` is the list; each entry answers checkoutOf()
+     on its own, so one option can move to Shopify while the other is still
+     on Square.
+
+     A drop with no `options` falls back to the single link, which is the
+     shape every other drop in this ledger has ever had. */
+  /* THE THREE COLORWAYS.
+
+     One garment, three colors, and only one of them has been photographed.
+     The swatches say which is which and mark the shot one, rather than the
+     page implying three sets of shots it does not have -- a color chip is an
+     honest promise, a tinted photograph is not. The buyer names their
+     colorway at checkout, so these are here to be read, not clicked. */
+  function colorwaysHtml(d) {
+    var cw = d.colorways || [];
+    if (cw.length < 2) return "";
+    return '<div class="clm__ways"><p class="clm__waysk">Three colorways &middot; name yours at checkout</p>' +
+      '<div class="clm__wayrow">' + cw.map(function (c) {
+        return '<span class="clm__way' + (c.shot ? " is-shot" : "") + '">' +
+          '<i style="background:' + esc(c.hex) + '"></i>' + esc(c.name) +
+          (c.shot ? " <small>shown</small>" : "") + "</span>";
+      }).join("") + "</div></div>";
+  }
+
+  function buysOf(pre) {
+    if (!pre) return [];
+    var opts = (pre.options || []).map(function (o) {
+      var c = checkoutOf(o);
+      return c ? { id: o.id, label: o.label, price: o.price, note: o.note, via: c.via, viaId: c.id, href: c.href } : null;
+    }).filter(Boolean);
+    if (opts.length) return opts;
+    var one = checkoutOf(pre);
+    return one ? [{ id: "only", label: "Preorder", price: pre.deposit, note: null,
+                    via: one.via, viaId: one.id, href: one.href }] : [];
+  }
+
   fetch(ROOT + "data/prayer-closet.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (j) {
     var drops = j.drops || [];
     var idx = -1;
@@ -292,14 +414,18 @@
         '<span class="dph__wm" aria-hidden="true">M' + d.chapter + "</span>" +
         (heroShot ? '<span class="dph__field" aria-hidden="true">' + photo(heroShot, d.title + " · " + d.garment) + "</span>"
                   : hanger(d.color.ink)) +
-        '<span class="dph__em"><img src="' + esc(emblem) + '" alt=""><b>Prayer&nbsp;Closet</b></span>' +
+        '<span class="dph__em"><img src="' + esc(emblem) + '" alt=""><b>Hitman&nbsp;Halo</b></span>' +
         '<button class="dph__share" type="button" id="dphShare">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2.6"/><circle cx="17.5" cy="5.5" r="2.6"/><circle cx="17.5" cy="18.5" r="2.6"/><path d="M8.3 10.7l6.9-4M8.3 13.3l6.9 4"/></svg>' +
         "<span>Share</span></button>");
       var k = document.getElementById("dphK");
-      if (k) k.textContent = "Prayer Closet · " + (d.tag || "Drop " + d.no) + " · " + (STATUS[d.status] || d.status);
+      if (k) k.textContent = "Hitman Halo · " + (d.tag || "Drop " + d.no) + " · " + (STATUS[d.status] || d.status);
       var meta = document.getElementById("dphMeta");
-      if (meta) meta.innerHTML = [d.garment, d.color.name, d.reference,
+      /* a drop with three colorways has no single colour to name here, so
+         the strip counts them and the swatches downstairs do the naming */
+      var wayLabel = (d.colorways && d.colorways.length > 1)
+        ? d.colorways.length + " colorways" : d.color.name;
+      if (meta) meta.innerHTML = [d.garment, wayLabel, d.reference,
         colab.name ? "with " + colab.name : null].filter(Boolean).map(function (m) {
           return "<span>" + esc(m) + "</span>"; }).join("");
     }
@@ -377,6 +503,37 @@
       '<div class="dph__meta" style="margin-top:1rem">' + (d.theme || []).map(function (t) {
         return "<span>" + esc(t) + "</span>"; }).join("") + "</div></section>";
 
+    /* THE MARKS. Every graphic on this garment carries a meaning and a
+       verse, and until now both lived in the owner's head — which is the
+       one place a meaning cannot survive. Each mark shows its own artwork,
+       what it means, and the scripture it is standing on, quoted exactly
+       from the same public-domain translation the chapter rooms serve.
+
+       It reads as a list rather than a grid on purpose: this is the part of
+       the page somebody actually stops and reads, and a verse set in a tile
+       is a verse nobody finishes. */
+    var emb = j.emblems || [];
+    var embHtml = emb.length ?
+      '<section class="dsc rv" id="marks">' +
+      '<p class="dsc__k">The Marks</p>' +
+      '<h2 class="dsc__t">Nothing on it is decoration.</h2>' +
+      '<div class="mrk">' + emb.map(function (e) {
+        return '<article class="mrk__row">' +
+          '<span class="mrk__art"><img src="' + ROOT + esc(e.art) + '" alt="' + esc(e.name) +
+            '" width="' + (e.w || 0) + '" height="' + (e.h || 0) + '" loading="lazy" decoding="async"></span>' +
+          '<div class="mrk__txt">' +
+            "<b>" + esc(e.name) + "</b>" +
+            "<p>" + esc(e.meaning) + "</p>" +
+            (e.scripture || []).map(function (v) {
+              return '<blockquote class="mrk__v"><span>' + esc(v.ref) + "</span>" +
+                     esc(v.text) + "</blockquote>";
+            }).join("") +
+          "</div></article>";
+      }).join("") + "</div>" +
+      '<p class="mrk__tr">Scripture: World English Bible, public domain &middot; ' +
+      'the same text the chapter rooms serve.</p>' +
+      "</section>" : "";
+
     var briefHtml = b.mission ?
       '<section class="dsc rv" id="briefing">' +
       '<p class="dsc__k">' + esc(briefName) + "</p>" +
@@ -401,7 +558,9 @@
     var live = d.status === "live" && d.offering;
     var soldOut = d.status === "sold-out";
     var pre = d.preorder || {};
-    var preLive = !!pre.square;
+    var buys = buysOf(pre);
+    var buy = buys[0] || null;          // the room's voice follows the first option
+    var preLive = buys.length > 0;
     var sizes = d.sizes || [];
     var sizesHtml = sizes.length ?
       '<div class="sizes" id="clmSizes" role="group" aria-label="Size">' + sizes.map(function (s) {
@@ -417,18 +576,41 @@
     } else if (preLive) {
       /* the honesty layer: a preorder states its terms where the money moves.
          Ledger-driven: set preorder.terms (array of strings) to override. */
+      /* THE SIZING LINE HAS TO DESCRIBE THE CHECKOUT THAT IS ACTUALLY OPEN.
+
+         It promised "chosen by email right after checkout" for years, which
+         was true of a bare Square payment link and of nothing else. Shopify
+         takes the size as a variant; Square takes it too once the link
+         carries custom fields, which these now do. So the email step is
+         claimed only where the ledger has not been told otherwise -- a
+         promise of a step that no longer happens is worse than no promise. */
+      var range = (sizes[0] || "S") + " to " + (sizes[sizes.length - 1] || "2XL");
+      var atCheckout = buy.viaId === "shopify" || pre.sizeAtCheckout !== false;
+      var sizeLine = atCheckout
+        ? "<b>Size &amp; colorway:</b> both chosen at checkout (" + range + ")"
+        : "<b>Sizing &amp; customization:</b> chosen by email right after checkout (" + range + ")";
       var terms = (pre.terms && pre.terms.length) ? pre.terms : [
-        "<b>What ships:</b> " + esc(d.garment) + " in " + esc(d.color.name) + ", every placement on the tech pack above",
+        "<b>What ships:</b> " + esc(d.garment) + " in " +
+          ((d.colorways && d.colorways.length > 1) ? "the colorway you pick" : esc(d.color.name)) +
+          ", every placement on the tech pack above",
         "<b>When:</b> about four weeks from order to door. Tracking lands in your email",
-        "<b>Sizing &amp; customization:</b> chosen by email right after checkout (S to 2XL)",
+        sizeLine,
         "<b>Change of heart:</b> full refund any time before your set ships. One email does it",
         "<b>A person answers:</b> matthew@mccluster.org",
       ];
       clmBody =
         "<p>" + (pre.how ? esc(pre.how)
-          : "The set is in production. A preorder holds your edition before the rail opens. Checkout runs through Square, and the house ships the moment the garments land.") + "</p>" +
-        (pre.deposit ? '<span class="clm__dep">' + money(pre.deposit) + "<small>preorder &middot; through Square</small></span>" : "") +
-        '<a class="clm__go" style="margin-top:1.3rem" id="clmSquare" href="' + esc(pre.square) + '" rel="noopener">Preorder through Square &#8594;</a>' +
+          : "The set is in production. A preorder holds your edition before the rail opens. Checkout runs through " +
+            buy.via + ", and the house ships the moment the garments land.") + "</p>" +
+        (pre.deposit ? '<span class="clm__dep">' + money(pre.deposit) + "<small>preorder &middot; through " + buy.via + "</small></span>" : "") +
+        colorwaysHtml(d) +
+        '<div class="clm__buys">' + buys.map(function (o, i) {
+          return '<a class="clm__go' + (i ? " clm__go--alt" : "") + '" data-buy="' + esc(o.id) +
+            '" href="' + esc(o.href) + '" rel="noopener">' +
+            (o.price ? '<b>' + money(o.price) + "</b>" : "") +
+            "<span>" + esc(o.label) + "</span>" +
+            (o.note ? "<small>" + esc(o.note) + "</small>" : "") + "</a>";
+        }).join("") + "</div>" +
         '<span class="clm__alt">Not ready? <a href="#" id="clmClaimAlt" style="color:inherit">Put your name on the list instead</a>.</span>' +
         '<div id="clmClaimWrap" hidden>' + sizesHtml +
         '<form id="clmForm"><input name="name" placeholder="Your name" autocomplete="name" maxlength="80" required>' +
@@ -459,17 +641,30 @@
       (give && give.square ? '<span class="clm__sow">Or simply sow into the season &mdash; <a href="' + esc(give.square) + '" data-sow rel="noopener">give through Square &#8594;</a></span>' : "") +
       "</div></section>";
 
-    var prev = drops[(idx + drops.length - 1) % drops.length];
-    var next = drops[(idx + 1) % drops.length];
-    var nxHtml =
-      '<section class="dsc rv"><div class="dnx">' +
-      '<a href="' + esc(prev.slug) + '.html" style="' + field(prev.color) + '">' +
-        (prev.cover ? '<span class="dnxf" aria-hidden="true">' + photo(prev.cover, "") + "</span>" : "") +
-        '<i>&#8592; ' + esc(prev.tag || "Drop " + prev.no) + "</i><b>" + esc(prev.title) + "</b></a>" +
-      '<a href="' + esc(next.slug) + '.html" style="' + field(next.color) + '">' +
-        (next.cover ? '<span class="dnxf" aria-hidden="true">' + photo(next.cover, "") + "</span>" : "") +
-        '<i>' + esc(next.tag || "Drop " + next.no) + " &#8594;</i><b>" + esc(next.title) + "</b></a>" +
-      '</div><a class="dnx--home" href="' + ROOT + 'prayer-closet.html">Back into the Closet</a></section>';
+    /* THE WALK-ON, when there is somewhere to walk on to.
+
+       prev and next wrap around the drop list, which was right for a season
+       of three and absurd for a season of one: both arrows resolved to the
+       drop you are standing on, so the page offered you two doors back into
+       itself. With a single drop the pair is dropped and only the way back
+       into the Closet is drawn. */
+    var nxHtml;
+    if (drops.length > 1) {
+      var prev = drops[(idx + drops.length - 1) % drops.length];
+      var next = drops[(idx + 1) % drops.length];
+      nxHtml =
+        '<section class="dsc rv"><div class="dnx">' +
+        '<a href="' + esc(prev.slug) + '.html" style="' + field(prev.color) + '">' +
+          (prev.cover ? '<span class="dnxf" aria-hidden="true">' + photo(prev.cover, "") + "</span>" : "") +
+          '<i>&#8592; ' + esc(prev.tag || "Drop " + prev.no) + "</i><b>" + esc(prev.title) + "</b></a>" +
+        '<a href="' + esc(next.slug) + '.html" style="' + field(next.color) + '">' +
+          (next.cover ? '<span class="dnxf" aria-hidden="true">' + photo(next.cover, "") + "</span>" : "") +
+          '<i>' + esc(next.tag || "Drop " + next.no) + " &#8594;</i><b>" + esc(next.title) + "</b></a>" +
+        '</div><a class="dnx--home" href="' + ROOT + 'prayer-closet.html">Back into the Closet</a></section>';
+    } else {
+      nxHtml = '<section class="dsc rv"><a class="dnx--home" href="' + ROOT +
+        'prayer-closet.html">Back into the Closet</a></section>';
+    }
 
     var wordShell =
       '<section class="dsc rv" id="chapter"><div class="word">' +
@@ -487,7 +682,7 @@
       return '<a href="#' + s[0] + '">' + s[1] + "</a>"; }).join("") + "</nav>";
 
     document.getElementById("dropBody").innerHTML =
-      cmpHtml + lookHtml + msgHtml + wordShell + briefHtml + cloHtml + clmHtml + nxHtml;
+      cmpHtml + lookHtml + msgHtml + embHtml + wordShell + briefHtml + cloHtml + clmHtml + nxHtml;
 
     /* ----- the Word itself, from the house copy of the WEB ----- */
     fetch(ROOT + "data/scripture/" + d.book + "-" + d.chapter + ".json", { cache: "force-cache" })
@@ -588,10 +783,14 @@
       sizeWrap.querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === btn); });
     });
 
-    /* ----- preorder: Square carries the money ----- */
-    var sq = document.getElementById("clmSquare");
-    if (sq) sq.addEventListener("click", function () {
-      track("closet_preorder_click", { drop: d.slug, deposit: pre.deposit || null });
+    /* ----- preorder: whichever checkout the ledger named carries it ----- */
+    var buyRow = document.querySelector(".clm__buys");
+    if (buyRow) buyRow.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest("[data-buy]");
+      if (!a) return;
+      var pick = buys.filter(function (o) { return o.id === a.getAttribute("data-buy"); })[0];
+      track("closet_preorder_click", { drop: d.slug, option: pick && pick.id,
+        price: pick && pick.price, via: pick && pick.viaId });
     });
     var alt = document.getElementById("clmClaimAlt");
     if (alt) alt.addEventListener("click", function (e) {
@@ -629,6 +828,7 @@
       if (e.target.closest && e.target.closest("[data-sow]")) track("closet_sow_click", { from: d.slug });
     });
 
-    track("closet_drop_view", { drop: d.slug, status: d.status, chapter: d.chapter, preorder: preLive });
+    track("closet_drop_view", { drop: d.slug, status: d.status, chapter: d.chapter,
+      preorder: preLive, options: buys.length, via: buy ? buy.viaId : null });
   }).catch(function () {});
 })();

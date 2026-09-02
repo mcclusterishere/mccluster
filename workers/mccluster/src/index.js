@@ -1,4 +1,4 @@
-import { corsHeaders, fail, logEvent, reply } from './lib/http.js';
+import { allowedOrigins, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -25,6 +25,17 @@ async function sb(env, path) {
   }
   if (!res.ok) throw Object.assign(new Error('McCluster database request failed'), { status: res.status, detail: data });
   return data;
+}
+
+
+async function sbCount(env, path) {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
+    headers: { ...sbHeaders(env), prefer: 'count=exact', range: '0-0' }
+  });
+  if (!res.ok) return null;
+  const range = res.headers.get('content-range') || '';
+  const total = range.split('/')[1];
+  return total && total !== '*' ? Number(total) : null;
 }
 
 async function authUser(req, env) {
@@ -70,7 +81,7 @@ export default {
           ok: true,
           service: 'mccluster',
           supabase_project: env.MCCLUSTER_SUPABASE_PROJECT_REF || null,
-          products: ['identity', 'apps', 'fees', 'payments', 'mobility'],
+          products: ['identity', 'apps', 'fees', 'status', 'payments', 'mobility'],
           canonical_identity: 'McCluster',
           durable_object: 'HereTenantAgent',
           durable_object_bound: Boolean(env.HereTenantAgent)
@@ -90,6 +101,53 @@ export default {
         if (!user) return fail(request, env, 'Authentication required', 401);
         return reply(request, env, {
           user: { id: user.id, email: user.email, phone: user.phone, user_metadata: user.user_metadata || {} }
+        });
+      }
+
+      /* THE CONTROL PLANE'S ONE CALL.
+
+         The operator screen needs five unrelated facts — is the database
+         answering, how much is waiting on the desk, how many briefs are
+         unread, what is registered, what is this Worker — and five round
+         trips to draw one board is four too many. Counts come back through
+         PostgREST's exact-count header rather than by fetching rows, so a
+         busy inbox costs the same as an empty one.
+
+         Authed on purpose: this is operational state, not public. Each
+         count is allowed to fail on its own and report null rather than
+         taking the whole board down with it. */
+      if (path === '/v1/status' && request.method === 'GET') {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+
+        const [apps, requests, inboxIn, convos, channels] = await Promise.all([
+          sbCount(env, 'platform_apps?enabled=eq.true&select=id'),
+          sbCount(env, 'site_requests?select=id'),
+          sbCount(env, 'inbox_messages?direction=eq.in&select=id'),
+          sbCount(env, 'inbox_conversations?select=id'),
+          sb(env, 'inbox_channels?select=key,enabled').catch(() => null)
+        ]);
+
+        return reply(request, env, {
+          ok: true,
+          checked_at: new Date().toISOString(),
+          operator: { id: user.id, email: user.email },
+          database: {
+            project: env.MCCLUSTER_SUPABASE_PROJECT_REF || null,
+            reachable: apps !== null
+          },
+          worker: {
+            service: 'mccluster',
+            durable_object_bound: Boolean(env.HereTenantAgent),
+            allowed_origins: allowedOrigins(env).length
+          },
+          counts: {
+            apps_enabled: apps,
+            site_requests: requests,
+            inbox_messages_in: inboxIn,
+            conversations: convos
+          },
+          channels: Array.isArray(channels) ? channels : []
         });
       }
 

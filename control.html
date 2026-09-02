@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Control Plane · McCluster</title>
+  <meta name="description" content="The operator's board: the site, the Worker, the database, and what is waiting on the desk.">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="assets/img/hm-mark-96.png">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    /* ============================================================
+       THE CONTROL PLANE.
+
+       One screen that answers "is the house up?" without opening five
+       dashboards. Every number on it is fetched live — from the Worker
+       for operational state, from the page itself for what is deployed.
+       Nothing here is typed in by hand, because a status board with a
+       hardcoded number on it is worse than no status board.
+       ============================================================ */
+    body.cp { background: var(--ink); color: var(--cream); min-height: 100svh; }
+    .cp__wrap { max-width: 74rem; margin: 0 auto;
+      padding: clamp(1.4rem,4vw,2.6rem) clamp(1rem,4vw,2rem) calc(6rem + env(safe-area-inset-bottom)); }
+
+    .cp__head { display: flex; flex-wrap: wrap; align-items: center; gap: .9rem 1.2rem;
+      padding-bottom: 1.2rem; box-shadow: inset 0 -1px 0 rgba(244,239,230,.1); }
+    .cp__mark { height: 2.4rem; width: auto; }
+    .cp__ttl { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(1.9rem,5vw,2.8rem);
+      text-transform: uppercase; line-height: 1; }
+    .cp__who { margin-left: auto; display: flex; align-items: center; gap: .7rem;
+      font: 500 .82rem var(--body); color: var(--cream-dim); }
+    .cp__btn { -webkit-appearance: none; appearance: none; cursor: pointer; border-radius: 99px;
+      border: 1px solid rgba(244,239,230,.24); background: rgba(244,239,230,.05); color: var(--cream);
+      padding: .5em 1.05em; font: 800 .66rem var(--body); letter-spacing: .16em; text-transform: uppercase;
+      transition: border-color .2s, background .2s; }
+    .cp__btn:hover { border-color: var(--ruby-hot); background: rgba(229,56,59,.16); }
+    .cp__btn--go { border: 0; background: linear-gradient(120deg,var(--ruby),var(--ruby-hot)); color: #fff; }
+    .cp__btn[disabled] { opacity: .55; cursor: default; }
+
+    /* ---- the gate ---- */
+    .cp__gate { max-width: 26rem; margin: clamp(3rem,12vh,7rem) auto; text-align: left; }
+    .cp__gate h2 { font-family: var(--display); font-weight: 400; font-size: 2rem; text-transform: uppercase; margin: 0 0 .3rem; }
+    .cp__gate p { color: var(--cream-dim); margin: 0 0 1.3rem; font-size: .95rem; line-height: 1.5; }
+    .cp__in { width: 100%; -webkit-appearance: none; appearance: none; margin-bottom: .6rem;
+      border: 1px solid rgba(244,239,230,.2); background: rgba(244,239,230,.05); color: var(--cream);
+      border-radius: 13px; padding: .85em 1em; font: 500 1rem var(--body); }
+    .cp__in:focus { outline: none; border-color: var(--ruby-hot); }
+    .cp__gate .cp__btn { width: 100%; margin-top: .35rem; padding: .95em; font-size: .72rem; }
+    .cp__note { margin-top: .9rem; font-size: .86rem; color: var(--cream-dim); min-height: 1.2em; }
+    .cp__note.is-err { color: var(--ruby-hot); }
+
+    /* ---- the board ---- */
+    .cp__grid { display: grid; gap: .7rem; margin-top: 1.4rem;
+      grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+    .cp__card { border-radius: 18px; padding: 1.1rem 1.2rem; background: rgba(244,239,230,.045);
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); }
+    .cp__k { margin: 0 0 .55rem; font: 800 .6rem var(--body); letter-spacing: .2em;
+      text-transform: uppercase; color: rgba(244,239,230,.5); display: flex; align-items: center; gap: .5em; }
+    /* the lamp is the whole point of a status card: colour before words */
+    .cp__lamp { width: .55rem; height: .55rem; border-radius: 50%; flex: none;
+      background: rgba(244,239,230,.3); }
+    .cp__lamp.is-up { background: #35d07f; box-shadow: 0 0 10px rgba(53,208,127,.8); }
+    .cp__lamp.is-down { background: var(--ruby-hot); box-shadow: 0 0 10px rgba(229,56,59,.9); }
+    .cp__big { font-family: var(--display); font-weight: 400; font-size: 2.1rem; line-height: 1; }
+    .cp__sub { margin: .35rem 0 0; font-size: .85rem; color: var(--cream-dim); line-height: 1.45;
+      word-break: break-word; }
+    .cp__rows { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: .3rem; }
+    .cp__rows li { display: flex; justify-content: space-between; gap: .8rem; font-size: .85rem;
+      padding-top: .3rem; box-shadow: inset 0 1px 0 rgba(244,239,230,.08); }
+    .cp__rows li:first-child { box-shadow: none; padding-top: 0; }
+    .cp__rows span { color: var(--cream-dim); }
+    .cp__rows b { font-weight: 700; }
+
+    .cp__sect { margin-top: 2.2rem; }
+    .cp__sect > h2 { font-family: var(--display); font-weight: 400; font-size: 1.5rem;
+      text-transform: uppercase; margin: 0 0 .8rem; }
+    .cp__doors { display: grid; gap: .55rem; grid-template-columns: repeat(auto-fit, minmax(14rem,1fr)); }
+    .cp__door { display: grid; gap: .1rem; padding: .85rem 1rem; border-radius: 15px; text-decoration: none;
+      color: var(--cream); background: rgba(244,239,230,.045);
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); transition: background .2s, box-shadow .2s, transform .2s; }
+    .cp__door:hover { background: rgba(229,56,59,.14); box-shadow: inset 0 0 0 1px var(--ruby-hot); transform: translateY(-2px); }
+    .cp__door b { font: 800 .8rem var(--body); }
+    .cp__door small { color: var(--cream-dim); font-size: .78rem; }
+    [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) { .cp__door { transition: none; } .cp__door:hover { transform: none; } }
+  </style>
+</head>
+<body class="cp">
+  <div class="cp__wrap">
+
+    <!-- THE GATE -->
+    <section class="cp__gate" id="cpGate">
+      <h2>The Control Plane</h2>
+      <p>Operator only. A link lands in your email, or use the password on the account.</p>
+      <input class="cp__in" id="cpEmail" type="email" placeholder="Owner email" autocomplete="email">
+      <input class="cp__in" id="cpPass" type="password" placeholder="Password (optional)" autocomplete="current-password">
+      <button class="cp__btn cp__btn--go" id="cpIn" type="button">Open the plane &rarr;</button>
+      <button class="cp__btn" id="cpLink" type="button">Email me a sign-in link</button>
+      <p class="cp__note" id="cpNote"></p>
+    </section>
+
+    <!-- THE BOARD -->
+    <main id="cpBoard" hidden>
+      <header class="cp__head">
+        <img class="cp__mark" src="assets/img/hm-mark-wide.webp" alt="">
+        <h1 class="cp__ttl">Control Plane</h1>
+        <div class="cp__who">
+          <span id="cpUser">—</span>
+          <button class="cp__btn" id="cpRefresh" type="button">Refresh</button>
+          <button class="cp__btn" id="cpOut" type="button">Sign out</button>
+        </div>
+      </header>
+
+      <div class="cp__grid" id="cpTiles"></div>
+
+      <section class="cp__sect">
+        <h2>Registered apps</h2>
+        <div class="cp__doors" id="cpApps"></div>
+      </section>
+
+      <section class="cp__sect">
+        <h2>The rooms</h2>
+        <div class="cp__doors">
+          <a class="cp__door" href="admin.html"><b>The Back Office</b><small>inbox, rights, shop, walls</small></a>
+          <a class="cp__door" href="crm.html"><b>CRM</b><small>people and conversations</small></a>
+          <a class="cp__door" href="console.html"><b>Client console</b><small>what a client sees</small></a>
+          <a class="cp__door" href="prayer-closet.html"><b>Hitman Halo</b><small>the drop and the rack</small></a>
+          <a class="cp__door" href="chat.html"><b>The desk</b><small>the live conversation</small></a>
+          <a class="cp__door" href="index.html"><b>The public site</b><small>what everyone else sees</small></a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script>
+  /* ============================================================
+     THE PLANE'S WIRING.
+
+     Two sources, and it says which is which rather than blending them:
+     the Worker at api.mccluster.org answers for the database and the
+     queues, and the page itself answers for what is deployed (its own
+     asset stamp is the commit that built it — no API can tell you that
+     more honestly than the bytes you are already running).
+
+     Every probe fails on its own. A dead Worker greys one lamp; it does
+     not blank the board, because a board that disappears when something
+     breaks is a board that is useless exactly when it is needed.
+     ============================================================ */
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var API = "https://api.mccluster.org";
+
+    function esc(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; }
+    function note(msg, err) {
+      var n = $("cpNote"); n.textContent = msg || "";
+      n.className = "cp__note" + (err ? " is-err" : "");
+    }
+    function token() {
+      return (window.MCC_SUPA && MCC_SUPA.token) ? MCC_SUPA.token() : Promise.resolve(null);
+    }
+
+    /* the commit that built the page you are looking at: the ?v= stamp the
+       deploy writes into every asset URL */
+    function deployedStamp() {
+      var l = document.querySelector('link[href*="style.css?v="]');
+      var m = l && l.getAttribute("href").match(/v=([^&"]+)/);
+      var v = m && m[1];
+      return (!v || v === "__STAMP__") ? null : v;
+    }
+
+    function card(k, lamp, big, sub, rows) {
+      return '<div class="cp__card"><p class="cp__k"><i class="cp__lamp ' + lamp + '"></i>' + esc(k) + "</p>" +
+        (big ? '<div class="cp__big">' + esc(big) + "</div>" : "") +
+        (sub ? '<p class="cp__sub">' + esc(sub) + "</p>" : "") +
+        (rows && rows.length
+          ? '<ul class="cp__rows">' + rows.map(function (r) {
+              return "<li><span>" + esc(r[0]) + "</span><b>" + esc(r[1]) + "</b></li>";
+            }).join("") + "</ul>"
+          : "") + "</div>";
+    }
+
+    function num(n) { return n === null || n === undefined ? "—" : String(n); }
+
+    function draw(status, health) {
+      var stamp = deployedStamp();
+      var tiles = [];
+
+      tiles.push(card("This site", stamp ? "is-up" : "",
+        stamp ? stamp.slice(0, 7) : "local",
+        stamp ? "The commit this page was built from." : "Unstamped — you are on a local or unbuilt copy.",
+        [["matthew.mccluster.org", "live"], ["mccluster.org", "alias"]]));
+
+      tiles.push(card("API Worker", health ? "is-up" : "is-down",
+        health ? "up" : "down",
+        health ? "api.mccluster.org · " + (health.service || "mccluster")
+               : "No answer from api.mccluster.org.",
+        health ? [
+          ["Durable Object", health.durable_object_bound ? "bound" : "not bound"],
+          ["Products", (health.products || []).length]
+        ] : []));
+
+      var db = status && status.database;
+      tiles.push(card("Database", db && db.reachable ? "is-up" : (status ? "is-down" : ""),
+        db && db.reachable ? "up" : (status ? "down" : "—"),
+        db && db.project ? "Supabase · " + db.project : "Sign in to read the database.",
+        []));
+
+      var c = (status && status.counts) || null;
+      tiles.push(card("The desk", c ? "is-up" : "", c ? num(c.inbox_messages_in) : "—",
+        "Messages in from visitors.",
+        c ? [["Conversations", num(c.conversations)], ["Briefs filed", num(c.site_requests)]] : []));
+
+      tiles.push(card("Registry", c ? "is-up" : "", c ? num(c.apps_enabled) : "—",
+        "Applications enabled on the plane.",
+        (status && status.channels || []).map(function (ch) {
+          return ["Channel · " + ch.key, ch.enabled ? "on" : "off"];
+        })));
+
+      $("cpTiles").innerHTML = tiles.join("");
+    }
+
+    function drawApps(apps) {
+      if (!apps || !apps.length) { $("cpApps").innerHTML = '<p class="cp__sub">No apps registered.</p>'; return; }
+      $("cpApps").innerHTML = apps.map(function (a) {
+        var href = a.public_url || null;
+        var inner = "<b>" + esc(a.name) + "</b><small>" + esc(a.app_key) + " · " + esc(a.kind || "") + "</small>";
+        return href ? '<a class="cp__door" href="' + esc(href) + '" rel="noopener">' + inner + "</a>"
+                    : '<div class="cp__door">' + inner + "</div>";
+      }).join("");
+    }
+
+    function load() {
+      /* health needs no auth, so the Worker lamp is honest even when the
+         session is not */
+      var health = fetch(API + "/health", { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+
+      var authed = token().then(function (t) {
+        if (!t) return { status: null, apps: null };
+        var h = { authorization: "Bearer " + t };
+        return Promise.all([
+          fetch(API + "/v1/status", { headers: h, cache: "no-store" })
+            .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+          fetch(API + "/v1/apps", { headers: h, cache: "no-store" })
+            .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+        ]).then(function (both) { return { status: both[0], apps: both[1] && both[1].apps }; });
+      });
+
+      return Promise.all([health, authed]).then(function (r) {
+        draw(r[1].status, r[0]);
+        drawApps(r[1].apps);
+        var u = r[1].status && r[1].status.operator;
+        $("cpUser").textContent = u && u.email ? u.email : "signed in";
+      });
+    }
+
+    function boot() {
+      $("cpGate").hidden = true;
+      $("cpBoard").hidden = false;
+      load();
+    }
+
+    $("cpIn").addEventListener("click", function () {
+      var em = $("cpEmail").value.trim(), pw = $("cpPass").value;
+      if (!em) { note("Email first.", true); return; }
+      if (!pw) { note("No password? Use the sign-in link below.", true); return; }
+      var b = $("cpIn"); b.disabled = true; b.textContent = "Opening…";
+      window.MCC_AUTH.signInPassword(em, pw).then(boot).catch(function (e) {
+        b.disabled = false; b.textContent = "Open the plane →";
+        note(String(e && e.message || e), true);
+      });
+    });
+    $("cpPass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("cpIn").click(); });
+
+    $("cpLink").addEventListener("click", function () {
+      var em = $("cpEmail").value.trim();
+      if (!em) { note("Email first.", true); return; }
+      var b = $("cpLink"); b.disabled = true; b.textContent = "Sending…";
+      window.MCC_AUTH.signIn(em).then(function () {
+        b.textContent = "Link sent";
+        note("Check " + em + ". The link opens this page signed in.");
+      }).catch(function (e) {
+        b.disabled = false; b.textContent = "Email me a sign-in link";
+        note(String(e && e.message || e), true);
+      });
+    });
+
+    $("cpOut").addEventListener("click", function () {
+      window.MCC_AUTH.signOut().then(function () { location.reload(); });
+    });
+    $("cpRefresh").addEventListener("click", function () {
+      var b = $("cpRefresh"); b.disabled = true; b.textContent = "…";
+      load().then(function () { b.disabled = false; b.textContent = "Refresh"; });
+    });
+
+    /* a magic-link landing arrives already signed in, so the gate should
+       never be the first thing that visitor sees */
+    function tryResume() {
+      token().then(function (t) { if (t) boot(); });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", tryResume);
+    else tryResume();
+    setTimeout(tryResume, 900);
+  })();
+  </script>
+</body>
+</html>

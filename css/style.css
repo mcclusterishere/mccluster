@@ -318,7 +318,12 @@ html[data-theme="light"] .sound-toggle{border-color:rgba(26,20,13,0.3)}
    is still pinned, and it rides above it — so the night scroll DISSOLVES in
    over the fly-through instead of sliding up with an edge. js/main.js fades
    .services .command__sticky in across the first slice of this section's
-   own scroll; the two films now hand the screen over without a seam. */
+   own scroll; the two films now hand the screen over without a seam.
+   That same file also HOLDS the night scroll on its opening frame for the
+   length of the dissolve — the shot starts above the cloud line, coming out
+   of the aircraft, and it was being scrubbed away behind an opacity still
+   climbing out of zero. The length here and the trigger's end distance are
+   a pair: see PB_HANDOVER in js/main.js before changing either. */
 .services{position:relative;z-index:2;min-height:220svh;margin-top:-100svh}
 .services .command__sticky{position:sticky;top:0;height:100svh;opacity:0}
 .services .command__count{display:none}
@@ -451,6 +456,106 @@ html[data-theme="light"] .btn--ghost:hover{border-color:var(--cream);background:
 .site-foot__links a{font-size:0.84rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--cream-dim);transition:color 0.3s}
 .site-foot__links a:hover{color:var(--ruby-hot)}
 .site-foot__note{font-size:0.84rem;color:var(--cream-dim);letter-spacing:0.08em}
+
+/* ============================================================
+   THE DOORS — the footer, built as things you press.
+
+   The home page's footer was twelve links stacked in a column,
+   uppercase and letter-spaced at .84rem. That is the footer every
+   site has, and it fails for the reason every one of them fails:
+   twelve links that look identical are not twelve choices, they
+   are a paragraph of underlines you scroll past. Nothing in it
+   said which room was worth walking into.
+
+   Same rooms, built as doors. A tile with its own mark, its name
+   and one line of what is behind it — scanned by shape, hit with a
+   thumb, and sized like something meant to be pressed. Reach is
+   three pills. The legal line is the only thing left that is
+   still just words, which is correct: nobody presses a copyright.
+
+   The other six pages carry the short footer (a brand mark and a
+   line) and do not need any of this, so all of it hangs off
+   .site-foot--doors and leaves them exactly as they were.
+   ============================================================ */
+.site-foot--doors { display: block; padding: clamp(2.6rem,7vh,4.4rem) clamp(1.1rem,4vw,3rem); }
+/* the bar is fixed over the bottom of every page, and the shorthand above
+   outranks the .site-foot rules further down this file that clear it — so the
+   clearance is restated here rather than left to lose a specificity fight */
+.site-foot--doors { padding-bottom: calc(var(--appbar-h, 3.7rem) + env(safe-area-inset-bottom) + 2rem); }
+.foot__inner { max-width: 66rem; margin: 0 auto; display: grid; gap: clamp(1.3rem,4vh,2rem); }
+.foot__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.1rem; }
+.foot__brand { margin: 0; font-family: var(--display); font-size: 1.6rem; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: .14em; }
+.foot__k { margin: 0; font: 800 .62rem var(--body); letter-spacing: .26em;
+  text-transform: uppercase; color: rgba(244,239,230,.45); }
+
+/* 17.5rem is chosen, not guessed: it is the width at which nine tiles fall
+   into a clean 3x3 inside the 66rem inner column instead of a 4+4+1 with an
+   orphan, and at which no descriptor wraps to a second line. */
+.foot__doors { display: grid; gap: .55rem;
+  grid-template-columns: repeat(auto-fit, minmax(17.5rem, 1fr)); }
+.footdoor { position: relative; display: grid; grid-template-columns: auto 1fr auto;
+  align-items: center; gap: .85rem; padding: .85rem 1rem; border-radius: 16px;
+  text-decoration: none; color: var(--cream); background: rgba(244,239,230,.045);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.1);
+  transition: background .22s ease, box-shadow .22s ease, transform .22s ease; }
+.footdoor::after { content: "\2192"; font-size: 1rem; color: rgba(244,239,230,.3);
+  transition: color .22s ease, transform .22s ease; }
+.footdoor:hover, .footdoor:focus-visible { background: rgba(229,56,59,.14);
+  box-shadow: inset 0 0 0 1px var(--ruby-hot); transform: translateY(-2px); }
+.footdoor:hover::after, .footdoor:focus-visible::after { color: var(--ruby-hot); transform: translateX(3px); }
+.footdoor:active { transform: translateY(0); }
+.footdoor__ic { flex: none; width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: 12px; background: rgba(244,239,230,.06);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); }
+.footdoor__ic svg { width: 20px; height: 20px; fill: none; stroke: var(--ruby-hot);
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.footdoor__ic--mark img { width: 24px; height: 24px; object-fit: contain; }
+.footdoor__txt { min-width: 0; }
+.footdoor b { display: block; font: 800 .95rem var(--body); letter-spacing: .02em;
+  color: var(--cream); }
+/* the descriptor is copy somebody actually reads, not an eyebrow, so it sits
+   at the house's legible size rather than at label size */
+.footdoor small { display: block; margin-top: .12rem; font: 500 .85rem/1.35 var(--body);
+  color: var(--cream-dim); }
+
+.foot__reach { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; }
+.footreach { display: inline-flex; align-items: center; gap: .55em; text-decoration: none;
+  border: 1px solid rgba(244,239,230,.22); border-radius: 99px; padding: .55em 1.1em;
+  color: var(--cream); font: 700 .76rem var(--body); letter-spacing: .1em;
+  text-transform: uppercase; transition: border-color .22s, background .22s, transform .22s; }
+.footreach svg { width: 17px; height: 17px; fill: none; stroke: currentColor;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.footreach:hover, .footreach:focus-visible { border-color: var(--ruby-hot);
+  background: rgba(229,56,59,.16); transform: translateY(-2px); }
+.footreach__handle { font: 500 .85rem var(--body); color: rgba(244,239,230,.42);
+  letter-spacing: .04em; }
+
+/* The legibility pass sets .site-foot__note to 1.14rem along with the site's
+   body copy, which down here makes the copyright the loudest thing in the
+   footer — louder than the nine doors above it. It stays comfortably
+   readable and stops competing: nobody came to this page for the notice. */
+.site-foot--doors .site-foot__note { margin: 0; font-size: .95rem; line-height: 1.6;
+  max-width: 62rem; color: rgba(244,239,230,.42); }
+.site-foot--doors .site-foot__note em { font-style: normal; color: var(--cream-dim); }
+
+/* the tiles read on the bone coat too: the same edges, inked */
+html[data-theme="light"] .footdoor { background: rgba(26,20,13,.04);
+  box-shadow: inset 0 0 0 1px rgba(26,20,13,.16); }
+html[data-theme="light"] .footdoor__ic { background: rgba(26,20,13,.05);
+  box-shadow: inset 0 0 0 1px rgba(26,20,13,.14); }
+html[data-theme="light"] .footreach { border-color: rgba(26,20,13,.3); }
+
+@media (max-width: 560px) {
+  .foot__doors { grid-template-columns: 1fr; }
+  .footdoor { padding: .75rem .85rem; gap: .7rem; }
+  .footdoor__ic { width: 36px; height: 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footdoor, .footdoor::after, .footreach { transition: none; }
+  .footdoor:hover, .footreach:hover { transform: none; }
+  .footdoor:hover::after { transform: none; }
+}
 @media (max-width:900px){.pillars__frame{grid-template-columns:1fr;align-content:center;gap:2rem}
 .pillars__head .section-title{font-size:clamp(2.4rem,10vw,4rem)}
 .site-head__nav a:not(.head-cta){display:none}
@@ -1707,6 +1812,11 @@ html.is-installed .getapp,html.is-installed .getapp-pill{display:none !important
 .app-crumb{position:fixed;top:calc(0.8rem + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:210;padding:0.45em 1.1em;border-radius:100px;text-decoration:none;background:rgba(10,8,7,0.75);backdrop-filter:blur(8px);border:1px solid rgba(229,56,59,0.5);color:var(--cream);font-size:0.78rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase}
 .app-crumb:hover{background:rgba(193,18,31,0.4)}
 .appbar__m{width:1.75rem;height:1.75rem;object-fit:contain;display:block}
+/* THE HM RIDES ON ITS HEIGHT, not on a square. The mark is 1.4:1 and the
+   bar already carries a wide icon (the EQ glyph is nearly 2:1), so matching
+   the other tabs' height and letting the width follow keeps every tab's
+   optical weight equal without squashing a logo into a box it is not. */
+.appbar__hm{height:2rem;width:auto;max-width:3.1rem;object-fit:contain;display:block;margin-block:-0.12rem}
 html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m{content:url("../assets/img/m-mark-dark.png")}
 /* the fifth tab wore the halo PNG, which needed a bigger box than the M
    coin (baked-in transparent margin) and a dark pill under it on the light
@@ -2243,14 +2353,22 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
 }
 
 /* ============================================================
-   THE BRIEFING — two rules, three seconds, then the cabin is yours.
+   THE BRIEFING — the rules, three seconds, then the cabin is yours.
    The old card stacked a caution triangle, a compass rose and
    flashing red text and still said nothing quickly. This one is a
    single pane of dark glass with the operator's mark on it.
+
+   It was also a 23rem chip floating in the middle of a film, and
+   it read like a cookie notice: small, polite, skippable. Nobody
+   skips it now — the page is parked behind it — so it takes the
+   room it needs: a headline you cannot scroll past, one line of
+   why, and the three rules under that. Bigger is the whole point;
+   the card is the only thing to look at for three seconds, so it
+   should look like it knows that.
    ============================================================ */
 .vrbrief { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center;
-  padding: 1.2rem; opacity: 0; visibility: hidden;
-  background: rgba(6,5,4,.55); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  padding: 1.1rem; opacity: 0; visibility: hidden;
+  background: rgba(6,5,4,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   transition: opacity .5s ease, visibility .5s; pointer-events: none; }
 .vrbrief.is-on { opacity: 1; visibility: visible; pointer-events: auto; }
 .vrbrief.is-gone { opacity: 0; visibility: hidden; pointer-events: none; }
@@ -2262,45 +2380,81 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
    (the entrance animation fills forwards, so it has to be cleared before
    a transform of ours can land) */
 .vrbrief.is-ready .vrbrief__card { pointer-events: none; animation: none;
-  transform: scale(.95); opacity: .94; transition: transform .45s cubic-bezier(.2,.7,.2,1), opacity .45s ease; }
+  transform: scale(.9); opacity: .92; transition: transform .45s cubic-bezier(.2,.7,.2,1), opacity .45s ease; }
 .vrbrief.is-ready .vrbrief__go { pointer-events: auto; }
+/* released, the card stops shouting the parts that were only for the hold */
+.vrbrief.is-ready .vrbrief__lede { opacity: 0; }
 
-.vrbrief__card { position: relative; width: min(23rem, 88vw); text-align: center;
-  padding: 1.5rem 1.4rem 1.3rem; border-radius: 22px; color: var(--cream);
-  background: linear-gradient(180deg, rgba(22,17,15,.94), rgba(10,8,7,.96));
-  box-shadow: inset 0 0 0 1px rgba(244,239,230,.14), inset 0 1px 0 rgba(255,255,255,.1),
-    0 34px 80px -28px rgba(0,0,0,.95);
-  animation: vrBriefIn .55s cubic-bezier(.2,.7,.2,1) both; }
-@keyframes vrBriefIn { from { opacity: 0; transform: translateY(14px) scale(.97); }
+.vrbrief__card { position: relative; width: min(34rem, 94vw); max-height: 100%; overflow: auto;
+  text-align: center; padding: 1.9rem 1.7rem 1.7rem; border-radius: 26px; color: var(--cream);
+  background: linear-gradient(180deg, rgba(24,18,16,.96), rgba(9,7,6,.975));
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.16), inset 0 1px 0 rgba(255,255,255,.12),
+    0 44px 110px -30px rgba(0,0,0,.98);
+  animation: vrBriefIn .6s cubic-bezier(.16,1.03,.3,1) both,
+             vrBriefBreathe 2.6s ease-in-out .6s infinite; }
+@keyframes vrBriefIn { from { opacity: 0; transform: translateY(20px) scale(.9); }
                        to { opacity: 1; transform: none; } }
-.vrbrief__logo { width: 46px; height: 46px; border-radius: 12px; object-fit: cover;
-  box-shadow: 0 0 0 1px rgba(244,239,230,.18); }
-.vrbrief__k { margin: .7rem 0 1.1rem; font: 800 .6rem var(--body); letter-spacing: .26em;
+/* the pane is dark and still; one slow lit edge keeps the card alive on it
+   without another thing blinking at the visitor */
+@keyframes vrBriefBreathe {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(244,239,230,.16), inset 0 1px 0 rgba(255,255,255,.12),
+               0 44px 110px -30px rgba(0,0,0,.98); }
+  50%      { box-shadow: inset 0 0 0 1px rgba(248,76,10,.5), inset 0 1px 0 rgba(255,255,255,.14),
+               0 44px 110px -30px rgba(0,0,0,.98), 0 0 44px -6px rgba(248,76,10,.42); }
+}
+.vrbrief__logo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(244,239,230,.2); }
+.vrbrief__k { margin: .75rem 0 .5rem; font: 800 .63rem var(--body); letter-spacing: .28em;
   text-transform: uppercase; color: rgba(244,239,230,.62); }
+
+/* THE LINE THEY ACTUALLY READ. Display face, two stacked lines, the
+   second one in the operator's colour: the rule and the invitation, in
+   the order the visitor needs them. */
+.vrbrief__title { margin: 0 0 .6rem; font-family: var(--display); font-weight: 400;
+  font-size: clamp(1.7rem, 6.8vw, 2.9rem); line-height: .98; letter-spacing: .012em;
+  text-transform: uppercase; color: #fff; }
+.vrbrief__title span { display: block; }
+.vrbrief__title span + span { color: var(--vaunt); }
+.vrbrief__lede { margin: 0 auto 1.15rem; max-width: 29rem;
+  font: 500 .95rem/1.45 var(--body); color: var(--cream-dim); transition: opacity .4s ease; }
+
 .vrbrief__rules { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; text-align: left; }
-.vrbrief__rules li { display: flex; align-items: center; gap: .75rem;
-  padding: .7rem .85rem; border-radius: 13px; background: rgba(244,239,230,.05);
-  box-shadow: inset 0 0 0 1px rgba(244,239,230,.09); }
-.vrbrief__rules svg { flex: none; width: 22px; height: 22px; fill: none; stroke: var(--ruby-hot);
+.vrbrief__rules li { display: flex; align-items: center; gap: .8rem;
+  padding: .8rem .95rem; border-radius: 15px; background: rgba(244,239,230,.06);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); }
+.vrbrief__rules svg { flex: none; width: 25px; height: 25px; fill: none; stroke: var(--ruby-hot);
   stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.vrbrief__rules span { font: 500 .92rem var(--body); color: var(--cream-dim); }
+.vrbrief__rules span { font: 500 1rem/1.3 var(--body); color: var(--cream-dim); }
 .vrbrief__rules b { color: var(--cream); font-weight: 800; }
 
-.vrbrief__count { display: grid; place-items: center; width: 62px; height: 62px; margin: 1.1rem auto .2rem;
+.vrbrief__count { display: grid; place-items: center; width: 74px; height: 74px; margin: 1.15rem auto .2rem;
   border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(244,239,230,.16); position: relative; }
 .vrbrief__count::after { content: ""; position: absolute; inset: -2px; border-radius: 50%;
   border: 2px solid transparent; border-top-color: var(--ruby-hot);
   animation: vrBriefSpin 1s linear infinite; }
-.vrbrief__count b { font-family: var(--display); font-size: 2rem; line-height: 1; color: #f4efe6;
+.vrbrief__count b { font-family: var(--display); font-size: 2.5rem; line-height: 1; color: #f4efe6;
   animation: vrBriefTick .95s ease-out; }
 @keyframes vrBriefSpin { to { transform: rotate(360deg); } }
 @keyframes vrBriefTick { from { transform: scale(1.5); opacity: .3; } to { transform: none; opacity: 1; } }
 
-.vrbrief__go { display: none; margin: 1rem auto 0; -webkit-appearance: none; appearance: none;
-  border: 0; cursor: pointer; border-radius: 99px; padding: .8rem 1.5rem; background: var(--metal);
-  color: #fff; font: 800 .72rem var(--body); letter-spacing: .14em; text-transform: uppercase; }
+.vrbrief__go { display: none; margin: 1.1rem auto 0; -webkit-appearance: none; appearance: none;
+  border: 0; cursor: pointer; border-radius: 99px; padding: .95rem 1.9rem; background: var(--metal);
+  color: #fff; font: 800 .8rem var(--body); letter-spacing: .16em; text-transform: uppercase; }
 .vrbrief.is-ready .vrbrief__count { display: none; }
 .vrbrief.is-ready .vrbrief__go { display: block; }
+
+/* a short viewport (landscape phones, small laptops) gets the same card
+   with the trimmings taken off, rather than a card that runs off the pane */
+@media (max-height: 720px) {
+  .vrbrief__card { padding: 1.35rem 1.3rem 1.2rem; }
+  .vrbrief__logo { width: 42px; height: 42px; }
+  .vrbrief__title { font-size: clamp(1.4rem, 5vw, 1.9rem); }
+  .vrbrief__lede { display: none; }
+  .vrbrief__rules li { padding: .6rem .8rem; }
+  .vrbrief__rules span { font-size: .92rem; }
+  .vrbrief__count { width: 58px; height: 58px; margin-top: .85rem; }
+  .vrbrief__count b { font-size: 1.9rem; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .vrbrief__card { animation: none; }

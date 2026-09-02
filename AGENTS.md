@@ -114,7 +114,12 @@ The reference for the current look is a cel-shaded low-poly spherical-world game
 
 ### The Living Sketch style board is ART STYLE ONLY — it is NOT A CHARACTER REFERENCE
 
-`docs/uprise-world/references/style/living-sketch-style-reference-board.jpg` contains drawings of a person. **That person is not Matthew McCluster, is not the protagonist, and is not any character in Uprise World.** Use it for line quality only. Never use it for face, likeness, hair, clothing, or identity.
+`docs/uprise-world/references/style/living-sketch-style-reference-board.jpg` contains drawings of a person. **That person is not Matthew McCluster, is not the protagonist, and is not any character in Uprise World.** The figures in STYLE REF 01–04 are anonymous stand-in bodies that exist solely to demonstrate ink, graphite, wash, and paper technique.
+
+- ✅ Use it for: line quality, construction marks, wash behavior, charcoal grounding, red editorial scribbles, paper negative space, unfinished hand-drawn edges.
+- ❌ Never use it for: face, likeness, hair, skin tone, beard, build, age, clothing, colorway, pose-as-character-design, or identity — **for the main character or for any NPC**.
+
+The blue jacket and black tee in those panels are **not** canonical wardrobe. The hair in those panels is **not** the protagonist's hair. The **STYLE 01** and **STYLE 02** panels inside `references/boards/canonical-visual-reference-board.jpg` are the same artwork and carry the same restriction, even though character-authoritative panels sit on the same page.
 
 Character appearance comes only from the character likeness sheet, the raw `assets/likeness/` photographs, the wardrobe board, the exact emblem files, and the character panels of the composite and Proof Room boards. Read `docs/uprise-world/references/style/README.md` before using anything in `style/`.
 

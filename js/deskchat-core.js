@@ -243,14 +243,16 @@ window.MCC_DESK = (function () {
     document.addEventListener("DOMContentLoaded", boot);
   } else { boot(); }
 
-  document.addEventListener("click", function (e) {
-    var a = e.target.closest && e.target.closest('a[data-appnav="sites"]');
-    if (!a) return;
-    if (onChatPage()) return;
-    e.preventDefault();
-    e.stopPropagation();
-    location.href = chatHref();
-  }, true);
+  /* A capture-phase interceptor on a[data-appnav="sites"] stood here. It took
+     the fourth tab's tap on every page and sailed to chat.html — in the
+     CAPTURE phase, ahead of the bar's own handler, so the bar could never
+     overrule it. That tab is the Hitman Halo store now and its markup says
+     so on every page, so the interceptor would have quietly sent every tap
+     on the HM mark to the chat room instead of the shop.
+
+     It was removed once already and came back when this file was copied out
+     of js/deskchat.js. Chat keeps its doors: chat.html itself, the wing's
+     second slot, and the Lock In room at the bottom of the home page. */
 
   return { open: open, close: close, boot: boot, inline: function () { return inline; } };
 })();

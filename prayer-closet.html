@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Prayer Closet: limited apparel with meaning behind the garment · McCluster</title>
-  <meta name="description" content="Prayer Closet is a curated closet of limited-edition clothing. Browse the drops, meet the collaborators, and discover the story stitched behind every garment. Season 001: Matthew.">
+  <title>Hitman Halo: every mark carries a verse · McCluster</title>
+  <meta name="description" content="Hitman Halo is a limited-edition drop where every mark on the garment carries a meaning and a verse. Meet the collaborators, and discover the story stitched behind every garment. Season 001: Matthew.">
   <link rel="canonical" href="https://matthew.mccluster.org/prayer-closet.html">
   <link rel="icon" type="image/png" href="assets/img/hm-mark-96.png">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b0908">
-  <meta property="og:title" content="Prayer Closet: the drops carry more than the fabric">
+  <meta property="og:title" content="Hitman Halo: the garment carries more than the fabric">
   <meta property="og:description" content="Limited apparel, real collaborators, and a story behind every garment. Enter the closet.">
   <meta property="og:url" content="https://matthew.mccluster.org/prayer-closet.html">
   <meta property="og:image" content="https://matthew.mccluster.org/assets/img/hm-mark.png">
@@ -196,7 +196,7 @@
   {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "name": "Prayer Closet · Season 001: Matthew",
+    "name": "Hitman Halo · Season 001: Matthew",
     "url": "https://matthew.mccluster.org/prayer-closet.html",
     "description": "A curated closet of limited-edition clothing collections. Each garment opens into its story, its collaborator, and the chapter behind it.",
     "publisher": { "@id": "https://matthew.mccluster.org/#mccluster-corp" }
@@ -310,9 +310,9 @@
     <section class="pch" id="pcHero">
       <span class="pch__field" id="pcHeroField" aria-hidden="true"></span>
       <span class="pch__wm" id="pcHeroWm" aria-hidden="true"></span>
-      <span class="pch__em"><img src="assets/img/hm-mark.png" alt="" width="512" height="512"><b>Prayer&nbsp;Closet</b></span>
-      <p class="pch__k" id="pcHeroK">Prayer Closet · Season 001: Matthew</p>
-      <h1 id="pcHeroT">The Closet</h1>
+      <span class="pch__em"><img src="assets/img/hm-mark.png" alt="" width="512" height="512"><b>Hitman&nbsp;Halo</b></span>
+      <p class="pch__k" id="pcHeroK">Hitman Halo · Season 001: Matthew</p>
+      <h1 id="pcHeroT">Hitman Halo</h1>
       <p class="pch__sub" id="pcHeroS">Limited pieces. Real collaborators. A story behind every garment.</p>
       <div class="pch__meta" id="pcHeroM"></div>
       <a class="pch__cta" id="pcHeroCta" href="#closetRail">Enter the Closet &#8594;</a>
@@ -323,8 +323,8 @@
 
     <!-- INSIDE THE CLOSET: the rail -->
     <section class="pcs rv" id="closetRail">
-      <p class="pcs__k">Inside the Closet</p>
-      <h2 class="pcs__t">Season 001: the Matthew drops.</h2>
+      <p class="pcs__k">Inside the drop</p>
+      <h2 class="pcs__t">Season 001: the Matthew drop.</h2>
       <div class="railwrap">
         <div class="rail" id="pcRail"></div>
         <div class="raildots" id="pcDots" aria-hidden="true"></div>
@@ -390,9 +390,9 @@
       <img class="appbar__m" src="assets/img/m-mark.png" alt="">
       <span>HERE</span>
     </a>
-    <a class="appbar__tab" href="sites.html" data-appnav="sites">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
-      <span>Chat</span>
+    <a class="appbar__tab" href="prayer-closet.html" data-appnav="sites">
+      <img class="appbar__hm" src="assets/img/hm-mark-bar.webp" alt="">
+      <span>Hitman</span>
     </a>
     <a class="appbar__tab" href="account.html" data-appnav="profile">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
@@ -419,9 +419,12 @@
 
     var STATUS = { concept: "Concept", preview: "Preview", "coming-soon": "Coming soon",
       live: "Live now", "sold-out": "Sold out", archived: "Archive" };
-    /* an open Square preorder outranks the quiet statuses on every chip */
+    /* an open preorder outranks the quiet statuses on every chip, whichever
+       checkout is carrying it — see checkoutOf() in js/closet.js, which the
+       drop rooms use to answer the same question in more detail */
     function preOpen(d) {
-      return d.status !== "live" && d.status !== "sold-out" && d.preorder && d.preorder.square;
+      return d.status !== "live" && d.status !== "sold-out" &&
+        d.preorder && (d.preorder.shopify || d.preorder.square);
     }
     function stName(d) { return preOpen(d) ? "Preorder open" : (STATUS[d.status] || d.status); }
 
@@ -545,11 +548,16 @@
           $("pcHero").classList.add("has-photo");
         }
         $("pcHeroWm").textContent = "M" + lead.chapter;
-        $("pcHeroK").textContent = "Prayer Closet · " + j.season.name.replace("SEASON", "Season") +
+        $("pcHeroK").textContent = "Hitman Halo · " + j.season.name.replace(/^SEASON (\d+): (.+)$/, function (_, n, g) { return "Season " + n + ": " + g.charAt(0) + g.slice(1).toLowerCase(); }) +
           " · " + (lead.tag || "Drop " + lead.no);
         $("pcHeroT").textContent = lead.phrase;
-        $("pcHeroS").textContent = lead.support + ", with " +
-          ((j.collaborators || []).filter(function (c) { return c.id === lead.collaborator; })[0] || {}).name;
+        /* `support` is a finished sentence and ends in its own full stop, so
+           gluing ", with X" onto it produced "Innocent as Doves., with Hitman
+           Halo". The credit is its own sentence now. */
+        var withWho = ((j.collaborators || []).filter(function (c) {
+          return c.id === lead.collaborator; })[0] || {}).name;
+        $("pcHeroS").textContent = lead.support +
+          (withWho ? (/[.!?]$/.test(lead.support) ? " With " : ", with ") + withWho + "." : "");
         var chips = [lead.garment, lead.color.name, lead.reference].map(function (m) { return "<span>" + esc(m) + "</span>"; });
         chips.unshift('<span class="live">' + esc(stName(lead)) + "</span>");
         $("pcHeroM").innerHTML = chips.join("");

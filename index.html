@@ -143,47 +143,17 @@
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/lockroom.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
+  <!-- The .case and .wings rules stood here too: the only styling for the two
+       sections this page no longer has. They leave with their sections; the
+       no-curtain rule and the hero poster above stay. -->
   <noscript><style>.preloader{display:none!important}</style></noscript>
   <style>
     /* NO CURTAIN. First paint is the house, not a black gate. */
     .preloader{display:none!important;opacity:0;visibility:hidden;pointer-events:none;animation:none}
     .hero__poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
     .hero__line--accent{color:var(--ruby-hot,#e5383b)}
-    /* the case rail: flat cards between films */
-    .case { position: relative; min-height: 92svh; display: grid; align-items: end; overflow: hidden; }
-    .case__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
-    .case__scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,8,7,0.55) 0%, rgba(10,8,7,0.25) 42%, rgba(10,8,7,0.92) 100%); }
-    .case__inner { position: relative; max-width: 44rem; margin: 0 auto; padding: 0 clamp(1.1rem, 4vw, 2rem) clamp(3rem, 8vh, 5rem); width: 100%; }
-    .case__seal { width: 46px; height: 46px; border-radius: 12px; margin-bottom: 0.9rem; }
-    .case__title { font-family: var(--sig); text-transform: uppercase; line-height: 0.9; font-size: clamp(2.6rem, 11vw, 4.6rem); }
-    .case__sub { color: var(--cream-dim); line-height: 1.7; margin-top: 0.9rem; max-width: 46ch; font-size: 1rem; }
-    .case__sub b { color: var(--cream); }
-    .case__cta { display: inline-block; margin-top: 1.4rem; text-decoration: none; padding: 0.9rem 1.3rem; border-radius: 14px;
-      border: 1px solid rgba(229,56,59,0.55); color: var(--cream); font-weight: 800; touch-action: manipulation; }
-    .case__cta:hover { background: rgba(229,56,59,0.12); }
-
-    /* the wings: three doors, the whole screen */
-    .wings { min-height: 100svh; display: flex; flex-direction: column; }
-    .wings__inner { display: flex; flex-direction: column; flex: 1; width: 100%; text-align: center; }
-    .wings__head { padding: clamp(3.4rem, 8vh, 5rem) 1.2rem 1.4rem; }
-    .wings__title { font-family: var(--sig); text-transform: uppercase; line-height: 0.9; font-size: clamp(2.2rem, 9vw, 3.6rem); }
-    .wings__sub { color: var(--cream-dim); line-height: 1.65; margin-top: 0.7rem; font-size: 0.95rem; }
-    .wings__row { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 100%; }
-    .wings__tab { position: relative; overflow: hidden; display: grid; align-content: end; justify-items: center; gap: 0.55rem;
-      text-decoration: none; padding: 1.2rem 0.6rem clamp(1.6rem, 5vh, 2.6rem);
-      border-top: 1px solid rgba(229,56,59,0.4); border-radius: 0; background: #100c09;
-      color: var(--cream); font-weight: 800; font-size: clamp(0.78rem, 2.8vw, 1.05rem); letter-spacing: 0.04em;
-      touch-action: manipulation; transition: box-shadow 0.18s ease; }
-    .wings__tab + .wings__tab { border-left: 1px solid rgba(229,56,59,0.25); }
-    .wings__tab:hover, .wings__tab:active { box-shadow: inset 0 0 80px -30px rgba(232,200,119,0.6); }
-    .wings__vid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-    .wings__scrim { position: absolute; inset: 0; z-index: 1;
-      background: linear-gradient(180deg, rgba(10,8,7,0.35) 0%, rgba(10,8,7,0.05) 45%, rgba(10,8,7,0.88) 100%); }
-    .wings__tab > img, .wings__tab > span, .wings__tab > small { position: relative; z-index: 2; }
-    .wings__tab > img { width: clamp(40px, 7vw, 64px); height: clamp(40px, 7vw, 64px); object-fit: contain;
-      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.8)); }
-    .wings__tab small { font-weight: 600; color: var(--cream-dim); font-size: clamp(0.66rem, 2vw, 0.8rem); letter-spacing: 0.02em; max-width: 16ch; }
   </style>
 </head>
 <!-- No data-mh-cta here on purpose. The "Deal with me" pill floated over the
@@ -307,19 +277,24 @@
 
         <!-- the 360 band: between the runway performance and the fly-through,
              the real inside-the-jet film takes over and you can look anywhere -->
-        <div class="workvr" id="workVR" aria-label="Inside the jet. Drag in any direction to look around, or keep scrolling to pass through">
+        <div class="workvr" id="workVR" aria-label="Inside the jet. The page is held here: drag in any direction to look around, and use Land or Back to the card to leave">
           <canvas class="workvr__canvas" id="workVRCanvas"></canvas>
           <!-- THE BRIEFING: everything holds for three seconds so the rules
-               actually get read, then the cabin is yours. -->
+               actually get read, then the cabin is yours. It is a full-height
+               card, not a chip: it has one job, it gets one screen, and the
+               scroll is parked behind it so there is nothing else to do. -->
           <div class="vrbrief" id="workVRCompass" role="dialog" aria-label="Before you board">
             <div class="vrbrief__card">
               <img class="vrbrief__logo" src="assets/img/vaunt-logo.webp" alt="Vaunt"
                    width="200" height="200" loading="lazy" decoding="async">
               <p class="vrbrief__k">Vaunt &middot; you're inside the jet</p>
+              <h3 class="vrbrief__title"><span>Scroll is off.</span><span>Look around.</span></h3>
+              <p class="vrbrief__lede">Real footage, shot inside the jet &mdash; and the page is
+                parked right here, so your thumb looks instead of leaves.</p>
               <ul class="vrbrief__rules">
                 <li>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg>
-                  <span><b>Drag</b> to look around</span>
+                  <span><b>Drag anywhere</b> to look around the cabin</span>
                 </li>
                 <!-- the phone's own motion is armed for you on the way in, so
                      this row is an announcement, not another thing to press -->
@@ -327,9 +302,11 @@
                   <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M3 8.5 1.5 12 3 15.5M21 8.5 22.5 12 21 15.5"/></svg>
                   <span><b>Tilt your phone</b> &mdash; you're free to move around the cabin</span>
                 </li>
+                <!-- scrolling no longer flies you on, so the row that said so
+                     is now the row that names the door -->
                 <li>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M8 8l4-4 4 4M8 16l4 4 4-4"/></svg>
-                  <span><b>Scroll</b> to fly on</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 22h20"/><path d="M3.77 10.77 2 9l2-4.5 1.1.55c.55.28.9.84.9 1.45s.35 1.17.9 1.45L8 8.5l3-6 1.05.53a2 2 0 0 0 1.09 1.52l.72 5.4a2 2 0 0 0 1.09 1.52l4.4 2.2c.42.22.78.55 1.01.96l.6 1.03c.49.88-.06 1.98-1.06 2.1l-1.18.15c-.47.06-.95-.02-1.37-.24L4.29 11.15a2 2 0 0 1-.52-.38Z"/></svg>
+                  <span><b>Land</b> &mdash; on the right &mdash; is the way out</span>
                 </li>
               </ul>
               <div class="vrbrief__count" id="vrBriefCount"><b id="vrBriefNum">3</b></div>
@@ -430,39 +407,13 @@
       </div>
     </section>
 
-    <!-- ============ CASE 02, EQUITY UPRISE: the civic engine ============ -->
-    <section class="case" id="uprise" aria-label="Case study 02: Equity Uprise">
-      <img class="case__bg" src="assets/img/uprise-still.jpg" alt="Matthew McCluster at the mixing desk, directing a packed civic assembly" loading="lazy" decoding="async">
-      <div class="case__scrim" aria-hidden="true"></div>
-      <div class="case__inner">
-        <p class="command__meta" style="margin-bottom:0.7rem"><img class="command__logo command__logo--transparent" loading="lazy" decoding="async" src="assets/img/equity-uprise-logo.webp" alt="Equity Uprise logo" style="height:40px"><span class="command__tag">Equity Uprise &middot; Docket 516R: The Fellowship</span></p>
-        <p class="kicker">Case study 02 · the civic engine</p>
-        <h2 class="case__title">Policy<br>Fellowship</h2>
-        <p class="case__sub">Not left, not right, <b>forward</b>. We produce the rallies, put the fight on the record,
-          and turn policy, music, media, and voter outreach into one operating system, <b>funding the arts and
-          workforce development</b> for artists in Connecticut and Georgia, recognized by the <b>State of
-          Georgia</b> and the <b>City of Bridgeport</b>.</p>
-        <div class="eu-portals" style="margin-top:1.1rem">
-          <a class="eu-portal eu-portal--terminal" href="fellowship.html" data-cta="fellowship">
-            <svg class="eu-portal__ic" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/><path d="M6.5 8l2.2 2-2.2 2"/><path d="M11.5 12h4"/></g></svg>
-            <span class="eu-portal__txt">Enter the terminal</span>
-          </a>
-          <a class="eu-portal eu-portal--safe" href="docket-516.html" data-cta="docket-516-panel">
-            <svg class="eu-portal__ic" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1.5"/><circle cx="10.5" cy="12" r="4.4"/><circle cx="10.5" cy="12" r="1" fill="currentColor" stroke="none"/><path d="M10.5 7.6v1.4M10.5 15v1.4M6.1 12h1.4M13.5 12h1.4"/><path d="M18 9.5v5"/></g></svg>
-            <span class="eu-portal__txt">The evidence room</span>
-          </a>
-        </div>
-        <nav class="eu-ctas" aria-label="Equity Uprise platform" style="margin-top:0.9rem">
-          <a href="fellowship.html" data-cta="eu-fellowship">Join the Policy Fellowship</a>
-          <a href="mailto:matthew@mccluster.org?subject=Civic%20Anthem%20Submission%2C%20Equity%20Uprise" data-cta="eu-anthem">Submit a Civic Anthem</a>
-          <a href="mailto:matthew@mccluster.org?subject=Outreach%20Campaign%2C%20Equity%20Uprise" data-cta="eu-outreach">Launch an Outreach Campaign</a>
-          <a href="mailto:matthew@mccluster.org?subject=Vendor%2FPartner%20Access%2C%20Equity%20Uprise" data-cta="eu-vendor-login">Vendor / Partner Login</a>
-          <a href="mailto:matthew@mccluster.org?subject=Admin%20Access%2C%20Equity%20Uprise" data-cta="eu-admin-login">Admin Login</a>
-        </nav>
-      </div>
-    </section>
-
-
+    <!-- The Equity Uprise case card and the three-door "Pick a door" wings
+         both stood between the Antisocial film and the close. The owner cut
+         them: by the time somebody has scrolled the jet and the night
+         descent, a second case study and a rack of side doors are more
+         rooms to choose between, not fewer. Equity Uprise keeps its own tab
+         on the bar and its own site; the wings all keep their pages. What
+         is left down here is one thing to do. -->
 
     <!-- ============ FINALE ============ -->
     <section class="finale" id="book">
@@ -472,45 +423,18 @@
           <span class="hero__line" data-word="LOCK">LOCK</span>
           <span class="hero__line hero__line--accent" data-word="IN">IN</span>
         </h2>
-        <div class="finale__actions">
-          <a class="btn btn--ruby magnetic" id="bookCallBtn" href="#">Book a call</a>
-          <a class="btn btn--ghost magnetic" href="#" data-lead-sheet data-cta="lock-date-home">Lock in a date</a>
-          <a class="btn btn--ghost magnetic" href="gallery.html#shop" data-cta="print-shop">The Print Shop</a>
-          <a class="btn btn--ghost magnetic" id="subscribeBtn" href="#">Subscribe</a>
-        </div>
-      </div>
-    </section>
-    <!-- ============ THE WINGS: three doors on one card, riding Who Did The Shoot ============ -->
-    <section class="wings" id="wings" aria-label="Equity Uprise, Whip Equipped, and the catalog">
-      <div class="wings__inner">
-        <div class="wings__head">
-          <p class="kicker kicker--center">The wings of the operation</p>
-          <h2 class="wings__title">Pick a door.</h2>
-          <p class="wings__sub">Three rooms, one house.</p>
-        </div>
-        <div class="wings__row">
-          <a class="wings__tab" href="equity-uprise.html" data-cta="wing-uprise">
-            <video class="wings__vid" src="assets/video/ocho3.mp4" poster="assets/img/wing-uprise-poster.jpg"
-              autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
-            <span class="wings__scrim" aria-hidden="true"></span>
-            <img src="assets/img/equity-uprise-logo.webp" alt="">
-            <span>Equity Uprise</span><small>the civic engine</small>
-          </a>
-          <a class="wings__tab" href="album.html?album=whip-equipped" data-cta="wing-whip">
-            <video class="wings__vid" src="assets/video/dealer-plates-b-video.mp4" poster="assets/img/wing-whip-poster.jpg"
-              autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
-            <span class="wings__scrim" aria-hidden="true"></span>
-            <img src="assets/img/we-mark.png" alt="">
-            <span>Whip Equipped</span><small>the fleet</small>
-          </a>
-          <a class="wings__tab" href="catalogue.html" data-cta="wing-catalog">
-            <video class="wings__vid" src="assets/video/studio360.mp4" poster="assets/img/wing-catalog-poster.jpg"
-              autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
-            <span class="wings__scrim" aria-hidden="true"></span>
-            <img src="assets/img/m-mark.png" alt="">
-            <span>Catalog</span><small>the registered discography</small>
-          </a>
-        </div>
+        <!-- THE ROOM. Four buttons stood here — Book a call, Lock in a date,
+             The Print Shop, Subscribe — which is four decisions asked of
+             somebody who has not told anybody what they want yet, and three
+             of them were the wrong door for most of the people tapping.
+
+             It is one room now, and it does the asking. Tap what you need,
+             answer five short questions, name your number, and the brief
+             lands on the desk. Nothing here is a form: every question has
+             its answers on screen, typing is optional the whole way
+             through, and js/lockroom.js falls back to a prefilled email if
+             the wire is down, so the close is never a dead card. -->
+        <div class="lockroom" id="lockRoom" data-lockroom></div>
       </div>
     </section>
 
@@ -530,9 +454,7 @@
     <span class="float-pause__label">Pause</span>
   </button>
 
-  <!-- FOOTER -->
-  
-  <!-- THE BAR: Music · Equity Uprise · HERE · Prayer Closet · Profile. One tap goes where it says; hold a tab to open its wing. -->
+  <!-- THE BAR: Music · Equity Uprise · HERE · Hitman Halo · Profile. One tap goes where it says; hold a tab to open its wing. -->
   <nav class="appbar" aria-label="Sections">
     <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
       <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
@@ -546,9 +468,9 @@
       <img class="appbar__m" src="assets/img/m-mark.png" alt="">
       <span>HERE</span>
     </a>
-    <a class="appbar__tab" href="sites.html" data-appnav="sites">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.4 4.9h15.2a1.6 1.6 0 0 1 1.6 1.6v8.2a1.6 1.6 0 0 1-1.6 1.6H10l-4.5 3.4v-3.4H4.4a1.6 1.6 0 0 1-1.6-1.6V6.5a1.6 1.6 0 0 1 1.6-1.6z"/><path d="M7.6 9.3h8.8"/><path d="M7.6 12.2h5.6"/></svg>
-      <span>Chat</span>
+    <a class="appbar__tab" href="prayer-closet.html" data-appnav="sites">
+      <img class="appbar__hm" src="assets/img/hm-mark-bar.webp" alt="">
+      <span>Hitman</span>
     </a>
     <a class="appbar__tab" href="account.html" data-appnav="profile">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
@@ -556,24 +478,85 @@
     </a>
   </nav>
 
-  <footer class="site-foot">
-    <div class="site-foot__brand"><img class="brand__mark" src="assets/img/m-mark.png" alt="M">cCluster</div>
-    <nav class="site-foot__links">
-      <a href="album.html">I AM HERE: the album, all six tracks</a>
-      <a href="hire.html">Hire the agency</a>
-      <a href="pay.html?offer=approved-invoice">Pay an invoice · Apple Pay / Google Pay</a>
-      <a href="gallery.html#shop" data-cta="footer-prints">The Print Shop: own the work</a>
-      <a href="catalogue.html" data-cta="footer-catalog">The catalog: the registered discography</a>
-      <a href="equity-uprise.html" data-cta="footer-uprise">Equity Uprise: the civic engine</a>
-      <a href="docket-516.html" data-cta="footer-docket">Docket 516: the evidence room</a>
-      <a href="matthew-mccluster.html" data-cta="footer-bio">Matthew McCluster: about the founder</a>
-      <a href="press.html" data-cta="footer-press">Press &amp; media kit</a>
-      <a href="https://instagram.com/McClusterishere" target="_blank" rel="noopener">Instagram · @McClusterishere</a>
-      <a href="https://youtube.com/@McClusterishere" target="_blank" rel="noopener">YouTube · @McClusterishere</a>
-      <a href="https://tiktok.com/@McClusterishere" target="_blank" rel="noopener">TikTok · @McClusterishere</a>
-    </nav>
-    <p class="site-foot__note">© 2026 Matthew McCluster · McCluster Corp. Every frame, chord, and line of code on this page is his, the intellectual property of McCluster Corp. All rights reserved. <em style="font-style:normal;color:var(--cream-dim)">For the kingdom.</em></p>
+  <!-- ============ THE DOORS ============
+
+       The footer that stood here was twelve underlined words stacked in a
+       column, uppercase and letter-spaced: the same footer every site has,
+       and unreadable as a set of choices — a link that looks exactly like
+       eleven other links is not a door, it is a line of text you skip.
+
+       Same rooms, built as doors. Each one is a tile you can hit with a
+       thumb, with its own mark, its name, and the line that says what is
+       behind it, so the footer is scanned by shape instead of read word by
+       word. Reach is three pills, not three more words in the stack. The
+       legal line stays at the bottom, where a legal line belongs.
+       ============================================================ -->
+  <footer class="site-foot site-foot--doors">
+    <div class="foot__inner">
+      <div class="foot__head">
+        <p class="foot__brand"><img class="brand__mark" src="assets/img/m-mark.png" alt="M">cCluster</p>
+        <p class="foot__k">Every other room in the house</p>
+      </div>
+
+      <nav class="foot__doors" aria-label="Everything else on this site">
+        <a class="footdoor" href="album.html" data-cta="footer-album">
+          <span class="footdoor__ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 18V5l8-2v13" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="18" r="3" fill="currentColor" stroke="none"/><circle cx="15" cy="16" r="3" fill="currentColor" stroke="none"/></svg></span>
+          <span class="footdoor__txt"><b>I AM HERE</b><small>the album, all six tracks</small></span>
+        </a>
+        <a class="footdoor" href="hire.html" data-cta="footer-hire">
+          <span class="footdoor__ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="19" height="13" rx="2.2"/><path d="M9 7V5.2A1.7 1.7 0 0 1 10.7 3.5h2.6A1.7 1.7 0 0 1 15 5.2V7"/><path d="M2.5 12.5h19"/></svg></span>
+          <span class="footdoor__txt"><b>Hire the agency</b><small>every service, every rate</small></span>
+        </a>
+        <a class="footdoor" href="gallery.html#shop" data-cta="footer-prints">
+          <span class="footdoor__ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m6.5 16.5 4-4.6 3.2 3.4 2.3-2.4 1.5 1.6"/><circle cx="9" cy="9" r="1.4"/></svg></span>
+          <span class="footdoor__txt"><b>The Print Shop</b><small>own the work</small></span>
+        </a>
+        <a class="footdoor" href="catalogue.html" data-cta="footer-catalog">
+          <span class="footdoor__ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="2.4"/><path d="M12 3.4v2M12 18.6v2M3.4 12h2M18.6 12h2"/></svg></span>
+          <span class="footdoor__txt"><b>The catalog</b><small>the registered discography</small></span>
+        </a>
+        <a class="footdoor" href="equity-uprise.html" data-cta="footer-uprise">
+          <span class="footdoor__ic footdoor__ic--mark"><img src="assets/img/equity-uprise-logo.webp" alt="" loading="lazy" decoding="async"></span>
+          <span class="footdoor__txt"><b>Equity Uprise</b><small>the civic engine</small></span>
+        </a>
+        <a class="footdoor" href="docket-516.html" data-cta="footer-docket">
+          <span class="footdoor__ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"/><circle cx="10.5" cy="12" r="4.4"/><circle cx="10.5" cy="12" r="1" fill="currentColor" stroke="none"/><path d="M10.5 7.6v1.4M10.5 15v1.4M6.1 12h1.4M13.5 12h1.4"/><path d="M18 9.5v5"/></svg></span>
+          <span class="footdoor__txt"><b>Docket 516</b><small>the evidence room</small></span>
+        </a>
+        <a class="footdoor" href="matthew-mccluster.html" data-cta="footer-bio">
+          <span class="footdoor__ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></span>
+          <span class="footdoor__txt"><b>Matthew McCluster</b><small>about the founder</small></span>
+        </a>
+        <a class="footdoor" href="press.html" data-cta="footer-press">
+          <span class="footdoor__ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h13v13a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2Z"/><path d="M17 9.5h3v9a2 2 0 0 1-2 2"/><path d="M7 9h7M7 12.5h7M7 16h4"/></svg></span>
+          <span class="footdoor__txt"><b>Press</b><small>the media kit</small></span>
+        </a>
+        <a class="footdoor" href="pay.html?offer=approved-invoice" data-cta="footer-pay">
+          <span class="footdoor__ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="2.2"/><path d="M2.5 10h19"/><path d="M6 14.5h3.5"/></svg></span>
+          <span class="footdoor__txt"><b>Pay an invoice</b><small>Apple Pay &middot; Google Pay</small></span>
+        </a>
+      </nav>
+
+      <nav class="foot__reach" aria-label="Elsewhere">
+        <a class="footreach" href="https://instagram.com/McClusterishere" target="_blank" rel="me noopener" data-cta="footer-ig">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r="1.1" fill="currentColor" stroke="none"/></svg>
+          <span>Instagram</span>
+        </a>
+        <a class="footreach" href="https://youtube.com/@McClusterishere" target="_blank" rel="me noopener" data-cta="footer-yt">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="m10.5 9.5 5 2.5-5 2.5Z"/></svg>
+          <span>YouTube</span>
+        </a>
+        <a class="footreach" href="https://tiktok.com/@McClusterishere" target="_blank" rel="me noopener" data-cta="footer-tt">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3.5v10.2a3.6 3.6 0 1 1-3-3.55"/><path d="M14 6.2a5 5 0 0 0 4.6 3"/></svg>
+          <span>TikTok</span>
+        </a>
+        <span class="footreach__handle">@McClusterishere, everywhere</span>
+      </nav>
+
+      <p class="site-foot__note">&copy; 2026 Matthew McCluster &middot; McCluster Corp. Every frame, chord, and line of code on this page is his, the intellectual property of McCluster Corp. All rights reserved. <em>For the kingdom.</em></p>
+    </div>
   </footer>
+
 
   <!-- THE SCORE: Who Did The Shoot opens and closes the film, Antisocial
        carries Scroll Slow, the two Vaunt versions score the commercial and
@@ -597,44 +580,9 @@
     <source src="assets/audio/here.mp3" type="audio/mpeg">
   </audio>
 
-  <script>
-    /* the wing films: not scroll-driven, they just play. The muted IDL
-       property must be set before play() or some browsers hold autoplay;
-       the poster stands in until the first frame lands. Low Power Mode and
-       data savers veto the first attempt, so every touch and the section
-       coming into view retry until all three doors are rolling. */
-    (function () {
-      var vids = Array.prototype.slice.call(document.querySelectorAll(".wings__vid"));
-      function kick() {
-        var still = false;
-        vids.forEach(function (v) {
-          if (!v.paused) return;
-          still = true;
-          v.muted = true;
-          var p = v.play();
-          if (p && p.catch) p.catch(function () {});
-        });
-        if (!still) {
-          document.removeEventListener("touchend", kick);
-          document.removeEventListener("pointerdown", kick);
-        }
-      }
-      kick();
-      vids.forEach(function (v) { v.addEventListener("canplay", kick, { once: true }); });
-      document.addEventListener("touchend", kick, { passive: true });
-      document.addEventListener("pointerdown", kick, { passive: true });
-      if ("IntersectionObserver" in window) {
-        var io = new IntersectionObserver(function (es) {
-          es.forEach(function (e) {
-            if (!e.isIntersecting) return;
-            e.target.preload = "auto";
-            kick();
-          });
-        }, { threshold: 0.15 });
-        vids.forEach(function (v) { io.observe(v); });
-      }
-    })();
-  </script>
+  <!-- The wing-film starter stood here: three looping videos behind the
+       three doors, kicked on every touch until Low Power Mode let them
+       roll. The doors are gone, so there is nothing left for it to start. -->
   <script defer src="js/masthead.js?v=__STAMP__"></script>
   <script defer src="js/analytics.js?v=__STAMP__"></script>
   <script defer src="js/payments.js?v=__STAMP__"></script>
@@ -656,6 +604,7 @@
   <script defer src="js/backend.js?v=__STAMP__"></script>
   <script defer src="js/tabbar.js?v=__STAMP__"></script>
   <script defer src="js/deskchat.js?v=__STAMP__"></script>
+  <script defer src="js/lockroom.js?v=__STAMP__"></script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
 </body>
 </html>
