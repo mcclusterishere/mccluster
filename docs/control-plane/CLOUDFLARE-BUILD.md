@@ -21,4 +21,12 @@ Do not set an assets / static directory.
 Do not point this project at `Here`.
 Do not create a Worker named `mccluster-core`.
 
-After you save Root directory, hit **Retry build**.
+## Why deploy used to fail with error 10064
+
+Worker `mccluster` already has Durable Objects named `HereTenantAgent` from an older deploy.
+Cloudflare will not accept a new script unless that class is still **exported** from `src/index.js`.
+Changing Root directory alone does not fix it. The class has to be in the code.
+
+Do not run a delete-class migration unless you want those objects wiped.
+
+After this file is on `main`, hit **Retry build**.

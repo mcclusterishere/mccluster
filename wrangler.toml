@@ -1,6 +1,7 @@
 # Cloudflare Git integration looks at the repository ROOT.
 # There is ONE Worker. Its name is mccluster.
 # Do not create or deploy a Worker named mccluster-core.
+# Dashboard Root directory should be workers/mccluster so this file is not the one Wrangler uses in CI.
 
 name = "mccluster"
 main = "workers/mccluster/src/index.js"
@@ -17,3 +18,11 @@ MCCLUSTER_SUPABASE_PROJECT_REF = "zmnhbrjyhxzhkxmhkexs"
 PUBLIC_ORIGIN = "https://matthew.mccluster.org"
 APEX_ORIGIN = "https://mccluster.org"
 ALLOW_DEMO_IDENTITIES = "false"
+
+[[durable_objects.bindings]]
+name = "HereTenantAgent"
+class_name = "HereTenantAgent"
+
+[exports.HereTenantAgent]
+type = "durable-object"
+storage = "sqlite"

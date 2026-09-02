@@ -21,3 +21,13 @@ PUBLIC_ORIGIN = "https://matthew.mccluster.org"
 APEX_ORIGIN = "https://mccluster.org"
 ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
+
+# Existing production Durable Objects on this Worker. Keep the class name.
+# Do not add a new_classes / deleted_classes migration here.
+[[durable_objects.bindings]]
+name = "HereTenantAgent"
+class_name = "HereTenantAgent"
+
+[exports.HereTenantAgent]
+type = "durable-object"
+storage = "sqlite"
