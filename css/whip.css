@@ -229,3 +229,176 @@ html[data-theme="light"] .status--build { color: #9a6212; }
 @media (prefers-reduced-motion: reduce) {
   .app { transition: none; }
 }
+
+/* the panel leads with the app, so the demo gets air above the facts */
+.wprev__demo { margin: 0 0 .4rem; }
+
+/* ============================================================
+   THE APPS THEMSELVES.
+
+   A phone drawn in CSS, and three interfaces running inside it. The
+   frame is deliberately plain -- no glossy bezel, no hand holding it --
+   because the screen is the thing being shown and a rendered device is
+   just chrome around it.
+
+   Everything below is scoped under .wd, so the demo cannot reach out and
+   restyle the page it sits in.
+   ============================================================ */
+
+.wd { display: grid; justify-items: center; gap: .9rem; }
+
+.wd__phone { width: min(19.5rem, 100%); border-radius: 26px; padding: .5rem;
+  background: var(--ink-2); box-shadow: inset 0 0 0 1px var(--edge); position: relative; }
+.wd__notch { position: absolute; top: .82rem; left: 50%; transform: translateX(-50%);
+  width: 4.2rem; height: .32rem; border-radius: 99px; background: var(--edge); }
+.wd__screen { border-radius: 20px; overflow: hidden; background: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--edge); min-height: 27rem;
+  display: flex; flex-direction: column; padding-top: 1.5rem; }
+
+.wd__legal { margin: 0; max-width: 30rem; text-align: center;
+  font: 600 .72rem/1.5 var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+.wd__legal a { color: var(--ruby-hot); text-decoration: none; font-weight: 800; }
+
+/* ---------- shared furniture ---------- */
+.wd__bar { display: flex; align-items: center; gap: .5rem; padding: .7rem .9rem;
+  box-shadow: inset 0 -1px 0 var(--edge); }
+.wd__bar b { font: 800 .86rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream);
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wd__back { -webkit-appearance: none; appearance: none; border: 0; background: none;
+  color: var(--cream-dim); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 .1rem; }
+.wd__acct { width: 1.4rem; height: 1.4rem; border-radius: 50%; display: grid; place-items: center;
+  background: var(--metal); color: #fff; font: 800 .68rem var(--ui, "Manrope", system-ui, sans-serif); }
+.wd__day { font: 800 .72rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--ruby-hot);
+  font-variant-numeric: tabular-nums; }
+
+.wd__from { display: flex; align-items: center; gap: .45rem; padding: .7rem .9rem;
+  font: 600 .76rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+.wd__dot { width: .42rem; height: .42rem; border-radius: 50%; background: var(--ruby-hot); flex: none; }
+.wd__dot--b { background: var(--cream-dim); }
+
+.wd__list { display: grid; gap: 1px; padding: 0 .55rem; }
+.wd__row { display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  width: 100%; text-align: left; -webkit-appearance: none; appearance: none; border: 0;
+  background: var(--glass-lo); color: inherit; cursor: pointer; padding: .68rem .7rem;
+  border-radius: 10px; margin-bottom: .35rem; transition: background .14s ease; }
+.wd__row:hover, .wd__row:focus-visible { background: var(--glass-hi); outline: none; }
+.wd__row b { display: block; font: 800 .82rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream); }
+.wd__row small { display: block; font: 600 .68rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+.wd__row em { font: 800 .84rem var(--ui, "Manrope", system-ui, sans-serif); font-style: normal;
+  color: var(--cream); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wd__row em i { font-style: normal; font-size: .68em; color: var(--cream-dim); }
+
+.wd__foot, .wd__lead { margin: auto .9rem .9rem; font: 600 .7rem/1.45 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); }
+.wd__lead { margin: .8rem .9rem .2rem; }
+
+/* ---------- the route ---------- */
+.wd__map { display: block; width: 100%; height: auto; }
+.wd__mapbg { fill: var(--glass-lo); }
+.wd__grid { stroke: var(--edge); stroke-width: 1; fill: none; }
+.wd__route { fill: none; stroke: var(--ruby-hot); stroke-width: 2.4; stroke-linecap: round; opacity: .85; }
+.wd__pin { fill: var(--cream); }
+.wd__pin--a { fill: var(--ruby-hot); }
+.wd__car { fill: var(--cream); stroke: var(--ruby); stroke-width: 2.5; }
+
+/* ---------- the sheet at the bottom of a screen ---------- */
+.wd__sheet { margin-top: auto; padding: .8rem .9rem 1rem; display: grid; gap: .45rem;
+  box-shadow: inset 0 1px 0 var(--edge); }
+.wd__sheet--two { grid-template-columns: 1fr 1fr; }
+.wd__line { display: flex; justify-content: space-between; gap: .8rem;
+  font: 600 .78rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim);
+  font-variant-numeric: tabular-nums; }
+.wd__line--tot { color: var(--cream); font-weight: 800; padding-top: .45rem;
+  box-shadow: inset 0 1px 0 var(--edge); }
+.wd__go { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  margin-top: .35rem; padding: .78rem 1rem; border-radius: 10px; color: #fff;
+  background: var(--ruby-hot);
+  font: 800 .82rem var(--ui, "Manrope", system-ui, sans-serif); transition: filter .14s ease; }
+.wd__go:hover:not(:disabled), .wd__go:focus-visible:not(:disabled) { filter: brightness(1.09); }
+.wd__go:disabled { opacity: .45; cursor: not-allowed; }
+.wd__go--ghost { background: transparent; color: var(--cream);
+  box-shadow: inset 0 0 0 1px var(--edge); }
+.wd__src { margin: .3rem 0 0; font: 600 .66rem/1.45 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); }
+.wd__src b { color: var(--ruby-hot); }
+
+/* ---------- waiting, driver card, progress ---------- */
+.wd__wait { display: grid; justify-items: center; gap: .5rem; padding: 2rem .9rem;
+  font: 700 .74rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+.wd__wait i { width: .4rem; height: .4rem; border-radius: 50%; background: var(--ruby-hot);
+  display: inline-block; margin: 0 .12rem; animation: wdPulse 1.1s infinite ease-in-out; }
+.wd__wait i:nth-child(2) { animation-delay: .16s; }
+.wd__wait i:nth-child(3) { animation-delay: .32s; }
+.wd__wait span { grid-column: 1; }
+@keyframes wdPulse { 0%,100% { opacity: .28; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+
+.wd__who { display: flex; align-items: center; gap: .55rem; padding-bottom: .5rem; }
+.wd__av { width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center;
+  background: var(--metal); color: #fff; font: 800 .85rem var(--ui, "Manrope", system-ui, sans-serif); }
+.wd__who b { display: block; font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream); }
+.wd__who small { display: block; font: 600 .68rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+
+.wd__prog { height: .3rem; border-radius: 99px; background: var(--glass-hi); overflow: hidden; }
+.wd__prog i { display: block; height: 100%; background: var(--ruby-hot); border-radius: 99px; }
+
+.wd__hero { display: grid; justify-items: center; gap: .1rem; padding: 1.9rem .9rem 1.2rem; }
+.wd__big { font-family: var(--sig); font-weight: var(--we-sig-weight, 700); letter-spacing: -.02em;
+  font-size: 2.7rem; line-height: 1; color: var(--cream); font-variant-numeric: tabular-nums; }
+.wd__hero small { font: 700 .72rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+
+.wd__done { display: grid; justify-items: center; gap: .2rem; padding: 1.6rem .9rem 1rem; }
+.wd__tick { width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center;
+  background: var(--metal); color: #fff; font-size: 1.1rem; margin-bottom: .35rem; }
+.wd__done b { font-family: var(--sig); font-weight: var(--we-sig-weight, 700); font-size: 1.9rem;
+  line-height: 1; color: var(--cream); font-variant-numeric: tabular-nums; }
+.wd__done small { font: 600 .72rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+
+/* ---------- the driver's offer ---------- */
+.wd__offer { display: grid; justify-items: center; gap: .25rem; padding: 1.3rem .9rem .6rem; }
+.wd__ring { width: 3rem; height: 3rem; border-radius: 50%; display: grid; place-items: center;
+  box-shadow: inset 0 0 0 2px var(--ruby-hot); color: var(--ruby-hot); margin-bottom: .5rem;
+  font: 800 1rem var(--ui, "Manrope", system-ui, sans-serif); font-variant-numeric: tabular-nums; }
+.wd__offer b { font-family: var(--sig); font-weight: var(--we-sig-weight, 700); font-size: 2rem;
+  line-height: 1; color: var(--cream); font-variant-numeric: tabular-nums; }
+.wd__offer small { font: 600 .72rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+.wd__ab { display: grid; gap: .3rem; margin-top: .8rem; width: 100%; }
+.wd__ab span { display: flex; align-items: center; gap: .45rem;
+  font: 600 .74rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+
+/* ---------- rentals ---------- */
+.wd__step { display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  padding: .45rem .2rem; }
+.wd__step span { font: 700 .78rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim);
+  font-variant-numeric: tabular-nums; }
+.wd__step button { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  width: 2.1rem; height: 2.1rem; border-radius: 8px; background: var(--glass-hi); color: var(--cream);
+  font-size: 1rem; line-height: 1; }
+.wd__step button:hover, .wd__step button:focus-visible { background: var(--ruby-hot); color: #fff; outline: none; }
+
+.wd__checks { list-style: none; margin: .9rem .9rem 0; padding: 0; display: grid; gap: .45rem; }
+.wd__checks li { display: flex; align-items: center; gap: .55rem; padding: .6rem .7rem;
+  border-radius: 10px; background: var(--glass-lo);
+  font: 700 .76rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+.wd__checks li span { flex: 1; }
+.wd__checks li em { font-style: normal; font-size: .66rem; font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--cream-dim); }
+.wd__checks li i { width: 1.05rem; height: 1.05rem; border-radius: 50%; flex: none;
+  box-shadow: inset 0 0 0 1.5px var(--edge); }
+.wd__checks li.is-ok { color: var(--cream); }
+.wd__checks li.is-ok i { background: var(--ruby-hot); box-shadow: none; }
+.wd__checks li.is-ok em { color: var(--ruby-hot); }
+
+.wd__shots { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; padding: .7rem .9rem 0; }
+.wd__shot { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  display: grid; justify-items: center; gap: .3rem; padding: .8rem .5rem; border-radius: 10px;
+  background: var(--glass-lo); color: var(--cream-dim);
+  font: 700 .7rem var(--ui, "Manrope", system-ui, sans-serif); transition: background .14s ease; }
+.wd__shot i { width: 1.5rem; height: 1.5rem; border-radius: 5px; box-shadow: inset 0 0 0 1.5px var(--edge); }
+.wd__shot:hover, .wd__shot:focus-visible { background: var(--glass-hi); outline: none; }
+.wd__shot.is-shot { color: var(--cream); }
+.wd__shot.is-shot i { background: var(--ruby-hot); box-shadow: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wd__wait i { animation: none; opacity: .75; }
+  .wd__row, .wd__go, .wd__shot { transition: none; }
+}

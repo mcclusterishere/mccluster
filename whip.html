@@ -52,7 +52,7 @@
     </header>
 
     <section class="wsec" aria-labelledby="appsHead">
-      <p class="wk" id="appsHead">The three apps &middot; tap one to look inside</p>
+      <p class="wk" id="appsHead">The three apps &middot; open one and drive it</p>
       <div class="wsec__rule"></div>
       <div class="apps" id="appGrid"></div>
     </section>
@@ -171,6 +171,7 @@
     var prev = document.getElementById("appPrev");
     var card = document.getElementById("appPrevCard");
     var lastFocus = null;
+    var stopDemo = null;
     var BUILDS = {};
 
     function buildsFor(key) { return BUILDS[key] || []; }
@@ -187,7 +188,7 @@
           '<p class="app__one">' + esc(p.one) + "</p>" +
           '<span class="app__foot">' +
             '<span class="plats">' + plats + "</span>" +
-            '<span class="app__open">Look inside &rarr;</span>' +
+            '<span class="app__open">Open the app &rarr;</span>' +
           "</span>" +
         "</button>";
       }).join("");
@@ -215,6 +216,7 @@
         '<p class="wk">' + esc(p.role) + "</p>" +
         '<h2 id="appPrevTitle">' + esc(p.name) + "</h2>" +
         '<p class="wprev__tag">' + esc(p.one) + "</p>" +
+        '<div class="wprev__demo" data-demo="' + esc(p.key) + '"></div>' +
         '<p class="wprev__k">What it does</p>' +
         "<ul>" + p.does.map(function (d) { return "<li>" + esc(d) + "</li>"; }).join("") + "</ul>" +
         '<p class="wprev__k">Builds in the registry</p>' +
@@ -236,11 +238,17 @@
 
       prev.hidden = false;
       document.body.style.overflow = "hidden";
+
+      if (stopDemo) { stopDemo(); stopDemo = null; }
+      var slot = card.querySelector("[data-demo]");
+      if (slot && window.MCC_WHIP) stopDemo = window.MCC_WHIP.mount(slot, key);
+
       var x = card.querySelector("[data-close]");
       if (x) x.focus();
     }
 
     function close() {
+      if (stopDemo) { stopDemo(); stopDemo = null; }
       prev.hidden = true;
       document.body.style.overflow = "";
       if (lastFocus && lastFocus.focus) lastFocus.focus();
@@ -286,6 +294,7 @@
   })();
   </script>
 
+  <script src="js/whip-demo.js?v=__STAMP__"></script>
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/backend.js?v=__STAMP__"></script>
