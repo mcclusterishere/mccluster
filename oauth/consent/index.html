@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Continue with McCluster</title>
+  <style>
+    :root{color-scheme:dark;--ink:#0a0807;--panel:#15110f;--edge:#332925;--cream:#f4efe6;--dim:#b8ada2;--ruby:#e5383b}
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;background:radial-gradient(circle at 50% 0,#211411 0,var(--ink) 48%);color:var(--cream);font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:24px}
+    main{width:min(440px,100%)}.mark{width:54px;height:54px;border-radius:15px;background:var(--ruby);display:grid;place-items:center;font-weight:950;font-size:27px;margin-bottom:22px}.k{color:#ff7a72;text-transform:uppercase;letter-spacing:.18em;font-size:11px;font-weight:900}.card{border:1px solid var(--edge);background:rgba(21,17,15,.94);border-radius:22px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.42)}h1{font-size:32px;line-height:1;margin:7px 0 12px}p{color:var(--dim);margin:0}.client{margin:22px 0;padding:15px;border:1px solid var(--edge);border-radius:15px}.client strong{display:block;color:var(--cream);font-size:18px}.scope{display:flex;gap:9px;align-items:flex-start;margin:10px 0;color:var(--dim)}.scope b{color:#ff7a72}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}button,input{font:inherit}.primary,.secondary{border:0;border-radius:13px;padding:13px;font-weight:850;cursor:pointer}.primary{background:var(--ruby);color:white}.secondary{background:transparent;color:var(--cream);border:1px solid var(--edge)}.login{display:grid;gap:10px;margin-top:20px}.login input{width:100%;border-radius:12px;padding:13px;border:1px solid var(--edge);background:#0d0a09;color:var(--cream)}.msg{margin-top:12px;color:#ff9a91;font-size:13px}.who{margin-top:12px;font-size:13px;color:var(--dim)}[hidden]{display:none!important}
+  </style>
+</head>
+<body>
+<main>
+  <div class="mark">M</div>
+  <div class="card">
+    <div class="k">McCluster Account</div>
+    <h1>Continue with McCluster</h1>
+    <p>One account for McCluster-powered apps.</p>
+
+    <section id="login" class="login" hidden>
+      <input id="email" type="email" autocomplete="email" placeholder="Email">
+      <input id="password" type="password" autocomplete="current-password" placeholder="Password">
+      <button id="signin" class="primary">Sign in</button>
+      <a href="/account.html" style="color:#ff7a72;text-decoration:none;text-align:center">Create or recover your McCluster account</a>
+    </section>
+
+    <section id="consent" hidden>
+      <div class="who" id="who"></div>
+      <div class="client">
+        <div class="k">App requesting access</div>
+        <strong id="clientName">App</strong>
+        <div id="scopes"></div>
+      </div>
+      <p>Approving lets this app identify your McCluster account using only the permissions shown above. You can use the same McCluster identity across every McCluster-powered app.</p>
+      <div class="actions">
+        <button id="deny" class="secondary">Not now</button>
+        <button id="approve" class="primary">Continue</button>
+      </div>
+    </section>
+    <div id="msg" class="msg"></div>
+  </div>
+</main>
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  const SUPABASE_URL='https://zmnhbrjyhxzhkxmhkexs.supabase.co';
+  const SUPABASE_KEY='sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
+  const supabase=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{flowType:'pkce',persistSession:true,autoRefreshToken:true}});
+  const $=s=>document.querySelector(s);
+  const authorizationId=new URLSearchParams(location.search).get('authorization_id');
+  const msg=text=>$('#msg').textContent=text||'';
+
+  async function importLegacySession(){
+    try{
+      const raw=localStorage.getItem('mccdb_session')||localStorage.getItem('mcc_sess_keep');
+      if(!raw)return;
+      const legacy=JSON.parse(raw);
+      if(legacy?.access_token&&legacy?.refresh_token)await supabase.auth.setSession({access_token:legacy.access_token,refresh_token:legacy.refresh_token});
+    }catch{}
+  }
+
+  async function getUser(){
+    const {data,error}=await supabase.auth.getUser();
+    if(error)return null;
+    return data.user||null;
+  }
+
+  async function renderConsent(user){
+    if(!authorizationId){msg('Missing OAuth authorization request.');return;}
+    const {data,error}=await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
+    if(error){msg(error.message);return;}
+    if(data?.redirect_url&&!data?.authorization_id){location.assign(data.redirect_url);return;}
+    $('#login').hidden=true;$('#consent').hidden=false;
+    $('#who').textContent=`Signed in as ${user.email||user.id}`;
+    $('#clientName').textContent=data?.client?.name||'McCluster app';
+    const scope=String(data?.scope||'openid profile email').split(/\s+/).filter(Boolean);
+    const labels={openid:'Know which McCluster account is signing in',profile:'Read your basic profile',email:'Read your account email',phone:'Read your account phone'};
+    $('#scopes').innerHTML=scope.map(x=>`<div class="scope"><b>✓</b><span>${labels[x]||x}</span></div>`).join('');
+  }
+
+  async function boot(){
+    await importLegacySession();
+    const user=await getUser();
+    if(!user){$('#login').hidden=false;return;}
+    await renderConsent(user);
+  }
+
+  $('#signin').onclick=async()=>{
+    msg('');$('#signin').disabled=true;
+    const {error}=await supabase.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value});
+    $('#signin').disabled=false;
+    if(error){msg(error.message);return;}
+    const user=await getUser();if(user)await renderConsent(user);
+  };
+
+  $('#approve').onclick=async()=>{
+    msg('');$('#approve').disabled=true;
+    const {data,error}=await supabase.auth.oauth.approveAuthorization(authorizationId);
+    if(error){msg(error.message);$('#approve').disabled=false;return;}
+    location.assign(data.redirect_url);
+  };
+  $('#deny').onclick=async()=>{
+    msg('');
+    const {data,error}=await supabase.auth.oauth.denyAuthorization(authorizationId);
+    if(error){msg(error.message);return;}
+    location.assign(data.redirect_url);
+  };
+
+  boot().catch(e=>msg(e.message||'Unable to open McCluster sign-in.'));
+</script>
+</body>
+</html>

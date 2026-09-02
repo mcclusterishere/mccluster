@@ -1,3 +1,60 @@
+# MCCLUSTER CONTROL PLANE — READ THIS FIRST
+
+This file is the law for every McCluster repository, every Cloudflare project, and every agent (ChatGPT, Claude, Codex, Cursor, Gemini, Copilot, Grok).
+
+If you skip it, you will invent a second backend, race a git push, or break a client product. That is exactly how the last agents failed.
+
+## The plane
+
+| Piece | Canonical |
+| --- | --- |
+| GitHub control repo | `mcclusterishere/mccluster` |
+| GitHub org | `McCluster-Corp` |
+| Cloudflare project + Worker | `mccluster` |
+| Worker source | `workers/mccluster` |
+| Public site | `https://matthew.mccluster.org` |
+| Apex | `https://mccluster.org` → same property, not a second site |
+| API | `https://api.mccluster.org` |
+| Supabase | project `zmnhbrjyhxzhkxmhkexs` (`https://zmnhbrjyhxzhkxmhkexs.supabase.co`) |
+| Durable Object class that MUST stay exported | `HereTenantAgent` |
+
+**There is no Worker named `mccluster-core`. Do not create one.**
+The only Cloudflare Worker is `mccluster`. Only call routes that Worker actually serves.
+
+**McCluster is the backend AND the control plane.** Product repos are satellites. Client sites are tenants. None of them own auth, billing, social, CRM, or admin.
+
+`Here` is the old website repo. Do not deploy matthew.mccluster.org or mccluster.org from `Here`.
+
+## Hard rules
+
+1. **Do not create a competing backend.** No new auth stack, no new Postgres, no new admin, no new social scheduler, no new Stripe account, in a satellite repo.
+2. **Do not auto-push CI onto feature branches.** LiDAR and other heavy jobs use `workflow_dispatch` and artifacts. They never `git push` onto an open PR branch.
+3. **Do not overwrite `index.html` or a client's shipping UI** unless the owner named that file in the task.
+4. **Cloudflare Worker `mccluster` is not a Node compile of the whole git tree.** Source lives at `workers/mccluster`. Dashboard Root directory is `workers/mccluster`. Deploy command is `npx wrangler deploy`. The public site is static and ships to `matthew.mccluster.org` from this repo, not from `Here`. Do not create `mccluster-core`.
+5. **Supabase `zmnhbrjyhxzhkxmhkexs` is the shared data plane.** New tables belong there (or on the Control desk). Public anon key is public by design; RLS is the wall.
+6. **Client social is a McCluster service.** Every client backend gets accounts, campaigns, and a queue on the plane. Satellites may display and submit. They are not the source of truth.
+7. **Preserve local product law.** PRIM3 Site 0, Uprise World, and any repo-specific gates below this section still apply. Control-plane law does not delete them.
+8. **If a task wants you to "rebuild", "simplify", or "migrate to a new stack": stop.** Route the work through McCluster. Ask only if the owner is explicitly retiring a satellite.
+9. **Do not invent infrastructure names.** The Worker is `mccluster`. The API host is `api.mccluster.org`. If a name is not in this table, it does not exist.
+10. **Keep exporting `HereTenantAgent`.** Worker `mccluster` already has Durable Objects of that class. A deploy that drops the export dies with Cloudflare error 10064. Do not run a delete-class migration unless the owner says wipe those objects.
+
+## Files every agent must honor
+
+On the control repo:
+
+- `AGENTS.md` (this law + local product gates)
+- `CLAUDE.md` / `GEMINI.md` / `.cursorrules` / `.github/copilot-instructions.md`
+- `docs/control-plane/ECOSYSTEM.md`
+- `docs/control-plane/registry.json`
+
+On every satellite: the same four agent files, pointing here.
+
+## Owner
+
+Matthew McCluster / McCluster Corp (Connecticut public charity CHR.0069693). Operator desk is the McCluster Control admin.
+
+---
+
 # HERE — Codex Repository Instructions
 
 ## HITMAN PRIM3 Site 0 / Ground Zero fortress
@@ -55,82 +112,34 @@ The reference for the current look is a cel-shaded low-poly spherical-world game
 
 **Living Sketch** is a hand-drawn mixed-media sketchbook world built from irregular ink contours, graphite construction marks, watercolor/marker washes, charcoal-gray grounding, red editorial scribbles, visible paper negative space, selective saturation, selective detail, and controlled human imperfection.
 
-### ⛔ The Living Sketch style board is ART STYLE ONLY — it is NOT A CHARACTER REFERENCE ⛔
+### The Living Sketch style board is ART STYLE ONLY — it is NOT A CHARACTER REFERENCE
 
-`docs/uprise-world/references/style/living-sketch-style-reference-board.jpg`
-contains drawings of a person. **That person is not Matthew McCluster, is not the
-protagonist, and is not any character in Uprise World.** The figures in STYLE REF
-01–04 are anonymous stand-in bodies that exist solely to demonstrate ink,
-graphite, wash, and paper technique.
+`docs/uprise-world/references/style/living-sketch-style-reference-board.jpg` contains drawings of a person. **That person is not Matthew McCluster, is not the protagonist, and is not any character in Uprise World.** The figures in STYLE REF 01–04 are anonymous stand-in bodies that exist solely to demonstrate ink, graphite, wash, and paper technique.
 
 - ✅ Use it for: line quality, construction marks, wash behavior, charcoal grounding, red editorial scribbles, paper negative space, unfinished hand-drawn edges.
 - ❌ Never use it for: face, likeness, hair, skin tone, beard, build, age, clothing, colorway, pose-as-character-design, or identity — **for the main character or for any NPC**.
 
-The blue jacket and black tee in those panels are **not** canonical wardrobe. The
-hair in those panels is **not** the protagonist's hair. The **STYLE 01** and
-**STYLE 02** panels inside `references/boards/canonical-visual-reference-board.jpg`
-are the same artwork and carry the same restriction, even though
-character-authoritative panels sit on the same page.
+The blue jacket and black tee in those panels are **not** canonical wardrobe. The hair in those panels is **not** the protagonist's hair. The **STYLE 01** and **STYLE 02** panels inside `references/boards/canonical-visual-reference-board.jpg` are the same artwork and carry the same restriction, even though character-authoritative panels sit on the same page.
 
-Character appearance comes only from the character likeness sheet, the raw
-`assets/likeness/` photographs, the wardrobe board, the exact emblem files, and
-the character panels of the composite and Proof Room boards. Read
-`docs/uprise-world/references/style/README.md` before using anything in `style/`.
+Character appearance comes only from the character likeness sheet, the raw `assets/likeness/` photographs, the wardrobe board, the exact emblem files, and the character panels of the composite and Proof Room boards. Read `docs/uprise-world/references/style/README.md` before using anything in `style/`.
 
 ### Non-negotiable rules
 
-- Never implement **Living Sketch** as conventional 3D with a sketch/post-processing filter layered over the camera. (This rule is about how Living Sketch gets built when its turn comes. It is not a prohibition on the current cel-shaded renderer, which is toon shading with inverted-hull outlines — a shading model, not a filter over the camera.)
+- Never implement **Living Sketch** as conventional 3D with a sketch/post-processing filter layered over the camera.
 - Canonical user-supplied visual references outrank generated interpretations.
-- The Living Sketch style board is a rendering-technique reference only and must never be used as a character, likeness, or wardrobe reference for any character, player or NPC.
 - Preserve working spherical locomotion, WebGL fallback behavior, landmark/check-in logic, mobile/touch controls, and data-driven world content unless a documented audit shows a concrete reason to change them.
 - Do not expand the world map before the **Visual Proof Room** passes its acceptance criteria.
-- Do not casually replace existing architecture, add large dependencies, or perform vanity rewrites.
-- Treat the player likeness and outfit as canonical character design; do not redesign supplied emblems or substitute generated logos.
-- Follow `UPRISE-WORLD-ROADMAP.md` in order. **Do not skip phases or gates merely because a later phase is technically possible.**
-- Honor all mandatory stop/review points before progressing.
+- Follow `UPRISE-WORLD-ROADMAP.md` in order.
 
 ### Phase 0 audit gate
 
-**Phase 0 must be completed before any Proof Room implementation or other Uprise World application-code change.**
-
-Phase 0 must follow `docs/uprise-world/PHASE-0-AUDIT-INSTRUCTIONS.md` and produce the permanent deliverable:
-
-`docs/uprise-world/AUDIT-REPORT.md`
-
-Phase 0 is not complete until all of the following are true:
-
-- `AUDIT-REPORT.md` exists;
-- it contains the nine required audit sections;
-- material conclusions cite actual repository paths/functions/components rather than generic assumptions;
-- measurements that cannot be obtained are labeled **NOT MEASURED** rather than invented;
-- no application implementation code was changed as part of the audit;
-- the user has explicitly reviewed and approved the audit.
-
-**No Phase 1 implementation may begin before explicit user approval.**
-
-### Visual completion rule
-
-**When visual output is part of a task, implementation is not complete until screenshots have been produced and explicitly evaluated against the canonical references and `SCREENSHOT-ACCEPTANCE-CRITERIA.md`.**
-
-A successful compile, clean build, or working route is not sufficient evidence of visual completion.
-
-Any screenshot criterion marked FAIL blocks phase completion until corrected and re-captured.
-
-### Performance completion rule
-
-Tablet is a binding target. Visual work that is not measured against `PERFORMANCE-BUDGET.md` is not considered tablet-ready. Sustained normal-play performance below 30 FPS is a blocking failure.
-
-### First-task rule
-
-When asked to begin Uprise World work, first complete **Phase 0** from `UPRISE-WORLD-ROADMAP.md` and `PHASE-0-AUDIT-INSTRUCTIONS.md`: audit the existing implementation against the Bible and supporting specs. Do not modify application code until the audit and proposed file plan are complete unless the user explicitly instructs otherwise.
+**Phase 0 must be completed before any Proof Room implementation or other Uprise World application-code change.** Follow `docs/uprise-world/PHASE-0-AUDIT-INSTRUCTIONS.md`. No Phase 1 implementation may begin before explicit user approval.
 
 ## The Universe schema — one world, many universes
 
-Any task that touches game worlds, level selectors, portals/teleporting between worlds, the bottom tab bar as a world switcher, or per-world saved state must first read:
+Any task that touches game worlds, level selectors, portals, or per-world saved state must first read:
 
 - `docs/universe/UNIVERSE-SCHEMA.md`
 - `docs/universe/universe-registry.json`
-
-Summary of the law: HERE is one underlying world with many universes. Each universe has its own engine, its own play style (`visual` decision-tree or `fps`), its own entrance, and its own state slot — players continue where they left off in each universe. Universes connect only through registered portals (data, never cross-imported engine code). Adding a universe requires a registry entry, a contract file, an entrance route, and owner approval.
 
 This schema does not relax any existing gate: Uprise World work still follows `docs/uprise-world/` phases, and Site 0 work still follows `assets/3d/prim3-site0/AGENTS.md`.
