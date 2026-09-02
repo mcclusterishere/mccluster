@@ -1581,6 +1581,16 @@
     });
   });
   } catch (err) {
+    /* The whole scroll engine sits inside that try. That is the right call —
+       one bad selector must not leave the page under a black gate — but a
+       catch that only lifts the gate makes a broken engine LOOK like a
+       working static page, which is how the last blackout hid for a week.
+       So it fails loudly: the page still opens, and the reason is on the
+       console and on window.__MCC_ERR for anyone standing at the keyboard. */
+    try {
+      window.__MCC_ERR = { message: String(err && err.message || err), stack: err && err.stack || null };
+      if (window.console && console.error) console.error("[mcc] scroll engine stopped:", err);
+    } catch (e) {}
     liftGate();
   }
 })();
