@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>S477 · Interactive LiDAR</title>
+  <meta name="theme-color" content="#090807">
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090807;color:#f4efe6;font-family:Arial,Helvetica,sans-serif}body{position:relative}
+    #view{position:absolute;inset:0}.veil{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 42%,transparent 25%,rgba(0,0,0,.22) 75%,rgba(0,0,0,.58));z-index:2}
+    .top{position:absolute;z-index:6;left:max(14px,env(safe-area-inset-left));right:max(14px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}.brand{display:grid;gap:3px}.brand b{font-size:13px;letter-spacing:.2em;text-transform:uppercase}.brand span{font-size:10px;letter-spacing:.11em;color:rgba(244,239,230,.58);text-transform:uppercase}.live{display:flex;align-items:center;gap:7px;border:1px solid rgba(244,239,230,.16);background:rgba(9,8,7,.58);backdrop-filter:blur(18px);border-radius:999px;padding:8px 10px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.live i{width:7px;height:7px;border-radius:50%;background:#e8c877;box-shadow:0 0 14px rgba(232,200,119,.75)}.live.ready i{background:#79d49b}
+    .help{position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;max-width:420px;padding:20px;pointer-events:none}.help b{display:block;font-size:clamp(28px,7vw,64px);line-height:.9;text-transform:uppercase}.help p{font-size:12px;line-height:1.6;color:rgba(244,239,230,.62)}.help.hide{opacity:0;transition:opacity .8s}
+    .hud{position:absolute;z-index:7;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}.panel{border:1px solid rgba(244,239,230,.14);background:rgba(12,10,9,.78);backdrop-filter:blur(22px);border-radius:18px;padding:11px;box-shadow:0 18px 60px rgba(0,0,0,.35)}.stats{display:flex;gap:18px;overflow:auto;scrollbar-width:none}.stats::-webkit-scrollbar{display:none}.stat{flex:none;min-width:92px}.stat small{display:block;color:rgba(244,239,230,.45);font-size:8px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.stat b{display:block;margin-top:4px;font-size:14px}.controls{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.controls button,.controls a{appearance:none;border:1px solid rgba(244,239,230,.15);background:rgba(255,255,255,.055);color:#f4efe6;border-radius:999px;padding:9px 11px;font:800 9px/1 Arial;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;text-decoration:none}.controls button.on{background:#f4efe6;color:#090807}.controls button:focus-visible,.controls a:focus-visible{outline:2px solid #e8c877;outline-offset:2px}
+    .legend{position:absolute;z-index:5;right:18px;top:92px;display:grid;gap:6px;padding:10px;border-radius:13px;background:rgba(9,8,7,.62);backdrop-filter:blur(18px);border:1px solid rgba(244,239,230,.1);font-size:9px;color:rgba(244,239,230,.72)}.legend span{display:flex;align-items:center;gap:7px}.legend i{width:7px;height:7px;border-radius:50%}
+    @media(max-width:720px){.hud{grid-template-columns:1fr}.controls{justify-content:flex-start;overflow:auto;flex-wrap:nowrap}.panel{border-radius:15px}.legend{display:none}.brand span{max-width:210px}.live{font-size:8px}.stats{gap:10px}.stat{min-width:76px}.stat b{font-size:12px}.controls button,.controls a{padding:10px 11px;flex:none}}
+  </style>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}</script>
+</head>
+<body>
+  <div id="view" aria-label="Rotatable S477 LiDAR point cloud"></div><div class="veil"></div>
+  <header class="top"><div class="brand"><b>S477 · LiDAR Twin</b><span>477 Broad Street · Bridgeport · NOAA 2023</span></div><div class="live" id="state"><i></i><span>Crop processing</span></div></header>
+  <div class="help" id="help"><b>Drag the building.</b><p>One finger rotates. Two fingers pan and zoom. Desktop: drag to orbit, scroll to zoom, right-drag to pan.</p></div>
+  <div class="legend" id="legend"><span><i style="background:#d5c6a1"></i>Ground</span><span><i style="background:#e5383b"></i>Building</span><span><i style="background:#6fa66d"></i>Vegetation</span><span><i style="background:#6db7ff"></i>Water</span><span><i style="background:#d8d8d8"></i>Other</span></div>
+  <div class="hud">
+    <div class="panel stats"><div class="stat"><small>Web points</small><b id="points">—</b></div><div class="stat"><small>Crop</small><b id="crop">260 × 265 m</b></div><div class="stat"><small>Source</small><b>NOAA EPT</b></div><div class="stat"><small>Status</small><b id="quality">Preliminary AOI</b></div></div>
+    <div class="panel controls"><button id="color" class="on" type="button">Classification</button><button id="elevation" type="button">Elevation</button><button id="buildings" type="button">Buildings only</button><button id="reset" type="button">Reset view</button><a href="https://www.fisheries.noaa.gov/inport/item/75570" target="_blank" rel="noopener">Source</a></div>
+  </div>
+  <script type="module">
+    import * as THREE from 'three';
+    import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+    const host=document.getElementById('view'), stateEl=document.getElementById('state'), help=document.getElementById('help');
+    const scene=new THREE.Scene(); scene.background=new THREE.Color(0x090807); scene.fog=new THREE.FogExp2(0x090807,.0023);
+    const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.1,1400); camera.position.set(150,115,165);
+    const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight); host.appendChild(renderer.domElement);
+    const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.075; controls.screenSpacePanning=true; controls.minDistance=12; controls.maxDistance=650; controls.target.set(0,16,0);
+    const grid=new THREE.GridHelper(320,32,0x403a33,0x211e1b); grid.material.transparent=true; grid.material.opacity=.42; scene.add(grid);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(6,6.35,96),new THREE.MeshBasicMaterial({color:0xe8c877,transparent:true,opacity:.75,side:THREE.DoubleSide})); ring.rotation.x=-Math.PI/2; ring.position.y=.12; scene.add(ring);
+    const axes=new THREE.AxesHelper(18); axes.material.transparent=true; axes.material.opacity=.28; scene.add(axes);
+    let cloud=null, allData=null, buildingData=null, mode='classification', buildingsOnly=false, initialTarget=new THREE.Vector3();
+
+    function classColor(c){
+      if(c===2)return [0.84,0.78,0.63]; if(c===6)return [0.9,0.22,0.23]; if(c===3||c===4||c===5)return [0.44,0.65,0.43]; if(c===9)return [0.43,0.72,1]; if(c===17)return [0.91,0.78,0.47]; return [0.82,0.82,0.82];
+    }
+    function makeData(raw,filterBuilding=false){
+      const n=raw.length/4, pos=[], cls=[], zs=[];
+      let zmin=Infinity,zmax=-Infinity;
+      for(let i=0;i<n;i++){const c=Math.round(raw[i*4+3]); if(filterBuilding&&c!==6)continue; const x=raw[i*4], north=raw[i*4+1], z=raw[i*4+2]; pos.push(x,z,-north); cls.push(c); zs.push(z); zmin=Math.min(zmin,z);zmax=Math.max(zmax,z)}
+      return {pos:new Float32Array(pos),cls,zs,zmin,zmax,count:cls.length};
+    }
+    function colorsFor(d){const arr=new Float32Array(d.count*3), span=Math.max(1,d.zmax-d.zmin); for(let i=0;i<d.count;i++){let rgb;if(mode==='classification')rgb=classColor(d.cls[i]);else{const t=(d.zs[i]-d.zmin)/span; rgb=[0.28+.72*t,0.38+.45*(1-Math.abs(t-.55)*1.5),0.72-.48*t]}arr[i*3]=rgb[0];arr[i*3+1]=rgb[1];arr[i*3+2]=rgb[2]}return arr}
+    function renderCloud(){const d=buildingsOnly?buildingData:allData;if(!d)return;if(cloud){scene.remove(cloud);cloud.geometry.dispose();cloud.material.dispose()}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(d.pos,3));g.setAttribute('color',new THREE.BufferAttribute(colorsFor(d),3));g.computeBoundingBox();const m=new THREE.PointsMaterial({size:buildingsOnly?1.05:.62,vertexColors:true,sizeAttenuation:true,transparent:true,opacity:.94});cloud=new THREE.Points(g,m);scene.add(cloud);const box=g.boundingBox,center=new THREE.Vector3();box.getCenter(center);initialTarget.copy(center);controls.target.copy(center);ring.position.set(center.x,.12,center.z);if(buildingsOnly){camera.position.set(center.x+92,center.y+70,center.z+105)}controls.update()}
+    function reset(){if(!allData)return;controls.target.copy(initialTarget);camera.position.set(initialTarget.x+150,initialTarget.y+105,initialTarget.z+165);controls.update()}
+    function setStatus(text,ready=false){stateEl.querySelector('span').textContent=text;stateEl.classList.toggle('ready',ready)}
+
+    async function boot(){
+      try{
+        const meta=await fetch('data/s477/lidar/generated/s477-site-web.json?v=1').then(r=>{if(!r.ok)throw new Error('Crop assets are still processing');return r.json()});
+        const buffer=await fetch('data/s477/lidar/generated/'+meta.binary+'?v=1').then(r=>{if(!r.ok)throw new Error('Point derivative unavailable');return r.arrayBuffer()});
+        const raw=new Float32Array(buffer); allData=makeData(raw,false); buildingData=makeData(raw,true); document.getElementById('points').textContent=allData.count.toLocaleString(); document.getElementById('crop').textContent=meta.cropSizeMeters.width+' × '+meta.cropSizeMeters.height+' m'; document.getElementById('quality').textContent='Real crop · buffered'; setStatus('Real crop loaded',true); renderCloud(); setTimeout(()=>help.classList.add('hide'),2400);
+      }catch(err){setStatus('Crop job running');document.getElementById('quality').textContent='Generating now';help.querySelector('b').textContent='LiDAR crop is processing.';help.querySelector('p').textContent=err.message+' — reload after the GitHub crop job finishes.'}
+    }
+    document.getElementById('color').onclick=()=>{mode='classification';document.getElementById('color').classList.add('on');document.getElementById('elevation').classList.remove('on');renderCloud()};
+    document.getElementById('elevation').onclick=()=>{mode='elevation';document.getElementById('elevation').classList.add('on');document.getElementById('color').classList.remove('on');renderCloud()};
+    document.getElementById('buildings').onclick=e=>{buildingsOnly=!buildingsOnly;e.currentTarget.classList.toggle('on',buildingsOnly);renderCloud()}; document.getElementById('reset').onclick=reset;
+    addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+    renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera)}); boot();
+  </script>
+</body>
+</html>
