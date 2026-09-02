@@ -10,12 +10,14 @@ If you skip it, you will invent a second backend, race a git push, or break a cl
 | --- | --- |
 | GitHub control repo | `mcclusterishere/mccluster` |
 | GitHub org | `McCluster-Corp` |
-| Cloudflare project (public edge + Git integration) | `mccluster` |
-| Cloudflare Worker (API) | `mccluster-core` (`workers/mccluster-core`) |
+| Cloudflare project + Worker | `mccluster` |
+| Worker source | `workers/mccluster` |
 | Public site | `https://matthew.mccluster.org` |
 | Apex | `https://mccluster.org` → same property, not a second site |
 | API | `https://api.mccluster.org` |
 | Supabase | project `zmnhbrjyhxzhkxmhkexs` (`https://zmnhbrjyhxzhkxmhkexs.supabase.co`) |
+
+**There is no Worker named `mccluster-core`. Do not create one.**
 
 **McCluster is the backend AND the control plane.** Product repos are satellites. Client sites are tenants. None of them own auth, billing, social, CRM, or admin.
 
@@ -24,11 +26,12 @@ If you skip it, you will invent a second backend, race a git push, or break a cl
 1. **Do not create a competing backend.** No new auth stack, no new Postgres, no new admin, no new social scheduler, no new Stripe account, in a satellite repo.
 2. **Do not auto-push CI onto feature branches.** LiDAR and other heavy jobs use `workflow_dispatch` and artifacts. They never `git push` onto an open PR branch.
 3. **Do not overwrite `index.html` or a client's shipping UI** unless the owner named that file in the task.
-4. **Cloudflare project `mccluster` is not a Node compile of the whole git tree.** The Worker lives at `workers/mccluster-core`. The public site is static and ships to `matthew.mccluster.org`. Root `wrangler.toml` exists so Git integration does not fail in zero seconds looking for a Worker named `mccluster`.
+4. **Cloudflare Worker `mccluster` is not a Node compile of the whole git tree.** Source lives at `workers/mccluster`. The public site is static and ships to `matthew.mccluster.org`. Root `wrangler.toml` exists so Git integration finds Worker name `mccluster`. Do not create `mccluster-core`.
 5. **Supabase `zmnhbrjyhxzhkxmhkexs` is the shared data plane.** New tables belong there (or on the Control desk). Public anon key is public by design; RLS is the wall.
 6. **Client social is a McCluster service.** Every client backend gets accounts, campaigns, and a queue on the plane. Satellites may display and submit. They are not the source of truth.
 7. **Preserve local product law.** PRIM3 Site 0, Uprise World, and any repo-specific gates below this section still apply. Control-plane law does not delete them.
 8. **If a task wants you to "rebuild", "simplify", or "migrate to a new stack": stop.** Route the work through McCluster. Ask only if the owner is explicitly retiring a satellite.
+9. **Do not invent infrastructure names.** The Worker is `mccluster`. The API host is `api.mccluster.org`. If a name is not in this table, it does not exist.
 
 ## Files every agent must honor
 
@@ -104,27 +107,17 @@ The reference for the current look is a cel-shaded low-poly spherical-world game
 
 **Living Sketch** is a hand-drawn mixed-media sketchbook world built from irregular ink contours, graphite construction marks, watercolor/marker washes, charcoal-gray grounding, red editorial scribbles, visible paper negative space, selective saturation, selective detail, and controlled human imperfection.
 
-### ⛔ The Living Sketch style board is ART STYLE ONLY — it is NOT A CHARACTER REFERENCE ⛔
+### The Living Sketch style board is ART STYLE ONLY — it is NOT A CHARACTER REFERENCE
 
 `docs/uprise-world/references/style/living-sketch-style-reference-board.jpg`
-contains drawings of a person. **That person is not Matthew McCluster, is not the
-protagonist, and is not any character in Uprise World.** The figures in STYLE REF
-01–04 are anonymous stand-in bodies that exist solely to demonstrate ink,
-graphite, wash, and paper technique.
+contains drawings of a person. **That person is not Matthew McCluster, is not the protagonist, and is not any character in Uprise World.** The figures in STYLE REF 01–04 are anonymous stand-in bodies that exist solely to demonstrate ink, graphite, wash, and paper technique.
 
-- ✅ Use it for: line quality, construction marks, wash behavior, charcoal grounding, red editorial scribbles, paper negative space, unfinished hand-drawn edges.
-- ❌ Never use it for: face, likeness, hair, skin tone, beard, build, age, clothing, colorway, pose-as-character-design, or identity — **for the main character or for any NPC**.
+- Use it for: line quality, construction marks, wash behavior, charcoal grounding, red editorial scribbles, paper negative space, unfinished hand-drawn edges.
+- Never use it for: face, likeness, hair, skin tone, beard, build, age, clothing, colorway, pose-as-character-design, or identity — for the main character or for any NPC.
 
-The blue jacket and black tee in those panels are **not** canonical wardrobe. The
-hair in those panels is **not** the protagonist's hair. The **STYLE 01** and
-**STYLE 02** panels inside `references/boards/canonical-visual-reference-board.jpg`
-are the same artwork and carry the same restriction, even though
-character-authoritative panels sit on the same page.
+The blue jacket and black tee in those panels are **not** canonical wardrobe. The hair in those panels is **not** the protagonist's hair. The **STYLE 01** and **STYLE 02** panels inside `references/boards/canonical-visual-reference-board.jpg` are the same artwork and carry the same restriction, even though character-authoritative panels sit on the same page.
 
-Character appearance comes only from the character likeness sheet, the raw
-`assets/likeness/` photographs, the wardrobe board, the exact emblem files, and
-the character panels of the composite and Proof Room boards. Read
-`docs/uprise-world/references/style/README.md` before using anything in `style/`.
+Character appearance comes only from the character likeness sheet, the raw `assets/likeness/` photographs, the wardrobe board, the exact emblem files, and the character panels of the composite and Proof Room boards. Read `docs/uprise-world/references/style/README.md` before using anything in `style/`.
 
 ### Non-negotiable rules
 
