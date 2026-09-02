@@ -1,15 +1,15 @@
 {
  "id": "./",
- "name": "HERE — A McCluster Production",
- "short_name": "HERE",
- "description": "Matthew McCluster's own distribution: the music, the film, the record. Streams online, plays offline, installs on everything.",
+ "name": "McCluster",
+ "short_name": "McCluster",
+ "description": "McCluster platform: sites, products, civic work, and the record.",
  "start_url": "./index.html",
  "scope": "./",
  "display": "standalone",
  "display_override": ["standalone", "minimal-ui"],
  "background_color": "#0b0908",
  "theme_color": "#0b0908",
- "categories": ["music", "entertainment"],
+ "categories": ["business", "productivity"],
  "launch_handler": { "client_mode": "navigate-existing" },
  "icons": [
   {
@@ -27,7 +27,7 @@
  "shortcuts": [
   {
    "name": "The Sound",
-   "description": "Every record in the catalog, one room",
+   "description": "I AM HERE and the catalog",
    "url": "./album.html",
    "icons": [{ "src": "assets/img/icon-192.png", "sizes": "192x192" }]
   },
