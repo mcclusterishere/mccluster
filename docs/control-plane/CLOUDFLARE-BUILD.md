@@ -2,8 +2,6 @@
 
 The public website is GitHub Pages. This Cloudflare project only deploys the **Worker**.
 
-If the dashboard Root directory is `/`, Wrangler sees the whole website tree and the build dies.
-
 ## Settings that work
 
 In Cloudflare → Workers & Pages → `mccluster` → Settings → Build:
@@ -21,12 +19,20 @@ Do not set an assets / static directory.
 Do not point this project at `Here`.
 Do not create a Worker named `mccluster-core`.
 
-## Why deploy used to fail with error 10064
+## Do not click Retry on an old red build
 
-Worker `mccluster` already has Durable Objects named `HereTenantAgent` from an older deploy.
-Cloudflare will not accept a new script unless that class is still **exported** from `src/index.js`.
-Changing Root directory alone does not fix it. The class has to be in the code.
+Retry rebuilds the **same old commit**. That is why the log keeps saying `HereTenantAgent` is missing and why upload stays `7.89 KiB` with only three env vars.
+
+To pick up the fix:
+
+1. Wait until GitHub `mccluster` `main` shows the commit that adds `workers/mccluster/src/here-tenant-agent.js`.
+2. In Cloudflare → Worker `mccluster` → Deployments, start a **new** production deploy of **latest `main`**. Do not Retry the failed 08:11 / 08:12 / 08:18 jobs.
+3. The good log must show a Durable Object binding named `HereTenantAgent`, not only the three environment variables.
+
+## Why error 10064 happens
+
+Worker `mccluster` already has Durable Objects named `HereTenantAgent`.
+The uploaded JavaScript must `export class HereTenantAgent`.
+That class lives in `workers/mccluster/src/here-tenant-agent.js` and is re-exported from `src/index.js`.
 
 Do not run a delete-class migration unless you want those objects wiped.
-
-After this file is on `main`, hit **Retry build**.

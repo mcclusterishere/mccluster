@@ -1,5 +1,6 @@
-import { DurableObject } from 'cloudflare:workers';
 import { corsHeaders, fail, logEvent, reply } from './lib/http.js';
+
+export { HereTenantAgent } from './here-tenant-agent.js';
 
 function configured(env) {
   return Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY);
@@ -54,22 +55,6 @@ function pct(cents, bps) {
   return Math.round(Number(cents || 0) * Number(bps || 0) / 10000);
 }
 
-// Cloudflare already has live Durable Objects of this class on Worker "mccluster".
-// The class MUST stay exported or every deploy is rejected (error 10064).
-// This is the keep-alive stub. Do not delete it. Do not rename it.
-export class HereTenantAgent extends DurableObject {
-  async fetch() {
-    return new Response(JSON.stringify({
-      ok: true,
-      service: 'here-tenant-agent',
-      worker: 'mccluster',
-      stub: true
-    }), {
-      headers: { 'content-type': 'application/json; charset=utf-8' }
-    });
-  }
-}
-
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') {
@@ -87,8 +72,15 @@ export default {
           supabase_project: env.MCCLUSTER_SUPABASE_PROJECT_REF || null,
           products: ['identity', 'apps', 'fees', 'payments', 'mobility'],
           canonical_identity: 'McCluster',
-          durable_object: 'HereTenantAgent'
+          durable_object: 'HereTenantAgent',
+          durable_object_bound: Boolean(env.HereTenantAgent)
         });
+      }
+
+      if (path === '/internal/here-tenant-agent' && request.method === 'GET') {
+        const id = env.HereTenantAgent.idFromName('health');
+        const stub = env.HereTenantAgent.get(id);
+        return stub.fetch(request);
       }
 
       if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);
