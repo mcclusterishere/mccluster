@@ -1,7 +1,7 @@
 {
-  "file_size": 10159032,
+  "file_size": 10156030,
   "filename": "data/s477/lidar/generated/s477-preliminary-site.copc.laz",
-  "now": "2026-09-02T05:41:18+0000",
+  "now": "2026-09-02T05:43:17+0000",
   "pdal_version": "2.10.2 (git-version: e8618b)",
   "reader": "readers.copc",
   "summary":
