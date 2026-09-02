@@ -21,7 +21,11 @@
 
   function renderMetrics(){
     var host=q("#scMetrics"); if(!host||!state.data)return;
-    host.innerHTML=state.data.metrics.map(function(m){return '<article class="sc-metric"><div><b>'+esc(m.value)+'</b><span>'+esc(m.unit)+'</span></div><small>'+esc(m.label)+' · '+esc(m.note)+'</small></article>'}).join("");
+    host.innerHTML=state.data.metrics.map(function(m){
+      var unit=m.unit,note=m.note;
+      if(m.label==="Video"){unit="planned cameras";note="33 provisioned incl. 3 cold spares"}
+      return '<article class="sc-metric"><div><b>'+esc(m.value)+'</b><span>'+esc(unit)+'</span></div><small>'+esc(m.label)+' · '+esc(note)+'</small></article>';
+    }).join("");
   }
 
   function renderFloorTabs(){
