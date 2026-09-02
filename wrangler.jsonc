@@ -1,10 +1,10 @@
 {
   "name": "mccluster",
-  "main": "workers/mccluster-core/src/index.js",
-  "compatibility_date": "2026-08-31",
+  "main": "workers/mccluster/src/index.js",
+  "compatibility_date": "2026-09-02",
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "vars": {
-    "ALLOWED_ORIGIN": "*",
     "MCCLUSTER_SUPABASE_PROJECT_REF": "zmnhbrjyhxzhkxmhkexs",
     "PUBLIC_ORIGIN": "https://matthew.mccluster.org",
     "APEX_ORIGIN": "https://mccluster.org"
