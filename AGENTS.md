@@ -16,23 +16,27 @@ If you skip it, you will invent a second backend, race a git push, or break a cl
 | Apex | `https://mccluster.org` → same property, not a second site |
 | API | `https://api.mccluster.org` |
 | Supabase | project `zmnhbrjyhxzhkxmhkexs` (`https://zmnhbrjyhxzhkxmhkexs.supabase.co`) |
+| Durable Object class that MUST stay exported | `HereTenantAgent` |
 
 **There is no Worker named `mccluster-core`. Do not create one.**
 The only Cloudflare Worker is `mccluster`. Only call routes that Worker actually serves.
 
 **McCluster is the backend AND the control plane.** Product repos are satellites. Client sites are tenants. None of them own auth, billing, social, CRM, or admin.
 
+`Here` is the old website repo. Do not deploy matthew.mccluster.org or mccluster.org from `Here`.
+
 ## Hard rules
 
 1. **Do not create a competing backend.** No new auth stack, no new Postgres, no new admin, no new social scheduler, no new Stripe account, in a satellite repo.
 2. **Do not auto-push CI onto feature branches.** LiDAR and other heavy jobs use `workflow_dispatch` and artifacts. They never `git push` onto an open PR branch.
 3. **Do not overwrite `index.html` or a client's shipping UI** unless the owner named that file in the task.
-4. **Cloudflare Worker `mccluster` is not a Node compile of the whole git tree.** Source lives at `workers/mccluster`. The public site is static and ships to `matthew.mccluster.org` from this repo, not from `Here`. Do not create `mccluster-core`.
+4. **Cloudflare Worker `mccluster` is not a Node compile of the whole git tree.** Source lives at `workers/mccluster`. Dashboard Root directory is `workers/mccluster`. Deploy command is `npx wrangler deploy`. The public site is static and ships to `matthew.mccluster.org` from this repo, not from `Here`. Do not create `mccluster-core`.
 5. **Supabase `zmnhbrjyhxzhkxmhkexs` is the shared data plane.** New tables belong there (or on the Control desk). Public anon key is public by design; RLS is the wall.
 6. **Client social is a McCluster service.** Every client backend gets accounts, campaigns, and a queue on the plane. Satellites may display and submit. They are not the source of truth.
 7. **Preserve local product law.** PRIM3 Site 0, Uprise World, and any repo-specific gates below this section still apply. Control-plane law does not delete them.
 8. **If a task wants you to "rebuild", "simplify", or "migrate to a new stack": stop.** Route the work through McCluster. Ask only if the owner is explicitly retiring a satellite.
 9. **Do not invent infrastructure names.** The Worker is `mccluster`. The API host is `api.mccluster.org`. If a name is not in this table, it does not exist.
+10. **Keep exporting `HereTenantAgent`.** Worker `mccluster` already has Durable Objects of that class. A deploy that drops the export dies with Cloudflare error 10064. Do not run a delete-class migration unless the owner says wipe those objects.
 
 ## Files every agent must honor
 
