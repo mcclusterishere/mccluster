@@ -1,0 +1,94 @@
+{
+  "project": "S477",
+  "updated": "2026-09-02",
+  "sources": [
+    {
+      "id": "city-building-department",
+      "authority": "City of Bridgeport Building Department",
+      "type": "government",
+      "status": "authoritative",
+      "url": "https://www.bridgeportct.gov/government/departments/building-department",
+      "use": "Building permits, department contact and property-record custody."
+    },
+    {
+      "id": "city-record-search",
+      "authority": "City of Bridgeport Building Department",
+      "type": "government",
+      "status": "authoritative",
+      "url": "https://www.bridgeportct.gov/government/departments/building-department/record-search-request",
+      "use": "Property-record request procedure and published search turnaround."
+    },
+    {
+      "id": "city-records-request",
+      "authority": "City of Bridgeport",
+      "type": "government",
+      "status": "authoritative",
+      "url": "https://www.bridgeportct.gov/government/departments/city-attorney/records-request",
+      "use": "FOI routing and City public-record request procedure."
+    },
+    {
+      "id": "city-gis",
+      "authority": "City of Bridgeport",
+      "type": "government-gis",
+      "status": "authoritative",
+      "url": "https://www.bridgeportct.gov/government/departments/planning-economic-development/geographic-information-system-gis",
+      "use": "Bridgeport GIS hub and public spatial-data entry point."
+    },
+    {
+      "id": "bridgeport-parcels",
+      "authority": "City of Bridgeport / MetroCOG",
+      "type": "government-gis-service",
+      "status": "authoritative",
+      "url": "https://maps.ctmetro.org/server/rest/services/Bridgeport/Bridgeport_Parcels_NAD83/MapServer",
+      "use": "Parcel geometry, parcel labels, lot dimensions, property lines and zoning. Parcel geometry should become the spatial envelope for the site model once the exact feature is extracted."
+    },
+    {
+      "id": "ct-lidar-2023-noaa",
+      "authority": "Connecticut GIS Office / NOAA Office for Coastal Management",
+      "type": "government-lidar",
+      "status": "authoritative",
+      "url": "https://www.fisheries.noaa.gov/inport/item/75570",
+      "use": "2023 Connecticut statewide classified LiDAR provenance, metadata and download access. NOAA mission/dataset ID 10296."
+    },
+    {
+      "id": "ct-lidar-2023-bulk",
+      "authority": "NOAA Office for Coastal Management",
+      "type": "government-lidar-download",
+      "status": "authoritative",
+      "url": "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/index.html",
+      "use": "Bulk LAZ, tile indexes, metadata, reports and STAC catalog."
+    },
+    {
+      "id": "ct-lidar-2023-ept",
+      "authority": "NOAA Office for Coastal Management",
+      "type": "government-lidar-stream",
+      "status": "authoritative",
+      "url": "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/entwine/geoid18/10296/ept.json",
+      "use": "Streamable Entwine Point Tile endpoint suitable for QGIS, Potree and site-subset extraction."
+    },
+    {
+      "id": "ct-lidar-2023-viewer",
+      "authority": "NOAA Office for Coastal Management",
+      "type": "government-lidar-viewer",
+      "status": "authoritative",
+      "url": "https://coast.noaa.gov/lidar/viewer/v/noaapotree.html?r=https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/entwine/geoid18/10296/ept.json",
+      "use": "Interactive browser-based 3D point-cloud inspection."
+    },
+    {
+      "id": "ct-lidar-building-footprints",
+      "authority": "Connecticut GIS Office",
+      "type": "government-derived-spatial",
+      "status": "authoritative-dataset",
+      "url": "https://www.arcgis.com/sharing/rest/content/items/1fc1468133cc4080a9cd8d64c49c8b2d/info/metadata/metadata.xml?format=default&output=html",
+      "use": "2023 LiDAR-derived 2D building-footprint dataset; automated geometry must be field-checked before being treated as construction geometry."
+    },
+    {
+      "id": "s477-engineering-pack-v2",
+      "authority": "S477 project engineering pack",
+      "type": "internal-engineering",
+      "status": "current-reference-design",
+      "path": "Shiloh_477_Broad_S477_Technology_Engineering_Pack_V2.xlsx",
+      "use": "Current quantities, budget model, reference architecture and field-verification gates."
+    }
+  ]
+}
