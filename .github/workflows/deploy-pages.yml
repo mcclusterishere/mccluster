@@ -24,6 +24,37 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Public face is the platform, not the album
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          t = p.read_text()
+          repls = [
+            ('<title>I AM HERE: the album by Matthew McCluster · stream it, own it, license it</title>',
+             '<title>McCluster — platform</title>'),
+            ('<meta name="description" content="I AM HERE, the six-song album by Matthew McCluster. Stream every track, watch the lyric videos, buy the work, and license the music. Have no fear, McCluster is here.">',
+             '<meta name="description" content="McCluster is the public platform for Matthew McCluster and McCluster Corp. The album I AM HERE lives at album.html.">'),
+            ('<meta property="og:site_name" content="I AM HERE: the album">',
+             '<meta property="og:site_name" content="McCluster">'),
+            ('<meta property="og:title" content="I AM HERE: the album by Matthew McCluster">',
+             '<meta property="og:title" content="McCluster — platform">'),
+            ('<meta property="og:description" content="Six songs, six lyric videos. Stream it, own it, license it. Have no fear, McCluster is here.">',
+             '<meta property="og:description" content="The McCluster platform. Album, fleet, fellowship, and the house behind them.">'),
+            ('<meta name="twitter:title" content="I AM HERE: the album by Matthew McCluster">',
+             '<meta name="twitter:title" content="McCluster — platform">'),
+            ('<meta name="twitter:description" content="Six songs, six lyric videos. Stream it, own it, license it.">',
+             '<meta name="twitter:description" content="The McCluster platform. Album, fleet, fellowship, and the house behind them.">'),
+            ('"name": "I AM HERE: the album by Matthew McCluster"',
+             '"name": "McCluster"'),
+            ('<h1 style="font-size:2rem">I AM HERE: the album by Matthew McCluster</h1>',
+             '<h1 style="font-size:2rem">McCluster</h1>'),
+          ]
+          for a, b in repls:
+              t = t.replace(a, b)
+          p.write_text(t)
+          PY
+
       - name: Stamp asset versions so every deploy busts browser caches
         run: |
           find . -path ./node_modules -prune -o -path ./apps -prune -o \
@@ -31,6 +62,7 @@ jobs:
             | xargs -0 sed -i "s/__STAMP__/${GITHUB_SHA::12}/g"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
           git commit -am "Stamp asset versions for deploy" --allow-empty
 
       - name: Promote the Site 0 game into the web root
