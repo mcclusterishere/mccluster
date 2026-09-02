@@ -120,3 +120,12 @@
 
   fetch("data/s477-public.json?v=2").then(function(r){if(!r.ok)throw new Error("S477 data unavailable");return r.json()}).then(boot).catch(function(err){var host=q("#smartChurchApp");if(host)host.insertAdjacentHTML("afterbegin",'<p style="padding:1rem;border:1px solid rgba(229,56,59,.35);color:#f4efe6">Smart Church data could not load. '+esc(err.message)+'</p>')});
 })();
+
+/* Responsive evidence/budget/LiDAR layer is isolated so the core twin remains
+   functional even if a supplemental dataset fails. */
+(function(){
+  var s=document.createElement("script");
+  s.src="js/smart-church-visuals.js?v=3";
+  s.defer=true;
+  document.head.appendChild(s);
+})();
