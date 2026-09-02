@@ -97,8 +97,7 @@
          Chat did not lose anything: it is the second slot of this wing,
          one hold away, with the Inner Room and Give. */
       '<a class="appbar__tab" href="' + ROOT + 'whip.html" data-appnav="sites">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="14" r="4"/>' +
-        '<path d="M11 11L20 2"/><path d="M17 5l2.5 2.5M14.5 7.5L17 10"/></svg>' +
+        '<img class="appbar__we" src="' + ROOT + 'assets/img/we-mark-bar.webp" alt="">' +
         '<span>Whip</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'account.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
@@ -215,7 +214,7 @@
            tooltip. Prices are not typed here any more; the conversation
            quotes them from the ledger, and the Closet quotes them from
            whatever checkout carries the drop. */
-        ["whip.html", "key", "Whip Equipped", { title: "Whip Equipped LLC",
+        ["whip.html", "whipmark", "Whip Equipped", { title: "Whip Equipped LLC",
           sub: "Three apps on one McCluster account: Rider, Driver and Rentals, run off a parts-licensed dealership in Acworth, Georgia." }],
         ["sites.html", "chat", "Chat", { title: "Talk to the desk",
           sub: "Ask what it costs, check whether your address is free, and buy it in the same conversation. A person reads all of it." }],
@@ -321,8 +320,20 @@
     chat: CHAT,
   };
   function ic(k) {
+    /* A LOGO IS NOT A GLYPH. Every slot icon here is a stroked path that
+       takes the tab's own colour, which is right for a room and wrong for
+       a company: Whip Equipped is a black tile with a wrench running amber
+       into red, and redrawing that in one stroke weight would be drawing a
+       different mark. Named marks come through as their actual artwork. */
+    if (MARKS[k]) {
+      return '<img class="' + MARKS[k][1] + '" src="' + ROOT + MARKS[k][0] + '" alt="">';
+    }
     return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[k] || ICONS.desk) + "</svg>";
   }
+
+  var MARKS = {
+    whipmark: ["assets/img/we-mark-bar.webp", "appbar__we"],
+  };
   function emit(n, d) { try { window.dispatchEvent(new CustomEvent(n, { detail: d || {} })); } catch (e) {} }
 
   /* THE TRANSPORT STATE. SOUND_ON is the single source of truth for whether
