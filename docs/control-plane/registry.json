@@ -7,11 +7,14 @@
     "publicDomain": "matthew.mccluster.org",
     "apexDomain": "mccluster.org",
     "apiDomain": "api.mccluster.org",
-    "supabaseRef": "zmnhbrjyhxzhkxmhkexs"
+    "supabaseRef": "zmnhbrjyhxzhkxmhkexs",
+    "workerSource": "workers/mccluster",
+    "durableObjectClass": "HereTenantAgent",
+    "forbiddenWorkerNames": ["mccluster-core", "McCluster-Core", "here-agent-platform"]
   },
   "satellites": [
     {"owner": "mcclusterishere", "repo": "mccluster", "role": "control-plane", "branch": "main"},
-    {"owner": "mcclusterishere", "repo": "Here", "role": "public-shell", "branch": "main"},
+    {"owner": "mcclusterishere", "repo": "Here", "role": "archive-old-website", "branch": "main", "doNotDeploy": true},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped-Driver", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped-Rentals", "role": "product", "branch": "main"},

@@ -5,7 +5,7 @@ Single source of truth for how the house is wired. Agents: if this disagrees wit
 ## Map
 
 ```
-                    mccluster.org  ──alias──►  matthew.mccluster.org
+                    mccluster.org  —alias—►  matthew.mccluster.org
                                                       │
                          Cloudflare project + Worker `mccluster`
                                                       │
@@ -15,7 +15,7 @@ Single source of truth for how the house is wired. Agents: if this disagrees wit
                                       │                    │
                                       │              api.mccluster.org
                                       │                    │
-                                      └────────► Supabase zmnhbrjyhxzhkxmhkexs
+                                      └───────► Supabase zmnhbrjyhxzhkxmhkexs
                                                        │
                           client satellites + product satellites (GitHub)
 ```
@@ -24,19 +24,22 @@ Single source of truth for how the house is wired. Agents: if this disagrees wit
 
 | Concern | Where |
 | --- | --- |
-| Public pages, twin, civic directory | static → matthew.mccluster.org |
+| Public pages | GitHub Pages from `mcclusterishere/mccluster` → matthew.mccluster.org |
 | Operator desk | McCluster Control |
 | API / webhooks | Cloudflare Worker `mccluster` |
+| Worker source | `workers/mccluster` |
 | Shared tables | Supabase `zmnhbrjyhxzhkxmhkexs` |
 | Product UI | Satellite repos in `registry.json` |
-| Client social calendars | McCluster Control social layer |
+| Old website copy | `mcclusterishere/Here` — do not deploy from it |
 
 ## Pipeline rules
 
 - Never let a workflow commit generated LiDAR onto an open feature branch.
-- Git integration must see root `wrangler.toml` with `name = "mccluster"`.
+- Cloudflare Git integration Root directory is `workers/mccluster`. Deploy command is `npx wrangler deploy`.
+- Worker `mccluster` already has Durable Objects named `HereTenantAgent`. That class must stay exported or deploys fail (error 10064). Do not delete-class it.
 - There is no second Worker named `mccluster-core`. Do not create one.
 - Humans push product; CI must not push onto an open PR branch.
+- `Here` does not ship matthew.mccluster.org or mccluster.org.
 
 ## Adding a satellite
 
