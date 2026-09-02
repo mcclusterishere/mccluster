@@ -96,8 +96,9 @@
 
          Chat did not lose anything: it is the second slot of this wing,
          one hold away, with the Inner Room and Give. */
-      '<a class="appbar__tab" href="' + ROOT + 'ecosystem.html#whip-equipped" data-appnav="sites">' +
-        '<img class="appbar__we" src="' + ROOT + 'assets/img/we-logo.webp" alt="">' +
+      '<a class="appbar__tab" href="' + ROOT + 'whip.html" data-appnav="sites">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="14" r="4"/>' +
+        '<path d="M11 11L20 2"/><path d="M17 5l2.5 2.5M14.5 7.5L17 10"/></svg>' +
         '<span>Whip</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'account.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
@@ -204,7 +205,7 @@
          ledger are untouched on disk; nothing links to them while Whip
          Equipped holds the column, and putting the Hitman entries back is
          a matter of restoring these two lines. */
-      home: "ecosystem.html#whip-equipped",
+      home: "whip.html",
       slots: [
         /* The wing's first slot is the same door the tab is, so it says
            the same thing -- which is why these two swapped places when the
@@ -214,8 +215,8 @@
            tooltip. Prices are not typed here any more; the conversation
            quotes them from the ledger, and the Closet quotes them from
            whatever checkout carries the drop. */
-        ["ecosystem.html#whip-equipped", "whip", "Whip Equipped", { title: "Whip Equipped LLC",
-          sub: "A parts-licensed dealership in Acworth, Georgia \u2014 and the set of \u201cWe In This Together,\u201d the interactive series scored by \u201cDealer Plates.\u201d" }],
+        ["whip.html", "key", "Whip Equipped", { title: "Whip Equipped LLC",
+          sub: "Three apps on one McCluster account: Rider, Driver and Rentals, run off a parts-licensed dealership in Acworth, Georgia." }],
         ["sites.html", "chat", "Chat", { title: "Talk to the desk",
           sub: "Ask what it costs, check whether your address is free, and buy it in the same conversation. A person reads all of it." }],
         ["inner-room.html", "lamp", "Inner Room", { title: "The Inner Room",
@@ -273,7 +274,7 @@
        shakes.html and shake-desk.html are not listed because they are not
        served any more — see _unfinished/README.md. */
     "sites.html": "sites",
-    "ecosystem.html": "sites",
+    "whip.html": "sites", "ecosystem.html": "sites",
     "prayer-closet.html": "sites", "inner-room.html": "sites",
     "sent.html": "sites", "give.html": "sites"
     /* policy.html and policy-memo-dna.html carry the bar now but claim no
@@ -303,11 +304,6 @@
     halo: '<ellipse cx="12" cy="4.1" rx="5.2" ry="1.9"/>' +
       '<path d="M12 6.6 14.1 11v7.2a2.1 2.1 0 0 1-2.1 2.1 2.1 2.1 0 0 1-2.1-2.1V11z"/>' +
       '<path d="M9.9 15.3h4.2"/>',
-    /* Whip Equipped: a plate under a roofline. Two shapes, because at
-       24px a whole car is a smudge and a plate is not. */
-    whip: '<path d="M4.4 12.4 6.6 7.3A2 2 0 0 1 8.4 6h7.2a2 2 0 0 1 1.8 1.3l2.2 5.1"/>' +
-      '<rect x="3.3" y="12.4" width="17.4" height="5.4" rx="1.5"/>' +
-      '<path d="M7 15.1h3.1M13.9 15.1H17"/>',
     hang: '<path d="M12 6a2 2 0 1 1 2-2"/><path d="M12 6l8.2 5.8a1.5 1.5 0 0 1-.9 2.7H4.7a1.5 1.5 0 0 1-.9-2.7z"/><path d="M6.5 14.5V20M17.5 14.5V20"/>',
     shot: '<path d="M3 8.5a2 2 0 0 1 2-2h2.2l1.3-2h6.8l1.3 2H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.8" r="3.6"/>',
     lamp: '<path d="M12 20V7"/><path d="M12 7c-2.6-2.2-5.6-2.6-8-2v12c2.4-.6 5.4-.2 8 2 2.6-2.2 5.6-2.6 8-2V5c-2.4-.6-5.4-.2-8 2z"/>',

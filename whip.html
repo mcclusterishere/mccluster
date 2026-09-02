@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Whip Equipped &middot; three apps, one account</title>
+  <meta name="description" content="Whip Equipped LLC is a parts-licensed dealership in Acworth, Georgia, and a mobility application family: Rider, Driver and Rentals. Three apps, one McCluster account, one ledger.">
+  <link rel="canonical" href="https://matthew.mccluster.org/whip.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="McCluster">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Whip Equipped. Three apps, one account.">
+  <meta property="og:description" content="Rider, Driver and Rentals: one mobility family on the McCluster account system, run out of a parts-licensed dealership in Acworth, Georgia.">
+  <meta property="og:url" content="https://matthew.mccluster.org/whip.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/frames/whip_0001.jpg">
+
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    html, body { background: #0a0807; }
+    .st { max-width: 64rem; margin: 0 auto;
+      padding: clamp(4.6rem, 10vh, 7rem) clamp(1.1rem, 4vw, 2rem) 9rem; }
+
+    /* ---------- the head of the page ---------- */
+    .wtop { position: relative; border-radius: 16px; overflow: hidden;
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    .wtop__shot { position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; opacity: .3; }
+    .wtop__in { position: relative; padding: clamp(1.5rem, 5vw, 2.6rem);
+      background: linear-gradient(180deg, rgba(10,8,7,.55), rgba(10,8,7,.93) 72%); }
+    .wtop__logo { height: 1.35rem; width: auto; display: block; margin: 0 0 1rem;
+      padding: .3rem .55rem; border-radius: 100px; background: #f4efe6;
+      box-sizing: content-box; align-self: start; }
+    .wk { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .22em;
+      text-transform: uppercase; color: var(--ruby-hot); margin: 0 0 .55rem; }
+    .wtop h1 { font-family: var(--sig); text-transform: uppercase; line-height: .88;
+      font-size: clamp(2.4rem, 10vw, 4.2rem); margin: 0 0 .8rem; color: var(--cream);
+      text-wrap: balance; }
+    .wtop h1 em { font-style: normal; color: var(--ruby-hot); }
+    .wtop__lede { font: 600 .98rem/1.6 var(--ui, "Manrope", system-ui, sans-serif);
+      color: var(--cream-dim); margin: 0; max-width: 46ch; }
+    .wtop__facts { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1.2rem 0 0; padding: 0;
+      list-style: none; }
+    .wtop__facts li { font: 700 .7rem var(--ui, "Manrope", system-ui, sans-serif);
+      color: var(--cream-dim); padding: .38rem .6rem; border-radius: 6px;
+      box-shadow: inset 0 0 0 1px var(--edge); }
+
+    /* ---------- the three apps ---------- */
+    .wsec { margin-top: clamp(2rem, 6vh, 3rem); }
+    .wsec__rule { height: 1px; background: var(--edge); margin: .55rem 0 1.1rem; }
+
+    .apps { display: grid; gap: .7rem; align-items: stretch; }
+    @media (min-width: 52rem) { .apps { grid-template-columns: repeat(3, 1fr); } }
+
+    .app { display: flex; flex-direction: column; text-align: left; width: 100%;
+      -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      background: var(--glass-lo); box-shadow: inset 0 0 0 1px var(--edge);
+      border-radius: 14px; padding: clamp(1.15rem, 3.4vw, 1.4rem);
+      color: inherit; font: inherit; transition: box-shadow .16s ease, background .16s ease; }
+    .app:hover, .app:focus-visible { background: rgba(255,255,255,.045);
+      box-shadow: inset 0 0 0 1px rgba(229,56,59,.5); outline: none; }
+    .app__role { font: 800 .6rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .19em;
+      text-transform: uppercase; color: var(--ruby-hot); margin: 0 0 .5rem; }
+    .app h3 { font-family: var(--sig); text-transform: uppercase; line-height: .95;
+      font-size: clamp(1.35rem, 4.6vw, 1.75rem); margin: 0 0 .45rem; color: var(--cream); }
+    .app__one { font: 600 .85rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+      color: var(--cream-dim); margin: 0 0 1rem; }
+    .app__foot { margin-top: auto; padding-top: .95rem; box-shadow: inset 0 1px 0 var(--edge);
+      display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+    .plats { display: flex; gap: .3rem; }
+    .plat { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .1em;
+      text-transform: uppercase; color: var(--cream-dim); padding: .28rem .45rem;
+      border-radius: 5px; box-shadow: inset 0 0 0 1px var(--edge); }
+    .app__open { font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif);
+      color: var(--ruby-hot); white-space: nowrap; }
+
+    /* ---------- the preview ---------- */
+    .wprev { position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center;
+      background: rgba(6,5,4,.76); backdrop-filter: blur(6px); padding: 0; }
+    .wprev[hidden] { display: none; }
+    .wprev__card { width: min(38rem, 100%); max-height: 88vh; overflow-y: auto;
+      background: #12100f; box-shadow: inset 0 0 0 1px var(--edge);
+      border-radius: 18px 18px 0 0; padding: clamp(1.3rem, 4vw, 2rem);
+      padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); }
+    @media (min-width: 44rem) {
+      .wprev { place-items: center; padding: 1.5rem; }
+      .wprev__card { border-radius: 18px; }
+    }
+    .wprev__x { float: right; -webkit-appearance: none; appearance: none; border: 0;
+      background: rgba(255,255,255,.07); color: var(--cream); cursor: pointer;
+      width: 2.1rem; height: 2.1rem; border-radius: 50%; font-size: 1.1rem; line-height: 1; }
+    .wprev h2 { font-family: var(--sig); text-transform: uppercase; line-height: .92;
+      font-size: clamp(1.9rem, 7vw, 2.6rem); margin: .2rem 0 .5rem; color: var(--cream); }
+    .wprev__tag { font: 600 .95rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
+      color: var(--cream-dim); margin: 0 0 1.2rem; }
+    .wprev__k { font: 800 .58rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .2em;
+      text-transform: uppercase; color: var(--cream-dim); margin: 1.3rem 0 .6rem;
+      padding-top: 1rem; box-shadow: inset 0 1px 0 var(--edge); }
+    .wprev ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .38rem; }
+    .wprev ul li { position: relative; padding-left: 1.05rem;
+      font: 600 .84rem/1.5 var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+    .wprev ul li::before { content: ""; position: absolute; left: 0; top: .55em;
+      width: .3rem; height: .3rem; border-radius: 50%; background: var(--ruby-hot); opacity: .8; }
+    .builds { display: grid; gap: .4rem; }
+    .build { display: flex; align-items: center; justify-content: space-between; gap: .7rem;
+      padding: .7rem .85rem; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--edge); }
+    .build b { font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream); }
+    .build code { font: 700 .72rem var(--mono, ui-monospace, Menlo, monospace);
+      color: var(--cream-dim); }
+    .build a { font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif);
+      color: var(--ruby-hot); text-decoration: none; white-space: nowrap; }
+    .status { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .09em;
+      text-transform: uppercase; white-space: nowrap; }
+    .status--build { color: #d99a3c; }
+    .status--live { color: #5fae7d; }
+    .status--gone { color: var(--cream-dim); }
+    .wprev__note { font: 600 .78rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
+      color: var(--cream-dim); margin: 1.1rem 0 0; }
+    .wprev__note a { color: var(--ruby-hot); font-weight: 800; text-decoration: none; }
+
+    .wout { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center;
+      margin: clamp(1.8rem, 5vh, 2.6rem) 0 calc(3.5rem + env(safe-area-inset-bottom, 0px));
+      font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+    .wout a { color: var(--ruby-hot); text-decoration: none; }
+    .wout span { opacity: .45; }
+  </style>
+</head>
+<body>
+
+  <main class="st">
+
+    <!-- THE DEALERSHIP AND THE NETWORK ARE THE SAME COMPANY. Everything
+         factual here comes from data/brands.json and
+         docs/mccluster-platform-core.md; nothing about Whip Equipped is
+         typed twice. -->
+    <header class="wtop">
+      <img class="wtop__shot" src="assets/frames/whip_0001.jpg" alt="" decoding="async">
+      <div class="wtop__in">
+        <img class="wtop__logo" src="assets/img/we-logo.webp" alt="Whip Equipped">
+        <p class="wk">Whip Equipped LLC &middot; Acworth, Georgia</p>
+        <h1>Three apps.<br><em>One account.</em></h1>
+        <p class="wtop__lede">A parts-licensed dealership that became a network. The lot
+          runs sales and compliance day to day; the apps run the rides, the drivers and
+          the rentals on top of it. One McCluster identity moves through all three &mdash;
+          no second account, no second database.</p>
+        <ul class="wtop__facts">
+          <li>Formed 2024</li>
+          <li>Parts-licensed dealership</li>
+          <li>iOS + web, per product</li>
+          <li>3% payer &middot; 3% receiver</li>
+        </ul>
+      </div>
+    </header>
+
+    <section class="wsec" aria-labelledby="appsHead">
+      <p class="wk" id="appsHead">The three apps &middot; tap one to look inside</p>
+      <div class="wsec__rule"></div>
+      <div class="apps" id="appGrid"></div>
+    </section>
+
+    <p class="wout">
+      <a href="ecosystem.html#whip-equipped">The company in the ecosystem &rarr;</a>
+      <span>&middot;</span>
+      <a href="album.html">&ldquo;Dealer Plates&rdquo; on the album</a>
+    </p>
+  </main>
+
+  <div class="wprev" id="appPrev" hidden role="dialog" aria-modal="true" aria-labelledby="appPrevTitle">
+    <div class="wprev__card" id="appPrevCard"></div>
+  </div>
+
+  <!-- THE BAR -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="whip.html" data-appnav="sites">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="14" r="4"/><path d="M11 11L20 2"/><path d="M17 5l2.5 2.5M14.5 7.5L17 10"/></svg>
+      <span>Whip</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script>
+  /* ============================================================
+     THE THREE APPS.
+
+     THE REGISTRY IS THE SOURCE OF TRUTH, NOT THIS PAGE. The Worker at
+     api.mccluster.org/v1/apps holds the application registry, and each
+     product's builds are rows in it. This page asks the registry which
+     builds exist and what their public URL is, then draws what it was
+     told: a build with a public_url gets a link, and a build without one
+     says it is in build. Nobody has to remember to come back here and
+     change a word on launch day.
+
+     IT FAILS OPEN. If the Worker is unreachable the three products still
+     draw from the shape below, because a page that says nothing about
+     the network is worse than a page that says the network exists and
+     the builds are not shipped yet.
+     ============================================================ */
+  (function () {
+    "use strict";
+
+    var API = "https://api.mccluster.org/v1/apps";
+    var FAMILY = "whip-equipped";
+
+    /* what each product IS -- the registry knows the builds, not the
+       job. This is the only place the jobs are written down. */
+    var PRODUCTS = [
+      {
+        key: "rider",
+        role: "The passenger side",
+        name: "Whip Equipped",
+        one: "Hail a whip, watch it come, pay in the app.",
+        does: [
+          "Request a ride and follow the car in",
+          "Fare quoted before the trip, not after",
+          "Card on file through the McCluster account",
+          "Receipts and trip history on the record",
+        ],
+      },
+      {
+        key: "driver",
+        role: "The earning side",
+        name: "Whip Equipped Driver",
+        one: "Take the trip, see the split, get paid out.",
+        does: [
+          "Go on shift and take dispatched trips",
+          "Earnings per trip with the fee shown, not buried",
+          "Payouts through the operator's own connected account",
+          "Vehicle and compliance documents in one place",
+        ],
+      },
+      {
+        key: "rentals",
+        role: "The lot",
+        name: "Whip Equipped Rentals",
+        one: "Rent from the dealership itself, by the day.",
+        does: [
+          "Book a vehicle off the lot for a day or a week",
+          "Licence and insurance checked before the keys move",
+          "Hand-off and return condition recorded with photos",
+          "The same account and the same ledger as the rides",
+        ],
+      },
+    ];
+
+    var KIND = { ios: "iOS", web: "Web" };
+
+    function esc(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    var grid = document.getElementById("appGrid");
+    var prev = document.getElementById("appPrev");
+    var card = document.getElementById("appPrevCard");
+    var lastFocus = null;
+    var BUILDS = {};
+
+    function buildsFor(key) { return BUILDS[key] || []; }
+
+    function paintGrid() {
+      grid.innerHTML = PRODUCTS.map(function (p) {
+        var b = buildsFor(p.key);
+        var plats = b.length
+          ? b.map(function (r) { return '<span class="plat">' + esc(KIND[r.kind] || r.kind) + "</span>"; }).join("")
+          : '<span class="plat">iOS</span><span class="plat">Web</span>';
+        return '<button class="app" type="button" data-app="' + esc(p.key) + '">' +
+          '<p class="app__role">' + esc(p.role) + "</p>" +
+          "<h3>" + esc(p.name) + "</h3>" +
+          '<p class="app__one">' + esc(p.one) + "</p>" +
+          '<span class="app__foot">' +
+            '<span class="plats">' + plats + "</span>" +
+            '<span class="app__open">Look inside &rarr;</span>' +
+          "</span>" +
+        "</button>";
+      }).join("");
+    }
+
+    function buildRow(r) {
+      var live = !!r.public_url;
+      return '<div class="build">' +
+        "<span><b>" + esc(KIND[r.kind] || r.kind) + "</b><br><code>" + esc(r.app_key) + "</code></span>" +
+        (live
+          ? '<a href="' + esc(r.public_url) + '" rel="noopener">Open &rarr;</a>'
+          : '<span class="status status--build">In build</span>') +
+      "</div>";
+    }
+
+    function open(key) {
+      var p = null;
+      for (var i = 0; i < PRODUCTS.length; i++) if (PRODUCTS[i].key === key) p = PRODUCTS[i];
+      if (!p) return;
+      lastFocus = document.activeElement;
+
+      var b = buildsFor(key);
+      card.innerHTML =
+        '<button class="wprev__x" type="button" data-close aria-label="Close">&times;</button>' +
+        '<p class="wk">' + esc(p.role) + "</p>" +
+        '<h2 id="appPrevTitle">' + esc(p.name) + "</h2>" +
+        '<p class="wprev__tag">' + esc(p.one) + "</p>" +
+        '<p class="wprev__k">What it does</p>' +
+        "<ul>" + p.does.map(function (d) { return "<li>" + esc(d) + "</li>"; }).join("") + "</ul>" +
+        '<p class="wprev__k">Builds in the registry</p>' +
+        '<div class="builds">' +
+          (b.length
+            ? b.map(buildRow).join("")
+            : '<div class="build"><span><b>Not answering</b><br><code>' + esc(API) +
+              '</code></span><span class="status status--gone">Registry offline</span></div>')
+        + "</div>" +
+        '<p class="wprev__k">How it signs in and settles</p>' +
+        "<ul>" +
+          "<li>Continue with McCluster &mdash; the same identity as this site, no second account</li>" +
+          "<li>3% from the payer, 3% from the receiver; card processing is separate</li>" +
+          "<li>Money moves through the operator&rsquo;s own connected account</li>" +
+        "</ul>" +
+        '<p class="wprev__note">The builds above are read live from the application registry on ' +
+          '<a href="https://api.mccluster.org/health" rel="noopener">api.mccluster.org</a>. ' +
+          'The moment one carries a public address, this panel links to it.</p>';
+
+      prev.hidden = false;
+      document.body.style.overflow = "hidden";
+      var x = card.querySelector("[data-close]");
+      if (x) x.focus();
+    }
+
+    function close() {
+      prev.hidden = true;
+      document.body.style.overflow = "";
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+
+    grid.addEventListener("click", function (e) {
+      var t = e.target.closest ? e.target.closest("[data-app]") : null;
+      if (t) open(t.getAttribute("data-app"));
+    });
+    prev.addEventListener("click", function (e) {
+      if (e.target === prev || (e.target.closest && e.target.closest("[data-close]"))) close();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !prev.hidden) close();
+    });
+
+    /* draw first, then improve. The registry is an enhancement, not a
+       gate: the cards are on screen before the request is answered. */
+    paintGrid();
+
+    fetch(API, { cache: "no-cache" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var rows = (d && d.apps) || [];
+        rows.forEach(function (r) {
+          if (r.product_family !== FAMILY) return;
+          var m = /^whip-([a-z]+)-/.exec(r.app_key || "");
+          if (!m) return;
+          (BUILDS[m[1]] = BUILDS[m[1]] || []).push(r);
+        });
+        /* the registry returns rows in insertion order, which put Web
+           before iOS on two products and after it on the third. Order is
+           not information here, so it is fixed. */
+        var RANK = { ios: 0, web: 1 };
+        Object.keys(BUILDS).forEach(function (k) {
+          BUILDS[k].sort(function (a, b) {
+            return (RANK[a.kind] == null ? 9 : RANK[a.kind]) - (RANK[b.kind] == null ? 9 : RANK[b.kind]);
+          });
+        });
+        paintGrid();
+      })
+      .catch(function () {});
+  })();
+  </script>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>
