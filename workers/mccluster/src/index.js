@@ -1,4 +1,5 @@
 import { allowedOrigins, corsHeaders, fail, logEvent, reply } from './lib/http.js';
+import whip from './whip/identity-gateway.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -190,8 +191,17 @@ export default {
         });
       }
 
+      /* THE WHIP APPS TALK HERE.
+
+         This used to answer every call from Rider, Driver and Rentals
+         with a 503 telling whoever read it to put the handlers in
+         workers/mccluster/src/whip/. Three finished applications were
+         shipping requests at that note. The handlers are in that folder
+         now, and identity-gateway is the outermost layer of the chain:
+         identity gates, then ownership checks, then driver and ride
+         transitions, then the auth proxy, then rides and rentals. */
       if (path === '/api' || path.startsWith('/api/')) {
-        return fail(request, env, 'Whip product routes belong on Worker mccluster. Put handlers in workers/mccluster/src/whip/.', 503);
+        return whip.fetch(request, env);
       }
 
       return fail(request, env, 'Not found', 404);
