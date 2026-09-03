@@ -120,8 +120,11 @@ html[data-theme="light"] .we-hero__in {
   background: linear-gradient(180deg, rgba(247,244,239,.6), rgba(247,244,239,.96) 62%); }
 
 .we-id { display: flex; align-items: center; gap: .7rem; margin: 0 0 1.1rem; }
-.we-id__tile { width: 3.4rem; height: 3.4rem; border-radius: .95rem; flex: none;
-  box-shadow: 0 8px 22px -10px rgba(0,0,0,.85), inset 0 0 0 1px var(--edge); }
+.we-id__tile { width: 3.1rem; height: 3.42rem; flex: none; object-fit: contain;
+  content: url("../assets/img/we-icon-dark.png");
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,.55)); }
+html[data-theme="light"] .we-id__tile { content: url("../assets/img/we-icon.png");
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,.22)); }
 .we-id__names b { display: block; font: 800 1.02rem var(--ui, "Manrope", system-ui, sans-serif);
   color: var(--cream); line-height: 1.2; }
 .we-id__names small { display: block; font: 600 .74rem var(--ui, "Manrope", system-ui, sans-serif);
@@ -256,8 +259,8 @@ html[data-theme="light"] .we-note.is-bad { color: #9a5a10; }
 .we-foot { margin: 2.6rem 0 0; padding: 1.5rem 1.25rem 0;
   box-shadow: inset 0 1px 0 var(--edge); }
 .we-foot__logo { height: 1.7rem; width: auto; display: block; margin: 0 0 .8rem;
-  content: url("../assets/img/we-logo-dark.webp"); }
-html[data-theme="light"] .we-foot__logo { content: url("../assets/img/we-logo.webp"); }
+  content: url("../assets/img/we-logo-dark.png"); }
+html[data-theme="light"] .we-foot__logo { content: url("../assets/img/we-logo.png"); }
 .we-foot p { margin: 0 0 .7rem; font: 600 .76rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
   color: var(--cream-dim); max-width: 40ch; }
 .we-foot__links { display: flex; flex-wrap: wrap; gap: .9rem; }
