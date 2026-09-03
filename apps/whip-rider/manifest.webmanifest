@@ -1,0 +1,20 @@
+{
+  "name": "Whip Equipped — In This Together",
+  "short_name": "WE",
+  "description": "Rideshare built for us. Market-rate rider pricing with operator-first economics.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "orientation": "portrait-primary",
+  "categories": ["travel", "navigation", "business"],
+  "icons": [
+    {
+      "src": "assets/we-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

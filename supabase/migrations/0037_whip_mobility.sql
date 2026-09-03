@@ -318,10 +318,10 @@ insert into public.rental_vehicles (id, tenant_id, name, category, operator_name
 select v.id, t.id, v.name, v.category, v.operator_name, v.location_label, v.daily_rate_cents, v.rating, v.rental_count, v.seats, v.transmission, v.fuel_type, v.color_hex
 from public.tenants t
 cross join (values
-  ('we-rental-standard','Toyota Camry 2025','economy','WE Midtown Fleet','Midtown · 0.8 mi',4400,4.96,218,5,'Automatic','Gas','#d7d7d5'),
-  ('we-rental-suv','Toyota Highlander 2025','suv','WE Local Partner','Downtown · 1.4 mi',7200,4.98,146,7,'Automatic','Hybrid','#d0c2ad'),
-  ('we-rental-black','Mercedes-Benz E-Class','luxury','WE Black Partner','Business District · 2.1 mi',11800,5.00,91,5,'Automatic','Gas','#171719'),
-  ('we-rental-ev','Tesla Model 3 Long Range','ev','WE Electric Fleet','Central Station · 2.7 mi',8300,4.95,173,5,'Single-speed','EV','#e9eeee')
+  ('we-rental-standard','Toyota Camry 2025','economy','Whip Equipped Lot','Acworth, GA lot',4400,4.96,218,5,'Automatic','Gas','#d7d7d5'),
+  ('we-rental-suv','Toyota Highlander 2025','suv','Whip Equipped Lot','Acworth, GA lot',7200,4.98,146,7,'Automatic','Hybrid','#d0c2ad'),
+  ('we-rental-black','Mercedes-Benz E-Class','luxury','Whip Equipped Lot','Acworth, GA lot',11800,5.00,91,5,'Automatic','Gas','#171719'),
+  ('we-rental-ev','Tesla Model 3 Long Range','ev','Whip Equipped Lot','Acworth, GA lot',8300,4.95,173,5,'Single-speed','EV','#e9eeee')
 ) as v(id,name,category,operator_name,location_label,daily_rate_cents,rating,rental_count,seats,transmission,fuel_type,color_hex)
 where t.slug = 'whip-equipped'
 on conflict (id) do update set

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="description" content="Whip Equipped Rentals — local cars, transparent pricing, operator-owned economics." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WE Rentals" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/we-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/we-icon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Whip Equipped Rentals — In This Together</title>
+</head>
+<body>
+  <div id="splash" class="splash">
+    <div class="brand-lockup splash-lockup">
+      <img src="assets/we-icon.svg" alt="" />
+      <div><strong>WE</strong><small>RENTALS · IN THIS TOGETHER</small></div>
+    </div>
+    <p>Pick the whip. Keep the freedom.</p>
+  </div>
+
+  <div id="app" class="app-shell">
+    <header class="app-header">
+      <button id="brandButton" class="brand-button" aria-label="Brand settings">
+        <img src="assets/we-icon.svg" alt="Whip Equipped" id="brandIcon" />
+        <span><strong id="brandName">Whip Equipped</strong><small id="brandSubline">RENTALS · IN THIS TOGETHER</small></span>
+      </button>
+      <button class="round-btn" id="profileButton">MC</button>
+    </header>
+
+    <main>
+      <section id="discoverView" class="view active">
+        <div class="hero">
+          <span class="eyebrow">WHIP EQUIPPED RENTALS</span>
+          <h1>Drive it yourself.</h1>
+          <p>Nearby vehicles from local operators with upfront pricing and clear terms.</p>
+          <button id="searchBar" class="search-bar">
+            <span>⌖</span>
+            <span><strong>Where do you need a car?</strong><small>Current area · Change location</small></span>
+            <b>›</b>
+          </button>
+          <div class="date-row">
+            <button id="startDateBtn"><small>Pick up</small><strong id="startDateLabel">Tomorrow · 10:00 AM</strong></button>
+            <span>→</span>
+            <button id="endDateBtn"><small>Return</small><strong id="endDateLabel">+2 days · 10:00 AM</strong></button>
+          </div>
+        </div>
+
+        <div class="filter-row">
+          <button class="filter active" data-filter="all">All</button>
+          <button class="filter" data-filter="economy">Value</button>
+          <button class="filter" data-filter="suv">SUV</button>
+          <button class="filter" data-filter="luxury">Black</button>
+          <button class="filter" data-filter="ev">EV</button>
+        </div>
+
+        <div class="section-title"><div><span class="eyebrow">AVAILABLE NEARBY</span><h2>Choose your whip</h2></div><button id="mapToggle">Map</button></div>
+        <div id="vehicleGrid" class="vehicle-grid"></div>
+      </section>
+
+      <section id="detailsView" class="view">
+        <div id="vehicleHero" class="vehicle-hero">
+          <button class="floating-back" data-back="discover">←</button>
+          <button class="floating-like" id="favoriteBtn">♡</button>
+          <div class="hero-car" id="heroCar"></div>
+          <span class="photo-count">1 of 6</span>
+        </div>
+        <div class="detail-body">
+          <span class="eyebrow" id="detailOperator">LOCAL WE OPERATOR</span>
+          <h2 id="detailName">Vehicle</h2>
+          <div class="rating-line"><span id="detailRating">★ 4.9</span><span>·</span><span id="detailTrips">120 rentals</span></div>
+
+          <div class="trip-card">
+            <div><small>Trip dates</small><strong id="detailDates">Tomorrow → +2 days</strong></div>
+            <button>Change</button>
+            <div><small>Pickup & return</small><strong id="detailLocation">Downtown</strong></div>
+            <button>Change</button>
+          </div>
+
+          <div class="feature-strip" id="featureStrip"></div>
+
+          <div class="info-block">
+            <h3>What’s included</h3>
+            <p>✓ Upfront daily rate</p>
+            <p>✓ 200 miles included per day</p>
+            <p>✓ Roadside support during the rental</p>
+            <p>✓ Digital pickup and return checklist</p>
+          </div>
+
+          <div class="info-block">
+            <h3>Rules of the road</h3>
+            <p>No smoking · Return reasonably clean · Refuel or recharge to the agreed level · No unauthorized drivers.</p>
+          </div>
+        </div>
+        <div class="sticky-price"><div><strong id="detailDaily">$—/day</strong><small id="detailEstimate">$— est. total</small></div><button id="continueCheckout" class="primary">Continue</button></div>
+      </section>
+
+      <section id="checkoutView" class="view sheet-view">
+        <div class="sheet-head"><button data-back="details">←</button><div><span class="eyebrow">CHECKOUT</span><h2>Review your rental</h2></div></div>
+        <div class="checkout-vehicle"><div class="mini-car" id="checkoutCar"></div><div><strong id="checkoutName">Vehicle</strong><small id="checkoutDates">Dates</small></div></div>
+
+        <div class="price-breakdown">
+          <div><span id="baseRateLabel">Daily rate × 2 days</span><strong id="baseRateValue">$—</strong></div>
+          <div><span>Protection</span><strong id="protectionValue">$18.00</strong></div>
+          <div><span>Estimated taxes & fees</span><strong id="taxValue">$—</strong></div>
+          <div class="total"><span>Total</span><strong id="checkoutTotal">$—</strong></div>
+        </div>
+
+        <div class="choice-list">
+          <button id="extrasButton"><span><small>Extras</small><strong id="extrasLabel">None selected</strong></span><b>›</b></button>
+          <button id="protectionButton"><span><small>Protection plan</small><strong>Standard · $9/day</strong></span><b>›</b></button>
+          <button id="paymentMethod"><span><small>Secure payment</small><strong>Card · Apple Pay · supported wallets</strong></span><b>›</b></button>
+        </div>
+
+        <div class="trust-card"><strong>Free cancellation window</strong><p>Cancel before the listed cutoff to avoid a rental charge. Exact policy belongs to the operator and jurisdiction.</p></div>
+        <div class="trust-card"><strong>Operator-owned checkout</strong><p>Your displayed total is the customer price. Any WE platform fee is settled from the operator side and is not added as a separate renter surcharge.</p></div>
+        <button id="bookButton" class="primary full">Continue to secure payment</button>
+        <small id="paymentStatus" class="payment-status" hidden></small>
+      </section>
+
+      <section id="extrasView" class="view sheet-view">
+        <div class="sheet-head"><button data-back="checkout">×</button><div><span class="eyebrow">OPTIONAL</span><h2>Add extras</h2></div></div>
+        <div class="extras-list">
+          <label><div><strong>Prepaid refuel</strong><small>Return without topping off</small></div><span>$55</span><input type="checkbox" data-extra="refuel" data-price="55"></label>
+          <label><div><strong>Phone mount</strong><small>Mounted and ready at pickup</small></div><span>$8</span><input type="checkbox" data-extra="mount" data-price="8"></label>
+          <label><div><strong>Child seat</strong><small>Operator-provided child seat</small></div><span>$14</span><input type="checkbox" data-extra="seat" data-price="14"></label>
+        </div>
+        <button id="saveExtras" class="primary full">Save extras</button>
+      </section>
+
+      <section id="bookedView" class="view sheet-view">
+        <div class="success-mark">✓</div>
+        <span class="eyebrow">PAID · RESERVATION CONFIRMED</span>
+        <h2>Your whip is booked.</h2>
+        <p class="lead">Complete check-in before pickup so the operator can release the vehicle.</p>
+        <div class="reservation-card">
+          <div class="mini-car" id="bookedCar"></div>
+          <div><strong id="bookedName">Vehicle</strong><small id="bookedDates">Dates</small><small id="bookedLocation">Location</small></div>
+        </div>
+        <div class="checklist">
+          <button id="licenseCheck"><span>1</span><div><strong>Verify driver’s license</strong><small id="licenseStatus">Secure ID + selfie verification required</small></div><b>›</b></button>
+          <button id="photosCheck"><span>2</span><div><strong>Trip photos</strong><small id="photosStatus">Document vehicle condition</small></div><b>›</b></button>
+          <button id="pickupCheck"><span>3</span><div><strong>Pickup instructions</strong><small id="pickupStatus">Unlock after check-in</small></div><b>›</b></button>
+        </div>
+        <button id="startRental" class="primary full" disabled>Start rental</button>
+      </section>
+
+      <section id="activeView" class="view sheet-view">
+        <div class="active-rental-head">
+          <span class="status-pill">ACTIVE RENTAL</span>
+          <h2 id="activeName">Your rental</h2>
+          <p id="activeDue">Return due —</p>
+        </div>
+        <div class="active-car-card"><div class="hero-car small" id="activeCar"></div><div class="rental-stats"><div><small>Miles included</small><strong>400</strong></div><div><small>Miles used</small><strong id="milesUsed">42</strong></div><div><small>Fuel / charge</small><strong>82%</strong></div></div></div>
+        <div class="choice-list">
+          <button><span><small>Pickup / return location</small><strong id="activeLocation">Downtown</strong></span><b>⌖</b></button>
+          <button><span><small>Operator</small><strong id="activeOperator">WE Local Partner</strong></span><b>☎</b></button>
+          <button><span><small>Protection</small><strong>Standard</strong></span><b>›</b></button>
+        </div>
+        <div class="return-card"><span class="eyebrow">RETURN CHECKLIST</span><h3>Document it. Lock it. Leave it right.</h3><p>Take return photos, confirm fuel/charge, report damage if any, and return the vehicle to the agreed location.</p></div>
+        <button id="beginReturn" class="primary full">Begin return</button>
+      </section>
+
+      <section id="returnView" class="view sheet-view">
+        <div class="sheet-head"><button data-back="active">←</button><div><span class="eyebrow">RETURN</span><h2>Close out the rental</h2></div></div>
+        <div class="return-steps">
+          <label><input type="checkbox" class="return-check"><span>Parked at the agreed return location</span></label>
+          <label><input type="checkbox" class="return-check"><span>Fuel / charge matches the agreement</span></label>
+          <label><input type="checkbox" class="return-check"><span>Interior and exterior photos captured</span></label>
+          <label><input type="checkbox" class="return-check"><span>Keys / access method returned</span></label>
+        </div>
+        <button id="completeReturn" class="primary full" disabled>Complete return</button>
+      </section>
+
+      <section id="completeView" class="view sheet-view">
+        <div class="success-mark">✓</div>
+        <span class="eyebrow">RENTAL COMPLETE</span>
+        <h2>That whip is back.</h2>
+        <p class="lead">Your receipt and final condition record are saved to Trips.</p>
+        <div class="receipt"><div><span>Total paid</span><strong id="finalTotal">$—</strong></div><div><span>Payment</span><strong id="finalPaymentStatus">Paid securely</strong></div><div><span>Vehicle</span><strong id="finalVehicle">—</strong></div></div>
+        <p class="rate-copy">Rate the vehicle and operator</p>
+        <div class="stars" id="stars"><button>★</button><button>★</button><button>★</button><button>★</button><button>★</button></div>
+        <button id="bookAnother" class="primary full">Find another rental</button>
+      </section>
+
+      <section id="tripsView" class="view sheet-view">
+        <span class="eyebrow">YOUR RENTALS</span><h2>Trips</h2>
+        <div id="tripHistory" class="trip-history"><div class="empty-state"><strong>No completed rentals yet.</strong><p>Your reservations and receipts will live here.</p></div></div>
+      </section>
+    </main>
+
+    <aside id="brandDrawer" class="brand-drawer">
+      <div class="drawer-banner"><div class="brand-lockup"><img src="assets/we-icon.svg" alt=""><div><strong>WE</strong><small>IN THIS TOGETHER</small></div></div><button id="closeBrand">×</button></div>
+      <span class="eyebrow">TENANT PREVIEW</span><h2>Rental branding</h2>
+      <p>WE is the network default. White-label operators can replace the customer-facing identity while using the same rental backend.</p>
+      <label>Brand name<input id="brandInput" value="Whip Equipped"></label>
+      <label>Accent<input id="accentInput" type="color" value="#F04449"></label>
+      <label class="toggle-row"><span><strong>White label preview</strong><small>0% WE platform cut when subscribed</small></span><input id="whiteLabelToggle" type="checkbox"></label>
+      <button id="applyBrand" class="primary full">Apply preview</button>
+    </aside>
+
+    <nav class="bottom-nav">
+      <button class="active" data-nav="discover"><span>⌕</span><small>Discover</small></button>
+      <button data-nav="trips"><span>▣</span><small>Trips</small></button>
+      <button class="we-center" data-nav="discover"><img src="assets/we-icon.svg" alt=""></button>
+      <button><span>♡</span><small>Saved</small></button>
+      <button id="moreNav"><span>⋯</span><small>More</small></button>
+    </nav>
+  </div>
+  <script src="app.js"></script>
+  <script src="identity-client.js"></script>
+</body>
+</html>
