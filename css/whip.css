@@ -93,141 +93,201 @@ html[data-brand="whip"] .appbar__tab.is-active {
 }
 
 /* ============================================================
-   THE PAGE.
+   THE LANDING PAGE — mobile first.
+
+   Everything in this block is written for a phone. There is one
+   min-width block at the foot and it only adds room: a wider column, a
+   three-across product row, a two-column hero. Nothing below is undone
+   later, so reading this top to bottom is reading the phone.
    ============================================================ */
 
-html[data-brand="whip"] body { background: var(--ink); }
+.we-body { background: var(--ink); }
+.we-body.we-locked { overflow: hidden; }
 
-.st {
-  max-width: 64rem;
-  margin: 0 auto;
-  padding: clamp(4.6rem, 10vh, 7rem) clamp(1.1rem, 4vw, 2rem) 9rem;
-}
+.we { max-width: 34rem; margin: 0 auto;
+  padding: 0 0 calc(6.5rem + env(safe-area-inset-bottom, 0px)); }
 
-/* ---------- the head ---------- */
-.wtop { position: relative; border-radius: 16px; overflow: hidden;
-  box-shadow: inset 0 0 0 1px var(--edge); }
-.wtop__shot { position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; opacity: .34; }
-html[data-theme="light"] .wtop__shot { opacity: .16; }
-.wtop__in { position: relative; padding: clamp(1.5rem, 5vw, 2.6rem);
-  background: linear-gradient(180deg, rgba(6,5,5,.5), rgba(6,5,5,.94) 74%); }
-html[data-theme="light"] .wtop__in {
-  background: linear-gradient(180deg, rgba(247,244,239,.66), rgba(247,244,239,.95) 74%); }
+/* ---------- the hero: a store listing, not a billboard ---------- */
+.we-hero { position: relative; overflow: hidden;
+  border-radius: 0 0 26px 26px; box-shadow: inset 0 -1px 0 var(--edge); }
+.we-hero__bg { position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; opacity: .3; }
+html[data-theme="light"] .we-hero__bg { opacity: .14; }
+.we-hero__in { position: relative;
+  padding: calc(3.6rem + env(safe-area-inset-top, 0px)) 1.25rem 1.6rem;
+  background: linear-gradient(180deg, rgba(6,5,5,.42), rgba(6,5,5,.95) 62%); }
+html[data-theme="light"] .we-hero__in {
+  background: linear-gradient(180deg, rgba(247,244,239,.6), rgba(247,244,239,.96) 62%); }
 
-/* THE LOCKUP TURNS WITH THE COAT. The wordmark is black, which is
-   correct on paper and invisible on the tile's own ground, so the dark
-   coat gets a cut with the type knocked to cream and the wrench left
-   exactly as it is. Nobody's logo is recoloured; one of them is
-   reversed, which is what a reversed lockup is for. */
-.wtop__logo { height: 2.15rem; width: auto; display: block; margin: 0 0 1.15rem;
-  content: url("../assets/img/we-logo-dark.webp"); }
-html[data-theme="light"] .wtop__logo { content: url("../assets/img/we-logo.webp"); }
+.we-id { display: flex; align-items: center; gap: .7rem; margin: 0 0 1.1rem; }
+.we-id__tile { width: 3.4rem; height: 3.4rem; border-radius: .95rem; flex: none;
+  box-shadow: 0 8px 22px -10px rgba(0,0,0,.85), inset 0 0 0 1px var(--edge); }
+.we-id__names b { display: block; font: 800 1.02rem var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream); line-height: 1.2; }
+.we-id__names small { display: block; font: 600 .74rem var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); }
 
-.wk { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .22em;
-  text-transform: uppercase; color: var(--ruby-hot); margin: 0 0 .55rem; }
-.wtop h1 { font-family: var(--sig); text-transform: uppercase; line-height: .92;
-  font-size: clamp(2.2rem, 8.4vw, 3.9rem); margin: 0 0 .8rem; color: var(--cream);
-  text-wrap: balance; }
-.wtop h1 em { font-style: normal;
-  background: linear-gradient(96deg, var(--we-amber), var(--we-red) 72%);
+.we-pill { display: inline-flex; align-items: center; gap: .42rem; margin: 0 0 .9rem;
+  padding: .34rem .68rem .34rem .55rem; border-radius: 999px;
+  background: rgba(243,171,107,.13); box-shadow: inset 0 0 0 1px rgba(243,171,107,.42);
+  font: 800 .64rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .14em;
+  text-transform: uppercase; color: var(--we-amber); }
+html[data-theme="light"] .we-pill { color: #9a5a10;
+  background: rgba(217,102,47,.1); box-shadow: inset 0 0 0 1px rgba(217,102,47,.34); }
+.we-pill i { width: .42rem; height: .42rem; border-radius: 50%; background: currentColor;
+  animation: wePulse 2.1s infinite ease-in-out; }
+@keyframes wePulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+
+.we h1 { font-family: var(--sig); font-weight: var(--we-sig-weight);
+  letter-spacing: var(--we-sig-track); text-transform: uppercase;
+  font-size: clamp(2.5rem, 13vw, 3.4rem); line-height: .96; margin: 0 0 .75rem;
+  color: var(--cream); }
+.we h1 em { font-style: normal;
+  background: linear-gradient(96deg, var(--we-amber), var(--we-red) 74%);
   -webkit-background-clip: text; background-clip: text; color: transparent; }
-html[data-theme="light"] .wtop h1 em {
-  background: linear-gradient(96deg, #d9662f, #a8331a 72%);
+html[data-theme="light"] .we h1 em {
+  background: linear-gradient(96deg, #d9662f, #a8331a 74%);
   -webkit-background-clip: text; background-clip: text; color: transparent; }
-.wtop__lede { font: 600 .98rem/1.6 var(--ui, "Manrope", system-ui, sans-serif);
-  color: var(--cream-dim); margin: 0; max-width: 46ch; }
-.wtop__facts { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1.2rem 0 0; padding: 0;
-  list-style: none; }
-.wtop__facts li { font: 700 .7rem var(--ui, "Manrope", system-ui, sans-serif);
-  color: var(--cream-dim); padding: .38rem .6rem; border-radius: 6px;
-  box-shadow: inset 0 0 0 1px var(--edge); }
 
-/* ---------- the three apps ---------- */
-.wsec { margin-top: clamp(2rem, 6vh, 3rem); }
-.wsec__rule { height: 1px; background: var(--edge); margin: .55rem 0 1.1rem; }
+.we-lede { font: 600 .95rem/1.6 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: 0 0 1.25rem; max-width: 34ch; }
 
-.apps { display: grid; gap: .7rem; align-items: stretch; }
-@media (min-width: 52rem) { .apps { grid-template-columns: repeat(3, 1fr); } }
+.we-cta { display: block; text-align: center; text-decoration: none;
+  padding: .95rem 1.1rem; border-radius: 12px; background: var(--ruby-hot); color: #fff;
+  font: 800 .92rem var(--ui, "Manrope", system-ui, sans-serif);
+  transition: filter .15s ease; }
+.we-cta:hover, .we-cta:focus-visible { filter: brightness(1.09); }
 
-.app { display: flex; flex-direction: column; text-align: left; width: 100%;
-  -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+.we-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  list-style: none; margin: 1.25rem 0 0; padding: 0;
+  background: var(--edge); box-shadow: 0 0 0 1px var(--edge); border-radius: 10px;
+  overflow: hidden; }
+.we-facts li { background: var(--ink); padding: .7rem .5rem; text-align: center; }
+html[data-theme="light"] .we-facts li { background: var(--ink); }
+.we-facts b { display: block; font-family: var(--sig); font-weight: var(--we-sig-weight);
+  font-size: 1.35rem; line-height: 1; color: var(--cream); }
+.we-facts span { font: 700 .62rem var(--ui, "Manrope", system-ui, sans-serif);
+  letter-spacing: .13em; text-transform: uppercase; color: var(--cream-dim); }
+
+/* ---------- sections ---------- */
+.we-sec { padding: 2.1rem 1.25rem 0; }
+.we-k { font: 800 .6rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .21em;
+  text-transform: uppercase; color: var(--ruby-hot); margin: 0 0 .45rem; }
+.we-h2 { font-family: var(--sig); font-weight: var(--we-sig-weight);
+  letter-spacing: var(--we-sig-track); text-transform: uppercase;
+  font-size: clamp(1.6rem, 7vw, 2.05rem); line-height: 1; margin: 0 0 .5rem;
+  color: var(--cream); text-wrap: balance; }
+.we-sub { font: 600 .88rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); margin: 0 0 1.15rem; max-width: 38ch; }
+
+/* ---------- the three products, as rows a thumb can hit ---------- */
+.we-list { display: grid; gap: .6rem; }
+.we-row { display: flex; align-items: flex-start; gap: .85rem; width: 100%;
+  text-align: left; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
   background: var(--glass-lo); box-shadow: inset 0 0 0 1px var(--edge);
-  border-radius: 14px; padding: clamp(1.15rem, 3.4vw, 1.4rem);
-  color: inherit; font: inherit; transition: box-shadow .16s ease, background .16s ease; }
-.app:hover, .app:focus-visible { background: var(--glass-hi);
+  border-radius: 16px; padding: 1rem; color: inherit; font: inherit;
+  transition: background .15s ease, box-shadow .15s ease; }
+.we-row:hover, .we-row:focus-visible { background: var(--glass-hi);
   box-shadow: inset 0 0 0 1px var(--ruby-hot); outline: none; }
-.app__role { font: 800 .6rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .19em;
-  text-transform: uppercase; color: var(--ruby-hot); margin: 0 0 .5rem; }
-/* the card carries the one word that separates the three; -0.028em is
-   right on a 4rem headline and closes the word gap on a short one */
-.app h3 { font-family: var(--sig); text-transform: uppercase; line-height: 1;
-  font-size: clamp(1.6rem, 5vw, 2.05rem); margin: 0 0 .5rem; color: var(--cream);
-  letter-spacing: -0.012em; }
-.app__one { font: 600 .85rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
-  color: var(--cream-dim); margin: 0 0 1rem; }
-.app__foot { margin-top: auto; padding-top: .95rem; box-shadow: inset 0 1px 0 var(--edge);
-  display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
-.plats { display: flex; gap: .3rem; }
-.plat { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .1em;
-  text-transform: uppercase; color: var(--cream-dim); padding: .28rem .45rem;
+.we-row:active { transform: translateY(1px); }
+
+.we-row__tile { width: 3rem; height: 3rem; flex: none; border-radius: .85rem;
+  display: grid; place-items: center; background: var(--metal);
+  box-shadow: 0 8px 20px -12px rgba(0,0,0,.9); }
+.we-row__tile svg { width: 1.5rem; height: 1.5rem; fill: none; stroke: #fff;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+.we-row__body { flex: 1; min-width: 0; }
+.we-row__top { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+.we-row__top b { font-family: var(--sig); font-weight: var(--we-sig-weight);
+  letter-spacing: -.01em; text-transform: uppercase; font-size: 1.3rem; line-height: 1;
+  color: var(--cream); }
+.we-row__state { font-style: normal; font: 800 .58rem var(--ui, "Manrope", system-ui, sans-serif);
+  letter-spacing: .13em; text-transform: uppercase; color: var(--we-amber);
+  padding: .24rem .45rem; border-radius: 5px;
+  box-shadow: inset 0 0 0 1px rgba(243,171,107,.4); white-space: nowrap; }
+html[data-theme="light"] .we-row__state { color: #9a5a10;
+  box-shadow: inset 0 0 0 1px rgba(217,102,47,.34); }
+.we-row__state.is-live { color: #5fae7d; box-shadow: inset 0 0 0 1px rgba(95,174,125,.45); }
+.we-row__body small { display: block; margin: .3rem 0 .6rem;
+  font: 600 .81rem/1.45 var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
+
+.we-chips { display: flex; align-items: center; gap: .3rem; }
+.we-chip { font: 800 .6rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--cream-dim); padding: .24rem .42rem;
   border-radius: 5px; box-shadow: inset 0 0 0 1px var(--edge); }
-.app__open { font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif);
+.we-row__go { margin-left: auto; font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif);
   color: var(--ruby-hot); white-space: nowrap; }
 
-/* ---------- the preview ---------- */
-.wprev { position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center;
-  background: rgba(4,3,3,.78); backdrop-filter: blur(6px); padding: 0; }
-html[data-theme="light"] .wprev { background: rgba(60,48,42,.42); }
-.wprev[hidden] { display: none; }
-.wprev__card { width: min(30rem, 100%); max-height: 88vh; overflow-y: auto;
-  background: var(--ink-2); box-shadow: inset 0 0 0 1px var(--edge);
-  border-radius: 18px 18px 0 0; padding: clamp(1.3rem, 4vw, 2rem);
-  padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); }
-@media (min-width: 44rem) {
-  .wprev { place-items: center; padding: 1.5rem; }
-  .wprev__card { border-radius: 18px; }
-}
-.wprev__x { float: right; -webkit-appearance: none; appearance: none; border: 0;
-  background: var(--glass-hi); color: var(--cream); cursor: pointer;
-  width: 2.1rem; height: 2.1rem; border-radius: 50%; font-size: 1.1rem; line-height: 1; }
-.wprev h2 { font-family: var(--sig); text-transform: uppercase; line-height: 1;
-  font-size: clamp(1.6rem, 6vw, 2.2rem); margin: .2rem 0 .5rem; color: var(--cream); }
-.wprev__tag { font: 600 .95rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
-  color: var(--cream-dim); margin: 0 0 1.2rem; }
-.wprev__k { font: 800 .58rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .2em;
-  text-transform: uppercase; color: var(--cream-dim); margin: 1.3rem 0 .6rem;
-  padding-top: 1rem; box-shadow: inset 0 1px 0 var(--edge); }
-.wprev ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .38rem; }
-.wprev ul li { position: relative; padding-left: 1.05rem;
-  font: 600 .84rem/1.5 var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-.wprev ul li::before { content: ""; position: absolute; left: 0; top: .55em;
-  width: .3rem; height: .3rem; border-radius: 50%; background: var(--ruby-hot); }
-.builds { display: grid; gap: .4rem; }
-.build { display: flex; align-items: center; justify-content: space-between; gap: .7rem;
-  padding: .7rem .85rem; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--edge); }
-.build b { font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream); }
-.build code { font: 700 .72rem ui-monospace, Menlo, monospace; color: var(--cream-dim); }
-.build a { font: 800 .74rem var(--ui, "Manrope", system-ui, sans-serif);
-  color: var(--ruby-hot); text-decoration: none; white-space: nowrap; }
-.status { font: 800 .62rem var(--ui, "Manrope", system-ui, sans-serif); letter-spacing: .09em;
-  text-transform: uppercase; white-space: nowrap; }
-.status--build { color: var(--we-amber); }
-html[data-theme="light"] .status--build { color: #9a6212; }
-.status--live { color: #5fae7d; }
-.status--gone { color: var(--cream-dim); }
-.wprev__note { font: 600 .78rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
-  color: var(--cream-dim); margin: 1.1rem 0 0; }
-.wprev__note a { color: var(--ruby-hot); font-weight: 800; text-decoration: none; }
+/* ---------- how it works ---------- */
+.we-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+.we-steps li { display: flex; gap: .8rem; padding: .95rem 1rem; border-radius: 14px;
+  background: var(--glass-lo); box-shadow: inset 0 0 0 1px var(--edge); }
+.we-steps__n { width: 1.6rem; height: 1.6rem; flex: none; border-radius: 50%;
+  display: grid; place-items: center; background: var(--metal); color: #fff;
+  font: 800 .78rem var(--ui, "Manrope", system-ui, sans-serif); }
+.we-steps li > span:last-child { font: 600 .82rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); }
+.we-steps b { display: block; font-weight: 800; color: var(--cream); margin-bottom: .15rem;
+  font-size: .88rem; }
 
-.wout { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center;
-  margin: clamp(1.8rem, 5vh, 2.6rem) 0 calc(3.5rem + env(safe-area-inset-bottom, 0px));
-  font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-.wout a { color: var(--ruby-hot); text-decoration: none; }
-.wout span { opacity: .45; }
+/* ---------- launching soon ---------- */
+.we-soon { padding-top: 2.4rem; }
+.we-form { display: grid; gap: .5rem; }
+.we-input { -webkit-appearance: none; appearance: none; width: 100%;
+  padding: .92rem 1rem; border: 0; border-radius: 12px; background: var(--glass-lo);
+  box-shadow: inset 0 0 0 1px var(--edge); color: var(--cream);
+  font: 600 .95rem var(--ui, "Manrope", system-ui, sans-serif); }
+.we-input::placeholder { color: var(--cream-dim); opacity: .7; }
+.we-input:focus { outline: none; box-shadow: inset 0 0 0 1px var(--ruby-hot); }
+.we-go { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  padding: .92rem 1.1rem; border-radius: 12px; background: var(--ruby-hot); color: #fff;
+  font: 800 .92rem var(--ui, "Manrope", system-ui, sans-serif); transition: filter .15s ease; }
+.we-go:hover:not(:disabled), .we-go:focus-visible:not(:disabled) { filter: brightness(1.09); }
+.we-go:disabled { opacity: .5; cursor: not-allowed; }
+.we-note { margin: .65rem 0 0; font: 600 .76rem/1.5 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); }
+.we-note.is-good { color: #5fae7d; }
+.we-note.is-bad { color: var(--we-amber); }
+html[data-theme="light"] .we-note.is-bad { color: #9a5a10; }
+.we-note a { color: var(--ruby-hot); font-weight: 800; }
+
+/* ---------- foot ---------- */
+.we-foot { margin: 2.6rem 0 0; padding: 1.5rem 1.25rem 0;
+  box-shadow: inset 0 1px 0 var(--edge); }
+.we-foot__logo { height: 1.7rem; width: auto; display: block; margin: 0 0 .8rem;
+  content: url("../assets/img/we-logo-dark.webp"); }
+html[data-theme="light"] .we-foot__logo { content: url("../assets/img/we-logo.webp"); }
+.we-foot p { margin: 0 0 .7rem; font: 600 .76rem/1.55 var(--ui, "Manrope", system-ui, sans-serif);
+  color: var(--cream-dim); max-width: 40ch; }
+.we-foot__links { display: flex; flex-wrap: wrap; gap: .9rem; }
+.we-foot__links a { color: var(--ruby-hot); text-decoration: none;
+  font: 800 .78rem var(--ui, "Manrope", system-ui, sans-serif); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- room, once there is some ---------- */
+@media (min-width: 46rem) {
+  .we { max-width: 60rem; padding-bottom: 7rem; }
+  .we-hero { border-radius: 0 0 30px 30px; }
+  .we-hero__in { padding: 4.4rem 2.2rem 2.2rem; }
+  .we h1 { font-size: 4rem; }
+  .we-lede { font-size: 1.02rem; max-width: 42ch; }
+  .we-cta { display: inline-block; padding-inline: 2rem; }
+  .we-facts { max-width: 24rem; }
+  .we-sec { padding: 3rem 2.2rem 0; }
+  .we-list { grid-template-columns: repeat(3, 1fr); gap: .7rem; }
+  .we-row { flex-direction: column; }
+  .we-row__body { width: 100%; }
+  .we-steps { grid-template-columns: repeat(3, 1fr); }
+  .we-form { grid-template-columns: 1fr auto; }
+  .we-foot { padding: 1.8rem 2.2rem 0; }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .app { transition: none; }
+  .we-pill i { animation: none; opacity: .9; }
+  .we-row, .we-cta, .we-go, .we-input { transition: none; }
 }
 
 /* the panel leads with the app, so the demo gets air above the facts */
@@ -259,146 +319,31 @@ html[data-theme="light"] .status--build { color: #9a6212; }
   font: 600 .72rem/1.5 var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
 .wd__legal a { color: var(--ruby-hot); text-decoration: none; font-weight: 800; }
 
-/* ---------- shared furniture ---------- */
-.wd__bar { display: flex; align-items: center; gap: .5rem; padding: .7rem .9rem;
-  box-shadow: inset 0 -1px 0 var(--edge); }
-.wd__bar b { font: 800 .86rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream);
-  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wd__back { -webkit-appearance: none; appearance: none; border: 0; background: none;
-  color: var(--cream-dim); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 .1rem; }
-.wd__acct { width: 1.4rem; height: 1.4rem; border-radius: 50%; display: grid; place-items: center;
-  background: var(--metal); color: #fff; font: 800 .68rem var(--ui, "Manrope", system-ui, sans-serif); }
-.wd__day { font: 800 .72rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--ruby-hot);
-  font-variant-numeric: tabular-nums; }
+/* ---------- the sheet the app opens in ---------- */
+.wprev { position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center;
+  background: rgba(4,3,3,.8); backdrop-filter: blur(6px); padding: 0; }
+html[data-theme="light"] .wprev { background: rgba(60,48,42,.44); }
+.wprev[hidden] { display: none; }
+.wprev__card { width: 100%; max-height: 92vh; overflow-y: auto;
+  background: var(--ink-2); box-shadow: inset 0 0 0 1px var(--edge);
+  border-radius: 22px 22px 0 0; padding: 1.15rem 1.1rem;
+  padding-bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px)); }
+.wprev__head { display: flex; align-items: flex-start; justify-content: space-between;
+  gap: .8rem; margin: 0 0 1rem; }
+.wprev__head .we-k { margin: 0 0 .3rem; }
+.wprev h2 { font-family: var(--sig); font-weight: var(--we-sig-weight);
+  letter-spacing: var(--we-sig-track); text-transform: uppercase; line-height: 1;
+  font-size: clamp(1.5rem, 6vw, 1.9rem); margin: 0; color: var(--cream); }
+.wprev__x { flex: none; -webkit-appearance: none; appearance: none; border: 0;
+  background: var(--glass-hi); color: var(--cream); cursor: pointer;
+  width: 2.2rem; height: 2.2rem; border-radius: 50%; font-size: 1.15rem; line-height: 1; }
+.wprev__x:hover, .wprev__x:focus-visible { background: var(--ruby-hot); color: #fff; outline: none; }
 
-.wd__from { display: flex; align-items: center; gap: .45rem; padding: .7rem .9rem;
-  font: 600 .76rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-.wd__dot { width: .42rem; height: .42rem; border-radius: 50%; background: var(--ruby-hot); flex: none; }
-.wd__dot--b { background: var(--cream-dim); }
-
-.wd__list { display: grid; gap: 1px; padding: 0 .55rem; }
-.wd__row { display: flex; align-items: center; justify-content: space-between; gap: .6rem;
-  width: 100%; text-align: left; -webkit-appearance: none; appearance: none; border: 0;
-  background: var(--glass-lo); color: inherit; cursor: pointer; padding: .68rem .7rem;
-  border-radius: 10px; margin-bottom: .35rem; transition: background .14s ease; }
-.wd__row:hover, .wd__row:focus-visible { background: var(--glass-hi); outline: none; }
-.wd__row b { display: block; font: 800 .82rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream); }
-.wd__row small { display: block; font: 600 .68rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-.wd__row em { font: 800 .84rem var(--ui, "Manrope", system-ui, sans-serif); font-style: normal;
-  color: var(--cream); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.wd__row em i { font-style: normal; font-size: .68em; color: var(--cream-dim); }
-
-.wd__foot, .wd__lead { margin: auto .9rem .9rem; font: 600 .7rem/1.45 var(--ui, "Manrope", system-ui, sans-serif);
-  color: var(--cream-dim); }
-.wd__lead { margin: .8rem .9rem .2rem; }
-
-/* ---------- the route ---------- */
-.wd__map { display: block; width: 100%; height: auto; }
-.wd__mapbg { fill: var(--glass-lo); }
-.wd__grid { stroke: var(--edge); stroke-width: 1; fill: none; }
-.wd__route { fill: none; stroke: var(--ruby-hot); stroke-width: 2.4; stroke-linecap: round; opacity: .85; }
-.wd__pin { fill: var(--cream); }
-.wd__pin--a { fill: var(--ruby-hot); }
-.wd__car { fill: var(--cream); stroke: var(--ruby); stroke-width: 2.5; }
-
-/* ---------- the sheet at the bottom of a screen ---------- */
-.wd__sheet { margin-top: auto; padding: .8rem .9rem 1rem; display: grid; gap: .45rem;
-  box-shadow: inset 0 1px 0 var(--edge); }
-.wd__sheet--two { grid-template-columns: 1fr 1fr; }
-.wd__line { display: flex; justify-content: space-between; gap: .8rem;
-  font: 600 .78rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim);
-  font-variant-numeric: tabular-nums; }
-.wd__line--tot { color: var(--cream); font-weight: 800; padding-top: .45rem;
-  box-shadow: inset 0 1px 0 var(--edge); }
-.wd__go { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
-  margin-top: .35rem; padding: .78rem 1rem; border-radius: 10px; color: #fff;
-  background: var(--ruby-hot);
-  font: 800 .82rem var(--ui, "Manrope", system-ui, sans-serif); transition: filter .14s ease; }
-.wd__go:hover:not(:disabled), .wd__go:focus-visible:not(:disabled) { filter: brightness(1.09); }
-.wd__go:disabled { opacity: .45; cursor: not-allowed; }
-.wd__go--ghost { background: transparent; color: var(--cream);
-  box-shadow: inset 0 0 0 1px var(--edge); }
-.wd__src { margin: .3rem 0 0; font: 600 .66rem/1.45 var(--ui, "Manrope", system-ui, sans-serif);
-  color: var(--cream-dim); }
-.wd__src b { color: var(--ruby-hot); }
-
-/* ---------- waiting, driver card, progress ---------- */
-.wd__wait { display: grid; justify-items: center; gap: .5rem; padding: 2rem .9rem;
-  font: 700 .74rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-.wd__wait i { width: .4rem; height: .4rem; border-radius: 50%; background: var(--ruby-hot);
-  display: inline-block; margin: 0 .12rem; animation: wdPulse 1.1s infinite ease-in-out; }
-.wd__wait i:nth-child(2) { animation-delay: .16s; }
-.wd__wait i:nth-child(3) { animation-delay: .32s; }
-.wd__wait span { grid-column: 1; }
-@keyframes wdPulse { 0%,100% { opacity: .28; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
-
-.wd__who { display: flex; align-items: center; gap: .55rem; padding-bottom: .5rem; }
-.wd__av { width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center;
-  background: var(--metal); color: #fff; font: 800 .85rem var(--ui, "Manrope", system-ui, sans-serif); }
-.wd__who b { display: block; font: 800 .8rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream); }
-.wd__who small { display: block; font: 600 .68rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-
-.wd__prog { height: .3rem; border-radius: 99px; background: var(--glass-hi); overflow: hidden; }
-.wd__prog i { display: block; height: 100%; background: var(--ruby-hot); border-radius: 99px; }
-
-.wd__hero { display: grid; justify-items: center; gap: .1rem; padding: 1.9rem .9rem 1.2rem; }
-.wd__big { font-family: var(--sig); font-weight: var(--we-sig-weight, 700); letter-spacing: -.02em;
-  font-size: 2.7rem; line-height: 1; color: var(--cream); font-variant-numeric: tabular-nums; }
-.wd__hero small { font: 700 .72rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-
-.wd__done { display: grid; justify-items: center; gap: .2rem; padding: 1.6rem .9rem 1rem; }
-.wd__tick { width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center;
-  background: var(--metal); color: #fff; font-size: 1.1rem; margin-bottom: .35rem; }
-.wd__done b { font-family: var(--sig); font-weight: var(--we-sig-weight, 700); font-size: 1.9rem;
-  line-height: 1; color: var(--cream); font-variant-numeric: tabular-nums; }
-.wd__done small { font: 600 .72rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-
-/* ---------- the driver's offer ---------- */
-.wd__offer { display: grid; justify-items: center; gap: .25rem; padding: 1.3rem .9rem .6rem; }
-.wd__ring { width: 3rem; height: 3rem; border-radius: 50%; display: grid; place-items: center;
-  box-shadow: inset 0 0 0 2px var(--ruby-hot); color: var(--ruby-hot); margin-bottom: .5rem;
-  font: 800 1rem var(--ui, "Manrope", system-ui, sans-serif); font-variant-numeric: tabular-nums; }
-.wd__offer b { font-family: var(--sig); font-weight: var(--we-sig-weight, 700); font-size: 2rem;
-  line-height: 1; color: var(--cream); font-variant-numeric: tabular-nums; }
-.wd__offer small { font: 600 .72rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-.wd__ab { display: grid; gap: .3rem; margin-top: .8rem; width: 100%; }
-.wd__ab span { display: flex; align-items: center; gap: .45rem;
-  font: 600 .74rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-
-/* ---------- rentals ---------- */
-.wd__step { display: flex; align-items: center; justify-content: space-between; gap: .6rem;
-  padding: .45rem .2rem; }
-.wd__step span { font: 700 .78rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim);
-  font-variant-numeric: tabular-nums; }
-.wd__step button { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
-  width: 2.1rem; height: 2.1rem; border-radius: 8px; background: var(--glass-hi); color: var(--cream);
-  font-size: 1rem; line-height: 1; }
-.wd__step button:hover, .wd__step button:focus-visible { background: var(--ruby-hot); color: #fff; outline: none; }
-
-.wd__checks { list-style: none; margin: .9rem .9rem 0; padding: 0; display: grid; gap: .45rem; }
-.wd__checks li { display: flex; align-items: center; gap: .55rem; padding: .6rem .7rem;
-  border-radius: 10px; background: var(--glass-lo);
-  font: 700 .76rem var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
-.wd__checks li span { flex: 1; }
-.wd__checks li em { font-style: normal; font-size: .66rem; font-weight: 800; letter-spacing: .09em;
-  text-transform: uppercase; color: var(--cream-dim); }
-.wd__checks li i { width: 1.05rem; height: 1.05rem; border-radius: 50%; flex: none;
-  box-shadow: inset 0 0 0 1.5px var(--edge); }
-.wd__checks li.is-ok { color: var(--cream); }
-.wd__checks li.is-ok i { background: var(--ruby-hot); box-shadow: none; }
-.wd__checks li.is-ok em { color: var(--ruby-hot); }
-
-.wd__shots { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; padding: .7rem .9rem 0; }
-.wd__shot { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
-  display: grid; justify-items: center; gap: .3rem; padding: .8rem .5rem; border-radius: 10px;
-  background: var(--glass-lo); color: var(--cream-dim);
-  font: 700 .7rem var(--ui, "Manrope", system-ui, sans-serif); transition: background .14s ease; }
-.wd__shot i { width: 1.5rem; height: 1.5rem; border-radius: 5px; box-shadow: inset 0 0 0 1.5px var(--edge); }
-.wd__shot:hover, .wd__shot:focus-visible { background: var(--glass-hi); outline: none; }
-.wd__shot.is-shot { color: var(--cream); }
-.wd__shot.is-shot i { background: var(--ruby-hot); box-shadow: none; }
+@media (min-width: 44rem) {
+  .wprev { place-items: center; padding: 1.5rem; }
+  .wprev__card { width: min(30rem, 100%); border-radius: 20px; padding: 1.5rem; }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .wd__wait i { animation: none; opacity: .75; }
-  .wd__row, .wd__go, .wd__shot { transition: none; }
+  .wprev__x { transition: none; }
 }
