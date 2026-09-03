@@ -27,9 +27,9 @@ window.MCC_WHIP = (function () {
 
   var API = "https://api.mccluster.org";
   var APPS = {
-    rider: { path: "apps/whip-rider/index.html", name: "Whip Equipped Rider" },
-    driver: { path: "apps/whip-driver/index.html", name: "Whip Equipped Driver" },
-    rentals: { path: "apps/whip-rentals/index.html", name: "Whip Equipped Rentals" }
+    rider: { path: "whip/rider/index.html", name: "Whip Equipped Rider" },
+    driver: { path: "whip/driver/index.html", name: "Whip Equipped Driver" },
+    rentals: { path: "whip/rentals/index.html", name: "Whip Equipped Rentals" }
   };
 
   function esc(s) {
