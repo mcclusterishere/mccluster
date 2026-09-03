@@ -1,0 +1,11 @@
+{
+  "name":"Whip Equipped Driver",
+  "short_name":"WE Driver",
+  "description":"Driver app for the Whip Equipped rideshare network.",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#050505",
+  "theme_color":"#050505",
+  "orientation":"portrait-primary",
+  "icons":[{"src":"assets/we-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

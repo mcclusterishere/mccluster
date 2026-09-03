@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="description" content="Whip Equipped — rideshare built for us." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Whip Equipped" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/we-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/we-icon.svg" />
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Whip Equipped — In This Together</title>
+</head>
+<body>
+  <div id="splashScreen" class="splash-screen" aria-hidden="true">
+    <div class="splash-lockup">
+      <img src="assets/we-icon.svg" alt="" class="splash-icon" />
+      <div class="we-wordmark splash-wordmark"><strong>WE</strong><small>IN THIS TOGETHER</small></div>
+    </div>
+    <div class="splash-message">
+      <strong>Rideshare. Built for us.</strong>
+      <span>Better economics for the people actually moving the city.</span>
+    </div>
+  </div>
+
+  <div id="app" class="app-shell">
+    <div id="map" class="map" aria-label="Ride map"></div>
+    <div class="map-shade"></div>
+    <div class="map-brand-watermark" aria-hidden="true">
+      <img src="assets/we-icon.svg" alt="" />
+      <span>WHIP EQUIPPED</span>
+    </div>
+
+    <header class="topbar">
+      <button class="brand-chip" id="brandButton" aria-label="Whip Equipped operator settings">
+        <span class="brand-mark" id="brandMark"><img src="assets/we-icon.svg" alt="Whip Equipped" /></span>
+        <span class="brand-copy">
+          <span class="mini-lockup-row">
+            <span class="mini-we">WE</span>
+            <strong id="brandName">Whip Equipped</strong>
+          </span>
+          <small id="brandMode">IN THIS TOGETHER · NETWORK</small>
+        </span>
+      </button>
+      <div class="top-actions">
+        <button class="icon-btn" id="locateButton" aria-label="Use my location">⌖</button>
+        <button class="avatar-btn" aria-label="Account">MC</button>
+      </div>
+    </header>
+
+    <aside id="operatorDrawer" class="operator-drawer" aria-hidden="true">
+      <div class="drawer-brand-banner">
+        <div class="drawer-lockup">
+          <img src="assets/we-icon.svg" alt="" />
+          <div class="we-wordmark light"><strong>WE</strong><small>IN THIS TOGETHER</small></div>
+        </div>
+        <span>Operator Studio</span>
+      </div>
+
+      <div class="drawer-head">
+        <div>
+          <span class="eyebrow">Whip Equipped operator console</span>
+          <h2>Own the customer relationship.</h2>
+        </div>
+        <button class="icon-btn dark" id="closeOperator" aria-label="Close">×</button>
+      </div>
+
+      <div class="official-brand-card">
+        <span class="eyebrow">Official WE identity</span>
+        <div class="brand-preview-lockup">
+          <img src="assets/we-icon.svg" alt="" />
+          <div class="we-wordmark"><strong>WE</strong><small>IN THIS TOGETHER</small></div>
+        </div>
+        <div class="palette-row">
+          <span class="palette coral" title="WE Coral"></span>
+          <span class="palette orange" title="WE Orange"></span>
+          <span class="palette ink" title="WE Black"></span>
+          <span class="palette paper" title="WE White"></span>
+          <span class="palette gradient" title="WE Gradient"></span>
+        </div>
+      </div>
+
+      <div class="plan-card network-plan">
+        <div>
+          <span class="plan-label">WE Network</span>
+          <strong>3% platform fee</strong>
+          <p>Run under the Whip Equipped customer brand. Processing fees are separate.</p>
+        </div>
+        <span class="status-pill">Current</span>
+      </div>
+
+      <div class="plan-card white-label-plan">
+        <div>
+          <span class="plan-label">White Label</span>
+          <strong>$33 / month</strong>
+          <p>0% Whip Equipped platform fee. Replace WE customer branding with your own brand and keep ride revenue after payment processing.</p>
+        </div>
+        <button class="mini-cta" id="upgradeButton">Preview</button>
+      </div>
+
+      <div class="drawer-section">
+        <span class="eyebrow">White-label preview</span>
+        <label>Customer-facing brand<input id="brandInput" maxlength="28" value="Whip Equipped" /></label>
+        <label>Primary accent<input id="accentInput" type="color" value="#F04449" /></label>
+        <label>Customer domain<input id="domainInput" placeholder="rides.yourbrand.com" /></label>
+        <button class="primary-btn" id="applyBrand">Apply preview</button>
+      </div>
+
+      <div class="economics-card">
+        <span class="eyebrow">Example $24.80 trip</span>
+        <div class="economics-row"><span>Rider pays</span><strong>$24.80</strong></div>
+        <div class="economics-row"><span>WE platform fee</span><strong id="platformFeeDemo">$0.74</strong></div>
+        <div class="economics-row"><span>Est. card processing</span><strong>≈ $1.02</strong></div>
+        <div class="economics-row total"><span>Operator receives*</span><strong id="operatorNetDemo">≈ $23.04</strong></div>
+        <small>*Illustrative estimate before taxes, driver payout, insurance, tolls, refunds, or other operating costs.</small>
+      </div>
+    </aside>
+
+    <main class="ride-sheet" id="rideSheet">
+      <div class="sheet-handle"></div>
+
+      <section id="homeState" class="state active">
+        <div class="home-brand-kicker">
+          <img src="assets/we-icon.svg" alt="" />
+          <span>WHIP EQUIPPED</span>
+          <b>IN THIS TOGETHER</b>
+        </div>
+        <div class="home-intro">
+          <span class="eyebrow">Your city. Your ride.</span>
+          <h1>Where are we going?</h1>
+        </div>
+        <button class="destination-box" id="destinationButton">
+          <span class="destination-dot"></span>
+          <span class="destination-copy"><strong>Where to?</strong><small>Search a place or address</small></span>
+          <span class="now-pill">Now⌄</span>
+        </button>
+        <div class="quick-grid">
+          <button class="quick-card" data-destination="Home"><span>⌂</span><strong>Home</strong><small>Saved place</small></button>
+          <button class="quick-card" data-destination="Work"><span>⌁</span><strong>Work</strong><small>Saved place</small></button>
+          <button class="quick-card" data-destination="Airport"><span>✈</span><strong>Airport</strong><small>Estimate fare</small></button>
+        </div>
+        <div class="we-value-card">
+          <div class="we-value-icon"><img src="assets/we-icon.svg" alt="" /></div>
+          <div>
+            <span class="value-tag">THE WE DIFFERENCE</span>
+            <strong>Market-rate rides. Operator-first economics.</strong>
+            <p>Operators start at a 3% WE fee—or white-label for $33/month and drop the WE platform cut to 0%.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="searchState" class="state">
+        <div class="state-head">
+          <button class="back-btn" data-back="home">←</button>
+          <div><span class="eyebrow">WE · Plan your ride</span><h2>Choose destination</h2></div>
+        </div>
+        <div class="route-inputs">
+          <div class="route-rail"><span></span><i></i><b></b></div>
+          <label><small>Pickup</small><input id="pickupInput" value="Current location" /></label>
+          <label><small>Dropoff</small><input id="dropoffInput" autofocus placeholder="Where to?" /></label>
+        </div>
+        <div id="suggestions" class="suggestions">
+          <button data-place="Downtown" data-miles="4.8" data-minutes="14"><span class="suggest-icon">⌖</span><span><strong>Downtown</strong><small>4.8 mi · about 14 min</small></span><span>›</span></button>
+          <button data-place="Central Station" data-miles="7.2" data-minutes="19"><span class="suggest-icon">◫</span><span><strong>Central Station</strong><small>7.2 mi · about 19 min</small></span><span>›</span></button>
+          <button data-place="Airport" data-miles="13.6" data-minutes="27"><span class="suggest-icon">✈</span><span><strong>Airport</strong><small>13.6 mi · about 27 min</small></span><span>›</span></button>
+          <button data-place="Arena District" data-miles="5.9" data-minutes="16"><span class="suggest-icon">◎</span><span><strong>Arena District</strong><small>5.9 mi · about 16 min</small></span><span>›</span></button>
+        </div>
+      </section>
+
+      <section id="optionsState" class="state">
+        <div class="state-head compact">
+          <button class="back-btn" data-back="search">←</button>
+          <div><span class="eyebrow">WE upfront pricing</span><h2 id="routeTitle">Choose your ride</h2></div>
+        </div>
+        <div class="market-note"><span class="pulse-dot"></span><span>Transparent market-rate pricing · demand is normal</span><strong id="routeMeta">—</strong></div>
+        <div id="rideOptions" class="ride-options"></div>
+        <div class="payment-row">
+          <button><span class="pay-icon">●●</span><span><small>Payment</small><strong>•••• 4242</strong></span></button>
+          <button><span>＋</span><span><small>Promo</small><strong>Add code</strong></span></button>
+        </div>
+        <button class="primary-btn sticky-cta" id="confirmRide">Choose a ride</button>
+      </section>
+
+      <section id="matchingState" class="state">
+        <div class="matching-wrap">
+          <div class="radar"><span></span><span></span><i><img src="assets/we-icon.svg" alt="" /></i></div>
+          <span class="eyebrow">WE MATCH · nearby drivers</span>
+          <h2>Finding the right whip.</h2>
+          <p>Your upfront fare is being shown to nearby drivers.</p>
+          <div class="match-details"><span id="matchRideType">WE Standard</span><strong id="matchPrice">$—</strong></div>
+          <button class="secondary-btn" id="cancelMatch">Cancel request</button>
+        </div>
+      </section>
+
+      <section id="pickupState" class="state">
+        <div class="driver-top">
+          <div><span class="eyebrow">Your WE arrives in</span><strong class="eta-big">3 min</strong></div>
+          <span class="verified-pill">✓ WE Verified</span>
+        </div>
+        <div class="driver-card">
+          <div class="driver-avatar">JA</div>
+          <div class="driver-copy"><strong>Jordan A.</strong><small>4.97 ★ · 2,481 trips</small><span>Black sedan · ABC 123</span></div>
+          <button class="icon-btn dark">☎</button>
+        </div>
+        <div class="pickup-code"><span>Your pickup code</span><strong>7 4 2 8</strong></div>
+        <div class="safety-row"><button>Share trip</button><button>WE Safety</button><button>Message</button></div>
+        <button class="primary-btn" id="simulateComplete">Simulate trip</button>
+      </section>
+
+      <section id="completeState" class="state">
+        <div class="complete-brand-icon"><img src="assets/we-icon.svg" alt="" /></div>
+        <span class="eyebrow">WE · Ride complete</span>
+        <h2 id="completeThanks">Thanks for riding Whip Equipped.</h2>
+        <div class="receipt-card">
+          <div><span>Trip total</span><strong id="receiptTotal">$—</strong></div>
+          <div><span>Operator platform fee</span><strong id="receiptPlatformFee">—</strong></div>
+          <div><span>Payment</span><strong>•••• 4242</strong></div>
+        </div>
+        <p class="rate-prompt">How was your WE ride?</p>
+        <div class="stars"><button>★</button><button>★</button><button>★</button><button>★</button><button>★</button></div>
+        <button class="primary-btn" id="newRide">Book another ride</button>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="active"><span>⌂</span><small>Ride</small></button>
+      <button><span>◷</span><small>Trips</small></button>
+      <button class="we-nav-button" aria-label="Whip Equipped home"><span><img src="assets/we-icon.svg" alt="" /></span><small>WE</small></button>
+      <button><span>◈</span><small>Wallet</small></button>
+      <button id="operatorNav"><span>◎</span><small>Operator</small></button>
+    </nav>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>

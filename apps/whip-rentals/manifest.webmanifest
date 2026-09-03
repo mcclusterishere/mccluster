@@ -1,0 +1,11 @@
+{
+  "name": "Whip Equipped Rentals — In This Together",
+  "short_name": "WE Rentals",
+  "description": "Local vehicle rentals powered by Whip Equipped.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "orientation": "portrait-primary",
+  "icons": [{"src":"assets/we-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

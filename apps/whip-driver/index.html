@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="description" content="Whip Equipped Driver — drive local, keep more." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WE Driver" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/we-icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/we-icon.svg" />
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Whip Equipped Driver</title>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <div id="map" class="map" aria-label="Driver map"></div>
+    <div class="map-shade"></div>
+
+    <header class="driver-header">
+      <button class="brand-lockup" aria-label="Whip Equipped Driver">
+        <img src="assets/we-icon.svg" alt="" />
+        <span><strong>WE</strong><small>DRIVER · IN THIS TOGETHER</small></span>
+      </button>
+      <div class="header-actions">
+        <button class="metric-pill"><small>Today</small><strong id="todayEarnings">$0.00</strong></button>
+        <button class="avatar">JA</button>
+      </div>
+    </header>
+
+    <div class="connection-pill" id="connectionPill"><span></span><strong>Backend</strong><small>checking…</small></div>
+
+    <main class="driver-sheet" id="driverSheet">
+      <div class="sheet-handle"></div>
+
+      <section class="state active" id="offlineState">
+        <div class="hero-status">
+          <span class="eyebrow">Whip Equipped Driver</span>
+          <h1>Ready when you are.</h1>
+          <p>Sign in, verify your identity, then go online to receive paid ride offers from the shared WE network.</p>
+        </div>
+        <div class="driver-summary-grid">
+          <div><small>Identity</small><strong>Verified required</strong></div>
+          <div><small>Offers</small><strong>Paid only</strong></div>
+          <div><small>Network</small><strong>WE</strong></div>
+        </div>
+        <button class="primary-btn online-btn" id="goOnline">Go online</button>
+      </section>
+
+      <section class="state" id="onlineState">
+        <div class="status-row">
+          <div><span class="eyebrow">You’re online</span><h2>Waiting for requests.</h2></div>
+          <button class="online-toggle active" id="goOffline"><span></span>Online</button>
+        </div>
+        <div class="demand-card">
+          <div class="demand-orbit"><i></i><i></i><b>WE</b></div>
+          <div><strong>Listening to the network</strong><p>Authorized rider requests will appear here automatically.</p></div>
+        </div>
+        <div class="shift-card">
+          <span><small>Shift time</small><strong id="shiftTime">00:00</strong></span>
+          <span><small>Completed</small><strong id="completedCount">0</strong></span>
+          <span><small>Online area</small><strong>Local</strong></span>
+        </div>
+      </section>
+
+      <section class="state" id="offerState">
+        <div class="offer-topline"><span class="live-pill">LIVE REQUEST</span><span id="offerTimer">20s</span></div>
+        <div class="offer-money"><small>Estimated earnings before operator payout rules</small><strong id="offerFare">$—</strong></div>
+        <div class="offer-rider"><div class="rider-avatar">R</div><div><strong id="offerRider">Rider</strong><small>Authenticated rider · payment authorized</small></div><span id="offerTier">WE Standard</span></div>
+        <div class="route-card">
+          <div class="route-node pickup"></div><div><small>Pickup</small><strong id="offerPickup">Current location</strong></div><span id="pickupMeta">—</span>
+          <div class="route-line"></div><div class="route-node dropoff"></div><div><small>Dropoff</small><strong id="offerDropoff">—</strong></div><span id="dropoffMeta">—</span>
+        </div>
+        <div class="offer-actions"><button class="secondary-btn danger" id="declineOffer">Decline</button><button class="primary-btn" id="acceptOffer">Accept ride</button></div>
+      </section>
+
+      <section class="state" id="enrouteState">
+        <div class="trip-status"><span class="eyebrow">Heading to pickup</span><h2 id="enrouteEta">3 min away</h2></div>
+        <div class="trip-rider-card"><div class="rider-avatar">R</div><div><strong id="enrouteRider">Rider</strong><small id="enrouteRideType">WE Standard</small></div><button class="circle-btn">☎</button><button class="circle-btn">•••</button></div>
+        <div class="destination-card"><span class="route-node pickup"></span><div><small>Pickup</small><strong id="enroutePickup">—</strong></div></div>
+        <button class="primary-btn" id="arrivedButton">I’ve arrived</button>
+      </section>
+
+      <section class="state" id="arrivedState">
+        <div class="trip-status"><span class="eyebrow">At pickup</span><h2>Meet your rider.</h2><p>Verify the 4-digit pickup code before starting the trip.</p></div>
+        <label class="pin-entry"><span>Pickup code</span><input id="pinInput" inputmode="numeric" maxlength="4" placeholder="••••" /></label>
+        <div class="safety-tools"><button>Call rider</button><button>Message</button><button>Safety</button></div>
+        <button class="primary-btn" id="verifyButton">Verify rider</button>
+        <small class="inline-error" id="pinError"></small>
+      </section>
+
+      <section class="state" id="verifiedState">
+        <div class="verified-hero"><span>✓</span><div><small>Rider verified</small><strong>Ready to roll.</strong></div></div>
+        <div class="destination-card"><span class="route-node dropoff"></span><div><small>Destination</small><strong id="verifiedDropoff">—</strong></div></div>
+        <button class="primary-btn" id="startTrip">Start trip</button>
+      </section>
+
+      <section class="state" id="inprogressState">
+        <div class="navigation-banner"><span>↗</span><div><small>Continue toward</small><strong id="navDestination">Destination</strong></div><b id="navEta">14 min</b></div>
+        <div class="trip-progress-card"><span><small>Ride</small><strong id="progressTier">WE Standard</strong></span><span><small>Fare</small><strong id="progressFare">$—</strong></span><span><small>Rider</small><strong id="progressRider">Rider</strong></span></div>
+        <div class="safety-tools"><button>Navigation</button><button>Rider</button><button>Safety</button></div>
+        <button class="primary-btn finish" id="completeTrip">Complete trip</button>
+      </section>
+
+      <section class="state" id="completeState">
+        <div class="complete-mark">✓</div>
+        <span class="eyebrow">Trip complete</span>
+        <h2>Nice work.</h2>
+        <div class="earnings-receipt"><span><small>Trip fare</small><strong id="completeFare">$—</strong></span><span><small>WE platform fee</small><strong id="completePlatform">$—</strong></span><span class="net"><small>Operator-side gross after WE fee*</small><strong id="completeNet">$—</strong></span></div>
+        <p class="fineprint">*Driver compensation is determined by the operator’s driver agreement. Payment processing, taxes, insurance, tolls and other costs are separate.</p>
+        <button class="primary-btn" id="backOnline">Back online</button>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="active"><span>⌖</span><small>Drive</small></button>
+      <button><span>▤</span><small>Earnings</small></button>
+      <button><span>◈</span><small>Safety</small></button>
+      <button><span>◎</span><small>Account</small></button>
+    </nav>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="app.js"></script>
+  <script src="identity-client.js"></script>
+</body>
+</html>

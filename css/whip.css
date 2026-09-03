@@ -180,7 +180,7 @@ html[data-theme="light"] .wtop h1 em {
   background: rgba(4,3,3,.78); backdrop-filter: blur(6px); padding: 0; }
 html[data-theme="light"] .wprev { background: rgba(60,48,42,.42); }
 .wprev[hidden] { display: none; }
-.wprev__card { width: min(38rem, 100%); max-height: 88vh; overflow-y: auto;
+.wprev__card { width: min(30rem, 100%); max-height: 88vh; overflow-y: auto;
   background: var(--ink-2); box-shadow: inset 0 0 0 1px var(--edge);
   border-radius: 18px 18px 0 0; padding: clamp(1.3rem, 4vw, 2rem);
   padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); }
@@ -251,9 +251,9 @@ html[data-theme="light"] .status--build { color: #9a6212; }
   background: var(--ink-2); box-shadow: inset 0 0 0 1px var(--edge); position: relative; }
 .wd__notch { position: absolute; top: .82rem; left: 50%; transform: translateX(-50%);
   width: 4.2rem; height: .32rem; border-radius: 99px; background: var(--edge); }
-.wd__screen { border-radius: 20px; overflow: hidden; background: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--edge); min-height: 27rem;
-  display: flex; flex-direction: column; padding-top: 1.5rem; }
+.wd__frame { display: block; width: 100%; height: 34rem; border: 0;
+  border-radius: 20px; background: #fff; box-shadow: inset 0 0 0 1px var(--edge); }
+@media (max-height: 44rem) { .wd__frame { height: 26rem; } }
 
 .wd__legal { margin: 0; max-width: 30rem; text-align: center;
   font: 600 .72rem/1.5 var(--ui, "Manrope", system-ui, sans-serif); color: var(--cream-dim); }
