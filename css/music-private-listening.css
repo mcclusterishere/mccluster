@@ -1,0 +1,197 @@
+/* ============================================================
+   McCluster Music — Private Listening Suite
+   The native engine stays intact. This layer changes only the album
+   experience: fewer app-store tropes, more listening room / liner notes.
+   Reference language: TIDAL hierarchy, MD Vinyl tactility, Open cinema,
+   FLORA negative space, Instrument editorial restraint.
+   ============================================================ */
+
+body.music-room--album{
+  --pl-bg:#060605;
+  --pl-black:#090908;
+  --pl-panel:#0d0d0c;
+  --pl-bone:#f1ede5;
+  --pl-bone-soft:#d8d1c6;
+  --pl-stone:#8a847b;
+  --pl-faint:#5a5650;
+  --pl-rule:rgba(241,237,229,.105);
+  --pl-rule-strong:rgba(241,237,229,.19);
+  --pl-brass:#9d8462;
+  --pl-serif:Iowan Old Style,Baskerville,"Times New Roman",serif;
+  --pl-ui:var(--ui,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);
+  background:var(--pl-bg)!important;
+  color:var(--pl-bone)!important;
+  color-scheme:dark;
+  letter-spacing:-.005em;
+}
+html[data-theme="light"] body.music-room--album{background:var(--pl-bg)!important;color:var(--pl-bone)!important}
+body.music-room--album *{scrollbar-color:rgba(241,237,229,.16) transparent}
+body.music-room--album ::selection{background:var(--pl-bone);color:var(--pl-black)}
+
+/* Atmosphere: almost monochrome, like a room lit by the record itself. */
+body.music-room--album .room{opacity:0!important;mix-blend-mode:normal!important;background:#050504!important}
+body.music-room--album .room.is-on{opacity:.22!important}
+body.music-room--album .room video{filter:blur(54px) saturate(.28) contrast(1.08) brightness(.32)!important;transform:scale(1.14)!important}
+body.music-room--album .room__scrim,
+html[data-theme="light"] body.music-room--album .room__scrim{background:linear-gradient(180deg,rgba(6,6,5,.62),rgba(6,6,5,.86) 48%,rgba(6,6,5,.985) 100%)!important}
+
+/* The chrome becomes architecture instead of decoration. */
+body.music-room--album .hr{width:min(100%,104rem)!important;max-width:104rem!important;padding:0 clamp(18px,4vw,64px) clamp(165px,17vh,240px)!important}
+body.music-room--album .top{min-height:62px!important;margin:0 0 clamp(42px,6vw,88px)!important;padding:12px 0!important;border-bottom:1px solid var(--pl-rule)!important;background:rgba(6,6,5,.74)!important;backdrop-filter:blur(26px) saturate(.6)!important;-webkit-backdrop-filter:blur(26px) saturate(.6)!important}
+body.music-room--album .top__ava{width:30px!important;height:30px!important;border-radius:2px!important;filter:grayscale(1) contrast(1.08) brightness(.92)!important}
+body.music-room--album .top__circle{width:34px!important;height:34px!important;border:1px solid var(--pl-rule)!important;border-radius:3px!important;background:transparent!important;color:var(--pl-stone)!important;box-shadow:none!important}
+body.music-room--album .top__circle:hover{color:var(--pl-bone)!important;border-color:var(--pl-rule-strong)!important;background:rgba(255,255,255,.025)!important}
+body.music-room--album .greet,body.music-room--album .greet__sub{display:none!important}
+
+/* Album opening: cover art as an object, title as editorial typography. */
+body.music-room--album .alb{position:relative;min-height:calc(100svh - 150px)!important;display:grid!important;grid-template-columns:minmax(330px,.82fr) minmax(0,1.18fr)!important;gap:clamp(52px,8vw,145px)!important;align-items:center!important;padding:0 0 clamp(70px,9vw,130px)!important;border-bottom:1px solid var(--pl-rule)!important}
+body.music-room--album .alb::before{content:"PRIVATE LISTENING · MCCLUSTER";position:absolute;right:0;top:0;color:rgba(241,237,229,.28);font:600 8px/1 var(--pl-ui);letter-spacing:.22em;text-transform:uppercase;pointer-events:none}
+body.music-room--album .alb__art{position:relative;width:100%!important;max-width:690px!important;justify-self:center!important;overflow:hidden!important;border-radius:2px!important;background:#0a0a09!important;box-shadow:0 60px 160px -70px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.07)!important}
+body.music-room--album .alb__art::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.055)}
+body.music-room--album .alb__art img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;filter:saturate(.66) contrast(1.035) brightness(.91)!important;transform:none!important}
+body.music-room--album .alb__k{color:var(--pl-brass)!important;font-size:8px!important;font-weight:600!important;letter-spacing:.23em!important;text-transform:uppercase!important}
+body.music-room--album .alb h1{max-width:8.3ch!important;margin:14px 0 22px!important;color:var(--pl-bone)!important;font-family:var(--pl-serif)!important;font-size:clamp(64px,8.5vw,142px)!important;font-weight:400!important;line-height:.81!important;letter-spacing:-.058em!important;text-transform:none!important;text-wrap:balance}
+body.music-room--album .alb__by{color:var(--pl-stone)!important;font-size:12px!important;letter-spacing:.02em!important}
+body.music-room--album .alb__by b{color:var(--pl-bone-soft)!important;font-weight:600!important}
+body.music-room--album .alb__edition,body.music-room--album .alb__desc{color:var(--pl-stone)!important}
+body.music-room--album .alb__edition{margin-top:16px!important;font-size:8px!important;font-weight:600!important;letter-spacing:.18em!important;text-transform:uppercase!important}
+body.music-room--album .alb__desc{max-width:610px!important;margin-top:24px!important;font-size:clamp(12px,1.05vw,15px)!important;line-height:1.78!important;letter-spacing:0!important}
+body.music-room--album .alb__logo img{filter:grayscale(1) brightness(1.45)!important;opacity:.78!important}
+body.music-room--album .alb__actions{display:flex!important;align-items:center!important;gap:16px!important;flex-wrap:wrap!important;margin-top:32px!important}
+body.music-room--album .alb__play{position:relative!important;width:auto!important;height:48px!important;min-width:136px!important;margin:0!important;padding:0 22px 0 48px!important;border:1px solid var(--pl-bone)!important;border-radius:2px!important;background:var(--pl-bone)!important;color:#080807!important;box-shadow:none!important;font:700 9px/1 var(--pl-ui)!important;letter-spacing:.16em!important;text-transform:uppercase!important;transition:transform .18s ease,background .18s ease,color .18s ease!important}
+body.music-room--album .alb__play svg{position:absolute!important;left:19px!important;width:14px!important;height:14px!important;margin:0!important}
+body.music-room--album .alb__play::after{content:"Listen"!important;position:static!important;font:inherit!important;letter-spacing:inherit!important;color:inherit!important}
+body.music-room--album .alb__play:hover{transform:translateY(-1px)!important;background:#fff!important;color:#050504!important}
+
+/* Filters read like catalog tabs, never chips. */
+body.music-room--album .chips{display:flex!important;gap:28px!important;margin:34px 0 18px!important;padding:0!important;border-bottom:1px solid var(--pl-rule)!important;overflow-x:auto!important}
+body.music-room--album .chips button,body.music-room--album .mode button{position:relative!important;min-height:44px!important;padding:0 0 12px!important;border:0!important;border-radius:0!important;background:transparent!important;color:rgba(241,237,229,.34)!important;box-shadow:none!important;font:600 8px/1 var(--pl-ui)!important;letter-spacing:.17em!important;text-transform:uppercase!important;white-space:nowrap!important}
+body.music-room--album .chips button.on,body.music-room--album .mode button.on{color:var(--pl-bone)!important}
+body.music-room--album .chips button.on::after,body.music-room--album .mode button.on::after{content:""!important;position:absolute!important;left:0!important;right:0!important;bottom:-1px!important;height:1px!important;background:var(--pl-brass)!important}
+body.music-room--album .lib__k{margin:52px 0 16px!important;color:rgba(241,237,229,.38)!important;font:600 8px/1 var(--pl-ui)!important;letter-spacing:.2em!important;text-transform:uppercase!important}
+
+/* Discovery is an editorial shelf, not a carousel of toy cards. */
+body.music-room--album .feat{display:grid!important;grid-auto-flow:column!important;grid-auto-columns:minmax(300px,34vw)!important;gap:12px!important;padding:0 0 18px!important;border:0!important;background:transparent!important;overflow-x:auto!important;scroll-snap-type:x proximity!important}
+body.music-room--album .feat__card{width:auto!important;min-height:0!important;aspect-ratio:16/10!important;padding:0!important;overflow:hidden!important;border:1px solid var(--pl-rule)!important;border-radius:2px!important;background:#0a0a09!important;box-shadow:none!important;scroll-snap-align:start!important;isolation:isolate}
+body.music-room--album .feat__card::after{display:none!important}
+body.music-room--album .feat__bg{filter:saturate(.48) contrast(1.03) brightness(.61)!important;transform:scale(1.01)!important;transition:transform .45s cubic-bezier(.2,.7,.2,1),filter .45s ease!important}
+body.music-room--album .feat__card:hover .feat__bg{transform:scale(1.025)!important;filter:saturate(.62) contrast(1.04) brightness(.69)!important}
+body.music-room--album .feat__smoke{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:linear-gradient(180deg,rgba(6,6,5,.05),rgba(6,6,5,.18) 44%,rgba(6,6,5,.94) 100%)!important}
+body.music-room--album .feat__card>b{position:absolute!important;left:20px!important;right:58px!important;bottom:39px!important;margin:0!important;color:var(--pl-bone)!important;font-family:var(--pl-serif)!important;font-size:clamp(22px,2.1vw,34px)!important;font-weight:400!important;line-height:.98!important;letter-spacing:-.03em!important;text-shadow:none!important}
+body.music-room--album .feat__card>small{position:absolute!important;left:20px!important;bottom:17px!important;margin:0!important;min-height:0!important;color:rgba(241,237,229,.45)!important;font:600 7px/1 var(--pl-ui)!important;letter-spacing:.17em!important;text-transform:uppercase!important}
+body.music-room--album .feat__acts{position:absolute!important;right:14px!important;bottom:14px!important;top:auto!important;margin:0!important}
+body.music-room--album .feat__play{width:34px!important;height:34px!important;border:1px solid rgba(241,237,229,.22)!important;border-radius:50%!important;background:rgba(7,7,6,.62)!important;color:var(--pl-bone)!important;box-shadow:none!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important}
+body.music-room--album .feat__play svg{width:13px!important;height:13px!important}
+body.music-room--album .feat__n{display:none!important}
+
+/* Track list = liner-note ledger. Thumbnails disappear; the record is the art. */
+body.music-room--album #album{padding:clamp(58px,7vw,108px) 0!important;border-bottom:1px solid var(--pl-rule)!important}
+body.music-room--album .tr{margin:0!important;border-top:1px solid var(--pl-rule)!important}
+body.music-room--album .tr li{min-height:76px!important;gap:18px!important;margin:0!important;padding:15px 2px!important;border:0!important;border-bottom:1px solid var(--pl-rule)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transition:background .18s ease,padding .18s ease!important}
+body.music-room--album .tr li:hover{padding-left:10px!important;padding-right:10px!important;background:rgba(255,255,255,.02)!important}
+body.music-room--album .tr li.on{background:rgba(157,132,98,.055)!important;box-shadow:inset 1px 0 0 var(--pl-brass)!important}
+body.music-room--album .tr li.on::before{display:none!important}
+body.music-room--album .tr .th{display:none!important}
+body.music-room--album .tr .n{min-width:28px!important;color:rgba(241,237,229,.28)!important;font:500 8px/1 var(--pl-ui)!important;font-variant-numeric:tabular-nums!important}
+body.music-room--album .tr .t{color:var(--pl-bone)!important;font-family:var(--pl-serif)!important;font-size:clamp(17px,1.4vw,22px)!important;font-weight:400!important;line-height:1.1!important;letter-spacing:-.018em!important}
+body.music-room--album .tr .t small,body.music-room--album .tr .d{color:rgba(241,237,229,.34)!important;font-family:var(--pl-ui)!important;font-size:8px!important;font-weight:500!important;letter-spacing:.06em!important;text-transform:uppercase!important}
+body.music-room--album .tr .hrt{width:32px!important;height:32px!important;border:0!important;background:transparent!important;color:rgba(241,237,229,.28)!important;box-shadow:none!important}
+body.music-room--album .tr .hrt:hover{color:var(--pl-bone)!important}
+body.music-room--album .tr .eq i{background:var(--pl-brass)!important}
+
+/* Lyrics are booklet copy, not karaoke UI. */
+body.music-room--album .album-lyrics{margin-top:72px!important;padding:0 0 72px!important;border:0!important;border-top:1px solid var(--pl-rule)!important;background:transparent!important;color:var(--pl-bone)!important}
+body.music-room--album .album-lyrics__head{padding:22px 0!important;border-bottom:1px solid var(--pl-rule)!important}
+body.music-room--album .album-lyrics__tabs{display:flex!important;gap:26px!important;overflow-x:auto!important}
+body.music-room--album .album-lyrics__tabs button{min-height:42px!important;padding:0!important;border:0!important;border-bottom:1px solid transparent!important;border-radius:0!important;background:transparent!important;color:rgba(241,237,229,.33)!important;box-shadow:none!important;font:600 8px/1 var(--pl-ui)!important;letter-spacing:.16em!important;text-transform:uppercase!important}
+body.music-room--album .album-lyrics__tabs button.is-active,body.music-room--album .album-lyrics__tabs button[aria-selected="true"]{color:var(--pl-bone)!important;border-bottom-color:var(--pl-brass)!important}
+body.music-room--album .album-lyrics__body{max-width:760px!important;padding:42px 0 0!important;color:#c5beb4!important;font-family:var(--pl-serif)!important;font-size:clamp(17px,1.45vw,22px)!important;font-weight:400!important;line-height:1.88!important;letter-spacing:-.012em!important}
+
+/* Pocket transport: one smoky piece of hardware. */
+body.music-room--album .deckbar{left:50%!important;transform:translateX(-50%)!important;width:min(880px,calc(100vw - 32px))!important;bottom:calc(80px + env(safe-area-inset-bottom,0px))!important;border:1px solid var(--pl-rule-strong)!important;border-radius:4px!important;background:rgba(10,10,9,.9)!important;color:var(--pl-bone)!important;box-shadow:0 30px 90px -45px rgba(0,0,0,.98)!important;backdrop-filter:blur(28px) saturate(.55)!important;-webkit-backdrop-filter:blur(28px) saturate(.55)!important}
+body.music-room--album .deckbar__seek{height:8px!important;padding:0!important;background:transparent!important}
+body.music-room--album .deckbar__seek i{height:1px!important;border-radius:0!important;background:rgba(241,237,229,.13)!important}
+body.music-room--album .deckbar__seek b{height:1px!important;border-radius:0!important;background:var(--pl-bone)!important}
+body.music-room--album .deckbar__row{gap:14px!important;padding:10px 12px 11px!important}
+body.music-room--album .deckbar__art{width:40px!important;height:40px!important;border-radius:1px!important;filter:saturate(.58) contrast(1.02)!important}
+body.music-room--album .deckbar__meta b{color:var(--pl-bone)!important;font-family:var(--pl-serif)!important;font-size:13px!important;font-weight:400!important;letter-spacing:-.01em!important}
+body.music-room--album .deckbar__meta small{color:rgba(241,237,229,.32)!important;font-size:7px!important;letter-spacing:.08em!important;text-transform:uppercase!important}
+body.music-room--album .deckbar__lyr{color:rgba(241,237,229,.5)!important;font-size:8px!important}
+body.music-room--album .deckbar button.tp{width:34px!important;height:34px!important;color:rgba(241,237,229,.62)!important}
+body.music-room--album .deckbar button.tp--play{border:0!important;border-radius:50%!important;background:var(--pl-bone)!important;color:#060605!important;box-shadow:none!important}
+
+/* Full now-playing becomes the private room: cinema left, record right. */
+body.music-room--album .now{display:grid!important;grid-template-columns:minmax(0,1.42fr) minmax(350px,.58fr)!important;grid-template-rows:auto 1fr!important;gap:0!important;background:#050504!important;color:var(--pl-bone)!important;transform:translateY(1.5%)!important}
+body.music-room--album .now[data-on="1"]{transform:none!important}
+body.music-room--album .now__head{grid-column:1/-1!important;min-height:62px!important;padding:calc(env(safe-area-inset-top,0px) + 11px) 18px 11px!important;border-bottom:1px solid var(--pl-rule)!important;background:rgba(5,5,4,.82)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
+body.music-room--album .now__down{width:34px!important;height:34px!important;border:1px solid var(--pl-rule)!important;border-radius:3px!important;background:transparent!important;color:var(--pl-stone)!important}
+body.music-room--album .now__from{color:rgba(241,237,229,.42)!important;font-size:8px!important;font-weight:600!important;letter-spacing:.18em!important;text-transform:uppercase!important}
+body.music-room--album .now__art{grid-column:1!important;grid-row:2!important;width:100%!important;height:calc(100svh - 62px)!important;max-height:none!important;min-height:0!important;margin:0!important;border:0!important;border-right:1px solid var(--pl-rule)!important;border-radius:0!important;background:#080807!important;box-shadow:none!important}
+body.music-room--album .now__art::after{display:none!important}
+body.music-room--album .now__film{opacity:.9!important;filter:saturate(.55) contrast(1.04) brightness(.88)!important}
+body.music-room--album .now__scrim{background:linear-gradient(180deg,rgba(5,5,4,.04),rgba(5,5,4,.12) 48%,rgba(5,5,4,.72) 100%)!important}
+body.music-room--album .now__lyr{padding:clamp(24px,4vw,62px) clamp(24px,4vw,62px) 34%!important}
+body.music-room--album .now__lyr p{max-width:20ch!important;color:rgba(241,237,229,.25)!important;font-family:var(--pl-serif)!important;font-size:clamp(20px,2.1vw,36px)!important;font-weight:400!important;line-height:1.15!important;letter-spacing:-.025em!important;text-shadow:0 3px 28px rgba(0,0,0,.72)!important}
+body.music-room--album .now__lyr p.is-live{color:var(--pl-bone)!important;transform:none!important}
+body.music-room--album .now__meta{grid-column:2!important;grid-row:2!important;align-self:start!important;padding:clamp(48px,8vh,92px) clamp(28px,4vw,62px) 0!important;text-align:left!important;pointer-events:none!important}
+body.music-room--album .now__title{color:var(--pl-bone)!important;font-family:var(--pl-serif)!important;font-size:clamp(48px,5.5vw,92px)!important;font-weight:400!important;line-height:.86!important;letter-spacing:-.055em!important;text-transform:none!important}
+body.music-room--album .now__by{margin-top:14px!important;color:var(--pl-stone)!important;font-size:10px!important;font-weight:500!important;letter-spacing:.04em!important}
+body.music-room--album .now__deck{grid-column:2!important;grid-row:2!important;align-self:end!important;padding:0 clamp(28px,4vw,62px) calc(env(safe-area-inset-bottom,0px) + 34px)!important}
+body.music-room--album .now__seek{height:18px!important;padding:8px 0!important}
+body.music-room--album .now__seek i{height:1px!important;border-radius:0!important;background:rgba(241,237,229,.15)!important}
+body.music-room--album .now__seek b{height:1px!important;border-radius:0!important;background:var(--pl-bone)!important}
+body.music-room--album .now__seek b::after{width:6px!important;height:6px!important;right:-3px!important;background:var(--pl-bone)!important;box-shadow:none!important}
+body.music-room--album .now__times{margin-top:2px!important;color:rgba(241,237,229,.29)!important;font-size:7px!important;font-variant-numeric:tabular-nums!important}
+body.music-room--album .now__tp{justify-content:flex-start!important;gap:10px!important;margin-top:22px!important}
+body.music-room--album .now__tp button{width:40px!important;height:40px!important;border:1px solid var(--pl-rule)!important;border-radius:50%!important;background:transparent!important;color:rgba(241,237,229,.64)!important;box-shadow:none!important}
+body.music-room--album .now__tp button.now__play,body.music-room--album .now__tp button.tp--play{width:48px!important;height:48px!important;border-color:var(--pl-bone)!important;background:var(--pl-bone)!important;color:#050504!important}
+
+/* The global app bar is reduced to a quiet dock while music is open. */
+body.music-room--album .appbar{background:rgba(6,6,5,.94)!important;border-top:1px solid rgba(241,237,229,.075)!important;box-shadow:none!important;backdrop-filter:blur(22px) saturate(.55)!important;-webkit-backdrop-filter:blur(22px) saturate(.55)!important}
+body.music-room--album .appbar__tab{color:rgba(241,237,229,.34)!important}
+body.music-room--album .appbar__tab.is-active,body.music-room--album .appbar__tab[aria-current="page"]{color:var(--pl-bone)!important}
+
+@media (max-width:900px){
+  body.music-room--album .hr{padding-left:18px!important;padding-right:18px!important}
+  body.music-room--album .top{margin-bottom:34px!important}
+  body.music-room--album .alb{min-height:auto!important;grid-template-columns:1fr!important;gap:34px!important;padding-bottom:62px!important}
+  body.music-room--album .alb::before{display:none!important}
+  body.music-room--album .alb__art{width:min(84vw,560px)!important;max-width:none!important;justify-self:center!important}
+  body.music-room--album .alb h1{max-width:10ch!important;font-size:clamp(56px,15vw,92px)!important;line-height:.84!important}
+  body.music-room--album .alb__desc{font-size:13px!important;line-height:1.7!important}
+  body.music-room--album .feat{grid-auto-columns:minmax(275px,82vw)!important}
+  body.music-room--album .now{display:block!important;overflow-y:auto!important;background:#050504!important}
+  body.music-room--album .now__head{position:sticky!important;top:0!important;z-index:8!important}
+  body.music-room--album .now__art{width:100%!important;height:min(62svh,680px)!important;border-right:0!important;border-bottom:1px solid var(--pl-rule)!important}
+  body.music-room--album .now__meta{padding:28px 20px 0!important}
+  body.music-room--album .now__title{font-size:clamp(48px,14vw,78px)!important}
+  body.music-room--album .now__deck{padding:28px 20px calc(env(safe-area-inset-bottom,0px) + 34px)!important}
+  body.music-room--album .now__lyr{padding:20px 20px 32%!important}
+}
+
+@media (max-width:600px){
+  body.music-room--album .hr{padding-left:14px!important;padding-right:14px!important;padding-bottom:160px!important}
+  body.music-room--album .top{min-height:54px!important;padding:9px 0!important}
+  body.music-room--album .alb{gap:28px!important;padding-bottom:50px!important}
+  body.music-room--album .alb__art{width:min(86vw,470px)!important}
+  body.music-room--album .alb h1{font-size:clamp(52px,16.5vw,80px)!important}
+  body.music-room--album .alb__actions{margin-top:26px!important}
+  body.music-room--album .alb__play{height:46px!important;min-width:130px!important}
+  body.music-room--album .chips{gap:22px!important;margin-top:26px!important}
+  body.music-room--album .feat{grid-auto-columns:82vw!important;gap:9px!important}
+  body.music-room--album .tr li{min-height:70px!important;padding:14px 0!important;gap:12px!important}
+  body.music-room--album .tr li:hover{padding-left:0!important;padding-right:0!important}
+  body.music-room--album .tr .t{font-size:18px!important}
+  body.music-room--album .deckbar{width:calc(100vw - 16px)!important;bottom:calc(72px + env(safe-area-inset-bottom,0px))!important;border-radius:3px!important}
+  body.music-room--album .deckbar__row{padding:8px 9px 9px!important;gap:9px!important}
+  body.music-room--album .deckbar__art{width:36px!important;height:36px!important}
+  body.music-room--album .deckbar__lyr{display:none!important}
+  body.music-room--album .now__art{height:54svh!important}
+  body.music-room--album .now__lyr p{font-size:22px!important}
+}
+
+@media (prefers-reduced-motion:reduce){
+  body.music-room--album .alb__play,
+  body.music-room--album .feat__bg,
+  body.music-room--album .tr li{transition:none!important}
+}
