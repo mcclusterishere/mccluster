@@ -1,5 +1,5 @@
 const CACHE = 'whip-equipped-v3';
-const SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './assets/we-icon.svg'];
+const SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './assets/we-icon.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)));

@@ -1817,19 +1817,26 @@ html.is-installed .getapp,html.is-installed .getapp-pill{display:none !important
    the other tabs' height and letting the width follow keeps every tab's
    optical weight equal without squashing a logo into a box it is not. */
 .appbar__hm{height:2rem;width:auto;max-width:3.1rem;object-fit:contain;display:block;margin-block:-0.12rem}
-/* the mark in the bar is the app icon itself, tightened. The real tile
-   pads the wrench for a home screen; at 28px that padding is all you can
-   see, so assets/img/we-mark-bar.webp is the same icon with the air
-   taken out. It keeps its black plate on purpose -- on the accent coin
-   the plate is what gives the wrench something to read against. */
+/* THE MARK IN THE BAR IS THE SHIPPED APP ICON.
+   A hand-drawn approximation of this wrench used to stand here, cut from
+   a raster and given a rounded plate this stylesheet invented. It is
+   gone. These are Whip Equipped's own files: the black-tile lockup for
+   paper, the white-tile lockup for the company's own ground, cropped to
+   the icon and nothing else.
+
+   IT TURNS WITH THE COAT. The bar takes the white tile on the cinema
+   coat and the black tile on the gallery coat, so the wrench always has
+   a plate under it -- including on the accent coin the active tab sits
+   on. Width is auto: the tile is 464x512, and forcing it square squashed
+   it. */
 .appbar__we {
-  height: 1.65rem;
-  width: 1.65rem;
+  height: 1.62rem;
+  width: auto;
   object-fit: contain;
   display: block;
-  border-radius: 0.42rem;
-  margin-block: -0.05rem;
+  margin-block: -0.02rem;
 }
+html[data-theme="light"] .appbar__we { content: url("../assets/img/we-icon-bar.png"); }
 
 html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m{content:url("../assets/img/m-mark-dark.png")}
 /* the fifth tab wore the halo PNG, which needed a bigger box than the M

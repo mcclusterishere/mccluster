@@ -97,7 +97,7 @@
          Chat did not lose anything: it is the second slot of this wing,
          one hold away, with the Inner Room and Give. */
       '<a class="appbar__tab" href="' + ROOT + 'whip.html" data-appnav="sites">' +
-        '<img class="appbar__we" src="' + ROOT + 'assets/img/we-mark-bar.webp" alt="">' +
+        '<img class="appbar__we" src="' + ROOT + 'assets/img/we-icon-dark-bar.png" alt="">' +
         '<span>Whip</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'account.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
@@ -332,7 +332,7 @@
   }
 
   var MARKS = {
-    whipmark: ["assets/img/we-mark-bar.webp", "appbar__we"],
+    whipmark: ["assets/img/we-icon-dark-bar.png", "appbar__we"],
   };
   function emit(n, d) { try { window.dispatchEvent(new CustomEvent(n, { detail: d || {} })); } catch (e) {} }
 

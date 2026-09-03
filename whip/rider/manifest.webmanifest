@@ -11,7 +11,7 @@
   "categories": ["travel", "navigation", "business"],
   "icons": [
     {
-      "src": "assets/we-icon.svg",
+      "src": "assets/we-icon.png",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
