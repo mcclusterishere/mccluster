@@ -37,6 +37,53 @@ The only Cloudflare Worker is `mccluster`. Only call routes that Worker actually
 8. **If a task wants you to "rebuild", "simplify", or "migrate to a new stack": stop.** Route the work through McCluster. Ask only if the owner is explicitly retiring a satellite.
 9. **Do not invent infrastructure names.** The Worker is `mccluster`. The API host is `api.mccluster.org`. If a name is not in this table, it does not exist.
 10. **Keep exporting `HereTenantAgent`.** Worker `mccluster` already has Durable Objects of that class. A deploy that drops the export dies with Cloudflare error 10064. Do not run a delete-class migration unless the owner says wipe those objects.
+11. **Never draw a logo.** See the section below. This one has already cost a rewrite.
+12. **`mcclusterishere/Here` is dead.** It publishes nothing: its deploy workflows are disabled and it has no CNAME. Do not write to it. If a task seems to want it, say so in the chat and work here instead.
+
+## THE LOGOS ARE NOT YOURS TO DRAW
+
+**The artwork the owner supplies is the only source of truth for any mark, forever.**
+
+This is not a style preference. An agent once shipped `assets/we-icon.svg` —
+five rectangles and a hand-plotted path approximating the Whip Equipped
+wrench — into three repositories, and a later agent (this one) compounded it
+by inventing a black rounded plate to sit the mark on because the supplied
+lockup did not crop to one. Neither was the logo. Both had to be torn out of
+four repositories.
+
+Rules, no exceptions:
+
+- **Do not draw, trace, approximate, or "reconstruct" a logo** in SVG, CSS,
+  canvas, or anything else. Not as a placeholder. Not "until the real one
+  arrives". Not at a size where you think it will not matter.
+- **Do not recolour a supplied mark.** If it does not read on a ground, the
+  answer is the variant the owner supplied for that ground, or a plate the
+  brand itself uses — never a hue you picked.
+- **Do not composite one.** Cropping a supplied file is fine. Adding a shape
+  the supplied file does not contain is drawing.
+- **If the variant you need does not exist, ask for it.** A missing asset is a
+  question for the owner, not a gap to fill.
+
+### Whip Equipped — the supplied kit
+
+Under `assets/img/`, every file cropped or resampled from the owner's artwork
+and nothing else:
+
+| File | What it is | Ground |
+| --- | --- | --- |
+| `we-logo.png` | full lockup, black tile, black wordmark | light |
+| `we-logo-dark.png` | full lockup, white tile, white wordmark | dark |
+| `we-icon.png` | app icon, black tile | light |
+| `we-icon-dark.png` | app icon, white tile | dark |
+| `we-icon-bar.png` / `we-icon-dark-bar.png` | the same icons at bar size | light / dark |
+| `we-mark.png` | the wrench alone, gradient | |
+| `we-mark-white.png` | the wrench alone, white | |
+
+The three app repositories carry `assets/we-icon.png`, `we-logo.png`,
+`we-mark.png` and `we-mark-white.png` from the same source.
+
+If you find `we-icon.svg`, `we-mark-bar.webp`, or any `.webp` of this logo
+anywhere: it is the drawn one. Delete it, do not reference it.
 
 ## Files every agent must honor
 
