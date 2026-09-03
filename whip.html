@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Whip Equipped &middot; three apps, one account</title>
-  <meta name="description" content="Whip Equipped LLC is a parts-licensed dealership in Acworth, Georgia, and a mobility application family: Rider, Driver and Rentals. Three apps, one McCluster account, one ledger.">
+  <title>Whip Equipped &middot; three apps, launching soon</title>
+  <meta name="description" content="Whip Equipped LLC — a parts-licensed dealership in Acworth, Georgia, and three apps launching soon: Rider, Driver and Rentals. One account across all three. Try them now.">
   <link rel="canonical" href="https://matthew.mccluster.org/whip.html">
   <link rel="icon" type="image/webp" href="assets/img/we-mark-bar.webp">
   <link rel="manifest" href="manifest.json">
@@ -14,54 +14,123 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Whip Equipped">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Whip Equipped. Three apps, one account.">
-  <meta property="og:description" content="Rider, Driver and Rentals: one mobility family on the McCluster account system, run out of a parts-licensed dealership in Acworth, Georgia.">
+  <meta property="og:title" content="Whip Equipped. Three apps, launching soon.">
+  <meta property="og:description" content="Rider, Driver and Rentals — one account across all three, run out of a parts-licensed dealership in Acworth, Georgia. Try them before they land.">
   <meta property="og:url" content="https://matthew.mccluster.org/whip.html">
   <meta property="og:image" content="https://matthew.mccluster.org/assets/frames/whip_0001.jpg">
 
-  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/whip.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
 </head>
-<body>
+<body class="we-body">
 
-  <main class="st">
+  <!-- ============================================================
+       MOBILE FIRST, AND SHAPED LIKE THE THING IT IS SELLING.
 
-    <!-- THE DEALERSHIP AND THE NETWORK ARE THE SAME COMPANY. Everything
-         factual here comes from data/brands.json and
-         docs/mccluster-platform-core.md; nothing about Whip Equipped is
-         typed twice. -->
-    <header class="wtop">
-      <img class="wtop__shot" src="assets/frames/whip_0001.jpg" alt="" decoding="async">
-      <div class="wtop__in">
-        <img class="wtop__logo" src="assets/img/we-logo-dark.webp" alt="Whip Equipped" width="458" height="160">
-        <p class="wk">Whip Equipped LLC &middot; Acworth, Georgia</p>
+       This is the front door of a product that has not launched. It is
+       laid out as an app screen rather than a web page: the icon at the
+       top the way a store listing opens, a status line that says where
+       the build actually is, then the three products as rows a thumb can
+       hit, then a way to be told when it lands.
+
+       Every wide-screen rule in css/whip.css is a min-width addition to
+       what is written here. The phone is the design; the desktop is the
+       phone with room.
+       ============================================================ -->
+  <main class="we">
+
+    <header class="we-hero">
+      <img class="we-hero__bg" src="assets/frames/whip_0001.jpg" alt="" decoding="async">
+      <div class="we-hero__in">
+
+        <div class="we-id">
+          <img class="we-id__tile" src="assets/img/we-mark-bar.webp" alt="" width="169" height="169">
+          <div class="we-id__names">
+            <b>Whip Equipped</b>
+            <small>Acworth, Georgia &middot; est. 2024</small>
+          </div>
+        </div>
+
+        <p class="we-pill"><i></i>Launching soon</p>
+
         <h1>Three apps.<br><em>One account.</em></h1>
-        <p class="wtop__lede">A parts-licensed dealership that became a network. The lot
-          runs sales and compliance day to day; the apps run the rides, the drivers and
-          the rentals on top of it. One McCluster identity moves through all three &mdash;
-          no second account, no second database.</p>
-        <ul class="wtop__facts">
-          <li>Formed 2024</li>
-          <li>Parts-licensed dealership</li>
-          <li>iOS + web, per product</li>
-          <li>3% payer &middot; 3% receiver</li>
+
+        <p class="we-lede">A parts-licensed dealership that became a network.
+          Ride, drive, or rent off the lot &mdash; one sign-in carries you
+          through all three, and the fare is quoted before you commit to it.</p>
+
+        <a class="we-cta" href="#products">See what we're launching &darr;</a>
+
+        <ul class="we-facts">
+          <li><b>3</b><span>apps</span></li>
+          <li><b>6</b><span>builds</span></li>
+          <li><b>1</b><span>account</span></li>
         </ul>
       </div>
     </header>
 
-    <section class="wsec" aria-labelledby="appsHead">
-      <p class="wk" id="appsHead">The three apps &middot; open one and use it</p>
-      <div class="wsec__rule"></div>
-      <div class="apps" id="appGrid"></div>
+    <!-- THE THREE PRODUCTS. Each row opens the real application, which is
+         vendored under whip/ and talks to api.mccluster.org. The build
+         chips under each name are read from the registry, not typed. -->
+    <section class="we-sec" id="products">
+      <p class="we-k">The products</p>
+      <h2 class="we-h2">Check out what we&rsquo;re launching</h2>
+      <p class="we-sub">All three run right now, on the real API. Tap one and use it.</p>
+      <div class="we-list" id="appGrid"></div>
     </section>
 
-    <p class="wout">
-      <a href="ecosystem.html#whip-equipped">The company in the ecosystem &rarr;</a>
-      <span>&middot;</span>
-      <a href="album.html">&ldquo;Dealer Plates&rdquo; on the album</a>
-    </p>
+    <section class="we-sec">
+      <p class="we-k">How it works</p>
+      <h2 class="we-h2">One sign-in, three doors</h2>
+      <ul class="we-steps">
+        <li>
+          <span class="we-steps__n">1</span>
+          <span><b>Make one account</b>Continue with McCluster and it works in Rider,
+            Driver and Rentals. No second password, no second profile.</span>
+        </li>
+        <li>
+          <span class="we-steps__n">2</span>
+          <span><b>See the price first</b>The fare or the day rate is quoted before you
+            commit, with the fee shown on its own line instead of buried.</span>
+        </li>
+        <li>
+          <span class="we-steps__n">3</span>
+          <span><b>Everything lands on one ledger</b>Rides, rentals and driver payouts
+            settle through the same books, so a receipt is never a mystery.</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- LAUNCHING SOON, WITH A REAL WAY TO BE TOLD. The note goes to the
+         same desk the rest of the house uses; nothing here is a
+         decorative form that drops what you typed. -->
+    <section class="we-sec we-soon" id="notify">
+      <p class="we-k">Launching soon</p>
+      <h2 class="we-h2">Be first on the lot</h2>
+      <p class="we-sub">iOS and web builds are registered for all three. Leave an address
+        and you get one message when they open &mdash; not a newsletter.</p>
+
+      <form class="we-form" id="notifyForm" novalidate>
+        <label class="sr-only" for="notifyEmail">Your email</label>
+        <input class="we-input" id="notifyEmail" type="email" inputmode="email"
+               autocomplete="email" placeholder="you@example.com" required>
+        <button class="we-go" type="submit">Notify me</button>
+      </form>
+      <p class="we-note" id="notifyNote" role="status">One message. Nothing else, ever.</p>
+    </section>
+
+    <footer class="we-foot">
+      <img class="we-foot__logo" src="assets/img/we-logo-dark.webp" alt="Whip Equipped"
+           width="422" height="155">
+      <p>Whip Equipped LLC &middot; a parts-licensed dealership in Acworth, Georgia,
+        and the set of &ldquo;We In This Together.&rdquo;</p>
+      <p class="we-foot__links">
+        <a href="ecosystem.html#whip-equipped">The company &rarr;</a>
+        <a href="album.html">&ldquo;Dealer Plates&rdquo; &rarr;</a>
+        <a href="index.html">McCluster &rarr;</a>
+      </p>
+    </footer>
   </main>
 
   <div class="wprev" id="appPrev" hidden role="dialog" aria-modal="true" aria-labelledby="appPrevTitle">
@@ -94,20 +163,18 @@
 
   <script>
   /* ============================================================
-     THE THREE APPS.
+     THE THREE PRODUCTS.
 
      THE REGISTRY IS THE SOURCE OF TRUTH, NOT THIS PAGE. The Worker at
      api.mccluster.org/v1/apps holds the application registry, and each
-     product's builds are rows in it. This page asks the registry which
-     builds exist and what their public URL is, then draws what it was
-     told: a build with a public_url gets a link, and a build without one
-     says it is in build. Nobody has to remember to come back here and
-     change a word on launch day.
+     product's builds are rows in it. This page asks which builds exist
+     and what their public URL is, then draws what it was told: a build
+     with a public_url is out, one without is still in build. Launch day
+     needs no edit here.
 
      IT FAILS OPEN. If the Worker is unreachable the three products still
-     draw from the shape below, because a page that says nothing about
-     the network is worse than a page that says the network exists and
-     the builds are not shipped yet.
+     draw, because a landing page that says nothing is worse than one
+     that says the apps exist and are not in the stores yet.
      ============================================================ */
   (function () {
     "use strict";
@@ -115,51 +182,28 @@
     var API = "https://api.mccluster.org/v1/apps";
     var FAMILY = "whip-equipped";
 
-    /* what each product IS -- the registry knows the builds, not the
-       job. This is the only place the jobs are written down. */
     var PRODUCTS = [
       {
-        key: "rider",
-        role: "The passenger side",
+        key: "rider", short: "Rider", role: "Ride",
         name: "Whip Equipped",
-        short: "Rider",
-        one: "Hail a whip, watch it come, pay in the app.",
-        does: [
-          "Request a ride and follow the car in",
-          "Fare quoted before the trip, not after",
-          "Card on file through the McCluster account",
-          "Receipts and trip history on the record",
-        ],
+        one: "Hail a whip, watch it come in, pay in the app.",
+        glyph: '<circle cx="12" cy="7.4" r="3.2"/><path d="M5.4 20a6.6 6.6 0 0 1 13.2 0"/>'
       },
       {
-        key: "driver",
-        role: "The earning side",
+        key: "driver", short: "Driver", role: "Earn",
         name: "Whip Equipped Driver",
-        short: "Driver",
-        one: "Take the trip, see the split, get paid out.",
-        does: [
-          "Go on shift and take dispatched trips",
-          "Earnings per trip with the fee shown, not buried",
-          "Payouts through the operator's own connected account",
-          "Vehicle and compliance documents in one place",
-        ],
+        one: "Go on shift, see the split before you accept, get paid out.",
+        glyph: '<circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="3"/>' +
+               '<path d="M12 3.6v5.4M4.3 15.2l5-2M19.7 15.2l-5-2"/>'
       },
       {
-        key: "rentals",
-        role: "The lot",
+        key: "rentals", short: "Rentals", role: "Rent",
         name: "Whip Equipped Rentals",
-        short: "Rentals",
-        one: "Rent from the dealership itself, by the day.",
-        does: [
-          "Book a vehicle off the lot for a day or a week",
-          "Licence and insurance checked before the keys move",
-          "Hand-off and return condition recorded with photos",
-          "The same account and the same ledger as the rides",
-        ],
-      },
+        one: "Take one off the lot by the day, keys released after check-in.",
+        glyph: '<circle cx="8" cy="14" r="3.6"/><path d="M10.9 11.4 19.6 3"/>' +
+               '<path d="M17 5.4l2.3 2.3M14.6 7.8l2.3 2.3"/>'
+      }
     ];
-
-    var KIND = { ios: "iOS", web: "Web" };
 
     function esc(s) {
       return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -167,41 +211,30 @@
       });
     }
 
+    var KIND = { ios: "iOS", web: "Web" };
     var grid = document.getElementById("appGrid");
     var prev = document.getElementById("appPrev");
     var card = document.getElementById("appPrevCard");
-    var lastFocus = null;
-    var stopDemo = null;
-    var BUILDS = {};
+    var lastFocus = null, stopApp = null, BUILDS = {};
 
-    function buildsFor(key) { return BUILDS[key] || []; }
-
-    function paintGrid() {
+    function paint() {
       grid.innerHTML = PRODUCTS.map(function (p) {
-        var b = buildsFor(p.key);
-        var plats = b.length
-          ? b.map(function (r) { return '<span class="plat">' + esc(KIND[r.kind] || r.kind) + "</span>"; }).join("")
-          : '<span class="plat">iOS</span><span class="plat">Web</span>';
-        return '<button class="app" type="button" data-app="' + esc(p.key) + '">' +
-          '<p class="app__role">' + esc(p.role) + "</p>" +
-          "<h3>" + esc(p.short || p.name) + "</h3>" +
-          '<p class="app__one">' + esc(p.one) + "</p>" +
-          '<span class="app__foot">' +
-            '<span class="plats">' + plats + "</span>" +
-            '<span class="app__open">Open the app &rarr;</span>' +
+        var b = BUILDS[p.key] || [];
+        var live = b.filter(function (r) { return r.public_url; }).length;
+        var chips = (b.length ? b.map(function (r) { return KIND[r.kind] || r.kind; })
+                              : ["iOS", "Web"])
+          .map(function (k) { return '<span class="we-chip">' + esc(k) + "</span>"; }).join("");
+        return '<button class="we-row" type="button" data-app="' + esc(p.key) + '">' +
+          '<span class="we-row__tile"><svg viewBox="0 0 24 24" aria-hidden="true">' + p.glyph + "</svg></span>" +
+          '<span class="we-row__body">' +
+            '<span class="we-row__top"><b>' + esc(p.short) + "</b>" +
+              '<em class="we-row__state' + (live ? " is-live" : "") + '">' +
+                (live ? "Out now" : "Soon") + "</em></span>" +
+            "<small>" + esc(p.one) + "</small>" +
+            '<span class="we-chips">' + chips + '<span class="we-row__go">Open &rarr;</span></span>' +
           "</span>" +
         "</button>";
       }).join("");
-    }
-
-    function buildRow(r) {
-      var live = !!r.public_url;
-      return '<div class="build">' +
-        "<span><b>" + esc(KIND[r.kind] || r.kind) + "</b><br><code>" + esc(r.app_key) + "</code></span>" +
-        (live
-          ? '<a href="' + esc(r.public_url) + '" rel="noopener">Open &rarr;</a>'
-          : '<span class="status status--build">In build</span>') +
-      "</div>";
     }
 
     function open(key) {
@@ -209,48 +242,26 @@
       for (var i = 0; i < PRODUCTS.length; i++) if (PRODUCTS[i].key === key) p = PRODUCTS[i];
       if (!p) return;
       lastFocus = document.activeElement;
-
-      var b = buildsFor(key);
       card.innerHTML =
-        '<button class="wprev__x" type="button" data-close aria-label="Close">&times;</button>' +
-        '<p class="wk">' + esc(p.role) + "</p>" +
-        '<h2 id="appPrevTitle">' + esc(p.name) + "</h2>" +
-        '<p class="wprev__tag">' + esc(p.one) + "</p>" +
-        '<div class="wprev__demo" data-demo="' + esc(p.key) + '"></div>' +
-        '<p class="wprev__k">What it does</p>' +
-        "<ul>" + p.does.map(function (d) { return "<li>" + esc(d) + "</li>"; }).join("") + "</ul>" +
-        '<p class="wprev__k">Builds in the registry</p>' +
-        '<div class="builds">' +
-          (b.length
-            ? b.map(buildRow).join("")
-            : '<div class="build"><span><b>Not answering</b><br><code>' + esc(API) +
-              '</code></span><span class="status status--gone">Registry offline</span></div>')
-        + "</div>" +
-        '<p class="wprev__k">How it signs in and settles</p>' +
-        "<ul>" +
-          "<li>Continue with McCluster &mdash; the same identity as this site, no second account</li>" +
-          "<li>3% from the payer, 3% from the receiver; card processing is separate</li>" +
-          "<li>Money moves through the operator&rsquo;s own connected account</li>" +
-        "</ul>" +
-        '<p class="wprev__note">The builds above are read live from the application registry on ' +
-          '<a href="https://api.mccluster.org/health" rel="noopener">api.mccluster.org</a>. ' +
-          'The moment one carries a public address, this panel links to it.</p>';
-
+        '<div class="wprev__head">' +
+          '<span><p class="we-k">' + esc(p.role) + '</p>' +
+          '<h2 id="appPrevTitle">' + esc(p.name) + "</h2></span>" +
+          '<button class="wprev__x" type="button" data-close aria-label="Close">&times;</button>' +
+        "</div>" +
+        '<div class="wprev__demo" data-demo="' + esc(p.key) + '"></div>';
       prev.hidden = false;
-      document.body.style.overflow = "hidden";
-
-      if (stopDemo) { stopDemo(); stopDemo = null; }
+      document.body.classList.add("we-locked");
+      if (stopApp) { stopApp(); stopApp = null; }
       var slot = card.querySelector("[data-demo]");
-      if (slot && window.MCC_WHIP) stopDemo = window.MCC_WHIP.mount(slot, key);
-
+      if (slot && window.MCC_WHIP) stopApp = window.MCC_WHIP.mount(slot, key);
       var x = card.querySelector("[data-close]");
       if (x) x.focus();
     }
 
     function close() {
-      if (stopDemo) { stopDemo(); stopDemo = null; }
+      if (stopApp) { stopApp(); stopApp = null; }
       prev.hidden = true;
-      document.body.style.overflow = "";
+      document.body.classList.remove("we-locked");
       if (lastFocus && lastFocus.focus) lastFocus.focus();
     }
 
@@ -265,32 +276,84 @@
       if (e.key === "Escape" && !prev.hidden) close();
     });
 
-    /* draw first, then improve. The registry is an enhancement, not a
-       gate: the cards are on screen before the request is answered. */
-    paintGrid();
+    paint();
 
     fetch(API, { cache: "no-cache" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
-        var rows = (d && d.apps) || [];
-        rows.forEach(function (r) {
+        ((d && d.apps) || []).forEach(function (r) {
           if (r.product_family !== FAMILY) return;
           var m = /^whip-([a-z]+)-/.exec(r.app_key || "");
           if (!m) return;
           (BUILDS[m[1]] = BUILDS[m[1]] || []).push(r);
         });
-        /* the registry returns rows in insertion order, which put Web
-           before iOS on two products and after it on the third. Order is
-           not information here, so it is fixed. */
         var RANK = { ios: 0, web: 1 };
         Object.keys(BUILDS).forEach(function (k) {
-          BUILDS[k].sort(function (a, b) {
-            return (RANK[a.kind] == null ? 9 : RANK[a.kind]) - (RANK[b.kind] == null ? 9 : RANK[b.kind]);
-          });
+          BUILDS[k].sort(function (a, b) { return (RANK[a.kind] ?? 9) - (RANK[b.kind] ?? 9); });
         });
-        paintGrid();
+        paint();
       })
       .catch(function () {});
+
+    /* ---------- tell me when it lands ----------
+       The address goes to the same desk everything else in the house
+       uses. A form that swallows what you typed is worse than no form,
+       so a failure says so and hands over the email address instead. */
+    var form = document.getElementById("notifyForm");
+    var input = document.getElementById("notifyEmail");
+    var note = document.getElementById("notifyNote");
+    var KEY = "mcc_desk_key";
+
+    function visitorKey() {
+      var k = null;
+      try { k = localStorage.getItem(KEY); } catch (e) {}
+      if (k && /^[A-Za-z0-9_-]{16,64}$/.test(k)) return k;
+      var b = new Uint8Array(24);
+      (window.crypto || window.msCrypto).getRandomValues(b);
+      k = btoa(String.fromCharCode.apply(null, b))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      try { localStorage.setItem(KEY, k); } catch (e) {}
+      return k;
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var email = (input.value || "").trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) {
+        note.textContent = "That address does not look right. Check it and send again.";
+        note.className = "we-note is-bad";
+        input.focus();
+        return;
+      }
+      var S = window.MCC_SUPA;
+      if (!S || !S.url) {
+        note.innerHTML = 'The list is not reachable from here. Email ' +
+          '<a href="mailto:matthew@mccluster.org?subject=Whip%20Equipped%20launch">matthew@mccluster.org</a> and you are on it.';
+        note.className = "we-note is-bad";
+        return;
+      }
+      var btn = form.querySelector(".we-go");
+      btn.disabled = true; btn.textContent = "Sending…";
+      fetch(S.url + "/functions/v1/inbox", {
+        method: "POST",
+        headers: { "content-type": "application/json", apikey: S.key, Authorization: "Bearer " + S.key },
+        body: JSON.stringify({
+          action: "say", org: window.MCC_ORG || "mccluster",
+          visitor_key: visitorKey(), page: location.pathname,
+          body: "Whip Equipped launch list: " + email
+        })
+      }).then(function (r) {
+        if (!r.ok) throw new Error("list " + r.status);
+        form.hidden = true;
+        note.textContent = "You're on the list. One message when the apps open.";
+        note.className = "we-note is-good";
+      }).catch(function () {
+        btn.disabled = false; btn.textContent = "Notify me";
+        note.innerHTML = 'That did not send. Email ' +
+          '<a href="mailto:matthew@mccluster.org?subject=Whip%20Equipped%20launch">matthew@mccluster.org</a> and you are on it.';
+        note.className = "we-note is-bad";
+      });
+    });
   })();
   </script>
 
