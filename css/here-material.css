@@ -1,9 +1,5 @@
 /* HERE Material System 2.0 — REMOVED 2026-08-15 by the owner's call.
    The marble/metal skin is retired. The flat house system in css/style.css
-   remains the shipping aesthetic.
-
-   album.html still links this compatibility stub, so it now loads one
-   tightly-scoped extension for the McCluster music room. music-lounge.css
-   affects only body.music-room--album and does not revive the old material
-   skin anywhere else. */
-@import url("music-lounge.css?v=20260903-1");
+   (cinema/gallery coats, driven by js/theme.js) is the shipping aesthetic.
+   This stub remains only so pages still linking the file get a clean 200
+   instead of a 404 until the dead links are stripped. Intentionally empty. */

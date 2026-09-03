@@ -1,274 +1,640 @@
 <!doctype html>
-<html lang="en" data-theme-lock="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Equity Uprise · Institutional Experience</title>
-  <meta name="description" content="Equity Uprise is McCluster Corp's institutional civic strategy program: policy intelligence, public affairs, stakeholder research, campaign execution, media and durable public record.">
+  <title>Equity Uprise: the program, the record, the fellows</title>
+  <meta name="description" content="Equity Uprise is the civic fellowship McCluster Corp runs. The record, in order: a 2024 memorandum to Governor Kemp, Georgia's healthy school meals blueprint, a Georgia Governor's proclamation, the Docket 516 archive, the 5-3 Siting Council denial that closed Docket 516R, three Connecticut General Assembly citations, and Equity Uprise Human Rights Day in Bridgeport.">
+  <meta name="keywords" content="Equity Uprise, civic fellowship, policy fellowship, Docket 516, Docket 516R, McCluster Corp, Connecticut Siting Council, Bridgeport, Georgia, environmental justice">
   <link rel="canonical" href="https://matthew.mccluster.org/equity-uprise.html">
   <link rel="icon" type="image/png" href="assets/img/eu-favicon.png">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#080807">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Equity Uprise · Institutional Experience">
-  <meta property="og:description" content="Research the issue. Build the record. Move the room.">
+  <meta property="og:title" content="Equity Uprise: the program, the record, the fellows">
+  <meta property="og:description" content="Georgia to Connecticut, November 2024 to February 2026. Every claim on the page opens the document behind it.">
   <meta property="og:url" content="https://matthew.mccluster.org/equity-uprise.html">
   <meta property="og:image" content="https://matthew.mccluster.org/assets/img/uprise-still.jpg">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="css/equity-uprise-institutional.css?v=__STAMP__">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
   <script type="application/ld+json">
   {
-    "@context":"https://schema.org",
-    "@type":"Organization",
-    "name":"Equity Uprise",
-    "url":"https://matthew.mccluster.org/equity-uprise.html",
-    "logo":"https://matthew.mccluster.org/assets/img/equity-uprise-logo.webp",
-    "parentOrganization":{"@type":"Organization","name":"McCluster Corp"},
-    "description":"A McCluster Corp program combining independent policy research, stakeholder engagement, public affairs, civic education, culture and media.",
-    "founder":{"@type":"Person","name":"Matthew McCluster"}
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Equity Uprise",
+    "alternateName": "Equity Uprise: a McCluster Corp civic fellowship",
+    "url": "https://matthew.mccluster.org/equity-uprise.html",
+    "logo": "https://matthew.mccluster.org/assets/img/equity-uprise-logo.webp",
+    "parentOrganization": { "@type": "Organization", "name": "McCluster Corp" },
+    "description": "The civic fellowship McCluster Corp runs: policy research, community organizing and public-record work across Georgia and Connecticut, recognized by the Connecticut General Assembly, the State of Georgia and the City of Bridgeport.",
+    "founder": { "@type": "Person", "name": "Matthew McCluster" },
+    "areaServed": [
+      { "@type": "State", "name": "Connecticut" },
+      { "@type": "State", "name": "Georgia" }
+    ],
+    "award": [
+      "Connecticut General Assembly Official Citation, October 5, 2025",
+      "State of Georgia Proclamation, Georgia Youth Innovation and Civic Leadership Week, signed October 27, 2025",
+      "City of Bridgeport Proclamation, Equity Uprise Human Rights Day, December 10, 2025"
+    ]
   }
   </script>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
 </head>
-<body class="eu-app">
-  <div class="eu-noise" aria-hidden="true"></div>
-  <div class="eu-scrollbar" aria-hidden="true"><i id="euScrollFill"></i></div>
-
-  <header class="eu-floatbar">
-    <a class="eu-floatbar__brand" href="index.html" aria-label="Back to McCluster">
-      <img src="assets/img/equity-uprise-logo.webp" alt="" width="30" height="30">
-      <span><b>Equity Uprise</b><small>Institutional</small></span>
-    </a>
-    <p class="eu-floatbar__scene"><span id="euSceneNo">01</span><b id="euSceneName">The thesis</b></p>
-    <div class="eu-floatbar__links">
-      <a href="equity-uprise-fellowship.html">Fellowship + Artists</a>
-      <a href="album.html?album=equity-uprise">Listen</a>
-      <a class="eu-pill" href="mailto:matthew@mccluster.org?subject=Equity%20Uprise%20Institutional%20Engagement">Open a conversation</a>
-    </div>
-  </header>
-
+<body class="eupage" data-mh-cta="Join the Fellowship|fellowship.html">
+  <!-- the page's own header is retired: the house masthead carries the
+       mark, the rooms, and this page's action (data-mh-cta) -->
   <main>
-    <section class="eu-scene eu-hero" data-scene="The thesis" id="top">
-      <div class="eu-hero__wash" aria-hidden="true"></div>
-      <div class="eu-hero__copy">
-        <p class="eu-kicker">Policy intelligence · public affairs · civic media</p>
-        <h1>Build the record.<br><em>Move the room.</em></h1>
-        <p class="eu-lede">Equity Uprise turns live civic issues into research, stakeholder intelligence, policy products, public engagement and culture. The institutional face is built for funders, companies, elected leaders and partners who need public work that survives scrutiny.</p>
-        <div class="eu-hero__actions">
-          <a class="eu-button eu-button--light" href="#current">Enter the live work</a>
-          <a class="eu-button" href="#proof">Inspect the record</a>
-        </div>
+
+    <!-- ============================================================
+         REGISTER ONE: the photograph is the hero. Type column beside
+         it on a desk, a band above it on a phone, and the two never
+         sit on top of each other.
+         ============================================================ -->
+    <header class="euhero">
+      <div class="euhero__media">
+        <img src="assets/img/uprise-still.jpg" alt="Film still &mdash; McCluster at a mixing desk before a packed assembly" fetchpriority="high" decoding="async">
+        <span class="euhero__veil" aria-hidden="true"></span>
       </div>
-      <div class="eu-hero__console" data-tilt>
-        <div class="eu-console__head"><span><i></i>Current intelligence file</span><small>September 2026</small></div>
-        <div class="eu-console__feature">
-          <p>Infrastructure policy</p>
-          <h2>Data-center governance without lazy binaries.</h2>
-          <span>Performance standards · ratepayer protection · water · sound · power · siting · continuing compliance</span>
-        </div>
-        <div class="eu-console__grid">
-          <article><small>Primary file</small><b>DeKalb County</b><span>legislative memorandum</span></article>
-          <article><small>Comparative scan</small><b>CT · NY · MA · NJ · RI</b><span>state + local rulemaking</span></article>
-          <article><small>Field layer</small><b>Stakeholder interviews</b><span>operator + public + technical</span></article>
-          <article><small>Campaign layer</small><b>Three perspectives</b><span>growth · protection · inquiry</span></article>
-        </div>
+      <div class="euhero__copy">
+        <p class="euhero__k"><img class="euhero__mark" src="assets/img/equity-uprise-logo.webp" alt="" width="28" height="28" decoding="async"> A McCluster Corp program</p>
+        <h1 class="euhero__h">Equity.<br>Then we <em>rise.</em></h1>
+        <p class="euhero__stand">A civic fellowship that works on the public record. Georgia to
+          Connecticut, November 2024 to February 2026 &mdash; and every line below opens the
+          document behind it.</p>
+        <p class="euhero__foot">Run by <b>McCluster Corp</b>, a registered Connecticut public charity
+          (CHR.0069693) &middot; founded by Matthew McCluster &middot; nine fellows in the 2025 cohort</p>
+        <p class="euhero__cred">Above: the uprise still, editorial.</p>
       </div>
-      <div class="eu-hero__foot"><span>McCluster Corp · Connecticut public charity CHR.0069693</span><span>Scroll to enter the record ↓</span></div>
+    </header>
+
+    <!-- REGISTER TWO WAS UPRISE WORLD, and it is gone from the page as of
+         2026-08-18. The playable world is unfinished and does not work, so
+         the owner pulled it rather than leave a card inviting visitors into
+         a broken room. Everything is kept intact in _unfinished/uprise-world/
+         and the deploy strips that directory from the published tree.
+
+         The whole <section class="euworld"> came out, not just the card
+         inside it: the section's aria-labelledby pointed at an id that only
+         existed on the card, so an emptied section would have been a labelled
+         landmark with no label and no content. Put the section back with the
+         card when the world works. -->
+
+    <!-- the hard numbers, set at the size they earned -->
+    <section class="eustats" aria-label="The record in numbers">
+      <div class="eustat eustat--won"><b>5&#8211;3</b><small>the Siting Council vote that denied the monopole plan</small></div>
+      <div class="eustat"><b>325</b><small>Docket 516 filings indexed, explained, and linked to the official source</small></div>
+      <div class="eustat"><b>$12.6M</b><small>the twenty-school Georgia pilot the blueprint costed, line by line</small></div>
+      <div class="eustat"><b id="euFellowCount">9</b><small>fellows in the 2025 cohort</small></div>
+      <div class="eustat"><b>2</b><small>states where the work is on the public record</small></div>
     </section>
 
-    <section class="eu-scene eu-proofband" data-scene="Proof of execution">
-      <div class="eu-proofband__intro">
-        <p class="eu-kicker">Measured campaign execution</p>
-        <h2>Not a pitch deck.<br><em>A record of work.</em></h2>
-        <p>Selected metrics below come from the Nicole Massiah / DeKalb District 3 media-engagement reporting used in the Equity Uprise capability record.</p>
-      </div>
-      <div class="eu-numbers">
-        <article><span>Instagram views</span><b>27,983</b><small>measured campaign window</small></article>
-        <article><span>Accounts reached</span><b>+578.8%</b><small>measured campaign window</small></article>
-        <article><span>Facebook views</span><b>44K</b><small>measured campaign window</small></article>
-        <article><span>Facebook engagement</span><b>+531%</b><small>measured campaign window</small></article>
-      </div>
-      <div class="eu-proofband__note">Public-figure media and marketing work was performed for Commissioner Nicole Massiah / DeKalb County District 3. Equity Uprise's independent civic recognitions are separate from that client/campaign work.</div>
-    </section>
-
-    <section class="eu-scene eu-current" data-scene="Current intelligence" id="current">
-      <div class="eu-sectionhead">
-        <div><p class="eu-kicker">Current intelligence</p><h2>One live issue.<br>Multiple systems.</h2></div>
-        <p>The product is not one memo or one campaign asset. It is an operating system for a public issue.</p>
-      </div>
-      <div class="eu-current__grid">
-        <article class="eu-mega" data-tilt>
-          <div class="eu-mega__meta"><span>01 · Active file</span><span>DeKalb County · Georgia</span></div>
-          <h3>Data Center Performance Standards Reform</h3>
-          <p>Performance-based local regulation for large-load infrastructure, designed around measurable impacts and continuing compliance rather than blanket prohibition.</p>
-          <div class="eu-tokenrow"><span>aggregation</span><span>WUE</span><span>low-frequency acoustics</span><span>electrical load</span><span>independent review</span><span>due process</span></div>
-          <a href="#policy">Open the policy engine ↓</a>
-        </article>
-        <article class="eu-stackcard eu-stackcard--image">
-          <img src="assets/img/uprise-still.jpg" alt="Equity Uprise production still" loading="lazy">
-          <div><small>02 · Comparative research</small><h3>Northeast rulemaking</h3><p>Connecticut, New York, Massachusetts, New Jersey and Rhode Island — thresholds, moratoria, tariffs, water stewardship and cost allocation.</p></div>
-        </article>
-        <article class="eu-stackcard">
-          <small>03 · Field intelligence</small>
-          <h3>Stakeholder register</h3>
-          <p>Operators, engineers, utilities, residents, environmental advocates, policymakers and subject-matter experts — each interview logged with attribution terms and research use.</p>
-          <div class="eu-miniindex"><span>Operator</span><span>Utility</span><span>Resident</span><span>Technical</span><span>Policy</span></div>
-        </article>
-        <article class="eu-stackcard eu-stackcard--bronze">
-          <small>04 · Campaign architecture</small>
-          <h3>Three perspectives. One disclosed platform.</h3>
-          <p><b>Responsible Growth.</b> <b>Community Protection.</b> <b>Public Inquiry.</b> Each lane can fund the strongest presentation of its perspective while the comparative research remains independent.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="eu-scene eu-cases" data-scene="Case files" id="cases">
-      <div class="eu-sectionhead eu-sectionhead--wide">
-        <div><p class="eu-kicker">Case files</p><h2>Capability under<br>real conditions.</h2></div>
-        <p>Independent Equity Uprise programs, campaign/client work and outside fellowships are labeled separately. Recognition is never attributed to the wrong program.</p>
+    <!-- ============================================================
+         REGISTER THREE: Georgia as a rail of dated documents, with a
+         sticky companion filling the dead right-hand column on a desk.
+         ============================================================ -->
+    <section class="euseg" id="georgia">
+      <div class="euseg__head">
+        <p class="euseg__place">Georgia</p>
+        <h2 class="euseg__h">Where the paper starts</h2>
+        <p class="euseg__lede">Four dated documents, in order. The first predates the fellowship's
+          name and is here because the Georgia work starts with it.</p>
       </div>
 
-      <div class="eu-case eu-case--docket">
-        <div class="eu-case__media"><img src="assets/frames/moneyglitch_0001.jpg" alt="Equity Uprise Docket 516R media artwork" loading="lazy"><span>Independent Equity Uprise</span></div>
-        <div class="eu-case__copy">
-          <p class="eu-kicker">01 · Connecticut · Docket 516R</p>
-          <h3>One proceeding became an ecosystem.</h3>
-          <p>Public-record research, issue education, creator participation, environmental-justice framing, original music, community engagement and a durable evidence room around a live transmission controversy.</p>
-          <dl><div><dt>Indexed filings</dt><dd>325</dd></div><div><dt>Proceeding outcome</dt><dd>5–3 denial</dd></div><div><dt>Media product</dt><dd>4-track civic record</dd></div></dl>
-          <div class="eu-case__actions"><a href="docket-516.html">Open evidence room ↗</a><a href="album.html?album=equity-uprise">Hear the record ↗</a></div>
-        </div>
-      </div>
+      <div class="euseg__body">
+        <aside class="euseg__side">
+          <figure class="euside">
+            <img class="euscan" src="assets/credentials/img/ulf-school-meals-policy.jpg" alt="Title slide reading A Policy Blueprint for Healthy School Meals in Georgia, 2025 Urban Leadership Final Policy Presentation, with four author names" loading="lazy" decoding="async">
+            <figcaption>The title slide of the 2025 final policy presentation. Four names on it:
+              Senge Ngalame, Josh Thomas, Matthew McCluster, Brandon Isome.
+              <a href="policy.html#school-meals" data-cta="eu-ga-deck">The deck plays on the policy page</a>.</figcaption>
+          </figure>
+        </aside>
+        <ol class="eurail">
 
-      <div class="eu-case eu-case--reverse">
-        <div class="eu-case__media"><img src="assets/img/uprise-still.jpg" alt="Campaign and public-program production still" loading="lazy"><span>Campaign / client work</span></div>
-        <div class="eu-case__copy">
-          <p class="eu-kicker">02 · DeKalb County District 3</p>
-          <h3>Public-figure media under election pressure.</h3>
-          <p>Rapid-turn photography, video, narrative packaging, event coverage and social publishing for Commissioner Nicole Massiah's District 3 campaign/media operation.</p>
-          <dl><div><dt>Instagram views</dt><dd>27,983</dd></div><div><dt>Facebook views</dt><dd>44K</dd></div><div><dt>Engagement</dt><dd>+531%</dd></div></dl>
-          <p class="eu-fine">Available as a professional reference relationship subject to the normal discretion of the referenced party.</p>
-        </div>
-      </div>
+          <li class="eudoc" id="ga-kemp-memo">
+            <p class="eudoc__date"><time datetime="2024-11-29">November 29, 2024</time></p>
+            <p class="eudoc__auth">Addressed to Gov. Brian Kemp &middot; sole author</p>
+            <h3 class="eudoc__t">Opposition to Legislation Mandating DNA Collection from Misdemeanor Offenders</h3>
+            <p class="eudoc__b">Argued on four fronts: Fourth Amendment doctrine under
+              <i>Maryland v. King</i>, the equity consequences for minority and low-income
+              populations, the fiscal load of processing and storage, and the thin evidence that
+              it reduces crime at all. Written alone, before any cohort. It is reproduced in full
+              on this site.</p>
+            <a class="eudoc__go" href="policy-memo-dna.html" data-cta="eu-ga-memo">Read the memorandum in full</a>
+          </li>
 
-      <div class="eu-case eu-case--event">
-        <div class="eu-case__media"><img src="assets/frames/church_0001.jpg" alt="Equity Uprise community-program visual" loading="lazy"><button class="eu-play" type="button" data-video="Tum9BPmGjEY" aria-label="Watch the October 5, 2025 program">▶</button><span>Independent Equity Uprise</span></div>
-        <div class="eu-case__copy">
-          <p class="eu-kicker">03 · October 5, 2025 · Shiloh</p>
-          <h3>A movement in the room.</h3>
-          <p>Artists, speakers, public programming and live production assembled as a capstone civic event. The full program remains available as a public archive; Facebook distribution was reported at roughly 10K views.</p>
-          <div class="eu-case__actions"><button type="button" data-video="Tum9BPmGjEY">Watch the full program ↗</button></div>
-        </div>
-      </div>
+          <li class="eudoc" id="ga-ulf">
+            <p class="eudoc__date"><time datetime="2025">2025</time></p>
+            <p class="eudoc__auth">Urban Leadership Fellowship &middot; Atlanta, Georgia</p>
+            <h3 class="eudoc__t">How the founder got into the policy room</h3>
+            <p class="eudoc__b">Equity Uprise's founder, Matthew McCluster, applied to the Urban
+              Leadership Fellowship's policy reform cohort and was selected; the memorandum above
+              was the writing sample that won him the seat. The fellowship counts the work he did
+              there as part of its own record.</p>
+            <p class="eudoc__prov">The Urban Leadership Fellowship is a separate program. It
+              does not endorse, sponsor or partner with Equity Uprise, and nothing on this page
+              should be read as a statement by it.</p>
+          </li>
 
-      <div class="eu-case eu-case--compact">
-        <div class="eu-case__copy">
-          <p class="eu-kicker">04 · Independent policy programs</p>
-          <h3>The paper existed before the pitch.</h3>
-          <p>Equity Uprise / McCluster policy-memo programs and infotainment campaigns are part of the independent record behind the civic recognition shown below. The citations were not earned through Urban Leaders Fellowship.</p>
-          <a href="policy.html">Read policy work ↗</a>
-        </div>
-        <div class="eu-case__copy eu-case__copy--external">
-          <p class="eu-kicker">External policy formation · separate</p>
-          <h3>Urban Leaders Fellowship</h3>
-          <p>Matthew McCluster was selected for the Atlanta policy-reform cohort and worked on formal memo development, including policy check-ins with Georgia Rep. Eric Bell. ULF is useful professional formation and policy-room experience — not the source of Equity Uprise's proclamations or citations.</p>
-        </div>
+          <li class="eudoc" id="ga-school-meals">
+            <p class="eudoc__date"><time datetime="2025">2025</time></p>
+            <p class="eudoc__auth">Final policy presentation &middot; four authors</p>
+            <h3 class="eudoc__t">A Policy Blueprint for Healthy School Meals in Georgia</h3>
+            <p class="eudoc__b">Written with <b>Senge Ngalame</b>, <b>Josh Thomas</b> and
+              <b>Brandon Isome</b>; the title slide carries all four names. It costs a
+              twenty-school Georgia pilot at <b>$12.6M</b>, screens four clean-label vendors against
+              a cost-neutral $3.75 per meal, and hands an explicit next-step list to the
+              <b>Georgia Department of Education</b> and school boards.</p>
+            <a class="eudoc__go" href="policy.html" data-cta="eu-ga-policy">Read the blueprint, section by section</a>
+          </li>
+
+          <li class="eudoc eudoc--scan" id="ga-proclamation">
+            <p class="eudoc__date"><time datetime="2025-10-27">Signed October 27, 2025</time> &middot; proclaiming December 12&ndash;18, 2025</p>
+            <p class="eudoc__auth">State of Georgia &middot; Office of the Governor (Gov. Brian P. Kemp)</p>
+            <h3 class="eudoc__t">Proclamation &middot; Georgia Youth Innovation &amp; Civic Leadership Week</h3>
+            <a class="eudoc__scan" href="assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+               data-lens="assets/credentials/img/georgia-youth-innovation-civic-leadership-week-proclamation.jpg"
+               data-lens-doc="assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf"
+               data-lens-cap="State of Georgia Proclamation &middot; Gov. Brian P. Kemp &middot; signed October 27, 2025, proclaiming December 12&ndash;18, 2025"
+               data-cta="eu-cred-ga">
+              <img class="euscan" src="assets/credentials/img/georgia-youth-innovation-civic-leadership-week-proclamation.jpg" alt="Scan of the State of Georgia proclamation" loading="lazy" decoding="async">
+              <span class="eudoc__open">Open the document (PDF)</span>
+            </a>
+          </li>
+
+        </ol>
+
       </div>
     </section>
 
-    <section class="eu-scene eu-policy" data-scene="Policy engine" id="policy">
-      <div class="eu-policy__intro">
-        <p class="eu-kicker">Policy engine</p>
-        <h2>From a public complaint<br>to enforceable architecture.</h2>
-        <p>The DeKalb work demonstrates the technical side of the institutional practice: turning broad public concerns into triggers, standards, review procedures, verification and remedies.</p>
-        <div class="eu-techproof"><span>~5,000 sq ft data-center buildout support</span><span>racks · CAT6 · PDU/UPS · environmental monitoring</span><span>Cisco · servers · RAID · firmware · lifecycle work</span></div>
+    <!-- ============================================================
+         REGISTER ONE again, and only twice on this page: Connecticut
+         announced on the image, not above it.
+         ============================================================ -->
+    <section class="euband" id="connecticut">
+      <img class="euband__img" src="assets/frames/church_0001.jpg" alt="A crowd standing together outside a church at sunset" loading="lazy" decoding="async">
+      <span class="euband__veil" aria-hidden="true"></span>
+      <div class="euband__type">
+        <p class="euband__k">Connecticut</p>
+        <!-- "ended in a denial" was accurate and read backwards: the thing
+             denied was United Illuminating's application, but at a glance it
+             looks like the denial landed on us. Name what the fight did. -->
+        <h2 class="euband__h">The fight that stopped<br>the <em>line</em></h2>
+        <p class="euband__sub">7.3 miles of new high-voltage monopoles through Fairfield and
+          Bridgeport. Two cities pushed back. The paper is all of it.</p>
       </div>
-      <div class="eu-policy__stack">
-        <button class="eu-policyrow is-open" type="button"><span>01</span><b>Classification + aggregation</b><small>MW + footprint · anti-segmentation · common-control tests</small><i>+</i><em>Define who enters heightened review and prevent project slicing across phases, affiliates, buildings or contiguous parcels.</em></button>
-        <button class="eu-policyrow" type="button"><span>02</span><b>Sound + low-frequency acoustics</b><small>Class 1 · LAeq · tonality · one-third octave</small><i>+</i><em>Measure what residents actually experience, including low-frequency and tonal components that ordinary A-weighted snapshots can miss.</em></button>
-        <button class="eu-policyrow" type="button"><span>03</span><b>Water + cooling</b><small>capacity · metering · WUE · drought response</small><i>+</i><em>Require capacity certification, separate metering, operating disclosure and drought/high-demand response planning.</em></button>
-        <button class="eu-policyrow" type="button"><span>04</span><b>Power + generation</b><small>load · interconnection · backup vs routine generation</small><i>+</i><em>Separate emergency backup from routine generation and address electrical demand without pretending local zoning can replace state utility jurisdiction.</em></button>
-        <button class="eu-policyrow" type="button"><span>05</span><b>Independent technical review</b><small>qualifications · conflicts · escrow · deliverables</small><i>+</i><em>Give government a defensible expert-review procedure while preventing applicant-selected consultants from becoming the de facto decision-maker.</em></button>
-        <button class="eu-policyrow" type="button"><span>06</span><b>Continuing compliance + due process</b><small>verification · notice · cure · retest · appeal</small><i>+</i><em>Make operational promises testable after opening, with clear enforcement, cure, written determination and appeal paths.</em></button>
+      <p class="euband__cred">A frame from the &ldquo;Environmental Injustice&rdquo; film.</p>
+    </section>
+
+    <!-- ============================================================
+         REGISTER TWO: the outcome, editorial. The number carries the
+         left column; the account and its sources carry the right.
+         ============================================================ -->
+    <section class="euwin" id="the-win">
+      <div class="euwin__num">
+        <b>5&#8211;3</b>
+        <span>denied</span>
+      </div>
+      <div class="euwin__body">
+        <p class="euwin__k">Connecticut Siting Council &middot; Docket 516R &middot; closed</p>
+        <h2 class="euwin__h">It ended, in victory.</h2>
+        <p class="euwin__p">On <b>October 16, 2025</b> the Connecticut Siting Council voted
+          <b>5&#8211;3 to deny</b> United Illuminating's application. UI asked the Council to
+          reconsider; on <b>February 5, 2026</b> the Council rejected that appeal and
+          <b>closed Docket 516R</b>. The community's unified front was recognized as a major factor
+          in the decision.</p>
+        <p class="euwin__srck">Sources</p>
+        <ul class="euwin__src">
+          <li><a href="https://ctmirror.org/2025/10/16/monopoles-denied-ct-siting-council-united-illuminating/" target="_blank" rel="noopener" data-cta="eu-win-ctmirror-denial">CT Mirror &middot; CT rejects controversial UI monopoles plan</a></li>
+          <li><a href="https://ctmirror.org/2026/02/05/ct-siting-council-rejects-united-illuminatings-monopole-appeal/" target="_blank" rel="noopener" data-cta="eu-win-ctmirror-appeal">CT Mirror &middot; Siting Council rejects UI's appeal</a></li>
+          <li><a href="https://portal.ct.gov/csc/1_applications-and-other-pending-matters/applications/4_docketnos500s/docket-no-516r" target="_blank" rel="noopener" data-cta="eu-win-csc">Connecticut Siting Council &middot; the Docket 516R record</a></li>
+        </ul>
       </div>
     </section>
 
-    <section class="eu-scene eu-ops" data-scene="Operating system">
-      <div class="eu-sectionhead"><div><p class="eu-kicker">Operating system</p><h2>Research is only<br>the first layer.</h2></div><p>The institutional engagement is designed as one continuous sequence, not disconnected deliverables.</p></div>
-      <div class="eu-flowline">
-        <article><span>01</span><b>Issue intelligence</b><p>Record, law, incentives, risks, opposition, decision map.</p></article>
-        <article><span>02</span><b>Stakeholder program</b><p>Interviews, attribution rules, field intelligence, coalition map.</p></article>
-        <article><span>03</span><b>Policy product</b><p>Memo, brief, model language, implementation architecture.</p></article>
-        <article><span>04</span><b>Public affairs</b><p>Hearings, testimony, meetings, explainers, coalition communications.</p></article>
-        <article><span>05</span><b>Culture + media</b><p>Artists, creators, music, short-form video, public education.</p></article>
-        <article><span>06</span><b>Capstone + record</b><p>Convening, analytics, source archive and durable public record.</p></article>
+    <!-- the Connecticut chapter as a dated ledger: one line, one date,
+         one thing that happened. No paragraph pretending to be an event. -->
+    <section class="euledger" aria-labelledby="euledger-h">
+      <div class="euledger__head">
+        <h3 class="euledger__h" id="euledger-h">Connecticut, in order</h3>
+        <a class="euledger__go" href="docket-516.html" data-cta="eu-docket">Enter the evidence room: 325 filings &#8594;</a>
+      </div>
+      <ol class="euledger__list">
+        <li><span class="euledger__d"><time datetime="2023">Early 2023</time></span><span class="euledger__x">United Illuminating files for a Certificate of Environmental Compatibility and Public Need: new steel monopoles along roughly 7.3 miles of the Metro-North corridor.</span></li>
+        <li><span class="euledger__d"><time datetime="2024-02-16">02 / 16 / 2024</time></span><span class="euledger__x">The Council grants the certificate with conditions &mdash; the date on its Final Decision documents; the Superior Court&rsquo;s remand order recites the decision as of February 15. Parties appeal; the court remands. The redo runs as Docket 516R.</span></li>
+        <li class="is-mark"><span class="euledger__d"><time datetime="2025-10-05">10 / 05 / 2025</time></span><span class="euledger__x">The fellowship's Bridgeport event at Shiloh Baptist Church. The City of Bridgeport's proclamation later records that it &ldquo;transformed the discussion around environmental-justice concerns in Docket 516 into constructive engagement through art, music, and policy dialogue.&rdquo;</span></li>
+        <li><span class="euledger__d"><time datetime="2025-10-05">10 / 05 / 2025</time></span><span class="euledger__x">The Connecticut General Assembly issues three official citations at the State Capitol in Hartford.</span></li>
+        <li class="is-won"><span class="euledger__d"><time datetime="2025-10-16">10 / 16 / 2025</time></span><span class="euledger__x">The Siting Council votes 5&#8211;3 to deny the application.</span></li>
+        <li><span class="euledger__d"><time datetime="2025-10-28">10 / 28 / 2025</time></span><span class="euledger__x">McCluster Corp is registered as a Connecticut public charity, CHR.0069693, by the Department of Consumer Protection.</span></li>
+        <li><span class="euledger__d"><time datetime="2025-12-10">12 / 10 / 2025</time></span><span class="euledger__x">Mayor Joseph P. Ganim proclaims Equity Uprise Human Rights Day in the City of Bridgeport.</span></li>
+        <li class="is-won"><span class="euledger__d"><time datetime="2026-02-05">02 / 05 / 2026</time></span><span class="euledger__x">The Council rejects UI's appeal and closes Docket 516R.</span></li>
+      </ol>
+    </section>
+
+    <!-- ============================================================
+         THE CITATIONS WALL. Led by the issuing authority, not by six
+         identical white rectangles. Built from data/dossier.json so the
+         ledger this site files with every application is the same
+         ledger it publishes. The markup already inside #euCites is the
+         no-JS floor: the documents themselves, still one tap away.
+         ============================================================ -->
+    <section class="eucites" id="record">
+      <p class="eucites__k">Signed, sealed, on file</p>
+      <h2 class="eucites__h" id="euCitesH">Four authorities.<br>Six documents.</h2>
+      <p class="eucites__lede" id="euCitesLede">Every document below opens as filed.</p>
+      <div class="eucites__wall" id="euCites">
+        <ul class="eucites__fallback">
+          <li><a href="assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf">Connecticut General Assembly citation &middot; Matthew Christian Perry McCluster (PDF)</a></li>
+          <li><a href="assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf">Connecticut General Assembly citation &middot; McCluster Corp (PDF)</a></li>
+          <li><a href="assets/credentials/ct-general-assembly-citation-apex-kingdom.pdf">Connecticut General Assembly citation &middot; Apex Kingdom (PDF)</a></li>
+          <li><a href="assets/credentials/mccluster-corp-public-charity-registration.pdf">Connecticut Public Charity Registration CHR.0069693 (PDF)</a></li>
+          <li><a href="assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf">State of Georgia proclamation (PDF)</a></li>
+          <li><a href="assets/credentials/bridgeport-human-rights-day-proclamation.pdf">City of Bridgeport proclamation &middot; Equity Uprise Human Rights Day (PDF)</a></li>
+        </ul>
       </div>
     </section>
 
-    <section class="eu-scene eu-media" data-scene="Media archive">
-      <div class="eu-sectionhead eu-sectionhead--wide"><div><p class="eu-kicker">Media archive</p><h2>The policy can<br>have a soundtrack.</h2></div><p>Culture is not decoration. It is another distribution layer for the same researched civic issue.</p></div>
-      <div class="eu-media__grid">
-        <a class="eu-mediahero" href="album.html?album=equity-uprise">
-          <img src="assets/frames/moneyglitch_0001.jpg" alt="Equity Uprise music engine artwork" loading="lazy">
-          <div><small>McCluster native music engine</small><h3>Equity Uprise · Docket 516R</h3><p>Environmental Injustice · Brave mix · Please Set Me Free · Money or the Power</p><span>Open the record ↗</span></div>
+    <!-- ============================================================
+         REGISTER FOUR, once on this page: no image, no card, no rule.
+         One sentence the program actually files with every application.
+         ============================================================ -->
+    <section class="euquiet">
+      <p class="euquiet__line">Turn media, policy and technology into one operating system a
+        community can actually use &mdash; and prove it in public, with documents anyone can check.</p>
+      <p class="euquiet__by">The mission statement, taken from the dossier McCluster Corp files with every
+        application, grant and fellowship.</p>
+    </section>
+
+    <!-- ============================================================
+         THE FELLOWS. The stage name leads because that is the name the
+         work carries; the legal name is the formal credit under it.
+         Rendered from data/fellows.json, which records for each person
+         whether the Bridgeport proclamation prints their name.
+         ============================================================ -->
+    <section class="eufel" id="fellows">
+      <p class="eufel__k">The 2025 cohort</p>
+      <h2 class="eufel__h" id="euFellowsH">Nine people</h2>
+      <div class="eufel__prov" id="euFellowsProv"></div>
+      <div class="eufel__grid" id="euFellows">
+        <p class="eufel__fallback">The 2025 cohort is nine people. Most are named on the
+          <a href="assets/credentials/bridgeport-human-rights-day-proclamation.pdf">City of Bridgeport
+          proclamation of December 10, 2025</a>, which is the document of record.</p>
+      </div>
+    </section>
+
+    <!-- the rally: five photographs, one honest line, one door -->
+    <section class="eustrip" aria-labelledby="eustrip-h">
+      <div class="eustrip__head">
+        <h2 class="eustrip__h" id="eustrip-h">October 5, Bridgeport</h2>
+        <p class="eustrip__sub">The fellowship's October 5 Bridgeport event at Shiloh Baptist Church.
+          Photographs from the day. The same day the General Assembly signed its three citations in
+          Hartford.</p>
+      </div>
+      <div class="eustrip__reel">
+        <a class="eustrip__f" href="walls/eu-rally.html" data-cta="eu-rally-wall"><img src="assets/img/rally/rally-01.jpg" alt="Speakers on stage at the October 5 Bridgeport event, Shiloh Baptist Church" loading="lazy" decoding="async"></a>
+        <a class="eustrip__f" href="walls/eu-rally.html" data-cta="eu-rally-wall"><img src="assets/img/rally/rally-02.jpg" alt="The October 5 Bridgeport event" loading="lazy" decoding="async"></a>
+        <a class="eustrip__f" href="walls/eu-rally.html" data-cta="eu-rally-wall"><img src="assets/img/rally/rally-03.jpg" alt="Banners reading Bport Resists beside the rail corridor in Bridgeport" loading="lazy" decoding="async"></a>
+        <a class="eustrip__f" href="walls/eu-rally.html" data-cta="eu-rally-wall"><img src="assets/img/rally/rally-04.jpg" alt="The October 5 Bridgeport event" loading="lazy" decoding="async"></a>
+        <a class="eustrip__f" href="walls/eu-rally.html" data-cta="eu-rally-wall"><img src="assets/img/rally/rally-05.jpg" alt="The October 5 Bridgeport event" loading="lazy" decoding="async"></a>
+      </div>
+      <p class="eustrip__go"><a href="walls/eu-rally.html" data-cta="eu-rally-wall">The whole wall &#8594;</a></p>
+    </section>
+
+    <!-- the doors, ranked: join, read, verify, fund -->
+    <section class="eudoors" id="join">
+      <h2 class="eudoors__h">Ways in</h2>
+      <div class="eudoors__grid">
+        <a class="eudoor eudoor--lead" href="fellowship.html" data-cta="eu-join-fellowship">
+          <b>Join the Policy Fellowship</b>
+          <small>Free. Sixteen questions, then a person reads it. No fee and no automated screen.</small>
         </a>
-        <button class="eu-mediafilm" type="button" data-video="Tum9BPmGjEY">
-          <img src="assets/frames/church_0001.jpg" alt="October 5 program archive" loading="lazy">
-          <div><small>Full program archive · October 5, 2025</small><h3>You, I vs You and I</h3><span>Watch full program ↗</span></div>
-        </button>
+        <!-- The living half. Everything above this page is a finished
+             record; these two are where somebody arriving today can
+             actually put something in and get something back. -->
+        <a class="eudoor eudoor--mid" href="topics.html" data-cta="eu-topics">
+          <b>Say what you think</b>
+          <small>Three things people are arguing about, framed so either side can answer honestly.</small>
+        </a>
+        <a class="eudoor eudoor--mid" href="fellowships.html" data-cta="eu-fellowships">
+          <b>The fellowship directory</b>
+          <small>A fellowship of fellowships: real programs, matched to what you care about.</small>
+        </a>
+        <a class="eudoor eudoor--mid" href="docket-516.html" data-cta="eu-civic-hq">
+          <b>The evidence room</b>
+          <small>325 Docket 516 filings, indexed and explained in plain English.</small>
+        </a>
+        <a class="eudoor eudoor--mid" href="policy.html" data-cta="eu-policy-record">
+          <b>The policy record</b>
+          <small>Three pushes, two states, two years: the memo, the blueprint, the archive.</small>
+        </a>
+      </div>
+      <ul class="eudoors__list">
+        <li><a href="verify.html" data-cta="eu-apply-profile"><b>Apply for a verified profile</b>
+          <span>put your organization on the record with real registry identifiers</span></a></li>
+        <li><a href="album.html" data-cta="eu-anthem-listen"><b>Hear the anthem</b>
+          <span>&ldquo;Environmental Injustice&rdquo; and the rest of the 516R Release</span></a></li>
+        <li><a href="https://square.link/u/MBVeuzoo?src=sheet" target="_blank" rel="noopener" data-cta="eu-support"><b>Fund the next campaign</b>
+          <span>a contribution to the programming: anthems, film, community work</span></a></li>
+        <li><a href="mailto:matthew@mccluster.org?subject=Civic%20Anthem%20Submission%20%E2%80%94%20Equity%20Uprise" data-cta="eu-submit-anthem"><b>Submit a civic anthem</b>
+          <span>turn a cause into a song</span></a></li>
+        <li><a href="mailto:matthew@mccluster.org?subject=Partnership%20%E2%80%94%20Equity%20Uprise" data-cta="eu-partner"><b>Partner or sponsor</b>
+          <span>bring Equity Uprise to your community, agency or campus</span></a></li>
+      </ul>
+      <p class="eudoors__foot">Cohort artists onboard through
+        <a href="account.html" data-cta="eu-cohort-mccluster">the artist door</a>: profile, the Market,
+        performance packets. The whole McCluster ecosystem is
+        <a href="index.html" data-cta="eu-ecosystem">one room over</a>.</p>
+      <div class="eudoors__cta">
+        <a class="btn btn--ruby" href="fellowship.html" data-cta="eu-join-bottom">Join the Fellowship, free</a>
+        <a class="btn btn--ghost" href="https://square.link/u/MBVeuzoo?src=sheet" target="_blank" rel="noopener" data-cta="eu-support-bottom">Fund the work</a>
       </div>
     </section>
 
-    <section class="eu-scene eu-proofroom" data-scene="Proof room" id="proof">
-      <div class="eu-sectionhead eu-sectionhead--wide"><div><p class="eu-kicker">Proof room</p><h2>Every serious claim<br>should open.</h2></div><p>These recognitions come from Equity Uprise / McCluster's own independent policy-memo programs, infotainment campaigns, civic programming and advocacy work. They are not ULF citations.</p></div>
-      <div class="eu-docgrid">
-        <a href="assets/credentials/ct-general-assembly-citation-mccluster-corp.pdf" target="_blank" rel="noopener"><span>Connecticut General Assembly</span><b>McCluster Corp Official Citation</b><small>Open PDF ↗</small></a>
-        <a href="assets/credentials/ct-general-assembly-citation-matthew-mccluster.pdf" target="_blank" rel="noopener"><span>Connecticut General Assembly</span><b>Matthew McCluster Official Citation</b><small>Open PDF ↗</small></a>
-        <a href="assets/credentials/bridgeport-human-rights-day-proclamation.pdf" target="_blank" rel="noopener"><span>City of Bridgeport</span><b>Equity Uprise Human Rights Day</b><small>Open PDF ↗</small></a>
-        <a href="assets/credentials/georgia-youth-innovation-civic-leadership-week-proclamation.pdf" target="_blank" rel="noopener"><span>State of Georgia</span><b>Youth Innovation & Civic Leadership Week</b><small>Open PDF ↗</small></a>
-        <a href="docket-516.html"><span>Public record</span><b>Docket 516 / 516R Evidence Room</b><small>Open archive ↗</small></a>
-        <a href="assets/credentials/ipc-data-center-engagement.pdf" target="_blank" rel="noopener"><span>Technical record</span><b>Data Center Infrastructure Engagement</b><small>Open PDF ↗</small></a>
-      </div>
-    </section>
-
-    <section class="eu-scene eu-partner" data-scene="Partner desk">
-      <div class="eu-partner__top">
-        <p class="eu-kicker">Partner desk</p>
-        <h2>Bring us the<br><em>live issue.</em></h2>
-        <p>Equity Uprise can enter at the research stage, the public-affairs stage, or when the room is already hot.</p>
-      </div>
-      <div class="eu-lanes">
-        <article><span>01</span><h3>Responsible Growth</h3><p>For operators, developers, infrastructure companies and business groups that need to make the strongest credible case for responsible development.</p></article>
-        <article><span>02</span><h3>Community Protection</h3><p>For residents, environmental organizations, ratepayer advocates and local institutions that need research plus public pressure.</p></article>
-        <article><span>03</span><h3>Public Inquiry</h3><p>For universities, foundations, civic institutions and media-minded partners that want the evidence before the position.</p></article>
-      </div>
-      <div class="eu-partner__cta">
-        <div><small>Institutional engagements</small><b>Research · policy · public affairs · media · convening</b></div>
-        <a href="mailto:matthew@mccluster.org?subject=Equity%20Uprise%20Institutional%20Engagement">Start the conversation ↗</a>
-      </div>
-      <div class="eu-yinyang">
-        <div><img src="assets/img/equity-uprise-logo.webp" alt="" width="54" height="54"><span><b>This face</b><small>Institutional · data-driven · funders + partners</small></span></div>
-        <p>Same ecosystem. Different entrance.</p>
-        <a href="equity-uprise-fellowship.html"><span><b>The other face</b><small>Fellowship + artists · policy education · creator development ↗</small></span></a>
-      </div>
-    </section>
   </main>
 
-  <div class="eu-dock" aria-label="Equity Uprise quick actions">
-    <a href="#top" class="eu-dock__mark" aria-label="Back to top"><img src="assets/img/equity-uprise-logo.webp" alt="" width="28" height="28"></a>
-    <div class="eu-dock__status"><i></i><span id="euDockLabel">Institutional experience</span></div>
-    <a href="album.html?album=equity-uprise">Listen</a>
-    <button type="button" data-video="Tum9BPmGjEY">Watch</button>
-    <a href="equity-uprise-fellowship.html">Fellowship</a>
-    <a class="eu-dock__cta" href="mailto:matthew@mccluster.org?subject=Equity%20Uprise%20Institutional%20Engagement">Partner ↗</a>
-  </div>
+  <footer class="site-foot">
+    <div class="site-foot__brand"><img class="brand__mark" src="assets/img/m-mark.png" alt="M">cCluster</div>
+    <p class="site-foot__note">© 2026 Matthew McCluster · Equity Uprise · McCluster Corp.</p>
+  </footer>
 
-  <div class="eu-video" id="euVideo" hidden>
-    <button class="eu-video__backdrop" type="button" data-video-close aria-label="Close video"></button>
-    <div class="eu-video__frame" role="dialog" aria-modal="true" aria-label="Equity Uprise program archive">
-      <div class="eu-video__bar"><span>Equity Uprise · Public Program Archive</span><button type="button" data-video-close aria-label="Close">×</button></div>
-      <iframe id="euVideoFrame" title="Equity Uprise October 5, 2025 livestream" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-    </div>
-  </div>
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script>
+    /* ============================================================
+       THE RECORD, RENDERED. Two files nothing on this site has ever
+       read: data/dossier.json, the credential ledger, and
+       data/fellows.json, the cohort. They are the source of truth for
+       an application; there is no reason this page should carry a
+       second copy of the same sentences and drift away from them.
 
-  <script src="js/equity-uprise-institutional.js?v=__STAMP__"></script>
+       Laws this block keeps:
+       - citation text prints verbatim: never edited, never "corrected"
+         to match the masthead above it;
+       - a document carrying a programNote gets that note under it,
+         small, so the reader learns why the paper says another name;
+       - if a fetch fails, the markup already in the page stands and
+         every document is still one tap from the reader.
+       ============================================================ */
+    (function () {
+      "use strict";
+
+      function track(n, p) { if (window.MCC_TRACK) window.MCC_TRACK(n, p); }
+      function esc(s) { var d = document.createElement("i"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+
+      /* one listener for the whole page: the wall and the roster arrive
+         after this script runs, and a click on them still has to count */
+      document.addEventListener("click", function (ev) {
+        var a = ev.target && ev.target.closest ? ev.target.closest("a[data-cta]") : null;
+        if (!a) return;
+        track("cta_click", { label: a.getAttribute("data-cta"), page: "equity-uprise" });
+      });
+      track("equity_uprise_view", {});
+
+      /* ---------- the citations wall ---------- */
+
+      /* the government paper only, in the order the dates run. The
+         personal certificates and the two policy papers in the same
+         ledger have their own places on this page and on the site;
+         this wall is seals. */
+      var WALL = [
+        "ct-general-assembly-citation-matthew-mccluster.pdf",
+        "ct-general-assembly-citation-mccluster-corp.pdf",
+        "ct-general-assembly-citation-apex-kingdom.pdf",
+        "mccluster-corp-public-charity-registration.pdf",
+        "georgia-youth-innovation-civic-leadership-week-proclamation.pdf",
+        "bridgeport-human-rights-day-proclamation.pdf"
+      ];
+      var MONTHS = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+      var COUNT = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven",
+        "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+
+      /* the headings count what actually rendered. Type a number into a
+         headline and the day the ledger grows the headline starts lying. */
+      function say(n) { return COUNT[n] || String(n); }
+
+      /* dates arrive as YYYY, YYYY-MM or YYYY-MM-DD: print exactly as
+         much as the ledger actually knows, and no more */
+      function readDate(s) {
+        var p = String(s || "").split("-");
+        if (p.length === 1) return p[0];
+        var m = MONTHS[parseInt(p[1], 10) - 1] || "";
+        return p.length === 2 ? m + " " + p[0] : m + " " + parseInt(p[2], 10) + ", " + p[0];
+      }
+      function base(p) { return String(p || "").split("/").pop(); }
+      function scanOf(doc) { return "assets/credentials/img/" + base(doc).replace(/\.pdf$/, ".jpg"); }
+
+      fetch("data/dossier.json").then(function (r) { return r.json(); }).then(function (d) {
+        var wall = document.getElementById("euCites");
+        var recs = (d && d.recognition) || [];
+        var picked = WALL.map(function (f) {
+          return recs.filter(function (r) { return base(r.doc) === f; })[0];
+        }).filter(Boolean);
+        if (!wall || !picked.length) return;
+
+        /* grouped by issuer: the authority is the headline, and the
+           documents it signed are the entries underneath it */
+        var order = [], byIssuer = {};
+        picked.forEach(function (r) {
+          if (!byIssuer[r.issuer]) { byIssuer[r.issuer] = []; order.push(r.issuer); }
+          byIssuer[r.issuer].push(r);
+        });
+
+        var head = document.getElementById("euCitesH");
+        if (head) {
+          head.innerHTML = say(order.length) + (order.length === 1 ? " authority." : " authorities.") +
+            "<br>" + say(picked.length) + (picked.length === 1 ? " document." : " documents.");
+        }
+
+        /* the promise belongs to the block that keeps it. Printed here, it
+           can only appear on a page that is actually printing quotations;
+           with the fetch down the static lede says what the fallback does. */
+        var lede = document.getElementById("euCitesLede");
+        if (lede && picked.some(function (r) { return r.citation; })) {
+          lede.textContent = "Every quotation below is reproduced exactly as the issuer wrote it. "
+            + "Nothing here is paraphrased, and nothing is corrected.";
+        }
+
+        wall.innerHTML = order.map(function (issuer) {
+          var group = byIssuer[issuer];
+          /* a note every document in a group carries is a note about the
+             GROUP. Printed once under the authority, it reads as the
+             explanation it is; printed on each card it read as a machine. */
+          var notes = group.map(function (r) { return r.programNote || ""; })
+            .filter(function (n) { return n; });
+          var shared = notes.length > 1 && notes.every(function (n) { return n === notes[0]; })
+            ? notes[0] : "";
+          return '<article class="eucite">' +
+            '<h3 class="eucite__auth">' + esc(issuer) + "</h3>" +
+            '<p class="eucite__count">' + group.length +
+              (group.length === 1 ? " document on file" : " documents on file") + "</p>" +
+            '<div class="eucite__docs">' + group.map(function (r) {
+              var parts = String(r.title || "").split("·");
+              var title = (parts.length > 1 ? parts.pop() : parts[0]).trim();
+              return '<div class="eucite__doc">' +
+                '<a class="eucite__scan" href="' + esc(r.doc) + '"' +
+                  ' data-lens="' + esc(scanOf(r.doc)) + '"' +
+                  ' data-lens-doc="' + esc(r.doc) + '"' +
+                  ' data-lens-cap="' + esc(r.title + " · " + readDate(r.date)) + '"' +
+                  ' data-cta="eu-cite-' + esc(base(r.doc).replace(/\.pdf$/, "")) + '">' +
+                  '<img class="euscan" src="' + esc(scanOf(r.doc)) + '" alt="Scan of ' + esc(r.title) + '" loading="lazy" decoding="async">' +
+                  '<span class="eucite__open">Open the document (PDF)</span>' +
+                "</a>" +
+                '<div class="eucite__text">' +
+                  '<p class="eucite__date">' + esc(readDate(r.date)) + "</p>" +
+                  '<h4 class="eucite__t">' + esc(title) + "</h4>" +
+                  (r.citation ? '<blockquote class="eucite__q">' + esc(r.citation) + "</blockquote>" : "") +
+                  (r.signedBy ? '<p class="eucite__sig">Signed: ' + esc(r.signedBy) + "</p>" : "") +
+                  (!shared && r.programNote
+                    ? '<p class="eucite__prov">' + esc(r.programNote) + "</p>" : "") +
+                "</div>" +
+              "</div>";
+            }).join("") + "</div>" +
+            (shared ? '<p class="eucite__prov eucite__prov--group">' + esc(shared) + "</p>" : "") +
+          "</article>";
+        }).join("");
+      }).catch(function () { /* the fallback list is already on the page */ });
+
+      /* ---------- the cohort ---------- */
+
+      fetch("data/fellows.json").then(function (r) { return r.json(); }).then(function (d) {
+        var grid = document.getElementById("euFellows");
+        var prov = document.getElementById("euFellowsProv");
+        var list = (d && d.fellows) || [];
+        if (!grid || !list.length) return;
+
+        var head = document.getElementById("euFellowsH");
+        if (head) head.textContent = say(list.length) + (list.length === 1 ? " person" : " people");
+        var tile = document.getElementById("euFellowCount");
+        if (tile) tile.textContent = String(list.length);
+
+        if (prov && d.source) {
+          prov.innerHTML =
+            '<div class="eufel__provtext">' +
+              '<p class="eufel__provk">The document of record</p>' +
+              "<p>" + esc(d.source.document) + " &middot; " + esc(d.source.issuer) +
+                " &middot; signed " + esc(d.source.signedBy) + " &middot; " + esc(readDate(d.source.date)) + "</p>" +
+              (d.source.quote ? '<blockquote class="eufel__q">' + esc(d.source.quote) + "</blockquote>" : "") +
+              (d.source.scanNote ? '<p class="eufel__note">' + esc(d.source.scanNote) + "</p>" : "") +
+            "</div>" +
+            /* the card is about a piece of paper; the paper goes in the
+               empty half of its own band, and opens at full fidelity */
+            (d.source.scan
+              ? '<a class="eufel__provscan" href="' + esc(d.source.doc) + '"' +
+                  ' data-lens="' + esc(d.source.scan) + '"' +
+                  ' data-lens-doc="' + esc(d.source.doc) + '"' +
+                  ' data-lens-cap="' + esc(d.source.document + " · signed " + d.source.signedBy +
+                    " · " + readDate(d.source.date)) + '"' +
+                  ' data-cta="eu-fellows-doc">' +
+                  '<img class="euscan" src="' + esc(d.source.scan) + '" alt="Scan of ' +
+                    esc(d.source.document) + '" loading="lazy" decoding="async">' +
+                  "<span>Open the proclamation (PDF)</span></a>"
+              : '<p class="eufel__note"><a href="' + esc(d.source.doc) + '" data-cta="eu-fellows-doc">Open the proclamation (PDF)</a></p>');
+        }
+
+        /* a blurb more than one fellow carries is not a bio, it is a rule.
+           It is printed once under the grid and each card keeps the line
+           that is only true of that person. */
+        var seen = {};
+        list.forEach(function (f) { if (f.blurb) seen[f.blurb] = (seen[f.blurb] || 0) + 1; });
+        var ruleText = "", ruleCount = 0;
+        Object.keys(seen).forEach(function (b) {
+          if (seen[b] > ruleCount) { ruleCount = seen[b]; ruleText = b; }
+        });
+        var hoisted = ruleCount > 1 ? ruleText : "";
+
+        grid.innerHTML = list.map(function (f) {
+          var note = f.spellingNote || f.rosterNote || "";
+          return '<article class="eufelc" id="fellow-' + esc(f.slug) + '">' +
+            '<h3 class="eufelc__stage">' + esc(f.stage) + "</h3>" +
+            (f.legal && f.legal !== f.stage
+              ? '<p class="eufelc__legal">' + esc(f.legal) + "</p>" : "") +
+            '<p class="eufelc__role">' + esc(f.role) + "</p>" +
+            (f.blurb && f.blurb !== hoisted
+              ? '<p class="eufelc__blurb">' + esc(f.blurb) + "</p>" : "") +
+            '<p class="eufelc__mark' + (f.onProclamation ? "" : " is-off") + '">' +
+              (f.onProclamation ? "Named on the Bridgeport proclamation" : "Not in the readable portion of the proclamation") +
+            "</p>" +
+            (note ? '<p class="eufelc__note">' + esc(note) + "</p>" : "") +
+            (f.links && f.links.length
+              ? '<p class="eufelc__go">' + f.links.map(function (l) {
+                  return '<a href="' + esc(l.href) + '" data-cta="eu-fellow-' + esc(f.slug) + '">' + esc(l.label) + " &#8594;</a>";
+                }).join(" ") + "</p>"
+              : "") +
+          "</article>";
+        }).join("");
+
+        if (hoisted) {
+          var rule = document.createElement("p");
+          rule.className = "eufel__rule";
+          rule.textContent = say(ruleCount) + " of the " + say(list.length).toLowerCase() +
+            " carry exactly one line on the record, and it is the same line: \u201c" + hoisted +
+            "\u201d Nothing further is claimed for them here.";
+          grid.parentNode.appendChild(rule);
+        }
+      }).catch(function () { /* the fallback line is already on the page */ });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      "use strict";
+      /* THE PILL AND THE BUTTON. The masthead's fixed action and this
+         page's own primary action are the same action in two shapes, and
+         when both are on screen they read as one element drawn twice. The
+         pill stands down while a real button is in view and comes back the
+         moment it leaves. No IntersectionObserver means no observation and
+         no hiding: the pill simply stays, which is what it always did. */
+      if (!("IntersectionObserver" in window)) return;
+      var targets = [].slice.call(document.querySelectorAll(".eudoors__cta .btn--ruby"));
+      if (!targets.length) return;
+      var seen = targets.map(function () { return false; });
+      var pill = null;
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          var i = targets.indexOf(e.target);
+          if (i > -1) seen[i] = e.isIntersecting;
+        });
+        pill = pill || document.querySelector("a.mh__cta");
+        if (!pill) return;
+        pill.classList.toggle("is-echo", seen.some(Boolean));
+      }, { threshold: 0.4 });
+      targets.forEach(function (t) { io.observe(t); });
+    })();
+  </script>
+  <!-- THE BAR: Music · Equity Uprise · HERE · Hitman Halo · Profile. One tap goes where it says; hold a tab to open its wing. -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="whip.html" data-appnav="sites">
+      <img class="appbar__we" src="assets/img/we-icon-dark-bar.png" alt="">
+      <span>Whip</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/deskchat.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/lens.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
 </body>
 </html>
