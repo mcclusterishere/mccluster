@@ -1,0 +1,61 @@
+{
+  "project": "S477",
+  "dataset": {
+    "id": 10296,
+    "shortName": "2023 CT Statewide lidar m10296",
+    "title": "2023 CT GIS Lidar: Connecticut Statewide",
+    "authorities": ["Connecticut GIS Office", "NOAA Office for Coastal Management"],
+    "acquisition": {
+      "start": "2023-03-22",
+      "end": "2023-05-07",
+      "nominalPulseSpacingMeters": 0.35,
+      "coastalTargetPointsPerSquareMeter": ">=20",
+      "otherTargetPointsPerSquareMeter": ">=14"
+    },
+    "delivery": {
+      "lasVersion": "1.4",
+      "tileCount": 23381,
+      "tileSizeFeet": "2500 x 2500",
+      "bulkApproxSize": "4.1 TB",
+      "pointCount": 416109963523,
+      "verticalDatum": "NAVD88 / GEOID18",
+      "bulkHorizontalProjection": "NAD83(2011) / UTM zone 18N",
+      "sourceProductionProjection": "NAD83(2011) / Connecticut State Plane, US survey feet"
+    },
+    "classes": {
+      "1": "Unclassified",
+      "2": "Ground",
+      "3": "Low Vegetation",
+      "4": "Medium Vegetation",
+      "5": "High Vegetation",
+      "6": "Building",
+      "7": "Low Point / noise",
+      "9": "Water",
+      "17": "Bridge Deck",
+      "20": "Ignored Ground near breakline",
+      "22": "Temporal Exclusion"
+    },
+    "access": {
+      "catalog": "https://www.fisheries.noaa.gov/inport/item/75570",
+      "bulkIndex": "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/index.html",
+      "ept": "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/entwine/geoid18/10296/ept.json",
+      "viewer3d": "https://coast.noaa.gov/lidar/viewer/v/noaapotree.html?r=https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/entwine/geoid18/10296/ept.json",
+      "customDownload": "https://coast.noaa.gov/dataviewer/#/lidar/search/where:ID=10296/details/10296",
+      "tileIndexShapefile": "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/tileindex_CT_statewide_m10296.zip",
+      "tileIndexGeoPackage": "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/tileindex_CT_statewide_m10296.gpkg",
+      "accuracyReport": "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/supplemental/CT_GIS_Services_Lidar_Final_Accuracy_Report.pdf"
+    }
+  },
+  "s477SiteSubset": {
+    "status": "pending-authoritative-parcel-bounds",
+    "reason": "Do not crop against a guessed geocode when the City parcel service is already identified. Resolve the exact 477 Broad Street parcel/building geometry first, then generate a small LAZ/COPC/DEM site package.",
+    "preferredOutputs": [
+      "s477-site-classified.laz",
+      "s477-site-building-ground.copc.laz",
+      "s477-site-dem.tif",
+      "s477-site-hillshade.webp",
+      "s477-site-footprint.geojson"
+    ],
+    "storageRule": "Keep lightweight GeoJSON/derived web previews in Git. Put raw/cropped point clouds in object storage or Git LFS and reference them from this manifest."
+  }
+}

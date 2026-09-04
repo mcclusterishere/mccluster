@@ -1,0 +1,83 @@
+{
+  "project": "S477",
+  "site": {
+    "name": "Shiloh Baptist Church",
+    "address": "477 Broad Street, Bridgeport, Connecticut 06604"
+  },
+  "facts": [
+    {
+      "id": "building-area",
+      "label": "Building area",
+      "value": 6226,
+      "unit": "sq ft",
+      "state": "verified",
+      "source": "S477 engineering pack / Connecticut Green Bank project record"
+    },
+    {
+      "id": "year-built",
+      "label": "Year built",
+      "value": 1955,
+      "unit": "year",
+      "state": "verified",
+      "source": "S477 engineering pack public-record baseline"
+    },
+    {
+      "id": "solar",
+      "label": "Existing rooftop solar",
+      "value": 15.1,
+      "unit": "kW",
+      "state": "verified",
+      "source": "Connecticut Green Bank C-PACE project record"
+    },
+    {
+      "id": "legacy-compute",
+      "label": "Existing Dell PowerEdge R620 fleet",
+      "value": 10,
+      "unit": "servers",
+      "state": "verified-project-inventory",
+      "source": "S477 project inventory; per-node condition and configuration remain survey items"
+    },
+    {
+      "id": "camera-reference",
+      "label": "Video-security reference design",
+      "value": 30,
+      "unit": "planned installed cameras",
+      "secondary": "33 provisioned including 3 cold spares",
+      "state": "reference-design",
+      "source": "S477 Engineering Pack V2"
+    },
+    {
+      "id": "controlled-openings",
+      "label": "Controlled exterior openings",
+      "value": 4,
+      "unit": "openings",
+      "secondary": "3 single + 1 double opening",
+      "state": "reference-design-field-verification-required",
+      "source": "S477 Engineering Pack V2 / owner site knowledge"
+    },
+    {
+      "id": "floor-plan",
+      "label": "Authoritative interior floor plan",
+      "value": null,
+      "unit": null,
+      "state": "open-record-request-sent",
+      "source": "City of Bridgeport Building Department request sent 2026-09-02"
+    },
+    {
+      "id": "parcel-geometry",
+      "label": "Authoritative parcel geometry",
+      "value": null,
+      "unit": null,
+      "state": "source-identified-extraction-pending",
+      "source": "City of Bridgeport / MetroCOG parcel geometry MapServer"
+    },
+    {
+      "id": "lidar",
+      "label": "2023 site LiDAR",
+      "value": "available",
+      "unit": "statewide point cloud",
+      "state": "authoritative-source-connected-site-crop-pending",
+      "source": "Connecticut GIS Office / NOAA dataset 10296"
+    }
+  ]
+}

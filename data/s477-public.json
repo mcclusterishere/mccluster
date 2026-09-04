@@ -1,0 +1,225 @@
+{
+  "project": {
+    "id": "S477",
+    "name": "Shiloh Smart Church",
+    "site": "477 Broad Street, Bridgeport, Connecticut 06604",
+    "status": "Pre-Design-Freeze",
+    "buildingAreaSqFt": 6226,
+    "yearBuilt": 1955,
+    "existingSolarKw": 15.1,
+    "capitalBaseline": 138689.01,
+    "publicModelNotice": "This public digital twin communicates design intent and verified equipment requirements. Exact security-device coordinates, intrusion zones, private network addressing, rack location, cable routes, credentials, serial numbers and blind-spot analysis belong in the restricted engineering layer and are intentionally not published here."
+  },
+  "metrics": [
+    {"label": "Building", "value": "6,226", "unit": "sq ft", "note": "verified public record"},
+    {"label": "Video", "value": "30", "unit": "planned cameras", "note": "33 provisioned incl. 3 cold spares"},
+    {"label": "Network", "value": "72", "unit": "structured ports", "note": "10GbE core"},
+    {"label": "Wi-Fi", "value": "6", "unit": "Wi-Fi 7 APs", "note": "final count after RF survey"},
+    {"label": "AI", "value": "2", "unit": "high-memory nodes", "note": "NVIDIA + AMD/x86"},
+    {"label": "Critical power", "value": "2 × 3", "unit": "kVA UPS", "note": "separate security and compute domains"}
+  ],
+  "floors": [
+    {"id": "upper", "label": "Upper Level", "status": "survey-required"},
+    {"id": "lower", "label": "Lower Level", "status": "survey-required"},
+    {"id": "site", "label": "Exterior / Site", "status": "survey-required"}
+  ],
+  "rooms": [
+    {
+      "id": "sanctuary",
+      "floor": "upper",
+      "name": "Sanctuary",
+      "purpose": "Primary worship and assembly space.",
+      "plain": "Four 4K cameras are planned for the large room so the reference design can cover it without turning the worship space into a surveillance experience.",
+      "engineering": "Reference design: 4 × G6 Mini Dome 4K PoE. Final mounting height, lens direction, occlusion, lighting and cable path are field-survey items. Audio recording remains disabled by default.",
+      "systems": ["video", "wifi", "future-av"],
+      "areaSqFt": null,
+      "dimensions": null,
+      "measurementStatus": "Pending measured floor plan"
+    },
+    {
+      "id": "kitchen",
+      "floor": "lower",
+      "name": "Kitchen",
+      "purpose": "Food preparation and service.",
+      "plain": "Planned security coverage is designed around doors and room overview while keeping cameras away from heat, steam and grease plumes.",
+      "engineering": "Reference design: 2 × G6 Mini Dome 4K PoE. Environmental conditions, hood locations, mounting surface and cable pathway require field verification.",
+      "systems": ["video", "environmental", "wifi"],
+      "areaSqFt": null,
+      "dimensions": null,
+      "measurementStatus": "Pending measured floor plan"
+    },
+    {
+      "id": "mess-hall",
+      "floor": "lower",
+      "name": "Mess Hall",
+      "purpose": "Community meals, meetings and flexible programming.",
+      "plain": "Two opposing security views are planned, with Wi-Fi coverage sized by the final RF survey rather than guesswork.",
+      "engineering": "Reference design: 2 × G6 Mini Dome 4K PoE. Room geometry, occupancy, AP placement and camera sight lines remain survey-dependent.",
+      "systems": ["video", "wifi"],
+      "areaSqFt": null,
+      "dimensions": null,
+      "measurementStatus": "Pending measured floor plan"
+    },
+    {
+      "id": "offices",
+      "floor": "lower",
+      "name": "Office Suite",
+      "purpose": "Three private mini-offices with shared circulation.",
+      "plain": "The default design watches the office entrance and common circulation, not private desks or conversations.",
+      "engineering": "Reference design: 2 × G5 Dome Ultra 2K covering common circulation, with intrusion contacts on individual office doors. In-office cameras require an explicit policy decision.",
+      "systems": ["video", "intrusion", "wifi"],
+      "areaSqFt": null,
+      "dimensions": null,
+      "measurementStatus": "Pending measured floor plan"
+    },
+    {
+      "id": "lower-circulation",
+      "floor": "lower",
+      "name": "Lower-Level Circulation",
+      "purpose": "Hallways and approaches to lower-level rooms.",
+      "plain": "Secondary cameras are planned to protect movement paths and room approaches while privacy-sensitive rooms remain excluded by policy.",
+      "engineering": "Reference design: 4 × G5 Dome Ultra 2K across lower-level circulation/approaches. Exact room inventory and views must be confirmed during walkthrough.",
+      "systems": ["video", "intrusion", "wifi"],
+      "areaSqFt": null,
+      "dimensions": null,
+      "measurementStatus": "Room inventory incomplete"
+    },
+    {
+      "id": "stairs",
+      "floor": "lower",
+      "name": "Vertical Circulation",
+      "purpose": "Movement between levels.",
+      "plain": "Security views are planned to cover inter-floor movement without obstructing egress.",
+      "engineering": "Reference design: 2 × G5 Dome Ultra 2K at stair/landing positions. Stair geometry and final mounting points are not yet frozen.",
+      "systems": ["video", "life-safety"],
+      "areaSqFt": null,
+      "dimensions": null,
+      "measurementStatus": "Pending measured floor plan"
+    },
+    {
+      "id": "entrances",
+      "floor": "site",
+      "name": "Four Controlled Entrances",
+      "purpose": "Three single exterior openings plus one main double-door opening.",
+      "plain": "The doors are treated as commercial construction and life-safety systems, not four consumer smart locks.",
+      "engineering": "Reference architecture: four replacement openings, one 8-door access hub, three G3 Reader Flex units, one G3 Intercom, door-position sensing, request-to-exit and code-compliant electrified hardware selected only after measured opening and egress review.",
+      "systems": ["access", "video", "intrusion", "life-safety"],
+      "areaSqFt": null,
+      "dimensions": null,
+      "measurementStatus": "Door schedule pending field measurement"
+    },
+    {
+      "id": "perimeter",
+      "floor": "site",
+      "name": "Five-Corner Perimeter",
+      "purpose": "Overlapping exterior building coverage.",
+      "plain": "Two crossing views are planned at each of the five exterior corners so the perimeter is not dependent on one camera angle.",
+      "engineering": "Reference design: 10 G6 Bullet 4K PoE cameras planned, two views per user-identified exterior corner, plus one cold spare. Public site does not publish exact aiming, blind-spot or mounting-coordinate data.",
+      "systems": ["video", "network", "power"],
+      "areaSqFt": null,
+      "dimensions": null,
+      "measurementStatus": "Corner geometry and FOV verification pending"
+    }
+  ],
+  "systems": [
+    {
+      "id": "network",
+      "name": "Network Core",
+      "plain": "One managed backbone keeps public Wi-Fi, church administration, security systems and the AI lab from stepping on each other.",
+      "state": "Designed",
+      "accent": "ruby",
+      "metrics": ["72 structured ports", "10GbE aggregation core", "6 Wi-Fi 7 APs", "1,120W aggregate PoE budget"],
+      "stack": ["Ubiquiti UDM Pro Max", "8-port 10GbE aggregation layer", "Pro Max 48 PoE", "Pro Max 24 PoE", "6 × U7 Pro", "Cat6A structured cabling", "5G WAN failover"],
+      "engineering": "Logical segmentation separates management, video, access/intrusion, administration, AI clients, AI/server systems, guest, IoT/building and future voice/AV. Exact private addressing and switch-port maps are restricted engineering data."
+    },
+    {
+      "id": "video",
+      "name": "Video Security",
+      "plain": "Thirty cameras are planned for installation with enough NVR headroom to grow substantially without replacing the recorder.",
+      "state": "Designed",
+      "accent": "gold",
+      "metrics": ["30 planned installed + 3 spares", "144TB raw video storage", "30-day minimum retention target", "local NVR recording"],
+      "stack": ["11 × G6 Bullet provisioned", "13 × G6 Mini Dome provisioned", "9 × G5 Dome Ultra provisioned", "Enterprise NVR", "8 × 18TB surveillance drives", "Protect Viewport"],
+      "engineering": "Acceptance requires measured retention under the final codec, frame-rate, RAID/protection and bitrate configuration. Audio is disabled by default. Exact FOV and device coordinates stay out of the public model."
+    },
+    {
+      "id": "access",
+      "name": "Access + Doors",
+      "plain": "Four entrance openings are rebuilt as commercial, code-aware access points with logged credentials and visitor intercom at the main entry.",
+      "state": "Field verification required",
+      "accent": "cream",
+      "metrics": ["3 single openings", "1 double opening", "8-door controller capacity", "free egress is mandatory"],
+      "stack": ["Enterprise Access Hub", "3 × G3 Reader Flex", "G3 Intercom", "Grade 1 exit hardware", "door position + request-to-exit", "fire/access interface"],
+      "engineering": "Electrified locking hardware is intentionally not frozen until door dimensions, handing, rating, ADA conditions and assembly-occupancy egress are reviewed by the appropriate licensed trades/AHJ."
+    },
+    {
+      "id": "intrusion",
+      "name": "Intrusion + Environmental",
+      "plain": "Cameras do not replace an alarm. The building gets a separate professionally monitored intrusion layer that can still communicate if the main internet connection fails.",
+      "state": "Dealer platform to be selected",
+      "accent": "ruby",
+      "metrics": ["hardwired zones", "IP + cellular path", "central monitoring", "environmental telemetry"],
+      "stack": ["Bosch / DMP / Resideo commercial equivalent", "hardwired contacts", "motion / glass-break where appropriate", "cellular backup", "supplemental UniFi environmental sensors"],
+      "engineering": "The public model intentionally does not reveal zone numbering, sensor coordinates, panel location or response procedures. Fire alarm remains a separate life-safety system."
+    },
+    {
+      "id": "ai",
+      "name": "AI + Learning Lab",
+      "plain": "Students use ordinary business PCs while the heavy AI work runs on two centralized high-memory systems, one NVIDIA and one AMD/x86.",
+      "state": "Designed / sponsor-first",
+      "accent": "gold",
+      "metrics": ["2 high-memory AI nodes", "12 endpoint seats", "64TB raw initial lab NAS", "10GbE east-west data path"],
+      "stack": ["NVIDIA DGX Spark, 128GB / 4TB", "MINISFORUM MS-S1 MAX, 128GB / 2TB", "UNAS Pro 8", "4 × 16TB initial NAS drives", "12 × Dell OptiPlex Micro", "selected Dell R620 lab nodes"],
+      "engineering": "The two-node design teaches both NVIDIA/CUDA/Blackwell and AMD/x86 high-memory workflows. Legacy R620 servers are used selectively for Linux, virtualization, distributed systems, storage and infrastructure education rather than modern AI acceleration."
+    },
+    {
+      "id": "power",
+      "name": "Power + Resilience",
+      "plain": "Security and compute are split across separate battery-backed power domains so one failure does not take the whole technology plant down at once.",
+      "state": "Electrical survey required",
+      "accent": "cream",
+      "metrics": ["2 × 3kVA Smart-UPS", "404.6W modeled edge PoE", "505.75W with 25% PoE reserve", "15.1kW existing solar PV"],
+      "stack": ["APC/Schneider 3kVA Smart-UPS class", "dedicated circuits", "grounding + surge protection", "rack-room cooling allowance", "future battery/generator resilience lane"],
+      "engineering": "Existing solar does not prove outage islanding or battery capability. Final UPS input voltage, receptacles, electrical-panel capacity, runtime and cooling are field-survey gates."
+    }
+  ],
+  "architectureLayers": [
+    {"name": "Experience", "items": ["Public Smart Church site", "Future 360 / Marble digital twin", "Engineer detail mode"]},
+    {"name": "Building edge", "items": ["Cameras", "Readers + intercom", "Intrusion sensors", "Wi-Fi APs", "Environmental sensors"]},
+    {"name": "Transport", "items": ["Cat6A", "PoE switching", "10GbE aggregation", "Primary WAN + 5G failover"]},
+    {"name": "Control + data", "items": ["Gateway/controller", "Enterprise NVR", "Access controller", "Commercial alarm panel", "UNAS Pro 8"]},
+    {"name": "Compute", "items": ["DGX Spark", "MS-S1 MAX", "12 OptiPlex clients", "Selected R620 infrastructure nodes"]},
+    {"name": "Resilience", "items": ["Dual UPS domains", "Electrical upgrades", "Monitoring", "Backups", "Existing solar + future resilience study"]}
+  ],
+  "vendors": [
+    {"name": "Ubiquiti", "role": "network, cameras, NVR/NAS, access, environmental telemetry"},
+    {"name": "NVIDIA", "role": "Blackwell local AI compute"},
+    {"name": "AMD", "role": "x86 / Ryzen AI ecosystem and academic donation lane"},
+    {"name": "MINISFORUM", "role": "AMD high-memory AI system"},
+    {"name": "Dell", "role": "12 endpoints and legacy R620 infrastructure fleet"},
+    {"name": "Western Digital / Seagate", "role": "video and lab storage"},
+    {"name": "APC / Schneider Electric", "role": "UPS and power resiliency"},
+    {"name": "Bosch / DMP / Resideo", "role": "commercial intrusion candidates"},
+    {"name": "Allegion / ASSA ABLOY", "role": "commercial doors and egress hardware"},
+    {"name": "CommScope / Panduit / Belden", "role": "structured cabling ecosystem"},
+    {"name": "AT&T", "role": "connectivity, endpoints and Connected Learning Center lane"},
+    {"name": "Cisco / TechSoup", "role": "alternative nonprofit network/security lane"},
+    {"name": "Microsoft", "role": "nonprofit cloud / disaster recovery"},
+    {"name": "Google", "role": "identity, productivity and nonprofit outreach tooling"},
+    {"name": "GitHub", "role": "source control, documentation and deployment workflow"}
+  ],
+  "surveyGates": [
+    {"item": "Authoritative or measured floor plan", "state": "open"},
+    {"item": "360 walkthrough indexed by room", "state": "open"},
+    {"item": "Three single + one double door measured", "state": "open"},
+    {"item": "Five exterior corners / camera overlaps verified", "state": "open"},
+    {"item": "ISP demarc, rack, switches and cabling inventoried", "state": "open"},
+    {"item": "All ten R620 CPU/RAM/storage/NIC/PSU/iDRAC inventoried", "state": "open"},
+    {"item": "Electrical panels, spare circuits, grounding and service documented", "state": "open"},
+    {"item": "Solar inverter and outage/islanding capability documented", "state": "open"},
+    {"item": "Fire alarm, emergency lighting and exits inspected", "state": "open"},
+    {"item": "Rack-room thermal conditions measured", "state": "open"},
+    {"item": "Cable-route survey completed", "state": "open"},
+    {"item": "Wi-Fi predictive + onsite RF survey completed", "state": "open"}
+  ]
+}

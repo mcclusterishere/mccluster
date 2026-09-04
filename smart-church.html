@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Smart Church · S477 Technology Digital Twin</title>
+  <meta name="description" content="Explore S477, the site-specific Smart Church technology architecture for 477 Broad Street in Bridgeport: network, security, access, AI, storage, power, vendors and the path to a measured digital twin.">
+  <meta name="theme-color" content="#0a0807">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/smart-church.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"TechArticle",
+    "headline":"S477 Smart Church Integrated Technology Systems",
+    "about":"A site-specific digital twin and technology modernization architecture for 477 Broad Street, Bridgeport, Connecticut",
+    "author":{"@type":"Organization","name":"McCluster Corp"},
+    "isBasedOn":"S477 Integrated Technology Systems Engineering Pack V2"
+  }
+  </script>
+</head>
+<body data-mode="simple">
+  <header class="sc-top">
+    <a class="sc-brand" href="index.html" aria-label="McCluster home">
+      <img src="assets/img/m-mark.png" alt="" width="34" height="34">
+      <span class="sc-brand__copy"><b>Smart Church</b><small>S477 · 477 Broad Street</small></span>
+    </a>
+    <a class="sc-home" href="index.html">McCluster Home</a>
+  </header>
+
+  <main class="sc-shell" id="smartChurchApp">
+    <section class="sc-hero" aria-labelledby="smartChurchTitle">
+      <p class="sc-kicker">S477 · Integrated building technology</p>
+      <h1 id="smartChurchTitle">A church that can <em>explain itself.</em></h1>
+      <p class="sc-lead">Not a shopping list. Not a rendering pretending the building has already been surveyed. <b>S477 is a living technical model of 477 Broad Street</b>, designed so leadership can understand the mission, engineers can inspect the architecture, and future 360 scans can connect every room to real measurements and real equipment.</p>
+      <div class="sc-statusline" aria-label="Project status">
+        <span class="sc-chip"><i></i><span id="projectStatus">Pre-Design-Freeze</span></span>
+        <span class="sc-chip sc-chip--live"><i></i><span id="projectArea">6,226 sq ft</span></span>
+        <span class="sc-chip"><i></i><span id="projectBudget">$138,689 baseline</span></span>
+      </div>
+    </section>
+
+    <section class="sc-metrics" id="scMetrics" aria-label="S477 system metrics"></section>
+
+    <div class="sc-modebar">
+      <div class="sc-sectiontitle">
+        <p class="sc-kicker">Digital twin · progressive disclosure</p>
+        <h2>See the building your way.</h2>
+        <p>Simple mode explains what each system does. Engineer mode opens the equipment stack, constraints and acceptance logic without dumping sensitive operational details onto a public webpage.</p>
+      </div>
+      <div class="sc-switch" role="group" aria-label="Information detail level">
+        <button type="button" data-mode-button="simple" aria-pressed="true">Simple</button>
+        <button type="button" data-mode-button="engineer" aria-pressed="false">Engineer</button>
+      </div>
+    </div>
+
+    <section class="sc-twin" aria-label="S477 building digital twin">
+      <div class="sc-twin__toolbar">
+        <div class="sc-tabs" id="floorTabs" role="tablist" aria-label="Building level"></div>
+        <div class="sc-viewtabs" aria-label="Twin view">
+          <button class="sc-tab on" type="button" data-view="plan">Plan</button>
+          <button class="sc-tab" type="button" data-view="360">360</button>
+        </div>
+      </div>
+      <div class="sc-twin__body">
+        <div class="sc-stage" aria-label="Interactive building schematic">
+          <svg id="planSvg" viewBox="0 0 800 520" role="img" aria-label="Provisional S477 schematic, pending measured floor plan">
+            <path class="sc-outline" d="M82 84 H690 L735 168 V423 H575 L530 466 H150 L70 386 V192 Z"/>
+            <path class="sc-floorfill" d="M125 130 H642 L682 194 V374 H540 L500 415 H180 L120 355 V210 Z"/>
+            <path class="sc-outline" d="M210 130 V415 M510 130 V415 M120 272 H682"/>
+            <text class="sc-floorlabel" id="floorSvgLabel" x="145" y="180">UPPER LEVEL</text>
+            <text class="sc-floorlabel" x="145" y="205">MEASURED GEOMETRY PENDING</text>
+          </svg>
+          <div id="roomNodes" aria-live="polite"></div>
+          <div class="sc-panorama" id="panoramaPlaceholder">
+            <div class="sc-panorama__ring" aria-hidden="true"></div>
+            <p><b>360 room model slot is ready.</b><br>When your X5 / Marble capture is uploaded, this view can become the navigable building experience while retaining the same room IDs, system data and inspector.</p>
+          </div>
+        </div>
+
+        <aside class="sc-inspector" aria-live="polite">
+          <p class="sc-inspector__eyebrow"><span id="floorName">Upper Level</span> · room record</p>
+          <h3 id="inspectorTitle" tabindex="-1">Sanctuary</h3>
+          <p class="sc-inspector__purpose" id="inspectorPurpose">Primary worship and assembly space.</p>
+          <div class="sc-inspector__plain" id="inspectorPlain">Select a room or site zone to inspect the design.</div>
+          <dl class="sc-inspector__spec">
+            <dt>Measurement</dt><dd id="inspectorMeasurement">Pending measured floor plan</dd>
+            <dt>Dimensions</dt><dd id="inspectorDimensions">Not yet measured</dd>
+            <div data-detail="engineer">
+              <dt>Engineering basis</dt><dd id="inspectorEngineering"></dd>
+            </div>
+          </dl>
+          <div class="sc-inspector__tags" id="inspectorTags"></div>
+        </aside>
+      </div>
+    </section>
+
+    <p class="sc-sensitive" data-detail="engineer"><b>Public engineering boundary.</b> This site can expose models, quantities, performance requirements, standards, subsystem interfaces and room-level design intent. Exact camera aiming/blind spots, private VLAN/subnet maps, switch-port assignments, alarm zones, rack coordinates, access-control response logic and credentials belong in a restricted engineering layer.</p>
+
+    <section class="sc-systems" aria-labelledby="systemsTitle">
+      <div class="sc-sectiontitle">
+        <p class="sc-kicker">Six building systems · one architecture</p>
+        <h2 id="systemsTitle">The technology stack.</h2>
+        <p>Every subsystem has a job, a dependency and an acceptance condition. Free equipment is useful only when it fits this architecture.</p>
+      </div>
+      <div class="sc-systemgrid" id="systemGrid"></div>
+    </section>
+
+    <section class="sc-architecture" aria-labelledby="architectureTitle">
+      <div class="sc-sectiontitle">
+        <p class="sc-kicker">From room to rack to compute</p>
+        <h2 id="architectureTitle">How the building talks.</h2>
+        <p data-detail="simple-only">Devices at the edge connect to a managed network, the network routes them to the right controllers and storage, and critical systems stay backed up when power or internet fails.</p>
+        <p data-detail="engineer">The model separates edge devices, transport, control/data planes, compute and resilience. Segmentation prevents low-trust clients from obtaining lateral access to physical-security or management systems.</p>
+      </div>
+      <div class="sc-layers" id="architectureLayers"></div>
+    </section>
+
+    <section class="sc-ledger" aria-label="Design freeze and vendor ecosystem">
+      <div class="sc-ledger__main">
+        <p class="sc-kicker">Design freeze gate</p>
+        <h2>What we still have to prove.</h2>
+        <p style="margin-top:.6rem;color:var(--s477-muted);font-size:.8rem;line-height:1.6">The page gets more exact as the building gets more measured. These are the open field-engineering gates between today's basis of design and an issued-for-procurement package.</p>
+        <div class="sc-checks" id="surveyChecks"></div>
+      </div>
+      <aside class="sc-vendors">
+        <p class="sc-kicker">Reference ecosystem</p>
+        <h2>Who plugs into S477.</h2>
+        <div class="sc-vendorlist" id="vendorList"></div>
+      </aside>
+    </section>
+
+    <section class="sc-next" aria-labelledby="nextTitle">
+      <p class="sc-kicker">From schematic to real digital twin</p>
+      <h2 id="nextTitle">Three inputs finish the picture.</h2>
+      <div class="sc-next__grid">
+        <article class="sc-step"><b>01</b><h3>Floor plans</h3><p>Use an authoritative archived drawing if one exists, then field-verify dimensions. The website swaps its schematic polygons for measured room geometry.</p></article>
+        <article class="sc-step"><b>02</b><h3>360 walkthrough</h3><p>Capture each room and circulation path consistently. Every panorama is indexed to the same room ID used by the technical database.</p></article>
+        <article class="sc-step"><b>03</b><h3>Marble / 3D model</h3><p>Feed the verified capture into the spatial model, then attach equipment, dimensions, documents and commissioning records as selectable digital-twin objects.</p></article>
+      </div>
+    </section>
+
+    <footer class="sc-footer">
+      <span><b>S477</b> · Shiloh Smart Church · Engineering Development / Pre-Design-Freeze</span>
+      <span>Public twin: explanatory + sponsor-safe · Restricted twin: engineering operations</span>
+    </footer>
+  </main>
+
+  <script src="js/smart-church.js?v=__STAMP__"></script>
+</body>
+</html>

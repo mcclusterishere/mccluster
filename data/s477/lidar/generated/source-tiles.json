@@ -1,0 +1,15 @@
+{
+  "sourceIndex": "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/tileindex_CT_statewide_m10296.gpkg",
+  "queryCrs": "EPSG:6347",
+  "queryBounds": [
+    651890,
+    4559070,
+    652150,
+    4559335
+  ],
+  "tileCount": 2,
+  "tiles": [
+    "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/BLOCK2/20230327_875620_ne.copc.laz",
+    "https://noaa-nos-coastal-lidar-pds.s3.amazonaws.com/laz/geoid18/10296/BLOCK2/20230327_875620_se.copc.laz"
+  ]
+}

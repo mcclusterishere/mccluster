@@ -1,0 +1,50 @@
+{
+  "version": "2026-09-02-v2",
+  "capital": {
+    "subtotal": 126080.92,
+    "contingency": 12608.092,
+    "baseline": 138689.012,
+    "optionalLongDurationResilience": 30000,
+    "fullBuildWithResilienceAllowance": 168689.012,
+    "categories": [
+      {"name":"Surveillance","value":17832.92,"status":"reference architecture"},
+      {"name":"Doors & Access","value":28285,"status":"reference architecture"},
+      {"name":"Intrusion & Environmental","value":8487,"status":"reference architecture"},
+      {"name":"Network & Cabling","value":24114,"status":"reference architecture"},
+      {"name":"AI Lab & Endpoints","value":30764,"status":"reference architecture"},
+      {"name":"Power & Cooling","value":15098,"status":"reference architecture"},
+      {"name":"Commissioning","value":1500,"status":"reference architecture"}
+    ],
+    "note": "Engineering Pack V2 baseline includes 10% design/procurement contingency. Dollar values remain subordinate to field verification and measured quotes."
+  },
+  "proof": [
+    {"label":"Building area","value":"6,226","unit":"sq ft","state":"verified","detail":"Public-record baseline"},
+    {"label":"Existing solar","value":"15.1","unit":"kW","state":"verified","detail":"C-PACE project record"},
+    {"label":"Legacy compute","value":"10","unit":"R620 servers","state":"inventory","detail":"Per-node survey still required"},
+    {"label":"Video reference","value":"30","unit":"planned installed","state":"reference-design","detail":"33 provisioned incl. spares"},
+    {"label":"Controlled openings","value":"4","unit":"exterior openings","state":"field-check","detail":"3 single + 1 double"},
+    {"label":"LiDAR site crop","value":"1.89M","unit":"source points","state":"verified","detail":"NOAA dataset 10296 · 260 m × 265 m buffered AOI"}
+  ],
+  "lidar": {
+    "label":"2023 Connecticut LiDAR",
+    "datasetId":"10296",
+    "tileCount":23381,
+    "tileSize":"2,500 ft × 2,500 ft",
+    "approxFullDataset":"4.1 TB",
+    "acquisition":"Mar 22 – May 7, 2023",
+    "status":"S477 real NOAA crop generated · parcel-mask refinement pending",
+    "siteSourcePoints":1892482,
+    "browserPoints":120000,
+    "siteCopcBytes":10156030,
+    "crop":"260 m × 265 m",
+    "viewer":"s477-lidar.html",
+    "catalog":"https://www.fisheries.noaa.gov/inport/item/75570"
+  },
+  "records": {
+    "status":"Requests sent",
+    "sent":"2026-09-02",
+    "to":"Bridgeport Building, Assessor, Zoning and GIS",
+    "ask":"Complete property jacket, floor plans, field card/building sketch, site/zoning plans, parcel geometry, dimensional records and relevant City-held spatial records.",
+    "publishedSearchWindow":"7–10 business days minimum for Building Department record searches"
+  }
+}
