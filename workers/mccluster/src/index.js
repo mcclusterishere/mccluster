@@ -1,5 +1,6 @@
 import { allowedOrigins, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
+import connect from './connect.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -82,7 +83,8 @@ export default {
           ok: true,
           service: 'mccluster',
           supabase_project: env.MCCLUSTER_SUPABASE_PROJECT_REF || null,
-          products: ['identity', 'apps', 'fees', 'status', 'payments', 'mobility'],
+          products: ['identity', 'apps', 'fees', 'status', 'payments', 'mobility', 'connect'],
+          stripe_configured: Boolean(env.STRIPE_SECRET_KEY),
           canonical_identity: 'McCluster',
           durable_object: 'HereTenantAgent',
           durable_object_bound: Boolean(env.HereTenantAgent)
@@ -189,6 +191,18 @@ export default {
             payee_economic_amount_cents: Math.max(0, baseCents - receiverFee)
           }
         });
+      }
+
+      /* CLIENT CONNECT — a client's own Stripe rail and their Book tab.
+
+         Kept out of /api/* on purpose. That prefix is the whip namespace,
+         and the whole point of this rail is that a client no longer needs a
+         whip tenant row to take money. Returns null when the path is not
+         one of its own, so the whip fallback below still sees everything
+         else unchanged. */
+      if (path === '/v1/inquiries' || path === '/v1/stripe/webhook' || path.startsWith('/v1/connect')) {
+        const handled = await connect.fetch(request, env, url, reply, fail);
+        if (handled) return handled;
       }
 
       /* THE WHIP APPS TALK HERE.

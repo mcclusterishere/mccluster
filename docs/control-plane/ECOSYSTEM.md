@@ -29,6 +29,7 @@ Single source of truth for how the house is wired. Agents: if this disagrees wit
 | API / webhooks | Cloudflare Worker `mccluster` |
 | Worker source | `workers/mccluster` |
 | Shared tables | Supabase `zmnhbrjyhxzhkxmhkexs` |
+| Client payments / Stripe Connect | Control plane only — `docs/control-plane/CLIENT-PAYMENTS.md` |
 | Product UI | Satellite repos in `registry.json` |
 | Old website copy | `mcclusterishere/Here` — do not deploy from it |
 
@@ -48,6 +49,7 @@ Single source of truth for how the house is wired. Agents: if this disagrees wit
 3. Write an `AGENTS.md` that starts with the control-plane block and then any local law.
 4. Add a row to `docs/control-plane/registry.json`.
 5. Give the client a social backend on the Control desk. Do not invent a scheduler in the satellite.
+6. If the client takes money, give them a Connect rail on the plane (`docs/control-plane/CLIENT-PAYMENTS.md`). A satellite never holds a Stripe key.
 
 ## Supabase
 
