@@ -15,7 +15,12 @@ enabled = true
 head_sampling_rate = 0.01
 
 [vars]
-ALLOWED_ORIGINS = "https://matthew.mccluster.org,https://mccluster.org,http://localhost:8787,http://127.0.0.1:8787,http://localhost:5500,http://127.0.0.1:5500"
+# Client satellite origins are listed here because /v1/inquiries is called
+# from the client's own site, not from a McCluster page. Esmer's canonical
+# hostname is still unconfirmed (docs/control-plane/CLIENT-PAYMENTS.md); both
+# forms are listed so the Book tab works whichever is chosen, and an unused
+# allowed origin costs nothing.
+ALLOWED_ORIGINS = "https://matthew.mccluster.org,https://mccluster.org,https://www.esmermusic.com,https://esmermusic.com,http://localhost:8787,http://127.0.0.1:8787,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8099,http://127.0.0.1:8099"
 MCCLUSTER_SUPABASE_PROJECT_REF = "zmnhbrjyhxzhkxmhkexs"
 PUBLIC_ORIGIN = "https://matthew.mccluster.org"
 APEX_ORIGIN = "https://mccluster.org"
