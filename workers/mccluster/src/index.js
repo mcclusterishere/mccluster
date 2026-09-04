@@ -200,8 +200,9 @@ export default {
          whip tenant row to take money. Returns null when the path is not
          one of its own, so the whip fallback below still sees everything
          else unchanged. */
-      if (path === '/v1/inquiries' || path === '/v1/stripe/webhook' || path.startsWith('/v1/connect')) {
-        const handled = await connect.fetch(request, env, url, reply, fail);
+      if (path === '/v1/inquiries' || path === '/v1/stripe/webhook'
+          || path.startsWith('/v1/connect') || path.startsWith('/v1/account')) {
+        const handled = await connect.fetch(request, env, url, reply, fail, logEvent);
         if (handled) return handled;
       }
 

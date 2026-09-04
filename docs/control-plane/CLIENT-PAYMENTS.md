@@ -60,7 +60,47 @@ person filling in the form has no account.
 { "received": true, "at": "2026-09-04T…Z" }
 ```
 
-No lead id is returned. The form needs to know it arrived and nothing more.
+`notified` says whether a person was actually reached. An inquiry does three
+things or it is a form that goes nowhere:
+
+1. becomes a record — `leads`, org-scoped
+2. becomes a conversation — the `site` inbox channel, so it is workable
+3. reaches the client — email, sent inline
+
+No lead id, thread id or recipient address is returned. The form needs to
+know it arrived; who was emailed is the client's business, not the visitor's.
+
+**Why the notification sends inline rather than queueing.** Migration 0022
+built `inbox_outbound` so a send is "attempted, retried and auditable rather
+than fired into the dark", and that is the better pattern — but nothing
+drains that queue on a schedule. There is no `pg_cron` and no `pg_net` in
+this project, and the inbox edge function runs on demand. A queued
+notification would sit there until someone opened the console, which is the
+one place they would already have seen it. So it sends here, and the outcome
+is still written to `inbox_outbound` so the audit trail exists either way.
+
+**Who gets told**, resolved at send time and never hardcoded: every `owner`
+in `org_members` at the email on their McCluster account, plus
+`orgs.settings->>'notify_email'` when set. If neither exists the inquiry is
+still recorded and still appears in the inbox — it just does not reach
+anyone, and `notified` is false rather than implying delivery.
+
+Requires `RESEND_API_KEY`, and either a verified `resend` row in
+`out_sender_identities` for the org or `NOTIFY_FROM` on the Worker.
+
+### `POST /v1/account/start` — public
+
+Passwordless sign-in for someone who just made an inquiry. Supabase Auth
+emails the link; this is a front door onto it, not a second auth system. No
+password is accepted, no user row is written here, no session is minted here.
+
+```jsonc
+{ "org": "esmer", "email": "…" }   // 200 -> { "sent": true }
+```
+
+The response is **identical** whether or not that address already has an
+account. Anything else makes this an oracle for checking whether a given
+person is a McCluster client's customer.
 
 ### `GET /v1/connect/status?org=<slug>` — org member
 
@@ -125,6 +165,12 @@ succeeded" is never proof.
   `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` and
   `STRIPE_CONNECT_WEBHOOK_SECRET` are unset, so every money route answers 503.
   Set them as Worker secrets, test keys first.
+- **No email provider is configured.** `RESEND_API_KEY` is unset, so inquiry
+  notifications record and return `notified: false` rather than sending.
+  Set it, plus `NOTIFY_FROM` on a domain verified in Resend.
+- **Esmer has no notify target.** No owner account, no `notify_email`. Until
+  one exists his inquiries are recorded but reach nobody. Migration 0040
+  carries the one-line `update` to set it.
 - **Connect has never been used.** Zero connected accounts; `payments`,
   `stripe_events` and `platform_ledger` are all empty. Nothing has run
   end to end yet.

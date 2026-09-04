@@ -22,6 +22,7 @@
    businesses — McCluster should not be merchant of record for a musician's
    booking deposit. */
 
+import { upsertConversation, notifyOwners } from './inquiries.js';
 import {
   stripeConfigured,
   stripeRequest,
@@ -238,7 +239,7 @@ async function handleEvent(env, event) {
 }
 
 export default {
-  async fetch(request, env, url, reply, fail) {
+  async fetch(request, env, url, reply, fail, logEvent) {
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
     /* THE WEBHOOK IS THE ONLY PROOF OF PAYMENT.
@@ -280,6 +281,10 @@ export default {
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail(request, env, 'A valid email is required');
       if (name.length > 200 || email.length > 320) return fail(request, env, 'name or email is too long');
 
+      const want = String(body.want || '').slice(0, 200);
+      const note = String(body.note || '').slice(0, 4000);
+      const page = String(body.page || '').slice(0, 500);
+
       const rows = await sb(env, 'leads?select=id,at', {
         method: 'POST',
         headers: { Prefer: 'return=representation' },
@@ -291,18 +296,79 @@ export default {
              purpose: Esmer's service list is not settled, and a check
              constraint on a list nobody has approved would reject real
              inquiries. */
-          want: String(body.want || '').slice(0, 200),
-          note: String(body.note || '').slice(0, 4000),
-          page: String(body.page || '').slice(0, 500),
+          want,
+          note,
+          page,
           source: String(body.source || 'esmer-book').slice(0, 100),
           medium: body.medium ? String(body.medium).slice(0, 100) : null,
           campaign: body.campaign ? String(body.campaign).slice(0, 100) : null
         })
       });
 
-      /* No lead id goes back to the browser. The form needs to know it was
-         received, and nothing more. */
-      return reply(request, env, { received: true, at: rows?.[0]?.at || new Date().toISOString() }, 201);
+      /* The lead is the record. Everything after it is delivery, and a
+         delivery failure must not lose a message that is already saved —
+         so the conversation and the notification are best-effort and their
+         outcome is reported rather than thrown. */
+      const lead = { leadId: rows?.[0]?.id, name, email, want, note, page };
+      let thread = null;
+      let notice = { notified: 0, reason: 'not attempted' };
+      try {
+        thread = await upsertConversation(env, org, lead);
+        notice = await notifyOwners(env, org, lead, thread?.convId);
+      } catch (error) {
+        logEvent('error', { at: 'inquiry-delivery', org: org.slug, message: error.message });
+      }
+
+      /* No lead id, no thread id and no recipient address goes back to the
+         browser. The form needs to know it was received; who was emailed is
+         the client's business, not the visitor's. `notified` is a count so
+         the Book page can stay honest without naming anyone. */
+      return reply(request, env, {
+        received: true,
+        at: rows?.[0]?.at || new Date().toISOString(),
+        notified: notice.notified > 0
+      }, 201);
+    }
+
+    /* ACCOUNT — passwordless sign-in for someone who just made an inquiry.
+
+       Supabase Auth is the plane's auth and this is a thin front door onto
+       it: no password is accepted here, no user record is written here, and
+       no session is minted here. Supabase emails the link and owns the
+       session.
+
+       The response is deliberately identical whether the address is already
+       registered or not. Anything else turns this into an oracle for
+       checking whether a given person has an account with a McCluster
+       client, which is not a question a public endpoint should answer. */
+    if (path === '/v1/account/start' && request.method === 'POST') {
+      const body = await request.json().catch(() => ({}));
+      const org = await orgBySlug(env, body.org);
+      if (!org) return fail(request, env, 'Unknown client org', 404);
+
+      const email = String(body.email || '').trim();
+      if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || email.length > 320) {
+        return fail(request, env, 'A valid email is required');
+      }
+
+      const res = await fetch(`${env.SUPABASE_URL}/auth/v1/otp`, {
+        method: 'POST',
+        headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          create_user: true,
+          data: { source: 'inquiry', org_slug: org.slug }
+        })
+      });
+
+      if (!res.ok) {
+        /* Rate limiting is the common case here and it is not the visitor's
+           fault. Log the detail, tell them plainly, do not leak the body. */
+        logEvent('error', { at: 'account-start', org: org.slug, status: res.status });
+        return fail(request, env, 'Could not send a sign-in link just now', 503);
+      }
+
+      return reply(request, env, { sent: true });
     }
 
     // ---- Connect onboarding, owner-only ------------------------------------
