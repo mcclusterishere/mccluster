@@ -20,6 +20,7 @@
     {"owner": "mcclusterishere", "repo": "Whip-Equipped-Rentals", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "smartchurch", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Shiloh-Church-BPT-App", "role": "client", "branch": "claude/shiloh-church-bpt-design-x9lnin"},
+    {"owner": "mcclusterishere", "repo": "esmer", "role": "client", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "street-credit-bureau", "role": "product", "branch": "production"},
     {"owner": "mcclusterishere", "repo": "Welgen", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Prim3", "role": "internal", "branch": "main"},
