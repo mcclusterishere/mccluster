@@ -798,7 +798,12 @@
     var prevP = workVR.lastP;
     var vaulted = prevP !== null && prevP < workVR.band[0] && p > workVR.band[1];
     workVR.lastP = p;
-    if (!workVR.landing && (inBand || vaulted)) workVR.held = true;
+    /* A visitor who pressed Cancel does not get grabbed again. The band
+       stops being a latch for them and goes back to being a band: it holds
+       while they are inside it and lets go the moment they are not, so
+       "scroll on to continue" is literally true. */
+    if (workVR.declined) workVR.held = inBand;
+    else if (!workVR.landing && (inBand || vaulted)) workVR.held = true;
     var on = workVR.held && !workVR.landing;
     // mount well before the band so the poster is up and the film is
     // buffered by the time the look-around takes the screen
@@ -820,27 +825,30 @@
         ],
       });
       window.__MCC_VR = workVR; // debug/verification handle
-      var compass = document.getElementById("workVRCompass");
+      /* the film is blurred from its very first frame, poster included */
+      workVR.el.classList.add("is-gated");
       document.getElementById("workVRCanvas").addEventListener("pointerdown", function () {
-        armCabinMotion();  /* a tap is a gesture, which is what iOS wants */
-        if (!workVR.briefReady) return;   /* the hold owns the cabin until zero */
-        compass.classList.add("is-gone");
+        /* THE GATE IS NOT A PANE YOU CAN DISMISS. Touching the cabin used to
+           open it, which meant the card was never really withholding
+           anything. Now nothing here happens until Allow has been pressed. */
+        if (!workVR.allowed) return;
+        armCabinMotion();
         showNPBeacon(); // dragging in silence: the beacon points at the sound
       });
-      var goBtn = document.getElementById("vrBriefGo");
-      if (goBtn) goBtn.addEventListener("click", function () {
-        armCabinMotion();
-        compass.classList.add("is-gone");
-        showNPBeacon();
-      });
+      var allowBtn = document.getElementById("vrGateAllow");
+      var denyBtn = document.getElementById("vrGateDeny");
+      if (allowBtn) allowBtn.addEventListener("click", allowCabin);
+      if (denyBtn) denyBtn.addEventListener("click", declineCabin);
       if (window.MCC_TRACK) window.MCC_TRACK("vr_inline_view", { page: "home" });
     }
     if (on !== workVR.live) {
       workVR.live = on;
       workVR.el.classList.toggle("is-live", on);
-      if (workVR.viewer) { on ? workVR.viewer.play() : workVR.viewer.pause(); }
-      lockPageScroll(on);
-      if (on) runBriefing();
+      if (workVR.viewer) { (on && !workVR.declined) ? workVR.viewer.play() : workVR.viewer.pause(); }
+      /* Cancel hands the scroll back for good; re-entering the band must not
+         quietly take it again. */
+      lockPageScroll(on && !workVR.declined);
+      if (on) openGate();
       // inside the 360 the acoustic takes the cabin; either side of it,
       // the full record flies
       /* the guard was `commandInView &&`, which is set by the #work zone's
@@ -869,14 +877,13 @@
     workVR.motionAsked = true;
     workVR.viewer.enableGyro().then(function (on) {
       workVR.motion = !!on;
-      var row = document.getElementById("vrBriefTilt");
-      if (!on) { if (row) row.hidden = true; return; }
+      if (!on) return;
       if (window.MCC_TRACK) window.MCC_TRACK("vr_gyro_on", { page: "home", auto: 1 });
       // the sound curtain used to hang off the Motion tap. It cannot hang off
       // this: arming is automatic, so the curtain would throw itself over the
       // cabin the instant you scrolled in — and land on top of the sign. The
       // quieter beacon on the first real touch carries the soundtrack instead.
-      if (workVR.briefReady) flashCabinSign();
+      if (workVR.allowed) flashCabinSign();
     });
   }
 
@@ -895,43 +902,61 @@
     }, 4200);
   }
 
-  /* THE THREE SECONDS. The drag and the side buttons hold while the count
-     runs, because rules are only worth writing if they get read. The page
-     itself is already frozen — the cabin took the scroll on the way in and
-     keeps it until you take a door — so the count no longer has to grab and
-     hand back a lock it does not own. At zero the pane stops swallowing the
-     cabin, the flight is the visitor's, and the cabin says so. Runs once per
-     visit. */
-  function runBriefing() {
-    if (workVR.briefed) return;
-    workVR.briefed = true;
+  /* THE GATE, which replaced the three-second briefing.
+
+     The old card counted down and then stood aside, and a tap anywhere —
+     or simply waiting — opened the cabin. Nothing was ever actually
+     withheld; the countdown was a delay dressed as a decision.
+
+     This withholds. The film is blurred in the canvas, not behind a pane,
+     so clicking away, waiting, or dragging the blurred picture all leave it
+     exactly as blurred as it was. The only thing that clears it is Allow.
+
+     Cancel is a real second answer, not a way of saying nothing: it hands
+     the scroll straight back, tells the visitor a reload is how to change
+     their mind, and never asks again for the rest of the visit. */
+  function openGate() {
     var card = document.getElementById("workVRCompass");
-    var num = document.getElementById("vrBriefNum");
-    if (!card || !num) { workVR.briefReady = true; return; }
-    var row = document.getElementById("vrBriefTilt");
-    if (row && phoneCanTilt()) row.hidden = false;
+    if (!card) { workVR.allowed = true; return; }
+    if (workVR.allowed || workVR.declined) return;
+    if (workVR.el) workVR.el.classList.add("is-gated");
     card.classList.add("is-on");
-    card.classList.remove("is-ready", "is-gone");
-    // arm on entry where no gesture is required; iOS waits for the first tap
-    if (workVR.viewer && !workVR.viewer.enableGyro.needsGesture) armCabinMotion();
-    if (window.MCC_TRACK) window.MCC_TRACK("vr_brief", { page: "home" });
-    var n = 3;
-    num.textContent = n;
-    var iv = setInterval(function () {
-      n -= 1;
-      if (n > 0) {
-        num.textContent = n;
-        num.style.animation = "none"; void num.offsetWidth; num.style.animation = "";
-        return;
-      }
-      clearInterval(iv);
-      workVR.briefReady = true;
-      // when the phone handed over its motion, the announcement IS the
-      // release and it says more than the button would — so the card steps
-      // aside for it. Without motion the card stays, button and all.
-      if (workVR.motion) { card.classList.add("is-gone"); flashCabinSign(); }
-      else card.classList.add("is-ready");
-    }, 1000);
+    card.classList.remove("is-gone", "is-declined");
+    var allow = document.getElementById("vrGateAllow");
+    if (allow) { try { allow.focus({ preventScroll: true }); } catch (e) {} }
+    if (!workVR.gateSeen) {
+      workVR.gateSeen = true;
+      if (window.MCC_TRACK) window.MCC_TRACK("vr_gate", { page: "home" });
+    }
+  }
+
+  function allowCabin() {
+    if (workVR.allowed) return;
+    workVR.allowed = true;
+    workVR.declined = false;
+    var card = document.getElementById("workVRCompass");
+    if (card) { card.classList.remove("is-declined"); card.classList.add("is-gone"); }
+    if (workVR.el) workVR.el.classList.remove("is-gated");
+    if (workVR.viewer) workVR.viewer.play();
+    /* the press is the gesture iOS wants before it will hand over the gyro */
+    armCabinMotion();
+    showNPBeacon();
+    flashCabinSign();
+    if (window.MCC_TRACK) window.MCC_TRACK("vr_gate_allow", { page: "home" });
+  }
+
+  function declineCabin() {
+    if (workVR.allowed || workVR.declined) return;
+    workVR.declined = true;
+    var card = document.getElementById("workVRCompass");
+    if (card) {
+      card.classList.add("is-declined");
+      var after = document.getElementById("vrGateAfter");
+      if (after) after.hidden = false;
+    }
+    if (workVR.viewer) workVR.viewer.pause();
+    lockPageScroll(false);   /* the scroll is theirs again, immediately */
+    if (window.MCC_TRACK) window.MCC_TRACK("vr_gate_deny", { page: "home" });
   }
 
   var workSlow = document.getElementById("workSlowHint");
@@ -1027,10 +1052,19 @@
 
   /* THE KEY TO THE ROOM. The cabin holds the scroll, so the two on-screen
      doors are the way out — but a sealed room needs a key that is not a
-     pixel. Escape lands the jet, the same as pressing Land. */
+     pixel. While the gate is up, Escape is Cancel: the keyboard answer to a
+     dialog, and it hands the scroll back the same way the button does. Once
+     the cabin is allowed, Escape lands the jet, the same as pressing Land. */
   document.addEventListener("keydown", function (e) {
     if (e.key !== "Escape" && e.key !== "Esc") return;
-    if (!workVR.live || !workVR.briefReady || !workSkip) return;
+    if (!workVR.live) return;
+    if (!workVR.allowed) {
+      if (workVR.declined) return;
+      e.preventDefault();
+      declineCabin();
+      return;
+    }
+    if (!workSkip) return;
     e.preventDefault();
     workSkip.click();
   });
