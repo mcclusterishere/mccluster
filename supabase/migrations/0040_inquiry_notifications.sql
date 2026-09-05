@@ -22,9 +22,15 @@
 -- in the same place as everything else the house sends.
 -- ============================================================
 
-insert into public.inbox_channels (key, enabled)
-values ('email', true)
-on conflict (key) do update set enabled = true;
+-- `label` is NOT NULL with no default, and `can_send_dm` gates whether the
+-- channel may originate a message at all. Both are required: without the
+-- first this insert fails outright, without the second the channel exists
+-- but is not allowed to send.
+insert into public.inbox_channels (key, label, enabled, can_send_dm, note)
+values ('email', 'Email', true, true,
+        'Transactional notifications to a client when their site produces an inquiry. Sent by the Worker, recorded in inbox_outbound.')
+on conflict (key) do update set
+  enabled = true, label = excluded.label, note = excluded.note;
 
 comment on table public.inbox_outbound is
   'Every attempt to say something outward, including transactional notifications on the email channel. A row is the record of an intention; state is what became of it.';
@@ -49,11 +55,22 @@ comment on table public.inbox_outbound is
 comment on column public.orgs.settings is
   'Per-org configuration. Recognised keys: notify_email (comma-separated addresses that receive inquiry notifications, in addition to org owners).';
 
--- Esmer's notify_email is deliberately NOT set here. Justin's address is on
+-- Esmer's notify_email is NOT set to Justin's address here. His address is on
 -- the client-approval list in the esmer repo (docs/ESMER-DOSSIER.md §13) and
--- has not been supplied. A migration must not invent one: a plausible
--- address silently routes real bookings into nothing. Set it when he
--- confirms it, or add him as an org owner and his account address is used:
+-- has not been supplied, and a migration must never invent one: a plausible
+-- address silently routes real bookings into nothing.
+--
+-- It IS set, as an interim, to the agency address — because the alternative
+-- is that an inquiry reaches nobody at all. Applied out of band on
+-- 2026-09-05 and recorded here so the repository and the database agree:
+--
+--   update public.orgs
+--      set settings = coalesce(settings,'{}'::jsonb)
+--                  || jsonb_build_object('notify_email','matthew@mccluster.org')
+--    where slug = 'esmer';
+--
+-- Hand it over the moment Justin confirms an address, or add him as an org
+-- owner and his own account address is used automatically:
 --
 --   update public.orgs
 --      set settings = settings || jsonb_build_object('notify_email','<his address>')
