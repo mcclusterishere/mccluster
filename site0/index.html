@@ -1,0 +1,711 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Walk PRIM3 Site 0 · Nine Levels in 3D</title>
+<meta name="description" content="Walk PRIM3 Site 0 in the browser: nine levels from the L4 flight-control island down to the B5 resilience node, on foot, by vehicle, or taxiing a plane. WASD, lifts and armoured ramps.">
+<link rel="canonical" href="https://matthew.mccluster.org/site0/">
+<link rel="icon" type="image/png" href="icon.png">
+<meta name="theme-color" content="#0b0e12">
+<meta property="og:title" content="Walk PRIM3 Site 0">
+<meta property="og:description" content="Nine levels of the facility, in the browser.">
+<meta property="og:type" content="website">
+<style>
+  :root{ --acc:#c5a646; --red:#ff3b30; }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;background:#0b0e12;color:#cfd6da;font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden;overscroll-behavior:none}
+  #view{position:fixed;inset:0}
+  canvas{display:block}
+  .hud{position:fixed;pointer-events:none;z-index:5}
+  #obj{top:14px;left:50%;transform:translateX(-50%);text-align:center;background:#0a0e12d9;border:1px solid var(--acc);border-radius:8px;padding:8px 18px;min-width:280px}
+  #obj .tag{font-size:10px;letter-spacing:.22em;color:var(--acc)}
+  #obj .txt{font-size:14px;margin-top:2px}
+  #obj .dist{font-size:10.5px;color:#7d8a93;margin-top:2px}
+  #timer{top:14px;left:104px;font-size:12px;color:#7d8a93;background:#0a0e12b0;padding:6px 10px;border-radius:6px;border:1px solid #232a30}
+  #timer b{color:#cfd6da;font-size:14px}
+  #help{bottom:12px;left:14px;font-size:11px;color:#7d8a93;background:#0a0e12b0;padding:7px 11px;border-radius:6px;border:1px solid #232a30;line-height:1.7}
+  #map{top:14px;right:14px;background:#0a0e12b0;border:1px solid #232a30;border-radius:8px;padding:6px}
+  #cross{top:50%;left:50%;transform:translate(-50%,-50%);width:6px;height:6px;border-radius:50%;background:#ffffff88;box-shadow:0 0 6px #000}
+  #shellnote{position:fixed;right:14px;bottom:14px;z-index:8;font:10px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+             letter-spacing:.14em;color:var(--acc);background:#0a0e12cc;padding:6px 9px;border-radius:6px;
+             border:1px solid #c5a64655;pointer-events:none}
+  #exit{position:fixed;top:14px;left:14px;z-index:7;font-size:10px;letter-spacing:.16em;color:#7d8a93;
+        background:#0a0e12b0;padding:7px 10px;border-radius:6px;border:1px solid #232a30;text-decoration:none}
+  #exit:hover,#exit:focus-visible{color:#cfd6da;border-color:var(--acc)}
+  #agents{bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto;z-index:6;position:fixed}
+  /* The HUD is five fixed panels each sized to itself, so it only fits a wide
+     window. Measured overlaps: obj/map and help/agents from 1000 px down, plus
+     obj/timer at phone widths. Give the centre panel a width budget, shrink the
+     map, and drop the help text once the buttons below it say the same thing. */
+  #obj{max-width:calc(100vw - 300px)}
+  @media (max-width:1000px){
+    #map{transform:scale(.72);transform-origin:top right}
+    #obj{max-width:calc(100vw - 250px);min-width:0}
+    #obj .txt{font-size:13px}
+    #help{bottom:58px}          /* sits above the agent row instead of beside it */
+  }
+  @media (max-width:760px){
+    #help{display:none}
+    #map{transform:scale(.58);transform-origin:top right}
+    #obj{top:auto;bottom:58px;max-width:calc(100vw - 24px);padding:6px 12px}
+  }
+  @media (max-width:520px){
+    /* the agent labels wrap to three lines at this width, so the row is taller */
+    #obj{bottom:104px}
+  }
+  .abtn{background:#0a0e12b0;border:1px solid #3a444d;color:#8b96a8;font-size:11px;font-weight:700;letter-spacing:.1em;padding:9px 16px;border-radius:7px;cursor:pointer}
+  .abtn.on{background:#c5a64622;border-color:var(--acc);color:var(--acc)}
+  #start{position:fixed;inset:0;z-index:20;background:#0b0e12e8;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+  #start h1{font-size:20px;letter-spacing:.2em;color:var(--acc)}
+  #start h2{font-size:13px;font-weight:400;color:#cfd6da;margin-top:6px;letter-spacing:.08em}
+  #start .brief{font-size:12px;color:#7d8a93;margin:18px 0;max-width:460px;line-height:1.8;text-align:left}
+  #start .brief b{color:#cfd6da}
+  #deploy{pointer-events:auto;background:var(--acc);color:#0a0e12;border:0;font-size:15px;font-weight:700;letter-spacing:.14em;padding:14px 42px;border-radius:8px;cursor:pointer}
+  #deploy:active{transform:scale(.97)}
+  #done{display:none;position:fixed;inset:0;z-index:19;background:#0b0e12cc;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  #done h1{color:var(--acc);letter-spacing:.2em;font-size:22px}
+  #done p{margin-top:10px;color:#cfd6da;font-size:14px}
+  .tbtn{display:none;position:fixed;z-index:8;pointer-events:auto;background:#0a0e12b0;border:1px solid #3a444d;color:#cfd6da;border-radius:50%;width:64px;height:64px;font-size:11px;font-weight:700}
+  .tbtn:active{background:#1a2025}
+  #bJump{right:24px;bottom:96px} #bRun{right:104px;bottom:24px} #bMap{right:24px;bottom:24px}
+  #stick{position:fixed;z-index:8;pointer-events:none;display:none;width:110px;height:110px;border:1px solid #3a444d;border-radius:50%;background:#0a0e1266}
+  #nub{position:absolute;width:46px;height:46px;border-radius:50%;background:#c5a646aa;left:32px;top:32px}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div class="hud" id="obj"><div class="tag">OBJECTIVE</div><div class="txt">—</div><div class="dist"></div></div>
+<div class="hud" id="timer"><span id="tclk">T+ <b>00:00</b></span> · <span id="flr">L1</span><span id="qual"></span></div>
+<div class="hud" id="help">WASD move · Shift sprint · Space jump · M overview · R respawn<br/>1/2/3 switch agent · Click for mouse-look</div>
+<div class="hud" id="map"><canvas id="mmc" width="220" height="140"></canvas></div>
+<div class="hud" id="cross"></div>
+<a id="exit" href="/hitman-facility.html">&larr; FACILITY</a>
+<div id="agents">
+  <button class="abtn on" data-ag="WALK">1 · WALK</button>
+  <button class="abtn" data-ag="DRIVE">2 · DRIVE</button>
+  <button class="abtn" data-ag="TAXI">3 · TAXI (plane, ground)</button>
+</div>
+<div id="stick"><div id="nub"></div></div>
+<button class="tbtn" id="bJump">JUMP</button>
+<button class="tbtn" id="bRun">SPRINT</button>
+<button class="tbtn" id="bMap">MAP</button>
+
+<div id="start">
+  <h1>PRIM3 · SITE 0</h1>
+  <h2>LEVEL 1 — CENTER DRIVE-THROUGH · THREE-AGENT TEST · DUSK</h2>
+  <div class="brief">
+    <b>19:52 local.</b> Straight run: one south portal, center road, trident fork — three ways out.<br/><br/>
+    · <b>APPROACH</b> — south apron to the single center portal<br/>
+    · <b>TRANSIT</b> — straight north; six rooms cut into the mass on both sides, doors on the road<br/>
+    · <b>FORK</b> — center exit north face, or take the W/E ramps DOWN to B3 staging<br/><br/>
+    Test with all three agents: walking, driving, and a plane taxiing on the ground.
+  </div>
+  <button id="deploy">DEPLOY ▸</button>
+</div>
+<div id="done"><h1>RUN COMPLETE</h1><p id="dtime"></p><p style="color:#7d8a93;font-size:12px;margin-top:16px">press R to run it again</p></div>
+
+<script type="importmap">
+{"imports":{"three":"./vendor/three/three.module.js",
+"three/addons/":"./vendor/three/addons/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+
+const SCALE=273;
+const view=document.getElementById('view');
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x1c2733);
+scene.fog=new THREE.Fog(0x1c2733,320,2800);
+const cam=new THREE.PerspectiveCamera(66,innerWidth/innerHeight,0.1,8000);
+cam.rotation.order='YXZ';
+const ren=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+ren.setSize(innerWidth,innerHeight);
+ren.setPixelRatio(Math.min(devicePixelRatio,1.6));
+ren.shadowMap.enabled=true; ren.shadowMap.type=THREE.PCFShadowMap;
+ren.toneMapping=THREE.ACESFilmicToneMapping; ren.toneMappingExposure=0.95;
+view.appendChild(ren.domElement);
+
+scene.add(new THREE.HemisphereLight(0x86a0c2,0x2a2d31,1.0));
+const amb=new THREE.AmbientLight(0x44506a,0.55); scene.add(amb);
+const sun=new THREE.DirectionalLight(0xffd9b0,1.3);
+sun.position.set(-1400,420,900); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+const sc=340; Object.assign(sun.shadow.camera,{left:-sc,right:sc,top:sc,bottom:-sc,far:4000});
+scene.add(sun);
+const torch=new THREE.SpotLight(0xfff2dc,600,180,0.55,0.5,1.5);
+const torchTgt=new THREE.Object3D(); scene.add(torchTgt); torch.target=torchTgt; scene.add(torch);
+const fill=new THREE.PointLight(0xfff2dc,26,24,2); scene.add(fill);
+{ const n=500,pos=new Float32Array(n*3);
+  for(let i=0;i<n;i++){const t=Math.random()*Math.PI*2,p=Math.acos(1-Math.random()*0.9),r=3600;
+    pos[i*3]=r*Math.sin(p)*Math.cos(t);pos[i*3+1]=r*Math.cos(p)+600;pos[i*3+2]=r*Math.sin(p)*Math.sin(t);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xbfd0e0,size:2.0,sizeAttenuation:false,fog:false}))); }
+const solids=[],walkables=[];
+{ const gp=new THREE.Mesh(new THREE.CircleGeometry(5000,48),new THREE.MeshStandardMaterial({color:0x14181c,roughness:1}));
+  gp.rotation.x=-Math.PI/2;gp.position.y=-0.6;gp.receiveShadow=true;gp.name='GROUND_PLANE';scene.add(gp);
+  gp.updateMatrixWorld(true); walkables.push(gp); }
+// The ground plane has to be IN the walkable list, not merely named in it.
+// It was built before the loader and so never went through classify(), which
+// left groundAt() falling back to a hard-coded -0.6 outside the model. That
+// fallback is invisible until the ray happens to find a basement slab 12 m
+// down, at which point the player drops through the world into a sealed B1.
+// ---------------------------------------------------------------------------
+// SURFACE CLASSIFICATION -- what you stand on vs what stops you.
+//
+// Measured, not assumed. Dumping every node's height at SCALE=273 shows the
+// model is mostly FLAT PLATES, not volumes:
+//
+//    0.04 m   road markings
+//    0.10 m   the six L1 rooms          <- floor patches, not rooms
+//    0.82 m   every B1-B5 room          <- floor patches, not rooms
+//    2.73 m   the L2 room volumes       <- actual blocks on the deck
+//    4.91 m   the B-level enclosures    <- wall rings
+//    6.01 m   the 11-piece L1 podium    <- you stand on TOP of it
+//    8.19 m   the L1 lintel             <- the ceiling over the podium
+//   55.69 m   SHELL_MAIN_RECTANGLE      <- the hull
+//  122-141 m  the lift and stair cores  <- 0.7 m posts running the full height
+//
+// Calling the 0.82 m plates "solid" is what makes the basements unwalkable:
+// they are the floor finish, and you would bump into every one of them at
+// knee height. Calling the 6.01 m podium "not solid" is equally wrong the
+// other way. So height decides, with two exceptions height cannot see:
+//
+//   * a deck is walkable however thick it is (L3_FLIGHT_DECK is 4.37 m)
+//   * a wall is solid however thin it is (a partition is 0.5 m through)
+//
+// and the vertical cores are neither -- they are 0.7 m posts sitting inside
+// the lift-pad radius, so making them solid would trap the player on the pad
+// the moment ride() sets them down.
+const SURFACE_ROLE=/_FLOOR(_\d+)?$|_DECK$|THROUGH_ROAD(_\d+)?$|ROAD_(NORTH|SOUTH)_GATE$|_MARKING(_\d+)?$|TAKEOFF_RUN(_\d+)?$|LANDING_LANE(_\d+)?$|MERGE_LANE$|_PAD(_\d+)?$|_APRON$|LIFT_PLATFORM_[A-D]$|EGRESS_STAIR|RAMP_LANDING$|^GROUND_PLANE$/;
+const WALL_ROLE=/_ENCLOSURE$|PARTITION|LINTEL|PARAPET|GLAZING|RADOME|ROOF_RING|PEDESTAL|^SHELL_/;
+const SHAFT_ROLE=/PASSENGER_CORE|LIFT_CORE|_WELL$/;
+const STEP=2.0;                       // metres you can step onto rather than into
+// A thick slab is BOTH: you stand on its top and you are stopped by its side.
+// The L1 podium is the case that proves it -- 6.01 m of mass with the drive-
+// through cut through it, so if it is walkable-only the road loses its walls
+// and you stroll out through the building. collide() casts at waist height, so
+// a surface you are standing on top of never blocks you: only its flank does,
+// and only while you are beside it.
+function classify(o){
+  const n=o.name;
+  if(SHAFT_ROLE.test(n)) return {walk:false,solid:false};
+  o.geometry.computeBoundingBox();
+  const h=(o.geometry.boundingBox.max.y-o.geometry.boundingBox.min.y)*SCALE;
+  const wall=WALL_ROLE.test(n);
+  return {walk:!wall&&(SURFACE_ROLE.test(n)||h<=STEP), solid:wall||h>STEP};
+}
+// gate + fork floodlights
+for(const [fx,fz] of [[0,-0.30],[0,0.24],[-0.36,0.30],[0.36,0.30]]){
+  const F=new THREE.PointLight(0xffe0b0,2200,120,2);
+  F.position.set(fx*SCALE,9,fz*SCALE); scene.add(F);
+}
+// bore lamps along center road
+for(let zz=-70;zz<=60;zz+=26){
+  const L=new THREE.PointLight(0xffc37a,240,40,2);
+  L.position.set(0,5.2,zz); scene.add(L);
+}
+
+new GLTFLoader().load('assets/prim3_site0_master.glb?v=a2cedb33c9df',gl=>{
+  const root=gl.scene; root.scale.setScalar(SCALE);
+  root.traverse(o=>{
+    if(!o.isMesh) return;
+    o.castShadow=o.receiveShadow=true;
+    if(o.material){ o.material.roughness=.85; o.material.metalness=.15; }
+    if(/GLAZING|FLIGHT_CONTROL|COMMAND_CENTER/.test(o.name)) o.material.emissive=new THREE.Color(0x2a4a66), o.material.emissiveIntensity=.9;
+    if(/MARKING|TAKEOFF_RUN|LANDING_LANE|_PAD/.test(o.name)) o.material.emissive=new THREE.Color(0xdddddd), o.material.emissiveIntensity=.35;
+    if(/RADOME|ROOF_RING|LIFT_PLATFORM/.test(o.name)) o.material.emissive=new THREE.Color(0x8a6a1a), o.material.emissiveIntensity=.5;
+    const role=classify(o);
+    if(role.walk)  walkables.push(o);
+    if(role.solid) solids.push(o);
+    if(/^SHELL_/.test(o.name)) kimiShell.push(o);
+  });
+  scene.add(root);
+  root.updateMatrixWorld(true);
+  deriveStops();
+  const want=new URLSearchParams(location.search).get('level');
+  if(want && !spawnAtLevel(want.toUpperCase()))
+    console.warn('no shaft serves level '+want+'; starting at the south gate');
+  loadPerfectShell();          // only once the building itself is walkable
+});
+
+// --- the perfect exterior, which is the whole point of the outside ---------
+// The interior build carries its own remodelled shell -- SHELL_MAIN_RECTANGLE
+// and three decorative bands, 2,420 vertices in total. It is the part of the
+// Kimi build the owner rejected, and for a long time it was what this page
+// showed anyone standing outside, because the real shell was 47 MB and behind
+// an opt-in flag nobody would ever type. That was the wrong trade.
+//
+// site0_shell_perfect.glb is the Tripo exterior, 1,024,579 vertices, re-encoded
+// with EXT_meshopt_compression to 17 MB. Not decimated, not welded, not
+// quantised -- same vertex count, same triangle count, same surface area to
+// 8e-14, every position present. See tools/pack-shell.sh.
+//
+// It loads AFTER the interior and in the background, so the game is walkable
+// while it streams. When it arrives, the remodelled shell is hidden -- kept in
+// the scene, because it is 2,420 vertices of collision geometry and raycasting
+// a million-vertex mesh every frame is not a thing you do. A perfect skin over
+// a cheap collision proxy is how this is supposed to work.
+//
+// ?shell=0 skips it.
+let kimiShell=[];
+function loadPerfectShell(){
+  if(new URLSearchParams(location.search).get('shell')==='0') return;
+  const note=document.createElement('div'); note.id='shellnote';
+  note.textContent='EXTERIOR · 0%';
+  document.body.appendChild(note);
+  const done=(msg,keep)=>{ note.textContent=msg;
+    if(!keep) setTimeout(()=>note.remove(),2600); };
+  const ld=new GLTFLoader();
+  ld.setMeshoptDecoder(MeshoptDecoder);
+  ld.load('assets/site0_shell_perfect.glb',gl=>{
+    const sh=gl.scene; sh.scale.setScalar(SCALE);
+    sh.traverse(o=>{ if(!o.isMesh)return;
+      o.name='SHELL_EXTERIOR_PERFECT';
+      o.castShadow=false; o.receiveShadow=true;
+      o.material=new THREE.MeshStandardMaterial({color:0x9aa2ab,roughness:.88,metalness:.12,side:THREE.DoubleSide});
+    });
+    scene.add(sh);
+    for(const m of kimiShell) m.visible=false;   // still collides, no longer seen
+    done('EXTERIOR · perfect shell');
+  },ev=>{ if(ev.total) note.textContent='EXTERIOR · '+Math.round(100*ev.loaded/ev.total)+'%';
+          else note.textContent='EXTERIOR · '+(ev.loaded/1048576).toFixed(1)+' MB'; },
+    ()=>done('EXTERIOR · unavailable · showing the block massing',true));
+}
+
+// --- agents ---
+const SITE_LIMIT=560;   // metres from centre; the site is 262 x 245
+const STEP_UP=1.2;      // the tallest kerb you can walk up without jumping
+const AGENTS={WALK:{speed:6.0,sprint:11.5,eye:1.7,rad:1.1,jump:5.0},
+              DRIVE:{speed:15,sprint:24,eye:2.3,rad:1.5,jump:0},
+              TAXI:{speed:20,sprint:30,eye:3.1,rad:2.3,jump:0}};
+let AG='WALK';
+function setAgent(a){AG=a;
+  document.querySelectorAll('.abtn').forEach(b=>b.classList.toggle('on',b.dataset.ag===a));
+  P.eye=AGENTS[a].eye;}
+document.querySelectorAll('.abtn').forEach(b=>b.addEventListener('click',()=>setAgent(b.dataset.ag)));
+
+const P={pos:new THREE.Vector3(0,1.7,-0.37*SCALE),vel:new THREE.Vector3(),yaw:Math.PI,pitch:0,
+         grounded:false,sprint:false,jump:false,eye:1.7};
+// -0.37*SCALE = -101.0 m. The spawn used to be -0.44 (-120.1 m), which was on
+// the south apron until conform_to_shell.py cut the apron back to the shell's
+// silhouette -- it now ends at -104.8 m, and the old spawn hung 15 m off the
+// end of it in mid-air. Moved to 3.8 m inside the new edge.
+const SPAWN=P.pos.clone();
+let overview=false,orbit=null,started=false,t0=0,missionDone=false,stage=0,tourNote='';
+const keys={};
+addEventListener('keydown',e=>{keys[e.code]=true;
+  if(e.repeat){if(e.code==='Space')e.preventDefault();return;}   // held keys are not repeated presses
+  if(e.code==='KeyM')toggleOverview();
+  if(e.code==='KeyR')respawn();
+  if(e.code==='KeyE')ride(1);
+  if(e.code==='KeyQ')ride(-1);
+  if(e.code==='Digit1')setAgent('WALK');
+  if(e.code==='Digit2')setAgent('DRIVE');
+  if(e.code==='Digit3')setAgent('TAXI');
+  if(e.code==='Space')e.preventDefault();});
+addEventListener('keyup',e=>keys[e.code]=false);
+ren.domElement.addEventListener('click',()=>{ if(started&&!overview&&!isTouch) ren.domElement.requestPointerLock(); });
+addEventListener('mousemove',e=>{ if(document.pointerLockElement===ren.domElement){
+  P.yaw-=e.movementX*0.0023; P.pitch-=e.movementY*0.0023;
+  P.pitch=Math.max(-1.45,Math.min(1.45,P.pitch)); } });
+
+const isTouch=('ontouchstart'in window)&&(navigator.maxTouchPoints>0);
+if(isTouch){
+  document.querySelectorAll('.tbtn').forEach(b=>b.style.display='block');
+  document.getElementById('help').style.display='none';
+  const stick=document.getElementById('stick'),nub=document.getElementById('nub');
+  let sid=null,lid=null,lx=0,ly=0,vec={x:0,y:0};
+  addEventListener('touchstart',e=>{for(const t of e.changedTouches){
+    if(t.clientX<innerWidth/2&&sid===null){sid=t.identifier;
+      stick.style.display='block';stick.style.left=(t.clientX-55)+'px';stick.style.top=(t.clientY-55)+'px';}
+    else if(lid===null&&!['bJump','bRun','bMap'].includes(t.target.id)){lid=t.identifier;lx=t.clientX;ly=t.clientY;}
+  }},{passive:true});
+  addEventListener('touchmove',e=>{for(const t of e.changedTouches){
+    if(t.identifier===sid){const r=stick.getBoundingClientRect();
+      let dx=t.clientX-(r.left+55),dy=t.clientY-(r.top+55);
+      const m2=Math.hypot(dx,dy)||1,c=Math.min(m2,44);dx=dx/m2*c;dy=dy/m2*c;
+      nub.style.left=(32+dx)+'px';nub.style.top=(32+dy)+'px';vec={x:dx/44,y:dy/44};}
+    if(t.identifier===lid){P.yaw-=(t.clientX-lx)*0.005;P.pitch-=(t.clientY-ly)*0.005;
+      P.pitch=Math.max(-1.45,Math.min(1.45,P.pitch));lx=t.clientX;ly=t.clientY;}
+  }},{passive:true});
+  addEventListener('touchend',e=>{for(const t of e.changedTouches){
+    if(t.identifier===sid){sid=null;vec={x:0,y:0};stick.style.display='none';nub.style.left='32px';nub.style.top='32px';}
+    if(t.identifier===lid)lid=null;
+  }});
+  window._tvec=()=>vec;
+  document.getElementById('bJump').addEventListener('touchstart',()=>P.jump=true);
+  const br=document.getElementById('bRun');
+  br.addEventListener('touchstart',()=>{P.sprint=!P.sprint;br.style.background=P.sprint?'#c5a646aa':'#0a0e12b0';});
+  document.getElementById('bMap').addEventListener('touchstart',()=>toggleOverview());
+}else window._tvec=()=>({x:0,y:0});
+
+function toggleOverview(){
+  overview=!overview;
+  if(overview){
+    if(document.pointerLockElement)document.exitPointerLock();
+    orbit=new OrbitControls(cam,ren.domElement);
+    cam.position.set(P.pos.x-180,150,P.pos.z-180); orbit.target.copy(P.pos); orbit.update();
+    amb.intensity=1.6;
+  }else{ orbit.dispose(); orbit=null; cam.rotation.order='YXZ'; amb.intensity=0.55; }
+}
+function respawn(){
+  P.pos.copy(SPAWN);P.vel.set(0,0,0);P.yaw=Math.PI;P.pitch=0;
+  if(missionDone){missionDone=false;stage=0;t0=performance.now();document.getElementById('done').style.display='none';}
+  if(overview)toggleOverview();
+}
+
+const rayD=new THREE.Raycaster(); const DOWN=new THREE.Vector3(0,-1,0);
+function groundAt(x,y,z){
+  rayD.set(new THREE.Vector3(x,y+2,z),DOWN); rayD.far=100;
+  const h=rayD.intersectObjects(walkables,false)[0];
+  return h?h.point.y:-0.6;
+}
+const _n=new THREE.Vector3();
+function collide(pos,move){
+  if(move.length()<1e-6)return move;
+  const dir=move.clone().normalize();
+  const waist=pos.clone(); waist.y-=0.4;
+  const r=new THREE.Raycaster(waist,dir,0,AGENTS[AG].rad);
+  const hit=r.intersectObjects(solids,false)[0];
+  if(hit){
+    _n.copy(hit.face.normal).transformDirection(hit.object.matrixWorld); _n.y=0;
+    if(_n.lengthSq()<0.01)return move;
+    _n.normalize();
+    const into=move.dot(_n);
+    if(into<0) move.addScaledVector(_n,-into);
+  }
+  return move;
+}
+
+const YLVL={'B5':-0.220,'B4':-0.176,'B3':-0.132,'B2':-0.088,'B1':-0.044,'L1':0.0,'L2':0.052,'L3':0.272,'L4':0.340};
+const SHAFTS={A:{x:-0.065*SCALE,z:0.27*SCALE,r:0.024*SCALE,stops:['B4','B3','B2','L1','L2','L3']},
+ B:{x:0.065*SCALE,z:0.27*SCALE,r:0.024*SCALE,stops:['B4','B3','B2','B1','L1','L2']},
+ C:{x:0.065*SCALE,z:0.315*SCALE,r:0.012*SCALE,stops:['B5','B4','B3','B2','B1','L1','L2']},
+ D:{x:-0.065*SCALE,z:0.315*SCALE,r:0.012*SCALE,stops:['B3','L1','L2','L3','L4']},
+ R1:{x:-0.36*SCALE,z:0.30*SCALE,r:0.042*SCALE,ramp:true,stops:['B3','L1']},
+ R2:{x:0.36*SCALE,z:0.30*SCALE,r:0.042*SCALE,ramp:true,stops:['B3','L1']},
+ EW:{x:-0.10*SCALE,z:0.27*SCALE,r:0.010*SCALE,stairs:true,stops:['B5','B4','B3','B2','B1','L1','L2']},
+ EE:{x:0.10*SCALE,z:0.27*SCALE,r:0.010*SCALE,stairs:true,stops:['B5','B4','B3','B2','B1','L1','L2']}};
+let riding=null;
+// The stop tables above are the shafts as DESIGNED. Probing the model showed
+// nine of the 38 stops have no floor to land on -- ride() teleports you to the
+// shaft's x/z at the target level's height, and if nothing is there you are
+// dropped into the air:
+//
+//   * every L2 stop, on all six shafts -- the shafts pass through the L1/L2
+//     two-storey void, which is exactly where they should pass, but a lift
+//     that opens into a void is not a stop
+//   * D at L3 -- (x -0.065, z 0.315) is past the flight deck's north edge
+//   * D at L4 -- the only L4 floor is the penthouse, well west of any shaft
+//   * C at B5 -- lands in a carved-out part of the B5 slab
+//
+// So the offered stops are DERIVED from the geometry rather than asserted
+// against it. After the model loads, each candidate stop is raycast. If there
+// is floor at the shaft centre, that is the landing. If there is not, a ring
+// is searched out to 12 m and the lift opens onto the nearest floor beside the
+// shaft -- which is what a lift lobby is. Eight of the nine bad stops have
+// floor within 10 m and are recovered that way; only D at L4 does not, because
+// the only L4 floor is the penthouse and it is over 100 m west of any shaft,
+// so L4 is not served by a lift and the game no longer pretends it is.
+// If the model changes, the lifts follow it instead of quietly lying.
+const LANDING_MAX=12;        // metres a lift may open away from its shaft
+function deriveStops(){
+  const r=new THREE.Raycaster(); const down=new THREE.Vector3(0,-1,0);
+  const floorAt=(x,y,z)=>{r.set(new THREE.Vector3(x,y+3,z),down); r.far=14;
+    const h=r.intersectObjects(walkables,false)[0];
+    return h&&Math.abs(h.point.y-y)<4?h.point.y:null;};
+  for(const k in SHAFTS){const sh=SHAFTS[k]; const kept=[]; sh.land={};
+    for(const st of sh.stops){const y=YLVL[st]*SCALE;
+      if(floorAt(sh.x,y,sh.z)!==null){ kept.push(st); sh.land[st]={x:sh.x,z:sh.z}; continue; }
+      let found=null;
+      for(let rad=4;rad<=LANDING_MAX&&!found;rad+=2)
+        for(let a=0;a<16&&!found;a++){const th=a*Math.PI/8;
+          const x=sh.x+rad*Math.cos(th), z=sh.z+rad*Math.sin(th);
+          if(floorAt(x,y,z)!==null) found={x,z};}
+      if(found){ kept.push(st); sh.land[st]=found; }}
+    sh.dropped=sh.stops.filter(x=>!kept.includes(x));
+    sh.stops=kept;}
+}
+function currentFloor(){let best='L1',bd=1e9;for(const k in YLVL){const d=Math.abs(P.pos.y-P.eye-YLVL[k]*SCALE);if(d<bd){bd=d;best=k;}}return best;}
+function onPad(){for(const k in SHAFTS){const sh=SHAFTS[k];
+  if(sh.stops.length<2)continue;          // nowhere to go is not a lift
+  if(Math.abs(P.pos.x-sh.x)<sh.r&&Math.abs(P.pos.z-sh.z)<sh.r)return k;}return null;}
+function ride(dir){const k=onPad(); if(!k||riding)return;
+  const sh=SHAFTS[k];const cur=currentFloor();let i=sh.stops.indexOf(cur);
+  if(i<0){let bd=1e9;sh.stops.forEach((s2,j)=>{const d=Math.abs(YLVL[s2]*SCALE-(P.pos.y-P.eye));if(d<bd){bd=d;i=j;}});}
+  const ni=i+dir; if(ni<0||ni>=sh.stops.length)return;
+  const to=sh.stops[ni];
+  const land=sh.land&&sh.land[to]?sh.land[to]:{x:sh.x,z:sh.z};
+  riding={key:k,to,t:0,
+          y0:P.pos.y,y1:YLVL[to]*SCALE+P.eye,
+          x0:P.pos.x,x1:land.x, z0:P.pos.z,z1:land.z,
+          dur:Math.abs(YLVL[to]*SCALE+P.eye-P.pos.y)/8.0};
+  document.getElementById('obj').querySelector('.tag').textContent='LIFT '+k;}
+const PTS={gate:new THREE.Vector2(0,-0.28*SCALE),fork:new THREE.Vector2(0,0.255*SCALE),
+           exitN:new THREE.Vector2(0,0.47*SCALE),rampW:new THREE.Vector2(-0.36*SCALE,0.30*SCALE),
+           rampE:new THREE.Vector2(0.36*SCALE,0.30*SCALE),b3:new THREE.Vector2(0,0.25*SCALE)};
+const objEl=document.getElementById('obj');
+function setObj(t,d){objEl.querySelector('.txt').textContent=t;objEl.querySelector('.dist').textContent=d||'';}
+function fmt(s){const m=Math.floor(s/60),ss=Math.floor(s%60);return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0');}
+function flash(){objEl.style.borderColor='#ff3b30';setTimeout(()=>objEl.style.borderColor='#c5a646',450);}
+function tickObjectives(){
+  if(missionDone)return;
+  const t=(performance.now()-t0)/1000;
+  document.getElementById('tclk').innerHTML='T+ <b>'+fmt(t)+'</b>';
+  const px=P.pos.x,pz=P.pos.z,py=P.pos.y;
+  const d2=(q)=>Math.hypot(px-q.x,pz-q.y);
+  if(stage===0){const d=d2(PTS.gate);setObj('APPROACH — SOUTH ENTRANCE (single center portal)',d.toFixed(0)+' m');
+    if(d<14){stage=1;flash();}}
+  else if(stage===1){const d=d2(PTS.fork);setObj('TRANSIT — straight north to the TRIDENT FORK',d.toFixed(0)+' m');
+    if(d<10){stage=2;flash();}}
+  else if(stage===2){const d=Math.min(d2(PTS.exitN),d2(PTS.rampW),d2(PTS.rampE));
+    setObj('EXIT — center north face, or ride a side ramp DOWN to B3 [E/Q]',d.toFixed(0)+' m');
+    if(d<10){stage=3;flash();}}
+  else if(stage===3){
+    const inB3=py<-20;
+    const dN=d2(PTS.exitN);
+    const finish=(how)=>{missionDone=true;flash();
+      document.getElementById('dtime').textContent='time '+fmt(t)+' · '+how;
+      document.getElementById('done').style.display='flex';
+      stage=4;};
+    if(inB3){setObj('B3 — prototype staging reached · return or hold','depth '+(-py).toFixed(0)+' m');
+      if(d2(PTS.b3)<20) finish('B3 staging reached via the armoured ramp');}
+    else if(dN<10) finish('exited the north face');
+  }
+  else if(stage===4){setObj('FREE TOUR — '+(tourNote||currentFloor())+' · stand on a lift pad or ramp: E up / Q down',tourNote?'R to return here':'R to run again');}
+}
+
+// minimap
+const mmc=document.getElementById('mmc'),mx=mmc.getContext('2d');
+function drawMap(){
+  const W2=mmc.width,H=mmc.height;
+  const mxX=x=>(x/SCALE+0.55)/1.1*W2, mzY=z=>H-(z/SCALE+0.60)/1.2*H;
+  mx.clearRect(0,0,W2,H);
+  // mxX/mzY divide by SCALE, so they take WORLD coordinates. These literals
+  // are in model units and have to be scaled up, or the whole plan is drawn
+  // 273x too small at an offset that puts it off the canvas entirely.
+  const MX=v=>mxX(v*SCALE), MZ=v=>mzY(v*SCALE);
+  mx.fillStyle='#151a1f'; mx.fillRect(MX(-0.478),MZ(0.492),0.956/1.1*W2,0.983/1.2*H);
+  mx.fillStyle='#2b3442';
+  mx.fillRect(MX(-0.02),MZ(0.275),0.04/1.1*W2,(0.275+0.331)/1.2*H);
+  mx.fillRect(MX(-0.02),MZ(0.51),0.04/1.1*W2,0.275/1.2*H);
+  mx.fillRect(MX(-0.19),MZ(0.29),0.38/1.1*W2,0.055/1.2*H);
+  mx.fillRect(MX(-0.345),MZ(0.31),0.05/1.1*W2,0.07/1.2*H);
+  mx.fillRect(MX(0.295),MZ(0.31),0.05/1.1*W2,0.07/1.2*H);
+  mx.strokeStyle='#c5a646'; mx.strokeRect(MX(-0.478),MZ(0.492),0.956/1.1*W2,0.983/1.2*H);
+  if(!missionDone&&started){
+    const tgt=stage===0?PTS.gate:(stage===1?PTS.fork:(stage===2?PTS.exitN:PTS.b3));
+    mx.fillStyle='#ff3b30'; mx.beginPath(); mx.arc(mxX(tgt.x),mzY(tgt.y),4,0,7); mx.fill();
+  }
+  const px2=mxX(P.pos.x),py2=mzY(P.pos.z);
+  mx.save(); mx.translate(px2,py2); mx.rotate(P.yaw+Math.PI);
+  mx.fillStyle='#fff'; mx.beginPath(); mx.moveTo(0,-6); mx.lineTo(4,5); mx.lineTo(-4,5); mx.closePath(); mx.fill();
+  mx.restore();
+}
+
+document.getElementById('deploy').addEventListener('click',()=>{
+  document.getElementById('start').style.display='none';
+  started=true; t0=performance.now();
+  if(!isTouch&&!location.hash.includes('test')) ren.domElement.requestPointerLock();
+});
+// hitman-facility.html is a nine-level selector for this building, and its
+// level names are the same programme this model was reprogrammed to. So it can
+// hand the chosen level straight over: /site0/?level=B3 puts you on B3.
+// Placed at the landing of a shaft that actually serves that level, so the
+// arrival point is one deriveStops() has already proven has floor under it.
+function spawnAtLevel(code){
+  if(!YLVL.hasOwnProperty(code)) return false;
+  const y=YLVL[code]*SCALE;
+  const place=(x,z,note)=>{
+    P.pos.set(x,y+P.eye,z); P.vel.set(0,0,0); P.grounded=true; P.yaw=Math.PI; P.pitch=0;
+    SPAWN.copy(P.pos);                       // R returns here, not to the gate
+    stage=4; missionDone=false; tourNote=code+(note?' · '+note:'');
+    return true;
+  };
+  // A shaft landing first: deriveStops() has already proven there is floor
+  // under it, and arriving at a lift is arriving somewhere you can leave from.
+  for(const k of ['C','B','A','D','EW','EE','R1','R2']){
+    const sh=SHAFTS[k];
+    if(sh&&sh.land&&sh.land[code]) return place(sh.land[code].x,sh.land[code].z,'lift '+k);
+  }
+  // No shaft serves it -- true of L4, whose only floor is the penthouse, over
+  // 100 m from any shaft. You can still STAND there, so sweep the level for
+  // real floor rather than dropping the visitor at the gate with no
+  // explanation of why the level they picked is not where they landed.
+  const r=new THREE.Raycaster(), down=new THREE.Vector3(0,-1,0);
+  for(let i=0;i<28;i++)for(let j=0;j<28;j++){
+    const x=(-0.44+0.905*i/27)*SCALE, z=(-0.30+0.636*j/27)*SCALE;
+    r.set(new THREE.Vector3(x,y+3,z),down); r.far=14;
+    const h=r.intersectObjects(walkables,false)[0];
+    if(h&&Math.abs(h.point.y-y)<4) return place(x,z,'no lift serves this level');
+  }
+  return false;
+}
+const AUTOWALK=location.hash.includes('walk');
+// #test exposes the simulation for the automated harness. Guarded by the hash
+// so a player never has it, and so a test never has to guess at behaviour it
+// could just read -- every defect in this file was found by measuring.
+if(location.hash.includes('test'))
+  window.__site0={P,SHAFTS,YLVL,walkables,solids,AGENTS,scene,cam,ren,
+                  // park the camera somewhere and hold it there: setting P.pos
+                  // alone does not stop gravity, so a screenshot taken a few
+                  // seconds later is of the ground, not the view you asked for
+                  look(x,y,z,yaw,pitch){ started=false;
+                    cam.position.set(x,y,z); cam.rotation.order='YXZ';
+                    cam.rotation.set(pitch,yaw,0);
+                    torch.position.set(x,y,z); fill.position.set(x,y,z);
+                    torchTgt.position.set(x-Math.sin(yaw)*300,y,z-Math.cos(yaw)*300); },
+                  get stage(){return stage;}, get riding(){return !!riding;},
+                  get done(){return missionDone;}, get quality(){return QUALITY[qLevel].name;},
+                  onPad,currentFloor,groundAt,setAgent};
+if(location.hash.includes('test')) document.getElementById('deploy').click();
+if(location.hash.includes('taxi')) setAgent('TAXI');
+if(location.hash.includes('lift')) setTimeout(()=>{
+  // ride every shaft through every stop it derived, and report where the
+  // player actually lands against where the floor actually is
+  const rc=new THREE.Raycaster(), dn=new THREE.Vector3(0,-1,0);
+  const rows=[];
+  for(const k in SHAFTS){const sh=SHAFTS[k];
+    rows.push({shaft:k,offered:sh.stops.slice(),dropped:sh.dropped||[]});
+    for(const st of sh.stops){const L=sh.land[st];
+      rc.set(new THREE.Vector3(L.x,YLVL[st]*SCALE+3,L.z),dn); rc.far=14;
+      const h=rc.intersectObjects(walkables,false)[0];
+      rows.push({shaft:k,stop:st,
+        offset:+Math.hypot(L.x-sh.x,L.z-sh.z).toFixed(1),
+        floor:h?+h.point.y.toFixed(1):null, want:+(YLVL[st]*SCALE).toFixed(1),
+        on:h?h.object.name:'NOTHING'});}}
+  window.LIFTTEST=rows; console.log('LIFTTEST '+JSON.stringify(rows));
+},4000);
+if(location.hash.includes('drive')) setAgent('DRIVE');
+
+// --- adaptive quality ------------------------------------------------------
+// The scene ships a 2048 shadow map, a dozen point lights, antialiasing and a
+// 1.6 pixel ratio. On a machine that can carry it that is the right look; on
+// one that cannot it is a slideshow, and a slideshow is not playable. So the
+// renderer measures itself and steps down rather than asking the player to
+// know what any of those words mean. It never steps back up -- oscillating
+// between two settings is worse than sitting on the lower one.
+const QUALITY=[
+  {name:'HIGH'},
+  {name:'MEDIUM', apply(){ ren.setPixelRatio(1); }},
+  {name:'LOW',    apply(){ ren.shadowMap.enabled=false; sun.castShadow=false;
+                           scene.traverse(o=>{ if(o.isMesh)o.castShadow=o.receiveShadow=false; }); }},
+  {name:'MINIMAL',apply(){ scene.traverse(o=>{ if(o.isPointLight&&o!==fill)o.intensity=0; }); }},
+];
+let qLevel=0, qFrames=0, qAccum=0;
+function qualityTick(dt){
+  if(qLevel>=QUALITY.length-1) return;
+  qAccum+=dt; if(++qFrames<90) return;
+  const avg=qAccum/qFrames; qFrames=0; qAccum=0;
+  if(avg>0.040){                       // under 25 fps sustained
+    QUALITY[++qLevel].apply();
+    const q=document.getElementById('qual');
+    if(q) q.textContent=' · GRAPHICS '+QUALITY[qLevel].name;
+  }
+}
+
+const clock=new THREE.Clock();
+const _f=new THREE.Vector3(),_r=new THREE.Vector3(),_mv=new THREE.Vector3();
+function loop(){
+  requestAnimationFrame(loop);
+  // A frame that took 500 ms is 500 ms of world time, not 50. Clamping the
+  // delta silently slowed the whole game down in proportion to frame rate --
+  // measured at 4% of intended speed at 1 fps, 29% at 6 fps. So real time is
+  // accumulated and simulated in fixed 1/60 steps. The catch-up is capped at
+  // 0.5 s: past that the machine cannot keep up and running more steps than
+  // it can render only makes the stall worse.
+  const FIXED=1/60, MAXCATCHUP=0.5;
+  const real=Math.min(clock.getDelta(),MAXCATCHUP);
+  acc+=real;
+  let steps=0;
+  while(acc>=FIXED&&steps++<Math.round(MAXCATCHUP/FIXED)){ acc-=FIXED; simulate(FIXED); }
+  qualityTick(real);
+  drawFrame();
+  if(started&&overview&&orbit){
+    orbit.update(); drawMap();
+    torch.position.copy(cam.position); torchTgt.position.copy(orbit.target);
+    fill.position.copy(cam.position);
+  }
+  ren.render(scene,cam);
+}
+let acc=0;
+function simulate(dt){
+  if(started){
+    if(!overview){
+      const tv=window._tvec();
+      let ix=(keys.KeyD?1:0)-(keys.KeyA?1:0)+tv.x;
+      let iz=(keys.KeyW?1:0)-(keys.KeyS?1:0)-tv.y; if(AUTOWALK)iz=1;
+      const A0=AGENTS[AG];
+      const sp=(keys.ShiftLeft||keys.ShiftRight||P.sprint)?A0.sprint:A0.speed;
+      _f.set(-Math.sin(P.yaw),0,-Math.cos(P.yaw));
+      _r.set(Math.cos(P.yaw),0,-Math.sin(P.yaw));
+      _mv.set(0,0,0).addScaledVector(_f,iz).addScaledVector(_r,ix);
+      if(_mv.lengthSq()>1)_mv.normalize();
+      _mv.multiplyScalar(sp*dt);
+      _mv.copy(collide(P.pos,_mv));
+      P.pos.add(_mv);
+      // The site is 262 x 245 m. Without an edge you can sprint to 1349 m out
+      // and stand on nothing, which is not a place and not a view. Held at the
+      // perimeter rather than teleported, so walking into it feels like a wall.
+      { const d=Math.hypot(P.pos.x,P.pos.z);
+        if(d>SITE_LIMIT){ P.pos.x*=SITE_LIMIT/d; P.pos.z*=SITE_LIMIT/d; } }
+      if(riding){riding.t+=dt/riding.dur;
+        if(riding.t>=1){P.pos.set(riding.x1,riding.y1,riding.z1);P.vel.y=0;P.grounded=true;
+          document.getElementById('obj').querySelector('.tag').textContent='OBJECTIVE';riding=null;}
+        else{const e=riding.t*riding.t*(3-2*riding.t);
+          P.pos.y=riding.y0+(riding.y1-riding.y0)*e;
+          P.pos.x=riding.x0+(riding.x1-riding.x0)*e;
+          P.pos.z=riding.z0+(riding.z1-riding.z0)*e;
+          P.vel.y=0;P.grounded=true;}}
+
+      // Vertical motion. The old version re-grounded the player whenever the
+      // surface was within 1.6 m -- including 1.6 m BELOW them, mid-jump. So
+      // the jump impulse re-applied every frame while Space was held (it
+      // levitated to +2.68 m against a predicted 1.04 m and never came down),
+      // and releasing Space snapped the player instantly back to the floor
+      // with no arc at all. A tap did nothing, because the snap ran in the
+      // same frame as the impulse. Ground contact now means standing on it or
+      // falling onto it, never floating above it.
+      const g=groundAt(P.pos.x,P.pos.y,P.pos.z);
+      let feetY=P.pos.y-P.eye;
+      if(P.grounded&&(keys.Space||P.jump)&&A0.jump>0){P.vel.y=A0.jump;P.grounded=false;}
+      P.jump=false;
+      if(P.grounded){
+        if(g>feetY+STEP_UP){ P.pos.y=g+P.eye; }            // stepped up onto a kerb
+        else if(g>feetY-STEP_UP){ P.pos.y=g+P.eye; P.vel.y=0; }
+        else { P.grounded=false; }                          // walked off an edge
+      }
+      if(!P.grounded){
+        P.vel.y-=12*dt; P.pos.y+=P.vel.y*dt;
+        feetY=P.pos.y-P.eye;
+        if(P.vel.y<=0&&feetY<=g+0.05){ P.pos.y=g+P.eye; P.vel.y=0; P.grounded=true; }
+      }
+      if(P.pos.y<-60)respawn();
+      cam.position.copy(P.pos);
+      cam.rotation.set(P.pitch,P.yaw,0);
+      torch.position.set(P.pos.x,P.pos.y-0.1,P.pos.z);
+      fill.position.set(P.pos.x,P.pos.y+0.3,P.pos.z);
+      const _td=new THREE.Vector3(-Math.sin(P.yaw)*Math.cos(P.pitch),Math.sin(P.pitch),-Math.cos(P.yaw)*Math.cos(P.pitch));
+      torchTgt.position.copy(P.pos).addScaledVector(_td,30);
+      tickObjectives();
+      if(AUTOWALK){const tt=Math.floor((performance.now()-t0)/3000); if(tt!==window._lt){window._lt=tt; console.log('POS',AG,P.pos.x.toFixed(1),P.pos.y.toFixed(2),P.pos.z.toFixed(1),'stage',stage);}}
+    }
+  }
+}
+// Drawing is per FRAME, not per physics step -- at 1 fps the accumulator runs
+// 30 substeps, and repainting the minimap 30 times for one visible frame is
+// 29 wasted repaints on the machine that can least afford them.
+function drawFrame(){
+  if(!started||overview) return;
+  drawMap();
+  const fl=document.getElementById('flr');
+  if(fl) fl.textContent=currentFloor()+(onPad()?' · PAD '+onPad()+' [E/Q]':'');
+}
+loop();
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight);});
+</script>
+
+
+</body></html>
