@@ -4950,3 +4950,35 @@ html[data-theme="light"] .felband__veil {
    It is the site's primary action on every page; the colours are the house's
    own ruby and ruby-dark and nothing else about the pill changes. */
 .mh__cta { background-image: linear-gradient(165deg, #e5383b 0%, #c1121f 46%, #a4101a 100%) !important; }
+
+
+/* ============================================================
+   EQUITY UPRISE — the measured register. Appended; nothing
+   above this line is edited.
+
+   The campaign numbers needed the .eustats treatment (the page
+   already teaches the reader that a big display figure over a
+   hairline is a hard number) but they also needed a heading and
+   a provenance note, which .eustats has no slot for and should
+   not grow one — it is a bare grid by design. So the row keeps
+   its own styling and a wrapper carries the page measure, the
+   gutter and the two pieces of prose around it.
+   ============================================================ */
+.eumeas { max-width: var(--eu-w); margin: clamp(2.6rem, 6vw, 4rem) auto 0;
+  padding: 0 var(--eu-pad); }
+.eumeas .eustats { max-width: none; margin: .9rem 0 0; padding: 0; }
+.eumeas .euhonest { margin-top: .3rem; }
+
+/* -- The three funding lanes are peers: three across on a desk, not a
+      two-up grid with an orphan. The house rule above forces every
+      .eudoors__grid on this page to two columns, which is right for
+      "Ways in" (it has a lead tile) and wrong here. -- */
+.eupage .eudoors__grid.eulanes { grid-template-columns: 1fr; }
+@media (min-width: 900px) {
+  .eupage .eudoors__grid.eulanes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.eulanes .eudoor { padding: 1.15rem 1.25rem; }
+.eulanes .eudoor b { font-family: var(--display); font-weight: 400;
+  text-transform: uppercase; letter-spacing: .02em;
+  font-size: clamp(1.05rem, 2.4vw, 1.28rem); line-height: 1.1; }
+.eulanes .eudoor small { margin-top: .55rem; }
