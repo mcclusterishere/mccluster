@@ -151,29 +151,46 @@ succeeded" is never proof.
 6. Client hits `/v1/connect/accounts`, then `/v1/connect/onboarding-link`.
 7. `account.updated` flips them to `ready`.
 
-## Operational state — read this before promising a client card payments
+## Operational state — checked 2026-09-05
 
-- **The McCluster platform Stripe account cannot currently charge.**
-  `acct_1TrMuQLHDCoUz9Q4` (dashboard "Street Credit Bureau", entity McCluster
-  Corp) reports `charges_enabled: false`, `payouts_enabled: false`,
-  `card_payments: inactive`, `disabled_reason: requirements.past_due`, with
-  `business_profile.url` past due and error `invalid_url_website_inaccessible`,
-  plus an open URL inquiry form. The site returns HTTP 200, so this is a stale
-  verification that must be resubmitted in the dashboard. Until it clears, no
-  client takes a card.
-- **The Worker has no Stripe keys.** `STRIPE_SECRET_KEY`,
-  `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` and
-  `STRIPE_CONNECT_WEBHOOK_SECRET` are unset, so every money route answers 503.
-  Set them as Worker secrets, test keys first.
-- **No email provider is configured.** `RESEND_API_KEY` is unset, so inquiry
-  notifications record and return `notified: false` rather than sending.
-  Set it, plus `NOTIFY_FROM` on a domain verified in Resend.
-- **Esmer has no notify target.** No owner account, no `notify_email`. Until
-  one exists his inquiries are recorded but reach nobody. Migration 0040
-  carries the one-line `update` to set it.
-- **Connect has never been used.** Zero connected accounts; `payments`,
-  `stripe_events` and `platform_ledger` are all empty. Nothing has run
-  end to end yet.
+### Done
+
+- Migrations 0038-0041 are **applied** to `zmnhbrjyhxzhkxmhkexs`. Verified
+  after: esmer org present, both `org_stripe_accounts` rows, `leads.org_id`,
+  email channel enabled, fee policy, both oauth mirror rows. The security
+  advisor no longer lists `org_stripe_accounts` under "RLS enabled, no
+  policy".
+- Every insert the Worker performs was dry-run against the live schema and
+  accepted, then cleaned up.
+- `orgs.settings.notify_email` for esmer is set to the agency address as an
+  interim, so an inquiry reaches someone. Hand it to Justin when he
+  confirms one.
+
+### Blocking, in order
+
+1. **The platform Stripe account is restricted, and its deadline has
+   passed.** `acct_1TrMuQLHDCoUz9Q4`: `charges_enabled: false`,
+   `payouts_enabled: false`, `card_payments: inactive`,
+   `disabled_reason: requirements.past_due`. `business_profile.url` is past
+   due with `invalid_url_website_inaccessible`, and there is an open URL
+   inquiry form (`interv_1TuFcoLHDCoUz9Q40FBtdP7V`). The deadline was
+   **2026-07-31**, over a month ago.
+
+   The site returns HTTP 200 right now, so the finding is stale — but the
+   account will not un-restrict itself. Resubmit the URL and answer the
+   inquiry form in the Stripe dashboard. **Nothing else on this page
+   matters until this clears; no client can take a card.**
+
+2. **The Worker is not deployed** with the routes in this document.
+   `/v1/inquiries` currently answers 404 in production.
+
+3. **No Worker secrets.** `RESEND_API_KEY` and `NOTIFY_FROM` (a
+   Resend-verified domain) for notifications; `STRIPE_SECRET_KEY`,
+   `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`,
+   `STRIPE_CONNECT_WEBHOOK_SECRET` for money — test keys first.
+
+4. **Connect has never been used.** Zero connected accounts; `payments`,
+   `stripe_events` and `platform_ledger` are empty.
 
 ## Not built yet
 
