@@ -13,8 +13,8 @@
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 
   <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
-  <script src="js/theme.js?v=__STAMP__"></script>
+  <link rel="stylesheet" href="css/style.css?v=a2cedb33c9df">
+  <script src="js/theme.js?v=a2cedb33c9df"></script>
   <style>
     /* THE VIEWER. One bar, and the bar IS the navigation: no tabbar rides
        this page. Everything the visitor sees comes out of data/sites.json. */
@@ -221,7 +221,7 @@
       measure();
     }
 
-    fetch("data/sites.json?v=__STAMP__").then(function (r) { return r.json(); }).then(function (d) {
+    fetch("data/sites.json?v=a2cedb33c9df").then(function (r) { return r.json(); }).then(function (d) {
       var all = (d.showcase || []).filter(function (s) { return s && s.slug && s.url; });
       if (!all.length) {
         stop("There is no demo to show yet.", "The shelf is empty right now. The seats and the lanes are still on the sales page.");
@@ -353,6 +353,6 @@
     });
   })();
   </script>
-  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=a2cedb33c9df"></script>
 </body>
 </html>

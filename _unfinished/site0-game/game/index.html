@@ -207,7 +207,7 @@ for(let zz=-70;zz<=60;zz+=26){
   L.position.set(0,5.2,zz); scene.add(L);
 }
 
-new GLTFLoader().load('assets/prim3_site0_master.glb?v=__STAMP__',gl=>{
+new GLTFLoader().load('assets/prim3_site0_master.glb?v=a2cedb33c9df',gl=>{
   const root=gl.scene; root.scale.setScalar(SCALE);
   root.traverse(o=>{
     if(!o.isMesh) return;

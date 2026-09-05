@@ -7,7 +7,7 @@
   <meta name="description" content="A small planet with one half standing and one half burning. You start on the healed side — America. Play a fellow, check in at four real landmarks in Connecticut and Georgia, and open the Deep End: the far side of the world, still on fire. Every place is tied to a real document from the Equity Uprise record.">
   <link rel="icon" type="image/png" href="assets/img/eu-favicon.png">
   <meta name="theme-color" content="#0b0908">
-  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/style.css?v=a2cedb33c9df">
   <style>
     /* The world takes the screen; everything else is a layer on it.
        The chrome follows the same rule as the render: flat white
@@ -306,7 +306,7 @@
       el("uwRing").hidden = true;
     } else {
       document.body.classList.add("uw--on");
-      const { mount } = await import("./js/uprise-world.js?v=__STAMP__");
+      const { mount } = await import("./js/uprise-world.js?v=a2cedb33c9df");
       const card = el("uwCard");
       el("uwCardX").addEventListener("click", () => { card.hidden = true; });
 
@@ -384,7 +384,7 @@
         crossed = true;
         el("uwHint").textContent = "The Deep End \u2014 the Three";
         card.hidden = true;
-        import("./js/uprise-intro.js?v=__STAMP__")
+        import("./js/uprise-intro.js?v=a2cedb33c9df")
           .then((m) => m.playIntro())
           .catch(() => { document.body.classList.remove("uw--cine"); });
       }
@@ -447,7 +447,7 @@
       if (new URLSearchParams(location.search).get("intro") === "1") theCrossing();
     }
   </script>
-  <script src="js/tabbar.js?v=__STAMP__"></script>
-  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=a2cedb33c9df"></script>
+  <script defer src="js/pip.js?v=a2cedb33c9df"></script>
 </body>
 </html>
