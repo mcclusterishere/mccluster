@@ -30,6 +30,7 @@ Single source of truth for how the house is wired. Agents: if this disagrees wit
 | Worker source | `workers/mccluster` |
 | Shared tables | Supabase `zmnhbrjyhxzhkxmhkexs` |
 | Client payments / Stripe Connect | Control plane only — `docs/control-plane/CLIENT-PAYMENTS.md` |
+| Accounts / sign-in across sites | One Supabase project — `docs/control-plane/SSO.md` |
 | Product UI | Satellite repos in `registry.json` |
 | Old website copy | `mcclusterishere/Here` — do not deploy from it |
 

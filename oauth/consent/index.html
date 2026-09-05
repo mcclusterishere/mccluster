@@ -20,6 +20,7 @@
     <p>One account for McCluster-powered apps.</p>
 
     <section id="login" class="login" hidden>
+      <button id="google" class="primary" hidden>Continue with Google</button>
       <input id="email" type="email" autocomplete="email" placeholder="Email">
       <input id="password" type="password" autocomplete="current-password" placeholder="Password">
       <button id="signin" class="primary">Sign in</button>
@@ -86,6 +87,24 @@
     if(!user){$('#login').hidden=false;return;}
     await renderConsent(user);
   }
+
+  /* Google is shown only when the provider is actually enabled on the
+     project. It is currently off, so this stays hidden rather than offering
+     a button that 400s at GoTrue. redirectTo comes back here with the same
+     authorization_id, so approving resumes exactly where it left off. */
+  (async()=>{
+    try{
+      const r=await fetch(`${SUPABASE_URL}/auth/v1/settings`,{headers:{apikey:SUPABASE_KEY}});
+      const j=await r.json();
+      if(!j?.external?.google)return;
+      const btn=$('#google');btn.hidden=false;
+      btn.onclick=async()=>{
+        btn.disabled=true;
+        const {error}=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href}});
+        if(error){btn.disabled=false;msg(error.message)}
+      };
+    }catch{/* leave hidden; the email path still works */}
+  })();
 
   $('#signin').onclick=async()=>{
     msg('');$('#signin').disabled=true;
