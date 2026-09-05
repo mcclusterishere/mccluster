@@ -2374,39 +2374,57 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
 }
 
 /* ============================================================
-   THE BRIEFING — the rules, three seconds, then the cabin is yours.
-   The old card stacked a caution triangle, a compass rose and
-   flashing red text and still said nothing quickly. This one is a
-   single pane of dark glass with the operator's mark on it.
+   THE GATE — one question, two real answers, and a blurred film
+   behind both of them until one is pressed.
 
-   It was also a 23rem chip floating in the middle of a film, and
-   it read like a cookie notice: small, polite, skippable. Nobody
-   skips it now — the page is parked behind it — so it takes the
-   room it needs: a headline you cannot scroll past, one line of
-   why, and the three rules under that. Bigger is the whole point;
-   the card is the only thing to look at for three seconds, so it
-   should look like it knows that.
+   This card was a briefing: three rules and a three-second
+   countdown, after which the cabin opened whether or not anybody
+   had read a word. A tap anywhere opened it early. So the pane
+   was never withholding the film — it was delaying it, which is
+   the thing a visitor learns to click past.
+
+   Now the picture itself is blurred, in the canvas (see THE
+   GATE'S BLUR, below), and the pane on top of it is only the
+   question. Waiting does not answer it, clicking away does not
+   answer it, and dragging the smeared cabin does not answer it.
+   Allow clears the blur. Cancel keeps it and hands back the
+   scroll, and says a reload is how to change your mind.
    ============================================================ */
 .vrbrief { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center;
   padding: 1.1rem; opacity: 0; visibility: hidden;
   background: rgba(6,5,4,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   transition: opacity .5s ease, visibility .5s; pointer-events: none; }
 .vrbrief.is-on { opacity: 1; visibility: visible; pointer-events: auto; }
+/* THE BLUR ITSELF, and it has to live here rather than on the canvas.
+
+   The obvious version — filter: blur() on .workvr__canvas — draws black.
+   The cabin is a WebGL canvas, and a CSS filter on one forces it down a
+   compositing path that reads a drawing buffer already presented and
+   cleared: you get the element's geometry filled with nothing. So the pane
+   in front does the blurring instead, through backdrop-filter, which is the
+   path this card was already using at 6px and is known good here.
+
+   The visitor cannot tell the difference. The picture is smeared, the shape
+   of the cabin is all that survives, and it stays that way until Allow. */
+.vrbrief--gate { background: radial-gradient(125% 95% at 50% 45%,
+    rgba(6,5,4,.42), rgba(6,5,4,.82));
+  -webkit-backdrop-filter: blur(32px) saturate(.8) brightness(.85);
+  backdrop-filter: blur(32px) saturate(.8) brightness(.85); }
 .vrbrief.is-gone { opacity: 0; visibility: hidden; pointer-events: none; }
-/* once the count clears, the pane stops swallowing the cabin */
-.vrbrief.is-ready { pointer-events: none; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
-/* the card itself stays see-but-don't-touch so a drag started anywhere
-   goes straight to the cabin; only the button still takes a hand. It also
-   settles back a notch, so being released is something you can see.
-   (the entrance animation fills forwards, so it has to be cleared before
-   a transform of ours can land) */
-.vrbrief.is-ready .vrbrief__card { pointer-events: none; animation: none;
-  transform: scale(.9); opacity: .92; transition: transform .45s cubic-bezier(.2,.7,.2,1), opacity .45s ease; }
-.vrbrief.is-ready .vrbrief__go { pointer-events: auto; }
-/* released, the card stops shouting the parts that were only for the hold */
-.vrbrief.is-ready .vrbrief__lede { opacity: 0; }
+/* Cancelled. The pane stops being a wall — the screen and the scroll are
+   handed straight back — but the card stays where it is with the one thing
+   the visitor still needs to read, and the film behind it stays blurred
+   until a reload. (the entrance animation fills forwards, so it has to be
+   cleared before a transform of ours can land) */
+.vrbrief.is-declined { pointer-events: none; }
+.vrbrief.is-declined .vrbrief__card { pointer-events: none; animation: none;
+  transform: scale(.94); transition: transform .45s cubic-bezier(.2,.7,.2,1); }
+.vrbrief.is-declined .vrbrief__lede,
+.vrbrief.is-declined .vrgate__acts,
+.vrbrief.is-declined .vrgate__note { display: none; }
 
 .vrbrief__card { position: relative; width: min(34rem, 94vw); max-height: 100%; overflow: auto;
+  -webkit-user-select: none; user-select: none;
   text-align: center; padding: 1.9rem 1.7rem 1.7rem; border-radius: 26px; color: var(--cream);
   background: linear-gradient(180deg, rgba(24,18,16,.96), rgba(9,7,6,.975));
   box-shadow: inset 0 0 0 1px rgba(244,239,230,.16), inset 0 1px 0 rgba(255,255,255,.12),
@@ -2439,30 +2457,36 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
 .vrbrief__lede { margin: 0 auto 1.15rem; max-width: 29rem;
   font: 500 .95rem/1.45 var(--body); color: var(--cream-dim); transition: opacity .4s ease; }
 
-.vrbrief__rules { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; text-align: left; }
-.vrbrief__rules li { display: flex; align-items: center; gap: .8rem;
-  padding: .8rem .95rem; border-radius: 15px; background: rgba(244,239,230,.06);
-  box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); }
-.vrbrief__rules svg { flex: none; width: 25px; height: 25px; fill: none; stroke: var(--ruby-hot);
-  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.vrbrief__rules span { font: 500 1rem/1.3 var(--body); color: var(--cream-dim); }
-.vrbrief__rules b { color: var(--cream); font-weight: 800; }
+/* THE TWO ANSWERS. A permission prompt, so it looks like one: the
+   affirmative in the operator's colour, the refusal in negative — an
+   outline and nothing else — and both of them real. */
+.vrgate__acts { margin: 1.35rem auto 0; display: grid; gap: .6rem; }
+@media (min-width: 520px) {
+  .vrgate__acts { grid-auto-flow: column; justify-content: center; }
+}
+.vrgate__btn { -webkit-appearance: none; appearance: none; cursor: pointer; border: 0;
+  border-radius: 99px; padding: .95rem 1.9rem; font: 800 .8rem var(--body);
+  letter-spacing: .16em; text-transform: uppercase;
+  transition: transform .18s ease, background .25s ease, color .25s ease, box-shadow .25s ease; }
+.vrgate__btn:active { transform: scale(.97); }
+.vrgate__allow { background: var(--metal); color: #fff;
+  box-shadow: 0 16px 36px -14px rgba(0,0,0,.95); }
+.vrgate__deny { background: transparent; color: rgba(244,239,230,.66);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.26); }
+.vrgate__deny:hover { color: var(--cream); box-shadow: inset 0 0 0 1px rgba(244,239,230,.52); }
+.vrgate__note { margin: .95rem auto 0; max-width: 27rem;
+  font: 500 .78rem/1.5 var(--body); color: rgba(244,239,230,.5); }
+.vrgate__note b { color: rgba(244,239,230,.78); font-weight: 800; }
 
-.vrbrief__count { display: grid; place-items: center; width: 74px; height: 74px; margin: 1.15rem auto .2rem;
-  border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(244,239,230,.16); position: relative; }
-.vrbrief__count::after { content: ""; position: absolute; inset: -2px; border-radius: 50%;
-  border: 2px solid transparent; border-top-color: var(--ruby-hot);
-  animation: vrBriefSpin 1s linear infinite; }
-.vrbrief__count b { font-family: var(--display); font-size: 2.5rem; line-height: 1; color: #f4efe6;
-  animation: vrBriefTick .95s ease-out; }
-@keyframes vrBriefSpin { to { transform: rotate(360deg); } }
-@keyframes vrBriefTick { from { transform: scale(1.5); opacity: .3; } to { transform: none; opacity: 1; } }
-
-.vrbrief__go { display: none; margin: 1.1rem auto 0; -webkit-appearance: none; appearance: none;
-  border: 0; cursor: pointer; border-radius: 99px; padding: .95rem 1.9rem; background: var(--metal);
-  color: #fff; font: 800 .8rem var(--body); letter-spacing: .16em; text-transform: uppercase; }
-.vrbrief.is-ready .vrbrief__count { display: none; }
-.vrbrief.is-ready .vrbrief__go { display: block; }
+/* what Cancel says back */
+.vrgate__after { margin: 1.15rem auto 0; padding: 1rem 1.1rem; max-width: 28rem;
+  border-radius: 16px; text-align: left; background: rgba(244,239,230,.06);
+  box-shadow: inset 0 0 0 1px rgba(244,239,230,.12); }
+.vrgate__after[hidden] { display: none; }
+.vrgate__afterh { margin: 0; font: 800 .68rem var(--body); letter-spacing: .2em;
+  text-transform: uppercase; color: var(--vaunt); }
+.vrgate__afterp { margin: .5rem 0 0; font: 500 .95rem/1.5 var(--body); color: var(--cream-dim); }
+.vrgate__afterp b { color: var(--cream); font-weight: 800; }
 
 /* a short viewport (landscape phones, small laptops) gets the same card
    with the trimmings taken off, rather than a card that runs off the pane */
@@ -2471,27 +2495,19 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
   .vrbrief__logo { width: 42px; height: 42px; }
   .vrbrief__title { font-size: clamp(1.4rem, 5vw, 1.9rem); }
   .vrbrief__lede { display: none; }
-  .vrbrief__rules li { padding: .6rem .8rem; }
-  .vrbrief__rules span { font-size: .92rem; }
-  .vrbrief__count { width: 58px; height: 58px; margin-top: .85rem; }
-  .vrbrief__count b { font-size: 1.9rem; }
+  .vrgate__acts { margin-top: 1rem; }
+  .vrgate__btn { padding: .8rem 1.5rem; font-size: .74rem; }
+  .vrgate__note { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .vrbrief__card { animation: none; }
-  .vrbrief__count::after { animation: none; border-top-color: transparent;
-    box-shadow: inset 0 0 0 2px rgba(229,56,59,.5); }
-  .vrbrief__count b { animation: none; }
+  .vrgate__btn { transition: none; }
+  .vrgate__btn:active { transform: none; }
 }
 
-/* the cabin is Vaunt's, so the briefing wears Vaunt orange, not house ruby */
-#work .vrbrief__rules svg { stroke: var(--vaunt); }
-#work .vrbrief__count::after { border-top-color: var(--vaunt); }
-#work .vrbrief__go { background: linear-gradient(120deg, var(--vaunt-deep), var(--vaunt)); }
-@media (prefers-reduced-motion: reduce) {
-  #work .vrbrief__count::after { border-top-color: transparent;
-    box-shadow: inset 0 0 0 2px rgba(248,76,10,.5); }
-}
+/* the cabin is Vaunt's, so the gate wears Vaunt orange, not house ruby */
+#work .vrgate__allow { background: linear-gradient(120deg, var(--vaunt-deep), var(--vaunt)); }
 
 /* THE THUMB LANE. The control rail is ~200px of labelled buttons anchored
    at top:50%, which on a 390px phone put the Motion button dead in the
@@ -2583,8 +2599,23 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
 .workvr .vr360-spots, .workvr .workvr__side, .workvr .workvr__tag {
   transition: opacity .5s ease .25s; }
 
-/* the row is only revealed to hands that can use it */
-.vrbrief__rule--tilt[hidden] { display: none; }
+/* ============================================================
+   WHILE THE GATE IS UP. The cabin's own furniture stands down —
+   there is nothing to press behind a question — and the canvas
+   goes pointer-dead, so a drag on the smeared film is simply a
+   scroll, which is what "scroll on to continue" needs it to be
+   after Cancel. The blur is on the pane; see .vrbrief--gate.
+   ============================================================ */
+.workvr.is-gated .workvr__canvas { cursor: default; pointer-events: none; }
+.workvr.is-gated .vr360-spots,
+.workvr.is-gated .workvr__side,
+.workvr.is-gated .workvr__tag { opacity: 0; pointer-events: none; }
+/* the one engine without backdrop-filter gets the canvas filter after all:
+   black is wrong, but so is a clear view of the thing being withheld. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .workvr.is-gated .workvr__canvas { filter: blur(30px) brightness(.8); transform: scale(1.12); }
+}
+
 
 /* Stillness, restated here. The blanket reduced-motion rule for the cabin
    sits earlier in this file, so the flashes declared above would simply
