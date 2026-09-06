@@ -1,50 +1,40 @@
 /* MCC AUTH — one McCluster account, every McCluster-powered site.
    ============================================================
    CANONICAL SOURCE: mcclusterishere/mccluster → js/mcc-auth.js
-   Satellites vendor this file. Fix it here, then copy it out.
 
-   The identity is the Supabase project, not the page. Every McCluster
-   property authenticates against project zmnhbrjyhxzhkxmhkexs, so a person
-   who signs in on matthew.mccluster.org and later signs in on a client's
-   site is the SAME auth user, with the same id, on both.
+   Supabase auth.users is the authentication record. public.m_people is the
+   canonical M identity above it, so verified credentials that use different
+   provider emails can be explicitly linked without pretending a shared
+   device proves two people are the same person.
 
-   Google, Apple, Facebook, X and email are doors into one M Account. The
-   permanent identity is auth.users.id (M_UID). Provider identities remain
-   attached in auth.identities; a browser/device identifier is only a
-   continuity signal and is NEVER sufficient to merge two accounts.
+   Google, Apple, Facebook, X, password and magic-link auth are doors into
+   the M layer. A random first-party installation id is only a continuity
+   signal. It is never browser/hardware fingerprinting and never authenticates
+   or automatically merges a user.
 
-   A session is per-origin by design. Signing in on a client's site is one
-   tap; it is not a second account.
-
-   No vendored SDK: this is the GoTrue HTTP API directly, matching
-   js/backend.js. It keeps satellites inside their performance budget and
-   off a third-party CDN on the critical path.
-
-   The publishable key below is public by design. Row Level Security is the
-   wall. No secret belongs in this file, and none is used by it.
+   No secret belongs in this file. The publishable key is public by design;
+   Row Level Security and authenticated RPCs are the security boundary.
    ============================================================ */
 (function (root) {
   'use strict';
 
   var URL_ = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co';
   var KEY = 'sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
-
   var SESSION = 'mccdb_session';
   var KEEP = 'mcc_sess_keep';
   var VERIFIER = 'mcc.pkce';
+  var OAUTH_PROVIDER = 'mcc.oauth_provider';
   var DEVICE = 'mcc.device_id';
-
-  /* Provider names are current Supabase Auth provider identifiers.
-     X is `x` (OAuth 2.0), not legacy Twitter OAuth 1. */
   var SOCIAL = { google: true, apple: true, facebook: true, x: true };
 
   function get(store, key) { try { return root[store].getItem(key); } catch (e) { return null; } }
-  function set(store, key, value) { try { root[store].setItem(key, value); } catch (e) { /* not fatal */ } }
-  function del(store, key) { try { root[store].removeItem(key); } catch (e) { /* not fatal */ } }
+  function set(store, key, value) { try { root[store].setItem(key, value); } catch (e) { /* storage may be blocked */ } }
+  function del(store, key) { try { root[store].removeItem(key); } catch (e) { /* storage may be blocked */ } }
 
   function readSession() {
     try { return JSON.parse(get('localStorage', SESSION) || 'null'); } catch (e) { return null; }
   }
+
   function writeSession(s) {
     if (!s) { del('localStorage', SESSION); del('localStorage', KEEP); return null; }
     s.expires_at = s.expires_at || (Math.floor(Date.now() / 1000) + (s.expires_in || 3600));
@@ -54,7 +44,19 @@
     return s;
   }
 
-  function api(path, init) {
+  function parseResponse(res) {
+    return res.text().then(function (text) {
+      var data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+      if (!res.ok) {
+        var msg = data && (data.message || data.error_description || data.msg || data.error);
+        throw Object.assign(new Error(msg || 'Request failed'), { status: res.status, data: data });
+      }
+      return data;
+    });
+  }
+
+  function authApi(path, init) {
     init = init || {};
     var headers = { apikey: KEY, 'content-type': 'application/json' };
     if (init.token) headers.authorization = 'Bearer ' + init.token;
@@ -62,14 +64,19 @@
       method: init.method || 'GET',
       headers: headers,
       body: init.body ? JSON.stringify(init.body) : undefined
-    }).then(function (res) {
-      return res.text().then(function (text) {
-        var data = null;
-        try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
-        if (!res.ok) throw Object.assign(new Error((data && (data.error_description || data.msg || data.error)) || 'Auth request failed'), { status: res.status });
-        return data;
-      });
-    });
+    }).then(parseResponse);
+  }
+
+  function rpc(name, body, token) {
+    return fetch(URL_ + '/rest/v1/rpc/' + name, {
+      method: 'POST',
+      headers: {
+        apikey: KEY,
+        authorization: 'Bearer ' + token,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(body || {})
+    }).then(parseResponse);
   }
 
   function random(bytes) {
@@ -77,15 +84,18 @@
     root.crypto.getRandomValues(a);
     return b64url(a);
   }
+
   function b64url(bytes) {
     var s = '';
     for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
     return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
+
   function challenge(verifier) {
     return root.crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))
       .then(function (buf) { return b64url(new Uint8Array(buf)); });
   }
+
   function uuid() {
     if (root.crypto && typeof root.crypto.randomUUID === 'function') return root.crypto.randomUUID();
     var a = new Uint8Array(16);
@@ -95,12 +105,33 @@
     var h = Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
     return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
   }
+
   function deviceId() {
     var id = get('localStorage', DEVICE);
-    if (id && /^[0-9a-f-]{36}$/i.test(id)) return id;
+    if (id && id.length >= 20) return id;
     id = uuid();
     set('localStorage', DEVICE, id);
     return id;
+  }
+
+  function providerEnabled(settings, provider) {
+    var ext = (settings && settings.external) || {};
+    if (provider === 'x') return Boolean(ext.x || ext.twitter);
+    return Boolean(ext[provider]);
+  }
+
+  function inferAppContext() {
+    if (root.MCC_APP_KEY) return { app: String(root.MCC_APP_KEY), org: String(root.MCC_ORG_SLUG || 'mccluster') };
+    var host = (root.location.hostname || '').toLowerCase();
+    var path = root.location.pathname || '/';
+    if (/esmermusic\.com$/.test(host)) return { app: 'esmer-web', org: 'esmer' };
+    if (/mccluster\.org$/.test(host)) {
+      if (/^\/whip\/driver(?:\/|$)/.test(path)) return { app: 'whip-driver-web', org: 'mccluster' };
+      if (/^\/whip\/rentals(?:\/|$)/.test(path)) return { app: 'whip-rentals-web', org: 'mccluster' };
+      if (/^\/whip\/rider(?:\/|$)/.test(path)) return { app: 'whip-rider-web', org: 'mccluster' };
+      return { app: 'mccluster-web', org: 'mccluster' };
+    }
+    return null;
   }
 
   function beginSocial(provider, redirectTo) {
@@ -108,6 +139,7 @@
     if (!SOCIAL[provider]) return Promise.reject(new Error('Unsupported sign-in provider'));
     var verifier = random(48);
     set('sessionStorage', VERIFIER, verifier);
+    set('sessionStorage', OAUTH_PROVIDER, provider);
     return challenge(verifier).then(function (c) {
       var q = new URLSearchParams({
         provider: provider,
@@ -120,7 +152,6 @@
   }
 
   var MCC = {
-    /* The returned user.id is the permanent M_UID. */
     user: function () {
       var s = readSession();
       if (!s || !s.access_token) return Promise.resolve(null);
@@ -128,20 +159,33 @@
       var chain = fresh ? Promise.resolve(s) : MCC.refresh();
       return chain.then(function (session) {
         if (!session) return null;
-        return api('user', { token: session.access_token });
+        return authApi('user', { token: session.access_token });
       }).catch(function () { return null; });
     },
 
     session: readSession,
     deviceId: deviceId,
-    mUid: function () { return MCC.user().then(function (u) { return u ? u.id : null; }); },
 
     refresh: function () {
       var s = readSession();
       if (!s || !s.refresh_token) return Promise.resolve(null);
-      return api('token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: s.refresh_token } })
+      return authApi('token?grant_type=refresh_token', { method: 'POST', body: { refresh_token: s.refresh_token } })
         .then(writeSession)
         .catch(function () { writeSession(null); return null; });
+    },
+
+    refreshIfNeeded: function () {
+      var s = readSession();
+      if (!s) return Promise.resolve(null);
+      if (s.expires_at && s.expires_at > (Date.now() / 1000) + 60) return Promise.resolve(s);
+      return MCC.refresh();
+    },
+
+    mUid: function () {
+      return MCC.refreshIfNeeded().then(function (session) {
+        if (!session || !session.access_token) return null;
+        return rpc('m_my_uid', {}, session.access_token);
+      });
     },
 
     signInWithProvider: beginSocial,
@@ -150,19 +194,35 @@
     signInWithFacebook: function (redirectTo) { return beginSocial('facebook', redirectTo); },
     signInWithX: function (redirectTo) { return beginSocial('x', redirectTo); },
 
+    providerSettings: function () {
+      return fetch(URL_ + '/auth/v1/settings', { headers: { apikey: KEY } }).then(parseResponse);
+    },
+
     providers: function () {
-      return fetch(URL_ + '/auth/v1/settings', { headers: { apikey: KEY } })
-        .then(function (r) { if (!r.ok) throw new Error('Could not load sign-in providers'); return r.json(); })
-        .then(function (j) {
-          var ext = (j && j.external) || {};
-          return { google: !!ext.google, apple: !!ext.apple, facebook: !!ext.facebook, x: !!ext.x };
-        });
+      return MCC.providerSettings().then(function (settings) {
+        return {
+          google: providerEnabled(settings, 'google'),
+          apple: providerEnabled(settings, 'apple'),
+          facebook: providerEnabled(settings, 'facebook'),
+          x: providerEnabled(settings, 'x')
+        };
+      });
+    },
+
+    enabledProviders: function () {
+      return MCC.providers().then(function (enabled) {
+        return Object.keys(SOCIAL).filter(function (provider) { return enabled[provider]; });
+      });
     },
 
     signInWithEmail: function (email, redirectTo) {
-      return api('otp', {
+      return authApi('otp', {
         method: 'POST',
-        body: { email: email, create_user: true, options: { email_redirect_to: redirectTo || root.location.origin + '/auth/' } }
+        body: {
+          email: email,
+          create_user: true,
+          options: { email_redirect_to: redirectTo || root.location.origin + '/auth/' }
+        }
       });
     },
 
@@ -176,35 +236,43 @@
       var verifier = get('sessionStorage', VERIFIER);
       if (!verifier) return Promise.reject(new Error('This sign-in link was started in a different browser or tab.'));
 
-      return api('token?grant_type=pkce', { method: 'POST', body: { auth_code: code, code_verifier: verifier } })
+      return authApi('token?grant_type=pkce', { method: 'POST', body: { auth_code: code, code_verifier: verifier } })
         .then(function (session) {
           del('sessionStorage', VERIFIER);
+          del('sessionStorage', OAUTH_PROVIDER);
           writeSession(session);
           root.history.replaceState({}, '', root.location.pathname);
-          MCC.touch(root.MCC_APP_KEY || null).catch(function () { /* not auth-critical */ });
-          return session && session.user ? session.user : MCC.user();
+          return MCC.autoTouch().then(function () {
+            return session && session.user ? session.user : MCC.user();
+          });
         });
     },
 
-    /* First-party random device continuity; never a user-merge key. */
-    touch: function (appKey) {
+    touch: function (appKey, orgSlug, meta) {
       return MCC.refreshIfNeeded().then(function (session) {
         if (!session || !session.access_token) return null;
-        return fetch(URL_ + '/rest/v1/rpc/platform_touch_device', {
-          method: 'POST',
-          headers: { apikey: KEY, authorization: 'Bearer ' + session.access_token, 'content-type': 'application/json' },
-          body: JSON.stringify({
-            p_device_id: deviceId(),
-            p_app_key: appKey || null,
-            p_client_meta: {
-              language: (root.navigator && root.navigator.language) || '',
-              platform: (root.navigator && root.navigator.platform) || ''
-            }
-          })
-        }).then(function (r) {
-          if (!r.ok) throw new Error('Could not record M Account device continuity');
-          return r.json().catch(function () { return null; });
-        });
+        return rpc('m_touch_app', {
+          p_app_key: appKey,
+          p_device_key: deviceId(),
+          p_org_slug: orgSlug || 'mccluster',
+          p_meta: meta || {}
+        }, session.access_token);
+      });
+    },
+
+    autoTouch: function () {
+      var ctx = inferAppContext();
+      if (!ctx) return Promise.resolve(null);
+      return MCC.touch(ctx.app, ctx.org, {
+        origin: root.location.origin,
+        locale: (root.navigator && root.navigator.language) || ''
+      }).catch(function () { return null; });
+    },
+
+    identities: function () {
+      return MCC.refreshIfNeeded().then(function (session) {
+        if (!session || !session.access_token) return [];
+        return rpc('m_my_identities', {}, session.access_token);
       });
     },
 
@@ -212,7 +280,7 @@
       var s = readSession();
       writeSession(null);
       if (!s || !s.access_token) return Promise.resolve();
-      return api('logout', { method: 'POST', token: s.access_token }).catch(function () { /* local sign-out already done */ });
+      return authApi('logout', { method: 'POST', token: s.access_token }).catch(function () { /* local sign-out already done */ });
     },
 
     api: function (path, init) {
@@ -225,55 +293,69 @@
           body: init.body ? JSON.stringify(init.body) : undefined
         });
       });
-    },
-
-    refreshIfNeeded: function () {
-      var s = readSession();
-      if (!s) return Promise.resolve(null);
-      if (s.expires_at && s.expires_at > (Date.now() / 1000) + 60) return Promise.resolve(s);
-      return MCC.refresh();
     }
   };
 
-  /* Upgrade the existing account page in-place. Only enabled providers are shown. */
   function mountAccountSocial() {
     var wrap = root.document && root.document.getElementById('acOauth');
-    var google = root.document && root.document.getElementById('acGoogle');
-    if (!wrap || !google) return;
+    if (!wrap || wrap.getAttribute('data-mcc-enhanced') === '1') return;
+    wrap.setAttribute('data-mcc-enhanced', '1');
+    wrap.innerHTML =
+      '<button class="ac__btn" id="acM" type="button" style="display:flex;align-items:center;justify-content:center;gap:.65rem">' +
+        '<img src="assets/img/m-mark.png" alt="" width="22" height="22">Sign in with M</button>' +
+      '<div id="acSocial" hidden style="margin-top:.75rem">' +
+        '<button class="ac__ghost" id="acGoogle" type="button" hidden style="width:100%;cursor:pointer">Continue with Google</button>' +
+        '<button class="ac__ghost" id="acApple" type="button" hidden style="width:100%;cursor:pointer">Continue with Apple</button>' +
+        '<button class="ac__ghost" id="acFacebook" type="button" hidden style="width:100%;cursor:pointer">Continue with Facebook</button>' +
+        '<button class="ac__ghost" id="acX" type="button" hidden style="width:100%;cursor:pointer">Continue with X</button>' +
+      '</div>' +
+      '<p class="ac__sub" style="margin:.8rem 0 1.2rem">One M Account across McCluster. Social sign-ins attach to the same identity.</p>';
+    wrap.hidden = false;
+
+    var m = root.document.getElementById('acM');
+    if (m) m.addEventListener('click', function () {
+      var make = root.document.getElementById('acMake');
+      var signin = root.document.getElementById('acIn');
+      if (make) make.hidden = true;
+      if (signin) signin.hidden = false;
+      var email = root.document.getElementById('acInEmail');
+      if (email) email.focus();
+    });
 
     MCC.providers().then(function (enabled) {
-      google.hidden = !enabled.google;
-      [
-        ['apple', 'acApple', 'Continue with Apple'],
-        ['facebook', 'acFacebook', 'Continue with Facebook'],
-        ['x', 'acX', 'Continue with X']
-      ].forEach(function (spec) {
-        var provider = spec[0];
-        if (!enabled[provider] || root.document.getElementById(spec[1])) return;
-        var btn = root.document.createElement('button');
-        btn.className = 'ac__btn';
-        btn.id = spec[1];
-        btn.type = 'button';
-        btn.textContent = spec[2];
-        btn.addEventListener('click', function () {
-          btn.disabled = true;
+      var specs = [
+        ['google', 'acGoogle'], ['apple', 'acApple'],
+        ['facebook', 'acFacebook'], ['x', 'acX']
+      ];
+      var any = false;
+      specs.forEach(function (spec) {
+        var provider = spec[0], button = root.document.getElementById(spec[1]);
+        if (!button || !enabled[provider]) return;
+        button.hidden = false;
+        any = true;
+        button.addEventListener('click', function () {
+          button.disabled = true;
           MCC.signInWithProvider(provider, root.location.origin + '/auth/?next=/account.html')
             .catch(function (e) {
-              btn.disabled = false;
+              button.disabled = false;
               var msg = root.document.getElementById('acMsg');
               if (msg) msg.textContent = e.message || ('Could not start ' + provider + ' sign-in.');
             });
         });
-        var sub = wrap.querySelector('.ac__sub');
-        wrap.insertBefore(btn, sub || null);
       });
-      wrap.hidden = !(enabled.google || enabled.apple || enabled.facebook || enabled.x);
-    }).catch(function () { /* email/password stays available */ });
+      var social = root.document.getElementById('acSocial');
+      if (social) social.hidden = !any;
+    }).catch(function () { /* native M/email auth stays available */ });
   }
 
   root.MCC = MCC;
+
   if (root.document) {
-    if (root.document.readyState === 'loading') root.document.addEventListener('DOMContentLoaded', mountAccountSocial);
-    else mountAccountSocial();
+    var boot = function () {
+      mountAccountSocial();
+      MCC.autoTouch();
+    };
+    if (root.document.readyState === 'loading') root.document.addEventListener('DOMContentLoaded', boot);
+    else boot();
   }
 })(window);
