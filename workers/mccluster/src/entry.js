@@ -3,7 +3,9 @@ import { fail, reply } from './lib/http.js';
 import { createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
-import { attachCompletedVariantAssets, handleMetaWebhook, handleSocialRequest } from './social/router.js';
+import { attachCompletedVariantAssets, handleSocialRequest } from './social/router.js';
+import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
+import { handleMetaWebhook } from './social/webhook.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -122,6 +124,18 @@ export default {
       attachCompletedVariantAssets(env).catch((error) => {
         console.error(JSON.stringify({
           event: 'social_variant_attachment_failed',
+          message: error instanceof Error ? error.message : String(error)
+        }));
+      }),
+      processInstagramPublishQueue(env, { limit: 10 }).catch((error) => {
+        console.error(JSON.stringify({
+          event: 'social_instagram_publish_cycle_failed',
+          message: error instanceof Error ? error.message : String(error)
+        }));
+      }),
+      syncInstagramInsights(env, { limit: 5 }).catch((error) => {
+        console.error(JSON.stringify({
+          event: 'social_instagram_insights_sync_failed',
           message: error instanceof Error ? error.message : String(error)
         }));
       })
