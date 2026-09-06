@@ -1,4 +1,5 @@
 import { collectAssetCandidates, normalizeFalStatus, resultFal, statusFal, submitFal, verifyFalWebhook } from './fal.js';
+import { estimateModelCost } from './pricing.js';
 
 function headers(env) {
   return {
@@ -18,6 +19,13 @@ async function db(env, path, options = {}) {
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
   if (!res.ok) throw Object.assign(new Error('Media database request failed'), { status: res.status, detail: data });
   return data;
+}
+
+async function rpc(env, name, payload) {
+  return db(env, `rpc/${name}`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
 }
 
 async function getOrg(env, userId, requestedOrgId) {
@@ -55,6 +63,13 @@ async function patchJob(env, id, values) {
   return rows?.[0] || null;
 }
 
+async function releaseReservation(env, jobId, reason) {
+  return rpc(env, 'media_release_cost_reservation', {
+    p_job_id: jobId,
+    p_reason: reason || null
+  });
+}
+
 async function saveAssets(env, orgId, jobId, result) {
   const candidates = collectAssetCandidates(result);
   const unique = [...new Map(candidates.map((a) => [a.url, a])).values()];
@@ -72,6 +87,15 @@ async function saveAssets(env, orgId, jobId, result) {
     headers: { prefer: 'return=representation' },
     body: JSON.stringify(body)
   });
+}
+
+function budgetCents(value) {
+  if (value === null || value === undefined) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw Object.assign(new Error('budget_cents must be a non-negative number'), { status: 400 });
+  }
+  return Math.floor(parsed);
 }
 
 export async function listModels(request, env) {
@@ -97,26 +121,47 @@ export async function createGeneration(request, env, user) {
   if (body.prompt && !input.prompt) input.prompt = body.prompt;
   if (!Object.keys(input).length) throw Object.assign(new Error('input or prompt is required'), { status: 400 });
 
-  const [job] = await db(env, 'media_jobs', {
-    method: 'POST',
-    headers: { prefer: 'return=representation' },
-    body: JSON.stringify({
-      org_id: org.org_id,
-      created_by: user.id,
-      provider: model.provider,
-      provider_model_id: model.provider_model_id,
-      capability: model.capability,
-      status: 'queued',
-      prompt: body.prompt || input.prompt || null,
-      input,
-      routing: {
-        requested_model_id: model.id,
-        requested_by: user.id,
-        budget_cents: Number.isFinite(body.budget_cents) ? Math.max(0, Math.floor(body.budget_cents)) : null,
-        strategy: body.strategy || 'explicit-model'
+  const budget = budgetCents(body.budget_cents);
+  const estimate = estimateModelCost(model, input);
+  if (budget !== null && !estimate.available) {
+    throw Object.assign(new Error('This model cannot be safely preflighted against a budget yet'), {
+      status: 422,
+      detail: { model_id: model.id, provider_model_id: model.provider_model_id, reason: estimate.reason }
+    });
+  }
+  if (budget !== null && estimate.estimated_cost_cents > budget) {
+    throw Object.assign(new Error('Estimated media cost exceeds budget'), {
+      status: 422,
+      detail: {
+        model_id: model.id,
+        estimated_cost_cents: estimate.estimated_cost_cents,
+        budget_cents: budget
       }
-    })
+    });
+  }
+
+  const created = await rpc(env, 'media_create_budgeted_job', {
+    p_org_id: org.org_id,
+    p_created_by: user.id,
+    p_provider: model.provider,
+    p_provider_model_id: model.provider_model_id,
+    p_capability: model.capability,
+    p_prompt: body.prompt || input.prompt || null,
+    p_input: input,
+    p_routing: {
+      requested_model_id: model.id,
+      requested_by: user.id,
+      strategy: body.strategy || 'explicit-model',
+      estimate_available: Boolean(estimate.available),
+      estimate_reason: estimate.available ? null : estimate.reason,
+      estimated_cost_cents_exact: estimate.available ? estimate.estimated_cost_cents_exact : null
+    },
+    p_estimated_cost_cents: estimate.available ? estimate.estimated_cost_cents : null,
+    p_budget_cents: budget,
+    p_pricing_snapshot: estimate.pricing_snapshot || model.cost_hint || {}
   });
+  const job = Array.isArray(created) ? created[0] : created;
+  if (!job?.id) throw Object.assign(new Error('Media job creation did not return a job'), { status: 500 });
 
   try {
     const webhookUrl = `${new URL(request.url).origin}/v1/media/webhooks/fal`;
@@ -128,10 +173,12 @@ export async function createGeneration(request, env, user) {
       status: 'queued'
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     await patchJob(env, job.id, {
       status: 'failed',
-      error: { message: error instanceof Error ? error.message : String(error) }
+      error: { message }
     }).catch(() => null);
+    await releaseReservation(env, job.id, `provider submission failed: ${message}`).catch(() => null);
     throw error;
   }
 }
