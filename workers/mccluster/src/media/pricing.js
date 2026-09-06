@@ -82,8 +82,14 @@ function money(centsExact, detail = {}) {
   return {
     estimated_cost_cents: Math.ceil(centsExact),
     estimated_cost_cents_exact: centsExact,
+    estimated_cost_usd_micros: Math.ceil(centsExact * 10_000),
     ...detail
   };
+}
+
+function unitPriceMicrosFromCents(cents) {
+  const value = positive(cents);
+  return value === null ? null : Math.ceil(value * 10_000);
 }
 
 export function estimateModelCost(model, input = {}) {
@@ -106,7 +112,11 @@ export function estimateModelCost(model, input = {}) {
 
   if (hint.kind === 'fixed') {
     const cents = positive(hint.cents_per_generation);
-    const result = cents === null ? null : money(cents, { units: 1, unit: 'generation' });
+    const result = cents === null ? null : money(cents, {
+      units: 1,
+      unit: 'generation',
+      unit_price_usd_micros: unitPriceMicrosFromCents(cents)
+    });
     return result ? { available: true, ...result, pricing_snapshot: pricingSnapshot } : { available: false, reason: 'invalid_fixed_price', pricing_snapshot: pricingSnapshot };
   }
 
@@ -116,7 +126,16 @@ export function estimateModelCost(model, input = {}) {
     if (seconds === null || rate === null) {
       return { available: false, reason: 'pricing_requires_duration_or_rate_selector', pricing_snapshot: pricingSnapshot };
     }
-    return { available: true, ...money(seconds * rate, { units: seconds, unit: 'second', unit_price_cents: rate }), pricing_snapshot: pricingSnapshot };
+    return {
+      available: true,
+      ...money(seconds * rate, {
+        units: seconds,
+        unit: 'second',
+        unit_price_cents: rate,
+        unit_price_usd_micros: unitPriceMicrosFromCents(rate)
+      }),
+      pricing_snapshot: pricingSnapshot
+    };
   }
 
   if (hint.kind === 'per_output_megapixel') {
@@ -134,6 +153,7 @@ export function estimateModelCost(model, input = {}) {
         units: billedMegapixels,
         unit: 'output_megapixel',
         unit_price_cents: rate,
+        unit_price_usd_micros: unitPriceMicrosFromCents(rate),
         output_count: count,
         megapixels_per_output: megapixelsPerOutput
       }),
@@ -157,7 +177,8 @@ export function estimateModelCost(model, input = {}) {
         units: billedPerOutput * count,
         unit: 'output_megapixel',
         output_count: count,
-        megapixels_per_output: billedPerOutput
+        megapixels_per_output: billedPerOutput,
+        pricing_formula: 'tiered'
       }),
       pricing_snapshot: pricingSnapshot
     };
