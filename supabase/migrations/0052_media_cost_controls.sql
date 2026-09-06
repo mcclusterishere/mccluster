@@ -224,7 +224,9 @@ update public.media_models set cost_hint = jsonb_build_object(
   'kind', 'per_output_megapixel',
   'cents_per_megapixel', 1.2,
   'round_megapixels', 'none',
-  'default_output_megapixels', 1,
+  'default_image_size', 'landscape_4_3',
+  'count_field', 'num_images',
+  'default_count', 1,
   'source', 'https://fal.ai/models/fal-ai/flux-2',
   'verified_at', '2026-09-06'
 ) where provider = 'fal' and provider_model_id = 'fal-ai/flux-2';
@@ -233,7 +235,7 @@ update public.media_models set cost_hint = jsonb_build_object(
   'kind', 'tiered_output_megapixel',
   'first_megapixel_cents', 3,
   'additional_megapixel_cents', 1.5,
-  'default_output_megapixels', 1,
+  'default_image_size', 'landscape_4_3',
   'source', 'https://fal.ai/models/fal-ai/flux-2-pro',
   'verified_at', '2026-09-06'
 ) where provider = 'fal' and provider_model_id = 'fal-ai/flux-2-pro';
