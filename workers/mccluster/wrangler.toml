@@ -26,6 +26,12 @@ PUBLIC_APP_URL = "https://matthew.mccluster.org"
 # SUPABASE_URL
 # SUPABASE_SERVICE_ROLE_KEY
 # FAL_KEY
+# FAL_ADMIN_KEY  # Admin-scoped fal key required for exact billing-event reconciliation.
+
+# Batch unsettled successful fal jobs every five minutes. The scheduled handler
+# intentionally no-ops if FAL_ADMIN_KEY is not configured.
+[triggers]
+crons = ["*/5 * * * *"]
 
 # Existing production Durable Objects on this Worker. Keep the class name.
 # Do not add a new_classes / deleted_classes migration here.

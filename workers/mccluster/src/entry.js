@@ -1,6 +1,6 @@
 import core from './index.js';
 import { fail, reply } from './lib/http.js';
-import { createGeneration, getGeneration, handleFalWebhook, listModels } from './media/router.js';
+import { createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 
@@ -88,5 +88,16 @@ export default {
     }
 
     return core.fetch(request, env, ctx);
+  },
+
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(
+      reconcilePendingFalCosts(env, { limit: 50 }).catch((error) => {
+        console.error(JSON.stringify({
+          event: 'media_cost_reconciliation_failed',
+          message: error instanceof Error ? error.message : String(error)
+        }));
+      })
+    );
   }
 };
