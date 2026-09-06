@@ -215,35 +215,30 @@
     },
 
     /* Associates this first-party random device with the signed-in M_UID.
-       This is NOT browser fingerprinting and is never an identity merge key. */
+       The database function derives user_id from auth.uid(), preserves the
+       first app ever seen, and uses RLS. This is NOT browser fingerprinting
+       and is never an identity merge key. */
     touch: function (appKey) {
-      return Promise.all([MCC.refreshIfNeeded(), MCC.user()]).then(function (pair) {
-        var session = pair[0], user = pair[1];
-        if (!session || !user || !user.id) return null;
-        var now = new Date().toISOString();
-        var row = {
-          user_id: user.id,
-          device_id: deviceId(),
-          first_app_key: appKey || null,
-          last_app_key: appKey || null,
-          last_seen_at: now,
-          client_meta: {
-            language: (root.navigator && root.navigator.language) || '',
-            platform: (root.navigator && root.navigator.platform) || ''
-          }
-        };
-        return fetch(URL_ + '/rest/v1/platform_user_devices?on_conflict=user_id,device_id', {
+      return MCC.refreshIfNeeded().then(function (session) {
+        if (!session || !session.access_token) return null;
+        return fetch(URL_ + '/rest/v1/rpc/platform_touch_device', {
           method: 'POST',
           headers: {
             apikey: KEY,
             authorization: 'Bearer ' + session.access_token,
-            'content-type': 'application/json',
-            prefer: 'resolution=merge-duplicates,return=minimal'
+            'content-type': 'application/json'
           },
-          body: JSON.stringify([row])
+          body: JSON.stringify({
+            p_device_id: deviceId(),
+            p_app_key: appKey || null,
+            p_client_meta: {
+              language: (root.navigator && root.navigator.language) || '',
+              platform: (root.navigator && root.navigator.platform) || ''
+            }
+          })
         }).then(function (r) {
           if (!r.ok) throw new Error('Could not record M Account device continuity');
-          return { user_id: user.id, device_id: row.device_id };
+          return r.json().catch(function () { return null; });
         });
       });
     },
@@ -276,5 +271,49 @@
     }
   };
 
+  /* Upgrade the existing McCluster account page without hard-coding dead
+     provider buttons into HTML. The Google button already exists in the page
+     and keeps its legacy handler; the remaining buttons are mounted here only
+     when their provider is actually enabled in Supabase. */
+  function mountAccountSocial() {
+    var wrap = root.document && root.document.getElementById('acOauth');
+    var google = root.document && root.document.getElementById('acGoogle');
+    if (!wrap || !google) return;
+
+    MCC.providers().then(function (enabled) {
+      google.hidden = !enabled.google;
+      var specs = [
+        ['apple', 'acApple', 'Continue with Apple'],
+        ['facebook', 'acFacebook', 'Continue with Facebook'],
+        ['x', 'acX', 'Continue with X']
+      ];
+      specs.forEach(function (spec) {
+        var provider = spec[0];
+        if (!enabled[provider] || root.document.getElementById(spec[1])) return;
+        var btn = root.document.createElement('button');
+        btn.className = 'ac__btn';
+        btn.id = spec[1];
+        btn.type = 'button';
+        btn.textContent = spec[2];
+        btn.addEventListener('click', function () {
+          btn.disabled = true;
+          MCC.signInWithProvider(provider, root.location.origin + '/auth/?next=/account.html')
+            .catch(function (e) {
+              btn.disabled = false;
+              var msg = root.document.getElementById('acMsg');
+              if (msg) msg.textContent = e.message || ('Could not start ' + provider + ' sign-in.');
+            });
+        });
+        var sub = wrap.querySelector('.ac__sub');
+        wrap.insertBefore(btn, sub || null);
+      });
+      wrap.hidden = !(enabled.google || enabled.apple || enabled.facebook || enabled.x);
+    }).catch(function () { /* email/password stays available */ });
+  }
+
   root.MCC = MCC;
+  if (root.document) {
+    if (root.document.readyState === 'loading') root.document.addEventListener('DOMContentLoaded', mountAccountSocial);
+    else mountAccountSocial();
+  }
 })(window);
