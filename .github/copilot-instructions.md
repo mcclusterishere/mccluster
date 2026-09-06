@@ -8,6 +8,14 @@ There is no Worker named `mccluster-core`. Do not create one.
 
 Do not scaffold a new API server, auth provider, or database. Route shared work through McCluster. Public site is `matthew.mccluster.org`. API is `https://api.mccluster.org`. Read `AGENTS.md`.
 
+## Canonical AI context plane
+
+Read `docs/control-plane/AI-HARNESS.md` before implementing AI, agent, memory, RAG, conversation-history, provider-routing, or autonomous-company features.
+
+Private AI context lives in Supabase schema `ai_context`, not in public Git. Raw ChatGPT, Claude, Grok, Gemini, Copilot, local-model, or other provider conversations must never be committed to this public repository by default. Provider adapters normalize into the authenticated `context-ingest` contract and all models retrieve from the same canonical context plane.
+
+No AI provider owns memory. Do not create a shadow vector store, second conversation database, raw-chat directory, separate memory service, or competing context source. Git stores schemas, adapters, policies, tests, and intentionally public-safe summaries; Supabase stores the private corpus and provenance.
+
 ## Autonomous operations contract
 
 McCluster is an event-driven operating system, not a collection of disconnected assistants.
