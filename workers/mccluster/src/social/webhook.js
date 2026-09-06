@@ -83,13 +83,12 @@ export async function handleMetaWebhook(request, env) {
       ...(entry.messaging || []).map((value) => ({ type: 'message', value })),
       ...(entry.changes || []).map((value) => ({ type: value.field || 'change', value }))
     ];
-    for (let index = 0; index < items.length; index += 1) {
-      const item = items[index];
+    for (const item of items) {
       await storeEvent(env, {
         org_id: account?.org_id || null,
         account_id: account?.id || null,
         platform: 'instagram',
-        event_id: `${digest}:${index}`,
+        event_id: `${digest}:${accepted}`,
         event_type: item.type,
         payload: item.value
       });
