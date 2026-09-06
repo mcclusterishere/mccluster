@@ -2,6 +2,7 @@ import core from './index.js';
 import { fail, reply } from './lib/http.js';
 import { createGeneration, getGeneration, listModels } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
+import { recommendModels } from './media/recommend.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -29,6 +30,17 @@ export default {
         return reply(request, env, { models });
       } catch (error) {
         return fail(request, env, error.message || 'Media model request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/media/recommend' && request.method === 'POST') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const recommendation = await recommendModels(request, env);
+        return reply(request, env, recommendation);
+      } catch (error) {
+        return fail(request, env, error.message || 'Media recommendation failed', error.status || 500, error.detail);
       }
     }
 
