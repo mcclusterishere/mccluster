@@ -11,8 +11,13 @@
 # so a deploy cannot quietly flip it.
 #
 # Functions NOT listed here do not live in this repo (pay-now,
-# stripe-webhook, unsubscribe, intake, outreach, social, ops-chat,
-# connect-onboard, backend-sub). A deploy from here never touches them.
+# unsubscribe, intake, connect-onboard, backend-sub, outreach-webhook,
+# context-ingest, context-query, m-oauth-bootstrap). A deploy from here
+# never touches them.
+#
+# outreach, social and ops-chat WERE on that list. They are in the repo
+# now because production was carrying three control surfaces that no
+# checkout could reconstruct — see docs/control-plane/AUTHZ.md.
 
 project_id = "zmnhbrjyhxzhkxmhkexs"
 
@@ -40,3 +45,23 @@ verify_jwt = false
 # is not going to before they know whether the name is free.
 [functions.domain-check]
 verify_jwt = false
+
+# THE THREE THAT AUTHORIZE THEMSELVES
+#
+# verify_jwt stays true, but it is no longer the whole story: each of
+# these checks org membership before it does anything, because a valid
+# token only says the caller is somebody. See supabase/functions/_shared/authz.ts.
+
+# Mass email. Sending is owner-only.
+[functions.outreach]
+verify_jwt = true
+
+# Social queue and publishing. Dispatch is owner-only, and approved_by is
+# written by the server from the verified caller — never from the body.
+[functions.social]
+verify_jwt = true
+
+# The operator agent. Requires staff, and forwards the caller's token to
+# outreach and social rather than the service key.
+[functions.ops-chat]
+verify_jwt = true
