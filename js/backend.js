@@ -291,7 +291,20 @@
   };
 
   window.MCC_DB = session() ? sb : local;
-  window.MCC_AUTH = { signIn: sb.signIn, signInAnon: sb.signInAnon, signInPassword: sb.signInPassword, signUpPassword: sb.signUpPassword, signOut: sb.signOut, user: sb.user };
+  /* Google is delegated to js/mcc-auth.js rather than reimplemented here.
+     That module is the canonical implementation every McCluster property
+     shares, and it writes this same session, so there is one sign-in path
+     and not a house one plus a satellite one. Absent, the button is simply
+     not offered — nothing else breaks. */
+  window.MCC_AUTH = {
+    signIn: sb.signIn, signInAnon: sb.signInAnon, signInPassword: sb.signInPassword,
+    signUpPassword: sb.signUpPassword, signOut: sb.signOut, user: sb.user,
+    googleAvailable: function () { return Boolean(window.MCC && window.MCC.signInWithGoogle); },
+    signInWithGoogle: function (redirectTo) {
+      if (!window.MCC || !window.MCC.signInWithGoogle) return Promise.reject(new Error('Google sign-in is not loaded'));
+      return window.MCC.signInWithGoogle(redirectTo);
+    }
+  };
   // the low-level surface for other modules (network layer, talent app):
   // same public anon key, same RLS wall, never a secret
   window.MCC_SUPA = { url: URL_, key: KEY, token: token, uid: uid, email: email };

@@ -62,6 +62,15 @@
 
     <!-- signed out: make the profile. The store runs on it -->
     <div class="ac__card" id="acDoor">
+            <!-- Google sits ABOVE both panels because it is the fastest way in and
+           produces the same McCluster account either path creates. Hidden
+           unless js/mcc-auth.js loaded, so a failed script shows no dead
+           button. It is also hidden by the script when the provider is off
+           in Supabase, rather than offering a button that 400s. -->
+      <div id="acOauth" hidden>
+        <button class="ac__btn" id="acGoogle" type="button">Continue with Google</button>
+        <p class="ac__sub" style="margin:0.6rem 0 1.2rem">or use an email address</p>
+      </div>
       <div id="acMake">
         <p class="ac__lab">Make your profile</p>
         <p class="ac__sub" style="margin-top:0.5rem">The gallery is a store and your profile is the register. Every print, file, and booking lands on your record, on any device.</p>
@@ -144,6 +153,7 @@
 
   <script src="js/masthead.js?v=__STAMP__"></script>
   <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/backend.js?v=__STAMP__"></script>
   <script src="js/network.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
@@ -224,6 +234,29 @@
         msg.textContent = e.message || "That didn't turn the lock. Check both fields.";
       });
     });
+
+    /* Google is offered only when the module loaded AND the provider is
+       actually enabled on the project. Asking the public settings endpoint
+       costs one request and avoids showing a button that cannot work —
+       google is currently false there, so today this stays hidden. */
+    (function () {
+      var wrap = el("acOauth"), btn = el("acGoogle");
+      if (!wrap || !btn || !window.MCC_AUTH || !window.MCC_AUTH.googleAvailable()) return;
+      fetch("https://zmnhbrjyhxzhkxmhkexs.supabase.co/auth/v1/settings", {
+        headers: { apikey: "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4" }
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || !j.external || !j.external.google) return;
+          wrap.hidden = false;
+          btn.addEventListener("click", function () {
+            btn.disabled = true;
+            window.MCC_AUTH.signInWithGoogle(location.origin + "/auth/?next=/account.html")
+              .catch(function (e) { btn.disabled = false; el("acMsg").textContent = e.message || "Could not start Google sign-in."; });
+          });
+        })
+        .catch(function () { /* leave it hidden; email still works */ });
+    })();
 
     el("acSend").addEventListener("click", function () {
       var em = (el("acInEmail").value || "").trim();
