@@ -1,6 +1,7 @@
 import { fal } from '@fal-ai/client';
 
 const FAL_JWKS_URL = 'https://rest.fal.ai/.well-known/jwks.json';
+const FAL_BILLING_EVENTS_URL = 'https://api.fal.ai/v1/models/billing-events';
 const FAL_WEBHOOK_MAX_AGE_SECONDS = 300;
 const FAL_JWKS_CACHE_MS = 6 * 60 * 60 * 1000;
 let jwksCache = { keys: null, expiresAt: 0 };
@@ -61,6 +62,66 @@ export async function resultFal(env, modelId, requestId) {
   setup(env);
   const result = await fal.queue.result(modelId, { requestId });
   return { data: result.data, request_id: result.requestId || requestId };
+}
+
+export async function billingEventsFal(env, requestIds) {
+  const ids = [...new Set((requestIds || []).map((value) => String(value || '').trim()).filter(Boolean))].slice(0, 50);
+  if (!ids.length) return { available: true, events: [] };
+  if (!env.FAL_ADMIN_KEY) {
+    return { available: false, retryable: false, reason: 'fal_admin_key_not_configured', events: [] };
+  }
+
+  const url = new URL(FAL_BILLING_EVENTS_URL);
+  ids.forEach((id) => url.searchParams.append('request_id', id));
+  url.searchParams.set('limit', String(Math.max(ids.length, 1)));
+
+  const res = await fetch(url, {
+    headers: {
+      accept: 'application/json',
+      authorization: `Key ${env.FAL_ADMIN_KEY}`
+    }
+  });
+
+  const text = await res.text();
+  let body = null;
+  try { body = text ? JSON.parse(text) : null; } catch { body = { raw: text }; }
+
+  if (res.status === 401 || res.status === 403) {
+    return {
+      available: false,
+      retryable: false,
+      reason: 'fal_admin_key_rejected',
+      status: res.status,
+      detail: body,
+      events: []
+    };
+  }
+
+  if (res.status === 429) {
+    return {
+      available: false,
+      retryable: true,
+      reason: 'fal_billing_rate_limited',
+      status: res.status,
+      detail: body,
+      events: []
+    };
+  }
+
+  if (!res.ok) {
+    throw Object.assign(new Error('Unable to query fal billing events'), {
+      status: 503,
+      detail: { provider_status: res.status, provider_body: body }
+    });
+  }
+
+  return {
+    available: true,
+    retryable: false,
+    events: Array.isArray(body?.billing_events) ? body.billing_events : [],
+    next_cursor: body?.next_cursor || null,
+    has_more: Boolean(body?.has_more)
+  };
 }
 
 export async function verifyFalWebhook(request) {
