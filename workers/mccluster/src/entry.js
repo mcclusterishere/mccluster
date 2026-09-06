@@ -1,6 +1,7 @@
 import core from './index.js';
 import { fail, reply } from './lib/http.js';
 import { createGeneration, getGeneration, listModels } from './media/router.js';
+import { createBakeoff } from './media/orchestrator.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -39,6 +40,17 @@ export default {
         return reply(request, env, { job }, 202);
       } catch (error) {
         return fail(request, env, error.message || 'Media generation request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/media/bakeoff' && request.method === 'POST') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const bakeoff = await createBakeoff(request, env, user);
+        return reply(request, env, bakeoff, 202);
+      } catch (error) {
+        return fail(request, env, error.message || 'Media bakeoff request failed', error.status || 500, error.detail);
       }
     }
 
