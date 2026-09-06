@@ -1,4 +1,4 @@
-import { collectAssetCandidates, normalizeFalStatus, resultFal, statusFal, submitFal } from './fal.js';
+import { collectAssetCandidates, normalizeFalStatus, resultFal, statusFal, submitFal, verifyFalWebhook } from './fal.js';
 
 function headers(env) {
   return {
@@ -41,6 +41,11 @@ async function jobById(env, id, orgId) {
   return rows?.[0] || null;
 }
 
+async function jobByProviderRequestId(env, requestId) {
+  const rows = await db(env, `media_jobs?provider=eq.fal&provider_request_id=eq.${encodeURIComponent(requestId)}&select=*&limit=1`);
+  return rows?.[0] || null;
+}
+
 async function patchJob(env, id, values) {
   const rows = await db(env, `media_jobs?id=eq.${encodeURIComponent(id)}`, {
     method: 'PATCH',
@@ -54,7 +59,14 @@ async function saveAssets(env, orgId, jobId, result) {
   const candidates = collectAssetCandidates(result);
   const unique = [...new Map(candidates.map((a) => [a.url, a])).values()];
   if (!unique.length) return [];
-  const body = unique.map((asset) => ({ ...asset, org_id: orgId, job_id: jobId }));
+
+  const existing = await db(env, `media_assets?job_id=eq.${encodeURIComponent(jobId)}&select=url`);
+  const existingUrls = new Set((existing || []).map((asset) => asset.url));
+  const body = unique
+    .filter((asset) => !existingUrls.has(asset.url))
+    .map((asset) => ({ ...asset, org_id: orgId, job_id: jobId }));
+  if (!body.length) return [];
+
   return db(env, 'media_assets', {
     method: 'POST',
     headers: { prefer: 'return=representation' },
@@ -107,11 +119,12 @@ export async function createGeneration(request, env, user) {
   });
 
   try {
-    const submitted = await submitFal(env, model.provider_model_id, input);
+    const webhookUrl = `${new URL(request.url).origin}/v1/media/webhooks/fal`;
+    const submitted = await submitFal(env, model.provider_model_id, input, { webhookUrl });
     return patchJob(env, job.id, {
       provider_request_id: submitted.request_id,
       submitted_at: new Date().toISOString(),
-      provider_status: submitted,
+      provider_status: { ...submitted, delivery: 'webhook' },
       status: 'queued'
     });
   } catch (error) {
@@ -121,6 +134,44 @@ export async function createGeneration(request, env, user) {
     }).catch(() => null);
     throw error;
   }
+}
+
+export async function handleFalWebhook(request, env) {
+  const webhook = await verifyFalWebhook(request);
+  const providerRequestId = webhook?.request_id || webhook?.gateway_request_id;
+  if (!providerRequestId) throw Object.assign(new Error('fal webhook is missing request_id'), { status: 400 });
+
+  const job = await jobByProviderRequestId(env, providerRequestId);
+  if (!job) return { accepted: true, matched: false, request_id: providerRequestId };
+
+  const falStatus = String(webhook?.status || '').toUpperCase();
+  if (falStatus === 'ERROR') {
+    const failed = await patchJob(env, job.id, {
+      status: 'failed',
+      provider_status: webhook,
+      error: {
+        message: typeof webhook.error === 'string' ? webhook.error : 'fal generation failed',
+        detail: webhook.payload || null
+      }
+    });
+    return { accepted: true, matched: true, job_id: failed?.id || job.id, status: 'failed' };
+  }
+
+  if (falStatus !== 'OK') {
+    throw Object.assign(new Error('Unsupported fal webhook status'), { status: 400, detail: { status: webhook?.status || null } });
+  }
+
+  const result = webhook.payload || {};
+  const completed = await patchJob(env, job.id, {
+    status: 'completed',
+    result,
+    completed_at: job.completed_at || new Date().toISOString(),
+    provider_status: webhook,
+    error: null
+  });
+  await saveAssets(env, job.org_id, job.id, result);
+
+  return { accepted: true, matched: true, job_id: completed?.id || job.id, status: 'completed' };
 }
 
 export async function getGeneration(request, env, user, jobId, refresh = true) {
