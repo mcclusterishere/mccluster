@@ -24,7 +24,8 @@
 <script>
   /* OAuth callback for the shared McCluster identity. Capture the intended
      same-origin destination before MCC.complete() removes the one-time code
-     from the address bar. */
+     from the address bar. After the session exists, stamp this installation
+     into the M Account layer before handing the user back to the app. */
   (function () {
     var h = document.getElementById('h'), p = document.getElementById('p');
 
@@ -36,6 +37,10 @@
 
     var destination = nextPath();
     window.MCC.complete()
+      .then(function (user) {
+        if (!user) return null;
+        return window.MCC.autoTouch().then(function () { return user; });
+      })
       .then(function (user) {
         if (!user) { h.textContent = 'Nothing to finish'; p.innerHTML = '<a href="/account.html">Go to your account</a>'; return; }
         location.replace(destination);
