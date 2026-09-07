@@ -28,7 +28,6 @@ async function sb(env, path) {
   return data;
 }
 
-
 async function sbCount(env, path) {
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
     headers: { ...sbHeaders(env), prefer: 'count=exact', range: '0-0' }
@@ -47,6 +46,19 @@ async function authUser(req, env) {
   });
   if (!res.ok) return null;
   return res.json();
+}
+
+async function requireHouseOwner(req, env) {
+  const user = await authUser(req, env);
+  if (!user) throw Object.assign(new Error('Authentication required'), { status: 401 });
+
+  const orgs = await sb(env, 'orgs?slug=eq.mccluster&select=id&limit=1');
+  const houseId = orgs?.[0]?.id;
+  if (!houseId) throw Object.assign(new Error('McCluster house organization is not configured'), { status: 503 });
+
+  const memberships = await sb(env, `org_members?org_id=eq.${encodeURIComponent(houseId)}&profile_id=eq.${encodeURIComponent(user.id)}&role=eq.owner&select=org_id,role&limit=1`);
+  if (!memberships?.length) throw Object.assign(new Error('McCluster house owner access required'), { status: 403 });
+  return user;
 }
 
 async function appByKey(env, key) {
@@ -80,22 +92,18 @@ export default {
       if (path === '/health' && request.method === 'GET') {
         return reply(request, env, {
           ok: true,
-          service: 'mccluster',
-          supabase_project: env.MCCLUSTER_SUPABASE_PROJECT_REF || null,
-          products: ['identity', 'apps', 'fees', 'status', 'payments', 'mobility'],
-          canonical_identity: 'McCluster',
-          durable_object: 'HereTenantAgent',
-          durable_object_bound: Boolean(env.HereTenantAgent)
+          service: 'mccluster'
         });
       }
 
+      if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);
+
       if (path === '/internal/here-tenant-agent' && request.method === 'GET') {
+        await requireHouseOwner(request, env);
         const id = env.HereTenantAgent.idFromName('health');
         const stub = env.HereTenantAgent.get(id);
         return stub.fetch(request);
       }
-
-      if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);
 
       if (path === '/v1/me' && request.method === 'GET') {
         const user = await authUser(request, env);
@@ -107,19 +115,11 @@ export default {
 
       /* THE CONTROL PLANE'S ONE CALL.
 
-         The operator screen needs five unrelated facts — is the database
-         answering, how much is waiting on the desk, how many briefs are
-         unread, what is registered, what is this Worker — and five round
-         trips to draw one board is four too many. Counts come back through
-         PostgREST's exact-count header rather than by fetching rows, so a
-         busy inbox costs the same as an empty one.
-
-         Authed on purpose: this is operational state, not public. Each
-         count is allowed to fail on its own and report null rather than
-         taking the whole board down with it. */
+         Operational state belongs to the house, not merely to any authenticated
+         application user. Counts come back through PostgREST's exact-count header
+         rather than by fetching rows, so a busy inbox costs the same as an empty one. */
       if (path === '/v1/status' && request.method === 'GET') {
-        const user = await authUser(request, env);
-        if (!user) return fail(request, env, 'Authentication required', 401);
+        const user = await requireHouseOwner(request, env);
 
         const [apps, requests, inboxIn, convos, channels] = await Promise.all([
           sbCount(env, 'platform_apps?enabled=eq.true&select=id'),
@@ -134,7 +134,6 @@ export default {
           checked_at: new Date().toISOString(),
           operator: { id: user.id, email: user.email },
           database: {
-            project: env.MCCLUSTER_SUPABASE_PROJECT_REF || null,
             reachable: apps !== null
           },
           worker: {
@@ -153,7 +152,7 @@ export default {
       }
 
       if (path === '/v1/apps' && request.method === 'GET') {
-        const rows = await sb(env, 'platform_apps?enabled=eq.true&order=product_family.asc,name.asc&select=app_key,name,product_family,kind,bundle_id,public_url,oauth_client_id,settings');
+        const rows = await sb(env, 'platform_apps?enabled=eq.true&order=product_family.asc,name.asc&select=app_key,name,product_family,kind,bundle_id,public_url');
         return reply(request, env, { apps: rows || [] });
       }
 
