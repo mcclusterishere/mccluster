@@ -1,4 +1,4 @@
-import { allowedOrigins, corsHeaders, fail, logEvent, reply } from './lib/http.js';
+import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
@@ -77,6 +77,13 @@ async function feePolicy(env, appId, orgId) {
 
 function pct(cents, bps) {
   return Math.round(Number(cents || 0) * Number(bps || 0) / 10000);
+}
+
+function secureWhipRequest(request) {
+  const headers = new Headers(request.headers);
+  headers.delete('x-we-user-id');
+  headers.delete('x-we-role');
+  return new Request(request, { headers });
 }
 
 export default {
@@ -192,15 +199,15 @@ export default {
 
       /* THE WHIP APPS TALK HERE.
 
-         This used to answer every call from Rider, Driver and Rentals
-         with a 503 telling whoever read it to put the handlers in
-         workers/mccluster/src/whip/. Three finished applications were
-         shipping requests at that note. The handlers are in that folder
-         now, and identity-gateway is the outermost layer of the chain:
-         identity gates, then ownership checks, then driver and ride
-         transitions, then the auth proxy, then rides and rentals. */
+         Identity headers from the old demo harness are stripped at the control-plane
+         boundary. The inner Whip stack also receives ALLOW_DEMO_IDENTITIES=false
+         regardless of dashboard configuration, and its response CORS is overwritten
+         by the control plane's allowlist before anything reaches the browser. */
       if (path === '/api' || path.startsWith('/api/')) {
-        return whip.fetch(request, env);
+        const whipRequest = secureWhipRequest(request);
+        const whipEnv = { ...env, ALLOW_DEMO_IDENTITIES: 'false' };
+        const response = await whip.fetch(whipRequest, whipEnv);
+        return applyCors(request, env, response);
       }
 
       return fail(request, env, 'Not found', 404);
