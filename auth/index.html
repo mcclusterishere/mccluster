@@ -22,25 +22,23 @@
 </main>
 <script src="/js/mcc-auth.js"></script>
 <script>
-  /* The landing point for a redirect back from Google. Its only job is to
-     spend the authorization code, then send the person where they were
-     going. It renders no account data and reads nothing but the URL. */
+  /* OAuth callback for the shared McCluster identity. Capture the intended
+     same-origin destination before MCC.complete() removes the one-time code
+     from the address bar. */
   (function () {
     var h = document.getElementById('h'), p = document.getElementById('p');
 
-    /* Where to return to. Same-origin only: an attacker-supplied absolute
-       URL here would turn the sign-in flow into an open redirect that
-       arrives carrying a fresh session. */
     function nextPath() {
       var raw = new URLSearchParams(location.search).get('next') || '/account.html';
       if (raw.charAt(0) !== '/' || raw.charAt(1) === '/') return '/account.html';
       return raw;
     }
 
+    var destination = nextPath();
     window.MCC.complete()
       .then(function (user) {
         if (!user) { h.textContent = 'Nothing to finish'; p.innerHTML = '<a href="/account.html">Go to your account</a>'; return; }
-        location.replace(nextPath());
+        location.replace(destination);
       })
       .catch(function (error) {
         h.textContent = 'That sign-in did not complete';

@@ -279,38 +279,32 @@
              the real inside-the-jet film takes over and you can look anywhere -->
         <div class="workvr" id="workVR" aria-label="Inside the jet. The page is held here: drag in any direction to look around, and use Land or Back to the card to leave">
           <canvas class="workvr__canvas" id="workVRCanvas"></canvas>
-          <!-- THE BRIEFING: everything holds for three seconds so the rules
-               actually get read, then the cabin is yours. It is a full-height
-               card, not a chip: it has one job, it gets one screen, and the
-               scroll is parked behind it so there is nothing else to do. -->
-          <div class="vrbrief" id="workVRCompass" role="dialog" aria-label="Before you board">
+          <!-- THE GATE. Not a briefing and not a countdown: the film itself
+               is blurred, in the canvas, and it stays blurred until Allow is
+               pressed. Clicking away does not open it, waiting does not open
+               it, dragging the pane does not open it. Cancel is a real answer
+               too and hands the scroll straight back. -->
+          <div class="vrbrief vrbrief--gate" id="workVRCompass" role="dialog" aria-modal="true"
+               aria-labelledby="vrGateTitle">
             <div class="vrbrief__card">
               <img class="vrbrief__logo" src="assets/img/vaunt-logo.webp" alt="Vaunt"
                    width="200" height="200" loading="lazy" decoding="async">
-              <p class="vrbrief__k">Vaunt &middot; you're inside the jet</p>
-              <h3 class="vrbrief__title"><span>Scroll is off.</span><span>Look around.</span></h3>
-              <p class="vrbrief__lede">Real footage, shot inside the jet &mdash; and the page is
-                parked right here, so your thumb looks instead of leaves.</p>
-              <ul class="vrbrief__rules">
-                <li>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg>
-                  <span><b>Drag anywhere</b> to look around the cabin</span>
-                </li>
-                <!-- the phone's own motion is armed for you on the way in, so
-                     this row is an announcement, not another thing to press -->
-                <li class="vrbrief__rule--tilt" id="vrBriefTilt" hidden>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M3 8.5 1.5 12 3 15.5M21 8.5 22.5 12 21 15.5"/></svg>
-                  <span><b>Tilt your phone</b> &mdash; you're free to move around the cabin</span>
-                </li>
-                <!-- scrolling no longer flies you on, so the row that said so
-                     is now the row that names the door -->
-                <li>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 22h20"/><path d="M3.77 10.77 2 9l2-4.5 1.1.55c.55.28.9.84.9 1.45s.35 1.17.9 1.45L8 8.5l3-6 1.05.53a2 2 0 0 0 1.09 1.52l.72 5.4a2 2 0 0 0 1.09 1.52l4.4 2.2c.42.22.78.55 1.01.96l.6 1.03c.49.88-.06 1.98-1.06 2.1l-1.18.15c-.47.06-.95-.02-1.37-.24L4.29 11.15a2 2 0 0 1-.52-.38Z"/></svg>
-                  <span><b>Land</b> &mdash; on the right &mdash; is the way out</span>
-                </li>
-              </ul>
-              <div class="vrbrief__count" id="vrBriefCount"><b id="vrBriefNum">3</b></div>
-              <button class="vrbrief__go" id="vrBriefGo" type="button">Look around</button>
+              <p class="vrbrief__k">Vaunt &middot; inside the jet</p>
+              <h3 class="vrbrief__title" id="vrGateTitle"><span>Blurred until</span><span>you allow it.</span></h3>
+              <p class="vrbrief__lede">Real 360 footage, shot inside the jet. It takes the page
+                and your thumb while it plays, so it does not start until you say so.</p>
+              <div class="vrgate__acts" id="vrGateActs">
+                <button class="vrgate__btn vrgate__allow" id="vrGateAllow" type="button">Allow to see</button>
+                <button class="vrgate__btn vrgate__deny" id="vrGateDeny" type="button">Cancel</button>
+              </div>
+              <p class="vrgate__note" id="vrGateNote">Allow and the cabin is yours &mdash; drag
+                anywhere to look around, <b>Land</b> is the way out. Cancel and you scroll
+                straight on.</p>
+              <div class="vrgate__after" id="vrGateAfter" hidden>
+                <p class="vrgate__afterh">Cancelled &middot; the cabin stays blurred</p>
+                <p class="vrgate__afterp"><b>Reload the page</b> and press Allow if you want to
+                  see inside &mdash; or <b>scroll on</b> to continue.</p>
+              </div>
             </div>
           </div>
           <!-- the cabin announcement: thrown across the whole screen the moment

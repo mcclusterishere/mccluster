@@ -1,8 +1,10 @@
 # Gemini
 
-Read `AGENTS.md` and `CLAUDE.md` first. Same law.
+Read `AGENTS.md`, `CLAUDE.md`, and `docs/control-plane/AI-HARNESS.md` first. Same law.
 
 McCluster (`mcclusterishere/mccluster` + Cloudflare Worker `mccluster` + Supabase `zmnhbrjyhxzhkxmhkexs`) is the backend and control plane for every product and every client backend. Do not invent a parallel stack. Do not create a Worker named `mccluster-core`. Do not race git pushes from CI. Ship public pages to `matthew.mccluster.org`. API is `https://api.mccluster.org`.
+
+Private cross-model context lives in Supabase schema `ai_context`. Do not commit raw ChatGPT, Claude, Grok, Gemini, Copilot, local-model, or other AI transcripts into public Git. Treat every model as a replaceable adapter to the canonical McCluster context plane. Do not create a second conversation database, vector store, memory service, CRM, or competing context source.
 
 ## Never draw a logo
 
@@ -14,8 +16,7 @@ shape it does not contain is drawing. If the variant you need does not
 exist, ask for it.
 
 An agent shipped a hand-drawn `we-icon.svg` into three repositories once and
-it had to be torn out of four. See `AGENTS.md` → "THE LOGOS ARE NOT YOURS TO
-DRAW" for the supplied Whip Equipped kit.
+it had to be torn out of four. See `AGENTS.md` → "THE LOGOS ARE NOT YOURS TO DRAW" for the supplied Whip Equipped kit.
 
 ## mcclusterishere/Here is dead
 

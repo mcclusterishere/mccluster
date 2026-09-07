@@ -1,5 +1,5 @@
 name = "mccluster"
-main = "src/index.js"
+main = "src/entry.js"
 compatibility_date = "2026-09-02"
 compatibility_flags = [ "nodejs_compat" ]
 workers_dev = true
@@ -26,6 +26,22 @@ PUBLIC_ORIGIN = "https://matthew.mccluster.org"
 APEX_ORIGIN = "https://mccluster.org"
 ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
+META_GRAPH_API_VERSION = "v26.0"
+
+# Secrets required in production (set with wrangler secret put, never commit values):
+# SUPABASE_URL
+# SUPABASE_SERVICE_ROLE_KEY
+# FAL_KEY
+# FAL_ADMIN_KEY  # Admin-scoped fal key required for exact billing-event reconciliation.
+# META_APP_SECRET
+# META_WEBHOOK_VERIFY_TOKEN
+# Instagram access tokens are also Worker secrets. social_accounts.credential_ref
+# stores only the binding name (for example SOCIAL_IG_PRIMARY_ACCESS_TOKEN), never the token itself.
+
+# Batch unsettled fal jobs, attach completed social variants, process due Instagram
+# publish jobs, and refresh recent Instagram insights every five minutes.
+[triggers]
+crons = ["*/5 * * * *"]
 
 # Existing production Durable Objects on this Worker. Keep the class name.
 # Do not add a new_classes / deleted_classes migration here.
