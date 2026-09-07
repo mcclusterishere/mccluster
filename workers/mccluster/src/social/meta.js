@@ -1,5 +1,5 @@
 import { scoreMetrics } from './router.js';
-import { parseSocialCredentialRef } from './security.js';
+import { credentialRefForConfiguredChannel, parseSocialCredentialRef } from './security.js';
 
 function headers(env) {
   return {
@@ -72,7 +72,14 @@ async function graphPost(env, path, token, params) {
 }
 
 async function tokenFor(env, account) {
-  const parsed = parseSocialCredentialRef(account?.platform, account?.credential_ref);
+  if (!account?.org_id || String(account.platform || '').toLowerCase() !== 'instagram') return null;
+  const rows = await db(env, `org_channels?org_id=eq.${encodeURIComponent(account.org_id)}&channel=eq.instagram&enabled=eq.true&select=token_env,secret_id,account_id&limit=1`);
+  const channel = rows?.[0] || null;
+  if (!channel) return null;
+  if (channel.account_id && String(channel.account_id) !== String(account.external_account_id)) return null;
+
+  const ref = credentialRefForConfiguredChannel('instagram', channel);
+  const parsed = parseSocialCredentialRef('instagram', ref);
   if (!parsed) return null;
   if (parsed.kind === 'env') return env[parsed.name] || null;
   if (parsed.kind === 'vault') {
