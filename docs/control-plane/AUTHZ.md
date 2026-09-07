@@ -34,28 +34,92 @@ request against the deployed functions on 2026-09-05. The bar was not
    they asked about. The other order answers differently for a real id
    than a made-up one, which tells a stranger which ids exist.
 
-## The role ladder
+## Capabilities, not a hardcoded ladder
 
-`org_members.role`, ordered:
+The first fix used a three-rung ladder — `viewer < staff < owner` — written
+into `authz.ts`. It worked and it was the wrong shape, because the database
+already contained a better answer that nothing had ever read:
 
-| Role | May |
-| --- | --- |
-| `viewer` | read what the org already did |
-| `staff` | change the org's own state — draft, build, queue, pause |
-| `owner` | irreversible outward acts — send mail, publish, approve spend |
+| Table | What it is | Rows |
+| --- | --- | --- |
+| `control_capabilities` | the vocabulary of privileged acts, graded by risk | 18 |
+| `control_role_capabilities` | which role holds which capability | 63 |
+| `control_commands` | a privileged act that was actually attempted | — |
+| `control_audit` | every decision, allow and deny | — |
 
-The line that matters is the last one. Everything above it can be undone by
+`authz.ts` now reads the first two. The consequence that matters: **changing
+who may send mail as an organisation is an `UPDATE`, not a redeploy.**
+
+### The bug that had to be fixed first
+
+The two tables did not speak the same role vocabulary:
+
+```
+org_members.role                CHECK (role IN ('owner','staff','viewer'))
+control_role_capabilities.role  owner, admin, staff, member
+```
+
+`viewer` — a role the system can actually issue, and the default for anyone
+invited without elevation — held **zero** capabilities. `admin` and `member`
+held 21 between them and can never appear in `org_members` at all.
+
+Joining membership to capabilities without noticing would have silently
+locked every viewer out of everything, and looked like a permissions bug in
+a hundred places. `0059_capability_role_reconciliation.sql` fixes it
+additively and raises if any issuable role is left with no capability.
+
+`admin` and `member` are deliberately left in place and deliberately left
+unreachable — see that migration for why.
+
+### What each action requires
+
+| Function | Action | Capability | Risk |
+| --- | --- | --- | --- |
+| `outreach` | `stats` | `campaign.read` | low |
+| `outreach` | `build` | `campaign.prepare` | medium |
+| `outreach` | `pause` | `campaign.pause` | medium |
+| `outreach` | **`send`** | **`campaign.send`** | **high** |
+| `social` | `channels`, `stats` | `social.read` | low |
+| `social` | `queue` | `social.queue` | medium |
+| `social` | **`dispatch`** | **`social.publish`** | **high** |
+| `ops-chat` | any | `ops.use` | medium |
+
+The line that matters is the high one. Everything above it can be undone by
 someone having a bad morning. A sent email cannot.
 
-| Function | Action | Needs |
-| --- | --- | --- |
-| `outreach` | `stats` | viewer |
-| `outreach` | `build`, `pause` | staff |
-| `outreach` | **`send`** | **owner** |
-| `social` | `channels`, `stats` | viewer |
-| `social` | `queue` | staff |
-| `social` | **`dispatch`** | **owner** |
-| `ops-chat` | any | staff |
+## The audit trail
+
+Every decision lands in `control_audit` — `authz.allow` and `authz.deny`
+alike. A refusal is a fact worth keeping; it is the only trace a probe
+leaves. An absent grant and an explicit `allowed = false` are recorded
+differently, because "never granted" and "taken away" mean different things
+to whoever reads the trail later.
+
+The two **high**-risk acts additionally open a `control_commands` row
+*before* they run, so an act that dies mid-flight still says who started it.
+Status values are the four that table's CHECK constraint permits:
+
+```
+allowed  → the act is authorized and starting
+executed → it finished
+failed   → it threw
+denied   → reserved; refusals never open a command row, they go to audit
+```
+
+A row still at `allowed` with a `started_at` and no `finished_at` is an act
+that died mid-flight, which is exactly the thing worth being able to find.
+
+**Both writers swallow their own errors on purpose.** If `control_audit` is
+unwritable, the choice is between failing every privileged call — an audit
+outage becoming a total outage — and proceeding unrecorded. It takes the
+second. The writes are awaited, so ordinary operation produces a complete
+trail; only actual failure is silent.
+
+> Getting this right needed a live probe, not a reading. The first version
+> wrote `status: "running"`, which the CHECK constraint rejects — and
+> because `beginCommand` swallows its errors, **no command row would ever
+> have been written and nothing would have said so.** The trail would have
+> looked empty because it was working.
 
 ## Approval is not a claim
 
@@ -64,30 +128,89 @@ that field **from the request body**. Writing a name into the JSON approved
 your own spend.
 
 `approved_by` is now the verified caller's id, written by the server, and
-only when that caller is an `owner`. `p.approved_by` is ignored entirely.
+only when that caller actually holds `social.publish`. `p.approved_by` is
+ignored entirely.
 
 A real approval is a server-generated fact about *actor + capability +
 resource*. A string the caller supplies is a wish.
 
+## Guarding vs. branching
+
+`requireCapability()` **throws** on refusal, so a caller that forgets to
+check the return value still cannot proceed — the failure mode of an
+omitted `if` is the dangerous one, and this shape does not have it.
+
+`hasCapability()` returns a boolean and writes no audit row. It is for
+branching, never guarding: the code asking itself "may they *also* stamp
+this as approved?" on the way to doing something the caller is already
+allowed to do. Recording a `deny` there would fill the trail with refusals
+nobody was refused.
+
+## Caching
+
+The grant matrix is ~60 rows and changes when a human decides it should. It
+is cached in module scope with a 60-second TTL, so an operator who revokes a
+capability sees it take effect within a minute rather than waiting for
+isolates to recycle. Concurrent cold starts share one fetch.
+
+**Role lookup is deliberately not cached.** If a grant must be revoked
+*immediately*, revoke the membership: that takes effect on the next request.
+
+## Identity elsewhere: `context-ingest` and `context-query`
+
+Both derived the caller by base64-decoding the JWT payload and trusting
+`sub` — rule 1, violated again, in the two functions that read and write
+`ai_context`, the private cross-model transcript store.
+
+**It was not exploitable as deployed.** A forged token with a chosen `sub`
+is rejected by the gateway before reaching the function; confirmed by direct
+request on 2026-09-07. But the safety of the private context store rested
+entirely on a project setting those files do not control — one toggle and
+`sub` becomes attacker-chosen, which is full impersonation of any org member
+over every stored transcript. `context-ingest` also stamped that unverified
+identity into its receipt as `ingested_by`.
+
+Both now call `verifyCaller`. Their org-membership checks are unchanged.
+
 ## What is still open
 
-- **`ops-chat` checks `ANTHROPIC_API_KEY` before it authorizes**, so an
-  unauthenticated caller learns whether that key is configured. Trivial, but
-  it should authorize first. (The key is currently unset, so that function
-  returns 503 to everyone regardless.)
 - **No service actor exists.** Nothing may call these functions
   unattended — no cron, no CI, no automation — because every path now
   requires a human's token. If a drip sender is ever wanted, it needs a
   first-class machine actor with its own capabilities, not a shared key.
+- **`control_commands` is a record, not a bus.** Rows are written by the
+  act; nothing proposes work into the table and waits. `control_approvals`
+  and `control_leases` remain unused, and MCP (`mcp_calls`,
+  `mcp_approvals`) is still not the mandatory choke point.
 - **`operator_members` is still empty and still unused.** The concept
   exists; nothing reads it. `org_members` is the real membership table.
-- **MCP is still not the command bus.** `mcp_calls` and `mcp_approvals`
-  are both empty — the proposal/approval machinery in `0028_mcp.sql` has
-  never been used. These fixes put authorization in front of three
-  functions; they do not make MCP the mandatory choke point.
+- **Seventeen of twenty edge functions still have no capability check.**
+  This work covers five. The rest are either public by design
+  (`unsubscribe`, `intake`, webhooks) or have not been reviewed.
+
+## Retirement list
+
+`docs/here-inventory.md` and `docs/architecture/current-state.md` both
+already record `pay-now`, `connect-onboard` and `backend-sub` as superseded
+by `checkout`, to be retired once `checkout` deployed. `checkout` deployed.
+They were never retired and are still serving.
+
+They belong to the `mcclusterishere/Here` era, their `SITE` constant points
+at that dead origin, they read `public.providers` (zero rows), and
+`public.payments` is also zero — no payment has ever completed through them.
+
+**`pay-now` is the one to deal with first.** `verify_jwt` is false, so an
+anonymous caller can mint a Stripe Checkout session on the platform account
+for any amount with an attacker-chosen product name rendered on a
+Stripe-hosted page. Nothing in either repository calls it.
+
+Their source is now committed under `supabase/functions/` so that deleting
+the deployed functions is reversible.
 
 ## Adding a privileged function
 
 Import from `_shared/authz.ts`. Resolve the caller, then the resource, then
-the role. Never reach for the service key before all three have happened,
-and never accept an org id or an approver from the caller.
+the capability. Name the capability in `control_capabilities` first — an
+undefined name fails closed with a 500, on purpose, because only our own
+code can reach that branch. Never reach for the service key before all three
+have happened, and never accept an org id or an approver from the caller.

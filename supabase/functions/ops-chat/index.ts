@@ -27,15 +27,19 @@
 // whether that person had any standing in this org before handing a
 // language model service-role access to the CRM.
 //
-// Now: the token is verified with the issuer, the caller must hold at
-// least `staff` in the configured org, and — importantly — the calls
-// this function makes into outreach and social forward the CALLER'S
-// token rather than the service key. The human is authorized again at
-// the far end, so ops-chat cannot be used to borrow authority it does
-// not have. That is what stops this being a confused deputy.
+// Now: the token is verified with the issuer, the caller must hold the
+// `ops.use` capability in the configured org, and — importantly — the
+// calls this function makes into outreach and social forward the
+// CALLER'S token rather than the service key. The human is authorized
+// again at the far end, so ops-chat cannot be used to borrow authority
+// it does not have. That is what stops this being a confused deputy.
+//
+// `ops.use` is a row in `control_capabilities`, not a constant in this
+// file. Which roles hold it is `control_role_capabilities`. Changing who
+// may open this console is therefore an UPDATE, not a redeploy.
 
 import Anthropic from "npm:@anthropic-ai/sdk@0.71.0";
-import { authzResponse, orgIdBySlug, requireOrgRole } from "../_shared/authz.ts";
+import { authzResponse, orgIdBySlug, requireOrgCapability } from "../_shared/authz.ts";
 
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -329,7 +333,15 @@ On cold outreach: it is lawful, and it stays lawful only because every message c
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
-  if (!ANTHROPIC_KEY) return json({ error: "ANTHROPIC_API_KEY is not configured on this project" }, 503);
+
+  // The ANTHROPIC_API_KEY check used to live here, above the
+  // authorization below. That made this endpoint answer differently
+  // depending on whether a secret was configured — 503 when it was not,
+  // 401 when it was — so an unauthenticated stranger could learn a fact
+  // about the project's configuration by making one request. Tiny, but
+  // it is the same category of mistake as the one this file was fixed
+  // for: telling someone something before establishing they may ask.
+  // The check now happens after the caller is authorized.
 
   let p: { messages?: Anthropic.MessageParam[] };
   try { p = await req.json(); } catch { return json({ error: "bad json" }, 400); }
@@ -342,9 +354,17 @@ Deno.serve(async (req) => {
 
   try {
     org = await orgIdBySlug(ORG_SLUG);
-    // This agent writes to the CRM, so reading is not enough to open it.
-    const { caller } = await requireOrgRole(req, org, "staff");
+    // This agent writes to the CRM and can drive the other functions, so
+    // reading is not enough to open it. `ops.use` is the capability that
+    // names exactly that.
+    const { caller } = await requireOrgCapability(req, org, "ops.use", { type: "org", id: org });
     const authorization = req.headers.get("authorization")!;
+
+    // Only now, once the caller is known to be entitled to be here, does
+    // the response reveal anything about how the project is configured.
+    if (!ANTHROPIC_KEY) {
+      return json({ error: "ANTHROPIC_API_KEY is not configured on this project" }, 503);
+    }
 
     const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
     const messages: Anthropic.MessageParam[] = [...history];

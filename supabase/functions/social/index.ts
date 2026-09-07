@@ -29,16 +29,27 @@
 // Two things were wrong here and they compounded.
 //
 // First, a valid JWT was treated as permission to operate the org's
-// connected accounts. Membership is now required, and dispatch — which
-// actually publishes — is owner-only.
+// connected accounts. The caller must now hold the named capability for
+// the action — `social.read`, `social.queue`, `social.publish` — which
+// are rows in `control_capabilities`, granted per role in
+// `control_role_capabilities`. Changing who may publish is an UPDATE,
+// not a redeploy.
 //
 // Second, and worse: approved_by was read from the request body. The
 // paid-channel guard in dispatch() checks whether that field is set, so
 // a caller could approve their own spend by writing a name into the
 // JSON. Approval is now the verified caller's id, recorded by the
-// server. A claim of approval is not an approval.
+// server, and only when that caller actually holds `social.publish`. A
+// claim of approval is not an approval.
 
-import { authzResponse, orgIdBySlug, requireOrgRole } from "../_shared/authz.ts";
+import {
+  authzResponse,
+  beginCommand,
+  endCommand,
+  hasCapability,
+  orgIdBySlug,
+  requireOrgCapability,
+} from "../_shared/authz.ts";
 
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -123,7 +134,8 @@ async function channels(org: string) {
  * when a retry or a double-click happens.
  *
  * approvedBy is supplied by the CALLER OF THIS FUNCTION, not by the
- * request body, and only ever holds a verified owner's id.
+ * request body, and only ever holds the id of a verified caller who
+ * holds `social.publish`.
  */
 async function queue(org: string, opts: { channels: string[]; body: string; kind: string; approvedBy?: string }) {
   const body = String(opts.body ?? "").trim();
@@ -232,7 +244,7 @@ async function dispatch(org: string, max: number) {
   for (const row of rows) {
     // Anything that costs money per call waits for a named approver.
     // approved_by can only have been written by the server, from a
-    // verified owner — see queue().
+    // caller holding `social.publish` — see queue().
     if (row.costs_money && !row.approved_by) {
       held++;
       await db(`inbox_outbound?id=eq.${row.id}`, {
@@ -311,13 +323,15 @@ async function stats(org: string, days: number) {
   return { since, by_channel: byChannel };
 }
 
-/** Reading is a member's business; queueing changes org state; dispatch
- *  publishes to the world under the org's name and spends money. */
-const NEEDS: Record<string, "viewer" | "staff" | "owner"> = {
-  channels: "viewer",
-  stats: "viewer",
-  queue: "staff",
-  dispatch: "owner",
+/** Named capabilities from `control_capabilities`, not roles. Reading is
+ *  a viewer's business; queueing changes org state; dispatch publishes to
+ *  the world under the org's name and spends money — it is graded high,
+ *  so it also gets a `control_commands` row. */
+const NEEDS: Record<string, string> = {
+  channels: "social.read",
+  stats: "social.read",
+  queue: "social.queue",
+  dispatch: "social.publish",
 };
 
 Deno.serve(async (req) => {
@@ -333,21 +347,39 @@ Deno.serve(async (req) => {
 
   try {
     const org = await orgIdBySlug(ORG_SLUG);
-    const { caller, role } = await requireOrgRole(req, org, needs);
+    const { caller } = await requireOrgCapability(req, org, needs, { type: "org", id: org });
 
     if (action === "channels") return json({ ok: true, channels: await channels(org) });
     if (action === "stats") return json({ ok: true, ...(await stats(org, Number(p.days ?? 30))) });
     if (action === "dispatch") {
-      console.log(JSON.stringify({ fn: "social", action, org, by: caller.id }));
-      return json({ ok: true, ...(await dispatch(org, Number(p.max ?? 10))) });
+      // Publishing is irreversible and spends money. Record the attempt
+      // before making it, so a dispatch that dies mid-flight still says
+      // who started it.
+      const cmd = await beginCommand(caller, org, needs, "dispatch", { type: "org", id: org }, {
+        max: Number(p.max ?? 10),
+      });
+      try {
+        const out = await dispatch(org, Number(p.max ?? 10));
+        await endCommand(cmd, { ok: true, result: out });
+        return json({ ok: true, ...out });
+      } catch (err) {
+        await endCommand(cmd, { ok: false, error: String(err).slice(0, 300) });
+        throw err;
+      }
     }
     if (action === "queue") {
       const list = Array.isArray(p.channels) ? p.channels.map(String) : [];
       if (!list.length) return json({ error: "channels[] required" }, 400);
-      // The ONLY way approved_by gets set. It is the verified caller,
-      // and only when that caller is an owner — never a string from the
-      // request. p.approved_by is ignored entirely.
-      const approvedBy = role === "owner" ? caller.id : undefined;
+      // The ONLY way approved_by gets set. It is the verified caller, and
+      // only when that caller actually holds the capability that means
+      // "may publish and spend under this org's name" — never a string
+      // from the request. p.approved_by is ignored entirely.
+      //
+      // Asked as a capability rather than `role === "owner"` so that if
+      // the grant matrix is ever changed to let a trusted staff member
+      // approve, this follows without a redeploy.
+      const mayApprove = await hasCapability(caller, org, "social.publish");
+      const approvedBy = mayApprove ? caller.id : undefined;
       return json({
         ok: true,
         approved_by: approvedBy ?? null,

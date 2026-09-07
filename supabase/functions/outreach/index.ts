@@ -26,10 +26,19 @@
 // campaign uuid could build, send, pause and read it.
 //
 // The org is now taken from the campaign row — never from the caller —
-// and the caller must hold a role in that org. Sending is owner-only,
-// because it is the one action here that cannot be undone.
+// and the caller must hold the named capability for the action in that
+// org. Which roles hold `campaign.send` is a row in
+// `control_role_capabilities`, not a constant in this file, so changing
+// who may send is an UPDATE rather than a redeploy.
 
-import { authzResponse, orgOfCampaign, requireRoleFor, verifyCaller } from "../_shared/authz.ts";
+import {
+  authzResponse,
+  beginCommand,
+  endCommand,
+  orgOfCampaign,
+  requireCapability,
+  verifyCaller,
+} from "../_shared/authz.ts";
 
 const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -328,14 +337,22 @@ async function stats(campaignId: string) {
   };
 }
 
-/** What each action costs if it is wrong, expressed as the least role
- *  allowed to do it. `send` is owner because it is the only one that
- *  reaches strangers and cannot be taken back. */
-const NEEDS: Record<string, "viewer" | "staff" | "owner"> = {
-  stats: "viewer",
-  build: "staff",
-  pause: "staff",
-  send: "owner",
+/** What each action requires, named as a capability from
+ *  `control_capabilities`. These are not invented here — they are rows
+ *  in the database, graded by risk, and which role holds each one is
+ *  `control_role_capabilities`. That means the answer to "who may send
+ *  mail as this org?" is a query an operator can run and a row an
+ *  operator can change, instead of an `if` an operator would have to
+ *  find in a deployed function.
+ *
+ *  `campaign.send` is graded high — the only action here that reaches
+ *  strangers and cannot be taken back — so it also gets a
+ *  `control_commands` row recording that it was attempted. */
+const NEEDS: Record<string, string> = {
+  stats: "campaign.read",
+  build: "campaign.prepare",
+  pause: "campaign.pause",
+  send: "campaign.send",
 };
 
 Deno.serve(async (req) => {
@@ -359,10 +376,28 @@ Deno.serve(async (req) => {
     // campaign ids exist. Verify, then resolve, then authorize.
     const caller = await verifyCaller(req);
     const org = await orgOfCampaign(id);
-    await requireRoleFor(caller, org, needs);
+    await requireCapability(caller, org, needs, { type: "campaign", id });
 
     if (action === "build") return json({ ok: true, ...(await build(id)) });
-    if (action === "send")  return json({ ok: true, ...(await sendBatch(id, Number(p.max ?? 0))) });
+
+    if (action === "send") {
+      // A send is the one act here that leaves the building. Record that
+      // it was attempted BEFORE attempting it, so a send that crashes
+      // half way still leaves a trace saying who started it — the row
+      // that would otherwise only exist if everything went right.
+      const cmd = await beginCommand(caller, org, needs, "send", { type: "campaign", id }, {
+        max: Number(p.max ?? 0),
+      });
+      try {
+        const out = await sendBatch(id, Number(p.max ?? 0));
+        await endCommand(cmd, { ok: true, result: out });
+        return json({ ok: true, ...out });
+      } catch (err) {
+        await endCommand(cmd, { ok: false, error: String(err).slice(0, 300) });
+        throw err;
+      }
+    }
+
     if (action === "stats") return json({ ok: true, ...(await stats(id)) });
     if (action === "pause") {
       // Scoped to the org as well as the id. Belt and braces: if the
