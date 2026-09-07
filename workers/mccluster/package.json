@@ -2,10 +2,12 @@
   "name": "mccluster",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "description": "Cloudflare Worker mccluster. The only Worker.",
   "scripts": {
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "dev": "wrangler dev",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@fal-ai/client": "1.10.1"

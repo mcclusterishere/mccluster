@@ -2,7 +2,7 @@ name = "mccluster"
 main = "src/entry.js"
 compatibility_date = "2026-09-02"
 compatibility_flags = [ "nodejs_compat" ]
-workers_dev = true
+workers_dev = false
 
 [observability]
 enabled = true
@@ -30,11 +30,11 @@ META_GRAPH_API_VERSION = "v26.0"
 # FAL_ADMIN_KEY  # Admin-scoped fal key required for exact billing-event reconciliation.
 # META_APP_SECRET
 # META_WEBHOOK_VERIFY_TOKEN
-# Instagram access tokens are also Worker secrets. social_accounts.credential_ref
-# stores only the binding name (for example SOCIAL_IG_PRIMARY_ACCESS_TOKEN), never the token itself.
+# Instagram access tokens are Worker secrets selected only from the org's enabled
+# org_channels row. Allowed env bindings must match SOCIAL_IG_*_ACCESS_TOKEN.
 
 # Batch unsettled fal jobs, attach completed social variants, process due Instagram
-# publish jobs, and refresh recent Instagram insights every five minutes.
+# publish jobs, and refresh due Instagram insights every five minutes.
 [triggers]
 crons = ["*/5 * * * *"]
 

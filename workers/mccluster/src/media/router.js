@@ -1,5 +1,6 @@
 import { billingEventsFal, collectAssetCandidates, normalizeFalStatus, resultFal, statusFal, submitFal, verifyFalWebhook } from './fal.js';
 import { estimateModelCost } from './pricing.js';
+import { requireOrgId } from '../social/security.js';
 
 function headers(env) {
   return {
@@ -29,13 +30,9 @@ async function rpc(env, name, payload) {
 }
 
 async function getOrg(env, userId, requestedOrgId) {
-  if (requestedOrgId) {
-    const rows = await db(env, `org_members?org_id=eq.${encodeURIComponent(requestedOrgId)}&profile_id=eq.${encodeURIComponent(userId)}&select=org_id,role&limit=1`);
-    if (!rows?.length) throw Object.assign(new Error('You are not a member of that organization'), { status: 403 });
-    return rows[0];
-  }
-  const rows = await db(env, `org_members?profile_id=eq.${encodeURIComponent(userId)}&select=org_id,role&order=added_at.asc&limit=1`);
-  if (!rows?.length) throw Object.assign(new Error('No McCluster organization membership found'), { status: 403 });
+  const orgId = requireOrgId(requestedOrgId);
+  const rows = await db(env, `org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(userId)}&select=org_id,role&limit=1`);
+  if (!rows?.length) throw Object.assign(new Error('You are not a member of that organization'), { status: 403 });
   return rows[0];
 }
 
@@ -217,7 +214,7 @@ export async function listModels(request, env) {
 export async function createGeneration(request, env, user) {
   let body;
   try { body = await request.json(); } catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
-  const org = await getOrg(env, user.id, body.org_id || null);
+  const org = await getOrg(env, user.id, body.org_id);
   if (!body.model_id) throw Object.assign(new Error('model_id is required'), { status: 400 });
   const model = await modelById(env, body.model_id);
   if (!model) throw Object.assign(new Error('Unknown or disabled media model'), { status: 404 });
