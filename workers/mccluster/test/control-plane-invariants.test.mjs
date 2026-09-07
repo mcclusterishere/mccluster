@@ -29,7 +29,7 @@ test('completed domain cutover cannot regress to the old runbook',async()=>{
   ]);
   assert.doesNotMatch(readme,/Cutover pending/i);
   assert.match(readme,/Cutover complete/i);
-  assert.match(cutover,/completed/i);
+  assert.match(cutover,/Status: complete/i);
 });
 
 test('heavy Site 0 source artifacts stay out of the active git tree',async()=>{
