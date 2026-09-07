@@ -22,8 +22,10 @@ native/ios/
 native/node_modules/
 native/.expo/
 
-# Site 0: the fitted exterior shell is 47 MB and the repo already carries its
-# source zip at the root. Run _unfinished/site0-game/tools/unpack_shell.py.
+# Site 0 heavyweight source/render artifacts belong in object storage or a
+# release, not the active git tree. Keep the lightweight 500k viewer SPZs.
+PRIM3+site+zero+perfect+model.zip
+_unfinished/site0-game/viewer/assets/**/**_full_res.spz
 _unfinished/site0-game/game/assets/site0_shell_fitted.glb
 
 # site0/ is generated from _unfinished/site0-game by tools/publish-site0.sh
