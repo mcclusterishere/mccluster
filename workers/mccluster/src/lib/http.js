@@ -17,8 +17,7 @@ export function allowedOrigins(env) {
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
-  const single = env.ALLOWED_ORIGIN && env.ALLOWED_ORIGIN !== '*' ? [env.ALLOWED_ORIGIN] : [];
-  return [...new Set([...DEFAULT_ORIGINS, ...single, ...extra])];
+  return [...new Set([...DEFAULT_ORIGINS, ...extra])];
 }
 
 export function corsHeaders(request, env) {
@@ -28,7 +27,7 @@ export function corsHeaders(request, env) {
   return {
     'access-control-allow-origin': allowOrigin,
     'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
-    'access-control-allow-headers': 'authorization,content-type,x-we-user-id,x-we-role,stripe-signature',
+    'access-control-allow-headers': 'authorization,content-type,stripe-signature',
     'access-control-allow-credentials': 'true',
     'access-control-max-age': '86400',
     vary: 'Origin'
