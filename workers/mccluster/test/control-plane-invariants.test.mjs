@@ -28,7 +28,7 @@ test('completed domain cutover cannot regress to the old runbook',async()=>{
     readFile(resolve(repoRoot,'docs/domain-cutover.md'),'utf8')
   ]);
   assert.doesNotMatch(readme,/Cutover pending/i);
-  assert.match(readme,/cutover is complete/i);
+  assert.match(readme,/Cutover complete/i);
   assert.match(cutover,/completed/i);
 });
 
