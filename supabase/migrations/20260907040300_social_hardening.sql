@@ -1,6 +1,7 @@
 -- Harden the client social control plane without changing provider behavior.
 -- 1) lease external publish side effects so overlapping cron runs cannot process the same job;
--- 2) make insight refresh a fair due-work queue instead of repeatedly selecting the newest posts.
+-- 2) make insight refresh a fair due-work queue instead of repeatedly selecting the newest posts;
+-- 3) make social mutations Worker-only so browser clients cannot bypass Worker authorization.
 
 alter table public.social_publish_jobs
   add column if not exists lease_owner text,
@@ -25,6 +26,34 @@ create index if not exists social_posts_insights_due_idx
   on public.social_posts (next_insights_sync_at, published_at)
   where external_media_id is not null;
 
+-- These tables are read through RLS by authenticated members, but every mutation
+-- is intentionally routed through the McCluster Worker. The Worker authenticates
+-- the caller and then uses service_role, so a browser must not be able to bypass
+-- that authorization boundary by writing the Data API directly.
+revoke all on table
+  public.social_accounts,
+  public.social_campaigns,
+  public.social_variants,
+  public.social_publish_jobs,
+  public.social_posts,
+  public.social_metric_snapshots,
+  public.social_automation_rules,
+  public.social_webhook_events,
+  public.social_lead_attribution
+from anon, authenticated;
+
+grant select on table
+  public.social_accounts,
+  public.social_campaigns,
+  public.social_variants,
+  public.social_publish_jobs,
+  public.social_posts,
+  public.social_metric_snapshots,
+  public.social_automation_rules,
+  public.social_webhook_events,
+  public.social_lead_attribution
+to authenticated;
+
 create or replace function public.claim_social_publish_jobs(
   p_lease_owner text,
   p_limit integer default 10,
@@ -32,8 +61,8 @@ create or replace function public.claim_social_publish_jobs(
 )
 returns setof public.social_publish_jobs
 language plpgsql
-security definer
-set search_path = public, pg_temp
+security invoker
+set search_path = pg_catalog, pg_temp
 as $$
 begin
   if nullif(btrim(p_lease_owner), '') is null then
@@ -67,15 +96,15 @@ grant execute on function public.claim_social_publish_jobs(text, integer, intege
   to service_role;
 
 comment on function public.claim_social_publish_jobs(text, integer, integer) is
-  'Atomically leases due queued/processing social publish jobs using row locks and SKIP LOCKED so overlapping schedulers cannot execute the same external Meta phase concurrently.';
+  'Service-role-only atomic lease of due queued/processing social publish jobs using row locks and SKIP LOCKED.';
 
 create or replace function public.claim_social_insight_posts(
   p_limit integer default 25
 )
 returns setof public.social_posts
 language plpgsql
-security definer
-set search_path = public, pg_temp
+security invoker
+set search_path = pg_catalog, pg_temp
 as $$
 begin
   return query
@@ -104,4 +133,4 @@ grant execute on function public.claim_social_insight_posts(integer)
   to service_role;
 
 comment on function public.claim_social_insight_posts(integer) is
-  'Claims the oldest due recent social posts for insight refresh. Advancing next_insights_sync_at inside the same transaction prevents duplicate refreshes and guarantees rotation across clients when capacity is sufficient.';
+  'Service-role-only fair claim of the oldest due recent social posts for insight refresh.';
