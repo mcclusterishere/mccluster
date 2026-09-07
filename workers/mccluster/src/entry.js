@@ -133,7 +133,7 @@ export default {
           message: error instanceof Error ? error.message : String(error)
         }));
       }),
-      syncInstagramInsights(env, { limit: 5 }).catch((error) => {
+      syncInstagramInsights(env, { limit: 25 }).catch((error) => {
         console.error(JSON.stringify({
           event: 'social_instagram_insights_sync_failed',
           message: error instanceof Error ? error.message : String(error)
