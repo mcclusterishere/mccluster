@@ -7,7 +7,7 @@ function httpError(message, status) {
 
 export function requireOrgId(value) {
   const orgId = String(value || '').trim();
-  if (!orgId) throw httpError('org_id is required for social operations', 400);
+  if (!orgId) throw httpError('org_id is required for tenant-scoped operations', 400);
   if (!UUID_RE.test(orgId)) throw httpError('org_id must be a UUID', 400);
   return orgId;
 }
