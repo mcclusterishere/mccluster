@@ -1,4 +1,5 @@
 import { scoreMetrics } from './router.js';
+import { parseSocialCredentialRef } from './security.js';
 
 function headers(env) {
   return {
@@ -70,9 +71,18 @@ async function graphPost(env, path, token, params) {
   return data;
 }
 
-function tokenFor(env, account) {
-  const ref = account?.credential_ref;
-  return ref ? env[ref] || null : null;
+async function tokenFor(env, account) {
+  const parsed = parseSocialCredentialRef(account?.platform, account?.credential_ref);
+  if (!parsed) return null;
+  if (parsed.kind === 'env') return env[parsed.name] || null;
+  if (parsed.kind === 'vault') {
+    const token = await db(env, 'rpc/vault_secret', {
+      method: 'POST',
+      body: JSON.stringify({ p_id: parsed.id })
+    });
+    return typeof token === 'string' && token ? token : null;
+  }
+  return null;
 }
 
 async function resolveVideoUrl(env, job) {
@@ -108,7 +118,9 @@ async function beginInstagramPublish(env, job, account, token) {
     state: 'processing',
     external_creation_id: created.id,
     attempts: Number(job.attempts || 0) + 1,
-    last_error: null
+    last_error: null,
+    lease_owner: null,
+    lease_expires_at: null
   });
   return { state: 'processing', creation_id: created.id };
 }
@@ -117,9 +129,15 @@ async function finishInstagramPublish(env, job, account, token) {
   if (!job.external_creation_id) throw new Error('Processing publish job is missing its creation container id');
   const status = await graphGet(env, `${encodeURIComponent(job.external_creation_id)}?fields=status_code`, token);
   const code = status?.status_code || 'UNKNOWN';
-  if (code === 'IN_PROGRESS') return { state: 'processing', status_code: code };
+  if (code === 'IN_PROGRESS') {
+    await patch(env, 'social_publish_jobs', job.id, { lease_owner: null, lease_expires_at: null });
+    return { state: 'processing', status_code: code };
+  }
   if (['ERROR', 'EXPIRED'].includes(code)) throw new Error(`Instagram creation container ${code.toLowerCase()}`);
-  if (code !== 'FINISHED') return { state: 'processing', status_code: code };
+  if (code !== 'FINISHED') {
+    await patch(env, 'social_publish_jobs', job.id, { lease_owner: null, lease_expires_at: null });
+    return { state: 'processing', status_code: code };
+  }
 
   const published = await graphPost(env, `${encodeURIComponent(account.external_account_id)}/media_publish`, token, {
     creation_id: job.external_creation_id
@@ -130,7 +148,9 @@ async function finishInstagramPublish(env, job, account, token) {
     state: 'published',
     external_media_id: published.id,
     attempts: Number(job.attempts || 0) + 1,
-    last_error: null
+    last_error: null,
+    lease_owner: null,
+    lease_expires_at: null
   });
 
   const existing = await db(env, `social_posts?account_id=eq.${encodeURIComponent(account.id)}&external_media_id=eq.${encodeURIComponent(published.id)}&select=*&limit=1`);
@@ -153,19 +173,39 @@ async function finishInstagramPublish(env, job, account, token) {
 async function processPublishJob(env, job) {
   const account = await accountForJob(env, job);
   if (!account) throw new Error('Instagram account is missing or does not belong to this organization');
-  const token = tokenFor(env, account);
-  if (!token) return { state: job.state, deferred: true, reason: 'credential_secret_not_configured' };
+  const token = await tokenFor(env, account);
+  if (!token) {
+    await patch(env, 'social_publish_jobs', job.id, {
+      lease_owner: null,
+      lease_expires_at: null,
+      last_error: 'credential_secret_not_configured'
+    });
+    return { state: job.state, deferred: true, reason: 'credential_secret_not_configured' };
+  }
   if (job.state === 'queued') return beginInstagramPublish(env, job, account, token);
   if (job.state === 'processing') return finishInstagramPublish(env, job, account, token);
+  await patch(env, 'social_publish_jobs', job.id, { lease_owner: null, lease_expires_at: null });
   return { state: job.state, skipped: true };
 }
 
+async function claimPublishJobs(env, limit) {
+  const leaseOwner = crypto.randomUUID();
+  const jobs = await db(env, 'rpc/claim_social_publish_jobs', {
+    method: 'POST',
+    body: JSON.stringify({
+      p_lease_owner: leaseOwner,
+      p_limit: limit,
+      p_lease_seconds: 120
+    })
+  });
+  return Array.isArray(jobs) ? jobs : [];
+}
+
 export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
-  const now = new Date().toISOString();
   const safeLimit = Math.min(25, Math.max(1, Number(limit) || 10));
-  const jobs = await db(env, `social_publish_jobs?state=in.(queued,processing)&scheduled_at=lte.${encodeURIComponent(now)}&order=scheduled_at.asc&limit=${safeLimit}&select=*`);
+  const jobs = await claimPublishJobs(env, safeLimit);
   const results = [];
-  for (const job of jobs || []) {
+  for (const job of jobs) {
     try {
       results.push({ id: job.id, ...(await processPublishJob(env, job)) });
     } catch (error) {
@@ -174,12 +214,14 @@ export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
       await patch(env, 'social_publish_jobs', job.id, {
         state: terminal ? 'failed' : job.state,
         attempts,
-        last_error: error instanceof Error ? error.message : String(error)
+        last_error: error instanceof Error ? error.message : String(error),
+        lease_owner: null,
+        lease_expires_at: null
       });
       results.push({ id: job.id, state: terminal ? 'failed' : job.state, error: error instanceof Error ? error.message : String(error) });
     }
   }
-  return { checked: jobs?.length || 0, results };
+  return { checked: jobs.length, results };
 }
 
 function metricValue(payload) {
@@ -196,11 +238,25 @@ async function safeInsight(env, mediaId, metric, token) {
   }
 }
 
+function nextInsightsAt(publishedAt, now = new Date()) {
+  const published = new Date(publishedAt || now);
+  const ageMs = Math.max(0, now.getTime() - published.getTime());
+  let delayMs = 15 * 60 * 1000;
+  if (ageMs >= 24 * 60 * 60 * 1000 && ageMs < 72 * 60 * 60 * 1000) delayMs = 60 * 60 * 1000;
+  if (ageMs >= 72 * 60 * 60 * 1000) delayMs = 6 * 60 * 60 * 1000;
+  return new Date(now.getTime() + delayMs).toISOString();
+}
+
 async function syncPostInsights(env, post) {
   const accounts = await db(env, `social_accounts?id=eq.${encodeURIComponent(post.account_id)}&org_id=eq.${encodeURIComponent(post.org_id)}&platform=eq.instagram&select=*&limit=1`);
   const account = accounts?.[0];
-  const token = tokenFor(env, account);
-  if (!account || !token) return { deferred: true, reason: 'credential_secret_not_configured' };
+  const token = await tokenFor(env, account);
+  if (!account || !token) {
+    await patch(env, 'social_posts', post.id, {
+      next_insights_sync_at: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+    });
+    return { post_id: post.id, deferred: true, reason: 'credential_secret_not_configured' };
+  }
 
   let fields = {};
   try {
@@ -240,18 +296,39 @@ async function syncPostInsights(env, post) {
     raw: { graph_fields: fields, synced_metrics: ['views', 'reach', 'saved', 'shares'] }
   });
   if (post.variant_id) await patch(env, 'social_variants', post.variant_id, { score: scored.score, score_components: scored.components });
-  if (fields.permalink && fields.permalink !== post.permalink) await patch(env, 'social_posts', post.id, { permalink: fields.permalink });
+
+  const syncedAt = new Date();
+  await patch(env, 'social_posts', post.id, {
+    ...(fields.permalink ? { permalink: fields.permalink } : {}),
+    last_insights_synced_at: syncedAt.toISOString(),
+    next_insights_sync_at: nextInsightsAt(post.published_at, syncedAt)
+  });
   return { post_id: post.id, snapshot_id: snapshot?.id || null, score: scored.score };
 }
 
-export async function syncInstagramInsights(env, { limit = 5 } = {}) {
-  const safeLimit = Math.min(10, Math.max(1, Number(limit) || 5));
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const posts = await db(env, `social_posts?published_at=gte.${encodeURIComponent(since)}&order=published_at.desc&limit=${safeLimit}&select=id,org_id,account_id,variant_id,external_media_id,permalink,published_at`);
+async function claimInsightPosts(env, limit) {
+  const posts = await db(env, 'rpc/claim_social_insight_posts', {
+    method: 'POST',
+    body: JSON.stringify({ p_limit: limit })
+  });
+  return Array.isArray(posts) ? posts : [];
+}
+
+export async function syncInstagramInsights(env, { limit = 25 } = {}) {
+  const safeLimit = Math.min(100, Math.max(1, Number(limit) || 25));
+  const posts = await claimInsightPosts(env, safeLimit);
   const results = [];
-  for (const post of posts || []) {
-    try { results.push(await syncPostInsights(env, post)); }
-    catch (error) { results.push({ post_id: post.id, error: error instanceof Error ? error.message : String(error) }); }
+  for (const post of posts) {
+    try {
+      results.push(await syncPostInsights(env, post));
+    } catch (error) {
+      try {
+        await patch(env, 'social_posts', post.id, {
+          next_insights_sync_at: new Date(Date.now() + 15 * 60 * 1000).toISOString()
+        });
+      } catch {}
+      results.push({ post_id: post.id, error: error instanceof Error ? error.message : String(error) });
+    }
   }
-  return { checked: posts?.length || 0, results };
+  return { checked: posts.length, results };
 }
