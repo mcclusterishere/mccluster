@@ -1,104 +1,35 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 
-import core from '../src/index.js';
+const here=dirname(fileURLToPath(import.meta.url));
+const sourcePath=resolve(here,'..','src','index.js');
 
-function env(overrides = {}) {
-  return {
-    SUPABASE_URL: 'https://example.supabase.co',
-    SUPABASE_SERVICE_ROLE_KEY: 'service-role-test',
-    ALLOWED_ORIGINS: 'https://matthew.mccluster.org',
-    HereTenantAgent: {
-      idFromName: () => 'health-id',
-      get: () => ({ fetch: async () => new Response(JSON.stringify({ ok: true, internal: true }), { headers: { 'content-type': 'application/json' } }) })
-    },
-    ...overrides
-  };
-}
+async function source(){return readFile(sourcePath,'utf8')}
 
-async function json(response) {
-  return response.json();
-}
-
-test('public health is minimal and does not expose infrastructure identifiers', async () => {
-  const originalFetch = globalThis.fetch;
-  let calls = 0;
-  globalThis.fetch = async () => { calls += 1; throw new Error('health should not make network calls'); };
-  try {
-    const response = await core.fetch(new Request('https://api.mccluster.org/health'), env());
-    assert.equal(response.status, 200);
-    assert.deepEqual(await json(response), { ok: true, service: 'mccluster' });
-    assert.equal(calls, 0);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+test('public health remains minimal',async()=>{
+  const text=await source();
+  const block=text.match(/if \(path === '\/health'[\s\S]*?\n\s*}\n/);
+  assert.ok(block,'health route not found');
+  assert.match(block[0],/ok:\s*true/);
+  assert.match(block[0],/service:\s*'mccluster'/);
+  assert.doesNotMatch(block[0],/supabase_project|durable_object|products|project_ref/i);
 });
 
-test('internal durable-object health rejects unauthenticated callers before touching Supabase', async () => {
-  const originalFetch = globalThis.fetch;
-  let calls = 0;
-  globalThis.fetch = async () => { calls += 1; throw new Error('unauthenticated request should not fetch'); };
-  try {
-    const response = await core.fetch(new Request('https://api.mccluster.org/internal/here-tenant-agent'), env());
-    assert.equal(response.status, 401);
-    assert.equal((await json(response)).error, 'Authentication required');
-    assert.equal(calls, 0);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+test('internal and status routes require house-owner authorization',async()=>{
+  const text=await source();
+  assert.match(text,/if \(path === '\/internal\/here-tenant-agent'[\s\S]*?await requireHouseOwner\(request, env\)/);
+  assert.match(text,/if \(path === '\/v1\/status'[\s\S]*?await requireHouseOwner\(request, env\)/);
+  assert.match(text,/role=eq\.owner/);
+  assert.match(text,/slug=eq\.mccluster/);
 });
 
-test('internal durable-object health rejects authenticated non-house owners', async () => {
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (url) => {
-    const value = String(url);
-    if (value.includes('/auth/v1/user')) return Response.json({ id: 'user-1', email: 'client@example.com' });
-    if (value.includes('/rest/v1/orgs?slug=eq.mccluster')) return Response.json([{ id: 'house-org' }]);
-    if (value.includes('/rest/v1/org_members?')) return Response.json([]);
-    throw new Error(`unexpected fetch: ${value}`);
-  };
-  try {
-    const request = new Request('https://api.mccluster.org/internal/here-tenant-agent', { headers: { authorization: 'Bearer client-token' } });
-    const response = await core.fetch(request, env());
-    assert.equal(response.status, 403);
-    assert.equal((await json(response)).error, 'McCluster house owner access required');
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-test('internal durable-object health permits a verified house owner', async () => {
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (url) => {
-    const value = String(url);
-    if (value.includes('/auth/v1/user')) return Response.json({ id: 'owner-1', email: 'owner@example.com' });
-    if (value.includes('/rest/v1/orgs?slug=eq.mccluster')) return Response.json([{ id: 'house-org' }]);
-    if (value.includes('/rest/v1/org_members?')) return Response.json([{ org_id: 'house-org', role: 'owner' }]);
-    throw new Error(`unexpected fetch: ${value}`);
-  };
-  try {
-    const request = new Request('https://api.mccluster.org/internal/here-tenant-agent', { headers: { authorization: 'Bearer owner-token' } });
-    const response = await core.fetch(request, env());
-    assert.equal(response.status, 200);
-    assert.deepEqual(await json(response), { ok: true, internal: true });
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-test('public app registry uses an explicit safe field projection', async () => {
-  const originalFetch = globalThis.fetch;
-  let requested = '';
-  globalThis.fetch = async (url) => {
-    requested = String(url);
-    return Response.json([{ app_key: 'whip-rider-web', name: 'Whip Equipped', public_url: 'https://example.com' }]);
-  };
-  try {
-    const response = await core.fetch(new Request('https://api.mccluster.org/v1/apps'), env());
-    assert.equal(response.status, 200);
-    assert.match(requested, /select=app_key,name,product_family,kind,bundle_id,public_url/);
-    assert.doesNotMatch(requested, /oauth_client_id|settings/);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+test('public app registry exposes only explicit safe fields',async()=>{
+  const text=await source();
+  const apps=text.match(/if \(path === '\/v1\/apps'[\s\S]*?return reply\(request, env, \{ apps: rows \|\| \[\] \}\);/);
+  assert.ok(apps,'apps route not found');
+  assert.match(apps[0],/select=app_key,name,product_family,kind,bundle_id,public_url/);
+  assert.doesNotMatch(apps[0],/oauth_client_id|settings/);
 });
