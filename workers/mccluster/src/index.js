@@ -1,4 +1,4 @@
-import { allowedOrigins, corsHeaders, fail, logEvent, reply } from './lib/http.js';
+import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
@@ -200,7 +200,8 @@ export default {
          identity gates, then ownership checks, then driver and ride
          transitions, then the auth proxy, then rides and rentals. */
       if (path === '/api' || path.startsWith('/api/')) {
-        return whip.fetch(request, env);
+        const response = await whip.fetch(request, env);
+        return applyCors(request, env, response);
       }
 
       return fail(request, env, 'Not found', 404);

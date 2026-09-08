@@ -19,8 +19,7 @@ async function userFromRequest(req,env){
 async function requireUser(req,env){const user=await userFromRequest(req,env);if(!user)throw Object.assign(new Error('Authentication required'),{status:401});return user}
 async function requireOperator(req,env,tenantId){
   const user=await requireUser(req,env);
-  let rows=await sb(env,`operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&auth_user_id=eq.${encodeURIComponent(user.id)}&select=*`);
-  if(!rows?.length&&user.email)rows=await sb(env,`operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&email=eq.${encodeURIComponent(user.email)}&select=*`);
+  const rows=await sb(env,`operator_members?tenant_id=eq.${encodeURIComponent(tenantId)}&auth_user_id=eq.${encodeURIComponent(user.id)}&select=*`);
   if(!rows?.length)throw Object.assign(new Error('Operator access required'),{status:403});return {user,membership:rows[0]};
 }
 function cleanSlug(value){return String(value||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)}
@@ -33,7 +32,7 @@ export default {async fetch(req,env,ctx){
     // Public auth proxy. The service key remains inside Cloudflare; clients receive only their own session JWT.
     if(path==='/api/auth/signup'&&req.method==='POST'){
       const body=await req.json();if(!body.email||!body.password||String(body.password).length<8)return fail(env,'Email and a password of at least 8 characters are required');
-      const data=await supabaseAuth(env,'signup',{email:String(body.email).trim().toLowerCase(),password:body.password,data:body.data||{}});return reply(env,data,201)
+      const data=await supabaseAuth(env,'signup',{email:String(body.email).trim().toLowerCase(),password:body.password});return reply(env,data,201)
     }
     if(path==='/api/auth/login'&&req.method==='POST'){
       const body=await req.json();const data=await supabaseAuth(env,'token?grant_type=password',{email:String(body.email||'').trim().toLowerCase(),password:body.password});return reply(env,data)
@@ -48,11 +47,10 @@ export default {async fetch(req,env,ctx){
       const user=await requireUser(req,env);return reply(env,{user})
     }
 
-    // Discover tenants owned by the signed-in operator.
+    // Discover tenants linked to the immutable auth user id.
     if(path==='/api/operators/mine'&&req.method==='GET'){
       const user=await requireUser(req,env);
-      let memberships=await sb(env,`operator_members?auth_user_id=eq.${encodeURIComponent(user.id)}&select=tenant_id,role,email`);
-      if(!memberships?.length&&user.email)memberships=await sb(env,`operator_members?email=eq.${encodeURIComponent(user.email)}&select=tenant_id,role,email`);
+      const memberships=await sb(env,`operator_members?auth_user_id=eq.${encodeURIComponent(user.id)}&select=tenant_id,role,email`);
       const ids=[...new Set((memberships||[]).map(x=>x.tenant_id))];
       const tenants=[];for(const id of ids){const rows=await sb(env,`tenants?id=eq.${encodeURIComponent(id)}&select=*`);if(rows?.[0])tenants.push({...rows[0],role:memberships.find(m=>m.tenant_id===id)?.role||'viewer'})}
       return reply(env,{tenants})
