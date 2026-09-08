@@ -1,5 +1,6 @@
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
+import { CATALOG } from './ai/envelope.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
 
@@ -96,6 +97,11 @@ export default {
         });
       }
 
+      if (path === '/v1' && request.method === 'GET') {
+        return reply(request, env, CATALOG);
+      }
+
+
       if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);
 
       if (path === '/internal/here-tenant-agent' && request.method === 'GET') {
@@ -129,6 +135,12 @@ export default {
           sb(env, 'inbox_channels?select=key,enabled').catch(() => null)
         ]);
 
+        const harness = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/ai_harness_status`, {
+          method: 'POST',
+          headers: sbHeaders(env),
+          body: JSON.stringify({ p_org: (await sb(env, 'orgs?slug=eq.mccluster&select=id&limit=1'))?.[0]?.id })
+        }).then(async (res) => res.ok ? res.json() : null).catch(() => null);
+
         return reply(request, env, {
           ok: true,
           checked_at: new Date().toISOString(),
@@ -147,7 +159,8 @@ export default {
             inbox_messages_in: inboxIn,
             conversations: convos
           },
-          channels: Array.isArray(channels) ? channels : []
+          channels: Array.isArray(channels) ? channels : [],
+          harness: harness || { ok: false, schema: 'ai_context' }
         });
       }
 
