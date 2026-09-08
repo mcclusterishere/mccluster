@@ -7,6 +7,7 @@ import { recommendModels } from './media/recommend.js';
 import { attachCompletedVariantAssets, handleSocialRequest } from './social/router.js';
 import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
 import { handleMetaWebhook } from './social/webhook.js';
+import { handleAiRequest } from './ai/router.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -115,6 +116,17 @@ export default {
         return reply(request, env, data, accepted ? 202 : 200);
       } catch (error) {
         return fail(request, env, error.message || 'Social request failed', error.status || 500, error.detail);
+      }
+    }
+
+
+    if (path === '/v1/ai' || path.startsWith('/v1/ai/')) {
+      try {
+        const user = await authUser(request, env);
+        const response = await handleAiRequest(request, env, user);
+        if (response) return response;
+      } catch (error) {
+        return fail(request, env, error.message || 'AI harness request failed', error.status || 500, error.detail);
       }
     }
 
