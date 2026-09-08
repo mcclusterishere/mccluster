@@ -4,6 +4,8 @@ const DEFAULT_ORIGINS = [
   'https://matthew.mccluster.org',
   'https://mccluster.org',
   'https://api.mccluster.org',
+  'https://esmer.mccluster.org',
+  'https://mcclusterishere.github.io',
   'http://localhost:8787',
   'http://127.0.0.1:8787',
   'http://localhost:5500',
