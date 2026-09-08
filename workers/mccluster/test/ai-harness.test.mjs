@@ -68,10 +68,15 @@ test('AI routes require house-owner membership, not any authenticated user', asy
 });
 
 test('private AI schema is locked away from anon and authenticated', async () => {
-  const sql = [
-    await readFile(resolve(repoRoot, 'supabase', 'migrations', '20260908221900_ai_harness.sql'), 'utf8'),
-    await readFile(resolve(repoRoot, 'supabase', 'migrations', '20260908221901_ai_harness_rpc.sql'), 'utf8'),
-  ].join('\n');
+  const files = [
+    '20260908221900_ai_harness.sql',
+    '20260908221901_ai_harness_ops.sql',
+    '20260908221902_ai_harness_ingest.sql',
+    '20260908221903_ai_harness_rpc.sql',
+  ];
+  const sql = (
+    await Promise.all(files.map((name) => readFile(resolve(repoRoot, 'supabase', 'migrations', name), 'utf8')))
+  ).join('\n');
   assert.match(sql, /create schema if not exists ai_context/);
   assert.match(sql, /revoke all on schema ai_context from public, anon, authenticated/);
   assert.match(sql, /revoke all on function public\.ai_ingest\(jsonb\) from public, anon, authenticated/);
