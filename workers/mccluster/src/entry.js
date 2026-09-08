@@ -1,5 +1,6 @@
 import core from './index.js';
 import { fail, reply } from './lib/http.js';
+import { handleClientRequest } from './client.js';
 import { createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
@@ -24,6 +25,13 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
+
+    try {
+      const clientResponse = await handleClientRequest(request, env);
+      if (clientResponse) return clientResponse;
+    } catch (error) {
+      return fail(request, env, error.message || 'Client request failed', error.status || 500, error.detail);
+    }
 
     if (path === '/v1/media/webhooks/fal' && request.method === 'POST') {
       try {
