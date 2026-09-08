@@ -50,6 +50,7 @@ jobs:
             supabase/functions/eu-monitor/index.ts \
             supabase/functions/eu-google-workspace/index.ts \
             supabase/functions/eu-orcid-oauth/index.ts \
+            supabase/functions/eu-crossref-callback/index.ts \
             supabase/functions/eu-government/index.ts \
             supabase/functions/eu-music/index.ts \
             supabase/functions/eu-derivatives/index.ts \
