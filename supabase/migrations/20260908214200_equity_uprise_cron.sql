@@ -71,17 +71,19 @@ begin
  if not exists(select 1 from private.eu_runtime) then raise exception 'configure eu_runtime first'; end if;
  begin perform cron.unschedule('eu-core-worker'); exception when others then null; end;
  begin perform cron.unschedule('eu-external-worker'); exception when others then null; end;
+ begin perform cron.unschedule('eu-ddex-worker'); exception when others then null; end;
  begin perform cron.unschedule('eu-monitor'); exception when others then null; end;
  begin perform cron.unschedule('eu-google-watch-renew'); exception when others then null; end;
  begin perform cron.unschedule('eu-google-history-safety-sync'); exception when others then null; end;
  select cron.schedule('eu-core-worker','* * * * *',$cmd$select private.eu_cron_worker('eu-worker',20);$cmd$) into j;
  select cron.schedule('eu-external-worker','* * * * *',$cmd$select private.eu_cron_worker('eu-external-worker',20);$cmd$) into j;
+ select cron.schedule('eu-ddex-worker','* * * * *',$cmd$select private.eu_cron_worker('eu-ddex-worker',10);$cmd$) into j;
  select cron.schedule('eu-monitor','*/10 * * * *',$cmd$select private.eu_cron_worker('eu-monitor',20);$cmd$) into j;
  if exists(select 1 from private.eu_runtime where google_secret_id is not null) then
    select cron.schedule('eu-google-watch-renew','17 8 * * *',$cmd$select private.eu_cron_google('gmail.watch.renew');$cmd$) into j;
    select cron.schedule('eu-google-history-safety-sync','47 * * * *',$cmd$select private.eu_cron_google('gmail.sync');$cmd$) into j;
  end if;
- return jsonb_build_object('installed',true,'core','every minute','external','every minute','monitors','every 10 minutes','gmail_watch','daily','gmail_sync','hourly');
+ return jsonb_build_object('installed',true,'core','every minute','external','every minute','ddex','every minute','monitors','every 10 minutes','gmail_watch','daily','gmail_sync','hourly');
 end;$fn$;
 revoke all on function public.eu_cron_install_service() from public,anon,authenticated;
 grant execute on function public.eu_cron_install_service() to service_role;
