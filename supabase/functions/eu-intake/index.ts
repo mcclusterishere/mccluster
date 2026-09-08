@@ -9,6 +9,11 @@ function arr(v: unknown, max = 30) {
   return Array.isArray(v) ? v.slice(0, max).map((x) => safeText(x, 120)).filter(Boolean) : [];
 }
 
+function randomToken(bytes = 32) {
+  const raw = crypto.getRandomValues(new Uint8Array(bytes));
+  return btoa(String.fromCharCode(...raw)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
 async function publicInitiative(orgId: string, id: unknown) {
   const sid = safeText(id, 80);
   if (!sid) return null;
@@ -83,7 +88,7 @@ async function upsertStakeholder(orgId: string, input: Record<string, unknown>, 
   return { id: rows[0].id, email };
 }
 
-async function stakeholderIntake(req: Request, body: Record<string, unknown>) {
+async function stakeholderIntake(_req: Request, body: Record<string, unknown>) {
   const org = await orgBySlug("mccluster");
   const initiative = await publicInitiative(org.id, body.initiative_id);
   if (!initiative) throw new Error("active public initiative required");
@@ -148,6 +153,8 @@ async function fellowshipIntake(req: Request, body: Record<string, unknown>) {
   const prior = await db(`eu_fellowship_applications?org_id=eq.${org.id}&email=ilike.${encodeURIComponent(email)}&stage=not.in.(declined,withdrawn)&select=id,stage&order=created_at.desc&limit=1`);
   if (prior?.length) return { ok: true, application_id: prior[0].id, stage: prior[0].stage, duplicate: true };
 
+  const bookingToken = randomToken();
+  const bookingTokenHash = await sha256Hex(bookingToken);
   const made = await db("eu_fellowship_applications", {
     method: "POST",
     body: JSON.stringify({
@@ -170,6 +177,7 @@ async function fellowshipIntake(req: Request, body: Record<string, unknown>) {
       consent: typeof body.consent === "object" && body.consent ? body.consent : {},
       stage: "submitted",
       submitted_at: new Date().toISOString(),
+      booking_token_hash: bookingTokenHash,
     }),
   });
   const app = made[0];
@@ -184,7 +192,7 @@ async function fellowshipIntake(req: Request, body: Record<string, unknown>) {
     data: { stakeholder_id: stakeholder.id, initiative_ids: validInitiatives },
     idempotencyKey: `fellowship:${app.id}:submitted`,
   });
-  return { ok: true, application_id: app.id, stage: app.stage };
+  return { ok: true, application_id: app.id, stage: app.stage, booking_token: bookingToken };
 }
 
 Deno.serve(async (req) => {
