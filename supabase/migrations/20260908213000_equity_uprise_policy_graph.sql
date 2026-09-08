@@ -592,12 +592,20 @@ using (
 do $$ declare t text; begin
   foreach t in array array[
     'eu_stakeholder_orgs','eu_stakeholders','eu_stakeholder_links','eu_communications',
-    'eu_meetings','eu_meeting_participants','eu_commitments','eu_calendar_settings','eu_interview_requests','eu_events'
+    'eu_meetings','eu_commitments','eu_calendar_settings','eu_interview_requests','eu_events'
   ] loop
     execute format('drop policy if exists %I on public.%I', t || '_org_read', t);
     execute format('create policy %I on public.%I for select to authenticated using (public.is_org_member(org_id))', t || '_org_read', t);
   end loop;
 end $$;
+
+-- eu_meeting_participants is the one operational table with no org_id of its
+-- own: a participant row is identified by (meeting_id, email) and inherits
+-- tenancy from its meeting. It was in the org_id loop above, which made this
+-- migration fail outright with 42703 on a clean database.
+drop policy if exists eu_meeting_participants_org_read on public.eu_meeting_participants;
+create policy eu_meeting_participants_org_read on public.eu_meeting_participants for select to authenticated
+using (exists(select 1 from public.eu_meetings m where m.id = meeting_id and public.is_org_member(m.org_id)));
 
 -- Applicant can read their own application after signing in; staff sees all.
 drop policy if exists eu_fellowship_app_read on public.eu_fellowship_applications;
@@ -627,15 +635,16 @@ using (
 );
 
 -- Research children inherit access through their project/manuscript.
-do $$ declare t text; fk text; begin
-  foreach t, fk in array values
-    ('eu_sources','research_project_id'),
-    ('eu_claims','research_project_id')
-  loop
+-- `foreach a, b in array values (...)` is not PL/pgSQL: a multi-variable
+-- FOREACH needs SLICE over a real 2-D array, and VALUES is not an array
+-- expression at all. This block was a syntax error, so the migration could
+-- never have run. Both tables key on the same column, so one variable does.
+do $$ declare t text; begin
+  foreach t in array array['eu_sources','eu_claims'] loop
     execute format('drop policy if exists %I on public.%I', t || '_read', t);
     execute format(
-      'create policy %I on public.%I for select to authenticated using (exists(select 1 from public.eu_research_projects p where p.id=%I and (public.is_org_member(p.org_id) or exists(select 1 from public.eu_research_members rm join public.m_auth_user_links l on l.m_uid=rm.m_uid where rm.research_project_id=p.id and rm.status=''active'' and l.auth_user_id=auth.uid()))))',
-      t || '_read', t, fk
+      'create policy %I on public.%I for select to authenticated using (exists(select 1 from public.eu_research_projects p where p.id=%I.research_project_id and (public.is_org_member(p.org_id) or exists(select 1 from public.eu_research_members rm join public.m_auth_user_links l on l.m_uid=rm.m_uid where rm.research_project_id=p.id and rm.status=''active'' and l.auth_user_id=auth.uid()))))',
+      t || '_read', t, t
     );
   end loop;
 end $$;

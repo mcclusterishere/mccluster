@@ -3,7 +3,7 @@
 // Final event creation is a high-risk control-plane action and requires an
 // approved control_approval bound to the exact interview request hash.
 import {
-  authorize, cors, db, emitEvent, json, orgBySlug, safeText, sha256Hex, verifyCaller, verifyTurnstile,
+  authorize, cors, db, emitEvent, json, orgBySlug, safeText, sha256Hex, verifyCaller, turnstileFailure, verifyTurnstile,
 } from "../_shared/eu-policy-os.ts";
 
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
@@ -290,8 +290,11 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const action = safeText(body.action, 50);
     if (["availability","request"].includes(action)) {
-      const ok = await verifyTurnstile(req, body.turnstile_token);
-      if (!ok) return json({ error: "verification failed" }, 403);
+      const verified = await verifyTurnstile(req, body.turnstile_token);
+      if (!verified.ok) {
+        const failure = turnstileFailure(verified);
+        return json(failure.body, failure.status);
+      }
       const org = await orgBySlug("mccluster");
       await applicationFromCapability(org.id, body.application_id, body.booking_token);
       if (action === "availability") return json(await availableSlots(org.id, safeText(body.start_date, 10), Number(body.days) || 14));
