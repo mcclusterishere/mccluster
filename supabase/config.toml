@@ -30,7 +30,7 @@ verify_jwt = false
 verify_jwt = false
 
 # Pub/Sub / cron / OAuth callback / internal workers authenticate using provider
-# signatures, one-time OAuth state, or dedicated internal secrets.
+# signatures, one-time OAuth state, dedicated callback tokens, or internal secrets.
 [functions.eu-google-workspace]
 verify_jwt = false
 
@@ -47,6 +47,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.eu-orcid-oauth]
+verify_jwt = false
+
+[functions.eu-crossref-callback]
 verify_jwt = false
 
 # Staff/fellow control surfaces require a real Supabase user JWT at the gateway
