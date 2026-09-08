@@ -23,7 +23,7 @@ Git may contain intentionally redacted or generated context summaries when usefu
 
 ## Ingestion contract
 
-All providers normalize into one McCluster conversation shape before storage. Current ingress is the authenticated Supabase Edge Function `context-ingest`.
+All providers normalize into one McCluster conversation shape before storage. Canonical ingress is Worker `POST /v1/ai/ingest` on `api.mccluster.org`. The Supabase Edge Function `context-ingest` accepts the same envelope so adapters that already speak Edge Functions do not invent a second memory store. Both doors write `ai_context` through service-role RPCs. Schema: `supabase/migrations/20260908221900_ai_harness.sql`.
 
 Required envelope:
 
@@ -77,6 +77,8 @@ The private corpus supports:
 - hybrid retrieval that combines durable memory, recent messages, CRM/ops state, and relevant repository context.
 
 A model should receive the smallest sufficient context package, not the entire transcript archive on every request.
+
+Lexical retrieval ships in `20260908221900_ai_harness.sql`. pgvector is the next shelf on the same project — do not invent a second vector database.
 
 ## Model adapters
 
