@@ -82,6 +82,10 @@ drop trigger if exists eu_publications_touch on public.eu_publications;
 create trigger eu_publications_touch before update on public.eu_publications
 for each row execute function private.eu_touch_updated_at();
 
+-- Guarded: a bare ADD CONSTRAINT makes the migration fail on a second run,
+-- which turns an ordinary replay into a manual cleanup.
+alter table public.eu_government_submissions
+  drop constraint if exists eu_government_submissions_publication_fk;
 alter table public.eu_government_submissions
   add constraint eu_government_submissions_publication_fk
   foreign key (publication_id) references public.eu_publications(id) on delete set null;
