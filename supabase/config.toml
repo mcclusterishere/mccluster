@@ -40,3 +40,8 @@ verify_jwt = false
 # is not going to before they know whether the name is free.
 [functions.domain-check]
 verify_jwt = false
+
+# Private AI harness ingress. Authenticates callers itself — house owner
+# JWT or service role. Never a public website datastore.
+[functions.context-ingest]
+verify_jwt = false
