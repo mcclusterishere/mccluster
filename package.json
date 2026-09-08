@@ -10,5 +10,9 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^6.1.0"
+  },
+  "scripts": {
+    "test": "node --test-reporter=spec --test supabase/tests/*.test.mjs || for f in supabase/tests/*.test.mjs; do echo \"\\n== $f\"; node \"$f\" || exit 1; done",
+    "test:social": "node supabase/tests/social-authz.test.mjs"
   }
 }

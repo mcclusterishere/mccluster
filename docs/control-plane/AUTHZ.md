@@ -156,6 +156,78 @@ isolates to recycle. Concurrent cold starts share one fetch.
 **Role lookup is deliberately not cached.** If a grant must be revoked
 *immediately*, revoke the membership: that takes effect on the next request.
 
+## The same rules in the Worker
+
+The Cloudflare Worker cannot import `authz.ts` — different runtime — but
+it reads the **same two tables**, so there is one vocabulary and one
+grant matrix across both. `workers/mccluster/src/social/router.js` and
+`media/router.js` each have a `resolveOrg(env, userId, orgId, capability)`.
+
+Both had the identical defect, found on 2026-09-07: `getOrg()` selected
+`org_id,role` and **no call site ever read the role**. Membership in any
+org was the whole check.
+
+| Worker route | Capability |
+| --- | --- |
+| `GET /v1/social/accounts`, `campaigns`, `automations`, leaderboard | `social.read` |
+| `POST /v1/social/accounts` | **`social.connect`** |
+| `POST /v1/social/campaigns`, `publish`, `posts`, `metrics`, `automations` | `social.queue` |
+| `POST /v1/social/variants/generate`, `/v1/media/generate`, `/v1/media/bakeoff` | `media.generate` |
+| `GET /v1/media/jobs/:id` | `campaign.read` |
+
+`social.connect` is new in `0060`. Attaching a credential decides which
+account everything afterwards speaks as, which is strictly more
+dangerous than posting once, so it is graded high and owner-only rather
+than folded into `social.publish`.
+
+### The org default was a footgun on its own
+
+Given no `org_id`, both routers took `order=added_at.asc&limit=1` — the
+caller's *oldest* membership. For an operator in several client orgs,
+omitting one query parameter published to whichever client they joined
+first. No attacker required. Both now refuse and ask which org, unless
+the caller belongs to exactly one.
+
+### `credential_ref` is a secret selector
+
+`social_accounts.credential_ref` holds the **name** of a Worker secret,
+resolved with `env[ref]`. Storing the name rather than the token is
+right; taking the name from the request body and looking it up with no
+constraint was not. Any member could have pointed an account at
+`STRIPE_SECRET_KEY`.
+
+It must now match `SOCIAL_[A-Z0-9_]{1,64}` — enforced by a CHECK
+constraint in `0060`, at the write site in `router.js`, and again at the
+read site in `meta.js`, so a row predating the constraint still cannot
+select an unrelated binding.
+
+## Publishing exactly once
+
+`processInstagramPublishQueue` read `state in ('queued','processing')`
+and published in a plain loop with nothing between the read and the call
+to Meta — and `processing` is the state set *after* a media container is
+created and *before* `media_publish`. Two overlapping cron runs did not
+merely race for a queued job; the second re-selected a job the first was
+mid-publish and called `media_publish` on the same container again. The
+client's Reel goes out twice. `dedupe_key` never helped: it is unique on
+our table and says nothing about how many times we called Instagram.
+
+Jobs are now claimed with a compare-and-swap:
+
+```
+PATCH social_publish_jobs?id=eq.$1&or=(lease_until.is.null,lease_until.lt.$now)
+```
+
+A concurrent updater blocks on the row lock, re-evaluates the predicate
+against the committed new version, matches nothing, and gets zero rows
+back. Zero rows means someone else owns it.
+
+The lease **expires rather than releases**, so a Worker that dies
+mid-publish does not strand the job — and it covers **one phase, not the
+whole job**, because the second phase is meant to be a later run.
+Holding it across both would turn a safety mechanism into a ten-minute
+delay on every post.
+
 ## Identity elsewhere: `context-ingest` and `context-query`
 
 Both derived the caller by base64-decoding the JWT payload and trusting

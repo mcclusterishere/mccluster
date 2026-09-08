@@ -28,15 +28,76 @@ async function rpc(env, name, payload) {
   });
 }
 
-async function getOrg(env, userId, requestedOrgId) {
+// ---------------------------------------------------------------
+// AUTHORIZATION
+//
+// This file had the same defect the social router had: it selected
+// `org_id,role` and never read the role, so membership alone let any
+// member of any org start generations. Generation is not a read — it
+// calls fal.ai and SPENDS REAL MONEY per job, reserved against the org's
+// budget. A viewer could burn a client's balance.
+//
+// Resolved through the same `control_role_capabilities` grant matrix the
+// social router and the edge functions use. `media.generate` is graded
+// medium (staff and above); `media.spend` stays high and is what any
+// future budget-raising path should require.
+// ---------------------------------------------------------------
+
+const GRANT_TTL_MS = 60_000;
+let grantCache = null;
+let grantInFlight = null;
+
+async function loadGrants(env) {
+  const rows = await db(env, 'control_role_capabilities?select=role,capability,allowed');
+  if (!Array.isArray(rows) || !rows.length) {
+    // Fail closed: an unreadable grant table stops the call.
+    throw Object.assign(new Error('Authorization is temporarily unavailable'), { status: 503 });
+  }
+  const grants = new Map();
+  for (const row of rows) grants.set(`${row.role} ${row.capability}`, row.allowed === true);
+  return { grants, loadedAt: Date.now() };
+}
+
+async function grantTable(env) {
+  if (grantCache && Date.now() - grantCache.loadedAt < GRANT_TTL_MS) return grantCache;
+  if (!grantInFlight) {
+    grantInFlight = loadGrants(env)
+      .then((table) => { grantCache = table; return table; })
+      .finally(() => { grantInFlight = null; });
+  }
+  return grantInFlight;
+}
+
+/**
+ * Which org this call acts on, and whether the caller may do the thing.
+ *
+ * Given no org_id the old code took the caller's OLDEST membership,
+ * silently. For anyone in more than one client org that meant spending
+ * whichever client's budget they happened to join first. A default is
+ * only safe when there is exactly one thing it could mean.
+ */
+async function resolveOrg(env, userId, requestedOrgId, capability) {
+  if (!capability) throw new Error(`resolveOrg called with no capability for user ${userId}`);
+
+  let row;
   if (requestedOrgId) {
     const rows = await db(env, `org_members?org_id=eq.${encodeURIComponent(requestedOrgId)}&profile_id=eq.${encodeURIComponent(userId)}&select=org_id,role&limit=1`);
-    if (!rows?.length) throw Object.assign(new Error('You are not a member of that organization'), { status: 403 });
-    return rows[0];
+    row = rows?.[0];
+    if (!row) throw Object.assign(new Error('You are not a member of that organization'), { status: 403 });
+  } else {
+    const rows = await db(env, `org_members?profile_id=eq.${encodeURIComponent(userId)}&select=org_id,role&order=added_at.asc&limit=25`);
+    if (!rows?.length) throw Object.assign(new Error('No McCluster organization membership found'), { status: 403 });
+    if (rows.length > 1) {
+      throw Object.assign(new Error('You belong to more than one organisation; name which one with org_id'), { status: 400 });
+    }
+    row = rows[0];
   }
-  const rows = await db(env, `org_members?profile_id=eq.${encodeURIComponent(userId)}&select=org_id,role&order=added_at.asc&limit=1`);
-  if (!rows?.length) throw Object.assign(new Error('No McCluster organization membership found'), { status: 403 });
-  return rows[0];
+
+  const { grants } = await grantTable(env);
+  if (grants.get(`${row.role} ${capability}`) !== true) {
+    throw Object.assign(new Error(`Your role (${row.role}) does not include ${capability}`), { status: 403 });
+  }
+  return row;
 }
 
 async function modelById(env, id) {
@@ -217,7 +278,7 @@ export async function listModels(request, env) {
 export async function createGeneration(request, env, user) {
   let body;
   try { body = await request.json(); } catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
-  const org = await getOrg(env, user.id, body.org_id || null);
+  const org = await resolveOrg(env, user.id, body.org_id || null, 'media.generate');
   if (!body.model_id) throw Object.assign(new Error('model_id is required'), { status: 400 });
   const model = await modelById(env, body.model_id);
   if (!model) throw Object.assign(new Error('Unknown or disabled media model'), { status: 404 });
@@ -346,7 +407,7 @@ export async function handleFalWebhook(request, env) {
 
 export async function getGeneration(request, env, user, jobId, refresh = true) {
   const url = new URL(request.url);
-  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+  const org = await resolveOrg(env, user.id, url.searchParams.get('org_id'), 'campaign.read');
   let job = await jobById(env, jobId, org.org_id);
   if (!job) throw Object.assign(new Error('Media job not found'), { status: 404 });
 

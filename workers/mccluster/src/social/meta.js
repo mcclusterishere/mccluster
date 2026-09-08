@@ -70,9 +70,23 @@ async function graphPost(env, path, token, params) {
   return data;
 }
 
+/**
+ * `credential_ref` is the NAME of a Worker secret, and `env[ref]` is an
+ * unrestricted dynamic lookup over every binding this Worker has. The
+ * name arrives from a row that an API caller created, so the shape rule
+ * is re-applied HERE as well as at the write — a row that predates the
+ * CHECK constraint in 0060, or one written by any future path that
+ * forgets to validate, still cannot select an unrelated secret.
+ *
+ * Same regex as the constraint and as router.js, deliberately: three
+ * copies of one rule is fine when the rule is "these characters only".
+ */
+const CREDENTIAL_REF_SHAPE = /^SOCIAL_[A-Z0-9_]{1,64}$/;
+
 function tokenFor(env, account) {
   const ref = account?.credential_ref;
-  return ref ? env[ref] || null : null;
+  if (!ref || !CREDENTIAL_REF_SHAPE.test(String(ref))) return null;
+  return env[ref] || null;
 }
 
 async function resolveVideoUrl(env, job) {
@@ -160,26 +174,101 @@ async function processPublishJob(env, job) {
   return { state: job.state, skipped: true };
 }
 
+/** How long a claimer owns a job before another run may take it back.
+ *  Longer than any single publish should take, shorter than the pain of
+ *  a stuck job. The cron fires every five minutes, so ten gives a slow
+ *  Meta call room to finish without letting a dead Worker strand work
+ *  for long. */
+const LEASE_MS = 10 * 60 * 1000;
+
+/**
+ * Take exclusive ownership of one job, or return null.
+ *
+ * This is the fix for the worst bug in the social engine. The queue was
+ * read with `state in ('queued','processing')` and then published in a
+ * plain loop, with nothing between the read and the call to Meta — and
+ * 'processing' is the state set AFTER a media container is created and
+ * BEFORE media_publish is called. So two overlapping cron runs did not
+ * merely race for a queued job: the second re-selected a job the first
+ * was mid-way through publishing, and called media_publish on the same
+ * container again. The client's Reel goes out twice.
+ *
+ * `dedupe_key` never helped — it is unique on our table and says nothing
+ * about how many times we called Instagram.
+ *
+ * The PATCH below is a real compare-and-swap. Postgres makes a
+ * concurrent updater block on the row lock, then re-evaluate the WHERE
+ * against the committed new version; the loser matches nothing and gets
+ * zero rows back. Zero rows means someone else owns this job.
+ *
+ * The lease EXPIRES rather than being released, because the failure it
+ * has to survive is a Worker dying mid-publish. A lock that needed
+ * releasing would strand that job forever.
+ */
+async function claimJob(env, job, runId) {
+  const now = new Date();
+  const claimed = await db(
+    env,
+    `social_publish_jobs?id=eq.${encodeURIComponent(job.id)}` +
+      `&or=(lease_until.is.null,lease_until.lt.${encodeURIComponent(now.toISOString())})`,
+    {
+      method: 'PATCH',
+      headers: { prefer: 'return=representation' },
+      body: JSON.stringify({
+        lease_owner: runId,
+        lease_until: new Date(now.getTime() + LEASE_MS).toISOString(),
+        updated_at: now.toISOString()
+      })
+    }
+  );
+  return claimed?.[0] || null;
+}
+
 export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
   const now = new Date().toISOString();
   const safeLimit = Math.min(25, Math.max(1, Number(limit) || 10));
+  // A run identity so a leased row says who holds it. Informational —
+  // the lease is enforced by lease_until, not by this string.
+  const runId = crypto.randomUUID();
   const jobs = await db(env, `social_publish_jobs?state=in.(queued,processing)&scheduled_at=lte.${encodeURIComponent(now)}&order=scheduled_at.asc&limit=${safeLimit}&select=*`);
   const results = [];
-  for (const job of jobs || []) {
+  let skipped = 0;
+  for (const candidate of jobs || []) {
+    // Claim BEFORE anything reaches Meta. Everything after this point
+    // works from the freshly-read `job`, not the candidate row, because
+    // the claim returns the row as it actually is now.
+    const job = await claimJob(env, candidate, runId);
+    if (!job) { skipped += 1; continue; }
     try {
-      results.push({ id: job.id, ...(await processPublishJob(env, job)) });
+      const outcome = await processPublishJob(env, job);
+      // The lease covers ONE PHASE, not the whole job. Publishing is
+      // deliberately two-phase — create the container, then publish it
+      // once Meta reports FINISHED — and the second phase is meant to be
+      // picked up by a later run. Holding the lease across both would
+      // make every post wait out the full lease window before it could
+      // finish, turning a safety mechanism into a ten-minute delay.
+      //
+      // So: release unless the job is done. 'published' is terminal;
+      // 'failed' is set in the catch below, which releases separately.
+      if (outcome?.state !== 'published') {
+        await patch(env, 'social_publish_jobs', job.id, { lease_until: null, lease_owner: null });
+      }
+      results.push({ id: job.id, ...outcome });
     } catch (error) {
       const attempts = Number(job.attempts || 0) + 1;
       const terminal = attempts >= 5;
       await patch(env, 'social_publish_jobs', job.id, {
         state: terminal ? 'failed' : job.state,
         attempts,
-        last_error: error instanceof Error ? error.message : String(error)
+        last_error: error instanceof Error ? error.message : String(error),
+        // Hand a failed-but-retryable job straight back, rather than
+        // making the next run wait out the full lease for nothing.
+        lease_until: terminal ? null : new Date().toISOString()
       });
       results.push({ id: job.id, state: terminal ? 'failed' : job.state, error: error instanceof Error ? error.message : String(error) });
     }
   }
-  return { checked: jobs?.length || 0, results };
+  return { checked: jobs?.length || 0, claimed: results.length, skipped_leased: skipped, results };
 }
 
 function metricValue(payload) {
