@@ -16,11 +16,11 @@ The Worker routes and Edge Function are in git. The private schema is not
 in the live database until you paste it.
 
 1. Open https://supabase.com/dashboard/project/zmnhbrjyhxzhkxmhkexs/sql/new
-2. Open this file:
-   https://github.com/mcclusterishere/mccluster/blob/main/supabase/migrations/20260908221900_ai_harness.sql
-3. Copy the whole file. Paste. Run.
-4. Open https://api.mccluster.org/v1 — you want a JSON catalog, not 404.
-5. Signed in as house owner, `GET /v1/ai/status` should return `{ ok: true, schema: "ai_context" }`.
+2. Paste and run, in order:
+   - https://github.com/mcclusterishere/mccluster/blob/main/supabase/migrations/20260908221900_ai_harness.sql
+   - https://github.com/mcclusterishere/mccluster/blob/main/supabase/migrations/20260908221901_ai_harness_rpc.sql
+3. Open https://api.mccluster.org/v1 — you want a JSON catalog, not 404.
+4. Signed in as house owner, `GET /v1/ai/status` should return `{ ok: true, schema: "ai_context" }`.
 
 Do not create a second Supabase project.
 Do not put raw conversations in git.
