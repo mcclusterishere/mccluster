@@ -1,0 +1,57 @@
+name: Equity Uprise Policy OS
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20260908213*.sql'
+      - 'supabase/migrations/20260908214*.sql'
+      - 'supabase/functions/eu-*/**'
+      - 'supabase/functions/_shared/eu-policy-os.ts'
+      - 'supabase/config.toml'
+      - 'scripts/check_policy_os_sql.py'
+  push:
+    branches: [equity-uprise-policy-os]
+    paths:
+      - 'supabase/migrations/20260908213*.sql'
+      - 'supabase/migrations/20260908214*.sql'
+      - 'supabase/functions/eu-*/**'
+      - 'supabase/functions/_shared/eu-policy-os.ts'
+      - 'supabase/config.toml'
+      - 'scripts/check_policy_os_sql.py'
+
+jobs:
+  sql-parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'pglast>=7,<8'
+      - run: python scripts/check_policy_os_sql.py
+
+  edge-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check Policy OS functions
+        run: |
+          deno check \
+            supabase/functions/eu-intake/index.ts \
+            supabase/functions/eu-calendar/index.ts \
+            supabase/functions/eu-workspace/index.ts \
+            supabase/functions/eu-publish/index.ts \
+            supabase/functions/eu-worker/index.ts \
+            supabase/functions/eu-external-worker/index.ts \
+            supabase/functions/eu-ddex-worker/index.ts \
+            supabase/functions/eu-monitor/index.ts \
+            supabase/functions/eu-google-workspace/index.ts \
+            supabase/functions/eu-orcid-oauth/index.ts \
+            supabase/functions/eu-government/index.ts \
+            supabase/functions/eu-music/index.ts \
+            supabase/functions/eu-derivatives/index.ts \
+            supabase/functions/eu-status/index.ts \
+            supabase/functions/eu-control/index.ts
