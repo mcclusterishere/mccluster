@@ -1,8 +1,5 @@
 import { createGeneration } from '../media/router.js';
-// clamp and scoreMetrics live in score.js so they can be imported and
-// tested without pulling in the fal.ai SDK through media/router.js.
-import { clamp, scoreMetrics } from './score.js';
-export { scoreMetrics };
+import { credentialRefForConfiguredChannel, requireOrgId, requireOrgRole } from './security.js';
 
 function headers(env) {
   return {
@@ -29,120 +26,22 @@ async function bodyJson(request) {
   catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
 }
 
-// ---------------------------------------------------------------
-// AUTHORIZATION
-//
-// The previous version of this file selected `org_id,role` and then
-// never read the role. Membership was the whole check, so a viewer in
-// any org could connect accounts, spend money generating variants,
-// queue publications and inject metrics that steer the learning loop.
-//
-// The role is now resolved into a CAPABILITY, using the same
-// `control_capabilities` / `control_role_capabilities` tables the edge
-// functions read (see supabase/functions/_shared/authz.ts and
-// docs/control-plane/AUTHZ.md). One vocabulary, one grant matrix, two
-// runtimes. Changing who may publish stays an UPDATE, not a redeploy.
-// ---------------------------------------------------------------
-
-const GRANT_TTL_MS = 60_000;
-let grantCache = null;
-let grantInFlight = null;
-
-async function loadGrants(env) {
-  const rows = await db(env, 'control_role_capabilities?select=role,capability,allowed');
-  if (!Array.isArray(rows) || !rows.length) {
-    // Fail closed. An unreadable grant table is a reason to stop, never
-    // a reason to let the call through.
-    throw Object.assign(new Error('Authorization is temporarily unavailable'), { status: 503 });
-  }
-  const grants = new Map();
-  for (const row of rows) grants.set(`${row.role} ${row.capability}`, row.allowed === true);
-  return { grants, loadedAt: Date.now() };
+async function getOrg(env, userId, requestedOrgId) {
+  const orgId = requireOrgId(requestedOrgId);
+  const rows = await db(env, `org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(userId)}&select=org_id,role&limit=1`);
+  if (!rows?.length) throw Object.assign(new Error('No matching McCluster organization membership found'), { status: 403 });
+  return rows[0];
 }
 
-async function grantTable(env) {
-  if (grantCache && Date.now() - grantCache.loadedAt < GRANT_TTL_MS) return grantCache;
-  if (!grantInFlight) {
-    grantInFlight = loadGrants(env)
-      .then((table) => { grantCache = table; return table; })
-      .finally(() => { grantInFlight = null; });
+async function configuredCredentialRef(env, orgId, platform, externalAccountId) {
+  if (String(platform || '').toLowerCase() !== 'instagram') return null;
+  const rows = await db(env, `org_channels?org_id=eq.${encodeURIComponent(orgId)}&channel=eq.instagram&enabled=eq.true&select=token_env,secret_id,account_id&limit=1`);
+  const channel = rows?.[0] || null;
+  if (!channel) return null;
+  if (channel.account_id && String(channel.account_id) !== String(externalAccountId)) {
+    throw Object.assign(new Error('Instagram account id does not match the credential configured for this organization'), { status: 409 });
   }
-  return grantInFlight;
-}
-
-/**
- * Resolve which org this call acts on, then check the caller may do the
- * thing. Both halves matter and both used to be missing.
- *
- * The org half: the old code, given no org_id, took
- * `order=added_at.asc&limit=1` — the caller's OLDEST membership. For an
- * agency operator who belongs to several client orgs, omitting one
- * query parameter silently published to whichever client they joined
- * first. "Posted to the wrong client's account" is the failure that
- * costs you the client, and it needed no attacker to happen. A default
- * is only safe when there is exactly one thing it could mean.
- */
-async function resolveOrg(env, userId, requestedOrgId, capability) {
-  if (!capability) throw new Error(`resolveOrg called with no capability for user ${userId}`);
-
-  let row;
-  if (requestedOrgId) {
-    const rows = await db(
-      env,
-      `org_members?org_id=eq.${encodeURIComponent(requestedOrgId)}&profile_id=eq.${encodeURIComponent(userId)}&select=org_id,role&limit=1`
-    );
-    row = rows?.[0];
-    // Same refusal for "not a member" and "no such org", so this does
-    // not become an oracle for which org ids exist.
-    if (!row) throw Object.assign(new Error('No matching McCluster organization membership found'), { status: 403 });
-  } else {
-    const rows = await db(
-      env,
-      `org_members?profile_id=eq.${encodeURIComponent(userId)}&select=org_id,role&order=added_at.asc&limit=25`
-    );
-    if (!rows?.length) throw Object.assign(new Error('No matching McCluster organization membership found'), { status: 403 });
-    if (rows.length > 1) {
-      throw Object.assign(
-        new Error('You belong to more than one organisation; name which one with org_id'),
-        { status: 400 }
-      );
-    }
-    row = rows[0];
-  }
-
-  const { grants } = await grantTable(env);
-  if (grants.get(`${row.role} ${capability}`) !== true) {
-    throw Object.assign(
-      new Error(`Your role (${row.role}) does not include ${capability}`),
-      { status: 403 }
-    );
-  }
-  return row;
-}
-
-/**
- * `credential_ref` names a Worker secret; the publisher resolves it with
- * `env[ref]`. That is an unrestricted dynamic lookup over every binding
- * the Worker has, and this endpoint takes the name from the request
- * body — so without a shape rule, a caller could point a social account
- * at STRIPE_SECRET_KEY or the service-role key.
- *
- * The prefix is the whole defence: only secrets deliberately named for
- * this purpose can be selected. Checked here for a good error message
- * and by a CHECK constraint in 0060 for the guarantee.
- */
-const CREDENTIAL_REF_SHAPE = /^SOCIAL_[A-Z0-9_]{1,64}$/;
-
-function validCredentialRef(value) {
-  if (value == null || value === '') return null;
-  const ref = String(value);
-  if (!CREDENTIAL_REF_SHAPE.test(ref)) {
-    throw Object.assign(
-      new Error('credential_ref must name a Worker secret of the form SOCIAL_YOUR_ACCOUNT'),
-      { status: 400 }
-    );
-  }
-  return ref;
+  return credentialRefForConfiguredChannel('instagram', channel);
 }
 
 async function ownedRow(env, table, id, orgId, select = '*') {
@@ -168,6 +67,38 @@ async function patch(env, table, id, value) {
   return rows?.[0] || null;
 }
 
+function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+
+// `Math.max(0, Number(x))` looks like a clamp but is not one: Number('abc')
+// is NaN, and Math.max(0, NaN) is NaN, not 0. Metrics arrive from the Meta
+// Graph API and from operator-supplied JSON, so one non-numeric field used
+// to poison `score` — and `score` is what the variant generator orders by
+// to pick top performers, so a single NaN silently removed a variant from
+// consideration forever. Everything numeric goes through num().
+function num(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+export function scoreMetrics(metrics = {}) {
+  const views = num(metrics.views);
+  const reach = num(metrics.reach) || views;
+  const likes = num(metrics.likes);
+  const comments = num(metrics.comments);
+  const shares = num(metrics.shares);
+  const saves = num(metrics.saves);
+  const follows = num(metrics.follows);
+  const dms = num(metrics.dms);
+  const leads = num(metrics.leads);
+  const retention = metrics.retention_3s == null ? 0 : clamp(num(metrics.retention_3s), 0, 1);
+  const viewScore = clamp(Math.log10(views + 1) * 20, 0, 100);
+  const engagementScore = clamp(((likes + comments * 2 + shares * 4 + saves * 4) / Math.max(views, 1)) * 1000, 0, 100);
+  const conversionScore = clamp(((follows * 4 + dms * 8 + leads * 15) / Math.max(reach, 1)) * 1000, 0, 100);
+  const retentionScore = retention * 100;
+  const score = Number((viewScore * 0.20 + engagementScore * 0.35 + conversionScore * 0.25 + retentionScore * 0.20).toFixed(3));
+  return { score, components: { views: Number(viewScore.toFixed(3)), engagement: Number(engagementScore.toFixed(3)), conversion: Number(conversionScore.toFixed(3)), retention: Number(retentionScore.toFixed(3)) } };
+}
+
 function generationRequest(request, payload) {
   const h = new Headers(request.headers);
   h.set('content-type', 'application/json');
@@ -176,23 +107,29 @@ function generationRequest(request, payload) {
 
 async function listAccounts(request, env, user) {
   const url = new URL(request.url);
-  const org = await resolveOrg(env, user.id, url.searchParams.get('org_id'), 'social.read');
-  const rows = await db(env, `social_accounts?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.asc&select=id,org_id,platform,external_account_id,handle,display_name,credential_ref,status,capabilities,settings,last_synced_at,created_at,updated_at`);
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+  const rows = await db(env, `social_accounts?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.asc&select=id,org_id,platform,external_account_id,handle,display_name,status,capabilities,settings,last_synced_at,created_at,updated_at`);
   return { org_id: org.org_id, accounts: rows || [] };
 }
 
 async function createAccount(request, env, user) {
   const body = await bodyJson(request);
-  const org = await resolveOrg(env, user.id, body.org_id || null, 'social.connect');
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
   if (!body.platform || !body.external_account_id) throw Object.assign(new Error('platform and external_account_id are required'), { status: 400 });
+  if (body.credential_ref != null) {
+    throw Object.assign(new Error('credential_ref is server-managed and cannot be supplied by clients'), { status: 400 });
+  }
+  const platform = String(body.platform).toLowerCase();
+  const credentialRef = await configuredCredentialRef(env, org.org_id, platform, body.external_account_id);
   return { account: await insert(env, 'social_accounts', {
     org_id: org.org_id,
-    platform: String(body.platform).toLowerCase(),
+    platform,
     external_account_id: String(body.external_account_id),
     handle: body.handle || null,
     display_name: body.display_name || null,
-    credential_ref: validCredentialRef(body.credential_ref),
-    status: body.status || (body.credential_ref ? 'connected' : 'disconnected'),
+    credential_ref: credentialRef,
+    status: credentialRef ? 'connected' : 'disconnected',
     capabilities: body.capabilities || {},
     settings: body.settings || {}
   }) };
@@ -200,14 +137,15 @@ async function createAccount(request, env, user) {
 
 async function listCampaigns(request, env, user) {
   const url = new URL(request.url);
-  const org = await resolveOrg(env, user.id, url.searchParams.get('org_id'), 'social.read');
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
   const rows = await db(env, `social_campaigns?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.desc&select=*`);
   return { org_id: org.org_id, campaigns: rows || [] };
 }
 
 async function createCampaign(request, env, user) {
   const body = await bodyJson(request);
-  const org = await resolveOrg(env, user.id, body.org_id || null, 'social.queue');
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
   if (!body.account_id || !body.name) throw Object.assign(new Error('account_id and name are required'), { status: 400 });
   const account = await ownedRow(env, 'social_accounts', body.account_id, org.org_id, 'id');
   if (!account) throw Object.assign(new Error('Social account not found in this organization'), { status: 404 });
@@ -228,7 +166,8 @@ async function createCampaign(request, env, user) {
 async function generateVariant(request, env, user) {
   const body = await bodyJson(request);
   if (!body.campaign_id || !body.model_id) throw Object.assign(new Error('campaign_id and model_id are required'), { status: 400 });
-  const org = await resolveOrg(env, user.id, body.org_id || null, 'media.generate');
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
   const campaign = await ownedRow(env, 'social_campaigns', body.campaign_id, org.org_id);
   if (!campaign) throw Object.assign(new Error('Campaign not found in this organization'), { status: 404 });
   const leaders = await db(env, `social_variants?campaign_id=eq.${encodeURIComponent(campaign.id)}&score=not.is.null&order=score.desc&limit=5&select=variant_key,hook,hypothesis,score,score_components`);
@@ -259,7 +198,7 @@ async function generateVariant(request, env, user) {
 
 async function leaderboard(request, env, user, campaignId) {
   const url = new URL(request.url);
-  const org = await resolveOrg(env, user.id, url.searchParams.get('org_id'), 'social.read');
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
   const campaign = await ownedRow(env, 'social_campaigns', campaignId, org.org_id, 'id,name,objective,status');
   if (!campaign) throw Object.assign(new Error('Campaign not found'), { status: 404 });
   const variants = await db(env, `social_variants?campaign_id=eq.${encodeURIComponent(campaignId)}&order=score.desc.nullslast,created_at.asc&select=*`);
@@ -268,7 +207,8 @@ async function leaderboard(request, env, user, campaignId) {
 
 async function queuePublish(request, env, user) {
   const body = await bodyJson(request);
-  const org = await resolveOrg(env, user.id, body.org_id || null, 'social.queue');
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
   if (!body.account_id) throw Object.assign(new Error('account_id is required'), { status: 400 });
   const account = await ownedRow(env, 'social_accounts', body.account_id, org.org_id, 'id');
   if (!account) throw Object.assign(new Error('Social account not found'), { status: 404 });
@@ -297,7 +237,8 @@ async function queuePublish(request, env, user) {
 
 async function registerPost(request, env, user) {
   const body = await bodyJson(request);
-  const org = await resolveOrg(env, user.id, body.org_id || null, 'social.queue');
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
   if (!body.account_id || !body.external_media_id) throw Object.assign(new Error('account_id and external_media_id are required'), { status: 400 });
   const account = await ownedRow(env, 'social_accounts', body.account_id, org.org_id, 'id');
   if (!account) throw Object.assign(new Error('Social account not found'), { status: 404 });
@@ -319,14 +260,15 @@ async function registerPost(request, env, user) {
 async function ingestMetrics(request, env, user) {
   const body = await bodyJson(request);
   if (!body.post_id) throw Object.assign(new Error('post_id is required'), { status: 400 });
-  const org = await resolveOrg(env, user.id, body.org_id || null, 'social.queue');
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
   const post = await ownedRow(env, 'social_posts', body.post_id, org.org_id, 'id,variant_id');
   if (!post) throw Object.assign(new Error('Social post not found'), { status: 404 });
   const m = body.metrics || body;
   const scored = scoreMetrics(m);
   const snapshot = await insert(env, 'social_metric_snapshots', {
     org_id: org.org_id, post_id: post.id, recorded_at: body.recorded_at || new Date().toISOString(),
-    views: Math.max(0, Number(m.views || 0)), reach: Math.max(0, Number(m.reach || 0)), likes: Math.max(0, Number(m.likes || 0)), comments: Math.max(0, Number(m.comments || 0)), shares: Math.max(0, Number(m.shares || 0)), saves: Math.max(0, Number(m.saves || 0)), follows: Math.max(0, Number(m.follows || 0)), profile_visits: Math.max(0, Number(m.profile_visits || 0)), dms: Math.max(0, Number(m.dms || 0)), leads: Math.max(0, Number(m.leads || 0)), watch_time_seconds: Math.max(0, Number(m.watch_time_seconds || 0)), avg_watch_time_seconds: Math.max(0, Number(m.avg_watch_time_seconds || 0)), retention_3s: m.retention_3s == null ? null : clamp(Number(m.retention_3s), 0, 1), score: scored.score, raw: body.raw || m.raw || {}
+    views: num(m.views), reach: num(m.reach), likes: num(m.likes), comments: num(m.comments), shares: num(m.shares), saves: num(m.saves), follows: num(m.follows), profile_visits: num(m.profile_visits), dms: num(m.dms), leads: num(m.leads), watch_time_seconds: num(m.watch_time_seconds), avg_watch_time_seconds: num(m.avg_watch_time_seconds), retention_3s: m.retention_3s == null ? null : clamp(num(m.retention_3s), 0, 1), score: scored.score, raw: body.raw || m.raw || {}
   });
   if (post.variant_id) await patch(env, 'social_variants', post.variant_id, { score: scored.score, score_components: scored.components });
   return { snapshot, score: scored };
@@ -334,14 +276,15 @@ async function ingestMetrics(request, env, user) {
 
 async function listAutomations(request, env, user) {
   const url = new URL(request.url);
-  const org = await resolveOrg(env, user.id, url.searchParams.get('org_id'), 'social.read');
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
   const rows = await db(env, `social_automation_rules?org_id=eq.${encodeURIComponent(org.org_id)}&order=created_at.desc&select=*`);
   return { org_id: org.org_id, automations: rows || [] };
 }
 
 async function createAutomation(request, env, user) {
   const body = await bodyJson(request);
-  const org = await resolveOrg(env, user.id, body.org_id || null, 'social.queue');
+  const org = await getOrg(env, user.id, body.org_id);
+  requireOrgRole(org, ['owner']);
   if (!body.account_id || !body.name || !body.trigger_type || !body.action_type) throw Object.assign(new Error('account_id, name, trigger_type, and action_type are required'), { status: 400 });
   const account = await ownedRow(env, 'social_accounts', body.account_id, org.org_id, 'id');
   if (!account) throw Object.assign(new Error('Social account not found'), { status: 404 });

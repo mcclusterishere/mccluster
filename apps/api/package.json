@@ -1,14 +1,12 @@
 {
-  "name": "@here/api",
+  "name": "@mccluster/legacy-api-archive",
   "private": true,
   "version": "0.1.0",
-  "description": "The Here platform API — the server that owns what clients must never decide.",
+  "description": "Archived predecessor to the canonical Cloudflare Worker at workers/mccluster. Do not deploy or run as a backend.",
   "type": "module",
-  "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
+    "dev": "node -e \"console.error('DISABLED: use workers/mccluster'); process.exit(1)\"",
+    "start": "node -e \"console.error('DISABLED: canonical backend is workers/mccluster'); process.exit(1)\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },

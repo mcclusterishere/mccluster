@@ -1,18 +1,17 @@
 {
-  "name": "@mccluster/here-cloudflare-edge",
+  "name": "@mccluster/legacy-cloudflare-edge-archive",
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "description": "Archived predecessor to workers/mccluster. Not deployable; kept only for historical reference and tests.",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "check": "tsc --noEmit",
     "test": "vitest run",
-    "dev": "wrangler dev",
-    "deploy:dry": "wrangler deploy --dry-run",
-    "deploy": "wrangler deploy",
-    "types": "wrangler types env.d.ts --include-runtime false"
+    "dev": "node -e \"console.error('DISABLED: use workers/mccluster'); process.exit(1)\"",
+    "deploy": "node -e \"console.error('DISABLED: canonical Worker is workers/mccluster'); process.exit(1)\""
   },
   "dependencies": {
     "agents": "0.20.1"
@@ -20,7 +19,6 @@
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260810.1",
     "typescript": "7.0.2",
-    "vitest": "4.1.10",
-    "wrangler": "4.120.1"
+    "vitest": "4.1.10"
   }
 }

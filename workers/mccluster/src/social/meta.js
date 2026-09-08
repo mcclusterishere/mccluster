@@ -1,4 +1,5 @@
 import { scoreMetrics } from './router.js';
+import { credentialRefForConfiguredChannel, parseSocialCredentialRef } from './security.js';
 
 function headers(env) {
   return {
@@ -70,23 +71,25 @@ async function graphPost(env, path, token, params) {
   return data;
 }
 
-/**
- * `credential_ref` is the NAME of a Worker secret, and `env[ref]` is an
- * unrestricted dynamic lookup over every binding this Worker has. The
- * name arrives from a row that an API caller created, so the shape rule
- * is re-applied HERE as well as at the write — a row that predates the
- * CHECK constraint in 0060, or one written by any future path that
- * forgets to validate, still cannot select an unrelated secret.
- *
- * Same regex as the constraint and as router.js, deliberately: three
- * copies of one rule is fine when the rule is "these characters only".
- */
-const CREDENTIAL_REF_SHAPE = /^SOCIAL_[A-Z0-9_]{1,64}$/;
+async function tokenFor(env, account) {
+  if (!account?.org_id || String(account.platform || '').toLowerCase() !== 'instagram') return null;
+  const rows = await db(env, `org_channels?org_id=eq.${encodeURIComponent(account.org_id)}&channel=eq.instagram&enabled=eq.true&select=token_env,secret_id,account_id&limit=1`);
+  const channel = rows?.[0] || null;
+  if (!channel) return null;
+  if (channel.account_id && String(channel.account_id) !== String(account.external_account_id)) return null;
 
-function tokenFor(env, account) {
-  const ref = account?.credential_ref;
-  if (!ref || !CREDENTIAL_REF_SHAPE.test(String(ref))) return null;
-  return env[ref] || null;
+  const ref = credentialRefForConfiguredChannel('instagram', channel);
+  const parsed = parseSocialCredentialRef('instagram', ref);
+  if (!parsed) return null;
+  if (parsed.kind === 'env') return env[parsed.name] || null;
+  if (parsed.kind === 'vault') {
+    const token = await db(env, 'rpc/vault_secret', {
+      method: 'POST',
+      body: JSON.stringify({ p_id: parsed.id })
+    });
+    return typeof token === 'string' && token ? token : null;
+  }
+  return null;
 }
 
 async function resolveVideoUrl(env, job) {
@@ -122,7 +125,9 @@ async function beginInstagramPublish(env, job, account, token) {
     state: 'processing',
     external_creation_id: created.id,
     attempts: Number(job.attempts || 0) + 1,
-    last_error: null
+    last_error: null,
+    lease_owner: null,
+    lease_expires_at: null
   });
   return { state: 'processing', creation_id: created.id };
 }
@@ -131,9 +136,15 @@ async function finishInstagramPublish(env, job, account, token) {
   if (!job.external_creation_id) throw new Error('Processing publish job is missing its creation container id');
   const status = await graphGet(env, `${encodeURIComponent(job.external_creation_id)}?fields=status_code`, token);
   const code = status?.status_code || 'UNKNOWN';
-  if (code === 'IN_PROGRESS') return { state: 'processing', status_code: code };
+  if (code === 'IN_PROGRESS') {
+    await patch(env, 'social_publish_jobs', job.id, { lease_owner: null, lease_expires_at: null });
+    return { state: 'processing', status_code: code };
+  }
   if (['ERROR', 'EXPIRED'].includes(code)) throw new Error(`Instagram creation container ${code.toLowerCase()}`);
-  if (code !== 'FINISHED') return { state: 'processing', status_code: code };
+  if (code !== 'FINISHED') {
+    await patch(env, 'social_publish_jobs', job.id, { lease_owner: null, lease_expires_at: null });
+    return { state: 'processing', status_code: code };
+  }
 
   const published = await graphPost(env, `${encodeURIComponent(account.external_account_id)}/media_publish`, token, {
     creation_id: job.external_creation_id
@@ -144,7 +155,9 @@ async function finishInstagramPublish(env, job, account, token) {
     state: 'published',
     external_media_id: published.id,
     attempts: Number(job.attempts || 0) + 1,
-    last_error: null
+    last_error: null,
+    lease_owner: null,
+    lease_expires_at: null
   });
 
   const existing = await db(env, `social_posts?account_id=eq.${encodeURIComponent(account.id)}&external_media_id=eq.${encodeURIComponent(published.id)}&select=*&limit=1`);
@@ -167,93 +180,41 @@ async function finishInstagramPublish(env, job, account, token) {
 async function processPublishJob(env, job) {
   const account = await accountForJob(env, job);
   if (!account) throw new Error('Instagram account is missing or does not belong to this organization');
-  const token = tokenFor(env, account);
-  if (!token) return { state: job.state, deferred: true, reason: 'credential_secret_not_configured' };
+  const token = await tokenFor(env, account);
+  if (!token) {
+    await patch(env, 'social_publish_jobs', job.id, {
+      lease_owner: null,
+      lease_expires_at: null,
+      last_error: 'credential_secret_not_configured'
+    });
+    return { state: job.state, deferred: true, reason: 'credential_secret_not_configured' };
+  }
   if (job.state === 'queued') return beginInstagramPublish(env, job, account, token);
   if (job.state === 'processing') return finishInstagramPublish(env, job, account, token);
+  await patch(env, 'social_publish_jobs', job.id, { lease_owner: null, lease_expires_at: null });
   return { state: job.state, skipped: true };
 }
 
-/** How long a claimer owns a job before another run may take it back.
- *  Longer than any single publish should take, shorter than the pain of
- *  a stuck job. The cron fires every five minutes, so ten gives a slow
- *  Meta call room to finish without letting a dead Worker strand work
- *  for long. */
-const LEASE_MS = 10 * 60 * 1000;
-
-/**
- * Take exclusive ownership of one job, or return null.
- *
- * This is the fix for the worst bug in the social engine. The queue was
- * read with `state in ('queued','processing')` and then published in a
- * plain loop, with nothing between the read and the call to Meta — and
- * 'processing' is the state set AFTER a media container is created and
- * BEFORE media_publish is called. So two overlapping cron runs did not
- * merely race for a queued job: the second re-selected a job the first
- * was mid-way through publishing, and called media_publish on the same
- * container again. The client's Reel goes out twice.
- *
- * `dedupe_key` never helped — it is unique on our table and says nothing
- * about how many times we called Instagram.
- *
- * The PATCH below is a real compare-and-swap. Postgres makes a
- * concurrent updater block on the row lock, then re-evaluate the WHERE
- * against the committed new version; the loser matches nothing and gets
- * zero rows back. Zero rows means someone else owns this job.
- *
- * The lease EXPIRES rather than being released, because the failure it
- * has to survive is a Worker dying mid-publish. A lock that needed
- * releasing would strand that job forever.
- */
-async function claimJob(env, job, runId) {
-  const now = new Date();
-  const claimed = await db(
-    env,
-    `social_publish_jobs?id=eq.${encodeURIComponent(job.id)}` +
-      `&or=(lease_until.is.null,lease_until.lt.${encodeURIComponent(now.toISOString())})`,
-    {
-      method: 'PATCH',
-      headers: { prefer: 'return=representation' },
-      body: JSON.stringify({
-        lease_owner: runId,
-        lease_until: new Date(now.getTime() + LEASE_MS).toISOString(),
-        updated_at: now.toISOString()
-      })
-    }
-  );
-  return claimed?.[0] || null;
+async function claimPublishJobs(env, limit) {
+  const leaseOwner = crypto.randomUUID();
+  const jobs = await db(env, 'rpc/claim_social_publish_jobs', {
+    method: 'POST',
+    body: JSON.stringify({
+      p_lease_owner: leaseOwner,
+      p_limit: limit,
+      p_lease_seconds: 120
+    })
+  });
+  return Array.isArray(jobs) ? jobs : [];
 }
 
 export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
-  const now = new Date().toISOString();
   const safeLimit = Math.min(25, Math.max(1, Number(limit) || 10));
-  // A run identity so a leased row says who holds it. Informational —
-  // the lease is enforced by lease_until, not by this string.
-  const runId = crypto.randomUUID();
-  const jobs = await db(env, `social_publish_jobs?state=in.(queued,processing)&scheduled_at=lte.${encodeURIComponent(now)}&order=scheduled_at.asc&limit=${safeLimit}&select=*`);
+  const jobs = await claimPublishJobs(env, safeLimit);
   const results = [];
-  let skipped = 0;
-  for (const candidate of jobs || []) {
-    // Claim BEFORE anything reaches Meta. Everything after this point
-    // works from the freshly-read `job`, not the candidate row, because
-    // the claim returns the row as it actually is now.
-    const job = await claimJob(env, candidate, runId);
-    if (!job) { skipped += 1; continue; }
+  for (const job of jobs) {
     try {
-      const outcome = await processPublishJob(env, job);
-      // The lease covers ONE PHASE, not the whole job. Publishing is
-      // deliberately two-phase — create the container, then publish it
-      // once Meta reports FINISHED — and the second phase is meant to be
-      // picked up by a later run. Holding the lease across both would
-      // make every post wait out the full lease window before it could
-      // finish, turning a safety mechanism into a ten-minute delay.
-      //
-      // So: release unless the job is done. 'published' is terminal;
-      // 'failed' is set in the catch below, which releases separately.
-      if (outcome?.state !== 'published') {
-        await patch(env, 'social_publish_jobs', job.id, { lease_until: null, lease_owner: null });
-      }
-      results.push({ id: job.id, ...outcome });
+      results.push({ id: job.id, ...(await processPublishJob(env, job)) });
     } catch (error) {
       const attempts = Number(job.attempts || 0) + 1;
       const terminal = attempts >= 5;
@@ -261,14 +222,13 @@ export async function processInstagramPublishQueue(env, { limit = 10 } = {}) {
         state: terminal ? 'failed' : job.state,
         attempts,
         last_error: error instanceof Error ? error.message : String(error),
-        // Hand a failed-but-retryable job straight back, rather than
-        // making the next run wait out the full lease for nothing.
-        lease_until: terminal ? null : new Date().toISOString()
+        lease_owner: null,
+        lease_expires_at: null
       });
       results.push({ id: job.id, state: terminal ? 'failed' : job.state, error: error instanceof Error ? error.message : String(error) });
     }
   }
-  return { checked: jobs?.length || 0, claimed: results.length, skipped_leased: skipped, results };
+  return { checked: jobs.length, results };
 }
 
 function metricValue(payload) {
@@ -285,11 +245,25 @@ async function safeInsight(env, mediaId, metric, token) {
   }
 }
 
+function nextInsightsAt(publishedAt, now = new Date()) {
+  const published = new Date(publishedAt || now);
+  const ageMs = Math.max(0, now.getTime() - published.getTime());
+  let delayMs = 15 * 60 * 1000;
+  if (ageMs >= 24 * 60 * 60 * 1000 && ageMs < 72 * 60 * 60 * 1000) delayMs = 60 * 60 * 1000;
+  if (ageMs >= 72 * 60 * 60 * 1000) delayMs = 6 * 60 * 60 * 1000;
+  return new Date(now.getTime() + delayMs).toISOString();
+}
+
 async function syncPostInsights(env, post) {
   const accounts = await db(env, `social_accounts?id=eq.${encodeURIComponent(post.account_id)}&org_id=eq.${encodeURIComponent(post.org_id)}&platform=eq.instagram&select=*&limit=1`);
   const account = accounts?.[0];
-  const token = tokenFor(env, account);
-  if (!account || !token) return { deferred: true, reason: 'credential_secret_not_configured' };
+  const token = await tokenFor(env, account);
+  if (!account || !token) {
+    await patch(env, 'social_posts', post.id, {
+      next_insights_sync_at: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+    });
+    return { post_id: post.id, deferred: true, reason: 'credential_secret_not_configured' };
+  }
 
   let fields = {};
   try {
@@ -329,18 +303,39 @@ async function syncPostInsights(env, post) {
     raw: { graph_fields: fields, synced_metrics: ['views', 'reach', 'saved', 'shares'] }
   });
   if (post.variant_id) await patch(env, 'social_variants', post.variant_id, { score: scored.score, score_components: scored.components });
-  if (fields.permalink && fields.permalink !== post.permalink) await patch(env, 'social_posts', post.id, { permalink: fields.permalink });
+
+  const syncedAt = new Date();
+  await patch(env, 'social_posts', post.id, {
+    ...(fields.permalink ? { permalink: fields.permalink } : {}),
+    last_insights_synced_at: syncedAt.toISOString(),
+    next_insights_sync_at: nextInsightsAt(post.published_at, syncedAt)
+  });
   return { post_id: post.id, snapshot_id: snapshot?.id || null, score: scored.score };
 }
 
-export async function syncInstagramInsights(env, { limit = 5 } = {}) {
-  const safeLimit = Math.min(10, Math.max(1, Number(limit) || 5));
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const posts = await db(env, `social_posts?published_at=gte.${encodeURIComponent(since)}&order=published_at.desc&limit=${safeLimit}&select=id,org_id,account_id,variant_id,external_media_id,permalink,published_at`);
+async function claimInsightPosts(env, limit) {
+  const posts = await db(env, 'rpc/claim_social_insight_posts', {
+    method: 'POST',
+    body: JSON.stringify({ p_limit: limit })
+  });
+  return Array.isArray(posts) ? posts : [];
+}
+
+export async function syncInstagramInsights(env, { limit = 25 } = {}) {
+  const safeLimit = Math.min(100, Math.max(1, Number(limit) || 25));
+  const posts = await claimInsightPosts(env, safeLimit);
   const results = [];
-  for (const post of posts || []) {
-    try { results.push(await syncPostInsights(env, post)); }
-    catch (error) { results.push({ post_id: post.id, error: error instanceof Error ? error.message : String(error) }); }
+  for (const post of posts) {
+    try {
+      results.push(await syncPostInsights(env, post));
+    } catch (error) {
+      try {
+        await patch(env, 'social_posts', post.id, {
+          next_insights_sync_at: new Date(Date.now() + 15 * 60 * 1000).toISOString()
+        });
+      } catch {}
+      results.push({ post_id: post.id, error: error instanceof Error ? error.message : String(error) });
+    }
   }
-  return { checked: posts?.length || 0, results };
+  return { checked: posts.length, results };
 }

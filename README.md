@@ -7,11 +7,10 @@ the album, the studio, and the civic platform behind
 [Matthew McCluster](https://matthew.mccluster.org/matthew-mccluster.html) and
 McCluster Corp.
 
-> **Cutover pending.** The site is served at `here.mccluster.org` until the
-> DNS record for `matthew` exists. The repo is already renamed throughout.
-> **Do not merge the rename to `main` before that record resolves** — Pages
-> serves one host, read from `CNAME`, and flipping it early takes the site
-> down. Ordered runbook: [`docs/domain-cutover.md`](docs/domain-cutover.md).
+> **Cutover complete.** `matthew.mccluster.org` is the canonical site and the
+> repository `CNAME` is authoritative. Do not move the live site back to
+> `here.mccluster.org`. The old hostname is legacy/redirect territory only.
+> Current status: [`docs/domain-cutover.md`](docs/domain-cutover.md).
 
 Matthew McCluster is a creative director, photographer, web designer and
 songwriter working out of Bridgeport, Connecticut and Acworth, Georgia. He
