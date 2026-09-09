@@ -141,6 +141,15 @@
         <button class="btn" type="button" id="usepassword">Back to sign-in</button>
       </div>
     </form>
+    <!--
+      Most McCluster house-owner accounts are Google-only — no password was
+      ever set. This sends the browser to matthew.mccluster.org, where the
+      shared identity's own sign-in already lives, and back with a session;
+      see auth/seek-first-start.html and auth/seek-first-handoff.html.
+    -->
+    <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--line); text-align:center;">
+      <a class="btn" style="display:inline-block; text-decoration:none;" href="https://matthew.mccluster.org/auth/seek-first-start.html">Continue with Google</a>
+    </div>
   </div>
 </div>
 
@@ -264,6 +273,21 @@
       else sessionStorage.removeItem(SESSION_KEY);
     } catch (e) { /* private mode */ }
     return token;
+  }
+
+  /*
+    auth/seek-first-handoff.html hands a signed-in McCluster session to this
+    origin via a URL fragment — never a query string, so the token is never
+    sent in a Referer header or to any server, this one included. Pick it up
+    before boot() runs its own session check, then scrub it from the visible
+    URL and browser history so it doesn't linger there.
+  */
+  function captureHandoffToken() {
+    var match = /(?:^|[#&])access_token=([^&]+)/.exec(location.hash);
+    if (!match) return false;
+    session(decodeURIComponent(match[1]));
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* ignore */ }
+    return true;
   }
 
   function api(path, options) {
@@ -858,6 +882,7 @@
   });
 
   wireSignIn();
+  captureHandoffToken();
   boot();
 })();
 
