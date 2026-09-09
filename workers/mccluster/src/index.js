@@ -1,6 +1,8 @@
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
 import geo from './geo/index.js';
+import { AccessError, verifyAccess } from './geo/access.js';
+import GEV_CONSOLE_HTML from './geo/console.html';
 import { CATALOG } from './ai/envelope.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
@@ -104,6 +106,52 @@ export default {
 
       if (path === '/v1/geo' || path.startsWith('/v1/geo/')) {
         return geo.fetch(request, env, { requireHouseOwner });
+      }
+
+      /* THE INTERNAL SPATIAL CONSOLE.
+
+         Not a public page and not part of the published site. It carries no
+         data and no credential of its own: everything it draws comes back from
+         /v1/geo/*, which requires a McCluster house owner. Cloudflare Access,
+         when GEV_ACCESS_TEAM_DOMAIN and GEV_ACCESS_AUD are set on the Worker,
+         is verified here so the shell itself stops being reachable too. */
+      if (path === '/internal/gev' && request.method === 'GET') {
+        try {
+          await verifyAccess(request, env);
+        } catch (error) {
+          if (error instanceof AccessError) return fail(request, env, error.message, error.status, { code: error.code });
+          throw error;
+        }
+        return new Response(GEV_CONSOLE_HTML, {
+          headers: {
+            'content-type': 'text/html; charset=utf-8',
+            'cache-control': 'private, no-store',
+            'x-robots-tag': 'noindex, nofollow, noarchive, noimageindex',
+            'x-frame-options': 'DENY',
+            'x-content-type-options': 'nosniff',
+            'referrer-policy': 'no-referrer',
+            'permissions-policy': 'geolocation=(), microphone=(), camera=()',
+            'content-security-policy': [
+              "default-src 'none'",
+              "base-uri 'none'",
+              "form-action 'none'",
+              "frame-ancestors 'none'",
+              // CesiumJS compiles WebAssembly (Draco, Basis) and evaluates
+              // generated shader/glTF code at runtime. Verified in a cold
+              // browser: without these the globe never constructs at all.
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:",
+              "worker-src blob: https://cdn.jsdelivr.net",
+              "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+              "font-src https://cdn.jsdelivr.net data:",
+              "img-src 'self' data: blob: https://tile.openstreetmap.org https://cdn.jsdelivr.net https://tile.googleapis.com https://*.googleapis.com https://*.gstatic.com https://*.cesium.com",
+              // Cesium requests imagery and terrain tiles with XHR, not <img>,
+              // so every tile host must appear here as well as in img-src.
+              // Verified in a cold browser: omitting tile.openstreetmap.org
+              // renders a blank globe with no error the user can see.
+              "connect-src 'self' https://zmnhbrjyhxzhkxmhkexs.supabase.co https://cdn.jsdelivr.net https://tile.openstreetmap.org https://tile.googleapis.com https://*.googleapis.com https://*.gstatic.com https://api.cesium.com https://assets.ion.cesium.com https://*.cesium.com"
+            ].join('; ')
+          }
+        });
       }
 
       if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);

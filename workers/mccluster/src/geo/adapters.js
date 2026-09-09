@@ -564,28 +564,6 @@ async function eia(input, env) {
   return result('eia', 'route', url, records, data);
 }
 
-async function dataCommons(input, env) {
-  requireCredentials('data_commons', env);
-  const place = stringValue(input?.place, 'place', { max: 200 });
-  const statVar = stringValue(input?.stat_var, 'stat_var', { max: 300 });
-  const url = new URL('https://api.datacommons.org/stat/series');
-  url.searchParams.set('place', place);
-  url.searchParams.set('stat_var', statVar);
-  const { data } = await jsonFetch(url, { headers: { 'x-api-key': env.DATA_COMMONS_API_KEY } });
-  const series = data?.series || data || {};
-  const records = Object.entries(series).slice(0, MAX_PROVIDER_ROWS).map(([date, value]) => record('observation', {
-    external_id: `dc:${place}:${statVar}:${date}`,
-    observation_type: 'statistical_series',
-    metric: statVar,
-    value_number: Number.isFinite(Number(value)) ? Number(value) : null,
-    value_text: value === undefined ? null : String(value),
-    point: null,
-    observed_at: timestamp(`${date}T00:00:00Z`),
-    properties: { place }
-  }));
-  return result('data_commons', 'stat_series', url, records, data);
-}
-
 async function openSky(input, env) {
   requireCredentials('opensky_research', env);
   const tokenUrl = 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token';
@@ -859,23 +837,17 @@ async function planet(input, env) {
   return result('planet_research', 'quick_search', url, records, data);
 }
 
-async function epa(input) {
-  const endpoint = input?.endpoint || 'echo';
-  if (endpoint !== 'echo') throw new GeoAdapterError('Unsupported EPA operation', 400, 'unsupported_operation');
-  // EPA ECHO exposes multiple schemas that drift independently. Keep this as a
-  // fixed-host gateway rather than accepting arbitrary URLs; callers provide an
-  // ECHO REST path after /echo/ only.
-  const path = stringValue(input?.path || 'rest_services.get_facilities', 'path', { max: 300, pattern: /^[A-Za-z0-9_.\/-]+$/ });
-  const url = new URL(`https://echodata.epa.gov/echo/${path}`);
-  paramsFromObject(url, input?.params || {});
-  const { data } = await jsonFetch(url);
-  return result('epa', 'echo', url, [], data);
-}
-
 async function passthroughConfig(sourceKey) {
   const source = sourceByKey(sourceKey);
   if (sourceKey === 'reearth_terrain') {
-    return result(sourceKey, 'config', null, [], null, { terrain_url: 'https://terrain.reearth.land/cesium-mesh/ellipsoid' });
+    return result(sourceKey, 'config', null, [], null, {
+      tilejson_url: 'https://tiles.mapterhorn.com/layer.json',
+      tile_url_template: 'https://tiles.mapterhorn.com/{z}/{x}/{y}.webp',
+      encoding: 'terrarium',
+      tile_size: 512,
+      quantized_mesh: false,
+      note: 'Raster terrarium DEM. Cesium needs a quantized-mesh terrain provider or a client-side terrarium decoder; it is not a drop-in TerrainProvider URL.'
+    });
   }
   if (sourceKey === 'cesium_ion') {
     return result(sourceKey, 'config', null, [], null, { configured_for_server: true, note: 'Viewer token remains a scoped client/viewer concern; this endpoint never returns it.' });
@@ -902,12 +874,17 @@ export async function executeAdapter(sourceKey, input = {}, env = {}) {
     case 'fred': return fred(input, env);
     case 'bls': return bls(input, env);
     case 'eia': return eia(input, env);
-    case 'data_commons': return dataCommons(input, env);
     case 'opensky_research': return openSky(input, env);
     case 'nasa_firms': return nasaFirms(input, env);
     case 'tomtom': return tomTom(input, env);
     case 'mapbox': return mapbox(input, env);
     case 'google_maps': return googleMaps(input, env);
+    // gateway.js owns these two. They resolve to the providers' current APIs in
+    // verified-adapters.js rather than the legacy endpoints upstream GEV used,
+    // so reaching them here means a caller bypassed executeProvider.
+    case 'data_commons':
+    case 'epa':
+      throw new GeoAdapterError(`${source.name} is served through the verified provider gateway`, 500, 'adapter_routing_error');
     case 'nominatim': return nominatim(input);
     case 'gdelt': return gdelt(input);
     case 'radio_browser': return radioBrowser(input);

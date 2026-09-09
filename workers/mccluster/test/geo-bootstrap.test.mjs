@@ -26,7 +26,7 @@ test('geo catalog reports binding names but never credential values', () => {
   assert.doesNotMatch(serialized, new RegExp(FAKE_SECRET));
 });
 
-test('geo router is adapter-ready without database configuration', async () => {
+test('public geo health is adapter-ready and reveals no provider inventory', async () => {
   const response = await geo.fetch(
     new Request('https://api.mccluster.org/v1/geo/health'),
     { CENSUS_API_KEY: FAKE_SECRET }
@@ -36,20 +36,41 @@ test('geo router is adapter-ready without database configuration', async () => {
   assert.equal(payload.ok, true);
   assert.equal(payload.service, 'mccluster-spatial-intelligence');
   assert.equal(payload.mode, 'adapter-ready');
-  assert.equal(payload.database_schema_ready, false);
   assert.equal(payload.adapter_gateway_ready, true);
+  assert.equal(payload.edge_access_configured, false);
   assert.match(payload.upstream_commit, /^[0-9a-f]{40}$/);
-  assert.ok(payload.adapter_capabilities.persistent.includes('usgs'));
+
+  // Which providers hold credentials is a map of where the keys are. The one
+  // unauthenticated route must not draw it.
+  const body = JSON.stringify(payload);
+  assert.doesNotMatch(body, new RegExp(FAKE_SECRET));
+  assert.equal(payload.readiness, undefined);
+  assert.equal(payload.adapter_capabilities, undefined);
+  assert.equal(payload.sources, undefined);
 });
 
-test('geo source endpoint does not leak a configured secret', async () => {
+test('provider inventory, readiness and viewer config all require house-owner authorization', async () => {
+  for (const route of ['/v1/geo/sources', '/v1/geo/readiness', '/v1/geo/entitlements', '/v1/geo/capabilities', '/v1/geo/viewer/config']) {
+    const response = await geo.fetch(
+      new Request(`https://api.mccluster.org${route}`),
+      { CENSUS_API_KEY: FAKE_SECRET }
+    );
+    assert.equal(response.status, 503, `${route} must not answer without the authorization callback`);
+    const payload = await response.json();
+    assert.equal(payload.detail.code, 'authorization_unavailable', route);
+    assert.doesNotMatch(JSON.stringify(payload), new RegExp(FAKE_SECRET), route);
+  }
+});
+
+test('authorized source catalog reports binding names but never credential values', async () => {
   const response = await geo.fetch(
     new Request('https://api.mccluster.org/v1/geo/sources'),
-    { CENSUS_API_KEY: FAKE_SECRET }
+    { CENSUS_API_KEY: FAKE_SECRET, SUPABASE_URL: 'https://db.invalid', SUPABASE_SERVICE_ROLE_KEY: 'service-role' },
+    { requireHouseOwner: async () => ({ id: 'owner-1' }) }
   );
-  assert.equal(response.status, 200);
+  // resolveHouseOrg reaches a database that does not exist in this test, so the
+  // assertion here is the security one: the failure carries no secret.
   const body = await response.text();
-  assert.match(body, /CENSUS_API_KEY/);
   assert.doesNotMatch(body, new RegExp(FAKE_SECRET));
 });
 

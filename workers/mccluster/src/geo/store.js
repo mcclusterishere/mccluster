@@ -164,7 +164,7 @@ async function insertObservations(env, rows) {
   });
 }
 
-export async function persistAdapterResult(env, orgId, result, { operation = 'fetch', requestFingerprint = null, force = false } = {}) {
+export async function persistAdapterResult(env, orgId, result, { operation = 'fetch', requestFingerprint = null, force = false, entitlement = null } = {}) {
   const source = sourceByKey(result.source);
   if (!source) throw new GeoAdapterError('Unknown spatial source', 404, 'unknown_source');
 
@@ -173,6 +173,11 @@ export async function persistAdapterResult(env, orgId, result, { operation = 'fe
   }
   if (source.persistence === PERSISTENCE.TRANSIENT && !force) {
     return { persisted: false, reason: 'transient_provider', records_seen: result.records?.length || 0, records_written: 0 };
+  }
+  // force only overrides the registry default for a transient feed; it can
+  // never override an org entitlement that withholds retention.
+  if (entitlement && entitlement.persistence_allowed === false) {
+    return { persisted: false, reason: 'entitlement_forbids_persistence', records_seen: result.records?.length || 0, records_written: 0 };
   }
   if (!await schemaReady(env)) throw new GeoAdapterError('Spatial database schema is not ready', 503, 'spatial_schema_not_ready');
 
@@ -279,4 +284,59 @@ export async function listIngestionRuns(env, orgId, { source, limit = 50 } = {})
   ];
   if (source) parts.push(`source_key=eq.${encodeURIComponent(source)}`);
   return db(env, `geo_ingestion_runs?${parts.join('&')}`);
+}
+
+/*
+  Entitlement rows. Absent rows are not an error: the registry default in
+  entitlements.js applies, so open data works the moment the schema exists and
+  restricted lanes stay closed until the owner writes a grant.
+*/
+export async function entitlementRows(env, orgId, sourceKey = null) {
+  if (!configured(env)) return new Map();
+  const parts = [
+    `org_id=eq.${encodeURIComponent(orgId)}`,
+    'select=source_key,enabled,lane,commercial_use,public_display,redistribution,persistence_allowed,terms_acknowledged_at,effective_at,expires_at'
+  ];
+  if (sourceKey) parts.push(`source_key=eq.${encodeURIComponent(sourceKey)}`);
+  try {
+    const rows = await db(env, `geo_source_entitlements?${parts.join('&')}`);
+    return new Map((rows || []).map((row) => [row.source_key, row]));
+  } catch {
+    // A missing schema must not stop a keyless open-data read.
+    return new Map();
+  }
+}
+
+/*
+  History. geo_entities holds current state; geo_entity_revisions is the append
+  only record of how that state got there, and geo_observations is the metric
+  timeline. An entity's history is the merge of both, newest first.
+*/
+export async function entityRevisions(env, orgId, entityId, limit = 100) {
+  return db(env, `geo_entity_revisions?org_id=eq.${encodeURIComponent(orgId)}&entity_id=eq.${encodeURIComponent(entityId)}&select=id,revision,change_type,name,entity_type,properties,provenance,source_url,observed_at,recorded_at&order=revision.desc&limit=${Math.max(1, Math.min(Number(limit) || 100, 500))}`);
+}
+
+export async function entityObservations(env, orgId, entityId, limit = 200) {
+  return db(env, `geo_observations?org_id=eq.${encodeURIComponent(orgId)}&entity_id=eq.${encodeURIComponent(entityId)}&select=id,source_key,external_id,observation_type,metric,value_number,value_text,unit,observed_at,provenance&order=observed_at.desc&limit=${Math.max(1, Math.min(Number(limit) || 200, 1000))}`);
+}
+
+export async function timelineNearby(env, orgId, params) {
+  return rpc(env, 'geo_timeline', {
+    p_org: orgId,
+    p_lat: Number(params.lat),
+    p_lon: Number(params.lon),
+    p_radius_m: Number(params.radius_m || 25000),
+    p_from: params.from || null,
+    p_to: params.to || null,
+    p_limit: Number(params.limit || 200),
+    p_source: params.source || null
+  });
+}
+
+export async function listProjects(env, orgId, limit = 100) {
+  return db(env, `geo_projects?org_id=eq.${encodeURIComponent(orgId)}&select=id,project_key,name,description,settings,created_at,updated_at&order=created_at.desc&limit=${Math.max(1, Math.min(Number(limit) || 100, 200))}`);
+}
+
+export async function listLayers(env, orgId, limit = 200) {
+  return db(env, `geo_layers?org_id=eq.${encodeURIComponent(orgId)}&select=id,layer_key,name,source_key,layer_type,enabled,style,settings&order=layer_key.asc&limit=${Math.max(1, Math.min(Number(limit) || 200, 500))}`);
 }

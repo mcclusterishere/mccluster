@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex">
+<meta name="referrer" content="no-referrer">
+<title>McCluster Spatial Intelligence</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cesium@1.145.0/Build/Cesium/Widgets/widgets.css">
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #e8ecf1;
+    --dim: #8b97a6;
+    --line: #1e2733;
+    --panel: #0d1219;
+    --ground: #05080c;
+    --ok: #4ac08a;
+    --warn: #d8a33c;
+    --bad: #d2604f;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font: 13px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+
+  #cover, #signin {
+    position: fixed; inset: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--ground);
+  }
+  #signin { display: none; }
+  .card {
+    width: min(560px, calc(100vw - 32px));
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--panel); padding: 22px 24px;
+  }
+  .card h1 { font-size: 15px; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 4px; }
+  .card p.sub { color: var(--dim); margin: 0 0 18px; }
+  #bootlog { list-style: none; margin: 0; padding: 0; }
+  #bootlog li { display: flex; gap: 10px; padding: 3px 0; align-items: baseline; }
+  #bootlog .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); flex: 0 0 8px; }
+  #bootlog .dot.ok { background: var(--ok); }
+  #bootlog .dot.warn { background: var(--warn); }
+  #bootlog .dot.bad { background: var(--bad); }
+  #bootlog .detail { color: var(--dim); margin-left: auto; text-align: right; }
+  #bootactions { margin-top: 18px; display: none; gap: 8px; }
+  .btn {
+    border: 1px solid var(--line); background: #131b25; border-radius: 6px;
+    padding: 8px 14px;
+  }
+  .btn:hover { border-color: #33445a; }
+  .btn.primary { background: #1b3550; border-color: #2c5a86; }
+  label { display: block; color: var(--dim); margin: 12px 0 4px; }
+  input[type=email], input[type=password], input[type=text] {
+    width: 100%; padding: 9px 10px; border-radius: 6px;
+    border: 1px solid var(--line); background: #080c12; color: var(--ink); font: inherit;
+  }
+  .err { color: var(--bad); margin-top: 12px; min-height: 18px; }
+
+  #app { display: none; height: 100%; }
+  #globe { position: absolute; inset: 0 0 0 300px; }
+  #panel {
+    position: absolute; inset: 0 auto 0 0; width: 300px; z-index: 10;
+    border-right: 1px solid var(--line); background: var(--panel);
+    display: flex; flex-direction: column;
+  }
+  #panel header { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  #panel header h1 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; margin: 0; }
+  #panel header .who { color: var(--dim); font-size: 11px; margin-top: 2px; }
+  #modes { display: flex; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  #layers { overflow-y: auto; flex: 1; padding: 6px 0; }
+  .layer { padding: 8px 14px; border-bottom: 1px solid #141b24; }
+  .layer .row { display: flex; align-items: center; gap: 8px; }
+  .layer .name { flex: 1; }
+  .layer .meta { color: var(--dim); font-size: 11px; margin-top: 2px; }
+  .layer .meta.blocked { color: var(--warn); }
+  .layer .meta.failed { color: var(--bad); }
+  .layer button.toggle {
+    border: 1px solid var(--line); background: #101822; border-radius: 5px;
+    padding: 3px 9px; font-size: 11px; min-width: 62px;
+  }
+  .layer[data-on="1"] button.toggle { background: #143a2b; border-color: #2a6b50; }
+  .layer[data-blocked="1"] { opacity: .62; }
+  #footer { padding: 10px 14px; border-top: 1px solid var(--line); color: var(--dim); font-size: 11px; }
+  #attrib { position: absolute; right: 10px; bottom: 8px; z-index: 10; color: var(--dim);
+            font-size: 11px; text-align: right; max-width: 46vw; text-shadow: 0 1px 3px #000; }
+  #toast {
+    position: absolute; left: 316px; top: 12px; z-index: 20; display: none;
+    border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 8px 12px;
+    max-width: 60vw;
+  }
+  .cesium-viewer-bottom { display: none; }
+  @media (max-width: 760px) {
+    #panel { width: 100%; inset: auto 0 0 0; height: 46%; border-right: 0; border-top: 1px solid var(--line); }
+    #globe { inset: 0 0 46% 0; }
+    #toast { left: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="cover">
+  <div class="card">
+    <h1>McCluster Spatial Intelligence</h1>
+    <p class="sub">Internal operations console. Not a public surface.</p>
+    <ul id="bootlog"></ul>
+    <div id="bootactions">
+      <button class="btn primary" id="retry">Retry</button>
+      <button class="btn" id="continue">Continue anyway</button>
+    </div>
+  </div>
+</div>
+
+<div id="signin">
+  <div class="card">
+    <h1>McCluster sign-in</h1>
+    <p class="sub">House-owner access is required. This console holds no data of its own.</p>
+    <form id="signinform">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <div class="err" id="signinerr"></div>
+      <div style="margin-top:14px; display:flex; gap:8px;">
+        <button class="btn primary" type="submit">Sign in</button>
+        <button class="btn" type="button" id="usetoken">Use an access token</button>
+      </div>
+    </form>
+    <form id="tokenform" style="display:none">
+      <label for="token">Supabase access token</label>
+      <input id="token" type="text" autocomplete="off" spellcheck="false" class="mono">
+      <div style="margin-top:14px; display:flex; gap:8px;">
+        <button class="btn primary" type="submit">Use token</button>
+        <button class="btn" type="button" id="usepassword">Back to sign-in</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="app">
+  <div id="panel">
+    <header>
+      <h1>Spatial Intelligence</h1>
+      <div class="who" id="who"></div>
+    </header>
+    <div id="modes"></div>
+    <div id="layers"></div>
+    <div id="footer"></div>
+  </div>
+  <div id="globe"></div>
+  <div id="attrib"></div>
+  <div id="toast"></div>
+</div>
+
+<script>window.CESIUM_BASE_URL = 'https://cdn.jsdelivr.net/npm/cesium@1.145.0/Build/Cesium/';</script>
+<script src="https://cdn.jsdelivr.net/npm/cesium@1.145.0/Build/Cesium/Cesium.js"></script>
+<script>
+/*
+  McCluster Spatial Intelligence — internal console.
+
+  This is the boot path the earlier /gev/ prototype did not have.
+
+  Upstream God's Eye View reads its provider credentials from
+  import.meta.env at BUILD time, so a runtime JSON fetch bolted into the
+  generated HTML could never satisfy it, and any startup dependency that
+  threw or never settled left the user on the loading cover forever. The
+  rules here exist to make that failure mode impossible:
+
+    - every boot step is timed out and its result is shown, not swallowed;
+    - a failed step degrades exactly one capability;
+    - the cover is dismissed by a finally block AND by a hard deadline, so
+      there is no path on which it stays up indefinitely;
+    - the globe is constructed from an open imagery stack that needs no
+      credential at all, and paid providers are added on top afterwards.
+
+  Provider credentials arrive from GET /v1/geo/viewer/config, which is
+  house-owner authenticated. Nothing here is baked into the page.
+*/
+(function () {
+  'use strict';
+
+  var SUPABASE_URL = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co';
+  var SUPABASE_PUBLISHABLE = 'sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
+  var SESSION_KEY = 'mcc.gev.session';
+  var BOOT_DEADLINE_MS = 25000;
+  var STEP_TIMEOUT_MS = 12000;
+
+  var el = function (id) { return document.getElementById(id); };
+  var state = { token: null, config: null, viewer: null, layers: {}, sources: {}, covered: true };
+
+  /* ---------------------------------------------------------------- boot log */
+
+  var steps = [];
+
+  function step(id, label) {
+    var li = document.createElement('li');
+    li.innerHTML = '<span class="dot"></span><span class="label"></span><span class="detail"></span>';
+    li.querySelector('.label').textContent = label;
+    el('bootlog').appendChild(li);
+    var entry = { id: id, node: li, state: 'pending' };
+    steps.push(entry);
+    return entry;
+  }
+
+  function mark(entry, result, detail) {
+    if (!entry) return;
+    entry.state = result;
+    entry.node.querySelector('.dot').className = 'dot ' + (result === 'ok' ? 'ok' : result === 'warn' ? 'warn' : 'bad');
+    entry.node.querySelector('.detail').textContent = detail || '';
+  }
+
+  function withTimeout(promise, ms, label) {
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        reject(new Error(label + ' timed out after ' + Math.round(ms / 1000) + 's'));
+      }, ms);
+      Promise.resolve(promise).then(function (value) {
+        if (settled) return;
+        settled = true; clearTimeout(timer); resolve(value);
+      }, function (error) {
+        if (settled) return;
+        settled = true; clearTimeout(timer); reject(error);
+      });
+    });
+  }
+
+  function uncover() {
+    if (!state.covered) return;
+    state.covered = false;
+    el('cover').style.display = 'none';
+    el('app').style.display = 'block';
+    if (state.viewer) state.viewer.resize();
+  }
+
+  function stall(message) {
+    // Not a spinner. A diagnostic with a way out.
+    el('bootactions').style.display = 'flex';
+    var entry = steps[steps.length - 1];
+    if (entry && entry.state === 'pending') mark(entry, 'bad', message || 'failed');
+  }
+
+  /* -------------------------------------------------------------------- api */
+
+  function session(token) {
+    if (token === undefined) {
+      if (state.token) return state.token;
+      try { state.token = sessionStorage.getItem(SESSION_KEY); } catch (e) { state.token = null; }
+      return state.token;
+    }
+    state.token = token;
+    try {
+      if (token) sessionStorage.setItem(SESSION_KEY, token);
+      else sessionStorage.removeItem(SESSION_KEY);
+    } catch (e) { /* private mode */ }
+    return token;
+  }
+
+  function api(path, options) {
+    options = options || {};
+    var headers = { accept: 'application/json' };
+    var token = session();
+    if (token) headers.authorization = 'Bearer ' + token;
+    if (options.body) headers['content-type'] = 'application/json';
+    return fetch(path, {
+      method: options.method || 'GET',
+      headers: headers,
+      body: options.body ? JSON.stringify(options.body) : undefined
+    }).then(function (response) {
+      return response.text().then(function (text) {
+        var data = null;
+        try { data = text ? JSON.parse(text) : null; } catch (e) { data = { error: text }; }
+        if (response.status === 401 || response.status === 403) {
+          var error = new Error((data && data.error) || 'Authorization required');
+          error.status = response.status;
+          error.authFailure = response.status === 401;
+          error.detail = data && data.detail;
+          throw error;
+        }
+        if (!response.ok) {
+          var failure = new Error((data && data.error) || ('Request failed with ' + response.status));
+          failure.status = response.status;
+          failure.detail = data && data.detail;
+          throw failure;
+        }
+        return data;
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------- auth */
+
+  function showSignIn(message) {
+    el('cover').style.display = 'none';
+    el('signin').style.display = 'flex';
+    el('signinerr').textContent = message || '';
+  }
+
+  function signInWithPassword(email, password) {
+    return fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', apikey: SUPABASE_PUBLISHABLE },
+      body: JSON.stringify({ email: email, password: password })
+    }).then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok || !data || !data.access_token) {
+          throw new Error((data && (data.error_description || data.msg || data.message)) || 'Sign-in failed');
+        }
+        return data.access_token;
+      });
+    });
+  }
+
+  function wireSignIn() {
+    el('signinform').addEventListener('submit', function (event) {
+      event.preventDefault();
+      el('signinerr').textContent = 'Signing in...';
+      signInWithPassword(el('email').value.trim(), el('password').value)
+        .then(function (token) {
+          session(token);
+          el('signin').style.display = 'none';
+          el('cover').style.display = 'flex';
+          boot();
+        })
+        .catch(function (error) { el('signinerr').textContent = error.message; });
+    });
+    el('tokenform').addEventListener('submit', function (event) {
+      event.preventDefault();
+      var token = el('token').value.trim();
+      if (!token) return;
+      session(token);
+      el('signin').style.display = 'none';
+      el('cover').style.display = 'flex';
+      boot();
+    });
+    el('usetoken').addEventListener('click', function () {
+      el('signinform').style.display = 'none';
+      el('tokenform').style.display = 'block';
+    });
+    el('usepassword').addEventListener('click', function () {
+      el('tokenform').style.display = 'none';
+      el('signinform').style.display = 'block';
+    });
+  }
+
+  /* ------------------------------------------------------------------ layers */
+
+  var LAYER_SPECS = [
+    {
+      key: 'stored', source: null, name: 'Stored entities (PostGIS)', color: '#7fd4ff',
+      kind: 'stored', hint: 'Everything already ingested into the longitudinal store, in view.'
+    },
+    {
+      key: 'usgs', source: 'usgs', name: 'Earthquakes (USGS)', color: '#e2734a',
+      build: function (c) { return { lat: c.lat, lon: c.lon, radius_km: 800, limit: 400 }; }
+    },
+    {
+      key: 'adsb_lol', source: 'adsb_lol', name: 'Aircraft (ADSB.lol)', color: '#ffd479',
+      build: function (c) { return { lat: c.lat, lon: c.lon, radius_nm: 150 }; }
+    },
+    {
+      key: 'overpass', source: 'overpass', name: 'Infrastructure (OSM)', color: '#9bd17b',
+      build: function (c) { return { lat: c.lat, lon: c.lon, radius_m: 3000, operation: 'infrastructure' }; }
+    },
+    {
+      key: 'overpass_military', source: 'overpass', name: 'Mapped military land (OSM)', color: '#c58fd8',
+      build: function (c) { return { lat: c.lat, lon: c.lon, radius_m: 20000, operation: 'military' }; },
+      hint: 'Publicly mapped installation footprints only. No person tracking.'
+    },
+    {
+      key: 'open_meteo', source: 'open_meteo', name: 'Weather (Open-Meteo)', color: '#79c4e0',
+      build: function (c) { return { lat: c.lat, lon: c.lon }; }
+    },
+    {
+      key: 'radio_browser', source: 'radio_browser', name: 'Radio stations', color: '#b0b8c4',
+      build: function () { return { limit: 400 }; }
+    },
+    {
+      key: 'launch_library2', source: 'launch_library2', name: 'Upcoming launches', color: '#f0a3c8',
+      build: function () { return { limit: 40 }; }
+    },
+    {
+      key: 'celestrak', source: 'celestrak', name: 'Satellite catalogue', color: '#8fa6c9',
+      build: function () { return { group: 'stations' }; },
+      hint: 'Orbital elements arrive without a ground position; count only until propagation lands.'
+    },
+    {
+      key: 'nasa_firms', source: 'nasa_firms', name: 'Active fires (FIRMS)', color: '#ff6b4a',
+      build: function (c) { return { lat: c.lat, lon: c.lon, delta_deg: 4, day_range: 2 }; }
+    },
+    {
+      key: 'tomtom', source: 'tomtom', name: 'Traffic flow (TomTom)', color: '#e0c04a',
+      build: function (c) { return { lat: c.lat, lon: c.lon, zoom: 12 }; }
+    },
+    {
+      key: 'ais', source: 'aisstream', name: 'Vessels (AIS live)', color: '#5fd0c0', kind: 'ais',
+      hint: 'Served from the persistent Durable Object cache, not a per-request connection.'
+    }
+  ];
+
+  function cameraCentre() {
+    var viewer = state.viewer;
+    var fallback = { lat: 41.31, lon: -72.92, bbox: [-73.4, 40.9, -72.4, 41.7] };
+    if (!viewer) return fallback;
+    try {
+      var rectangle = viewer.camera.computeViewRectangle(viewer.scene.globe.ellipsoid);
+      var carto = Cesium.Cartographic.fromCartesian(viewer.camera.positionWC);
+      var centre = {
+        lat: Cesium.Math.toDegrees(carto.latitude),
+        lon: Cesium.Math.toDegrees(carto.longitude),
+        bbox: fallback.bbox
+      };
+      if (rectangle) {
+        centre.bbox = [
+          Cesium.Math.toDegrees(rectangle.west),
+          Cesium.Math.toDegrees(rectangle.south),
+          Cesium.Math.toDegrees(rectangle.east),
+          Cesium.Math.toDegrees(rectangle.north)
+        ];
+      }
+      if (!isFinite(centre.lat) || !isFinite(centre.lon)) return fallback;
+      return centre;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function dataSource(spec) {
+    if (!state.layers[spec.key]) {
+      var source = new Cesium.CustomDataSource(spec.key);
+      state.viewer.dataSources.add(source);
+      state.layers[spec.key] = source;
+    }
+    return state.layers[spec.key];
+  }
+
+  function drawPoints(spec, points) {
+    var source = dataSource(spec);
+    source.entities.removeAll();
+    var colour = Cesium.Color.fromCssColorString(spec.color);
+    points.forEach(function (item) {
+      if (!isFinite(item.lat) || !isFinite(item.lon)) return;
+      source.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(item.lon, item.lat),
+        point: { pixelSize: 7, color: colour, outlineColor: Cesium.Color.BLACK, outlineWidth: 1,
+                 disableDepthTestDistance: Number.POSITIVE_INFINITY },
+        name: item.name || spec.name,
+        description: item.description || ''
+      });
+    });
+    return source.entities.values.length;
+  }
+
+  function describe(properties) {
+    if (!properties) return '';
+    var rows = Object.keys(properties).slice(0, 24).map(function (key) {
+      var value = properties[key];
+      if (value && typeof value === 'object') value = JSON.stringify(value).slice(0, 200);
+      return '<tr><td style="color:#8b97a6;padding-right:10px">' + escapeHtml(key) + '</td><td>' + escapeHtml(String(value)) + '</td></tr>';
+    });
+    return '<table>' + rows.join('') + '</table>';
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"]/g, function (character) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[character];
+    });
+  }
+
+  function loadStored(spec) {
+    var view = cameraCentre();
+    var query = '/v1/geo/bbox?min_lon=' + view.bbox[0] + '&min_lat=' + view.bbox[1] +
+                '&max_lon=' + view.bbox[2] + '&max_lat=' + view.bbox[3] + '&limit=1000';
+    return api(query).then(function (payload) {
+      var rows = (payload && payload.entities) || [];
+      var mapped = drawPoints(spec, rows.map(function (row) {
+        return { lat: row.lat, lon: row.lon, name: row.name || row.entity_type, description: describe(row.properties) };
+      }));
+      return { records: rows.length, mapped: mapped, attribution: null };
+    });
+  }
+
+  function loadAis(spec) {
+    var view = cameraCentre();
+    return api('/v1/geo/live/ais?limit=2000&bbox=' + view.bbox.join(',')).then(function (payload) {
+      if (payload && payload.configured === false) {
+        var error = new Error('AISSTREAM_API_KEY is not set');
+        error.blocked = true;
+        throw error;
+      }
+      var rows = (payload && payload.rows) || [];
+      var mapped = drawPoints(spec, rows.map(function (row) {
+        return {
+          lat: row.latitude, lon: row.longitude,
+          name: row.ship_name || ('MMSI ' + row.mmsi),
+          description: describe(row)
+        };
+      }));
+      var note = payload.status && payload.status !== 'open' ? payload.status : null;
+      return { records: rows.length, mapped: mapped, attribution: payload.attribution, note: note };
+    });
+  }
+
+  function loadProvider(spec) {
+    var body = spec.build ? spec.build(cameraCentre()) : {};
+    body.persist = false;
+    body.lane = 'INTERNAL';
+    return api('/v1/geo/fetch/' + spec.source, { method: 'POST', body: body }).then(function (payload) {
+      var result = (payload && payload.result) || {};
+      var records = result.records || [];
+      var mapped = drawPoints(spec, records.map(function (row) {
+        return {
+          lat: row.point && row.point.lat, lon: row.point && row.point.lon,
+          name: row.name || row.metric || row.event_type || spec.name,
+          description: describe(row.properties)
+        };
+      }));
+      return { records: records.length, mapped: mapped, attribution: result.attribution };
+    });
+  }
+
+  function toggleLayer(spec, node) {
+    var on = node.getAttribute('data-on') === '1';
+    if (on) {
+      node.setAttribute('data-on', '0');
+      node.querySelector('button.toggle').textContent = 'Off';
+      if (state.layers[spec.key]) state.layers[spec.key].entities.removeAll();
+      setMeta(node, spec.hint || '', '');
+      renderAttribution();
+      return;
+    }
+    node.setAttribute('data-on', '1');
+    node.querySelector('button.toggle').textContent = 'Loading';
+    var loader = spec.kind === 'stored' ? loadStored : spec.kind === 'ais' ? loadAis : loadProvider;
+
+    withTimeout(loader(spec), STEP_TIMEOUT_MS + 8000, spec.name)
+      .then(function (summary) {
+        node.querySelector('button.toggle').textContent = 'On';
+        spec.attribution = summary.attribution;
+        var detail = summary.records + ' records, ' + summary.mapped + ' mapped';
+        if (summary.note) detail += ' — ' + summary.note;
+        setMeta(node, detail, '');
+        renderAttribution();
+      })
+      .catch(function (error) {
+        node.setAttribute('data-on', '0');
+        node.querySelector('button.toggle').textContent = 'Off';
+        if (error.authFailure) { session(null); showSignIn('Session expired. Sign in again.'); return; }
+        var reason = error.message || 'failed';
+        if (error.detail && error.detail.code === 'credential_missing' && error.detail.required_bindings) {
+          reason = 'needs ' + error.detail.required_bindings.join(', ');
+          setMeta(node, reason, 'blocked');
+          return;
+        }
+        if (error.detail && String(error.detail.code || '').indexOf('entitlement') === 0) {
+          setMeta(node, reason, 'blocked');
+          return;
+        }
+        setMeta(node, reason, 'failed');
+      });
+  }
+
+  function setMeta(node, text, className) {
+    var meta = node.querySelector('.meta');
+    meta.textContent = text;
+    meta.className = 'meta' + (className ? ' ' + className : '');
+  }
+
+  function renderAttribution() {
+    var active = LAYER_SPECS.filter(function (spec) {
+      var node = document.querySelector('[data-layer="' + spec.key + '"]');
+      return node && node.getAttribute('data-on') === '1' && spec.attribution;
+    }).map(function (spec) { return spec.attribution; });
+    var base = ['© OpenStreetMap contributors'];
+    if (state.config && state.config.google_photorealistic_3d_tiles && state.config.google_photorealistic_3d_tiles.active) {
+      base.push('Google');
+    }
+    el('attrib').textContent = base.concat(active).filter(function (value, index, all) {
+      return all.indexOf(value) === index;
+    }).join(' · ');
+  }
+
+  function renderLayers() {
+    var host = el('layers');
+    host.innerHTML = '';
+    LAYER_SPECS.forEach(function (spec) {
+      var source = spec.source ? state.sources[spec.source] : null;
+      var blocked = Boolean(source && source.credential_required && !source.configured);
+      var node = document.createElement('div');
+      node.className = 'layer';
+      node.setAttribute('data-layer', spec.key);
+      node.setAttribute('data-on', '0');
+      if (blocked) node.setAttribute('data-blocked', '1');
+      node.innerHTML =
+        '<div class="row"><span class="name"></span><button class="toggle" type="button">Off</button></div>' +
+        '<div class="meta"></div>';
+      node.querySelector('.name').textContent = spec.name;
+      var meta = blocked
+        ? 'needs ' + (source.credential_bindings || []).join(', ')
+        : (spec.hint || (source ? source.persistence + ' · ' + source.source_class : 'stored data'));
+      setMeta(node, meta, blocked ? 'blocked' : '');
+      node.querySelector('button.toggle').addEventListener('click', function () { toggleLayer(spec, node); });
+      host.appendChild(node);
+    });
+  }
+
+  function renderModes() {
+    var host = el('modes');
+    host.innerHTML = '';
+    var config = state.config || {};
+
+    function modeButton(label, enabled, handler, title) {
+      var button = document.createElement('button');
+      button.className = 'btn';
+      button.type = 'button';
+      button.textContent = label;
+      button.title = title || '';
+      if (!enabled) { button.disabled = true; button.style.opacity = '.5'; button.style.cursor = 'not-allowed'; }
+      else button.addEventListener('click', handler);
+      host.appendChild(button);
+      return button;
+    }
+
+    modeButton('Open imagery', true, function () { useOpenImagery(); }, 'OpenStreetMap raster. No credential.');
+
+    var google = config.google_photorealistic_3d_tiles || {};
+    modeButton('Google 3D', Boolean(google.available && google.api_key), function () { useGoogleTiles(); },
+      google.available ? 'Google Photorealistic 3D Tiles' : 'Set GOOGLE_MAPS_API_KEY to enable');
+
+    var ion = config.cesium_ion || {};
+    modeButton('ion terrain', Boolean(ion.available && ion.token), function () { useIonTerrain(); },
+      ion.available ? 'Cesium World Terrain' : 'Set CESIUM_ION_TOKEN to enable');
+  }
+
+  function toast(message) {
+    var node = el('toast');
+    node.textContent = message;
+    node.style.display = 'block';
+    clearTimeout(node.timer);
+    node.timer = setTimeout(function () { node.style.display = 'none'; }, 6000);
+  }
+
+  /* ------------------------------------------------------------------ globe */
+
+  function openImageryProvider() {
+    return new Cesium.OpenStreetMapImageryProvider({
+      url: 'https://tile.openstreetmap.org/',
+      credit: new Cesium.Credit('© OpenStreetMap contributors')
+    });
+  }
+
+  function buildViewer() {
+    /*
+      Keyless by construction. baseLayerPicker and geocoder are the two Viewer
+      features that reach Cesium ion whether or not a token exists, so both are
+      off and the base layer is supplied explicitly. This is the globe that
+      renders when the owner has bought nothing.
+    */
+    var viewer = new Cesium.Viewer('globe', {
+      baseLayer: new Cesium.ImageryLayer(openImageryProvider()),
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      sceneModePicker: true,
+      navigationHelpButton: false,
+      animation: false,
+      timeline: false,
+      fullscreenButton: false,
+      infoBox: true,
+      selectionIndicator: true,
+      terrainProvider: new Cesium.EllipsoidTerrainProvider()
+    });
+    viewer.scene.globe.enableLighting = false;
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(-72.92, 41.31, 900000)
+    });
+    return viewer;
+  }
+
+  function useOpenImagery() {
+    var viewer = state.viewer;
+    viewer.scene.primitives.remove(state.googleTileset);
+    state.googleTileset = null;
+    viewer.imageryLayers.removeAll();
+    viewer.imageryLayers.addImageryProvider(openImageryProvider());
+    viewer.scene.globe.show = true;
+    if (state.config) state.config.google_photorealistic_3d_tiles.active = false;
+    renderAttribution();
+  }
+
+  function useGoogleTiles() {
+    var config = state.config.google_photorealistic_3d_tiles;
+    if (!config || !config.api_key) return;
+    if (state.googleTileset) return;
+    var url = config.url + '?key=' + encodeURIComponent(config.api_key);
+    Cesium.Cesium3DTileset.fromUrl(url, { showCreditsOnScreen: true })
+      .then(function (tileset) {
+        state.googleTileset = state.viewer.scene.primitives.add(tileset);
+        state.viewer.scene.globe.show = false;
+        config.active = true;
+        renderAttribution();
+      })
+      .catch(function (error) {
+        toast('Google 3D Tiles unavailable: ' + (error && error.message ? error.message : 'request rejected'));
+      });
+  }
+
+  function useIonTerrain() {
+    var ion = state.config.cesium_ion;
+    if (!ion || !ion.token) return;
+    Cesium.Ion.defaultAccessToken = ion.token;
+    Cesium.createWorldTerrainAsync()
+      .then(function (terrain) { state.viewer.terrainProvider = terrain; toast('Cesium World Terrain active.'); })
+      .catch(function (error) {
+        toast('ion terrain unavailable: ' + (error && error.message ? error.message : 'request rejected'));
+      });
+  }
+
+  /* ------------------------------------------------------------------- boot */
+
+  function boot() {
+    steps.length = 0;
+    el('bootlog').innerHTML = '';
+    el('bootactions').style.display = 'none';
+
+    var deadline = setTimeout(function () {
+      if (state.covered) {
+        stall('startup deadline reached');
+      }
+    }, BOOT_DEADLINE_MS);
+
+    var cesiumStep = step('cesium', 'CesiumJS runtime');
+    if (typeof Cesium === 'undefined') {
+      mark(cesiumStep, 'bad', 'CDN blocked');
+      clearTimeout(deadline);
+      stall('CesiumJS did not load');
+      return;
+    }
+    mark(cesiumStep, 'ok', Cesium.VERSION || 'loaded');
+
+    var authStep = step('auth', 'House-owner session');
+    if (!session()) {
+      mark(authStep, 'warn', 'sign-in required');
+      clearTimeout(deadline);
+      showSignIn('');
+      return;
+    }
+
+    var configStep;
+    withTimeout(api('/v1/geo/viewer/config'), STEP_TIMEOUT_MS, 'Viewer configuration')
+      .then(function (payload) {
+        mark(authStep, 'ok', 'verified');
+        configStep = step('config', 'Provider configuration');
+        state.config = payload.config;
+        (state.config.layers || []).forEach(function (layer) { state.sources[layer.key] = layer; });
+        var pending = (state.config.layers || []).filter(function (layer) {
+          return layer.credential_required && !layer.configured;
+        }).length;
+        mark(configStep, 'ok', state.config.keyless ? 'keyless mode' : (pending + ' keys pending'));
+      })
+      .catch(function (error) {
+        if (error.authFailure) {
+          mark(authStep, 'bad', 'not signed in');
+          clearTimeout(deadline);
+          session(null);
+          showSignIn('Sign in with a McCluster house-owner account.');
+          throw error;
+        }
+        mark(authStep, error.status === 403 ? 'bad' : 'warn', error.message);
+        if (error.status === 403) {
+          clearTimeout(deadline);
+          stall('This account is not a McCluster house owner.');
+          throw error;
+        }
+        // The globe does not need the config to exist. Boot keyless.
+        state.config = { keyless: true, layers: [], google_photorealistic_3d_tiles: {}, cesium_ion: {} };
+        if (configStep) mark(configStep, 'warn', 'unavailable — keyless');
+      })
+      .then(function () {
+        var globeStep = step('globe', 'Globe');
+        try {
+          state.viewer = buildViewer();
+          mark(globeStep, 'ok', 'open imagery');
+        } catch (error) {
+          mark(globeStep, 'bad', error.message || 'failed');
+          throw error;
+        }
+      })
+      .then(function () {
+        var uiStep = step('ui', 'Layers');
+        renderModes();
+        renderLayers();
+        renderAttribution();
+        el('who').textContent = state.config.keyless
+          ? 'keyless mode — open sources only'
+          : 'provider credentials active';
+        el('footer').textContent = (state.config.layers || []).length + ' registered sources · ' +
+          (state.config.layers || []).filter(function (l) { return !l.credential_required || l.configured; }).length +
+          ' available now';
+        mark(uiStep, 'ok', LAYER_SPECS.length + ' layers');
+      })
+      .catch(function (error) {
+        if (!error || !error.authFailure) stall(error && error.message ? error.message : 'startup failed');
+      })
+      .finally(function () {
+        clearTimeout(deadline);
+        // The one guarantee: if the globe exists, the cover comes down.
+        if (state.viewer) uncover();
+      });
+  }
+
+  el('retry').addEventListener('click', function () { boot(); });
+  el('continue').addEventListener('click', function () {
+    if (!state.viewer && typeof Cesium !== 'undefined') {
+      try { state.viewer = buildViewer(); renderModes(); renderLayers(); renderAttribution(); } catch (e) { /* nothing left to try */ }
+    }
+    uncover();
+  });
+
+  wireSignIn();
+  boot();
+})();
+
+</script>
+</body>
+</html>
