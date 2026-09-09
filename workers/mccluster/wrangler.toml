@@ -37,6 +37,30 @@ META_GRAPH_API_VERSION = "v26.0"
 # META_WEBHOOK_VERIFY_TOKEN
 # Instagram access tokens are Worker secrets selected only from the org's enabled
 # org_channels row. Allowed env bindings must match SOCIAL_IG_*_ACCESS_TOKEN.
+#
+# Spatial intelligence / GEV provider bindings. The backend is complete without
+# values here; add only the credentials for providers you activate:
+# CENSUS_API_KEY
+# EIA_API_KEY
+# DATA_COMMONS_API_KEY
+# BLS_API_KEY
+# FRED_API_KEY
+# FIRMS_MAP_KEY
+# COPERNICUS_CLIENT_ID
+# COPERNICUS_CLIENT_SECRET
+# PLANET_RESEARCH_API_KEY
+# OPENSKY_CLIENT_ID
+# OPENSKY_CLIENT_SECRET
+# TOMTOM_API_KEY
+# AISSTREAM_API_KEY
+# MAPBOX_ACCESS_TOKEN
+# GOOGLE_MAPS_API_KEY
+# CESIUM_ION_TOKEN
+# LL2_API_TOKEN  # optional; Launch Library 2 also supports unauthenticated access
+#
+# Optional non-secret AIS subscription tuning may be set as Worker vars/secrets:
+# AISSTREAM_BOUNDING_BOXES=[[[-90,-180],[90,180]]]
+# AISSTREAM_MESSAGE_TYPES=PositionReport,StandardClassBPositionReport,ExtendedClassBPositionReport,ShipStaticData,StaticDataReport
 
 # Batch unsettled fal jobs, attach completed social variants, process due Instagram
 # publish jobs, and refresh due Instagram insights every five minutes.
@@ -44,7 +68,8 @@ META_GRAPH_API_VERSION = "v26.0"
 crons = ["*/5 * * * *"]
 
 # Existing production Durable Objects on this Worker. Keep the class name.
-# Do not add a new_classes / deleted_classes migration here.
+# Spatial AIS caching deliberately reuses a named instance of HereTenantAgent;
+# do not add a second Durable Object class or migration for geo.
 [[durable_objects.bindings]]
 name = "HereTenantAgent"
 class_name = "HereTenantAgent"
