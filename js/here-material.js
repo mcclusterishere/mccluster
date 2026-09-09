@@ -1,5 +1,12 @@
-/* HERE Material System 2.0 light driver — REMOVED 2026-08-15 by the owner's
-   call. No longer drives --here-light-angle; the skin it served is retired.
-   This stub remains only so pages still loading the file get a clean 200
-   instead of a 404 until the dead script tags are stripped. Does nothing. */
-(function () { "use strict"; })();
+/* HERE Material System 2.0 light driver is retired. This compatibility file
+   remains a clean 200 for old pages. Fellowship uses it as a narrow legacy
+   bridge so the inline terminal can gain the Policy OS intake without a risky
+   rewrite of the question UI. */
+(function(){
+  "use strict";
+  if(!/\/fellowship\.html$/.test(location.pathname))return;
+  var s=document.createElement("script");
+  s.src="js/equity-uprise-fellowship-live.js?v=__STAMP__";
+  s.defer=true;
+  document.head.appendChild(s);
+})();
