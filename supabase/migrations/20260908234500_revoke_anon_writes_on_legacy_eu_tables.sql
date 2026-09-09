@@ -1,42 +1,57 @@
--- The 2026-08 Equity Uprise tables grant INSERT/UPDATE/DELETE to `anon`.
+-- The 2026-08 Equity Uprise surface granted browser write privileges more
+-- broadly than the public product needs.
 --
--- This is not currently exploitable: RLS is enabled on all of them and every
--- policy is scoped to `authenticated`, so an anonymous writer matches no
--- policy and is denied. The grant is nonetheless a loaded gun pointed at a
--- future change — the day someone adds a read policy `to anon, authenticated`
--- and word it slightly too broadly, or disables RLS on one table while
--- debugging, anonymous writes become real. Nothing should rely on RLS alone
--- when the privilege underneath can simply be taken away.
+-- Base tables have RLS, but privileges should still be least-authority. More
+-- importantly, projection views may be auto-updatable and can execute with
+-- their owner's rights, so leaving INSERT/UPDATE/DELETE on an EU view is not
+-- merely redundant: it can become an RLS bypass.
 --
--- `authenticated` keeps its write privileges: the policies above are written
--- for it and the app depends on them. Only `anon` loses what it could never
--- use. SELECT is untouched, so public reads keep working.
+-- The invariant for the anonymous role is therefore simple and stronger than
+-- the original hand-maintained table list: every public eu_* relation is
+-- read-only to anon. SELECT is untouched.
+--
+-- authenticated is handled separately by the following view-hardening
+-- migration because legacy authenticated base-table writes are still used by
+-- older UI paths. This migration only strips anon mutation privileges.
 
 do $$
 declare
-  t text;
+  r record;
 begin
-  foreach t in array array[
-    'eu_applications','eu_audit','eu_campaign_recipients','eu_campaigns','eu_conversations',
-    'eu_fellowship_sources','eu_fellowships','eu_messages','eu_perspectives','eu_profile_contact',
-    'eu_profiles','eu_saves','eu_suppressions','eu_topics'
-  ] loop
-    execute format('revoke insert, update, delete on public.%I from anon', t);
+  for r in
+    select distinct c.relname
+      from pg_class c
+      join pg_namespace n on n.oid = c.relnamespace
+      join information_schema.role_table_grants g
+        on g.table_schema = n.nspname and g.table_name = c.relname
+     where n.nspname = 'public'
+       and c.relname like 'eu\_%'
+       and c.relkind in ('r','p','v','m')
+       and g.grantee = 'anon'
+       and g.privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')
+  loop
+    execute format(
+      'revoke insert, update, delete, truncate, references, trigger on public.%I from anon',
+      r.relname
+    );
   end loop;
 end $$;
 
--- Prove no anon write privilege survives on any eu_ table.
+-- Prove no anonymous write privilege survives on any public eu_* relation,
+-- including views. Keeping this assertion broad is deliberate: if a future EU
+-- object becomes writable to anon, the migration chain should stop here.
 do $$
 declare
   leftover text;
 begin
-  select string_agg(distinct table_name, ', ')
+  select string_agg(distinct table_name || ':' || privilege_type, ', ' order by table_name || ':' || privilege_type)
     into leftover
     from information_schema.role_table_grants
    where table_schema = 'public'
      and table_name like 'eu\_%'
      and grantee = 'anon'
-     and privilege_type in ('INSERT','UPDATE','DELETE');
+     and privilege_type in ('INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER');
+
   if leftover is not null then
     raise exception 'anon still holds write privileges on: %', leftover;
   end if;
