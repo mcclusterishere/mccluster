@@ -365,7 +365,7 @@ as $$
   where e.org_id = p_org
     and e.location is not null
     and (p_source is null or e.source_key = p_source)
-    and e.location::extensions.geometry && extensions.st_makeenvelope(
+    and e.location::extensions.geometry OPERATOR(extensions.&&) extensions.st_makeenvelope(
       p_min_lon, p_min_lat, p_max_lon, p_max_lat, 4326
     )
   order by e.last_seen_at desc
