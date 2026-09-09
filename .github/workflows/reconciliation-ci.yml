@@ -1,0 +1,67 @@
+name: Reconciliation CI
+
+on:
+  push:
+    branches:
+      - reconcile/equity-uprise-20260908
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reconciliation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  worker:
+    name: Worker contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Worker dependencies
+        working-directory: workers/mccluster
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Run Worker tests
+        working-directory: workers/mccluster
+        run: npm test
+      - name: Parse routing surfaces
+        run: |
+          node --check workers/mccluster/src/entry.js
+          node --check workers/mccluster/src/index.js
+          node --check workers/mccluster/src/client.js
+          node --check workers/mccluster/src/connect.js
+          node --check workers/mccluster/src/ai/router.js
+          node --check workers/mccluster/src/media/router.js
+          node --check workers/mccluster/src/social/router.js
+          node --check js/equity-uprise-institutional.js
+          node --check js/equity-uprise-fellowship-live.js
+      - name: Reject unresolved reconciliation markers
+        run: |
+          if git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- . ':!*.lock'; then
+            echo 'Unresolved merge marker found.' >&2
+            exit 1
+          fi
+
+  database:
+    name: Supabase migration reset
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.117.0
+      - name: Start isolated Supabase stack
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+      - name: Rebuild database from migrations
+        run: supabase db reset
+      - name: Stop isolated stack
+        if: always()
+        run: supabase stop --no-backup || true
