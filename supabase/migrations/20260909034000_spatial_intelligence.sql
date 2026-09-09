@@ -8,7 +8,7 @@
 create schema if not exists extensions;
 create extension if not exists postgis with schema extensions;
 
-create table if not exists public.geo_sources (
+create table if not exists public.seek_first_sources (
   source_key text primary key,
   name text not null,
   source_class text not null,
@@ -28,9 +28,9 @@ create table if not exists public.geo_sources (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.geo_source_entitlements (
+create table if not exists public.seek_first_source_entitlements (
   org_id uuid not null references public.orgs(id) on delete cascade,
-  source_key text not null references public.geo_sources(source_key) on delete cascade,
+  source_key text not null references public.seek_first_sources(source_key) on delete cascade,
   enabled boolean not null default true,
   lane text not null,
   commercial_use boolean not null default false,
@@ -44,12 +44,12 @@ create table if not exists public.geo_source_entitlements (
   primary key (org_id, source_key)
 );
 
-create table if not exists public.geo_layers (
+create table if not exists public.seek_first_layers (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
   layer_key text not null,
   name text not null,
-  source_key text references public.geo_sources(source_key) on delete set null,
+  source_key text references public.seek_first_sources(source_key) on delete set null,
   layer_type text not null default 'entity',
   enabled boolean not null default true,
   style jsonb not null default '{}'::jsonb,
@@ -59,10 +59,10 @@ create table if not exists public.geo_layers (
   unique (org_id, layer_key)
 );
 
-create table if not exists public.geo_entities (
+create table if not exists public.seek_first_entities (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
-  source_key text not null references public.geo_sources(source_key) on delete restrict,
+  source_key text not null references public.seek_first_sources(source_key) on delete restrict,
   external_id text not null,
   entity_type text not null,
   name text,
@@ -80,20 +80,20 @@ create table if not exists public.geo_entities (
   unique (org_id, source_key, external_id)
 );
 
-create index if not exists geo_entities_location_gix
-  on public.geo_entities using gist (location);
-create index if not exists geo_entities_footprint_gix
-  on public.geo_entities using gist (footprint);
-create index if not exists geo_entities_org_type_idx
-  on public.geo_entities (org_id, entity_type, last_seen_at desc);
-create index if not exists geo_entities_org_source_idx
-  on public.geo_entities (org_id, source_key, last_seen_at desc);
+create index if not exists seek_first_entities_location_gix
+  on public.seek_first_entities using gist (location);
+create index if not exists seek_first_entities_footprint_gix
+  on public.seek_first_entities using gist (footprint);
+create index if not exists seek_first_entities_org_type_idx
+  on public.seek_first_entities (org_id, entity_type, last_seen_at desc);
+create index if not exists seek_first_entities_org_source_idx
+  on public.seek_first_entities (org_id, source_key, last_seen_at desc);
 
-create table if not exists public.geo_observations (
+create table if not exists public.seek_first_observations (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
-  entity_id uuid references public.geo_entities(id) on delete cascade,
-  source_key text not null references public.geo_sources(source_key) on delete restrict,
+  entity_id uuid references public.seek_first_entities(id) on delete cascade,
+  source_key text not null references public.seek_first_sources(source_key) on delete restrict,
   external_id text,
   observation_type text not null,
   metric text,
@@ -107,17 +107,17 @@ create table if not exists public.geo_observations (
   created_at timestamptz not null default now()
 );
 
-create index if not exists geo_observations_location_gix
-  on public.geo_observations using gist (location);
-create index if not exists geo_observations_entity_time_idx
-  on public.geo_observations (entity_id, observed_at desc);
-create index if not exists geo_observations_org_source_time_idx
-  on public.geo_observations (org_id, source_key, observed_at desc);
+create index if not exists seek_first_observations_location_gix
+  on public.seek_first_observations using gist (location);
+create index if not exists seek_first_observations_entity_time_idx
+  on public.seek_first_observations (entity_id, observed_at desc);
+create index if not exists seek_first_observations_org_source_time_idx
+  on public.seek_first_observations (org_id, source_key, observed_at desc);
 
-create table if not exists public.geo_events (
+create table if not exists public.seek_first_events (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
-  source_key text not null references public.geo_sources(source_key) on delete restrict,
+  source_key text not null references public.seek_first_sources(source_key) on delete restrict,
   external_id text not null,
   event_type text not null,
   name text,
@@ -136,20 +136,20 @@ create table if not exists public.geo_events (
   unique (org_id, source_key, external_id)
 );
 
-create index if not exists geo_events_location_gix
-  on public.geo_events using gist (location);
-create index if not exists geo_events_footprint_gix
-  on public.geo_events using gist (footprint);
-create index if not exists geo_events_org_type_time_idx
-  on public.geo_events (org_id, event_type, observed_at desc);
+create index if not exists seek_first_events_location_gix
+  on public.seek_first_events using gist (location);
+create index if not exists seek_first_events_footprint_gix
+  on public.seek_first_events using gist (footprint);
+create index if not exists seek_first_events_org_type_time_idx
+  on public.seek_first_events (org_id, event_type, observed_at desc);
 
-create table if not exists public.geo_relationships (
+create table if not exists public.seek_first_relationships (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
-  source_entity_id uuid not null references public.geo_entities(id) on delete cascade,
-  target_entity_id uuid not null references public.geo_entities(id) on delete cascade,
+  source_entity_id uuid not null references public.seek_first_entities(id) on delete cascade,
+  target_entity_id uuid not null references public.seek_first_entities(id) on delete cascade,
   relationship_type text not null,
-  source_key text references public.geo_sources(source_key) on delete set null,
+  source_key text references public.seek_first_sources(source_key) on delete set null,
   confidence double precision check (confidence is null or (confidence >= 0 and confidence <= 1)),
   valid_from timestamptz,
   valid_to timestamptz,
@@ -161,12 +161,12 @@ create table if not exists public.geo_relationships (
   unique (org_id, source_entity_id, target_entity_id, relationship_type)
 );
 
-create index if not exists geo_relationships_source_idx
-  on public.geo_relationships (org_id, source_entity_id, relationship_type);
-create index if not exists geo_relationships_target_idx
-  on public.geo_relationships (org_id, target_entity_id, relationship_type);
+create index if not exists seek_first_relationships_source_idx
+  on public.seek_first_relationships (org_id, source_entity_id, relationship_type);
+create index if not exists seek_first_relationships_target_idx
+  on public.seek_first_relationships (org_id, target_entity_id, relationship_type);
 
-create table if not exists public.geo_projects (
+create table if not exists public.seek_first_projects (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
   project_key text not null,
@@ -179,22 +179,22 @@ create table if not exists public.geo_projects (
   unique (org_id, project_key)
 );
 
-create index if not exists geo_projects_aoi_gix
-  on public.geo_projects using gist (area_of_interest);
+create index if not exists seek_first_projects_aoi_gix
+  on public.seek_first_projects using gist (area_of_interest);
 
-create table if not exists public.geo_project_entities (
-  project_id uuid not null references public.geo_projects(id) on delete cascade,
-  entity_id uuid not null references public.geo_entities(id) on delete cascade,
+create table if not exists public.seek_first_project_entities (
+  project_id uuid not null references public.seek_first_projects(id) on delete cascade,
+  entity_id uuid not null references public.seek_first_entities(id) on delete cascade,
   role text,
   metadata jsonb not null default '{}'::jsonb,
   added_at timestamptz not null default now(),
   primary key (project_id, entity_id)
 );
 
-create table if not exists public.geo_ingestion_runs (
+create table if not exists public.seek_first_ingestion_runs (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
-  source_key text not null references public.geo_sources(source_key) on delete restrict,
+  source_key text not null references public.seek_first_sources(source_key) on delete restrict,
   operation text not null,
   status text not null default 'running'
     check (status in ('running', 'succeeded', 'partial', 'failed')),
@@ -209,14 +209,14 @@ create table if not exists public.geo_ingestion_runs (
   created_at timestamptz not null default now()
 );
 
-create index if not exists geo_ingestion_runs_org_source_idx
-  on public.geo_ingestion_runs (org_id, source_key, started_at desc);
+create index if not exists seek_first_ingestion_runs_org_source_idx
+  on public.seek_first_ingestion_runs (org_id, source_key, started_at desc);
 
-create table if not exists public.geo_derived_metrics (
+create table if not exists public.seek_first_derived_metrics (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
-  entity_id uuid references public.geo_entities(id) on delete cascade,
-  project_id uuid references public.geo_projects(id) on delete cascade,
+  entity_id uuid references public.seek_first_entities(id) on delete cascade,
+  project_id uuid references public.seek_first_projects(id) on delete cascade,
   metric_key text not null,
   value_number double precision,
   value_text text,
@@ -228,15 +228,15 @@ create table if not exists public.geo_derived_metrics (
   computed_at timestamptz not null default now()
 );
 
-create index if not exists geo_derived_metrics_entity_idx
-  on public.geo_derived_metrics (org_id, entity_id, metric_key, computed_at desc);
+create index if not exists seek_first_derived_metrics_entity_idx
+  on public.seek_first_derived_metrics (org_id, entity_id, metric_key, computed_at desc);
 
-create table if not exists public.geo_alert_rules (
+create table if not exists public.seek_first_alert_rules (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
   name text not null,
   enabled boolean not null default true,
-  source_key text references public.geo_sources(source_key) on delete set null,
+  source_key text references public.seek_first_sources(source_key) on delete set null,
   event_type text,
   area_of_interest extensions.geometry(Geometry, 4326),
   condition jsonb not null default '{}'::jsonb,
@@ -245,14 +245,14 @@ create table if not exists public.geo_alert_rules (
   updated_at timestamptz not null default now()
 );
 
-create index if not exists geo_alert_rules_aoi_gix
-  on public.geo_alert_rules using gist (area_of_interest);
+create index if not exists seek_first_alert_rules_aoi_gix
+  on public.seek_first_alert_rules using gist (area_of_interest);
 
-create table if not exists public.geo_alerts (
+create table if not exists public.seek_first_alerts (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
-  rule_id uuid references public.geo_alert_rules(id) on delete set null,
-  event_id uuid references public.geo_events(id) on delete set null,
+  rule_id uuid references public.seek_first_alert_rules(id) on delete set null,
+  event_id uuid references public.seek_first_events(id) on delete set null,
   status text not null default 'open',
   title text not null,
   detail jsonb not null default '{}'::jsonb,
@@ -262,12 +262,12 @@ create table if not exists public.geo_alerts (
   created_at timestamptz not null default now()
 );
 
-create index if not exists geo_alerts_org_status_idx
-  on public.geo_alerts (org_id, status, triggered_at desc);
+create index if not exists seek_first_alerts_org_status_idx
+  on public.seek_first_alerts (org_id, status, triggered_at desc);
 
 -- Server-mediated spatial RPCs. service_role is the only Data API caller
 -- granted EXECUTE; client authorization happens in the canonical Worker.
-create or replace function public.geo_nearby(
+create or replace function public.seek_first_nearby(
   p_org uuid,
   p_lat double precision,
   p_lon double precision,
@@ -309,7 +309,7 @@ as $$
     e.properties,
     e.observed_at,
     e.last_seen_at
-  from public.geo_entities e
+  from public.seek_first_entities e
   where e.org_id = p_org
     and e.location is not null
     and (p_source is null or e.source_key = p_source)
@@ -324,7 +324,7 @@ as $$
   limit greatest(1, least(coalesce(p_limit, 100), 1000));
 $$;
 
-create or replace function public.geo_bbox(
+create or replace function public.seek_first_bbox(
   p_org uuid,
   p_min_lat double precision,
   p_min_lon double precision,
@@ -361,7 +361,7 @@ as $$
     e.properties,
     e.observed_at,
     e.last_seen_at
-  from public.geo_entities e
+  from public.seek_first_entities e
   where e.org_id = p_org
     and e.location is not null
     and (p_source is null or e.source_key = p_source)
@@ -372,7 +372,7 @@ as $$
   limit greatest(1, least(coalesce(p_limit, 500), 2000));
 $$;
 
-create or replace function public.geo_events_nearby(
+create or replace function public.seek_first_events_nearby(
   p_org uuid,
   p_lat double precision,
   p_lon double precision,
@@ -416,7 +416,7 @@ as $$
     e.status,
     e.observed_at,
     e.properties
-  from public.geo_events e
+  from public.seek_first_events e
   where e.org_id = p_org
     and e.location is not null
     and (p_source is null or e.source_key = p_source)
@@ -439,19 +439,19 @@ declare
   t text;
 begin
   foreach t in array array[
-    'geo_sources',
-    'geo_source_entitlements',
-    'geo_layers',
-    'geo_entities',
-    'geo_observations',
-    'geo_events',
-    'geo_relationships',
-    'geo_projects',
-    'geo_project_entities',
-    'geo_ingestion_runs',
-    'geo_derived_metrics',
-    'geo_alert_rules',
-    'geo_alerts'
+    'seek_first_sources',
+    'seek_first_source_entitlements',
+    'seek_first_layers',
+    'seek_first_entities',
+    'seek_first_observations',
+    'seek_first_events',
+    'seek_first_relationships',
+    'seek_first_projects',
+    'seek_first_project_entities',
+    'seek_first_ingestion_runs',
+    'seek_first_derived_metrics',
+    'seek_first_alert_rules',
+    'seek_first_alerts'
   ]
   loop
     execute format('alter table public.%I enable row level security', t);
@@ -460,15 +460,15 @@ begin
   end loop;
 end $$;
 
-revoke all on function public.geo_nearby(uuid,double precision,double precision,double precision,integer,text,text) from public, anon, authenticated;
-revoke all on function public.geo_bbox(uuid,double precision,double precision,double precision,double precision,integer,text) from public, anon, authenticated;
-revoke all on function public.geo_events_nearby(uuid,double precision,double precision,double precision,integer,text,text) from public, anon, authenticated;
-grant execute on function public.geo_nearby(uuid,double precision,double precision,double precision,integer,text,text) to service_role;
-grant execute on function public.geo_bbox(uuid,double precision,double precision,double precision,double precision,integer,text) to service_role;
-grant execute on function public.geo_events_nearby(uuid,double precision,double precision,double precision,integer,text,text) to service_role;
+revoke all on function public.seek_first_nearby(uuid,double precision,double precision,double precision,integer,text,text) from public, anon, authenticated;
+revoke all on function public.seek_first_bbox(uuid,double precision,double precision,double precision,double precision,integer,text) from public, anon, authenticated;
+revoke all on function public.seek_first_events_nearby(uuid,double precision,double precision,double precision,integer,text,text) from public, anon, authenticated;
+grant execute on function public.seek_first_nearby(uuid,double precision,double precision,double precision,integer,text,text) to service_role;
+grant execute on function public.seek_first_bbox(uuid,double precision,double precision,double precision,double precision,integer,text) to service_role;
+grant execute on function public.seek_first_events_nearby(uuid,double precision,double precision,double precision,integer,text,text) to service_role;
 
 -- Seed metadata only. Credential values are Worker secrets and never database rows.
-insert into public.geo_sources (
+insert into public.seek_first_sources (
   source_key, name, source_class, lane, transport, persistence_policy,
   capabilities, credential_bindings, optional_credential_bindings, upstream_url, attribution
 )

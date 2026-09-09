@@ -1,16 +1,16 @@
 -- Longitudinal entity history for the spatial intelligence plane.
 --
--- geo_entities holds CURRENT state and is upserted by external_id, so without
+-- seek_first_entities holds CURRENT state and is upserted by external_id, so without
 -- this an April "wooded parcel" is silently overwritten by a July "building
 -- footprint" and the change that matters is the one thing we cannot see.
--- geo_observations already records metrics over time; this records how the
+-- seek_first_observations already records metrics over time; this records how the
 -- entity itself changed, so "what physically happened on this parcel between
 -- March and August" is answerable from stored evidence rather than inference.
 
-create table if not exists public.geo_entity_revisions (
+create table if not exists public.seek_first_entity_revisions (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
-  entity_id uuid not null references public.geo_entities(id) on delete cascade,
+  entity_id uuid not null references public.seek_first_entities(id) on delete cascade,
   revision integer not null,
   change_type text not null check (change_type in ('created', 'updated')),
   source_key text not null,
@@ -26,12 +26,12 @@ create table if not exists public.geo_entity_revisions (
   recorded_at timestamptz not null default now()
 );
 
-create index if not exists geo_entity_revisions_entity_idx
-  on public.geo_entity_revisions (entity_id, recorded_at desc, revision desc);
-create index if not exists geo_entity_revisions_org_time_idx
-  on public.geo_entity_revisions (org_id, recorded_at desc);
-create index if not exists geo_entity_revisions_location_gix
-  on public.geo_entity_revisions using gist (location);
+create index if not exists seek_first_entity_revisions_entity_idx
+  on public.seek_first_entity_revisions (entity_id, recorded_at desc, revision desc);
+create index if not exists seek_first_entity_revisions_org_time_idx
+  on public.seek_first_entity_revisions (org_id, recorded_at desc);
+create index if not exists seek_first_entity_revisions_location_gix
+  on public.seek_first_entity_revisions using gist (location);
 
 /*
   Record a revision only when something an analyst would call a change actually
@@ -43,7 +43,7 @@ create index if not exists geo_entity_revisions_location_gix
   key. It is deliberately not unique: two collectors racing the same entity
   should both leave a trace, not abort an ingestion run.
 */
-create or replace function public.geo_entities_record_revision()
+create or replace function public.seek_first_entities_record_revision()
 returns trigger
 language plpgsql
 security invoker
@@ -75,10 +75,10 @@ begin
 
   select coalesce(max(r.revision), 0) + 1
     into next_revision
-    from public.geo_entity_revisions r
+    from public.seek_first_entity_revisions r
    where r.entity_id = new.id;
 
-  insert into public.geo_entity_revisions (
+  insert into public.seek_first_entity_revisions (
     org_id, entity_id, revision, change_type, source_key, external_id,
     name, entity_type, location, footprint, properties, provenance,
     source_url, observed_at
@@ -93,10 +93,10 @@ begin
 end;
 $$;
 
-drop trigger if exists geo_entities_revision_trg on public.geo_entities;
-create trigger geo_entities_revision_trg
-  after insert or update on public.geo_entities
-  for each row execute function public.geo_entities_record_revision();
+drop trigger if exists seek_first_entities_revision_trg on public.seek_first_entities;
+create trigger seek_first_entities_revision_trg
+  after insert or update on public.seek_first_entities
+  for each row execute function public.seek_first_entities_record_revision();
 
 /*
   One timeline for a place: entity revisions, events and observations in a
@@ -104,7 +104,7 @@ create trigger geo_entities_revision_trg
   changed around this parcel in the last six months", and it returns provenance
   with every row so an answer can be traced back to the source that produced it.
 */
-create or replace function public.geo_timeline(
+create or replace function public.seek_first_timeline(
   p_org uuid,
   p_lat double precision,
   p_lon double precision,
@@ -153,7 +153,7 @@ as $$
       coalesce(r.observed_at, r.recorded_at) as occurred_at,
       r.properties,
       r.provenance
-    from public.geo_entity_revisions r, origin o, window_bounds w
+    from public.seek_first_entity_revisions r, origin o, window_bounds w
     where r.org_id = p_org
       and r.location is not null
       and (p_source is null or r.source_key = p_source)
@@ -172,7 +172,7 @@ as $$
       e.observed_at as occurred_at,
       e.properties,
       e.provenance
-    from public.geo_events e, origin o, window_bounds w
+    from public.seek_first_events e, origin o, window_bounds w
     where e.org_id = p_org
       and e.location is not null
       and (p_source is null or e.source_key = p_source)
@@ -191,7 +191,7 @@ as $$
       b.observed_at as occurred_at,
       b.payload as properties,
       b.provenance
-    from public.geo_observations b, origin o, window_bounds w
+    from public.seek_first_observations b, origin o, window_bounds w
     where b.org_id = p_org
       and b.location is not null
       and (p_source is null or b.source_key = p_source)
@@ -224,11 +224,11 @@ $$;
 -- Same Data API boundary as the rest of the plane: no browser role reaches
 -- these directly; the canonical Worker authorizes first and calls as
 -- service_role.
-alter table public.geo_entity_revisions enable row level security;
-revoke all on table public.geo_entity_revisions from anon, authenticated;
-grant select, insert, update, delete on table public.geo_entity_revisions to service_role;
+alter table public.seek_first_entity_revisions enable row level security;
+revoke all on table public.seek_first_entity_revisions from anon, authenticated;
+grant select, insert, update, delete on table public.seek_first_entity_revisions to service_role;
 
-revoke all on function public.geo_timeline(uuid,double precision,double precision,double precision,timestamptz,timestamptz,integer,text) from public, anon, authenticated;
-grant execute on function public.geo_timeline(uuid,double precision,double precision,double precision,timestamptz,timestamptz,integer,text) to service_role;
-revoke all on function public.geo_entities_record_revision() from public, anon, authenticated;
-grant execute on function public.geo_entities_record_revision() to service_role;
+revoke all on function public.seek_first_timeline(uuid,double precision,double precision,double precision,timestamptz,timestamptz,integer,text) from public, anon, authenticated;
+grant execute on function public.seek_first_timeline(uuid,double precision,double precision,double precision,timestamptz,timestamptz,integer,text) to service_role;
+revoke all on function public.seek_first_entities_record_revision() from public, anon, authenticated;
+grant execute on function public.seek_first_entities_record_revision() to service_role;

@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import geo from '../src/geo/index.js';
-import { sourceCatalog } from '../src/geo/source-registry.js';
+import seekFirst from '../src/seek-first/index.js';
+import { sourceCatalog } from '../src/seek-first/source-registry.js';
 
 const FAKE_SECRET = 'do-not-leak-this-value';
 const here = dirname(fileURLToPath(import.meta.url));
 const workerSourcePath = resolve(here, '..', 'src', 'index.js');
 
- test('geo source catalog separates no-key and credentialed sources', () => {
+ test('seek-first source catalog separates no-key and credentialed sources', () => {
   const sources = sourceCatalog({ CENSUS_API_KEY: FAKE_SECRET });
   assert.ok(sources.some((source) => source.key === 'usaspending' && source.credential_required === false));
   assert.ok(sources.some((source) => source.key === 'usgs' && source.credential_required === false));
@@ -20,15 +20,15 @@ const workerSourcePath = resolve(here, '..', 'src', 'index.js');
   assert.equal(sources.find((source) => source.key === 'eia').configured, false);
 });
 
-test('geo catalog reports binding names but never credential values', () => {
+test('seek-first catalog reports binding names but never credential values', () => {
   const serialized = JSON.stringify(sourceCatalog({ CENSUS_API_KEY: FAKE_SECRET }));
   assert.match(serialized, /CENSUS_API_KEY/);
   assert.doesNotMatch(serialized, new RegExp(FAKE_SECRET));
 });
 
-test('public geo health is adapter-ready and reveals no provider inventory', async () => {
-  const response = await geo.fetch(
-    new Request('https://api.mccluster.org/v1/geo/health'),
+test('public seek-first health is adapter-ready and reveals no provider inventory', async () => {
+  const response = await seekFirst.fetch(
+    new Request('https://api.mccluster.org/v1/seek-first/health'),
     { CENSUS_API_KEY: FAKE_SECRET }
   );
   assert.equal(response.status, 200);
@@ -50,8 +50,8 @@ test('public geo health is adapter-ready and reveals no provider inventory', asy
 });
 
 test('provider inventory, readiness and viewer config all require house-owner authorization', async () => {
-  for (const route of ['/v1/geo/sources', '/v1/geo/readiness', '/v1/geo/entitlements', '/v1/geo/capabilities', '/v1/geo/viewer/config']) {
-    const response = await geo.fetch(
+  for (const route of ['/v1/seek-first/sources', '/v1/seek-first/readiness', '/v1/seek-first/entitlements', '/v1/seek-first/capabilities', '/v1/seek-first/viewer/config']) {
+    const response = await seekFirst.fetch(
       new Request(`https://api.mccluster.org${route}`),
       { CENSUS_API_KEY: FAKE_SECRET }
     );
@@ -63,8 +63,8 @@ test('provider inventory, readiness and viewer config all require house-owner au
 });
 
 test('authorized source catalog reports binding names but never credential values', async () => {
-  const response = await geo.fetch(
-    new Request('https://api.mccluster.org/v1/geo/sources'),
+  const response = await seekFirst.fetch(
+    new Request('https://api.mccluster.org/v1/seek-first/sources'),
     { CENSUS_API_KEY: FAKE_SECRET, SUPABASE_URL: 'https://db.invalid', SUPABASE_SERVICE_ROLE_KEY: 'service-role' },
     { requireHouseOwner: async () => ({ id: 'owner-1' }) }
   );
@@ -74,9 +74,9 @@ test('authorized source catalog reports binding names but never credential value
   assert.doesNotMatch(body, new RegExp(FAKE_SECRET));
 });
 
-test('data-bearing geo routes fail closed without canonical authorization callback', async () => {
-  const response = await geo.fetch(
-    new Request('https://api.mccluster.org/v1/geo/fetch/usgs', {
+test('data-bearing seek-first routes fail closed without canonical authorization callback', async () => {
+  const response = await seekFirst.fetch(
+    new Request('https://api.mccluster.org/v1/seek-first/fetch/usgs', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ lat: 41.3, lon: -72.9 })
@@ -88,13 +88,13 @@ test('data-bearing geo routes fail closed without canonical authorization callba
   assert.equal(payload.detail.code, 'authorization_unavailable');
 });
 
-test('canonical worker delegates geo namespace with house-owner authorization before database gate', async () => {
+test('canonical worker delegates seek-first namespace with house-owner authorization before database gate', async () => {
   const source = await readFile(workerSourcePath, 'utf8');
-  assert.match(source, /import geo from '\.\/geo\/index\.js';/);
-  const routeNeedle = "return geo.fetch(request, env, { requireHouseOwner });";
+  assert.match(source, /import seekFirst from '\.\/seek-first\/index\.js';/);
+  const routeNeedle = "return seekFirst.fetch(request, env, { requireHouseOwner });";
   const routeIndex = source.indexOf(routeNeedle);
   const configGateIndex = source.indexOf("if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);");
-  assert.ok(routeIndex >= 0, 'geo route delegation with house-owner authorization is missing');
+  assert.ok(routeIndex >= 0, 'seek-first route delegation with house-owner authorization is missing');
   assert.ok(configGateIndex >= 0, 'database configuration gate is missing');
-  assert.ok(routeIndex < configGateIndex, 'geo health/readiness must remain reachable while credentials are being assembled');
+  assert.ok(routeIndex < configGateIndex, 'seek-first health/readiness must remain reachable while credentials are being assembled');
 });

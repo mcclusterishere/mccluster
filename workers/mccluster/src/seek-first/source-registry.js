@@ -52,7 +52,7 @@ function source({
     transient  — proxy/cache only; the adapter does not archive provider rows.
     none       — credential/readiness surface only; no provider content is stored.
 
-  GEV upstream reference used for provider parity:
+  Seek First upstream reference used for provider parity:
   bilawalsidhu/gods-eye-view@759652207fd1279ece97f0f19af566feb9a82146
 */
 export const SOURCES = Object.freeze([
@@ -69,7 +69,7 @@ export const SOURCES = Object.freeze([
   source({ key: 'nhtsa', name: 'National Highway Traffic Safety Administration', capabilities: ['vehicle-safety', 'recalls', 'complaints', 'crashes'], adapter: 'nhtsa', upstream: 'https://api.nhtsa.gov' }),
   source({ key: 'celestrak', name: 'CelesTrak', capabilities: ['satellite-orbits'], adapter: 'celestrak', upstream: 'https://celestrak.org', attribution: 'CelesTrak (celestrak.org), Dr. T.S. Kelso' }),
 
-  // GEV-native keyless/provider-backed runtime sources.
+  // Seek First native keyless/provider-backed runtime sources.
   source({ key: 'overpass', name: 'OpenStreetMap Overpass', capabilities: ['roads', 'infrastructure', 'military-installations', 'poi'], adapter: 'overpass', upstream: 'https://overpass-api.de/api', attribution: '© OpenStreetMap contributors' }),
   source({ key: 'adsb_lol', name: 'ADSB.lol', capabilities: ['aircraft', 'military-aircraft', 'aircraft-traces'], adapter: 'adsb_lol', upstream: 'https://api.adsb.lol', attribution: 'adsb.lol contributors — ODbL 1.0' }),
   source({ key: 'launch_library2', name: 'Launch Library 2', optionalCredentialEnv: ['LL2_API_TOKEN'], capabilities: ['launches', 'missions', 'pads', 'spaceflight-events'], adapter: 'launch_library2', upstream: 'https://ll.thespacedevs.com', attribution: 'Launch Library 2 — The Space Devs' }),

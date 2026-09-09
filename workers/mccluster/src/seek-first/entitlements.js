@@ -13,7 +13,7 @@ import { PERSISTENCE, SOURCE_CLASSES, sourceByKey } from './source-registry.js';
   class of licence it was obtained under. This module decides whether that pair
   is allowed, and what the consumer may then do with the rows.
 
-  A row in public.geo_source_entitlements narrows or widens the default for one
+  A row in public.seek_first_source_entitlements narrows or widens the default for one
   org; the defaults below are what applies when the owner has not written one.
   Defaults never invent a permission the source class does not already imply.
 */

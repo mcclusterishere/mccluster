@@ -25,13 +25,13 @@ ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
 META_GRAPH_API_VERSION = "v26.0"
 
-# Cloudflare Access in front of the internal spatial console at /internal/gev.
+# Cloudflare Access in front of the internal spatial console at /internal/seek-first.
 # Set BOTH (as [vars] here, or as secrets) to make the console shell itself
 # unreachable without a valid Access assertion. Leaving them unset keeps the
 # shell reachable but empty, because every byte of data behind it still needs a
 # McCluster house-owner token.
-# GEV_ACCESS_TEAM_DOMAIN = "yourteam"   # or yourteam.cloudflareaccess.com
-# GEV_ACCESS_AUD = "<Access application AUD tag>"
+# SEEK_FIRST_ACCESS_TEAM_DOMAIN = "yourteam"   # or yourteam.cloudflareaccess.com
+# SEEK_FIRST_ACCESS_AUD = "<Access application AUD tag>"
 
 # Secrets required in production (set with wrangler secret put, never commit values):
 # SUPABASE_URL
@@ -46,7 +46,7 @@ META_GRAPH_API_VERSION = "v26.0"
 # Instagram access tokens are Worker secrets selected only from the org's enabled
 # org_channels row. Allowed env bindings must match SOCIAL_IG_*_ACCESS_TOKEN.
 #
-# Spatial intelligence / GEV provider bindings. The backend is complete without
+# Spatial intelligence / Seek First provider bindings. The backend is complete without
 # values here; add only the credentials for providers you activate:
 # CENSUS_API_KEY
 # EIA_API_KEY

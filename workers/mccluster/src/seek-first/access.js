@@ -4,8 +4,8 @@
   Two locks, and they are independent on purpose:
 
     1. Cloudflare Access, verified here, in front of the console shell and the
-       internal routes. Enabled by setting GEV_ACCESS_TEAM_DOMAIN and
-       GEV_ACCESS_AUD on the Worker. Until those exist this is a no-op, because
+       internal routes. Enabled by setting SEEK_FIRST_ACCESS_TEAM_DOMAIN and
+       SEEK_FIRST_ACCESS_AUD on the Worker. Until those exist this is a no-op, because
        failing closed on an unconfigured edge would lock the owner out of their
        own console with no way back in.
     2. McCluster house-owner authentication (Supabase bearer + org_members
@@ -30,11 +30,11 @@ export class AccessError extends Error {
 }
 
 export function accessConfigured(env) {
-  return Boolean(env?.GEV_ACCESS_TEAM_DOMAIN && env?.GEV_ACCESS_AUD);
+  return Boolean(env?.SEEK_FIRST_ACCESS_TEAM_DOMAIN && env?.SEEK_FIRST_ACCESS_AUD);
 }
 
 function teamOrigin(env) {
-  const raw = String(env.GEV_ACCESS_TEAM_DOMAIN).trim().replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  const raw = String(env.SEEK_FIRST_ACCESS_TEAM_DOMAIN).trim().replace(/^https?:\/\//, '').replace(/\/+$/, '');
   const host = raw.includes('.') ? raw : `${raw}.cloudflareaccess.com`;
   if (!/^[a-z0-9.-]+$/i.test(host)) throw new AccessError('Access team domain is malformed', 500, 'access_misconfigured');
   return `https://${host}`;
@@ -102,7 +102,7 @@ export async function verifyAccess(request, env) {
   if (payload.iss !== teamOrigin(env)) throw new AccessError('Cloudflare Access assertion issuer mismatch', 403, 'access_assertion_issuer');
 
   const audience = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-  if (!audience.includes(String(env.GEV_ACCESS_AUD))) {
+  if (!audience.includes(String(env.SEEK_FIRST_ACCESS_AUD))) {
     throw new AccessError('Cloudflare Access assertion audience mismatch', 403, 'access_assertion_audience');
   }
 
@@ -119,7 +119,7 @@ export async function verifyAccess(request, env) {
         ['verify']
       );
       if (await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, signature, signed)) {
-        return { email: payload.email || null, sub: payload.sub || null, aud: env.GEV_ACCESS_AUD, expires_at: payload.exp };
+        return { email: payload.email || null, sub: payload.sub || null, aud: env.SEEK_FIRST_ACCESS_AUD, expires_at: payload.exp };
       }
     } catch {
       // Try the next published key rather than failing on one rotation artifact.

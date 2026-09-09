@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { executeAdapter, GeoAdapterError } from '../src/geo/adapters.js';
-import { sourceByKey } from '../src/geo/source-registry.js';
+import { executeAdapter, GeoAdapterError } from '../src/seek-first/adapters.js';
+import { sourceByKey } from '../src/seek-first/source-registry.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..', '..', '..');
@@ -87,9 +87,9 @@ test('spatial migration creates PostGIS graph and keeps browser roles out', asyn
   const sql = await readFile(migrationPath, 'utf8');
   const idempotency = await readFile(idempotencyPath, 'utf8');
   for (const table of [
-    'geo_sources', 'geo_source_entitlements', 'geo_layers', 'geo_entities', 'geo_observations',
-    'geo_events', 'geo_relationships', 'geo_projects', 'geo_project_entities', 'geo_ingestion_runs',
-    'geo_derived_metrics', 'geo_alert_rules', 'geo_alerts'
+    'seek_first_sources', 'seek_first_source_entitlements', 'seek_first_layers', 'seek_first_entities', 'seek_first_observations',
+    'seek_first_events', 'seek_first_relationships', 'seek_first_projects', 'seek_first_project_entities', 'seek_first_ingestion_runs',
+    'seek_first_derived_metrics', 'seek_first_alert_rules', 'seek_first_alerts'
   ]) {
     assert.match(sql, new RegExp(`create table if not exists public\\.${table}\\b`, 'i'));
   }
@@ -99,10 +99,10 @@ test('spatial migration creates PostGIS graph and keeps browser roles out', asyn
   assert.match(sql, /grant select, insert, update, delete on table public\.%I to service_role/i);
   assert.match(sql, /security invoker/i);
   assert.doesNotMatch(sql, /security definer/i);
-  assert.match(sql, /public\.geo_nearby/);
-  assert.match(sql, /public\.geo_bbox/);
-  assert.match(sql, /public\.geo_events_nearby/);
-  assert.match(idempotency, /unique index if not exists geo_observations_external_uidx/i);
+  assert.match(sql, /public\.seek_first_nearby/);
+  assert.match(sql, /public\.seek_first_bbox/);
+  assert.match(sql, /public\.seek_first_events_nearby/);
+  assert.match(idempotency, /unique index if not exists seek_first_observations_external_uidx/i);
   assert.match(idempotency, /org_id, source_key, external_id/i);
 });
 
@@ -112,7 +112,7 @@ test('AIS support extends the existing Durable Object class without creating a s
   assert.deepEqual(exportedClasses, ['HereTenantAgent']);
   assert.match(source, /AISSTREAM_API_KEY/);
   assert.match(source, /https:\/\/stream\.aisstream\.io\/v0\/stream/);
-  assert.match(source, /\/internal\/geo\/ais\/snapshot/);
+  assert.match(source, /\/internal\/seek-first\/ais\/snapshot/);
   assert.match(source, /CREATE TABLE IF NOT EXISTS ais_vessels/i);
   assert.doesNotMatch(source, /class\s+Geo/i);
 });

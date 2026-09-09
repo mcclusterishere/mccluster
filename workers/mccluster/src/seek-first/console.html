@@ -180,7 +180,7 @@
     - the globe is constructed from an open imagery stack that needs no
       credential at all, and paid providers are added on top afterwards.
 
-  Provider credentials arrive from GET /v1/geo/viewer/config, which is
+  Provider credentials arrive from GET /v1/seek-first/viewer/config, which is
   house-owner authenticated. Nothing here is baked into the page.
 */
 (function () {
@@ -188,7 +188,7 @@
 
   var SUPABASE_URL = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co';
   var SUPABASE_PUBLISHABLE = 'sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
-  var SESSION_KEY = 'mcc.gev.session';
+  var SESSION_KEY = 'mcc.seek-first.session';
   var BOOT_DEADLINE_MS = 25000;
   var STEP_TIMEOUT_MS = 12000;
 
@@ -481,7 +481,7 @@
 
   function loadStored(spec) {
     var view = cameraCentre();
-    var query = '/v1/geo/bbox?min_lon=' + view.bbox[0] + '&min_lat=' + view.bbox[1] +
+    var query = '/v1/seek-first/bbox?min_lon=' + view.bbox[0] + '&min_lat=' + view.bbox[1] +
                 '&max_lon=' + view.bbox[2] + '&max_lat=' + view.bbox[3] + '&limit=1000';
     return api(query).then(function (payload) {
       var rows = (payload && payload.entities) || [];
@@ -494,7 +494,7 @@
 
   function loadAis(spec) {
     var view = cameraCentre();
-    return api('/v1/geo/live/ais?limit=2000&bbox=' + view.bbox.join(',')).then(function (payload) {
+    return api('/v1/seek-first/live/ais?limit=2000&bbox=' + view.bbox.join(',')).then(function (payload) {
       if (payload && payload.configured === false) {
         var error = new Error('AISSTREAM_API_KEY is not set');
         error.blocked = true;
@@ -517,7 +517,7 @@
     var body = spec.build ? spec.build(cameraCentre()) : {};
     body.persist = false;
     body.lane = 'INTERNAL';
-    return api('/v1/geo/fetch/' + spec.source, { method: 'POST', body: body }).then(function (payload) {
+    return api('/v1/seek-first/fetch/' + spec.source, { method: 'POST', body: body }).then(function (payload) {
       var result = (payload && payload.result) || {};
       var records = result.records || [];
       var mapped = drawPoints(spec, records.map(function (row) {
@@ -784,7 +784,7 @@
     }
 
     var configStep;
-    withTimeout(api('/v1/geo/viewer/config'), STEP_TIMEOUT_MS, 'Viewer configuration')
+    withTimeout(api('/v1/seek-first/viewer/config'), STEP_TIMEOUT_MS, 'Viewer configuration')
       .then(function (payload) {
         mark(authStep, 'ok', 'verified');
         configStep = step('config', 'Provider configuration');

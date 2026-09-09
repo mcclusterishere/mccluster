@@ -1,13 +1,13 @@
-# GEV / Spatial Intelligence — state and remaining owner actions
+# Seek First / Spatial Intelligence — state and remaining owner actions
 
 Supersedes the original Claude handoff. That document asked for work; this one
 records what was done, what was verified and how, and what is still yours.
 
 ## User intent (unchanged, still authoritative)
 
-- God's Eye View is **not** a replacement for any public McCluster page.
+- Seek First is **not** a replacement for any public McCluster page.
 - `matthew.mccluster.org` stays visually and behaviorally unchanged.
-- GEV is an **internal/backend operations and spatial-intelligence surface**.
+- Seek First is an **internal/backend operations and spatial-intelligence surface**.
   No public navigation, no public product page.
 - Access goes through Cloudflare Access or the existing backend auth boundary,
   never an unauthenticated Pages route.
@@ -28,7 +28,7 @@ baked the Supabase anon key into the generated HTML and monkey-patched
 
 All of it is gone. `.github/workflows/deploy-pages.yml` is back to the
 main-branch version and publishes only from `main`. A test asserts the public
-Pages workflow never mentions GEV again.
+Pages workflow never mentions Seek First again.
 
 ### The console is McCluster's, and it boots
 
@@ -38,8 +38,8 @@ JSON fetch injected into the generated HTML could never satisfy that code path,
 which is why the prototype sat on its loading cover.
 
 Rather than keep patching a build-time credential path at runtime, the viewer
-is now McCluster's own: `workers/mccluster/src/geo/console.html`, served by the
-canonical Worker at `GET /internal/gev`, querying `/v1/geo/*`. Upstream GEV
+is now McCluster's own: `workers/mccluster/src/seek-first/console.html`, served by the
+canonical Worker at `GET /internal/seek-first`, querying `/v1/seek-first/*`. The upstream God's Eye View project
 stays the reference for provider parity; the canonical intelligence is the API
 and the database, and the renderer is replaceable.
 
@@ -57,13 +57,13 @@ Boot is built so the stuck-cover failure cannot recur:
 
 ### The API is authenticated and lane-aware
 
-Only `GET /v1/geo/health` answers unauthenticated, and it reports liveness
+Only `GET /v1/seek-first/health` answers unauthenticated, and it reports liveness
 only. `sources`, `readiness`, `entitlements`, `capabilities` and the viewer
 config all require a McCluster house owner, because the provider inventory is a
 map of where the credentials are.
 
 Cloudflare Access (RS256 assertion verified against the team JWKS) sits in
-front of `/internal/gev` and the geo routes when configured.
+front of `/internal/seek-first` and the Seek First routes when configured.
 
 An entitlement firewall decides whether a consumer's lane may consume a
 source's licence class, and gates retention. See `SPATIAL-INTELLIGENCE.md`.
@@ -106,10 +106,10 @@ record to Null Island.
 - all three spatial migrations apply cleanly;
 - the DeKalb scenario reads correctly end to end — April wooded parcel, May
   permit event, June cleared, July building footprint, September energy
-  observation — and `geo_timeline` returns them in order for a window;
+  observation — and `seek_first_timeline` returns them in order for a window;
 - a re-ingest that changes nothing writes no revision;
 - observation idempotency holds on `(org_id, source_key, external_id)`;
-- `geo_nearby`, `geo_bbox`, `geo_events_nearby`, `geo_timeline` all return
+- `seek_first_nearby`, `seek_first_bbox`, `seek_first_events_nearby`, `seek_first_timeline` all return
   correct distances and counts;
 - after deliberately re-granting the old permissive Supabase defaults,
   re-running the migration closed the boundary again: `anon` and `authenticated`
@@ -167,13 +167,13 @@ repository's Supabase workflow and run the advisor checks. Until then the
 Worker reports `mode: adapter-ready`; provider brokering works and only the
 stored-data routes return `spatial_schema_not_ready`.
 
-### 3. Put Cloudflare Access in front of `/internal/gev`
+### 3. Put Cloudflare Access in front of `/internal/seek-first`
 
-Create an Access application for `api.mccluster.org/internal/gev`, then set on
+Create an Access application for `api.mccluster.org/internal/seek-first`, then set on
 the Worker:
 
-- `GEV_ACCESS_TEAM_DOMAIN` — e.g. `yourteam` or `yourteam.cloudflareaccess.com`
-- `GEV_ACCESS_AUD` — the application's AUD tag
+- `SEEK_FIRST_ACCESS_TEAM_DOMAIN` — e.g. `yourteam` or `yourteam.cloudflareaccess.com`
+- `SEEK_FIRST_ACCESS_AUD` — the application's AUD tag
 
 Until both exist the shell is reachable but empty: every byte behind it still
 requires a house-owner token. With both set the shell itself is unreachable
@@ -235,12 +235,12 @@ basemap the console boots on. Each was reached live while this work was done.
   requires eval and WASM compilation, and the console is a single inlined file.
   Tightening to a nonce plus `strict-dynamic` is possible but needs its own
   browser verification pass; it is not free.
-- **No `POST /v1/geo/query` or `/analyze` yet.** Buffers, spatial joins and
+- **No `POST /v1/seek-first/query` or `/analyze` yet.** Buffers, spatial joins and
   difference-in-differences are the next layer, and they belong on top of
-  `geo_timeline` rather than beside it.
+  `seek_first_timeline` rather than beside it.
 
 ## Public site invariant
 
 Still true, still checked: the Pages deployment publishes only the web root
 from `main`, and the internal console lives on the Worker. A test fails if the
-public workflow ever mentions GEV again.
+public workflow ever mentions Seek First again.

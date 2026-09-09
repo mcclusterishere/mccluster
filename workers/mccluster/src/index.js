@@ -1,8 +1,8 @@
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
-import geo from './geo/index.js';
-import { AccessError, verifyAccess } from './geo/access.js';
-import GEV_CONSOLE_HTML from './geo/console.html';
+import seekFirst from './seek-first/index.js';
+import { AccessError, verifyAccess } from './seek-first/access.js';
+import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
@@ -104,25 +104,25 @@ export default {
         return reply(request, env, CATALOG);
       }
 
-      if (path === '/v1/geo' || path.startsWith('/v1/geo/')) {
-        return geo.fetch(request, env, { requireHouseOwner });
+      if (path === '/v1/seek-first' || path.startsWith('/v1/seek-first/')) {
+        return seekFirst.fetch(request, env, { requireHouseOwner });
       }
 
       /* THE INTERNAL SPATIAL CONSOLE.
 
          Not a public page and not part of the published site. It carries no
          data and no credential of its own: everything it draws comes back from
-         /v1/geo/*, which requires a McCluster house owner. Cloudflare Access,
-         when GEV_ACCESS_TEAM_DOMAIN and GEV_ACCESS_AUD are set on the Worker,
+         /v1/seek-first/*, which requires a McCluster house owner. Cloudflare Access,
+         when SEEK_FIRST_ACCESS_TEAM_DOMAIN and SEEK_FIRST_ACCESS_AUD are set on the Worker,
          is verified here so the shell itself stops being reachable too. */
-      if (path === '/internal/gev' && request.method === 'GET') {
+      if (path === '/internal/seek-first' && request.method === 'GET') {
         try {
           await verifyAccess(request, env);
         } catch (error) {
           if (error instanceof AccessError) return fail(request, env, error.message, error.status, { code: error.code });
           throw error;
         }
-        return new Response(GEV_CONSOLE_HTML, {
+        return new Response(SEEK_FIRST_CONSOLE_HTML, {
           headers: {
             'content-type': 'text/html; charset=utf-8',
             'cache-control': 'private, no-store',

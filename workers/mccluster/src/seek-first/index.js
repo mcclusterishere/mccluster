@@ -190,8 +190,8 @@ async function aisSnapshot(request, env, options, url, restart = false) {
   if (!env.HereTenantAgent) throw new GeoAdapterError('Tenant agent Durable Object binding is unavailable', 503, 'durable_object_unavailable');
 
   const internalUrl = new URL(restart
-    ? 'https://internal.mccluster/internal/geo/ais/restart'
-    : 'https://internal.mccluster/internal/geo/ais/snapshot');
+    ? 'https://internal.mccluster/internal/seek-first/ais/restart'
+    : 'https://internal.mccluster/internal/seek-first/ais/snapshot');
   if (!restart) {
     const limit = int(url.searchParams.get('limit'), 'limit', 1, 5000, 1000);
     internalUrl.searchParams.set('limit', String(limit));
@@ -209,7 +209,7 @@ async function aisSnapshot(request, env, options, url, restart = false) {
     }
   }
 
-  const id = env.HereTenantAgent.idFromName('geo:ais:mccluster');
+  const id = env.HereTenantAgent.idFromName('seek-first:ais:mccluster');
   const stub = env.HereTenantAgent.get(id);
   const response = await stub.fetch(new Request(internalUrl, { method: restart ? 'POST' : 'GET' }));
   if (!response.ok) throw new GeoAdapterError('AIS live cache request failed', 502, 'ais_cache_error');
@@ -287,7 +287,7 @@ export default {
         nothing about which providers are keyed — that inventory is a map of
         where the credentials are, so it lives behind the owner check.
       */
-      if ((path === '/v1/geo' || path === '/v1/geo/health') && request.method === 'GET') {
+      if ((path === '/v1/seek-first' || path === '/v1/seek-first/health') && request.method === 'GET') {
         return reply(request, env, {
           ok: true,
           service: SERVICE,
@@ -299,7 +299,7 @@ export default {
         });
       }
 
-      if (path === '/v1/geo/sources' && request.method === 'GET') {
+      if (path === '/v1/seek-first/sources' && request.method === 'GET') {
         const { org } = await protectedContext(request, env, options);
         const lane = normalizeLane(url.searchParams.get('lane'));
         const rows = await entitlementRows(env, org.id);
@@ -330,7 +330,7 @@ export default {
         });
       }
 
-      if (path === '/v1/geo/entitlements' && request.method === 'GET') {
+      if (path === '/v1/seek-first/entitlements' && request.method === 'GET') {
         const { org } = await protectedContext(request, env, options);
         const lane = normalizeLane(url.searchParams.get('lane'));
         const rows = await entitlementRows(env, org.id);
@@ -345,7 +345,7 @@ export default {
         });
       }
 
-      if (path === '/v1/geo/readiness' && request.method === 'GET') {
+      if (path === '/v1/seek-first/readiness' && request.method === 'GET') {
         await protectedContext(request, env, options);
         return reply(request, env, {
           ok: true,
@@ -357,12 +357,12 @@ export default {
         });
       }
 
-      if (path === '/v1/geo/viewer/config' && request.method === 'GET') {
+      if (path === '/v1/seek-first/viewer/config' && request.method === 'GET') {
         await protectedContext(request, env, options);
         return reply(request, env, { ok: true, service: SERVICE, config: viewerConfig(env) });
       }
 
-      if (path === '/v1/geo/capabilities' && request.method === 'GET') {
+      if (path === '/v1/seek-first/capabilities' && request.method === 'GET') {
         await protectedContext(request, env, options);
         return reply(request, env, {
           ok: true,
@@ -372,42 +372,42 @@ export default {
           adapters: adapterCapabilities(),
           lanes: Object.values(LANES),
           routes: {
-            health: 'GET /v1/geo/health',
-            readiness: 'GET /v1/geo/readiness',
-            sources: 'GET /v1/geo/sources?lane=',
-            entitlements: 'GET /v1/geo/entitlements?lane=',
-            viewer_config: 'GET /v1/geo/viewer/config',
-            fetch: 'POST /v1/geo/fetch/:source',
-            ingest: 'POST /v1/geo/ingest/:source',
-            entities: 'GET /v1/geo/entities',
-            entity: 'GET /v1/geo/entities/:id',
-            entity_history: 'GET /v1/geo/entities/:id/history',
-            nearby: 'GET /v1/geo/nearby',
-            bbox: 'GET /v1/geo/bbox',
-            events_nearby: 'GET /v1/geo/events/nearby',
-            timeline: 'GET /v1/geo/timeline',
-            projects: 'GET /v1/geo/projects',
-            layers: 'GET /v1/geo/layers',
-            ingestion_runs: 'GET /v1/geo/ingestion-runs',
-            live_ais: 'GET /v1/geo/live/ais',
-            live_ais_restart: 'POST /v1/geo/live/ais/restart'
+            health: 'GET /v1/seek-first/health',
+            readiness: 'GET /v1/seek-first/readiness',
+            sources: 'GET /v1/seek-first/sources?lane=',
+            entitlements: 'GET /v1/seek-first/entitlements?lane=',
+            viewer_config: 'GET /v1/seek-first/viewer/config',
+            fetch: 'POST /v1/seek-first/fetch/:source',
+            ingest: 'POST /v1/seek-first/ingest/:source',
+            entities: 'GET /v1/seek-first/entities',
+            entity: 'GET /v1/seek-first/entities/:id',
+            entity_history: 'GET /v1/seek-first/entities/:id/history',
+            nearby: 'GET /v1/seek-first/nearby',
+            bbox: 'GET /v1/seek-first/bbox',
+            events_nearby: 'GET /v1/seek-first/events/nearby',
+            timeline: 'GET /v1/seek-first/timeline',
+            projects: 'GET /v1/seek-first/projects',
+            layers: 'GET /v1/seek-first/layers',
+            ingestion_runs: 'GET /v1/seek-first/ingestion-runs',
+            live_ais: 'GET /v1/seek-first/live/ais',
+            live_ais_restart: 'POST /v1/seek-first/live/ais/restart'
           }
         });
       }
 
-      const providerMatch = path.match(/^\/v1\/geo\/(fetch|ingest)\/([a-z0-9_-]+)$/i);
+      const providerMatch = path.match(/^\/v1\/seek-first\/(fetch|ingest)\/([a-z0-9_-]+)$/i);
       if (providerMatch && request.method === 'POST') {
         return await fetchAndMaybePersist(request, env, options, providerMatch[2], providerMatch[1]);
       }
 
-      if (path === '/v1/geo/live/ais' && request.method === 'GET') {
+      if (path === '/v1/seek-first/live/ais' && request.method === 'GET') {
         return await aisSnapshot(request, env, options, url, false);
       }
-      if (path === '/v1/geo/live/ais/restart' && request.method === 'POST') {
+      if (path === '/v1/seek-first/live/ais/restart' && request.method === 'POST') {
         return await aisSnapshot(request, env, options, url, true);
       }
 
-      if (path === '/v1/geo/nearby' && request.method === 'GET') {
+      if (path === '/v1/seek-first/nearby' && request.method === 'GET') {
         const { org } = await protectedContext(request, env, options, { requireSchema: true });
         const params = queryParams(url);
         params.lat = finite(params.lat, 'lat', -90, 90);
@@ -418,7 +418,7 @@ export default {
         return reply(request, env, { ok: true, service: SERVICE, entities: rows || [] });
       }
 
-      if (path === '/v1/geo/events/nearby' && request.method === 'GET') {
+      if (path === '/v1/seek-first/events/nearby' && request.method === 'GET') {
         const { org } = await protectedContext(request, env, options, { requireSchema: true });
         const params = queryParams(url);
         params.lat = finite(params.lat, 'lat', -90, 90);
@@ -429,7 +429,7 @@ export default {
         return reply(request, env, { ok: true, service: SERVICE, events: rows || [] });
       }
 
-      if (path === '/v1/geo/timeline' && request.method === 'GET') {
+      if (path === '/v1/seek-first/timeline' && request.method === 'GET') {
         const { org } = await protectedContext(request, env, options, { requireSchema: true });
         const params = queryParams(url);
         params.lat = finite(params.lat, 'lat', -90, 90);
@@ -442,7 +442,7 @@ export default {
         return reply(request, env, { ok: true, service: SERVICE, timeline: rows || [] });
       }
 
-      if (path === '/v1/geo/bbox' && request.method === 'GET') {
+      if (path === '/v1/seek-first/bbox' && request.method === 'GET') {
         const { org } = await protectedContext(request, env, options, { requireSchema: true });
         const params = queryParams(url);
         params.min_lat = finite(params.min_lat, 'min_lat', -90, 90);
@@ -457,7 +457,7 @@ export default {
         return reply(request, env, { ok: true, service: SERVICE, entities: rows || [] });
       }
 
-      if (path === '/v1/geo/entities' && request.method === 'GET') {
+      if (path === '/v1/seek-first/entities' && request.method === 'GET') {
         const { org } = await protectedContext(request, env, options, { requireSchema: true });
         const rows = await listEntities(env, org.id, {
           source: url.searchParams.get('source') || null,
@@ -467,7 +467,7 @@ export default {
         return reply(request, env, { ok: true, service: SERVICE, entities: rows || [] });
       }
 
-      const historyMatch = path.match(/^\/v1\/geo\/entities\/([0-9a-f-]{36})\/history$/i);
+      const historyMatch = path.match(/^\/v1\/seek-first\/entities\/([0-9a-f-]{36})\/history$/i);
       if (historyMatch && request.method === 'GET') {
         if (!UUID_RE.test(historyMatch[1])) throw new GeoAdapterError('Invalid entity id', 400, 'invalid_parameter');
         const { org } = await protectedContext(request, env, options, { requireSchema: true });
@@ -487,7 +487,7 @@ export default {
         });
       }
 
-      const entityMatch = path.match(/^\/v1\/geo\/entities\/([0-9a-f-]{36})$/i);
+      const entityMatch = path.match(/^\/v1\/seek-first\/entities\/([0-9a-f-]{36})$/i);
       if (entityMatch && request.method === 'GET') {
         if (!UUID_RE.test(entityMatch[1])) throw new GeoAdapterError('Invalid entity id', 400, 'invalid_parameter');
         const { org } = await protectedContext(request, env, options, { requireSchema: true });
@@ -496,19 +496,19 @@ export default {
         return reply(request, env, { ok: true, service: SERVICE, entity });
       }
 
-      if (path === '/v1/geo/projects' && request.method === 'GET') {
+      if (path === '/v1/seek-first/projects' && request.method === 'GET') {
         const { org } = await protectedContext(request, env, options, { requireSchema: true });
         const rows = await listProjects(env, org.id, int(url.searchParams.get('limit'), 'limit', 1, 200, 100));
         return reply(request, env, { ok: true, service: SERVICE, projects: rows || [] });
       }
 
-      if (path === '/v1/geo/layers' && request.method === 'GET') {
+      if (path === '/v1/seek-first/layers' && request.method === 'GET') {
         const { org } = await protectedContext(request, env, options, { requireSchema: true });
         const rows = await listLayers(env, org.id, int(url.searchParams.get('limit'), 'limit', 1, 500, 200));
         return reply(request, env, { ok: true, service: SERVICE, layers: rows || [] });
       }
 
-      if (path === '/v1/geo/ingestion-runs' && request.method === 'GET') {
+      if (path === '/v1/seek-first/ingestion-runs' && request.method === 'GET') {
         const { org } = await protectedContext(request, env, options, { requireSchema: true });
         const rows = await listIngestionRuns(env, org.id, {
           source: url.searchParams.get('source') || null,

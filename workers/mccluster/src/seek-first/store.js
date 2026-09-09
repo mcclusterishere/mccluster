@@ -44,7 +44,7 @@ export async function resolveHouseOrg(env) {
 export async function schemaReady(env) {
   if (!configured(env)) return false;
   try {
-    const rows = await db(env, 'geo_sources?select=source_key&limit=1');
+    const rows = await db(env, 'seek_first_sources?select=source_key&limit=1');
     return Array.isArray(rows);
   } catch {
     return false;
@@ -121,7 +121,7 @@ function observationRow(orgId, result, item) {
 }
 
 async function startRun(env, orgId, result, operation, requestFingerprint = null) {
-  const rows = await db(env, 'geo_ingestion_runs', {
+  const rows = await db(env, 'seek_first_ingestion_runs', {
     method: 'POST',
     prefer: 'return=representation',
     body: [{
@@ -139,7 +139,7 @@ async function startRun(env, orgId, result, operation, requestFingerprint = null
 
 async function finishRun(env, runId, patch) {
   if (!runId) return;
-  await db(env, `geo_ingestion_runs?id=eq.${encodeURIComponent(runId)}`, {
+  await db(env, `seek_first_ingestion_runs?id=eq.${encodeURIComponent(runId)}`, {
     method: 'PATCH',
     prefer: 'return=minimal',
     body: { ...patch, finished_at: new Date().toISOString() }
@@ -157,7 +157,7 @@ async function upsertRows(env, table, rows, onConflict) {
 
 async function insertObservations(env, rows) {
   if (!rows.length) return [];
-  return db(env, 'geo_observations?on_conflict=org_id,source_key,external_id', {
+  return db(env, 'seek_first_observations?on_conflict=org_id,source_key,external_id', {
     method: 'POST',
     prefer: 'resolution=ignore-duplicates,return=representation',
     body: rows
@@ -188,8 +188,8 @@ export async function persistAdapterResult(env, orgId, result, { operation = 'fe
     const observations = (result.records || []).filter((item) => item.kind === 'observation').map((item) => observationRow(orgId, result, item));
 
     const [entityWrites, eventWrites, observationWrites] = await Promise.all([
-      upsertRows(env, 'geo_entities', entities, 'org_id,source_key,external_id'),
-      upsertRows(env, 'geo_events', events, 'org_id,source_key,external_id'),
+      upsertRows(env, 'seek_first_entities', entities, 'org_id,source_key,external_id'),
+      upsertRows(env, 'seek_first_events', events, 'org_id,source_key,external_id'),
       insertObservations(env, observations)
     ]);
     const written = (entityWrites?.length || 0) + (eventWrites?.length || 0) + (observationWrites?.length || 0);
@@ -223,7 +223,7 @@ async function rpc(env, name, args) {
 }
 
 export async function nearbyEntities(env, orgId, params) {
-  return rpc(env, 'geo_nearby', {
+  return rpc(env, 'seek_first_nearby', {
     p_org: orgId,
     p_lat: Number(params.lat),
     p_lon: Number(params.lon),
@@ -235,7 +235,7 @@ export async function nearbyEntities(env, orgId, params) {
 }
 
 export async function nearbyEvents(env, orgId, params) {
-  return rpc(env, 'geo_events_nearby', {
+  return rpc(env, 'seek_first_events_nearby', {
     p_org: orgId,
     p_lat: Number(params.lat),
     p_lon: Number(params.lon),
@@ -247,7 +247,7 @@ export async function nearbyEvents(env, orgId, params) {
 }
 
 export async function entitiesInBbox(env, orgId, params) {
-  return rpc(env, 'geo_bbox', {
+  return rpc(env, 'seek_first_bbox', {
     p_org: orgId,
     p_min_lat: Number(params.min_lat),
     p_min_lon: Number(params.min_lon),
@@ -259,7 +259,7 @@ export async function entitiesInBbox(env, orgId, params) {
 }
 
 export async function getEntity(env, orgId, id) {
-  const rows = await db(env, `geo_entities?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}&select=id,source_key,external_id,entity_type,name,properties,provenance,source_url,observed_at,first_seen_at,last_seen_at,expires_at&limit=1`);
+  const rows = await db(env, `seek_first_entities?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}&select=id,source_key,external_id,entity_type,name,properties,provenance,source_url,observed_at,first_seen_at,last_seen_at,expires_at&limit=1`);
   return rows?.[0] || null;
 }
 
@@ -272,7 +272,7 @@ export async function listEntities(env, orgId, { source, entityType, limit = 100
   ];
   if (source) parts.push(`source_key=eq.${encodeURIComponent(source)}`);
   if (entityType) parts.push(`entity_type=eq.${encodeURIComponent(entityType)}`);
-  return db(env, `geo_entities?${parts.join('&')}`);
+  return db(env, `seek_first_entities?${parts.join('&')}`);
 }
 
 export async function listIngestionRuns(env, orgId, { source, limit = 50 } = {}) {
@@ -283,7 +283,7 @@ export async function listIngestionRuns(env, orgId, { source, limit = 50 } = {})
     `limit=${Math.max(1, Math.min(Number(limit) || 50, 200))}`
   ];
   if (source) parts.push(`source_key=eq.${encodeURIComponent(source)}`);
-  return db(env, `geo_ingestion_runs?${parts.join('&')}`);
+  return db(env, `seek_first_ingestion_runs?${parts.join('&')}`);
 }
 
 /*
@@ -299,7 +299,7 @@ export async function entitlementRows(env, orgId, sourceKey = null) {
   ];
   if (sourceKey) parts.push(`source_key=eq.${encodeURIComponent(sourceKey)}`);
   try {
-    const rows = await db(env, `geo_source_entitlements?${parts.join('&')}`);
+    const rows = await db(env, `seek_first_source_entitlements?${parts.join('&')}`);
     return new Map((rows || []).map((row) => [row.source_key, row]));
   } catch {
     // A missing schema must not stop a keyless open-data read.
@@ -308,20 +308,20 @@ export async function entitlementRows(env, orgId, sourceKey = null) {
 }
 
 /*
-  History. geo_entities holds current state; geo_entity_revisions is the append
-  only record of how that state got there, and geo_observations is the metric
+  History. seek_first_entities holds current state; seek_first_entity_revisions is the append
+  only record of how that state got there, and seek_first_observations is the metric
   timeline. An entity's history is the merge of both, newest first.
 */
 export async function entityRevisions(env, orgId, entityId, limit = 100) {
-  return db(env, `geo_entity_revisions?org_id=eq.${encodeURIComponent(orgId)}&entity_id=eq.${encodeURIComponent(entityId)}&select=id,revision,change_type,source_key,external_id,name,entity_type,properties,provenance,source_url,observed_at,recorded_at&order=recorded_at.desc,revision.desc&limit=${Math.max(1, Math.min(Number(limit) || 100, 500))}`);
+  return db(env, `seek_first_entity_revisions?org_id=eq.${encodeURIComponent(orgId)}&entity_id=eq.${encodeURIComponent(entityId)}&select=id,revision,change_type,source_key,external_id,name,entity_type,properties,provenance,source_url,observed_at,recorded_at&order=recorded_at.desc,revision.desc&limit=${Math.max(1, Math.min(Number(limit) || 100, 500))}`);
 }
 
 export async function entityObservations(env, orgId, entityId, limit = 200) {
-  return db(env, `geo_observations?org_id=eq.${encodeURIComponent(orgId)}&entity_id=eq.${encodeURIComponent(entityId)}&select=id,source_key,external_id,observation_type,metric,value_number,value_text,unit,observed_at,provenance&order=observed_at.desc&limit=${Math.max(1, Math.min(Number(limit) || 200, 1000))}`);
+  return db(env, `seek_first_observations?org_id=eq.${encodeURIComponent(orgId)}&entity_id=eq.${encodeURIComponent(entityId)}&select=id,source_key,external_id,observation_type,metric,value_number,value_text,unit,observed_at,provenance&order=observed_at.desc&limit=${Math.max(1, Math.min(Number(limit) || 200, 1000))}`);
 }
 
 export async function timelineNearby(env, orgId, params) {
-  return rpc(env, 'geo_timeline', {
+  return rpc(env, 'seek_first_timeline', {
     p_org: orgId,
     p_lat: Number(params.lat),
     p_lon: Number(params.lon),
@@ -334,9 +334,9 @@ export async function timelineNearby(env, orgId, params) {
 }
 
 export async function listProjects(env, orgId, limit = 100) {
-  return db(env, `geo_projects?org_id=eq.${encodeURIComponent(orgId)}&select=id,project_key,name,description,settings,created_at,updated_at&order=created_at.desc&limit=${Math.max(1, Math.min(Number(limit) || 100, 200))}`);
+  return db(env, `seek_first_projects?org_id=eq.${encodeURIComponent(orgId)}&select=id,project_key,name,description,settings,created_at,updated_at&order=created_at.desc&limit=${Math.max(1, Math.min(Number(limit) || 100, 200))}`);
 }
 
 export async function listLayers(env, orgId, limit = 200) {
-  return db(env, `geo_layers?org_id=eq.${encodeURIComponent(orgId)}&select=id,layer_key,name,source_key,layer_type,enabled,style,settings&order=layer_key.asc&limit=${Math.max(1, Math.min(Number(limit) || 200, 500))}`);
+  return db(env, `seek_first_layers?org_id=eq.${encodeURIComponent(orgId)}&select=id,layer_key,name,source_key,layer_type,enabled,style,settings&order=layer_key.asc&limit=${Math.max(1, Math.min(Number(limit) || 200, 500))}`);
 }

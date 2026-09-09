@@ -3,10 +3,10 @@
 ## Status
 
 Implemented on the canonical Worker. See "What is live" below for the exact
-surface, and `GEV-CLOUDFLARE-HANDOFF.md` for the remaining owner actions
+surface, and `SEEK-FIRST-CLOUDFLARE-HANDOFF.md` for the remaining owner actions
 (API keys, Cloudflare Access, and the production migration).
 
-This is the McCluster-native backend adaptation of the data-fusion ideas demonstrated by **God's Eye View** (`bilawalsidhu/gods-eye-view`). It is not a second backend and it is not a blind copy of the upstream application.
+This is **Seek First**, the McCluster-native backend adaptation of the data-fusion ideas demonstrated by the open-source **God's Eye View** project (`bilawalsidhu/gods-eye-view`). It is not a second backend and it is not a blind copy of the upstream application.
 
 Canonical McCluster law still applies:
 
@@ -28,7 +28,7 @@ The upstream repository's code license does not grant McCluster blanket rights t
 
 ### The one public route
 
-`GET /v1/geo/health` is the only route that answers without authentication,
+`GET /v1/seek-first/health` is the only route that answers without authentication,
 and it says whether the subsystem is up and nothing else. Which providers
 hold credentials is a map of where the keys are, so that inventory sits
 behind the house-owner check with everything else.
@@ -39,40 +39,40 @@ Read surface:
 
 | Route | What it answers |
 | --- | --- |
-| `GET /v1/geo/readiness` | schema state, adapter capabilities, which bindings are still missing |
-| `GET /v1/geo/sources?lane=` | the source catalogue with an entitlement decision per source |
-| `GET /v1/geo/entitlements?lane=` | what this org may do with each source on that lane |
-| `GET /v1/geo/capabilities` | the route table and the lane vocabulary |
-| `GET /v1/geo/viewer/config` | runtime configuration for the internal console |
-| `GET /v1/geo/entities` | stored entities, filterable by source and type |
-| `GET /v1/geo/entities/:id` | one entity's current state |
-| `GET /v1/geo/entities/:id/history` | its revisions and its observation series |
-| `GET /v1/geo/nearby` | entities within a radius |
-| `GET /v1/geo/bbox` | entities in a bounding box |
-| `GET /v1/geo/events/nearby` | events within a radius |
-| `GET /v1/geo/timeline` | revisions, events and observations for a place and a window |
-| `GET /v1/geo/projects` / `GET /v1/geo/layers` | project and layer definitions |
-| `GET /v1/geo/ingestion-runs` | what ran, what it wrote, what failed |
-| `GET /v1/geo/live/ais` | the Durable Object's AIS cache (`bbox`, `limit`) |
+| `GET /v1/seek-first/readiness` | schema state, adapter capabilities, which bindings are still missing |
+| `GET /v1/seek-first/sources?lane=` | the source catalogue with an entitlement decision per source |
+| `GET /v1/seek-first/entitlements?lane=` | what this org may do with each source on that lane |
+| `GET /v1/seek-first/capabilities` | the route table and the lane vocabulary |
+| `GET /v1/seek-first/viewer/config` | runtime configuration for the internal console |
+| `GET /v1/seek-first/entities` | stored entities, filterable by source and type |
+| `GET /v1/seek-first/entities/:id` | one entity's current state |
+| `GET /v1/seek-first/entities/:id/history` | its revisions and its observation series |
+| `GET /v1/seek-first/nearby` | entities within a radius |
+| `GET /v1/seek-first/bbox` | entities in a bounding box |
+| `GET /v1/seek-first/events/nearby` | events within a radius |
+| `GET /v1/seek-first/timeline` | revisions, events and observations for a place and a window |
+| `GET /v1/seek-first/projects` / `GET /v1/seek-first/layers` | project and layer definitions |
+| `GET /v1/seek-first/ingestion-runs` | what ran, what it wrote, what failed |
+| `GET /v1/seek-first/live/ais` | the Durable Object's AIS cache (`bbox`, `limit`) |
 
 Write surface:
 
 | Route | What it does |
 | --- | --- |
-| `POST /v1/geo/fetch/:source` | broker a provider call; persists unless `persist: false` |
-| `POST /v1/geo/ingest/:source` | broker and persist, returning the ingestion run |
-| `POST /v1/geo/live/ais/restart` | recycle the AIS socket |
+| `POST /v1/seek-first/fetch/:source` | broker a provider call; persists unless `persist: false` |
+| `POST /v1/seek-first/ingest/:source` | broker and persist, returning the ingestion run |
+| `POST /v1/seek-first/live/ais/restart` | recycle the AIS socket |
 
 Both write routes accept `lane` (default `INTERNAL`); the entitlement
 firewall below decides whether that lane may consume that source.
 
 ### Internal console
 
-`GET /internal/gev` on `api.mccluster.org`. Operations surface only: not
+`GET /internal/seek-first` on `api.mccluster.org`. Operations surface only: not
 linked from any public page, `noindex`, `X-Frame-Options: DENY`,
 `Cache-Control: private, no-store`, and a CSP with no wildcards. It holds no
 data and no credential of its own — everything it draws comes back from
-`/v1/geo/*` behind the house-owner check.
+`/v1/seek-first/*` behind the house-owner check.
 
 The globe boots from OpenStreetMap imagery and an ellipsoid, so it renders
 with no paid credential at all. Google Photorealistic 3D Tiles and Cesium ion
@@ -82,7 +82,7 @@ fatal error shows a diagnostic with Retry and Continue rather than a spinner.
 
 ## The entitlement firewall
 
-`workers/mccluster/src/geo/entitlements.js`.
+`workers/mccluster/src/seek-first/entitlements.js`.
 
 A CONSUMER declares the lane it is asking on behalf of. A SOURCE declares the
 licence class it was obtained under. The pair decides access:
@@ -100,7 +100,7 @@ is refused with `entitlement_lane_denied`, even though the same owner holds
 both accounts. `INTERNAL` reads every lane precisely because it is the one
 consumer that never redistributes.
 
-A row in `public.geo_source_entitlements` narrows or widens the default for
+A row in `public.seek_first_source_entitlements` narrows or widens the default for
 one org and can carry an expiry. It can withdraw a permission; it cannot
 invent one the registry does not allow — a row claiming `persistence_allowed`
 on a source whose policy is `none` still stores nothing.
@@ -119,21 +119,21 @@ TTL, and never lands in PostGIS.
 
 ## History
 
-`geo_entities` holds current state and is upserted by `external_id`, so on its
+`seek_first_entities` holds current state and is upserted by `external_id`, so on its
 own an April "wooded parcel" would be silently overwritten by a July "building
 footprint" — losing exactly the change that matters.
 
-`geo_entity_revisions` (migration `20260909040000`) records each real change
+`seek_first_entity_revisions` (migration `20260909040000`) records each real change
 via an `AFTER INSERT OR UPDATE` trigger. A re-ingest that finds the world
 unchanged updates `last_seen_at` and writes no revision, so the history stays
 a record of events rather than a record of how often the collector ran.
 
-`geo_timeline(...)` merges revisions, events and observations for a place and
+`seek_first_timeline(...)` merges revisions, events and observations for a place and
 a time window, returning provenance with every row.
 
 ## Database boundary
 
-Every `geo_*` table has RLS enabled, is revoked from `anon` and
+Every `seek_first_*` table has RLS enabled, is revoked from `anon` and
 `authenticated`, and is granted only to `service_role`. The spatial RPCs are
 `security invoker` and executable only by `service_role`. Browsers never reach
 these tables; the canonical Worker authorizes first and calls as the service
@@ -150,7 +150,7 @@ Every adapter will do five things:
 4. **attach provenance and entitlement metadata** to every normalized record;
 5. **archive observations instead of overwriting history** so the system becomes longitudinal.
 
-Initial source metadata lives in `workers/mccluster/src/geo/source-registry.js`.
+Initial source metadata lives in `workers/mccluster/src/seek-first/source-registry.js`.
 
 ## Eligibility firewall
 
@@ -165,7 +165,7 @@ Bootstrap lanes include:
 - `COMMERCIAL_OR_NONPROFIT`
 - `VIEWER`
 
-`public.geo_source_entitlements` carries the explicit rights metadata that
+`public.seek_first_source_entitlements` carries the explicit rights metadata that
 narrows these lanes per org:
 
 - source class;
@@ -180,28 +180,28 @@ narrows these lanes per org:
 
 A commercial satellite such as Whip must never receive an academic-only
 dataset merely because the same person controls both projects. That rule is
-enforced in `geo/entitlements.js`, not merely documented here — see "The
+enforced in `seek-first/entitlements.js`, not merely documented here — see "The
 entitlement firewall" above.
 
 ## Spatial data model
 
 Migrations `20260909034000`, `20260909034100` and `20260909040000` create:
 
-- `geo_sources`
-- `geo_source_entitlements`
-- `geo_layers`
-- `geo_entities`
-- `geo_observations`
-- `geo_events`
-- `geo_relationships`
-- `geo_projects`
-- `geo_project_entities`
-- `geo_ingestion_runs`
-- `geo_derived_metrics`
-- `geo_alert_rules`
-- `geo_alerts`
+- `seek_first_sources`
+- `seek_first_source_entitlements`
+- `seek_first_layers`
+- `seek_first_entities`
+- `seek_first_observations`
+- `seek_first_events`
+- `seek_first_relationships`
+- `seek_first_projects`
+- `seek_first_project_entities`
+- `seek_first_ingestion_runs`
+- `seek_first_derived_metrics`
+- `seek_first_alert_rules`
+- `seek_first_alerts`
 
-plus `geo_entity_revisions`. PostGIS lives in the `extensions` schema; spatial
+plus `seek_first_entity_revisions`. PostGIS lives in the `extensions` schema; spatial
 columns are SRID 4326 with GiST indexes.
 
 Every one of these tables has RLS enabled and is revoked from `anon` and
@@ -213,7 +213,7 @@ again and both browser roles were refused the tables and the RPCs.
 
 ## Why observations are append-only history
 
-`geo_entities` describes the canonical thing. `geo_observations` describes what a source said about that thing at a point in time.
+`seek_first_entities` describes the canonical thing. `seek_first_observations` describes what a source said about that thing at a point in time.
 
 That distinction allows McCluster to answer questions such as:
 
@@ -250,14 +250,14 @@ Private digital-twin and asset observations can use the same entity/event model 
 
 Never commit API keys to GitHub.
 
-The registry names expected Worker environment bindings only. `/v1/geo/sources`
+The registry names expected Worker environment bindings only. `/v1/seek-first/sources`
 reports whether a binding is configured, never its value, and requires the
 house owner.
 
 Two credentials are different in kind: `GOOGLE_MAPS_API_KEY` and
 `CESIUM_ION_TOKEN` are browser-side credentials that the globe cannot use
 unless the browser holds them. They are released only through
-`GET /v1/geo/viewer/config`, only to a verified house owner. Restrict the
+`GET /v1/seek-first/viewer/config`, only to a verified house owner. Restrict the
 Google key by HTTP referrer and use a scoped read-only ion token. Every other
 binding is server-side only and never leaves the Worker.
 
@@ -270,7 +270,7 @@ to production Supabase from this branch. Reconcile the production migration
 lineage first, then apply them through the repository's real Supabase workflow
 and run the advisor checks.
 
-Until then the Worker degrades honestly rather than failing: `/v1/geo/health`
+Until then the Worker degrades honestly rather than failing: `/v1/seek-first/health`
 reports `mode: adapter-ready`, provider brokering through
-`POST /v1/geo/fetch/:source` works, and only the routes that read stored data
+`POST /v1/seek-first/fetch/:source` works, and only the routes that read stored data
 return `spatial_schema_not_ready`.

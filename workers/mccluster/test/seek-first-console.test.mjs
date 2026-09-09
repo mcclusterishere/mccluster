@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { accessConfigured, verifyAccess } from '../src/geo/access.js';
+import { accessConfigured, verifyAccess } from '../src/seek-first/access.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const consolePath = resolve(here, '..', 'src', 'geo', 'console.html');
+const consolePath = resolve(here, '..', 'src', 'seek-first', 'console.html');
 const workerPath = resolve(here, '..', 'src', 'index.js');
 const repoRoot = resolve(here, '..', '..', '..');
 
@@ -19,7 +19,7 @@ test('the console carries no credential and no public entry point', async () => 
   assert.doesNotMatch(html, /eyJhbGciOi/, 'no JWT may be embedded in the console');
   assert.doesNotMatch(html, /sb_secret/i);
   assert.match(html, /name="robots" content="noindex/i);
-  assert.match(html, /GET \/v1\/geo\/viewer\/config|\/v1\/geo\/viewer\/config/);
+  assert.match(html, /GET \/v1\/seek-first\/viewer\/config|\/v1\/seek-first\/viewer\/config/);
 });
 
 /*
@@ -64,7 +64,7 @@ test('paid basemaps are optional, timed out, and fall back to the open stack', a
 
 test('the Worker serves the console with hardened headers and a Cesium-capable CSP', async () => {
   const source = await readFile(workerPath, 'utf8');
-  assert.match(source, /path === '\/internal\/gev'/);
+  assert.match(source, /path === '\/internal\/seek-first'/);
   assert.match(source, /verifyAccess\(request, env\)/);
   assert.match(source, /x-robots-tag/);
   assert.match(source, /'x-frame-options': 'DENY'/);
@@ -78,7 +78,7 @@ test('the Worker serves the console with hardened headers and a Cesium-capable C
 
 test('the internal console is never published to the public site', async () => {
   const workflow = await readFile(resolve(repoRoot, '.github', 'workflows', 'deploy-pages.yml'), 'utf8');
-  assert.doesNotMatch(workflow, /gev/i, 'the public Pages pipeline must not build or publish GEV');
+  assert.doesNotMatch(workflow, /seek-first/i, 'the public Pages pipeline must not build or publish Seek First');
   assert.match(workflow, /branches:\s*\n\s*- main\s*\n/, 'only main publishes the public site');
 });
 
@@ -102,15 +102,15 @@ test('both wrangler configs can bundle the console text module', async () => {
 
 test('Access verification is off until configured and fails closed once it is', async () => {
   assert.equal(accessConfigured({}), false);
-  assert.equal(await verifyAccess(new Request('https://api.mccluster.org/internal/gev'), {}), null);
+  assert.equal(await verifyAccess(new Request('https://api.mccluster.org/internal/seek-first'), {}), null);
 
-  const env = { GEV_ACCESS_TEAM_DOMAIN: 'mccluster', GEV_ACCESS_AUD: 'aud-tag' };
+  const env = { SEEK_FIRST_ACCESS_TEAM_DOMAIN: 'mccluster', SEEK_FIRST_ACCESS_AUD: 'aud-tag' };
   await assert.rejects(
-    () => verifyAccess(new Request('https://api.mccluster.org/internal/gev'), env),
+    () => verifyAccess(new Request('https://api.mccluster.org/internal/seek-first'), env),
     (error) => error.code === 'access_assertion_missing'
   );
   await assert.rejects(
-    () => verifyAccess(new Request('https://api.mccluster.org/internal/gev', {
+    () => verifyAccess(new Request('https://api.mccluster.org/internal/seek-first', {
       headers: { 'cf-access-jwt-assertion': 'not-a-jwt' }
     }), env),
     (error) => error.code === 'access_assertion_malformed'
@@ -120,7 +120,7 @@ test('Access verification is off until configured and fails closed once it is', 
   const b64 = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
   const expired = `${b64({ alg: 'RS256', kid: 'k1' })}.${b64({ exp: 1, aud: ['aud-tag'], iss: 'https://mccluster.cloudflareaccess.com' })}.sig`;
   await assert.rejects(
-    () => verifyAccess(new Request('https://api.mccluster.org/internal/gev', {
+    () => verifyAccess(new Request('https://api.mccluster.org/internal/seek-first', {
       headers: { 'cf-access-jwt-assertion': expired }
     }), env),
     (error) => error.code === 'access_assertion_expired'

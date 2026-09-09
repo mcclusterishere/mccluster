@@ -9,8 +9,8 @@ import {
   effectiveEntitlement,
   LANES,
   normalizeLane
-} from '../src/geo/entitlements.js';
-import { sourceByKey } from '../src/geo/source-registry.js';
+} from '../src/seek-first/entitlements.js';
+import { sourceByKey } from '../src/seek-first/source-registry.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..', '..', '..');
@@ -94,7 +94,7 @@ test('an unknown lane is rejected rather than silently downgraded', () => {
 });
 
 test('the entitlement decision is threaded into persistence, and force cannot override it', async () => {
-  const store = await readFile(resolve(here, '..', 'src', 'geo', 'store.js'), 'utf8');
+  const store = await readFile(resolve(here, '..', 'src', 'seek-first', 'store.js'), 'utf8');
   assert.match(store, /entitlement\.persistence_allowed === false/);
   const forceIndex = store.indexOf("source.persistence === PERSISTENCE.TRANSIENT && !force");
   const entitlementIndex = store.indexOf('entitlement.persistence_allowed === false');
@@ -105,13 +105,13 @@ test('the entitlement decision is threaded into persistence, and force cannot ov
 test('the entity history migration keeps evidence instead of overwriting it', async () => {
   const sql = await readFile(
     resolve(repoRoot, 'supabase', 'migrations', '20260909040000_spatial_entity_history.sql'), 'utf8');
-  assert.match(sql, /create table if not exists public\.geo_entity_revisions/i);
-  assert.match(sql, /after insert or update on public\.geo_entities/i);
-  assert.match(sql, /create or replace function public\.geo_timeline/i);
+  assert.match(sql, /create table if not exists public\.seek_first_entity_revisions/i);
+  assert.match(sql, /after insert or update on public\.seek_first_entities/i);
+  assert.match(sql, /create or replace function public\.seek_first_timeline/i);
   assert.match(sql, /security invoker/i);
   assert.doesNotMatch(sql, /security definer/i);
-  assert.match(sql, /revoke all on table public\.geo_entity_revisions from anon, authenticated/i);
-  assert.match(sql, /grant execute on function public\.geo_timeline\([^)]*\) to service_role/i);
+  assert.match(sql, /revoke all on table public\.seek_first_entity_revisions from anon, authenticated/i);
+  assert.match(sql, /grant execute on function public\.seek_first_timeline\([^)]*\) to service_role/i);
   // A re-ingest that changes nothing must not manufacture a revision.
   assert.match(sql, /is not distinct from old\.properties/i);
   // Geometry comparison must not use the ambiguous bare operator.

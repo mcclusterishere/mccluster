@@ -12,7 +12,7 @@ const OVERPASS_ENDPOINTS = Object.freeze([
 const GDELT_TIMEOUT_MS = 40000;
 
 export class GeoAdapterError extends Error {
-  constructor(message, status = 400, code = 'geo_adapter_error', detail = undefined) {
+  constructor(message, status = 400, code = 'seek_first_adapter_error', detail = undefined) {
     super(message);
     this.name = 'GeoAdapterError';
     this.status = status;
@@ -620,7 +620,7 @@ async function openSky(input, env) {
     properties: {
       icao24: state?.[0], callsign: state?.[1], origin_country: state?.[2], time_position: state?.[3], last_contact: state?.[4],
       longitude: state?.[5], latitude: state?.[6], baro_altitude: state?.[7], on_ground: state?.[8], velocity: state?.[9],
-      true_track: state?.[10], vertical_rate: state?.[11], sensors: state?.[12], geo_altitude: state?.[13], squawk: state?.[14], spi: state?.[15], position_source: state?.[16], category: state?.[17]
+      true_track: state?.[10], vertical_rate: state?.[11], sensors: state?.[12], seek_first_altitude: state?.[13], squawk: state?.[14], spi: state?.[15], position_source: state?.[16], category: state?.[17]
     }
   }));
   return result('opensky_research', 'states', url, records, data);
@@ -769,7 +769,7 @@ async function radioBrowser(input) {
     external_id: String(station?.stationuuid || crypto.randomUUID()),
     entity_type: 'radio_station',
     name: station?.name || 'Radio station',
-    point: point(station?.geo_lat ?? station?.latitude, station?.geo_long ?? station?.longitude),
+    point: point(station?.seek_first_lat ?? station?.latitude, station?.seek_first_long ?? station?.longitude),
     observed_at: new Date().toISOString(),
     source_url: station?.homepage || null,
     properties: { ...station, url: undefined, url_resolved: undefined }
@@ -906,7 +906,7 @@ export async function executeAdapter(sourceKey, input = {}, env = {}) {
     case 'mapbox': return mapbox(input, env);
     case 'google_maps': return googleMaps(input, env);
     // gateway.js owns these two. They resolve to the providers' current APIs in
-    // verified-adapters.js rather than the legacy endpoints upstream GEV used,
+    // verified-adapters.js rather than the legacy endpoints the upstream God's Eye View project used,
     // so reaching them here means a caller bypassed executeProvider.
     case 'data_commons':
     case 'epa':
@@ -922,7 +922,7 @@ export async function executeAdapter(sourceKey, input = {}, env = {}) {
     case 'cesium_ion':
       return passthroughConfig(sourceKey);
     case 'aisstream':
-      return result('aisstream', 'websocket', null, [], null, { live_endpoint: '/v1/geo/live/ais', configured: sourceConfigured(source, env) });
+      return result('aisstream', 'websocket', null, [], null, { live_endpoint: '/v1/seek-first/live/ais', configured: sourceConfigured(source, env) });
     default:
       throw new GeoAdapterError(`${source.name} adapter is registered but has no default operation`, 501, 'adapter_not_implemented');
   }

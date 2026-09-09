@@ -73,7 +73,7 @@ function boundedPayload(payload) {
 // Do not rename. Do not delete. Do not delete-class.
 //
 // Spatial intelligence reuses this EXISTING class instead of creating a second
-// Durable Object class. The geo AIS instance is isolated by idFromName while
+// Durable Object class. The Seek First AIS instance is isolated by idFromName while
 // keeping the Worker/DO migration contract unchanged.
 export class HereTenantAgent extends DurableObject {
   constructor(ctx, env) {
@@ -350,7 +350,7 @@ export class HereTenantAgent extends DurableObject {
     const now = new Date().toISOString();
     const url = new URL(request.url);
 
-    if (url.pathname === '/internal/geo/ais/snapshot' && request.method === 'GET') {
+    if (url.pathname === '/internal/seek-first/ais/snapshot' && request.method === 'GET') {
       if (this.env.AISSTREAM_API_KEY && !this.aisSocket) {
         this.ctx.waitUntil(this.ensureAis());
       }
@@ -362,7 +362,7 @@ export class HereTenantAgent extends DurableObject {
       }));
     }
 
-    if (url.pathname === '/internal/geo/ais/restart' && request.method === 'POST') {
+    if (url.pathname === '/internal/seek-first/ais/restart' && request.method === 'POST') {
       try { this.aisSocket?.close(1000, 'operator restart'); } catch { /* already closed */ }
       this.aisSocket = null;
       this.setAisState({ status: 'idle', error: null, failures: 0 });
