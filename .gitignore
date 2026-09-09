@@ -31,3 +31,6 @@ _unfinished/site0-game/game/assets/site0_shell_fitted.glb
 # site0/ is generated from _unfinished/site0-game by tools/publish-site0.sh
 # at deploy time. Committing it would be a second copy of the same build.
 /site0/
+
+# Wrangler local dev state (miniflare caches, local Durable Object storage)
+.wrangler/
