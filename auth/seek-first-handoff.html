@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Continue to Seek First — McCluster</title>
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;min-height:100dvh;display:grid;place-items:center;background:#0a0807;color:#f4efe6;
+       font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px;text-align:center}
+  h1{font-size:20px;margin:0 0 8px}
+  p{color:#b8ada2;margin:0 0 18px;max-width:38ch}
+  a.btn{display:inline-block;color:#0a0807;background:#ff7a72;text-decoration:none;
+        font-weight:600;padding:10px 20px;border-radius:8px}
+  a.retry{color:#ff7a72}
+  .err{color:#ff9a91}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="h">Continuing…</h1>
+  <p id="p">Signing you into Seek First.</p>
+  <div id="action"></div>
+</main>
+<script src="/js/mcc-auth.js"></script>
+<script>
+  /*
+    The other half of seek-first-start.html. By the time a signed-in browser
+    reaches this page, js/mcc-auth.js has already written a real McCluster
+    session to THIS origin's localStorage (matthew.mccluster.org) — that part
+    is unchanged, ordinary McCluster sign-in.
+
+    The problem this page solves: the Seek First console lives on a
+    different origin (api.mccluster.org), and browser storage never crosses
+    origins. So this page reads the session that already exists here and
+    hands the access token to the console via a URL FRAGMENT, not a query
+    string — a fragment is never sent in the Referer header or to any
+    server, including api.mccluster.org's own, so the token does not leak
+    into logs anywhere along the way. The console reads it client-side on
+    load and immediately scrubs it from the visible URL.
+
+    Only the token that this browser's own signed-in session already holds
+    is ever placed here. No new grant of access is created by this page.
+  */
+  (function () {
+    var h = document.getElementById('h'), p = document.getElementById('p'), action = document.getElementById('action');
+    var DEST = 'https://api.mccluster.org/internal/seek-first';
+
+    function fail(message) {
+      h.textContent = 'Not signed in';
+      p.className = 'err';
+      p.textContent = message;
+      action.innerHTML = '<a class="retry" href="/auth/seek-first-start.html">Try signing in again</a>';
+    }
+
+    window.MCC.refreshIfNeeded()
+      .then(function (session) {
+        if (!session || !session.access_token) { fail('No active McCluster session was found.'); return; }
+        var target = DEST + '#access_token=' + encodeURIComponent(session.access_token);
+        h.textContent = 'Signed in';
+        p.textContent = 'Continue to the Seek First console.';
+        action.innerHTML = '<a class="btn" id="go" href="' + target.replace(/"/g, '&quot;') + '">Continue to Seek First →</a>';
+        // Auto-continue; the button above is the fallback if the browser
+        // blocks the automatic navigation.
+        location.replace(target);
+      })
+      .catch(function (error) {
+        fail(error && error.message ? error.message : 'Please try again.');
+      });
+  })();
+</script>
+</body>
+</html>

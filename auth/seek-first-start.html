@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Signing you in — McCluster</title>
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;min-height:100dvh;display:grid;place-items:center;background:#0a0807;color:#f4efe6;
+       font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px;text-align:center}
+  h1{font-size:20px;margin:0 0 8px}
+  p{color:#b8ada2;margin:0;max-width:38ch}
+  a{color:#ff7a72}
+  .err{color:#ff9a91}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="h">Redirecting to Google…</h1>
+  <p id="p">One moment.</p>
+</main>
+<script src="/js/mcc-auth.js"></script>
+<script>
+  /*
+    Kicks off the shared McCluster identity's Google sign-in, same as any
+    other McCluster page, but with the OAuth callback (/auth/) told to land
+    on seek-first-handoff.html afterward instead of the default
+    /account.html. This file changes nothing about /auth/index.html or
+    js/mcc-auth.js — it only supplies a same-origin `next` value that their
+    existing same-origin-only redirect check already allows.
+
+    This exists to get a signed-in McCluster session onto a DIFFERENT origin
+    (api.mccluster.org, where the internal Seek First console lives) without
+    adding api.mccluster.org to Supabase's OAuth redirect allowlist and
+    without running the PKCE flow from the wrong origin (the code_verifier
+    has to be stored and read back on the same origin, which is why this
+    step happens here on matthew.mccluster.org rather than on the console).
+  */
+  (function () {
+    var h = document.getElementById('h'), p = document.getElementById('p');
+    var nextUrl = location.origin + '/auth/?next=' + encodeURIComponent('/auth/seek-first-handoff.html');
+    window.MCC.signInWithGoogle(nextUrl).catch(function (error) {
+      h.textContent = 'Could not start sign-in';
+      p.className = 'err';
+      p.textContent = error && error.message ? error.message : 'Please try again.';
+    });
+  })();
+</script>
+</body>
+</html>
