@@ -2,7 +2,9 @@
 
 ## Status
 
-Bootstrap branch: `feature/gev-spatial-intelligence`
+Implemented on the canonical Worker. See "What is live" below for the exact
+surface, and `GEV-CLOUDFLARE-HANDOFF.md` for the remaining owner actions
+(API keys, Cloudflare Access, and the production migration).
 
 This is the McCluster-native backend adaptation of the data-fusion ideas demonstrated by **God's Eye View** (`bilawalsidhu/gods-eye-view`). It is not a second backend and it is not a blind copy of the upstream application.
 
@@ -22,26 +24,121 @@ The initial backend bootstrap imports **no upstream application code**. It reimp
 
 The upstream repository's code license does not grant McCluster blanket rights to every third-party feed the upstream project can visualize. Every source must retain its own provenance, terms, entitlement lane, and redistribution rules.
 
-## API namespace
+## What is live
 
-Spatial intelligence lives under:
+### The one public route
 
-- `GET /v1/geo`
-- `GET /v1/geo/health`
-- `GET /v1/geo/sources`
+`GET /v1/geo/health` is the only route that answers without authentication,
+and it says whether the subsystem is up and nothing else. Which providers
+hold credentials is a map of where the keys are, so that inventory sits
+behind the house-owner check with everything else.
 
-Planned after the database schema is generated and verified:
+### Authenticated API (McCluster house owner)
 
-- `GET /v1/geo/layers`
-- `GET /v1/geo/entities`
-- `GET /v1/geo/entities/:id`
-- `GET /v1/geo/entities/:id/history`
-- `GET /v1/geo/events`
-- `GET /v1/geo/features`
-- `GET /v1/geo/nearby`
-- `GET /v1/geo/projects/:id`
-- `POST /v1/geo/query`
-- `POST /v1/geo/analyze`
+Read surface:
+
+| Route | What it answers |
+| --- | --- |
+| `GET /v1/geo/readiness` | schema state, adapter capabilities, which bindings are still missing |
+| `GET /v1/geo/sources?lane=` | the source catalogue with an entitlement decision per source |
+| `GET /v1/geo/entitlements?lane=` | what this org may do with each source on that lane |
+| `GET /v1/geo/capabilities` | the route table and the lane vocabulary |
+| `GET /v1/geo/viewer/config` | runtime configuration for the internal console |
+| `GET /v1/geo/entities` | stored entities, filterable by source and type |
+| `GET /v1/geo/entities/:id` | one entity's current state |
+| `GET /v1/geo/entities/:id/history` | its revisions and its observation series |
+| `GET /v1/geo/nearby` | entities within a radius |
+| `GET /v1/geo/bbox` | entities in a bounding box |
+| `GET /v1/geo/events/nearby` | events within a radius |
+| `GET /v1/geo/timeline` | revisions, events and observations for a place and a window |
+| `GET /v1/geo/projects` / `GET /v1/geo/layers` | project and layer definitions |
+| `GET /v1/geo/ingestion-runs` | what ran, what it wrote, what failed |
+| `GET /v1/geo/live/ais` | the Durable Object's AIS cache (`bbox`, `limit`) |
+
+Write surface:
+
+| Route | What it does |
+| --- | --- |
+| `POST /v1/geo/fetch/:source` | broker a provider call; persists unless `persist: false` |
+| `POST /v1/geo/ingest/:source` | broker and persist, returning the ingestion run |
+| `POST /v1/geo/live/ais/restart` | recycle the AIS socket |
+
+Both write routes accept `lane` (default `INTERNAL`); the entitlement
+firewall below decides whether that lane may consume that source.
+
+### Internal console
+
+`GET /internal/gev` on `api.mccluster.org`. Operations surface only: not
+linked from any public page, `noindex`, `X-Frame-Options: DENY`,
+`Cache-Control: private, no-store`, and a CSP with no wildcards. It holds no
+data and no credential of its own — everything it draws comes back from
+`/v1/geo/*` behind the house-owner check.
+
+The globe boots from OpenStreetMap imagery and an ellipsoid, so it renders
+with no paid credential at all. Google Photorealistic 3D Tiles and Cesium ion
+terrain are added afterwards when their keys exist, each timed out and each
+falling back to the open stack. Every boot step is bounded and reported; a
+fatal error shows a diagnostic with Retry and Continue rather than a spinner.
+
+## The entitlement firewall
+
+`workers/mccluster/src/geo/entitlements.js`.
+
+A CONSUMER declares the lane it is asking on behalf of. A SOURCE declares the
+licence class it was obtained under. The pair decides access:
+
+| Source class | Consumable by |
+| --- | --- |
+| `PUBLIC_OPEN` | every lane |
+| `ACADEMIC` | `ACADEMIC`, `INTERNAL` |
+| `NONPROFIT` | `NONPROFIT`, `INTERNAL` |
+| `COMMERCIAL` | `COMMERCIAL`, `INTERNAL` |
+| `INTERNAL` / `RESTRICTED` | `INTERNAL` |
+
+So a commercial Whip build asking for Planet's education-and-research imagery
+is refused with `entitlement_lane_denied`, even though the same owner holds
+both accounts. `INTERNAL` reads every lane precisely because it is the one
+consumer that never redistributes.
+
+A row in `public.geo_source_entitlements` narrows or widens the default for
+one org and can carry an expiry. It can withdraw a permission; it cannot
+invent one the registry does not allow — a row claiming `persistence_allowed`
+on a source whose policy is `none` still stores nothing.
+
+## Retention
+
+Three policies, set per source in the registry and enforced in `store.js`:
+
+- `persistent` — normalized records may be retained in PostGIS.
+- `transient` — brokered and returned, never archived (TomTom, OpenSky, AIS,
+  Nominatim, GDELT, CCTV catalogues, Mapbox).
+- `none` — provider content is never written at all (Google Maps, Cesium ion).
+
+AIS is cached only in the Durable Object, bounded by row count and a one-hour
+TTL, and never lands in PostGIS.
+
+## History
+
+`geo_entities` holds current state and is upserted by `external_id`, so on its
+own an April "wooded parcel" would be silently overwritten by a July "building
+footprint" — losing exactly the change that matters.
+
+`geo_entity_revisions` (migration `20260909040000`) records each real change
+via an `AFTER INSERT OR UPDATE` trigger. A re-ingest that finds the world
+unchanged updates `last_seen_at` and writes no revision, so the history stays
+a record of events rather than a record of how often the collector ran.
+
+`geo_timeline(...)` merges revisions, events and observations for a place and
+a time window, returning provenance with every row.
+
+## Database boundary
+
+Every `geo_*` table has RLS enabled, is revoked from `anon` and
+`authenticated`, and is granted only to `service_role`. The spatial RPCs are
+`security invoker` and executable only by `service_role`. Browsers never reach
+these tables; the canonical Worker authorizes first and calls as the service
+role, which is what makes the retention and entitlement rules enforceable
+rather than advisory.
 
 ## Source adapter contract
 
@@ -68,7 +165,8 @@ Bootstrap lanes include:
 - `COMMERCIAL_OR_NONPROFIT`
 - `VIEWER`
 
-The database layer will expand this into explicit rights metadata such as:
+`public.geo_source_entitlements` carries the explicit rights metadata that
+narrows these lanes per org:
 
 - source class;
 - entity/account that owns the entitlement;
@@ -80,11 +178,14 @@ The database layer will expand this into explicit rights metadata such as:
 - retention restrictions;
 - effective and expiration dates.
 
-A commercial satellite such as Whip must never receive an academic-only dataset merely because the same person controls both projects.
+A commercial satellite such as Whip must never receive an academic-only
+dataset merely because the same person controls both projects. That rule is
+enforced in `geo/entitlements.js`, not merely documented here — see "The
+entitlement firewall" above.
 
-## Planned spatial data model
+## Spatial data model
 
-The first durable schema should support:
+Migrations `20260909034000`, `20260909034100` and `20260909040000` create:
 
 - `geo_sources`
 - `geo_source_entitlements`
@@ -100,9 +201,15 @@ The first durable schema should support:
 - `geo_alert_rules`
 - `geo_alerts`
 
-PostGIS should be enabled in the existing Supabase project and spatial columns should use SRID 4326 with GiST indexes where appropriate.
+plus `geo_entity_revisions`. PostGIS lives in the `extensions` schema; spatial
+columns are SRID 4326 with GiST indexes.
 
-All tables in an exposed schema must have RLS enabled. Raw/restricted spatial records should be server-mediated through the canonical Worker rather than made anonymously readable by default.
+Every one of these tables has RLS enabled and is revoked from `anon` and
+`authenticated`; only `service_role` holds privileges, and the canonical Worker
+authorizes before it calls as that role. Verified by replaying the migrations
+against PostgreSQL 16 with PostGIS: after deliberately re-granting the old
+permissive Supabase defaults, re-running the migration closed the boundary
+again and both browser roles were refused the tables and the RPCs.
 
 ## Why observations are append-only history
 
@@ -143,12 +250,27 @@ Private digital-twin and asset observations can use the same entity/event model 
 
 Never commit API keys to GitHub.
 
-The registry names expected Worker environment bindings only. `/v1/geo/sources` may report whether a binding is configured, but must never return its value.
+The registry names expected Worker environment bindings only. `/v1/geo/sources`
+reports whether a binding is configured, never its value, and requires the
+house owner.
+
+Two credentials are different in kind: `GOOGLE_MAPS_API_KEY` and
+`CESIUM_ION_TOKEN` are browser-side credentials that the globe cannot use
+unless the browser holds them. They are released only through
+`GET /v1/geo/viewer/config`, only to a verified house owner. Restrict the
+Google key by HTTP referrer and use a scoped read-only ion token. Every other
+binding is server-side only and never leaves the Worker.
 
 When credentials arrive, add them through the Cloudflare secret/environment configuration for the canonical `mccluster` Worker and assign their entitlement lane in the data plane.
 
 ## Database rollout
 
-Do not invent a migration filename or mutate production casually. Generate the spatial schema through the repository's real Supabase migration workflow, review the diff, run security/advisor checks, then apply it deliberately.
+The migrations are written and replay cleanly, but they have NOT been applied
+to production Supabase from this branch. Reconcile the production migration
+lineage first, then apply them through the repository's real Supabase workflow
+and run the advisor checks.
 
-The API bootstrap can ship before the schema because it only exposes source/readiness metadata. Data-bearing routes stay disabled until the schema and RLS model are verified.
+Until then the Worker degrades honestly rather than failing: `/v1/geo/health`
+reports `mode: adapter-ready`, provider brokering through
+`POST /v1/geo/fetch/:source` works, and only the routes that read stored data
+return `spatial_schema_not_ready`.

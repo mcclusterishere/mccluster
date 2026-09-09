@@ -1,118 +1,221 @@
-# GEV / Cloudflare handoff for Claude
+# GEV / Spatial Intelligence — state and remaining owner actions
 
-## User intent (authoritative)
+Supersedes the original Claude handoff. That document asked for work; this one
+records what was done, what was verified and how, and what is still yours.
 
-- God's Eye View (GEV) is **not** a replacement for any public McCluster page.
-- The existing public-facing site at `matthew.mccluster.org` must remain visually and behaviorally unchanged.
-- GEV is an **internal/backend operations and spatial-intelligence surface only**. Do not add public navigation to it and do not expose it as a public product page.
-- Prefer an authenticated internal route/host protected with Cloudflare Access (or the existing backend auth boundary), not an unauthenticated Pages route.
-- Preserve upstream attribution/licenses and the pinned upstream source unless deliberately upgraded and re-audited.
+## User intent (unchanged, still authoritative)
 
-## Upstream source
+- God's Eye View is **not** a replacement for any public McCluster page.
+- `matthew.mccluster.org` stays visually and behaviorally unchanged.
+- GEV is an **internal/backend operations and spatial-intelligence surface**.
+  No public navigation, no public product page.
+- Access goes through Cloudflare Access or the existing backend auth boundary,
+  never an unauthenticated Pages route.
+- Upstream attribution and per-source licensing are preserved.
 
-Pinned source used for the current prototype:
+Upstream reference: `bilawalsidhu/gods-eye-view` @
+`759652207fd1279ece97f0f19af566feb9a82146`.
 
-- Repo: `bilawalsidhu/gods-eye-view`
-- Commit: `759652207fd1279ece97f0f19af566feb9a82146`
+## What changed
 
-The current public prototype was built from the real upstream application, not a visual imitation. It was temporarily published under `/gev/` for validation, but the user has now clarified that this surface must be backend/internal only.
+### The public exposure was removed
 
-## Current McCluster backend work
+The prior branch added `feature/gev-spatial-intelligence` to the GitHub Pages
+deploy trigger, built the upstream viewer into the public web root at `/gev/`,
+and mirrored its model directory to the site root. `tools/build-gev.sh` also
+baked the Supabase anon key into the generated HTML and monkey-patched
+`window.fetch` to redirect `/api/*` at a Supabase Edge Function.
 
-Branch / PR:
+All of it is gone. `.github/workflows/deploy-pages.yml` is back to the
+main-branch version and publishes only from `main`. A test asserts the public
+Pages workflow never mentions GEV again.
 
-- Branch: `feature/gev-spatial-intelligence`
-- PR: #42 `Bootstrap GEV spatial intelligence data layer`
+### The console is McCluster's, and it boots
 
-Relevant components already implemented/tested on that branch:
+Upstream `src/main.js` reads `import.meta.env.CESIUM_ION_TOKEN` and
+`import.meta.env.GOOGLE_MAPS_API_KEY` — Vite BUILD-time variables. A runtime
+JSON fetch injected into the generated HTML could never satisfy that code path,
+which is why the prototype sat on its loading cover.
 
-- `workers/` McCluster control-plane additions for spatial intelligence and the existing `HereTenantAgent` Durable Object.
-- PostGIS-oriented spatial intelligence migrations.
-- Worker contracts and Supabase reset CI have passed on the repaired branch head.
-- A Supabase Edge Function named `gev-proxy` is ACTIVE in project `zmnhbrjyhxzhkxmhkexs` (Here), used as a temporary broker for several keyless/server-side feeds.
+Rather than keep patching a build-time credential path at runtime, the viewer
+is now McCluster's own: `workers/mccluster/src/geo/console.html`, served by the
+canonical Worker at `GET /internal/gev`, querying `/v1/geo/*`. Upstream GEV
+stays the reference for provider parity; the canonical intelligence is the API
+and the database, and the renderer is replaceable.
 
-Do **not** blindly apply the entire feature-branch migration tail to production Supabase. Production migration history does not cleanly map to every late branch migration. Reconcile the exact production lineage first.
+Boot is built so the stuck-cover failure cannot recur:
 
-## Why the current `/gev/` prototype appears stuck on a loading screen
+- provider configuration is fetched at runtime and awaited before the map stack
+  is constructed;
+- every step is timed out and its result shown;
+- the cover is dismissed in a `finally` AND by a hard deadline;
+- a fatal error shows a diagnostic with Retry / Continue, never a spinner;
+- the globe is built from OpenStreetMap imagery and an ellipsoid, so it renders
+  with zero paid credentials; Google 3D Tiles and ion terrain are added after,
+  each timed out, each falling back to the open stack;
+- a missing key disables one layer and names the binding it wants.
 
-The temporary Pages build injected this runtime promise in the generated HTML:
+### The API is authenticated and lane-aware
 
-```js
-window.__MCCLUSTER_GEV_RUNTIME_CONFIG__ = fetch(/* Supabase gev-proxy runtime-config */)
-```
+Only `GET /v1/geo/health` answers unauthenticated, and it reports liveness
+only. `sources`, `readiness`, `entitlements`, `capabilities` and the viewer
+config all require a McCluster house owner, because the provider inventory is a
+map of where the credentials are.
 
-But the pinned upstream `src/main.js` still reads provider credentials synchronously from Vite build-time variables:
+Cloudflare Access (RS256 assertion verified against the team JWKS) sits in
+front of `/internal/gev` and the geo routes when configured.
 
-```js
-const cesiumToken = import.meta.env.CESIUM_ION_TOKEN;
-const googleApiKey = import.meta.env.GOOGLE_MAPS_API_KEY;
-```
+An entitlement firewall decides whether a consumer's lane may consume a
+source's licence class, and gates retention. See `SPATIAL-INTELLIGENCE.md`.
 
-So the current runtime-config shim is not a complete credential integration. It must be moved into the application boot path (or a real config module) and awaited before map initialization. Do not treat the static HTML shim as finished architecture.
+### AIS is genuinely persistent
 
-The loading cover is only dismissed after initialization reaches the `Promise.all(...).finally(...)` block in upstream `src/main.js`. Any thrown or indefinitely pending startup dependency before that point leaves the user on the loading/error cover. Reproduce with browser devtools and capture the first console/network failure before changing code.
+An outbound WebSocket in a Durable Object cannot hibernate: if the object is
+evicted, the socket dies with it and in-memory status goes too. So connection
+state is persisted in DO SQL, a self-re-arming alarm acts as the heartbeat and
+reconnects, failures back off exponentially, AISStream's in-band error frames
+fail the connection instead of being ignored, rows are pruned on a one-hour
+TTL, stored payloads are bounded, and the snapshot takes `bbox` and `limit`.
+With no key the endpoint reports `unconfigured` and the console says so.
 
-## Cloudflare work Claude should own
+## What was verified, and how
 
-Claude has the Cloudflare access needed to complete this part. Please:
+**Cold browser** (Chromium via Playwright, three configurations, 28 checks):
 
-1. **Internalize the viewer**
-   - Host the GEV frontend on an internal/backend route or dedicated internal hostname.
-   - Protect it with Cloudflare Access or the existing backend authentication/authorization model.
-   - Do not link it from public pages.
-   - Do not change `matthew.mccluster.org` public homepage/content/design.
+- no session: sign-in card, never an undiagnosed cover;
+- keyless authenticated: cover clears, Cesium 1.145.0 loads, globe geometry is
+  present under the centre of the view, the imagery layer attaches and its tile
+  queue drains, 12 layers render, paid modes are disabled;
+- keyless provider layer loads and reports mapped counts; a keyed layer with no
+  key degrades to "needs FIRMS_MAP_KEY"; AIS with no key says so; stored PostGIS
+  entities load;
+- config endpoint returning 500: still boots the globe keyless;
+- keyed: Google 3D and ion modes enable, and a rejected Google request degrades
+  with a message instead of killing the console;
+- no uncaught errors and no CSP violations in any configuration.
 
-2. **Run the real server-side GEV broker on Cloudflare**
-   - Use the canonical McCluster Worker / `HereTenantAgent` rather than creating a competing control plane.
-   - Preserve existing routes and Whip/API behavior.
-   - Keep provider secrets server-side.
-   - Use an allowlisted route table; do not create an arbitrary open proxy.
+That pass found three real bugs, all fixed: the CSP had no
+`'unsafe-eval'`/`'wasm-unsafe-eval'` so Cesium never constructed; `connect-src`
+omitted the tile host, and Cesium fetches tiles over XHR rather than `<img>`, so
+the globe rendered blank with no visible error; and the point renderer used the
+global `isFinite`, which coerces `null` to `0` and pinned every position-less
+record to Null Island.
 
-3. **Complete persistent AIS**
-   - Wire `AISSTREAM_API_KEY` through the existing Worker/Durable Object path.
-   - Maintain the persistent AISStream WebSocket in the Durable Object / appropriate long-lived Cloudflare primitive.
-   - Return the response shape expected by upstream `src/data/aisLiveVessels.js`.
-   - Add reconnect/backoff, stale-state handling, and rate/usage guardrails.
+**Database** (PostgreSQL 16 + PostGIS, migrations replayed from empty):
 
-4. **Finish upstream API parity needed by enabled UI controls**
-   - `/api/gbfs/...` for bikeshare with strict upstream URL allowlisting.
-   - `/api/cctv/*` for the public/authorized CCTV catalogs and media already modeled by upstream.
-   - `/api/military-installations` only as mapped/public installation context; no person tracking, face recognition, or individualized surveillance.
-   - Preserve source attribution and licensing metadata.
+- all three spatial migrations apply cleanly;
+- the DeKalb scenario reads correctly end to end — April wooded parcel, May
+  permit event, June cleared, July building footprint, September energy
+  observation — and `geo_timeline` returns them in order for a window;
+- a re-ingest that changes nothing writes no revision;
+- observation idempotency holds on `(org_id, source_key, external_id)`;
+- `geo_nearby`, `geo_bbox`, `geo_events_nearby`, `geo_timeline` all return
+  correct distances and counts;
+- after deliberately re-granting the old permissive Supabase defaults,
+  re-running the migration closed the boundary again: `anon` and `authenticated`
+  were refused both the tables and the RPCs, `service_role` still worked.
 
-5. **Fix application boot/runtime configuration correctly**
-   - Replace the temporary HTML fetch monkey-patch with an application-level config loader.
-   - Await runtime provider config before constructing the initial map stack.
-   - Support graceful keyless fallback when Google/Cesium keys are absent.
-   - A missing optional feed/key must degrade that layer only; it must not leave the entire application behind the loading cover.
-   - Add a bounded startup timeout and visible diagnostic state for truly fatal initialization errors.
+Applying the trigger against real PostGIS also found a bug: comparing
+`geometry` with `is not distinct from` under `search_path = ''` is ambiguous.
+It now compares `st_asewkb`.
 
-6. **Provider bindings / secrets**
-   Wire the existing expected names where applicable:
-   - `GOOGLE_MAPS_API_KEY`
-   - `CESIUM_ION_TOKEN`
-   - `AISSTREAM_API_KEY`
-   - `FIRMS_MAP_KEY`
-   - `TOMTOM_API_KEY`
-   - `OPENSKY_CLIENT_ID`
-   - `OPENSKY_CLIENT_SECRET`
-   - `OPENAI_API_KEY`
-   - optional `LL2_API_TOKEN`
+**Worker**: 66 unit tests pass. `wrangler deploy --dry-run` bundles cleanly at
+~536 KiB (113 KiB gzip) with the `HereTenantAgent` Durable Object binding
+present. Routes were probed against a local `wrangler dev`.
 
-7. **Validation before declaring done**
-   - Browser test the internal GEV surface from a cold session.
-   - Confirm the loading cover clears.
-   - Confirm the globe renders without paid keys using the keyless fallback.
-   - Confirm keyed Google/Cesium mode activates when credentials are present.
-   - Confirm enabled keyless layers return data without 404s.
-   - Confirm keyed-but-missing layers show a local unavailable/key-required state instead of breaking boot.
-   - Confirm AIS survives reconnects and stale sessions.
-   - Confirm `matthew.mccluster.org/` is unchanged before/after deployment.
+**Public site**: against `main`, this branch changes nothing outside
+`workers/`, `supabase/`, `docs/` and one `.gitignore` line. No HTML, asset, CSS
+or `js/` file in the published web root is touched, and `index.html` is
+byte-identical to `main`. The prior branch's changes to
+`.github/workflows/deploy-pages.yml` and `tools/build-gev.sh` were reverted, so
+they too are net-zero against `main`.
+
+## What is still yours
+
+### 1. Deploy the Worker
+
+This session had no Cloudflare deploy credential, so nothing was pushed to the
+`mccluster` Worker. Deploy latest `main` (or this branch's merge) as a **new**
+production deploy — do not Retry an old red build. The good log must show the
+`HereTenantAgent` Durable Object binding.
+
+### 2. Apply the migrations
+
+Not applied to production. Reconcile the production migration lineage first,
+then apply `20260909034000`, `20260909034100` and `20260909040000` through the
+repository's Supabase workflow and run the advisor checks. Until then the
+Worker reports `mode: adapter-ready`; provider brokering works and only the
+stored-data routes return `spatial_schema_not_ready`.
+
+### 3. Put Cloudflare Access in front of `/internal/gev`
+
+Create an Access application for `api.mccluster.org/internal/gev`, then set on
+the Worker:
+
+- `GEV_ACCESS_TEAM_DOMAIN` — e.g. `yourteam` or `yourteam.cloudflareaccess.com`
+- `GEV_ACCESS_AUD` — the application's AUD tag
+
+Until both exist the shell is reachable but empty: every byte behind it still
+requires a house-owner token. With both set the shell itself is unreachable
+without a valid assertion.
+
+### 4. Add provider keys as they arrive
+
+`wrangler secret put <NAME>` on the `mccluster` Worker, or the dashboard.
+Nothing else is needed: the source activates on the next request.
+
+| Binding | Unlocks | Notes |
+| --- | --- | --- |
+| `CENSUS_API_KEY` | Census / ACS | |
+| `EIA_API_KEY` | energy series | |
+| `DATA_COMMONS_API_KEY` | Data Commons v2 | |
+| `BLS_API_KEY` | labor series | |
+| `FRED_API_KEY` | economic series | |
+| `FIRMS_MAP_KEY` | NASA FIRMS active fires | |
+| `COPERNICUS_CLIENT_ID` + `COPERNICUS_CLIENT_SECRET` | Sentinel STAC search | |
+| `PLANET_RESEARCH_API_KEY` | Planet imagery | **ACADEMIC lane.** Refused to commercial consumers by design. |
+| `OPENSKY_CLIENT_ID` + `OPENSKY_CLIENT_SECRET` | OpenSky states | ACADEMIC lane, transient |
+| `TOMTOM_API_KEY` | traffic flow | COMMERCIAL lane, transient |
+| `AISSTREAM_API_KEY` | live vessels | COMMERCIAL lane, transient, DO-cached |
+| `MAPBOX_ACCESS_TOKEN` | geocoding / tiles | COMMERCIAL lane, transient |
+| `GOOGLE_MAPS_API_KEY` | Photorealistic 3D Tiles, geocoding | **Reaches the browser.** Restrict by HTTP referrer. Content is never persisted. |
+| `CESIUM_ION_TOKEN` | World Terrain, ion assets | **Reaches the browser.** Use a scoped read-only token. |
+| `LL2_API_TOKEN` | Launch Library 2 | Optional; the adapter works unauthenticated |
+
+Optional AIS tuning, non-secret: `AISSTREAM_BOUNDING_BOXES`,
+`AISSTREAM_MESSAGE_TYPES`.
+
+### 5. Working with no keys at all
+
+These need nothing: USGS, Open-Meteo, CelesTrak, ADSB.lol, OpenStreetMap
+Overpass, Nominatim, USAspending, Grants.gov, EPA ECHO, NHTSA, Radio Browser,
+Launch Library 2, GBFS, public CCTV catalogues, GDELT, and the OpenStreetMap
+basemap the console boots on. Each was reached live while this work was done.
+
+## Known gaps
+
+- **Not deployed and not migrated** — items 1 and 2 above.
+- **OSM tile policy.** The keyless basemap uses `tile.openstreetmap.org`, which
+  is fine for a handful of operators but is not a heavy-use tile source. Move
+  to Mapbox or self-hosted tiles if the console gets real traffic.
+- **CelesTrak returns orbital elements, not ground positions.** The layer
+  reports a count until SGP4 propagation is added.
+- **The CCTV adapter is a catalogue stub.** Only the audited Austin feed is
+  enabled, and it normalizes no records yet.
+- **Re:Earth / Mapterhorn terrain is raster terrarium**, not Cesium
+  quantized-mesh. `terrain.reearth.land` no longer resolves at all. The registry
+  now reports the live Mapterhorn tilejson and says it is not a drop-in
+  `TerrainProvider` URL; a decoder or a quantized-mesh source is still needed.
+- **The CSP allows `'unsafe-inline'` and `'unsafe-eval'`** because Cesium
+  requires eval and WASM compilation, and the console is a single inlined file.
+  Tightening to a nonce plus `strict-dynamic` is possible but needs its own
+  browser verification pass; it is not free.
+- **No `POST /v1/geo/query` or `/analyze` yet.** Buffers, spatial joins and
+  difference-in-differences are the next layer, and they belong on top of
+  `geo_timeline` rather than beside it.
 
 ## Public site invariant
 
-The GitHub Pages deployment on `main` force-publishes only the web root after stripping internals. Keep that public pipeline separate from GEV. The backend/internal GEV deployment must not modify the public `index.html`, album pages, public assets, or navigation.
-
-## Cleanup
-
-Once the internal Cloudflare-hosted GEV is verified, remove/avoid any unauthenticated public `/gev/` artifact and temporary runtime monkey-patch. The public Pages tree should contain only the intended public site.
+Still true, still checked: the Pages deployment publishes only the web root
+from `main`, and the internal console lives on the Worker. A test fails if the
+public workflow ever mentions GEV again.

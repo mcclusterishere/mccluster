@@ -313,7 +313,7 @@ export async function entitlementRows(env, orgId, sourceKey = null) {
   timeline. An entity's history is the merge of both, newest first.
 */
 export async function entityRevisions(env, orgId, entityId, limit = 100) {
-  return db(env, `geo_entity_revisions?org_id=eq.${encodeURIComponent(orgId)}&entity_id=eq.${encodeURIComponent(entityId)}&select=id,revision,change_type,name,entity_type,properties,provenance,source_url,observed_at,recorded_at&order=revision.desc&limit=${Math.max(1, Math.min(Number(limit) || 100, 500))}`);
+  return db(env, `geo_entity_revisions?org_id=eq.${encodeURIComponent(orgId)}&entity_id=eq.${encodeURIComponent(entityId)}&select=id,revision,change_type,source_key,external_id,name,entity_type,properties,provenance,source_url,observed_at,recorded_at&order=recorded_at.desc,revision.desc&limit=${Math.max(1, Math.min(Number(limit) || 100, 500))}`);
 }
 
 export async function entityObservations(env, orgId, entityId, limit = 200) {
