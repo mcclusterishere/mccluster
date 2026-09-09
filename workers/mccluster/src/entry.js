@@ -1,6 +1,7 @@
 import core from './index.js';
-import { fail, reply } from './lib/http.js';
+import { fail, logEvent, reply } from './lib/http.js';
 import { handleClientRequest } from './client.js';
+import clientConnect from './connect.js';
 import { createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
@@ -32,6 +33,13 @@ export default {
       if (clientResponse) return clientResponse;
     } catch (error) {
       return fail(request, env, error.message || 'Client request failed', error.status || 500, error.detail);
+    }
+
+    try {
+      const connectResponse = await clientConnect.fetch(request, env, url, reply, fail, logEvent);
+      if (connectResponse) return connectResponse;
+    } catch (error) {
+      return fail(request, env, error.message || 'Client Connect request failed', error.status || 500, error.detail);
     }
 
     if (path === '/v1/media/webhooks/fal' && request.method === 'POST') {
@@ -118,7 +126,6 @@ export default {
         return fail(request, env, error.message || 'Social request failed', error.status || 500, error.detail);
       }
     }
-
 
     if (path === '/v1/ai' || path.startsWith('/v1/ai/')) {
       try {

@@ -1,6 +1,7 @@
 import { billingEventsFal, collectAssetCandidates, normalizeFalStatus, resultFal, statusFal, submitFal, verifyFalWebhook } from './fal.js';
 import { estimateModelCost } from './pricing.js';
 import { requireOrgId } from '../social/security.js';
+import { requireCapability } from '../lib/capabilities.js';
 
 function headers(env) {
   return {
@@ -215,6 +216,10 @@ export async function createGeneration(request, env, user) {
   let body;
   try { body = await request.json(); } catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
   const org = await getOrg(env, user.id, body.org_id);
+  // Membership is not permission. Generation calls fal.ai and spends real
+  // money against the org's budget, so a viewer being in the org is not
+  // enough — the grant matrix decides.
+  await requireCapability(env, org, 'media.generate');
   if (!body.model_id) throw Object.assign(new Error('model_id is required'), { status: 400 });
   const model = await modelById(env, body.model_id);
   if (!model) throw Object.assign(new Error('Unknown or disabled media model'), { status: 404 });
