@@ -1,5 +1,6 @@
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
+import geo from './geo/index.js';
 import { CATALOG } from './ai/envelope.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
@@ -101,6 +102,9 @@ export default {
         return reply(request, env, CATALOG);
       }
 
+      if (path === '/v1/geo' || path.startsWith('/v1/geo/')) {
+        return geo.fetch(request, env);
+      }
 
       if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);
 
