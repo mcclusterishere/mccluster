@@ -145,11 +145,13 @@ create policy platform_apps_public_read on public.platform_apps
 
 -- A person can see their own app relationship. Org members can see rows for
 -- their org. Server-side provisioning uses service role.
+-- 0031 moved the org helpers into the non-PostgREST `private` schema; keep
+-- historical migrations consistent with that security boundary.
 drop policy if exists platform_user_apps_mine on public.platform_user_apps;
 create policy platform_user_apps_mine on public.platform_user_apps
   for select using (
     user_id = auth.uid()
-    or (org_id is not null and public.is_org_member(org_id))
+    or (org_id is not null and private.is_org_member(org_id))
   );
 
 -- Fee policy is quote-visible. Financial writes stay server-side.
@@ -157,7 +159,7 @@ drop policy if exists platform_fee_policy_read on public.platform_fee_policies;
 create policy platform_fee_policy_read on public.platform_fee_policies
   for select using (
     enabled = true
-    and (org_id is null or public.is_org_member(org_id))
+    and (org_id is null or private.is_org_member(org_id))
   );
 
 -- Payers see their own ledger; org members see org transactions.
@@ -165,7 +167,7 @@ drop policy if exists platform_ledger_read on public.platform_ledger;
 create policy platform_ledger_read on public.platform_ledger
   for select using (
     payer_user_id = auth.uid()
-    or (org_id is not null and public.is_org_member(org_id))
+    or (org_id is not null and private.is_org_member(org_id))
   );
 
 -- OAuth client IDs are public identifiers, but registry mutation is server/admin only.

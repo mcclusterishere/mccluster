@@ -54,10 +54,11 @@ create index if not exists org_stripe_accounts_ref_idx
 alter table public.org_stripe_accounts enable row level security;
 
 -- A client sees their own rail and nothing else. There is no cross-tenant
--- read here: an org member is scoped to their org by is_org_member.
+-- read here: an org member is scoped to their org by the private helper that
+-- 0031 deliberately removed from the PostgREST-exposed public schema.
 drop policy if exists org_stripe_accounts_member_read on public.org_stripe_accounts;
 create policy org_stripe_accounts_member_read on public.org_stripe_accounts
-  for select using (public.is_org_member(org_id));
+  for select using (private.is_org_member(org_id));
 
 -- The rail is written by the Worker under the service role, never from a
 -- browser. A client cannot mark their own account charges_enabled.
@@ -87,4 +88,4 @@ comment on column public.leads.org_id is
 drop policy if exists leads_org_read on public.leads;
 create policy leads_org_read on public.leads
   for select to authenticated
-  using (org_id is not null and public.is_org_member(org_id));
+  using (org_id is not null and private.is_org_member(org_id));
