@@ -49,6 +49,31 @@ jobs:
             exit 1
           fi
 
+  edge-functions:
+    name: Equity Uprise Edge Function contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check publication control path
+        run: |
+          deno check \
+            supabase/functions/_shared/eu-policy-os.ts \
+            supabase/functions/eu-publish/index.ts \
+            supabase/functions/eu-worker/index.ts
+      - name: Assert publication safety invariants
+        run: |
+          grep -F 'form.set("login_passwd", pass)' supabase/functions/eu-worker/index.ts
+          if grep -F 'form.set("passwd", pass)' supabase/functions/eu-worker/index.ts; then
+            echo 'Legacy Crossref password field is still present.' >&2
+            exit 1
+          fi
+          grep -F 'unknown_capability' supabase/functions/eu-worker/index.ts
+          grep -F 'request_hash: requestHash' supabase/functions/eu-publish/index.ts
+          grep -F 'publication content hash changed after approval' supabase/functions/eu-worker/index.ts
+
   database:
     name: Supabase migration reset
     runs-on: ubuntu-latest

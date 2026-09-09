@@ -1,6 +1,5 @@
-// Canonical publication gate. A manuscript becomes a publication only after
-// evidence/review checks pass and a high-risk control-plane approval is bound
-// to the exact immutable content hash.
+// Canonical publication gate. Publishing the canonical record and distributing
+// it to external systems are separate high-risk acts with separate approvals.
 import {
   authorize, cors, db, emitEvent, json, orgBySlug, rpc, safeText, sha256Hex, verifyCaller,
 } from "../_shared/eu-policy-os.ts";
@@ -31,7 +30,7 @@ async function readiness(orgId: string, manuscriptId: unknown) {
     const ev = await db(`eu_claim_evidence?claim_id=eq.${c.id}&relation=in.(supports,method)&select=source_id,verified_at`);
     if (!ev?.length) gaps.push({ code: "unsupported_claim", claim_id: c.id, claim: String(c.claim).slice(0, 220) });
   }
-  const highClaims = ctx.claims.filter((c: any) => ["high","legal-review"].includes(c.sensitivity) && c.status !== "approved");
+  const highClaims = ctx.claims.filter((c: any) => ["high", "legal-review"].includes(c.sensitivity) && c.status !== "approved");
   if (highClaims.length) gaps.push({ code: "sensitive_claims_unapproved", count: highClaims.length, claim_ids: highClaims.map((c: any) => c.id) });
 
   const content = ctx.sections.map((s: any) => `${s.section_key}\n${s.heading}\n${s.body_markdown}`).join("\n\n---\n\n");
@@ -108,49 +107,213 @@ async function prepare(caller: any, org: any, body: Record<string, unknown>) {
   return { ok: true, publication, content_hash: state.content_hash, ready: true };
 }
 
-async function publish(caller: any, org: any, body: Record<string, unknown>) {
-  const publicationId = safeText(body.publication_id, 80);
-  const pubs = await db(`eu_publications?id=eq.${encodeURIComponent(publicationId)}&org_id=eq.${org.id}&select=*&limit=1`);
+async function publicationVersion(orgId: string, publicationId: unknown) {
+  const id = safeText(publicationId, 80);
+  const pubs = await db(`eu_publications?id=eq.${encodeURIComponent(id)}&org_id=eq.${orgId}&select=*&limit=1`);
   if (!pubs?.length) throw new Error("publication not found");
-  const p = pubs[0];
-  const versions = await db(`eu_publication_versions?publication_id=eq.${p.id}&version_label=eq.${encodeURIComponent(p.current_version)}&select=*&limit=1`);
+  const publication = pubs[0];
+  const versions = await db(`eu_publication_versions?publication_id=eq.${publication.id}&version_label=eq.${encodeURIComponent(publication.current_version)}&select=*&limit=1`);
   if (!versions?.length) throw new Error("publication version not found");
-  const v = versions[0];
-  const requestHash = await sha256Hex(JSON.stringify({ action: "publication.publish", publication_id: p.id, stable_id: p.stable_id, version: v.version_label, content_hash: v.content_hash }));
+  return { publication, version: versions[0] };
+}
+
+async function publish(caller: any, org: any, body: Record<string, unknown>) {
+  const { publication: p, version: v } = await publicationVersion(org.id, body.publication_id);
+  const requestHash = await sha256Hex(JSON.stringify({
+    action: "publication.publish",
+    publication_id: p.id,
+    stable_id: p.stable_id,
+    version: v.version_label,
+    content_hash: v.content_hash,
+  }));
+  const approvalId = safeText(body.approval_id, 80);
   const decision = await authorize(caller, org.id, "publication.publish", {
-    resourceType: "eu_publications", resourceId: p.id, requestHash, approvalId: safeText(body.approval_id, 80),
+    resourceType: "eu_publications", resourceId: p.id, requestHash, approvalId,
   });
   if (!decision.allowed) return { ok: false, approval_required: true, reason: decision.reason, request_hash: requestHash };
 
-  const approvalId = safeText(body.approval_id, 80);
   await db(`eu_publications?id=eq.${p.id}`, { method: "PATCH", body: JSON.stringify({ status: "approved", approved_by_m_uid: caller.mUid }) });
   await db(`eu_artifacts?id=eq.${p.artifact_id}`, { method: "PATCH", body: JSON.stringify({ status: "approved" }) });
-  const renderJob = await db("eu_jobs", { method: "POST", body: JSON.stringify({
-    org_id: org.id, initiative_id: p.initiative_id, job_type: "publication.render", provider: "internal",
-    action: "render-package", capability: "publication.publish", resource_type: "eu_publications", resource_id: p.id,
-    payload: { publication_id: p.id, version_label: v.version_label, content_hash: v.content_hash }, state: "queued",
-    approval_id: approvalId || null, idempotency_key: `publication:${p.id}:${v.version_label}:render:${v.content_hash}`,
-  }) });
+  const renderJob = await db("eu_jobs", {
+    method: "POST",
+    headers: { Prefer: "resolution=ignore-duplicates,return=representation" },
+    body: JSON.stringify({
+      org_id: org.id, initiative_id: p.initiative_id, job_type: "publication.render", provider: "internal",
+      action: "render-package", capability: "publication.publish", resource_type: "eu_publications", resource_id: p.id,
+      payload: { publication_id: p.id, version_label: v.version_label, content_hash: v.content_hash, request_hash: requestHash },
+      state: "queued", approval_id: approvalId || null,
+      idempotency_key: `publication:${p.id}:${v.version_label}:render:${v.content_hash}`,
+    }),
+  });
 
-  const targets = await db(`eu_distribution_targets?org_id=eq.${org.id}&enabled=eq.true&select=*`);
-  for (const target of targets ?? []) {
-    const deliveryRows = await db("eu_deliveries", { method: "POST", headers: { Prefer: "resolution=ignore-duplicates,return=representation" }, body: JSON.stringify({
-      org_id: org.id, initiative_id: p.initiative_id, publication_id: p.id, artifact_id: p.artifact_id,
-      target_id: target.id, version_label: v.version_label, state: target.approval_required ? "waiting-approval" : "queued",
-      idempotency_key: `publication:${p.id}:${v.version_label}:target:${target.id}:${v.content_hash}`,
-    }) });
-    const delivery = deliveryRows?.[0];
-    if (!delivery) continue;
-    await db("eu_jobs", { method: "POST", headers: { Prefer: "resolution=ignore-duplicates,return=representation" }, body: JSON.stringify({
-      org_id: org.id, initiative_id: p.initiative_id, job_type: "publication.distribute", provider: target.provider,
-      action: "deliver", capability: target.capability || "publication.distribute", resource_type: "eu_deliveries", resource_id: delivery.id,
-      payload: { delivery_id: delivery.id, publication_id: p.id, version_label: v.version_label, target_id: target.id },
-      state: target.approval_required ? "waiting-approval" : "queued", approval_id: target.approval_required ? approvalId || null : null,
-      idempotency_key: `delivery:${delivery.id}:job`,
-    }) });
+  await emitEvent({
+    orgId: org.id, initiativeId: p.initiative_id, eventType: "publication.approved",
+    entityType: "eu_publications", entityId: p.id, actorMUid: caller.mUid, actorUserId: caller.authUserId,
+    data: { stable_id: p.stable_id, version: v.version_label, content_hash: v.content_hash, request_hash: requestHash, render_job_id: renderJob?.[0]?.id },
+    idempotencyKey: `publication:${p.id}:approved:${v.content_hash}`,
+  });
+  return {
+    ok: true,
+    publication_id: p.id,
+    stable_id: p.stable_id,
+    request_hash: requestHash,
+    render_job_id: renderJob?.[0]?.id ?? null,
+    distribution_ready: false,
+  };
+}
+
+type DistributionGroup = {
+  capability: string;
+  targets: any[];
+  request_hash: string;
+};
+
+async function distributionGroups(orgId: string, p: any, v: any): Promise<DistributionGroup[]> {
+  const targets = await db(`eu_distribution_targets?org_id=eq.${orgId}&enabled=eq.true&select=*&order=provider.asc,label.asc`);
+  const external = (targets ?? []).filter((t: any) => t.target_type !== "canonical-site" && t.provider !== "equity-uprise");
+  const grouped = new Map<string, any[]>();
+  for (const target of external) {
+    const capability = safeText(target.capability, 120) || "publication.distribute";
+    const arr = grouped.get(capability) ?? [];
+    arr.push(target);
+    grouped.set(capability, arr);
   }
-  await emitEvent({ orgId: org.id, initiativeId: p.initiative_id, eventType: "publication.approved", entityType: "eu_publications", entityId: p.id, actorMUid: caller.mUid, actorUserId: caller.authUserId, data: { stable_id: p.stable_id, version: v.version_label, content_hash: v.content_hash, render_job_id: renderJob?.[0]?.id }, idempotencyKey: `publication:${p.id}:approved:${v.content_hash}` });
-  return { ok: true, publication_id: p.id, stable_id: p.stable_id, render_job_id: renderJob?.[0]?.id ?? null };
+
+  const result: DistributionGroup[] = [];
+  for (const [capability, groupTargets] of [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    const targetFingerprint = groupTargets
+      .map((t: any) => ({ id: t.id, provider: t.provider, target_type: t.target_type, label: t.label }))
+      .sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)));
+    const requestHash = await sha256Hex(JSON.stringify({
+      action: "publication.distribute.batch",
+      publication_id: p.id,
+      stable_id: p.stable_id,
+      version: v.version_label,
+      content_hash: v.content_hash,
+      capability,
+      targets: targetFingerprint,
+    }));
+    result.push({ capability, targets: groupTargets, request_hash: requestHash });
+  }
+  return result;
+}
+
+function approvalFor(body: Record<string, unknown>, capability: string, groupCount: number) {
+  const approvals = body.approvals;
+  if (approvals && typeof approvals === "object" && !Array.isArray(approvals)) {
+    return safeText((approvals as Record<string, unknown>)[capability], 80);
+  }
+  if (groupCount === 1) return safeText(body.approval_id, 80);
+  return "";
+}
+
+async function distributionPlan(caller: any, org: any, body: Record<string, unknown>) {
+  const { publication: p, version: v } = await publicationVersion(org.id, body.publication_id);
+  if (!["published", "corrected"].includes(String(p.status))) {
+    return { ok: false, ready: false, reason: "canonical publication is not live yet", publication_status: p.status };
+  }
+  const groups = await distributionGroups(org.id, p, v);
+  const requirements = [];
+  for (const group of groups) {
+    const decision = await authorize(caller, org.id, group.capability, {
+      resourceType: "eu_publications", resourceId: p.id, requestHash: group.request_hash,
+    });
+    requirements.push({
+      capability: group.capability,
+      risk: decision.risk ?? null,
+      request_hash: group.request_hash,
+      targets: group.targets.map((t: any) => ({ id: t.id, provider: t.provider, label: t.label, target_type: t.target_type })),
+      approval_required: decision.reason === "approval_required",
+      allowed_without_approval: decision.allowed === true,
+      reason: decision.reason ?? null,
+    });
+  }
+  return { ok: true, ready: true, publication_id: p.id, stable_id: p.stable_id, version: v.version_label, content_hash: v.content_hash, requirements };
+}
+
+async function distribute(caller: any, org: any, body: Record<string, unknown>) {
+  const { publication: p, version: v } = await publicationVersion(org.id, body.publication_id);
+  if (!["published", "corrected"].includes(String(p.status)) || !p.canonical_url) {
+    return { ok: false, ready: false, reason: "canonical publication must be live before external distribution", publication_status: p.status };
+  }
+
+  const groups = await distributionGroups(org.id, p, v);
+  if (!groups.length) return { ok: true, queued: 0, message: "no external distribution targets are enabled" };
+
+  const decisions: Array<{ group: DistributionGroup; approval_id: string; decision: any }> = [];
+  for (const group of groups) {
+    const approvalId = approvalFor(body, group.capability, groups.length);
+    const decision = await authorize(caller, org.id, group.capability, {
+      resourceType: "eu_publications", resourceId: p.id, requestHash: group.request_hash, approvalId,
+    });
+    decisions.push({ group, approval_id: approvalId, decision });
+  }
+
+  const denied = decisions.filter((x) => !x.decision?.allowed);
+  if (denied.length) {
+    return {
+      ok: false,
+      authorization_required: true,
+      requirements: denied.map(({ group, decision }) => ({
+        capability: group.capability,
+        request_hash: group.request_hash,
+        reason: decision?.reason ?? "denied",
+        risk: decision?.risk ?? null,
+        targets: group.targets.map((t: any) => ({ id: t.id, provider: t.provider, label: t.label, target_type: t.target_type })),
+      })),
+    };
+  }
+
+  let queued = 0;
+  const jobs: string[] = [];
+  for (const { group, approval_id } of decisions) {
+    for (const target of group.targets) {
+      const deliveryKey = `publication:${p.id}:${v.version_label}:target:${target.id}:${v.content_hash}`;
+      const deliveryRows = await db("eu_deliveries", {
+        method: "POST",
+        headers: { Prefer: "resolution=ignore-duplicates,return=representation" },
+        body: JSON.stringify({
+          org_id: org.id, initiative_id: p.initiative_id, publication_id: p.id, artifact_id: p.artifact_id,
+          target_id: target.id, version_label: v.version_label, state: "queued", idempotency_key: deliveryKey,
+        }),
+      });
+      let delivery = deliveryRows?.[0];
+      if (!delivery) {
+        const existing = await db(`eu_deliveries?org_id=eq.${org.id}&idempotency_key=eq.${encodeURIComponent(deliveryKey)}&select=*&limit=1`);
+        delivery = existing?.[0];
+      }
+      if (!delivery) continue;
+
+      const jobRows = await db("eu_jobs", {
+        method: "POST",
+        headers: { Prefer: "resolution=ignore-duplicates,return=representation" },
+        body: JSON.stringify({
+          org_id: org.id, initiative_id: p.initiative_id, job_type: "publication.distribute", provider: target.provider,
+          action: "deliver", capability: group.capability, resource_type: "eu_publications", resource_id: p.id,
+          payload: {
+            delivery_id: delivery.id, publication_id: p.id, version_label: v.version_label, target_id: target.id,
+            content_hash: v.content_hash, request_hash: group.request_hash,
+          },
+          state: "queued", approval_id: approval_id || null,
+          idempotency_key: `delivery:${delivery.id}:job:${group.request_hash}`,
+        }),
+      });
+      const job = jobRows?.[0];
+      if (job?.id) {
+        jobs.push(job.id);
+        queued++;
+        await db(`eu_deliveries?id=eq.${delivery.id}`, { method: "PATCH", body: JSON.stringify({ job_id: job.id }) });
+      }
+    }
+  }
+
+  await emitEvent({
+    orgId: org.id, initiativeId: p.initiative_id, eventType: "publication.distribution_queued",
+    entityType: "eu_publications", entityId: p.id, actorMUid: caller.mUid, actorUserId: caller.authUserId,
+    data: { version: v.version_label, content_hash: v.content_hash, queued, job_ids: jobs },
+    idempotencyKey: `publication:${p.id}:distribution:${v.content_hash}:${groups.map((g) => g.request_hash).join(":")}`,
+  });
+  return { ok: true, publication_id: p.id, queued, job_ids: jobs };
 }
 
 Deno.serve(async (req) => {
@@ -169,6 +332,8 @@ Deno.serve(async (req) => {
     }
     if (action === "prepare") return json(await prepare(caller, org, body));
     if (action === "publish") return json(await publish(caller, org, body));
+    if (action === "distribution-plan") return json(await distributionPlan(caller, org, body));
+    if (action === "distribute") return json(await distribute(caller, org, body));
     return json({ error: "unknown action" }, 400);
   } catch (e) {
     console.error(e);
