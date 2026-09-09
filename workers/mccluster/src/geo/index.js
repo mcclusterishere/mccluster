@@ -1,5 +1,6 @@
 import { fail, reply } from '../lib/http.js';
-import { adapterCapabilities, executeAdapter, GeoAdapterError } from './adapters.js';
+import { adapterCapabilities, GeoAdapterError } from './adapters.js';
+import { executeProvider } from './gateway.js';
 import { sourceByKey, sourceCatalog } from './source-registry.js';
 import {
   entitiesInBbox,
@@ -109,7 +110,7 @@ async function fetchAndMaybePersist(request, env, options, sourceKey, mode) {
   if (!source) throw new GeoAdapterError('Unknown spatial source', 404, 'unknown_source');
   const { org } = await protectedContext(request, env, options);
   const body = await jsonBody(request);
-  const result = await executeAdapter(sourceKey, body, env);
+  const result = await executeProvider(sourceKey, body, env);
   const shouldPersist = mode === 'ingest' || body.persist !== false;
   let persistence = { persisted: false, reason: shouldPersist ? 'not_persistable' : 'disabled_by_request', records_seen: result.records?.length || 0, records_written: 0 };
 
