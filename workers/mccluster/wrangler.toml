@@ -56,7 +56,8 @@ META_GRAPH_API_VERSION = "v26.0"
 # MAPBOX_ACCESS_TOKEN
 # GOOGLE_MAPS_API_KEY
 # CESIUM_ION_TOKEN
-# LL2_API_TOKEN  # optional; Launch Library 2 also supports unauthenticated access
+# GEO_APP_TOKENS  # JSON object of platform_apps.app_key → secret. Derives spatial
+#                 # app identity. Callers cannot self-label consumer in the body.
 #
 # Optional non-secret AIS subscription tuning may be set as Worker vars/secrets:
 # AISSTREAM_BOUNDING_BOXES=[[[-90,-180],[90,180]]]

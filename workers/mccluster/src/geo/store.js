@@ -280,3 +280,205 @@ export async function listIngestionRuns(env, orgId, { source, limit = 50 } = {})
   if (source) parts.push(`source_key=eq.${encodeURIComponent(source)}`);
   return db(env, `geo_ingestion_runs?${parts.join('&')}`);
 }
+
+async function trySelect(env, path) {
+  if (!configured(env)) return { rows: [], missing: true };
+  try {
+    const payload = await db(env, path, { allow404: true });
+    if (payload === null) return { rows: [], missing: true };
+    return { rows: Array.isArray(payload) ? payload : [], missing: false };
+  } catch {
+    return { rows: [], missing: true };
+  }
+}
+
+function coordsFrom(value) {
+  const lat = Number(value?.lat ?? value?.latitude ?? value?.metadata?.lat);
+  const lon = Number(value?.lon ?? value?.lng ?? value?.longitude ?? value?.metadata?.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+  return { lat, lon };
+}
+
+function entityRecord({ externalId, entityType, name, point, properties }) {
+  return {
+    kind: 'entity',
+    external_id: String(externalId),
+    entity_type: entityType || 'unknown',
+    name: name || null,
+    point: point || null,
+    properties: properties || {},
+    source_url: null,
+    observed_at: null
+  };
+}
+
+function facilityRecord(row) {
+  return entityRecord({
+    externalId: row.facility_key || row.external_id || row.id,
+    entityType: row.kind || row.entity_type || 'facility',
+    name: row.name,
+    point: coordsFrom(row),
+    properties: {
+      city: row.city || null,
+      region: row.region || null,
+      visibility: row.visibility || 'internal',
+      source_key: row.source_key || null,
+      ...(row.metadata && typeof row.metadata === 'object' ? row.metadata : {})
+    }
+  });
+}
+
+function projectedOrgRecord(row) {
+  const point = coordsFrom(row.settings) || coordsFrom(row);
+  return entityRecord({
+    externalId: row.slug || row.id,
+    entityType: row.kind || 'org',
+    name: row.name,
+    point,
+    properties: {
+      slug: row.slug || null,
+      kind: row.kind || null,
+      projected_from: 'orgs'
+    }
+  });
+}
+
+function projectedEuOrgRecord(row) {
+  return entityRecord({
+    externalId: row.domain || row.id,
+    entityType: row.kind || 'stakeholder',
+    name: row.name,
+    point: coordsFrom(row.metadata) || coordsFrom(row),
+    properties: {
+      jurisdiction: row.jurisdiction || null,
+      domain: row.domain || null,
+      projected_from: 'eu_stakeholder_orgs'
+    }
+  });
+}
+
+function projectedResearchRecord(row) {
+  return entityRecord({
+    externalId: row.slug || row.id,
+    entityType: 'research-project',
+    name: row.title || row.name,
+    point: coordsFrom(row.settings) || coordsFrom(row),
+    properties: {
+      status: row.status || null,
+      visibility: row.visibility || 'internal',
+      projected_from: 'eu_research_projects'
+    }
+  });
+}
+
+export async function loadAuthoritativeEntities(env, sourceKey) {
+  if (!configured(env)) {
+    return { records: [], sites: [], arcs: [], authoritative: false, authority: 'unavailable' };
+  }
+
+  const facilities = await trySelect(
+    env,
+    `facilities?source_key=eq.${encodeURIComponent(sourceKey)}&select=facility_key,name,kind,city,region,lat,lon,visibility,source_key,metadata&order=facility_key.asc`
+  );
+  if (!facilities.missing && facilities.rows.length) {
+    const records = facilities.rows.map(facilityRecord);
+    return { records, sites: records, arcs: [], authoritative: true, authority: 'facilities' };
+  }
+
+  const entities = await trySelect(
+    env,
+    `geo_entities?source_key=eq.${encodeURIComponent(sourceKey)}&select=external_id,entity_type,name,properties,source_url,observed_at&order=external_id.asc&limit=500`
+  );
+  if (!entities.missing && entities.rows.length) {
+    const records = entities.rows.map((row) => entityRecord({
+      externalId: row.external_id,
+      entityType: row.entity_type,
+      name: row.name,
+      point: coordsFrom(row.properties),
+      properties: row.properties || {}
+    }));
+    return { records, sites: records, arcs: [], authoritative: true, authority: 'geo_entities' };
+  }
+
+  const projected = [];
+  if (sourceKey === 'house') {
+    const orgs = await trySelect(env, 'orgs?enabled=eq.true&select=id,slug,name,kind,settings&order=slug.asc');
+    if (!orgs.missing) projected.push(...orgs.rows.map(projectedOrgRecord));
+  }
+  if (sourceKey === 'equity_uprise') {
+    const stakeholders = await trySelect(env, 'eu_stakeholder_orgs?select=id,name,kind,jurisdiction,domain,metadata&order=name.asc&limit=500');
+    if (!stakeholders.missing) projected.push(...stakeholders.rows.map(projectedEuOrgRecord));
+    const research = await trySelect(env, 'eu_research_projects?select=id,slug,title,status,visibility,settings&order=slug.asc&limit=500');
+    if (!research.missing) projected.push(...research.rows.map(projectedResearchRecord));
+  }
+
+  if (projected.length) {
+    return { records: projected, sites: projected, arcs: [], authoritative: true, authority: 'projected' };
+  }
+
+  return {
+    records: [],
+    sites: [],
+    arcs: [],
+    authoritative: !facilities.missing,
+    authority: facilities.missing ? 'unavailable' : 'empty'
+  };
+}
+
+export async function loadInternalPlane(env) {
+  if (!configured(env)) {
+    return { sites: [], arcs: [], authoritative: false, authority: 'unavailable' };
+  }
+
+  const facilities = await trySelect(
+    env,
+    'facilities?select=facility_key,name,kind,city,region,lat,lon,visibility,source_key,metadata&order=source_key.asc,facility_key.asc'
+  );
+  if (!facilities.missing) {
+    const sites = facilities.rows.map((row) => ({
+      id: row.facility_key,
+      layer: row.source_key || row.kind || 'house',
+      name: row.name,
+      city: row.city || null,
+      lat: coordsFrom(row)?.lat ?? null,
+      lon: coordsFrom(row)?.lon ?? null,
+      visibility: row.visibility || 'internal',
+      detail: row.metadata?.detail || null,
+      sources: row.metadata?.sources || [row.source_key].filter(Boolean)
+    }));
+    const links = await trySelect(
+      env,
+      'facility_links?select=source_facility_key,target_facility_key,relationship_type&order=source_facility_key.asc'
+    );
+    const arcs = (links.rows || []).map((row) => [row.source_facility_key, row.target_facility_key]);
+    return {
+      sites,
+      arcs,
+      authoritative: true,
+      authority: 'facilities'
+    };
+  }
+
+  const house = await loadAuthoritativeEntities(env, 'house');
+  const policy = await loadAuthoritativeEntities(env, 'equity_uprise');
+  const research = await loadAuthoritativeEntities(env, 'scsu_docket');
+  const records = [...house.records, ...policy.records, ...research.records];
+  return {
+    sites: records.map((row) => ({
+      id: row.external_id,
+      layer: row.entity_type,
+      name: row.name,
+      city: row.properties?.city || null,
+      lat: row.point?.lat ?? null,
+      lon: row.point?.lon ?? null,
+      visibility: row.properties?.visibility || 'internal',
+      detail: row.properties?.detail || null,
+      sources: row.properties?.sources || []
+    })),
+    arcs: [],
+    authoritative: house.authoritative || policy.authoritative || research.authoritative,
+    authority: [house.authority, policy.authority, research.authority].find((value) => value && value !== 'unavailable' && value !== 'empty') || 'empty'
+  };
+}
+

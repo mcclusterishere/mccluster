@@ -1,27 +1,29 @@
-# Spatial plane — prize branch `grok/spatial-plane`
+# Spatial plane — `grok/spatial-plane`
 
 **Do not merge. Do not deploy. Do not touch GitHub Pages.**
 
-This branch is Grok's prize piece. It is not production. Live
-`https://api.mccluster.org/v1/geo` is **404** until the house deploys Worker
-`mccluster` from a branch it actually wants. CI green on a draft is not a
-deploy.
+This branch is the salvage base for McCluster spatial intelligence. It is not
+production. Live `https://api.mccluster.org/v1/geo` is **404** until the house
+deploys Worker `mccluster` from a branch it actually wants. CI green on a draft
+is not a deploy.
 
 ## What this is
 
 McCluster-shaped spatial intelligence on the **one** Worker.
 
 - Namespace: `/v1/geo`
-- Satellite contract: `GET /v1/geo/plane`
+- Public satellite contract: `GET /v1/geo/plane`
+- Internal geography: `GET /v1/geo/plane/internal` (house-owner)
 - Durable Object: existing `HereTenantAgent` (`geo:ais:mccluster`)
-- Database: existing Supabase `zmnhbrjyhxzhkxmhkexs` (PostGIS migrations in
-  this branch are **not applied**)
+- Database: existing Supabase `zmnhbrjyhxzhkxmhkexs` (PostGIS + facilities
+  migrations in this branch are **not applied**)
 - Upstream idea: [`bilawalsidhu/gods-eye-view`](https://github.com/bilawalsidhu/gods-eye-view)
   MIT code at `759652207fd1279ece97f0f19af566feb9a82146`
 - Upstream data/models are **not** MIT. Planet, OpenSky NC, TeleGeography
   BY-NC-SA, Google News NC stay behind the lane firewall.
 
 The globe is a satellite of `/v1/geo/plane`. It is not the source of truth.
+Internal McCluster facilities are not on the public contract.
 
 ## What this is not
 
@@ -35,76 +37,71 @@ The globe is a satellite of `/v1/geo/plane`. It is not the source of truth.
 | GEV `/api/gbfs` `/api/cctv` mimicry | Forbidden. Sources are McCluster adapters under `/v1/geo/fetch/:source` |
 | Overwrite `index.html` | Forbidden |
 | Merge to `main` | Forbidden until the house crowns it |
+| `body.consumer` self-label | Forbidden. App identity is derived from authentication |
 
-## Honest live surface (2026-09-09)
+## Honest live surface
 
 Probed, not imagined:
 
-- `GET /v1/geo` → **404**. ChatGPT PR #42 is not on the live Worker.
+- `GET /v1/geo` → **404**. This branch is not on the live Worker.
 - `GET /gev/` → HTML 200, Cesium.js **404**. Pages shell, no viewer.
-- `gev-proxy` health exists in Supabase and is not in git. USGS/adsb/opensky
-  paths `route_not_implemented`. Keys all false.
-- ChatGPT said finished because CI was green on a draft. That is not
-  production.
-- Claude's `GEV-CLOUDFLARE-HANDOFF.md` asks to internalize the Cesium app and
-  clone GEV `/api/*`. That is the wrong shape.
+- `gev-proxy` health exists in Supabase and is not in git.
+- PostGIS and `facilities` migrations are in git. They are not applied.
 
-## How Grok outshines both
+## Hardening (still not mergeable)
 
-ChatGPT salvaged the right module (adapters + PostGIS + AIS on the existing
-DO) and then fought the plane: Pages publish from a feature branch,
-`build-gev.sh`, out-of-repo proxy, lanes as **labels**. The registry wrote
-`SCSU_RESEARCH`. Nothing threw when Whip asked for Planet.
-
-Claude wrote a handoff that wants GEV API parity, Cloudflare Access around a
-Cesium boot, and `OPENAI_API_KEY` in the spatial namespace.
-
-This branch:
-
-1. **Lane firewall in code.** `workers/mccluster/src/geo/lanes.js` runs in
-   `executeProvider` *before* credentials. Whip + `planet_research` is 403
-   `lane_forbidden` even if the key is present. Tests prove it.
-2. **House INTERNAL sources GEV never had.** `house`, `equity_uprise`,
-   `scsu_docket` are McCluster geography — Bridgeport, Shiloh, Equity Uprise
-   dockets, SCSU — not a USGS clone.
-3. **`GET /v1/geo/plane`.** The satellite contract a globe binds to: sites,
-   arcs, lanes, forbidden list, routes. Public. No secrets. `do_not_merge: true`.
-4. **Catalog tells the truth.** `/v1` lists `/v1/geo` and `/v1/geo/plane`.
-   ChatGPT shipped adapters and left the envelope catalog blind.
-5. **Worker route before `configured()`.** Health and the plane stay reachable
-   while secrets are being assembled. Same wiring ChatGPT tested for, plus
-   the plane.
-6. **No Pages, no proxy, no Cesium, no Vercel.** AIS stays on
-   `export class HereTenantAgent`. There is no second class.
+1. **Identity-bound firewall.** JWT `app_metadata.mccluster_app` or
+   `X-McCluster-App-Token` (mapped by secret `GEO_APP_TOKENS`) resolves a
+   `platform_apps` key to a class + capabilities. `body.consumer` is 400
+   `consumer_not_accepted`. Whip requesting Planet is 403 *before* the key is
+   read, even if the caller is also the house owner.
+2. **Public plane is sanitized.** `GET /v1/geo/plane` returns service,
+   capabilities, public layers, routes, and lane contract. No Shiloh, SCSU,
+   PRIM3, Whip corridors, prize flags, or branch theater.
+3. **Internal plane is authenticated.** `GET /v1/geo/plane/internal` is
+   house-owner and reads `public.facilities` / live org + Equity Uprise
+   projections. Hard-coded Worker constants are gone.
+4. **Fetch never persists.** `POST /v1/geo/fetch/:source` is a proxy.
+   `POST /v1/geo/ingest/:source` persists when the source policy allows.
+5. **Whip is a commercial mobility app.** COMMERCIAL lane requires TRAFFIC or
+   MOBILITY, so Whip may use TomTom/AIS where the license allows. It still
+   cannot touch SCSU_RESEARCH or INTERNAL house geography.
 
 ## Contract
 
 ```
-GET  /v1/geo                 none            readiness
-GET  /v1/geo/plane           none            satellite contract
-GET  /v1/geo/sources         none            catalog, binding names, never values
-GET  /v1/geo/capabilities    none            adapter matrix
-POST /v1/geo/fetch/:source   house-owner     body.consumer required on restricted lanes
-POST /v1/geo/ingest/:source  house-owner     persist only when the source allows
-GET  /v1/geo/nearby          house-owner     PostGIS, schema must exist
-GET  /v1/geo/bbox            house-owner     PostGIS
-GET  /v1/geo/live/ais        house-owner     HereTenantAgent idFromName('geo:ais:mccluster')
+GET  /v1/geo                     none            readiness
+GET  /v1/geo/plane               none            sanitized satellite contract
+GET  /v1/geo/plane/internal      house-owner     facilities, arcs, full catalog
+GET  /v1/geo/sources             none            catalog, binding names, never values
+GET  /v1/geo/capabilities        none            adapter matrix
+POST /v1/geo/fetch/:source       app-identity    never persists
+POST /v1/geo/ingest/:source      house-owner     persist only when the source allows
+GET  /v1/geo/nearby              house-owner     PostGIS, schema must exist
+GET  /v1/geo/bbox                house-owner     PostGIS
+GET  /v1/geo/live/ais            house-owner     HereTenantAgent idFromName('geo:ais:mccluster')
 ```
 
-`body.consumer` is one of `house | policy | mobility | viewer | whip`.
-Default `house`. Restricted lanes:
+App identity is one of the registered `platform_apps` keys. Capabilities, not
+product nicknames, decide the lane:
 
-| Lane | Allowed | Whip? |
+| App | Class | Capabilities |
 |---|---|---|
-| `OPEN` | all | yes |
-| `SCSU_RESEARCH` | house, policy | **no** |
-| `COMMERCIAL` | house, mobility, viewer | no |
-| `COMMERCIAL_OR_NONPROFIT` | house, policy, mobility, viewer | no |
-| `VIEWER` | house, viewer | no |
-| `INTERNAL` | house, policy | **no** |
+| `mccluster-web`, `mccluster-gev` | INTERNAL | VIEWER, POLICY, MOBILITY, TRAFFIC, RESEARCH, INTERNAL |
+| `equity-uprise-web` | NONPROFIT_RESEARCH | POLICY |
+| `whip-rider-*`, `whip-driver-*`, `whip-rentals-*` | COMMERCIAL | MOBILITY, TRAFFIC |
 
-A house owner operating Whip still has to pass `consumer: "whip"`. Owner is
-not a skeleton key through academic licenses.
+| Lane | Required capability | Whip? |
+|---|---|---|
+| `OPEN` | none (identified app) | yes |
+| `SCSU_RESEARCH` | RESEARCH | **no** |
+| `COMMERCIAL` | TRAFFIC or MOBILITY | **yes** |
+| `COMMERCIAL_OR_NONPROFIT` | TRAFFIC, MOBILITY, POLICY, or VIEWER | yes |
+| `VIEWER` | VIEWER | no |
+| `INTERNAL` | INTERNAL (Equity Uprise docket also allows POLICY) | **no** |
+
+A house owner operating Whip is still Whip if the session is a Whip app. Owner
+is not a skeleton key through academic licenses.
 
 ## Salvage vs reject
 
@@ -121,25 +118,29 @@ Rejected:
 - feature-branch `deploy-pages.yml` force-push of `/gev/`
 - `gev-proxy`
 - GEV `/api/*` parity
+- caller-supplied `consumer`
+- public dump of internal McCluster geography
 - any claim that this is live
 
 ## How a satellite binds
 
-1. `GET /v1/geo/plane`
-2. Draw `sites` and `arcs`
+1. `GET /v1/geo/plane` for the public contract
+2. House console: `GET /v1/geo/plane/internal` with a house-owner session
 3. Honor `lanes` — a Whip client never requests `SCSU_RESEARCH` or `INTERNAL`
-4. Fetch live observations through `POST /v1/geo/fetch/:source` as house-owner
-   with `consumer` set to the satellite that will see the rows
+4. Fetch live observations through `POST /v1/geo/fetch/:source` as the
+   authenticated app. Persist only through `/ingest`
 5. Never talk to USGS/Planet/Cesium from the satellite's own origin when the
    Worker should mediate
 
-Until this Worker is deployed, the globe in the Grok preview is a satellite of
-the **contract shape**, not of production. USGS 4.5+ quakes on that globe are
-the public OPEN feed so the visual plane is not a screenshot of a 404.
+Until this Worker is deployed, the globe is a satellite of the **contract
+shape**, not of production.
 
 ## Crown
 
-Keep this branch. Do not merge it onto `main` to "win." If it is crowned,
-deploy Worker `mccluster` from it, apply PostGIS through the real migration
-path after reconciling production lineage, and take down `/gev/` and
-`gev-proxy` as a separate, explicit house order.
+Keep this branch. Do not merge it onto `main` to "win." If it is crowned:
+
+1. Deploy Worker `mccluster` from this branch as an explicit house order.
+2. Set `GEO_APP_TOKENS` and stamp `app_metadata.mccluster_app` on product JWTs.
+3. Reconcile production migration lineage, then apply PostGIS + `facilities`.
+4. Prove keyless OPEN feeds live, then commercial traffic, then AIS.
+5. Take down `/gev/` and `gev-proxy` as a separate, explicit house order.

@@ -30,7 +30,7 @@ export function corsHeaders(request, env) {
   return {
     'access-control-allow-origin': allowOrigin,
     'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
-    'access-control-allow-headers': 'authorization,content-type,x-we-user-id,x-we-role,stripe-signature',
+    'access-control-allow-headers': 'authorization,content-type,x-we-user-id,x-we-role,x-mccluster-app-token,stripe-signature',
     'access-control-allow-credentials': 'true',
     'access-control-max-age': '86400',
     vary: 'Origin'

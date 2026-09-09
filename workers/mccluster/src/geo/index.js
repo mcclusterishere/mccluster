@@ -1,14 +1,16 @@
 import { fail, reply } from '../lib/http.js';
 import { adapterCapabilities, GeoAdapterError } from './adapters.js';
 import { executeProvider } from './gateway.js';
-import { planeContract } from './house-plane.js';
-import { assertLane, normalizeConsumer } from './lanes.js';
+import { internalPlaneContract, publicPlaneContract, PLANE_ROUTES } from './house-plane.js';
+import { rejectCallerConsumer, resolveRequestIdentity } from './identity.js';
+import { assertLane } from './lanes.js';
 import { sourceByKey, sourceCatalog } from './source-registry.js';
 import {
   entitiesInBbox,
   getEntity,
   listEntities,
   listIngestionRuns,
+  loadInternalPlane,
   nearbyEntities,
   nearbyEvents,
   persistAdapterResult,
@@ -61,7 +63,8 @@ async function jsonBody(request) {
     const body = await request.json();
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('not object');
     return body;
-  } catch {
+  } catch (error) {
+    if (error instanceof GeoAdapterError) throw error;
     throw new GeoAdapterError('Request body must be a JSON object', 400, 'invalid_json');
   }
 }
@@ -71,6 +74,14 @@ async function requireOwner(request, env, options) {
     throw new GeoAdapterError('Spatial authorization is unavailable', 503, 'authorization_unavailable');
   }
   return options.requireHouseOwner(request, env);
+}
+
+async function resolveIdentity(request, env, options) {
+  const user = typeof options?.authUser === 'function' ? await options.authUser(request, env) : null;
+  if (typeof options?.resolveAppIdentity === 'function') {
+    return options.resolveAppIdentity(request, env, user);
+  }
+  return resolveRequestIdentity(request, env, user);
 }
 
 async function protectedContext(request, env, options, { requireSchema = false } = {}) {
@@ -88,7 +99,7 @@ async function requestFingerprint(source, body) {
   return [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, '0')).join('');
 }
 
-function responseResult(result, { includeRaw = false, persistence = null } = {}) {
+function responseResult(result, { includeRaw = false, persistence = null, identity = null } = {}) {
   const payload = {
     source: result.source,
     operation: result.operation,
@@ -97,7 +108,8 @@ function responseResult(result, { includeRaw = false, persistence = null } = {})
     attribution: result.attribution,
     persistence_policy: result.persistence,
     records: result.records || [],
-    persistence
+    persistence,
+    app: identity ? { app: identity.app, app_key: identity.app_key, class: identity.class } : undefined
   };
   for (const [key, value] of Object.entries(result)) {
     if (['source', 'operation', 'fetched_at', 'source_url', 'attribution', 'persistence', 'records', 'raw'].includes(key)) continue;
@@ -110,12 +122,32 @@ function responseResult(result, { includeRaw = false, persistence = null } = {})
 async function fetchAndMaybePersist(request, env, options, sourceKey, mode) {
   const source = sourceByKey(sourceKey);
   if (!source) throw new GeoAdapterError('Unknown spatial source', 404, 'unknown_source');
+  const identity = await resolveIdentity(request, env, options);
   const body = await jsonBody(request);
-  assertLane(source, normalizeConsumer(body.consumer));
-  const { org } = await protectedContext(request, env, options);
-  const result = await executeProvider(sourceKey, body, env);
-  const shouldPersist = mode === 'ingest' || body.persist !== false;
-  let persistence = { persisted: false, reason: shouldPersist ? 'not_persistable' : 'disabled_by_request', records_seen: result.records?.length || 0, records_written: 0 };
+  rejectCallerConsumer(body);
+  if (mode === 'fetch' && body.persist === true) {
+    throw new GeoAdapterError(
+      'POST /v1/geo/fetch/:source never persists. Use POST /v1/geo/ingest/:source',
+      400,
+      'persist_not_allowed_on_fetch'
+    );
+  }
+  assertLane(source, identity);
+
+  let org = null;
+  if (mode === 'ingest') {
+    const protectedRow = await protectedContext(request, env, options);
+    org = protectedRow.org;
+  }
+
+  const result = await executeProvider(sourceKey, body, env, identity);
+  const shouldPersist = mode === 'ingest';
+  let persistence = {
+    persisted: false,
+    reason: shouldPersist ? 'not_persistable' : 'fetch_never_persists',
+    records_seen: result.records?.length || 0,
+    records_written: 0
+  };
 
   if (shouldPersist) {
     const fingerprint = await requestFingerprint(sourceKey, body);
@@ -129,8 +161,9 @@ async function fetchAndMaybePersist(request, env, options, sourceKey, mode) {
   return reply(request, env, {
     ok: true,
     service: SERVICE,
-    org: { id: org.id, slug: org.slug },
-    result: responseResult(result, { includeRaw: body.include_raw === true, persistence })
+    org: org ? { id: org.id, slug: org.slug } : null,
+    app: { app: identity.app, app_key: identity.app_key, class: identity.class },
+    result: responseResult(result, { includeRaw: body.include_raw === true, persistence, identity })
   }, mode === 'ingest' && persistence.persisted ? 201 : 200);
 }
 
@@ -188,9 +221,23 @@ export default {
 
       if (path === '/v1/geo/plane' && request.method === 'GET') {
         const dbReady = await schemaReady(env);
-        return reply(request, env, planeContract({
+        return reply(request, env, publicPlaneContract({
           schemaReady: dbReady,
           sources: sourceCatalog(env)
+        }));
+      }
+
+      if (path === '/v1/geo/plane/internal' && request.method === 'GET') {
+        await requireOwner(request, env, options);
+        const dbReady = await schemaReady(env);
+        const loaded = await loadInternalPlane(env);
+        return reply(request, env, internalPlaneContract({
+          schemaReady: dbReady,
+          sources: sourceCatalog(env),
+          sites: loaded.sites,
+          arcs: loaded.arcs,
+          authority: loaded.authority,
+          authoritative: loaded.authoritative
         }));
       }
 
@@ -200,17 +247,7 @@ export default {
           upstream_reference: UPSTREAM,
           upstream_commit: UPSTREAM_COMMIT,
           adapters: adapterCapabilities(),
-          routes: {
-            health: 'GET /v1/geo',
-            plane: 'GET /v1/geo/plane',
-            fetch: 'POST /v1/geo/fetch/:source',
-            ingest: 'POST /v1/geo/ingest/:source',
-            nearby: 'GET /v1/geo/nearby',
-            bbox: 'GET /v1/geo/bbox',
-            events_nearby: 'GET /v1/geo/events/nearby',
-            entities: 'GET /v1/geo/entities',
-            live_ais: 'GET /v1/geo/live/ais'
-          }
+          routes: PLANE_ROUTES
         });
       }
 

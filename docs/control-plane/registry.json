@@ -21,6 +21,7 @@
   "spatial": {
     "namespace": "/v1/geo",
     "planeRoute": "/v1/geo/plane",
+    "internalPlaneRoute": "/v1/geo/plane/internal",
     "durableObject": "HereTenantAgent",
     "durableObjectInstance": "geo:ais:mccluster",
     "upstream": "bilawalsidhu/gods-eye-view",

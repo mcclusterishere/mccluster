@@ -54,7 +54,7 @@ test('geo source endpoint does not leak a configured secret', async () => {
   assert.doesNotMatch(body, new RegExp(FAKE_SECRET));
 });
 
-test('data-bearing geo routes fail closed without canonical authorization callback', async () => {
+test('data-bearing geo routes fail closed without app identity', async () => {
   const response = await geo.fetch(
     new Request('https://api.mccluster.org/v1/geo/fetch/usgs', {
       method: 'POST',
@@ -63,15 +63,15 @@ test('data-bearing geo routes fail closed without canonical authorization callba
     }),
     {}
   );
-  assert.equal(response.status, 503);
+  assert.equal(response.status, 403);
   const payload = await response.json();
-  assert.equal(payload.detail.code, 'authorization_unavailable');
+  assert.equal(payload.detail.code, 'unidentified_app');
 });
 
 test('canonical worker delegates geo namespace with house-owner authorization before database gate', async () => {
   const source = await readFile(workerSourcePath, 'utf8');
   assert.match(source, /import geo from '\.\/geo\/index\.js';/);
-  const routeNeedle = "return geo.fetch(request, env, { requireHouseOwner });";
+  const routeNeedle = 'return geo.fetch(request, env, { requireHouseOwner, authUser, resolveAppIdentity: resolveRequestIdentity });';
   const routeIndex = source.indexOf(routeNeedle);
   const configGateIndex = source.indexOf("if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);");
   assert.ok(routeIndex >= 0, 'geo route delegation with house-owner authorization is missing');

@@ -1,6 +1,7 @@
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
 import geo from './geo/index.js';
+import { resolveRequestIdentity } from './geo/identity.js';
 import { CATALOG } from './ai/envelope.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
@@ -103,7 +104,7 @@ export default {
       }
 
       if (path === '/v1/geo' || path.startsWith('/v1/geo/')) {
-        return geo.fetch(request, env, { requireHouseOwner });
+        return geo.fetch(request, env, { requireHouseOwner, authUser, resolveAppIdentity: resolveRequestIdentity });
       }
 
       if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);

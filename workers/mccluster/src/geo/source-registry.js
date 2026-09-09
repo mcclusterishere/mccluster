@@ -21,6 +21,7 @@ function source({
   optionalCredentialEnv = [],
   capabilities = [],
   lane = 'OPEN',
+  requiredCapabilities = null,
   adapter = null,
   transport = 'http',
   persistence = PERSISTENCE.PERSISTENT,
@@ -35,6 +36,7 @@ function source({
     optionalCredentialEnv: Object.freeze([...optionalCredentialEnv]),
     capabilities: Object.freeze([...capabilities]),
     lane,
+    requiredCapabilities: requiredCapabilities ? Object.freeze([...requiredCapabilities]) : null,
     adapter,
     transport,
     persistence,
@@ -91,10 +93,12 @@ export const SOURCES = Object.freeze([
   source({ key: 'google_maps', name: 'Google Maps Platform', sourceClass: SOURCE_CLASSES.COMMERCIAL, credentialEnv: ['GOOGLE_MAPS_API_KEY'], capabilities: ['maps', 'places', 'geocoding', '3d-tiles'], lane: 'COMMERCIAL_OR_NONPROFIT', adapter: 'google_maps', persistence: PERSISTENCE.NONE, upstream: 'https://maps.googleapis.com', attribution: 'Google Maps' }),
   source({ key: 'cesium_ion', name: 'Cesium ion', sourceClass: SOURCE_CLASSES.COMMERCIAL, credentialEnv: ['CESIUM_ION_TOKEN'], capabilities: ['3d-tiles', 'terrain', 'viewer-assets'], lane: 'VIEWER', adapter: 'cesium_ion', persistence: PERSISTENCE.NONE, upstream: 'https://api.cesium.com', attribution: 'Cesium ion' }),
 
-  // McCluster house INTERNAL. GEV never had these. Lane firewall forbids Whip.
+  // McCluster house INTERNAL. Geography comes from facilities / orgs / EU
+  // tables, never from a public JavaScript constant. Equity Uprise may read
+  // its own docket; Whip may not.
   source({ key: 'house', name: 'McCluster house sites', sourceClass: SOURCE_CLASSES.INTERNAL, capabilities: ['facilities', 'control-plane', 'digital-twin'], lane: 'INTERNAL', adapter: 'house', attribution: 'McCluster house INTERNAL' }),
-  source({ key: 'equity_uprise', name: 'Equity Uprise policy nodes', sourceClass: SOURCE_CLASSES.INTERNAL, capabilities: ['policy', 'environmental-justice', 'federal-awards-docket'], lane: 'INTERNAL', adapter: 'house', attribution: 'Equity Uprise / McCluster INTERNAL' }),
-  source({ key: 'scsu_docket', name: 'SCSU research docket', sourceClass: SOURCE_CLASSES.INTERNAL, capabilities: ['academic-program', 'research-sites'], lane: 'INTERNAL', adapter: 'house', attribution: 'McCluster / SCSU research program INTERNAL' })
+  source({ key: 'equity_uprise', name: 'Equity Uprise policy nodes', sourceClass: SOURCE_CLASSES.INTERNAL, capabilities: ['policy', 'environmental-justice', 'federal-awards-docket'], lane: 'INTERNAL', requiredCapabilities: ['INTERNAL', 'POLICY'], adapter: 'house', attribution: 'Equity Uprise / McCluster INTERNAL' }),
+  source({ key: 'scsu_docket', name: 'SCSU research docket', sourceClass: SOURCE_CLASSES.INTERNAL, capabilities: ['academic-program', 'research-sites'], lane: 'INTERNAL', requiredCapabilities: ['INTERNAL', 'RESEARCH'], adapter: 'house', attribution: 'McCluster / SCSU research program INTERNAL' })
 ]);
 
 const SOURCE_BY_KEY = new Map(SOURCES.map((item) => [item.key, item]));
@@ -107,19 +111,21 @@ export function sourceConfigured(item, env) {
   return item.credentialEnv.every((key) => Boolean(env?.[key]));
 }
 
-export function sourceCatalog(env) {
-  return SOURCES.map((item) => ({
-    key: item.key,
-    name: item.name,
-    source_class: item.sourceClass,
-    lane: item.lane,
-    capabilities: item.capabilities,
-    transport: item.transport,
-    persistence: item.persistence,
-    attribution: item.attribution,
-    credential_required: item.credentialEnv.length > 0,
-    credential_bindings: item.credentialEnv,
-    optional_credential_bindings: item.optionalCredentialEnv,
-    configured: sourceConfigured(item, env)
-  }));
+export function sourceCatalog(env, { publicOnly = false } = {}) {
+  return SOURCES
+    .filter((item) => !publicOnly || item.lane === 'OPEN')
+    .map((item) => ({
+      key: item.key,
+      name: item.name,
+      source_class: item.sourceClass,
+      lane: item.lane,
+      capabilities: item.capabilities,
+      transport: item.transport,
+      persistence: item.persistence,
+      attribution: item.attribution,
+      credential_required: item.credentialEnv.length > 0,
+      credential_bindings: item.credentialEnv,
+      optional_credential_bindings: item.optionalCredentialEnv,
+      configured: sourceConfigured(item, env)
+    }));
 }

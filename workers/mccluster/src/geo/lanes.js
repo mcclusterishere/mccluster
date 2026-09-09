@@ -1,62 +1,67 @@
 import { GeoAdapterError } from './errors.js';
+import { CAPABILITIES } from './identity.js';
 
 /*
-  Lanes are not labels. ChatGPT's registry wrote them. This module is the
-  firewall that actually throws.
+  Lanes are capability gates, not caller-supplied product names.
 
-  A commercial satellite such as Whip must never receive SCSU_RESEARCH or
-  INTERNAL house/policy rows merely because the same person owns both.
+  Entitlements evaluate identity.capabilities. A Whip session cannot become
+  POLICY by sending {"consumer":"policy"}. A house owner operating Whip is
+  still Whip if the authenticated app is a Whip product.
 */
 
-export const CONSUMERS = Object.freeze(['house', 'policy', 'mobility', 'viewer', 'whip']);
+export const LANE_CAPABILITIES = Object.freeze({
+  OPEN: Object.freeze([]),
+  SCSU_RESEARCH: Object.freeze([CAPABILITIES.RESEARCH]),
+  COMMERCIAL: Object.freeze([CAPABILITIES.TRAFFIC, CAPABILITIES.MOBILITY]),
+  COMMERCIAL_OR_NONPROFIT: Object.freeze([
+    CAPABILITIES.TRAFFIC,
+    CAPABILITIES.MOBILITY,
+    CAPABILITIES.POLICY,
+    CAPABILITIES.VIEWER
+  ]),
+  VIEWER: Object.freeze([CAPABILITIES.VIEWER]),
+  INTERNAL: Object.freeze([CAPABILITIES.INTERNAL])
+});
 
-export const LANE_ALLOW = Object.freeze({
-  OPEN: Object.freeze(['house', 'policy', 'mobility', 'viewer', 'whip']),
-  SCSU_RESEARCH: Object.freeze(['house', 'policy']),
-  COMMERCIAL: Object.freeze(['house', 'mobility', 'viewer']),
-  COMMERCIAL_OR_NONPROFIT: Object.freeze(['house', 'policy', 'mobility', 'viewer']),
-  VIEWER: Object.freeze(['house', 'viewer']),
-  INTERNAL: Object.freeze(['house', 'policy'])
+function allowsWhip(required) {
+  if (!required.length) return true;
+  return required.includes(CAPABILITIES.MOBILITY) || required.includes(CAPABILITIES.TRAFFIC);
+}
+
+const LANE_NOTES = Object.freeze({
+  OPEN: 'Open public feeds. Any identified app may consume.',
+  SCSU_RESEARCH: 'Academic Planet/OpenSky. Requires RESEARCH. Never a commercial Whip session.',
+  COMMERCIAL: 'Paid traffic/AIS. Commercial mobility products including Whip may consume where the license allows.',
+  COMMERCIAL_OR_NONPROFIT: 'Vendor tiles and geocoding. Commercial mobility or nonprofit/viewer capabilities.',
+  VIEWER: 'Cesium/Mapbox viewer tokens stay on the viewer satellite. Not a Whip feed.',
+  INTERNAL: 'House geography. Requires INTERNAL. Never a public dump, never a Whip client.'
 });
 
 export const LANE_CONTRACT = Object.freeze(
   Object.fromEntries(
-    Object.entries(LANE_ALLOW).map(([lane, consumers]) => [
+    Object.entries(LANE_CAPABILITIES).map(([lane, capabilities]) => [
       lane,
       Object.freeze({
-        consumers,
-        whip: consumers.includes('whip'),
-        notes: lane === 'SCSU_RESEARCH'
-          ? 'Academic Planet/OpenSky. Never Whip. Never a commercial satellite.'
-          : lane === 'INTERNAL'
-            ? 'House and Equity Uprise geography. Never Whip. Never a public viewer dump.'
-            : lane === 'VIEWER'
-              ? 'Cesium/Mapbox tokens stay on the viewer satellite. Not a Whip feed.'
-              : lane === 'COMMERCIAL'
-                ? 'Paid traffic/AIS. House and mobility only. Not a policy-research dump.'
-                : 'Open public feeds. Any satellite may consume.'
+        capabilities,
+        whip: allowsWhip(capabilities),
+        notes: LANE_NOTES[lane]
       })
     ])
   )
 );
 
-export function normalizeConsumer(value) {
-  const consumer = String(value || 'house').trim().toLowerCase();
-  if (!CONSUMERS.includes(consumer)) {
-    throw new GeoAdapterError(
-      'consumer must be house, policy, mobility, viewer, or whip',
-      400,
-      'invalid_consumer',
-      { consumer, allowed: CONSUMERS }
-    );
-  }
-  return consumer;
+function requiredCapabilities(source) {
+  if (Array.isArray(source?.requiredCapabilities)) return source.requiredCapabilities;
+  return LANE_CAPABILITIES[source?.lane];
 }
 
-export function assertLane(source, consumer) {
+export function assertLane(source, identity) {
   if (!source) throw new GeoAdapterError('Unknown spatial source', 404, 'unknown_source');
-  const allowed = LANE_ALLOW[source.lane];
-  if (!allowed) {
+  if (!identity?.app || !Array.isArray(identity.capabilities)) {
+    throw new GeoAdapterError('Spatial app identity is required', 403, 'unidentified_app');
+  }
+  const required = requiredCapabilities(source);
+  if (!required) {
     throw new GeoAdapterError(
       `Source ${source.key} has an unknown lane ${source.lane}`,
       500,
@@ -64,13 +69,29 @@ export function assertLane(source, consumer) {
       { source: source.key, lane: source.lane }
     );
   }
-  if (!allowed.includes(consumer)) {
+  const allowed = required.length === 0 || required.some((capability) => identity.capabilities.includes(capability));
+  if (!allowed) {
     throw new GeoAdapterError(
-      `${source.key} lane ${source.lane} forbids consumer ${consumer}`,
+      `${source.key} lane ${source.lane} forbids app ${identity.app}`,
       403,
       'lane_forbidden',
-      { source: source.key, lane: source.lane, consumer, allowed }
+      {
+        source: source.key,
+        lane: source.lane,
+        app: identity.app,
+        app_key: identity.app_key || null,
+        class: identity.class,
+        capabilities: identity.capabilities,
+        required
+      }
     );
   }
-  return { source: source.key, lane: source.lane, consumer, allowed };
+  return {
+    source: source.key,
+    lane: source.lane,
+    app: identity.app,
+    class: identity.class,
+    capabilities: identity.capabilities,
+    required
+  };
 }
