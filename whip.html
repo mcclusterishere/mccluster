@@ -3,141 +3,153 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Whip Equipped &middot; three apps, launching soon</title>
-  <meta name="description" content="Whip Equipped LLC — a parts-licensed dealership in Acworth, Georgia, and three apps launching soon: Rider, Driver and Rentals. One account across all three. Try them now.">
+  <title>WE &middot; from renting the ride to building it</title>
+  <meta name="description" content="Whip Equipped is expanding from a vehicle rental and mobility network into its own connected 125cc urban motorcycle platform, with U.S. assembly planning underway.">
   <link rel="canonical" href="https://matthew.mccluster.org/whip.html">
   <link rel="icon" type="image/png" href="assets/img/we-icon.png">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#060505">
+  <meta name="theme-color" content="#050505">
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Whip Equipped">
+  <meta name="apple-mobile-web-app-title" content="WE">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Whip Equipped. Three apps, launching soon.">
-  <meta property="og:description" content="Rider, Driver and Rentals — one account across all three, run out of a parts-licensed dealership in Acworth, Georgia. Try them before they land.">
+  <meta property="og:title" content="WE. From renting the ride to building it.">
+  <meta property="og:description" content="The next layer of Whip Equipped: a connected 125cc urban motorcycle platform built around proven mechanical systems and a WE-owned experience.">
   <meta property="og:url" content="https://matthew.mccluster.org/whip.html">
-  <meta property="og:image" content="https://matthew.mccluster.org/assets/frames/whip_0001.jpg">
-
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/we-icon.png">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
-  <link rel="stylesheet" href="css/whip.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/whip-manufacturer.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
 </head>
-<body class="we-body">
-
-  <!-- ============================================================
-       MOBILE FIRST, AND SHAPED LIKE THE THING IT IS SELLING.
-
-       This is the front door of a product that has not launched. It is
-       laid out as an app screen rather than a web page: the icon at the
-       top the way a store listing opens, a status line that says where
-       the build actually is, then the three products as rows a thumb can
-       hit, then a way to be told when it lands.
-
-       Every wide-screen rule in css/whip.css is a min-width addition to
-       what is written here. The phone is the design; the desktop is the
-       phone with room.
-       ============================================================ -->
-  <main class="we">
-
-    <header class="we-hero">
-      <img class="we-hero__bg" src="assets/frames/whip_0001.jpg" alt="" decoding="async">
-      <div class="we-hero__in">
-
-        <div class="we-id">
-          <img class="we-id__tile" src="assets/img/we-icon-dark.png" alt="" width="464" height="512">
-          <div class="we-id__names">
-            <b>Whip Equipped</b>
-            <small>Acworth, Georgia &middot; est. 2024</small>
-          </div>
+<body class="we-manufacturer">
+  <main class="wm">
+    <header class="wm__hero">
+      <div class="wm__top">
+        <div class="wm__id">
+          <img src="assets/img/we-icon-dark.png" alt="" width="464" height="512">
+          <div><b>WE Vehicle Lab</b><small>WHIP EQUIPPED &middot; IN THIS TOGETHER</small></div>
         </div>
-
-        <p class="we-pill"><i></i>Launching soon</p>
-
-        <h1>Three apps.<br><em>One account.</em></h1>
-
-        <p class="we-lede">A parts-licensed dealership that became a network.
-          Ride, drive, or rent off the lot &mdash; one sign-in carries you
-          through all three, and the fare is quoted before you commit to it.</p>
-
-        <a class="we-cta" href="#products">See what we're launching &darr;</a>
-
-        <ul class="we-facts">
-          <li><b>3</b><span>apps</span></li>
-          <li><b>6</b><span>builds</span></li>
-          <li><b>1</b><span>account</span></li>
-        </ul>
+        <span class="wm__status">IN DEVELOPMENT</span>
       </div>
+
+      <div class="wm__copy">
+        <p class="wm__k">The next layer of WE</p>
+        <h1>We rented the ride.<em>Now we build it.</em></h1>
+        <p>Whip Equipped started by helping people access, operate and rent vehicles built by somebody else. Now WE is expanding upstream: our own connected urban motorcycle platform, designed around proven mechanical systems and the network we already built.</p>
+      </div>
+
+      <div class="wm__bike" aria-label="Abstract development visualization of the WE 125 platform">
+        <svg viewBox="0 0 380 150" role="img" aria-label="Abstract mini motorcycle concept silhouette">
+          <defs>
+            <linearGradient id="bikeLine" x1="0" x2="1"><stop offset="0" stop-color="#F6AD62"/><stop offset="1" stop-color="#F04449"/></linearGradient>
+          </defs>
+          <circle cx="75" cy="111" r="29" fill="none" stroke="rgba(255,255,255,.78)" stroke-width="7"/>
+          <circle cx="299" cy="111" r="29" fill="none" stroke="rgba(255,255,255,.78)" stroke-width="7"/>
+          <path d="M75 111 L127 66 L190 73 L238 111 L148 111 L127 66 M190 73 L219 45 L273 51 L299 111 M215 45 L204 29 L234 27 M132 64 L117 47 L156 43" fill="none" stroke="url(#bikeLine)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M158 43 C182 31 224 35 247 49 L215 67 L174 62 Z" fill="rgba(246,173,98,.22)" stroke="rgba(255,255,255,.18)" stroke-width="2"/>
+          <path d="M146 111 L166 79 L210 79 L231 111" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.2)" stroke-width="3"/>
+        </svg>
+        <div class="wm__bike-tag"><b>125cc</b><small>URBAN PLATFORM &middot; TARGET</small></div>
+      </div>
+      <a class="wm__scroll" href="#platform"><i>↓</i> See the build</a>
     </header>
 
-    <!-- THE THREE PRODUCTS. Each row opens the real application, which is
-         vendored under whip/ and talks to api.mccluster.org. The build
-         chips under each name are read from the registry, not typed. -->
-    <section class="we-sec" id="products">
-      <p class="we-k">The products</p>
-      <h2 class="we-h2">Check out what we&rsquo;re launching</h2>
-      <p class="we-sub">All three run right now, on the real API. Tap one and use it.</p>
-      <div class="we-list" id="appGrid"></div>
+    <section class="wm__section" id="platform">
+      <div class="wm__intro">
+        <p class="wm__k">Marketplace → machine</p>
+        <h2>Own more of the mobility stack.</h2>
+        <p>The rental network is not going away. The apps are not going away. The operator model is not going away. The expansion is simple: instead of forcing WE around somebody else&rsquo;s vehicle, we can design the vehicle around WE.</p>
+      </div>
+
+      <div class="wm__facts" aria-label="Vehicle development targets">
+        <article class="wm__fact"><small>Target</small><b>125cc</b><span>Grom-class urban mini-moto architecture</span></article>
+        <article class="wm__fact"><small>Target</small><b>5-speed</b><span>Manual gearbox with a proven catalog powertrain</span></article>
+        <article class="wm__fact"><small>Connected</small><b>LTE + GNSS</b><span>Electrical headroom for fleet telematics</span></article>
+        <article class="wm__fact"><small>Assembly</small><b>U.S.</b><span>Domestic assembly site selection in progress</span></article>
+      </div>
+
+      <div class="wm__principles">
+        <article class="wm__principle wm__principle--hot"><i>01</i><b>Mechanically mature.</b><p>Use proven engines, EFI, brakes, suspension, controls and service parts instead of paying to reinvent expensive failure points.</p></article>
+        <article class="wm__principle"><i>02</i><b>Visually proprietary.</b><p>Put WE differentiation into bodywork, lighting, ergonomics, interface, connected systems and the ownership experience.</p></article>
+      </div>
     </section>
 
-    <section class="we-sec">
-      <p class="we-k">How it works</p>
-      <h2 class="we-h2">One sign-in, three doors</h2>
-      <ul class="we-steps">
-        <li>
-          <span class="we-steps__n">1</span>
-          <span><b>Make one account</b>Continue with McCluster and it works in Rider,
-            Driver and Rentals. No second password, no second profile.</span>
-        </li>
-        <li>
-          <span class="we-steps__n">2</span>
-          <span><b>See the price first</b>The fare or the day rate is quoted before you
-            commit, with the fee shown on its own line instead of buried.</span>
-        </li>
-        <li>
-          <span class="we-steps__n">3</span>
-          <span><b>Everything lands on one ledger</b>Rides, rentals and driver payouts
-            settle through the same books, so a receipt is never a mystery.</span>
-        </li>
-      </ul>
+    <section class="wm__section" id="roadmap">
+      <div class="wm__section-head">
+        <p class="wm__k">Development sequence</p>
+        <h2>Prototype → production.</h2>
+        <p>We are deliberately separating mechanical proof from styling. Tap a phase to see what has to be true before the next one begins.</p>
+      </div>
+      <div class="wm__phase-tabs" role="tablist" aria-label="WE vehicle development phases">
+        <button type="button" class="on" data-phase="p0"><b>P0</b><small>MULE</small></button>
+        <button type="button" data-phase="p1"><b>P1</b><small>DESIGN</small></button>
+        <button type="button" data-phase="p2"><b>P2</b><small>GOLDEN</small></button>
+        <button type="button" data-phase="scale"><b>WE</b><small>SCALE</small></button>
+      </div>
+      <div class="wm__phase-detail" aria-live="polite">
+        <div class="wm__phase-line"><b id="phaseTitle">P0 &middot; ENGINEERING MULE</b><small id="phaseBadge">MECHANICAL PROOF</small></div>
+        <p id="phaseCopy">Prove the engine, frame, brakes, suspension, electrical headroom and serviceability with catalog components before spending on production bodywork.</p>
+      </div>
     </section>
 
-    <!-- LAUNCHING SOON, WITH A REAL WAY TO BE TOLD. The note goes to the
-         same desk the rest of the house uses; nothing here is a
-         decorative form that drops what you typed. -->
-    <section class="we-sec we-soon" id="notify">
-      <p class="we-k">Launching soon</p>
-      <h2 class="we-h2">Be first on the lot</h2>
-      <p class="we-sub">iOS and web builds are registered for all three. Leave an address
-        and you get one message when they open &mdash; not a newsletter.</p>
-
-      <form class="we-form" id="notifyForm" novalidate>
-        <label class="sr-only" for="notifyEmail">Your email</label>
-        <input class="we-input" id="notifyEmail" type="email" inputmode="email"
-               autocomplete="email" placeholder="you@example.com" required>
-        <button class="we-go" type="submit">Notify me</button>
-      </form>
-      <p class="we-note" id="notifyNote" role="status">One message. Nothing else, ever.</p>
+    <section class="wm__section">
+      <div class="wm__section-head">
+        <p class="wm__k">One connected system</p>
+        <h2>Vehicle meets software.</h2>
+        <p>The point is not just to put a WE badge on a motorcycle. The physical platform becomes another node in the rider, driver, rental and fleet system.</p>
+      </div>
+      <div class="wm__stack">
+        <div class="wm__stack-row"><span class="wm__stack-icon">◒</span><div><b>WE Vehicle</b><p>Purpose-built physical platform for urban mobility, rental and delivery duty.</p></div><span>›</span></div>
+        <div class="wm__stack-row"><span class="wm__stack-icon">⌁</span><div><b>Telematics layer</b><p>Location, vehicle health, fleet events and service visibility designed into the electrical architecture.</p></div><span>›</span></div>
+        <div class="wm__stack-row"><span class="wm__stack-icon">▦</span><div><b>WE Fleet OS</b><p>Rider, Driver and Rentals become the control surface around the machine.</p></div><span>›</span></div>
+        <div class="wm__stack-row"><span class="wm__stack-icon">∞</span><div><b>Mobility network</b><p>The original marketplace remains the distribution layer for WE and third-party vehicles.</p></div><span>›</span></div>
+      </div>
     </section>
 
-    <footer class="we-foot">
-      <img class="we-foot__logo" src="assets/img/we-logo-dark.png" alt="Whip Equipped"
-           width="422" height="155">
-      <p>Whip Equipped LLC &middot; a parts-licensed dealership in Acworth, Georgia,
-        and the set of &ldquo;We In This Together.&rdquo;</p>
-      <p class="we-foot__links">
-        <a href="ecosystem.html#whip-equipped">The company &rarr;</a>
-        <a href="album.html">&ldquo;Dealer Plates&rdquo; &rarr;</a>
-        <a href="index.html">McCluster &rarr;</a>
-      </p>
+    <section class="wm__section">
+      <div class="wm__section-head">
+        <p class="wm__k">Engineering + production</p>
+        <h2>Build with people who build vehicles.</h2>
+      </div>
+      <article class="wm__partner">
+        <p class="wm__k">Development collaboration</p>
+        <b>WE × Oreion Motors</b>
+        <p>WE is working with Oreion Motors on vehicle architecture, prototype planning, component sourcing and a production path built around mature off-the-shelf systems before proprietary styling and connected features are locked.</p>
+      </article>
+      <article class="wm__site">
+        <div><p class="wm__k">U.S. assembly</p><b>Site selection is active.</b><p>WE is evaluating manufacturing communities for a lean first assembly operation with workforce and expansion capacity.</p></div>
+        <div class="wm__jobs"><strong>10→25+</strong><small>DIRECT JOBS &middot; PLANNING TARGET</small></div>
+      </article>
+    </section>
+
+    <section class="wm__section wm__section--tight">
+      <details class="wm__legacy">
+        <summary><b>Where WE started: Rider, Driver + Rentals</b><span>TUCKED IN ↓</span></summary>
+        <div class="wm__legacy-in">
+          <p>WE began as a mobility network built around vehicles we did not manufacture. That product family remains part of the ecosystem; the motorcycle program expands it rather than replacing it.</p>
+          <div class="wm__legacy-links">
+            <a href="ecosystem.html#whip-equipped">WE network</a>
+            <a href="sites.html">Product studio</a>
+            <a href="account.html">WE account</a>
+          </div>
+        </div>
+      </details>
+
+      <div class="wm__cta">
+        <a class="wm__cta-primary" href="mailto:matthew@mccluster.org?subject=WE%20Manufacturing%20Partnership"><span>Manufacturing / supplier partnership</span><span>↗</span></a>
+        <a class="wm__cta-secondary" href="#roadmap"><span>Explore the build roadmap</span><span>↑</span></a>
+      </div>
+      <p class="wm__fine">Development targets are planning goals, not final certified specifications. Production configuration, manufacturer-of-record structure, supplier BOM, EPA/NHTSA compliance path and final performance remain subject to engineering and regulatory validation.</p>
+    </section>
+
+    <footer class="wm__foot">
+      <img src="assets/img/we-logo-dark.png" alt="Whip Equipped" width="422" height="155">
+      <p>WE &middot; Whip Equipped &middot; from access to ownership to manufacturing.</p>
     </footer>
   </main>
 
-  <div class="wprev" id="appPrev" hidden role="dialog" aria-modal="true" aria-labelledby="appPrevTitle">
-    <div class="wprev__card" id="appPrevCard"></div>
-  </div>
-
-  <!-- THE BAR -->
+  <!-- THE BAR — intentionally unchanged. This is the anchor identity of the site. -->
   <nav class="appbar" aria-label="Sections">
     <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
       <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
@@ -162,205 +174,22 @@
   </nav>
 
   <script>
-  /* ============================================================
-     THE THREE PRODUCTS.
-
-     THE REGISTRY IS THE SOURCE OF TRUTH, NOT THIS PAGE. The Worker at
-     api.mccluster.org/v1/apps holds the application registry, and each
-     product's builds are rows in it. This page asks which builds exist
-     and what their public URL is, then draws what it was told: a build
-     with a public_url is out, one without is still in build. Launch day
-     needs no edit here.
-
-     IT FAILS OPEN. If the Worker is unreachable the three products still
-     draw, because a landing page that says nothing is worse than one
-     that says the apps exist and are not in the stores yet.
-     ============================================================ */
-  (function () {
-    "use strict";
-
-    var API = "https://api.mccluster.org/v1/apps";
-    var FAMILY = "whip-equipped";
-
-    var PRODUCTS = [
-      {
-        key: "rider", short: "Rider", role: "Ride",
-        name: "Whip Equipped",
-        one: "Hail a whip, watch it come in, pay in the app.",
-        glyph: '<circle cx="12" cy="7.4" r="3.2"/><path d="M5.4 20a6.6 6.6 0 0 1 13.2 0"/>'
-      },
-      {
-        key: "driver", short: "Driver", role: "Earn",
-        name: "Whip Equipped Driver",
-        one: "Go on shift, see the split before you accept, get paid out.",
-        glyph: '<circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="3"/>' +
-               '<path d="M12 3.6v5.4M4.3 15.2l5-2M19.7 15.2l-5-2"/>'
-      },
-      {
-        key: "rentals", short: "Rentals", role: "Rent",
-        name: "Whip Equipped Rentals",
-        one: "Take one off the lot by the day, keys released after check-in.",
-        glyph: '<circle cx="8" cy="14" r="3.6"/><path d="M10.9 11.4 19.6 3"/>' +
-               '<path d="M17 5.4l2.3 2.3M14.6 7.8l2.3 2.3"/>'
-      }
-    ];
-
-    function esc(s) {
-      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-      });
-    }
-
-    var KIND = { ios: "iOS", web: "Web" };
-    var grid = document.getElementById("appGrid");
-    var prev = document.getElementById("appPrev");
-    var card = document.getElementById("appPrevCard");
-    var lastFocus = null, stopApp = null, BUILDS = {};
-
-    function paint() {
-      grid.innerHTML = PRODUCTS.map(function (p) {
-        var b = BUILDS[p.key] || [];
-        var live = b.filter(function (r) { return r.public_url; }).length;
-        var chips = (b.length ? b.map(function (r) { return KIND[r.kind] || r.kind; })
-                              : ["iOS", "Web"])
-          .map(function (k) { return '<span class="we-chip">' + esc(k) + "</span>"; }).join("");
-        return '<button class="we-row" type="button" data-app="' + esc(p.key) + '">' +
-          '<span class="we-row__tile"><svg viewBox="0 0 24 24" aria-hidden="true">' + p.glyph + "</svg></span>" +
-          '<span class="we-row__body">' +
-            '<span class="we-row__top"><b>' + esc(p.short) + "</b>" +
-              '<em class="we-row__state' + (live ? " is-live" : "") + '">' +
-                (live ? "Out now" : "Soon") + "</em></span>" +
-            "<small>" + esc(p.one) + "</small>" +
-            '<span class="we-chips">' + chips + '<span class="we-row__go">Open &rarr;</span></span>' +
-          "</span>" +
-        "</button>";
-      }).join("");
-    }
-
-    function open(key) {
-      var p = null;
-      for (var i = 0; i < PRODUCTS.length; i++) if (PRODUCTS[i].key === key) p = PRODUCTS[i];
-      if (!p) return;
-      lastFocus = document.activeElement;
-      card.innerHTML =
-        '<div class="wprev__head">' +
-          '<span><p class="we-k">' + esc(p.role) + '</p>' +
-          '<h2 id="appPrevTitle">' + esc(p.name) + "</h2></span>" +
-          '<button class="wprev__x" type="button" data-close aria-label="Close">&times;</button>' +
-        "</div>" +
-        '<div class="wprev__demo" data-demo="' + esc(p.key) + '"></div>';
-      prev.hidden = false;
-      document.body.classList.add("we-locked");
-      if (stopApp) { stopApp(); stopApp = null; }
-      var slot = card.querySelector("[data-demo]");
-      if (slot && window.MCC_WHIP) stopApp = window.MCC_WHIP.mount(slot, key);
-      var x = card.querySelector("[data-close]");
-      if (x) x.focus();
-    }
-
-    function close() {
-      if (stopApp) { stopApp(); stopApp = null; }
-      prev.hidden = true;
-      document.body.classList.remove("we-locked");
-      if (lastFocus && lastFocus.focus) lastFocus.focus();
-    }
-
-    grid.addEventListener("click", function (e) {
-      var t = e.target.closest ? e.target.closest("[data-app]") : null;
-      if (t) open(t.getAttribute("data-app"));
-    });
-    prev.addEventListener("click", function (e) {
-      if (e.target === prev || (e.target.closest && e.target.closest("[data-close]"))) close();
-    });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && !prev.hidden) close();
-    });
-
-    paint();
-
-    fetch(API, { cache: "no-cache" })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        ((d && d.apps) || []).forEach(function (r) {
-          if (r.product_family !== FAMILY) return;
-          var m = /^whip-([a-z]+)-/.exec(r.app_key || "");
-          if (!m) return;
-          (BUILDS[m[1]] = BUILDS[m[1]] || []).push(r);
-        });
-        var RANK = { ios: 0, web: 1 };
-        Object.keys(BUILDS).forEach(function (k) {
-          BUILDS[k].sort(function (a, b) { return (RANK[a.kind] ?? 9) - (RANK[b.kind] ?? 9); });
-        });
-        paint();
-      })
-      .catch(function () {});
-
-    /* ---------- tell me when it lands ----------
-       The address goes to the same desk everything else in the house
-       uses. A form that swallows what you typed is worse than no form,
-       so a failure says so and hands over the email address instead. */
-    var form = document.getElementById("notifyForm");
-    var input = document.getElementById("notifyEmail");
-    var note = document.getElementById("notifyNote");
-    var KEY = "mcc_desk_key";
-
-    function visitorKey() {
-      var k = null;
-      try { k = localStorage.getItem(KEY); } catch (e) {}
-      if (k && /^[A-Za-z0-9_-]{16,64}$/.test(k)) return k;
-      var b = new Uint8Array(24);
-      (window.crypto || window.msCrypto).getRandomValues(b);
-      k = btoa(String.fromCharCode.apply(null, b))
-        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-      try { localStorage.setItem(KEY, k); } catch (e) {}
-      return k;
-    }
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var email = (input.value || "").trim();
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) {
-        note.textContent = "That address does not look right. Check it and send again.";
-        note.className = "we-note is-bad";
-        input.focus();
-        return;
-      }
-      var S = window.MCC_SUPA;
-      if (!S || !S.url) {
-        note.innerHTML = 'The list is not reachable from here. Email ' +
-          '<a href="mailto:matthew@mccluster.org?subject=Whip%20Equipped%20launch">matthew@mccluster.org</a> and you are on it.';
-        note.className = "we-note is-bad";
-        return;
-      }
-      var btn = form.querySelector(".we-go");
-      btn.disabled = true; btn.textContent = "Sending…";
-      fetch(S.url + "/functions/v1/inbox", {
-        method: "POST",
-        headers: { "content-type": "application/json", apikey: S.key, Authorization: "Bearer " + S.key },
-        body: JSON.stringify({
-          action: "say", org: window.MCC_ORG || "mccluster",
-          visitor_key: visitorKey(), page: location.pathname,
-          body: "Whip Equipped launch list: " + email
-        })
-      }).then(function (r) {
-        if (!r.ok) throw new Error("list " + r.status);
-        form.hidden = true;
-        note.textContent = "You're on the list. One message when the apps open.";
-        note.className = "we-note is-good";
-      }).catch(function () {
-        btn.disabled = false; btn.textContent = "Notify me";
-        note.innerHTML = 'That did not send. Email ' +
-          '<a href="mailto:matthew@mccluster.org?subject=Whip%20Equipped%20launch">matthew@mccluster.org</a> and you are on it.';
-        note.className = "we-note is-bad";
+  (function(){
+    var phases={
+      p0:{title:'P0 · ENGINEERING MULE',badge:'MECHANICAL PROOF',copy:'Prove the engine, frame, brakes, suspension, electrical headroom and serviceability with catalog components before spending on production bodywork.'},
+      p1:{title:'P1 · WE DESIGN PROTOTYPE',badge:'IDENTITY + UX',copy:'Carry the approved mechanical package into WE bodywork, lighting identity, ergonomics, rider touchpoints and connected-vehicle provisions.'},
+      p2:{title:'P2 · GOLDEN SAMPLE',badge:'PRODUCTION INTENT',copy:'Freeze the production BOM, assembly process, quality gates and approved supplier set into the exact reference vehicle the factory is expected to reproduce.'},
+      scale:{title:'PRODUCTION · U.S. ASSEMBLY',badge:'SITE SELECTION',copy:'Launch a lean U.S. assembly operation, train the first workforce, validate line quality and scale only after the production-intent vehicle is locked.'}
+    };
+    var title=document.getElementById('phaseTitle'),badge=document.getElementById('phaseBadge'),copy=document.getElementById('phaseCopy');
+    document.querySelectorAll('[data-phase]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var phase=phases[btn.getAttribute('data-phase')]; if(!phase)return;
+        document.querySelectorAll('[data-phase]').forEach(function(x){x.classList.toggle('on',x===btn);});
+        title.textContent=phase.title; badge.textContent=phase.badge; copy.textContent=phase.copy;
       });
     });
   })();
   </script>
-
-  <script src="js/whip-apps.js?v=__STAMP__"></script>
-  <script src="js/masthead.js?v=__STAMP__"></script>
-  <script src="js/analytics.js?v=__STAMP__"></script>
-  <script src="js/backend.js?v=__STAMP__"></script>
-  <script src="js/tabbar.js?v=__STAMP__"></script>
 </body>
 </html>
