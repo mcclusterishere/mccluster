@@ -228,9 +228,31 @@
 
     complete: function () {
       var params = new URLSearchParams(root.location.search);
+      var hash = new URLSearchParams(String(root.location.hash || '').replace(/^#/, ''));
       var code = params.get('code');
-      var error = params.get('error_description') || params.get('error');
+      var error = params.get('error_description') || params.get('error') ||
+                  hash.get('error_description') || hash.get('error');
       if (error) return Promise.reject(new Error(error));
+
+      /* Email links are not the PKCE flow. A confirmation, magic link or
+         recovery link comes back from GoTrue with the session in the URL
+         FRAGMENT, not as a one-time code in the query string. Reading only
+         `?code=` meant every emailed link landed here, found nothing to do,
+         and told the person "Nothing to finish" — while the address had in
+         fact just been verified. Consume the fragment, then scrub it out of
+         the address bar so the tokens are not left sitting in history. */
+      var access = hash.get('access_token');
+      if (access) {
+        writeSession({
+          access_token: access,
+          refresh_token: hash.get('refresh_token') || '',
+          token_type: hash.get('token_type') || 'bearer',
+          expires_in: Number(hash.get('expires_in') || 3600)
+        });
+        root.history.replaceState({}, '', root.location.pathname + root.location.search);
+        return MCC.autoTouch().then(function () { return MCC.user(); });
+      }
+
       if (!code) return Promise.resolve(null);
 
       var verifier = get('sessionStorage', VERIFIER);
