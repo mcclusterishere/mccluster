@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - feature/gev-spatial-intelligence
   workflow_dispatch: {}
 
 permissions:
@@ -25,13 +24,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Build hosted God's Eye View
-        run: bash ./tools/build-gev.sh
-
       - name: Stamp asset versions so every deploy busts browser caches
         run: |
           find . -path ./node_modules -prune -o -path ./apps -prune -o \
@@ -39,7 +31,7 @@ jobs:
             | xargs -0 sed -i "s/__STAMP__/${GITHUB_SHA::12}/g"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html gev models 2>/dev/null || true
+          git add index.html
           git commit -am "Stamp asset versions for deploy" --allow-empty
 
       - name: Promote the Site 0 game into the web root
