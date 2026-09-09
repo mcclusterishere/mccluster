@@ -88,7 +88,7 @@ create policy platform_ledger_allocations_read on public.platform_ledger_allocat
        where l.id = ledger_id
          and (
            l.payer_user_id = auth.uid()
-           or (l.org_id is not null and public.is_org_member(l.org_id))
+           or (l.org_id is not null and private.is_org_member(l.org_id))
          )
     )
   );
