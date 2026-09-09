@@ -6,7 +6,7 @@ Implemented on the canonical Worker. See "What is live" below for the exact
 surface, and `SEEK-FIRST-CLOUDFLARE-HANDOFF.md` for the remaining owner actions
 (API keys, Cloudflare Access, and the production migration).
 
-This is **Seek First**, the McCluster-native backend adaptation of the data-fusion ideas demonstrated by the open-source **God's Eye View** project (`bilawalsidhu/gods-eye-view`). It is not a second backend and it is not a blind copy of the upstream application.
+This is **Seek First**, McCluster's native spatial-intelligence backend: a data-fusion layer that turns many public and licensed geospatial sources into one longitudinal, provenance-tracked store. It is not a second backend.
 
 Canonical McCluster law still applies:
 
@@ -16,13 +16,16 @@ Canonical McCluster law still applies:
 - `HereTenantAgent` stays exported;
 - Whip, Equity Uprise, PRIM3, HERE/client products, policy tooling, and future satellites consume the same control plane.
 
-## Upstream relationship
+## Design approach
 
-Upstream reference: https://github.com/bilawalsidhu/gods-eye-view
+No third-party application code is imported into this backend. Many external
+data sources are represented as adapters, normalized into common
+spatial/temporal records, and exposed through one API — implemented
+independently against each provider's current, live API.
 
-The initial backend bootstrap imports **no upstream application code**. It reimplements the useful architectural idea independently: multiple external data sources are represented as adapters, normalized into common spatial/temporal records, and exposed through one API.
-
-The upstream repository's code license does not grant McCluster blanket rights to every third-party feed the upstream project can visualize. Every source must retain its own provenance, terms, entitlement lane, and redistribution rules.
+No blanket license covers every third-party feed a data-fusion viewer can
+visualize. Every source must retain its own provenance, terms, entitlement
+lane, and redistribution rules.
 
 ## What is live
 

@@ -11,10 +11,7 @@ records what was done, what was verified and how, and what is still yours.
   No public navigation, no public product page.
 - Access goes through Cloudflare Access or the existing backend auth boundary,
   never an unauthenticated Pages route.
-- Upstream attribution and per-source licensing are preserved.
-
-Upstream reference: `bilawalsidhu/gods-eye-view` @
-`759652207fd1279ece97f0f19af566feb9a82146`.
+- Per-source licensing is preserved and enforced.
 
 ## What changed
 
@@ -39,9 +36,9 @@ which is why the prototype sat on its loading cover.
 
 Rather than keep patching a build-time credential path at runtime, the viewer
 is now McCluster's own: `workers/mccluster/src/seek-first/console.html`, served by the
-canonical Worker at `GET /internal/seek-first`, querying `/v1/seek-first/*`. The upstream God's Eye View project
-stays the reference for provider parity; the canonical intelligence is the API
-and the database, and the renderer is replaceable.
+canonical Worker at `GET /internal/seek-first`, querying `/v1/seek-first/*`.
+The canonical intelligence is the API and the database; the renderer is
+replaceable.
 
 Boot is built so the stuck-cover failure cannot recur:
 

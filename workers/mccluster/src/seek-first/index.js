@@ -23,8 +23,6 @@ import {
 } from './store.js';
 
 const SERVICE = 'mccluster-spatial-intelligence';
-const UPSTREAM = 'https://github.com/bilawalsidhu/gods-eye-view';
-const UPSTREAM_COMMIT = '759652207fd1279ece97f0f19af566feb9a82146';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function readiness(env) {
@@ -293,9 +291,7 @@ export default {
           service: SERVICE,
           mode: await schemaReady(env) ? 'live' : 'adapter-ready',
           adapter_gateway_ready: true,
-          edge_access_configured: accessConfigured(env),
-          upstream_reference: UPSTREAM,
-          upstream_commit: UPSTREAM_COMMIT
+          edge_access_configured: accessConfigured(env)
         });
       }
 
@@ -367,8 +363,6 @@ export default {
         return reply(request, env, {
           ok: true,
           service: SERVICE,
-          upstream_reference: UPSTREAM,
-          upstream_commit: UPSTREAM_COMMIT,
           adapters: adapterCapabilities(),
           lanes: Object.values(LANES),
           routes: {

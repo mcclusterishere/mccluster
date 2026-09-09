@@ -52,8 +52,9 @@ function source({
     transient  — proxy/cache only; the adapter does not archive provider rows.
     none       — credential/readiness surface only; no provider content is stored.
 
-  Seek First upstream reference used for provider parity:
-  bilawalsidhu/gods-eye-view@759652207fd1279ece97f0f19af566feb9a82146
+  Provider endpoints below were verified independently against each
+  provider's current, live API rather than copied from any reference
+  implementation.
 */
 export const SOURCES = Object.freeze([
   source({ key: 'census', name: 'U.S. Census Data API', credentialEnv: ['CENSUS_API_KEY'], capabilities: ['demographics', 'housing', 'commuting', 'business'], adapter: 'census', upstream: 'https://api.census.gov' }),

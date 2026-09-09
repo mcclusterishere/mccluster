@@ -38,7 +38,6 @@ test('public seek-first health is adapter-ready and reveals no provider inventor
   assert.equal(payload.mode, 'adapter-ready');
   assert.equal(payload.adapter_gateway_ready, true);
   assert.equal(payload.edge_access_configured, false);
-  assert.match(payload.upstream_commit, /^[0-9a-f]{40}$/);
 
   // Which providers hold credentials is a map of where the keys are. The one
   // unauthenticated route must not draw it.

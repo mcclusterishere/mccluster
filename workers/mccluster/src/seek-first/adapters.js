@@ -906,7 +906,7 @@ export async function executeAdapter(sourceKey, input = {}, env = {}) {
     case 'mapbox': return mapbox(input, env);
     case 'google_maps': return googleMaps(input, env);
     // gateway.js owns these two. They resolve to the providers' current APIs in
-    // verified-adapters.js rather than the legacy endpoints the upstream God's Eye View project used,
+    // verified-adapters.js rather than a legacy endpoint an earlier reference implementation used,
     // so reaching them here means a caller bypassed executeProvider.
     case 'data_commons':
     case 'epa':

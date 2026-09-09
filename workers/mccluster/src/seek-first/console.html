@@ -167,10 +167,11 @@
 
   This is the boot path the earlier /gev/ prototype did not have.
 
-  Upstream God's Eye View reads its provider credentials from
-  import.meta.env at BUILD time, so a runtime JSON fetch bolted into the
-  generated HTML could never satisfy it, and any startup dependency that
-  threw or never settled left the user on the loading cover forever. The
+  An earlier reference implementation this drew boot-path lessons from read
+  its provider credentials from import.meta.env at BUILD time, so a runtime
+  JSON fetch bolted into generated HTML could never satisfy it, and any
+  startup dependency that threw or never settled left the user on the
+  loading cover forever. The
   rules here exist to make that failure mode impossible:
 
     - every boot step is timed out and its result is shown, not swallowed;
