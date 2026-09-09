@@ -268,6 +268,37 @@
         });
       });
     },
+    /* THE DOOR THAT WAS NEVER CUT.
+
+       signInPassword opens a lock. signUpPassword cuts a key for a brand
+       new account. Between them there was no way for a member who came in
+       through Google or a sign-in link to add a password to the account
+       they ALREADY have — so those accounts could never gain one, and
+       every password box on the site was, for them, a lock with no key.
+
+       Supabase updates the signed-in user in place: same account, same id,
+       same record, now with a password as a second way in. That matters
+       most where a browser redirect is not available, which is nearly
+       everything that is not a browser.
+
+       If Supabase → Auth → Providers has "Secure password change" ON, this
+       answers 401 asking for a recent login rather than a nonce we hold;
+       the thrown message says so instead of failing quietly. */
+    setPassword: function (pass) {
+      return token().then(function (t) {
+        if (!t) throw new Error("Sign in first, then set a password.");
+        return fetch(URL_ + "/auth/v1/user", {
+          method: "PUT",
+          headers: { apikey: KEY, "Content-Type": "application/json", Authorization: "Bearer " + t },
+          body: JSON.stringify({ password: pass }),
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (j) {
+            if (!r.ok) throw new Error(j.msg || j.error_description || j.error || "That password did not take.");
+            return true;
+          });
+        });
+      });
+    },
     /* instant start: a real cloud account with no email at all.
        Requires Anonymous sign-ins ON (Supabase → Auth → Sign In / Providers).
        The visitor gets a true auth.uid(), profiles and listings save under
@@ -298,7 +329,7 @@
      not offered — nothing else breaks. */
   window.MCC_AUTH = {
     signIn: sb.signIn, signInAnon: sb.signInAnon, signInPassword: sb.signInPassword,
-    signUpPassword: sb.signUpPassword, signOut: sb.signOut, user: sb.user,
+    signUpPassword: sb.signUpPassword, setPassword: sb.setPassword, signOut: sb.signOut, user: sb.user,
     googleAvailable: function () { return Boolean(window.MCC && window.MCC.signInWithGoogle); },
     signInWithGoogle: function (redirectTo) {
       if (!window.MCC || !window.MCC.signInWithGoogle) return Promise.reject(new Error('Google sign-in is not loaded'));

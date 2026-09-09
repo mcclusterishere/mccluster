@@ -101,6 +101,22 @@
       <ul class="rec" id="acRec"><li><small>Loading…</small></li></ul>
       <a class="ac__btn" style="text-decoration:none;text-align:center" href="gallery.html" data-cta="account-shop">Shop the gallery</a>
       <a class="ac__ghost" href="pay.html?offer=approved-invoice" data-cta="account-pay">Pay an invoice · Apple&nbsp;Pay / Google&nbsp;Pay</a>
+
+      <!-- A PASSWORD ON THE ACCOUNT YOU ALREADY HAVE.
+
+           Coming in through Google, or through a sign-in link, makes a real
+           account but never a password — and nothing here could add one
+           afterwards, so those accounts stayed password-less forever and
+           every password box on the site was a lock whose key had never
+           been cut. This cuts it. Same account, same record, one more way
+           in: the one that works where a browser redirect does not, which
+           is most things that are not a browser. -->
+      <p class="ac__lab" style="margin-top:1.2rem">Password</p>
+      <p class="ac__sub" style="margin-top:0.4rem">Set one and email&nbsp;+&nbsp;password works anywhere, alongside however you sign in now. Changing it later works the same way.</p>
+      <input type="password" id="acNewPass" placeholder="New password (8+ characters)" autocomplete="new-password" maxlength="80">
+      <button class="ac__btn" id="acSetPass">Set my password</button>
+      <p class="ac__note" id="acPwMsg"></p>
+
       <button class="ac__out" id="acOut">Sign out</button>
     </div>
 
@@ -270,6 +286,23 @@
         msg.textContent = "That didn't send. Try again in a minute (links are rate-limited).";
       });
     });
+    el("acSetPass").addEventListener("click", function () {
+      var pwMsg = el("acPwMsg");
+      var pw = el("acNewPass").value || "";
+      if (pw.length < 8) { pwMsg.textContent = "Password needs 8 characters or more."; return; }
+      if (!(window.MCC_AUTH && window.MCC_AUTH.setPassword)) { pwMsg.textContent = "Sign-in is still loading. One moment, then try again."; return; }
+      var btn = this; btn.disabled = true; btn.textContent = "Setting it…";
+      window.MCC_AUTH.setPassword(pw).then(function () {
+        el("acNewPass").value = "";
+        pwMsg.textContent = "Done. Email and password now works on this account, anywhere.";
+        btn.textContent = "Password set";
+        if (window.MCC_TRACK) window.MCC_TRACK("password_set", { via: "account" });
+      }).catch(function (e) {
+        pwMsg.textContent = (e && e.message) || "That password did not take.";
+        btn.disabled = false; btn.textContent = "Set my password";
+      });
+    });
+
     el("acOut").addEventListener("click", function () {
       if (window.MCC_AUTH && window.MCC_AUTH.signOut) window.MCC_AUTH.signOut();
       location.reload();
