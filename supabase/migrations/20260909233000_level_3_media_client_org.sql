@@ -43,8 +43,13 @@ on conflict (app_key) do update set
 -- is never handed out on the strength of someone typing an email into a
 -- signup form. If the account already exists and is confirmed, the same
 -- claim happens on its next confirmation update.
+--
+-- One trap, learned the hard way on this one: the trigger fires on
+-- CONFIRMATION, so an account that confirmed BEFORE this row existed has
+-- nothing left to fire and the invitation sits pending forever. Applying
+-- this after the fact means checking org_members and granting directly.
 insert into public.org_invitations (org_id, email, role)
-select o.id, 'level3media@gmail.com', 'owner'
+select o.id, 'level3mediallc@gmail.com', 'owner'
 from public.orgs o
 where o.slug = 'level-3-media'
 on conflict (org_id, email) do nothing;
