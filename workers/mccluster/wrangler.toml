@@ -15,7 +15,9 @@ enabled = true
 head_sampling_rate = 0.01
 
 [vars]
-ALLOWED_ORIGINS = "https://matthew.mccluster.org,https://mccluster.org,https://esmer.mccluster.org,https://mcclusterishere.github.io,http://localhost:8787,http://127.0.0.1:8787,http://localhost:5500,http://127.0.0.1:5500"
+# Client satellite origins are explicitly allowed because inquiry/auth/Connect
+# routes are reached from client sites as well as McCluster-owned surfaces.
+ALLOWED_ORIGINS = "https://matthew.mccluster.org,https://mccluster.org,https://esmer.mccluster.org,https://mcclusterishere.github.io,https://www.esmermusic.com,https://esmermusic.com,http://localhost:8787,http://127.0.0.1:8787,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8099,http://127.0.0.1:8099"
 MCCLUSTER_SUPABASE_PROJECT_REF = "zmnhbrjyhxzhkxmhkexs"
 PUBLIC_ORIGIN = "https://matthew.mccluster.org"
 APEX_ORIGIN = "https://mccluster.org"
@@ -26,6 +28,9 @@ META_GRAPH_API_VERSION = "v26.0"
 # Secrets required in production (set with wrangler secret put, never commit values):
 # SUPABASE_URL
 # SUPABASE_SERVICE_ROLE_KEY
+# STRIPE_SECRET_KEY
+# STRIPE_CONNECT_WEBHOOK_SECRET (or STRIPE_WEBHOOK_SECRET fallback)
+# RESEND_API_KEY
 # FAL_KEY
 # FAL_ADMIN_KEY  # Admin-scoped fal key required for exact billing-event reconciliation.
 # META_APP_SECRET

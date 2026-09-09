@@ -5,6 +5,25 @@
 create extension if not exists pgcrypto;
 create schema if not exists private;
 
+-- public.is_org_owner did not exist. Two policies below call it, so this
+-- migration could not run. It is defined here in the same shape as the
+-- existing public.is_org_member: SECURITY DEFINER over org_members with a
+-- pinned search_path, answering for the current auth.uid() only.
+create or replace function public.is_org_owner(p_org uuid)
+returns boolean
+language sql stable security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1
+    from public.org_members m
+    where m.org_id = p_org
+      and m.profile_id = auth.uid()
+      and m.role = 'owner'
+  );
+$$;
+grant execute on function public.is_org_owner(uuid) to authenticated, service_role;
+
 -- ---------------------------------------------------------------------
 -- 1. Integration registry: metadata + secret references, never raw secrets
 -- ---------------------------------------------------------------------

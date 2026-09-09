@@ -69,17 +69,28 @@ async function patch(env, table, id, value) {
 
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
 
+// `Math.max(0, Number(x))` looks like a clamp but is not one: Number('abc')
+// is NaN, and Math.max(0, NaN) is NaN, not 0. Metrics arrive from the Meta
+// Graph API and from operator-supplied JSON, so one non-numeric field used
+// to poison `score` — and `score` is what the variant generator orders by
+// to pick top performers, so a single NaN silently removed a variant from
+// consideration forever. Everything numeric goes through num().
+function num(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
 export function scoreMetrics(metrics = {}) {
-  const views = Math.max(0, Number(metrics.views || 0));
-  const reach = Math.max(0, Number(metrics.reach || views || 0));
-  const likes = Math.max(0, Number(metrics.likes || 0));
-  const comments = Math.max(0, Number(metrics.comments || 0));
-  const shares = Math.max(0, Number(metrics.shares || 0));
-  const saves = Math.max(0, Number(metrics.saves || 0));
-  const follows = Math.max(0, Number(metrics.follows || 0));
-  const dms = Math.max(0, Number(metrics.dms || 0));
-  const leads = Math.max(0, Number(metrics.leads || 0));
-  const retention = metrics.retention_3s == null ? 0 : clamp(Number(metrics.retention_3s), 0, 1);
+  const views = num(metrics.views);
+  const reach = num(metrics.reach) || views;
+  const likes = num(metrics.likes);
+  const comments = num(metrics.comments);
+  const shares = num(metrics.shares);
+  const saves = num(metrics.saves);
+  const follows = num(metrics.follows);
+  const dms = num(metrics.dms);
+  const leads = num(metrics.leads);
+  const retention = metrics.retention_3s == null ? 0 : clamp(num(metrics.retention_3s), 0, 1);
   const viewScore = clamp(Math.log10(views + 1) * 20, 0, 100);
   const engagementScore = clamp(((likes + comments * 2 + shares * 4 + saves * 4) / Math.max(views, 1)) * 1000, 0, 100);
   const conversionScore = clamp(((follows * 4 + dms * 8 + leads * 15) / Math.max(reach, 1)) * 1000, 0, 100);
@@ -257,7 +268,7 @@ async function ingestMetrics(request, env, user) {
   const scored = scoreMetrics(m);
   const snapshot = await insert(env, 'social_metric_snapshots', {
     org_id: org.org_id, post_id: post.id, recorded_at: body.recorded_at || new Date().toISOString(),
-    views: Math.max(0, Number(m.views || 0)), reach: Math.max(0, Number(m.reach || 0)), likes: Math.max(0, Number(m.likes || 0)), comments: Math.max(0, Number(m.comments || 0)), shares: Math.max(0, Number(m.shares || 0)), saves: Math.max(0, Number(m.saves || 0)), follows: Math.max(0, Number(m.follows || 0)), profile_visits: Math.max(0, Number(m.profile_visits || 0)), dms: Math.max(0, Number(m.dms || 0)), leads: Math.max(0, Number(m.leads || 0)), watch_time_seconds: Math.max(0, Number(m.watch_time_seconds || 0)), avg_watch_time_seconds: Math.max(0, Number(m.avg_watch_time_seconds || 0)), retention_3s: m.retention_3s == null ? null : clamp(Number(m.retention_3s), 0, 1), score: scored.score, raw: body.raw || m.raw || {}
+    views: num(m.views), reach: num(m.reach), likes: num(m.likes), comments: num(m.comments), shares: num(m.shares), saves: num(m.saves), follows: num(m.follows), profile_visits: num(m.profile_visits), dms: num(m.dms), leads: num(m.leads), watch_time_seconds: num(m.watch_time_seconds), avg_watch_time_seconds: num(m.avg_watch_time_seconds), retention_3s: m.retention_3s == null ? null : clamp(num(m.retention_3s), 0, 1), score: scored.score, raw: body.raw || m.raw || {}
   });
   if (post.variant_id) await patch(env, 'social_variants', post.variant_id, { score: scored.score, score_components: scored.components });
   return { snapshot, score: scored };

@@ -1,12 +1,14 @@
 import core from './index.js';
-import { fail, reply } from './lib/http.js';
+import { fail, logEvent, reply } from './lib/http.js';
 import { handleClientRequest } from './client.js';
+import clientConnect from './connect.js';
 import { createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 import { attachCompletedVariantAssets, handleSocialRequest } from './social/router.js';
 import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
 import { handleMetaWebhook } from './social/webhook.js';
+import { handleAiRequest } from './ai/router.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -31,6 +33,13 @@ export default {
       if (clientResponse) return clientResponse;
     } catch (error) {
       return fail(request, env, error.message || 'Client request failed', error.status || 500, error.detail);
+    }
+
+    try {
+      const connectResponse = await clientConnect.fetch(request, env, url, reply, fail, logEvent);
+      if (connectResponse) return connectResponse;
+    } catch (error) {
+      return fail(request, env, error.message || 'Client Connect request failed', error.status || 500, error.detail);
     }
 
     if (path === '/v1/media/webhooks/fal' && request.method === 'POST') {
@@ -115,6 +124,16 @@ export default {
         return reply(request, env, data, accepted ? 202 : 200);
       } catch (error) {
         return fail(request, env, error.message || 'Social request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/ai' || path.startsWith('/v1/ai/')) {
+      try {
+        const user = await authUser(request, env);
+        const response = await handleAiRequest(request, env, user);
+        if (response) return response;
+      } catch (error) {
+        return fail(request, env, error.message || 'AI harness request failed', error.status || 500, error.detail);
       }
     }
 
