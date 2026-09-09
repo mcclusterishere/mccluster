@@ -1,5 +1,5 @@
 import { fail, reply } from '../lib/http.js';
-import { adapterCapabilities, GeoAdapterError } from './adapters.js';
+import { adapterCapabilities, executeAdapter, GeoAdapterError } from './adapters.js';
 import { executeProvider } from './gateway.js';
 import { internalPlaneContract, publicPlaneContract, PLANE_ROUTES } from './house-plane.js';
 import { rejectCallerConsumer, resolveRequestIdentity } from './identity.js';
@@ -17,6 +17,7 @@ import {
   resolveHouseOrg,
   schemaReady
 } from './store.js';
+import { viewerResponse } from './viewer.js';
 
 const SERVICE = 'mccluster-spatial-intelligence';
 const UPSTREAM = 'https://github.com/bilawalsidhu/gods-eye-view';
@@ -171,6 +172,38 @@ function queryParams(url) {
   return Object.fromEntries(url.searchParams.entries());
 }
 
+function queryInput(url) {
+  const input = {};
+  for (const [key, value] of url.searchParams.entries()) {
+    if (value === '') continue;
+    const numeric = Number(value);
+    input[key] = Number.isFinite(numeric) && /^-?\d/.test(value) ? numeric : value;
+  }
+  return input;
+}
+
+async function openFetch(request, env, sourceKey, input) {
+  const source = sourceByKey(sourceKey);
+  if (!source) throw new GeoAdapterError('Unknown spatial source', 404, 'unknown_source');
+  if (source.lane !== 'OPEN') {
+    throw new GeoAdapterError(
+      `${source.key} is not an OPEN feed`,
+      403,
+      'lane_forbidden',
+      { source: source.key, lane: source.lane, required: ['OPEN'] }
+    );
+  }
+  const result = await executeAdapter(sourceKey, input, env);
+  return reply(request, env, {
+    ok: true,
+    service: SERVICE,
+    persisted: false,
+    result: responseResult(result, {
+      persistence: { persisted: false, reason: 'open_never_persists', records_seen: result.records?.length || 0, records_written: 0 }
+    })
+  });
+}
+
 async function aisSnapshot(request, env, options, restart = false) {
   await protectedContext(request, env, options);
   if (!env.HereTenantAgent) throw new GeoAdapterError('Tenant agent Durable Object binding is unavailable', 503, 'durable_object_unavailable');
@@ -227,6 +260,10 @@ export default {
         }));
       }
 
+      if ((path === '/v1/geo/view' || path === '/v1/geo/viewer') && request.method === 'GET') {
+        return viewerResponse(request, env);
+      }
+
       if (path === '/v1/geo/plane/internal' && request.method === 'GET') {
         await requireOwner(request, env, options);
         const dbReady = await schemaReady(env);
@@ -254,6 +291,11 @@ export default {
       const providerMatch = path.match(/^\/v1\/geo\/(fetch|ingest)\/([a-z0-9_-]+)$/i);
       if (providerMatch && request.method === 'POST') {
         return await fetchAndMaybePersist(request, env, options, providerMatch[2], providerMatch[1]);
+      }
+
+      const openMatch = path.match(/^\/v1\/geo\/open\/([a-z0-9_-]+)$/i);
+      if (openMatch && request.method === 'GET') {
+        return await openFetch(request, env, openMatch[1], queryInput(url));
       }
 
       if (path === '/v1/geo/live/ais' && request.method === 'GET') {

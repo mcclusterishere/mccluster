@@ -73,6 +73,8 @@ Probed, not imagined:
 GET  /v1/geo                     none            readiness
 GET  /v1/geo/plane               none            sanitized satellite contract
 GET  /v1/geo/plane/internal      house-owner     facilities, arcs, full catalog
+GET  /v1/geo/view                none            keyless MapLibre globe (OPEN feeds)
+GET  /v1/geo/open/:source        none            OPEN lane only, never persists
 GET  /v1/geo/sources             none            catalog, binding names, never values
 GET  /v1/geo/capabilities        none            adapter matrix
 POST /v1/geo/fetch/:source       app-identity    never persists

@@ -9,6 +9,8 @@ export const PLANE_ROUTES = Object.freeze({
   health: 'GET /v1/geo',
   plane: 'GET /v1/geo/plane',
   plane_internal: 'GET /v1/geo/plane/internal',
+  view: 'GET /v1/geo/view',
+  open: 'GET /v1/geo/open/:source',
   sources: 'GET /v1/geo/sources',
   capabilities: 'GET /v1/geo/capabilities',
   fetch: 'POST /v1/geo/fetch/:source',
@@ -77,6 +79,8 @@ export function publicPlaneContract({ schemaReady = false, sources = [] } = {}) 
     capabilities: {
       public: true,
       internal_plane: 'GET /v1/geo/plane/internal',
+      view: 'GET /v1/geo/view',
+      open: 'GET /v1/geo/open/:source',
       fetch_persists: false,
       ingest_persists: true
     }

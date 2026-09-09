@@ -150,6 +150,8 @@ test('GET /v1/geo/plane is a sanitized public contract with no internal sites', 
   assert.equal(payload.lanes.COMMERCIAL.whip, true);
   assert.ok(payload.public_layers.includes('usgs'));
   assert.equal(payload.routes.plane_internal, 'GET /v1/geo/plane/internal');
+  assert.equal(payload.routes.view, 'GET /v1/geo/view');
+  assert.equal(payload.routes.open, 'GET /v1/geo/open/:source');
   assert.doesNotMatch(serialized, /Shiloh|PRIM3|eu-dc|scsu|41\.3327|do_not_merge|prize-branch/);
   assert.doesNotMatch(serialized, /sk-|api[_-]?key\s*[:=]/i);
 });
@@ -261,6 +263,8 @@ test('catalog lists the public plane and the authenticated internal plane', () =
   assert.ok(paths.includes('/v1/geo'));
   assert.ok(paths.includes('/v1/geo/plane'));
   assert.ok(paths.includes('/v1/geo/plane/internal'));
+  assert.ok(paths.includes('/v1/geo/view'));
+  assert.ok(paths.includes('/v1/geo/open/:source'));
   assert.ok(paths.includes('/v1/geo/fetch/:source'));
   const fetchRoute = CATALOG.routes.find((row) => row.path === '/v1/geo/fetch/:source');
   assert.equal(fetchRoute.auth, 'app-identity');
@@ -297,4 +301,48 @@ test('authority migration keeps facilities off anon/authenticated roles', async 
   assert.match(sql, /'equity_uprise'/);
   assert.match(sql, /'scsu_docket'/);
   assert.match(sql, /mccluster-gev/);
+});
+
+test('GET /v1/geo/view is a keyless MapLibre satellite, not a Cesium clone', async () => {
+  const response = await geo.fetch(new Request('https://api.mccluster.org/v1/geo/view'), {});
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type'), /text\/html/);
+  const html = await response.text();
+  assert.match(html, /maplibre-gl/);
+  assert.match(html, /\/v1\/geo\/open\/usgs/);
+  assert.match(html, /\/v1\/geo\/plane/);
+  assert.doesNotMatch(html, /cesium\.js|CesiumWidget|CESIUM_ION|maps\.googleapis/i);
+  assert.doesNotMatch(html, /Shiloh|PRIM3 Site 0|41\.3327/);
+});
+
+test('GET /v1/geo/open serves USGS without identity and forbids restricted lanes', async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    if (href.includes('earthquake.usgs.gov')) {
+      return new Response(JSON.stringify({
+        type: 'FeatureCollection',
+        features: [{
+          id: 'us7000demo',
+          geometry: { type: 'Point', coordinates: [-73.2, 41.2, 10] },
+          properties: { mag: 5.1, place: 'Near Bridgeport', time: Date.now(), url: 'https://earthquake.usgs.gov/demo' }
+        }]
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    return originalFetch(url);
+  };
+
+  const open = await geo.fetch(new Request('https://api.mccluster.org/v1/geo/open/usgs'), {});
+  assert.equal(open.status, 200);
+  const payload = await open.json();
+  assert.equal(payload.persisted, false);
+  assert.equal(payload.result.persistence.reason, 'open_never_persists');
+  assert.equal(payload.result.records[0].event_type, 'earthquake');
+  assert.equal(payload.result.records[0].point.lat, 41.2);
+
+  const denied = await geo.fetch(new Request('https://api.mccluster.org/v1/geo/open/planet_research'), {});
+  assert.equal(denied.status, 403);
+  const blocked = await denied.json();
+  assert.equal(blocked.detail.code, 'lane_forbidden');
 });

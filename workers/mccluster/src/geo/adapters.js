@@ -207,6 +207,26 @@ function parseCsv(text) {
 }
 
 async function usgs(input) {
+  const hasPoint = input?.lat != null && input.lat !== ''
+    || input?.latitude != null && input.latitude !== '';
+  if (!hasPoint) {
+    const url = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson';
+    const { data } = await jsonFetch(url);
+    const records = clampRows(data?.features).map((feature) => {
+      const coordinates = feature?.geometry?.coordinates || [];
+      return record('event', {
+        external_id: String(feature?.id || feature?.properties?.code || crypto.randomUUID()),
+        event_type: 'earthquake',
+        name: feature?.properties?.place || 'Earthquake',
+        point: point(coordinates[1], coordinates[0]),
+        severity: Number.isFinite(Number(feature?.properties?.mag)) ? Number(feature.properties.mag) : null,
+        observed_at: timestamp(feature?.properties?.time),
+        source_url: feature?.properties?.url || null,
+        properties: feature?.properties || {}
+      });
+    });
+    return result('usgs', 'earthquakes-4.5-week', url, records, data);
+  }
   const { lat, lon } = latLon(input);
   const radiusKm = finite(input?.radius_km ?? 250, 'radius_km', { min: 0.1, max: 2000 });
   const limit = integer(input?.limit ?? 250, 'limit', { min: 1, max: 1000 });
