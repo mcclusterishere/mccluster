@@ -72,7 +72,7 @@ async function feePolicy(env, appId, orgId) {
   const orgFilter = orgId ? `&org_id=eq.${encodeURIComponent(orgId)}` : '&org_id=is.null';
   let rows = await sb(env, `platform_fee_policies?app_id=eq.${encodeURIComponent(appId)}${orgFilter}&enabled=eq.true&order=effective_at.desc&limit=1&select=*`);
   if (!rows?.length && orgId) {
-    rows = await sb(env, `platform_fee_policies?app_id=eq.${encodeURIComponent(appId)}&org_id=is.null&enabled=eq.true&order=effective_at.desc&limit=1&select=*`);
+    rows = await sb(env, `platform_fee_policies?app_id=eq.${encodeURIComponent(app.id)}&org_id=is.null&enabled=eq.true&order=effective_at.desc&limit=1&select=*`);
   }
   return rows?.[0] || null;
 }
@@ -103,7 +103,7 @@ export default {
       }
 
       if (path === '/v1/geo' || path.startsWith('/v1/geo/')) {
-        return geo.fetch(request, env);
+        return geo.fetch(request, env, { requireHouseOwner });
       }
 
       if (!configured(env)) return fail(request, env, 'McCluster is not configured', 503);
