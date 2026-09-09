@@ -97,7 +97,7 @@ test('spatial migration creates PostGIS graph and keeps browser roles out', asyn
   assert.match(sql, /enable row level security/i);
   assert.match(sql, /revoke all on table public\.%I from anon, authenticated/i);
   assert.match(sql, /grant select, insert, update, delete on table public\.%I to service_role/i);
-  assert.match(sql, /security invoker/gi);
+  assert.match(sql, /security invoker/i);
   assert.doesNotMatch(sql, /security definer/i);
   assert.match(sql, /public\.geo_nearby/);
   assert.match(sql, /public\.geo_bbox/);
@@ -111,7 +111,7 @@ test('AIS support extends the existing Durable Object class without creating a s
   const exportedClasses = [...source.matchAll(/export class\s+(\w+)/g)].map((match) => match[1]);
   assert.deepEqual(exportedClasses, ['HereTenantAgent']);
   assert.match(source, /AISSTREAM_API_KEY/);
-  assert.match(source, /wss?:\/\/stream\.aisstream\.io\/v0\/stream/);
+  assert.match(source, /https:\/\/stream\.aisstream\.io\/v0\/stream/);
   assert.match(source, /\/internal\/geo\/ais\/snapshot/);
   assert.match(source, /CREATE TABLE IF NOT EXISTS ais_vessels/i);
   assert.doesNotMatch(source, /class\s+Geo/i);
