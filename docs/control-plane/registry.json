@@ -10,7 +10,34 @@
     "supabaseRef": "zmnhbrjyhxzhkxmhkexs",
     "workerSource": "workers/mccluster",
     "durableObjectClass": "HereTenantAgent",
-    "forbiddenWorkerNames": ["mccluster-core", "McCluster-Core", "here-agent-platform"]
+    "forbiddenWorkerNames": [
+      "mccluster-core",
+      "McCluster-Core",
+      "here-agent-platform",
+      "gev-proxy",
+      "mccluster-gev-proxy"
+    ]
+  },
+  "spatial": {
+    "namespace": "/v1/geo",
+    "planeRoute": "/v1/geo/plane",
+    "durableObject": "HereTenantAgent",
+    "durableObjectInstance": "geo:ais:mccluster",
+    "upstream": "bilawalsidhu/gods-eye-view",
+    "upstreamCommit": "759652207fd1279ece97f0f19af566feb9a82146",
+    "upstreamLicense": "MIT",
+    "status": "prize-branch",
+    "branch": "grok/spatial-plane",
+    "doNotMerge": true,
+    "forbidden": [
+      "gev-proxy",
+      "second-worker",
+      "vercel",
+      "pages-hijack",
+      "cesium-clone",
+      "overwrite-index-html",
+      "gbfs-api-mimicry"
+    ]
   },
   "satellites": [
     {"owner": "mcclusterishere", "repo": "mccluster", "role": "control-plane", "branch": "main"},
