@@ -110,18 +110,68 @@ export async function emitEvent(input: {
   }
 }
 
-export async function verifyTurnstile(req: Request, bodyToken?: string) {
+export type TurnstileResult =
+  | { ok: true }
+  | { ok: false; reason: "unconfigured" | "missing_token" | "rejected" };
+
+/**
+ * Bot check for the two public, unauthenticated EU surfaces.
+ *
+ * This used to return `true` when TURNSTILE_SECRET_KEY was unset, which
+ * is the wrong direction to fail. Nothing else guards eu-intake or
+ * eu-calendar — no rate limit, no honeypot — so an unset secret meant
+ * anyone could mass-insert into eu_stakeholders and
+ * eu_fellowship_applications, and the secret is unset by default.
+ * "Not configured" is not "verified".
+ *
+ * It now denies unless the check actually passes. The one exception is
+ * EU_INTAKE_UNPROTECTED, which exists so the forms can be demonstrated
+ * before a Turnstile widget is provisioned. It is deliberately awkward to
+ * set by accident, and it announces itself on every single request so it
+ * cannot quietly become the production posture.
+ */
+export async function verifyTurnstile(req: Request, bodyToken?: string): Promise<TurnstileResult> {
   const secret = Deno.env.get("TURNSTILE_SECRET_KEY") ?? "";
-  if (!secret) return true; // dev scaffold; production runbook requires the secret.
+  if (!secret) {
+    if (Deno.env.get("EU_INTAKE_UNPROTECTED") === "true") {
+      console.warn(
+        "EU_INTAKE_UNPROTECTED=true: accepting a public submission with NO bot verification. " +
+          "Set TURNSTILE_SECRET_KEY and unset this before launch.",
+      );
+      return { ok: true };
+    }
+    console.error("TURNSTILE_SECRET_KEY is not set; refusing the public submission.");
+    return { ok: false, reason: "unconfigured" };
+  }
   const token = bodyToken || req.headers.get("x-turnstile-token") || "";
-  if (!token) return false;
+  if (!token) return { ok: false, reason: "missing_token" };
   const fd = new FormData();
   fd.set("secret", secret);
   fd.set("response", token);
   const r = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: fd });
-  if (!r.ok) return false;
+  if (!r.ok) return { ok: false, reason: "rejected" };
   const j = await r.json();
-  return j?.success === true;
+  return j?.success === true ? { ok: true } : { ok: false, reason: "rejected" };
+}
+
+/**
+ * The response a failed check should produce.
+ *
+ * An operator who forgot the secret and a bot that failed the challenge
+ * are different problems, and telling them apart in the response saves a
+ * long debugging session without telling a bot anything it can use.
+ */
+export function turnstileFailure(result: Extract<TurnstileResult, { ok: false }>) {
+  if (result.reason === "unconfigured") {
+    return {
+      status: 503,
+      body: {
+        error: "Submissions are temporarily unavailable",
+        detail: "Bot verification is not configured on this deployment.",
+      },
+    };
+  }
+  return { status: 403, body: { error: "verification failed" } };
 }
 
 export function safeText(value: unknown, max: number) {

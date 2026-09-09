@@ -2,7 +2,7 @@
 // status, roles, approvals or publication state. Every accepted submission is
 // normalized into the canonical graph and emits an immutable event.
 import {
-  cors, db, emitEvent, json, orgBySlug, safeEmail, safeText, sha256Hex, verifyCaller, verifyTurnstile,
+  cors, db, emitEvent, json, orgBySlug, safeEmail, safeText, sha256Hex, verifyCaller, turnstileFailure, verifyTurnstile,
 } from "../_shared/eu-policy-os.ts";
 
 function arr(v: unknown, max = 30) {
@@ -200,8 +200,11 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "POST required" }, 405);
   try {
     const body = await req.json();
-    const ok = await verifyTurnstile(req, body.turnstile_token);
-    if (!ok) return json({ error: "verification failed" }, 403);
+    const verified = await verifyTurnstile(req, body.turnstile_token);
+    if (!verified.ok) {
+      const failure = turnstileFailure(verified);
+      return json(failure.body, failure.status);
+    }
     const action = safeText(body.action, 40);
     if (action === "stakeholder") return json(await stakeholderIntake(req, body));
     if (action === "fellowship") return json(await fellowshipIntake(req, body));
