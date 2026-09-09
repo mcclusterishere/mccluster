@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+      - feature/gev-spatial-intelligence
   workflow_dispatch: {}
 
 permissions:
