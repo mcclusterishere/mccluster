@@ -161,22 +161,54 @@ export async function epaEchoFacilities(input) {
     url.searchParams.set(key, String(value).slice(0, 300));
   }
 
-  const data = await jsonFetch(url);
-  const facilities = data?.Results?.Facilities || data?.Results?.Facility || data?.Results?.FacilitiesList || [];
-  const rows = Array.isArray(facilities) ? facilities : [];
-  const records = rows.slice(0, MAX_ROWS).map((facility, index) => {
-    const lat = Number(facility?.FacLat ?? facility?.Latitude ?? facility?.AIRLat ?? facility?.Lat);
-    const lon = Number(facility?.FacLong ?? facility?.Longitude ?? facility?.AIRLong ?? facility?.Long);
+  /*
+    ECHO is a multi-step API and this is easy to get wrong.
+
+    get_facilities RESOLVES a query and answers with a QueryID plus row counts,
+    never with facility rows: reading Results.Facilities off that first response
+    silently yields zero records against a 200 OK. get_qid then returns rows,
+    but its default column set carries FacLat and NOT FacLong, so a parser
+    reading both still gets nothing mappable. get_geojson is the one endpoint
+    that returns real coordinates alongside the properties, so that is what a
+    spatial adapter calls.
+  */
+  const resolved = await jsonFetch(url);
+  const queryId = resolved?.Results?.QueryID;
+  const totalRows = Number(resolved?.Results?.QueryRows || 0);
+  if (!queryId || !totalRows) {
+    return baseResult('epa', 'echo_facilities', url.toString(), [], resolved, 'U.S. EPA ECHO');
+  }
+  if (totalRows > MAX_ROWS) {
+    throw new GeoAdapterError(
+      `EPA ECHO matched ${totalRows} facilities; narrow the query with state, city, zip or a lat/lon radius`,
+      400,
+      'query_too_broad',
+      { matched_rows: totalRows, max_rows: MAX_ROWS }
+    );
+  }
+
+  const geoUrl = new URL('https://echodata.epa.gov/echo/echo_rest_services.get_geojson');
+  geoUrl.searchParams.set('qid', String(queryId));
+  const data = await jsonFetch(geoUrl);
+  const rows = Array.isArray(data?.features) ? data.features : [];
+  const records = rows.slice(0, MAX_ROWS).map((feature, index) => {
+    const properties = feature?.properties || {};
+    const coordinates = feature?.geometry?.type === 'Point' ? feature.geometry.coordinates : null;
+    const lon = Number(coordinates?.[0]);
+    const lat = Number(coordinates?.[1]);
     return {
       kind: 'entity',
-      external_id: String(facility?.RegistryID || facility?.RegistryId || facility?.FacID || facility?.SourceID || index),
+      external_id: String(properties.RegistryID || properties.RegistryId || properties.FacID || index),
       entity_type: 'regulated_facility',
-      name: facility?.FacName || facility?.FacilityName || facility?.Name || 'EPA regulated facility',
+      name: properties.FacName || properties.FacilityName || 'EPA regulated facility',
       point: Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null,
       observed_at: new Date().toISOString(),
-      properties: facility || {}
+      properties
     };
   });
 
-  return baseResult('epa', 'echo_facilities', url.toString(), records, data, 'U.S. EPA ECHO');
+  return baseResult('epa', 'echo_facilities', geoUrl.toString(), records, {
+    query: resolved?.Results,
+    matched_rows: totalRows
+  }, 'U.S. EPA ECHO');
 }

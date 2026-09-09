@@ -82,6 +82,24 @@ test('the internal console is never published to the public site', async () => {
   assert.match(workflow, /branches:\s*\n\s*- main\s*\n/, 'only main publishes the public site');
 });
 
+test('both wrangler configs can bundle the console text module', async () => {
+  // wrangler.toml at the repo root is the fail-safe mirror for an accidental
+  // root deploy. Without the Text rule that deploy fails to bundle at all,
+  // which defeats the point of having the mirror.
+  for (const file of [
+    resolve(here, '..', 'wrangler.toml'),
+    resolve(repoRoot, 'wrangler.toml')
+  ]) {
+    const toml = await readFile(file, 'utf8');
+    assert.match(toml, /\[\[rules\]\]/, file + ' has no module rules');
+    assert.match(toml, /type = "Text"/, file + ' does not declare a Text module');
+    assert.match(toml, /globs = \["\*\*\/\*\.html"\]/, file + ' does not cover the console html');
+    assert.match(toml, /name = "mccluster"/, file + ' must stay the canonical Worker');
+    assert.doesNotMatch(toml, /mccluster-core/, 'that Worker does not exist');
+    assert.doesNotMatch(toml, /^\s*\[assets\]/m, 'the Worker must not gain an assets directory');
+  }
+});
+
 test('Access verification is off until configured and fails closed once it is', async () => {
   assert.equal(accessConfigured({}), false);
   assert.equal(await verifyAccess(new Request('https://api.mccluster.org/internal/gev'), {}), null);

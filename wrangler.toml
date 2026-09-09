@@ -28,6 +28,14 @@ ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
 META_GRAPH_API_VERSION = "v26.0"
 
+# The internal spatial console at /internal/gev ships as a text module. Without
+# this rule an accidental repo-root deploy fails to bundle the Worker at all,
+# which is exactly the case this fail-safe file exists to survive.
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
 [triggers]
 crons = ["*/5 * * * *"]
 

@@ -3,6 +3,13 @@ import { PERSISTENCE, sourceByKey, sourceConfigured } from './source-registry.js
 const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_PROVIDER_ROWS = 2000;
 const SENSITIVE_QUERY_KEYS = new Set(['key', 'api_key', 'access_token', 'token', 'map_key']);
+const OVERPASS_ENDPOINTS = Object.freeze([
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter'
+]);
+// GDELT's DOC API regularly needs more than the default budget.
+const GDELT_TIMEOUT_MS = 40000;
 
 export class GeoAdapterError extends Error {
   constructor(message, status = 400, code = 'geo_adapter_error', detail = undefined) {
@@ -336,12 +343,31 @@ async function overpass(input) {
       : `way(around:${radius},${lat},${lon})[\"highway\"];nwr(around:${radius},${lat},${lon})[\"power\"];nwr(around:${radius},${lat},${lon})[\"man_made\"];`;
     query = `[out:json][timeout:${timeout}];(${selector});out center tags;`;
   }
-  const url = new URL('https://overpass-api.de/api/interpreter');
-  const { data } = await jsonFetch(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ data: query }).toString()
-  }, 30000);
+  /*
+    The main Overpass instance sheds load with a 503 routinely enough that a
+    single-endpoint adapter reads as broken to an operator. Try the public
+    mirrors in turn before reporting a failure; they all speak the same API.
+  */
+  let data = null;
+  let url = null;
+  let lastError = null;
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    url = new URL(endpoint);
+    try {
+      ({ data } = await jsonFetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ data: query }).toString()
+      }, 30000));
+      lastError = null;
+      break;
+    } catch (error) {
+      lastError = error;
+      // 4xx means our query is wrong; another mirror will say the same thing.
+      if (error?.detail?.provider_status && error.detail.provider_status < 500) throw error;
+    }
+  }
+  if (lastError) throw lastError;
   const records = clampRows(data?.elements).map((item) => {
     const p = point(item?.lat ?? item?.center?.lat, item?.lon ?? item?.center?.lon);
     return record('entity', {
@@ -716,7 +742,7 @@ async function gdelt(input) {
   url.searchParams.set('format', 'json');
   url.searchParams.set('maxrecords', String(integer(input?.limit ?? 25, 'limit', { min: 1, max: 250 })));
   url.searchParams.set('sort', 'HybridRel');
-  const { data } = await jsonFetch(url);
+  const { data } = await jsonFetch(url, {}, GDELT_TIMEOUT_MS);
   const contextPoint = input?.lat !== undefined ? point(input.lat, input.lon ?? input.lng) : null;
   const records = clampRows(data?.articles).map((article, index) => record('event', {
     external_id: String(article?.url || `gdelt:${index}:${article?.seendate || ''}`),

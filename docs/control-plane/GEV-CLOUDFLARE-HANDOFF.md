@@ -119,7 +119,27 @@ Applying the trigger against real PostGIS also found a bug: comparing
 `geometry` with `is not distinct from` under `search_path = ''` is ambiguous.
 It now compares `st_asewkb`.
 
-**Worker**: 66 unit tests pass. `wrangler deploy --dry-run` bundles cleanly at
+**Provider adapters, called live against the real APIs** (no keys, 14 sources):
+USGS, Open-Meteo, CelesTrak, ADSB.lol, Overpass, Launch Library 2, Radio
+Browser, Nominatim, USAspending, Grants.gov, NHTSA, EPA ECHO and the Re:Earth
+config route all returned normalized records. That pass found three more bugs:
+
+- **EPA ECHO returned zero records against a 200 OK.** `get_facilities`
+  RESOLVES a query and answers with a QueryID and row counts, never with
+  facility rows. Worse, the obvious fix is also wrong: `get_qid`'s default
+  column set carries `FacLat` and not `FacLong`, so a parser reading both still
+  gets nothing mappable. The adapter now resolves, refuses a query too broad to
+  return honestly, then reads `get_geojson`. A New Haven query now returns 1560
+  facilities, all positioned.
+- **Overpass answered 503.** The main instance sheds load often enough that a
+  single-endpoint adapter reads as broken; it now tries the public mirrors in
+  turn, and a 4xx (our query is wrong) still fails immediately.
+- **GDELT timed out** at the default 15s budget; it now gets 40s.
+
+GDELT still answers 429 from this egress address — upstream rate limiting, not
+a defect, and the adapter reports it as 429.
+
+**Worker**: 67 unit tests pass. `wrangler deploy --dry-run` bundles cleanly at
 ~536 KiB (113 KiB gzip) with the `HereTenantAgent` Durable Object binding
 present. Routes were probed against a local `wrangler dev`.
 
@@ -202,6 +222,11 @@ basemap the console boots on. Each was reached live while this work was done.
   reports a count until SGP4 propagation is added.
 - **The CCTV adapter is a catalogue stub.** Only the audited Austin feed is
   enabled, and it normalizes no records yet.
+- **Overpass is slow through the mirrors** — a 3km infrastructure query took
+  ~40s in testing. The console times it out at 20s, so wide Overpass queries
+  will sometimes report a timeout rather than data.
+- **GDELT is rate limited by source IP.** Cloudflare's egress may fare better
+  than this test host, but expect 429s under load.
 - **Re:Earth / Mapterhorn terrain is raster terrarium**, not Cesium
   quantized-mesh. `terrain.reearth.land` no longer resolves at all. The registry
   now reports the live Mapterhorn tilejson and says it is not a drop-in
