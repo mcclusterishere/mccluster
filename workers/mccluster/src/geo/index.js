@@ -203,14 +203,14 @@ export default {
 
       const providerMatch = path.match(/^\/v1\/geo\/(fetch|ingest)\/([a-z0-9_-]+)$/i);
       if (providerMatch && request.method === 'POST') {
-        return fetchAndMaybePersist(request, env, options, providerMatch[2], providerMatch[1]);
+        return await fetchAndMaybePersist(request, env, options, providerMatch[2], providerMatch[1]);
       }
 
       if (path === '/v1/geo/live/ais' && request.method === 'GET') {
-        return aisSnapshot(request, env, options, false);
+        return await aisSnapshot(request, env, options, false);
       }
       if (path === '/v1/geo/live/ais/restart' && request.method === 'POST') {
-        return aisSnapshot(request, env, options, true);
+        return await aisSnapshot(request, env, options, true);
       }
 
       if (path === '/v1/geo/nearby' && request.method === 'GET') {
