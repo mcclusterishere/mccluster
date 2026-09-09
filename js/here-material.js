@@ -5,8 +5,20 @@
 (function(){
   "use strict";
   if(!/\/fellowship\.html$/.test(location.pathname))return;
-  var s=document.createElement("script");
-  s.src="js/equity-uprise-fellowship-live.js?v=__STAMP__";
-  s.defer=true;
-  document.head.appendChild(s);
+
+  function loadLive(){
+    if(document.querySelector('script[data-eu-fellowship-live]'))return;
+    var s=document.createElement("script");
+    s.src="js/equity-uprise-fellowship-live.js?v=__STAMP__";
+    s.dataset.euFellowshipLive="1";
+    document.head.appendChild(s);
+  }
+
+  if(window.MCC_SUPA){loadLive();return;}
+  var backend=document.createElement("script");
+  backend.src="js/backend.js?v=__STAMP__";
+  backend.dataset.euBackendBridge="1";
+  backend.onload=loadLive;
+  backend.onerror=loadLive; // adapter preserves the email fallback if backend loading fails
+  document.head.appendChild(backend);
 })();
