@@ -177,7 +177,34 @@ async function finishInstagramPublish(env, job, account, token) {
   return { state: 'published', media_id: published.id, post_id: post?.id || null };
 }
 
+/* The claim RPC takes the next due job whatever platform it belongs to —
+   it cannot know, the platform lives on the account row. So a job for any
+   other network landed here, failed "Instagram account is missing", burned
+   an attempt, and was marked failed on the fifth. The queue would quietly
+   destroy the first Facebook or Threads post anyone scheduled.
+
+   Hand those back instead: release the lease, say why, and do NOT count an
+   attempt — the job is waiting for a publisher, which is not its fault and
+   is not a reason to give up on it. */
+async function unpublishablePlatform(env, job, platform) {
+  await patch(env, 'social_publish_jobs', job.id, {
+    lease_owner: null,
+    lease_expires_at: null,
+    last_error: `no_publisher_for_platform:${platform || 'unknown'}`
+  });
+  return { state: job.state, deferred: true, reason: 'no_publisher_for_platform', platform: platform || null };
+}
+
+async function anyAccountForJob(env, job) {
+  const rows = await db(env, `social_accounts?id=eq.${encodeURIComponent(job.account_id)}&org_id=eq.${encodeURIComponent(job.org_id)}&select=id,platform&limit=1`);
+  return rows?.[0] || null;
+}
+
 async function processPublishJob(env, job) {
+  const claimed = await anyAccountForJob(env, job);
+  const platform = String(claimed?.platform || '').toLowerCase();
+  if (claimed && platform !== 'instagram') return unpublishablePlatform(env, job, platform);
+
   const account = await accountForJob(env, job);
   if (!account) throw new Error('Instagram account is missing or does not belong to this organization');
   const token = await tokenFor(env, account);
