@@ -3,8 +3,21 @@ import { adapterCapabilities, GeoAdapterError } from './adapters.js';
 import { AccessError, accessConfigured, verifyAccess } from './access.js';
 import { assertConsumable, effectiveEntitlement, entitlementCatalog, LANES, normalizeLane, sourceOrThrow } from './entitlements.js';
 import { executeProvider } from './gateway.js';
+import {
+  evaluateGovernedAccess,
+  normalizePurpose,
+  parsePurposeBinding,
+  policyFrom,
+  PURPOSES,
+  sealAuditEntry,
+  verifyAuditChain
+} from './governance.js';
 import { SOURCES, sourceByKey, sourceCatalog, sourceConfigured } from './source-registry.js';
 import {
+  adoptJurisdictionPolicy,
+  appendAuditEntry,
+  auditEntries,
+  auditHead,
   entitiesInBbox,
   entitlementRows,
   entityObservations,
@@ -13,13 +26,18 @@ import {
   listEntities,
   listIngestionRuns,
   listLayers,
+  jurisdictionPolicyRow,
+  listJurisdictionPolicies,
   listProjects,
   nearbyEntities,
   nearbyEvents,
   persistAdapterResult,
+  policyAmendments,
   resolveHouseOrg,
+  retentionOverage,
   schemaReady,
-  timelineNearby
+  timelineNearby,
+  transparencyReport
 } from './store.js';
 
 const SERVICE = 'mccluster-spatial-intelligence';
@@ -66,6 +84,12 @@ function isoOrNull(value, name) {
   const parsed = new Date(String(value));
   if (Number.isNaN(parsed.valueOf())) throw new GeoAdapterError(`${name} must be an ISO timestamp`, 400, 'invalid_parameter');
   return parsed.toISOString();
+}
+
+function requireJurisdiction(url) {
+  const jurisdiction = String(url.searchParams.get('jurisdiction') || '').trim();
+  if (!jurisdiction) throw new GeoAdapterError('jurisdiction is required', 400, 'jurisdiction_required');
+  return jurisdiction;
 }
 
 async function jsonBody(request) {
@@ -222,6 +246,129 @@ async function aisSnapshot(request, env, options, url, restart = false) {
   });
 }
 
+
+/*
+  The governed query path.
+
+  Every competitor in this market runs the query and logs it afterwards. That
+  ordering is why the San Francisco audit found 299 unauthorised queries a year
+  late: the rows had already been read and forwarded, and the log was a record
+  of a thing that could no longer be undone.
+
+  Here the order is inverted. The purpose binding is parsed, the town's adopted
+  policy is read, the verdict is computed, and the verdict is SEALED INTO THE
+  AUDIT CHAIN BEFORE the provider is called. A refusal returns 403 with the
+  policy's own reason and the audit sequence it was written at, so the officer
+  who was refused can cite the entry and the oversight board can find it.
+
+  A permitted query is then executed and its record count sealed in a second
+  entry, so the log distinguishes "authorised" from "authorised and answered".
+*/
+async function governedQuery(request, env, options) {
+  const body = await jsonBody(request);
+  const { org } = await protectedContext(request, env, options);
+
+  const jurisdiction = String(body.jurisdiction || '').trim();
+  if (!jurisdiction) {
+    throw new GeoAdapterError('jurisdiction is required for a governed query', 400, 'jurisdiction_required');
+  }
+
+  // Parsed before the policy is read: a malformed binding is refused on its own
+  // terms and never reaches the town's policy at all.
+  const binding = parsePurposeBinding(body.purpose_binding);
+  const policy = policyFrom(await jurisdictionPolicyRow(env, org.id, jurisdiction));
+  const verdict = evaluateGovernedAccess({ policy, binding, now: new Date() });
+
+  const sourceKey = String(body.source || '').trim() || null;
+  const head = await auditHead(env, org.id, jurisdiction);
+  const fingerprint = sourceKey ? await requestFingerprint(sourceKey, body.params || {}) : null;
+
+  const decision = await sealAuditEntry({
+    sequence: head.sequence + 1,
+    jurisdiction,
+    ...binding,
+    decision: verdict.allowed ? 'allow' : 'deny',
+    reason: verdict.reason,
+    source_key: sourceKey,
+    operation: body.operation || 'query',
+    query_fingerprint: fingerprint,
+    record_count: verdict.allowed ? null : 0,
+    policy_version: policy?.policy_version ?? null,
+    occurred_at: new Date().toISOString()
+  }, head.entry_hash);
+
+  await appendAuditEntry(env, org.id, {
+    ...decision,
+    note: binding.note,
+    retention_deadline: verdict.obligations.retention_deadline || null
+  });
+
+  if (!verdict.allowed) {
+    return fail(request, env, verdict.message, 403, {
+      code: `governance_${verdict.reason}`,
+      jurisdiction,
+      audit_sequence: decision.sequence,
+      audit_entry_hash: decision.entry_hash,
+      policy_version: policy?.policy_version ?? null
+    });
+  }
+
+  if (!sourceKey) {
+    return reply(request, env, {
+      ok: true,
+      service: SERVICE,
+      jurisdiction,
+      governance: { decision: 'allow', reason: verdict.reason, audit_sequence: decision.sequence, ...verdict.obligations },
+      result: null
+    });
+  }
+
+  // The licensing firewall still applies on top of the town's policy. A town
+  // may permit a purpose it has no licence to serve, and that is still a no.
+  const source = sourceOrThrow(sourceKey);
+  const lane = normalizeLane(body.lane);
+  const entRows = await entitlementRows(env, org.id, sourceKey);
+  const entitlement = effectiveEntitlement(source, entRows.get(sourceKey));
+  assertConsumable(entitlement, lane);
+
+  const result = await executeProvider(sourceKey, body.params || {}, env);
+  const answered = await sealAuditEntry({
+    sequence: decision.sequence + 1,
+    jurisdiction,
+    ...binding,
+    decision: 'allow',
+    reason: 'answered',
+    source_key: sourceKey,
+    operation: result.operation || body.operation || 'query',
+    query_fingerprint: fingerprint,
+    record_count: result.records?.length || 0,
+    policy_version: policy.policy_version,
+    occurred_at: new Date().toISOString()
+  }, decision.entry_hash);
+
+  await appendAuditEntry(env, org.id, {
+    ...answered,
+    note: binding.note,
+    retention_deadline: verdict.obligations.retention_deadline || null
+  });
+
+  return reply(request, env, {
+    ok: true,
+    service: SERVICE,
+    jurisdiction,
+    lane,
+    governance: {
+      decision: 'allow',
+      reason: verdict.reason,
+      policy_version: policy.policy_version,
+      audit_sequence: answered.sequence,
+      audit_entry_hash: answered.entry_hash,
+      ...verdict.obligations
+    },
+    result: responseResult(result, { includeRaw: body.include_raw === true })
+  });
+}
+
 /*
   Viewer configuration.
 
@@ -365,6 +512,7 @@ export default {
           service: SERVICE,
           adapters: adapterCapabilities(),
           lanes: Object.values(LANES),
+          governed_purposes: Object.values(PURPOSES),
           routes: {
             health: 'GET /v1/seek-first/health',
             readiness: 'GET /v1/seek-first/readiness',
@@ -384,7 +532,14 @@ export default {
             layers: 'GET /v1/seek-first/layers',
             ingestion_runs: 'GET /v1/seek-first/ingestion-runs',
             live_ais: 'GET /v1/seek-first/live/ais',
-            live_ais_restart: 'POST /v1/seek-first/live/ais/restart'
+            live_ais_restart: 'POST /v1/seek-first/live/ais/restart',
+            governance_policies: 'GET /v1/seek-first/governance/policies',
+            governance_policy: 'GET|PUT /v1/seek-first/governance/policy?jurisdiction=',
+            governance_query: 'POST /v1/seek-first/governance/query',
+            governance_audit: 'GET /v1/seek-first/governance/audit?jurisdiction=',
+            governance_audit_verify: 'GET /v1/seek-first/governance/audit/verify?jurisdiction=',
+            governance_transparency: 'GET /v1/seek-first/governance/transparency?jurisdiction=',
+            governance_retention: 'GET /v1/seek-first/governance/retention?jurisdiction='
           }
         });
       }
@@ -509,6 +664,163 @@ export default {
           limit: int(url.searchParams.get('limit'), 'limit', 1, 200, 50)
         });
         return reply(request, env, { ok: true, service: SERVICE, runs: rows || [] });
+      }
+
+
+      /*
+        Governance surface.
+
+        A town does not buy a query tool. It buys the ability to answer its own
+        council, its own press, and its own residents about what the query tool
+        did. These eight routes are that answer, and they are the product.
+      */
+      if (path === '/v1/seek-first/governance/policies' && request.method === 'GET') {
+        const { org } = await protectedContext(request, env, options, { requireSchema: true });
+        const rows = await listJurisdictionPolicies(env, org.id);
+        return reply(request, env, {
+          ok: true,
+          service: SERVICE,
+          purposes: Object.values(PURPOSES),
+          policies: rows.map((row) => policyFrom(row))
+        });
+      }
+
+      if (path === '/v1/seek-first/governance/policy' && request.method === 'GET') {
+        const { org } = await protectedContext(request, env, options, { requireSchema: true });
+        const jurisdiction = requireJurisdiction(url);
+        const row = await jurisdictionPolicyRow(env, org.id, jurisdiction);
+        if (!row) {
+          return fail(request, env, `No adopted policy is on file for ${jurisdiction}`, 404, {
+            code: 'governance_policy_missing',
+            jurisdiction
+          });
+        }
+        return reply(request, env, {
+          ok: true,
+          service: SERVICE,
+          policy: policyFrom(row),
+          amendments: await policyAmendments(env, org.id, row.id, 50)
+        });
+      }
+
+      /*
+        Adopting and amending are one route on purpose. A separate quiet "update"
+        is how a change to the egress boundary avoids leaving a record, and the
+        egress boundary is precisely what San Francisco could not reconstruct.
+      */
+      if (path === '/v1/seek-first/governance/policy' && request.method === 'PUT') {
+        const { org, user } = await protectedContext(request, env, options, { requireSchema: true });
+        const body = await jsonBody(request);
+        const jurisdiction = String(body.jurisdiction || '').trim();
+        if (!jurisdiction) throw new GeoAdapterError('jurisdiction is required', 400, 'jurisdiction_required');
+
+        const purposes = (key) => {
+          if (body[key] === undefined) return undefined;
+          if (!Array.isArray(body[key])) throw new GeoAdapterError(`${key} must be an array`, 400, 'invalid_parameter');
+          return body[key].map((value) => normalizePurpose(value));
+        };
+
+        const { policy, amendment } = await adoptJurisdictionPolicy(env, org.id, {
+          jurisdiction,
+          display_name: body.display_name,
+          retention_days: body.retention_days === undefined ? undefined : int(body.retention_days, 'retention_days', 1, 3650, 7),
+          permitted_purposes: purposes('permitted_purposes'),
+          prohibited_purposes: purposes('prohibited_purposes'),
+          permitted_agencies: body.permitted_agencies === undefined
+            ? undefined
+            : (Array.isArray(body.permitted_agencies) ? body.permitted_agencies.map((v) => String(v).trim()).filter(Boolean) : []),
+          external_sharing_enabled: body.external_sharing_enabled,
+          external_sharing_expires_at: isoOrNull(body.external_sharing_expires_at, 'external_sharing_expires_at'),
+          enabled: body.enabled
+        }, {
+          amendedBy: String(body.adopted_by || user?.email || 'unattributed').trim(),
+          rationale: body.rationale ? String(body.rationale).slice(0, 2000) : null
+        });
+
+        return reply(request, env, { ok: true, service: SERVICE, policy: policyFrom(policy), amendment });
+      }
+
+      if (path === '/v1/seek-first/governance/query' && request.method === 'POST') {
+        return await governedQuery(request, env, options);
+      }
+
+      if (path === '/v1/seek-first/governance/audit' && request.method === 'GET') {
+        const { org } = await protectedContext(request, env, options, { requireSchema: true });
+        const jurisdiction = requireJurisdiction(url);
+        const entries = await auditEntries(env, org.id, jurisdiction, {
+          from: isoOrNull(url.searchParams.get('from'), 'from'),
+          to: isoOrNull(url.searchParams.get('to'), 'to'),
+          limit: int(url.searchParams.get('limit'), 'limit', 1, 5000, 1000),
+          offset: int(url.searchParams.get('offset'), 'offset', 0, 1000000, 0)
+        });
+        return reply(request, env, { ok: true, service: SERVICE, jurisdiction, entries, count: entries.length });
+      }
+
+      /*
+        Verification runs here for convenience, but the same function ships in
+        governance.js and takes a plain exported array. An oversight board that
+        does not trust this server can verify the export on its own machine, and
+        should.
+      */
+      if (path === '/v1/seek-first/governance/audit/verify' && request.method === 'GET') {
+        const { org } = await protectedContext(request, env, options, { requireSchema: true });
+        const jurisdiction = requireJurisdiction(url);
+        const entries = await auditEntries(env, org.id, jurisdiction, {
+          limit: int(url.searchParams.get('limit'), 'limit', 1, 5000, 5000)
+        });
+        const verification = await verifyAuditChain(entries);
+        return reply(request, env, {
+          ok: true,
+          service: SERVICE,
+          jurisdiction,
+          verification,
+          verifiable_offline: 'Export /governance/audit and run verifyAuditChain from governance.js against it.'
+        });
+      }
+
+      if (path === '/v1/seek-first/governance/transparency' && request.method === 'GET') {
+        const { org } = await protectedContext(request, env, options, { requireSchema: true });
+        const jurisdiction = requireJurisdiction(url);
+        const now = new Date();
+        const from = isoOrNull(url.searchParams.get('from'), 'from')
+          || new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString();
+        const to = isoOrNull(url.searchParams.get('to'), 'to')
+          || new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+        const rows = await transparencyReport(env, org.id, jurisdiction, from, to);
+        const total = rows.reduce((sum, row) => sum + Number(row.queries || 0), 0);
+        const refused = rows.filter((row) => row.decision === 'deny').reduce((sum, row) => sum + Number(row.queries || 0), 0);
+        return reply(request, env, {
+          ok: true,
+          service: SERVICE,
+          jurisdiction,
+          period: { from, to },
+          totals: { queries: total, refused, permitted: total - refused },
+          // Counts only. A published report must not become a second copy of the
+          // thing the policy exists to protect.
+          breakdown: rows
+        });
+      }
+
+      if (path === '/v1/seek-first/governance/retention' && request.method === 'GET') {
+        const { org } = await protectedContext(request, env, options, { requireSchema: true });
+        const jurisdiction = requireJurisdiction(url);
+        const policy = policyFrom(await jurisdictionPolicyRow(env, org.id, jurisdiction));
+        if (!policy) {
+          return fail(request, env, `No adopted policy is on file for ${jurisdiction}`, 404, {
+            code: 'governance_policy_missing', jurisdiction
+          });
+        }
+        const overage = await retentionOverage(env, org.id, jurisdiction);
+        const rows_over = overage.reduce((sum, row) => sum + Number(row.rows_over || 0), 0);
+        return reply(request, env, {
+          ok: true,
+          service: SERVICE,
+          jurisdiction,
+          retention_days: policy.retention_days,
+          compliant: rows_over === 0,
+          rows_over_window: rows_over,
+          by_source: overage
+        });
       }
 
       return fail(request, env, 'Spatial intelligence route not found', 404);

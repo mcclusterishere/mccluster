@@ -340,3 +340,141 @@ export async function listProjects(env, orgId, limit = 100) {
 export async function listLayers(env, orgId, limit = 200) {
   return db(env, `seek_first_layers?org_id=eq.${encodeURIComponent(orgId)}&select=id,layer_key,name,source_key,layer_type,enabled,style,settings&order=layer_key.asc&limit=${Math.max(1, Math.min(Number(limit) || 200, 500))}`);
 }
+
+/*
+  Governance.
+
+  These read and write the tables a town's adopted policy lives in. Nothing here
+  interprets the policy -- that is governance.js, deliberately kept pure so an
+  auditor can run the same decision function against an exported log without a
+  database. This module only moves rows.
+*/
+
+export async function jurisdictionPolicyRow(env, orgId, jurisdiction) {
+  const encoded = encodeURIComponent(String(jurisdiction || '').trim());
+  const rows = await db(
+    env,
+    `seek_first_jurisdiction_policies?org_id=eq.${orgId}&jurisdiction=ilike.${encoded}&select=*&limit=1`
+  );
+  return rows?.[0] || null;
+}
+
+export async function listJurisdictionPolicies(env, orgId) {
+  return await db(env, `seek_first_jurisdiction_policies?org_id=eq.${orgId}&select=*&order=jurisdiction.asc`) || [];
+}
+
+/*
+  Adopting a policy and amending one are the same call, because a town amending
+  its policy is the event most worth having on the record and a separate
+  "update" path is how that record gets skipped. Every write bumps the version
+  and appends an amendment row naming who did it.
+*/
+export async function adoptJurisdictionPolicy(env, orgId, patch, { amendedBy, rationale = null }) {
+  const existing = await jurisdictionPolicyRow(env, orgId, patch.jurisdiction);
+  const nextVersion = existing ? Number(existing.policy_version || 1) + 1 : 1;
+  const row = {
+    org_id: orgId,
+    jurisdiction: patch.jurisdiction,
+    display_name: patch.display_name ?? existing?.display_name ?? null,
+    retention_days: patch.retention_days ?? existing?.retention_days ?? 7,
+    permitted_purposes: patch.permitted_purposes ?? existing?.permitted_purposes ?? [],
+    prohibited_purposes: patch.prohibited_purposes ?? existing?.prohibited_purposes ?? [],
+    permitted_agencies: patch.permitted_agencies ?? existing?.permitted_agencies ?? [],
+    external_sharing_enabled: patch.external_sharing_enabled ?? existing?.external_sharing_enabled ?? false,
+    external_sharing_expires_at: patch.external_sharing_expires_at ?? existing?.external_sharing_expires_at ?? null,
+    enabled: patch.enabled ?? existing?.enabled ?? true,
+    adopted_by: amendedBy,
+    adopted_at: new Date().toISOString(),
+    policy_version: nextVersion,
+    updated_at: new Date().toISOString()
+  };
+
+  const saved = await db(env, 'seek_first_jurisdiction_policies?on_conflict=org_id,jurisdiction', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates,return=representation',
+    body: [row]
+  });
+  const policy = saved?.[0] || row;
+
+  const changed = {};
+  for (const key of Object.keys(row)) {
+    if (key === 'updated_at' || key === 'adopted_at' || key === 'policy_version' || key === 'org_id') continue;
+    if (JSON.stringify(existing?.[key] ?? null) !== JSON.stringify(row[key] ?? null)) {
+      changed[key] = { from: existing?.[key] ?? null, to: row[key] };
+    }
+  }
+
+  await db(env, 'seek_first_policy_amendments', {
+    method: 'POST',
+    prefer: 'return=minimal',
+    body: [{
+      org_id: orgId,
+      policy_id: policy.id,
+      from_version: existing ? Number(existing.policy_version || 1) : 0,
+      to_version: nextVersion,
+      changed,
+      rationale,
+      amended_by: amendedBy
+    }]
+  });
+
+  return { policy, amendment: { from_version: existing ? Number(existing.policy_version || 1) : 0, to_version: nextVersion, changed } };
+}
+
+export async function policyAmendments(env, orgId, policyId, limit = 100) {
+  return await db(
+    env,
+    `seek_first_policy_amendments?org_id=eq.${orgId}&policy_id=eq.${policyId}&select=*&order=amended_at.desc&limit=${limit}`
+  ) || [];
+}
+
+export async function auditHead(env, orgId, jurisdiction) {
+  const rows = await rpc(env, 'seek_first_audit_head', { p_org: orgId, p_jurisdiction: jurisdiction });
+  const head = rows?.[0] || {};
+  return {
+    sequence: Number.isFinite(Number(head.sequence)) ? Number(head.sequence) : -1,
+    entry_hash: head.entry_hash || 'seek-first:audit:genesis'
+  };
+}
+
+/*
+  The audit write happens before any data is returned and is not conditional on
+  the verdict. A refused query writes a row exactly like a permitted one; that
+  row is the whole point.
+*/
+export async function appendAuditEntry(env, orgId, entry) {
+  const saved = await db(env, 'seek_first_query_audit', {
+    method: 'POST',
+    prefer: 'return=representation',
+    body: [{ org_id: orgId, ...entry }]
+  });
+  return saved?.[0] || null;
+}
+
+export async function auditEntries(env, orgId, jurisdiction, { from = null, to = null, limit = 1000, offset = 0 } = {}) {
+  const encoded = encodeURIComponent(String(jurisdiction || '').trim());
+  const filters = [
+    `org_id=eq.${orgId}`,
+    `jurisdiction=ilike.${encoded}`,
+    'select=*',
+    'order=sequence.asc',
+    `limit=${limit}`,
+    `offset=${offset}`
+  ];
+  if (from) filters.push(`occurred_at=gte.${encodeURIComponent(from)}`);
+  if (to) filters.push(`occurred_at=lt.${encodeURIComponent(to)}`);
+  return await db(env, `seek_first_query_audit?${filters.join('&')}`) || [];
+}
+
+export async function transparencyReport(env, orgId, jurisdiction, from, to) {
+  return await rpc(env, 'seek_first_transparency_report', {
+    p_org: orgId,
+    p_jurisdiction: jurisdiction,
+    p_from: from,
+    p_to: to
+  }) || [];
+}
+
+export async function retentionOverage(env, orgId, jurisdiction) {
+  return await rpc(env, 'seek_first_retention_overage', { p_org: orgId, p_jurisdiction: jurisdiction }) || [];
+}
