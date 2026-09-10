@@ -126,6 +126,8 @@ const LICENCE_RULES = Object.freeze([
     test: /open database license|\bodbl\b/i },
   { id: 'ogl', sourceClass: SOURCE_CLASSES.PUBLIC_OPEN, commercialUse: true,
     test: /open government licence|open government license|\bogl\b/i },
+  { id: 'copernicus', sourceClass: SOURCE_CLASSES.PUBLIC_OPEN, commercialUse: true,
+    test: /copernicus (sentinel )?(data )?(terms|licen[cs]e)|copernicus dem licen[cs]e/i },
   { id: 'mit-bsd-apache', sourceClass: SOURCE_CLASSES.PUBLIC_OPEN, commercialUse: true,
     test: /\bmit license\b|\bbsd[-\s]?[23]|apache license/i },
   // Non-commercial: usable on the academic lane, never on the commercial one.
@@ -169,6 +171,34 @@ export function classifyLicence(raw) {
     persistence: PERSISTENCE.NONE,
     recognised: false
   });
+}
+
+/**
+ * Classify from several pieces of evidence, best first.
+ *
+ * STAC sets license to the literal "proprietary" for anything that is not an
+ * SPDX identifier and puts the real terms behind a rel="license" link, so the
+ * declared field alone reports NAIP, Landsat, Sentinel-2 and Copernicus DEM as
+ * restricted when every one of them is open. The link's title is the
+ * authoritative statement; its href is weaker corroboration. First positive
+ * identification wins; if none of them land, this still fails closed.
+ */
+export function classifyLicenceFrom(candidates) {
+  const verdicts = [];
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string' || !candidate.trim()) continue;
+    const verdict = classifyLicence(candidate);
+    if (verdict.recognised) verdicts.push(verdict);
+  }
+  // A positive, open identification outranks a placeholder. "proprietary" is
+  // what STAC writes for anything that is not an SPDX id, so on its own it
+  // means "look elsewhere", not "closed" -- while a rel="license" link titled
+  // "Public Domain" is an actual statement about the terms.
+  const open = verdicts.find((v) => v.sourceClass !== SOURCE_CLASSES.RESTRICTED);
+  if (open) return open;
+  // Nothing open was identified. An explicit closed statement still beats
+  // silence, because the reason is worth keeping.
+  return verdicts[0] ?? classifyLicence(null);
 }
 
 /* ── normalization ──────────────────────────────────────────────────────── */
@@ -221,9 +251,13 @@ function normalizeEuHub(raw, cat) {
     publisher: text(raw?.publisher?.name ?? raw?.publisher),
     // The hub keeps licence on distributions, not the dataset. Absent here
     // means unknown, and unknown is restricted.
-    licence: classifyLicence(
-      text(raw?.license) ?? text(raw?.distributions?.[0]?.license)
-    ),
+    licence: classifyLicenceFrom([
+      text(raw?.license),
+      ...(Array.isArray(raw?.distributions)
+        ? raw.distributions.flatMap((d) => [text(d?.license), text(d?.rights)])
+        : []),
+      text(raw?.rights)
+    ]),
     updatedAt: isoOrNull(raw?.modified),
     issuedAt: isoOrNull(raw?.issued),
     landingUrl: typeof raw?.id === 'string' ? `https://data.europa.eu/data/datasets/${raw.id}` : null,
@@ -241,7 +275,9 @@ function normalizeSocrata(raw, cat) {
     title: text(res.name),
     description: text(res.description, { max: 1200 }),
     publisher: text(meta.domain),
-    licence: classifyLicence(text(meta.license)),
+    licence: classifyLicenceFrom([
+      text(meta.license), text(meta.rights), text(raw?.resource?.attribution)
+    ]),
     updatedAt: isoOrNull(res.updatedAt ?? res.data_updated_at),
     issuedAt: isoOrNull(res.createdAt),
     landingUrl: text(raw?.permalink) ?? text(raw?.link),
@@ -250,6 +286,9 @@ function normalizeSocrata(raw, cat) {
 }
 
 function normalizeStac(raw, cat) {
+  const licenseLink = Array.isArray(raw?.links)
+    ? raw.links.find((l) => l?.rel === 'license')
+    : null;
   const interval = raw?.extent?.temporal?.interval?.[0];
   const bbox = raw?.extent?.spatial?.bbox?.[0];
   return descriptor({
@@ -259,7 +298,11 @@ function normalizeStac(raw, cat) {
     title: text(raw?.title) ?? text(raw?.id),
     description: text(raw?.description, { max: 1200 }),
     publisher: text(raw?.providers?.[0]?.name),
-    licence: classifyLicence(text(raw?.license)),
+    licence: classifyLicenceFrom([
+      text(raw?.license),
+      text(licenseLink?.title),
+      text(licenseLink?.href)
+    ]),
     bbox: Array.isArray(bbox) && bbox.length >= 4 ? bbox.slice(0, 4).map(Number) : null,
     temporal: Array.isArray(interval)
       ? [isoOrNull(interval[0]), isoOrNull(interval[1])]
@@ -277,7 +320,9 @@ function normalizeCkan(raw, cat) {
     title: text(raw?.title),
     description: text(raw?.notes, { max: 1200 }),
     publisher: text(raw?.organization?.title),
-    licence: classifyLicence(text(raw?.license_title) ?? text(raw?.license_id)),
+    licence: classifyLicenceFrom([
+      text(raw?.license_title), text(raw?.license_id), text(raw?.license_url)
+    ]),
     updatedAt: isoOrNull(raw?.metadata_modified),
     issuedAt: isoOrNull(raw?.metadata_created),
     landingUrl: typeof raw?.name === 'string' ? `https://catalog.data.gov/dataset/${raw.name}` : null,

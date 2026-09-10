@@ -85,6 +85,15 @@ fallthrough = true
 # Existing production Durable Objects on this Worker. Keep the class name.
 # Spatial AIS caching deliberately reuses a named instance of HereTenantAgent;
 # do not add a second Durable Object class or migration for geo.
+# Raw payload archive. Every upstream response is stored verbatim, keyed by
+# content hash, so a query can be replayed against exactly the bytes we held at
+# the time rather than against whatever the provider serves today. R2 charges no
+# egress, which is what makes replaying an archive of this shape affordable
+# instead of ruinous.
+[[r2_buckets]]
+binding = "SEEK_FIRST_ARCHIVE"
+bucket_name = "seek-first-archive"
+
 [[durable_objects.bindings]]
 name = "HereTenantAgent"
 class_name = "HereTenantAgent"

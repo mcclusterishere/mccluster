@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  CATALOGS, CATALOG_PROTOCOLS, catalogByKey, classifyLicence,
+  CATALOGS, CATALOG_PROTOCOLS, catalogByKey, classifyLicence, classifyLicenceFrom,
   normalizeDataset, pageRequest, extractPage, discoverPage, retainableFor
 } from '../src/seek-first/catalogs.js';
 import { SOURCE_CLASSES, PERSISTENCE } from '../src/seek-first/source-registry.js';
@@ -187,4 +187,49 @@ test('every registered catalog declares a protocol that has a normalizer and a p
     assert.equal(cat.defaultSourceClass, SOURCE_CLASSES.RESTRICTED,
       `${cat.key} must default closed; a catalog is not a licence`);
   }
+});
+
+/* ── licence resolution: STAC hides the real terms behind a link ─────────── */
+
+test('a positive open identification outranks a "proprietary" placeholder', () => {
+  // Exactly what NAIP and Landsat return: license "proprietary", with the real
+  // statement in the rel="license" link title.
+  const verdict = classifyLicenceFrom([
+    'proprietary',
+    'Public Domain',
+    'https://www.fsa.usda.gov/help/policies-and-links/'
+  ]);
+  assert.equal(verdict.licenceId, 'us-public-domain');
+  assert.equal(verdict.sourceClass, SOURCE_CLASSES.PUBLIC_OPEN);
+  assert.equal(verdict.persistence, PERSISTENCE.PERSISTENT);
+});
+
+test('Copernicus programme terms are recognised as open', () => {
+  assert.equal(classifyLicenceFrom(['proprietary', 'Copernicus Sentinel data terms']).licenceId, 'copernicus');
+  assert.equal(classifyLicenceFrom(['proprietary', 'Copernicus DEM License']).sourceClass, SOURCE_CLASSES.PUBLIC_OPEN);
+});
+
+test('with nothing open identified, an explicit closed statement still beats silence', () => {
+  const verdict = classifyLicenceFrom(['proprietary', '', null]);
+  assert.equal(verdict.licenceId, 'proprietary');
+  assert.equal(verdict.recognised, true, 'the reason must survive rather than degrading to unknown');
+  assert.equal(verdict.persistence, PERSISTENCE.NONE);
+});
+
+test('resolution never invents permission: unrecognised evidence still fails closed', () => {
+  const verdict = classifyLicenceFrom(['see our website', 'contact us', 'terms apply']);
+  assert.equal(verdict.sourceClass, SOURCE_CLASSES.RESTRICTED);
+  assert.equal(verdict.recognised, false);
+});
+
+test('a STAC collection carrying a Public Domain licence link is retainable end to end', () => {
+  const cat = catalogByKey('planetary_computer');
+  const d = normalizeDataset(cat, {
+    ...stacCollection,
+    id: 'naip',
+    license: 'proprietary',
+    links: [{ rel: 'license', href: 'https://www.fsa.usda.gov/help/policies-and-links/', title: 'Public Domain' }]
+  });
+  assert.equal(d.licence.sourceClass, SOURCE_CLASSES.PUBLIC_OPEN);
+  assert.deepEqual(retainableFor([d]).map((x) => x.id), ['naip']);
 });
