@@ -33,15 +33,21 @@ async function getOrg(env, userId, requestedOrgId) {
   return rows[0];
 }
 
+/* Resolve the credential the ORG has configured for this platform. It was
+   bound to Instagram, so connecting a Facebook or Threads account always
+   came back with no credential and a 'disconnected' row — an account that
+   could never publish. security.js still decides which platforms may hold
+   a binding at all; this only stops assuming there is one. */
 async function configuredCredentialRef(env, orgId, platform, externalAccountId) {
-  if (String(platform || '').toLowerCase() !== 'instagram') return null;
-  const rows = await db(env, `org_channels?org_id=eq.${encodeURIComponent(orgId)}&channel=eq.instagram&enabled=eq.true&select=token_env,secret_id,account_id&limit=1`);
+  const name = String(platform || '').toLowerCase();
+  if (!name) return null;
+  const rows = await db(env, `org_channels?org_id=eq.${encodeURIComponent(orgId)}&channel=eq.${encodeURIComponent(name)}&enabled=eq.true&select=token_env,secret_id,account_id&limit=1`);
   const channel = rows?.[0] || null;
   if (!channel) return null;
   if (channel.account_id && String(channel.account_id) !== String(externalAccountId)) {
-    throw Object.assign(new Error('Instagram account id does not match the credential configured for this organization'), { status: 409 });
+    throw Object.assign(new Error(`${name} account id does not match the credential configured for this organization`), { status: 409 });
   }
-  return credentialRefForConfiguredChannel('instagram', channel);
+  return credentialRefForConfiguredChannel(name, channel);
 }
 
 async function ownedRow(env, table, id, orgId, select = '*') {
@@ -210,8 +216,9 @@ async function queuePublish(request, env, user) {
   const org = await getOrg(env, user.id, body.org_id);
   requireOrgRole(org, ['owner']);
   if (!body.account_id) throw Object.assign(new Error('account_id is required'), { status: 400 });
-  const account = await ownedRow(env, 'social_accounts', body.account_id, org.org_id, 'id');
+  const account = await ownedRow(env, 'social_accounts', body.account_id, org.org_id, 'id,platform');
   if (!account) throw Object.assign(new Error('Social account not found'), { status: 404 });
+  const platform = String(account.platform || 'instagram').toLowerCase();
   if (body.variant_id) {
     const variant = await ownedRow(env, 'social_variants', body.variant_id, org.org_id, 'id,campaign_id,output_asset_id,caption');
     if (!variant) throw Object.assign(new Error('Variant not found'), { status: 404 });
@@ -219,9 +226,21 @@ async function queuePublish(request, env, user) {
     body.video_asset_id ||= variant.output_asset_id;
     body.caption ||= variant.caption;
   }
-  if (!body.video_url && !body.video_asset_id) throw Object.assign(new Error('video_url, video_asset_id, or a ready variant is required'), { status: 400 });
-  const mode = body.publish_mode || 'trial';
-  if (!['trial', 'reel'].includes(mode)) throw Object.assign(new Error('publish_mode must be trial or reel'), { status: 400 });
+  /* Instagram's queue is reels, so it needs video. Facebook and Threads
+     take text on its own, and refusing a text post for having no video is
+     how a publishing plane ends up only able to say things with a camera. */
+  const hasMedia = Boolean(body.video_url || body.video_asset_id || body.image_url);
+  const hasWords = Boolean((body.caption && String(body.caption).trim()) || body.link);
+  let mode;
+  if (platform === 'instagram') {
+    if (!hasMedia) throw Object.assign(new Error('video_url, video_asset_id, or a ready variant is required'), { status: 400 });
+    mode = body.publish_mode || 'trial';
+    if (!['trial', 'reel'].includes(mode)) throw Object.assign(new Error('publish_mode must be trial or reel'), { status: 400 });
+  } else {
+    if (!hasMedia && !hasWords) throw Object.assign(new Error('a caption, link, image or video is required'), { status: 400 });
+    mode = body.publish_mode || 'post';
+    if (mode !== 'post') throw Object.assign(new Error('publish_mode must be post for this platform'), { status: 400 });
+  }
   return { publish_job: await insert(env, 'social_publish_jobs', {
     org_id: org.org_id,
     account_id: body.account_id,
@@ -230,8 +249,16 @@ async function queuePublish(request, env, user) {
     publish_mode: mode,
     scheduled_at: body.scheduled_at || new Date().toISOString(),
     state: 'queued',
-    dedupe_key: body.dedupe_key || `${body.account_id}:${body.variant_id || body.video_asset_id || body.video_url}:${body.scheduled_at || 'now'}:${mode}`,
-    payload: { video_url: body.video_url || null, video_asset_id: body.video_asset_id || null, caption: body.caption || '', share_to_feed: body.share_to_feed !== false, graduation_strategy: body.graduation_strategy || 'MANUAL' }
+    dedupe_key: body.dedupe_key || `${body.account_id}:${body.variant_id || body.video_asset_id || body.video_url || body.image_url || body.link || (body.caption || '').slice(0, 80)}:${body.scheduled_at || 'now'}:${mode}`,
+    payload: {
+      video_url: body.video_url || null,
+      video_asset_id: body.video_asset_id || null,
+      image_url: body.image_url || null,
+      link: body.link || null,
+      caption: body.caption || '',
+      share_to_feed: body.share_to_feed !== false,
+      graduation_strategy: body.graduation_strategy || 'MANUAL'
+    }
   }) };
 }
 

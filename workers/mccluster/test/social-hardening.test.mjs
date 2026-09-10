@@ -50,6 +50,40 @@ test('credential references cannot select arbitrary Worker secrets', () => {
   assert.equal(parseSocialCredentialRef('facebook', 'SOCIAL_IG_PRIMARY_ACCESS_TOKEN'), null);
 });
 
+test('each publishing platform gets its own credential pattern, and only its own', () => {
+  /* Widening the allowlist for Facebook and Threads must not let either
+     borrow the other's binding, reach Instagram's, or open the door for a
+     platform with no publisher. */
+  assert.deepEqual(
+    parseSocialCredentialRef('facebook', 'SOCIAL_FB_LEVEL3_ACCESS_TOKEN'),
+    { kind: 'env', name: 'SOCIAL_FB_LEVEL3_ACCESS_TOKEN' }
+  );
+  assert.deepEqual(
+    parseSocialCredentialRef('threads', 'env:SOCIAL_TH_LEVEL3_ACCESS_TOKEN'),
+    { kind: 'env', name: 'SOCIAL_TH_LEVEL3_ACCESS_TOKEN' }
+  );
+
+  // cross-platform borrowing
+  assert.equal(parseSocialCredentialRef('facebook', 'SOCIAL_TH_LEVEL3_ACCESS_TOKEN'), null);
+  assert.equal(parseSocialCredentialRef('threads', 'SOCIAL_FB_LEVEL3_ACCESS_TOKEN'), null);
+  assert.equal(parseSocialCredentialRef('instagram', 'SOCIAL_FB_LEVEL3_ACCESS_TOKEN'), null);
+
+  // arbitrary Worker secrets, on the new platforms too
+  assert.equal(parseSocialCredentialRef('facebook', 'SUPABASE_SERVICE_ROLE_KEY'), null);
+  assert.equal(parseSocialCredentialRef('threads', 'env:STRIPE_SECRET_KEY'), null);
+
+  // platforms that are registry-only hold no binding at all
+  for (const platform of ['x', 'bluesky', 'linkedin', 'slack', 'telegram', 'discord', 'whatsapp', 'site']) {
+    assert.equal(parseSocialCredentialRef(platform, 'SOCIAL_IG_PRIMARY_ACCESS_TOKEN'), null);
+    assert.equal(credentialRefForConfiguredChannel(platform, { token_env: 'SOCIAL_IG_PRIMARY_ACCESS_TOKEN', secret_id: null }), null);
+  }
+
+  assert.throws(
+    () => credentialRefForConfiguredChannel('facebook', { token_env: 'JNH_META_PAGE_TOKEN', secret_id: null }),
+    (error) => error.status === 500
+  );
+});
+
 test('account credential references are derived from configured org channels', () => {
   assert.equal(
     credentialRefForConfiguredChannel('instagram', { token_env: 'SOCIAL_IG_PRIMARY_ACCESS_TOKEN', secret_id: null }),

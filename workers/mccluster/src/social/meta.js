@@ -72,14 +72,15 @@ async function graphPost(env, path, token, params) {
 }
 
 async function tokenFor(env, account) {
-  if (!account?.org_id || String(account.platform || '').toLowerCase() !== 'instagram') return null;
-  const rows = await db(env, `org_channels?org_id=eq.${encodeURIComponent(account.org_id)}&channel=eq.instagram&enabled=eq.true&select=token_env,secret_id,account_id&limit=1`);
+  const platform = String(account?.platform || '').toLowerCase();
+  if (!account?.org_id || !platform) return null;
+  const rows = await db(env, `org_channels?org_id=eq.${encodeURIComponent(account.org_id)}&channel=eq.${encodeURIComponent(platform)}&enabled=eq.true&select=token_env,secret_id,account_id&limit=1`);
   const channel = rows?.[0] || null;
   if (!channel) return null;
   if (channel.account_id && String(channel.account_id) !== String(account.external_account_id)) return null;
 
-  const ref = credentialRefForConfiguredChannel('instagram', channel);
-  const parsed = parseSocialCredentialRef('instagram', ref);
+  const ref = credentialRefForConfiguredChannel(platform, channel);
+  const parsed = parseSocialCredentialRef(platform, ref);
   if (!parsed) return null;
   if (parsed.kind === 'env') return env[parsed.name] || null;
   if (parsed.kind === 'vault') {
@@ -97,6 +98,11 @@ async function resolveVideoUrl(env, job) {
   if (!job.payload?.video_asset_id) return null;
   const rows = await db(env, `media_assets?id=eq.${encodeURIComponent(job.payload.video_asset_id)}&org_id=eq.${encodeURIComponent(job.org_id)}&select=url&limit=1`);
   return rows?.[0]?.url || null;
+}
+
+async function accountForPlatform(env, job, platform) {
+  const rows = await db(env, `social_accounts?id=eq.${encodeURIComponent(job.account_id)}&org_id=eq.${encodeURIComponent(job.org_id)}&platform=eq.${encodeURIComponent(platform)}&select=*&limit=1`);
+  return rows?.[0] || null;
 }
 
 async function accountForJob(env, job) {
@@ -177,6 +183,133 @@ async function finishInstagramPublish(env, job, account, token) {
   return { state: 'published', media_id: published.id, post_id: post?.id || null };
 }
 
+/* ------------------------------------------------------------------
+   FACEBOOK PAGE
+   One shot, no container: a Page post is created and live in the same
+   call, unlike Instagram's create-then-publish. Which edge depends on
+   what is being posted, so the payload decides — video, then image,
+   then plain text or link. A Page post does not require media at all,
+   which is the whole reason this platform is worth having next to
+   Instagram: not everything a studio says is a reel.
+   ------------------------------------------------------------------ */
+async function publishFacebookPost(env, job, account, token) {
+  const page = encodeURIComponent(account.external_account_id);
+  const message = job.payload?.caption || '';
+  const videoUrl = await resolveVideoUrl(env, job);
+  const imageUrl = job.payload?.image_url || null;
+  const link = job.payload?.link || null;
+
+  let edge;
+  let params;
+  if (videoUrl) {
+    edge = `${page}/videos`;
+    params = { file_url: videoUrl, description: message };
+  } else if (imageUrl) {
+    edge = `${page}/photos`;
+    params = { url: imageUrl, caption: message };
+  } else {
+    if (!message && !link) throw new Error('A Facebook post needs a caption, a link, or media');
+    edge = `${page}/feed`;
+    params = link ? { message, link } : { message };
+  }
+
+  const published = await graphPost(env, edge, token, params);
+  const mediaId = published?.id || published?.post_id;
+  if (!mediaId) throw new Error('Meta did not return a published post id');
+  return recordPublished(env, job, account, String(mediaId), { edge });
+}
+
+/* ------------------------------------------------------------------
+   THREADS
+   Container then publish, like Instagram — but on graph.threads.net,
+   its own host with its own token. TEXT is a first-class media_type
+   here, so a text-only post is a normal post rather than a special case.
+   ------------------------------------------------------------------ */
+function threadsVersion(env) {
+  return env.THREADS_API_VERSION || 'v1.0';
+}
+
+async function threadsPost(env, path, token, params) {
+  const body = new URLSearchParams({ ...params, access_token: token });
+  const res = await fetch(`https://graph.threads.net/${threadsVersion(env)}/${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: body.toString()
+  });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+  if (!res.ok || data?.error) {
+    throw Object.assign(new Error(data?.error?.message || 'Threads API request failed'), { status: res.status, detail: data });
+  }
+  return data;
+}
+
+async function beginThreadsPublish(env, job, account, token) {
+  const user = encodeURIComponent(account.external_account_id);
+  const text = job.payload?.caption || '';
+  const videoUrl = await resolveVideoUrl(env, job);
+  const imageUrl = job.payload?.image_url || null;
+
+  const params = { text };
+  if (videoUrl) { params.media_type = 'VIDEO'; params.video_url = videoUrl; }
+  else if (imageUrl) { params.media_type = 'IMAGE'; params.image_url = imageUrl; }
+  else {
+    if (!text) throw new Error('A Threads post needs text or media');
+    params.media_type = 'TEXT';
+  }
+
+  const created = await threadsPost(env, `${user}/threads`, token, params);
+  if (!created?.id) throw new Error('Threads did not return a creation container id');
+  await patch(env, 'social_publish_jobs', job.id, {
+    state: 'processing',
+    external_creation_id: created.id,
+    attempts: Number(job.attempts || 0) + 1,
+    last_error: null,
+    lease_owner: null,
+    lease_expires_at: null
+  });
+  return { state: 'processing', creation_id: created.id };
+}
+
+async function finishThreadsPublish(env, job, account, token) {
+  if (!job.external_creation_id) throw new Error('Processing publish job is missing its creation container id');
+  const published = await threadsPost(env, `${encodeURIComponent(account.external_account_id)}/threads_publish`, token, {
+    creation_id: job.external_creation_id
+  });
+  if (!published?.id) throw new Error('Threads did not return a published media id');
+  return recordPublished(env, job, account, String(published.id), { threads_creation_id: job.external_creation_id });
+}
+
+/* Both new publishers finish the same way Instagram does, so the shape of
+   a published post is identical whichever network it went out on. */
+async function recordPublished(env, job, account, mediaId, metadata) {
+  await patch(env, 'social_publish_jobs', job.id, {
+    state: 'published',
+    external_media_id: mediaId,
+    attempts: Number(job.attempts || 0) + 1,
+    last_error: null,
+    lease_owner: null,
+    lease_expires_at: null
+  });
+
+  const existing = await db(env, `social_posts?account_id=eq.${encodeURIComponent(account.id)}&external_media_id=eq.${encodeURIComponent(mediaId)}&select=*&limit=1`);
+  const post = existing?.[0] || await insert(env, 'social_posts', {
+    org_id: job.org_id,
+    account_id: job.account_id,
+    campaign_id: job.campaign_id || null,
+    variant_id: job.variant_id || null,
+    publish_job_id: job.id,
+    external_media_id: mediaId,
+    publish_mode: job.publish_mode,
+    caption: job.payload?.caption || '',
+    published_at: new Date().toISOString(),
+    metadata: metadata || {}
+  });
+
+  return { state: 'published', media_id: mediaId, post_id: post?.id || null };
+}
+
 /* The claim RPC takes the next due job whatever platform it belongs to —
    it cannot know, the platform lives on the account row. So a job for any
    other network landed here, failed "Instagram account is missing", burned
@@ -200,13 +333,15 @@ async function anyAccountForJob(env, job) {
   return rows?.[0] || null;
 }
 
+const PUBLISHERS = new Set(['instagram', 'facebook', 'threads']);
+
 async function processPublishJob(env, job) {
   const claimed = await anyAccountForJob(env, job);
   const platform = String(claimed?.platform || '').toLowerCase();
-  if (claimed && platform !== 'instagram') return unpublishablePlatform(env, job, platform);
+  if (claimed && !PUBLISHERS.has(platform)) return unpublishablePlatform(env, job, platform);
 
-  const account = await accountForJob(env, job);
-  if (!account) throw new Error('Instagram account is missing or does not belong to this organization');
+  const account = await accountForPlatform(env, job, platform || 'instagram');
+  if (!account) throw new Error('Publishing account is missing or does not belong to this organization');
   const token = await tokenFor(env, account);
   if (!token) {
     await patch(env, 'social_publish_jobs', job.id, {
@@ -216,8 +351,18 @@ async function processPublishJob(env, job) {
     });
     return { state: job.state, deferred: true, reason: 'credential_secret_not_configured' };
   }
-  if (job.state === 'queued') return beginInstagramPublish(env, job, account, token);
-  if (job.state === 'processing') return finishInstagramPublish(env, job, account, token);
+  /* Facebook publishes in one call; Instagram and Threads both build a
+     container first and publish it on a later pass, which is why the job
+     has a state at all. */
+  if (platform === 'facebook') {
+    if (job.state === 'queued') return publishFacebookPost(env, job, account, token);
+  } else if (platform === 'threads') {
+    if (job.state === 'queued') return beginThreadsPublish(env, job, account, token);
+    if (job.state === 'processing') return finishThreadsPublish(env, job, account, token);
+  } else {
+    if (job.state === 'queued') return beginInstagramPublish(env, job, account, token);
+    if (job.state === 'processing') return finishInstagramPublish(env, job, account, token);
+  }
   await patch(env, 'social_publish_jobs', job.id, { lease_owner: null, lease_expires_at: null });
   return { state: job.state, skipped: true };
 }
