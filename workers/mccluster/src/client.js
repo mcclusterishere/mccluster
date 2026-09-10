@@ -1,4 +1,5 @@
 import { corsHeaders, fail, reply } from './lib/http.js';
+import { upsertConversation, notifyOwners } from './inquiries.js';
 
 const MAX_BODY_BYTES = 16 * 1024;
 const BOOKING_STATES = new Set([
@@ -173,7 +174,32 @@ async function publicInquiry(request, env) {
     body: row,
     prefer: 'return=representation'
   });
-  return reply(request, env, { ok: true, inquiry: rows?.[0] || null }, 201);
+  const lead = rows?.[0] || null;
+
+  /* A lead row on its own is a name in a list. The whole reason this
+     backend exists is that the client can ANSWER these people, so the
+     inquiry also opens a conversation on the `site` channel — contact,
+     thread, and the first inbound message — which is what the desk reads
+     and replies into. upsertConversation has existed since the inbox was
+     built; this path simply never called it, so every inquiry landed as a
+     lead with no thread behind it and nothing to reply to.
+
+     Threading and notifying must never cost the visitor their submission:
+     the lead is already written, so a failure here is logged and swallowed
+     rather than turned into an error on a form someone just sent. */
+  let thread = null;
+  try {
+    thread = await upsertConversation(env, org, { name, email, want: row.want, note: row.note, page: row.page });
+  } catch (error) {
+    console.error(JSON.stringify({ event: 'inquiry_thread_failed', org: org.slug, message: error?.message || String(error) }));
+  }
+  try {
+    await notifyOwners(env, org, { leadId: lead?.id, name, email, want: row.want || 'inquiry', note: row.note, page: row.page }, thread?.convId || null);
+  } catch (error) {
+    console.error(JSON.stringify({ event: 'inquiry_notify_failed', org: org.slug, message: error?.message || String(error) }));
+  }
+
+  return reply(request, env, { ok: true, inquiry: lead, thread_id: thread?.convId || null }, 201);
 }
 
 function authRedirectFor(request) {
@@ -388,6 +414,180 @@ async function listMedia(request, env, org) {
   return reply(request, env, { items: rows || [] });
 }
 
+/* ---------- threads ----------
+   A client can read the conversation behind an inquiry and answer it. The
+   reply is recorded as an outbound inbox_messages row whatever happens to
+   the email, because "what did I say to this person" is the client's
+   record, not the mail provider's.
+   ---------- */
+
+const RESEND_API = 'https://api.resend.com/emails';
+
+async function listThreads(request, env, org) {
+  const convs = await sbRequest(
+    env,
+    `inbox_conversations?org_id=eq.${encodeURIComponent(org.id)}&order=last_at.desc&limit=50&select=id,channel,kind,status,subject_ref,last_at,created_at,contact_id`
+  );
+  if (!convs?.length) return reply(request, env, { items: [] });
+
+  const contactIds = [...new Set(convs.map((c) => c.contact_id).filter(Boolean))];
+  const contacts = contactIds.length
+    ? await sbRequest(env, `inbox_contacts?id=in.(${contactIds.map(encodeURIComponent).join(',')})&select=id,display_name,email,handle`)
+    : [];
+  const byId = new Map((contacts || []).map((c) => [c.id, c]));
+
+  const items = [];
+  for (const conv of convs) {
+    const last = await sbRequest(
+      env,
+      `inbox_messages?conv_id=eq.${encodeURIComponent(conv.id)}&order=at.desc&limit=1&select=body,direction,at`
+    ).catch(() => []);
+    const contact = byId.get(conv.contact_id) || null;
+    items.push({
+      id: conv.id,
+      status: conv.status,
+      channel: conv.channel,
+      subject_ref: conv.subject_ref,
+      last_at: conv.last_at,
+      contact: contact ? { name: contact.display_name, email: contact.email, handle: contact.handle } : null,
+      last_message: last?.[0] || null
+    });
+  }
+  return reply(request, env, { items });
+}
+
+async function threadDetail(request, env, org, id) {
+  const convs = await sbRequest(
+    env,
+    `inbox_conversations?id=eq.${encodeURIComponent(id)}&org_id=eq.${encodeURIComponent(org.id)}&select=id,status,channel,subject_ref,last_at,contact_id&limit=1`
+  );
+  const conv = convs?.[0];
+  if (!conv) return fail(request, env, 'Conversation not found', 404);
+
+  const [messages, contacts] = await Promise.all([
+    sbRequest(env, `inbox_messages?conv_id=eq.${encodeURIComponent(conv.id)}&order=at.asc&limit=200&select=id,direction,author,body,state,error,at`),
+    conv.contact_id
+      ? sbRequest(env, `inbox_contacts?id=eq.${encodeURIComponent(conv.contact_id)}&select=display_name,email,handle&limit=1`)
+      : Promise.resolve([])
+  ]);
+
+  return reply(request, env, {
+    thread: {
+      id: conv.id,
+      status: conv.status,
+      channel: conv.channel,
+      subject_ref: conv.subject_ref,
+      last_at: conv.last_at,
+      contact: contacts?.[0] || null
+    },
+    messages: messages || []
+  });
+}
+
+async function replyToThread(request, env, member, id) {
+  const org = member.org;
+  const body = await jsonBody(request);
+  const text = clean(body.body, 4000);
+  if (!text) return fail(request, env, 'A reply body is required', 400);
+
+  const convs = await sbRequest(
+    env,
+    `inbox_conversations?id=eq.${encodeURIComponent(id)}&org_id=eq.${encodeURIComponent(org.id)}&select=id,contact_id,subject_ref&limit=1`
+  );
+  const conv = convs?.[0];
+  if (!conv) return fail(request, env, 'Conversation not found', 404);
+
+  const contacts = conv.contact_id
+    ? await sbRequest(env, `inbox_contacts?id=eq.${encodeURIComponent(conv.contact_id)}&select=display_name,email&limit=1`)
+    : [];
+  const to = contacts?.[0]?.email || null;
+  if (!to) return fail(request, env, 'This conversation has no email address to answer', 409);
+
+  let state = 'queued';
+  let error = null;
+
+  if (!env.RESEND_API_KEY) {
+    state = 'failed';
+    error = 'no email provider configured';
+  } else {
+    const senders = await sbRequest(
+      env,
+      `out_sender_identities?org_id=eq.${encodeURIComponent(org.id)}&provider=eq.resend&verified=is.true&select=from_name,from_email&limit=1`
+    ).catch(() => []);
+    const from = senders?.[0] || (env.NOTIFY_FROM ? { from_name: org.name || 'McCluster', from_email: env.NOTIFY_FROM } : null);
+    if (!from) {
+      state = 'failed';
+      error = 'no verified sender address for this client';
+    } else {
+      try {
+        const res = await fetch(RESEND_API, {
+          method: 'POST',
+          headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+          body: JSON.stringify({
+            from: `${from.from_name} <${from.from_email}>`,
+            to: [to],
+            reply_to: member.user.email || undefined,
+            subject: `Re: your enquiry with ${org.name}`,
+            text
+          })
+        });
+        if (res.ok) state = 'sent';
+        else { state = 'failed'; error = (await res.text()).slice(0, 500); }
+      } catch (sendError) {
+        state = 'failed';
+        error = String(sendError?.message || sendError).slice(0, 500);
+      }
+    }
+  }
+
+  /* Recorded either way. A client needs to see what they said and whether
+     it left the building — a reply that silently failed is the worst of
+     both worlds. */
+  const rows = await sbRequest(env, 'inbox_messages?select=id,direction,author,body,state,error,at', {
+    method: 'POST',
+    prefer: 'return=representation',
+    body: {
+      org_id: org.id,
+      conv_id: conv.id,
+      direction: 'out',
+      author: 'staff',
+      staff_id: member.user.id,
+      body: text,
+      state,
+      error,
+      meta: { to, via: 'client-desk' }
+    }
+  });
+
+  await sbRequest(env, `inbox_conversations?id=eq.${encodeURIComponent(conv.id)}`, {
+    method: 'PATCH',
+    prefer: 'return=minimal',
+    body: { last_at: new Date().toISOString(), status: 'open' }
+  }).catch(() => null);
+
+  await sbRequest(env, 'inbox_outbound', {
+    method: 'POST',
+    body: {
+      org_id: org.id,
+      conv_id: conv.id,
+      channel: 'email',
+      as_kind: 'reply',
+      target_id: to,
+      body: text,
+      state,
+      attempts: 1,
+      last_error: error,
+      sent_at: state === 'sent' ? new Date().toISOString() : null,
+      dedupe_key: `reply:${conv.id}:${Date.now()}`
+    }
+  }).catch(() => null);
+
+  if (state !== 'sent') {
+    return reply(request, env, { ok: false, message: rows?.[0] || null, delivery: { state, error } }, 502);
+  }
+  return reply(request, env, { ok: true, message: rows?.[0] || null, delivery: { state } }, 201);
+}
+
 export async function handleClientRequest(request, env) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -442,6 +642,11 @@ export async function handleClientRequest(request, env) {
     const response = await inquiryDetail(request, env, member.org, inquiryMatch[1]);
     if (response) return response;
   }
+  if (tail === 'threads' && request.method === 'GET') return listThreads(request, env, member.org);
+  const threadMatch = tail.match(/^threads\/([0-9a-f-]{36})$/i);
+  if (threadMatch && request.method === 'GET') return threadDetail(request, env, member.org, threadMatch[1]);
+  const replyMatch = tail.match(/^threads\/([0-9a-f-]{36})\/reply$/i);
+  if (replyMatch && request.method === 'POST') return replyToThread(request, env, member, replyMatch[1]);
   if (tail === 'contacts' && request.method === 'GET') return listContacts(request, env, member.org);
   if (tail === 'analytics' && request.method === 'GET') return analytics(request, env, member.org);
   if (tail === 'content' && request.method === 'GET') return getContent(request, env, member.org);
