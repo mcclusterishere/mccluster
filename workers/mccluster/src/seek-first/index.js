@@ -1,6 +1,6 @@
 import { fail, reply } from '../lib/http.js';
 import { adapterCapabilities, GeoAdapterError } from './adapters.js';
-import { AccessError, accessConfigured, verifyAccess } from './access.js';
+import { AccessError, accessConfigured, accessRequired, missingAccessBindings, verifyAccess } from './access.js';
 import { assertConsumable, effectiveEntitlement, entitlementCatalog, LANES, normalizeLane, sourceOrThrow } from './entitlements.js';
 import { executeProvider } from './gateway.js';
 import {
@@ -438,7 +438,9 @@ export default {
           service: SERVICE,
           mode: await schemaReady(env) ? 'live' : 'adapter-ready',
           adapter_gateway_ready: true,
-          edge_access_configured: accessConfigured(env)
+          edge_access_configured: accessConfigured(env),
+          edge_access_required: accessRequired(env),
+          edge_access_missing_bindings: missingAccessBindings(env)
         });
       }
 
@@ -495,6 +497,8 @@ export default {
           service: SERVICE,
           database_schema_ready: await schemaReady(env),
           edge_access_configured: accessConfigured(env),
+          edge_access_required: accessRequired(env),
+          edge_access_missing_bindings: missingAccessBindings(env),
           adapter_capabilities: adapterCapabilities(),
           readiness: readiness(env)
         });
@@ -826,7 +830,10 @@ export default {
       return fail(request, env, 'Spatial intelligence route not found', 404);
     } catch (error) {
       if (error instanceof AccessError) {
-        return fail(request, env, error.message, error.status, { code: error.code });
+        return fail(request, env, error.message, error.status, {
+          code: error.code,
+          ...(error.detail === null || error.detail === undefined ? {} : error.detail)
+        });
       }
       const status = Number(error?.status) || 500;
       return fail(

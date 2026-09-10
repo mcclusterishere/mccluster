@@ -114,12 +114,20 @@ export default {
          data and no credential of its own: everything it draws comes back from
          /v1/seek-first/*, which requires a McCluster house owner. Cloudflare Access,
          when SEEK_FIRST_ACCESS_TEAM_DOMAIN and SEEK_FIRST_ACCESS_AUD are set on the Worker,
-         is verified here so the shell itself stops being reachable too. */
+         is verified here so the shell itself stops being reachable too.
+
+         With SEEK_FIRST_ACCESS_REQUIRED="true" in wrangler.toml, losing those two
+         to a deploy makes this route 503 rather than quietly serve the shell. */
       if (path === '/internal/seek-first' && request.method === 'GET') {
         try {
           await verifyAccess(request, env);
         } catch (error) {
-          if (error instanceof AccessError) return fail(request, env, error.message, error.status, { code: error.code });
+          if (error instanceof AccessError) {
+            return fail(request, env, error.message, error.status, {
+              code: error.code,
+              ...(error.detail === null || error.detail === undefined ? {} : error.detail)
+            });
+          }
           throw error;
         }
         return new Response(SEEK_FIRST_CONSOLE_HTML, {

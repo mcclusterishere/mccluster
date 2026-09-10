@@ -25,13 +25,38 @@ ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
 META_GRAPH_API_VERSION = "v26.0"
 
+# ---------------------------------------------------------------------------
 # Cloudflare Access in front of the internal spatial console at /internal/seek-first.
-# Set BOTH (as [vars] here, or as secrets) to make the console shell itself
-# unreachable without a valid Access assertion. Leaving them unset keeps the
-# shell reachable but empty, because every byte of data behind it still needs a
-# McCluster house-owner token.
+#
+# READ THIS BEFORE SETTING THE TWO VALUES IN THE DASHBOARD.
+#
+# `wrangler deploy` uploads THIS [vars] block as the Worker's complete set of
+# plaintext bindings. A plaintext var added in the dashboard and missing from
+# here is deleted by the next deploy. Secrets (`wrangler secret put`) survive;
+# plaintext vars do not.
+#
+# So setting the two Access values in the dashboard and leaving them commented
+# out here means every deploy silently switches the edge lock back off.
+#
+# SEEK_FIRST_ACCESS_REQUIRED is the guard against that, and it works precisely
+# because it lives in this file: it survives the deploy that clears the values.
+# Set it to "true" once Access is actually working, and a wipe becomes a loud
+# 503 naming the missing binding instead of an open console.
+SEEK_FIRST_ACCESS_REQUIRED = "false"
+
+# Pick ONE of the two homes below for the values themselves, not the dashboard.
+#
+#   (a) here, in [vars] -- neither value is a credential. The team domain is a
+#       public hostname, and the AUD tag appears in every assertion Access
+#       issues. Committing them makes the deploy idempotent, which is the whole
+#       problem solved.
+#   (b) as secrets -- `wrangler secret put SEEK_FIRST_ACCESS_TEAM_DOMAIN`, same
+#       for SEEK_FIRST_ACCESS_AUD. Untouched by deploy. Use this if you would
+#       rather not have the AUD tag in git.
+#
 # SEEK_FIRST_ACCESS_TEAM_DOMAIN = "yourteam"   # or yourteam.cloudflareaccess.com
 # SEEK_FIRST_ACCESS_AUD = "<Access application AUD tag>"
+# ---------------------------------------------------------------------------
 
 # Secrets required in production (set with wrangler secret put, never commit values):
 # SUPABASE_URL

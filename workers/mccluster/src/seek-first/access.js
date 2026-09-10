@@ -5,9 +5,7 @@
 
     1. Cloudflare Access, verified here, in front of the console shell and the
        internal routes. Enabled by setting SEEK_FIRST_ACCESS_TEAM_DOMAIN and
-       SEEK_FIRST_ACCESS_AUD on the Worker. Until those exist this is a no-op, because
-       failing closed on an unconfigured edge would lock the owner out of their
-       own console with no way back in.
+       SEEK_FIRST_ACCESS_AUD on the Worker.
     2. McCluster house-owner authentication (Supabase bearer + org_members
        owner role), enforced by requireHouseOwner on every route that returns
        data or viewer credentials. That lock is NEVER optional.
@@ -15,22 +13,61 @@
   So an unconfigured Access means the console shell is reachable but empty:
   it renders a sign-in prompt and nothing else, because every byte of data and
   every viewer token behind it still needs the house-owner token.
+
+  THE DEPLOY WIPE, AND WHY THE FLAG EXISTS.
+
+  `wrangler deploy` uploads the [vars] block in wrangler.toml as the Worker's
+  COMPLETE set of plaintext bindings. Any plaintext var added in the dashboard
+  and absent from the toml is removed by the next deploy. Secrets set with
+  `wrangler secret put` are untouched; plaintext vars are not.
+
+  SEEK_FIRST_ACCESS_TEAM_DOMAIN and SEEK_FIRST_ACCESS_AUD are not credentials --
+  the team domain is a public hostname and the AUD tag appears in every
+  assertion Access issues -- so they are the kind of value an operator naturally
+  sets in the dashboard. Which meant every deploy silently switched the edge
+  lock off, and the only trace was a boolean on the health route that nobody
+  reads on a good day.
+
+  The fix is not to make the code cleverer. It is to notice that the values and
+  the requirement do not have to live in the same place. SEEK_FIRST_ACCESS_REQUIRED
+  is declared in the toml's [vars] block, so it survives the very deploy that
+  wipes the values. Once the owner sets it, losing the config stops being a
+  silent unlock and becomes a loud 503 that names the missing binding.
+
+  Unset, the old behaviour stands: an unconfigured edge is a no-op, because
+  failing closed before Access is set up would lock the owner out of their own
+  console with no way back in. That is a bootstrap concession, and the flag is
+  how it gets retired the moment it is no longer needed.
 */
 
 const JWKS_TTL_MS = 3600000;
 let jwksCache = { url: null, keys: null, fetchedAt: 0 };
 
 export class AccessError extends Error {
-  constructor(message, status = 403, code = 'access_denied') {
+  constructor(message, status = 403, code = 'access_denied', detail = null) {
     super(message);
     this.name = 'AccessError';
     this.status = status;
     this.code = code;
+    this.detail = detail;
   }
 }
 
 export function accessConfigured(env) {
   return Boolean(env?.SEEK_FIRST_ACCESS_TEAM_DOMAIN && env?.SEEK_FIRST_ACCESS_AUD);
+}
+
+/*
+  Declared in wrangler.toml so it outlives the deploy that clears the values it
+  guards. Anything other than an explicit "true" leaves the bootstrap no-op in
+  place -- a typo must not be what silences the lock.
+*/
+export function accessRequired(env) {
+  return String(env?.SEEK_FIRST_ACCESS_REQUIRED ?? '').trim().toLowerCase() === 'true';
+}
+
+export function missingAccessBindings(env) {
+  return ['SEEK_FIRST_ACCESS_TEAM_DOMAIN', 'SEEK_FIRST_ACCESS_AUD'].filter((name) => !env?.[name]);
 }
 
 function teamOrigin(env) {
@@ -78,7 +115,20 @@ function readToken(request) {
   a valid assertion, null when Access is not configured, and throws otherwise.
 */
 export async function verifyAccess(request, env) {
-  if (!accessConfigured(env)) return null;
+  if (!accessConfigured(env)) {
+    if (accessRequired(env)) {
+      const missing = missingAccessBindings(env);
+      throw new AccessError(
+        `Cloudflare Access is required but ${missing.join(' and ')} ${missing.length > 1 ? 'are' : 'is'} not set. `
+          + 'A wrangler deploy clears plaintext vars that are absent from wrangler.toml -- '
+          + 'restore them in the [vars] block or as Worker secrets.',
+        503,
+        'access_misconfigured',
+        { missing_bindings: missing }
+      );
+    }
+    return null;
+  }
 
   const token = readToken(request);
   if (!token) throw new AccessError('Cloudflare Access assertion is required', 401, 'access_assertion_missing');

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { accessConfigured, verifyAccess } from '../src/seek-first/access.js';
+import { accessConfigured, accessRequired, verifyAccess } from '../src/seek-first/access.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const consolePath = resolve(here, '..', 'src', 'seek-first', 'console.html');
@@ -139,4 +139,80 @@ test('the AIS Durable Object survives eviction and backs off', async () => {
   assert.match(source, /AIS_ROW_TTL_MS/, 'stale vessels must be pruned');
   assert.match(source, /payload\?\.error \|\| payload\?\.Error/, 'in-band AISStream errors must fail the connection');
   assert.doesNotMatch(source, /console\.(log|error)\([^)]*AISSTREAM_API_KEY/);
+});
+
+/*
+  The deploy wipe.
+
+  `wrangler deploy` uploads wrangler.toml's [vars] as the Worker's complete set
+  of plaintext bindings, so a dashboard-set var that is absent from the toml is
+  removed on the next ship. That is what kept switching the edge lock off, and
+  the only trace was a boolean on a health route nobody reads on a good day.
+
+  The flag survives the wipe because it lives in the toml. These tests are the
+  reason it stays that way.
+*/
+test('an unconfigured edge stays a no-op until the owner says otherwise', async () => {
+  const request = new Request('https://api.mccluster.org/internal/seek-first');
+
+  // Bootstrap: Access is not set up yet, and failing closed here would lock the
+  // owner out of their own console with no way back in.
+  assert.equal(await verifyAccess(request, {}), null);
+  assert.equal(await verifyAccess(request, { SEEK_FIRST_ACCESS_REQUIRED: 'false' }), null);
+});
+
+test('once Access is required, losing the config is a loud 503 that names the binding', async () => {
+  const request = new Request('https://api.mccluster.org/internal/seek-first');
+
+  await assert.rejects(
+    () => verifyAccess(request, { SEEK_FIRST_ACCESS_REQUIRED: 'true' }),
+    (error) => {
+      assert.equal(error.status, 503);
+      assert.equal(error.code, 'access_misconfigured');
+      assert.deepEqual(error.detail.missing_bindings, ['SEEK_FIRST_ACCESS_TEAM_DOMAIN', 'SEEK_FIRST_ACCESS_AUD']);
+      // The message has to say what happened, because the person reading it is
+      // looking at a console that worked ten minutes ago.
+      assert.match(error.message, /wrangler deploy clears plaintext vars/);
+      return true;
+    }
+  );
+
+  // A half-wipe names only the half that went missing.
+  await assert.rejects(
+    () => verifyAccess(request, { SEEK_FIRST_ACCESS_REQUIRED: 'true', SEEK_FIRST_ACCESS_TEAM_DOMAIN: 'mccluster' }),
+    (error) => {
+      assert.deepEqual(error.detail.missing_bindings, ['SEEK_FIRST_ACCESS_AUD']);
+      return true;
+    }
+  );
+});
+
+test('a typo in the flag does not silence the lock', async () => {
+  const request = new Request('https://api.mccluster.org/internal/seek-first');
+  // Only an explicit "true" arms it; anything else leaves the bootstrap no-op,
+  // so a mistyped flag never masquerades as a deliberate opt-out.
+  for (const value of ['TRUE', ' true ', 'yes', '1', 'True']) {
+    const armed = ['TRUE', ' true ', 'True'].includes(value);
+    const result = armed
+      ? await verifyAccess(request, { SEEK_FIRST_ACCESS_REQUIRED: value }).then(() => 'no-op', () => 'threw')
+      : await verifyAccess(request, { SEEK_FIRST_ACCESS_REQUIRED: value }).then(() => 'no-op', () => 'threw');
+    assert.equal(result, armed ? 'threw' : 'no-op', `SEEK_FIRST_ACCESS_REQUIRED=${JSON.stringify(value)}`);
+  }
+  assert.equal(accessRequired({ SEEK_FIRST_ACCESS_REQUIRED: 'yes' }), false);
+  assert.equal(accessRequired({ SEEK_FIRST_ACCESS_REQUIRED: '1' }), false);
+  assert.equal(accessRequired({ SEEK_FIRST_ACCESS_REQUIRED: ' TRUE ' }), true);
+});
+
+/*
+  The flag is only a guard if it is in the file that wrangler uploads. If it
+  ever moves to the dashboard it gets wiped by the same deploy it is supposed to
+  survive, and the whole mechanism is decorative.
+*/
+test('the flag is declared in wrangler.toml, where the deploy cannot reach it', async () => {
+  const toml = await readFile(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'wrangler.toml'), 'utf8');
+  const vars = toml.slice(toml.indexOf('[vars]'), toml.indexOf('[triggers]'));
+  assert.match(vars, /^SEEK_FIRST_ACCESS_REQUIRED = "(true|false)"$/m,
+    'SEEK_FIRST_ACCESS_REQUIRED must be an active [vars] entry, not a comment');
+  assert.match(toml, /wrangler deploy` uploads THIS \[vars\] block/,
+    'the reason has to stay next to the setting');
 });
