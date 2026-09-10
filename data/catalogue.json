@@ -13,7 +13,8 @@
    "length": "2:10",
    "available": true,
    "order": 1,
-   "no": 1
+   "no": 1,
+   "isrc": "QT6KV2600001"
   },
   {
    "slug": "runway-walk",
@@ -25,7 +26,8 @@
    "length": "1:55",
    "available": true,
    "order": 2,
-   "no": 2
+   "no": 2,
+   "isrc": "QT6KV2600002"
   },
   {
    "slug": "write-a-song",
@@ -37,7 +39,8 @@
    "length": "2:17",
    "available": true,
    "order": 3,
-   "no": 3
+   "no": 3,
+   "isrc": "QT6KV2600003"
   },
   {
    "slug": "here",
@@ -49,7 +52,8 @@
    "length": "1:36",
    "available": true,
    "order": 4,
-   "no": 4
+   "no": 4,
+   "isrc": "QT6KV2600004"
   },
   {
    "slug": "antisocial",
@@ -61,7 +65,8 @@
    "length": "2:57",
    "available": true,
    "order": 5,
-   "no": 5
+   "no": 5,
+   "isrc": "QT6KV2600005"
   },
   {
    "slug": "lightroom",
@@ -73,7 +78,8 @@
    "length": "2:12",
    "available": true,
    "order": 6,
-   "no": 6
+   "no": 6,
+   "isrc": "QT6KV2600006"
   },
   {
    "slug": "got-wifi",
@@ -84,18 +90,20 @@
    "length": "1:32",
    "available": true,
    "order": 6,
-   "no": 7
+   "no": 7,
+   "isrc": "QT6KV2600007"
   },
   {
    "slug": "environmental-injustice",
    "title": "Environmental Injustice",
-   "credit": "ft. Ocho & Evangelist Angel · the Equity Uprise anthem",
+   "credit": "ft. Ocho & Evangelist Angel \u00b7 the Equity Uprise anthem",
    "album": "Equity Uprise",
    "page": "album.html",
    "length": "2:43",
    "available": true,
    "order": 7,
-   "no": 8
+   "no": 8,
+   "isrc": "QT6KV2600008"
   },
   {
    "slug": "please-set-me-free",
@@ -105,7 +113,8 @@
    "page": "album.html",
    "length": "3:22",
    "available": true,
-   "no": 9
+   "no": 9,
+   "isrc": "QT6KV2600010"
   },
   {
    "slug": "money-or-the-power",
@@ -115,18 +124,20 @@
    "page": "album.html",
    "length": "",
    "available": true,
-   "no": 10
+   "no": 10,
+   "isrc": "QT6KV2600011"
   },
   {
    "slug": "vaunt",
    "title": "Vaunt (Acoustic)",
-   "credit": "The Vaunt Private Flights jingle · guitar by Zakir · from the Vaunt EP (with \"Jet Pass\")",
-   "album": "Vaunt · EP",
+   "credit": "The Vaunt Private Flights jingle \u00b7 guitar by Zakir \u00b7 from the Vaunt EP (with \"Jet Pass\")",
+   "album": "Vaunt \u00b7 EP",
    "page": "album.html",
    "length": "1:32",
    "available": true,
    "order": 8,
-   "no": 11
+   "no": 11,
+   "isrc": "QT6KV2600014"
   },
   {
    "slug": "dealer-plates",
@@ -137,7 +148,8 @@
    "length": "1:37",
    "available": true,
    "order": 9,
-   "no": 12
+   "no": 12,
+   "isrc": "QT6KV2600015"
   },
   {
    "slug": "dealer-plates-b",
@@ -148,18 +160,20 @@
    "length": "1:37",
    "available": true,
    "order": 10,
-   "no": 13
+   "no": 13,
+   "isrc": "QT6KV2600016"
   },
   {
    "slug": "upset",
    "title": "Upset",
-   "credit": "Hitman Halo × Raheem × Rahndrx",
+   "credit": "Hitman Halo \u00d7 Raheem \u00d7 Rahndrx",
    "album": "Singles",
    "page": "album.html",
    "length": "3:04",
    "available": true,
    "order": 11,
-   "no": 14
+   "no": 14,
+   "isrc": "QT6KV2600017"
   }
  ]
 }
