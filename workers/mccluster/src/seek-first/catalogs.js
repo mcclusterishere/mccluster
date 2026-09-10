@@ -36,7 +36,9 @@ export const CATALOG_PROTOCOLS = Object.freeze({
   DATACITE: 'datacite',
   OPENAIRE: 'openaire',
   ZENODO: 'zenodo',
-  DATAVERSE: 'dataverse'
+  DATAVERSE: 'dataverse',
+  ARCGIS_HUB: 'arcgis-hub',
+  OPENDATASOFT: 'opendatasoft'
 });
 
 function catalog({
@@ -130,6 +132,24 @@ export const CATALOGS = Object.freeze([
   }),
 
   // Research data. These are where the volume actually is.
+  catalog({
+    key: 'arcgis_hub',
+    name: 'ArcGIS Hub (government GIS layers)',
+    protocol: CATALOG_PROTOCOLS.ARCGIS_HUB,
+    endpoint: 'https://opendata.arcgis.com/api/v3/datasets',
+    homepage: 'https://hub.arcgis.com',
+    attribution: 'Esri ArcGIS Hub open data',
+    pageSize: 100
+  }),
+  catalog({
+    key: 'opendatasoft',
+    name: 'OpenDataSoft federated catalog',
+    protocol: CATALOG_PROTOCOLS.OPENDATASOFT,
+    endpoint: 'https://data.opendatasoft.com/api/explore/v2.1/catalog/datasets',
+    homepage: 'https://data.opendatasoft.com',
+    attribution: 'OpenDataSoft federated portals',
+    pageSize: 100
+  }),
   catalog({
     key: 'datacite',
     name: 'DataCite (global dataset DOI registry)',
@@ -478,6 +498,50 @@ function normalizeDataverse(raw, cat) {
   });
 }
 
+function normalizeArcgis(raw, cat) {
+  const a = raw?.attributes ?? {};
+  // extent is an envelope: [[minx, miny], [maxx, maxy]]
+  const c = a.extent?.coordinates;
+  const bbox = Array.isArray(c) && c.length === 2 && Array.isArray(c[0]) && Array.isArray(c[1])
+    ? [Number(c[0][0]), Number(c[0][1]), Number(c[1][0]), Number(c[1][1])]
+    : null;
+  return descriptor({
+    catalogKey: cat.key,
+    protocol: cat.protocol,
+    id: raw?.id,
+    title: text(a.name),
+    // Hub descriptions are HTML fragments; strip tags so this stays readable.
+    description: text(String(a.description ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' '), { max: 1200 }),
+    publisher: text(a.source) ?? text(a.owner),
+    licence: classifyLicenceFrom([text(a.license), text(a.licenseInfo)]),
+    // Hub timestamps are epoch milliseconds, not ISO strings.
+    updatedAt: isoOrNull(typeof a.modified === 'number' ? a.modified : a.modified),
+    issuedAt: isoOrNull(typeof a.created === 'number' ? a.created : a.created),
+    bbox: bbox && bbox.every(Number.isFinite) ? bbox : null,
+    landingUrl: raw?.links?.self ?? null,
+    keywords: Array.isArray(a.tags) ? a.tags : []
+  });
+}
+
+function normalizeOpenDataSoft(raw, cat) {
+  const m = raw?.metas?.default ?? {};
+  const bbox = Array.isArray(m.bbox) && m.bbox.length >= 4 ? m.bbox.slice(0, 4).map(Number) : null;
+  return descriptor({
+    catalogKey: cat.key,
+    protocol: cat.protocol,
+    id: raw?.dataset_id ?? raw?.dataset_uid,
+    title: text(m.title),
+    description: text(String(m.description ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' '), { max: 1200 }),
+    publisher: text(m.publisher),
+    licence: classifyLicenceFrom([text(m.license), text(m.license_url), text(m.attributions)]),
+    updatedAt: isoOrNull(m.modified),
+    issuedAt: isoOrNull(m.data_processed),
+    bbox: bbox && bbox.every(Number.isFinite) ? bbox : null,
+    landingUrl: raw?.dataset_id ? `https://data.opendatasoft.com/explore/dataset/${raw.dataset_id}/` : null,
+    keywords: Array.isArray(m.keyword) ? m.keyword : []
+  });
+}
+
 const NORMALIZERS = Object.freeze({
   [CATALOG_PROTOCOLS.EU_HUB]: normalizeEuHub,
   [CATALOG_PROTOCOLS.SOCRATA]: normalizeSocrata,
@@ -486,7 +550,9 @@ const NORMALIZERS = Object.freeze({
   [CATALOG_PROTOCOLS.DATACITE]: normalizeDataCite,
   [CATALOG_PROTOCOLS.OPENAIRE]: normalizeOpenAire,
   [CATALOG_PROTOCOLS.ZENODO]: normalizeZenodo,
-  [CATALOG_PROTOCOLS.DATAVERSE]: normalizeDataverse
+  [CATALOG_PROTOCOLS.DATAVERSE]: normalizeDataverse,
+  [CATALOG_PROTOCOLS.ARCGIS_HUB]: normalizeArcgis,
+  [CATALOG_PROTOCOLS.OPENDATASOFT]: normalizeOpenDataSoft
 });
 
 export function normalizeDataset(cat, raw) {
@@ -518,6 +584,10 @@ export function pageRequest(cat, { offset = 0, limit = null } = {}) {
       return { url: `${cat.endpoint}?size=${size}&page=${Math.floor(offset / size) + 1}` };
     case CATALOG_PROTOCOLS.DATAVERSE:
       return { url: `${cat.endpoint}?q=*&type=dataset&per_page=${size}&start=${offset}` };
+    case CATALOG_PROTOCOLS.ARCGIS_HUB:
+      return { url: `${cat.endpoint}?page%5Bsize%5D=${size}&page%5Bnumber%5D=${Math.floor(offset / size) + 1}` };
+    case CATALOG_PROTOCOLS.OPENDATASOFT:
+      return { url: `${cat.endpoint}?limit=${Math.min(size, 100)}&offset=${offset}` };
     default:
       throw new Error(`No page request for catalog protocol ${cat.protocol}`);
   }
@@ -546,6 +616,10 @@ export function extractPage(cat, body) {
       return { records: body?.hits?.hits ?? [], total: body?.hits?.total ?? null };
     case CATALOG_PROTOCOLS.DATAVERSE:
       return { records: body?.data?.items ?? [], total: body?.data?.total_count ?? null };
+    case CATALOG_PROTOCOLS.ARCGIS_HUB:
+      return { records: body?.data ?? [], total: body?.meta?.stats?.totalCount ?? null };
+    case CATALOG_PROTOCOLS.OPENDATASOFT:
+      return { records: body?.results ?? [], total: body?.total_count ?? null };
     default:
       throw new Error(`No page extractor for catalog protocol ${cat.protocol}`);
   }
