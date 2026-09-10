@@ -32,7 +32,11 @@ export const CATALOG_PROTOCOLS = Object.freeze({
   EU_HUB: 'eu-hub',
   SOCRATA: 'socrata',
   STAC: 'stac',
-  CKAN: 'ckan'
+  CKAN: 'ckan',
+  DATACITE: 'datacite',
+  OPENAIRE: 'openaire',
+  ZENODO: 'zenodo',
+  DATAVERSE: 'dataverse'
 });
 
 function catalog({
@@ -89,6 +93,77 @@ export const CATALOGS = Object.freeze([
     endpoint: 'https://earth-search.aws.element84.com/v1',
     homepage: 'https://earth-search.aws.element84.com',
     attribution: 'Element 84 Earth Search / AWS Open Data',
+    pageSize: 100
+  }),
+  // Every entry below speaks CKAN, so all of them cost zero new code.
+  catalog({
+    key: 'data_gov_uk',
+    name: 'data.gov.uk',
+    protocol: CATALOG_PROTOCOLS.CKAN,
+    endpoint: 'https://data.gov.uk/api/3/action',
+    homepage: 'https://data.gov.uk',
+    attribution: 'UK Government, data.gov.uk'
+  }),
+  catalog({
+    key: 'open_canada',
+    name: 'Open Government Canada',
+    protocol: CATALOG_PROTOCOLS.CKAN,
+    endpoint: 'https://open.canada.ca/data/en/api/3/action',
+    homepage: 'https://open.canada.ca',
+    attribution: 'Government of Canada Open Government'
+  }),
+  catalog({
+    key: 'un_hdx',
+    name: 'UN OCHA Humanitarian Data Exchange',
+    protocol: CATALOG_PROTOCOLS.CKAN,
+    endpoint: 'https://data.humdata.org/api/3/action',
+    homepage: 'https://data.humdata.org',
+    attribution: 'UN OCHA Humanitarian Data Exchange'
+  }),
+  catalog({
+    key: 'data_gov_bc',
+    name: 'British Columbia Data Catalogue',
+    protocol: CATALOG_PROTOCOLS.CKAN,
+    endpoint: 'https://catalogue.data.gov.bc.ca/api/3/action',
+    homepage: 'https://catalogue.data.gov.bc.ca',
+    attribution: 'Province of British Columbia'
+  }),
+
+  // Research data. These are where the volume actually is.
+  catalog({
+    key: 'datacite',
+    name: 'DataCite (global dataset DOI registry)',
+    protocol: CATALOG_PROTOCOLS.DATACITE,
+    endpoint: 'https://api.datacite.org/dois',
+    homepage: 'https://datacite.org',
+    attribution: 'DataCite DOI registry',
+    pageSize: 100
+  }),
+  catalog({
+    key: 'openaire',
+    name: 'OpenAIRE research graph',
+    protocol: CATALOG_PROTOCOLS.OPENAIRE,
+    endpoint: 'https://api.openaire.eu/search/datasets',
+    homepage: 'https://explore.openaire.eu',
+    attribution: 'OpenAIRE research graph',
+    pageSize: 50
+  }),
+  catalog({
+    key: 'zenodo',
+    name: 'Zenodo (CERN)',
+    protocol: CATALOG_PROTOCOLS.ZENODO,
+    endpoint: 'https://zenodo.org/api/records',
+    homepage: 'https://zenodo.org',
+    attribution: 'Zenodo, operated by CERN',
+    pageSize: 100
+  }),
+  catalog({
+    key: 'harvard_dataverse',
+    name: 'Harvard Dataverse',
+    protocol: CATALOG_PROTOCOLS.DATAVERSE,
+    endpoint: 'https://dataverse.harvard.edu/api/search',
+    homepage: 'https://dataverse.harvard.edu',
+    attribution: 'Harvard Dataverse',
     pageSize: 100
   }),
   catalog({
@@ -330,11 +405,88 @@ function normalizeCkan(raw, cat) {
   });
 }
 
+function normalizeDataCite(raw, cat) {
+  const a = raw?.attributes ?? {};
+  return descriptor({
+    catalogKey: cat.key,
+    protocol: cat.protocol,
+    id: raw?.id ?? a.doi,
+    title: text(a.titles?.[0]?.title),
+    description: text(a.descriptions?.[0]?.description, { max: 1200 }),
+    publisher: text(a.publisher?.name ?? a.publisher),
+    licence: classifyLicenceFrom([
+      text(a.rightsList?.[0]?.rights),
+      text(a.rightsList?.[0]?.rightsIdentifier),
+      text(a.rightsList?.[0]?.rightsUri)
+    ]),
+    updatedAt: isoOrNull(a.updated),
+    issuedAt: isoOrNull(a.created ?? a.registered),
+    landingUrl: text(a.url) ?? (a.doi ? `https://doi.org/${a.doi}` : null),
+    keywords: Array.isArray(a.subjects) ? a.subjects.map((x) => text(x?.subject)).filter(Boolean) : []
+  });
+}
+
+function normalizeOpenAire(raw, cat) {
+  const meta = raw?.metadata?.['oaf:entity']?.['oaf:result'] ?? raw ?? {};
+  const pick = (v) => (Array.isArray(v) ? v[0] : v);
+  const val = (v) => text(pick(v)?.$ ?? pick(v));
+  return descriptor({
+    catalogKey: cat.key,
+    protocol: cat.protocol,
+    id: val(meta.originalId) ?? val(meta.objIdentifier) ?? raw?.header?.['dri:objIdentifier']?.$,
+    title: val(meta.title),
+    description: val(meta.description),
+    publisher: val(meta.publisher),
+    licence: classifyLicenceFrom([val(meta.bestaccessright?.['@classname']), val(meta.license), val(meta.rights)]),
+    issuedAt: isoOrNull(val(meta.dateofacceptance)),
+    keywords: []
+  });
+}
+
+function normalizeZenodo(raw, cat) {
+  const meta = raw?.metadata ?? {};
+  return descriptor({
+    catalogKey: cat.key,
+    protocol: cat.protocol,
+    id: raw?.id ?? raw?.doi,
+    title: text(raw?.title ?? meta.title),
+    description: text(meta.description, { max: 1200 }),
+    publisher: text(meta.creators?.[0]?.affiliation) ?? 'Zenodo',
+    licence: classifyLicenceFrom([
+      text(meta.license?.id), text(meta.license), text(raw?.rights?.[0]?.title)
+    ]),
+    updatedAt: isoOrNull(raw?.updated),
+    issuedAt: isoOrNull(meta.publication_date ?? raw?.created),
+    landingUrl: text(raw?.links?.self_html) ?? (raw?.doi ? `https://doi.org/${raw.doi}` : null),
+    keywords: Array.isArray(meta.keywords) ? meta.keywords : []
+  });
+}
+
+function normalizeDataverse(raw, cat) {
+  return descriptor({
+    catalogKey: cat.key,
+    protocol: cat.protocol,
+    id: raw?.global_id ?? raw?.entity_id,
+    title: text(raw?.name),
+    description: text(raw?.description, { max: 1200 }),
+    publisher: text(raw?.publisher),
+    licence: classifyLicenceFrom([text(raw?.license), text(raw?.storageIdentifier && null)]),
+    updatedAt: isoOrNull(raw?.updatedAt),
+    issuedAt: isoOrNull(raw?.published_at ?? raw?.createdAt),
+    landingUrl: text(raw?.url),
+    keywords: Array.isArray(raw?.subjects) ? raw.subjects : []
+  });
+}
+
 const NORMALIZERS = Object.freeze({
   [CATALOG_PROTOCOLS.EU_HUB]: normalizeEuHub,
   [CATALOG_PROTOCOLS.SOCRATA]: normalizeSocrata,
   [CATALOG_PROTOCOLS.STAC]: normalizeStac,
-  [CATALOG_PROTOCOLS.CKAN]: normalizeCkan
+  [CATALOG_PROTOCOLS.CKAN]: normalizeCkan,
+  [CATALOG_PROTOCOLS.DATACITE]: normalizeDataCite,
+  [CATALOG_PROTOCOLS.OPENAIRE]: normalizeOpenAire,
+  [CATALOG_PROTOCOLS.ZENODO]: normalizeZenodo,
+  [CATALOG_PROTOCOLS.DATAVERSE]: normalizeDataverse
 });
 
 export function normalizeDataset(cat, raw) {
@@ -358,6 +510,14 @@ export function pageRequest(cat, { offset = 0, limit = null } = {}) {
       return { url: `${cat.endpoint}/collections` };
     case CATALOG_PROTOCOLS.CKAN:
       return { url: `${cat.endpoint}/package_search?rows=${size}&start=${offset}` };
+    case CATALOG_PROTOCOLS.DATACITE:
+      return { url: `${cat.endpoint}?resource-type-id=dataset&page%5Bsize%5D=${size}&page%5Bnumber%5D=${Math.floor(offset / size) + 1}` };
+    case CATALOG_PROTOCOLS.OPENAIRE:
+      return { url: `${cat.endpoint}?size=${size}&page=${Math.floor(offset / size)}&format=json` };
+    case CATALOG_PROTOCOLS.ZENODO:
+      return { url: `${cat.endpoint}?size=${size}&page=${Math.floor(offset / size) + 1}` };
+    case CATALOG_PROTOCOLS.DATAVERSE:
+      return { url: `${cat.endpoint}?q=*&type=dataset&per_page=${size}&start=${offset}` };
     default:
       throw new Error(`No page request for catalog protocol ${cat.protocol}`);
   }
@@ -373,6 +533,19 @@ export function extractPage(cat, body) {
       return { records: body?.collections ?? [], total: (body?.collections ?? []).length };
     case CATALOG_PROTOCOLS.CKAN:
       return { records: body?.result?.results ?? [], total: body?.result?.count ?? null };
+    case CATALOG_PROTOCOLS.DATACITE:
+      return { records: body?.data ?? [], total: body?.meta?.total ?? null };
+    case CATALOG_PROTOCOLS.OPENAIRE: {
+      const results = body?.response?.results?.result ?? [];
+      return {
+        records: Array.isArray(results) ? results : [results],
+        total: Number(body?.response?.header?.total?.$ ?? body?.response?.header?.total) || null
+      };
+    }
+    case CATALOG_PROTOCOLS.ZENODO:
+      return { records: body?.hits?.hits ?? [], total: body?.hits?.total ?? null };
+    case CATALOG_PROTOCOLS.DATAVERSE:
+      return { records: body?.data?.items ?? [], total: body?.data?.total_count ?? null };
     default:
       throw new Error(`No page extractor for catalog protocol ${cat.protocol}`);
   }
