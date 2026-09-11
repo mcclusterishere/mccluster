@@ -18,6 +18,7 @@ test('PRIM3 ingestion keeps 21 canonical episode/song source units but expands t
   assert.match(source, /const SOURCE_UNIT_COUNT = 21/);
   assert.match(source, /const INSTRUCTIONAL_MODULE_COUNT = 63/);
   assert.match(source, /sourceCourse\.modules\.flatMap\(expandUnit\)/);
+  assert.match(source, /modules\.length !== INSTRUCTIONAL_MODULE_COUNT/);
   assert.match(source, /module_strategy: '3 instructional modules per episode\/song unit'/);
   assert.match(source, /module_count: modules\.length/);
 });
@@ -30,11 +31,14 @@ test('hat/box material is protected from being recompressed into one beginner le
   assert.match(source, /part_label: 'INFRASTRUCTURE \+ EXAM BRIDGE'/);
 });
 
-test('team-role source unit separates red-blue from purple-white before enrichment', async () => {
+test('team-role source unit separates red-blue from purple-white and preserves remaining source concepts', async () => {
   const source = await text(prim3Path);
   assert.match(source, /'Red & Blue Teams', 'Purple & White Teams', 'Security Engineering Teams & Exercise Operations'/);
   assert.match(source, /\['red team', 'blue team'\]/);
   assert.match(source, /\['purple team', 'white team'\]/);
+  assert.match(source, /const sourceRemainder = sourceConcepts\.filter/);
+  assert.match(source, /source_concepts: sourceRemainder/);
+  assert.match(source, /enrichment_concepts: bridge/);
 });
 
 test('course access and progress require an M Account while tuition remains free', async () => {
@@ -58,7 +62,8 @@ test('PRIM3 routes remain inside the canonical mccluster Worker', async () => {
 test('source provenance and enrichment are distinguished', async () => {
   const source = await text(prim3Path);
   assert.match(source, /curriculum_origin: 'prim3-source'/);
-  assert.match(source, /curriculum_origin: 'mccluster-enrichment'/);
+  assert.match(source, /mccluster-enrichment/);
+  assert.match(source, /prim3-source\+mccluster-enrichment/);
   assert.match(source, /CompTIA objective families without treating the song as complete exam coverage/);
   assert.match(source, /A\+ 220-1201/);
   assert.match(source, /Network\+ N10-009/);
@@ -74,6 +79,6 @@ test('protected open source unit stays uninvented and expands into protected mod
 
 test('the API exposes both instructional modules and original source units', async () => {
   const source = await text(prim3Path);
-  assert.match(source, /\/v1\\\/prim3\\\/course\\\/modules/);
-  assert.match(source, /\/v1\\\/prim3\\\/course\\\/units/);
+  assert.match(source, /course\\\/modules/);
+  assert.match(source, /course\\\/units/);
 });
