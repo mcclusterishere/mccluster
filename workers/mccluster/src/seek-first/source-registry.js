@@ -81,6 +81,37 @@ export const SOURCES = Object.freeze([
   source({ key: 'nominatim', name: 'OpenStreetMap Nominatim', capabilities: ['reverse-geocoding', 'place-labels'], adapter: 'nominatim', persistence: PERSISTENCE.TRANSIENT, upstream: 'https://nominatim.openstreetmap.org', attribution: '© OpenStreetMap contributors' }),
   source({ key: 'gdelt', name: 'GDELT Project DOC 2.0', capabilities: ['regional-news', 'events', 'headlines'], adapter: 'gdelt', persistence: PERSISTENCE.TRANSIENT, upstream: 'https://api.gdeltproject.org', attribution: 'GDELT Project' }),
 
+  // Infrastructure sources with licensing lanes that must not be silently mixed.
+  // PeeringDB public API acceptable-use restrictions make NONPROFIT the safe
+  // default for Halo until separate commercial terms are obtained. Provider
+  // facility coordinates are useful operational context, not surveyed truth.
+  source({
+    key: 'peeringdb',
+    name: 'PeeringDB',
+    sourceClass: SOURCE_CLASSES.NONPROFIT,
+    optionalCredentialEnv: ['PEERINGDB_API_KEY'],
+    capabilities: ['internet-facilities', 'interconnection', 'datacenters'],
+    lane: 'NONPROFIT',
+    adapter: 'peeringdb',
+    persistence: PERSISTENCE.TRANSIENT,
+    upstream: 'https://www.peeringdb.com',
+    attribution: 'PeeringDB'
+  }),
+  // RIPE Atlas public probe data is exposed here only through the academic lane.
+  // Its published probe coordinates are deliberately privacy-obfuscated; the
+  // adapter preserves that precision/confidence metadata on every row.
+  source({
+    key: 'ripe_atlas',
+    name: 'RIPE Atlas',
+    sourceClass: SOURCE_CLASSES.ACADEMIC,
+    capabilities: ['network-probes', 'anchors', 'latency-measurement-context'],
+    lane: 'ACADEMIC',
+    adapter: 'ripe_atlas',
+    persistence: PERSISTENCE.TRANSIENT,
+    upstream: 'https://atlas.ripe.net',
+    attribution: 'RIPE Atlas — RIPE NCC'
+  }),
+
   // Authenticated/restricted lanes.
   source({ key: 'nasa_firms', name: 'NASA FIRMS Active Fires', credentialEnv: ['FIRMS_MAP_KEY'], capabilities: ['active-fires', 'thermal-anomalies'], adapter: 'nasa_firms', upstream: 'https://firms.modaps.eosdis.nasa.gov', attribution: 'NASA FIRMS' }),
   source({ key: 'copernicus', name: 'Copernicus Data Space Ecosystem', credentialEnv: ['COPERNICUS_CLIENT_ID', 'COPERNICUS_CLIENT_SECRET'], capabilities: ['sentinel-imagery', 'stac', 'earth-observation'], adapter: 'copernicus', upstream: 'https://catalogue.dataspace.copernicus.eu' }),
@@ -88,7 +119,7 @@ export const SOURCES = Object.freeze([
   source({ key: 'opensky_research', name: 'OpenSky Network Research', sourceClass: SOURCE_CLASSES.ACADEMIC, credentialEnv: ['OPENSKY_CLIENT_ID', 'OPENSKY_CLIENT_SECRET'], capabilities: ['aircraft', 'flight-history'], lane: 'SCSU_RESEARCH', adapter: 'opensky', persistence: PERSISTENCE.TRANSIENT, upstream: 'https://opensky-network.org', attribution: 'OpenSky Network' }),
   source({ key: 'tomtom', name: 'TomTom Traffic', sourceClass: SOURCE_CLASSES.COMMERCIAL, credentialEnv: ['TOMTOM_API_KEY'], capabilities: ['traffic', 'flow-segments', 'flow-tiles', 'routing'], lane: 'COMMERCIAL', adapter: 'tomtom', persistence: PERSISTENCE.TRANSIENT, upstream: 'https://api.tomtom.com', attribution: 'Traffic flow data © TomTom' }),
   source({ key: 'aisstream', name: 'AISStream', sourceClass: SOURCE_CLASSES.COMMERCIAL, credentialEnv: ['AISSTREAM_API_KEY'], capabilities: ['vessels', 'ais'], lane: 'COMMERCIAL', adapter: 'aisstream', transport: 'websocket', persistence: PERSISTENCE.TRANSIENT, upstream: 'wss://stream.aisstream.io', attribution: 'AISStream.io' }),
-  source({ key: 'mapbox', name: 'Mapbox', sourceClass: SOURCE_CLASSES.COMMERCIAL, credentialEnv: ['MAPBOX_ACCESS_TOKEN'], capabilities: ['maps', 'tiles', 'routing', 'geocoding'], lane: 'COMMERCIAL_OR_NONPROFIT', adapter: 'mapbox', persistence: PERSISTENCE.TRANSIENT, upstream: 'https://api.mapbox.com' }),
+  source({ key: 'mapbox', name: 'Mapbox', sourceClass: SOURCE_CLASSES.COMMERCIAL, credentialEnv: ['MAPBOX_ACCESS_TOKEN'], capabilities: ['maps', 'tiles', 'routing', 'geocoding'], lane: 'COMMERCIAL_OR_NONPROFIT', adapter: 'mapbox', persistence: PERSISTENCE.TRANSIENT, upstream: 'https://api.mapbox.com', attribution: 'Mapbox' }),
   source({ key: 'google_maps', name: 'Google Maps Platform', sourceClass: SOURCE_CLASSES.COMMERCIAL, credentialEnv: ['GOOGLE_MAPS_API_KEY'], capabilities: ['maps', 'places', 'geocoding', '3d-tiles'], lane: 'COMMERCIAL_OR_NONPROFIT', adapter: 'google_maps', persistence: PERSISTENCE.NONE, upstream: 'https://maps.googleapis.com', attribution: 'Google Maps' }),
   source({ key: 'cesium_ion', name: 'Cesium ion', sourceClass: SOURCE_CLASSES.COMMERCIAL, credentialEnv: ['CESIUM_ION_TOKEN'], capabilities: ['3d-tiles', 'terrain', 'viewer-assets'], lane: 'VIEWER', adapter: 'cesium_ion', persistence: PERSISTENCE.NONE, upstream: 'https://api.cesium.com', attribution: 'Cesium ion' })
 ]);
