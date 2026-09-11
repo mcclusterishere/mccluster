@@ -12,7 +12,7 @@
   max-width: 42rem;
   margin: 0 auto;
   padding: clamp(4.4rem, 9vh, 6.2rem) clamp(1rem, 4vw, 1.6rem) 8.4rem;
-  min-height: 100svh;
+  min-height:100vh;min-height: 100svh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -66,11 +66,11 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  min-height: min(38rem, 62dvh);
+  min-height:min(38rem, 62vh);min-height: min(38rem, 62dvh);
 }
 .chatpage .dsk--inline {
   flex: 1 1 auto;
-  min-height: min(38rem, 62dvh);
+  min-height:min(38rem, 62vh);min-height: min(38rem, 62dvh);
   display: flex;
   flex-direction: column;
 }

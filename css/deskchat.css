@@ -176,7 +176,7 @@ html[data-theme="light"] .dsk__in::placeholder { color: rgba(26, 20, 13, 0.5); }
      it stops short of that on purpose, because the line underneath —
      "rather read than talk?" — is the promise that nobody is trapped in
      a chatbot, and a promise below the fold is not a promise. */
-  min-height: min(30rem, 58dvh);
+  min-height:min(30rem, 58vh);min-height: min(30rem, 58dvh);
   animation: none;
   border-radius: 18px;
 }
@@ -189,5 +189,5 @@ body.has-appbar .dsk--inline { bottom: auto; }
 }
 
 @media (min-width: 46rem) {
-  .dsk--inline { min-height: min(34rem, 58dvh); }
+  .dsk--inline { min-height:min(34rem, 58vh);min-height: min(34rem, 58dvh); }
 }

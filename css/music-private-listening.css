@@ -44,7 +44,7 @@ body.music-room--album .top__circle:hover{color:var(--pl-bone)!important;border-
 body.music-room--album .greet,body.music-room--album .greet__sub{display:none!important}
 
 /* Album opening: cover art as an object, title as editorial typography. */
-body.music-room--album .alb{position:relative;min-height:calc(100svh - 150px)!important;display:grid!important;grid-template-columns:minmax(330px,.82fr) minmax(0,1.18fr)!important;gap:clamp(52px,8vw,145px)!important;align-items:center!important;padding:0 0 clamp(70px,9vw,130px)!important;border-bottom:1px solid var(--pl-rule)!important}
+body.music-room--album .alb{position:relative;min-height:calc(100vh - 150px)!important;min-height:calc(100svh - 150px)!important;display:grid!important;grid-template-columns:minmax(330px,.82fr) minmax(0,1.18fr)!important;gap:clamp(52px,8vw,145px)!important;align-items:center!important;padding:0 0 clamp(70px,9vw,130px)!important;border-bottom:1px solid var(--pl-rule)!important}
 body.music-room--album .alb::before{content:"PRIVATE LISTENING · MCCLUSTER";position:absolute;right:0;top:0;color:rgba(241,237,229,.28);font:600 8px/1 var(--pl-ui);letter-spacing:.22em;text-transform:uppercase;pointer-events:none}
 body.music-room--album .alb__art{position:relative;width:100%!important;max-width:690px!important;justify-self:center!important;overflow:hidden!important;border-radius:2px!important;background:#0a0a09!important;box-shadow:0 60px 160px -70px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.07)!important}
 body.music-room--album .alb__art::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.055)}
@@ -126,7 +126,7 @@ body.music-room--album .now[data-on="1"]{transform:none!important}
 body.music-room--album .now__head{grid-column:1/-1!important;min-height:62px!important;padding:calc(env(safe-area-inset-top,0px) + 11px) 18px 11px!important;border-bottom:1px solid var(--pl-rule)!important;background:rgba(5,5,4,.82)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
 body.music-room--album .now__down{width:34px!important;height:34px!important;border:1px solid var(--pl-rule)!important;border-radius:3px!important;background:transparent!important;color:var(--pl-stone)!important}
 body.music-room--album .now__from{color:rgba(241,237,229,.42)!important;font-size:8px!important;font-weight:600!important;letter-spacing:.18em!important;text-transform:uppercase!important}
-body.music-room--album .now__art{grid-column:1!important;grid-row:2!important;width:100%!important;height:calc(100svh - 62px)!important;max-height:none!important;min-height:0!important;margin:0!important;border:0!important;border-right:1px solid var(--pl-rule)!important;border-radius:0!important;background:#080807!important;box-shadow:none!important}
+body.music-room--album .now__art{grid-column:1!important;grid-row:2!important;width:100%!important;height:calc(100vh - 62px)!important;height:calc(100svh - 62px)!important;max-height:none!important;min-height:0!important;margin:0!important;border:0!important;border-right:1px solid var(--pl-rule)!important;border-radius:0!important;background:#080807!important;box-shadow:none!important}
 body.music-room--album .now__art::after{display:none!important}
 body.music-room--album .now__film{opacity:.9!important;filter:saturate(.55) contrast(1.04) brightness(.88)!important}
 body.music-room--album .now__scrim{background:linear-gradient(180deg,rgba(5,5,4,.04),rgba(5,5,4,.12) 48%,rgba(5,5,4,.72) 100%)!important}
@@ -162,7 +162,7 @@ body.music-room--album .appbar__tab.is-active,body.music-room--album .appbar__ta
   body.music-room--album .feat{grid-auto-columns:minmax(275px,82vw)!important}
   body.music-room--album .now{display:block!important;overflow-y:auto!important;background:#050504!important}
   body.music-room--album .now__head{position:sticky!important;top:0!important;z-index:8!important}
-  body.music-room--album .now__art{width:100%!important;height:min(62svh,680px)!important;border-right:0!important;border-bottom:1px solid var(--pl-rule)!important}
+  body.music-room--album .now__art{width:100%!important;height:min(62vh,680px)!important;height:min(62svh,680px)!important;border-right:0!important;border-bottom:1px solid var(--pl-rule)!important}
   body.music-room--album .now__meta{padding:28px 20px 0!important}
   body.music-room--album .now__title{font-size:clamp(48px,14vw,78px)!important}
   body.music-room--album .now__deck{padding:28px 20px calc(env(safe-area-inset-bottom,0px) + 34px)!important}
@@ -186,7 +186,7 @@ body.music-room--album .appbar__tab.is-active,body.music-room--album .appbar__ta
   body.music-room--album .deckbar__row{padding:8px 9px 9px!important;gap:9px!important}
   body.music-room--album .deckbar__art{width:36px!important;height:36px!important}
   body.music-room--album .deckbar__lyr{display:none!important}
-  body.music-room--album .now__art{height:54svh!important}
+  body.music-room--album .now__art{height:54vh!important;height:54svh!important}
   body.music-room--album .now__lyr p{font-size:22px!important}
 }
 

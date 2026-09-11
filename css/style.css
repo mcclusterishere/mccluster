@@ -324,8 +324,8 @@ html[data-theme="light"] .sound-toggle{border-color:rgba(26,20,13,0.3)}
    of the aircraft, and it was being scrubbed away behind an opacity still
    climbing out of zero. The length here and the trigger's end distance are
    a pair: see PB_HANDOVER in js/main.js before changing either. */
-.services{position:relative;z-index:2;min-height:220svh;margin-top:-100svh}
-.services .command__sticky{position:sticky;top:0;height:100svh;opacity:0}
+.services{position:relative;z-index:2;min-height:220vh;min-height:220svh;margin-top:-100vh;margin-top:-100svh}
+.services .command__sticky{position:sticky;top:0;height:100vh;height:100svh;opacity:0}
 .services .command__count{display:none}
 .services .song-gate{display:none}
 .antiabout{bottom:clamp(2rem,7vh,4rem);max-width:52rem;pointer-events:auto;display:flex;flex-direction:column;gap:1rem}
@@ -446,11 +446,11 @@ html[data-theme="light"] .sound-toggle{border-color:rgba(26,20,13,0.3)}
 .nightroom .kicker{margin:0}
 /* The room keeps its own width but is capped to what is left of the viewport
    and scrolls inside itself rather than pushing the headline off screen. */
-.nightroom .lockroom{margin:0;width:min(46rem,100%);max-height:min(64svh,34rem);overflow:auto;-webkit-overflow-scrolling:touch;pointer-events:auto}
+.nightroom .lockroom{margin:0;width:min(46rem,100%);max-height:min(64vh,34rem);max-height:min(64svh,34rem);overflow:auto;-webkit-overflow-scrolling:touch;pointer-events:auto}
 .anchor-arrival{position:absolute;bottom:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none}
 @media (max-width:640px){
   .nightroom{justify-content:flex-start;padding-top:clamp(3.5rem,11vh,5rem)}
-  .nightroom .lockroom{max-height:min(58svh,30rem)}
+  .nightroom .lockroom{max-height:min(58vh,30rem);max-height:min(58svh,30rem)}
 }
 @media (prefers-reduced-motion:reduce){
   .nightroom{transition:none}
@@ -1699,7 +1699,7 @@ html.pt-out .pt-veil{transform:translateY(0);transition:transform .48s cubic-bez
 @media (prefers-reduced-motion:reduce){.book-huge,.book-huge__arrow,.book-huge::after{animation:none}
 .lo-offer.is-shown,.lo-offer.is-shown b{animation:none}
 }
-.hero__sticky,.command__sticky,.loadout__sticky{height:100dvh}
+.hero__sticky,.command__sticky,.loadout__sticky{height:100vh;height:100dvh}
 .sitenote{padding:clamp(3.2rem,10vh,5.5rem) 1.4rem}
 .sitenote__inner{position:relative;overflow:hidden;max-width:40rem;margin:0 auto;text-align:center;padding:1.8rem 1rem;background:repeating-linear-gradient(90deg,var(--ruby-hot) 0 12px,transparent 12px 26px) left top / 26px 3px repeat-x,repeating-linear-gradient(90deg,var(--ruby-hot) 0 12px,transparent 12px 26px) left bottom / 26px 3px repeat-x;animation:snMarch 0.8s linear infinite}
 @keyframes snMarch{to{background-position:26px top,26px bottom} }
@@ -1892,14 +1892,14 @@ html[data-theme="light"] .appbar__tab[data-appnav="home"] .appbar__m{content:url
 /* THE LENS. A native <dialog>, so the platform owns the focus trap, the
    inert page behind it, the Escape key and the backdrop. This sheet only
    has to say what the paper looks like once it is open. */
-.lens{width:fit-content;margin:auto;max-width:min(94vw,42rem);max-height:88dvh;padding:0;border:0;border-radius:16px;
+.lens{width:fit-content;margin:auto;max-width:min(94vw,42rem);max-height:88vh;max-height:88dvh;padding:0;border:0;border-radius:16px;
   background:var(--ink-2);color:var(--cream);overflow:visible;
   box-shadow:0 30px 90px rgba(0,0,0,0.7),0 0 0 1px rgba(232,200,119,0.45)}
 .lens[open]{animation:dockIn 0.3s cubic-bezier(0.2,0.9,0.2,1)}
 .lens::backdrop{background:rgba(5,4,3,0.86);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.lens__body{display:flex;flex-direction:column;max-height:88dvh;overflow:hidden;border-radius:16px}
+.lens__body{display:flex;flex-direction:column;max-height:88vh;max-height:88dvh;overflow:hidden;border-radius:16px}
 .lens__fig{display:flex;flex-direction:column;min-height:0;margin:0}
-.lens__img{display:block;width:100%;max-height:72dvh;min-height:0;object-fit:contain;background:#f4efe6}
+.lens__img{display:block;width:100%;max-height:72vh;max-height:72dvh;min-height:0;object-fit:contain;background:#f4efe6}
 .lens__cap{display:flex;align-items:baseline;gap:0.9rem;justify-content:space-between;flex-wrap:wrap;
   padding:0.85rem 1.05rem;font:600 0.84rem/1.5 var(--body);color:var(--cream-dim)}
 .lens__doc{color:var(--ruby-hot);font-weight:800;white-space:nowrap}
@@ -2162,7 +2162,7 @@ html[data-theme="light"] .leadsheet__card input,html[data-theme="light"] .leadsh
 .freq__ch.is-on{opacity:1;visibility:visible}
 .freq__vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.72) contrast(1.06)}
 .freq__grade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,7,.42),rgba(10,8,7,.18) 34%,rgba(10,8,7,.88) 82%),radial-gradient(90% 70% at 12% 100%,rgba(193,18,31,.34),transparent 62%)}
-.freq__body{position:relative;z-index:3;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:5rem clamp(1.2rem,6vw,5rem) clamp(12rem,26svh,16rem);max-width:60rem}
+.freq__body{position:relative;z-index:3;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:5rem clamp(1.2rem,6vw,5rem) clamp(12rem,26vh,16rem);padding:5rem clamp(1.2rem,6vw,5rem) clamp(12rem,26svh,16rem);max-width:60rem}
 .freq__band{font:800 .68rem/1 var(--body);letter-spacing:.42em;text-transform:uppercase;color:var(--ruby-hot);margin:0 0 .8rem}
 .freq__band span{color:rgba(244,239,230,.6);margin-left:.6em}
 .freq__name{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:clamp(4.4rem,18vw,11.5rem);line-height:.84;letter-spacing:.01em;color:#f4efe6;margin:0 0 .9rem;text-shadow:calc(var(--tear,0) * -14px) 0 rgba(229,56,59,.85),calc(var(--tear,0) * 14px) 0 rgba(244,239,230,.55)}
@@ -2199,7 +2199,7 @@ html[data-theme="light"] .leadsheet__card input,html[data-theme="light"] .leadsh
 42%{transform:scale(1,1);opacity:1}
 72%{transform:scale(1,70);opacity:.22}
 100%{transform:scale(1,140);opacity:0} }
-.freq__osd{position:absolute;top:clamp(1rem,4svh,2.4rem);right:clamp(1rem,4vw,2.6rem);z-index:6;pointer-events:none;font:800 clamp(.9rem,2.6vw,1.35rem)/1 var(--body);letter-spacing:.22em;text-transform:uppercase;color:#f4efe6;opacity:0;text-shadow:0 0 18px rgba(229,56,59,.8),1px 0 0 rgba(229,56,59,.85)}
+.freq__osd{position:absolute;top:clamp(1rem,4vh,2.4rem);top:clamp(1rem,4svh,2.4rem);right:clamp(1rem,4vw,2.6rem);z-index:6;pointer-events:none;font:800 clamp(.9rem,2.6vw,1.35rem)/1 var(--body);letter-spacing:.22em;text-transform:uppercase;color:#f4efe6;opacity:0;text-shadow:0 0 18px rgba(229,56,59,.8),1px 0 0 rgba(229,56,59,.85)}
 .freq__osd span{color:var(--ruby-hot);margin-left:.4em}
 .freq__osd.show{animation:freqOsd 1.7s steps(1) forwards}
 @keyframes freqOsd{0%{opacity:0} 4%{opacity:1} 9%{opacity:.25} 14%{opacity:1}
@@ -2230,7 +2230,7 @@ html[data-theme="light"] .brand__mark,html[data-theme="light"] .kicker__mark,htm
 .lcd.on{display:block}
 .lcd__scrim{position:absolute;inset:0;background:rgba(6,5,4,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .lcd__card{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,34rem);
-max-height:92svh;overflow:auto;background:#100c0b;color:var(--cream);
+max-height:92vh;max-height:92svh;overflow:auto;background:#100c0b;color:var(--cream);
 border:1px solid rgba(244,239,230,.16);border-bottom:0;border-radius:22px 22px 0 0;
 padding:1.5rem clamp(1.1rem,4vw,1.8rem) calc(1.5rem + env(safe-area-inset-bottom,0px));
 animation:lcdUp .42s cubic-bezier(.2,.7,.2,1)}
@@ -2274,7 +2274,7 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
    has actually used it, so it invites rather than nags.
    ============================================================ */
 .freq__dial {
-  height: clamp(116px, 19svh, 158px);
+  height:clamp(116px, 19vh, 158px);height: clamp(116px, 19svh, 158px);
   max-width: min(1000px, 94vw);
   border-radius: 22px;
   background: linear-gradient(180deg, rgba(244,239,230,.05), rgba(244,239,230,.02));
@@ -2795,7 +2795,7 @@ background:rgba(255,255,255,.75);color:#141009;border-color:rgba(20,16,12,.2)}
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   opacity: 0; transition: opacity .3s ease; }
 .gate.is-in { opacity: 1; }
-.gate__card { position: relative; width: min(34rem, 96vw); max-height: 92svh;
+.gate__card { position: relative; width: min(34rem, 96vw); max-height:92vh;max-height: 92svh;
   display: flex; flex-direction: column; border-radius: 24px; overflow: hidden;
   background: linear-gradient(180deg, rgba(24,18,16,.98), rgba(10,8,7,.99));
   box-shadow: inset 0 0 0 1px rgba(244,239,230,.16), 0 40px 100px -30px rgba(0,0,0,.95);
@@ -3701,7 +3701,7 @@ body.eco-locked{overflow:hidden}
 .ecomodal[hidden]{display:none}
 .ecomodal__bg{position:absolute;inset:0;background:rgba(5,4,3,0.88);
   backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
-.ecomodal__card{position:relative;width:min(94vw,40rem);max-height:88dvh;overflow:auto;
+.ecomodal__card{position:relative;width:min(94vw,40rem);max-height:88vh;max-height:88dvh;overflow:auto;
   background:var(--ink-2);border:1px solid rgba(232,200,119,0.4);border-radius:18px;
   padding:clamp(1.4rem,4vw,2.4rem);box-shadow:0 24px 80px rgba(0,0,0,0.7);
   animation:dockIn 0.3s cubic-bezier(0.2,0.9,0.2,1)}

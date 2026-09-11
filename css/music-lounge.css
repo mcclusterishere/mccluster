@@ -70,7 +70,7 @@ body.music-room--album .hr {
   row-gap:0;
   width:min(100%,1440px);
   max-width:1440px!important;
-  min-height:100svh;
+  min-height:100vh;min-height:100svh;
   margin:0 auto;
   padding:72px clamp(22px,4vw,64px) 180px!important;
 }

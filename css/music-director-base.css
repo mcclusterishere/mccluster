@@ -79,7 +79,7 @@ html[data-theme="light"] {
   display: flex;
   flex-direction: column;
   max-width: var(--music-measure);
-  min-height: 100svh;
+  min-height:100vh;min-height: 100svh;
   margin: 0 auto;
   padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3.5rem) 12rem;
 }
@@ -112,7 +112,7 @@ html[data-theme="light"] {
   grid-template-columns: minmax(18rem, 0.88fr) minmax(23rem, 1.12fr);
   align-items: end;
   gap: clamp(2rem, 5vw, 5rem);
-  min-height: min(68rem, 68svh);
+  min-height:min(68rem, 68vh);min-height: min(68rem, 68svh);
   padding-bottom: clamp(2.5rem, 5vw, 5rem);
   border-bottom: 1px solid var(--music-rule);
 }
@@ -241,7 +241,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
   column-gap: clamp(2rem, 5vw, 5rem);
   row-gap: 1rem;
   max-width: var(--music-measure);
-  min-height: 100svh;
+  min-height:100vh;min-height: 100svh;
   margin: 0 auto;
   padding: clamp(2rem, 6vh, 4.5rem) clamp(1rem, 4vw, 3.5rem) 11rem;
 }
@@ -265,7 +265,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 .music-room--track .tk__film {
   grid-area: film;
   align-self: stretch;
-  min-height: clamp(25rem, 62svh, 45rem);
+  min-height:clamp(25rem, 62vh, 45rem);min-height: clamp(25rem, 62svh, 45rem);
   margin: 0;
   border-radius: 2px;
   box-shadow: 0 42px 110px -46px #000;
@@ -343,7 +343,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
   align-items: start;
 }
 .music-room--runway .tk h1 { max-width: none; font-size: clamp(5rem, 12vw, 12rem); }
-.music-room--runway .tk__film { min-height: min(64rem, 62svh); }
+.music-room--runway .tk__film { min-height:min(64rem, 62vh);min-height: min(64rem, 62svh); }
 .music-room--runway .tk__line { margin-bottom: 1rem; }
 
 /* Track 03 reads like a session sheet. */
@@ -407,7 +407,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 .music-room--antisocial .tk {
   grid-template-columns: 0.72fr 1.28fr;
 }
-.music-room--antisocial .tk__film { min-height: min(62rem, 72svh); }
+.music-room--antisocial .tk__film { min-height:min(62rem, 72vh);min-height: min(62rem, 72svh); }
 .music-room--antisocial .tk__story { border-color: rgba(142, 185, 219, 0.25); }
 
 /* Track 06 closes in the edit bay. */
@@ -575,7 +575,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 
   .music-room--album .alb { min-height: 0; }
   .music-room--album .alb h1 { font-size: clamp(4.4rem, 24vw, 8rem); }
-  .music-room--album .alb__art { max-height: 68svh; object-fit: cover; }
+  .music-room--album .alb__art { max-height:68vh;max-height: 68svh; object-fit: cover; }
 
   .music-room--track .tk,
   .music-room--runway .tk,
@@ -596,7 +596,7 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
   .music-room--here .tk h1 { font-size: clamp(8rem, 42vw, 15rem); }
   .music-room--track .tk__film,
   .music-room--runway .tk__film,
-  .music-room--antisocial .tk__film { min-height: 48svh; }
+  .music-room--antisocial .tk__film { min-height:48vh;min-height: 48svh; }
   .music-room--track .tk__story { grid-template-columns: 1fr; }
   .music-room--track .tk__story article {
     min-height: 0;
