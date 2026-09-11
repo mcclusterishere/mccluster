@@ -52,15 +52,10 @@
         <a href="equity-uprise-fellowship.html">Fellowship + Artists ↗</a>
       </div>
 
-      <nav class="eui-nav" aria-label="Institutional workspace">
-        <button class="is-active" type="button" data-eui-view="overview"><span>01</span>Overview</button>
-        <button type="button" data-eui-view="projects"><span>02</span>Project Intelligence</button>
-        <button type="button" data-eui-view="cases"><span>03</span>Case Files</button>
-        <button type="button" data-eui-view="policy"><span>04</span>Policy Desk</button>
-        <button type="button" data-eui-view="field"><span>05</span>Field Operations</button>
-        <button type="button" data-eui-view="media"><span>06</span>Media Archive</button>
-        <button type="button" data-eui-view="proof"><span>07</span>Proof Room</button>
-        <button type="button" data-eui-view="partner"><span>08</span>Partner Desk</button>
+      <nav class="eui-nav" aria-label="Equity Uprise">
+        <button class="is-active" type="button" data-eui-view="now"><span>01</span>Now</button>
+        <button type="button" data-eui-view="past"><span>02</span>Past work</button>
+        <button type="button" data-eui-view="join"><span>03</span>Join</button>
       </nav>
 
       <div class="eui-rail__foot">
@@ -83,15 +78,24 @@
         </div>
       </header>
 
-      <section class="eui-view is-active" data-eui-panel="overview" aria-labelledby="overviewTitle">
+      <!-- 01 · NOW. The live issue, and the instrument being built for it.
+           Everything here used to be spread across Overview, Project
+           Intelligence and the Policy Desk -- three tabs to learn one
+           argument. The policy architecture keeps its own six buttons,
+           because those ARE the paper's chapters. -->
+      <section class="eui-view is-active" data-eui-panel="now" aria-labelledby="nowTitle">
         <div class="eui-hero">
           <div class="eui-hero__copy">
             <p class="eui-eyebrow">Public affairs · policy intelligence · civic media</p>
             <h1 id="overviewTitle">Build the record.<br><em>Move the room.</em></h1>
             <p class="eui-hero__lede">Equity Uprise turns live civic issues into research, stakeholder intelligence, policy products, public engagement and culture. The work is designed to survive scrutiny after the campaign is over.</p>
             <div class="eui-hero__actions">
-              <button type="button" class="eui-btn eui-btn--ink" data-eui-view="projects">View active intelligence</button>
-              <button type="button" class="eui-btn" data-eui-view="cases">Inspect the case files</button>
+              <!-- The first of these pointed at Project Intelligence, which is
+                   folded into this view now -- so as a view switch it would
+                   have re-selected the page you are already on and looked
+                   broken. It scrolls to the paper instead. -->
+              <a class="eui-btn eui-btn--ink" href="#nowTitle">Read the working paper</a>
+              <button type="button" class="eui-btn" data-eui-view="past">See what we have done</button>
             </div>
           </div>
           <figure class="eui-hero__visual">
@@ -99,14 +103,6 @@
             <figcaption><span>Field + media</span><b>Public work, documented.</b></figcaption>
           </figure>
         </div>
-
-        <div class="eui-metrics" aria-label="Selected documented outcomes">
-          <article><span>District 3 · Instagram</span><b>27,983</b><small>views in the measured campaign window</small></article>
-          <article><span>District 3 · reach</span><b>+578.8%</b><small>accounts reached in the measured window</small></article>
-          <article><span>District 3 · Facebook</span><b>44K</b><small>views in the measured campaign window</small></article>
-          <article><span>District 3 · engagement</span><b>+531%</b><small>Facebook engagement in the measured window</small></article>
-        </div>
-        <p class="eui-metrics__note">Campaign metrics above come from the Nicole Massiah / DeKalb District 3 media-engagement reporting used in the Equity Uprise capability record.</p>
 
         <div class="eui-grid eui-grid--overview">
           <article class="eui-card eui-card--feature">
@@ -116,9 +112,8 @@
             <div class="eui-card__chips">
               <span>DeKalb County</span><span>New Haven</span><span>NY</span><span>MA</span><span>NJ</span><span>RI</span>
             </div>
-            <button type="button" class="eui-textlink" data-eui-view="projects">Open project intelligence →</button>
+            <button type="button" class="eui-textlink" data-eui-view="now">Open project intelligence →</button>
           </article>
-
           <article class="eui-card">
             <div class="eui-card__meta"><span>Operating model</span><span>60–90 days</span></div>
             <h3>Research to durable public record</h3>
@@ -131,65 +126,52 @@
               <li><b>06</b><span>Capstone + record</span></li>
             </ol>
           </article>
+        </div>
 
-          <article class="eui-card eui-card--recognition">
-            <div class="eui-card__meta"><span>Recognition</span><span>Provenance matters</span></div>
-            <h3>Independent Equity Uprise / McCluster work.</h3>
-            <p>The Connecticut General Assembly citations, Bridgeport proclamation and Equity Uprise recognitions shown here derive from Equity Uprise’s own policy-memo programs, infotainment campaigns, civic programming and independent work.</p>
-            <div class="eui-notice"><strong>Not ULF.</strong> Urban Leaders Fellowship is a separate external fellowship in Matthew McCluster’s professional history. It is not presented as the source of these citations or proclamations.</div>
-            <button type="button" class="eui-textlink" data-eui-view="proof">Inspect recognition documents →</button>
-          </article>
+        <div class="eui-pagehead">
+          <div><p class="eui-eyebrow">The working paper</p><h2 id="nowTitle">Make the rule measurable.</h2></div>
+          <p>The data-center work treats ordinance language as an operating system: triggers, evidence, review, enforcement, cure and appeal.</p>
+        </div>
+          <p>The current infrastructure work treats ordinance language as an operating system: triggers, evidence, review, enforcement, cure and appeal.</p>
+        </div>
+
+        <div class="eui-policy-layout">
+          <div class="eui-policy-map" role="tablist" aria-label="Policy architecture">
+            <button class="is-active" type="button" data-eui-policy="classification"><span>01</span><b>Classification + aggregation</b><small>Prevent segmentation games.</small></button>
+            <button type="button" data-eui-policy="sound"><span>02</span><b>Sound + low-frequency acoustics</b><small>Measure what residents actually hear.</small></button>
+            <button type="button" data-eui-policy="water"><span>03</span><b>Water + cooling</b><small>Capacity, WUE, drought response.</small></button>
+            <button type="button" data-eui-policy="power"><span>04</span><b>Power + generation</b><small>Load, backup, routine generation.</small></button>
+            <button type="button" data-eui-policy="review"><span>05</span><b>Independent review</b><small>Qualifications, conflicts, cost recovery.</small></button>
+            <button type="button" data-eui-policy="compliance"><span>06</span><b>Continuing compliance</b><small>Verification after ribbon cutting.</small></button>
+          </div>
+          <div class="eui-policy-stage">
+            <article class="is-active" data-eui-policy-panel="classification"><p class="eui-eyebrow">01 · Classification</p><h3>Regulate the project that exists, not the label on the application.</h3><p>Use electrical demand and physical scale together. Aggregate phases, buildings, common-control entities, contiguous tracts and shared infrastructure so one campus cannot be sliced into smaller applications to escape review.</p><div class="eui-policy__principle">Policy principle <b>Thresholds are policy choices. Anti-segmentation is an enforcement necessity.</b></div></article>
+            <article data-eui-policy-panel="sound"><p class="eui-eyebrow">02 · Acoustics</p><h3>Low-frequency sound needs its own protocol.</h3><p>Baseline conditions, repeatable measurement positions, ten-minute LAeq, one-third-octave analysis and tonality review create an enforceable record that ordinary A-weighted limits can miss.</p><div class="eui-policy__principle">Policy principle <b>Write the measurement method into the rule before the complaint arrives.</b></div></article>
+            <article data-eui-policy-panel="water"><p class="eui-eyebrow">03 · Water</p><h3>Capacity is not a brochure number.</h3><p>Separate metering, watershed capacity certification, Water Usage Effectiveness reporting, cooling-method disclosure and drought response connect local approvals to real system constraints.</p><div class="eui-policy__principle">Policy principle <b>Routine reporting turns a promise into an operating condition.</b></div></article>
+            <article data-eui-policy-panel="power"><p class="eui-eyebrow">04 · Power</p><h3>Distinguish reliability from routine generation.</h3><p>Electrical load, interconnection assumptions, emergency backup, peak shaving and routine onsite generation create different grid, air-quality and neighborhood effects. The ordinance should not collapse them into one box.</p><div class="eui-policy__principle">Policy principle <b>Define what may operate, when, for how long and under which permit.</b></div></article>
+            <article data-eui-policy-panel="review"><p class="eui-eyebrow">05 · Review</p><h3>Independent expertise needs governance too.</h3><p>County-selected reviewers, qualification standards, conflict rules, applicant-funded escrow, scoped deliverables, invoices and an applicant response process prevent “independent review” from becoming another vague discretion point.</p><div class="eui-policy__principle">Policy principle <b>The reviewer should be independent of both the applicant and the political mood.</b></div></article>
+            <article data-eui-policy-panel="compliance"><p class="eui-eyebrow">06 · Compliance</p><h3>The permit is not the finish line.</h3><p>Commissioning, operational verification, periodic reporting, corrective action, notice and cure, emergency authority, retesting, written determinations and appeal create a system that still works years after approval.</p><div class="eui-policy__principle">Policy principle <b>Continuing compliance is what converts siting policy into operating policy.</b></div></article>
+          </div>
         </div>
       </section>
 
-      <section class="eui-view" data-eui-panel="projects" aria-labelledby="projectsTitle">
+      <!-- 02 · PAST. What was actually done, with the documents attached.
+           Case Files keeps its own tab strip; the recognition card and the
+           ULF disclosure travel with it, because the provenance note only
+           means anything next to the work it is disclaiming. -->
+      <section class="eui-view" data-eui-panel="past" aria-labelledby="pastTitle">
         <div class="eui-pagehead">
-          <div><p class="eui-eyebrow">Project intelligence</p><h2 id="projectsTitle">Live work, not portfolio theater.</h2></div>
-          <p>Each file combines the issue, exposure, institutional question, current work product and the next decision that matters.</p>
+          <div><p class="eui-eyebrow">Past work</p><h2 id="pastTitle">Capability under real conditions.</h2></div>
+          <p>Files, campaigns and outcomes that already survived scrutiny after the campaign was over.</p>
         </div>
-
-        <div class="eui-project-grid">
-          <article class="eui-project eui-project--lead">
-            <div class="eui-project__top"><span class="eui-status eui-status--live">Active</span><span>DeKalb County · Georgia</span></div>
-            <h3>Data Center Performance Standards Reform</h3>
-            <p>Performance-based local regulation for large-load infrastructure, designed around measurable impacts and continuing compliance rather than blanket prohibition.</p>
-            <div class="eui-project__data">
-              <div><small>Policy architecture</small><b>6 core systems</b></div>
-              <div><small>Primary questions</small><b>load · water · sound · siting</b></div>
-              <div><small>Output</small><b>legislative memorandum + brief</b></div>
-            </div>
-            <div class="eui-project__tags"><span>aggregation</span><span>WUE</span><span>LFN</span><span>independent review</span><span>due process</span><span>continuing compliance</span></div>
-            <button class="eui-btn eui-btn--small" type="button" data-eui-view="policy">Open policy architecture</button>
-          </article>
-
-          <article class="eui-project">
-            <div class="eui-project__top"><span class="eui-status">Research</span><span>Northeast comparative scan</span></div>
-            <h3>State + local data-center rulemaking</h3>
-            <p>Comparative research across Connecticut, New York, Massachusetts, New Jersey and Rhode Island: moratoria, ratepayer protection, water stewardship, threshold design and utility cost allocation.</p>
-            <div class="eui-project__tags"><span>New Haven</span><span>NY moratorium</span><span>MA guardrails</span><span>NJ tariffs</span><span>RI cost allocation</span></div>
-          </article>
-
-          <article class="eui-project">
-            <div class="eui-project__top"><span class="eui-status">Archive</span><span>Connecticut · Docket 516R</span></div>
-            <h3>Infrastructure controversy → civic ecosystem</h3>
-            <p>Public-record research, creator participation, environmental-justice communication, original music and community engagement around a live transmission proceeding.</p>
-            <div class="eui-project__data"><div><small>Indexed record</small><b>325 filings</b></div><div><small>Outcome</small><b>5–3 denial</b></div></div>
-            <a class="eui-btn eui-btn--small" href="docket-516.html">Open evidence room</a>
-          </article>
-
-          <article class="eui-project">
-            <div class="eui-project__top"><span class="eui-status">Campaign</span><span>DeKalb District 3</span></div>
-            <h3>Public-figure media under election pressure</h3>
-            <p>Rapid-turn photography, video, narrative packaging, event coverage and social publishing for Commissioner Nicole Massiah’s District 3 campaign/media operation.</p>
-            <div class="eui-project__data"><div><small>IG views</small><b>27,983</b></div><div><small>FB views</small><b>44K</b></div></div>
-            <button class="eui-btn eui-btn--small" type="button" data-eui-view="cases" data-eui-case-open="district3">Open case file</button>
-          </article>
+        <div class="eui-metrics" aria-label="Selected documented outcomes">
+          <article><span>District 3 · Instagram</span><b>27,983</b><small>views in the measured campaign window</small></article>
+          <article><span>District 3 · reach</span><b>+578.8%</b><small>accounts reached in the measured window</small></article>
+          <article><span>District 3 · Facebook</span><b>44K</b><small>views in the measured campaign window</small></article>
+          <article><span>District 3 · engagement</span><b>+531%</b><small>Facebook engagement in the measured window</small></article>
         </div>
-      </section>
+        <p class="eui-metrics__note">Campaign metrics above come from the Nicole Massiah / DeKalb District 3 media-engagement reporting used in the Equity Uprise capability record.</p>
 
-      <section class="eui-view" data-eui-panel="cases" aria-labelledby="casesTitle">
-        <div class="eui-pagehead">
-          <div><p class="eui-eyebrow">Case files</p><h2 id="casesTitle">Capability under real conditions.</h2></div>
           <p>The distinction matters: independent Equity Uprise programming, client/campaign work and outside fellowships are labeled separately.</p>
         </div>
 
@@ -224,7 +206,7 @@
               <div class="eui-case__label"><span>Bridgeport · Oct. 5, 2025</span><span>Independent Equity Uprise</span></div>
               <h3>You, I versus You and I.</h3>
               <p>A live Equity Uprise program at Shiloh: artists, speakers, community, policy framing and production in the same room. The full program remains available as a broadcast archive; Facebook distribution was reported at roughly 10K views.</p>
-              <div class="eui-case__actions"><button type="button" class="eui-btn eui-btn--ink" data-eui-video="https://www.youtube.com/embed/Tum9BPmGjEY">Watch full program</button><button type="button" class="eui-btn" data-eui-view="media">Open media archive</button></div>
+              <div class="eui-case__actions"><button type="button" class="eui-btn eui-btn--ink" data-eui-video="https://www.youtube.com/embed/Tum9BPmGjEY">Watch full program</button><button type="button" class="eui-btn" data-eui-view="past">Open media archive</button></div>
             </article>
 
             <article class="eui-case" data-eui-case-panel="policy-programs">
@@ -250,79 +232,16 @@
             </article>
           </div>
         </div>
-      </section>
 
-      <section class="eui-view" data-eui-panel="policy" aria-labelledby="policyTitle">
-        <div class="eui-pagehead">
-          <div><p class="eui-eyebrow">Policy desk</p><h2 id="policyTitle">Make the rule measurable.</h2></div>
-          <p>The current infrastructure work treats ordinance language as an operating system: triggers, evidence, review, enforcement, cure and appeal.</p>
-        </div>
-
-        <div class="eui-policy-layout">
-          <div class="eui-policy-map" role="tablist" aria-label="Policy architecture">
-            <button class="is-active" type="button" data-eui-policy="classification"><span>01</span><b>Classification + aggregation</b><small>Prevent segmentation games.</small></button>
-            <button type="button" data-eui-policy="sound"><span>02</span><b>Sound + low-frequency acoustics</b><small>Measure what residents actually hear.</small></button>
-            <button type="button" data-eui-policy="water"><span>03</span><b>Water + cooling</b><small>Capacity, WUE, drought response.</small></button>
-            <button type="button" data-eui-policy="power"><span>04</span><b>Power + generation</b><small>Load, backup, routine generation.</small></button>
-            <button type="button" data-eui-policy="review"><span>05</span><b>Independent review</b><small>Qualifications, conflicts, cost recovery.</small></button>
-            <button type="button" data-eui-policy="compliance"><span>06</span><b>Continuing compliance</b><small>Verification after ribbon cutting.</small></button>
-          </div>
-          <div class="eui-policy-stage">
-            <article class="is-active" data-eui-policy-panel="classification"><p class="eui-eyebrow">01 · Classification</p><h3>Regulate the project that exists, not the label on the application.</h3><p>Use electrical demand and physical scale together. Aggregate phases, buildings, common-control entities, contiguous tracts and shared infrastructure so one campus cannot be sliced into smaller applications to escape review.</p><div class="eui-policy__principle">Policy principle <b>Thresholds are policy choices. Anti-segmentation is an enforcement necessity.</b></div></article>
-            <article data-eui-policy-panel="sound"><p class="eui-eyebrow">02 · Acoustics</p><h3>Low-frequency sound needs its own protocol.</h3><p>Baseline conditions, repeatable measurement positions, ten-minute LAeq, one-third-octave analysis and tonality review create an enforceable record that ordinary A-weighted limits can miss.</p><div class="eui-policy__principle">Policy principle <b>Write the measurement method into the rule before the complaint arrives.</b></div></article>
-            <article data-eui-policy-panel="water"><p class="eui-eyebrow">03 · Water</p><h3>Capacity is not a brochure number.</h3><p>Separate metering, watershed capacity certification, Water Usage Effectiveness reporting, cooling-method disclosure and drought response connect local approvals to real system constraints.</p><div class="eui-policy__principle">Policy principle <b>Routine reporting turns a promise into an operating condition.</b></div></article>
-            <article data-eui-policy-panel="power"><p class="eui-eyebrow">04 · Power</p><h3>Distinguish reliability from routine generation.</h3><p>Electrical load, interconnection assumptions, emergency backup, peak shaving and routine onsite generation create different grid, air-quality and neighborhood effects. The ordinance should not collapse them into one box.</p><div class="eui-policy__principle">Policy principle <b>Define what may operate, when, for how long and under which permit.</b></div></article>
-            <article data-eui-policy-panel="review"><p class="eui-eyebrow">05 · Review</p><h3>Independent expertise needs governance too.</h3><p>County-selected reviewers, qualification standards, conflict rules, applicant-funded escrow, scoped deliverables, invoices and an applicant response process prevent “independent review” from becoming another vague discretion point.</p><div class="eui-policy__principle">Policy principle <b>The reviewer should be independent of both the applicant and the political mood.</b></div></article>
-            <article data-eui-policy-panel="compliance"><p class="eui-eyebrow">06 · Compliance</p><h3>The permit is not the finish line.</h3><p>Commissioning, operational verification, periodic reporting, corrective action, notice and cure, emergency authority, retesting, written determinations and appeal create a system that still works years after approval.</p><div class="eui-policy__principle">Policy principle <b>Continuing compliance is what converts siting policy into operating policy.</b></div></article>
-          </div>
-        </div>
-      </section>
-
-      <section class="eui-view" data-eui-panel="field" aria-labelledby="fieldTitle">
-        <div class="eui-pagehead">
-          <div><p class="eui-eyebrow">Field operations</p><h2 id="fieldTitle">Research that leaves the PDF.</h2></div>
-          <p>Equity Uprise is designed to move between the desk, the hearing room, the creator studio and the public record without pretending those are the same job.</p>
-        </div>
-
-        <div class="eui-field-flow">
-          <article><span>01</span><h3>Stakeholder intelligence</h3><p>Identify decision-makers, operators, residents, advocates, engineers, utilities, legal exposure and financial exposure.</p></article>
-          <article><span>02</span><h3>Interview program</h3><p>Structured consultations, attribution rules, background conversations, permissioned quotes and a stakeholder register.</p></article>
-          <article><span>03</span><h3>Policy product</h3><p>Legislative memorandum, executive brief, model language, technical appendices and comparative research.</p></article>
-          <article><span>04</span><h3>Public process</h3><p>City council, board, commission and committee attendance; testimony preparation; hearing briefs; public-record preservation.</p></article>
-          <article><span>05</span><h3>Civic campaign</h3><p>Creator participation, short-form media, issue explainers, music, interviews, photography, influencer distribution and coalition outreach.</p></article>
-          <article><span>06</span><h3>Capstone + record</h3><p>Forum or cultural program, campaign analytics, archived evidence, final policy publication and post-campaign reporting.</p></article>
-        </div>
-
-        <div class="eui-note-panel"><span>Institutional principle</span><h3>Sponsored messaging can have a point of view. The research record cannot be quietly sold.</h3><p>Responsible Growth, Community Protection and Public Inquiry can each support distinct campaigns. Sponsorship and perspective should be disclosed; independent research findings remain independent.</p></div>
-      </section>
-
-      <section class="eui-view" data-eui-panel="media" aria-labelledby="mediaTitle">
-        <div class="eui-pagehead">
-          <div><p class="eui-eyebrow">Media archive</p><h2 id="mediaTitle">The campaign can be heard.</h2></div>
-          <p>No external music storefront is required. Equity Uprise lives inside the McCluster music engine with the rest of the catalogue.</p>
-        </div>
-
-        <div class="eui-media-grid">
-          <article class="eui-media-card eui-media-card--music">
-            <div class="eui-media-card__visual"><img src="assets/img/equity-uprise-logo.webp" alt="Equity Uprise" loading="lazy"></div>
-            <div class="eui-media-card__body"><span>Native catalogue</span><h3>Equity Uprise · civic anthems</h3><p>Environmental Injustice · Brave mix · Please Set Me Free · Money or the Power.</p><a class="eui-btn eui-btn--ink" href="album.html?album=equity-uprise">Open the record</a></div>
-          </article>
-
-          <article class="eui-media-card">
-            <div class="eui-media-card__visual eui-media-card__visual--still"><img src="assets/frames/church_0001.jpg" alt="October 5 Equity Uprise convening" loading="lazy"></div>
-            <div class="eui-media-card__body"><span>Full-program archive · Oct. 5, 2025</span><h3>You, I versus You and I</h3><p>Artists, speakers, community, policy framing and live production. Facebook distribution was reported at roughly 10K views.</p><button type="button" class="eui-btn eui-btn--ink" data-eui-video="https://www.youtube.com/embed/Tum9BPmGjEY">Watch full program</button></div>
-          </article>
-
-          <article class="eui-media-card">
-            <div class="eui-media-card__visual eui-media-card__visual--film"><img src="assets/frames/uprise_0001.jpg" alt="Environmental Injustice film still" loading="lazy"></div>
-            <div class="eui-media-card__body"><span>Infotainment</span><h3>Policy language that can travel.</h3><p>Original music, film, explainers and local creator participation are used to widen the audience for an issue without pretending entertainment replaces the underlying research.</p><a class="eui-btn" href="films.html">Open film archive</a></div>
+        <div class="eui-grid eui-grid--overview">
+          <article class="eui-card eui-card--recognition">
+            <div class="eui-card__meta"><span>Recognition</span><span>Provenance matters</span></div>
+            <h3>Independent Equity Uprise / McCluster work.</h3>
+            <p>The Connecticut General Assembly citations, Bridgeport proclamation and Equity Uprise recognitions shown here derive from Equity Uprise’s own policy-memo programs, infotainment campaigns, civic programming and independent work.</p>
+            <div class="eui-notice"><strong>Not ULF.</strong> Urban Leaders Fellowship is a separate external fellowship in Matthew McCluster’s professional history. It is not presented as the source of these citations or proclamations.</div>
+            <button type="button" class="eui-textlink" data-eui-view="past">Inspect recognition documents →</button>
           </article>
         </div>
-      </section>
-
-      <section class="eui-view" data-eui-panel="proof" aria-labelledby="proofTitle">
-        <div class="eui-pagehead">
-          <div><p class="eui-eyebrow">Proof room</p><h2 id="proofTitle">Documents before adjectives.</h2></div>
           <p>Every recognition below is linked to the underlying document. The Connecticut citations and Bridgeport recognition are presented as independent Equity Uprise / McCluster program recognition — not as ULF output.</p>
         </div>
 
@@ -342,9 +261,29 @@
         </div>
       </section>
 
-      <section class="eui-view" data-eui-panel="partner" aria-labelledby="partnerTitle">
+      <!-- 03 · JOIN. Two doors, named plainly: come as a person, or come as
+           an institution. The three funding lanes stay, because the
+           disclosure standard across them is the point. -->
+      <section class="eui-view" data-eui-panel="join" aria-labelledby="joinTitle">
         <div class="eui-pagehead">
-          <div><p class="eui-eyebrow">Partner desk</p><h2 id="partnerTitle">Three lanes. One disclosure standard.</h2></div>
+          <div><p class="eui-eyebrow">Join</p><h2 id="joinTitle">Come as a fellow, or come as an organization.</h2></div>
+          <p>One standard either way: fund the perspective you care about without buying the conclusion of the research.</p>
+        </div>
+
+        <div class="eui-grid eui-grid--overview">
+          <article class="eui-card eui-card--feature">
+            <div class="eui-card__meta"><span>For people</span><span>Fellowship + artists</span></div>
+            <h2>Join as a fellow.</h2>
+            <p>Researchers, organizers, artists and students who want live civic work with their name on the record rather than a portfolio line.</p>
+            <a class="eui-btn eui-btn--ink" href="equity-uprise-fellowship.html">Open the fellowship →</a>
+          </article>
+          <article class="eui-card">
+            <div class="eui-card__meta"><span>For institutions</span><span>60–90 days</span></div>
+            <h3>Join as an organization.</h3>
+            <p>Operators, community groups, foundations and universities can scope an engagement around a specific policy fight, infrastructure project or public-information gap.</p>
+            <a class="eui-textlink" href="mailto:matthew@mccluster.org?subject=Equity%20Uprise%20Institutional%20Engagement">Start with the issue →</a>
+          </article>
+        </div>
           <p>Organizations can fund the perspective they care about without buying the conclusion of the underlying research.</p>
         </div>
 
