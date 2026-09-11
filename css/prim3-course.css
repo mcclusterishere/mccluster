@@ -1,5 +1,6 @@
 /* PRIM3 course-feed additions. Keep the LMS conventional; the brand lives in
    proportion, type, approved artwork and signal-red accents rather than a game HUD. */
+body:has(#courseGate:not([hidden])) .p3-reset{display:none}
 .p3-id{grid-template-columns:auto 1fr;align-items:center;text-align:left;gap:.65rem}
 .p3-id__mark{width:38px;height:38px;object-fit:cover;border-radius:3px;display:block}
 .p3-id>div{display:grid;gap:.12rem}
