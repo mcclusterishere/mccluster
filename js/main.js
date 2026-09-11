@@ -567,18 +567,54 @@
        the section is lengthened to match so the descent plays at the same
        pace it always did rather than being sped up to fit. */
     var PB_HANDOVER = 0.19;   // the dissolve: film held, opacity climbing
+    /* THE ARRIVAL. The descent runs to PB_ARRIVE, and the last stretch is
+       dwell: the film holds on the lit window while the room fades up and
+       the viewer actually reads it. Without that tail the close would land
+       on the final frame and be scrolled past in the same gesture.
+
+       The pin is lengthened by the dwell rather than the scrub being
+       squeezed into the old length, so the descent still plays at the pace
+       it always did. */
+    var PB_ARRIVE = 0.74;
+    var PB_RAMP = 0.13;       // fully up well before the pin ends; rest is dwell
+    var nightRoom = document.getElementById("nightRoom");
+    var nightRoomLive = false;
     ScrollTrigger.create({
       trigger: "#pillars",
       start: "top top",
-      end: "+=172%",   // 140% of scrub, plus the held dissolve in front of it
+      end: "+=232%",   // 172% as before, plus the dwell the room needs
       scrub: true,
       pin: "#pillars .command__sticky",
       pinSpacing: true,
       anticipatePin: 1,
       invalidateOnRefresh: true,
       onUpdate: function (st) {
-        var q = clamp01((st.progress - PB_HANDOVER) / (1 - PB_HANDOVER));
+        var q = clamp01((st.progress - PB_HANDOVER) / (PB_ARRIVE - PB_HANDOVER));
         pillarsBg.target = q * (pillarsBg.count - 1 || 0);
+        if (nightRoom) {
+          /* The ramp SATURATES BEFORE THE END OF THE PIN, deliberately.
+
+             Tying it to (1 - PB_ARRIVE) meant the room only reached full
+             opacity, and only became clickable, at progress exactly 1.0 --
+             and a scrub driven by smooth scrolling, a trackpad's rubber band
+             or a short viewport routinely tops out a little under that.
+             Measured in a real browser it settled at 0.867, which left the
+             chat sitting at 49% and permanently inert: visible, inviting,
+             and impossible to type in. A close that cannot be reached is
+             worse than no close.
+
+             So it is fully up at PB_ARRIVE + PB_RAMP, with the rest of the
+             pin as dwell, and it becomes interactive as soon as it is
+             legible rather than when it is perfect. Once armed it stays
+             armed for the rest of the descent -- interactivity that
+             flickers with scroll jitter eats taps. */
+          var arrival = clamp01((st.progress - PB_ARRIVE) / PB_RAMP);
+          nightRoom.style.opacity = arrival;
+          nightRoom.style.transform = "translateY(" + ((1 - arrival) * 26).toFixed(2) + "px)";
+          if (arrival > 0.35) nightRoomLive = true;
+          else if (st.progress < PB_ARRIVE) nightRoomLive = false;
+          nightRoom.style.pointerEvents = nightRoomLive ? "auto" : "none";
+        }
         var ps = st.isActive ? PAR.ramp(st.progress) : 0;
         PAR.set(parPillars, ps);
         PAR.set(parPanelsPB, ps);
@@ -1148,18 +1184,20 @@
   });
 
   /* ---------------- finale ---------------- */
-  gsap.set(finaleChars, { yPercent: 120, opacity: 0, rotate: 8 });
-  gsap.to(finaleChars, {
-    yPercent: 0, opacity: 1, rotate: 0,
-    duration: 1, ease: "power4.out", stagger: 0.05,
-    scrollTrigger: { trigger: "#book", start: "top 70%" },
-  });
-  /* the four buttons this staggered are gone — one room stands where they
-     did (js/lockroom.js), so there is one thing to bring in, not four */
-  gsap.from(".lockroom", {
-    y: 40, opacity: 0, duration: 0.8, ease: "power3.out",
-    scrollTrigger: { trigger: "#book", start: "top 78%" },
-  });
+  /* The close used to be its own section (#book) with its own two triggers.
+     It is inside the night descent now, so both are gone -- and deliberately
+     NOT replaced with triggers pointed at #pillars, because #pillars is
+     pinned: a "top 70%" start there fires before the pin even begins, which
+     would play the reveal at the top of the descent instead of the bottom.
+
+     The reveal is driven from the descent's own scrub instead. See the
+     .nightroom handling in the pillars ScrollTrigger below.
+
+     The letters are left VISIBLE here. The old code set them to opacity 0 and
+     relied on a trigger to bring them back; with that trigger's element gone
+     the set would have stuck and LOCK IN would never have appeared. Nothing
+     in this file may hide them without also owning the code that shows them. */
+  if (finaleChars.length) gsap.set(finaleChars, { yPercent: 0, opacity: 1, rotate: 0 });
 
   // magnetic buttons
   if (!prefersReduced) {

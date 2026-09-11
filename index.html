@@ -365,6 +365,21 @@
 
 
     <!-- ============ THE ANTISOCIAL EXPERIENCE: the last card before the finale ============ -->
+    <!-- ============ THE ANTISOCIAL EXPERIENCE, and the close ============
+
+         The film is a night descent: out of the aircraft, down toward a lit
+         house, a phone glowing blue in the window. It used to hand off to a
+         separate finale a screen later, which meant the arrival and the
+         invitation were two rooms apart.
+
+         They are one room now. You come down into the house, and the thing
+         waiting at the bottom is a conversation — because the shot is
+         literally somebody texting in bed at night, and "I am here, late,
+         text me" is what it already says without a word of copy.
+
+         The three explainer beats that stood here (Scroll Slow Homie, the
+         device bullets, the turn-the-sound-on prompt) are gone. They were
+         the approach to a close that now happens in the same frame. -->
     <section class="services" id="pillars">
       <div class="command__sticky">
         <canvas class="bg-canvas" id="pillarsCanvas" aria-label="Night drone descent toward a lit house, the blue glow of a phone in the window"></canvas>
@@ -372,65 +387,39 @@
           <source src="assets/video/nightscroll.mp4" type="video/mp4">
         </video>
         <div class="scrim scrim--deep" aria-hidden="true"></div>
-        <header class="command__head">
-          <p class="kicker">An experience, not a website</p>
-          <h2 class="antiscroll__title"><span class="antiscroll__l1">Scroll</span><span class="antiscroll__l2">Slow,</span><span class="antiscroll__l3">Homie</span></h2>
-        </header>
-        <div class="command__panels antiabout">
-          <div class="antiabout__duo">
-            <span class="antiabout__phone" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><rect x="7" y="2.6" width="10" height="18.8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><line x1="10.2" y1="18.3" x2="13.8" y2="18.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-            </span>
-            <ul class="antiabout__points">
-              <li><span>More devices on Earth than humans.</span></li>
-              <li><span>But only one of you.</span></li>
-            </ul>
-          </div>
-          <p class="antiabout__sound"><span class="antiabout__spk" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a4 4 0 0 1 0 7M18.5 6a7.5 7.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span> Your attention is the scarcest thing in the room. Turn the sound on. Let it move you.</p>
-          <div class="antiabout__tabprompt" aria-hidden="false">
-            <!-- This read "tap Music below. Once for the sound · twice for
-                 the album." Both halves are now untrue: the double-tap was
-                 retired, and the Music coin no longer toggles this page's
-                 sound at all — it opens the record, from every page. The
-                 instruction names what actually works. -->
-            <span class="antiabout__tabprompt-txt">Turn the sound on with <b>Sound</b>, top right.<br><small>The <svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;vertical-align:-2px;display:inline-block"><path d="M10 18V5l8-2v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="18" r="3" fill="currentColor"/><circle cx="15" cy="16" r="3" fill="currentColor"/></svg> coin below opens the record.</small></span>
-            <svg class="antiabout__tabprompt-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v13"/><path d="M6 12l6 6 6-6"/></svg>
-          </div>
+
+        <!-- Revealed by the pillars scrub, not by a trigger of its own: the
+             room is the last beat of the descent, so it fades up as the film
+             reaches the window. js/main.js drives .nightroom from the same
+             st.progress that moves the frames. -->
+        <div class="nightroom" id="nightRoom">
+          <p class="kicker kicker--center">An experience, not a website</p>
+          <h2 class="nightroom__title" id="finaleTitle">
+            <span class="hero__line" data-word="LOCK">LOCK</span>
+            <span class="hero__line hero__line--accent" data-word="IN">IN</span>
+          </h2>
+          <!-- THE ROOM. Tap what you need, answer five short questions, name
+               your number, and the brief lands on the desk. Nothing here is a
+               form: every question has its answers on screen, typing is
+               optional the whole way through, and js/lockroom.js falls back to
+               a prefilled email if the wire is down, so the close is never a
+               dead card. -->
+          <div class="lockroom" id="lockRoom" data-lockroom></div>
         </div>
         <div class="command__count" id="svcCount" hidden>01 / 03</div>
       </div>
+      <!-- #book outlived its section. "Book a call" in the masthead, in the
+           shop card and in gate.js all point here by href, and the audio
+           zones and section analytics name it too. Keeping the id as an
+           anchor at the foot of the descent means every one of those still
+           lands exactly where the room is, instead of dying silently. -->
+      <a id="book" class="anchor-arrival" aria-hidden="true" tabindex="-1"></a>
     </section>
 
-    <!-- The Equity Uprise case card and the three-door "Pick a door" wings
-         both stood between the Antisocial film and the close. The owner cut
-         them: by the time somebody has scrolled the jet and the night
-         descent, a second case study and a rack of side doors are more
-         rooms to choose between, not fewer. Equity Uprise keeps its own tab
-         on the bar and its own site; the wings all keep their pages. What
-         is left down here is one thing to do. -->
+    <!-- The finale stood here. Its headline and its room both moved into the
+         night descent above, where the picture already says what the copy was
+         trying to. Nothing was dropped except the second screen between them. -->
 
-    <!-- ============ FINALE ============ -->
-    <section class="finale" id="book">
-      <div class="finale__inner">
-        <p class="kicker kicker--center">"Deposit, lock the day in."</p>
-        <h2 class="finale__title" id="finaleTitle">
-          <span class="hero__line" data-word="LOCK">LOCK</span>
-          <span class="hero__line hero__line--accent" data-word="IN">IN</span>
-        </h2>
-        <!-- THE ROOM. Four buttons stood here — Book a call, Lock in a date,
-             The Print Shop, Subscribe — which is four decisions asked of
-             somebody who has not told anybody what they want yet, and three
-             of them were the wrong door for most of the people tapping.
-
-             It is one room now, and it does the asking. Tap what you need,
-             answer five short questions, name your number, and the brief
-             lands on the desk. Nothing here is a form: every question has
-             its answers on screen, typing is optional the whole way
-             through, and js/lockroom.js falls back to a prefilled email if
-             the wire is down, so the close is never a dead card. -->
-        <div class="lockroom" id="lockRoom" data-lockroom></div>
-      </div>
-    </section>
 
   </main>
 
