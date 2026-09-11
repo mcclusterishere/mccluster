@@ -12,12 +12,38 @@ async function text(path) {
   return readFile(path, 'utf8');
 }
 
-test('PRIM3 ingestion points at the canonical Prim3 publication feed', async () => {
+test('PRIM3 ingestion keeps 21 canonical episode/song source units but expands the LMS to 63 modules', async () => {
   const source = await text(prim3Path);
   assert.match(source, /mcclusterishere\/Prim3\/main\/learning\/course\/course-feed\.json/);
-  assert.match(source, /schema_version !== '1\.0\.0'/);
-  assert.match(source, /modules\.length !== 21/);
-  assert.match(source, /course\.id !== COURSE_ID/);
+  assert.match(source, /const SOURCE_UNIT_COUNT = 21/);
+  assert.match(source, /const INSTRUCTIONAL_MODULE_COUNT = 63/);
+  assert.match(source, /sourceCourse\.modules\.flatMap\(expandUnit\)/);
+  assert.match(source, /module_strategy: '3 instructional modules per episode\/song unit'/);
+  assert.match(source, /module_count: modules\.length/);
+});
+
+test('hat/box material is protected from being recompressed into one beginner lesson', async () => {
+  const source = await text(prim3Path);
+  assert.match(source, /'White \/ Grey \/ Black Hat', 'White \/ Grey \/ Black Box', 'Pen-Test Infrastructure, Scope & Remediation'/);
+  assert.match(source, /part_label: 'SONG CORE A'/);
+  assert.match(source, /part_label: 'SONG CORE B'/);
+  assert.match(source, /part_label: 'INFRASTRUCTURE \+ EXAM BRIDGE'/);
+});
+
+test('team-role source unit separates red-blue from purple-white before enrichment', async () => {
+  const source = await text(prim3Path);
+  assert.match(source, /'Red & Blue Teams', 'Purple & White Teams', 'Security Engineering Teams & Exercise Operations'/);
+  assert.match(source, /\['red team', 'blue team'\]/);
+  assert.match(source, /\['purple team', 'white team'\]/);
+});
+
+test('course access and progress require an M Account while tuition remains free', async () => {
+  const source = await text(prim3Path);
+  assert.match(source, /M Account required for the free PRIM3 course/);
+  assert.match(source, /account_required: true/);
+  assert.match(source, /price_cents: 0/);
+  assert.match(source, /await requireLearner\(request, env\)/);
+  assert.match(source, /prim3_course_progress/);
 });
 
 test('PRIM3 routes remain inside the canonical mccluster Worker', async () => {
@@ -29,16 +55,25 @@ test('PRIM3 routes remain inside the canonical mccluster Worker', async () => {
   assert.doesNotMatch(source, /mccluster-core/);
 });
 
-test('PRIM3 learner state is authenticated and separate from course canon', async () => {
+test('source provenance and enrichment are distinguished', async () => {
   const source = await text(prim3Path);
-  assert.match(source, /Authentication required for synced PRIM3 progress/);
-  assert.match(source, /prim3_course_progress/);
-  assert.match(source, /user_id=eq\.\$\{encodeURIComponent\(user\.id\)\}/);
-  assert.match(source, /\/v1\/prim3\/progress/);
+  assert.match(source, /curriculum_origin: 'prim3-source'/);
+  assert.match(source, /curriculum_origin: 'mccluster-enrichment'/);
+  assert.match(source, /CompTIA objective families without treating the song as complete exam coverage/);
+  assert.match(source, /A\+ 220-1201/);
+  assert.match(source, /Network\+ N10-009/);
+  assert.match(source, /Security\+ SY0-701/);
 });
 
-test('protected open module is preserved rather than invented', async () => {
+test('protected open source unit stays uninvented and expands into protected module slots', async () => {
   const source = await text(prim3Path);
-  assert.match(source, /module\.id === 'M18'/);
+  assert.match(source, /unit\.id === 'U18'/);
   assert.match(source, /owner-source-required/);
+  assert.match(source, /'Owner Source Required · Part I', 'Owner Source Required · Part II', 'Infrastructure Bridge · Pending Source'/);
+});
+
+test('the API exposes both instructional modules and original source units', async () => {
+  const source = await text(prim3Path);
+  assert.match(source, /\/v1\\\/prim3\\\/course\\\/modules/);
+  assert.match(source, /\/v1\\\/prim3\\\/course\\\/units/);
 });
