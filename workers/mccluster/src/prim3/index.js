@@ -128,10 +128,16 @@ async function dbRequest(env, path, options = {}) {
 
 function validSourceUnit(module, index) {
   return Boolean(
-    module && typeof module === 'object' && /^M\d{2}$/.test(String(module.id || '')) &&
-    Number(module.sequence) === index + 1 && Number.isInteger(Number(module.season)) &&
-    typeof module.episode_id === 'string' && typeof module.episode_title === 'string' &&
-    Array.isArray(module.concepts) && Array.isArray(module.objectives) && module.sources && Array.isArray(module.sources)
+    module &&
+    typeof module === 'object' &&
+    /^M\d{2}$/.test(String(module.id || '')) &&
+    Number(module.sequence) === index + 1 &&
+    Number.isInteger(Number(module.season)) &&
+    typeof module.episode_id === 'string' &&
+    typeof module.episode_title === 'string' &&
+    Array.isArray(module.concepts) &&
+    Array.isArray(module.objectives) &&
+    module.sources && Array.isArray(module.sources)
   );
 }
 
@@ -143,7 +149,9 @@ function validateFeed(payload) {
     throw Object.assign(new Error(`PRIM3 source feed must publish exactly ${SOURCE_UNIT_COUNT} episode/song units`), { status: 502 });
   }
   payload.course.modules.forEach((module, index) => {
-    if (!validSourceUnit(module, index)) throw Object.assign(new Error(`Invalid PRIM3 source unit at sequence ${index + 1}`), { status: 502 });
+    if (!validSourceUnit(module, index)) {
+      throw Object.assign(new Error(`Invalid PRIM3 source unit at sequence ${index + 1}`), { status: 502 });
+    }
   });
   return payload;
 }
@@ -157,25 +165,64 @@ async function fetchSource(env) {
     const hit = await cache.match(cacheKey);
     if (hit) {
       const payload = validateFeed(await hit.json());
-      return { payload, meta: { repo: 'mcclusterishere/Prim3', branch: 'main', path: 'learning/course/course-feed.json', source_url: source, cache: 'hit', etag: hit.headers.get('etag') || null, fetched_at: hit.headers.get('x-prim3-fetched-at') || null } };
+      return {
+        payload,
+        meta: {
+          repo: 'mcclusterishere/Prim3',
+          branch: 'main',
+          path: 'learning/course/course-feed.json',
+          source_url: source,
+          cache: 'hit',
+          etag: hit.headers.get('etag') || null,
+          fetched_at: hit.headers.get('x-prim3-fetched-at') || null
+        }
+      };
     }
   }
 
-  const upstream = await fetch(source, { headers: { accept: 'application/json', 'user-agent': 'McCluster-PRIM3-Course-Ingest/2.0' } });
-  if (!upstream.ok) throw Object.assign(new Error(`PRIM3 source feed returned ${upstream.status}`), { status: 502 });
+  const upstream = await fetch(source, {
+    headers: {
+      accept: 'application/json',
+      'user-agent': 'McCluster-PRIM3-Course-Ingest/2.0'
+    }
+  });
+  if (!upstream.ok) {
+    throw Object.assign(new Error(`PRIM3 source feed returned ${upstream.status}`), { status: 502 });
+  }
+
   const text = await upstream.text();
   let payload;
-  try { payload = JSON.parse(text); } catch { throw Object.assign(new Error('PRIM3 source feed is not valid JSON'), { status: 502 }); }
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    throw Object.assign(new Error('PRIM3 source feed is not valid JSON'), { status: 502 });
+  }
   validateFeed(payload);
 
   const fetchedAt = new Date().toISOString();
   const etag = upstream.headers.get('etag') || null;
   if (cache) {
-    const headers = new Headers({ 'content-type': 'application/json; charset=utf-8', 'cache-control': `public, max-age=${CACHE_SECONDS}`, 'x-prim3-fetched-at': fetchedAt });
+    const headers = new Headers({
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': `public, max-age=${CACHE_SECONDS}`,
+      'x-prim3-fetched-at': fetchedAt
+    });
     if (etag) headers.set('etag', etag);
     await cache.put(cacheKey, new Response(JSON.stringify(payload), { status: 200, headers }));
   }
-  return { payload, meta: { repo: 'mcclusterishere/Prim3', branch: 'main', path: 'learning/course/course-feed.json', source_url: source, cache: 'miss', etag, fetched_at: fetchedAt } };
+
+  return {
+    payload,
+    meta: {
+      repo: 'mcclusterishere/Prim3',
+      branch: 'main',
+      path: 'learning/course/course-feed.json',
+      source_url: source,
+      cache: 'miss',
+      etag,
+      fetched_at: fetchedAt
+    }
+  };
 }
 
 function splitCoreConcepts(unit, unitIndex) {
@@ -199,6 +246,11 @@ function expandUnit(unit, unitIndex) {
   const bridge = BRIDGE_TOPICS[unitIndex] || [];
   const exams = EXAM_ALIGNMENT[unitIndex] || [];
   const [coreA, coreB] = splitCoreConcepts(unit, unitIndex);
+  const sourceConcepts = Array.isArray(unit.concepts) ? unit.concepts.slice() : [];
+  const usedCore = new Set([...coreA, ...coreB].map((concept) => String(concept).toLowerCase()));
+  const sourceRemainder = sourceConcepts.filter((concept) => !usedCore.has(String(concept).toLowerCase()));
+  const bridgeConcepts = [...sourceRemainder, ...bridge];
+  const bridgeOrigin = sourceRemainder.length ? 'prim3-source+mccluster-enrichment' : 'mccluster-enrichment';
   const sourceLocked = unit.status === 'owner-source-required';
   const base = {
     unit_id: `U${String(unitIndex + 1).padStart(2, '0')}`,
@@ -225,9 +277,51 @@ function expandUnit(unit, unitIndex) {
   ];
 
   return [
-    { ...base, id: instructionalModuleId(firstSequence), sequence: firstSequence, part: 1, part_label: 'SONG CORE A', title: titles[0], status: sourceLocked ? 'owner-source-required' : 'source-aligned', curriculum_origin: 'prim3-source', concepts: coreA, objectives: sourceLocked ? [] : coreObjective(1), exam_alignment: [] },
-    { ...base, id: instructionalModuleId(firstSequence + 1), sequence: firstSequence + 1, part: 2, part_label: 'SONG CORE B', title: titles[1], status: sourceLocked ? 'owner-source-required' : 'source-aligned', curriculum_origin: 'prim3-source', concepts: coreB, objectives: sourceLocked ? [] : coreObjective(2), exam_alignment: [] },
-    { ...base, id: instructionalModuleId(firstSequence + 2), sequence: firstSequence + 2, part: 3, part_label: 'INFRASTRUCTURE + EXAM BRIDGE', title: titles[2], status: sourceLocked ? 'owner-source-required' : 'enrichment', curriculum_origin: 'mccluster-enrichment', concepts: bridge, objectives: bridgeObjectives, exam_alignment: exams }
+    {
+      ...base,
+      id: instructionalModuleId(firstSequence),
+      sequence: firstSequence,
+      part: 1,
+      part_label: 'SONG CORE A',
+      title: titles[0],
+      status: sourceLocked ? 'owner-source-required' : 'source-aligned',
+      curriculum_origin: 'prim3-source',
+      concepts: coreA,
+      source_concepts: coreA,
+      enrichment_concepts: [],
+      objectives: sourceLocked ? [] : coreObjective(1),
+      exam_alignment: []
+    },
+    {
+      ...base,
+      id: instructionalModuleId(firstSequence + 1),
+      sequence: firstSequence + 1,
+      part: 2,
+      part_label: 'SONG CORE B',
+      title: titles[1],
+      status: sourceLocked ? 'owner-source-required' : 'source-aligned',
+      curriculum_origin: 'prim3-source',
+      concepts: coreB,
+      source_concepts: coreB,
+      enrichment_concepts: [],
+      objectives: sourceLocked ? [] : coreObjective(2),
+      exam_alignment: []
+    },
+    {
+      ...base,
+      id: instructionalModuleId(firstSequence + 2),
+      sequence: firstSequence + 2,
+      part: 3,
+      part_label: 'INFRASTRUCTURE + EXAM BRIDGE',
+      title: titles[2],
+      status: sourceLocked ? 'owner-source-required' : 'enrichment',
+      curriculum_origin: bridgeOrigin,
+      concepts: bridgeConcepts,
+      source_concepts: sourceRemainder,
+      enrichment_concepts: bridge,
+      objectives: bridgeObjectives,
+      exam_alignment: exams
+    }
   ];
 }
 
@@ -248,6 +342,15 @@ function normalizedCourse(payload) {
     sources: unit.sources || []
   }));
   const modules = sourceCourse.modules.flatMap(expandUnit);
+  if (modules.length !== INSTRUCTIONAL_MODULE_COUNT) {
+    throw Object.assign(new Error(`PRIM3 curriculum adapter must publish exactly ${INSTRUCTIONAL_MODULE_COUNT} instructional modules`), { status: 502 });
+  }
+  modules.forEach((module, index) => {
+    if (module.id !== instructionalModuleId(index + 1) || Number(module.sequence) !== index + 1) {
+      throw Object.assign(new Error(`Invalid PRIM3 instructional module ordering at sequence ${index + 1}`), { status: 502 });
+    }
+  });
+
   return {
     id: COURSE_ID,
     source_course_id: SOURCE_COURSE_ID,
@@ -271,7 +374,10 @@ function normalizedCourse(payload) {
 
 async function getProgress(request, env) {
   const user = await requireLearner(request, env);
-  const rows = await dbRequest(env, `prim3_course_progress?user_id=eq.${encodeURIComponent(user.id)}&course_id=eq.${encodeURIComponent(COURSE_ID)}&order=module_id.asc&select=module_id,reading_completed_at,assessment_score,assessment_attempts,passed_at,mastery,last_activity_at,updated_at`);
+  const rows = await dbRequest(
+    env,
+    `prim3_course_progress?user_id=eq.${encodeURIComponent(user.id)}&course_id=eq.${encodeURIComponent(COURSE_ID)}&order=module_id.asc&select=module_id,reading_completed_at,assessment_score,assessment_attempts,passed_at,mastery,last_activity_at,updated_at`
+  );
   return reply(request, env, { ok: true, course_id: COURSE_ID, user_id: user.id, progress: rows || [] });
 }
 
@@ -284,15 +390,23 @@ async function saveProgress(request, env, moduleId) {
 
   let body;
   try { body = await request.json(); } catch { return fail(request, env, 'Valid JSON body required', 400); }
+
   const now = new Date().toISOString();
   const scoreProvided = body.assessment_score !== undefined && body.assessment_score !== null;
   const incomingScore = scoreProvided ? Math.round(Number(body.assessment_score)) : null;
-  if (scoreProvided && (!Number.isFinite(incomingScore) || incomingScore < 0 || incomingScore > 100)) return fail(request, env, 'assessment_score must be 0 through 100', 400);
+  if (scoreProvided && (!Number.isFinite(incomingScore) || incomingScore < 0 || incomingScore > 100)) {
+    return fail(request, env, 'assessment_score must be 0 through 100', 400);
+  }
 
-  const existing = await dbRequest(env, `prim3_course_progress?user_id=eq.${encodeURIComponent(user.id)}&course_id=eq.${encodeURIComponent(COURSE_ID)}&module_id=eq.${encodeURIComponent(moduleId)}&select=assessment_attempts,assessment_score,reading_completed_at,passed_at,mastery&limit=1`);
+  const existing = await dbRequest(
+    env,
+    `prim3_course_progress?user_id=eq.${encodeURIComponent(user.id)}&course_id=eq.${encodeURIComponent(COURSE_ID)}&module_id=eq.${encodeURIComponent(moduleId)}&select=assessment_attempts,assessment_score,reading_completed_at,passed_at,mastery&limit=1`
+  );
   const previous = existing?.[0] || {};
   const previousScore = Number(previous.assessment_score);
-  const bestScore = scoreProvided ? (Number.isFinite(previousScore) ? Math.max(previousScore, incomingScore) : incomingScore) : (Number.isFinite(previousScore) ? previousScore : null);
+  const bestScore = scoreProvided
+    ? (Number.isFinite(previousScore) ? Math.max(previousScore, incomingScore) : incomingScore)
+    : (Number.isFinite(previousScore) ? previousScore : null);
   const readingCompleted = body.reading_completed === true || Boolean(previous.reading_completed_at);
   const attempts = Number(previous.assessment_attempts || 0) + (scoreProvided ? 1 : 0);
   const passedAt = previous.passed_at || (bestScore !== null && bestScore >= course.pass_mark ? now : null);
@@ -312,13 +426,25 @@ async function saveProgress(request, env, moduleId) {
     updated_at: now
   };
 
-  const rows = await dbRequest(env, 'prim3_course_progress?on_conflict=user_id,course_id,module_id', { method: 'POST', headers: { prefer: 'resolution=merge-duplicates,return=representation' }, body: JSON.stringify(row) });
+  const rows = await dbRequest(
+    env,
+    'prim3_course_progress?on_conflict=user_id,course_id,module_id',
+    {
+      method: 'POST',
+      headers: { prefer: 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify(row)
+    }
+  );
   return reply(request, env, { ok: true, course_id: COURSE_ID, progress: rows?.[0] || row });
 }
 
 async function resetProgress(request, env) {
   const user = await requireLearner(request, env);
-  await dbRequest(env, `prim3_course_progress?user_id=eq.${encodeURIComponent(user.id)}&course_id=eq.${encodeURIComponent(COURSE_ID)}`, { method: 'DELETE', headers: { prefer: 'return=minimal' } });
+  await dbRequest(
+    env,
+    `prim3_course_progress?user_id=eq.${encodeURIComponent(user.id)}&course_id=eq.${encodeURIComponent(COURSE_ID)}`,
+    { method: 'DELETE', headers: { prefer: 'return=minimal' } }
+  );
   return reply(request, env, { ok: true, course_id: COURSE_ID, reset: true });
 }
 
@@ -339,18 +465,28 @@ async function route(request, env) {
   }
 
   if (request.method !== 'GET') return fail(request, env, 'Method not allowed', 405);
+
   await requireLearner(request, env);
   const source = await fetchSource(env);
   const course = normalizedCourse(source.payload);
 
-  if (path === '/v1/prim3' || path === '/v1/prim3/course') return reply(request, env, { ok: true, source: source.meta, course });
+  if (path === '/v1/prim3' || path === '/v1/prim3/course') {
+    return reply(request, env, { ok: true, source: source.meta, course });
+  }
 
   if (path === '/v1/prim3/course/health') {
     return reply(request, env, {
       ok: true,
       source: source.meta,
       learner_progress: { configured: databaseConfigured(env), account_required: true },
-      course: { id: course.id, schema_version: course.schema_version, source_unit_count: course.source_unit_count, module_count: course.module_count, free_after_account: true, protected_open_unit: course.units.some((unit) => unit.id === 'U18' && unit.status === 'owner-source-required') }
+      course: {
+        id: course.id,
+        schema_version: course.schema_version,
+        source_unit_count: course.source_unit_count,
+        module_count: course.module_count,
+        free_after_account: true,
+        protected_open_unit: course.units.some((unit) => unit.id === 'U18' && unit.status === 'owner-source-required')
+      }
     });
   }
 
@@ -373,4 +509,6 @@ async function route(request, env) {
   return fail(request, env, 'PRIM3 route not found', 404);
 }
 
-export default { fetch: route };
+export default {
+  fetch: route
+};
