@@ -38,7 +38,11 @@ export const CATALOG_PROTOCOLS = Object.freeze({
   ZENODO: 'zenodo',
   DATAVERSE: 'dataverse',
   ARCGIS_HUB: 'arcgis-hub',
-  OPENDATASOFT: 'opendatasoft'
+  OPENDATASOFT: 'opendatasoft',
+  // OGC API - Records. An open standard rather than a vendor API, which is why
+  // it is worth a driver: Connecticut's geodata portal speaks it, and so does a
+  // growing set of national and state portals that will never speak Socrata.
+  OGC_RECORDS: 'ogc-records'
 });
 
 function catalog({
@@ -52,11 +56,20 @@ function catalog({
   defaultSourceClass = SOURCE_CLASSES.RESTRICTED,
   lane = 'OPEN',
   attribution = null,
-  pageSize = 100
+  pageSize = 100,
+  // Extra query parameters a catalog needs on every request -- a Socrata
+  // domain filter, an org scope. Kept separate from `endpoint` so URL
+  // building never has to guess whether a '?' is already present.
+  query = null,
+  // Where this catalog's data is about, when it is regional. Purely
+  // descriptive; nothing filters on it yet.
+  region = null
 }) {
   return Object.freeze({
     key, name, protocol, endpoint, homepage,
-    defaultSourceClass, lane, attribution, pageSize
+    defaultSourceClass, lane, attribution, pageSize,
+    query: query ? Object.freeze({ ...query }) : null,
+    region
   });
 }
 
@@ -139,6 +152,41 @@ export const CATALOGS = Object.freeze([
     endpoint: 'https://opendata.arcgis.com/api/v3/datasets',
     homepage: 'https://hub.arcgis.com',
     attribution: 'Esri ArcGIS Hub open data',
+    pageSize: 100
+  }),
+  /*
+    CONNECTICUT.
+
+    The state is the first market, and a bid is won on local depth rather than
+    on global breadth -- a town does not care that we reach 212 million datasets
+    if we cannot name its own parcels. These two catalogs are registered
+    separately from the global federation so Connecticut coverage can be
+    measured, and regressed, on its own.
+
+    Connecticut also has no county government: 169 municipalities and 9 councils
+    of governments, and the COGs are the bodies that collect parcel and CAMA
+    data from every town annually under Conn. Gen. Stat. 7-100l. That statutory
+    pipeline is why statewide parcel coverage exists at all.
+  */
+  catalog({
+    key: 'ct_geodata',
+    name: 'Connecticut Geodata Portal (CT GIS Office)',
+    protocol: CATALOG_PROTOCOLS.OGC_RECORDS,
+    endpoint: 'https://geodata.ct.gov/api/search/v1/collections/dataset/items',
+    homepage: 'https://geodata.ct.gov',
+    attribution: 'Connecticut GIS Office / CT Office of Policy and Management',
+    region: 'US-CT',
+    pageSize: 100
+  }),
+  catalog({
+    key: 'ct_open_data',
+    name: 'Connecticut Open Data (data.ct.gov)',
+    protocol: CATALOG_PROTOCOLS.SOCRATA,
+    endpoint: 'https://api.us.socrata.com/api/catalog/v1',
+    query: { domains: 'data.ct.gov' },
+    homepage: 'https://data.ct.gov',
+    attribution: 'State of Connecticut open data',
+    region: 'US-CT',
     pageSize: 100
   }),
   catalog({
@@ -498,6 +546,57 @@ function normalizeDataverse(raw, cat) {
   });
 }
 
+/*
+  OGC API - Records. Each record is a GeoJSON Feature whose `properties` carry
+  the metadata and whose `geometry` is the dataset's footprint -- which is why
+  this protocol is worth having for a regional catalog: the extent arrives with
+  the record instead of needing a second lookup.
+*/
+function normalizeOgcRecords(raw, cat) {
+  const p = raw?.properties ?? {};
+  // `extent` here is an ArcGIS-style envelope [[minx,miny],[maxx,maxy]]; the
+  // Feature's own geometry is a polygon. Prefer the envelope, fall back to the
+  // polygon's bounds.
+  let bbox = null;
+  const e = p.extent;
+  if (Array.isArray(e) && e.length === 2 && Array.isArray(e[0]) && Array.isArray(e[1])) {
+    bbox = [Number(e[0][0]), Number(e[0][1]), Number(e[1][0]), Number(e[1][1])];
+  } else if (raw?.geometry?.type === 'Polygon' && Array.isArray(raw.geometry.coordinates?.[0])) {
+    const ring = raw.geometry.coordinates[0].filter((pt) => Array.isArray(pt) && pt.length >= 2);
+    if (ring.length) {
+      const xs = ring.map((pt) => Number(pt[0]));
+      const ys = ring.map((pt) => Number(pt[1]));
+      bbox = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+    }
+  }
+  const keywords = [
+    ...(Array.isArray(p.keywords) ? p.keywords : []),
+    ...(Array.isArray(p.typeKeywords) ? p.typeKeywords : [])
+  ].map((k) => String(k)).slice(0, 40);
+
+  return descriptor({
+    catalogKey: cat.key,
+    protocol: cat.protocol,
+    id: raw?.id ?? p.id,
+    title: text(p.title ?? p.name),
+    description: text(String(p.description ?? p.snippet ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' '), { max: 1200 }),
+    publisher: text(p.owner ?? p.orgId ?? cat.name),
+    // licenseInfo is an HTML fragment as often as it is an identifier, so it is
+    // stripped before classification -- and classifyLicenceFrom still fails
+    // closed on anything it cannot place.
+    licence: classifyLicenceFrom([
+      text(String(p.license ?? '').replace(/<[^>]*>/g, ' ')),
+      text(String(p.licenseInfo ?? '').replace(/<[^>]*>/g, ' ')),
+      text(p.rights)
+    ]),
+    updatedAt: isoOrNull(p.modified ?? p.updated),
+    issuedAt: isoOrNull(p.created ?? p.published),
+    bbox: bbox && bbox.every(Number.isFinite) ? bbox : null,
+    landingUrl: (Array.isArray(raw?.links) ? raw.links.find((l) => l?.rel === 'self')?.href : null) ?? null,
+    keywords
+  });
+}
+
 function normalizeArcgis(raw, cat) {
   const a = raw?.attributes ?? {};
   // extent is an envelope: [[minx, miny], [maxx, maxy]]
@@ -552,7 +651,8 @@ const NORMALIZERS = Object.freeze({
   [CATALOG_PROTOCOLS.ZENODO]: normalizeZenodo,
   [CATALOG_PROTOCOLS.DATAVERSE]: normalizeDataverse,
   [CATALOG_PROTOCOLS.ARCGIS_HUB]: normalizeArcgis,
-  [CATALOG_PROTOCOLS.OPENDATASOFT]: normalizeOpenDataSoft
+  [CATALOG_PROTOCOLS.OPENDATASOFT]: normalizeOpenDataSoft,
+  [CATALOG_PROTOCOLS.OGC_RECORDS]: normalizeOgcRecords
 });
 
 export function normalizeDataset(cat, raw) {
@@ -563,31 +663,52 @@ export function normalizeDataset(cat, raw) {
 
 /* ── discovery ──────────────────────────────────────────────────────────── */
 
+/*
+  Merge a catalog's standing query parameters into a URL that may already carry
+  its own. Building these by string concatenation is how a second '?' gets into
+  a URL and a whole catalog silently returns the unfiltered firehose.
+*/
+function withCatalogQuery(cat, url) {
+  if (!cat.query) return url;
+  const parsed = new URL(url);
+  for (const [k, v] of Object.entries(cat.query)) {
+    if (v === undefined || v === null) continue;
+    parsed.searchParams.set(k, String(v));
+  }
+  return parsed.toString();
+}
+
 /** Where each protocol keeps its page of records and its total count. */
 export function pageRequest(cat, { offset = 0, limit = null } = {}) {
   const size = Math.min(limit ?? cat.pageSize, 1000);
   switch (cat.protocol) {
     case CATALOG_PROTOCOLS.EU_HUB:
-      return { url: `${cat.endpoint}?limit=${size}&page=${Math.floor(offset / size)}` };
+      return { url: withCatalogQuery(cat, `${cat.endpoint}?limit=${size}&page=${Math.floor(offset / size)}`) };
     case CATALOG_PROTOCOLS.SOCRATA:
-      return { url: `${cat.endpoint}?limit=${size}&offset=${offset}` };
+      return { url: withCatalogQuery(cat, `${cat.endpoint}?limit=${size}&offset=${offset}`) };
     case CATALOG_PROTOCOLS.STAC:
       // Collections are the addressable unit; items are fetched per collection.
       return { url: `${cat.endpoint}/collections` };
     case CATALOG_PROTOCOLS.CKAN:
-      return { url: `${cat.endpoint}/package_search?rows=${size}&start=${offset}` };
+      return { url: withCatalogQuery(cat, `${cat.endpoint}/package_search?rows=${size}&start=${offset}`) };
     case CATALOG_PROTOCOLS.DATACITE:
-      return { url: `${cat.endpoint}?resource-type-id=dataset&page%5Bsize%5D=${size}&page%5Bnumber%5D=${Math.floor(offset / size) + 1}` };
+      return { url: withCatalogQuery(cat, `${cat.endpoint}?resource-type-id=dataset&page%5Bsize%5D=${size}&page%5Bnumber%5D=${Math.floor(offset / size) + 1}`) };
     case CATALOG_PROTOCOLS.OPENAIRE:
-      return { url: `${cat.endpoint}?size=${size}&page=${Math.floor(offset / size)}&format=json` };
+      return { url: withCatalogQuery(cat, `${cat.endpoint}?size=${size}&page=${Math.floor(offset / size)}&format=json`) };
     case CATALOG_PROTOCOLS.ZENODO:
-      return { url: `${cat.endpoint}?size=${size}&page=${Math.floor(offset / size) + 1}` };
+      return { url: withCatalogQuery(cat, `${cat.endpoint}?size=${size}&page=${Math.floor(offset / size) + 1}`) };
     case CATALOG_PROTOCOLS.DATAVERSE:
-      return { url: `${cat.endpoint}?q=*&type=dataset&per_page=${size}&start=${offset}` };
+      return { url: withCatalogQuery(cat, `${cat.endpoint}?q=*&type=dataset&per_page=${size}&start=${offset}`) };
     case CATALOG_PROTOCOLS.ARCGIS_HUB:
-      return { url: `${cat.endpoint}?page%5Bsize%5D=${size}&page%5Bnumber%5D=${Math.floor(offset / size) + 1}` };
+      return { url: withCatalogQuery(cat, `${cat.endpoint}?page%5Bsize%5D=${size}&page%5Bnumber%5D=${Math.floor(offset / size) + 1}`) };
     case CATALOG_PROTOCOLS.OPENDATASOFT:
-      return { url: `${cat.endpoint}?limit=${Math.min(size, 100)}&offset=${offset}` };
+      return { url: withCatalogQuery(cat, `${cat.endpoint}?limit=${Math.min(size, 100)}&offset=${offset}`) };
+    case CATALOG_PROTOCOLS.OGC_RECORDS:
+      // startindex is ONE-based in this standard, and a server will 400 on
+      // startindex=0 rather than treat it as the first page. Verified against
+      // Connecticut's portal, which advertises `startindex=6` as the `next`
+      // link for the second page of five.
+      return { url: withCatalogQuery(cat, `${cat.endpoint}?limit=${size}&startindex=${offset + 1}`) };
     default:
       throw new Error(`No page request for catalog protocol ${cat.protocol}`);
   }
@@ -620,6 +741,10 @@ export function extractPage(cat, body) {
       return { records: body?.data ?? [], total: body?.meta?.stats?.totalCount ?? null };
     case CATALOG_PROTOCOLS.OPENDATASOFT:
       return { records: body?.results ?? [], total: body?.total_count ?? null };
+    case CATALOG_PROTOCOLS.OGC_RECORDS:
+      // A GeoJSON FeatureCollection; numberMatched is the full result count,
+      // numberReturned only this page.
+      return { records: body?.features ?? [], total: body?.numberMatched ?? null };
     default:
       throw new Error(`No page extractor for catalog protocol ${cat.protocol}`);
   }

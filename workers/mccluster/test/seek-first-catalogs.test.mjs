@@ -233,3 +233,104 @@ test('a STAC collection carrying a Public Domain licence link is retainable end 
   assert.equal(d.licence.sourceClass, SOURCE_CLASSES.PUBLIC_OPEN);
   assert.deepEqual(retainableFor([d]).map((x) => x.id), ['naip']);
 });
+
+/* ── Connecticut ───────────────────────────────────────────────────────────
+  The state is the first market, and a municipal bid is won on local depth, not
+  on the global total. A town does not care that we reach 212 million datasets
+  if we cannot name its own parcels. So Connecticut coverage is asserted
+  separately from the global federation, and can regress on its own.
+*/
+import { pageRequest as ctPageRequest, extractPage as ctExtractPage, CATALOGS as CT_CATALOGS, CATALOG_PROTOCOLS as CT_PROTOCOLS, normalizeDataset as ctNormalize } from '../src/seek-first/catalogs.js';
+
+const CT = CT_CATALOGS.filter((c) => c.region === 'US-CT');
+
+test('Connecticut is registered as its own region, on two protocols', () => {
+  assert.equal(CT.length, 2, 'expected ct_geodata and ct_open_data');
+  const keys = CT.map((c) => c.key).sort();
+  assert.deepEqual(keys, ['ct_geodata', 'ct_open_data']);
+  // Two different protocols on purpose: the GIS portal and the open-data
+  // portal publish different things and neither is a superset of the other.
+  assert.equal(new Set(CT.map((c) => c.protocol)).size, 2);
+});
+
+/*
+  A catalog that needs a standing filter must not get it by string concatenation
+  -- that is how a second '?' lands in a URL and the whole state filter silently
+  drops, returning every Socrata domain on earth instead of Connecticut's.
+*/
+test('a catalog query parameter survives URL building', () => {
+  const socrata = CT.find((c) => c.protocol === CT_PROTOCOLS.SOCRATA);
+  const url = new URL(ctPageRequest(socrata, { offset: 0, limit: 10 }).url);
+  assert.equal(url.searchParams.get('domains'), 'data.ct.gov');
+  assert.equal(url.searchParams.get('limit'), '10');
+  assert.equal((url.toString().match(/\?/g) || []).length, 1, 'exactly one query separator');
+});
+
+/*
+  OGC API - Records pages with a ONE-based startindex. Connecticut's portal
+  returns HTTP 400 on startindex=0 rather than treating it as the first page,
+  so an off-by-one here is not a subtle bug -- it is a catalog that never loads.
+*/
+test('OGC Records paging is one-based', () => {
+  const ogc = CT.find((c) => c.protocol === CT_PROTOCOLS.OGC_RECORDS);
+  assert.match(ctPageRequest(ogc, { offset: 0, limit: 5 }).url, /startindex=1(&|$)/);
+  assert.match(ctPageRequest(ogc, { offset: 5, limit: 5 }).url, /startindex=6(&|$)/);
+  assert.doesNotMatch(ctPageRequest(ogc, { offset: 0, limit: 5 }).url, /startindex=0/);
+});
+
+test('an OGC Records FeatureCollection extracts records and its full count', () => {
+  const ogc = CT.find((c) => c.protocol === CT_PROTOCOLS.OGC_RECORDS);
+  const page = ctExtractPage(ogc, {
+    type: 'FeatureCollection',
+    numberMatched: 232,
+    numberReturned: 2,
+    features: [{ id: 'a', properties: { title: 'x' } }, { id: 'b', properties: { title: 'y' } }]
+  });
+  assert.equal(page.total, 232, 'numberMatched is the full count, not numberReturned');
+  assert.equal(page.records.length, 2);
+});
+
+/*
+  The footprint arrives WITH the record in this protocol, which is the reason it
+  is worth driving for a regional catalog. Connecticut's real extent, from the
+  live portal.
+*/
+test('an OGC record carries its own bounding box', () => {
+  const ogc = CT.find((c) => c.protocol === CT_PROTOCOLS.OGC_RECORDS);
+  const d = ctNormalize(ogc, {
+    id: 'ct-lidar',
+    properties: { title: 'CT 2023 Elevation - Shaded Relief', licenseInfo: 'CC0', license: 'CC0-1.0' },
+    geometry: { type: 'Polygon', coordinates: [[[-73.7389, 42.0598], [-71.7784, 42.0598], [-71.7784, 40.9738], [-73.7389, 40.9738], [-73.7389, 42.0598]]] }
+  });
+  assert.ok(d.bbox, 'bbox must be derived from the feature geometry');
+  const [minx, miny, maxx, maxy] = d.bbox;
+  assert.ok(minx < -73.7 && maxx > -71.8, 'spans Connecticut west to east');
+  assert.ok(miny < 41.0 && maxy > 42.0, 'spans Connecticut south to north');
+  assert.equal(d.licence.sourceClass, 'PUBLIC_OPEN', 'CC0-1.0 is open');
+});
+
+/*
+  A REAL typo, found in Connecticut's own published metadata: one lidar dataset
+  carries licenseInfo "c00" (with zeros) and license "custom" where its siblings
+  carry "CC0" / "CC0-1.0".
+
+  The classifier must NOT helpfully read "c00" as CC0. Guessing a licence from a
+  near-miss is precisely the failure the firewall exists to prevent, and the
+  cost of being wrong is retaining material we have no right to keep. One
+  unusable dataset is the correct price.
+*/
+test('a near-miss licence string is refused, not guessed', () => {
+  const ogc = CT.find((c) => c.protocol === CT_PROTOCOLS.OGC_RECORDS);
+  const typo = ctNormalize(ogc, {
+    id: 'ct-lidar-intensity',
+    properties: { title: 'CT 2023 Elevation Lidar Intensity', licenseInfo: 'c00', license: 'custom' }
+  });
+  assert.equal(typo.licence.sourceClass, 'RESTRICTED');
+  assert.equal(typo.licence.persistence, 'none');
+
+  const correct = ctNormalize(ogc, {
+    id: 'ct-shaded-relief',
+    properties: { title: 'CT 2023 Elevation - Shaded Relief', licenseInfo: 'CC0', license: 'CC0-1.0' }
+  });
+  assert.equal(correct.licence.sourceClass, 'PUBLIC_OPEN');
+});
