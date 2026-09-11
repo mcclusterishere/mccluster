@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>PRIM3 · Cybersecurity Curriculum</title>
+  <meta name="description" content="PRIM3 is a conventional cybersecurity learning path reinforced by music, story and safe practical labs.">
+  <link rel="canonical" href="https://matthew.mccluster.org/prim3.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/prim3.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+</head>
+<body class="prim3-lms">
+  <a class="p3-skip" href="#course">Skip to coursework</a>
+
+  <header class="p3-topbar">
+    <a class="p3-house" href="index.html" aria-label="Back to McCluster">McCluster</a>
+    <div class="p3-id">
+      <strong>PRIM3</strong>
+      <span>Cybersecurity Curriculum · Foundation</span>
+    </div>
+    <button class="p3-reset" id="resetProgress" type="button">Reset progress</button>
+  </header>
+
+  <main class="p3-shell" id="course">
+    <section class="p3-hero" aria-labelledby="p3Title">
+      <div class="p3-hero__copy">
+        <p class="p3-kicker">Learning management system</p>
+        <h1 id="p3Title">Learn it normally.<br><span>Remember it differently.</span></h1>
+        <p class="p3-lede">The required path is intentionally conventional: read the lesson, study the terms, pass the assessment, unlock the next module. Music, the show and the game reinforce the same objectives, but they never replace the coursework.</p>
+      </div>
+      <aside class="p3-progress-card" aria-label="Course progress">
+        <div class="p3-progress-card__line"><span>Foundation progress</span><strong id="progressPercent">0%</strong></div>
+        <div class="p3-progress" aria-hidden="true"><i id="progressBar"></i></div>
+        <dl class="p3-stats">
+          <div><dt id="passedCount">0</dt><dd>passed</dd></div>
+          <div><dt id="moduleCount">11</dt><dd>modules</dd></div>
+          <div><dt>80%</dt><dd>pass mark</dd></div>
+        </dl>
+        <button class="p3-primary" id="continueCourse" type="button">Start Module 01</button>
+      </aside>
+    </section>
+
+    <section class="p3-contract" aria-label="How PRIM3 works">
+      <article><span>01</span><div><b>LEARN</b><p>Required reading, terms and assessments. This controls progression.</p></div><em>REQUIRED</em></article>
+      <article><span>02</span><div><b>REMEMBER</b><p>Songs map technical concepts to repeatable memory cues.</p></div><em>COMPANION</em></article>
+      <article><span>03</span><div><b>WATCH</b><p>The PRIM3 show gives the concepts narrative context.</p></div><em>COMPANION</em></article>
+      <article><span>04</span><div><b>LAB</b><p>Safe simulations and game missions turn concepts into practice.</p></div><em>COMPANION</em></article>
+    </section>
+
+    <section class="p3-course-grid">
+      <aside class="p3-syllabus" aria-label="Course syllabus">
+        <div class="p3-section-head">
+          <p class="p3-kicker">Foundation</p>
+          <h2>Syllabus</h2>
+        </div>
+        <div id="moduleList" class="p3-module-list"></div>
+        <p class="p3-safety"><b>Lab rule:</b> PRIM3 labs use fictional, local or explicitly authorized systems only. No exercise requires attacking a real third party.</p>
+      </aside>
+
+      <section class="p3-lesson" id="lessonPanel" aria-live="polite">
+        <div class="p3-empty" id="lessonEmpty">
+          <p class="p3-kicker">Coursework</p>
+          <h2>Select an unlocked module.</h2>
+          <p>Your completion state is stored on this device for this foundation build.</p>
+        </div>
+
+        <article id="lessonContent" hidden>
+          <header class="p3-lesson-head">
+            <div>
+              <p class="p3-kicker" id="lessonNumber">Module 01</p>
+              <h2 id="lessonTitle"></h2>
+              <p id="lessonSummary"></p>
+            </div>
+            <span class="p3-status" id="lessonStatus">IN PROGRESS</span>
+          </header>
+
+          <section class="p3-objectives">
+            <h3>Learning objectives</h3>
+            <ul id="objectiveList"></ul>
+          </section>
+
+          <section class="p3-reading">
+            <div class="p3-section-label"><span>Required</span><b>Reading</b></div>
+            <div id="readingBody"></div>
+            <div class="p3-terms">
+              <h3>Key terms</h3>
+              <dl id="termList"></dl>
+            </div>
+            <button class="p3-secondary" id="markRead" type="button">Mark reading complete</button>
+          </section>
+
+          <section class="p3-assessment" id="assessmentSection">
+            <div class="p3-section-label"><span>Required</span><b>Assessment</b></div>
+            <p class="p3-assessment__rule">Score at least 80% to pass this module and unlock the next one.</p>
+            <form id="quizForm"></form>
+            <div class="p3-quiz-actions">
+              <button class="p3-primary" id="submitQuiz" type="submit" form="quizForm">Grade assessment</button>
+              <span id="quizResult" role="status"></span>
+            </div>
+          </section>
+
+          <section class="p3-companions">
+            <div class="p3-section-label"><span>Optional</span><b>Reinforcement</b></div>
+            <div class="p3-layer-grid">
+              <article data-layer="remember"><small>02 · REMEMBER</small><b id="musicTitle"></b><p id="musicCopy"></p></article>
+              <article data-layer="watch"><small>03 · WATCH</small><b id="watchTitle"></b><p id="watchCopy"></p></article>
+              <article data-layer="lab"><small>04 · LAB</small><b id="labTitle"></b><p id="labCopy"></p></article>
+            </div>
+          </section>
+        </article>
+      </section>
+    </section>
+
+    <section class="p3-roadmap">
+      <div class="p3-section-head">
+        <p class="p3-kicker">Curriculum architecture</p>
+        <h2>One objective set. Four delivery layers.</h2>
+      </div>
+      <p>The LMS owns competencies and assessment. Every song, episode and game mission points back to those same competencies. That keeps PRIM3 creative without making the credential dependent on consuming entertainment.</p>
+      <div class="p3-roadmap-flow" aria-label="PRIM3 learning flow">
+        <span>READ</span><i>→</i><span>STUDY</span><i>→</i><span>TEST</span><i>→</i><strong>PASS</strong><i>→</i><span>UNLOCK</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="p3-footer">
+    <strong>PRIM3</strong>
+    <span>McCluster Corp · educational foundation build</span>
+    <a href="whip.html">Whip Equipped archive</a>
+  </footer>
+
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/prim3.js?v=__STAMP__"></script>
+</body>
+</html>
