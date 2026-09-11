@@ -209,22 +209,27 @@ async function saveProgress(request, env, moduleId) {
 
   const existing = await dbRequest(
     env,
-    `prim3_course_progress?user_id=eq.${encodeURIComponent(user.id)}&course_id=eq.${encodeURIComponent(COURSE_ID)}&module_id=eq.${encodeURIComponent(moduleId)}&select=assessment_attempts,reading_completed_at,passed_at&limit=1`
+    `prim3_course_progress?user_id=eq.${encodeURIComponent(user.id)}&course_id=eq.${encodeURIComponent(COURSE_ID)}&module_id=eq.${encodeURIComponent(moduleId)}&select=assessment_attempts,assessment_score,reading_completed_at,passed_at,mastery&limit=1`
   );
   const previous = existing?.[0] || {};
+  const previousScore = Number(previous.assessment_score);
+  const hasPreviousScore = previous.assessment_score !== null && previous.assessment_score !== undefined && Number.isFinite(previousScore);
+  const bestScore = scoreProvided ? (hasPreviousScore ? Math.max(previousScore, score) : score) : (hasPreviousScore ? previousScore : null);
   const readingCompleted = body.reading_completed === true || Boolean(previous.reading_completed_at);
   const attempts = Number(previous.assessment_attempts || 0) + (scoreProvided ? 1 : 0);
   const passedAt = previous.passed_at || (scoreProvided && score >= course.pass_mark ? now : null);
+  const priorMastery = previous.mastery && typeof previous.mastery === 'object' && !Array.isArray(previous.mastery) ? previous.mastery : {};
+  const suppliedMastery = body.mastery && typeof body.mastery === 'object' && !Array.isArray(body.mastery) ? body.mastery : null;
 
   const row = {
     user_id: user.id,
     course_id: COURSE_ID,
     module_id: moduleId,
     reading_completed_at: readingCompleted ? (previous.reading_completed_at || now) : null,
-    assessment_score: scoreProvided ? score : null,
+    assessment_score: bestScore,
     assessment_attempts: attempts,
     passed_at: passedAt,
-    mastery: body.mastery && typeof body.mastery === 'object' && !Array.isArray(body.mastery) ? body.mastery : {},
+    mastery: suppliedMastery ? { ...priorMastery, ...suppliedMastery } : priorMastery,
     last_activity_at: now,
     updated_at: now
   };
