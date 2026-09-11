@@ -1,130 +1,130 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "prim3_course_progress_v2";
-  var API_URL = "https://api.mccluster.org/v1/prim3/course";
-  var FALLBACK_URL = "https://raw.githubusercontent.com/mcclusterishere/Prim3/main/learning/course/course-feed.json";
+  var STORAGE_KEY = "prim3_course_progress_v3";
   var course = null;
   var modules = [];
   var activeId = null;
   var passMark = 80;
 
-  /* Conventional lessons are authored in McCluster; canonical module identity,
-     objectives, songs, episodes and labs come from PRIM3. Never manufacture
-     a lesson merely because a story module exists. */
+  /* The canonical PRIM3 repo publishes 21 episode/song units. McCluster turns
+     every unit into three instructional modules: two small source-aligned
+     concept clusters plus one infrastructure / CompTIA enrichment bridge.
+     Do not collapse separate concept families back into one lesson. */
   var LESSONS = {
     M01: {
-      title: "High Alert: Triage, Scope & Evidence",
-      summary: "Build the basic incident-response habit: observe first, correlate evidence, establish a safe boundary, and preserve the detail that matters before acting.",
+      title: "Alert Triage & Monitoring",
+      summary: "Start with the smallest possible idea: an alert means investigate, not panic. Learn what monitoring sees, what an alert does and how to decide whether a signal deserves attention.",
       reading: [
-        ["Alert is a decision state, not proof", "An alert tells you that something deserves attention. It does not prove the first explanation is correct. PRIM3's opening lab deliberately gives multiple weak signals and requires correlation before escalation. The professional habit is to compare evidence, rank confidence and document why an event deserves priority."],
-        ["Scope keeps response controlled", "A responder needs to know what system, property, account or process is actually under review. Scope prevents a legitimate response from becoming an uncontrolled search. When scope is uncertain, preserve evidence and escalate the authorization question instead of treating access as unlimited."],
-        ["Preserve before cleanup", "Logs, camera records, environmental alarms and staff reports can rotate out or be overwritten. The technical task is not to collect everything forever; it is to identify and preserve the telemetry that supports or disproves the incident picture."],
-        ["Professional judgment", "The R/E/T labs divide the problem into picture, physical safety and technical preservation. A strong response coordinates those functions instead of letting one urgent signal consume the entire operation."]
+        ["An alert is not proof", "Monitoring systems generate signals because a condition crossed a rule, threshold or behavioral expectation. That is a reason to inspect the situation, not a reason to assume the worst explanation is already proven."],
+        ["Triage is prioritization", "Triage asks what happened, how reliable the signal is, what could be affected and what should be checked next. Strong responders compare multiple observations before escalating."],
+        ["Monitoring is the collection layer", "Logs, sensors, service health, network telemetry and human reports can all contribute observations. The useful habit is to know which source produced a signal and what that source can and cannot prove."],
+        ["Confidence comes from corroboration", "One noisy warning can be misleading. Independent supporting evidence raises confidence; contradictory evidence should lower it and change the next question."]
       ],
-      terms: [["Alert triage","Prioritizing alerts using relevance, confidence and potential impact."],["Scope","The defined boundary of authorized work or investigation."],["Evidence trail","The documented chain of observations and records supporting a conclusion."],["Telemetry","Recorded operational data from systems, sensors, logs or monitoring tools."],["Confidence","How strongly the available evidence supports a conclusion."]],
+      terms: [["Alert","A notification that a monitored condition deserves attention."],["Monitoring","Continuous or repeated observation of systems and conditions."],["Triage","Prioritizing what needs attention first using evidence and potential impact."],["Telemetry","Operational data produced by systems, devices, sensors or software."],["Corroboration","Independent evidence that supports or challenges a claim."]],
       quiz: [
-        {q:"What should happen before a weak alert is treated as confirmed?",a:["Delete unrelated logs","Correlate it with supporting evidence","Expand scope automatically","Assume the highest-impact explanation"],c:1},
-        {q:"Why does scope matter during response?",a:["It defines authorized boundaries","It guarantees every alert is real","It replaces evidence","It increases network speed"],c:0},
-        {q:"What is the goal of preserving telemetry?",a:["Store every byte forever","Keep relevant evidence before it rotates out or changes","Avoid documenting decisions","Disable all systems"],c:1},
-        {q:"Which PRIM3 function focuses most directly on the incident picture and warning?",a:["Field-R","Field-E","Field-T","None"],c:0},
-        {q:"A safe first response to uncertainty is to:",a:["Act outside scope","Preserve evidence and escalate the authorization question","Erase noisy records","Treat inference as fact"],c:1}
+        {q:"What does an alert prove by itself?",a:["That an attack definitely happened","Only that a monitored condition deserves attention","That every system is compromised","That the highest-impact explanation is correct"],c:1},
+        {q:"What is the purpose of triage?",a:["Delete noisy alerts","Prioritize investigation using evidence and impact","Expand access automatically","Disable every system"],c:1},
+        {q:"Which is telemetry?",a:["A router log","A guess with no source","An undocumented rumor","A password policy only"],c:0},
+        {q:"What raises confidence in a conclusion?",a:["Repeating the same source","Independent corroborating evidence","Ignoring contradictions","Choosing the scariest explanation"],c:1},
+        {q:"What should happen when evidence contradicts the first theory?",a:["Hide the evidence","Adjust the theory and investigate further","Escalate anyway","Stop documenting"],c:1}
       ]
     },
     M02: {
-      title: "Authorization, Hats & Testing Knowledge",
-      summary: "Separate authorization and intent from testing knowledge, then use rules of engagement to keep technical capability inside a professional mission.",
+      title: "Scope, Evidence & Search Policy",
+      summary: "Now add boundaries. Learn what scope means, why evidence has to be preserved and why technical reachability never automatically creates permission to search.",
       reading: [
-        ["Hats and boxes answer different questions", "Hat color describes the relationship to authorization and intent. Box color describes how much information a tester receives about the target. An authorized white-hat tester can perform a black-box assessment; the terms are not interchangeable."],
-        ["Permission is operational", "The PRIM3 mission model treats authorization as gameplay rather than an invisible wall. A system can be technically reachable and still be out of scope. Capability is not authority."],
-        ["Rules of engagement", "Professional testing begins with written boundaries: what may be tested, when, by whom, with which techniques and under which stop conditions. Findings are documented so they can become remediation rather than uncontrolled action."],
-        ["Scope states", "PRIM3's Permission Slip mission formalizes AUTHORIZED, OBSERVE-ONLY, OUT-OF-SCOPE, EMERGENCY-ELIGIBLE and UNKNOWN-SCOPE. Those states force the learner to distinguish what can be done from what may be done and what is actually known."]
+        ["Scope defines the boundary", "Scope tells a responder which systems, accounts, spaces, time windows and actions are authorized. A system can be technically reachable and still be outside the work you are allowed to perform."],
+        ["Evidence should survive the response", "Relevant logs, camera records, alerts and reports can rotate, change or be overwritten. Preserve the information needed to explain what happened before routine cleanup destroys context."],
+        ["Search and access are policy questions", "A technical tool may be capable of reading more than the mission permits. Professional work separates capability from authorization and escalates uncertainty instead of assuming access rights."],
+        ["Document the decision trail", "Record what was observed, what was preserved, why an action was taken and where the authority came from. That trail is what makes later review possible."]
       ],
-      terms: [["Authorization","Explicit permission to perform the agreed security activity."],["Rules of engagement","Written constraints that define an authorized assessment."],["White box","Testing with substantial internal system knowledge."],["Black box","Testing with little or no internal knowledge."],["Attack surface","The set of reachable components and interfaces that may be exposed to interaction."],["Remediation","Corrective work that reduces or removes a documented weakness."]],
+      terms: [["Scope","The defined boundary of authorized work."],["Evidence trail","A documented chain of observations and records supporting a conclusion."],["Authorization","Permission to perform a defined action."],["Retention","How long records or telemetry are preserved."],["Decision trail","Documentation of what was decided and why."]],
       quiz: [
-        {q:"What most clearly separates an authorized white-hat mission from hostile activity?",a:["The operating system","Permission and defined scope","A public IP address","Source-code access"],c:1},
-        {q:"What does a box color primarily describe?",a:["Tester intent","How much target knowledge is provided","Finding severity","Team seniority"],c:1},
-        {q:"A system is technically reachable but marked OUT-OF-SCOPE. What is the professional action?",a:["Test it anyway","Treat reachability as permission","Do not interact beyond the agreed boundary","Hide the discovery"],c:2},
-        {q:"Which phrase captures the lesson's central distinction?",a:["Capability is authority","Capability is not authority","Knowledge replaces scope","Scope replaces evidence"],c:1},
-        {q:"What should follow a valid finding?",a:["Uncontrolled exploitation","Documentation and remediation","Deletion of evidence","Automatic public disclosure"],c:1}
+        {q:"A reachable system is outside the approved scope. What should you do?",a:["Test it anyway","Treat reachability as permission","Stay inside the approved boundary and escalate the scope question","Delete the discovery"],c:2},
+        {q:"Why preserve evidence early?",a:["Relevant records can rotate or change","It makes systems faster","It replaces authorization","It guarantees attribution"],c:0},
+        {q:"What does scope define?",a:["Only the tool brand","Authorized systems, actions and boundaries","The attacker's identity","The final incident severity automatically"],c:1},
+        {q:"Why document a decision trail?",a:["So later reviewers can understand the evidence and authority behind actions","To avoid accountability","To remove timestamps","To replace technical logs"],c:0},
+        {q:"Capability and authorization are:",a:["Always the same","Separate questions","Only relevant to developers","Irrelevant during response"],c:1}
       ]
     },
     M03: {
-      title: "OSINT & Information Boundaries",
-      summary: "Collect from openly available sources, preserve provenance, corroborate important claims and keep open-source work separate from unauthorized access.",
+      title: "Monitoring Infrastructure & Incident Response",
+      summary: "Bridge the song into the real stack: where telemetry comes from, how alerts move, what incident-response workflow does and which infrastructure concepts the music does not have time to teach.",
       reading: [
-        ["Open-source intelligence", "PRIM3's OSINT source explicitly begins with public sources, social media and forums. The important boundary is availability: OSINT uses information lawfully available from open sources; bypassing access controls is not ordinary open-source collection."],
-        ["Collection is not verification", "A public claim can be wrong, stale, duplicated, manipulated or stripped of context. Record where it came from and compare it against independent evidence before turning it into an intelligence judgment."],
-        ["Provenance and confidence", "Analysts need a traceable source trail. Provenance captures where a fact came from; confidence communicates how strongly the evidence supports the conclusion. The PRIM3 lab makes the learner assign confidence instead of treating every item as equally reliable."],
-        ["Minimize the collection", "Gather what the defined requirement needs. More information is not automatically better intelligence, especially when it adds irrelevant personal data or obscures the facts that actually answer the question."]
+        ["Where the signals come from", "Endpoints, network devices, applications, identity systems, environmental sensors and cloud services all produce different telemetry. A useful monitoring design knows the source, timestamp, retention window and limits of each record."],
+        ["Collection is not the same as analysis", "A logging pipeline can collect large volumes of events while still failing to identify what matters. Monitoring architecture needs collection, normalization, correlation, alerting and a human or automated response workflow."],
+        ["Incident response is a process", "A practical response moves through preparation, detection and analysis, containment, eradication, recovery and lessons learned. The exact labels vary by framework, but the idea is consistent: do not jump from alert straight to random action."],
+        ["Exam bridge", "For CompTIA-oriented study, connect alerting to operational monitoring, log review, incident handling, change control and troubleshooting. The song is the mnemonic; this module supplies the infrastructure underneath it."]
       ],
-      terms: [["OSINT","Intelligence produced from publicly or openly available information."],["Primary source","A source closest to the original event, record, statement or dataset."],["Corroboration","Checking an important claim against independent evidence."],["Provenance","A record of where information came from and how it was collected."],["Confidence","A stated level of certainty based on source quality and corroboration."]],
+      terms: [["Log source","A system or device that produces recorded events."],["Correlation","Relating multiple observations to identify a meaningful pattern."],["Containment","Limiting the spread or impact of an incident."],["Recovery","Returning systems to a trusted operational state."],["Change control","A documented process for planning and reviewing changes."]],
       quiz: [
-        {q:"Which description best matches OSINT?",a:["Any data reachable with a browser","Information collected from public/open sources","Only social-media content","Private data obtained without attribution"],c:1},
-        {q:"Which action crosses the boundary of this lesson?",a:["Reading a public advisory","Checking an official record","Bypassing a login to obtain restricted data","Comparing two public reports"],c:2},
-        {q:"Why preserve provenance?",a:["To support verification and source tracing","To make a report longer","To avoid primary sources","To hide collection dates"],c:0},
-        {q:"A public post makes an important claim. What should happen next?",a:["Treat public availability as proof","Corroborate it with reliable evidence","Delete its source information","Assume it is current"],c:1},
-        {q:"What should determine how much information is collected?",a:["The defined collection requirement","Whatever is easiest to scrape","The number of tools available","How interesting the target seems"],c:0}
+        {q:"Which sequence best describes a monitoring pipeline?",a:["Collect, normalize/correlate, alert, respond","Alert, delete, guess, reboot","Search, exploit, publish, forget","Encrypt, format, print, archive"],c:0},
+        {q:"Why identify the source of telemetry?",a:["Different sources prove different things and have different limits","Every log proves the same thing","Source identity does not matter","It removes the need for timestamps"],c:0},
+        {q:"What is containment?",a:["Restoring every system immediately","Limiting incident spread or impact","Deleting the evidence","Writing a marketing report"],c:1},
+        {q:"What is the role of the song in this course?",a:["Complete exam coverage","A mnemonic/retention layer reinforced by deeper coursework","A substitute for labs","A replacement for infrastructure study"],c:1},
+        {q:"What does change control add to operations?",a:["A documented way to plan and review changes","Automatic permission for any action","A faster CPU","A public IP address"],c:0}
       ]
     },
     M04: {
-      title: "The Human Layer: Social Engineering Defense",
-      summary: "Recognize manipulation, verify identity and claims, preserve suspicious communications and keep verification proportional to the evidence.",
+      title: "White / Grey / Black Hat",
+      summary: "Hat colors answer one question: what is the relationship to authorization and intent? Keep that separate from how much information a tester knows about the system.",
       reading: [
-        ["People are part of the system", "Social engineering targets trust, urgency, authority, familiarity and routine. A secure technical system can still be exposed when a person is pushed into accepting an unverified claim."],
-        ["Verify the claim, not the pressure", "Phishing, smishing, pretexts and spoofed identities try to make verification feel inconvenient or urgent. The defensive response is to use an independent trusted channel and confirm the person, request and authority before acting."],
-        ["Do not create a second incident", "PRIM3's Field-E lab emphasizes verification without panic. Indiscriminate lockdown or public accusations can disrupt operations and expose innocent people. Verification should be controlled, documented and proportional."],
-        ["Preserve evidence", "Suspicious messages and account events may be needed for investigation. Classify and isolate the risk while retaining useful evidence rather than immediately destroying the material that explains what happened."]
+        ["Hat color is about authorization and intent", "White-hat activity is performed with authorization for a legitimate security purpose. Grey-hat behavior sits in a more ambiguous authorization space. Black-hat activity is malicious or unauthorized. The key distinction is not technical skill; it is the authority and intent surrounding the action."],
+        ["Capability does not create permission", "A person may know how to scan, test or manipulate a system without having the right to do so. Professional security work starts with permission, scope and stop conditions."],
+        ["Rules of engagement make permission usable", "Rules of engagement define who is authorized, what may be tested, when testing may happen, which systems are included and what conditions require the activity to stop."],
+        ["Do not mix hats with boxes", "A white-hat tester can perform a black-box assessment. A black-hat actor can possess extensive internal knowledge. Hat color and box color describe different dimensions."]
       ],
-      terms: [["Social engineering","Manipulating people or social processes to obtain access, information or action."],["Phishing","Deceptive messaging intended to induce a recipient to reveal information or take an unsafe action."],["Smishing","Phishing delivered through SMS or similar text messaging."],["Pretext","A fabricated scenario used to make a request appear legitimate."],["Spoofing","Making an identity, address or signal appear to come from a trusted source."],["Independent verification","Confirming a claim through a separate trusted channel."]],
+      terms: [["White hat","Authorized security testing performed for a legitimate defensive purpose."],["Grey hat","Security activity with ambiguous or incomplete authorization, depending on context."],["Black hat","Malicious or unauthorized security activity."],["Rules of engagement","Written constraints governing an authorized assessment."],["Intent","The purpose behind an action."]],
       quiz: [
-        {q:"What is the safest response to an urgent identity claim?",a:["Trust urgency","Verify through an independent trusted channel","Forward it widely","Disable all accounts"],c:1},
-        {q:"What is a pretext?",a:["A fabricated scenario supporting a deceptive request","A network cable","A backup site","An encryption algorithm"],c:0},
-        {q:"Why avoid indiscriminate lockdown during verification?",a:["It can create unnecessary operational and human consequences","It makes passwords longer","It prevents logging","It guarantees the attacker leaves"],c:0},
-        {q:"What should happen to a suspicious message needed for investigation?",a:["Destroy it immediately","Preserve relevant evidence while isolating risk","Reply with credentials","Publish it"],c:1},
-        {q:"Which layer does social engineering primarily exploit?",a:["Human trust and process","Only fiber optics","Only storage arrays","Only CPU scheduling"],c:0}
+        {q:"Hat color primarily describes:",a:["How much source code is provided","Authorization and intent","Network speed","Operating-system family"],c:1},
+        {q:"Can a white-hat tester perform a black-box assessment?",a:["Yes","No","Only on wireless systems","Only without permission"],c:0},
+        {q:"What makes professional testing operationally safe?",a:["Unlimited access","Defined permission, scope and rules of engagement","Hiding findings","Skipping documentation"],c:1},
+        {q:"Technical capability automatically provides authority.",a:["True","False","Only for administrators","Only for cloud systems"],c:1},
+        {q:"Which term belongs to the authorization/intent dimension?",a:["White hat","White box","Full disk image","Source code"],c:0}
       ]
     },
     M05: {
-      title: "Security Team Roles & Exercise Control",
-      summary: "Know who is attacking, defending, building, coordinating and refereeing an exercise—and know when a real incident means the exercise must stop.",
+      title: "White / Grey / Black Box",
+      summary: "Box colors answer a different question: how much target knowledge is available to the tester? Learn this independently before combining it with authorization concepts.",
       reading: [
-        ["Red and blue", "The PRIM3 team-role source describes Red as offense and Blue as defense. Red models adversary behavior inside an authorized exercise; Blue protects, detects and responds."],
-        ["Purple is the learning bridge", "Purple work connects offensive observations with defensive telemetry and remediation. The point is not merely to run two teams at once; it is to make the defensive system measurably better because the exercise happened."],
-        ["White controls the exercise", "The source frames White Team as the rule/referee function. Exercise control defines boundaries, distinguishes planned injects from real incidents and has authority to stop or redirect an exercise when safety or reality requires it."],
-        ["Builders matter too", "The song also introduces Yellow as developers, Orange as offensive security development and Green as defensive security development. The important lesson is functional responsibility: builders, testers and defenders contribute different evidence and controls."]
+        ["White box means substantial internal knowledge", "A white-box assessment may include architecture details, credentials, source code, configurations, documentation or system images. The purpose is deep visibility, not a statement about the tester's ethics."],
+        ["Black box means little or no internal knowledge", "A black-box assessment begins from an external or minimally informed perspective. It can be more realistic in some ways, but it may take longer to discover what a white-box assessor receives up front."],
+        ["Grey box sits between them", "Grey-box testing supplies partial knowledge or limited credentials. It can focus testing on a realistic user or partner perspective without exposing every internal detail."],
+        ["Knowledge changes coverage", "More internal knowledge can improve code review and configuration coverage. Less knowledge can better test discovery and external exposure. Neither approach is automatically better; the assessment goal determines the right model."]
       ],
-      terms: [["Red team","Authorized offensive security function that emulates adversary behavior."],["Blue team","Defensive function focused on prevention, detection and response."],["Purple team","Collaborative practice that converts offensive findings into defensive improvement."],["White team","Exercise-control/referee function responsible for rules and deconfliction."],["Deconfliction","Separating planned exercise activity from real incidents or unrelated operations."],["After-action learning","Structured review that turns exercise evidence into improvements."]],
+      terms: [["White box","Assessment with substantial internal system knowledge."],["Grey box","Assessment with partial internal knowledge or limited access."],["Black box","Assessment with little or no internal system knowledge."],["Attack surface","Reachable components and interfaces exposed to interaction."],["Source code review","Reviewing application code to identify defects or security weaknesses."]],
       quiz: [
-        {q:"Which team is primarily defensive?",a:["Red","Blue","Purple","White"],c:1},
-        {q:"What is the purpose of purple-team work?",a:["Replace Blue","Connect offensive findings to defensive improvement","Approve budgets","Run payroll"],c:1},
-        {q:"Who controls rules and deconfliction in the PRIM3 team model?",a:["White Team","Red Team","Yellow Team","Green Team"],c:0},
-        {q:"A real incident begins during an exercise. What must the organization be able to do?",a:["Keep pretending it is simulated","Distinguish reality from the exercise and re-role responders","Delete telemetry","Ignore safety"],c:1},
-        {q:"What makes an exercise valuable after it ends?",a:["After-action learning and remediation","More simulated alerts only","Keeping findings secret from defenders","Removing all scope"],c:0}
+        {q:"Box color primarily describes:",a:["Tester ethics","Amount of target knowledge provided","Incident severity","Team color"],c:1},
+        {q:"Which is most characteristic of white-box testing?",a:["No internal knowledge","Substantial architecture/source information","Unauthorized access","No documentation"],c:1},
+        {q:"Grey-box testing usually provides:",a:["Partial knowledge or limited access","No scope","Unlimited authority","Only physical access"],c:0},
+        {q:"Why choose black-box testing?",a:["To emulate a minimally informed external perspective","To guarantee full code coverage","To remove authorization","To avoid defining objectives"],c:0},
+        {q:"Hat and box colors should be learned separately because:",a:["They describe different dimensions","They are identical labels","Only one appears in security work","Box colors describe ethics"],c:0}
       ]
     },
     M06: {
-      title: "Wireless Defense: Signal, Service & Trust",
-      summary: "Separate radio signal from usable service, identify unauthorized wireless infrastructure and restore an approved responder path safely.",
+      title: "Pen-Test Infrastructure, Scope & Remediation",
+      summary: "Now connect hats and boxes to the missing professional machinery: target inventory, scope boundaries, vulnerability workflow, evidence, reporting and remediation.",
       reading: [
-        ["Signal is not service", "A device can show strong radio coverage and still fail authentication, backhaul, routing or service dependencies. PRIM3's Dead Air lab deliberately separates the physical presence of signal from a working trusted channel."],
-        ["Authorized coverage", "A rogue access point is wireless infrastructure that is not authorized for the environment. An evil-twin scenario imitates a trusted network identity. Defenders need an inventory of approved infrastructure plus monitoring that can identify unexpected sources."],
-        ["Wireless protection", "The PRIM3 source names WPA3, AES and WIPS as defensive concepts. At this level, know their roles: authentication/encryption protect the connection and traffic, while wireless monitoring helps discover suspicious devices, interference or policy violations."],
-        ["Restore the whole path", "A trusted responder channel needs viable radio coverage, power, backhaul and authentication. Fixing only the strongest visible signal is not enough; validate the connection end to end."]
+        ["A test needs an inventory and boundary", "Before testing, define target systems, owners, network ranges, applications, accounts, excluded assets, test windows and emergency contacts. This converts abstract permission into an operational scope."],
+        ["Attack surface is an infrastructure map", "Endpoints, services, ports, identity systems, applications, network paths and cloud resources all create different surfaces. Understanding the underlying architecture helps explain why a finding exists and what fixing it may affect."],
+        ["Findings need a lifecycle", "A vulnerability is not finished when it is discovered. It should be validated, documented, prioritized, assigned for remediation, corrected and then retested where appropriate."],
+        ["Exam bridge", "CompTIA-oriented study expects more than color vocabulary: authorization, assessment concepts, vulnerability management, reporting, controls and remediation all matter. This module intentionally fills that gap instead of pretending the song covers the whole domain."]
       ],
-      terms: [["Rogue access point","An unauthorized wireless access point in an environment."],["Evil twin","A deceptive wireless network designed to resemble a trusted network."],["WPA3","A modern Wi-Fi security standard for authentication and traffic protection."],["WIPS","Wireless intrusion prevention system used to detect and respond to suspicious wireless activity."],["Backhaul","The network path connecting an access network to upstream services."],["Spectrum","The range of radio frequencies used for wireless communication."]],
+      terms: [["Target inventory","The defined list of systems and assets included in an assessment."],["Vulnerability management","The lifecycle of identifying, prioritizing, remediating and validating weaknesses."],["Finding","A documented issue supported by evidence."],["Remediation","Corrective work that reduces or removes a weakness."],["Retest","Verification that a remediation actually resolved the finding."]],
       quiz: [
-        {q:"Strong Wi-Fi bars but failed authentication demonstrate what distinction?",a:["Signal is not the same as service","Every access point is trusted","WPA3 removes backhaul","Radio equals routing"],c:0},
-        {q:"What is a rogue access point?",a:["Any WPA3 network","An unauthorized access point","A wired switch","A DNS record"],c:1},
-        {q:"What is the defensive concern with an evil twin?",a:["It can imitate a trusted wireless network","It always has weak signal","It requires fiber","It prevents all monitoring"],c:0},
-        {q:"Which source-named control monitors suspicious wireless activity?",a:["WIPS","RAID 1","CapEx","SaaS"],c:0},
-        {q:"What should be validated after restoring a responder channel?",a:["Only signal strength","The end-to-end path including authentication and backhaul","Only the SSID spelling","Only device battery"],c:1}
+        {q:"What turns general permission into an operational test boundary?",a:["A target inventory and written scope","A fast scanner","A public website","A team color"],c:0},
+        {q:"What is an attack surface?",a:["Only open ports","The set of exposed components and interfaces that can be interacted with","A legal contract","A backup schedule"],c:1},
+        {q:"A valid finding should normally lead to:",a:["Documentation, prioritization, remediation and validation","Immediate deletion of evidence","Unlimited expansion of scope","No follow-up"],c:0},
+        {q:"Why include infrastructure in the course?",a:["It explains what the security concepts are actually operating on","It makes the song longer","It replaces authorization","It removes the need for troubleshooting"],c:0},
+        {q:"What is a retest?",a:["Verification that a fix resolved the issue","A second unauthorized target","A new team color","A backup type"],c:0}
       ]
     }
   };
 
   var state = loadState();
   var els = {
+    gate: document.getElementById("courseGate"), course: document.getElementById("course"),
     sync: document.getElementById("courseSync"), source: document.getElementById("courseSource"), feedState: document.getElementById("courseFeedState"),
     list: document.getElementById("moduleList"), empty: document.getElementById("lessonEmpty"), content: document.getElementById("lessonContent"),
     number: document.getElementById("lessonNumber"), title: document.getElementById("lessonTitle"), summary: document.getElementById("lessonSummary"), status: document.getElementById("lessonStatus"),
@@ -135,13 +135,9 @@
     progressPercent: document.getElementById("progressPercent"), progressBar: document.getElementById("progressBar"), passedCount: document.getElementById("passedCount"), moduleCount: document.getElementById("moduleCount"), passMark: document.getElementById("passMark"), continueCourse: document.getElementById("continueCourse"), reset: document.getElementById("resetProgress")
   };
 
-  function loadState() {
-    try {
-      var parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-      return { read: Array.isArray(parsed.read) ? parsed.read : [], passed: Array.isArray(parsed.passed) ? parsed.passed : [], scores: parsed.scores && typeof parsed.scores === "object" ? parsed.scores : {} };
-    } catch (e) { return { read: [], passed: [], scores: {} }; }
-  }
-  function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+  function h(value) { return String(value == null ? "" : value).replace(/[&<>\"]/g, function (c) { return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]; }); }
+  function loadState() { try { var p = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); return { read:Array.isArray(p.read)?p.read:[], passed:Array.isArray(p.passed)?p.passed:[], scores:p.scores&&typeof p.scores==="object"?p.scores:{} }; } catch (_) { return {read:[],passed:[],scores:{}}; } }
+  function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {} }
   function has(list, id) { return list.indexOf(id) !== -1; }
   function lessonReady(id) { return !!LESSONS[id]; }
   function byId(id) { return modules.find(function (m) { return m.id === id; }); }
@@ -156,7 +152,7 @@
   }
 
   function stateLabel(module, index) {
-    if (module.status === "owner-source-required") return "OPEN SLOT";
+    if (module.status === "owner-source-required") return "SOURCE NEEDED";
     if (!lessonReady(module.id)) return isUnlocked(index) ? "BUILDING" : "LOCKED";
     if (has(state.passed, module.id)) return "PASSED";
     if (!isUnlocked(index)) return "LOCKED";
@@ -164,57 +160,48 @@
   }
 
   function setSync(ok, label, detail) {
+    if (!els.sync) return;
     els.sync.classList.toggle("is-live", !!ok);
     els.sync.classList.toggle("is-error", ok === false);
     els.source.textContent = detail;
     els.feedState.textContent = label;
   }
 
-  function normalizeFeed(payload) {
-    var c = payload && payload.course ? payload.course : null;
-    if (!c || c.id !== "prim3-foundation" || !Array.isArray(c.modules) || c.modules.length !== 21) throw new Error("Unexpected PRIM3 course feed");
+  function showGate(message) {
+    if (els.course) els.course.hidden = true;
+    if (els.gate) {
+      els.gate.hidden = false;
+      var note = els.gate.querySelector("[data-gate-note]");
+      if (note && message) note.textContent = message;
+    }
+  }
+
+  function normalizeCourse(data) {
+    var c = data && data.course;
+    if (!c || c.id !== "prim3-foundation-v2" || !Array.isArray(c.modules) || c.modules.length !== 63) throw new Error("Unexpected PRIM3 LMS course map");
     return c;
   }
 
   function fetchCourse() {
-    return fetch(API_URL, { headers: { accept: "application/json" } })
-      .then(function (r) { if (!r.ok) throw new Error("McCluster API " + r.status); return r.json(); })
-      .then(function (data) {
-        course = normalizeFeed(data.course ? data : {course:data});
-        setSync(true, data.source && data.source.cache === "hit" ? "SYNCED · CACHE" : "SYNCED · LIVE", "PRIM3 main → McCluster API");
-        return course;
-      })
-      .catch(function () {
-        return fetch(FALLBACK_URL, { headers: { accept: "application/json" } })
-          .then(function (r) { if (!r.ok) throw new Error("PRIM3 fallback " + r.status); return r.json(); })
-          .then(function (data) {
-            course = normalizeFeed(data);
-            setSync(false, "DIRECT FALLBACK", "PRIM3 main · McCluster API preview not deployed yet");
-            return course;
-          });
-      });
+    if (!window.MCC || typeof window.MCC.api !== "function") return Promise.reject(new Error("M Account service unavailable"));
+    return window.MCC.api("/v1/prim3/course").then(function (r) {
+      if (!r.ok) throw Object.assign(new Error("McCluster API " + r.status), {status:r.status});
+      return r.json();
+    }).then(function (data) {
+      course = normalizeCourse(data);
+      setSync(true, data.source && data.source.cache === "hit" ? "SYNCED · CACHE" : "SYNCED · LIVE", "21 PRIM3 episode/song units → 63 focused LMS modules");
+      return course;
+    });
   }
 
   function renderProgress() {
-    var total = modules.length || 21;
+    var total = modules.length || 63;
     var passed = state.passed.filter(function (id) { return !!byId(id); }).length;
     var pct = total ? Math.round((passed / total) * 100) : 0;
-    els.passedCount.textContent = passed;
-    els.moduleCount.textContent = total;
-    els.passMark.textContent = passMark + "%";
-    els.progressPercent.textContent = pct + "%";
-    els.progressBar.style.width = pct + "%";
+    els.passedCount.textContent = passed; els.moduleCount.textContent = total; els.passMark.textContent = passMark + "%"; els.progressPercent.textContent = pct + "%"; els.progressBar.style.width = pct + "%";
     var next = modules.find(function (m, i) { return lessonReady(m.id) && isUnlocked(i) && !has(state.passed, m.id); });
-    if (next) {
-      els.continueCourse.disabled = false;
-      els.continueCourse.dataset.module = next.id;
-      els.continueCourse.textContent = (next.id === "M01" ? "Start " : "Continue ") + next.id;
-    } else {
-      delete els.continueCourse.dataset.module;
-      els.continueCourse.disabled = true;
-      var firstBuilding = modules.find(function (m, i) { return isUnlocked(i) && !lessonReady(m.id); });
-      els.continueCourse.textContent = firstBuilding ? firstBuilding.id + " lesson is in authoring" : "Current coursework complete";
-    }
+    if (next) { els.continueCourse.disabled = false; els.continueCourse.dataset.module = next.id; els.continueCourse.textContent = (next.id === "M01" ? "Start " : "Continue ") + next.id; }
+    else { delete els.continueCourse.dataset.module; els.continueCourse.disabled = true; var building = modules.find(function (m, i) { return isUnlocked(i) && !lessonReady(m.id); }); els.continueCourse.textContent = building ? building.id + " lesson is in authoring" : "Current coursework complete"; }
   }
 
   function renderList() {
@@ -224,140 +211,91 @@
       if (!seasonModules.length) continue;
       var wrap = document.createElement("section"); wrap.className = "p3-season";
       var passed = seasonModules.filter(function (m) { return has(state.passed, m.id); }).length;
-      var head = document.createElement("div"); head.className = "p3-season__head";
-      head.innerHTML = "<span>Season " + season + "</span><span>" + passed + "/" + seasonModules.length + " passed</span>";
-      wrap.appendChild(head);
+      var head = document.createElement("div"); head.className = "p3-season__head"; head.innerHTML = "<span>Season " + season + "</span><span>" + passed + "/" + seasonModules.length + " passed</span>"; wrap.appendChild(head);
+      var currentUnit = null;
       seasonModules.forEach(function (module) {
+        if (module.unit_id !== currentUnit) {
+          currentUnit = module.unit_id;
+          var unit = document.createElement("div"); unit.className = "p3-unit-label"; unit.innerHTML = "<b>" + h(module.unit_id) + " · " + h(module.song || "Owner Song #21") + "</b><span>" + h(module.episode_id) + " · " + h(module.episode_title) + "</span>"; wrap.appendChild(unit);
+        }
         var index = moduleIndex(module.id), label = stateLabel(module, index);
-        var button = document.createElement("button");
-        button.type = "button"; button.className = "p3-module";
-        if (label === "PASSED") button.classList.add("is-passed");
-        if (label === "OPEN" || label === "ASSESS") button.classList.add("is-open");
-        if (label === "BUILDING" || label === "OPEN SLOT") button.classList.add("is-building");
-        if (activeId === module.id) button.classList.add("is-current");
-        button.disabled = !isUnlocked(index) && label !== "OPEN SLOT";
-        var subtitle = (module.song || "Owner Song #21") + " · " + module.episode_title;
-        button.innerHTML = '<span class="p3-module__no">' + module.id + '</span><span class="p3-module__title"><b>' + module.episode_title + '</b><small>' + subtitle + '</small></span><span class="p3-module__state">' + label + '</span>';
-        button.addEventListener("click", function () { openModule(module.id, true); });
-        wrap.appendChild(button);
+        var button = document.createElement("button"); button.type = "button"; button.className = "p3-module";
+        if (label === "PASSED") button.classList.add("is-passed"); if (label === "OPEN" || label === "ASSESS") button.classList.add("is-open"); if (label === "BUILDING" || label === "SOURCE NEEDED") button.classList.add("is-building"); if (activeId === module.id) button.classList.add("is-current");
+        button.disabled = !isUnlocked(index) && label !== "SOURCE NEEDED";
+        button.innerHTML = '<span class="p3-module__no">' + h(module.id) + '</span><span class="p3-module__title"><b>' + h(module.title) + '</b><small>' + h(module.part_label) + '</small></span><span class="p3-module__state">' + h(label) + '</span>';
+        button.addEventListener("click", function () { openModule(module.id, true); }); wrap.appendChild(button);
       });
       els.list.appendChild(wrap);
     }
   }
 
   function renderReading(module, lesson) {
-    var readingSection = els.reading.closest(".p3-reading");
-    readingSection.classList.toggle("is-building", !lesson);
+    var section = els.reading.closest(".p3-reading"); section.classList.toggle("is-building", !lesson);
     if (!lesson) {
-      els.reading.innerHTML = '<div class="p3-build-note"><b>Conventional lesson not published yet.</b><br>The PRIM3 repository is already supplying this module’s canonical concepts, objectives, episode, song and lab map. McCluster will not invent a test until the LEARN layer is authored and reviewed.</div>';
-      els.terms.innerHTML = "";
-      els.markRead.disabled = true;
-      els.markRead.textContent = "Reading in authoring";
-      return;
+      els.reading.innerHTML = '<div class="p3-build-note"><b>Focused lesson is still in authoring.</b><br>This slot is intentionally visible so the curriculum stays granular. PRIM3 supplies the episode/song source; McCluster will not issue credit until the conventional reading and assessment for this exact concept cluster are reviewed.</div>';
+      els.terms.innerHTML = ""; els.markRead.disabled = true; els.markRead.textContent = "Reading in authoring"; return;
     }
-    els.reading.innerHTML = lesson.reading.map(function (s) { return "<h3>" + s[0] + "</h3><p>" + s[1] + "</p>"; }).join("");
-    els.terms.innerHTML = lesson.terms.map(function (t) { return "<dt>" + t[0] + "</dt><dd>" + t[1] + "</dd>"; }).join("");
-    var read = has(state.read, module.id);
-    els.markRead.disabled = read;
-    els.markRead.textContent = read ? "Reading complete ✓" : "Mark reading complete";
-    els.markRead.classList.toggle("is-done", read);
+    els.reading.innerHTML = lesson.reading.map(function (s) { return "<h3>" + h(s[0]) + "</h3><p>" + h(s[1]) + "</p>"; }).join("");
+    els.terms.innerHTML = lesson.terms.map(function (t) { return "<dt>" + h(t[0]) + "</dt><dd>" + h(t[1]) + "</dd>"; }).join("");
+    var read = has(state.read, module.id); els.markRead.disabled = read; els.markRead.textContent = read ? "Reading complete ✓" : "Mark reading complete"; els.markRead.classList.toggle("is-done", read);
   }
 
   function renderQuiz(module, lesson) {
     els.assessment.classList.toggle("is-building", !lesson);
-    if (!lesson) {
-      els.assessmentRule.textContent = "Assessment not published. This module cannot issue credit until the conventional LEARN layer is complete.";
-      els.quiz.innerHTML = ""; els.result.textContent = ""; els.submit.disabled = true;
-      return;
-    }
-    els.assessmentRule.textContent = "Score at least " + passMark + "% to pass this module and unlock the next module.";
+    if (!lesson) { els.assessmentRule.textContent = "Assessment not published. No credit is issued until this focused LEARN module is authored and reviewed."; els.quiz.innerHTML = ""; els.result.textContent = ""; els.submit.disabled = true; return; }
+    els.assessmentRule.textContent = "Score at least " + passMark + "% to pass this focused module and unlock the next one.";
     var read = has(state.read, module.id), passed = has(state.passed, module.id);
-    els.quiz.innerHTML = lesson.quiz.map(function (q, qi) {
-      return '<fieldset class="p3-question"><legend>' + (qi + 1) + '. ' + q.q + '</legend>' + q.a.map(function (a, ai) {
-        return '<label><input type="radio" name="q' + qi + '" value="' + ai + '" ' + (read ? "" : "disabled") + '><span>' + a + '</span></label>';
-      }).join("") + '</fieldset>';
-    }).join("");
-    els.submit.disabled = !read || passed;
-    els.submit.textContent = passed ? "Module passed" : "Grade assessment";
-    els.result.textContent = !read ? "Complete the required reading to unlock the assessment." : (state.scores[module.id] != null ? "Last score: " + state.scores[module.id] + "%" : "");
-    els.result.className = state.scores[module.id] >= passMark ? "pass" : (state.scores[module.id] != null ? "fail" : "");
+    els.quiz.innerHTML = lesson.quiz.map(function (q, qi) { return '<fieldset class="p3-question"><legend>' + (qi+1) + '. ' + h(q.q) + '</legend>' + q.a.map(function (a, ai) { return '<label><input type="radio" name="q'+qi+'" value="'+ai+'" '+(read?"":"disabled")+'><span>'+h(a)+'</span></label>'; }).join("") + '</fieldset>'; }).join("");
+    els.submit.disabled = !read || passed; els.submit.textContent = passed ? "Module passed" : "Grade assessment"; els.result.textContent = !read ? "Complete the required reading to unlock the assessment." : (state.scores[module.id] != null ? "Best score: " + state.scores[module.id] + "%" : ""); els.result.className = state.scores[module.id] >= passMark ? "pass" : (state.scores[module.id] != null ? "fail" : "");
   }
 
   function renderCompanions(module) {
     els.musicTitle.textContent = module.song || "Owner Song #21 · protected open slot";
-    els.musicCopy.textContent = module.song ? "Retention layer: replay the song after study to rehearse this module’s vocabulary and mental model." : "No song is invented here. PRIM3 keeps this slot open until the owner supplies Song #21.";
-    els.watchTitle.textContent = module.episode_title;
-    els.watchCopy.textContent = "Narrative layer: the canonical episode applies the same concept set through character pressure and operational consequence.";
+    els.musicCopy.textContent = module.song ? "REMEMBER: replay the song after this focused lesson. It is reinforcement, not a substitute for the coursework." : "No song is invented here. This source unit stays protected until the owner supplies Song #21.";
+    els.watchTitle.textContent = module.episode_title; els.watchCopy.textContent = "WATCH: the canonical episode places this unit's concepts under story and operational pressure.";
     var labNames = module.labs ? Object.keys(module.labs).map(function (k) { return module.labs[k]; }) : [];
-    els.labTitle.textContent = labNames.length ? "PLAY · " + labNames.length + " role applications" : "LAB · awaiting source";
-    els.labCopy.textContent = labNames.length ? "Application layer: technical correctness, evidence and tactical decisions are scored separately from entertainment." : "The protected open module has no lab until its owner source exists.";
-    els.labRoles.innerHTML = ["field_r","field_e","field_t"].map(function (key) {
-      var labels = {field_r:"FIELD-R · PICTURE",field_e:"FIELD-E · CONTROL",field_t:"FIELD-T · SYSTEM"};
-      return '<div><small>' + labels[key] + '</small><b>' + ((module.labs && module.labs[key]) || "Not assigned") + '</b></div>';
-    }).join("");
+    els.labTitle.textContent = labNames.length ? "LAB · " + labNames.length + " role applications" : "LAB · awaiting source"; els.labCopy.textContent = labNames.length ? "Apply the ideas only in fictional, local, owned or explicitly authorized environments." : "No lab is assigned until the source exists.";
+    els.labRoles.innerHTML = ["field_r","field_e","field_t"].map(function (key) { var labels={field_r:"FIELD-R · PICTURE",field_e:"FIELD-E · CONTROL",field_t:"FIELD-T · SYSTEM"}; return '<div><small>'+labels[key]+'</small><b>'+h((module.labs&&module.labs[key])||"Not assigned")+'</b></div>'; }).join("");
   }
 
   function openModule(id, scroll) {
-    var module = byId(id), index = moduleIndex(id);
-    if (!module || (!isUnlocked(index) && module.status !== "owner-source-required")) return;
-    activeId = id; var lesson = LESSONS[id] || null;
-    els.empty.hidden = true; els.content.hidden = false;
-    els.number.textContent = "Module " + module.id;
-    els.title.textContent = lesson ? lesson.title : module.episode_title;
-    els.summary.textContent = lesson ? lesson.summary : "Canonical course metadata is connected. The required LEARN lesson and assessment are still in authoring.";
-    els.season.textContent = "Season " + module.season;
-    els.episode.textContent = module.episode_id;
-    els.song.textContent = module.song ? "Song · " + module.song : "Song · Open slot";
-    var label = stateLabel(module, index);
-    els.status.textContent = label;
-    els.status.classList.toggle("is-passed", label === "PASSED");
-    els.objectives.innerHTML = (module.objectives || []).length ? module.objectives.map(function (o) { return "<li>" + o + "</li>"; }).join("") : "<li>Awaiting owner source.</li>";
-    els.concepts.innerHTML = (module.concepts || []).length ? module.concepts.map(function (c) { return "<span>" + c + "</span>"; }).join("") : "<span>Protected open slot</span>";
-    renderReading(module, lesson); renderQuiz(module, lesson); renderCompanions(module);
-    els.sources.innerHTML = (module.sources || []).map(function (s) { return "<li>" + s + "</li>"; }).join("");
-    renderList();
-    if (scroll) document.getElementById("lessonPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    var module = byId(id), index = moduleIndex(id); if (!module || (!isUnlocked(index) && module.status !== "owner-source-required")) return;
+    activeId = id; var lesson = LESSONS[id] || null; els.empty.hidden = true; els.content.hidden = false;
+    els.number.textContent = "Module " + module.id + " · " + module.unit_id + " · Part " + module.part + "/3"; els.title.textContent = lesson ? lesson.title : module.title; els.summary.textContent = lesson ? lesson.summary : "This focused module is reserved in the 63-module curriculum. Its source concepts are mapped, but the conventional LEARN reading and assessment are still being authored.";
+    els.season.textContent = "Season " + module.season; els.episode.textContent = module.episode_id; els.song.textContent = module.song ? "Song · " + module.song : "Song · Open slot";
+    var label = stateLabel(module, index); els.status.textContent = label; els.status.classList.toggle("is-passed", label === "PASSED");
+    els.objectives.innerHTML = (module.objectives || []).length ? module.objectives.map(function (o) { return "<li>" + h(o) + "</li>"; }).join("") : "<li>Awaiting owner source.</li>";
+    els.concepts.innerHTML = (module.concepts || []).length ? module.concepts.map(function (c) { return "<span>" + h(c) + "</span>"; }).join("") : "<span>Protected open slot</span>";
+    if (module.exam_alignment && module.exam_alignment.length) els.concepts.innerHTML += module.exam_alignment.map(function (e) { return '<span class="is-exam">Exam bridge · ' + h(e) + '</span>'; }).join("");
+    renderReading(module, lesson); renderQuiz(module, lesson); renderCompanions(module); els.sources.innerHTML = (module.sources || []).map(function (s) { return "<li>" + h(s) + "</li>"; }).join(""); renderList(); if (scroll) document.getElementById("lessonPanel").scrollIntoView({behavior:"smooth",block:"start"});
   }
 
-  function markReading() {
-    if (!activeId || !LESSONS[activeId] || has(state.read, activeId)) return;
-    state.read.push(activeId); saveState(); openModule(activeId, false);
-  }
-
+  function markReading() { if (!activeId || !LESSONS[activeId] || has(state.read, activeId)) return; state.read.push(activeId); saveState(); openModule(activeId, false); }
   function gradeQuiz(event) {
-    event.preventDefault();
-    var lesson = LESSONS[activeId], module = byId(activeId);
-    if (!lesson || !module || !has(state.read, activeId)) return;
-    var correct = 0, answered = 0;
-    lesson.quiz.forEach(function (q, qi) {
-      var picked = els.quiz.querySelector('input[name="q' + qi + '"]:checked');
-      if (picked) { answered += 1; if (Number(picked.value) === q.c) correct += 1; }
-    });
-    if (answered !== lesson.quiz.length) { els.result.textContent = "Answer every question before grading."; els.result.className = "fail"; return; }
-    var score = Math.round((correct / lesson.quiz.length) * 100); state.scores[activeId] = score;
-    if (score >= passMark && !has(state.passed, activeId)) state.passed.push(activeId);
-    saveState(); renderProgress(); renderList(); openModule(activeId, false);
-    els.result.textContent = score >= passMark ? "Passed: " + score + "%. The next module is unlocked." : "Score: " + score + "%. Review the lesson and retake the assessment.";
-    els.result.className = score >= passMark ? "pass" : "fail";
+    event.preventDefault(); var lesson=LESSONS[activeId], module=byId(activeId); if (!lesson || !module || !has(state.read, activeId)) return;
+    var correct=0, answered=0; lesson.quiz.forEach(function(q,qi){var picked=els.quiz.querySelector('input[name="q'+qi+'"]:checked'); if(picked){answered+=1;if(Number(picked.value)===q.c)correct+=1;}});
+    if(answered!==lesson.quiz.length){els.result.textContent="Answer every question before grading.";els.result.className="fail";return;}
+    var score=Math.round((correct/lesson.quiz.length)*100); var previous=Number(state.scores[activeId]); state.scores[activeId]=Number.isFinite(previous)?Math.max(previous,score):score; if(score>=passMark&&!has(state.passed,activeId))state.passed.push(activeId); saveState(); renderProgress(); renderList(); openModule(activeId,false); els.result.textContent=score>=passMark?"Passed: "+score+"%. The next focused module is unlocked.":"Score: "+score+"%. Review this concept cluster and retake the assessment."; els.result.className=score>=passMark?"pass":"fail";
   }
 
-  els.markRead.addEventListener("click", markReading);
-  els.quiz.addEventListener("submit", gradeQuiz);
-  els.continueCourse.addEventListener("click", function () { if (this.dataset.module) openModule(this.dataset.module, true); });
-  els.reset.addEventListener("click", function () {
-    if (!window.confirm("Reset all PRIM3 course progress on this device?")) return;
-    state = {read:[],passed:[],scores:{}}; saveState(); activeId = null; els.content.hidden = true; els.empty.hidden = false; renderProgress(); renderList();
-  });
+  function wireCourse() {
+    els.markRead.addEventListener("click", markReading); els.quiz.addEventListener("submit", gradeQuiz); els.continueCourse.addEventListener("click", function(){if(this.dataset.module)openModule(this.dataset.module,true);});
+    els.reset.addEventListener("click", function(){if(!window.confirm("Reset all PRIM3 course progress for this account on this device?"))return; state={read:[],passed:[],scores:{}};saveState();activeId=null;els.content.hidden=true;els.empty.hidden=false;renderProgress();renderList();});
+  }
 
-  fetchCourse().then(function (loaded) {
-    modules = loaded.modules.slice().sort(function (a,b) { return Number(a.sequence) - Number(b.sequence); });
-    passMark = Number(loaded.pass_mark || 80);
-    renderProgress(); renderList();
-    var next = modules.find(function (m, i) { return lessonReady(m.id) && isUnlocked(i) && !has(state.passed, m.id); }) || modules[0];
-    openModule(next.id, false);
-  }).catch(function (error) {
-    setSync(false, "OFFLINE", "Course feed unavailable");
-    els.list.innerHTML = '<p class="p3-source-error"><b>PRIM3 course map could not load.</b><br>' + (error && error.message ? error.message : "Unknown feed error") + '</p>';
-    els.continueCourse.disabled = true; els.continueCourse.textContent = "Course source unavailable";
-  });
+  function start() {
+    if (!window.MCC || typeof window.MCC.user !== "function") { showGate("Account service is still loading. Refresh in a moment."); return; }
+    window.MCC.user().then(function (user) {
+      if (!user) { showGate("Create or sign in to your free M Account to start PRIM3. The course itself is free."); return; }
+      if (els.gate) els.gate.hidden = true; if (els.course) els.course.hidden = false; wireCourse();
+      return fetchCourse().then(function (loaded) {
+        modules = loaded.modules.slice().sort(function(a,b){return Number(a.sequence)-Number(b.sequence);}); passMark=Number(loaded.pass_mark||80); renderProgress(); renderList(); var next=modules.find(function(m,i){return lessonReady(m.id)&&isUnlocked(i)&&!has(state.passed,m.id);})||modules[0]; openModule(next.id,false);
+      });
+    }).catch(function (error) {
+      if (error && error.status === 401) { showGate("Your M Account session expired. Sign in again to continue the free course."); return; }
+      if (els.course) els.course.hidden = false; if (els.gate) els.gate.hidden = true; setSync(false,"OFFLINE","Course service unavailable"); els.list.innerHTML='<p class="p3-source-error"><b>PRIM3 course map could not load.</b><br>'+h(error&&error.message?error.message:"Unknown course error")+'</p>'; els.continueCourse.disabled=true;els.continueCourse.textContent="Course unavailable";
+    });
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, {once:true}); else start();
 })();
