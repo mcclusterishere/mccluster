@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>PRIM3 · Learning Management System</title>
-  <meta name="description" content="PRIM3 is a conventional technology learning path reinforced by music, narrative and safe practical labs.">
+  <meta name="description" content="PRIM3 is a free account-based technology learning path reinforced by music, narrative and safe practical labs.">
   <link rel="canonical" href="https://matthew.mccluster.org/prim3.html">
   <link rel="icon" type="image/png" href="assets/img/prim3-tab.png">
   <meta name="theme-color" content="#090909">
@@ -25,7 +25,21 @@
     <button class="p3-reset" id="resetProgress" type="button">Reset progress</button>
   </header>
 
-  <main class="p3-shell" id="course">
+  <section class="p3-gate" id="courseGate" aria-labelledby="courseGateTitle">
+    <div class="p3-gate__card">
+      <img class="p3-gate__mark" src="assets/img/prim3-tab.png" alt="" width="96" height="96">
+      <p class="p3-gate__eyebrow">Free course · M Account required</p>
+      <h1 id="courseGateTitle">Make an account.<br>Then learn for free.</h1>
+      <p data-gate-note>PRIM3 uses your M Account to keep progress, assessment scores and unlocks attached to you instead of one browser. <strong>There is no course charge after account creation.</strong></p>
+      <p>The curriculum is intentionally deep: 21 episode/song units become 63 focused modules so beginner concepts are learned one cluster at a time instead of being crammed together.</p>
+      <div class="p3-gate__actions">
+        <a href="account.html">Create free M Account</a>
+        <a href="account.html">Sign in</a>
+      </div>
+    </div>
+  </section>
+
+  <main class="p3-shell" id="course" hidden>
     <div class="p3-sourcebar" id="courseSync" role="status">
       <span class="p3-sourcebar__light" aria-hidden="true"></span>
       <b>COURSE SOURCE</b>
@@ -37,14 +51,14 @@
       <div class="p3-hero__copy">
         <p class="p3-kicker">Program for Resilient Infrastructure Management</p>
         <h1 id="p3Title">Learn it normally.<br><span>Remember it differently.</span></h1>
-        <p class="p3-lede">The required path stays deliberately conventional: read the lesson, study the concepts, pass the assessment, unlock the next module. Music, WATCH and LAB reinforce the exact same objectives without replacing the coursework.</p>
+        <p class="p3-lede">Each episode/song is a learning unit, not a compressed chapter. Every unit is expanded into three focused modules: two small concept lessons from the source material, then an infrastructure + CompTIA bridge that teaches what the music does not have room to explain.</p>
       </div>
       <aside class="p3-progress-card" aria-label="Course progress">
         <div class="p3-progress-card__line"><span>Course progress</span><strong id="progressPercent">0%</strong></div>
         <div class="p3-progress" aria-hidden="true"><i id="progressBar"></i></div>
         <dl class="p3-stats">
           <div><dt id="passedCount">0</dt><dd>passed</dd></div>
-          <div><dt id="moduleCount">21</dt><dd>modules</dd></div>
+          <div><dt id="moduleCount">63</dt><dd>modules</dd></div>
           <div><dt id="passMark">80%</dt><dd>pass mark</dd></div>
         </dl>
         <button class="p3-primary" id="continueCourse" type="button">Loading course…</button>
@@ -52,18 +66,18 @@
     </section>
 
     <section class="p3-contract" aria-label="How PRIM3 works">
-      <article><span>01</span><div><b>LEARN</b><p>Required reading, concepts and assessment. This is the credential path.</p></div><em>REQUIRED</em></article>
-      <article><span>02</span><div><b>REMEMBER</b><p>The episode song rehearses the vocabulary and mental model.</p></div><em>COMPANION</em></article>
-      <article><span>03</span><div><b>WATCH</b><p>The canonical episode puts the same concepts under human pressure.</p></div><em>COMPANION</em></article>
-      <article><span>04</span><div><b>LAB</b><p>PLAY and LAB_NODE scenarios require application under constraints.</p></div><em>COMPANION</em></article>
+      <article><span>01</span><div><b>LEARN</b><p>Required reading, concepts and assessment. One focused concept cluster at a time.</p></div><em>REQUIRED</em></article>
+      <article><span>02</span><div><b>REMEMBER</b><p>The unit's song rehearses vocabulary and mental models after the lesson.</p></div><em>COMPANION</em></article>
+      <article><span>03</span><div><b>WATCH</b><p>The canonical episode puts the same unit concepts under human pressure.</p></div><em>COMPANION</em></article>
+      <article><span>04</span><div><b>LAB</b><p>Safe scenarios require application under controlled constraints.</p></div><em>COMPANION</em></article>
     </section>
 
     <section class="p3-course-grid">
       <aside class="p3-syllabus" aria-label="Course syllabus">
         <div class="p3-section-head">
-          <p class="p3-kicker">7 seasons · 21 modules</p>
+          <p class="p3-kicker">7 seasons · 21 episode/song units · 63 modules</p>
           <h2>Syllabus</h2>
-          <p class="p3-syllabus__intro">Course order comes from the canonical PRIM3 repository. Lesson/assessment readiness is tracked separately from story production readiness.</p>
+          <p class="p3-syllabus__intro">PRIM3 owns the canonical songs, episodes, concept sets and labs. McCluster converts each source unit into three beginner-sized instructional modules and adds missing infrastructure/exam foundations without pretending those additions came from the music.</p>
         </div>
         <div id="moduleList" class="p3-module-list"></div>
         <p class="p3-safety"><b>Lab rule:</b> PRIM3 labs use fictional, local, owned or explicitly authorized systems. Offensive concepts stay sandboxed, defensive, architectural, evidence-based or non-operational.</p>
@@ -73,7 +87,7 @@
         <div class="p3-empty" id="lessonEmpty">
           <p class="p3-kicker">Coursework</p>
           <h2>Select an available module.</h2>
-          <p>The course map is pulled from PRIM3. Learner state stays separate from story canon.</p>
+          <p>The course map is built from PRIM3 source units. Learner state stays in your M Account.</p>
         </div>
 
         <article id="lessonContent" hidden>
@@ -113,7 +127,7 @@
 
           <section class="p3-assessment" id="assessmentSection">
             <div class="p3-section-label"><span>Required</span><b>Assessment</b></div>
-            <p class="p3-assessment__rule" id="assessmentRule">Score at least 80% to pass this module and unlock the next assessment-ready module.</p>
+            <p class="p3-assessment__rule" id="assessmentRule">Score at least 80% to pass this module and unlock the next focused module.</p>
             <form id="quizForm"></form>
             <div class="p3-quiz-actions">
               <button class="p3-primary" id="submitQuiz" type="submit" form="quizForm">Grade assessment</button>
@@ -122,7 +136,7 @@
           </section>
 
           <section class="p3-companions">
-            <div class="p3-section-label"><span>Optional</span><b>Same objective, different medium</b></div>
+            <div class="p3-section-label"><span>Optional</span><b>Same unit, different medium</b></div>
             <div class="p3-layer-grid">
               <article data-layer="remember"><small>02 · REMEMBER</small><b id="musicTitle"></b><p id="musicCopy"></p></article>
               <article data-layer="watch"><small>03 · WATCH</small><b id="watchTitle"></b><p id="watchCopy"></p></article>
@@ -133,7 +147,7 @@
 
           <section class="p3-provenance">
             <div class="p3-section-label"><span>Source</span><b>PRIM3 provenance</b></div>
-            <p>The module map is ingested from <code>mcclusterishere/Prim3</code>. These repository pointers are the course's trace back to canon and owner source material.</p>
+            <p>The episode/song unit is ingested from <code>mcclusterishere/Prim3</code>. Source-aligned modules trace back to those files; infrastructure/exam bridge modules are explicitly marked as McCluster curriculum enrichment.</p>
             <ul id="sourceList"></ul>
           </section>
         </article>
@@ -143,18 +157,18 @@
     <section class="p3-roadmap">
       <div class="p3-section-head">
         <p class="p3-kicker">Curriculum architecture</p>
-        <h2>Two repositories. One course.</h2>
+        <h2>21 source units. 63 focused lessons.</h2>
       </div>
-      <p><b>PRIM3</b> owns story canon, songs, episode mappings, concepts and lab requirements. <b>McCluster</b> owns the LMS, accounts, progress, assessment delivery and API. McCluster ingests PRIM3 instead of copying it into a second source of truth.</p>
+      <p><b>PRIM3</b> owns story canon, songs, episodes, source concepts and lab requirements. <b>McCluster</b> owns instructional decomposition, accounts, progress, assessment delivery and enrichment. The LMS never has to pretend that a song taught something it did not.</p>
       <div class="p3-roadmap-flow" aria-label="PRIM3 publishing flow">
-        <span>PRIM3 MAIN</span><i>→</i><span>COURSE FEED</span><i>→</i><span>MCCLUSTER API</span><i>→</i><strong>LMS</strong><i>→</i><span>LEARNER STATE</span>
+        <span>PRIM3 MAIN</span><i>→</i><span>21 SOURCE UNITS</span><i>→</i><span>MCCLUSTER CURRICULUM ADAPTER</span><i>→</i><strong>63 MODULE LMS</strong><i>→</i><span>M ACCOUNT PROGRESS</span>
       </div>
     </section>
   </main>
 
   <footer class="p3-footer">
     <strong>PRIM3</strong>
-    <span>Course delivery by McCluster · canon/content by PRIM3</span>
+    <span>Free with an M Account · course delivery by McCluster · canon/content by PRIM3</span>
     <a href="whip.html">Whip Equipped archive</a>
   </footer>
 
