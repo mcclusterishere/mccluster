@@ -1,8 +1,8 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "prim3_course_progress_v2";
-  var BOOT_FLAG = "prim3_progress_bootstrap_v1";
+  var STORAGE_KEY = "prim3_course_progress_v3";
+  var BOOT_FLAG = "prim3_progress_bootstrap_v2";
   var SYNC_LABEL_ID = "prim3ProgressSync";
 
   function localState() {
@@ -40,7 +40,7 @@
       bar.appendChild(label);
     }
     label.textContent = text;
-    label.dataset.state = state || "local";
+    label.dataset.state = state || "account";
   }
 
   function parseJson(response) {
@@ -86,24 +86,24 @@
     return before !== JSON.stringify(state);
   }
 
-  function bootstrap() {
-    if (!window.MCC || typeof window.MCC.refreshIfNeeded !== "function") {
-      syncLabel("PROGRESS · LOCAL", "local");
-      return;
-    }
+  function accountSession() {
+    if (!window.MCC || typeof window.MCC.refreshIfNeeded !== "function") return Promise.resolve(null);
+    return window.MCC.refreshIfNeeded();
+  }
 
-    window.MCC.refreshIfNeeded().then(function (session) {
+  function bootstrap() {
+    accountSession().then(function (session) {
       if (!session || !session.access_token) {
         sessionStorage.removeItem(BOOT_FLAG);
-        syncLabel("PROGRESS · LOCAL", "local");
+        syncLabel("M ACCOUNT · REQUIRED", "required");
         return null;
       }
-      syncLabel("PROGRESS · SYNCING", "syncing");
+      syncLabel("M ACCOUNT · SYNCING", "syncing");
       return api("/v1/prim3/progress").then(function (data) {
         var changed = mergeRemote(data && data.progress);
-        syncLabel("PROGRESS · M ACCOUNT", "synced");
-        /* prim3.js snapshots local progress at boot. If remote state changed it,
-           reload once so the visible locks/scores reflect the canonical merge. */
+        syncLabel("M ACCOUNT · SYNCED", "synced");
+        /* prim3.js snapshots local progress at boot. Reload once when the
+           account has progress this browser did not yet know about. */
         if (changed && sessionStorage.getItem(BOOT_FLAG) !== "1") {
           sessionStorage.setItem(BOOT_FLAG, "1");
           location.reload();
@@ -112,8 +112,18 @@
         }
       });
     }).catch(function (error) {
-      if (error && error.status === 401) syncLabel("PROGRESS · LOCAL", "local");
-      else syncLabel("PROGRESS · LOCAL · SYNC LATER", "error");
+      if (error && error.status === 401) syncLabel("M ACCOUNT · SIGN IN AGAIN", "required");
+      else syncLabel("M ACCOUNT · SYNC LATER", "error");
+    });
+  }
+
+  function withAccount(action) {
+    return accountSession().then(function (session) {
+      if (!session || !session.access_token) {
+        syncLabel("M ACCOUNT · REQUIRED", "required");
+        return null;
+      }
+      return action();
     });
   }
 
@@ -123,9 +133,10 @@
     setTimeout(function () {
       var state = localState();
       if (state.read.indexOf(id) === -1) return;
-      api("/v1/prim3/progress/" + id, { method: "POST", body: { reading_completed: true } })
-        .then(function () { syncLabel("PROGRESS · M ACCOUNT", "synced"); })
-        .catch(function () { syncLabel("PROGRESS · LOCAL · SYNC LATER", "error"); });
+      withAccount(function () {
+        return api("/v1/prim3/progress/" + id, { method: "POST", body: { reading_completed: true } })
+          .then(function () { syncLabel("M ACCOUNT · SYNCED", "synced"); });
+      }).catch(function () { syncLabel("M ACCOUNT · SYNC LATER", "error"); });
     }, 0);
   }
 
@@ -136,9 +147,10 @@
       var state = localState();
       var score = state.scores[id];
       if (score === undefined || score === null) return;
-      api("/v1/prim3/progress/" + id, { method: "POST", body: { reading_completed: state.read.indexOf(id) !== -1, assessment_score: Number(score) } })
-        .then(function () { syncLabel("PROGRESS · M ACCOUNT", "synced"); })
-        .catch(function () { syncLabel("PROGRESS · LOCAL · SYNC LATER", "error"); });
+      withAccount(function () {
+        return api("/v1/prim3/progress/" + id, { method: "POST", body: { reading_completed: state.read.indexOf(id) !== -1, assessment_score: Number(score) } })
+          .then(function () { syncLabel("M ACCOUNT · SYNCED", "synced"); });
+      }).catch(function () { syncLabel("M ACCOUNT · SYNC LATER", "error"); });
     }, 0);
   }
 
@@ -146,9 +158,10 @@
     setTimeout(function () {
       var state = localState();
       if (state.read.length || state.passed.length || Object.keys(state.scores).length) return;
-      api("/v1/prim3/progress", { method: "DELETE" })
-        .then(function () { syncLabel("PROGRESS · M ACCOUNT", "synced"); })
-        .catch(function () { syncLabel("PROGRESS · LOCAL · SYNC LATER", "error"); });
+      withAccount(function () {
+        return api("/v1/prim3/progress", { method: "DELETE" })
+          .then(function () { syncLabel("M ACCOUNT · SYNCED", "synced"); });
+      }).catch(function () { syncLabel("M ACCOUNT · SYNC LATER", "error"); });
     }, 0);
   }
 
