@@ -68,5 +68,15 @@ if ("serviceWorker" in navigator) {
    (js/masthead.js, "The house"), reachable from every page that carries
    the bar, and the smoke suite checks that it is still linked.
 
-   Nothing rewrites a tab from here any more. What a page ships in its bar
-   is what the bar shows. */
+   PRIM3 is a different handoff: the owner explicitly replaced the Whip
+   column with the curriculum while keeping Whip on disk. The tiny adapter
+   below loads on every page that already rides the house theme so old
+   hand-written bars and newer generated bars make the same transition. */
+(function () {
+  var s = document.currentScript && document.currentScript.src;
+  var root = s ? s.replace(/js\/theme\.js.*$/, "") : "";
+  var nav = document.createElement("script");
+  nav.src = root + "js/prim3-nav.js?v=__STAMP__";
+  nav.async = true;
+  document.head.appendChild(nav);
+})();
