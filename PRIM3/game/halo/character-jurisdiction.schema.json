@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mccluster.org/schemas/prim3/halo/character-jurisdiction.schema.json",
+  "title": "PRIM3 Halo Character Jurisdiction",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["character_id", "canonical_name", "relationships", "canon_refs"],
+  "properties": {
+    "character_id": {"type": "string", "minLength": 1},
+    "canonical_name": {"type": "string", "minLength": 1},
+    "aliases": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "role": {"type": ["string", "null"]},
+    "faction": {"type": ["string", "null"]},
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["country_or_region", "relationship_type", "confidence", "source_refs"],
+        "properties": {
+          "country_or_region": {"type": "string", "minLength": 1},
+          "relationship_type": {"enum": ["origin", "residence", "representation", "assignment", "affiliation", "other"]},
+          "confidence": {"enum": ["high", "medium", "low"]},
+          "source_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+        }
+      }
+    },
+    "canon_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1}
+  }
+}
