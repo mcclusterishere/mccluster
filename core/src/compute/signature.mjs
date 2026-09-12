@@ -71,6 +71,13 @@ function header(headers, name) {
   return headers?.[name] ?? headers?.[name.toLowerCase()] ?? null;
 }
 
+function constantTimeStringEqual(a, b) {
+  const left = Buffer.from(String(a));
+  const right = Buffer.from(String(b));
+  if (left.length !== right.length) return false;
+  return crypto.timingSafeEqual(left, right);
+}
+
 export function verifySignedRequest({ publicKeyPem, method, path, headers, bodyBytes = Buffer.alloc(0), now = Date.now(), maxClockSkewMs = DEFAULT_CLOCK_SKEW_MS }) {
   const protocol = header(headers, SIGNATURE_HEADERS.protocol);
   const nodeId = validateNodeId(header(headers, SIGNATURE_HEADERS.node));
@@ -86,7 +93,7 @@ export function verifySignedRequest({ publicKeyPem, method, path, headers, bodyB
     throw Object.assign(new Error('Compute request timestamp is outside the allowed clock window'), { status: 401, code: 'STALE_SIGNATURE' });
   }
   const digest = sha256Body(bodyBytes);
-  if (!crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(String(claimedDigest)))) {
+  if (!constantTimeStringEqual(digest, claimedDigest)) {
     throw Object.assign(new Error('Compute request body digest mismatch'), { status: 401, code: 'BAD_DIGEST' });
   }
   const canonical = canonicalRequest({ method, path, nodeId, timestamp, nonce, digest });
