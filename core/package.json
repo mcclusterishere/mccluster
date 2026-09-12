@@ -1,9 +1,9 @@
 {
   "name": "@mccluster/core-runner",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
-  "description": "Persistent McCluster Core executor and normalized MCP/HTTP tool broker for the canonical control plane.",
+  "description": "Persistent McCluster Core executor with provider-independent capabilities and normalized MCP/HTTP tool access.",
   "engines": {
     "node": ">=20"
   },
@@ -12,6 +12,7 @@
     "once": "node src/runner.mjs --once",
     "digest": "node src/digest.mjs",
     "broker": "node src/tool-broker.mjs",
-    "check": "node --check src/runner.mjs && node --check src/digest.mjs && node --check src/supabase.mjs && node --check src/process.mjs && node --check src/notifier.mjs && node --check src/executors/repo-health.mjs && node --check src/executors/local-analysis.mjs && node --check src/executors/code-patch.mjs && node --check src/tool-broker.mjs && node --check src/tools/mcp-http.mjs && node --check src/tools/http.mjs && node --check src/tools/registry.mjs"
+    "test:capabilities": "node --test test/capability-registry.test.mjs",
+    "check": "node --check src/runner.mjs && node --check src/digest.mjs && node --check src/supabase.mjs && node --check src/process.mjs && node --check src/notifier.mjs && node --check src/executors/repo-health.mjs && node --check src/executors/local-analysis.mjs && node --check src/executors/code-patch.mjs && node --check src/tool-broker.mjs && node --check src/tools/mcp-http.mjs && node --check src/tools/http.mjs && node --check src/tools/registry.mjs && node --check src/capabilities/registry.mjs"
   }
 }
