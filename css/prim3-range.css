@@ -11,9 +11,15 @@
 
 * { box-sizing: border-box; }
 
+/* The range uses author CSS with explicit display values on cards and shells.
+   Safari can otherwise let those declarations win over the HTML hidden state,
+   leaving the loading gate visible above an already unlocked mission. */
+.prim3-range-page [hidden] { display: none !important; }
+
 body.prim3-range-page {
   margin: 0;
   min-height: 100vh;
+  min-height: 100svh;
   background:
     radial-gradient(circle at 85% 0%, rgba(237, 29, 32, .12), transparent 32rem),
     linear-gradient(180deg, #090909 0%, var(--range-black) 62%);
@@ -75,14 +81,15 @@ body.prim3-range-page {
 
 .range-gate {
   min-height: calc(100vh - 72px);
+  min-height: calc(100svh - 72px);
   display: grid;
   place-items: center;
-  padding: 2rem 1rem;
+  padding: clamp(1rem, 3vh, 2rem) 1rem;
 }
 
 .range-gate-card {
   width: min(680px, 100%);
-  padding: clamp(1.5rem, 4vw, 3rem);
+  padding: clamp(1.25rem, 3vw, 2.5rem);
   text-align: center;
   border: 1px solid var(--range-line);
   border-radius: 26px;
@@ -90,9 +97,9 @@ body.prim3-range-page {
   box-shadow: 0 24px 80px rgba(0, 0, 0, .34);
 }
 
-.range-gate-card img { margin-bottom: 1rem; border-radius: 50%; }
-.range-gate-card h1 { margin: .25rem 0 1rem; font-size: clamp(2rem, 5vw, 3.6rem); }
-.range-gate-card p { color: #bcb7b5; line-height: 1.65; }
+.range-gate-card img { margin-bottom: .75rem; border-radius: 50%; }
+.range-gate-card h1 { margin: .25rem 0 .8rem; font-size: clamp(2rem, 5vw, 3.4rem); }
+.range-gate-card p { color: #bcb7b5; line-height: 1.55; }
 
 .range-shell {
   width: min(1280px, calc(100% - 2rem));
@@ -472,6 +479,10 @@ body.prim3-range-page {
   .range-topbar { padding: .55rem .8rem; }
   .range-brand img { width: 44px; height: 44px; }
   .range-sync { font-size: .56rem; }
+  .range-gate { padding: .75rem; }
+  .range-gate-card { padding: 1.25rem 1rem; border-radius: 20px; }
+  .range-gate-card img { width: 72px; height: 72px; margin-bottom: .45rem; }
+  .range-gate-card h1 { font-size: clamp(1.9rem, 11vw, 2.8rem); }
   .range-hero h1 { font-size: clamp(2.45rem, 14vw, 4.3rem); }
   .range-readiness-grid,
   .range-tool-list,
