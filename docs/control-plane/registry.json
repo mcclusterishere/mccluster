@@ -10,11 +10,13 @@
     "supabaseRef": "zmnhbrjyhxzhkxmhkexs",
     "workerSource": "workers/mccluster",
     "durableObjectClass": "HereTenantAgent",
-    "forbiddenWorkerNames": ["mccluster-core", "McCluster-Core", "here-agent-platform"]
+    "forbiddenWorkerNames": ["mccluster-core", "McCluster-Core", "here-agent-platform"],
+    "executionPlane": {"name": "McCluster Core", "provider": "OVH", "hostname": "vps-af4e71d9.vps.ovh.us", "ipv4": "15.204.235.103", "region": "US-East / Vint Hill, Virginia", "os": "Ubuntu 26.04 LTS", "vcpu": 8, "memoryGb": 24, "diskGb": 200, "deployment": "native-systemd", "docker": false, "role": "persistent-execution-plane", "authoritativeData": "supabase", "publicEdge": "cloudflare-worker-mccluster"}
   },
   "satellites": [
     {"owner": "mcclusterishere", "repo": "mccluster", "role": "control-plane", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Here", "role": "archive-old-website", "branch": "main", "doNotDeploy": true},
+    {"owner": "mcclusterishere", "repo": "hitmans-halo", "role": "core-runtime", "branch": "main", "host": "McCluster Core"},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped-Driver", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped-Rentals", "role": "product", "branch": "main"},

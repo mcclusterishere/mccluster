@@ -16,10 +16,12 @@ If you skip it, you will invent a second backend, race a git push, or break a cl
 | Apex | `https://mccluster.org` → same property, not a second site |
 | API | `https://api.mccluster.org` |
 | Supabase | project `zmnhbrjyhxzhkxmhkexs` (`https://zmnhbrjyhxzhkxmhkexs.supabase.co`) |
+| Persistent execution plane | OVH **McCluster Core** (`vps-af4e71d9.vps.ovh.us`) |
 | Durable Object class that MUST stay exported | `HereTenantAgent` |
 
-**There is no Worker named `mccluster-core`. Do not create one.**
-The only Cloudflare Worker is `mccluster`. Only call routes that Worker actually serves.
+**There is no Worker named `mccluster-core`. Do not create one.** The only Cloudflare Worker is `mccluster`.
+
+**McCluster Core is nevertheless a real, canonical OVH execution plane.** It runs persistent agents, Halo, schedulers, queue consumers, builds, controlled code execution, caches, and machine-level MCP tools. It is not a Worker and must not become a second auth, database, CRM, memory store, asset ledger, or source of orchestration truth. Read `docs/control-plane/MCCLUSTER-CORE.md` before changing backend, agent, MCP, harness, hosting, or infrastructure architecture.
 
 **McCluster is the backend AND the control plane.** Product repos are satellites. Client sites are tenants. None of them own auth, billing, social, CRM, or admin.
 
@@ -35,7 +37,7 @@ The only Cloudflare Worker is `mccluster`. Only call routes that Worker actually
 6. **Client social is a McCluster service.** Every client backend gets accounts, campaigns, and a queue on the plane. Satellites may display and submit. They are not the source of truth.
 7. **Preserve local product law.** PRIM3 Site 0, Uprise World, and any repo-specific gates below this section still apply. Control-plane law does not delete them.
 8. **If a task wants you to "rebuild", "simplify", or "migrate to a new stack": stop.** Route the work through McCluster. Ask only if the owner is explicitly retiring a satellite.
-9. **Do not invent infrastructure names.** The Worker is `mccluster`. The API host is `api.mccluster.org`. If a name is not in this table, it does not exist.
+9. **Do not invent infrastructure names.** The Worker is `mccluster`; the API host is `api.mccluster.org`; the OVH execution plane is **McCluster Core**. The Core name must never be used as a Cloudflare Worker name. If infrastructure is not in this table or `docs/control-plane/MCCLUSTER-CORE.md`, it does not exist.
 10. **Keep exporting `HereTenantAgent`.** Worker `mccluster` already has Durable Objects of that class. A deploy that drops the export dies with Cloudflare error 10064. Do not run a delete-class migration unless the owner says wipe those objects.
 11. **Never draw a logo.** See the section below. This one has already cost a rewrite.
 12. **`mcclusterishere/Here` is dead.** It publishes nothing: its deploy workflows are disabled and it has no CNAME. Do not write to it. If a task seems to want it, say so in the chat and work here instead.
@@ -92,6 +94,7 @@ On the control repo:
 - `AGENTS.md` (this law + local product gates)
 - `CLAUDE.md` / `GEMINI.md` / `.cursorrules` / `.github/copilot-instructions.md`
 - `docs/control-plane/ECOSYSTEM.md`
+- `docs/control-plane/MCCLUSTER-CORE.md`
 - `docs/control-plane/registry.json`
 
 On every satellite: the same four agent files, pointing here.

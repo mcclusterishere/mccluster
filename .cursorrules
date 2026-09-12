@@ -7,9 +7,10 @@ Always read AGENTS.md before editing.
 - Public edge: matthew.mccluster.org
 - Data: Supabase zmnhbrjyhxzhkxmhkexs
 - There is no Worker named mccluster-core. Do not create one.
+- McCluster Core is the canonical OVH persistent execution plane, not a Worker. Read docs/control-plane/MCCLUSTER-CORE.md.
 - Satellites render product UI. They do not own auth, social, billing, or admin.
 - No CI git push onto feature branches.
-- No competing backends.
+- No competing backends or shadow state. Core may run Halo, persistent agents, schedulers, queue consumers, builds, caches, and machine-level MCP tools against canonical Worker/Supabase contracts.
 - Preserve local product gates (PRIM3 Site 0, Uprise World, etc.).
 
 ## Never draw a logo

@@ -7,6 +7,7 @@ McCluster is the model-agnostic AI control plane for the company. Models are rep
 - GitHub `mcclusterishere/mccluster`: code, schemas, adapters, policies, tests, public-safe documentation, and audit history.
 - Cloudflare Worker `mccluster` / `https://api.mccluster.org`: orchestration and provider routing layer.
 - Supabase `zmnhbrjyhxzhkxmhkexs`: canonical private memory and operational data plane.
+- OVH **McCluster Core**: persistent execution plane for the agent harness, schedulers, long-running agents, queue consumers, builds, controlled code execution, caches, and machine-level MCP tools. Core uses canonical Worker/Supabase contracts and owns no shadow memory or operational truth.
 - Supabase private schema `ai_context`: raw AI conversations, normalized messages, durable memories, decisions, model runs, artifact links, sync cursors, context snapshots, and ingestion receipts.
 - Existing `out_*` tables: outreach CRM.
 - Existing `ops_*` tables: objectives, signals, lead scores, jobs, recommendations, and repo telemetry.
@@ -120,6 +121,6 @@ Target steady state:
 
 ## Repo rule for every coding AI
 
-Before building AI features, read this file plus `AGENTS.md` and the relevant model instruction file. Never create a shadow memory database, parallel CRM, second orchestration backend, or raw-chat directory in public Git.
+Before building AI features, read this file plus `AGENTS.md` and the relevant model instruction file. Never create a shadow memory database, parallel CRM, competing source of orchestration truth, or raw-chat directory in public Git. This rule does **not** prohibit the registered McCluster Core execution plane. Persistent work that exceeds Worker limits belongs on Core, while its authoritative state remains in Supabase. Read `MCCLUSTER-CORE.md`.
 
 When an adapter exists, use the canonical context plane. When one does not exist, implement an adapter that targets the canonical ingestion/retrieval contracts rather than inventing another memory system.

@@ -17,7 +17,7 @@ In Cloudflare → Workers & Pages → `mccluster` → Settings → Build:
 
 Do not set an assets / static directory.
 Do not point this project at `Here`.
-Do not create a Worker named `mccluster-core`.
+Do not create a Worker named `mccluster-core`. McCluster Core is the separate OVH execution plane; it is not built or deployed by Wrangler.
 
 ## Do not click Retry on an old red build
 

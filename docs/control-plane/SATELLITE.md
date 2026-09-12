@@ -12,7 +12,7 @@ Canonical law lives in the control repo. If this file and that file disagree, th
 - API: `https://api.mccluster.org`
 - Data: Supabase `zmnhbrjyhxzhkxmhkexs`
 
-There is no Worker named `mccluster-core`. Do not create one.
+There is no Worker named `mccluster-core`. Do not create one. McCluster Core is the registered OVH execution plane, not a Worker or satellite-owned backend. Satellites may call authorized Core capabilities only through canonical McCluster contracts.
 
 ## What you are allowed to do here
 

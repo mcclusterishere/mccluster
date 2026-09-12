@@ -1,153 +1,81 @@
-# TARGET STATE: the deployable platform
+# TARGET STATE: McCluster distributed control and execution plane
 
-The smallest durable production system that serves Here + Prayer
-Closet + commerce + the Inner Room + a provider-neutral AI layer,
-without discarding anything that works today.
+Status: current architecture as of 2026-09-12. This replaces the earlier Railway/container target.
 
-## The shape
+## Shape
 
-```
-GitHub repo (source of truth, never the runtime)
-   │  GitHub Actions: lint → typecheck → test → build → image
-   ▼
-Container registry (images tagged by commit SHA)
-   ▼
-Railway project ─ staging env ─┬─ api      (Fastify/TS container)
-                 production env┴─ worker   (same image, worker entry)
-                                  redis    (managed, queue + cache)
-Supabase ──────────────────────── Postgres + Auth + Storage + RLS
-GitHub Pages / edge host ──────── static web (unchanged during migration)
-Stripe ────────────────────────── payments (webhooks → api)
-Shopify ↔ Tapstitch ───────────── fulfillment bridge (Phase 4)
-Sentry / provider logs ────────── observability
-Resend ────────────────────────── transactional email
+```text
+GitHub mcclusterishere/mccluster
+      |
+      +--> Cloudflare Worker `mccluster` --> api.mccluster.org / remote MCP
+      |              |                              |
+      |              v                              v
+      |       Supabase authoritative state <--> OVH McCluster Core
+      |                                      persistent execution
+      |
+      +--> static/product deployments and satellite repositories
 ```
 
-**Platform choice: Railway** (managed containers, per-service env
-vars, staging/production environments, managed Redis, logs,
-rollbacks, no cluster to run). The account is already connected.
-Google Cloud Run is the documented scale-out alternative. The
-Dockerfile is the contract, so moving is a redeploy, not a rewrite.
-**Database stays Supabase** (working migrations, RLS, auth, storage;
-audit found no blocker), upgraded to Pro before launch for
-point-in-time recovery.
+## Canonical responsibilities
 
-## Repository structure (staged, non-destabilizing)
+### Cloudflare Worker `mccluster`
 
-```
-/                     the static site stays at root; Pages keeps serving it
-/apps/api             Fastify + TypeScript, versioned /api/v1, OpenAPI
-/apps/worker          (Phase 1.5) queue consumer, same deps as api
-/packages/ai          vendor-neutral AI gateway (no vendor calls outside it)
-/packages/commerce    PaymentGateway + FulfillmentProvider contracts
-/infrastructure       Dockerfiles, deploy notes
-/docs/architecture    this trilogy
-```
+- public HTTPS API and remote MCP transport;
+- authentication, authorization, validation, rate and budget gates;
+- short-lived orchestration and webhook ingress;
+- delegation of durable or machine-level work to Core;
+- preservation of the `HereTenantAgent` Durable Object export.
 
-A full `/apps/web` move happens only when a bundler earns its place;
-forcing the static site into a monorepo build now would destabilize a
-working release for zero user value.
+There is no Worker named `mccluster-core`.
 
-## Backend ownership (the API becomes the authority)
+### Supabase `zmnhbrjyhxzhkxmhkexs`
 
-The API owns auth verification, profiles, catalog, carts, checkout
-sessions, orders, payment verification (webhooks), fulfillment
-routing, editions/QR activation, scripture metadata, saved
-notes/highlights sync, collaborator profiles, admin permissions, AI
-requests, notifications, audit logs. The client is never the source
-of truth for price, discount, inventory, order status, auth claims,
-premium access, fulfillment status, edition authenticity, or AI
-authorization. The offerings ledger already enforces the first of
-these; the API generalizes the pattern.
+Supabase remains authoritative for identities, organizations, private AI context, CRM, jobs, approvals, costs, lineage, audit history, creative entities, and asset metadata. Browser clients never receive service-role credentials. RLS and server-side authorization remain mandatory.
 
-## Database domains
+### OVH McCluster Core
 
-Existing migrations 0001 to 0007 keep working. New schemas arrive as
-numbered migrations in the same pipeline, grouped by domain:
-`identity, catalog, commerce, fulfillment, content, scripture,
-engagement, ai, operations`. Core tables per the master brief
-(users/profiles/roles, brands/collaborators/seasons/drops,
-products/variants/garment_placements/inventory, carts/orders/
-payments/fulfillment_jobs/shipments/returns, editions/activations,
-scripture_books/chapters/verses, studies/sessions/prayer_prompts,
-user_notes/highlights/bookmarks, media_assets, ai_threads/messages/
-usage, notifications, audit_events). UUID keys, explicit status
-enums, FKs, unique constraints, indexes; soft delete only where
-operationally justified. `data/prayer-closet.json` remains the
-editorial seed until the catalog tables exist, then becomes an
-export of them.
+The registered host `vps-af4e71d9.vps.ovh.us` runs persistent execution that does not fit the Worker lifecycle:
 
-## Contracts (all implemented in /packages, consumed by the api)
+- Hitman's Halo / Seek First;
+- the model-agnostic AI and agent harness;
+- scheduled and long-running agents;
+- queue consumers and reconciliation workers;
+- controlled GitHub workspaces, builds, and code execution;
+- infrastructure MCP tools;
+- approved caches and provider/API brokers;
+- monitoring and operational diagnostics.
 
-- **PaymentGateway**: `createCheckout / verifyWebhook / refund`.
-  First adapter: Stripe (exists conceptually in the checkout
-  function; moves behind the interface). Possible later:
-  ShopifyPaymentGateway. Payment state changes only from verified
-  webhooks, never a client "success" message.
-- **FulfillmentProvider**: `submitOrder / getOrder / cancelOrder /
-  normalizeWebhook`. Adapters: `TapstitchViaShopifyProvider` (no
-  public Tapstitch API is assumed; the verified path is their
-  Shopify/WooCommerce integration), `ManualMcClusterProvider`,
-  `LocalEmbroideryProvider`. Order items snapshot product, artwork
-  version, placements, costs ($25 finishing fee where applicable),
-  retail price, route, provider order id, tracking. Totals are
-  never recomputed from the live catalog.
-- **AIProvider**: `generate / stream / embed? / moderate?`.
-  Implementations `OpenAIProvider, AnthropicProvider,
-  MockAIProvider`, all server-side; the app talks only to
-  `AIService`, which enforces: policy check → budget check → route
-  (env-driven primary/fallback/model tiers) → timeout → retry with
-  backoff → circuit breaker → validated response → usage row
-  (provider, model, prompt_version, tokens, cost, latency, status,
-  user, thread, request id). No vendor key ever reaches a browser or
-  app binary; provider choice changes by env var, not app release.
-  No hidden chain-of-thought is stored or requested.
+Core uses native Ubuntu packages and systemd. Do not require Docker. Core is not a second database or competing control plane; every durable outcome is written through canonical contracts.
 
-## AI functions (grounded, non-canonical)
+## MCP contract
 
-Study companion, chapter questions, historical context, drop
-explanation, prayer prompts, search help, concierge, support triage,
-admin copy. Retrieval comes from approved app data (scripture files,
-the ledger, orders); AI is never canonical for scripture text,
-price, inventory, orders, shipping, or edition authenticity.
+Remote clients connect to the authenticated MCP endpoint on `api.mccluster.org`. The implementation must support the actual negotiated MCP transport and lifecycle, including initialization, tool discovery, tool invocation, structured errors, and authentication.
 
-## Jobs, webhooks, media
+Short work may finish at the Worker. Long-running work is dispatched to Core and returns a durable job identifier. Status, approvals, outputs, cost, and lineage remain authoritative in Supabase.
 
-Worker consumes a Redis (BullMQ) queue: order submission,
-fulfillment sync, webhook reconciliation, shipments, email, push,
-media processing, QR/certificate generation, indexing, AI batch,
-retries, daily reconciliation. Every job: id, type, payload version,
-attempts, status, timings, last error, idempotency key; dead-letter
-flow for repeat failures. Webhook routes (`/api/v1/webhooks/stripe`,
-`…/shopify`; `…/tapstitch` only if a real contract appears) verify
-raw-body signatures, persist the event, ack immediately, process
-async, support replay. Media lives in object storage (Supabase
-Storage now, R2 if egress costs demand) with signed URLs, size/MIME
-limits, and versioned artwork (source / production / web preview /
-mobile preview / customer download). The official Hitman mark is a
-versioned asset, never AI-generated.
+## AI and media
 
-## Native strategy
+Provider adapters remain replaceable. The existing media registry, budgeted job creation, cost reconciliation, asset saving, and comparison runner are reused. The persistent harness adds durable execution without copying their state.
 
-Capacitor is already in the repo for Android with the site bundled in
-`www/` (store-compliant, not a remote wrapper). Add the iOS project,
-then: Sign in with Apple, Stripe PaymentSheet + Apple Pay for
-physical goods (never IAP for garments; digital content stays free
-in v1, keeping App Review clean), push (APNs/FCM), Universal/App
-Links to `/prayer-closet/*` routes, QR scanner (camera) for edition
-activation, secure credential storage, haptics, offline saves. The
-"more than a website" bar is met by Prayer Closet's native utility:
-QR authentication, push for drops, offline Inner Room, saved
-studies.
+Generated assets are copied to private McCluster storage, hashed, inspected, and assigned canonical storage paths. Provider URLs are provenance, not permanent storage.
 
-## Security & observability baseline
+## Resource and reliability policy
 
-HTTPS-only, strict CORS, CSP, secure cookies + CSRF where cookies
-appear, zod-validated inputs, parameterized SQL, object-level
-authorization, brute-force throttles, least-privilege keys, secret
-rotation, dependency + container scanning, audit logging, Supabase
-Pro PITR + tested restores, admin MFA. Sentry (API, worker, mobile)
-+ structured logs + queue depth, webhook failures, AI spend. Alerts:
-payment-without-order, order-not-submitted, missing tracking,
-signature failures, stalled queue, DB down, AI budget, error spikes.
-Logs never contain passwords, payment details, notes, or prayers.
+Managed Core workloads target no more than roughly 80% sustained CPU and RAM, leaving roughly 20% operational headroom. Disk alerts fire before 80% utilization. Each systemd service receives appropriate limits, restart behavior, health checks, and log rotation. Capacity is assigned to useful work; artificial load is prohibited.
+
+## Security baseline
+
+- key-only SSH;
+- no public application ports;
+- authenticated Cloudflare or equivalently reviewed HTTPS ingress;
+- dedicated rotatable Worker-to-Core credentials with replay-resistant validation;
+- restricted server-side secret files;
+- least privilege and auditable actions;
+- no raw private transcript or credential commits;
+- no production deploy, external communication, spending, destructive change, or authorization change outside its approval policy.
+
+## Repository structure
+
+Existing code remains in place. New Core integration belongs in explicit packages or infrastructure paths in the control repo; Halo runtime code stays in `mcclusterishere/hitmans-halo`. Satellite repositories remain clients of the plane.
+
+See `docs/control-plane/MCCLUSTER-CORE.md`, `AI-HARNESS.md`, and `GENERATIVE-MEDIA-HARNESS.md`.

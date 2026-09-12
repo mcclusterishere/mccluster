@@ -38,7 +38,7 @@ by hand).
    the rest as demand shows.
 3. **This is a backend product.** Tokens, scheduling, retries, and media
    processing cannot live on GitHub Pages. It runs on `apps/api` (Fastify,
-   already scaffolded) deployed on Railway + Supabase for storage:
+   already scaffolded) served through the canonical Worker/Core execution split with Supabase as authoritative storage:
    `social_connections` (client ↔ platform ↔ encrypted token),
    `social_posts` (media ref, caption, per-platform status), a scheduler
    worker, and webhook receivers for token refresh/revocation.
@@ -49,7 +49,7 @@ by hand).
 
 1. Meta developer app → Business Verification → App Review (start this
    EARLY; it's the long pole and it's paperwork, not code).
-2. `apps/api` on Railway: OAuth callback routes, token vault (encrypted at
+2. Canonical API/Core services: OAuth callback routes, token vault (encrypted at
    rest, service-role only), `social_connections` + `social_posts` tables
    with the same RLS law as `site_requests`.
 3. Console: "Connected accounts" card (connect/disconnect per platform) +
