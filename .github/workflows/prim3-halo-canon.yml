@@ -1,0 +1,28 @@
+name: PRIM3 Halo Canon CI
+
+on:
+  pull_request:
+    paths:
+      - 'PRIM3/game/halo/**'
+      - 'docs/prim3/HITMANS-HALO-WORLD-CANON.md'
+      - '.github/workflows/prim3-halo-canon.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'PRIM3/game/halo/**'
+      - 'docs/prim3/HITMANS-HALO-WORLD-CANON.md'
+
+permissions:
+  contents: read
+
+jobs:
+  halo-canon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate 66-mission campaign and isolation invariants
+        working-directory: PRIM3/game/halo
+        run: npm run validate
