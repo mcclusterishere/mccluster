@@ -8,6 +8,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const prim3Path = resolve(here, '..', 'src', 'prim3', 'index.js');
 const workerPath = resolve(here, '..', 'src', 'index.js');
 const frontendPath = resolve(here, '..', '..', '..', 'js', 'prim3.js');
+const coveragePath = resolve(here, '..', '..', '..', 'docs', 'prim3', 'COMPTIA-COVERAGE.json');
 
 async function text(path) {
   return readFile(path, 'utf8');
@@ -22,6 +23,20 @@ test('PRIM3 ingestion keeps 21 canonical episode/song source units but expands t
   assert.match(source, /modules\.length !== INSTRUCTIONAL_MODULE_COUNT/);
   assert.match(source, /module_strategy: '3 instructional modules per episode\/song unit'/);
   assert.match(source, /module_count: modules\.length/);
+});
+
+test('the fixed 63 module course owns the full Security Plus and Network Plus objective inventory', async () => {
+  const coverage = JSON.parse(await text(coveragePath));
+  assert.equal(coverage.instructional_module_count, 63);
+  assert.equal(coverage.source_unit_count, 21);
+  assert.equal(coverage.certifications.security_plus.exam, 'SY0-701');
+  assert.equal(coverage.certifications.network_plus.exam, 'N10-009');
+  assert.equal(coverage.certifications.security_plus.objectives.length, 28);
+  assert.equal(coverage.certifications.network_plus.objectives.length, 25);
+  assert.equal(coverage.completion_contract.top_level_objectives_required, 53);
+  assert.equal(coverage.completion_contract.all_official_bullets_required, true);
+  assert.equal(coverage.completion_contract.all_nested_official_bullets_required, true);
+  assert.match(coverage.completion_contract.course_complete_only_when, /All 28 Security Plus objectives and all 25 Network Plus objectives/);
 });
 
 test('Episode One is fully authored as three comprehensive modules with forbidden dash punctuation blocked', async () => {
