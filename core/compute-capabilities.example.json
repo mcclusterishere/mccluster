@@ -35,6 +35,9 @@
       "executor": {
         "type": "http",
         "url": "http://127.0.0.1:8188/mccluster/execute",
+        "health_url": "http://127.0.0.1:8188/system_stats",
+        "health_method": "GET",
+        "health_timeout_ms": 2500,
         "timeout_ms": 3600000
       }
     }
