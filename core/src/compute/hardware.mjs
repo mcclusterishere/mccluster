@@ -15,16 +15,31 @@ function readText(file) {
   catch { return ''; }
 }
 
+function realBasename(file) {
+  try { return path.basename(fs.realpathSync(file)); }
+  catch { return null; }
+}
+
+function execText(command, args) {
+  return execFileSync(command, args, {
+    encoding: 'utf8',
+    timeout: 5_000,
+    stdio: ['ignore', 'pipe', 'ignore']
+  });
+}
+
 export function parseNvidiaInventoryCsv(text = '') {
   return String(text).trim().split('\n').filter(Boolean).map((line) => {
-    const [model, uuid, mib, driver, compute] = line.split(',').map((v) => v.trim());
+    const fields = line.split(',').map((v) => v.trim());
+    const [model, uuid, mib, driver] = fields;
+    const compute = fields[4] || null;
     return {
       vendor: 'nvidia',
       model: model || 'unknown',
       uuid: uuid || null,
       vram_bytes: Math.max(0, Math.floor(number(mib) * MIB)),
       driver: driver || null,
-      compute: compute || null
+      compute
     };
   });
 }
@@ -48,22 +63,26 @@ export function parseNvidiaLoadCsv(text = '') {
 }
 
 function nvidiaInventory() {
+  const format = '--format=csv,noheader,nounits';
   try {
-    const out = execFileSync('nvidia-smi', [
-      '--query-gpu=name,uuid,memory.total,driver_version,compute_cap',
-      '--format=csv,noheader,nounits'
-    ], { encoding: 'utf8', timeout: 5_000, stdio: ['ignore', 'pipe', 'ignore'] });
-    return parseNvidiaInventoryCsv(out);
-  } catch { return []; }
+    return parseNvidiaInventoryCsv(execText('nvidia-smi', [
+      '--query-gpu=name,uuid,memory.total,driver_version,compute_cap', format
+    ]));
+  } catch {
+    try {
+      return parseNvidiaInventoryCsv(execText('nvidia-smi', [
+        '--query-gpu=name,uuid,memory.total,driver_version', format
+      ]));
+    } catch { return []; }
+  }
 }
 
 function nvidiaLoad() {
   try {
-    const out = execFileSync('nvidia-smi', [
+    return parseNvidiaLoadCsv(execText('nvidia-smi', [
       '--query-gpu=uuid,memory.used,memory.total,utilization.gpu,temperature.gpu,power.draw',
       '--format=csv,noheader,nounits'
-    ], { encoding: 'utf8', timeout: 5_000, stdio: ['ignore', 'pipe', 'ignore'] });
-    return parseNvidiaLoadCsv(out);
+    ]));
   } catch { return []; }
 }
 
@@ -76,8 +95,7 @@ export function amdInventoryFromSysfs(root = '/sys/class/drm') {
   for (const entry of entries) {
     if (!entry.isDirectory() || !/^card\d+$/.test(entry.name)) continue;
     const device = path.join(root, entry.name, 'device');
-    const vendor = readText(path.join(device, 'vendor')).toLowerCase();
-    if (vendor !== '0x1002') continue;
+    if (readText(path.join(device, 'vendor')).toLowerCase() !== '0x1002') continue;
     const total = number(readText(path.join(device, 'mem_info_vram_total')));
     const pci = readText(path.join(device, 'uevent'));
     const slot = pci.split('\n').find((line) => line.startsWith('PCI_SLOT_NAME='))?.split('=')[1] || entry.name;
@@ -87,7 +105,7 @@ export function amdInventoryFromSysfs(root = '/sys/class/drm') {
       model: `AMD GPU ${deviceId}`,
       uuid: `pci:${slot}`,
       vram_bytes: Math.max(0, Math.floor(total)),
-      driver: path.basename(fs.realpathSync(path.join(device, 'driver'), { encoding: 'utf8' } || '')) || null,
+      driver: realBasename(path.join(device, 'driver')),
       compute: 'rocm'
     });
   }
@@ -130,8 +148,6 @@ function diskFreeBytes(directory = '/') {
 }
 
 export function discoverHardware() {
-  const nvidia = nvidiaInventory();
-  const amd = amdInventoryFromSysfs();
   return {
     hostname: os.hostname(),
     platform: os.platform(),
@@ -139,7 +155,7 @@ export function discoverHardware() {
     cpu_count: os.cpus().length,
     memory_bytes: os.totalmem(),
     disk_free_bytes: diskFreeBytes('/'),
-    gpus: [...nvidia, ...amd],
+    gpus: [...nvidiaInventory(), ...amdInventoryFromSysfs()],
     runtime: {
       node: process.version,
       kernel: os.release(),
