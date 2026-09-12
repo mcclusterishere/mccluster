@@ -1,0 +1,44 @@
+[Unit]
+Description=McCluster self-hosted compute node agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mccluster-node
+Group=mccluster-node
+WorkingDirectory=/opt/mccluster/core
+Environment=HOME=/var/lib/mccluster-node
+Environment=MCCLUSTER_NODE_STATE_DIR=/var/lib/mccluster-node
+Environment=MCCLUSTER_NODE_MANIFEST=/etc/mccluster-node/capabilities.json
+EnvironmentFile=/etc/mccluster-node/node.env
+ExecStart=/usr/bin/node /opt/mccluster/core/src/compute/node-agent.mjs
+Restart=always
+RestartSec=5
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+# GPU workers must be able to see host accelerator devices.
+PrivateDevices=false
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictNamespaces=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+ReadWritePaths=/var/lib/mccluster-node
+MemoryMax=2G
+CPUQuota=200%
+TasksMax=256
+
+[Install]
+WantedBy=multi-user.target
