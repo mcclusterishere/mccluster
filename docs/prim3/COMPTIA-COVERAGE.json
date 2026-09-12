@@ -1,5 +1,5 @@
 {
-  "version": "2.1.0",
+  "version": "2.2.0",
   "status": "CANONICAL_CURRICULUM_COVERAGE_CONTRACT",
   "course": "prim3-foundation-v3",
   "instructional_module_count": 66,
@@ -9,10 +9,17 @@
   "mapped_lesson_count": 66,
   "known_song_unit_count": 20,
   "blocked_source_unit_count": 1,
-  "mapping_status": "ALL_FIXED_MODULES_PLANNED_WITH_U18_SOURCE_BLOCKED",
-  "lesson_map_markdown": "docs/prim3/LESSON-CERTIFICATION-MAP.md",
-  "lesson_map_json": "docs/prim3/LESSON-CERTIFICATION-MAP.json",
-  "source_concept_crosswalk_json": "docs/prim3/SONG-CONCEPT-CROSSWALK.json",
+  "mapping_status": "SURGICAL_TOPIC_ASSIGNMENT_ACTIVE_WITH_U18_SOURCE_BLOCKED",
+  "curriculum_authorities": {
+    "modality_contract": "docs/prim3/LEARNING-MODALITY-CONTRACT.md",
+    "lesson_map_markdown": "docs/prim3/LESSON-CERTIFICATION-MAP.md",
+    "lesson_map_json": "docs/prim3/LESSON-CERTIFICATION-MAP.json",
+    "source_concept_crosswalk_json": "docs/prim3/SONG-CONCEPT-CROSSWALK.json",
+    "security_plus_topic_ledger": "docs/prim3/SECURITY-PLUS-TOPIC-LEDGER.json",
+    "network_plus_topic_ledger": "docs/prim3/NETWORK-PLUS-TOPIC-LEDGER.json",
+    "a_plus_precursor_map": "docs/prim3/APLUS-PRECURSOR-MAP.json",
+    "objective_overlap_graph": "docs/prim3/OBJECTIVE-OVERLAP-GRAPH.json"
+  },
   "module_structure": {
     "M01-M03": "McCluster certification foundation with no PRIM3 song or episode attachment",
     "M04-M66": "Twenty one PRIM3 source units expanded into exactly three modules each",
@@ -31,7 +38,8 @@
         {"domain":"4.0","name":"Security Operations","weight_percent":28,"objectives":["4.1","4.2","4.3","4.4","4.5","4.6","4.7","4.8","4.9"]},
         {"domain":"5.0","name":"Security Program Management and Oversight","weight_percent":20,"objectives":["5.1","5.2","5.3","5.4","5.5","5.6"]}
       ],
-      "numbered_objective_count": 28
+      "numbered_objective_count": 28,
+      "completion_gate": true
     },
     {
       "name": "CompTIA Network+",
@@ -44,82 +52,69 @@
         {"domain":"4.0","name":"Network Security","weight_percent":14,"objectives":["4.1","4.2","4.3"]},
         {"domain":"5.0","name":"Network Troubleshooting","weight_percent":24,"objectives":["5.1","5.2","5.3","5.4","5.5"]}
       ],
-      "numbered_objective_count": 25
+      "numbered_objective_count": 25,
+      "completion_gate": true
     }
   ],
   "mandatory_numbered_objective_count": 53,
+  "supporting_precursor": {
+    "name": "CompTIA A+",
+    "exams": ["220-1201", "220-1202"],
+    "numbered_objective_count": 63,
+    "completion_gate": false,
+    "role": "Tracked IT foundation and overlap layer. Relevant A+ concepts are taught when they strengthen the learner's foundation or naturally overlap the mandatory exams and PRIM3 source material."
+  },
+  "raw_cross_certification_numbered_objective_reference_count": 116,
+  "mastery_model": {
+    "authority": "docs/prim3/OBJECTIVE-OVERLAP-GRAPH.json",
+    "atomic_unit": "canonical concept",
+    "rule": "Teach a canonical concept comprehensively once in LEARN and credit every linked certification objective without requiring duplicate learner work.",
+    "objective_progress": "The share of required canonical topic nodes for the objective that the learner has mastered in LEARN.",
+    "reinforcement_progress": "REMEMBER, WATCH and LAB statuses are tracked independently and never substitute for LEARN mastery."
+  },
+  "modality_model": {
+    "learn": "Mandatory complete conventional instruction and assessment. Every required concept must be understandable and passable without any other modality.",
+    "remember": "Optional music reinforcement tied only to concepts actually present in PRIM3 source material.",
+    "watch": "Optional narrative reinforcement through episodes and story consequences.",
+    "lab": "Applied practice through the PRIM3 video game. Detailed lab design is deferred and cannot reduce LEARN coverage."
+  },
   "completion_contract": {
-    "numbered_objectives_required": "ALL",
-    "official_bullets_required": "ALL",
-    "official_nested_bullets_required": "ALL",
+    "numbered_objectives_required": "ALL_SECURITY_PLUS_AND_NETWORK_PLUS",
+    "official_bullets_required": "ALL_SECURITY_PLUS_AND_NETWORK_PLUS",
+    "official_nested_bullets_required": "ALL_SECURITY_PLUS_AND_NETWORK_PLUS",
     "planned_assignment_is_completion": false,
     "objective_complete_only_when": [
       "The objective and every official bullet and nested bullet beneath it are assigned to one or more of the fixed sixty six modules.",
-      "The assigned material is taught in conventional learner facing lesson content rather than merely named in metadata.",
-      "The learner must demonstrate the material through assessment, practice, lab work, scenario work, or an appropriate combination.",
-      "The coverage remains traceable from the objective inventory through the lesson map to the teaching and assessment artifact."
+      "The assigned material is taught comprehensively in conventional learner facing LEARN content rather than merely named in metadata.",
+      "The learner demonstrates mastery through conventional assessment or knowledge demonstration in LEARN.",
+      "The coverage remains traceable from the objective inventory through the topic ledger, overlap graph, lesson map and teaching artifact."
     ],
-    "song_rule": "A PRIM3 song is a memory and refresher layer. It never substitutes for missing certification instruction.",
+    "song_rule": "A PRIM3 song is a memory and refresher layer. It never substitutes for missing conventional instruction.",
+    "episode_rule": "An episode is a narrative reinforcement layer. It never substitutes for missing conventional instruction.",
+    "lab_rule": "A game lab is an application layer. It is designed separately and cannot substitute for missing conventional instruction.",
     "source_rule": "Only concepts actually present in PRIM3 source material may be represented as song derived. Missing exam material is McCluster bridge curriculum.",
-    "unknown_source_rule": "U18 remains owner source required. M55 through M57 stay reserved and unmapped until canonical source is supplied, and mandatory exam completeness must not depend on those unknown slots.",
-    "course_complete_only_when": "Every Security+ SY0-701 and Network+ N10-009 numbered objective, official bullet, and nested bullet satisfies the completion rule within the fixed sixty six modules."
+    "unknown_source_rule": "U18 remains owner source required. M55 through M57 stay reserved and unmapped until canonical source is supplied, and mandatory Security Plus and Network Plus completeness must not depend on those unknown slots.",
+    "overlap_rule": "The same mastered canonical concept may satisfy multiple objective topic requirements across Security Plus, Network Plus and the A Plus precursor overlay without duplicate learner work.",
+    "course_complete_only_when": "Every Security+ SY0-701 and Network+ N10-009 numbered objective, official bullet and nested bullet satisfies the completion rule within the fixed sixty six modules."
   },
   "foundation_modules": [
-    {
-      "module":"M01",
-      "title":"Security Foundations and Risk",
-      "song":null,
-      "episode":null,
-      "coverage_status":"PARTIAL",
-      "security_plus":["1.1","1.2","5.2"],
-      "network_plus":["4.1"]
-    },
-    {
-      "module":"M02",
-      "title":"Networking Foundations",
-      "song":null,
-      "episode":null,
-      "coverage_status":"PARTIAL",
-      "security_plus":[],
-      "network_plus":["1.1","1.2","1.4","1.6","1.7","2.1","3.4","3.5","5.1"]
-    },
-    {
-      "module":"M03",
-      "title":"Identity, Cryptography and Access",
-      "song":null,
-      "episode":null,
-      "coverage_status":"PARTIAL",
-      "security_plus":["1.4","3.3","4.6"],
-      "network_plus":["4.1"]
-    }
+    {"module":"M01","title":"Security Foundations and Risk","song":null,"episode":null,"coverage_status":"PARTIAL","security_plus":["1.1","1.2","2.1","5.2"],"network_plus":["4.1"]},
+    {"module":"M02","title":"Networking Foundations","song":null,"episode":null,"coverage_status":"PARTIAL","security_plus":[],"network_plus":["1.1","1.2","1.4","1.6","1.7","2.1","3.4","3.5","5.1"]},
+    {"module":"M03","title":"Identity, Cryptography and Access","song":null,"episode":null,"coverage_status":"PARTIAL","security_plus":["1.4","3.3","4.6"],"network_plus":["4.1"]}
   ],
   "authored_prim3_units": [
-    {
-      "unit":"U01",
-      "song":"High Alert",
-      "episode":"The Blip",
-      "modules":["M04","M05","M06"],
-      "coverage_status":"PARTIAL",
-      "security_plus":["1.2","4.4","4.5","4.8","4.9","5.1"],
-      "network_plus":["1.4","3.1","3.2","3.4","4.1","5.1","5.5"]
-    },
-    {
-      "unit":"U02",
-      "song":"White Grey Black Hat",
-      "episode":"Permission Slip",
-      "modules":["M07","M08","M09"],
-      "coverage_status":"PARTIAL",
-      "security_plus":["2.1","4.3","5.1","5.3","5.5"],
-      "network_plus":["3.1","4.1","4.3"]
-    }
+    {"unit":"U01","song":"High Alert","episode":"The Blip","modules":["M04","M05","M06"],"coverage_status":"PARTIAL","security_plus":["1.2","4.4","4.5","4.8","4.9","5.1"],"network_plus":["1.4","3.1","3.2","3.4","4.1","5.1","5.5"]},
+    {"unit":"U02","song":"White Grey Black Hat","episode":"Permission Slip","modules":["M07","M08","M09"],"coverage_status":"PARTIAL","security_plus":["2.1","4.3","5.1","5.3","5.5"],"network_plus":["3.1","4.1","4.3"]}
   ],
   "planning_guarantees": [
     "LESSON-CERTIFICATION-MAP.json contains exactly sixty six module records.",
     "SONG-CONCEPT-CROSSWALK.json contains all twenty one source unit slots and leaves U18 empty rather than inventing owner source.",
-    "The planned module map assigns every one of the twenty eight Security+ numbered objectives at least once.",
-    "The planned module map assigns every one of the twenty five Network+ numbered objectives at least once.",
-    "Numbered objective assignment does not claim official bullet level completion.",
-    "Concepts that do not naturally map to either mandatory exam may remain enrichment rather than receiving a fabricated exam mapping."
+    "SECURITY-PLUS-TOPIC-LEDGER.json contains every one of the twenty eight Security Plus numbered objectives with topic families and LEARN module homes.",
+    "NETWORK-PLUS-TOPIC-LEDGER.json contains every one of the twenty five Network Plus numbered objectives with topic families and LEARN module homes.",
+    "APLUS-PRECURSOR-MAP.json tracks sixty three current A Plus numbered objectives as a supporting precursor overlay.",
+    "OBJECTIVE-OVERLAP-GRAPH.json prevents duplicated conventional instruction from becoming the learner experience merely because certification objective numbers overlap.",
+    "Numbered objective assignment and topic assignment remain planning until the corresponding LEARN lesson and assessment are authored and validated.",
+    "Concepts that do not naturally map to an exam may remain enrichment rather than receiving a fabricated exam mapping."
   ],
   "authoring_rules": [
     "The course contains exactly sixty six modules.",
@@ -127,9 +122,10 @@
     "Every one of the twenty one PRIM3 source units receives exactly three modules.",
     "The sixty three song aligned modules are a subtotal, not the whole course.",
     "No sixty seventh module may be created to solve curriculum pressure.",
-    "Missing certification material must be distributed across the three foundations, song core lessons, and infrastructure and exam bridges without cramming unrelated concepts together.",
+    "Missing certification material must be distributed across the foundations, song core lessons and infrastructure bridges without cramming unrelated concepts together.",
     "Security+ SY0-701 and Network+ N10-009 are mandatory complete coverage targets.",
-    "A+ may appear as optional enrichment but is not a course completion gate.",
-    "Learner facing authored lesson copy must contain no dash, en dash, em dash, or hyphen characters."
+    "A+ 220-1201 and 220-1202 are tracked supporting precursors and overlap targets, not course completion gates.",
+    "LEARN must comprehensively teach every required concept without dependence on REMEMBER, WATCH or LAB.",
+    "Learner facing authored lesson copy must contain no dash, en dash, em dash or hyphen characters."
   ]
 }
