@@ -1,122 +1,166 @@
-// CONTEXT-INGEST — canonical Supabase-side ingress to the shared AI context plane.
-// Reconciled from Grok's ai_ingest envelope/RPC architecture and Claude's
-// verified-caller audit hardening. The Edge Function self-authenticates because
-// service-role ingestion is also supported; ai_ingest itself is service-only.
+// CONTEXT-INGEST — write a conversation into the private context plane.
+// Lands provider messages in ai_context idempotently and queues enrichment.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
+import postgres from 'npm:postgres@3.4.5'
 import { authzResponse, verifyCaller } from '../_shared/authz.ts'
 
-const SB = Deno.env.get('SUPABASE_URL') ?? ''
-const SRV = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-const PROVIDERS = new Set(['chatgpt', 'claude', 'grok', 'gemini', 'copilot', 'local', 'other'])
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const sql = postgres(Deno.env.get('SUPABASE_DB_URL')!, { prepare: false, max: 1 })
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+type Message = {
+  id?: string
+  role: string
+  model?: string
+  content: string
+  occurred_at?: string
+  ordinal?: number
+  metadata?: Record<string, unknown>
+}
+
+type Payload = {
+  org_id: string
+  provider: string
+  account_label?: string
+  adapter_version?: string
+  external_conversation_id: string
+  title?: string
+  source_url?: string
+  model_family?: string
+  started_at?: string
+  last_message_at?: string
+  metadata?: Record<string, unknown>
+  idempotency_key: string
+  messages: Message[]
+}
+
+const encoder = new TextEncoder()
+async function sha256(value: string) {
+  const digest = await crypto.subtle.digest('SHA-256', encoder.encode(value))
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...cors, 'content-type': 'application/json; charset=utf-8' },
+    headers: { 'content-type': 'application/json; charset=utf-8' },
   })
-}
-
-async function serviceRpc(name: string, body: unknown) {
-  const r = await fetch(`${SB}/rest/v1/rpc/${name}`, {
-    method: 'POST',
-    headers: {
-      apikey: SRV,
-      authorization: `Bearer ${SRV}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
-  const data = await r.json().catch(() => null)
-  if (!r.ok) throw Object.assign(new Error(data?.message || `${name} failed`), { status: r.status, detail: data })
-  return data
-}
-
-async function houseOrg() {
-  const r = await fetch(`${SB}/rest/v1/orgs?slug=eq.mccluster&select=id&limit=1`, {
-    headers: { apikey: SRV, authorization: `Bearer ${SRV}` },
-  })
-  const rows = await r.json().catch(() => [])
-  return rows?.[0]?.id ? String(rows[0].id) : ''
-}
-
-async function authorize(req: Request) {
-  const auth = req.headers.get('authorization') ?? ''
-  const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7) : ''
-  if (SRV && token === SRV) return { kind: 'service' as const, userId: null, orgId: null }
-
-  let caller
-  try {
-    caller = await verifyCaller(req)
-  } catch (e) {
-    const response = authzResponse(e, cors)
-    if (response) throw Object.assign(new Error('authentication failed'), { response })
-    throw e
-  }
-
-  const orgId = await houseOrg()
-  if (!orgId) throw Object.assign(new Error('house organization not configured'), { status: 503 })
-  const r = await fetch(
-    `${SB}/rest/v1/org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(caller.id)}&select=role&limit=1`,
-    { headers: { apikey: SRV, authorization: `Bearer ${SRV}` } },
-  )
-  const memberships = await r.json().catch(() => [])
-  const role = String(memberships?.[0]?.role ?? '')
-  if (!['owner', 'admin'].includes(role)) throw Object.assign(new Error('owner/admin required'), { status: 403 })
-  return { kind: 'operator' as const, userId: caller.id, orgId }
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
   if (req.method !== 'POST') return json({ error: 'POST required' }, 405)
-  if (!SB || !SRV) return json({ error: 'not configured' }, 503)
 
-  let who
+  let subject: string
   try {
-    who = await authorize(req)
+    subject = (await verifyCaller(req)).id
   } catch (e) {
-    const response = (e as any)?.response
-    if (response instanceof Response) return response
-    return json({ error: e instanceof Error ? e.message : 'authentication failed' }, Number((e as any)?.status) || 401)
+    return authzResponse(e, {}) ?? json({ error: 'authentication failed' }, 401)
   }
 
-  const body: any = await req.json().catch(() => null)
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'envelope required' }, 400)
-  if (!body.org_id && who.kind === 'operator') body.org_id = who.orgId
-  if (!UUID.test(String(body.org_id || ''))) return json({ error: 'valid org_id required' }, 400)
-  if (who.kind === 'operator' && body.org_id !== who.orgId) return json({ error: 'cross-org ingestion denied' }, 403)
+  let body: Payload
+  try { body = await req.json() } catch { return json({ error: 'invalid JSON' }, 400) }
 
-  const provider = String(body.provider || '').toLowerCase()
-  if (!PROVIDERS.has(provider)) return json({ error: 'unsupported provider' }, 400)
-  body.provider = provider
-  if (!body.external_conversation_id) return json({ error: 'external_conversation_id required' }, 400)
-  if (!body.idempotency_key) return json({ error: 'idempotency_key required' }, 400)
-  if (body.messages !== undefined && !Array.isArray(body.messages)) return json({ error: 'messages must be an array' }, 400)
-  if (Array.isArray(body.messages) && body.messages.length > 5000) return json({ error: 'message batch too large' }, 413)
-  for (const message of body.messages ?? []) {
-    if (!message || typeof message !== 'object' || typeof message.content !== 'string') {
-      return json({ error: 'every message requires string content' }, 400)
-    }
+  if (!body.org_id || !body.provider || !body.external_conversation_id || !body.idempotency_key || !Array.isArray(body.messages)) {
+    return json({ error: 'org_id, provider, external_conversation_id, idempotency_key, and messages are required' }, 400)
   }
-
-  body.metadata = {
-    ...(body.metadata && typeof body.metadata === 'object' ? body.metadata : {}),
-    ingress: 'supabase-context-ingest',
-    ingested_by: who.userId,
+  if (body.messages.length > 5000) return json({ error: 'message batch too large' }, 413)
+  for (const message of body.messages) {
+    if (!message?.role || typeof message.content !== 'string') return json({ error: 'every message requires role and content' }, 400)
   }
 
   try {
-    const data = await serviceRpc('ai_ingest', { envelope: body })
-    return json(data, data?.duplicate ? 200 : 202)
-  } catch (e) {
-    console.error(e)
-    return json({ error: e instanceof Error ? e.message : 'ingestion failed' }, Number((e as any)?.status) || 500)
+    const member = await sql`
+      select 1 from public.org_members
+      where org_id = ${body.org_id}::uuid and profile_id = ${subject}::uuid
+      limit 1
+    `
+    if (!member.length) return json({ error: 'not authorized for requested organization' }, 403)
+  } catch {
+    return json({ error: 'organization authorization failed' }, 403)
+  }
+
+  const payloadHash = await sha256(JSON.stringify(body))
+  try {
+    const result = await sql.begin(async (tx) => {
+      const prior = await tx`
+        select id, conversation_id, message_count, payload_hash
+        from ai_context.ingestion_receipts
+        where org_id = ${body.org_id}::uuid
+          and provider = ${body.provider}
+          and idempotency_key = ${body.idempotency_key}
+        limit 1
+      `
+      if (prior.length) return { duplicate: true, receipt: prior[0] }
+
+      const accountLabel = body.account_label?.trim() || 'default'
+      const [source] = await tx`
+        insert into ai_context.sources (org_id, provider, account_label, adapter_version, metadata)
+        values (${body.org_id}::uuid, ${body.provider}, ${accountLabel}, ${body.adapter_version ?? null}, ${tx.json(body.metadata ?? {})})
+        on conflict (org_id, provider, account_label)
+        do update set adapter_version = coalesce(excluded.adapter_version, ai_context.sources.adapter_version), metadata = ai_context.sources.metadata || excluded.metadata, updated_at = now()
+        returning id
+      `
+
+      const conversationHash = await sha256(body.messages.map((m) => `${m.role}\n${m.content}`).join('\n---\n'))
+      const [conversation] = await tx`
+        insert into ai_context.conversations (
+          org_id, source_id, external_conversation_id, title, source_url, model_family,
+          started_at, last_message_at, metadata, content_hash
+        ) values (
+          ${body.org_id}::uuid, ${source.id}::uuid, ${body.external_conversation_id},
+          ${body.title ?? null}, ${body.source_url ?? null}, ${body.model_family ?? null},
+          ${body.started_at ?? null}::timestamptz, ${body.last_message_at ?? null}::timestamptz,
+          ${tx.json(body.metadata ?? {})}, ${conversationHash}
+        )
+        on conflict (source_id, external_conversation_id)
+        do update set
+          title = coalesce(excluded.title, ai_context.conversations.title),
+          source_url = coalesce(excluded.source_url, ai_context.conversations.source_url),
+          model_family = coalesce(excluded.model_family, ai_context.conversations.model_family),
+          started_at = coalesce(ai_context.conversations.started_at, excluded.started_at),
+          last_message_at = greatest(ai_context.conversations.last_message_at, excluded.last_message_at),
+          metadata = ai_context.conversations.metadata || excluded.metadata,
+          content_hash = excluded.content_hash,
+          ingested_at = now(), updated_at = now()
+        returning id
+      `
+
+      let inserted = 0
+      for (let i = 0; i < body.messages.length; i += 1) {
+        const message = body.messages[i]
+        const contentHash = await sha256(`${message.role}\n${message.content}`)
+        const rows = await tx`
+          insert into ai_context.messages (
+            org_id, conversation_id, external_message_id, ordinal, role, model,
+            content, content_hash, occurred_at, metadata
+          ) values (
+            ${body.org_id}::uuid, ${conversation.id}::uuid, ${message.id ?? null},
+            ${message.ordinal ?? i}, ${message.role}, ${message.model ?? null},
+            ${message.content}, ${contentHash}, ${message.occurred_at ?? null}::timestamptz,
+            ${tx.json(message.metadata ?? {})}
+          )
+          on conflict (conversation_id, content_hash, role) do nothing
+          returning id
+        `
+        inserted += rows.length
+      }
+
+      const [receipt] = await tx`
+        insert into ai_context.ingestion_receipts (
+          org_id, provider, idempotency_key, payload_hash, conversation_id, message_count, status, detail
+        ) values (
+          ${body.org_id}::uuid, ${body.provider}, ${body.idempotency_key}, ${payloadHash},
+          ${conversation.id}::uuid, ${body.messages.length}, 'accepted',
+          ${tx.json({ inserted_messages: inserted, ingested_by: subject })}
+        ) returning id, conversation_id, message_count, payload_hash
+      `
+
+      await tx`select pgmq.send('ai-context-enrich', ${tx.json({ org_id: body.org_id, conversation_id: conversation.id, reason: 'ingest' })})`
+      return { duplicate: false, receipt, inserted_messages: inserted }
+    })
+
+    return json(result, result.duplicate ? 200 : 201)
+  } catch (error) {
+    console.error(error)
+    return json({ error: 'ingestion failed', detail: error instanceof Error ? error.message : String(error) }, 500)
   }
 })
