@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <title>PRIM3 · Learning Management System</title>
-  <meta name="description" content="PRIM3 is a free account-based technology learning path reinforced by music, narrative and safe practical labs.">
+  <meta name="description" content="PRIM3 is a free technology learning path reinforced by music, narrative and safe practical labs after M Account creation.">
   <link rel="canonical" href="https://matthew.mccluster.org/prim3.html">
   <link rel="icon" type="image/png" href="assets/img/prim3-tab.png">
   <meta name="theme-color" content="#090909">
@@ -31,7 +31,7 @@
       <p class="p3-gate__eyebrow">Free course · M Account required</p>
       <h1 id="courseGateTitle">Make an account.<br>Then learn for free.</h1>
       <p data-gate-note>PRIM3 uses your M Account to keep progress, assessment scores and unlocks attached to you instead of one browser. <strong>There is no course charge after account creation.</strong></p>
-      <p>The curriculum is intentionally deep: 21 episode/song units become 63 focused modules so beginner concepts are learned one cluster at a time instead of being crammed together.</p>
+      <p>The curriculum contains 66 focused modules. Three certification foundation modules come first with no song or episode attached. The 21 PRIM3 episode and song units then expand into 63 more modules.</p>
       <div class="p3-gate__actions">
         <a href="account.html">Create free M Account</a>
         <a href="account.html">Sign in</a>
@@ -51,14 +51,14 @@
       <div class="p3-hero__copy">
         <p class="p3-kicker">Program for Resilient Infrastructure Management</p>
         <h1 id="p3Title">Learn it normally.<br><span>Remember it differently.</span></h1>
-        <p class="p3-lede">Each episode/song is a learning unit, not a compressed chapter. Every unit is expanded into three focused modules: two small concept lessons from the source material, then an infrastructure + CompTIA bridge that teaches what the music does not have room to explain.</p>
+        <p class="p3-lede">The course starts with three songless certification foundations so missing Security Plus and Network Plus concepts have room to breathe. After that, every PRIM3 episode and song becomes a three module learning unit. The music helps memory. The LMS carries the full instruction.</p>
       </div>
       <aside class="p3-progress-card" aria-label="Course progress">
         <div class="p3-progress-card__line"><span>Course progress</span><strong id="progressPercent">0%</strong></div>
         <div class="p3-progress" aria-hidden="true"><i id="progressBar"></i></div>
         <dl class="p3-stats">
           <div><dt id="passedCount">0</dt><dd>passed</dd></div>
-          <div><dt id="moduleCount">63</dt><dd>modules</dd></div>
+          <div><dt id="moduleCount">66</dt><dd>modules</dd></div>
           <div><dt id="passMark">80%</dt><dd>pass mark</dd></div>
         </dl>
         <button class="p3-primary" id="continueCourse" type="button">Loading course…</button>
@@ -67,27 +67,27 @@
 
     <section class="p3-contract" aria-label="How PRIM3 works">
       <article><span>01</span><div><b>LEARN</b><p>Required reading, concepts and assessment. One focused concept cluster at a time.</p></div><em>REQUIRED</em></article>
-      <article><span>02</span><div><b>REMEMBER</b><p>The unit's song rehearses vocabulary and mental models after the lesson.</p></div><em>COMPANION</em></article>
-      <article><span>03</span><div><b>WATCH</b><p>The canonical episode puts the same unit concepts under human pressure.</p></div><em>COMPANION</em></article>
+      <article><span>02</span><div><b>REMEMBER</b><p>When a module belongs to a PRIM3 unit, the song rehearses vocabulary and mental models after the lesson.</p></div><em>COMPANION</em></article>
+      <article><span>03</span><div><b>WATCH</b><p>When a module belongs to a PRIM3 unit, the canonical episode puts related concepts under human pressure.</p></div><em>COMPANION</em></article>
       <article><span>04</span><div><b>LAB</b><p>Safe scenarios require application under controlled constraints.</p></div><em>COMPANION</em></article>
     </section>
 
     <section class="p3-course-grid">
       <aside class="p3-syllabus" aria-label="Course syllabus">
         <div class="p3-section-head">
-          <p class="p3-kicker">7 seasons · 21 episode/song units · 63 modules</p>
+          <p class="p3-kicker">3 foundations · 7 seasons · 21 episode and song units · 66 modules</p>
           <h2>Syllabus</h2>
-          <p class="p3-syllabus__intro">PRIM3 owns the canonical songs, episodes, concept sets and labs. McCluster converts each source unit into three beginner-sized instructional modules and adds missing infrastructure/exam foundations without pretending those additions came from the music.</p>
+          <p class="p3-syllabus__intro">McCluster owns the three certification foundations and the instructional decomposition. PRIM3 owns the canonical songs, episodes, source concepts and labs. Every source unit still gets three focused modules, while the opening foundation block absorbs important certification material that the album does not cover.</p>
         </div>
         <div id="moduleList" class="p3-module-list"></div>
-        <p class="p3-safety"><b>Lab rule:</b> PRIM3 labs use fictional, local, owned or explicitly authorized systems. Offensive concepts stay sandboxed, defensive, architectural, evidence-based or non-operational.</p>
+        <p class="p3-safety"><b>Lab rule:</b> PRIM3 labs use fictional, local, owned or explicitly authorized systems. Offensive concepts stay sandboxed, defensive, architectural, evidence based or non operational.</p>
       </aside>
 
       <section class="p3-lesson" id="lessonPanel" aria-live="polite">
         <div class="p3-empty" id="lessonEmpty">
           <p class="p3-kicker">Coursework</p>
           <h2>Select an available module.</h2>
-          <p>The course map is built from PRIM3 source units. Learner state stays in your M Account.</p>
+          <p>The first three modules are certification foundations. PRIM3 source units begin at Module M04. Learner state stays in your M Account.</p>
         </div>
 
         <article id="lessonContent" hidden>
@@ -146,8 +146,8 @@
           </section>
 
           <section class="p3-provenance">
-            <div class="p3-section-label"><span>Source</span><b>PRIM3 provenance</b></div>
-            <p>The episode/song unit is ingested from <code>mcclusterishere/Prim3</code>. Source-aligned modules trace back to those files; infrastructure/exam bridge modules are explicitly marked as McCluster curriculum enrichment.</p>
+            <div class="p3-section-label"><span>Source</span><b>Curriculum provenance</b></div>
+            <p>Foundation modules are McCluster certification curriculum. Song aligned modules trace to <code>mcclusterishere/Prim3</code>. Infrastructure and exam enrichment is marked separately so the LMS never pretends that a song taught material it did not contain.</p>
             <ul id="sourceList"></ul>
           </section>
         </article>
@@ -157,23 +157,24 @@
     <section class="p3-roadmap">
       <div class="p3-section-head">
         <p class="p3-kicker">Curriculum architecture</p>
-        <h2>21 source units. 63 focused lessons.</h2>
+        <h2>3 foundations plus 21 source units. 66 focused lessons.</h2>
       </div>
-      <p><b>PRIM3</b> owns story canon, songs, episodes, source concepts and lab requirements. <b>McCluster</b> owns instructional decomposition, accounts, progress, assessment delivery and enrichment. The LMS never has to pretend that a song taught something it did not.</p>
+      <p><b>McCluster</b> adds the opening certification foundation, instructional decomposition, accounts, progress, assessment delivery and enrichment. <b>PRIM3</b> owns story canon, songs, episodes, source concepts and lab requirements. The 63 song aligned modules remain intact, but they are no longer forced to carry every missing certification concept by themselves.</p>
       <div class="p3-roadmap-flow" aria-label="PRIM3 publishing flow">
-        <span>PRIM3 MAIN</span><i>→</i><span>21 SOURCE UNITS</span><i>→</i><span>MCCLUSTER CURRICULUM ADAPTER</span><i>→</i><strong>63 MODULE LMS</strong><i>→</i><span>M ACCOUNT PROGRESS</span>
+        <span>3 CERTIFICATION FOUNDATIONS</span><i>+</i><span>PRIM3 MAIN · 21 SOURCE UNITS</span><i>→</i><span>MCCLUSTER CURRICULUM ADAPTER</span><i>→</i><strong>66 MODULE LMS</strong><i>→</i><span>M ACCOUNT PROGRESS</span>
       </div>
     </section>
   </main>
 
   <footer class="p3-footer">
     <strong>PRIM3</strong>
-    <span>Free with an M Account · course delivery by McCluster · canon/content by PRIM3</span>
+    <span>Free with an M Account · course delivery by McCluster · canon and source content by PRIM3</span>
     <a href="whip.html">Whip Equipped archive</a>
   </footer>
 
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/prim3-lessons.js?v=__STAMP__"></script>
   <script src="js/prim3.js?v=__STAMP__"></script>
   <script src="js/prim3-sync.js?v=__STAMP__"></script>
 </body>
