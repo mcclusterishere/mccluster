@@ -2,59 +2,90 @@
 
 Status: canonical curriculum architecture
 
-PRIM3 uses one mandatory instructional layer and three reinforcement layers.
+PRIM3 uses the PRIM Method as its public learning model. One coherent curriculum is delivered through four complementary modalities.
 
-## LEARN
+## P Principles
 
-LEARN is the complete conventional course.
+Principles is the complete conventional course.
 
-A learner must be able to complete the reading, explanations, vocabulary, examples, knowledge checks, assessments and certification aligned instruction without listening to a song, watching an episode or entering the game.
+The learner must be able to complete the explanations, reading, vocabulary, examples, knowledge checks, assessments and certification aligned instruction without listening to a song, watching an episode or entering the game.
 
-Every required Security Plus SY0 701 objective and Network Plus N10 009 objective must be fully taught in LEARN. Relevant A Plus Core 1 220 1201 and Core 2 220 1202 precursor material may also be taught in LEARN where it strengthens the foundation.
+Every required Security Plus SY0 701 objective and Network Plus N10 009 objective must be fully taught in Principles. Relevant A Plus Core 1 220 1201 and Core 2 220 1202 precursor material is taught where it strengthens the learner foundation or overlaps the mandatory exams.
 
-LEARN is the authority for curriculum completion and objective progress.
+Principles is the authority for curriculum completion and objective mastery.
 
-## REMEMBER
+Internal PRIM cycle: Principles, Reasoning, Instruction, Mastery.
 
-REMEMBER is the music layer.
+## R Rhythm
 
-Songs reinforce concepts already taught in LEARN. Songs may introduce memorable vocabulary, analogies and mental models, but a song never substitutes for conventional instruction and never creates course credit by itself.
+Rhythm is the music reinforcement layer.
 
-A song concept is linked only when the source material actually contains that concept.
+Songs reinforce concepts already taught in Principles. Music may introduce memorable vocabulary, analogies, imagery, patterns and mental models, but a song never substitutes for conventional instruction and never creates Principles credit by itself.
 
-## WATCH
+A song concept is linked only when the canonical PRIM3 source material actually contains that concept.
 
-WATCH is the story layer.
+Internal PRIM cycle: Patterns, Rhythm, Imagery, Memory.
 
-Episodes reinforce concepts through characters, pressure, consequences and narrative context. Story scenes may make an abstract concept easier to recognize and remember, but WATCH does not replace the complete explanation in LEARN.
+## I Immersion
 
-## LAB
+Immersion is the story reinforcement layer.
 
-LAB is the practice layer and will be implemented through the PRIM3 video game.
+Episodes reinforce concepts through characters, pressure, consequences, decisions and narrative context. Story scenes may make an abstract concept easier to recognize and remember, but Immersion does not replace the complete explanation in Principles.
 
-LAB lets the learner apply knowledge in controlled fictional, local, owned or explicitly authorized scenarios. Detailed lab design is intentionally deferred until the lab architecture is separately approved.
+Internal PRIM cycle: Plot, Relevance, Immersion, Meaning.
 
-LAB does not reduce the amount of conventional instruction required in LEARN.
+## M Missions
+
+Missions is the practical application layer and will be implemented through the PRIM3 video game.
+
+Missions let the learner apply knowledge in controlled fictional, local, owned or explicitly authorized scenarios. Detailed mission and lab design is intentionally deferred until the game practice architecture is separately approved.
+
+Missions never reduce the amount of conventional instruction required in Principles.
+
+Internal PRIM cycle: Practice, Response, Interaction, Mastery.
+
+## Primary learner language
+
+The public explanation of PRIM should remain simple.
+
+P Principles means Learn it.
+
+R Rhythm means Remember it.
+
+I Immersion means See it.
+
+M Missions means Do it.
+
+The nested PRIM cycles are secondary explanatory devices. They may appear inside a modality but must not compete with the primary four letter model on first exposure.
 
 ## Progress semantics
 
-A concept is taught once in LEARN and may satisfy several overlapping certification objectives.
+A concept is taught comprehensively in Principles and may satisfy several overlapping certification objectives.
 
-The LMS should never force duplicate lessons merely because Security Plus, Network Plus and A Plus use different objective numbers for substantially overlapping knowledge.
+The LMS must not force duplicate lessons merely because Security Plus, Network Plus and A Plus use different objective numbers for substantially overlapping knowledge.
 
-Instead, each canonical concept has links to every certification objective it supports. When the learner demonstrates mastery of that concept in LEARN, progress is credited to every linked objective at the appropriate topic level.
+Each canonical concept links to every certification objective it supports. Principles mastery credits every linked objective at the appropriate topic level.
 
-Objective completion is calculated from required topic coverage, not from raw module count.
+Security Plus and Network Plus remain mandatory complete coverage targets. A Plus is a supporting precursor and overlap tracker rather than a PRIM3 completion gate.
 
-REMEMBER, WATCH and LAB have separate reinforcement status. Their completion may be displayed, but it does not substitute for LEARN mastery.
+Rhythm, Immersion and Missions have separate completion status. Their completion may be displayed and analyzed, but none of them substitutes for Principles mastery.
 
-## Four modality model
+## Tracking contract
 
-The learner encounters the same knowledge through complementary modalities:
+Principles progress is derived from the authenticated module progress records already stored by McCluster.
 
-1. Conventional reading and assessment in LEARN
-2. Musical reinforcement in REMEMBER
-3. Narrative reinforcement in WATCH
-4. Applied practice in LAB
+Rhythm, Immersion and Missions use the existing `mastery` JSON on the authenticated PRIM3 progress row for the first module of each PRIM3 source unit. That first module acts as the unit tracking anchor. This preserves one canonical learner record without creating a second backend.
 
-The purpose is not to create four different curricula. It is to expose one coherent curriculum through multiple forms of explanation, memory and application.
+The browser helper `window.PRIM3_TRACKING.recordModality(unitId, letter, completed, metadata)` is the integration point for the future music player, episode player and game runtime. Only R, I and M are manually recorded through that helper. P is derived from the required lesson and assessment state.
+
+Objective progress is computed from the Security Plus, Network Plus and A Plus curriculum maps against Principles modules actually passed by the learner. Planned curriculum metadata alone never counts as learner mastery.
+
+## Backend authority
+
+Cloudflare remains the public API and authentication edge.
+
+Supabase remains the learner state and durable data authority.
+
+The McCluster VPS remains an asynchronous execution and analysis plane. It must not become a browser facing LMS backend or a competing learner database.
+
+The VPS may later consume authorized Supabase learner progress through the existing McCluster Core job system for analytics, personalized review generation, curriculum gap analysis and morning or scheduled learning summaries. Any derived result must flow back through the canonical McCluster data plane rather than creating a shadow learner store.
