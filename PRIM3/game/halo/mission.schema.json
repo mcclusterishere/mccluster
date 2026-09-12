@@ -22,6 +22,28 @@
     "success_conditions": {"type": "array", "items": {"type": "string"}},
     "failure_conditions": {"type": "array", "items": {"type": "string"}},
     "unlock_dependencies": {"type": "array", "items": {"type": "string"}},
-    "canon_refs": {"type": "array", "items": {"type": "string"}}
+    "canon_refs": {"type": "array", "items": {"type": "string"}},
+    "context_profile_ref": {"type": "string", "minLength": 1},
+    "technology_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "local_systems": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "attack_surface_fit": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "constraints": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "anti_misconceptions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "cultural_learning": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "implicit_domains": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "environmental_cues": {"type": "array", "items": {"type": "string"}},
+        "avoid": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "placement_rationale": {"type": "string"},
+    "source_refs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
   }
 }
