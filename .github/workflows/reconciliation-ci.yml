@@ -52,6 +52,29 @@ jobs:
             exit 1
           fi
 
+  core:
+    name: McCluster Core contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse Core runner and executors
+        working-directory: core
+        run: npm run check
+      - name: Assert autonomous-code guardrails
+        run: |
+          grep -F "draft-only" core/src/executors/code-patch.mjs
+          grep -F "git push *" core/opencode/opencode.json
+          grep -F 'IPAddressDeny=any' core/systemd/mccluster-opencode.service
+          grep -F 'IPAddressAllow=localhost' core/systemd/mccluster-opencode.service
+          grep -F 'ops_agent_jobs' core/src/supabase.mjs
+          if grep -R -nE 'SUPABASE_SERVICE_ROLE_KEY=[^[:space:]]+' core --exclude='*.example'; then
+            echo 'A Supabase service-role value appears committed under core/.' >&2
+            exit 1
+          fi
+
   edge-functions:
     name: Equity Uprise Edge Function contracts
     runs-on: ubuntu-latest
