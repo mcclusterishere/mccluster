@@ -23,6 +23,7 @@ as $$
 declare
   v_node public.ops_compute_nodes%rowtype;
   v_task public.ops_compute_tasks%rowtype;
+  v_task_id uuid;
   v_advertised jsonb;
   v_implementation text;
   v_lease_id uuid;
@@ -30,6 +31,9 @@ declare
   v_running integer;
   v_seconds integer := greatest(30, least(coalesce(p_lease_seconds, 120), 900));
 begin
+  -- Serialize claims per node. This makes node-wide and per-implementation
+  -- concurrency admission atomic even if more than one gateway replica asks
+  -- for work for the same node at the same time.
   select * into v_node
     from public.ops_compute_nodes
    where id = p_node_id
@@ -38,6 +42,8 @@ begin
   if v_node.state <> 'online' or v_node.revoked_at is not null then return null; end if;
   if v_node.last_seen_at < now() - interval '3 minutes' then return null; end if;
 
+  -- Reclaim only leases that became expired in this transaction. Historical
+  -- expired rows must never requeue a task that has since received a new lease.
   with newly_expired as (
     update public.ops_compute_leases
        set status = 'expired',
@@ -65,8 +71,11 @@ begin
      and expires_at > now();
   if v_running >= v_node.max_leases then return null; end if;
 
-  select t, chosen.advertised
-    into v_task, v_advertised
+  -- PL/pgSQL row variables cannot participate in a multi-target INTO list.
+  -- Lock the task row while selecting its id plus the exact advertised
+  -- implementation, then hydrate the row variable from that already-locked id.
+  select t.id, chosen.advertised
+    into v_task_id, v_advertised
     from public.ops_compute_tasks t
     cross join lateral (
       select advertised
@@ -96,6 +105,10 @@ begin
    for update of t skip locked
    limit 1;
   if not found then return null; end if;
+
+  select * into strict v_task
+    from public.ops_compute_tasks
+   where id = v_task_id;
 
   v_implementation := v_advertised->>'implementation';
   if v_implementation is null then return null; end if;
