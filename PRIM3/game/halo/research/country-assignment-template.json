@@ -1,0 +1,18 @@
+{
+  "core_id": "PRIM3-CORE-XX",
+  "candidate_country": "",
+  "scores": {
+    "character_canon_fit": 0,
+    "curriculum_fit": 0,
+    "narrative_fit": 0,
+    "three_region_depth": 0,
+    "environmental_distinctiveness": 0,
+    "campaign_geographic_balance": 0
+  },
+  "candidate_regions": [],
+  "candidate_characters": [],
+  "blockers": [],
+  "source_refs": [],
+  "confidence": "unreviewed",
+  "canon_decision": "pending"
+}

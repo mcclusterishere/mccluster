@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0.0",
+  "status": "research-gated",
+  "characters": [],
+  "notes": [
+    "Populate only from authoritative current PRIM3 character canon and cited source records.",
+    "Do not infer nationality, ethnicity, citizenship, jurisdiction, or allegiance from names or appearance.",
+    "Country allocation in campaign.v1.json remains non-canonical until this roster and the 21-core curriculum mapping are reconciled."
+  ]
+}

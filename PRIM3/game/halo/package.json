@@ -1,0 +1,9 @@
+{
+  "name": "@prim3/halo-game",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "validate": "node validate-campaign.mjs && node --test canon-boundary.test.mjs"
+  }
+}
