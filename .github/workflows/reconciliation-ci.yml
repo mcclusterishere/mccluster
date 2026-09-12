@@ -63,7 +63,10 @@ jobs:
       - name: Parse Core runner, broker, and executors
         working-directory: core
         run: npm run check
-      - name: Assert Core security guardrails
+      - name: Test provider-independent capability resolution
+        working-directory: core
+        run: npm run test:capabilities
+      - name: Assert Core security and capability guardrails
         run: |
           grep -F "draft-only" core/src/executors/code-patch.mjs
           grep -F "git push *" core/opencode/opencode.json
@@ -73,6 +76,10 @@ jobs:
           grep -F "MCP-Protocol-Version" core/src/tools/mcp-http.mjs
           grep -F "https://api.mccluster.org/v1/media/mcp" core/src/tools/registry.mjs
           grep -F 'ops_agent_jobs' core/src/supabase.mjs
+          grep -F '"id": "video.generate"' core/capabilities/catalog.json
+          grep -F '"id": "model3d.generate"' core/capabilities/catalog.json
+          grep -F '"id": "code.build"' core/capabilities/catalog.json
+          grep -F "CORE_CAPABILITY_BINDINGS_JSON" core/src/capabilities/registry.mjs
           if grep -R -nE 'SUPABASE_SERVICE_ROLE_KEY=[^[:space:]]+' core --exclude='*.example'; then
             echo 'A Supabase service-role value appears committed under core/.' >&2
             exit 1
