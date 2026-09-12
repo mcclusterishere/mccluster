@@ -1,5 +1,6 @@
 import { callMcpTool, listMcpTools } from './mcp-http.mjs';
 import { callHttpTool } from './http.mjs';
+import { callComputeTool, discoverComputeTools } from './compute.mjs';
 
 const NAME = /^[a-zA-Z0-9_.:-]{1,160}$/;
 const CACHE_TTL_MS = Number(process.env.CORE_TOOL_CACHE_TTL_MS || 60_000);
@@ -63,8 +64,14 @@ function publicMcpName(server, remoteName) {
   return combined;
 }
 
+function addRecord(records, record) {
+  if (!record?.name || !NAME.test(record.name)) throw new Error(`Tool name is invalid: ${record?.name || ''}`);
+  if (records.has(record.name)) throw new Error(`Duplicate tool name: ${record.name}`);
+  records.set(record.name, record);
+}
+
 export class ToolRegistry {
-  constructor({ mcpServers, httpTools } = {}) {
+  constructor({ mcpServers, httpTools, computeDiscovery = discoverComputeTools } = {}) {
     this.mcpServers = (mcpServers || [
       ...BUILTIN_MCP_SERVERS,
       ...parseJsonEnv('CORE_MCP_SERVERS_JSON')
@@ -73,6 +80,7 @@ export class ToolRegistry {
       ...BUILTIN_HTTP_TOOLS,
       ...parseJsonEnv('CORE_HTTP_TOOLS_JSON')
     ]).map(normalizeHttpTool);
+    this.computeDiscovery = computeDiscovery;
     this.cache = null;
     this.cacheAt = 0;
   }
@@ -84,8 +92,7 @@ export class ToolRegistry {
     const diagnostics = [];
 
     for (const tool of this.httpTools) {
-      if (records.has(tool.name)) throw new Error(`Duplicate tool name: ${tool.name}`);
-      records.set(tool.name, {
+      addRecord(records, {
         name: tool.name,
         title: tool.title,
         description: tool.description,
@@ -101,8 +108,7 @@ export class ToolRegistry {
         for (const remote of tools) {
           if (!remote?.name) continue;
           const name = publicMcpName(server, remote.name);
-          if (records.has(name)) throw new Error(`Duplicate tool name: ${name}`);
-          records.set(name, {
+          addRecord(records, {
             name,
             title: remote.title || remote.name,
             description: remote.description || '',
@@ -120,6 +126,16 @@ export class ToolRegistry {
       }
     }
 
+    if (this.computeDiscovery) {
+      try {
+        const discovered = await this.computeDiscovery();
+        for (const tool of discovered.tools || []) addRecord(records, tool);
+        if (discovered.diagnostic) diagnostics.push(discovered.diagnostic);
+      } catch (error) {
+        diagnostics.push({ id: 'mccluster-compute', transport: 'compute', ok: false, error: error.message });
+      }
+    }
+
     this.cache = { records, diagnostics, refreshedAt: new Date().toISOString() };
     this.cacheAt = Date.now();
     return this.cache;
@@ -134,7 +150,7 @@ export class ToolRegistry {
     };
   }
 
-  async call(name, args = {}) {
+  async call(name, args = {}, options = {}) {
     if (!NAME.test(name || '')) throw new Error('Tool name is invalid');
     let snapshot = await this.refresh();
     let record = snapshot.records.get(name);
@@ -150,6 +166,8 @@ export class ToolRegistry {
       result = await callHttpTool(record.target, args);
     } else if (record.transport === 'mcp-http') {
       result = await callMcpTool(record.target.server, record.remoteName, args);
+    } else if (record.transport === 'compute') {
+      result = await callComputeTool(record.target, args, options);
     } else {
       throw new Error(`Unsupported transport: ${record.transport}`);
     }
