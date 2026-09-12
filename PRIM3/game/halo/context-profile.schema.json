@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mccluster.org/schemas/prim3/halo/context-profile.schema.json",
+  "title": "PRIM3 Halo Country Context Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile_id",
+    "country",
+    "status",
+    "as_of",
+    "technology_context",
+    "institution_context",
+    "threat_context",
+    "cultural_learning",
+    "sources"
+  ],
+  "properties": {
+    "profile_id": {"type": "string", "minLength": 3},
+    "country": {"type": "string", "minLength": 2},
+    "status": {"enum": ["research", "candidate", "reviewed", "canon"]},
+    "as_of": {"type": "string", "format": "date"},
+    "core_candidates": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^CORE-[0-9]{2}$"},
+      "uniqueItems": true
+    },
+    "technology_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "adoption_signals"],
+      "properties": {
+        "summary": {"type": "string", "minLength": 1},
+        "adoption_signals": {"type": "array", "items": {"type": "string"}},
+        "device_mix": {"type": "array", "items": {"type": "string"}},
+        "connectivity": {"type": "array", "items": {"type": "string"}},
+        "payments": {"type": "array", "items": {"type": "string"}},
+        "identity_and_auth": {"type": "array", "items": {"type": "string"}},
+        "infrastructure": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "institution_context": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "threat_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documented_patterns", "mission_fit"],
+      "properties": {
+        "documented_patterns": {"type": "array", "items": {"type": "string"}},
+        "mission_fit": {"type": "array", "items": {"type": "string"}},
+        "anti_misconceptions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "cultural_learning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["implicit_domains", "three_region_goal", "guardrails"],
+      "properties": {
+        "implicit_domains": {"type": "array", "items": {"type": "string"}},
+        "three_region_goal": {"type": "string", "minLength": 1},
+        "guardrails": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "alternative_countries": {"type": "array", "items": {"type": "string"}},
+    "open_questions": {"type": "array", "items": {"type": "string"}},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["publisher", "title", "date", "url", "supports"],
+        "properties": {
+          "publisher": {"type": "string", "minLength": 1},
+          "title": {"type": "string", "minLength": 1},
+          "date": {"type": "string", "minLength": 4},
+          "url": {"type": "string", "format": "uri"},
+          "supports": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}
