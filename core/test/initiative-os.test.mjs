@@ -81,6 +81,15 @@ test('groups multiple objectives into one initiative so the system advances outc
   assert.equal(mission.objectives.length, 2);
 });
 
+test('group ids are JSONB-safe and never contain U+0000', () => {
+  const grouped = groupInitiatives([
+    { id: 'a', project: 'McCluster', initiative: 'Autonomy', title: 'Plan overnight work' },
+  ]);
+  assert.equal(grouped.length, 1);
+  assert.equal(grouped[0].id.includes('\u0000'), false);
+  assert.doesNotThrow(() => JSON.stringify(grouped));
+});
+
 test('builds an executive portfolio plan with bounded ranked initiatives and job telemetry', () => {
   const plan = buildPortfolioPlan({
     maxInitiatives: 2,
