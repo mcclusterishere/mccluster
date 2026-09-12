@@ -33,9 +33,11 @@ jobs:
           grep -F "Compute gateway must bind to loopback" core/src/compute/gateway.mjs
           grep -F "MCCLUSTER_COMPUTE_URL must be an https:// URL" core/src/compute/node-agent.mjs
           grep -F "Node executors must be loopback services" core/src/compute/node-agent.mjs
-          grep -F "SUPABASE_SERVICE_ROLE_KEY" core/src/compute/store.mjs
-          if grep -F "SUPABASE_SERVICE_ROLE_KEY" core/compute-node.env.example core/compute-capabilities.example.json; then
-            echo 'Compute-node configuration must never contain the Supabase service role.' >&2
+          if grep -F "SUPABASE_SERVICE_ROLE_KEY" \
+            core/src/compute/node-agent.mjs \
+            core/compute-node.env.example \
+            core/compute-capabilities.example.json; then
+            echo 'Compute nodes must never receive the Supabase service role.' >&2
             exit 1
           fi
           grep -F "ops_compute_nonces" supabase/migrations/20260912071000_compute_node_protocol.sql
