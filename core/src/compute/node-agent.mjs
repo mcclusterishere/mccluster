@@ -1,21 +1,26 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { COMPUTE_PROTOCOL, validateCapabilityManifest } from './protocol.mjs';
 import { generateNodeIdentity, nodeIdFromPublicKey, signRequest } from './signature.mjs';
+import { discoverHardware, loadSnapshot } from './hardware.mjs';
+import { engineHealthSummary, healthyCapabilities, probeExecutors } from './engine-probes.mjs';
 
 const BASE_URL = String(process.env.MCCLUSTER_COMPUTE_URL || '').replace(/\/$/, '');
 const ORG_ID = process.env.MCCLUSTER_ORG_ID || '';
 const STATE_DIR = process.env.MCCLUSTER_NODE_STATE_DIR || '/var/lib/mccluster-node';
 const MANIFEST_PATH = process.env.MCCLUSTER_NODE_MANIFEST || '/etc/mccluster-node/capabilities.json';
 const IDENTITY_PATH = path.join(STATE_DIR, 'identity.json');
-const AGENT_VERSION = '0.1.0';
+const AGENT_VERSION = '0.2.0';
 const POLL_MS = Math.max(1_000, Number(process.env.MCCLUSTER_NODE_POLL_MS || 5_000));
 const HEARTBEAT_MS = Math.max(10_000, Number(process.env.MCCLUSTER_NODE_HEARTBEAT_MS || 30_000));
+const ENGINE_PROBE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_ENGINE_PROBE_MS || 15_000));
+const SHUTDOWN_GRACE_MS = Math.max(5_000, Number(process.env.MCCLUSTER_NODE_SHUTDOWN_GRACE_MS || 30_000));
 
 if (!BASE_URL || !/^https:\/\//.test(BASE_URL)) throw new Error('MCCLUSTER_COMPUTE_URL must be an https:// URL');
 if (!ORG_ID) throw new Error('MCCLUSTER_ORG_ID is required');
+
+let stopping = false;
 
 function normalizeMaxLeases(value) {
   const parsed = Math.floor(Number(value || 1));
@@ -31,15 +36,19 @@ function permanentError(message) {
 
 function ensureIdentity() {
   fs.mkdirSync(STATE_DIR, { recursive: true, mode: 0o700 });
+  fs.chmodSync(STATE_DIR, 0o700);
   if (fs.existsSync(IDENTITY_PATH)) {
     const saved = JSON.parse(fs.readFileSync(IDENTITY_PATH, 'utf8'));
     if (!saved.privateKeyPem || !saved.publicKeyPem) throw new Error('Compute node identity file is incomplete');
     const nodeId = nodeIdFromPublicKey(saved.publicKeyPem);
     if (saved.nodeId && saved.nodeId !== nodeId) throw new Error('Compute node identity file fingerprint mismatch');
+    fs.chmodSync(IDENTITY_PATH, 0o600);
     return { ...saved, nodeId };
   }
   const identity = generateNodeIdentity();
-  fs.writeFileSync(IDENTITY_PATH, JSON.stringify(identity, null, 2), { mode: 0o600, flag: 'wx' });
+  const tmp = `${IDENTITY_PATH}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(identity, null, 2), { mode: 0o600, flag: 'wx' });
+  fs.renameSync(tmp, IDENTITY_PATH);
   fs.chmodSync(IDENTITY_PATH, 0o600);
   return identity;
 }
@@ -61,49 +70,10 @@ function readManifest() {
   };
 }
 
-function nvidiaGpus() {
-  try {
-    const out = execFileSync('nvidia-smi', [
-      '--query-gpu=name,uuid,memory.total,driver_version,compute_cap',
-      '--format=csv,noheader,nounits'
-    ], { encoding: 'utf8', timeout: 5_000, stdio: ['ignore', 'pipe', 'ignore'] });
-    return out.trim().split('\n').filter(Boolean).map((line) => {
-      const [model, uuid, mib, driver, compute] = line.split(',').map((v) => v.trim());
-      return { vendor: 'nvidia', model, uuid, vram_bytes: Number(mib || 0) * 1024 * 1024, driver, compute };
-    });
-  } catch { return []; }
-}
-
-function inventory() {
-  let diskFree = 0;
-  try {
-    const stat = fs.statfsSync('/');
-    diskFree = Number(stat.bavail) * Number(stat.bsize);
-  } catch {}
-  return {
-    hostname: os.hostname(),
-    platform: os.platform(),
-    arch: os.arch(),
-    cpu_count: os.cpus().length,
-    memory_bytes: os.totalmem(),
-    disk_free_bytes: diskFree,
-    gpus: nvidiaGpus(),
-    runtime: { node: process.version }
-  };
-}
-
-function loadSnapshot(runningLeases) {
-  let diskFree = 0;
-  try {
-    const stat = fs.statfsSync('/');
-    diskFree = Number(stat.bavail) * Number(stat.bsize);
-  } catch {}
-  return {
-    running_leases: runningLeases,
-    memory_free_bytes: os.freemem(),
-    disk_free_bytes: diskFree,
-    gpu: []
-  };
+function inventory(engineHealth = []) {
+  const value = discoverHardware();
+  value.runtime = { ...(value.runtime || {}), agent_version: AGENT_VERSION, engine_health: engineHealth };
+  return value;
 }
 
 async function rawRequest(pathname, { method = 'POST', body = {}, headers = {} } = {}) {
@@ -150,7 +120,7 @@ async function signedRequest(identity, pathname, body = {}) {
   return parsed;
 }
 
-async function enroll(identity, manifest) {
+async function enroll(identity, manifest, capabilities, engineHealth) {
   const token = process.env.MCCLUSTER_NODE_ENROLL_TOKEN;
   if (!token) return null;
   return rawRequest('/v1/compute/enroll', {
@@ -161,8 +131,8 @@ async function enroll(identity, manifest) {
       display_name: process.env.MCCLUSTER_NODE_NAME || os.hostname(),
       public_key: identity.publicKeyPem,
       agent_version: AGENT_VERSION,
-      inventory: inventory(),
-      capabilities: manifest.publicCapabilities,
+      inventory: inventory(engineHealthSummary(engineHealth)),
+      capabilities,
       labels: manifest.labels,
       max_leases: manifest.maxLeases
     }
@@ -218,24 +188,51 @@ async function executeTask(executor, task) {
   throw permanentError(`Unsupported local executor type: ${executor.type || 'unknown'}`);
 }
 
+async function gracefulShutdown(active, signal) {
+  if (stopping) return;
+  stopping = true;
+  console.log(JSON.stringify({ event: 'compute_node_draining', signal, active_leases: active.size }));
+  const deadline = Date.now() + SHUTDOWN_GRACE_MS;
+  while (active.size && Date.now() < deadline) {
+    await Promise.race([
+      Promise.allSettled([...active.values()]),
+      new Promise((resolve) => setTimeout(resolve, 500))
+    ]);
+  }
+  console.log(JSON.stringify({ event: 'compute_node_shutdown', signal, remaining_leases: active.size }));
+}
+
 async function run() {
   const identity = ensureIdentity();
   let manifest = readManifest();
-  const enrolled = await enroll(identity, manifest);
-  if (enrolled) console.log(JSON.stringify({ event: 'compute_node_enrolled', node_id: identity.nodeId, protocol: enrolled.protocol }));
+  let engineHealth = await probeExecutors(manifest);
+  let advertised = healthyCapabilities(manifest, engineHealth);
+  const enrolled = await enroll(identity, manifest, advertised, engineHealth);
+  if (enrolled) console.log(JSON.stringify({ event: 'compute_node_enrolled', node_id: identity.nodeId, protocol: enrolled.protocol, advertised: advertised.length }));
   else console.log(JSON.stringify({ event: 'compute_node_existing_identity', node_id: identity.nodeId }));
 
   const active = new Map();
-  let lastHeartbeat = 0;
+  process.on('SIGTERM', () => gracefulShutdown(active, 'SIGTERM').then(() => process.exit(active.size ? 1 : 0)));
+  process.on('SIGINT', () => gracefulShutdown(active, 'SIGINT').then(() => process.exit(active.size ? 1 : 0)));
 
-  while (true) {
+  let lastHeartbeat = 0;
+  let lastProbe = 0;
+  let consecutiveErrors = 0;
+
+  while (!stopping) {
     try {
-      if (Date.now() - lastHeartbeat >= HEARTBEAT_MS) {
+      if (Date.now() - lastProbe >= ENGINE_PROBE_MS) {
         manifest = readManifest();
+        engineHealth = await probeExecutors(manifest);
+        advertised = healthyCapabilities(manifest, engineHealth);
+        lastProbe = Date.now();
+      }
+
+      if (Date.now() - lastHeartbeat >= HEARTBEAT_MS) {
         await signedRequest(identity, '/v1/compute/heartbeat', {
           agent_version: AGENT_VERSION,
-          inventory: inventory(),
-          capabilities: manifest.publicCapabilities,
+          inventory: inventory(engineHealthSummary(engineHealth)),
+          capabilities: advertised,
           labels: manifest.labels,
           max_leases: manifest.maxLeases,
           load: loadSnapshot(active.size)
@@ -243,12 +240,24 @@ async function run() {
         lastHeartbeat = Date.now();
       }
 
-      if (active.size < manifest.maxLeases) {
+      if (!stopping && advertised.length && active.size < manifest.maxLeases) {
         const { lease } = await signedRequest(identity, '/v1/compute/lease', {});
         if (lease) {
           const { lease_id: leaseId, lease_token: leaseToken, task } = lease;
-          await signedRequest(identity, `/v1/compute/leases/${leaseId}/start`, { lease_token: leaseToken, extend_seconds: 120 });
           const executor = executorFor(task, manifest);
+          const healthy = task.implementation
+            ? engineHealth.get(task.implementation)?.healthy === true
+            : advertised.some((item) => item.capability === task.capability);
+          if (!healthy) {
+            await signedRequest(identity, `/v1/compute/leases/${leaseId}/fail`, {
+              lease_token: leaseToken,
+              error: 'Local execution engine became unavailable before task start',
+              retry: true
+            });
+            continue;
+          }
+
+          await signedRequest(identity, `/v1/compute/leases/${leaseId}/start`, { lease_token: leaseToken, extend_seconds: 120 });
           const leaseHeartbeat = setInterval(() => {
             signedRequest(identity, `/v1/compute/leases/${leaseId}/heartbeat`, {
               lease_token: leaseToken,
@@ -268,23 +277,25 @@ async function run() {
                   retry: error.retryable !== false
                 });
               } catch (reportError) {
-                console.error(JSON.stringify({
-                  event: 'lease_failure_report_failed',
-                  lease_id: leaseId,
-                  task_id: task.id,
-                  error: reportError.message
-                }));
+                console.error(JSON.stringify({ event: 'lease_failure_report_failed', lease_id: leaseId, task_id: task.id, error: reportError.message }));
               }
             })
             .finally(() => { clearInterval(leaseHeartbeat); active.delete(leaseId); });
           active.set(leaseId, promise);
         }
       }
+      consecutiveErrors = 0;
     } catch (error) {
-      console.error(JSON.stringify({ event: 'compute_node_loop_error', node_id: identity.nodeId, error: error.message, code: error.code || null }));
+      consecutiveErrors += 1;
+      console.error(JSON.stringify({ event: 'compute_node_loop_error', node_id: identity.nodeId, error: error.message, code: error.code || null, consecutive_errors: consecutiveErrors }));
     }
-    await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+
+    const backoff = Math.min(60_000, POLL_MS * (2 ** Math.min(4, consecutiveErrors)));
+    const jitter = Math.floor(Math.random() * Math.min(1_000, Math.max(1, backoff / 5)));
+    await new Promise((resolve) => setTimeout(resolve, backoff + jitter));
   }
+
+  await gracefulShutdown(active, 'loop-exit');
 }
 
 run().catch((error) => {
