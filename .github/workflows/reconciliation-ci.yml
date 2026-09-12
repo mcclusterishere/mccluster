@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+      - openai/conversation-objective-synthesis-v1
   workflow_dispatch: {}
 
 permissions:
@@ -39,6 +40,7 @@ jobs:
           node --check workers/mccluster/src/connect.js
           node --check workers/mccluster/src/ai/router.js
           node --check workers/mccluster/src/ai/objectives.js
+          node --check workers/mccluster/src/fabric/router.js
           node --check workers/mccluster/src/media/router.js
           node --check workers/mccluster/src/social/router.js
           node --check workers/mccluster/src/prim3/index.js
@@ -46,11 +48,15 @@ jobs:
           node --check js/prim3-sync.js
           node --check js/equity-uprise-institutional.js
           node --check js/equity-uprise-fellowship-live.js
-      - name: Assert AI ingestion handoff contract
+      - name: Assert AI ingestion and Fabric handoff contracts
         run: |
           grep -F "queueObjectiveSynthesis" workers/mccluster/src/ai/router.js
+          grep -F "publishCloudflareEvent" workers/mccluster/src/ai/router.js
+          grep -F "kind: 'conversation.ingested'" workers/mccluster/src/ai/router.js
           grep -F "job_type: 'objective_synthesis'" workers/mccluster/src/ai/objectives.js
           grep -F "synthesize_objectives === false" workers/mccluster/src/ai/objectives.js
+          grep -F "x-mccluster-fabric-token" workers/mccluster/src/fabric/router.js
+          grep -F "fabric_outbox" workers/mccluster/src/fabric/router.js
       - name: Reject unresolved reconciliation markers
         run: |
           if git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- . ':!*.lock'; then
@@ -66,7 +72,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Parse Core runner, broker, and executors
+      - name: Parse Core runner, broker, executors, and Fabric
         working-directory: core
         run: npm run check
       - name: Test provider-independent capability resolution
@@ -81,7 +87,10 @@ jobs:
       - name: Test conversation objective synthesis
         working-directory: core
         run: npm run test:synthesis
-      - name: Assert Core security and capability guardrails
+      - name: Test Fabric envelope identity
+        working-directory: core
+        run: npm run test:fabric
+      - name: Assert Core security, capability, and Fabric guardrails
         run: |
           grep -F "draft-only" core/src/executors/code-patch.mjs
           grep -F "git push *" core/opencode/opencode.json
@@ -103,12 +112,18 @@ jobs:
           grep -F 'Never mark objectives completed or cancelled' core/src/executors/objective-synthesis.mjs
           grep -F "status: 'active'" core/src/objective-store.mjs
           grep -F 'OnCalendar=*-*-* 02:30:00 America/New_York' core/systemd/mccluster-core-reflection.timer
+          grep -F 'MCCLUSTER_FABRIC_SPOOL_DIR' core/src/fabric.mjs
+          grep -F 'ReadWritePaths=/var/lib/mccluster-core' core/systemd/mccluster-fabric.service
           grep -F '"id": "video.generate"' core/capabilities/catalog.json
           grep -F '"id": "model3d.generate"' core/capabilities/catalog.json
           grep -F '"id": "code.build"' core/capabilities/catalog.json
           grep -F "CORE_CAPABILITY_BINDINGS_JSON" core/src/capabilities/registry.mjs
           if grep -R -nE 'SUPABASE_SERVICE_ROLE_KEY=[^[:space:]]+' core --exclude='*.example'; then
             echo 'A Supabase service-role value appears committed under core/.' >&2
+            exit 1
+          fi
+          if grep -R -nE 'MCCLUSTER_FABRIC_TOKEN=[^[:space:]]+' core --exclude='*.example'; then
+            echo 'A Fabric token value appears committed under core/.' >&2
             exit 1
           fi
 
@@ -150,6 +165,11 @@ jobs:
         run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Rebuild database from migrations
         run: supabase db reset
+      - name: Assert Fabric migration contract
+        run: |
+          grep -F 'create table if not exists public.fabric_events' supabase/migrations/20260912221000_mccluster_fabric_v1.sql
+          grep -F 'security invoker' supabase/migrations/20260912221000_mccluster_fabric_v1.sql
+          grep -F 'revoke all on table public.fabric_events from anon, authenticated' supabase/migrations/20260912221000_mccluster_fabric_v1.sql
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true
