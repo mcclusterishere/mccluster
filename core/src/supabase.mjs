@@ -1,4 +1,5 @@
 import os from 'node:os';
+import { classifyDependencyRows, dependencyIdsFromJob } from './dependency-policy.mjs';
 
 const SB = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SECRET_KEY = String(process.env.SUPABASE_SECRET_KEY || '');
@@ -15,12 +16,7 @@ function configured() {
 export function buildSupabaseHeaders({ secretKey = SECRET_KEY, legacyServiceKey = LEGACY_SERVICE_KEY, extra = {} } = {}) {
   const apiKey = secretKey || legacyServiceKey;
   if (!apiKey) throw new Error('A Supabase backend API key is required');
-
-  const base = {
-    apikey: apiKey,
-    'content-type': 'application/json',
-  };
-
+  const base = { apikey: apiKey, 'content-type': 'application/json' };
   if (!secretKey && legacyServiceKey) base.authorization = `Bearer ${legacyServiceKey}`;
   return { ...base, ...extra };
 }
@@ -47,20 +43,11 @@ async function parse(res) {
 
 export async function rest(path, init = {}) {
   configured();
-  return parse(await fetch(`${SB}/rest/v1/${path}`, {
-    ...init,
-    headers: headers(init.headers || {}),
-  }));
-}
-
-function dependencyIds(job) {
-  const raw = job?.input?.plan?.depends_on_job_ids ?? job?.input?.depends_on_job_ids ?? [];
-  if (!Array.isArray(raw)) return [];
-  return [...new Set(raw.map((value) => String(value || '').trim()).filter(Boolean))].slice(0, 32);
+  return parse(await fetch(`${SB}/rest/v1/${path}`, { ...init, headers: headers(init.headers || {}) }));
 }
 
 export async function dependencyState(job) {
-  const ids = dependencyIds(job);
+  const ids = dependencyIdsFromJob(job);
   if (!ids.length) return { state: 'ready', dependency_ids: [] };
 
   const params = new URLSearchParams({
@@ -69,16 +56,7 @@ export async function dependencyState(job) {
     limit: String(ids.length),
   });
   const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
-  const byId = new Map(rows.map((row) => [String(row.id), row]));
-  const missing = ids.filter((id) => !byId.has(id));
-  if (missing.length) return { state: 'waiting', dependency_ids: ids, missing_ids: missing };
-
-  const failed = ids.filter((id) => byId.get(id)?.status === 'failed');
-  if (failed.length) return { state: 'failed', dependency_ids: ids, failed_ids: failed };
-
-  const pending = ids.filter((id) => byId.get(id)?.status !== 'done');
-  if (pending.length) return { state: 'waiting', dependency_ids: ids, pending_ids: pending };
-  return { state: 'ready', dependency_ids: ids };
+  return classifyDependencyRows(ids, rows);
 }
 
 async function failBlockedJob(job, dependency) {
@@ -109,7 +87,6 @@ export async function claimNext(supportedTypes) {
 
   for (const job of rows) {
     if (!supported.has(job.job_type)) continue;
-
     const dependencies = await dependencyState(job);
     if (dependencies.state === 'waiting') continue;
     if (dependencies.state === 'failed') {
@@ -137,11 +114,7 @@ export async function claimNext(supportedTypes) {
 }
 
 function ownedRunningParams(job) {
-  return new URLSearchParams({
-    id: `eq.${job.id}`,
-    status: 'eq.running',
-    locked_by: `eq.${workerId}`,
-  }).toString();
+  return new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.running', locked_by: `eq.${workerId}` }).toString();
 }
 
 export async function heartbeat(job) {
@@ -208,10 +181,7 @@ export async function recentJobs({ orgId, sinceHours = 12, limit = 25 } = {}) {
 }
 
 export async function recentObjectives({ orgId, limit = 25 } = {}) {
-  const params = new URLSearchParams({
-    select: '*',
-    limit: String(Math.min(100, Math.max(1, Number(limit) || 25))),
-  });
+  const params = new URLSearchParams({ select: '*', limit: String(Math.min(100, Math.max(1, Number(limit) || 25))) });
   if (orgId) params.set('org_id', `eq.${orgId}`);
   const { body = [] } = await rest(`ops_objectives?${params.toString()}`);
   return body;
