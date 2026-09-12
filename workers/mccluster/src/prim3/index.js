@@ -1,83 +1,149 @@
 import { fail, reply } from '../lib/http.js';
 
 const DEFAULT_FEED = 'https://raw.githubusercontent.com/mcclusterishere/Prim3/main/learning/course/course-feed.json';
-const COURSE_ID = 'prim3-foundation-v2';
+const COURSE_ID = 'prim3-foundation-v3';
 const SOURCE_COURSE_ID = 'prim3-foundation';
 const SOURCE_UNIT_COUNT = 21;
-const INSTRUCTIONAL_MODULE_COUNT = 63;
+const FOUNDATION_MODULE_COUNT = 3;
+const SONG_ALIGNED_MODULE_COUNT = SOURCE_UNIT_COUNT * 3;
+const INSTRUCTIONAL_MODULE_COUNT = FOUNDATION_MODULE_COUNT + SONG_ALIGNED_MODULE_COUNT;
 const CACHE_SECONDS = 300;
 
 const MODULE_TITLES = [
-  ['Alert Triage & Monitoring', 'Scope, Evidence & Search Policy', 'Monitoring Infrastructure & Incident Response'],
-  ['White / Grey / Black Hat', 'White / Grey / Black Box', 'Pen-Test Infrastructure, Scope & Remediation'],
-  ['Public Sources & Collection', 'Metadata, Corroboration & Confidence', 'Internet Intelligence Infrastructure'],
-  ['Social Engineering Patterns', 'Identity Verification & Spoofing', 'Identity Infrastructure & MFA'],
-  ['Red & Blue Teams', 'Purple & White Teams', 'Security Engineering Teams & Exercise Operations'],
-  ['Wireless Threats & Rogue Access', 'Wi-Fi Protection, Encryption & Interference', 'Wireless Infrastructure: RF to Backhaul'],
-  ['Breach Indicators & Access Evidence', 'Ransomware, Credentials & Containment', 'Data Protection, Backup & Incident Response'],
-  ['Injection, XSS & Untrusted Input', 'Privilege, RBAC & Browser Defenses', 'Web/App Infrastructure & Secure SDLC'],
-  ['Malware Families & Propagation', 'Rootkits, Credentials & Persistence', 'Endpoint Architecture & Malware Defense'],
-  ['Install, Upgrade & Multiboot', 'Compatibility, Backup & Rollback', 'Boot, Storage, Drivers & Deployment Infrastructure'],
-  ['Residual Data & Media Exposure', 'Physical Topology & RF Remnants', 'Media Sanitization, Cabling & Asset Control'],
-  ['IoT Devices, Sensors & Actuators', 'Credentials, Segmentation & Fail-Safe Control', 'Embedded / IoT Infrastructure'],
-  ['IaaS vs PaaS vs SaaS', 'Shared Responsibility & Hybrid Architecture', 'Virtualization, Containers & Cloud Infrastructure'],
-  ['CapEx vs OpEx', 'Capacity, Load & Ownership Tradeoffs', 'TCO, SLAs & Infrastructure Lifecycle'],
-  ['Cloud Compute, Storage & Networking', 'Elasticity, HA & Disaster Recovery', 'Cloud Architecture: Regions, Zones & Load Balancing'],
-  ['CPU, Memory & Storage', 'Interfaces, Power & Peripheral Connectivity', 'PC Hardware Architecture & Troubleshooting'],
-  ['Patches, Updates & Compatibility', 'Integrity, Secure Coding & Testing', 'Firmware, Patch Management & Rollback'],
-  ['Owner Source Required · Part I', 'Owner Source Required · Part II', 'Infrastructure Bridge · Pending Source'],
-  ['RAID Levels & Failure Tolerance', 'Hot / Warm / Cold Sites & Failover', 'Storage, Backup, RTO/RPO & Power Resilience'],
-  ['Evil Twins & Identity Deception', 'Replay, MITM, Hashes & Web Trust', 'Wireless / Identity Defense & Secure Authentication'],
-  ['Network Media & Interfaces', 'Path Tracing, Control & Privilege', 'Cabling, OSI & Network Troubleshooting']
+  ['Alert Triage and Monitoring', 'Scope, Evidence and Search Policy', 'Monitoring Infrastructure and Incident Response'],
+  ['White Grey Black Hat', 'White Grey Black Box', 'Penetration Testing Infrastructure, Scope and Remediation'],
+  ['Public Sources and Collection', 'Metadata, Corroboration and Confidence', 'Internet Intelligence Infrastructure'],
+  ['Social Engineering Patterns', 'Identity Verification and Spoofing', 'Identity Infrastructure and Multifactor Authentication'],
+  ['Red and Blue Teams', 'Purple and White Teams', 'Security Engineering Teams and Exercise Operations'],
+  ['Wireless Threats and Rogue Access', 'Wireless Protection, Encryption and Interference', 'Wireless Infrastructure from Radio to Backhaul'],
+  ['Breach Indicators and Access Evidence', 'Ransomware, Credentials and Containment', 'Data Protection, Backup and Incident Response'],
+  ['Injection, Cross Site Scripting and Untrusted Input', 'Privilege, Access Control and Browser Defenses', 'Application Infrastructure and Secure Development'],
+  ['Malware Families and Propagation', 'Rootkits, Credentials and Persistence', 'Endpoint Architecture and Malware Defense'],
+  ['Install, Upgrade and Multiple Boot Environments', 'Compatibility, Backup and Rollback', 'Boot, Storage, Drivers and Deployment Infrastructure'],
+  ['Residual Data and Media Exposure', 'Physical Topology and Radio Remnants', 'Media Sanitization, Cabling and Asset Control'],
+  ['Connected Devices, Sensors and Actuators', 'Credentials, Segmentation and Safe Control', 'Embedded and Connected Device Infrastructure'],
+  ['Infrastructure, Platform and Software Services', 'Shared Responsibility and Hybrid Architecture', 'Virtualization, Containers and Cloud Infrastructure'],
+  ['Capital Expense and Operating Expense', 'Capacity, Load and Ownership Tradeoffs', 'Total Cost, Service Agreements and Infrastructure Lifecycle'],
+  ['Cloud Compute, Storage and Networking', 'Elasticity, Availability and Disaster Recovery', 'Cloud Architecture with Regions, Zones and Load Balancing'],
+  ['Processor, Memory and Storage', 'Interfaces, Power and Peripheral Connectivity', 'Computer Hardware Architecture and Troubleshooting'],
+  ['Patches, Updates and Compatibility', 'Integrity, Secure Coding and Testing', 'Firmware, Patch Management and Rollback'],
+  ['Owner Source Required Part One', 'Owner Source Required Part Two', 'Infrastructure Bridge Pending Source'],
+  ['RAID Levels and Failure Tolerance', 'Hot Warm and Cold Sites', 'Storage, Backup, Recovery Objectives and Power Resilience'],
+  ['Evil Twins and Identity Deception', 'Replay, Interception, Hashes and Web Trust', 'Wireless Identity Defense and Secure Authentication'],
+  ['Network Media and Interfaces', 'Path Tracing, Control and Privilege', 'Cabling, Network Layers and Troubleshooting']
 ];
 
 const BRIDGE_TOPICS = [
-  ['logging and telemetry sources', 'monitoring stacks and alert routing', 'incident-response lifecycle', 'ticketing and evidence retention'],
-  ['written authorization and rules of engagement', 'vulnerability-management workflow', 'network and endpoint scope boundaries', 'reporting and remediation'],
-  ['DNS and naming infrastructure', 'public registration and certificate metadata', 'source provenance', 'legal and ethical collection boundaries'],
-  ['identity and access management', 'authentication factors and MFA', 'SSO and federation', 'help-desk verification controls'],
-  ['SOC and incident-response functions', 'exercise control and deconfliction', 'secure software-development roles', 'after-action remediation'],
-  ['RF basics and channels', 'access points and controllers', 'wireless authentication', 'DHCP/DNS/backhaul dependencies'],
-  ['data classification and encryption', 'backup and recovery', 'DLP and access logging', 'incident response and chain of custody'],
-  ['HTTP/TLS request flow', 'application tiers and trust boundaries', 'session and identity controls', 'secure SDLC and defensive gateways'],
-  ['processes, services and endpoint persistence', 'EDR and antimalware controls', 'isolation and recovery', 'backup and restoration'],
-  ['UEFI/BIOS and boot flow', 'partitioning and file systems', 'drivers and imaging', 'deployment validation and rollback'],
-  ['media sanitization and destruction', 'asset inventory and labeling', 'copper/fiber topology', 'RF and EMI fundamentals'],
-  ['embedded-device architecture', 'firmware and update paths', 'network segmentation', 'power, sensors and actuators'],
-  ['hypervisors and virtual machines', 'containers and orchestration', 'cloud service models', 'network, compute and storage dependencies'],
-  ['total cost of ownership', 'capacity planning', 'vendor and SLA considerations', 'asset lifecycle and redundancy'],
-  ['regions and availability zones', 'load balancing and autoscaling', 'object/block/file storage', 'high availability and disaster recovery'],
-  ['motherboard, CPU and memory relationships', 'storage buses and form factors', 'power delivery', 'systematic hardware troubleshooting'],
-  ['firmware and BIOS/UEFI updates', 'code signing and integrity', 'staged deployment and testing', 'rollback and vulnerability management'],
+  ['logging and telemetry sources', 'monitoring stacks and alert routing', 'incident response lifecycle', 'ticketing and evidence retention'],
+  ['written authorization and rules of engagement', 'vulnerability management workflow', 'network and endpoint scope boundaries', 'reporting and remediation'],
+  ['name resolution infrastructure', 'public registration and certificate metadata', 'source provenance', 'legal and ethical collection boundaries'],
+  ['identity and access management', 'authentication factors and multifactor authentication', 'single sign on and federation', 'support desk verification controls'],
+  ['security operations and incident response functions', 'exercise control and deconfliction', 'secure software development roles', 'after action remediation'],
+  ['radio frequency basics and channels', 'access points and controllers', 'wireless authentication', 'address assignment name resolution and backhaul dependencies'],
+  ['data classification and encryption', 'backup and recovery', 'data loss prevention and access logging', 'incident response and chain of custody'],
+  ['web request and transport security flow', 'application tiers and trust boundaries', 'session and identity controls', 'secure development and defensive gateways'],
+  ['processes services and endpoint persistence', 'endpoint detection and malware controls', 'isolation and recovery', 'backup and restoration'],
+  ['firmware boot flow', 'partitioning and file systems', 'drivers and imaging', 'deployment validation and rollback'],
+  ['media sanitization and destruction', 'asset inventory and labeling', 'copper and fiber topology', 'radio and electromagnetic fundamentals'],
+  ['embedded device architecture', 'firmware and update paths', 'network segmentation', 'power sensors and actuators'],
+  ['hypervisors and virtual machines', 'containers and orchestration', 'cloud service models', 'network compute and storage dependencies'],
+  ['total cost of ownership', 'capacity planning', 'vendor and service agreement considerations', 'asset lifecycle and redundancy'],
+  ['regions and availability zones', 'load balancing and automatic scaling', 'object block and file storage', 'high availability and disaster recovery'],
+  ['motherboard processor and memory relationships', 'storage buses and form factors', 'power delivery', 'systematic hardware troubleshooting'],
+  ['firmware updates', 'code signing and integrity', 'staged deployment and testing', 'rollback and vulnerability management'],
   [],
-  ['RAID versus backup', 'RTO and RPO', 'hot/warm/cold recovery sites', 'UPS, power and failure-domain design'],
-  ['802.11 trust and authentication', 'identity/session protections', 'DNS and lookalike-domain risk', 'defensive breaks in a compromised trust chain'],
-  ['copper, fiber and wireless media', 'OSI layers and packet path', 'switching and routing fundamentals', 'network troubleshooting tools and methodology']
+  ['RAID versus backup', 'recovery time and recovery point objectives', 'hot warm and cold recovery sites', 'power backup and failure domain design'],
+  ['wireless trust and authentication', 'identity and session protections', 'name resolution and lookalike domain risk', 'defensive breaks in a compromised trust chain'],
+  ['copper fiber and wireless media', 'network layers and packet path', 'switching and routing fundamentals', 'network troubleshooting tools and methodology']
 ];
 
 const EXAM_ALIGNMENT = [
   ['Security+ SY0-701', 'Network+ N10-009'],
   ['Security+ SY0-701'],
   ['Security+ SY0-701', 'Network+ N10-009'],
-  ['A+ 220-1202', 'Security+ SY0-701'],
   ['Security+ SY0-701'],
-  ['A+ 220-1201', 'Network+ N10-009', 'Security+ SY0-701'],
-  ['A+ 220-1202', 'Security+ SY0-701'],
   ['Security+ SY0-701'],
-  ['A+ 220-1202', 'Security+ SY0-701'],
-  ['A+ 220-1201', 'A+ 220-1202'],
-  ['A+ 220-1201', 'Network+ N10-009'],
-  ['A+ 220-1201', 'Network+ N10-009', 'Security+ SY0-701'],
-  ['A+ 220-1201', 'Network+ N10-009', 'Security+ SY0-701'],
-  ['Network+ N10-009'],
-  ['A+ 220-1201', 'Network+ N10-009', 'Security+ SY0-701'],
-  ['A+ 220-1201'],
-  ['A+ 220-1202', 'Security+ SY0-701'],
-  [],
-  ['A+ 220-1201', 'Network+ N10-009', 'Security+ SY0-701'],
   ['Network+ N10-009', 'Security+ SY0-701'],
-  ['A+ 220-1201', 'Network+ N10-009']
+  ['Security+ SY0-701'],
+  ['Security+ SY0-701'],
+  ['Security+ SY0-701'],
+  ['Network+ N10-009'],
+  ['Network+ N10-009', 'Security+ SY0-701'],
+  ['Network+ N10-009', 'Security+ SY0-701'],
+  ['Network+ N10-009', 'Security+ SY0-701'],
+  ['Network+ N10-009'],
+  ['Network+ N10-009', 'Security+ SY0-701'],
+  ['Network+ N10-009'],
+  ['Security+ SY0-701'],
+  [],
+  ['Network+ N10-009', 'Security+ SY0-701'],
+  ['Network+ N10-009', 'Security+ SY0-701'],
+  ['Network+ N10-009']
 ];
+
+function foundationModules() {
+  const shared = {
+    foundation: true,
+    unit_id: null,
+    unit_sequence: null,
+    season: 0,
+    episode_id: null,
+    episode_title: null,
+    song: null,
+    source_slug: null,
+    labs: {},
+    sources: ['docs/prim3/COMPTIA-COVERAGE.json'],
+    part: null,
+    part_label: 'CERTIFICATION FOUNDATION',
+    status: 'foundation',
+    curriculum_origin: 'mccluster-certification-foundation',
+    source_concepts: []
+  };
+  return [
+    {
+      ...shared,
+      id: 'M01',
+      sequence: 1,
+      title: 'Security Foundations and Risk',
+      concepts: ['confidentiality', 'integrity', 'availability', 'threat', 'vulnerability', 'risk', 'likelihood', 'impact', 'security controls', 'data states', 'zero trust', 'shared responsibility', 'governance'],
+      enrichment_concepts: ['confidentiality', 'integrity', 'availability', 'threat', 'vulnerability', 'risk', 'likelihood', 'impact', 'security controls', 'data states', 'zero trust', 'shared responsibility', 'governance'],
+      objectives: [
+        'Explain the core security goals of confidentiality, integrity and availability.',
+        'Distinguish threats, vulnerabilities, likelihood, impact and risk.',
+        'Recognize foundational control, governance, data protection and trust concepts before song aligned study begins.'
+      ],
+      exam_alignment: ['Security+ SY0-701 1.1', 'Security+ SY0-701 1.2', 'Security+ SY0-701 1.3', 'Security+ SY0-701 1.4']
+    },
+    {
+      ...shared,
+      id: 'M02',
+      sequence: 2,
+      title: 'Networking Foundations',
+      concepts: ['network models', 'hosts', 'clients', 'servers', 'media access addresses', 'internet protocol addresses', 'subnets', 'default gateways', 'switches', 'routers', 'firewalls', 'name resolution', 'address assignment', 'network address translation', 'ports', 'protocols', 'traffic flow'],
+      enrichment_concepts: ['network models', 'hosts', 'clients', 'servers', 'media access addresses', 'internet protocol addresses', 'subnets', 'default gateways', 'switches', 'routers', 'firewalls', 'name resolution', 'address assignment', 'network address translation', 'ports', 'protocols', 'traffic flow'],
+      objectives: [
+        'Explain how hosts communicate through layered network models.',
+        'Identify the roles of addressing, switching, routing, name resolution and address assignment.',
+        'Use ports, protocols, network devices and traffic flow as a foundation for later troubleshooting and security modules.'
+      ],
+      exam_alignment: ['Network+ N10-009 1.1', 'Network+ N10-009 1.2', 'Network+ N10-009 1.3', 'Network+ N10-009 1.4', 'Network+ N10-009 1.5']
+    },
+    {
+      ...shared,
+      id: 'M03',
+      sequence: 3,
+      title: 'Identity, Cryptography and Access',
+      concepts: ['identification', 'authentication', 'authorization', 'accounting', 'authentication factors', 'multifactor authentication', 'single sign on', 'federation', 'least privilege', 'role based access', 'attribute based access', 'symmetric encryption', 'asymmetric encryption', 'hashing', 'digital signatures', 'certificates', 'public key infrastructure', 'key management'],
+      enrichment_concepts: ['identification', 'authentication', 'authorization', 'accounting', 'authentication factors', 'multifactor authentication', 'single sign on', 'federation', 'least privilege', 'role based access', 'attribute based access', 'symmetric encryption', 'asymmetric encryption', 'hashing', 'digital signatures', 'certificates', 'public key infrastructure', 'key management'],
+      objectives: [
+        'Distinguish identification, authentication, authorization and accounting.',
+        'Explain access models, authentication factors, multifactor authentication, federation and least privilege.',
+        'Explain the purpose of encryption, hashing, digital signatures, certificates and key management.'
+      ],
+      exam_alignment: ['Security+ SY0-701 1.4', 'Security+ SY0-701 3.1', 'Security+ SY0-701 4.6', 'Network+ N10-009 4.1']
+    }
+  ];
+}
 
 function feedUrl(env) {
   return String(env.PRIM3_COURSE_FEED_URL || DEFAULT_FEED).trim();
@@ -146,7 +212,7 @@ function validateFeed(payload) {
   if (payload.schema_version !== '1.0.0') throw Object.assign(new Error('Unsupported PRIM3 source feed schema'), { status: 502 });
   if (!payload.course || payload.course.id !== SOURCE_COURSE_ID) throw Object.assign(new Error('Unexpected PRIM3 source identity'), { status: 502 });
   if (!Array.isArray(payload.course.modules) || payload.course.modules.length !== SOURCE_UNIT_COUNT) {
-    throw Object.assign(new Error(`PRIM3 source feed must publish exactly ${SOURCE_UNIT_COUNT} episode/song units`), { status: 502 });
+    throw Object.assign(new Error(`PRIM3 source feed must publish exactly ${SOURCE_UNIT_COUNT} episode and song units`), { status: 502 });
   }
   payload.course.modules.forEach((module, index) => {
     if (!validSourceUnit(module, index)) {
@@ -183,7 +249,7 @@ async function fetchSource(env) {
   const upstream = await fetch(source, {
     headers: {
       accept: 'application/json',
-      'user-agent': 'McCluster-PRIM3-Course-Ingest/2.0'
+      'user-agent': 'McCluster-PRIM3-Course-Ingest/3.0'
     }
   });
   if (!upstream.ok) {
@@ -253,6 +319,7 @@ function expandUnit(unit, unitIndex) {
   const bridgeOrigin = sourceRemainder.length ? 'prim3-source+mccluster-enrichment' : 'mccluster-enrichment';
   const sourceLocked = unit.status === 'owner-source-required';
   const base = {
+    foundation: false,
     unit_id: `U${String(unitIndex + 1).padStart(2, '0')}`,
     unit_sequence: unitIndex + 1,
     season: Number(unit.season),
@@ -263,7 +330,7 @@ function expandUnit(unit, unitIndex) {
     labs: unit.labs || {},
     sources: unit.sources || []
   };
-  const firstSequence = unitIndex * 3 + 1;
+  const firstSequence = FOUNDATION_MODULE_COUNT + unitIndex * 3 + 1;
   const sourceObjectives = unit.objectives || [];
   const coreObjective = (part) => [
     `Explain the ${part === 1 ? 'first' : 'second'} concept cluster from ${unit.song || unit.episode_title} without mixing it with a separate concept family.`,
@@ -272,8 +339,8 @@ function expandUnit(unit, unitIndex) {
   ];
   const bridgeObjectives = sourceLocked ? [] : [
     'Explain the infrastructure, hardware, services or operational processes underneath the episode concepts.',
-    'Connect the episode vocabulary to relevant current CompTIA objective families without treating the song as complete exam coverage.',
-    'Apply the missing foundation material in a troubleshooting, design or response scenario.'
+    'Connect the episode vocabulary to relevant Security Plus and Network Plus objectives without treating the song as complete exam coverage.',
+    'Apply missing foundation material in a troubleshooting, design or response scenario.'
   ];
 
   return [
@@ -312,7 +379,7 @@ function expandUnit(unit, unitIndex) {
       id: instructionalModuleId(firstSequence + 2),
       sequence: firstSequence + 2,
       part: 3,
-      part_label: 'INFRASTRUCTURE + EXAM BRIDGE',
+      part_label: 'INFRASTRUCTURE AND EXAM BRIDGE',
       title: titles[2],
       status: sourceLocked ? 'owner-source-required' : 'enrichment',
       curriculum_origin: bridgeOrigin,
@@ -341,7 +408,7 @@ function normalizedCourse(payload) {
     labs: unit.labs || {},
     sources: unit.sources || []
   }));
-  const modules = sourceCourse.modules.flatMap(expandUnit);
+  const modules = [...foundationModules(), ...sourceCourse.modules.flatMap(expandUnit)];
   if (modules.length !== INSTRUCTIONAL_MODULE_COUNT) {
     throw Object.assign(new Error(`PRIM3 curriculum adapter must publish exactly ${INSTRUCTIONAL_MODULE_COUNT} instructional modules`), { status: 502 });
   }
@@ -356,15 +423,18 @@ function normalizedCourse(payload) {
     source_course_id: SOURCE_COURSE_ID,
     title: 'PRIM3 Foundation',
     subtitle: 'Program for Resilient Infrastructure Management',
-    schema_version: '2.0.0',
+    schema_version: '3.0.0',
     source_schema_version: payload.schema_version,
     pass_mark: Number(sourceCourse.pass_mark || 80),
     progression: 'guided',
     account_required: true,
     price_cents: 0,
     source_unit_count: units.length,
+    foundation_module_count: FOUNDATION_MODULE_COUNT,
+    song_aligned_module_count: SONG_ALIGNED_MODULE_COUNT,
     module_count: modules.length,
-    module_strategy: '3 instructional modules per episode/song unit',
+    module_strategy: '3 certification foundation modules plus 3 instructional modules per episode and song unit',
+    mandatory_certifications: ['Security+ SY0-701', 'Network+ N10-009'],
     source_authorities: Array.isArray(sourceCourse.source_authorities) ? sourceCourse.source_authorities : [],
     layers: Array.isArray(sourceCourse.layers) ? sourceCourse.layers : [],
     units,
@@ -483,9 +553,11 @@ async function route(request, env) {
         id: course.id,
         schema_version: course.schema_version,
         source_unit_count: course.source_unit_count,
+        foundation_module_count: course.foundation_module_count,
+        song_aligned_module_count: course.song_aligned_module_count,
         module_count: course.module_count,
         free_after_account: true,
-        protected_open_unit: course.units.some((unit) => unit.id === 'U18' && unit.status === 'owner-source-required')
+        protected_open_unit: course.units.some((unit) => unit.status === 'owner-source-required')
       }
     });
   }
