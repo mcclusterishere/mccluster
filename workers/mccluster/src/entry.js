@@ -5,6 +5,7 @@ import clientConnect from './connect.js';
 import { createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
+import { handleMediaMcp } from './media/mcp.js';
 import { attachCompletedVariantAssets, handleSocialRequest } from './social/router.js';
 import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
 import { handleMetaWebhook } from './social/webhook.js';
@@ -57,6 +58,12 @@ export default {
       } catch (error) {
         return fail(request, env, error.message || 'Meta webhook failed', error.status || 500, error.detail);
       }
+    }
+
+    if (path === '/v1/media/mcp' && request.method === 'POST') {
+      const user = await authUser(request, env);
+      const { status, body } = await handleMediaMcp(request, env, user);
+      return reply(request, env, body, status);
     }
 
     if (path === '/v1/media/models' && request.method === 'GET') {
