@@ -1,80 +1,113 @@
-# McCluster Core tool broker
+# McCluster Core Tool Broker
 
-The Core tool broker gives local agents one normalized tool bus without making MCP itself the architecture.
+The Core broker is a loopback-only bridge between McCluster agents and normalized tools. It is deliberately not another public API or source of truth.
 
-## Interfaces
+## Two layers
 
-The broker listens on `127.0.0.1:4777` only.
+Core now exposes two related but distinct registries:
 
-- `GET /health` — broker and upstream discovery health.
-- `GET /v1/tools` — normalized tool catalog for ordinary HTTP clients.
-- `POST /v1/tools/call` — ordinary JSON/HTTP tool execution.
-- `POST /mcp` — MCP `2026-07-28` `tools/list` and `tools/call` over the same registry.
+1. **Capability Registry** — stable McCluster intent such as `video.generate`, `model3d.generate`, `code.build`, or `system.health`.
+2. **Tool Registry** — concrete executable implementations discovered from MCP servers or registered HTTP endpoints.
 
-Both interfaces call the same underlying tool definitions. Business logic must not be duplicated between MCP and REST.
+Normal products and agents should prefer capabilities. Raw tools remain available for diagnostics, expert operation, provider-specific controls, and building new bindings.
 
-## Built-in upstreams
+## Default upstreams
 
-Core ships with:
+The broker currently discovers the canonical McCluster media MCP surface:
 
-- remote MCP discovery against `https://api.mccluster.org/v1/media/mcp`, exposed locally with names such as `mccluster.media.models.search` and `mccluster.media.generate`;
-- a plain HTTP health tool named `mccluster.health` against the canonical Worker.
+- `https://api.mccluster.org/v1/media/mcp`
 
-The MCP media server remains the public edge implementation. Core is a client/broker, not a replacement Worker.
+and registers the canonical Worker health endpoint as an ordinary HTTP tool.
 
-## Optional upstreams
+Additional MCP servers and HTTP tools may be registered through root-controlled environment JSON without giving credentials to the low-privilege OpenCode process.
 
-Root may add approved remote MCP servers with `CORE_MCP_SERVERS_JSON` and approved HTTP tools with `CORE_HTTP_TOOLS_JSON` in `/etc/mccluster/core.env`.
+## Local HTTP surface
 
-Remote endpoints must use HTTPS. Plain HTTP is accepted only for loopback targets. Credentials are referenced by environment-variable name (`bearerEnv` or `headerEnv`) instead of being embedded in the registry JSON.
+The service binds to `127.0.0.1:4777` by default.
 
-Example MCP registration:
+Health:
+
+- `GET /health`
+
+Capabilities:
+
+- `GET /v1/capabilities`
+- `POST /v1/capabilities/resolve`
+- `POST /v1/capabilities/call`
+
+Raw tools:
+
+- `GET /v1/tools`
+- `POST /v1/tools/call`
+
+MCP:
+
+- `POST /mcp`
+
+A configured `CORE_BROKER_TOKEN` protects every route except `/health`.
+
+## MCP behavior
+
+`tools/list` returns two classes of tools:
+
+- currently resolvable stable capabilities, under provider-independent names such as `system.health` and `media.generate`;
+- namespaced raw implementation tools such as `mccluster.media.generate`.
+
+`tools/call` checks the capability registry first. If the name is a capability, Core resolves the highest-priority available binding and delegates through the raw tool bus. Otherwise the name is treated as a raw tool.
+
+The broker targets MCP `2026-07-28` and keeps the public edge separate: remote clients should still reach McCluster through `api.mccluster.org`, not port 4777.
+
+## Provider-independent resolution
+
+A capability binding carries:
+
+- `capability`
+- `provider`
+- `tool`
+- `transport`
+- `status`
+- `priority`
+- `features`
+
+Resolution keeps only active bindings whose underlying tools are discoverable, applies requested provider/transport/feature requirements, then selects the highest-priority result. Planned capabilities fail closed.
+
+The v1 resolver is intentionally deterministic. The next evaluation layer will score implementations using measured quality, latency, cost, reliability, controls, and McCluster-specific acceptance data rather than marketing claims.
+
+## Configuration
+
+Raw MCP servers:
 
 ```text
-CORE_MCP_SERVERS_JSON=[{"id":"example","namespace":"example","url":"https://example.com/mcp","protocolVersion":"2026-07-28","bearerEnv":"EXAMPLE_TOKEN"}]
+CORE_MCP_SERVERS_JSON=[...]
 ```
 
-Example HTTP registration:
+Raw HTTP tools:
 
 ```text
-CORE_HTTP_TOOLS_JSON=[{"name":"example.status","title":"Example status","inputSchema":{"type":"object","properties":{}},"request":{"method":"GET","url":"https://example.com/status"}}]
+CORE_HTTP_TOOLS_JSON=[...]
 ```
 
-## Local authorization
+Additional stable capability definitions:
 
-Set `CORE_BROKER_TOKEN` to require `Authorization: Bearer ...` for `/v1/tools`, `/v1/tools/call`, and `/mcp`. `/health` remains available over loopback for systemd health checks.
-
-Do not expose port 4777 publicly. Remote clients should continue to enter through the authenticated Cloudflare Worker at `api.mccluster.org`.
-
-## Smoke tests
-
-After installing `mccluster-core-tool-broker.service`:
-
-```bash
-curl -s http://127.0.0.1:4777/health | jq
-curl -s http://127.0.0.1:4777/v1/tools | jq '.tools[] | {name,transport}'
+```text
+CORE_CAPABILITIES_JSON=[...]
 ```
 
-The catalog should contain at minimum `mccluster.health` and the discovered `mccluster.media.*` MCP tools while the public media MCP endpoint is healthy.
+Additional bindings:
 
-To exercise the ordinary HTTP alternative:
-
-```bash
-curl -s http://127.0.0.1:4777/v1/tools/call \
-  -H 'content-type: application/json' \
-  --data '{"tool":"mccluster.health","arguments":{}}' | jq
+```text
+CORE_CAPABILITY_BINDINGS_JSON=[...]
 ```
 
-To exercise Core as an MCP server/broker:
-
-```bash
-curl -s http://127.0.0.1:4777/mcp \
-  -H 'content-type: application/json' \
-  -H 'MCP-Protocol-Version: 2026-07-28' \
-  -H 'Mcp-Method: tools/list' \
-  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | jq
-```
+Secrets referenced by an MCP server's `bearerEnv` stay in `/etc/mccluster/core.env`; they are never copied into catalog JSON or exposed to `mccluster-agent`.
 
 ## Security boundary
 
-The broker runs as `mccluster-core`, not `mccluster-agent`. OpenCode therefore still receives no production Supabase, GitHub, Twilio, or upstream API credentials. Later agent access should be mediated through explicitly approved broker calls rather than by copying secrets into the model process.
+- loopback bind only;
+- `mccluster-core` owns upstream credentials;
+- `mccluster-agent` / OpenCode receives no production API credentials;
+- raw HTTP registration rejects unsafe non-HTTPS remote destinations except loopback;
+- capability ids never contain provider credentials or secret material;
+- a capability being declared does not authorize it; normal McCluster authorization, budgets, and approval policy remain downstream enforcement points.
+
+See `docs/control-plane/CAPABILITY-REGISTRY.md` for the semantic contract.
