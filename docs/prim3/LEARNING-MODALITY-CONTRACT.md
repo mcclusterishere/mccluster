@@ -58,6 +58,20 @@ M Missions means Do it.
 
 The nested PRIM cycles are secondary explanatory devices. They may appear inside a modality but must not compete with the primary four letter model on first exposure.
 
+## Functional aliases
+
+Older curriculum contracts and internal tools may still use LEARN, REMEMBER, WATCH and LAB as functional aliases. These names are compatibility vocabulary, not a competing public brand.
+
+LEARN is the complete conventional course. LEARN maps to P Principles.
+
+REMEMBER maps to R Rhythm. A song never substitutes for conventional instruction.
+
+WATCH maps to I Immersion. WATCH does not replace the complete explanation in LEARN.
+
+LAB maps to M Missions. Detailed lab design is intentionally deferred until the game practice architecture is separately approved.
+
+The purpose remains one coherent curriculum through multiple forms of explanation, memory and application.
+
 ## Progress semantics
 
 A concept is taught comprehensively in Principles and may satisfy several overlapping certification objectives.
