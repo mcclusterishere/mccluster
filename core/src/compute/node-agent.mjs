@@ -17,6 +17,18 @@ const HEARTBEAT_MS = Math.max(10_000, Number(process.env.MCCLUSTER_NODE_HEARTBEA
 if (!BASE_URL || !/^https:\/\//.test(BASE_URL)) throw new Error('MCCLUSTER_COMPUTE_URL must be an https:// URL');
 if (!ORG_ID) throw new Error('MCCLUSTER_ORG_ID is required');
 
+function normalizeMaxLeases(value) {
+  const parsed = Math.floor(Number(value || 1));
+  if (!Number.isFinite(parsed)) return 1;
+  return Math.max(1, Math.min(64, parsed));
+}
+
+function permanentError(message) {
+  const error = new Error(message);
+  error.retryable = false;
+  return error;
+}
+
 function ensureIdentity() {
   fs.mkdirSync(STATE_DIR, { recursive: true, mode: 0o700 });
   if (fs.existsSync(IDENTITY_PATH)) {
@@ -45,7 +57,7 @@ function readManifest() {
     publicCapabilities,
     executors,
     labels: (!Array.isArray(raw) && raw.labels && typeof raw.labels === 'object') ? raw.labels : {},
-    maxLeases: (!Array.isArray(raw) && raw.max_leases) ? Number(raw.max_leases) : 1
+    maxLeases: normalizeMaxLeases(!Array.isArray(raw) ? raw.max_leases : 1)
   };
 }
 
@@ -81,10 +93,15 @@ function inventory() {
 }
 
 function loadSnapshot(runningLeases) {
+  let diskFree = 0;
+  try {
+    const stat = fs.statfsSync('/');
+    diskFree = Number(stat.bavail) * Number(stat.bsize);
+  } catch {}
   return {
     running_leases: runningLeases,
     memory_free_bytes: os.freemem(),
-    disk_free_bytes: inventory().disk_free_bytes,
+    disk_free_bytes: diskFree,
     gpu: []
   };
 }
@@ -164,9 +181,9 @@ function executorFor(task, manifest) {
 
 function assertLoopbackExecutor(urlString) {
   const url = new URL(urlString);
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('Executor must use HTTP(S)');
-  if (!['127.0.0.1', '::1', 'localhost'].includes(url.hostname)) {
-    throw new Error('Node executors must be loopback services; remote provider calls belong behind Core policy');
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') throw permanentError('Executor must use HTTP(S)');
+  if (!['127.0.0.1', '::1', '[::1]', 'localhost'].includes(url.hostname)) {
+    throw permanentError('Node executors must be loopback services; remote provider calls belong behind Core policy');
   }
   return url;
 }
@@ -185,15 +202,20 @@ async function executeHttp(executor, task) {
     const text = await res.text();
     let result;
     try { result = text ? JSON.parse(text) : {}; } catch { result = { text }; }
-    if (!res.ok) throw new Error(result?.error || `Local executor returned HTTP ${res.status}`);
+    if (!res.ok) {
+      const error = new Error(result?.error || `Local executor returned HTTP ${res.status}`);
+      error.status = res.status;
+      error.retryable = res.status === 408 || res.status === 425 || res.status === 429 || res.status >= 500;
+      throw error;
+    }
     return result;
   } finally { clearTimeout(timeout); }
 }
 
 async function executeTask(executor, task) {
-  if (!executor) throw new Error(`No local executor configured for ${task.implementation || task.capability}`);
+  if (!executor) throw permanentError(`No local executor configured for ${task.implementation || task.capability}`);
   if (executor.type === 'http') return executeHttp(executor, task);
-  throw new Error(`Unsupported local executor type: ${executor.type || 'unknown'}`);
+  throw permanentError(`Unsupported local executor type: ${executor.type || 'unknown'}`);
 }
 
 async function run() {
@@ -235,9 +257,25 @@ async function run() {
             }).catch((error) => console.error(JSON.stringify({ event: 'lease_heartbeat_failed', lease_id: leaseId, error: error.message })));
           }, 30_000);
           leaseHeartbeat.unref();
+
           const promise = executeTask(executor, task)
             .then((result) => signedRequest(identity, `/v1/compute/leases/${leaseId}/complete`, { lease_token: leaseToken, result }))
-            .catch((error) => signedRequest(identity, `/v1/compute/leases/${leaseId}/fail`, { lease_token: leaseToken, error: error.message, retry: false }))
+            .catch(async (error) => {
+              try {
+                await signedRequest(identity, `/v1/compute/leases/${leaseId}/fail`, {
+                  lease_token: leaseToken,
+                  error: error.message,
+                  retry: error.retryable !== false
+                });
+              } catch (reportError) {
+                console.error(JSON.stringify({
+                  event: 'lease_failure_report_failed',
+                  lease_id: leaseId,
+                  task_id: task.id,
+                  error: reportError.message
+                }));
+              }
+            })
             .finally(() => { clearInterval(leaseHeartbeat); active.delete(leaseId); });
           active.set(leaseId, promise);
         }
