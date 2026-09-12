@@ -41,7 +41,7 @@ const gemini = env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY
 
 function providerStatus() {
   return {
-    database: { configured: Boolean(pool), provider: 'railway-postgres' },
+    database: { configured: Boolean(pool), provider: 'postgres' },
     storage: { configured: Boolean(r2), provider: 'cloudflare-r2', bucket: env.R2_BUCKET || null },
     domains: { configured: Boolean(env.NAMESILO_API_KEY), provider: 'namesilo', purchasesEnabled: bool('ALLOW_DOMAIN_PURCHASES') },
     payments: { configured: Boolean(stripe), provider: 'stripe-connect', liveRevenueShareEnabled: bool('ALLOW_LIVE_REVENUE_SHARE') },
