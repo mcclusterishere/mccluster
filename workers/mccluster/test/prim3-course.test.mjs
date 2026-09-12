@@ -37,8 +37,10 @@ test('Episode One is fully authored as three comprehensive modules with forbidde
   assert.ok(start >= 0 && end > start);
   const episodeOne = source.slice(start, end);
   assert.doesNotMatch(episodeOne, /[-\u2013\u2014]/);
-  assert.ok((episodeOne.match(/q:"/g) || []).length >= 30);
-  assert.ok((episodeOne.match(/\[\["/g) || []).length >= 3);
+  assert.equal((episodeOne.match(/reading:\s*\[/g) || []).length, 3);
+  assert.equal((episodeOne.match(/terms:\s*\[/g) || []).length, 3);
+  assert.equal((episodeOne.match(/quiz:\s*\[/g) || []).length, 3);
+  assert.equal((episodeOne.match(/q:"/g) || []).length, 30);
 });
 
 test('hat/box material is protected from being recompressed into one beginner lesson', async () => {
