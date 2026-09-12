@@ -28,7 +28,8 @@ A **binding** points one capability at one implementation:
 - transport;
 - health/discovery availability;
 - priority;
-- implementation features.
+- implementation features;
+- economics: where it runs and how it is paid for.
 
 A **tool** is an executable endpoint discovered or registered by the Core tool bus. Tools can arrive over MCP, ordinary HTTP, or future local/native adapters. Raw tools remain visible for diagnostics and expert use, but normal products should call capabilities.
 
@@ -54,6 +55,21 @@ Bad:
 
 Provider names belong in bindings, not capability ids.
 
+## Self-host-first routing
+
+McCluster owns the control plane and should avoid recurring provider rent where an owned or open implementation can satisfy the same contract.
+
+Every binding may therefore declare:
+
+- `economics.hosting`: `owned`, `self-hosted`, or `external`;
+- `economics.billing`: `free`, `compute`, or `metered`.
+
+The default resolver policy is `preferOwned: true`. Available implementations are ranked first by billing class (`free` > `compute` > `metered`), then by hosting class (`owned` > `self-hosted` > `external`), then by explicit binding priority. This means a capable local/open worker wins over a paid API by default even when the paid provider has a higher raw priority.
+
+The policy can be disabled for explicit benchmarks with `preferOwned: false`, and callers may require a specific `provider`, `transport`, `hosting`, `billing`, or feature set. This makes paid APIs optional quality/burst fallbacks rather than architectural dependencies.
+
+Self-host-first does not mean "ignore quality." Once the evaluation harness exists, quality, reliability, latency, controls, and task fit will be measured alongside economics. A local implementation still has to meet the capability contract.
+
 ## Resolution
 
 Resolution is intentionally separate from execution.
@@ -62,10 +78,11 @@ Resolution is intentionally separate from execution.
 2. Reject unknown, planned, disabled, or deprecated work when policy says it cannot execute.
 3. Read the normalized tool snapshot.
 4. Keep only active bindings whose underlying tools are currently discoverable.
-5. Apply requested implementation requirements (provider, transport, feature flags, etc.).
-6. Sort candidates by priority.
-7. Return the winning binding plus alternatives.
-8. On execution, call the winning tool through the existing tool bus.
+5. Apply requested implementation requirements (provider, transport, hosting, billing, feature flags, etc.).
+6. Apply the self-host-first economic preference unless the caller explicitly disables it.
+7. Sort remaining candidates by routing score and deterministic tie-breaker.
+8. Return the winning binding plus alternatives.
+9. On execution, call the winning tool through the existing tool bus.
 
 The resolver does not pretend an unimplemented capability works. Planned capabilities are visible to product planning but fail closed at execution time.
 
@@ -119,6 +136,6 @@ The capability layer therefore presents resolved capabilities as ordinary MCP to
 
 V1 is the semantic registry and deterministic binding resolver. It does not yet claim to be the final quality router.
 
-The next layer is the evaluation harness: implementations such as MiniMax, Veo, Runway, Meshy, Tripo, World Labs, Codex, Claude, Gemini, and local models should earn routing priority from measured task quality, controls, latency, cost, reliability, and McCluster-specific acceptance data.
+The next layer is the evaluation harness: local/open implementations plus optional external providers should earn routing priority from measured task quality, controls, latency, cost, reliability, and McCluster-specific acceptance data.
 
 Until an implementation passes that evaluation and receives an active binding, the corresponding specialized capability stays planned or unavailable.
