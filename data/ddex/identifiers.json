@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-09-10T06:21:00.000Z",
+  "prefix": "QT6KV",
+  "year": 2026,
+  "note": "Real ISRCs are 12 characters: prefix QT6KV + year + 5-digit designation. House numbers like QT6KV·01 are not ISRCs. This file is the durable ledger. Do not remint a slug that already has a code. Allocation order is data/albums.json, not catalogue.no.",
+  "source": {
+    "owner": "mcclusterishere",
+    "repo": "mccluster",
+    "branch": "ddex/qt6kv-pipe",
+    "sha": "0df5b9677f50153055eba7e9ffb0f68319c4a136"
+  },
+  "seq": { "2026": 17 },
+  "house": {
+    "legal_name": "McCluster Corp",
+    "dpid": "",
+    "isni_org": "0000000528727276",
+    "isni_person": "0000000529563111",
+    "gs1_prefix": ""
+  },
+  "recordings": [
+    { "slug": "who-did-the-shoot", "title": "Who Did The Shoot", "isrc": "QT6KV2600001", "duration_ms": 130000, "album_slug": "here", "house_no": "QT6KV·01" },
+    { "slug": "runway-walk", "title": "Runway Walk", "isrc": "QT6KV2600002", "duration_ms": 115000, "album_slug": "here", "house_no": "QT6KV·02" },
+    { "slug": "write-a-song", "title": "Write a Song", "isrc": "QT6KV2600003", "duration_ms": 137000, "album_slug": "here", "house_no": "QT6KV·03" },
+    { "slug": "here", "title": "Here", "isrc": "QT6KV2600004", "duration_ms": 96000, "album_slug": "here", "house_no": "QT6KV·04" },
+    { "slug": "antisocial", "title": "Antisocial", "isrc": "QT6KV2600005", "duration_ms": 177000, "album_slug": "here", "house_no": "QT6KV·05" },
+    { "slug": "lightroom", "title": "Lightroom", "isrc": "QT6KV2600006", "duration_ms": 132000, "album_slug": "here", "house_no": "QT6KV·06" },
+    { "slug": "got-wifi", "title": "Got WiFi?", "isrc": "QT6KV2600007", "duration_ms": 92000, "album_slug": "prim3", "house_no": "QT6KV·07" },
+    { "slug": "environmental-injustice", "title": "Environmental Injustice", "isrc": "QT6KV2600008", "duration_ms": 163000, "album_slug": "equity-uprise", "house_no": "QT6KV·08" },
+    { "slug": "environmental-injustice-brave", "title": "Environmental Injustice (Brave mix)", "isrc": "QT6KV2600009", "duration_ms": 163000, "album_slug": "equity-uprise", "house_no": "QT6KV·09" },
+    { "slug": "please-set-me-free", "title": "Please Set Me Free", "isrc": "QT6KV2600010", "duration_ms": 202000, "album_slug": "equity-uprise", "house_no": "QT6KV·10" },
+    { "slug": "money-or-the-power", "title": "Money or the Power", "isrc": "QT6KV2600011", "duration_ms": 0, "album_slug": "equity-uprise", "house_no": "QT6KV·11" },
+    { "slug": "deep-end", "title": "Deep End", "isrc": "QT6KV2600012", "duration_ms": 0, "album_slug": "heal-the-3", "house_no": "QT6KV·12" },
+    { "slug": "heal-the-3rd-world", "title": "Heal the 3rd World", "isrc": "QT6KV2600013", "duration_ms": 0, "album_slug": "heal-the-3", "house_no": "QT6KV·13" },
+    { "slug": "vaunt", "title": "Vaunt (Acoustic)", "isrc": "QT6KV2600014", "duration_ms": 92000, "album_slug": "vaunt-ep", "house_no": "QT6KV·14" },
+    { "slug": "dealer-plates", "title": "Dealer Plates (A-Side)", "isrc": "QT6KV2600015", "duration_ms": 97000, "album_slug": "whip-equipped", "house_no": "QT6KV·15" },
+    { "slug": "dealer-plates-b", "title": "Dealer Plates (B-Side)", "isrc": "QT6KV2600016", "duration_ms": 97000, "album_slug": "whip-equipped", "house_no": "QT6KV·16" },
+    { "slug": "upset", "title": "Upset", "isrc": "QT6KV2600017", "duration_ms": 184000, "album_slug": "singles", "house_no": "QT6KV·17" }
+  ],
+  "releases": [
+    { "slug": "here", "title": "I AM HERE", "icpn": "", "tracks": ["who-did-the-shoot", "runway-walk", "write-a-song", "here", "antisocial", "lightroom"] },
+    { "slug": "prim3", "title": "PRIM3", "icpn": "", "tracks": ["got-wifi"] },
+    { "slug": "equity-uprise", "title": "Equity Uprise", "icpn": "", "tracks": ["environmental-injustice", "environmental-injustice-brave", "please-set-me-free", "money-or-the-power"] },
+    { "slug": "heal-the-3", "title": "Heal the 3", "icpn": "", "tracks": ["deep-end", "heal-the-3rd-world"] },
+    { "slug": "vaunt-ep", "title": "Vaunt EP", "icpn": "", "tracks": ["vaunt"] },
+    { "slug": "whip-equipped", "title": "Whip Equipped", "icpn": "", "tracks": ["dealer-plates", "dealer-plates-b"] },
+    { "slug": "singles", "title": "Singles", "icpn": "", "tracks": ["upset"] }
+  ]
+}
