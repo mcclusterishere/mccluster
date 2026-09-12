@@ -18,6 +18,9 @@ export async function enrollNode(node) {
   if (existing && existing.key_fingerprint !== node.key_fingerprint) {
     throw Object.assign(new Error('Node id is already bound to a different key'), { status: 409, code: 'NODE_KEY_CONFLICT' });
   }
+  if (existing && existing.org_id !== node.org_id) {
+    throw Object.assign(new Error('Compute node is already enrolled to a different organization'), { status: 409, code: 'NODE_ORG_CONFLICT' });
+  }
   if (existing?.state === 'revoked' || existing?.revoked_at) {
     throw Object.assign(new Error('Compute node has been revoked'), { status: 403, code: 'NODE_REVOKED' });
   }
