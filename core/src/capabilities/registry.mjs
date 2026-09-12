@@ -5,6 +5,10 @@ import { fileURLToPath } from 'node:url';
 const ID = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_CATALOG = path.resolve(HERE, '../../capabilities/catalog.json');
+const HOSTING = new Set(['owned', 'self-hosted', 'external']);
+const BILLING = new Set(['free', 'compute', 'metered']);
+const HOSTING_SCORE = { owned: 30, 'self-hosted': 20, external: 0 };
+const BILLING_SCORE = { free: 300, compute: 200, metered: 0 };
 
 function parseJsonEnv(name, fallback = []) {
   const raw = process.env[name];
@@ -54,6 +58,13 @@ function normalizeBinding(value, capabilities) {
   if (!['active', 'disabled', 'candidate'].includes(value.status || 'active')) {
     throw new Error(`Invalid status for binding ${value.id}`);
   }
+  const economics = {
+    hosting: value.economics?.hosting || 'external',
+    billing: value.economics?.billing || 'metered',
+    ...(value.economics || {})
+  };
+  if (!HOSTING.has(economics.hosting)) throw new Error(`Invalid hosting class for binding ${value.id}`);
+  if (!BILLING.has(economics.billing)) throw new Error(`Invalid billing class for binding ${value.id}`);
   return {
     provider: 'unknown',
     transport: 'tool',
@@ -61,6 +72,7 @@ function normalizeBinding(value, capabilities) {
     priority: 0,
     features: {},
     ...value,
+    economics,
     priority: Number(value.priority || 0)
   };
 }
@@ -76,6 +88,10 @@ function featureMatch(binding, requirements = {}) {
       if (binding.transport !== wanted) return false;
       continue;
     }
+    if (key === 'hosting' || key === 'billing') {
+      if (binding.economics?.[key] !== wanted) return false;
+      continue;
+    }
     const actual = binding.features?.[key];
     if (Array.isArray(wanted)) {
       if (!Array.isArray(actual) || !wanted.every((item) => actual.includes(item))) return false;
@@ -88,7 +104,14 @@ function featureMatch(binding, requirements = {}) {
   return true;
 }
 
-function publicBinding(binding, available) {
+function bindingScore(binding, preferOwned = true) {
+  const economicScore = preferOwned
+    ? (BILLING_SCORE[binding.economics?.billing] || 0) + (HOSTING_SCORE[binding.economics?.hosting] || 0)
+    : 0;
+  return economicScore + binding.priority;
+}
+
+function publicBinding(binding, available, preferOwned = true) {
   return {
     id: binding.id,
     provider: binding.provider,
@@ -96,6 +119,8 @@ function publicBinding(binding, available) {
     transport: binding.transport,
     status: binding.status,
     priority: binding.priority,
+    routingScore: bindingScore(binding, preferOwned),
+    economics: binding.economics,
     features: binding.features || {},
     available
   };
@@ -135,7 +160,7 @@ export class CapabilityRegistry {
     return this.capabilities.get(id) || null;
   }
 
-  async snapshot({ force = false } = {}) {
+  async snapshot({ force = false, preferOwned = true } = {}) {
     const toolSnapshot = await this.toolRegistry.list({ force });
     const availableTools = new Set(toolSnapshot.tools.map((tool) => tool.name));
     const capabilities = [];
@@ -143,7 +168,7 @@ export class CapabilityRegistry {
     for (const capability of this.capabilities.values()) {
       const bindings = this.bindings
         .filter((binding) => binding.capability === capability.id)
-        .map((binding) => publicBinding(binding, availableTools.has(binding.tool)));
+        .map((binding) => publicBinding(binding, availableTools.has(binding.tool), preferOwned));
       const activeBindings = bindings.filter((binding) => binding.status === 'active' && binding.available);
       capabilities.push({
         ...capability,
@@ -156,6 +181,7 @@ export class CapabilityRegistry {
     return {
       schemaVersion: this.schemaVersion,
       catalogVersion: this.catalogVersion,
+      routingPolicy: { preferOwned },
       capabilities,
       diagnostics: toolSnapshot.diagnostics,
       refreshedAt: toolSnapshot.refreshedAt
@@ -166,7 +192,7 @@ export class CapabilityRegistry {
     return this.snapshot(options);
   }
 
-  async resolve(id, { requirements = {}, force = false } = {}) {
+  async resolve(id, { requirements = {}, force = false, preferOwned = true } = {}) {
     const capability = this.capabilities.get(id);
     if (!capability) throw Object.assign(new Error(`Unknown capability: ${id}`), { status: 404, code: 'UNKNOWN_CAPABILITY' });
     if (capability.lifecycle !== 'active') {
@@ -180,7 +206,7 @@ export class CapabilityRegistry {
       .filter((binding) => binding.status === 'active')
       .filter((binding) => availableTools.has(binding.tool))
       .filter((binding) => featureMatch(binding, requirements))
-      .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id));
+      .sort((a, b) => bindingScore(b, preferOwned) - bindingScore(a, preferOwned) || a.id.localeCompare(b.id));
 
     if (!candidates.length) {
       throw Object.assign(new Error(`No available implementation satisfies ${id}`), {
@@ -192,8 +218,9 @@ export class CapabilityRegistry {
 
     return {
       capability,
-      binding: publicBinding(candidates[0], true),
-      alternatives: candidates.slice(1).map((binding) => publicBinding(binding, true)),
+      routingPolicy: { preferOwned },
+      binding: publicBinding(candidates[0], true, preferOwned),
+      alternatives: candidates.slice(1).map((binding) => publicBinding(binding, true, preferOwned)),
       refreshedAt: toolSnapshot.refreshedAt
     };
   }
@@ -207,6 +234,7 @@ export class CapabilityRegistry {
       catalogVersion: this.catalogVersion,
       provider: resolved.binding.provider,
       binding: resolved.binding.id,
+      economics: resolved.binding.economics,
       tool: resolved.binding.tool,
       durationMs: Date.now() - startedAt,
       result
@@ -229,7 +257,8 @@ export class CapabilityRegistry {
           'mccluster/risk': capability.risk,
           'mccluster/execution': capability.execution,
           'mccluster/approval': capability.approval,
-          'mccluster/providers': capability.providers
+          'mccluster/providers': capability.providers,
+          'mccluster/routingPolicy': snapshot.routingPolicy
         }
       }));
   }
