@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>PRIM3 · Training Range 01</title>
+  <meta name="description" content="PRIM3 Training Range 01 applies Security Foundations and Risk through a deterministic practical mission.">
+  <link rel="canonical" href="https://matthew.mccluster.org/prim3-range.html">
+  <link rel="icon" type="image/png" href="assets/img/prim3-tab.png">
+  <meta name="theme-color" content="#030303">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/prim3-range.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+</head>
+<body class="prim3-range-page">
+  <header class="range-topbar">
+    <a class="range-home" href="prim3.html">PRIM3 LMS</a>
+    <div class="range-brand">
+      <img src="assets/img/prim3-tab.png" alt="" width="54" height="54">
+      <div><strong>PRIM3</strong><span>Training Range 01</span></div>
+    </div>
+    <span id="rangeSyncStatus" class="range-sync" data-kind="neutral">Connecting</span>
+  </header>
+
+  <section id="rangeGate" class="range-gate">
+    <div class="range-gate-card">
+      <img src="assets/img/prim3-tab.png" alt="" width="96" height="96">
+      <p class="range-kicker">MISSION GATE</p>
+      <h1 id="rangeGateTitle">Loading Training Range 01</h1>
+      <p id="rangeGateCopy">Checking M Account and Principles progress.</p>
+      <a id="rangeGateAction" class="range-primary-link" href="account.html" hidden>Open M Account</a>
+    </div>
+  </section>
+
+  <main id="rangeShell" class="range-shell" hidden>
+    <section id="rangeBriefing" class="range-briefing">
+      <div class="range-hero">
+        <div>
+          <p class="range-kicker">M · MISSIONS</p>
+          <h1>Training Range 01<br><span>Risk and Controls</span></h1>
+          <p>This simulator applies Module M01 after instruction. Technical truth is selected before deployment and remains fixed for the entire attempt.</p>
+        </div>
+        <div class="range-contract">
+          <span>PRINCIPLES REQUIRED</span>
+          <span>DETERMINISTIC VERIFICATION</span>
+          <span>NO STORY CONSEQUENCES</span>
+        </div>
+      </div>
+
+      <section class="range-readiness" aria-labelledby="readinessTitle">
+        <div class="range-section-head">
+          <p class="range-kicker">MISSION READINESS PROFILE</p>
+          <h2 id="readinessTitle">Your preparation for this attempt</h2>
+          <p id="readinessNote"></p>
+        </div>
+        <div class="range-readiness-grid">
+          <article><small>Principles readiness</small><b id="readinessValue">0%</b></article>
+          <article><small>Technical challenge</small><b id="technicalValue">FOUNDATION</b></article>
+          <article><small>Scaffolding</small><b id="scaffoldingValue">HIGH</b></article>
+          <article><small>Preparation credits</small><b id="creditValue">0</b></article>
+        </div>
+      </section>
+
+      <section class="range-loadout">
+        <div class="range-section-head">
+          <p class="range-kicker">FAIRNESS FLOOR</p>
+          <h2>Required tools stay available.</h2>
+          <p>Low mastery can increase support. It never removes a tool required to solve the mission fairly.</p>
+        </div>
+        <ul id="toolList" class="range-tool-list"></ul>
+      </section>
+
+      <section class="range-prep">
+        <div class="range-section-head">
+          <p class="range-kicker">PREPARATION CREDITS</p>
+          <h2>Spend earned preparation before deployment.</h2>
+          <p id="prepHelp"></p>
+        </div>
+        <div id="prepList" class="range-prep-list"></div>
+      </section>
+
+      <section class="range-mission-card">
+        <div>
+          <p class="range-kicker">COMPILED VARIANT <span id="briefVariant"></span></p>
+          <h2 id="briefTitle"></h2>
+          <p id="briefCopy"></p>
+        </div>
+        <aside id="rangeHistory" class="range-history" hidden></aside>
+        <button id="launchRange" class="range-primary" type="button">Deploy Training Range 01</button>
+      </section>
+    </section>
+
+    <section id="rangeMission" class="range-mission" hidden>
+      <header class="range-mission-head">
+        <div>
+          <p class="range-kicker">ACTIVE MISSION · <span id="variantValue"></span></p>
+          <h1 id="missionTitle"></h1>
+          <p id="missionBrief"></p>
+        </div>
+        <div class="range-clock-grid" aria-label="Mission state">
+          <article><small>Window</small><b id="windowValue">8</b></article>
+          <article><small>Mission state</small><b id="missionState">STABLE</b></article>
+          <article><small>Evidence trace</small><b id="traceValue">0 of 4</b></article>
+        </div>
+      </header>
+
+      <div class="range-runtime-layout">
+        <aside class="range-runtime-tools">
+          <p class="range-kicker">ACTIVE TOOLS</p>
+          <div><b>Evidence Viewer</b><span>Observe and compare sources.</span></div>
+          <div><b>Risk Register</b><span>Classify threat, vulnerability, likelihood, impact, and objective.</span></div>
+          <div><b>Control Catalog</b><span>Select and validate a proportional control.</span></div>
+          <a href="prim3.html">Open Principles reference</a>
+        </aside>
+        <section class="range-runtime-main">
+          <p id="rangeMessage" class="range-message" role="status" hidden></p>
+          <div id="rangeStageBody"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer class="range-footer">
+    <strong>PRIM3</strong>
+    <span>Principles · Rhythm · Immersion · Missions</span>
+  </footer>
+
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/prim3-range-core.js?v=__STAMP__"></script>
+  <script src="js/prim3-range.js?v=__STAMP__"></script>
+</body>
+</html>
