@@ -1,14 +1,10 @@
 // CONTEXT-QUERY — authenticated search of the private cross-model context plane.
-// Reconciled from Claude's verified identity/tenant boundary and Grok's canonical
-// ai_retrieve RPC/schema. Browser callers never receive service credentials and
-// never receive direct access to the private ai_context schema.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
+import postgres from 'npm:postgres@3.4.5'
 import { authzResponse, verifyCaller } from '../_shared/authz.ts'
 
-const SB = Deno.env.get('SUPABASE_URL') ?? ''
-const SRV = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const sql = postgres(Deno.env.get('SUPABASE_DB_URL')!, { prepare: false, max: 1 })
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -17,63 +13,75 @@ function json(data: unknown, status = 200) {
   })
 }
 
-async function serviceGet(path: string) {
-  const r = await fetch(`${SB}/rest/v1/${path}`, {
-    headers: { apikey: SRV, authorization: `Bearer ${SRV}` },
-  })
-  const data = await r.json().catch(() => null)
-  if (!r.ok) throw new Error(`database read failed (${r.status})`)
-  return data
-}
-
-async function serviceRpc(name: string, body: Record<string, unknown>) {
-  const r = await fetch(`${SB}/rest/v1/rpc/${name}`, {
-    method: 'POST',
-    headers: {
-      apikey: SRV,
-      authorization: `Bearer ${SRV}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
-  const data = await r.json().catch(() => null)
-  if (!r.ok) throw new Error(data?.message || `${name} failed (${r.status})`)
-  return data
-}
-
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'POST required' }, 405)
-  if (!SB || !SRV) return json({ error: 'not configured' }, 503)
 
-  let caller
+  let subject: string
   try {
-    caller = await verifyCaller(req)
+    subject = (await verifyCaller(req)).id
   } catch (e) {
     return authzResponse(e, {}) ?? json({ error: 'authentication failed' }, 401)
   }
 
-  const body: { org_id?: string; query?: string; limit?: number } = await req.json().catch(() => ({}))
-  const orgId = String(body.org_id ?? '').trim()
-  const query = String(body.query ?? '').trim().slice(0, 4000)
-  const limit = Math.min(Math.max(Number(body.limit ?? 12) || 12, 1), 32)
-  if (!UUID.test(orgId)) return json({ error: 'valid org_id required' }, 400)
-  if (!query) return json({ error: 'query required' }, 400)
+  let body: { org_id?: string; query?: string; limit?: number; include_messages?: boolean; include_memories?: boolean }
+  try { body = await req.json() } catch { return json({ error: 'invalid JSON' }, 400) }
+
+  const orgId = body.org_id
+  const query = body.query?.trim()
+  const limit = Math.min(Math.max(body.limit ?? 12, 1), 50)
+  if (!orgId || !query) return json({ error: 'org_id and query are required' }, 400)
 
   try {
-    const membership = await serviceGet(
-      `org_members?org_id=eq.${encodeURIComponent(orgId)}&profile_id=eq.${encodeURIComponent(caller.id)}&select=role&limit=1`,
-    )
-    if (!membership?.length) return json({ error: 'not authorized for requested organization' }, 403)
+    const member = await sql`
+      select 1 from public.org_members
+      where org_id = ${orgId}::uuid and profile_id = ${subject}::uuid
+      limit 1
+    `
+    if (!member.length) return json({ error: 'not authorized for requested organization' }, 403)
 
-    // ai_retrieve is deliberately service-role-only. This authenticated gateway
-    // enforces tenant membership before invoking it, keeping ai_context private.
-    const result = await serviceRpc('ai_retrieve', {
-      p_org: orgId,
-      p_query: query,
-      p_limit: limit,
-    })
+    const includeMessages = body.include_messages !== false
+    const includeMemories = body.include_memories !== false
+    const [messages, memories] = await Promise.all([
+      includeMessages ? sql`
+        select
+          m.id,
+          m.conversation_id,
+          m.role,
+          m.model,
+          m.content,
+          m.occurred_at,
+          c.title as conversation_title,
+          s.provider,
+          ts_rank_cd(m.fts, websearch_to_tsquery('english', ${query})) as rank
+        from ai_context.messages m
+        join ai_context.conversations c on c.id = m.conversation_id
+        join ai_context.sources s on s.id = c.source_id
+        where m.org_id = ${orgId}::uuid
+          and m.fts @@ websearch_to_tsquery('english', ${query})
+        order by rank desc, coalesce(m.occurred_at, m.created_at) desc
+        limit ${limit}
+      ` : Promise.resolve([]),
+      includeMemories ? sql`
+        select
+          id,
+          memory_type,
+          subject,
+          content,
+          confidence,
+          status,
+          sensitivity,
+          last_confirmed_at,
+          ts_rank_cd(fts, websearch_to_tsquery('english', ${query})) as rank
+        from ai_context.memory_items
+        where org_id = ${orgId}::uuid
+          and status = 'active'
+          and fts @@ websearch_to_tsquery('english', ${query})
+        order by rank desc, confidence desc, coalesce(last_confirmed_at, updated_at) desc
+        limit ${limit}
+      ` : Promise.resolve([]),
+    ])
 
-    return json({ query, ...result })
+    return json({ query, messages, memories })
   } catch (error) {
     console.error(error)
     return json({ error: 'context query failed', detail: error instanceof Error ? error.message : String(error) }, 500)
