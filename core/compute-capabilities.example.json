@@ -1,0 +1,42 @@
+{
+  "max_leases": 1,
+  "labels": {
+    "site": "home-gpu-1",
+    "trust": "owned"
+  },
+  "capabilities": [
+    {
+      "capability": "model3d.generate",
+      "implementation": "hunyuan3d.2-1.local",
+      "backend": "comfyui",
+      "model": "Hunyuan3D 2.1",
+      "version": "2.1",
+      "features": {
+        "text_to_3d": true,
+        "image_to_3d": true,
+        "pbr": true
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "prompt": { "type": "string" },
+          "image_url": { "type": "string" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "asset_url": { "type": "string" },
+          "format": { "type": "string" }
+        }
+      },
+      "max_concurrency": 1,
+      "min_vram_bytes": 20000000000,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:8188/mccluster/execute",
+        "timeout_ms": 3600000
+      }
+    }
+  ]
+}

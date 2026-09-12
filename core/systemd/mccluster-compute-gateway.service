@@ -1,0 +1,43 @@
+[Unit]
+Description=McCluster Core self-hosted compute gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mccluster-core
+Group=mccluster-core
+SupplementaryGroups=mccluster-work
+WorkingDirectory=/opt/mccluster/core
+Environment=HOME=/var/lib/mccluster-core
+Environment=CORE_COMPUTE_HOST=127.0.0.1
+Environment=CORE_COMPUTE_PORT=4788
+EnvironmentFile=/etc/mccluster/core.env
+ExecStart=/usr/bin/node /opt/mccluster/core/src/compute/gateway.mjs
+Restart=always
+RestartSec=5
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictNamespaces=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+ReadWritePaths=/var/lib/mccluster-core
+MemoryMax=768M
+CPUQuota=150%
+TasksMax=192
+
+[Install]
+WantedBy=multi-user.target
