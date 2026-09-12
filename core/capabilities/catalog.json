@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-12.1",
+  "catalogVersion": "2026-09-12.2",
   "capabilities": [
     {
       "id": "system.health",
@@ -246,10 +246,10 @@
     }
   ],
   "bindings": [
-    {"id": "worker.health", "capability": "system.health", "provider": "mccluster-worker", "tool": "mccluster.health", "transport": "http", "status": "active", "priority": 100, "features": {"authenticated": false}},
-    {"id": "worker.media-model-search", "capability": "media.models.search", "provider": "mccluster-worker", "tool": "mccluster.media.models.search", "transport": "mcp-http", "status": "active", "priority": 100, "features": {"registry": true}},
-    {"id": "worker.media-recommend", "capability": "media.model.recommend", "provider": "mccluster-worker", "tool": "mccluster.media.recommend", "transport": "mcp-http", "status": "active", "priority": 100, "features": {"quality_routing": true, "budget_preference": true}},
-    {"id": "worker.media-generate", "capability": "media.generate", "provider": "mccluster-worker", "tool": "mccluster.media.generate", "transport": "mcp-http", "status": "active", "priority": 100, "features": {"async": true, "budgeted": true, "lineage": true, "authenticated": true}},
-    {"id": "worker.media-job-get", "capability": "media.job.get", "provider": "mccluster-worker", "tool": "mccluster.media.job.get", "transport": "mcp-http", "status": "active", "priority": 100, "features": {"lineage": true, "costs": true, "authenticated": true}}
+    {"id": "worker.health", "capability": "system.health", "provider": "mccluster-worker", "tool": "mccluster.health", "transport": "http", "status": "active", "priority": 100, "economics": {"hosting": "owned", "billing": "free"}, "features": {"authenticated": false}},
+    {"id": "worker.media-model-search", "capability": "media.models.search", "provider": "mccluster-worker", "tool": "mccluster.media.models.search", "transport": "mcp-http", "status": "active", "priority": 100, "economics": {"hosting": "owned", "billing": "free"}, "features": {"registry": true}},
+    {"id": "worker.media-recommend", "capability": "media.model.recommend", "provider": "mccluster-worker", "tool": "mccluster.media.recommend", "transport": "mcp-http", "status": "active", "priority": 100, "economics": {"hosting": "owned", "billing": "free"}, "features": {"quality_routing": true, "budget_preference": true}},
+    {"id": "worker.media-generate", "capability": "media.generate", "provider": "mccluster-worker", "tool": "mccluster.media.generate", "transport": "mcp-http", "status": "active", "priority": 100, "economics": {"hosting": "external", "billing": "metered"}, "features": {"async": true, "budgeted": true, "lineage": true, "authenticated": true, "upstream": "fal"}},
+    {"id": "worker.media-job-get", "capability": "media.job.get", "provider": "mccluster-worker", "tool": "mccluster.media.job.get", "transport": "mcp-http", "status": "active", "priority": 100, "economics": {"hosting": "owned", "billing": "free"}, "features": {"lineage": true, "costs": true, "authenticated": true}}
   ]
 }
