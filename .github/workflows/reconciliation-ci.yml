@@ -38,6 +38,7 @@ jobs:
           node --check workers/mccluster/src/client.js
           node --check workers/mccluster/src/connect.js
           node --check workers/mccluster/src/ai/router.js
+          node --check workers/mccluster/src/ai/objectives.js
           node --check workers/mccluster/src/media/router.js
           node --check workers/mccluster/src/social/router.js
           node --check workers/mccluster/src/prim3/index.js
@@ -45,6 +46,11 @@ jobs:
           node --check js/prim3-sync.js
           node --check js/equity-uprise-institutional.js
           node --check js/equity-uprise-fellowship-live.js
+      - name: Assert AI ingestion handoff contract
+        run: |
+          grep -F "queueObjectiveSynthesis" workers/mccluster/src/ai/router.js
+          grep -F "job_type: 'objective_synthesis'" workers/mccluster/src/ai/objectives.js
+          grep -F "synthesize_objectives === false" workers/mccluster/src/ai/objectives.js
       - name: Reject unresolved reconciliation markers
         run: |
           if git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- . ':!*.lock'; then
@@ -72,6 +78,9 @@ jobs:
       - name: Test dependency-aware objective plans
         working-directory: core
         run: npm run test:plans
+      - name: Test conversation objective synthesis
+        working-directory: core
+        run: npm run test:synthesis
       - name: Assert Core security and capability guardrails
         run: |
           grep -F "draft-only" core/src/executors/code-patch.mjs
@@ -89,6 +98,10 @@ jobs:
           grep -F "dependencies.state === 'failed'" core/src/supabase.mjs
           grep -F 'Never propose code_patch' core/src/executors/objective-reflection.mjs
           grep -F 'Do not propose code_patch' core/src/executors/objective-plan.mjs
+          grep -F "['objective_synthesis', objectiveSynthesis]" core/src/runner.mjs
+          grep -F "score < 0.72" core/src/objective-synthesis-policy.mjs
+          grep -F 'Never mark objectives completed or cancelled' core/src/executors/objective-synthesis.mjs
+          grep -F "status: 'active'" core/src/objective-store.mjs
           grep -F 'OnCalendar=*-*-* 02:30:00 America/New_York' core/systemd/mccluster-core-reflection.timer
           grep -F '"id": "video.generate"' core/capabilities/catalog.json
           grep -F '"id": "model3d.generate"' core/capabilities/catalog.json
