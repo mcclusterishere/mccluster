@@ -14,6 +14,19 @@ Allowlisted executors:
 
 Existing unsupported queue types remain queued. Core does not fake completion for jobs whose real data/tool adapter has not been built yet.
 
+## Capability registry and tool bus
+
+Core now separates **what McCluster can do** from **which provider currently does it**.
+
+- `core/capabilities/catalog.json` defines stable McCluster capability ids such as `video.generate`, `model3d.generate`, `code.build`, and `deploy.preview`.
+- `core/src/capabilities/registry.mjs` resolves active provider bindings against tools that are actually discoverable right now.
+- `core/src/tools/registry.mjs` is the lower-level execution bus for MCP and ordinary HTTP tools.
+- `core/src/tool-broker.mjs` exposes both layers on loopback over MCP and HTTP.
+
+Products and agents should prefer stable capability ids. Provider-specific/raw tools remain available for diagnostics and expert operation. A planned capability stays visible in the catalog but fails closed until a real implementation is bound and discoverable.
+
+See `docs/control-plane/CAPABILITY-REGISTRY.md` and `core/TOOL-BROKER.md` for the contracts.
+
 ## Process isolation
 
 There are two Unix identities plus one shared worktree group:
@@ -147,6 +160,7 @@ sudo install -m 0644 core/systemd/mccluster-opencode.service /etc/systemd/system
 sudo install -m 0644 core/systemd/mccluster-core-runner.service /etc/systemd/system/
 sudo install -m 0644 core/systemd/mccluster-core-digest.service /etc/systemd/system/
 sudo install -m 0644 core/systemd/mccluster-core-digest.timer /etc/systemd/system/
+sudo install -m 0644 core/systemd/mccluster-tool-broker.service /etc/systemd/system/
 
 sudo mkdir -p /etc/systemd/system/ollama.service.d
 sudo install -m 0644 core/systemd/ollama-mccluster.conf \
@@ -155,6 +169,7 @@ sudo install -m 0644 core/systemd/ollama-mccluster.conf \
 sudo systemctl daemon-reload
 sudo systemctl restart ollama
 sudo systemctl enable --now mccluster-opencode.service
+sudo systemctl enable --now mccluster-tool-broker.service
 sudo systemctl enable --now mccluster-core-runner.service
 sudo systemctl enable --now mccluster-core-digest.timer
 ```
@@ -168,10 +183,12 @@ Authenticate GitHub **only for `mccluster-core`** using a credential mechanism y
 ## Verify
 
 ```bash
-sudo systemctl status ollama mccluster-opencode mccluster-core-runner --no-pager
+sudo systemctl status ollama mccluster-opencode mccluster-tool-broker mccluster-core-runner --no-pager
 sudo systemctl list-timers mccluster-core-digest.timer
 curl -s http://127.0.0.1:11434/api/tags | jq '.models[].name'
-sudo journalctl -u mccluster-core-runner -u mccluster-opencode -n 100 --no-pager
+curl -s http://127.0.0.1:4777/health | jq
+curl -s http://127.0.0.1:4777/v1/capabilities | jq '.capabilities[] | {id,available,providers}'
+sudo journalctl -u mccluster-core-runner -u mccluster-opencode -u mccluster-tool-broker -n 100 --no-pager
 ```
 
 The runner logs one JSON object per lifecycle event, so journald can be shipped later without changing the application protocol.
