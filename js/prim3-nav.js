@@ -6,7 +6,7 @@
     return src ? src.replace(/js\/prim3-nav\.js.*$/, "") : "";
   })();
   var target = ROOT + "prim3.html";
-  var book = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5c2.9-.8 5.5-.4 8 1.2v12c-2.5-1.6-5.1-2-8-1.2z"/><path d="M20 5.5c-2.9-.8-5.5-.4-8 1.2v12c2.5-1.6 5.1-2 8-1.2z"/></svg>';
+  var approvedMark = '<img class="appbar__we appbar__prim3" src="' + ROOT + 'assets/img/prim3-tab.png" alt="">';
 
   function go(event) {
     event.preventDefault();
@@ -27,7 +27,10 @@
       tab.setAttribute("data-prim3-nav", "1");
       tab.setAttribute("href", target);
       tab.setAttribute("aria-label", "PRIM3 curriculum");
-      tab.innerHTML = book + "<span>PRIM3</span>";
+      /* The brand mark is owner-approved artwork cropped/resampled from the
+         approved PRIM3 lockup. Never replace this with a traced SVG or a
+         generic cyber glyph. */
+      tab.innerHTML = approvedMark + "<span>PRIM3</span>";
       if (location.pathname.split("/").pop() === "prim3.html") tab.classList.add("is-here");
 
       /* tabbar.js still owns the historical `sites` wing in older page
