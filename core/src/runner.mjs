@@ -3,12 +3,14 @@ import { repoHealth } from './executors/repo-health.mjs';
 import { localAnalysis } from './executors/local-analysis.mjs';
 import { codePatch } from './executors/code-patch.mjs';
 import { objectiveReflection } from './executors/objective-reflection.mjs';
+import { portfolioPlan } from './executors/portfolio-plan.mjs';
 
 const executors = new Map([
   ['repo_health', repoHealth],
   ['local_analysis', localAnalysis],
   ['code_patch', codePatch],
   ['objective_reflection', objectiveReflection],
+  ['portfolio_plan', portfolioPlan],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
