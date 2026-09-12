@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule McCluster Core nightly objective reflection
+
+[Timer]
+OnCalendar=*-*-* 02:30:00 America/New_York
+Persistent=true
+RandomizedDelaySec=180
+Unit=mccluster-core-reflection.service
+
+[Install]
+WantedBy=timers.target
