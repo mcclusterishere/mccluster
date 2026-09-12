@@ -1,0 +1,255 @@
+{
+  "schemaVersion": "1.0",
+  "catalogVersion": "2026-09-12.2",
+  "capabilities": [
+    {
+      "id": "system.health",
+      "title": "System health",
+      "description": "Read health from the canonical McCluster control-plane edge.",
+      "domain": "system",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "properties": {}, "additionalProperties": false},
+      "outputSchema": {"type": "object"},
+      "tags": ["control-plane", "health"]
+    },
+    {
+      "id": "media.models.search",
+      "title": "Search media models",
+      "description": "Discover enabled generative-media implementations by provider or media capability.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "capability": {"type": "string"},
+          "provider": {"type": "string"}
+        }
+      },
+      "outputSchema": {"type": "object"},
+      "tags": ["media", "discovery"]
+    },
+    {
+      "id": "media.model.recommend",
+      "title": "Recommend a media model",
+      "description": "Rank media implementations for task fit, controls, quality, speed, and price.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {
+        "type": "object",
+        "required": ["capability"],
+        "properties": {
+          "capability": {"type": "string"},
+          "preference": {"type": "string", "enum": ["quality", "balanced", "speed", "price"]},
+          "required": {"type": "object"},
+          "top_k": {"type": "integer", "minimum": 1, "maximum": 10}
+        }
+      },
+      "outputSchema": {"type": "object"},
+      "tags": ["media", "routing"]
+    },
+    {
+      "id": "media.generate",
+      "title": "Generate media with an explicit model",
+      "description": "Submit a tracked media-generation job through McCluster budget, cost, and lineage controls.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {
+        "type": "object",
+        "required": ["org_id", "model_id"],
+        "properties": {
+          "org_id": {"type": "string"},
+          "model_id": {"type": "string"},
+          "prompt": {"type": "string"},
+          "input": {"type": "object"},
+          "budget_cents": {"type": "number", "minimum": 0}
+        }
+      },
+      "outputSchema": {"type": "object"},
+      "tags": ["media", "generation", "budgeted"]
+    },
+    {
+      "id": "media.job.get",
+      "title": "Get media job",
+      "description": "Read a media job, provider result, costs, and asset lineage.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {
+        "type": "object",
+        "required": ["org_id", "job_id"],
+        "properties": {
+          "org_id": {"type": "string"},
+          "job_id": {"type": "string"}
+        }
+      },
+      "outputSchema": {"type": "object"},
+      "tags": ["media", "jobs", "lineage"]
+    },
+    {
+      "id": "image.generate",
+      "title": "Generate image",
+      "description": "Provider-independent image generation. Binding is added only after an implementation passes McCluster evaluation.",
+      "domain": "media.image",
+      "lifecycle": "planned",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "required": ["prompt"], "properties": {"prompt": {"type": "string"}, "references": {"type": "array"}, "budget_cents": {"type": "number", "minimum": 0}}},
+      "outputSchema": {"type": "object"},
+      "tags": ["media", "image"]
+    },
+    {
+      "id": "video.generate",
+      "title": "Generate video",
+      "description": "Provider-independent video generation for shots, trailers, and sequences.",
+      "domain": "media.video",
+      "lifecycle": "planned",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "required": ["prompt"], "properties": {"prompt": {"type": "string"}, "references": {"type": "array"}, "duration_seconds": {"type": "number"}, "aspect_ratio": {"type": "string"}, "budget_cents": {"type": "number", "minimum": 0}}},
+      "outputSchema": {"type": "object"},
+      "tags": ["media", "video", "prim3"]
+    },
+    {
+      "id": "audio.generate",
+      "title": "Generate audio",
+      "description": "Provider-independent voice, music, or sound-effect generation.",
+      "domain": "media.audio",
+      "lifecycle": "planned",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "required": ["prompt"], "properties": {"prompt": {"type": "string"}, "kind": {"type": "string", "enum": ["voice", "music", "sfx"]}, "budget_cents": {"type": "number", "minimum": 0}}},
+      "outputSchema": {"type": "object"},
+      "tags": ["media", "audio"]
+    },
+    {
+      "id": "model3d.generate",
+      "title": "Generate 3D model",
+      "description": "Generate a reusable 3D asset without exposing provider-specific request syntax to callers.",
+      "domain": "spatial.asset",
+      "lifecycle": "planned",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "properties": {"prompt": {"type": "string"}, "references": {"type": "array"}, "target_format": {"type": "string"}, "budget_cents": {"type": "number", "minimum": 0}}},
+      "outputSchema": {"type": "object"},
+      "tags": ["3d", "asset", "prim3"]
+    },
+    {
+      "id": "world.generate",
+      "title": "Generate navigable world",
+      "description": "Create a spatial environment or world representation for interactive experiences.",
+      "domain": "spatial.world",
+      "lifecycle": "planned",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "properties": {"prompt": {"type": "string"}, "references": {"type": "array"}, "budget_cents": {"type": "number", "minimum": 0}}},
+      "outputSchema": {"type": "object"},
+      "tags": ["3d", "world", "game", "prim3"]
+    },
+    {
+      "id": "research.web",
+      "title": "Research the web",
+      "description": "Gather current public evidence with source provenance for a bounded research objective.",
+      "domain": "research",
+      "lifecycle": "planned",
+      "execution": "async",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "required": ["objective"], "properties": {"objective": {"type": "string"}, "source_constraints": {"type": "object"}}},
+      "outputSchema": {"type": "object"},
+      "tags": ["research", "web", "provenance"]
+    },
+    {
+      "id": "repo.inspect",
+      "title": "Inspect repository",
+      "description": "Read repository state, tests, branches, and health without modifying source.",
+      "domain": "code",
+      "lifecycle": "planned",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "required": ["repository"], "properties": {"repository": {"type": "string"}}},
+      "outputSchema": {"type": "object"},
+      "tags": ["code", "repository"]
+    },
+    {
+      "id": "code.build",
+      "title": "Build code",
+      "description": "Produce a reviewed code change in an isolated workspace, returning a patch or draft PR rather than deploying it.",
+      "domain": "code",
+      "lifecycle": "planned",
+      "execution": "async",
+      "risk": "write",
+      "approval": "review-required",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "required": ["repository", "task"], "properties": {"repository": {"type": "string"}, "task": {"type": "string"}, "allowed_paths": {"type": "array", "items": {"type": "string"}}}},
+      "outputSchema": {"type": "object"},
+      "tags": ["code", "agent", "draft-pr"]
+    },
+    {
+      "id": "game.build",
+      "title": "Build game experience",
+      "description": "Compose code, assets, worlds, audio, and tests into a playable preview through a durable workflow.",
+      "domain": "game",
+      "lifecycle": "planned",
+      "execution": "async",
+      "risk": "write",
+      "approval": "review-required",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "required": ["brief"], "properties": {"brief": {"type": "string"}, "repository": {"type": "string"}, "budget_cents": {"type": "number", "minimum": 0}}},
+      "outputSchema": {"type": "object"},
+      "tags": ["game", "code", "media", "3d", "prim3"]
+    },
+    {
+      "id": "deploy.preview",
+      "title": "Deploy preview",
+      "description": "Create a non-production preview deployment from an approved build artifact or branch.",
+      "domain": "deployment",
+      "lifecycle": "planned",
+      "execution": "async",
+      "risk": "write",
+      "approval": "review-required",
+      "interfaces": ["http", "mcp", "agent"],
+      "inputSchema": {"type": "object", "required": ["repository", "ref"], "properties": {"repository": {"type": "string"}, "ref": {"type": "string"}}},
+      "outputSchema": {"type": "object"},
+      "tags": ["deployment", "preview"]
+    }
+  ],
+  "bindings": [
+    {"id": "worker.health", "capability": "system.health", "provider": "mccluster-worker", "tool": "mccluster.health", "transport": "http", "status": "active", "priority": 100, "economics": {"hosting": "owned", "billing": "free"}, "features": {"authenticated": false}},
+    {"id": "worker.media-model-search", "capability": "media.models.search", "provider": "mccluster-worker", "tool": "mccluster.media.models.search", "transport": "mcp-http", "status": "active", "priority": 100, "economics": {"hosting": "owned", "billing": "free"}, "features": {"registry": true}},
+    {"id": "worker.media-recommend", "capability": "media.model.recommend", "provider": "mccluster-worker", "tool": "mccluster.media.recommend", "transport": "mcp-http", "status": "active", "priority": 100, "economics": {"hosting": "owned", "billing": "free"}, "features": {"quality_routing": true, "budget_preference": true}},
+    {"id": "worker.media-generate", "capability": "media.generate", "provider": "mccluster-worker", "tool": "mccluster.media.generate", "transport": "mcp-http", "status": "active", "priority": 100, "economics": {"hosting": "external", "billing": "metered"}, "features": {"async": true, "budgeted": true, "lineage": true, "authenticated": true, "upstream": "fal"}},
+    {"id": "worker.media-job-get", "capability": "media.job.get", "provider": "mccluster-worker", "tool": "mccluster.media.job.get", "transport": "mcp-http", "status": "active", "priority": 100, "economics": {"hosting": "owned", "billing": "free"}, "features": {"lineage": true, "costs": true, "authenticated": true}}
+  ]
+}

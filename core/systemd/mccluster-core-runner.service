@@ -1,0 +1,40 @@
+[Unit]
+Description=McCluster Core durable job runner
+After=network-online.target mccluster-opencode.service
+Wants=network-online.target mccluster-opencode.service
+
+[Service]
+Type=simple
+User=mccluster-core
+Group=mccluster-core
+SupplementaryGroups=mccluster-work
+WorkingDirectory=/opt/mccluster/core
+Environment=HOME=/var/lib/mccluster-core
+EnvironmentFile=/etc/mccluster/core.env
+ExecStart=/usr/bin/node /opt/mccluster/core/src/runner.mjs
+Restart=always
+RestartSec=5
+UMask=0007
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictNamespaces=true
+SystemCallArchitectures=native
+
+ReadWritePaths=/srv/mccluster /var/lib/mccluster-core
+MemoryMax=3G
+CPUQuota=300%
+TasksMax=256
+
+[Install]
+WantedBy=multi-user.target
