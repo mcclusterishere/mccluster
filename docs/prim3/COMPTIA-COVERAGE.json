@@ -1,11 +1,18 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "status": "CANONICAL_CURRICULUM_COVERAGE_CONTRACT",
   "course": "prim3-foundation-v3",
   "instructional_module_count": 66,
   "foundation_module_count": 3,
   "song_aligned_module_count": 63,
   "source_unit_count": 21,
+  "mapped_lesson_count": 66,
+  "known_song_unit_count": 20,
+  "blocked_source_unit_count": 1,
+  "mapping_status": "ALL_FIXED_MODULES_PLANNED_WITH_U18_SOURCE_BLOCKED",
+  "lesson_map_markdown": "docs/prim3/LESSON-CERTIFICATION-MAP.md",
+  "lesson_map_json": "docs/prim3/LESSON-CERTIFICATION-MAP.json",
+  "source_concept_crosswalk_json": "docs/prim3/SONG-CONCEPT-CROSSWALK.json",
   "module_structure": {
     "M01-M03": "McCluster certification foundation with no PRIM3 song or episode attachment",
     "M04-M66": "Twenty one PRIM3 source units expanded into exactly three modules each",
@@ -18,36 +25,11 @@
       "exam": "SY0-701",
       "official_objective_document": "CompTIA Security+ SY0-701 Certification Exam Objectives",
       "domains": [
-        {
-          "domain": "1.0",
-          "name": "General Security Concepts",
-          "weight_percent": 12,
-          "objectives": ["1.1", "1.2", "1.3", "1.4"]
-        },
-        {
-          "domain": "2.0",
-          "name": "Threats, Vulnerabilities, and Mitigations",
-          "weight_percent": 22,
-          "objectives": ["2.1", "2.2", "2.3", "2.4", "2.5"]
-        },
-        {
-          "domain": "3.0",
-          "name": "Security Architecture",
-          "weight_percent": 18,
-          "objectives": ["3.1", "3.2", "3.3", "3.4"]
-        },
-        {
-          "domain": "4.0",
-          "name": "Security Operations",
-          "weight_percent": 28,
-          "objectives": ["4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9"]
-        },
-        {
-          "domain": "5.0",
-          "name": "Security Program Management and Oversight",
-          "weight_percent": 20,
-          "objectives": ["5.1", "5.2", "5.3", "5.4", "5.5", "5.6"]
-        }
+        {"domain":"1.0","name":"General Security Concepts","weight_percent":12,"objectives":["1.1","1.2","1.3","1.4"]},
+        {"domain":"2.0","name":"Threats, Vulnerabilities, and Mitigations","weight_percent":22,"objectives":["2.1","2.2","2.3","2.4","2.5"]},
+        {"domain":"3.0","name":"Security Architecture","weight_percent":18,"objectives":["3.1","3.2","3.3","3.4"]},
+        {"domain":"4.0","name":"Security Operations","weight_percent":28,"objectives":["4.1","4.2","4.3","4.4","4.5","4.6","4.7","4.8","4.9"]},
+        {"domain":"5.0","name":"Security Program Management and Oversight","weight_percent":20,"objectives":["5.1","5.2","5.3","5.4","5.5","5.6"]}
       ],
       "numbered_objective_count": 28
     },
@@ -56,36 +38,11 @@
       "exam": "N10-009",
       "official_objective_document": "CompTIA Network+ N10-009 Certification Exam Objectives",
       "domains": [
-        {
-          "domain": "1.0",
-          "name": "Networking Concepts",
-          "weight_percent": 23,
-          "objectives": ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8"]
-        },
-        {
-          "domain": "2.0",
-          "name": "Network Implementation",
-          "weight_percent": 20,
-          "objectives": ["2.1", "2.2", "2.3", "2.4"]
-        },
-        {
-          "domain": "3.0",
-          "name": "Network Operations",
-          "weight_percent": 19,
-          "objectives": ["3.1", "3.2", "3.3", "3.4", "3.5"]
-        },
-        {
-          "domain": "4.0",
-          "name": "Network Security",
-          "weight_percent": 14,
-          "objectives": ["4.1", "4.2", "4.3"]
-        },
-        {
-          "domain": "5.0",
-          "name": "Network Troubleshooting",
-          "weight_percent": 24,
-          "objectives": ["5.1", "5.2", "5.3", "5.4", "5.5"]
-        }
+        {"domain":"1.0","name":"Networking Concepts","weight_percent":23,"objectives":["1.1","1.2","1.3","1.4","1.5","1.6","1.7","1.8"]},
+        {"domain":"2.0","name":"Network Implementation","weight_percent":20,"objectives":["2.1","2.2","2.3","2.4"]},
+        {"domain":"3.0","name":"Network Operations","weight_percent":19,"objectives":["3.1","3.2","3.3","3.4","3.5"]},
+        {"domain":"4.0","name":"Network Security","weight_percent":14,"objectives":["4.1","4.2","4.3"]},
+        {"domain":"5.0","name":"Network Troubleshooting","weight_percent":24,"objectives":["5.1","5.2","5.3","5.4","5.5"]}
       ],
       "numbered_objective_count": 25
     }
@@ -95,62 +52,74 @@
     "numbered_objectives_required": "ALL",
     "official_bullets_required": "ALL",
     "official_nested_bullets_required": "ALL",
+    "planned_assignment_is_completion": false,
     "objective_complete_only_when": [
       "The objective and every official bullet and nested bullet beneath it are assigned to one or more of the fixed sixty six modules.",
       "The assigned material is taught in conventional learner facing lesson content rather than merely named in metadata.",
       "The learner must demonstrate the material through assessment, practice, lab work, scenario work, or an appropriate combination.",
-      "The coverage remains traceable from the objective inventory to the teaching module or modules."
+      "The coverage remains traceable from the objective inventory through the lesson map to the teaching and assessment artifact."
     ],
     "song_rule": "A PRIM3 song is a memory and refresher layer. It never substitutes for missing certification instruction.",
+    "source_rule": "Only concepts actually present in PRIM3 source material may be represented as song derived. Missing exam material is McCluster bridge curriculum.",
+    "unknown_source_rule": "U18 remains owner source required. M55 through M57 stay reserved and unmapped until canonical source is supplied, and mandatory exam completeness must not depend on those unknown slots.",
     "course_complete_only_when": "Every Security+ SY0-701 and Network+ N10-009 numbered objective, official bullet, and nested bullet satisfies the completion rule within the fixed sixty six modules."
   },
   "foundation_modules": [
     {
-      "module": "M01",
-      "title": "Security Foundations and Risk",
-      "song": null,
-      "episode": null,
-      "coverage_status": "PARTIAL",
-      "security_plus": ["1.1", "1.2", "1.3", "1.4"],
-      "network_plus": []
+      "module":"M01",
+      "title":"Security Foundations and Risk",
+      "song":null,
+      "episode":null,
+      "coverage_status":"PARTIAL",
+      "security_plus":["1.1","1.2","5.2"],
+      "network_plus":["4.1"]
     },
     {
-      "module": "M02",
-      "title": "Networking Foundations",
-      "song": null,
-      "episode": null,
-      "coverage_status": "PARTIAL",
-      "security_plus": [],
-      "network_plus": ["1.1", "1.2", "1.3", "1.4", "1.5"]
+      "module":"M02",
+      "title":"Networking Foundations",
+      "song":null,
+      "episode":null,
+      "coverage_status":"PARTIAL",
+      "security_plus":[],
+      "network_plus":["1.1","1.2","1.4","1.6","1.7","2.1","3.4","3.5","5.1"]
     },
     {
-      "module": "M03",
-      "title": "Identity, Cryptography and Access",
-      "song": null,
-      "episode": null,
-      "coverage_status": "PARTIAL",
-      "security_plus": ["1.4", "3.1", "4.6"],
-      "network_plus": ["4.1"]
+      "module":"M03",
+      "title":"Identity, Cryptography and Access",
+      "song":null,
+      "episode":null,
+      "coverage_status":"PARTIAL",
+      "security_plus":["1.4","3.3","4.6"],
+      "network_plus":["4.1"]
     }
   ],
   "authored_prim3_units": [
     {
-      "unit": "U01",
-      "song": "High Alert",
-      "episode": "The Blip",
-      "modules": ["M04", "M05", "M06"],
-      "coverage_status": "PARTIAL",
-      "security_plus": ["4.4", "4.8", "4.9"],
-      "network_plus": ["3.2", "5.1"]
+      "unit":"U01",
+      "song":"High Alert",
+      "episode":"The Blip",
+      "modules":["M04","M05","M06"],
+      "coverage_status":"PARTIAL",
+      "security_plus":["1.2","4.4","4.5","4.8","4.9","5.1"],
+      "network_plus":["1.4","3.1","3.2","3.4","4.1","5.1","5.5"]
     },
     {
-      "unit": "U02",
-      "song": "White Grey Black Hat",
-      "modules": ["M07", "M08", "M09"],
-      "coverage_status": "PARTIAL",
-      "security_plus": ["1.2", "2.5", "4.3", "5.1"],
-      "network_plus": ["4.1"]
+      "unit":"U02",
+      "song":"White Grey Black Hat",
+      "episode":"Permission Slip",
+      "modules":["M07","M08","M09"],
+      "coverage_status":"PARTIAL",
+      "security_plus":["2.1","4.3","5.1","5.3","5.5"],
+      "network_plus":["3.1","4.1","4.3"]
     }
+  ],
+  "planning_guarantees": [
+    "LESSON-CERTIFICATION-MAP.json contains exactly sixty six module records.",
+    "SONG-CONCEPT-CROSSWALK.json contains all twenty one source unit slots and leaves U18 empty rather than inventing owner source.",
+    "The planned module map assigns every one of the twenty eight Security+ numbered objectives at least once.",
+    "The planned module map assigns every one of the twenty five Network+ numbered objectives at least once.",
+    "Numbered objective assignment does not claim official bullet level completion.",
+    "Concepts that do not naturally map to either mandatory exam may remain enrichment rather than receiving a fabricated exam mapping."
   ],
   "authoring_rules": [
     "The course contains exactly sixty six modules.",
