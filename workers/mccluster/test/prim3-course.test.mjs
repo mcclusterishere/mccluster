@@ -7,6 +7,7 @@ import { dirname, resolve } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 const prim3Path = resolve(here, '..', 'src', 'prim3', 'index.js');
 const workerPath = resolve(here, '..', 'src', 'index.js');
+const frontendPath = resolve(here, '..', '..', '..', 'js', 'prim3.js');
 
 async function text(path) {
   return readFile(path, 'utf8');
@@ -21,6 +22,23 @@ test('PRIM3 ingestion keeps 21 canonical episode/song source units but expands t
   assert.match(source, /modules\.length !== INSTRUCTIONAL_MODULE_COUNT/);
   assert.match(source, /module_strategy: '3 instructional modules per episode\/song unit'/);
   assert.match(source, /module_count: modules\.length/);
+});
+
+test('Episode One is fully authored as three comprehensive modules with forbidden dash punctuation blocked', async () => {
+  const source = await text(frontendPath);
+  assert.doesNotThrow(() => new Function(source));
+  assert.match(source, /M01:\s*\{\s*title: "Alerts, Monitoring and Triage"/);
+  assert.match(source, /M02:\s*\{\s*title: "Scope, Authorization and Evidence"/);
+  assert.match(source, /M03:\s*\{\s*title: "Monitoring Infrastructure and Incident Response"/);
+  assert.match(source, /validateEpisodeOneCopy/);
+  assert.match(source, /lessonText/);
+  const start = source.indexOf('    M01:');
+  const end = source.indexOf('    M04:');
+  assert.ok(start >= 0 && end > start);
+  const episodeOne = source.slice(start, end);
+  assert.doesNotMatch(episodeOne, /[-\u2013\u2014]/);
+  assert.ok((episodeOne.match(/q:"/g) || []).length >= 30);
+  assert.ok((episodeOne.match(/\[\["/g) || []).length >= 3);
 });
 
 test('hat/box material is protected from being recompressed into one beginner lesson', async () => {
