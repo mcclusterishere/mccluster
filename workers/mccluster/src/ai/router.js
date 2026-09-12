@@ -1,4 +1,5 @@
 import { fail, reply } from '../lib/http.js';
+import { publishCloudflareEvent } from '../fabric/router.js';
 import { queueObjectiveSynthesis } from './objectives.js';
 
 const MAX_BODY = 512 * 1024;
@@ -88,6 +89,7 @@ export async function handleAiRequest(request, env, user) {
       ok: true,
       harness: 'ai_context-v2',
       durable_jobs: 'ops_agent_jobs',
+      fabric: 'three-node relay enabled for accepted conversation ingests',
       ingest: '/v1/ai/ingest',
       objective_synthesis: 'automatic after ingest unless synthesize_objectives=false',
       retrieve: '/v1/ai/retrieve',
@@ -111,6 +113,12 @@ export async function handleAiRequest(request, env, user) {
         query: 'context-query',
         decisions: 'context-decision'
       },
+      fabric: {
+        events: 'fabric_events',
+        receipts: 'fabric_receipts',
+        outbox: 'fabric_outbox',
+        nodes: ['supabase', 'cloudflare', 'ovh']
+      },
       execution: {
         table: 'ops_agent_jobs',
         jobs: { total, queued, running, failed },
@@ -124,6 +132,30 @@ export async function handleAiRequest(request, env, user) {
     if (!body.org_id) body.org_id = orgId;
     if (body.org_id !== orgId) return fail(request, env, 'cross-org ingestion denied', 403);
     const { status, data } = await callContextFunction(request, env, 'context-ingest', body);
+
+    let fabric;
+    try {
+      const receipt = data?.receipt || {};
+      fabric = await publishCloudflareEvent(env, {
+        event_id: receipt.id,
+        trace_id: receipt.conversation_id,
+        org_id: orgId,
+        kind: 'conversation.ingested',
+        payload: {
+          provider: body.provider,
+          external_conversation_id: body.external_conversation_id,
+          idempotency_key: body.idempotency_key,
+          source_url: body.source_url || null,
+          title: body.title || null,
+          messages: Array.isArray(body.messages) ? body.messages : [],
+          ingestion_receipt: receipt,
+          duplicate_ingest: Boolean(data?.duplicate)
+        }
+      });
+    } catch (error) {
+      fabric = { relayed: false, error: error instanceof Error ? error.message : String(error) };
+    }
+
     let synthesis;
     try {
       synthesis = await queueObjectiveSynthesis(env, { orgId, ingestBody: body, ingestResult: data });
@@ -132,6 +164,7 @@ export async function handleAiRequest(request, env, user) {
     }
     return reply(request, env, {
       ...(data && typeof data === 'object' ? data : { ingest_result: data }),
+      fabric,
       objective_synthesis: synthesis
     }, status);
   }
