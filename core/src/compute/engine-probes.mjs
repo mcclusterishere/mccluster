@@ -61,10 +61,45 @@ export async function probeExecutors(manifest, fetchImpl = fetch) {
   return health;
 }
 
-export function healthyCapabilities(manifest, health) {
-  return manifest.publicCapabilities.filter((capability) => health.get(capability.implementation)?.healthy === true);
+function largestVram(inventory) {
+  return Math.max(0, ...(Array.isArray(inventory?.gpus) ? inventory.gpus : []).map((gpu) => Number(gpu.vram_bytes || 0)));
 }
 
-export function engineHealthSummary(health) {
-  return [...health.entries()].map(([implementation, result]) => ({ implementation, ...result }));
+export function capabilityReadiness(manifest, health, inventory = { gpus: [] }) {
+  const maxVram = largestVram(inventory);
+  return manifest.publicCapabilities.map((capability) => {
+    const engine = health.get(capability.implementation);
+    if (engine?.healthy !== true) {
+      return { capability, ready: false, reason: engine?.reason || 'engine unavailable' };
+    }
+    const requiredVram = Number(capability.min_vram_bytes || 0);
+    if (requiredVram > 0 && maxVram < requiredVram) {
+      return {
+        capability,
+        ready: false,
+        reason: `insufficient VRAM: requires ${requiredVram}, detected ${maxVram}`
+      };
+    }
+    return { capability, ready: true, reason: null };
+  });
+}
+
+export function healthyCapabilities(manifest, health, inventory = { gpus: [] }) {
+  return capabilityReadiness(manifest, health, inventory)
+    .filter((entry) => entry.ready)
+    .map((entry) => entry.capability);
+}
+
+export function engineHealthSummary(health, readiness = []) {
+  const byImplementation = new Map();
+  for (const item of readiness) {
+    const list = byImplementation.get(item.capability.implementation) || [];
+    list.push({ capability: item.capability.capability, ready: item.ready, reason: item.reason });
+    byImplementation.set(item.capability.implementation, list);
+  }
+  return [...health.entries()].map(([implementation, result]) => ({
+    implementation,
+    ...result,
+    capabilities: byImplementation.get(implementation) || []
+  }));
 }
