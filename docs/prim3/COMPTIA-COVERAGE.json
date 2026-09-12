@@ -1,5 +1,5 @@
 {
-  "version": "2.2.0",
+  "version": "2.1.0",
   "status": "CANONICAL_CURRICULUM_COVERAGE_CONTRACT",
   "course": "prim3-foundation-v3",
   "instructional_module_count": 66,
@@ -10,6 +10,9 @@
   "known_song_unit_count": 20,
   "blocked_source_unit_count": 1,
   "mapping_status": "SURGICAL_TOPIC_ASSIGNMENT_ACTIVE_WITH_U18_SOURCE_BLOCKED",
+  "lesson_map_markdown": "docs/prim3/LESSON-CERTIFICATION-MAP.md",
+  "lesson_map_json": "docs/prim3/LESSON-CERTIFICATION-MAP.json",
+  "source_concept_crosswalk_json": "docs/prim3/SONG-CONCEPT-CROSSWALK.json",
   "curriculum_authorities": {
     "modality_contract": "docs/prim3/LEARNING-MODALITY-CONTRACT.md",
     "lesson_map_markdown": "docs/prim3/LESSON-CERTIFICATION-MAP.md",
@@ -62,7 +65,7 @@
     "exams": ["220-1201", "220-1202"],
     "numbered_objective_count": 63,
     "completion_gate": false,
-    "role": "Tracked IT foundation and overlap layer. Relevant A+ concepts are taught when they strengthen the learner's foundation or naturally overlap the mandatory exams and PRIM3 source material."
+    "role": "Tracked IT foundation and overlap layer. Relevant A+ concepts are taught when they strengthen the learner foundation or naturally overlap the mandatory exams and PRIM3 source material."
   },
   "raw_cross_certification_numbered_objective_reference_count": 116,
   "mastery_model": {
@@ -79,9 +82,10 @@
     "lab": "Applied practice through the PRIM3 video game. Detailed lab design is deferred and cannot reduce LEARN coverage."
   },
   "completion_contract": {
-    "numbered_objectives_required": "ALL_SECURITY_PLUS_AND_NETWORK_PLUS",
-    "official_bullets_required": "ALL_SECURITY_PLUS_AND_NETWORK_PLUS",
-    "official_nested_bullets_required": "ALL_SECURITY_PLUS_AND_NETWORK_PLUS",
+    "numbered_objectives_required": "ALL",
+    "official_bullets_required": "ALL",
+    "official_nested_bullets_required": "ALL",
+    "completion_scope": "MANDATORY_SECURITY_PLUS_AND_NETWORK_PLUS_ONLY",
     "planned_assignment_is_completion": false,
     "objective_complete_only_when": [
       "The objective and every official bullet and nested bullet beneath it are assigned to one or more of the fixed sixty six modules.",
