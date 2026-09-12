@@ -4,7 +4,7 @@
 
 Build a model-agnostic creative operating layer that can route image, video, audio, 3D, editing, upscaling, lip-sync, character-consistency, and multimodal workflows across multiple providers without locking McCluster to any single vendor.
 
-This is not a clone of any one product. The durable product is the orchestration layer: model registry, capability graph, routing, workflow composition, cost/latency/quality telemetry, private asset memory, reusable characters/styles, and agent/tool access.
+This is not a clone of any one product. The durable product is the orchestration layer: capability registry, model registry, capability graph, routing, workflow composition, cost/latency/quality telemetry, private asset memory, reusable characters/styles, and agent/tool access.
 
 ## Control-plane rule
 
@@ -14,10 +14,25 @@ The canonical system remains:
 - Cloudflare Worker: `mccluster` on `api.mccluster.org`
 - Supabase: `zmnhbrjyhxzhkxmhkexs`
 - Private shared AI memory: `ai_context`
+- Provider-independent capability namespace: `core/capabilities/catalog.json`
 
 Do not create a second backend or shadow asset database.
 
 ## Architecture
+
+### 0. Stable McCluster capabilities
+
+Website code, agents, and durable workflows should request McCluster-owned capability ids such as:
+
+- `image.generate`
+- `video.generate`
+- `audio.generate`
+- `model3d.generate`
+- `world.generate`
+
+They should not hard-code MiniMax, Veo, Runway, Meshy, Tripo, fal, or another vendor into the workflow contract. Provider/model names live in implementation bindings and the model registry.
+
+The capability registry answers **what can satisfy this intent right now?** The media model router then answers **which eligible implementation should win for this particular job?**
 
 ### 1. Provider adapters
 
@@ -32,7 +47,7 @@ Every provider implements the same normalized contract:
 
 Potential providers include direct vendor APIs plus aggregators such as fal.ai or Replicate. The router must never assume a specific provider owns a specific capability forever.
 
-### 2. Capability registry
+### 2. Capability and model registry
 
 A model is described by capabilities rather than marketing name alone.
 
@@ -94,6 +109,8 @@ The router should be able to:
 - retry with a fallback provider
 - escalate from cheap draft model to expensive final model
 - select separate models for separate stages of one workflow
+
+A provider receives an active binding only after it passes the McCluster evaluation harness for the relevant stable capability.
 
 ### 4. Workflow graph
 
@@ -178,31 +195,33 @@ Expert mode:
 
 Expose the media harness as tools through the McCluster agent layer / MCP-compatible surface.
 
-Suggested tools:
+Stable capability tools should lead:
+
+- `image.generate`
+- `video.generate`
+- `audio.generate`
+- `model3d.generate`
+- `world.generate`
+
+Supporting media tools remain available:
 
 - `media.models.search`
-- `media.generate.image`
-- `media.generate.video`
-- `media.edit.image`
-- `media.edit.video`
-- `media.upscale`
-- `media.audio.generate`
-- `media.character.create`
-- `media.workflow.create`
-- `media.workflow.run`
+- `media.model.recommend`
+- `media.generate`
 - `media.job.get`
+- `media.compare`
 - `media.asset.search`
 - `media.asset.get`
-- `media.compare`
 
-An attached model should never need to know provider-specific API syntax unless it explicitly asks for it.
+An attached model should never need to know provider-specific API syntax unless it explicitly asks for a raw implementation tool.
 
 ### 8. Telemetry and self-optimization
 
 For every job, track:
 
 - requested objective
-- selected provider/model
+- stable capability id
+- selected binding/provider/model
 - predicted cost
 - actual cost
 - queue time
@@ -219,7 +238,7 @@ Use this data to improve routing. Do not silently fine-tune or train on third-pa
 
 ### Phase 1 — Unified provider layer
 
-Start with one broad aggregator adapter and one or two direct APIs. Implement registry, normalized job schema, async jobs, callbacks, and private assets.
+Start with the capability registry, one broad aggregator adapter, and one or two direct APIs. Implement registry, normalized job schema, async jobs, callbacks, and private assets.
 
 ### Phase 2 — Workflow composer
 
