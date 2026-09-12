@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule McCluster Core Initiative OS nightly portfolio planning
+
+[Timer]
+OnCalendar=*-*-* 02:00:00 America/New_York
+Persistent=true
+RandomizedDelaySec=120
+Unit=mccluster-core-portfolio-plan.service
+
+[Install]
+WantedBy=timers.target
