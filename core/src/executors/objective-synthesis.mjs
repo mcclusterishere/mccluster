@@ -1,10 +1,5 @@
-import {
-  createObjective,
-  enqueueJob,
-  hasPendingJob,
-  recentObjectives,
-  updateObjective,
-} from '../supabase.mjs';
+import { enqueueJob, hasPendingJob, recentObjectives } from '../supabase.mjs';
+import { createObjective, updateObjective } from '../objective-store.mjs';
 import { extractJsonObject } from '../reflection-policy.mjs';
 import { normalizeObjectiveSynthesis } from '../objective-synthesis-policy.mjs';
 
