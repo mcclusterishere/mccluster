@@ -30,6 +30,17 @@ function computeRequirements(requirements = {}) {
   return Object.keys(features).length ? { features } : {};
 }
 
+export function normalizeComputeEnqueueResult(result) {
+  const task = result?.task || null;
+  if (!task) {
+    throw Object.assign(new Error('Failed to enqueue compute task'), {
+      status: 503,
+      code: 'COMPUTE_ENQUEUE_FAILED'
+    });
+  }
+  return { task, replayed: Boolean(result?.replayed) };
+}
+
 export async function discoverComputeTools() {
   const orgId = process.env.MCCLUSTER_ORG_ID;
   if (!orgId || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -62,8 +73,10 @@ export async function discoverComputeTools() {
       outputSchema: {
         type: 'object',
         properties: {
-          task: { type: 'object' }
-        }
+          task: { type: 'object' },
+          replayed: { type: 'boolean' }
+        },
+        required: ['task', 'replayed']
       },
       transport: 'compute',
       capabilityBinding: {
@@ -100,7 +113,7 @@ export async function discoverComputeTools() {
 }
 
 export async function callComputeTool(target, args = {}, options = {}) {
-  const task = await enqueueComputeTask({
+  const result = await enqueueComputeTask({
     orgId: target.orgId,
     capability: target.capability,
     implementation: target.implementation,
@@ -108,6 +121,7 @@ export async function callComputeTool(target, args = {}, options = {}) {
     requirements: computeRequirements(options.requirements || {}),
     priority: Number(options.priority || 0),
     maxAttempts: Number(options.maxAttempts || 3),
+    idempotencyKey: options.idempotencyKey || null,
     metadata: {
       source: options.source || 'mccluster-tool-bus',
       requested_at: new Date().toISOString(),
@@ -115,6 +129,5 @@ export async function callComputeTool(target, args = {}, options = {}) {
       advertised_concurrency_at_submit: target.maxConcurrency
     }
   });
-  if (!task) throw Object.assign(new Error('Failed to enqueue compute task'), { status: 503, code: 'COMPUTE_ENQUEUE_FAILED' });
-  return { task };
+  return normalizeComputeEnqueueResult(result);
 }
