@@ -126,6 +126,20 @@ function publicBinding(binding, available, preferOwned = true) {
   };
 }
 
+function liveBindings(staticBindings, toolSnapshot, capabilities) {
+  const bindings = [...staticBindings];
+  const ids = new Set(bindings.map((binding) => binding.id));
+  for (const tool of toolSnapshot.tools || []) {
+    const advertised = tool.capabilityBinding;
+    if (!advertised?.capability || !capabilities.has(advertised.capability)) continue;
+    const binding = normalizeBinding({ ...advertised, tool: tool.name }, capabilities);
+    if (ids.has(binding.id)) throw new Error(`Duplicate live capability binding id: ${binding.id}`);
+    ids.add(binding.id);
+    bindings.push(binding);
+  }
+  return bindings;
+}
+
 export class CapabilityRegistry {
   constructor({ toolRegistry, catalog, catalogPath } = {}) {
     if (!toolRegistry) throw new Error('CapabilityRegistry requires toolRegistry');
@@ -163,10 +177,11 @@ export class CapabilityRegistry {
   async snapshot({ force = false, preferOwned = true } = {}) {
     const toolSnapshot = await this.toolRegistry.list({ force });
     const availableTools = new Set(toolSnapshot.tools.map((tool) => tool.name));
+    const bindingsNow = liveBindings(this.bindings, toolSnapshot, this.capabilities);
     const capabilities = [];
 
     for (const capability of this.capabilities.values()) {
-      const bindings = this.bindings
+      const bindings = bindingsNow
         .filter((binding) => binding.capability === capability.id)
         .map((binding) => publicBinding(binding, availableTools.has(binding.tool), preferOwned));
       const activeBindings = bindings.filter((binding) => binding.status === 'active' && binding.available);
@@ -201,7 +216,8 @@ export class CapabilityRegistry {
 
     const toolSnapshot = await this.toolRegistry.list({ force });
     const availableTools = new Set(toolSnapshot.tools.map((tool) => tool.name));
-    const candidates = this.bindings
+    const bindingsNow = liveBindings(this.bindings, toolSnapshot, this.capabilities);
+    const candidates = bindingsNow
       .filter((binding) => binding.capability === id)
       .filter((binding) => binding.status === 'active')
       .filter((binding) => availableTools.has(binding.tool))
@@ -228,7 +244,11 @@ export class CapabilityRegistry {
   async call(id, args = {}, options = {}) {
     const resolved = await this.resolve(id, options);
     const startedAt = Date.now();
-    const result = await this.toolRegistry.call(resolved.binding.tool, args);
+    const result = await this.toolRegistry.call(resolved.binding.tool, args, {
+      ...options,
+      source: `capability:${id}`,
+      requirements: options.requirements || {}
+    });
     return {
       capability: id,
       catalogVersion: this.catalogVersion,
