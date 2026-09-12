@@ -1,0 +1,11 @@
+[Unit]
+Description=Send McCluster Core morning digest
+
+[Timer]
+OnCalendar=*-*-* 07:30:00 America/New_York
+Persistent=true
+RandomizedDelaySec=120
+Unit=mccluster-core-digest.service
+
+[Install]
+WantedBy=timers.target
