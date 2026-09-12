@@ -2,6 +2,7 @@ import http from 'node:http';
 import { COMPUTE_PROTOCOL, DEFAULT_CLOCK_SKEW_MS, validateCapabilityManifest, validateEnrollment, validateInventory, validateLoad, validateNodeId } from './protocol.mjs';
 import { keyFingerprint, nodeIdFromPublicKey, SIGNATURE_HEADERS, verifySignedRequest } from './signature.mjs';
 import { acceptNonce, claimLease, completeLease, enqueueComputeTask, enrollNode, failLease, heartbeatLease, heartbeatNode, listNodes, liveCapabilityImplementations, nodeById, startLease } from './store.mjs';
+import { assertJsonContentType, normalizeRequestId, parseIdempotencyKey, resolveScopedOrg, secureSecretEqual } from './http-security.mjs';
 
 const HOST = process.env.CORE_COMPUTE_HOST || '127.0.0.1';
 const PORT = Number(process.env.CORE_COMPUTE_PORT || 4788);
@@ -12,23 +13,30 @@ if (!['127.0.0.1', '::1', 'localhost'].includes(HOST)) {
   throw new Error('Compute gateway must bind to loopback; publish it through an authenticated reverse tunnel/proxy');
 }
 
-function json(res, status, body) {
+function json(res, status, body, extraHeaders = {}) {
   const payload = JSON.stringify(body);
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'content-length': Buffer.byteLength(payload),
     'cache-control': 'no-store',
-    'x-content-type-options': 'nosniff'
+    'x-content-type-options': 'nosniff',
+    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+    'referrer-policy': 'no-referrer',
+    ...extraHeaders
   });
   res.end(payload);
 }
 
 async function readBody(req) {
+  const declared = Number(req.headers['content-length']);
+  if (Number.isFinite(declared) && declared > BODY_LIMIT) {
+    throw Object.assign(new Error('Request body too large'), { status: 413, code: 'BODY_TOO_LARGE' });
+  }
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > BODY_LIMIT) throw Object.assign(new Error('Request body too large'), { status: 413 });
+    if (size > BODY_LIMIT) throw Object.assign(new Error('Request body too large'), { status: 413, code: 'BODY_TOO_LARGE' });
     chunks.push(chunk);
   }
   return Buffer.concat(chunks);
@@ -37,7 +45,7 @@ async function readBody(req) {
 function parseJson(bytes) {
   if (!bytes.length) return {};
   try { return JSON.parse(bytes.toString('utf8')); }
-  catch { throw Object.assign(new Error('Invalid JSON'), { status: 400 }); }
+  catch { throw Object.assign(new Error('Invalid JSON'), { status: 400, code: 'INVALID_JSON' }); }
 }
 
 function bearer(req) {
@@ -47,9 +55,12 @@ function bearer(req) {
 
 function requireSecret(req, envName, label) {
   const expected = process.env[envName];
-  if (!expected) throw Object.assign(new Error(`${label} is not configured`), { status: 503 });
-  const got = bearer(req);
-  if (!got || got !== expected) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+  if (!expected) throw Object.assign(new Error(`${label} is not configured`), { status: 503, code: 'AUTH_NOT_CONFIGURED' });
+  if (!secureSecretEqual(bearer(req), expected)) throw Object.assign(new Error('Unauthorized'), { status: 401, code: 'UNAUTHORIZED' });
+}
+
+function adminOrg(requested) {
+  return resolveScopedOrg(requested, process.env.MCCLUSTER_ORG_ID);
 }
 
 async function authenticateNode(req, url, bodyBytes) {
@@ -68,7 +79,7 @@ async function authenticateNode(req, url, bodyBytes) {
     bodyBytes,
     maxClockSkewMs: CLOCK_SKEW_MS
   });
-  if (verified.nodeId !== node.id) throw Object.assign(new Error('Node id mismatch'), { status: 401 });
+  if (verified.nodeId !== node.id) throw Object.assign(new Error('Node id mismatch'), { status: 401, code: 'NODE_ID_MISMATCH' });
   const replayExpiresAt = new Date(Date.parse(verified.timestamp) + CLOCK_SKEW_MS).toISOString();
   if (!await acceptNonce(node.id, verified.nonce, replayExpiresAt)) {
     throw Object.assign(new Error('Compute request nonce was already used'), { status: 409, code: 'REPLAY_DETECTED' });
@@ -88,20 +99,19 @@ async function route(req, res) {
     return json(res, 200, { ok: true, service: 'mccluster-compute-gateway', protocol: COMPUTE_PROTOCOL });
   }
 
+  if (req.method === 'POST') assertJsonContentType(req.headers['content-type']);
   const bodyBytes = await readBody(req);
   const body = parseJson(bodyBytes);
 
   if (url.pathname === '/v1/compute/enroll' && req.method === 'POST') {
     requireSecret(req, 'CORE_COMPUTE_ENROLL_TOKEN', 'Compute enrollment');
     const enrollment = validateEnrollment(body);
-    const canonicalOrg = process.env.MCCLUSTER_ORG_ID;
-    if (canonicalOrg && enrollment.org_id !== canonicalOrg) {
-      throw Object.assign(new Error('Enrollment token is not valid for that organization'), { status: 403 });
-    }
+    const scopedOrg = adminOrg(enrollment.org_id);
+    if (!scopedOrg) throw Object.assign(new Error('Enrollment organization is required'), { status: 400, code: 'ORG_REQUIRED' });
     const nodeId = nodeIdFromPublicKey(enrollment.public_key);
     const record = await enrollNode({
       id: nodeId,
-      org_id: enrollment.org_id,
+      org_id: scopedOrg,
       display_name: enrollment.display_name,
       public_key_pem: enrollment.public_key,
       key_fingerprint: keyFingerprint(enrollment.public_key),
@@ -122,30 +132,34 @@ async function route(req, res) {
 
   if (url.pathname === '/v1/compute/nodes' && req.method === 'GET') {
     requireSecret(req, 'CORE_COMPUTE_ADMIN_TOKEN', 'Compute admin');
-    return json(res, 200, { nodes: await listNodes({ orgId: url.searchParams.get('org_id') || process.env.MCCLUSTER_ORG_ID }) });
+    const orgId = adminOrg(url.searchParams.get('org_id'));
+    return json(res, 200, { nodes: await listNodes({ orgId }) });
   }
 
   if (url.pathname === '/v1/compute/capabilities' && req.method === 'GET') {
     requireSecret(req, 'CORE_COMPUTE_ADMIN_TOKEN', 'Compute admin');
-    return json(res, 200, { implementations: await liveCapabilityImplementations({ orgId: url.searchParams.get('org_id') || process.env.MCCLUSTER_ORG_ID }) });
+    const orgId = adminOrg(url.searchParams.get('org_id'));
+    return json(res, 200, { implementations: await liveCapabilityImplementations({ orgId }) });
   }
 
   if (url.pathname === '/v1/compute/tasks' && req.method === 'POST') {
     requireSecret(req, 'CORE_COMPUTE_ADMIN_TOKEN', 'Compute admin');
-    const orgId = body.org_id || process.env.MCCLUSTER_ORG_ID;
-    if (!orgId || !body.capability) throw Object.assign(new Error('org_id and capability are required'), { status: 400 });
-    const task = await enqueueComputeTask({
+    const orgId = adminOrg(body.org_id);
+    if (!orgId || !body.capability) throw Object.assign(new Error('org_id and capability are required'), { status: 400, code: 'TASK_INVALID' });
+    const idempotencyKey = parseIdempotencyKey(req.headers['idempotency-key']);
+    const { task, replayed } = await enqueueComputeTask({
       orgId,
       capability: body.capability,
       implementation: body.implementation || null,
       input: body.input || {},
       requirements: body.requirements || {},
       priority: body.priority || 0,
-      runAfter: body.run_after,
+      runAfter: body.run_after || null,
       maxAttempts: body.max_attempts || 3,
-      metadata: body.metadata || {}
+      metadata: body.metadata || {},
+      idempotencyKey
     });
-    return json(res, 202, { task });
+    return json(res, replayed ? 200 : 202, { task, replayed }, idempotencyKey ? { 'idempotency-replayed': replayed ? 'true' : 'false' } : {});
   }
 
   const node = await authenticateNode(req, url, bodyBytes);
@@ -179,7 +193,7 @@ async function route(req, res) {
 
   const parsed = leasePath(url);
   if (parsed && req.method === 'POST') {
-    if (!body.lease_token) throw Object.assign(new Error('lease_token is required'), { status: 400 });
+    if (!body.lease_token) throw Object.assign(new Error('lease_token is required'), { status: 400, code: 'LEASE_TOKEN_REQUIRED' });
     let result;
     if (parsed.action === 'start') result = await startLease(node.id, parsed.leaseId, body.lease_token, body.extend_seconds || 120);
     if (parsed.action === 'heartbeat') result = await heartbeatLease(node.id, parsed.leaseId, body.lease_token, body.progress || {}, body.extend_seconds || 120);
@@ -189,17 +203,21 @@ async function route(req, res) {
     return json(res, 200, { ok: true, result });
   }
 
-  return json(res, 404, { error: 'Not found' });
+  return json(res, 404, { error: 'Not found', code: 'NOT_FOUND' });
 }
 
 const server = http.createServer((req, res) => {
   const startedAt = Date.now();
+  const requestId = normalizeRequestId(req.headers['x-request-id']);
+  res.setHeader('x-request-id', requestId);
   route(req, res).catch((error) => {
-    console.error(JSON.stringify({ event: 'compute_gateway_error', message: error.message, code: error.code || null }));
-    if (!res.headersSent) json(res, Number(error.status || 500), { error: error.message || 'Compute gateway failure', code: error.code || null });
+    console.error(JSON.stringify({ event: 'compute_gateway_error', request_id: requestId, message: error.message, code: error.code || null }));
+    if (!res.headersSent) json(res, Number(error.status || 500), { error: error.message || 'Compute gateway failure', code: error.code || null, request_id: requestId });
     else res.end();
   }).finally(() => {
-    console.log(JSON.stringify({ event: 'compute_gateway_request', method: req.method, path: req.url, duration_ms: Date.now() - startedAt }));
+    let pathname = '/';
+    try { pathname = new URL(req.url || '/', `http://${HOST}:${PORT}`).pathname; } catch {}
+    console.log(JSON.stringify({ event: 'compute_gateway_request', request_id: requestId, method: req.method, path: pathname, status: res.statusCode, duration_ms: Date.now() - startedAt }));
   });
 });
 

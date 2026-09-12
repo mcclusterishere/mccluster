@@ -123,24 +123,26 @@ export async function failLease(nodeId, leaseId, leaseToken, error, retry = true
   }));
 }
 
-export async function enqueueComputeTask({ orgId, capability, implementation = null, input = {}, requirements = {}, priority = 0, runAfter, maxAttempts = 3, metadata = {} }) {
-  const body = {
-    org_id: orgId,
-    capability,
-    implementation,
-    input,
-    requirements,
-    priority: Number(priority || 0),
-    run_after: runAfter || new Date().toISOString(),
-    max_attempts: Math.max(1, Math.min(100, Number(maxAttempts || 3))),
-    metadata
-  };
-  const { body: rows = [] } = await rest('ops_compute_tasks', {
-    method: 'POST',
-    headers: { Prefer: 'return=representation' },
-    body: JSON.stringify(body)
+export async function enqueueComputeTask({ orgId, capability, implementation = null, input = {}, requirements = {}, priority = 0, runAfter = null, maxAttempts = 3, metadata = {}, idempotencyKey = null }) {
+  const result = await rpc('compute_enqueue_task', {
+    p_org_id: orgId,
+    p_capability: capability,
+    p_implementation: implementation,
+    p_input: input,
+    p_requirements: requirements,
+    p_priority: Number(priority || 0),
+    p_run_after: runAfter || null,
+    p_max_attempts: Math.max(1, Math.min(100, Number(maxAttempts || 3))),
+    p_metadata: metadata,
+    p_idempotency_key: idempotencyKey
   });
-  return rows[0] || null;
+  if (result?.conflict) {
+    throw Object.assign(new Error('Idempotency-Key was already used for a different compute task request'), {
+      status: 409,
+      code: 'IDEMPOTENCY_CONFLICT'
+    });
+  }
+  return { task: result?.task || null, replayed: Boolean(result?.replayed) };
 }
 
 export async function listNodes({ orgId, liveOnly = false, limit = 100 } = {}) {
