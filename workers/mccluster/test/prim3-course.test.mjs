@@ -129,7 +129,7 @@ test('active LMS documentation no longer treats 63 as the whole course', async (
   assert.match(architecture, /foundation_module_count = 3/);
   assert.match(architecture, /song_aligned_module_count = 63/);
   assert.match(architecture, /module_count = 66/);
-  assert.doesNotMatch(architecture, /module_count = 63/);
+  assert.doesNotMatch(architecture, /(^|\n)module_count = 63(\n|$)/);
   assert.match(html, /66 focused modules/);
   assert.match(html, /3 foundations · 7 seasons · 21 episode and song units · 66 modules/);
   assert.match(html, /js\/prim3-lessons\.js/);
