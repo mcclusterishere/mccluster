@@ -1,0 +1,289 @@
+{
+  "version": "1.0.0",
+  "course": "prim3-foundation-v3",
+  "status": "PLANNED_SOURCE_CONCEPT_CROSSWALK",
+  "rule": "Only concepts present in PRIM3 source material are listed as source concepts. Exam IDs show the closest numbered objective homes. Empty exam arrays are allowed and must not be filled merely to force alignment. Certification bridges are authored separately from song provenance.",
+  "units": [
+    {
+      "unit":"U01","song":"High Alert","modules":["M04","M05","M06"],
+      "concepts":[
+        {"concept":"alert state","security_plus":["4.4"],"network_plus":["3.2"]},
+        {"concept":"monitoring","security_plus":["4.4","4.9"],"network_plus":["3.2"]},
+        {"concept":"scope of work","security_plus":["5.1","5.5"],"network_plus":["3.1"]},
+        {"concept":"evidence trail","security_plus":["4.8","4.9"],"network_plus":[]},
+        {"concept":"search and access policy","security_plus":["4.6","5.1"],"network_plus":["4.1"]},
+        {"concept":"professional judgment","security_plus":["4.8","5.2"],"network_plus":["5.1"]}
+      ]
+    },
+    {
+      "unit":"U02","song":"White Grey Black Hat","modules":["M07","M08","M09"],
+      "concepts":[
+        {"concept":"white grey black hat","security_plus":["5.5"],"network_plus":[]},
+        {"concept":"authorization","security_plus":["5.1","5.5"],"network_plus":["4.1"]},
+        {"concept":"scope","security_plus":["5.1","5.5"],"network_plus":["3.1"]},
+        {"concept":"rules of engagement","security_plus":["5.5"],"network_plus":["3.1"]},
+        {"concept":"white grey black box","security_plus":["5.5"],"network_plus":[]},
+        {"concept":"attack surface","security_plus":["2.2","5.5"],"network_plus":["4.2"]},
+        {"concept":"remediation","security_plus":["4.3"],"network_plus":["4.3"]}
+      ]
+    },
+    {
+      "unit":"U03","song":"OSINT","modules":["M10","M11","M12"],
+      "concepts":[
+        {"concept":"public sources","security_plus":["5.5"],"network_plus":[]},
+        {"concept":"social media and forums","security_plus":["5.5"],"network_plus":[]},
+        {"concept":"metadata","security_plus":["4.9"],"network_plus":[]},
+        {"concept":"source evaluation","security_plus":["4.9","5.2"],"network_plus":[]},
+        {"concept":"corroboration","security_plus":["4.4","4.9"],"network_plus":["3.2"]},
+        {"concept":"public vs private information","security_plus":["3.3","5.4"],"network_plus":[]},
+        {"concept":"indicators","security_plus":["2.4","4.4"],"network_plus":["3.2"]},
+        {"concept":"confidence","security_plus":["4.4","4.9"],"network_plus":["5.1"]}
+      ]
+    },
+    {
+      "unit":"U04","song":"Anti Social Engineering","modules":["M13","M14","M15"],
+      "concepts":[
+        {"concept":"social engineering","security_plus":["2.2","5.6"],"network_plus":["4.2"]},
+        {"concept":"phishing and smishing","security_plus":["2.2","5.6"],"network_plus":["4.2"]},
+        {"concept":"pretext","security_plus":["2.2","5.6"],"network_plus":[]},
+        {"concept":"identity verification","security_plus":["4.6"],"network_plus":["4.1"]},
+        {"concept":"trust","security_plus":["1.2","4.6"],"network_plus":["4.1"]},
+        {"concept":"spoofing","security_plus":["2.2","2.4"],"network_plus":["4.2"]},
+        {"concept":"human attack surface","security_plus":["2.2","5.6"],"network_plus":[]}
+      ]
+    },
+    {
+      "unit":"U05","song":"Red Blue Purple White Team","modules":["M16","M17","M18"],
+      "concepts":[
+        {"concept":"red team","security_plus":["5.5"],"network_plus":[]},
+        {"concept":"blue team","security_plus":["4.5","5.5"],"network_plus":["4.3"]},
+        {"concept":"purple team","security_plus":["5.5"],"network_plus":["4.3"]},
+        {"concept":"white team","security_plus":["5.1","5.5"],"network_plus":["3.1"]},
+        {"concept":"yellow orange green teams","security_plus":["1.3","4.1","5.1"],"network_plus":["3.1"]},
+        {"concept":"exercise control","security_plus":["5.1","5.5"],"network_plus":["3.1"]},
+        {"concept":"deconfliction","security_plus":["4.8","5.5"],"network_plus":["3.1"]},
+        {"concept":"after action learning","security_plus":["4.8","5.1"],"network_plus":["5.1"]}
+      ]
+    },
+    {
+      "unit":"U06","song":"Got Wifi","modules":["M19","M20","M21"],
+      "concepts":[
+        {"concept":"wireless defense","security_plus":["2.5","4.5"],"network_plus":["2.3","4.3"]},
+        {"concept":"rogue access point","security_plus":["2.2","2.4"],"network_plus":["2.3","4.2"]},
+        {"concept":"wireless intrusion prevention system","security_plus":["4.5"],"network_plus":["4.3"]},
+        {"concept":"RF spectrum","security_plus":[],"network_plus":["2.3","5.4","5.5"]},
+        {"concept":"interference and jamming","security_plus":["2.4"],"network_plus":["4.2","5.4"]},
+        {"concept":"WPA3 and AES","security_plus":["1.4","4.5"],"network_plus":["2.3","4.1","4.3"]},
+        {"concept":"signal vs service","security_plus":[],"network_plus":["5.1","5.4"]},
+        {"concept":"OSI layers 1 and 2","security_plus":[],"network_plus":["1.1"]}
+      ]
+    },
+    {
+      "unit":"U07","song":"Data Breach","modules":["M22","M23","M24"],
+      "concepts":[
+        {"concept":"breach indicators","security_plus":["2.4","4.4"],"network_plus":["3.2"]},
+        {"concept":"ransomware","security_plus":["2.4"],"network_plus":["4.2"]},
+        {"concept":"physical media risk","security_plus":["2.2","4.2"],"network_plus":["4.1","4.2"]},
+        {"concept":"password attacks","security_plus":["2.4","4.6"],"network_plus":["4.2"]},
+        {"concept":"multifactor authentication","security_plus":["4.6"],"network_plus":["4.1"]},
+        {"concept":"supply chain","security_plus":["2.2","5.3"],"network_plus":[]},
+        {"concept":"abnormal data transfer","security_plus":["2.4","4.4","4.9"],"network_plus":["3.2"]},
+        {"concept":"access logs","security_plus":["4.4","4.9"],"network_plus":["3.2"]},
+        {"concept":"containment","security_plus":["4.8"],"network_plus":["5.1"]},
+        {"concept":"evidence preservation","security_plus":["4.8","4.9"],"network_plus":[]}
+      ]
+    },
+    {
+      "unit":"U08","song":"App Attacks","modules":["M25","M26","M27"],
+      "concepts":[
+        {"concept":"privilege escalation","security_plus":["2.4","4.6"],"network_plus":["4.2"]},
+        {"concept":"role based access control","security_plus":["4.6"],"network_plus":["4.1"]},
+        {"concept":"cross site scripting","security_plus":["2.3","2.4"],"network_plus":["4.2"]},
+        {"concept":"input validation","security_plus":["2.5","4.1"],"network_plus":[]},
+        {"concept":"sanitization","security_plus":["2.5","4.1"],"network_plus":[]},
+        {"concept":"content security policy","security_plus":["2.5","4.1"],"network_plus":[]},
+        {"concept":"injection family","security_plus":["2.3","2.4"],"network_plus":[]},
+        {"concept":"URL parameters","security_plus":["2.3"],"network_plus":[]},
+        {"concept":"code review","security_plus":["4.1","4.3","5.1"],"network_plus":[]},
+        {"concept":"debugging","security_plus":["4.3"],"network_plus":["5.1"]}
+      ]
+    },
+    {
+      "unit":"U09","song":"Virus Types","modules":["M28","M29","M30"],
+      "concepts":[
+        {"concept":"worm","security_plus":["2.4"],"network_plus":["4.2"]},
+        {"concept":"keylogger","security_plus":["2.4"],"network_plus":["4.2"]},
+        {"concept":"Trojan","security_plus":["2.4"],"network_plus":["4.2"]},
+        {"concept":"ransomware","security_plus":["2.4"],"network_plus":["4.2"]},
+        {"concept":"spyware","security_plus":["2.4"],"network_plus":["4.2"]},
+        {"concept":"fileless malware","security_plus":["2.4"],"network_plus":["4.2"]},
+        {"concept":"rootkit","security_plus":["2.4"],"network_plus":["4.2"]},
+        {"concept":"MFA and biometrics","security_plus":["4.6"],"network_plus":["4.1"]},
+        {"concept":"password spraying","security_plus":["2.4","4.6"],"network_plus":["4.2"]},
+        {"concept":"credentials","security_plus":["4.6"],"network_plus":["4.1"]}
+      ]
+    },
+    {
+      "unit":"U10","song":"Installation Types","modules":["M31","M32","M33"],
+      "concepts":[
+        {"concept":"compatibility","security_plus":["1.3"],"network_plus":["3.1"]},
+        {"concept":"clean install","security_plus":["4.2"],"network_plus":["3.1"]},
+        {"concept":"custom install","security_plus":["4.2"],"network_plus":["3.1"]},
+        {"concept":"in place upgrade","security_plus":["1.3","4.2"],"network_plus":["3.1"]},
+        {"concept":"multiboot","security_plus":["4.1"],"network_plus":[]},
+        {"concept":"backup","security_plus":["3.4"],"network_plus":["3.3"]},
+        {"concept":"migration","security_plus":["1.3","3.4"],"network_plus":["3.1","3.3"]},
+        {"concept":"registry","security_plus":["4.1"],"network_plus":[]},
+        {"concept":"reboot","security_plus":["1.3"],"network_plus":["5.1"]},
+        {"concept":"rollback","security_plus":["1.3","3.4"],"network_plus":["3.3","5.1"]}
+      ]
+    },
+    {
+      "unit":"U11","song":"Dive In","modules":["M34","M35","M36"],
+      "concepts":[
+        {"concept":"discarded information exposure","security_plus":["3.3","4.2","5.4","5.6"],"network_plus":["4.1","4.2"]},
+        {"concept":"media disposal","security_plus":["4.2","5.4"],"network_plus":[]},
+        {"concept":"asset tags","security_plus":["4.2"],"network_plus":["3.1"]},
+        {"concept":"physical topology","security_plus":[],"network_plus":["1.6","3.1"]},
+        {"concept":"RF remnants","security_plus":[],"network_plus":["2.3"]},
+        {"concept":"deauthentication and packet overload as risk concepts","security_plus":["2.4","2.5"],"network_plus":["4.2","4.3","5.4"]}
+      ]
+    },
+    {
+      "unit":"U12","song":"IoT","modules":["M37","M38","M39"],
+      "concepts":[
+        {"concept":"internet of things","security_plus":["2.3","3.1"],"network_plus":["1.8","4.1"]},
+        {"concept":"smart meter","security_plus":["3.1"],"network_plus":["1.8"]},
+        {"concept":"connected lighting","security_plus":["3.1"],"network_plus":["1.8"]},
+        {"concept":"connected vehicles","security_plus":["3.1"],"network_plus":["1.8"]},
+        {"concept":"wearables","security_plus":["3.1"],"network_plus":["1.8"]},
+        {"concept":"default credentials","security_plus":["2.2","2.5","4.1"],"network_plus":["4.1","4.3"]},
+        {"concept":"sensors","security_plus":["3.2"],"network_plus":["1.8"]},
+        {"concept":"actuators","security_plus":["3.2"],"network_plus":["1.8"]},
+        {"concept":"segmentation","security_plus":["2.5","3.2"],"network_plus":["4.3"]},
+        {"concept":"fail safe","security_plus":["3.4"],"network_plus":["3.3"]},
+        {"concept":"human override","security_plus":["3.4"],"network_plus":["3.3","5.1"]}
+      ]
+    },
+    {
+      "unit":"U13","song":"IaaS, SaaS, PaaS","modules":["M40","M41","M42"],
+      "concepts":[
+        {"concept":"IaaS","security_plus":["3.1","5.3"],"network_plus":["1.3"]},
+        {"concept":"PaaS","security_plus":["3.1","5.3"],"network_plus":["1.3"]},
+        {"concept":"SaaS","security_plus":["3.1","5.3"],"network_plus":["1.3"]},
+        {"concept":"application layer","security_plus":["3.1"],"network_plus":["1.1"]},
+        {"concept":"virtual machines","security_plus":["3.1"],"network_plus":["1.8"]},
+        {"concept":"switches and servers","security_plus":["3.2"],"network_plus":["1.2","2.2"]},
+        {"concept":"runtime","security_plus":["3.1"],"network_plus":["1.3","1.8"]},
+        {"concept":"Kubernetes","security_plus":["3.1"],"network_plus":["1.8"]},
+        {"concept":"hybrid architecture","security_plus":["3.1"],"network_plus":["1.3"]},
+        {"concept":"uptime","security_plus":["3.4"],"network_plus":["3.3"]}
+      ]
+    },
+    {
+      "unit":"U14","song":"Cap Ex Vs. Op Ex","modules":["M43","M44","M45"],
+      "concepts":[
+        {"concept":"capital expenditure","security_plus":["5.2","5.3"],"network_plus":["3.1"]},
+        {"concept":"operational expenditure","security_plus":["5.2","5.3"],"network_plus":["3.1"]},
+        {"concept":"upfront cost","security_plus":["5.2"],"network_plus":[]},
+        {"concept":"ongoing cost","security_plus":["5.2"],"network_plus":[]},
+        {"concept":"asset ownership","security_plus":["4.2","5.3"],"network_plus":["3.1"]},
+        {"concept":"variable and fixed cost","security_plus":["5.2"],"network_plus":[]},
+        {"concept":"load","security_plus":["3.4"],"network_plus":["5.4"]},
+        {"concept":"cost model","security_plus":["5.2","5.3"],"network_plus":[]}
+      ]
+    },
+    {
+      "unit":"U15","song":"Trappin From The Cloud","modules":["M46","M47","M48"],
+      "concepts":[
+        {"concept":"compute","security_plus":["3.1"],"network_plus":["1.3"]},
+        {"concept":"storage","security_plus":["3.1","3.3"],"network_plus":["1.3"]},
+        {"concept":"networking","security_plus":["3.1","3.2"],"network_plus":["1.3","1.7","2.1"]},
+        {"concept":"analytics","security_plus":["4.4","4.9"],"network_plus":["3.2"]},
+        {"concept":"agility","security_plus":["3.1","4.7"],"network_plus":["1.3"]},
+        {"concept":"scalability","security_plus":["3.1"],"network_plus":["1.3","1.8"]},
+        {"concept":"allocation","security_plus":["3.1"],"network_plus":["1.3"]},
+        {"concept":"disaster recovery","security_plus":["3.4"],"network_plus":["3.3"]},
+        {"concept":"elasticity","security_plus":["3.1","4.7"],"network_plus":["1.3","1.8"]},
+        {"concept":"high availability","security_plus":["3.4"],"network_plus":["3.3"]}
+      ]
+    },
+    {
+      "unit":"U16","song":"Per Diem","modules":["M49","M50","M51"],
+      "concepts":[
+        {"concept":"keyboard","security_plus":["4.2"],"network_plus":[],"note":"Primarily hardware enrichment."},
+        {"concept":"touchscreen","security_plus":["4.2"],"network_plus":[],"note":"Primarily hardware enrichment."},
+        {"concept":"optical drive","security_plus":["4.2"],"network_plus":[],"note":"Primarily hardware enrichment."},
+        {"concept":"Bluetooth","security_plus":["2.2"],"network_plus":["2.3"]},
+        {"concept":"memory","security_plus":["4.2"],"network_plus":[],"note":"Primarily hardware enrichment."},
+        {"concept":"CPU","security_plus":["4.2"],"network_plus":[],"note":"Primarily hardware enrichment."},
+        {"concept":"SSD and HDD","security_plus":["4.2"],"network_plus":[],"note":"Primarily hardware enrichment."},
+        {"concept":"NFC","security_plus":["2.2"],"network_plus":[],"note":"Primarily hardware enrichment."},
+        {"concept":"DC power","security_plus":[],"network_plus":["2.4"],"note":"Primarily hardware enrichment."},
+        {"concept":"battery","security_plus":[],"network_plus":["2.4"],"note":"Primarily hardware enrichment."},
+        {"concept":"PCIe","security_plus":["4.2"],"network_plus":[],"note":"Primarily hardware enrichment."},
+        {"concept":"hybrid systems","security_plus":["4.2"],"network_plus":[],"note":"Primarily hardware enrichment."}
+      ]
+    },
+    {
+      "unit":"U17","song":"Patch Work","modules":["M52","M53","M54"],
+      "concepts":[
+        {"concept":"update","security_plus":["1.3","4.3"],"network_plus":["3.1"]},
+        {"concept":"patch","security_plus":["1.3","2.5","4.3"],"network_plus":["3.1"]},
+        {"concept":"backward compatibility","security_plus":["1.3"],"network_plus":["3.1"]},
+        {"concept":"UEFI and BIOS","security_plus":["4.1"],"network_plus":[]},
+        {"concept":"fuzzing","security_plus":["4.3","5.5"],"network_plus":[]},
+        {"concept":"input validation","security_plus":["2.5","4.1"],"network_plus":[]},
+        {"concept":"code signing","security_plus":["1.4","4.1"],"network_plus":[]},
+        {"concept":"integrity","security_plus":["1.2","1.4"],"network_plus":["4.1"]},
+        {"concept":"secure cookies","security_plus":["2.5","4.1"],"network_plus":[]},
+        {"concept":"static and dynamic analysis","security_plus":["4.3","5.1"],"network_plus":[]},
+        {"concept":"secure coding","security_plus":["4.1"],"network_plus":[]},
+        {"concept":"debugging","security_plus":["4.3"],"network_plus":["5.1"]}
+      ]
+    },
+    {
+      "unit":"U18","song":null,"modules":["M55","M56","M57"],"status":"owner-source-required","concepts":[]
+    },
+    {
+      "unit":"U19","song":"RAID (HOT SITE)","modules":["M58","M59","M60"],
+      "concepts":[
+        {"concept":"RAID 0 1 5 6 and 10","security_plus":["3.4"],"network_plus":["3.3"]},
+        {"concept":"striping","security_plus":["3.4"],"network_plus":["3.3"]},
+        {"concept":"mirroring","security_plus":["3.4"],"network_plus":["3.3"]},
+        {"concept":"parity","security_plus":["3.4"],"network_plus":["3.3"]},
+        {"concept":"redundancy","security_plus":["3.4"],"network_plus":["3.3"]},
+        {"concept":"failure tolerance","security_plus":["3.4"],"network_plus":["3.3"]},
+        {"concept":"hot warm and cold sites","security_plus":["3.4","5.2"],"network_plus":["3.3"]},
+        {"concept":"failover","security_plus":["3.4","4.8"],"network_plus":["3.3","5.1"]},
+        {"concept":"recovery priority","security_plus":["3.4","4.8","5.2"],"network_plus":["3.3","5.1"]}
+      ]
+    },
+    {
+      "unit":"U20","song":"Evil Twin","modules":["M61","M62","M63"],
+      "concepts":[
+        {"concept":"evil twin and cloned SSID","security_plus":["2.2","2.4"],"network_plus":["2.3","4.2"]},
+        {"concept":"SIM swap risk","security_plus":["2.2","2.4","4.6"],"network_plus":["4.1","4.2"]},
+        {"concept":"replay","security_plus":["2.4"],"network_plus":["4.2"]},
+        {"concept":"pass the hash","security_plus":["2.4","4.6"],"network_plus":["4.2"]},
+        {"concept":"man in the middle and man in the browser","security_plus":["2.2","2.4"],"network_plus":["4.2"]},
+        {"concept":"typosquatting","security_plus":["2.2","5.6"],"network_plus":[]},
+        {"concept":"cross site request forgery","security_plus":["2.3","2.4"],"network_plus":[]},
+        {"concept":"privilege concepts","security_plus":["2.4","4.6"],"network_plus":["4.1"]},
+        {"concept":"zero days","security_plus":["2.3","4.3"],"network_plus":[]}
+      ]
+    },
+    {
+      "unit":"U21","song":"Ghost In The Wires","modules":["M64","M65","M66"],
+      "concepts":[
+        {"concept":"network media","security_plus":["3.2"],"network_plus":["1.5"]},
+        {"concept":"bound and unbound transmission","security_plus":["3.2"],"network_plus":["1.5","2.3"]},
+        {"concept":"cable and media types","security_plus":["3.2"],"network_plus":["1.5","5.2"]},
+        {"concept":"troubleshooting","security_plus":["4.4"],"network_plus":["5.1","5.2","5.4","5.5"]},
+        {"concept":"interfaces","security_plus":["4.2"],"network_plus":["1.5","5.2"]},
+        {"concept":"distributed control","security_plus":["3.2"],"network_plus":["3.1"]},
+        {"concept":"authority and privilege reduction","security_plus":["1.2","4.6"],"network_plus":["4.1"]}
+      ]
+    }
+  ]
+}
