@@ -10,6 +10,7 @@ import { attachCompletedVariantAssets, handleSocialRequest } from './social/rout
 import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
 import { handleMetaWebhook } from './social/webhook.js';
 import { handleAiRequest } from './ai/router.js';
+import { acceptFabricEvent, drainFabricOutbox, fabricStatus } from './fabric/router.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -28,6 +29,25 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
+
+    if (path === '/v1/fabric/events' && request.method === 'POST') {
+      try {
+        return await acceptFabricEvent(request, env);
+      } catch (error) {
+        return fail(request, env, error.message || 'Fabric event relay failed', error.status || 500, error.detail);
+      }
+    }
+
+    const fabricStatusMatch = path.match(/^\/v1\/fabric\/events\/([0-9a-f-]{36})$/i);
+    if (fabricStatusMatch && request.method === 'GET') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        return reply(request, env, await fabricStatus(env, fabricStatusMatch[1]));
+      } catch (error) {
+        return fail(request, env, error.message || 'Fabric status request failed', error.status || 500, error.detail);
+      }
+    }
 
     try {
       const clientResponse = await handleClientRequest(request, env);
@@ -153,29 +173,20 @@ export default {
 
   async scheduled(_controller, env, ctx) {
     ctx.waitUntil(Promise.all([
+      drainFabricOutbox(env, { limit: 100 }).catch((error) => {
+        console.error(JSON.stringify({ event: 'fabric_cloudflare_relay_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
       reconcilePendingFalCosts(env, { limit: 50 }).catch((error) => {
-        console.error(JSON.stringify({
-          event: 'media_cost_reconciliation_failed',
-          message: error instanceof Error ? error.message : String(error)
-        }));
+        console.error(JSON.stringify({ event: 'media_cost_reconciliation_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       attachCompletedVariantAssets(env).catch((error) => {
-        console.error(JSON.stringify({
-          event: 'social_variant_attachment_failed',
-          message: error instanceof Error ? error.message : String(error)
-        }));
+        console.error(JSON.stringify({ event: 'social_variant_attachment_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       processInstagramPublishQueue(env, { limit: 10 }).catch((error) => {
-        console.error(JSON.stringify({
-          event: 'social_instagram_publish_cycle_failed',
-          message: error instanceof Error ? error.message : String(error)
-        }));
+        console.error(JSON.stringify({ event: 'social_instagram_publish_cycle_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       syncInstagramInsights(env, { limit: 25 }).catch((error) => {
-        console.error(JSON.stringify({
-          event: 'social_instagram_insights_sync_failed',
-          message: error instanceof Error ? error.message : String(error)
-        }));
+        console.error(JSON.stringify({ event: 'social_instagram_insights_sync_failed', message: error instanceof Error ? error.message : String(error) }));
       })
     ]));
   }
