@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { amdInventoryFromSysfs, amdLoadFromSysfs, parseNvidiaInventoryCsv, parseNvidiaLoadCsv } from '../src/compute/hardware.mjs';
-import { assertLoopbackUrl, healthyCapabilities, probeExecutors, probeHttpExecutor } from '../src/compute/engine-probes.mjs';
+import { assertLoopbackUrl, capabilityReadiness, healthyCapabilities, probeExecutors, probeHttpExecutor } from '../src/compute/engine-probes.mjs';
 
 test('parses NVIDIA inventory and runtime telemetry', () => {
   const inventory = parseNvidiaInventoryCsv('NVIDIA RTX 4090, GPU-abc, 24564, 590.1, 8.9\n');
@@ -55,8 +55,8 @@ test('HTTP engine probe honors health status', async () => {
 test('only healthy implementations are advertised to Core', async () => {
   const manifest = {
     publicCapabilities: [
-      { capability: 'image.generate', implementation: 'image.local' },
-      { capability: 'video.generate', implementation: 'video.local' }
+      { capability: 'image.generate', implementation: 'image.local', min_vram_bytes: 0 },
+      { capability: 'video.generate', implementation: 'video.local', min_vram_bytes: 0 }
     ],
     executors: new Map([
       ['image.local', { type: 'http', url: 'http://127.0.0.1:8188/image', health_url: 'http://127.0.0.1:8188/health' }],
@@ -65,6 +65,20 @@ test('only healthy implementations are advertised to Core', async () => {
   };
   const fakeFetch = async (url) => new Response('', { status: String(url).includes('8188') ? 200 : 503 });
   const health = await probeExecutors(manifest, fakeFetch);
-  const advertised = healthyCapabilities(manifest, health);
+  const advertised = healthyCapabilities(manifest, health, { gpus: [] });
   assert.deepEqual(advertised.map((item) => item.implementation), ['image.local']);
+});
+
+test('healthy engines still fail closed when VRAM is below the capability requirement', () => {
+  const manifest = {
+    publicCapabilities: [
+      { capability: 'model3d.generate', implementation: 'hunyuan.local', min_vram_bytes: 20_000_000_000 }
+    ]
+  };
+  const health = new Map([['hunyuan.local', { healthy: true }]]);
+  const inventory = { gpus: [{ vendor: 'nvidia', vram_bytes: 12_000_000_000 }] };
+  const readiness = capabilityReadiness(manifest, health, inventory);
+  assert.equal(readiness[0].ready, false);
+  assert.match(readiness[0].reason, /insufficient VRAM/i);
+  assert.deepEqual(healthyCapabilities(manifest, health, inventory), []);
 });
