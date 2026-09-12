@@ -73,8 +73,8 @@ When a client signs, bump `build.taken` and put their name in `taken_by`.
 
 ## When the machine gets built (after 3 to 5 paying)
 
-`apps/api` (Fastify, scaffolded) on Railway + `packages/ai` (the
-vendor-neutral gateway, built for exactly this) drive Claude on each
+`apps/api` (Fastify, scaffolded) and `packages/ai` run through the canonical
+Worker/Supabase plane with persistent execution on OVH McCluster Core; they drive Claude on each
 client's repo → PR → **you tap approve** → deploy. Stripe/Square webhooks
 flip plan state; quota enforcement moves server-side. Until then, the desk
 enforces quota by eye and the console just displays it.
