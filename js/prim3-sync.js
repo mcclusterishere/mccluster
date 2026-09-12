@@ -1,8 +1,8 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "prim3_course_progress_v3";
-  var BOOT_FLAG = "prim3_progress_bootstrap_v2";
+  var STORAGE_KEY = "prim3_course_progress_v4";
+  var BOOT_FLAG = "prim3_progress_bootstrap_v3";
   var SYNC_LABEL_ID = "prim3ProgressSync";
 
   function localState() {
@@ -102,8 +102,6 @@
       return api("/v1/prim3/progress").then(function (data) {
         var changed = mergeRemote(data && data.progress);
         syncLabel("M ACCOUNT · SYNCED", "synced");
-        /* prim3.js snapshots local progress at boot. Reload once when the
-           account has progress this browser did not yet know about. */
         if (changed && sessionStorage.getItem(BOOT_FLAG) !== "1") {
           sessionStorage.setItem(BOOT_FLAG, "1");
           location.reload();
