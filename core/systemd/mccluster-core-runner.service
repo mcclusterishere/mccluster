@@ -6,7 +6,8 @@ Wants=network-online.target mccluster-opencode.service
 [Service]
 Type=simple
 User=mccluster-core
-Group=mccluster-work
+Group=mccluster-core
+SupplementaryGroups=mccluster-work
 WorkingDirectory=/opt/mccluster/core
 Environment=HOME=/var/lib/mccluster-core
 EnvironmentFile=/etc/mccluster/core.env
