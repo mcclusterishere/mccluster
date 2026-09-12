@@ -57,7 +57,7 @@ create table if not exists public.ops_compute_tasks (
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  check (capability ~ '^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$'),
+  check (capability ~ '^[a-z][a-z0-9]*([._-][a-z0-9]+)*$'),
   check (jsonb_typeof(input) = 'object'),
   check (jsonb_typeof(requirements) = 'object'),
   check (jsonb_typeof(metadata) = 'object')
@@ -129,8 +129,7 @@ set search_path = public, pg_temp
 as $$
 begin
   if p_expires_at <= now() then return false; end if;
-  delete from public.ops_compute_nonces
-   where node_id = p_node_id and expires_at < now();
+  delete from public.ops_compute_nonces where expires_at < now();
   begin
     insert into public.ops_compute_nonces(node_id, nonce, expires_at)
     values (p_node_id, p_nonce, p_expires_at);
@@ -141,8 +140,9 @@ begin
 end;
 $$;
 
--- Atomic SKIP LOCKED lease claim. The node tells Core what it can execute;
--- Core never asks a node to accept arbitrary shell/code payloads.
+-- Atomic SKIP LOCKED lease claim. Nodes advertise capabilities; Core chooses
+-- only tasks whose capability, implementation and requested feature subset
+-- match the node's stored manifest. The node never accepts arbitrary shell.
 create or replace function public.compute_claim_task(
   p_node_id text,
   p_capabilities text[],
@@ -169,12 +169,18 @@ begin
   if v_node.state <> 'online' or v_node.revoked_at is not null then return null; end if;
   if v_node.last_seen_at < now() - interval '3 minutes' then return null; end if;
 
-  update public.ops_compute_leases
-     set status = 'expired', updated_at = now(), last_error = coalesce(last_error, 'lease expired')
-   where node_id = p_node_id
-     and status in ('leased','running')
-     and expires_at <= now();
-
+  -- Reclaim only leases that became expired in this transaction. Historical
+  -- expired rows must never requeue a task that has since received a new lease.
+  with newly_expired as (
+    update public.ops_compute_leases
+       set status = 'expired',
+           updated_at = now(),
+           completed_at = coalesce(completed_at, now()),
+           last_error = coalesce(last_error, 'lease expired')
+     where status in ('leased','running')
+       and expires_at <= now()
+     returning task_id
+  )
   update public.ops_compute_tasks t
      set status = case when t.attempts < t.max_attempts then 'queued' else 'failed' end,
          locked_by_node_id = null,
@@ -182,10 +188,8 @@ begin
          run_after = case when t.attempts < t.max_attempts then now() + interval '30 seconds' else t.run_after end,
          last_error = coalesce(t.last_error, 'compute lease expired'),
          updated_at = now()
-   where t.id in (
-     select l.task_id from public.ops_compute_leases l
-      where l.node_id = p_node_id and l.status = 'expired'
-   ) and t.status in ('leased','running');
+   where t.id in (select task_id from newly_expired)
+     and t.status in ('leased','running');
 
   select count(*) into v_running
     from public.ops_compute_leases
@@ -194,15 +198,23 @@ begin
      and expires_at > now();
   if v_running >= v_node.max_leases then return null; end if;
 
-  select * into v_task
-    from public.ops_compute_tasks
-   where org_id = v_node.org_id
-     and status = 'queued'
-     and run_after <= now()
-     and attempts < max_attempts
-     and capability = any(coalesce(p_capabilities, array[]::text[]))
-     and (implementation is null or implementation = any(coalesce(p_implementations, array[]::text[])))
-   order by priority desc, run_after asc, created_at asc
+  select t.* into v_task
+    from public.ops_compute_tasks t
+   where t.org_id = v_node.org_id
+     and t.status = 'queued'
+     and t.run_after <= now()
+     and t.attempts < t.max_attempts
+     and t.capability = any(coalesce(p_capabilities, array[]::text[]))
+     and (t.implementation is null or t.implementation = any(coalesce(p_implementations, array[]::text[])))
+     and exists (
+       select 1
+         from jsonb_array_elements(v_node.capabilities) as advertised
+        where advertised->>'capability' = t.capability
+          and (t.implementation is null or advertised->>'implementation' = t.implementation)
+          and coalesce(t.requirements->'features', '{}'::jsonb)
+                <@ coalesce(advertised->'features', '{}'::jsonb)
+     )
+   order by t.priority desc, t.run_after asc, t.created_at asc
    for update skip locked
    limit 1;
   if not found then return null; end if;
@@ -250,14 +262,20 @@ create or replace function public.compute_start_lease(
 ) returns jsonb
 language plpgsql security definer set search_path = public, pg_temp
 as $$
-declare v_lease public.ops_compute_leases%rowtype; v_seconds integer := greatest(30, least(coalesce(p_extend_seconds,120),900));
+declare
+  v_lease public.ops_compute_leases%rowtype;
+  v_seconds integer := greatest(30, least(coalesce(p_extend_seconds,120),900));
 begin
   select * into v_lease from public.ops_compute_leases
    where id=p_lease_id and node_id=p_node_id for update;
   if not found or v_lease.status <> 'leased' or v_lease.expires_at <= now() then return null; end if;
   if encode(digest(p_lease_token,'sha256'),'hex') <> v_lease.lease_token_hash then return null; end if;
-  update public.ops_compute_leases set status='running', started_at=coalesce(started_at,now()), expires_at=now()+make_interval(secs=>v_seconds), updated_at=now() where id=p_lease_id;
-  update public.ops_compute_tasks set status='running', updated_at=now() where id=v_lease.task_id and locked_by_node_id=p_node_id;
+  update public.ops_compute_leases
+     set status='running', started_at=coalesce(started_at,now()),
+         expires_at=now()+make_interval(secs=>v_seconds), updated_at=now()
+   where id=p_lease_id;
+  update public.ops_compute_tasks set status='running', updated_at=now()
+   where id=v_lease.task_id and locked_by_node_id=p_node_id;
   return jsonb_build_object('ok',true,'expires_at',now()+make_interval(secs=>v_seconds));
 end;
 $$;
@@ -271,13 +289,20 @@ create or replace function public.compute_heartbeat_lease(
 ) returns jsonb
 language plpgsql security definer set search_path = public, pg_temp
 as $$
-declare v_lease public.ops_compute_leases%rowtype; v_seconds integer := greatest(30, least(coalesce(p_extend_seconds,120),900));
+declare
+  v_lease public.ops_compute_leases%rowtype;
+  v_seconds integer := greatest(30, least(coalesce(p_extend_seconds,120),900));
 begin
-  select * into v_lease from public.ops_compute_leases where id=p_lease_id and node_id=p_node_id for update;
+  select * into v_lease from public.ops_compute_leases
+   where id=p_lease_id and node_id=p_node_id for update;
   if not found or v_lease.status <> 'running' or v_lease.expires_at <= now() then return null; end if;
   if encode(digest(p_lease_token,'sha256'),'hex') <> v_lease.lease_token_hash then return null; end if;
-  update public.ops_compute_leases set progress=coalesce(p_progress,'{}'::jsonb), expires_at=now()+make_interval(secs=>v_seconds), updated_at=now() where id=p_lease_id;
-  update public.ops_compute_tasks set updated_at=now() where id=v_lease.task_id and status='running';
+  update public.ops_compute_leases
+     set progress=coalesce(p_progress,'{}'::jsonb),
+         expires_at=now()+make_interval(secs=>v_seconds), updated_at=now()
+   where id=p_lease_id;
+  update public.ops_compute_tasks set updated_at=now()
+   where id=v_lease.task_id and status='running';
   return jsonb_build_object('ok',true,'expires_at',now()+make_interval(secs=>v_seconds));
 end;
 $$;
@@ -292,11 +317,18 @@ language plpgsql security definer set search_path = public, pg_temp
 as $$
 declare v_lease public.ops_compute_leases%rowtype;
 begin
-  select * into v_lease from public.ops_compute_leases where id=p_lease_id and node_id=p_node_id for update;
-  if not found or v_lease.status <> 'running' then return false; end if;
+  select * into v_lease from public.ops_compute_leases
+   where id=p_lease_id and node_id=p_node_id for update;
+  if not found or v_lease.status <> 'running' or v_lease.expires_at <= now() then return false; end if;
   if encode(digest(p_lease_token,'sha256'),'hex') <> v_lease.lease_token_hash then return false; end if;
-  update public.ops_compute_leases set status='done', result=coalesce(p_result,'{}'::jsonb), completed_at=now(), updated_at=now() where id=p_lease_id;
-  update public.ops_compute_tasks set status='done', output=coalesce(p_result,'{}'::jsonb), locked_by_node_id=null, locked_at=null, last_error=null, updated_at=now() where id=v_lease.task_id and locked_by_node_id=p_node_id;
+  update public.ops_compute_leases
+     set status='done', result=coalesce(p_result,'{}'::jsonb),
+         completed_at=now(), updated_at=now()
+   where id=p_lease_id;
+  update public.ops_compute_tasks
+     set status='done', output=coalesce(p_result,'{}'::jsonb),
+         locked_by_node_id=null, locked_at=null, last_error=null, updated_at=now()
+   where id=v_lease.task_id and locked_by_node_id=p_node_id;
   return true;
 end;
 $$;
@@ -310,17 +342,24 @@ create or replace function public.compute_fail_lease(
 ) returns boolean
 language plpgsql security definer set search_path = public, pg_temp
 as $$
-declare v_lease public.ops_compute_leases%rowtype; v_task public.ops_compute_tasks%rowtype; v_retry boolean;
+declare
+  v_lease public.ops_compute_leases%rowtype;
+  v_task public.ops_compute_tasks%rowtype;
+  v_retry boolean;
 begin
-  select * into v_lease from public.ops_compute_leases where id=p_lease_id and node_id=p_node_id for update;
-  if not found or v_lease.status not in ('leased','running') then return false; end if;
+  select * into v_lease from public.ops_compute_leases
+   where id=p_lease_id and node_id=p_node_id for update;
+  if not found or v_lease.status not in ('leased','running') or v_lease.expires_at <= now() then return false; end if;
   if encode(digest(p_lease_token,'sha256'),'hex') <> v_lease.lease_token_hash then return false; end if;
   select * into v_task from public.ops_compute_tasks where id=v_lease.task_id for update;
   v_retry := coalesce(p_retry,true) and v_task.attempts < v_task.max_attempts;
-  update public.ops_compute_leases set status='failed', last_error=left(coalesce(p_error,'compute node failure'),4000), completed_at=now(), updated_at=now() where id=p_lease_id;
+  update public.ops_compute_leases
+     set status='failed', last_error=left(coalesce(p_error,'compute node failure'),4000),
+         completed_at=now(), updated_at=now()
+   where id=p_lease_id;
   update public.ops_compute_tasks
      set status=case when v_retry then 'queued' else 'failed' end,
-         run_after=case when v_retry then now()+make_interval(secs=>least(3600, greatest(30, power(2, greatest(1,v_task.attempts))::integer * 15))) else run_after end,
+         run_after=case when v_retry then now()+make_interval(secs=>least(3600, greatest(30, (power(2, greatest(1,v_task.attempts)) * 15)::integer))) else run_after end,
          locked_by_node_id=null,
          locked_at=null,
          last_error=left(coalesce(p_error,'compute node failure'),4000),
