@@ -116,7 +116,9 @@ export function groupInitiatives(objectives = [], options = {}) {
 
   for (const item of normalized) {
     if (item.status === 'inactive') continue;
-    const key = `${item.project}\u0000${item.initiative}`;
+    // PostgreSQL json/jsonb cannot represent U+0000. Use a visible, JSON-safe
+    // separator so grouped initiative ids can be persisted in Supabase results.
+    const key = `${item.project}\u241F${item.initiative}`;
     const current = grouped.get(key) || {
       id: key,
       project: item.project,
