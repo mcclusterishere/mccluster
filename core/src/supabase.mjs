@@ -59,6 +59,20 @@ export async function dependencyState(job) {
   return classifyDependencyRows(ids, rows);
 }
 
+async function deferWaitingJob(job) {
+  const now = new Date();
+  const recheckMs = Math.min(5 * 60_000, Math.max(5_000, Number(process.env.MCCLUSTER_DEPENDENCY_RECHECK_MS || 30_000)));
+  const params = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
+  await rest(`ops_agent_jobs?${params.toString()}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      run_after: new Date(now.getTime() + recheckMs).toISOString(),
+      updated_at: now.toISOString(),
+    }),
+  });
+}
+
 async function failBlockedJob(job, dependency) {
   const now = new Date().toISOString();
   const params = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
@@ -88,7 +102,10 @@ export async function claimNext(supportedTypes) {
   for (const job of rows) {
     if (!supported.has(job.job_type)) continue;
     const dependencies = await dependencyState(job);
-    if (dependencies.state === 'waiting') continue;
+    if (dependencies.state === 'waiting') {
+      await deferWaitingJob(job);
+      continue;
+    }
     if (dependencies.state === 'failed') {
       await failBlockedJob(job, dependencies);
       continue;
