@@ -152,7 +152,7 @@ The ledger must separately record those components even if Stripe settles them a
 
 ## Cloudflare
 
-The long-term Worker should be **McCluster Core**, not `whip-equipped-core`.
+The long-term public Worker remains **`mccluster`**, not `mccluster-core` or `whip-equipped-core`. **McCluster Core** is the separate OVH persistent execution plane defined in `docs/control-plane/MCCLUSTER-CORE.md`.
 
 Recommended API namespace:
 
@@ -177,7 +177,7 @@ Whip Equipped repositories become clients of this API. During migration, the exi
 5. Switch Rider / Driver / Rentals login buttons to **Continue with McCluster**.
 6. Move WE database migrations into the McCluster migration chain with collision-safe `mobility_*` names or `org_id` ownership.
 7. Move WE payment / Stripe Connect modules behind `api.mccluster.org`.
-8. Point all Whip frontends at McCluster Core.
+8. Point all Whip frontends at `api.mccluster.org`; the Worker may delegate approved durable work to McCluster Core.
 9. Retire the separate Whip Supabase identity assumptions.
 10. Reuse the same OAuth pattern for every future McCluster app.
 
