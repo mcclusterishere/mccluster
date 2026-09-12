@@ -1,4 +1,5 @@
 import { fail, reply } from '../lib/http.js';
+import { queueObjectiveSynthesis } from './objectives.js';
 
 const MAX_BODY = 512 * 1024;
 
@@ -88,6 +89,7 @@ export async function handleAiRequest(request, env, user) {
       harness: 'ai_context-v2',
       durable_jobs: 'ops_agent_jobs',
       ingest: '/v1/ai/ingest',
+      objective_synthesis: 'automatic after ingest unless synthesize_objectives=false',
       retrieve: '/v1/ai/retrieve',
       decisions: '/v1/ai/decisions',
       status: '/v1/ai/status'
@@ -111,7 +113,8 @@ export async function handleAiRequest(request, env, user) {
       },
       execution: {
         table: 'ops_agent_jobs',
-        jobs: { total, queued, running, failed }
+        jobs: { total, queued, running, failed },
+        conversation_objectives: 'objective_synthesis'
       }
     });
   }
@@ -121,7 +124,16 @@ export async function handleAiRequest(request, env, user) {
     if (!body.org_id) body.org_id = orgId;
     if (body.org_id !== orgId) return fail(request, env, 'cross-org ingestion denied', 403);
     const { status, data } = await callContextFunction(request, env, 'context-ingest', body);
-    return reply(request, env, data, status);
+    let synthesis;
+    try {
+      synthesis = await queueObjectiveSynthesis(env, { orgId, ingestBody: body, ingestResult: data });
+    } catch (error) {
+      synthesis = { queued: false, error: error instanceof Error ? error.message : String(error) };
+    }
+    return reply(request, env, {
+      ...(data && typeof data === 'object' ? data : { ingest_result: data }),
+      objective_synthesis: synthesis
+    }, status);
   }
 
   if (path === '/v1/ai/retrieve' && request.method === 'POST') {
