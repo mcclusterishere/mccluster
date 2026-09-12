@@ -106,7 +106,14 @@ This is for controlled deployment-time additions. Long-term provider/model state
 
 ## Protocol research incorporated
 
-MCP `2026-07-28` makes the capability layer easier to operate because remote calls are stateless, tool input/output schemas use JSON Schema 2020-12, and `tools/list` is cacheable. McCluster therefore keeps capability schemas provider-neutral and presents resolved capabilities as ordinary MCP tools while retaining HTTP access to the same runtime objects.
+MCP `2026-07-28` is deliberately compatible with this design:
+
+- remote calls are stateless, so capability execution does not depend on sticky sessions;
+- method/tool identity is mirrored in HTTP headers, making gateway authorization and metering practical;
+- list results can be cached, which fits the registry snapshot model;
+- tools use full JSON Schema 2020-12 input/output contracts, so McCluster does not need to invent another schema language.
+
+The capability layer therefore presents resolved capabilities as ordinary MCP tools while retaining HTTP access to the same runtime objects. Provider-specific transport details stay below the registry.
 
 ## What v1 deliberately does not do
 
