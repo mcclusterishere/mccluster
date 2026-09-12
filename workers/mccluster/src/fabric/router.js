@@ -45,6 +45,38 @@ export async function hashEnvelope(envelope) {
   }));
 }
 
+async function persistEvent(env, envelope) {
+  const existing = await sb(env, `/rest/v1/fabric_events?event_id=eq.${encodeURIComponent(envelope.event_id)}&select=event_id,content_hash&limit=1`);
+  if (existing?.length) {
+    if (existing[0].content_hash !== envelope.content_hash) throw Object.assign(new Error('fabric event_id collision'), { status: 409 });
+    return { duplicate: true };
+  }
+  await sb(env, '/rest/v1/fabric_events', {
+    method: 'POST',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify(envelope)
+  });
+  return { duplicate: false };
+}
+
+export async function publishCloudflareEvent(env, { org_id, trace_id, kind, payload = {}, event_id, occurred_at } = {}) {
+  if (!org_id || !kind) throw new Error('fabric event requires org_id and kind');
+  const envelope = {
+    schema_version: 1,
+    event_id: event_id || crypto.randomUUID(),
+    org_id,
+    trace_id: trace_id || crypto.randomUUID(),
+    kind,
+    origin_node: NODE,
+    occurred_at: occurred_at || new Date().toISOString(),
+    payload
+  };
+  envelope.content_hash = await hashEnvelope(envelope);
+  const persisted = await persistEvent(env, envelope);
+  await markAck(env, envelope.event_id);
+  return { envelope, ...persisted };
+}
+
 function internalAuth(request, env) {
   const expected = env.MCCLUSTER_FABRIC_TOKEN || '';
   const received = request.headers.get('x-mccluster-fabric-token') || '';
@@ -74,18 +106,7 @@ export async function acceptFabricEvent(request, env) {
   }
   const hash = await hashEnvelope(envelope);
   if (hash !== envelope.content_hash) return new Response(JSON.stringify({ error: 'fabric content_hash mismatch' }), { status: 409, headers: { 'content-type': 'application/json' } });
-
-  const existing = await sb(env, `/rest/v1/fabric_events?event_id=eq.${encodeURIComponent(envelope.event_id)}&select=event_id,content_hash&limit=1`);
-  if (existing?.length && existing[0].content_hash !== envelope.content_hash) {
-    return new Response(JSON.stringify({ error: 'fabric event_id collision' }), { status: 409, headers: { 'content-type': 'application/json' } });
-  }
-  if (!existing?.length) {
-    await sb(env, '/rest/v1/fabric_events', {
-      method: 'POST',
-      headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify(envelope)
-    });
-  }
+  await persistEvent(env, envelope);
   await markAck(env, envelope.event_id);
   return new Response(JSON.stringify({ ok: true, event_id: envelope.event_id, trace_id: envelope.trace_id, node: NODE }), { status: 202, headers: { 'content-type': 'application/json' } });
 }
