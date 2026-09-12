@@ -14,8 +14,13 @@ The canonical system remains:
 - Cloudflare Worker: `mccluster` on `api.mccluster.org`
 - Supabase: `zmnhbrjyhxzhkxmhkexs`
 - Private shared AI memory: `ai_context`
+- Persistent execution: OVH **McCluster Core**, using canonical Worker/Supabase job, cost, lineage, and asset contracts
 
-Do not create a second backend or shadow asset database.
+Do not create a competing backend or shadow asset database. Long-running media workflows, QC, assembly, builds, or machine-level tools may execute on McCluster Core; that execution must preserve canonical Supabase state and Worker budget/approval gates.
+
+## Execution split
+
+The Worker owns public MCP transport, authentication, routing, and short operations. Core owns durable or machine-bound execution beyond Worker limits. Supabase owns job status, approvals, costs, lineage, reusable entities, and asset metadata. Core returns durable job identifiers and never becomes a separate source of truth.
 
 ## Architecture
 
