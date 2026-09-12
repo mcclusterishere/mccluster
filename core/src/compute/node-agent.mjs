@@ -4,7 +4,7 @@ import path from 'node:path';
 import { COMPUTE_PROTOCOL, validateCapabilityManifest } from './protocol.mjs';
 import { generateNodeIdentity, nodeIdFromPublicKey, signRequest } from './signature.mjs';
 import { discoverHardware, loadSnapshot } from './hardware.mjs';
-import { engineHealthSummary, healthyCapabilities, probeExecutors } from './engine-probes.mjs';
+import { capabilityReadiness, engineHealthSummary, healthyCapabilities, probeExecutors } from './engine-probes.mjs';
 
 const BASE_URL = String(process.env.MCCLUSTER_COMPUTE_URL || '').replace(/\/$/, '');
 const ORG_ID = process.env.MCCLUSTER_ORG_ID || '';
@@ -70,8 +70,8 @@ function readManifest() {
   };
 }
 
-function inventory(engineHealth = []) {
-  const value = discoverHardware();
+function inventory(hardware, engineHealth = []) {
+  const value = structuredClone(hardware);
   value.runtime = { ...(value.runtime || {}), agent_version: AGENT_VERSION, engine_health: engineHealth };
   return value;
 }
@@ -120,7 +120,7 @@ async function signedRequest(identity, pathname, body = {}) {
   return parsed;
 }
 
-async function enroll(identity, manifest, capabilities, engineHealth) {
+async function enroll(identity, manifest, capabilities, hardware, healthSummary) {
   const token = process.env.MCCLUSTER_NODE_ENROLL_TOKEN;
   if (!token) return null;
   return rawRequest('/v1/compute/enroll', {
@@ -131,7 +131,7 @@ async function enroll(identity, manifest, capabilities, engineHealth) {
       display_name: process.env.MCCLUSTER_NODE_NAME || os.hostname(),
       public_key: identity.publicKeyPem,
       agent_version: AGENT_VERSION,
-      inventory: inventory(engineHealthSummary(engineHealth)),
+      inventory: inventory(hardware, healthSummary),
       capabilities,
       labels: manifest.labels,
       max_leases: manifest.maxLeases
@@ -205,9 +205,13 @@ async function gracefulShutdown(active, signal) {
 async function run() {
   const identity = ensureIdentity();
   let manifest = readManifest();
+  let hardware = discoverHardware();
   let engineHealth = await probeExecutors(manifest);
-  let advertised = healthyCapabilities(manifest, engineHealth);
-  const enrolled = await enroll(identity, manifest, advertised, engineHealth);
+  let readiness = capabilityReadiness(manifest, engineHealth, hardware);
+  let advertised = healthyCapabilities(manifest, engineHealth, hardware);
+  let healthSummary = engineHealthSummary(engineHealth, readiness);
+
+  const enrolled = await enroll(identity, manifest, advertised, hardware, healthSummary);
   if (enrolled) console.log(JSON.stringify({ event: 'compute_node_enrolled', node_id: identity.nodeId, protocol: enrolled.protocol, advertised: advertised.length }));
   else console.log(JSON.stringify({ event: 'compute_node_existing_identity', node_id: identity.nodeId }));
 
@@ -223,15 +227,18 @@ async function run() {
     try {
       if (Date.now() - lastProbe >= ENGINE_PROBE_MS) {
         manifest = readManifest();
+        hardware = discoverHardware();
         engineHealth = await probeExecutors(manifest);
-        advertised = healthyCapabilities(manifest, engineHealth);
+        readiness = capabilityReadiness(manifest, engineHealth, hardware);
+        advertised = healthyCapabilities(manifest, engineHealth, hardware);
+        healthSummary = engineHealthSummary(engineHealth, readiness);
         lastProbe = Date.now();
       }
 
       if (Date.now() - lastHeartbeat >= HEARTBEAT_MS) {
         await signedRequest(identity, '/v1/compute/heartbeat', {
           agent_version: AGENT_VERSION,
-          inventory: inventory(engineHealthSummary(engineHealth)),
+          inventory: inventory(hardware, healthSummary),
           capabilities: advertised,
           labels: manifest.labels,
           max_leases: manifest.maxLeases,
@@ -245,13 +252,13 @@ async function run() {
         if (lease) {
           const { lease_id: leaseId, lease_token: leaseToken, task } = lease;
           const executor = executorFor(task, manifest);
-          const healthy = task.implementation
-            ? engineHealth.get(task.implementation)?.healthy === true
+          const ready = task.implementation
+            ? advertised.some((item) => item.implementation === task.implementation)
             : advertised.some((item) => item.capability === task.capability);
-          if (!healthy) {
+          if (!ready) {
             await signedRequest(identity, `/v1/compute/leases/${leaseId}/fail`, {
               lease_token: leaseToken,
-              error: 'Local execution engine became unavailable before task start',
+              error: 'Local execution engine or hardware became unavailable before task start',
               retry: true
             });
             continue;
