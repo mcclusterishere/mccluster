@@ -4,9 +4,9 @@ This repository participates in the McCluster control plane.
 
 Canonical backend: GitHub `mcclusterishere/mccluster`, Cloudflare Worker `mccluster`, Supabase `zmnhbrjyhxzhkxmhkexs`.
 
-There is no Worker named `mccluster-core`. Do not create one.
+There is no Worker named `mccluster-core`. Do not create one. **McCluster Core is the canonical OVH persistent execution plane, not a Worker.** Read `docs/control-plane/MCCLUSTER-CORE.md`; do not block Halo, persistent agents, schedulers, queue consumers, builds, caches, or machine-level MCP tools that use canonical Worker/Supabase state.
 
-Do not scaffold a new API server, auth provider, or database. Route shared work through McCluster. Public site is `matthew.mccluster.org`. API is `https://api.mccluster.org`. Read `AGENTS.md`.
+Do not scaffold a competing API server, auth provider, or database. Route shared work through McCluster. Public site is `matthew.mccluster.org`. API is `https://api.mccluster.org`. Read `AGENTS.md`.
 
 ## Canonical AI context plane
 
