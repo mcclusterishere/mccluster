@@ -21,11 +21,7 @@ export function buildSupabaseHeaders({ secretKey = SECRET_KEY, legacyServiceKey 
     'content-type': 'application/json',
   };
 
-  // Modern sb_secret_* keys are opaque API keys, not JWTs, and must not be
-  // sent as Authorization: Bearer values. The legacy service_role key is a JWT,
-  // so preserve the bearer header only for backwards compatibility.
   if (!secretKey && legacyServiceKey) base.authorization = `Bearer ${legacyServiceKey}`;
-
   return { ...base, ...extra };
 }
 
@@ -57,6 +53,46 @@ export async function rest(path, init = {}) {
   }));
 }
 
+function dependencyIds(job) {
+  const raw = job?.input?.plan?.depends_on_job_ids ?? job?.input?.depends_on_job_ids ?? [];
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.map((value) => String(value || '').trim()).filter(Boolean))].slice(0, 32);
+}
+
+export async function dependencyState(job) {
+  const ids = dependencyIds(job);
+  if (!ids.length) return { state: 'ready', dependency_ids: [] };
+
+  const params = new URLSearchParams({
+    id: `in.(${ids.join(',')})`,
+    select: 'id,status,last_error,updated_at',
+    limit: String(ids.length),
+  });
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  const byId = new Map(rows.map((row) => [String(row.id), row]));
+  const missing = ids.filter((id) => !byId.has(id));
+  if (missing.length) return { state: 'waiting', dependency_ids: ids, missing_ids: missing };
+
+  const failed = ids.filter((id) => byId.get(id)?.status === 'failed');
+  if (failed.length) return { state: 'failed', dependency_ids: ids, failed_ids: failed };
+
+  const pending = ids.filter((id) => byId.get(id)?.status !== 'done');
+  if (pending.length) return { state: 'waiting', dependency_ids: ids, pending_ids: pending };
+  return { state: 'ready', dependency_ids: ids };
+}
+
+async function failBlockedJob(job, dependency) {
+  const now = new Date().toISOString();
+  const params = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
+  const message = `Blocked by failed prerequisite job(s): ${(dependency.failed_ids || []).join(', ')}`.slice(0, 4000);
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ status: 'failed', last_error: message, updated_at: now }),
+  });
+  return rows[0] || null;
+}
+
 export async function claimNext(supportedTypes) {
   const supported = new Set(supportedTypes);
   if (!supported.size) return null;
@@ -73,6 +109,14 @@ export async function claimNext(supportedTypes) {
 
   for (const job of rows) {
     if (!supported.has(job.job_type)) continue;
+
+    const dependencies = await dependencyState(job);
+    if (dependencies.state === 'waiting') continue;
+    if (dependencies.state === 'failed') {
+      await failBlockedJob(job, dependencies);
+      continue;
+    }
+
     const attempts = Number(job.attempts || 0) + 1;
     const patchParams = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
     const { body: claimed = [] } = await rest(`ops_agent_jobs?${patchParams.toString()}`, {
@@ -154,7 +198,7 @@ export async function recentJobs({ orgId, sinceHours = 12, limit = 25 } = {}) {
   const since = new Date(Date.now() - Math.max(1, Number(sinceHours)) * 3_600_000).toISOString();
   const params = new URLSearchParams({
     updated_at: `gte.${since}`,
-    select: 'id,org_id,job_type,target_type,target_id,status,priority,output,last_error,attempts,max_attempts,created_at,updated_at',
+    select: 'id,org_id,job_type,target_type,target_id,status,priority,input,output,last_error,attempts,max_attempts,created_at,updated_at',
     order: 'updated_at.desc',
     limit: String(Math.min(100, Math.max(1, Number(limit) || 25))),
   });
