@@ -1,7 +1,7 @@
 {
   "name": "@mccluster/core-runner",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "description": "Persistent McCluster Core executor with provider-independent capabilities, self-hosted compute nodes, and normalized MCP/HTTP tool access.",
   "engines": {
@@ -15,8 +15,8 @@
     "compute:gateway": "node src/compute/gateway.mjs",
     "compute:node": "node src/compute/node-agent.mjs",
     "test:capabilities": "node --test test/capability-registry.test.mjs",
-    "test:compute": "node --test test/compute-node-protocol.test.mjs test/node-agent-runtime.test.mjs",
+    "test:compute": "node --test test/compute-node-protocol.test.mjs test/node-agent-runtime.test.mjs test/compute-gateway-security.test.mjs",
     "test": "node --test test/*.test.mjs",
-    "check": "node --check src/runner.mjs && node --check src/digest.mjs && node --check src/supabase.mjs && node --check src/process.mjs && node --check src/notifier.mjs && node --check src/executors/repo-health.mjs && node --check src/executors/local-analysis.mjs && node --check src/executors/code-patch.mjs && node --check src/tool-broker.mjs && node --check src/tools/mcp-http.mjs && node --check src/tools/http.mjs && node --check src/tools/compute.mjs && node --check src/tools/registry.mjs && node --check src/capabilities/registry.mjs && node --check src/compute/protocol.mjs && node --check src/compute/signature.mjs && node --check src/compute/store.mjs && node --check src/compute/gateway.mjs && node --check src/compute/hardware.mjs && node --check src/compute/engine-probes.mjs && node --check src/compute/node-agent.mjs"
+    "check": "node --check src/runner.mjs && node --check src/digest.mjs && node --check src/supabase.mjs && node --check src/process.mjs && node --check src/notifier.mjs && node --check src/executors/repo-health.mjs && node --check src/executors/local-analysis.mjs && node --check src/executors/code-patch.mjs && node --check src/tool-broker.mjs && node --check src/tools/mcp-http.mjs && node --check src/tools/http.mjs && node --check src/tools/compute.mjs && node --check src/tools/registry.mjs && node --check src/capabilities/registry.mjs && node --check src/compute/protocol.mjs && node --check src/compute/signature.mjs && node --check src/compute/store.mjs && node --check src/compute/gateway.mjs && node --check src/compute/http-security.mjs && node --check src/compute/hardware.mjs && node --check src/compute/engine-probes.mjs && node --check src/compute/node-agent.mjs"
   }
 }
