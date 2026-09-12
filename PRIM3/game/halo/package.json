@@ -4,6 +4,6 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "validate": "node validate-campaign.mjs"
+    "validate": "node validate-campaign.mjs && node --test canon-boundary.test.mjs"
   }
 }
