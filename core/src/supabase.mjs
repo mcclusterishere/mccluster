@@ -1,21 +1,37 @@
 import os from 'node:os';
 
 const SB = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
-const SERVICE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '');
+const SECRET_KEY = String(process.env.SUPABASE_SECRET_KEY || '');
+const LEGACY_SERVICE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '');
+const API_KEY = SECRET_KEY || LEGACY_SERVICE_KEY;
 export const workerId = String(process.env.MCCLUSTER_CORE_ID || `core:${os.hostname()}:${process.pid}`);
 
 function configured() {
-  if (!SB || !SERVICE_KEY) throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+  if (!SB || !API_KEY) {
+    throw new Error('SUPABASE_URL and SUPABASE_SECRET_KEY (preferred) or SUPABASE_SERVICE_ROLE_KEY (legacy) are required');
+  }
+}
+
+export function buildSupabaseHeaders({ secretKey = SECRET_KEY, legacyServiceKey = LEGACY_SERVICE_KEY, extra = {} } = {}) {
+  const apiKey = secretKey || legacyServiceKey;
+  if (!apiKey) throw new Error('A Supabase backend API key is required');
+
+  const base = {
+    apikey: apiKey,
+    'content-type': 'application/json',
+  };
+
+  // Modern sb_secret_* keys are opaque API keys, not JWTs, and must not be
+  // sent as Authorization: Bearer values. The legacy service_role key is a JWT,
+  // so preserve the bearer header only for backwards compatibility.
+  if (!secretKey && legacyServiceKey) base.authorization = `Bearer ${legacyServiceKey}`;
+
+  return { ...base, ...extra };
 }
 
 function headers(extra = {}) {
   configured();
-  return {
-    apikey: SERVICE_KEY,
-    authorization: `Bearer ${SERVICE_KEY}`,
-    'content-type': 'application/json',
-    ...extra,
-  };
+  return buildSupabaseHeaders({ extra });
 }
 
 async function parse(res) {
