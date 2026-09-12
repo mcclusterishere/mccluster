@@ -66,6 +66,9 @@ jobs:
       - name: Test provider-independent capability resolution
         working-directory: core
         run: npm run test:capabilities
+      - name: Test bounded objective reflection
+        working-directory: core
+        run: npm run test:reflection
       - name: Assert Core security and capability guardrails
         run: |
           grep -F "draft-only" core/src/executors/code-patch.mjs
@@ -76,6 +79,9 @@ jobs:
           grep -F "MCP-Protocol-Version" core/src/tools/mcp-http.mjs
           grep -F "https://api.mccluster.org/v1/media/mcp" core/src/tools/registry.mjs
           grep -F 'ops_agent_jobs' core/src/supabase.mjs
+          grep -F "SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health'])" core/src/reflection-policy.mjs
+          grep -F 'Never propose code_patch' core/src/executors/objective-reflection.mjs
+          grep -F 'OnCalendar=*-*-* 02:30:00 America/New_York' core/systemd/mccluster-core-reflection.timer
           grep -F '"id": "video.generate"' core/capabilities/catalog.json
           grep -F '"id": "model3d.generate"' core/capabilities/catalog.json
           grep -F '"id": "code.build"' core/capabilities/catalog.json

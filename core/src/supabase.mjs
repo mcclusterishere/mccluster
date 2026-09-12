@@ -163,6 +163,62 @@ export async function recentJobs({ orgId, sinceHours = 12, limit = 25 } = {}) {
   return body;
 }
 
+export async function recentObjectives({ orgId, limit = 25 } = {}) {
+  const params = new URLSearchParams({
+    select: '*',
+    limit: String(Math.min(100, Math.max(1, Number(limit) || 25))),
+  });
+  if (orgId) params.set('org_id', `eq.${orgId}`);
+  const { body = [] } = await rest(`ops_objectives?${params.toString()}`);
+  return body;
+}
+
+export async function enqueueJob({
+  orgId,
+  jobType,
+  targetType = 'portfolio',
+  targetId = 'McCluster',
+  input = {},
+  priority = 25,
+  runAfter = new Date().toISOString(),
+  maxAttempts = 3,
+} = {}) {
+  if (!orgId) throw new Error('enqueueJob requires orgId');
+  if (!jobType) throw new Error('enqueueJob requires jobType');
+
+  const { body: rows = [] } = await rest('ops_agent_jobs', {
+    method: 'POST',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({
+      org_id: orgId,
+      job_type: jobType,
+      target_type: targetType,
+      target_id: targetId,
+      status: 'queued',
+      priority: Math.min(100, Math.max(0, Number(priority) || 0)),
+      input: input && typeof input === 'object' ? input : {},
+      run_after: runAfter,
+      max_attempts: Math.max(1, Number(maxAttempts) || 3),
+    }),
+  });
+  if (!rows.length) throw new Error(`Failed to enqueue ${jobType}`);
+  return rows[0];
+}
+
+export async function hasPendingJob({ orgId, jobType, targetId } = {}) {
+  if (!orgId || !jobType) return false;
+  const params = new URLSearchParams({
+    org_id: `eq.${orgId}`,
+    job_type: `eq.${jobType}`,
+    status: 'in.(queued,running)',
+    select: 'id',
+    limit: '1',
+  });
+  if (targetId) params.set('target_id', `eq.${targetId}`);
+  const { body = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  return body.length > 0;
+}
+
 export async function addSignal({ orgId, kind, body, severity = 'info', source = 'mccluster-core', metadata = {} }) {
   const { body: rows = [] } = await rest('ops_signals', {
     method: 'POST',
