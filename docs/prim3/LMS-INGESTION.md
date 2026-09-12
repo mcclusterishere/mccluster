@@ -29,7 +29,9 @@ McCluster expands every source unit into exactly three beginner-sized instructio
 2. **SONG CORE B** — a second focused source-derived concept cluster.
 3. **INFRASTRUCTURE + EXAM BRIDGE** — hardware, infrastructure, services, operational process and relevant CompTIA objective families that enrich the source without pretending the music taught material it did not contain.
 
-That produces **63 instructional modules**. The decomposition is intentionally slower than the album. A learner should not have to understand unrelated terminology in the same sitting merely because it appears in one song.
+That produces **63 instructional modules**. For LMS v2, **63 is a fixed contract and a hard ceiling**: exactly 21 source units × exactly 3 instructional modules. Do not create a 64th module because a song is dense. If a source unit carries more material, improve the scope, examples, reading, assessment and bridge inside its assigned three modules rather than expanding the module count.
+
+The decomposition is intentionally slower than the album. A learner should not have to understand unrelated terminology in the same sitting merely because it appears in one song.
 
 Example: the `White Grey Black Hat` source unit becomes separate modules for **White/Grey/Black Hat**, **White/Grey/Black Box**, and **Pen-Test Infrastructure, Scope & Remediation**. Hat terminology is not recombined with box terminology in the beginner lesson.
 
@@ -57,12 +59,12 @@ api.mccluster.org/v1/prim3/course
   - preserves source provenance
   - expands each source unit into three instructional modules
   - marks enrichment separately from PRIM3-source curriculum
-  - returns LMS schema 2.0.0 / 63 modules
+  - returns LMS schema 2.0.0 / exactly 63 modules
   - requires an authenticated M Account
        |
        v
 matthew.mccluster.org/prim3.html
-  - 7 seasons / 21 episode-song units / 63 modules
+  - 7 seasons / 21 episode-song units / exactly 63 modules
   - LEARN is required progression
   - REMEMBER / WATCH / LAB are aligned companions
   - course price = $0 after account creation
@@ -107,6 +109,8 @@ McCluster publishes LMS schema `2.0.0`:
 - `module_strategy = 3 instructional modules per episode/song unit`
 - `account_required = true`
 - `price_cents = 0`
+
+`module_count = 63` is an invariant for this course version, not a target or minimum. Any future curriculum improvement for v2 must preserve the same 21 × 3 structure.
 
 Every instructional module contains `unit_id`, `part`, `part_label`, song/episode identity, source pointers and `curriculum_origin`.
 
