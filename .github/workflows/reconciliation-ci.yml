@@ -170,7 +170,7 @@ jobs:
           grep -F "[functions.context-core]" supabase/config.toml
           grep -A1 -F "[functions.context-core]" supabase/config.toml | grep -F "verify_jwt = false"
           grep -F 'created_at' supabase/functions/context-ingest/index.ts
-          if grep -R -nE 'MCCLUSTER_CONTEXT_TOKEN[[:space:]]*=[[:space:]]*[^"'"'[:space:]]+' supabase/functions; then
+          if grep -R -nE 'MCCLUSTER_CONTEXT_TOKEN[[:space:]]*=[[:space:]]*[^[:space:]]+' supabase/functions; then
             echo 'A private context token value appears committed.' >&2
             exit 1
           fi
