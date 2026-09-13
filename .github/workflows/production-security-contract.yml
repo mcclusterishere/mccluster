@@ -24,7 +24,7 @@ jobs:
   production-boundaries:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
@@ -50,6 +50,30 @@ jobs:
             fi
           done
           exit "$failed"
+
+      - name: Enforce immutable third-party action refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          failed=0
+          while IFS= read -r line; do
+            ref="${line##*@}"
+            ref="${ref%% *}"
+            if ! [[ "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "Mutable GitHub Action ref is forbidden: $line" >&2
+              failed=1
+            fi
+          done < <(grep -RhoE 'uses:[[:space:]]+[^[:space:]#]+@[^[:space:]#]+' .github/workflows | grep -vE 'uses:[[:space:]]+\./' || true)
+          exit "$failed"
+
+      - name: Reject mutable network-installed deploy CLIs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -nE 'npx[[:space:]]+--yes[[:space:]]+[^[:space:]]+@[0-9]+([[:space:]]|$)' .github/workflows scripts; then
+            echo 'Major-only npx installs are forbidden in deployment/control-plane paths.' >&2
+            exit 1
+          fi
 
       - name: Enforce pinned OVH SSH host identity
         shell: bash
@@ -112,6 +136,8 @@ jobs:
           echo 'Production security invariants verified:' >> "$GITHUB_STEP_SUMMARY"
           echo '- no pull_request_target workflows' >> "$GITHUB_STEP_SUMMARY"
           echo '- explicit workflow token permissions' >> "$GITHUB_STEP_SUMMARY"
+          echo '- third-party GitHub Actions pinned to immutable commit SHAs' >> "$GITHUB_STEP_SUMMARY"
+          echo '- mutable major-only network CLI installs rejected from deploy/control-plane paths' >> "$GITHUB_STEP_SUMMARY"
           echo '- pinned OVH SSH host identity; no live ssh-keyscan TOFU' >> "$GITHUB_STEP_SUMMARY"
           echo '- direct OVH mutations require an exact commit already in main' >> "$GITHUB_STEP_SUMMARY"
           echo '- privileged game bootstrap versions are validated before remote shell interpolation' >> "$GITHUB_STEP_SUMMARY"
