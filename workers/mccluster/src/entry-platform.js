@@ -2,6 +2,7 @@ import existing from './entry.js';
 import { handlePlatformApi } from './platform-api-metered.js';
 import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
+import { enforceApiRateLimit } from './api-rate-limit.js';
 import { fail } from './lib/http.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
@@ -9,6 +10,9 @@ export { HereTenantAgent } from './here-tenant-agent.js';
 export default {
   async fetch(request, env, ctx) {
     try {
+      const rateLimitResponse = await enforceApiRateLimit(request, env);
+      if (rateLimitResponse) return rateLimitResponse;
+
       const computeResponse = await handleComputeApi(request, env);
       if (computeResponse) return computeResponse;
       const planResponse = await handlePlatformPlanApi(request, env);
