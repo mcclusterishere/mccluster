@@ -1,5 +1,6 @@
 import { claimNext, completeJob, failJob, heartbeat, workerId } from './supabase.mjs';
 import { prepareClaimedDagJob } from './objective-dag-store.mjs';
+import { notifyJobFailure, notifyJobSuccess } from './notifier.mjs';
 import { repoHealth } from './executors/repo-health.mjs';
 import { localAnalysis } from './executors/local-analysis.mjs';
 import { codePatch } from './executors/code-patch.mjs';
@@ -12,6 +13,7 @@ import { gameStudioCycle, gameMediaCollect, gameOwnerDecision, gameImplementatio
 import { gameBranchSmoke } from './executors/game-branch-smoke.mjs';
 import { gameReleaseDecision } from './executors/game-release-decision.mjs';
 import { previewDeploy } from './executors/preview-deploy.mjs';
+import { hostHealth } from './executors/host-health.mjs';
 
 const executors = new Map([
   ['repo_health', repoHealth],
@@ -29,6 +31,7 @@ const executors = new Map([
   ['game_branch_smoke', gameBranchSmoke],
   ['game_release_decision', gameReleaseDecision],
   ['preview_deploy', previewDeploy],
+  ['host_health', hostHealth],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
@@ -41,6 +44,15 @@ function log(event, detail = {}) {
 }
 function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 
+async function safeNotify(event, fn) {
+  try {
+    const result = await fn();
+    log(event, { sent: result?.sent === true, reason: result?.reason || null, sid: result?.sid || null });
+  } catch (error) {
+    log(`${event}_failed`, { message: error.message });
+  }
+}
+
 async function execute(job) {
   const executor = executors.get(job.job_type);
   if (!executor) throw new Error(`unsupported job type: ${job.job_type}`);
@@ -51,9 +63,12 @@ async function execute(job) {
     const output = await executor(job);
     await completeJob(job, output);
     log('job_completed', { job_id: job.id, job_type: job.job_type, output_summary: output?.summary || output?.executor || null });
+    await safeNotify('owner_sms', () => notifyJobSuccess(job, output));
   } catch (error) {
     const updated = await failJob(job, error).catch((writeError) => { log('job_failure_write_failed', { job_id: job.id, message: writeError.message }); return null; });
-    log('job_failed', { job_id: job.id, job_type: job.job_type, status: updated?.status || 'unknown', attempt: job.attempts, message: error.message });
+    const status = updated?.status || 'unknown';
+    log('job_failed', { job_id: job.id, job_type: job.job_type, status, attempt: job.attempts, message: error.message });
+    await safeNotify('owner_sms_alert', () => notifyJobFailure(job, error, status));
   } finally { clearInterval(timer); }
 }
 

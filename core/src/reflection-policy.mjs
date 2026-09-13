@@ -1,4 +1,5 @@
-const SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health']);
+const SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health', 'code_patch']);
+const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 
 function boundedString(value, max = 4000) {
   return String(value ?? '').trim().slice(0, max);
@@ -33,6 +34,7 @@ export function normalizeReflectionPlan(value, { maxJobs = 2 } = {}) {
   const plan = value && typeof value === 'object' ? value : {};
   const requested = Array.isArray(plan.next_jobs) ? plan.next_jobs : [];
   const nextJobs = [];
+  let codePatchCount = 0;
 
   for (const candidate of requested) {
     if (nextJobs.length >= limit) break;
@@ -44,9 +46,17 @@ export function normalizeReflectionPlan(value, { maxJobs = 2 } = {}) {
     const task = boundedString(candidate.task || candidate.prompt, 12_000);
     if (!task) continue;
 
-    const targetType = boundedString(candidate.target_type || 'portfolio', 120) || 'portfolio';
+    let targetType = boundedString(candidate.target_type || 'portfolio', 120) || 'portfolio';
     const targetId = boundedString(candidate.target_id || 'McCluster', 500) || 'McCluster';
-    const priority = clampInteger(candidate.priority, 0, 100, 25);
+    let priority = clampInteger(candidate.priority, 0, 100, 25);
+
+    if (jobType === 'code_patch') {
+      if (codePatchCount >= 1) continue;
+      if (!REPO.test(targetId)) continue;
+      targetType = 'repository';
+      priority = Math.min(priority, 40);
+      codePatchCount += 1;
+    }
 
     nextJobs.push({
       job_type: jobType,
@@ -59,6 +69,10 @@ export function normalizeReflectionPlan(value, { maxJobs = 2 } = {}) {
           ? candidate.evidence
           : {},
         reflection_origin: true,
+        ...(jobType === 'code_patch' ? {
+          title: boundedString(candidate.title || `Autonomous maintenance: ${task}`, 160),
+          autonomous_draft_only: true,
+        } : {}),
       },
     });
   }
