@@ -7,6 +7,7 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/tests/api_compute_economics_regression.sql'
       - 'supabase/tests/api_rate_limit_regression.sql'
+      - 'supabase/tests/compute_cogs_regression.sql'
       - 'workers/mccluster/src/compute-api.js'
       - 'workers/mccluster/src/platform-api*.js'
       - 'workers/mccluster/src/api-rate-limit.js'
@@ -18,6 +19,7 @@ on:
       - 'supabase/migrations/**'
       - 'supabase/tests/api_compute_economics_regression.sql'
       - 'supabase/tests/api_rate_limit_regression.sql'
+      - 'supabase/tests/compute_cogs_regression.sql'
       - 'workers/mccluster/src/compute-api.js'
       - 'workers/mccluster/src/platform-api*.js'
       - 'workers/mccluster/src/api-rate-limit.js'
@@ -51,7 +53,7 @@ jobs:
           grep -F "status: 429" workers/mccluster/src/api-rate-limit.js
 
   database-regression:
-    name: Credits, billing, idempotency, and rate-limit regression
+    name: Credits, billing, idempotency, rate-limit, and COGS regression
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -71,6 +73,10 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/api_rate_limit_regression.sql
+      - name: Run compute COGS regression suite
+        env:
+          PGPASSWORD: postgres
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/compute_cogs_regression.sql
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true
