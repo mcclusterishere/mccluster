@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { checkpointJobInput, enqueueJob, recentJobs, recentObjectives } from '../supabase.mjs';
+import { recentJobs, recentObjectives } from '../supabase.mjs';
+import { checkpointJobInput, enqueueJobWithId } from '../objective-dag-store.mjs';
 import { allowedPlanJobTypes, normalizeObjectivePlan } from '../plan-policy.mjs';
 import { extractJsonObject } from '../reflection-policy.mjs';
 
@@ -113,7 +114,7 @@ export async function objectivePlan(job) {
 
   for (const step of plan.steps) {
     const dependsOnJobIds = step.depends_on.map((key) => jobIdsByKey.get(key)).filter(Boolean);
-    const created = await enqueueJob({
+    const created = await enqueueJobWithId({
       jobId: jobIdsByKey.get(step.key),
       orgId: job.org_id,
       jobType: step.job_type,
