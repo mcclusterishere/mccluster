@@ -1,10 +1,7 @@
 \set ON_ERROR_STOP on
 begin;
 
--- This suite is destructive by design but always rolls back. It is safe to run
--- against an isolated local Supabase database and can also be used for a manual
--- production smoke test because no rows survive the transaction.
-
+-- Destructive regression setup is transaction-scoped and always rolled back.
 do $test$
 declare
   v_person_a uuid;
@@ -16,6 +13,9 @@ declare
   v_consumer_spend uuid;
   v_key_a uuid;
   v_key_b uuid;
+  v_key_low uuid;
+  v_key_monthly uuid;
+  v_key_spend uuid;
   v_req_a uuid;
   v_req_retry uuid;
   v_reserved bigint;
@@ -57,11 +57,8 @@ begin
     'regression-idempotent',v_consumer_a,v_key_a,'chat','reasoning',7000,2000,null,null,'{}'::jsonb
   );
 
-  if v_reserved <> 9 then
-    raise exception 'expected 9 reserved credits, got %', v_reserved;
-  end if;
-  if v_balance <> 991 then
-    raise exception 'expected balance 991 after reservation, got %', v_balance;
+  if v_reserved <> 9 or v_balance <> 991 then
+    raise exception 'reservation mismatch reserved=% balance=%',v_reserved,v_balance;
   end if;
 
   select request_uuid,reserved_credits,balance_after_reservation
@@ -70,11 +67,8 @@ begin
     'regression-idempotent',v_consumer_a,v_key_a,'chat','reasoning',7000,2000,null,null,'{}'::jsonb
   );
 
-  if v_req_retry <> v_req_a then
-    raise exception 'idempotent retry created a different request';
-  end if;
-  if v_after <> 991 then
-    raise exception 'idempotent retry double-charged credits: balance %', v_after;
+  if v_req_retry <> v_req_a or v_after <> 991 then
+    raise exception 'idempotent retry double-charged or changed request';
   end if;
 
   -- 2. Cross-tenant collision must fail closed.
@@ -90,19 +84,15 @@ begin
     end if;
   end;
 
-  -- 3. Settlement must charge actual use and refund the unused reservation.
+  -- 3. Settlement must charge actual use and refund unused reservation.
   select charged_credits,released_credits,gross_margin_bps
     into v_charged,v_released,v_margin
   from public.compute_settle_request(
     'regression-idempotent','succeeded',null,null,0,0,1000,2000,null,false,0,'{}'::jsonb,null,null
   );
-
-  if v_charged <> 2 or v_released <> 7 then
-    raise exception 'expected settlement charge/refund 2/7, got %/%', v_charged,v_released;
-  end if;
   select public.api_credit_balance(v_consumer_a) into v_after;
-  if v_after <> 998 then
-    raise exception 'expected post-settlement balance 998, got %', v_after;
+  if v_charged <> 2 or v_released <> 7 or v_after <> 998 then
+    raise exception 'settlement mismatch charged=% released=% balance=%',v_charged,v_released,v_after;
   end if;
 
   -- 4. Failed zero-cost work must release the complete reservation.
@@ -124,10 +114,12 @@ begin
   insert into public.api_consumers(owner_m_uid,name,slug,plan_code,monthly_credit_limit,settings)
   values(v_person_a,'Regression Low','regression-low-'||substr(gen_random_uuid()::text,1,8),'developer',100000,'{}')
   returning id into v_consumer_low;
+  insert into public.api_keys(consumer_id,key_prefix,secret_hash,name,scopes)
+  values(v_consumer_low,'mcc_test_low','hash-low-'||gen_random_uuid()::text,'regression-low',array['mnet:read']) returning id into v_key_low;
   insert into public.api_credit_ledger(consumer_id,delta,reason,reference_type,reference_id)
   values(v_consumer_low,1,'regression_grant','test','suite');
   begin
-    perform * from public.api_reserve_usage('regression-insufficient',v_consumer_low,null,'mnet.read','/v1/mnet/feed','GET',2,'{}'::jsonb);
+    perform * from public.api_reserve_usage('regression-insufficient',v_consumer_low,v_key_low,'mnet.read','/v1/mnet/feed','GET',2,'{}'::jsonb);
     raise exception 'insufficient-credit reservation unexpectedly succeeded';
   exception when others then
     get stacked diagnostics v_error = message_text;
@@ -152,11 +144,13 @@ begin
   insert into public.api_consumers(owner_m_uid,name,slug,plan_code,monthly_credit_limit,settings)
   values(v_person_a,'Regression Monthly','regression-monthly-'||substr(gen_random_uuid()::text,1,8),'developer',1,'{}')
   returning id into v_consumer_monthly;
+  insert into public.api_keys(consumer_id,key_prefix,secret_hash,name,scopes)
+  values(v_consumer_monthly,'mcc_test_month','hash-month-'||gen_random_uuid()::text,'regression-monthly',array['mnet:read']) returning id into v_key_monthly;
   insert into public.api_credit_ledger(consumer_id,delta,reason,reference_type,reference_id)
   values(v_consumer_monthly,100,'regression_grant','test','suite');
-  perform * from public.api_reserve_usage('regression-monthly-1',v_consumer_monthly,null,'mnet.read','/v1/mnet/feed','GET',1,'{}'::jsonb);
+  perform * from public.api_reserve_usage('regression-monthly-1',v_consumer_monthly,v_key_monthly,'mnet.read','/v1/mnet/feed','GET',1,'{}'::jsonb);
   begin
-    perform * from public.api_reserve_usage('regression-monthly-2',v_consumer_monthly,null,'mnet.read','/v1/mnet/feed','GET',1,'{}'::jsonb);
+    perform * from public.api_reserve_usage('regression-monthly-2',v_consumer_monthly,v_key_monthly,'mnet.read','/v1/mnet/feed','GET',1,'{}'::jsonb);
     raise exception 'monthly allowance overflow unexpectedly succeeded';
   exception when others then
     get stacked diagnostics v_error = message_text;
@@ -165,19 +159,18 @@ begin
     end if;
   end;
 
-  -- 8. Hard spend ceiling must reject overage even if overage is enabled.
-  update public.api_plans
-     set overage_price_per_1000_credits_cents=100
-   where plan_code='developer';
-
+  -- 8. Hard spend ceiling must reject overage even when overage is enabled.
+  update public.api_plans set overage_price_per_1000_credits_cents=100 where plan_code='developer';
   insert into public.api_consumers(owner_m_uid,name,slug,plan_code,monthly_credit_limit,hard_spend_limit_cents,settings)
   values(v_person_a,'Regression Spend','regression-spend-'||substr(gen_random_uuid()::text,1,8),'developer',1,0,'{"allow_overage":true}'::jsonb)
   returning id into v_consumer_spend;
+  insert into public.api_keys(consumer_id,key_prefix,secret_hash,name,scopes)
+  values(v_consumer_spend,'mcc_test_spend','hash-spend-'||gen_random_uuid()::text,'regression-spend',array['mnet:read']) returning id into v_key_spend;
   insert into public.api_credit_ledger(consumer_id,delta,reason,reference_type,reference_id)
   values(v_consumer_spend,100,'regression_grant','test','suite');
-  perform * from public.api_reserve_usage('regression-spend-1',v_consumer_spend,null,'mnet.read','/v1/mnet/feed','GET',1,'{}'::jsonb);
+  perform * from public.api_reserve_usage('regression-spend-1',v_consumer_spend,v_key_spend,'mnet.read','/v1/mnet/feed','GET',1,'{}'::jsonb);
   begin
-    perform * from public.api_reserve_usage('regression-spend-2',v_consumer_spend,null,'mnet.read','/v1/mnet/feed','GET',1,'{}'::jsonb);
+    perform * from public.api_reserve_usage('regression-spend-2',v_consumer_spend,v_key_spend,'mnet.read','/v1/mnet/feed','GET',1,'{}'::jsonb);
     raise exception 'hard spend ceiling unexpectedly allowed overage';
   exception when others then
     get stacked diagnostics v_error = message_text;
