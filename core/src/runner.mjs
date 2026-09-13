@@ -1,8 +1,10 @@
 import { claimNext, completeJob, failJob, heartbeat, workerId } from './supabase.mjs';
+import { prepareClaimedDagJob } from './objective-dag-store.mjs';
 import { repoHealth } from './executors/repo-health.mjs';
 import { localAnalysis } from './executors/local-analysis.mjs';
 import { codePatch } from './executors/code-patch.mjs';
 import { objectiveReflection } from './executors/objective-reflection.mjs';
+import { objectivePlan } from './executors/objective-plan.mjs';
 import { portfolioPlan } from './executors/portfolio-plan.mjs';
 import { gameBuildPlan } from './executors/game-build-plan.mjs';
 import { gamePlaytest } from './executors/game-playtest.mjs';
@@ -16,6 +18,7 @@ const executors = new Map([
   ['local_analysis', localAnalysis],
   ['code_patch', codePatch],
   ['objective_reflection', objectiveReflection],
+  ['objective_plan', objectivePlan],
   ['portfolio_plan', portfolioPlan],
   ['game_build_plan', gameBuildPlan],
   ['game_playtest', gamePlaytest],
@@ -55,9 +58,27 @@ async function execute(job) {
 }
 
 async function cycle() {
-  const job = await claimNext([...executors.keys()]);
-  if (!job) return false;
-  await execute(job);
+  const claimed = await claimNext([...executors.keys()]);
+  if (!claimed) return false;
+
+  const prepared = await prepareClaimedDagJob(claimed);
+  if (prepared.action === 'waiting') {
+    log('job_dependency_wait', {
+      job_id: claimed.id,
+      dependency_ids: prepared.dependency?.dependency_ids || [],
+      pending_ids: prepared.dependency?.pending_ids || prepared.dependency?.missing_ids || [],
+    });
+    return true;
+  }
+  if (prepared.action === 'blocked') {
+    log('job_dependency_failed', {
+      job_id: claimed.id,
+      failed_ids: prepared.dependency?.failed_ids || [],
+    });
+    return true;
+  }
+
+  await execute(prepared.job);
   return true;
 }
 
