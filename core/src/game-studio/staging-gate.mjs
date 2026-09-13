@@ -28,7 +28,7 @@ function run(cmd, args, options = {}) {
 
 export function probeGameStudioHost({ project_dir } = {}) {
   const godot = process.env.GODOT_BIN || which(['godot4', 'godot']);
-  const projectDir = resolve(project_dir || process.env.PRIM3_TEST_PROJECT || 'core/fixtures/prim3-test-mission-000');
+  const projectDir = resolve(project_dir || process.env.PRIM3_TEST_PROJECT || 'core/fixtures/prim3-tactical-sandbox');
   const projectFile = resolve(projectDir, 'project.godot');
 
   const report = {
