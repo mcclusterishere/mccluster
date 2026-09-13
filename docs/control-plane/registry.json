@@ -14,6 +14,7 @@
   },
   "satellites": [
     {"owner": "mcclusterishere", "repo": "mccluster", "role": "control-plane", "branch": "main"},
+    {"owner": "mcclusterishere", "repo": "Mnet", "role": "social-plane", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Here", "role": "archive-old-website", "branch": "main", "doNotDeploy": true},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped-Driver", "role": "product", "branch": "main"},
