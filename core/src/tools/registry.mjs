@@ -1,6 +1,7 @@
 import { callMcpTool, listMcpTools } from './mcp-http.mjs';
 import { callHttpTool } from './http.mjs';
 import { callComputeTool, discoverComputeTools } from './compute.mjs';
+import { CONTROL_TOOLS, callControlTool } from './control.mjs';
 
 const NAME = /^[a-zA-Z0-9_.:-]{1,160}$/;
 const CACHE_TTL_MS = Number(process.env.CORE_TOOL_CACHE_TTL_MS || 60_000);
@@ -71,7 +72,7 @@ function addRecord(records, record) {
 }
 
 export class ToolRegistry {
-  constructor({ mcpServers, httpTools, computeDiscovery = discoverComputeTools } = {}) {
+  constructor({ mcpServers, httpTools, localTools = CONTROL_TOOLS, computeDiscovery = discoverComputeTools } = {}) {
     this.mcpServers = (mcpServers || [
       ...BUILTIN_MCP_SERVERS,
       ...parseJsonEnv('CORE_MCP_SERVERS_JSON')
@@ -80,6 +81,7 @@ export class ToolRegistry {
       ...BUILTIN_HTTP_TOOLS,
       ...parseJsonEnv('CORE_HTTP_TOOLS_JSON')
     ]).map(normalizeHttpTool);
+    this.localTools = localTools || [];
     this.computeDiscovery = computeDiscovery;
     this.cache = null;
     this.cacheAt = 0;
@@ -90,6 +92,19 @@ export class ToolRegistry {
 
     const records = new Map();
     const diagnostics = [];
+
+    for (const tool of this.localTools) {
+      addRecord(records, {
+        name: tool.name,
+        title: tool.title || tool.name,
+        description: tool.description || '',
+        inputSchema: tool.inputSchema || { type: 'object', properties: {} },
+        outputSchema: tool.outputSchema,
+        transport: 'local-control',
+        target: tool
+      });
+    }
+    diagnostics.push({ id: 'core-control', transport: 'local-control', ok: true, tools: this.localTools.length });
 
     for (const tool of this.httpTools) {
       addRecord(records, {
@@ -162,7 +177,9 @@ export class ToolRegistry {
 
     const startedAt = Date.now();
     let result;
-    if (record.transport === 'http') {
+    if (record.transport === 'local-control') {
+      result = await callControlTool(name, args, options);
+    } else if (record.transport === 'http') {
       result = await callHttpTool(record.target, args);
     } else if (record.transport === 'mcp-http') {
       result = await callMcpTool(record.target.server, record.remoteName, args);
