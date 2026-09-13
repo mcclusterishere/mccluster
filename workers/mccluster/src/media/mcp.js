@@ -1,20 +1,6 @@
-// The media harness's own MCP surface — the "Agent interface" phase of
-// docs/control-plane/GENERATIVE-MEDIA-HARNESS.md, made real.
-//
-// This is the SERVER half. supabase/functions/inbox/mcp.ts is the other
-// direction entirely (McCluster calling OUT to a customer's building
-// automation server); this file is McCluster answering IN, so a remote
-// MCP client (Claude, or anything else that speaks the protocol) can
-// drive generation, Director Compare, and job/lineage lookups.
-//
-// Same transport rules as the client half, because there is only one
-// protocol in this codebase: 2026-07-28, stateless. No initialize
-// handshake, no Mcp-Session-Id, no GET stream. One POST per call.
-//
-// Every tool here is a thin re-entry into the REST handlers in
-// router.js/orchestrator.js/recommend.js. That keeps exactly one
-// implementation of org membership, capability checks, budget
-// enforcement, cost tracking and asset/lineage writes.
+// McCluster generative-media MCP surface. All generation paths re-enter the
+// canonical REST handlers so org authorization, budgets, provider costs and
+// asset lineage have one implementation.
 
 import { createGeneration, getGeneration, listModels } from './router.js';
 import { createBakeoff } from './orchestrator.js';
@@ -22,15 +8,32 @@ import { recommendModels } from './recommend.js';
 
 export const MCP_VERSION = '2026-07-28';
 
+function semanticTool(name, title, description, extra = {}) {
+  return {
+    name,
+    title,
+    description,
+    inputSchema: {
+      type: 'object',
+      required: ['org_id', 'prompt'],
+      properties: {
+        org_id: { type: 'string' },
+        prompt: { type: 'string' },
+        references: { type: 'array' },
+        budget_cents: { type: 'number', minimum: 0 },
+        preference: { type: 'string', enum: ['quality', 'balanced', 'speed', 'price'] },
+        ...extra,
+      },
+    },
+  };
+}
+
 const TOOLS = [
   {
     name: 'media.models.search',
     title: 'Search media models',
     description: 'List enabled generative-media models in the McCluster registry, optionally filtered by capability or provider.',
-    inputSchema: {
-      type: 'object',
-      properties: { capability: { type: 'string' }, provider: { type: 'string' } }
-    }
+    inputSchema: { type: 'object', properties: { capability: { type: 'string' }, provider: { type: 'string' } } }
   },
   {
     name: 'media.recommend',
@@ -67,10 +70,22 @@ const TOOLS = [
         model_id: { type: 'string' },
         prompt: { type: 'string' },
         input: { type: 'object' },
-        budget_cents: { type: 'number' }
+        budget_cents: { type: 'number' },
+        strategy: { type: 'string' }
       }
     }
   },
+  semanticTool('image.generate', 'Generate image', 'Provider-independent tracked image generation.'),
+  semanticTool('video.generate', 'Generate video', 'Provider-independent tracked video generation.', {
+    duration_seconds: { type: 'number', minimum: 0 },
+    aspect_ratio: { type: 'string' }
+  }),
+  semanticTool('audio.generate', 'Generate audio', 'Provider-independent tracked audio generation.', {
+    kind: { type: 'string', enum: ['voice', 'music', 'sfx'] }
+  }),
+  semanticTool('model3d.generate', 'Generate 3D model', 'Provider-independent tracked 3D model generation returning reusable engine assets.', {
+    target_format: { type: 'string', enum: ['glb'] }
+  }),
   {
     name: 'media.compare',
     title: 'Director Compare',
@@ -117,6 +132,61 @@ function synthetic(request, { method = 'GET', path, query, body } = {}) {
   return new Request(url, init);
 }
 
+function capabilityForSemanticTool(name, args) {
+  if (name === 'image.generate') return Array.isArray(args.references) && args.references.length ? 'image-to-image' : 'text-to-image';
+  if (name === 'video.generate') return Array.isArray(args.references) && args.references.length ? 'image-to-video' : 'text-to-video';
+  if (name === 'audio.generate') return 'text-to-audio';
+  if (name === 'model3d.generate') return Array.isArray(args.references) && args.references.length ? 'image-to-3d' : 'text-to-3d';
+  return null;
+}
+
+function providerInputForSemanticTool(name, args) {
+  const input = { prompt: args.prompt };
+  if (name === 'video.generate') {
+    if (args.duration_seconds !== undefined) input.duration = args.duration_seconds;
+    if (args.aspect_ratio) input.aspect_ratio = args.aspect_ratio;
+  }
+  if (Array.isArray(args.references) && args.references.length) {
+    const first = args.references[0];
+    const url = typeof first === 'string' ? first : first?.url;
+    if (url) input.image_url = url;
+  }
+  return input;
+}
+
+async function semanticGenerate(name, args, request, env, user) {
+  if (!args.org_id || !args.prompt) throw Object.assign(new Error('org_id and prompt are required'), { status: 400 });
+  const capability = capabilityForSemanticTool(name, args);
+  const recommended = await recommendModels(synthetic(request, {
+    method: 'POST',
+    body: {
+      capability,
+      preference: args.preference || 'quality',
+      required: {
+        commercial_use: true,
+        reference_images: Array.isArray(args.references) && args.references.length > 0
+      },
+      top_k: 1
+    }
+  }), env);
+  const model = recommended?.candidates?.[0]?.model;
+  if (!model?.id) throw Object.assign(new Error(`No enabled model available for ${capability}`), { status: 503 });
+
+  const job = await createGeneration(synthetic(request, {
+    method: 'POST',
+    body: {
+      org_id: args.org_id,
+      model_id: model.id,
+      prompt: args.prompt,
+      input: providerInputForSemanticTool(name, args),
+      budget_cents: args.budget_cents,
+      strategy: `semantic:${name}`
+    }
+  }), env, user);
+
+  return textResult({ capability: name, routed_capability: capability, model, job });
+}
+
 async function callTool(name, args, request, env, user) {
   switch (name) {
     case 'media.models.search':
@@ -125,6 +195,11 @@ async function callTool(name, args, request, env, user) {
       return textResult(await recommendModels(synthetic(request, { method: 'POST', body: args }), env));
     case 'media.generate':
       return textResult({ job: await createGeneration(synthetic(request, { method: 'POST', body: args }), env, user) });
+    case 'image.generate':
+    case 'video.generate':
+    case 'audio.generate':
+    case 'model3d.generate':
+      return semanticGenerate(name, args, request, env, user);
     case 'media.compare':
       return textResult(await createBakeoff(synthetic(request, { method: 'POST', body: args }), env, user));
     case 'media.job.get':
