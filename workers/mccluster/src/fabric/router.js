@@ -1,5 +1,6 @@
 const NODE = 'cloudflare';
 const MAX_EVENT_BYTES = 128 * 1024;
+const CONVERSATION_EVENT_KEYS = new Set(['provider', 'conversation_id', 'receipt_id', 'message_count', 'payload_hash']);
 
 function headers(env) {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Supabase backend configuration missing');
@@ -38,8 +39,21 @@ export function canonicalTimestamp(value) {
 }
 
 function assertPayloadPolicy(envelope) {
-  if (envelope?.kind === 'conversation.ingested' && Object.prototype.hasOwnProperty.call(envelope.payload || {}, 'messages')) {
-    throw Object.assign(new Error('raw conversation messages are forbidden in fabric events'), { status: 400 });
+  if (envelope?.kind !== 'conversation.ingested') return;
+  const payload = envelope.payload;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw Object.assign(new Error('raw conversation messages are forbidden in fabric events; conversation.ingested payload must be reference-only'), { status: 400 });
+  }
+  const unexpected = Object.keys(payload).filter((key) => !CONVERSATION_EVENT_KEYS.has(key));
+  if (unexpected.length) {
+    throw Object.assign(new Error(`raw conversation messages are forbidden in fabric events; unexpected conversation metadata: ${unexpected.join(', ')}`), { status: 400 });
+  }
+  if (!String(payload.conversation_id || '').trim() || !String(payload.receipt_id || '').trim()) {
+    throw Object.assign(new Error('conversation.ingested requires conversation_id and receipt_id references'), { status: 400 });
+  }
+  const messageCount = Number(payload.message_count);
+  if (!Number.isInteger(messageCount) || messageCount < 0) {
+    throw Object.assign(new Error('conversation.ingested message_count must be a non-negative integer'), { status: 400 });
   }
 }
 
