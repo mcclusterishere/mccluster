@@ -1,0 +1,12 @@
+[Unit]
+Description=Periodically reconcile McCluster VPS to approved Git ref
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=2min
+RandomizedDelaySec=20s
+Persistent=true
+Unit=mccluster-vps-reconcile.service
+
+[Install]
+WantedBy=timers.target
