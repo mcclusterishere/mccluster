@@ -68,3 +68,44 @@ alter table public.network_follows enable row level security;
 alter table public.network_reactions enable row level security;
 
 grant all on table public.network_profiles, public.network_posts, public.network_follows, public.network_reactions to service_role;
+
+-- Production trigger that ensures every authenticated M identity can acquire a
+-- corresponding network profile without granting client-side write authority.
+create or replace function public.ensure_network_profile_for_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  v_m_uid uuid;
+  v_name text;
+begin
+  select l.m_uid into v_m_uid
+  from public.m_auth_user_links l
+  where l.auth_user_id = new.id
+  order by l.is_primary desc, l.linked_at asc
+  limit 1;
+
+  if v_m_uid is null then
+    return new;
+  end if;
+
+  v_name := coalesce(new.raw_user_meta_data->>'name', new.raw_user_meta_data->>'full_name', '');
+  insert into public.network_profiles(m_uid, display_name, avatar_url)
+  values(v_m_uid, v_name, coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture', ''))
+  on conflict (m_uid) do update set
+    display_name = case when public.network_profiles.display_name = '' then excluded.display_name else public.network_profiles.display_name end,
+    avatar_url = case when public.network_profiles.avatar_url = '' then excluded.avatar_url else public.network_profiles.avatar_url end,
+    updated_at = now();
+  return new;
+end;
+$$;
+
+revoke all on function public.ensure_network_profile_for_auth_user() from public, anon, authenticated;
+grant execute on function public.ensure_network_profile_for_auth_user() to service_role;
+
+drop trigger if exists zz_network_profile_after_auth on auth.users;
+create trigger zz_network_profile_after_auth
+after insert or update on auth.users
+for each row execute function public.ensure_network_profile_for_auth_user();
