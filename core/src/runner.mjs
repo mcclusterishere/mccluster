@@ -15,6 +15,7 @@ import { gameBranchSmoke } from './executors/game-branch-smoke.mjs';
 import { gameReleaseDecision } from './executors/game-release-decision.mjs';
 import { previewDeploy } from './executors/preview-deploy.mjs';
 import { hostHealth } from './executors/host-health.mjs';
+import { smsAssistantTurn } from './executors/sms-assistant-turn.mjs';
 
 const executors = new Map([
   ['repo_health', repoHealth],
@@ -34,6 +35,7 @@ const executors = new Map([
   ['game_release_decision', gameReleaseDecision],
   ['preview_deploy', previewDeploy],
   ['host_health', hostHealth],
+  ['sms_assistant_turn', smsAssistantTurn],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
