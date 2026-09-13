@@ -72,6 +72,9 @@ jobs:
       - name: Test Initiative OS portfolio planning
         working-directory: core
         run: npm run test:initiative-os
+      - name: Test dependency-aware objective plans
+        working-directory: core
+        run: npm run test:plans
       - name: Assert Core security and capability guardrails
         run: |
           grep -F "draft-only" core/src/executors/code-patch.mjs
@@ -82,7 +85,14 @@ jobs:
           grep -F "MCP-Protocol-Version" core/src/tools/mcp-http.mjs
           grep -F "https://api.mccluster.org/v1/media/mcp" core/src/tools/registry.mjs
           grep -F 'ops_agent_jobs' core/src/supabase.mjs
-          grep -F "SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health'])" core/src/reflection-policy.mjs
+          grep -F "SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health', 'objective_plan'])" core/src/reflection-policy.mjs
+          grep -F "SAFE_PLAN_JOB_TYPES = new Set(['local_analysis', 'repo_health'])" core/src/plan-policy.mjs
+          grep -F "dependencies.state === 'waiting'" core/src/supabase.mjs
+          grep -F "dependencies.state === 'failed'" core/src/supabase.mjs
+          grep -F 'dependencies: boundedDependencyEvidence' core/src/supabase.mjs
+          grep -F 'resolution=ignore-duplicates,return=representation' core/src/supabase.mjs
+          grep -F 'deterministicPlanJobId' core/src/executors/objective-plan.mjs
+          grep -F 'Do not propose code_patch' core/src/executors/objective-plan.mjs
           grep -F 'Never propose code_patch' core/src/executors/objective-reflection.mjs
           grep -F 'objective_reflection only' core/src/executors/portfolio-plan.mjs
           grep -F 'OnCalendar=*-*-* 02:00:00 America/New_York' core/systemd/mccluster-core-portfolio-plan.timer
