@@ -29,6 +29,11 @@ const BASE_TOOLS = [
     inputSchema: { type: 'object', required: ['repository'], properties: { repository: { type: 'string' }, tests: { type: 'boolean' }, dependency_review: { type: 'boolean' } }, additionalProperties: false }
   },
   {
+    name: 'core.objective.plan', title: 'Plan bounded objective DAG',
+    description: 'Queue a dependency-aware plan of safe unattended analysis/inspection work. The planner cannot create code, deploy, communicate, spend, or mutate production.',
+    inputSchema: { type: 'object', required: ['org_id', 'objective'], properties: { org_id: { type: 'string' }, objective: { type: 'string' }, target_id: { type: 'string' }, max_steps: { type: 'integer', minimum: 1, maximum: 12 }, since_hours: { type: 'integer', minimum: 1, maximum: 168 }, priority: { type: 'number' } }, additionalProperties: false }
+  },
+  {
     name: 'core.code.build', title: 'Build code change',
     description: 'Queue an isolated autonomous code change that can produce a draft branch/PR but never auto-merge.',
     inputSchema: { type: 'object', required: ['org_id', 'repository', 'task'], properties: { org_id: { type: 'string' }, repository: { type: 'string' }, task: { type: 'string' }, title: { type: 'string' }, allowed_paths: { type: 'array', items: { type: 'string' } }, priority: { type: 'number' } } }
@@ -67,6 +72,39 @@ export async function callControlTool(name, args = {}) {
   }
 
   if (name === 'core.research.web') return researchWeb(args);
+
+  if (name === 'core.objective.plan') {
+    const orgId = requireOrg(args.org_id);
+    const objective = text(args.objective, 12_000);
+    if (!objective) throw Object.assign(new Error('objective is required'), { status: 400 });
+    const targetId = text(args.target_id || 'McCluster', 500) || 'McCluster';
+    const maxSteps = Math.min(12, Math.max(1, Number(args.max_steps || 8)));
+    const sinceHours = Math.min(168, Math.max(1, Number(args.since_hours || 48)));
+    const job = await enqueueJob({
+      orgId,
+      jobType: 'objective_plan',
+      targetType: 'objective',
+      targetId,
+      priority: Math.min(100, Math.max(0, Number(args.priority ?? 70))),
+      maxAttempts: 3,
+      input: { objective, max_steps: maxSteps, since_hours: sinceHours },
+    });
+    return {
+      queued: true,
+      job_id: job.id,
+      job_type: job.job_type,
+      objective,
+      max_steps: maxSteps,
+      safety: {
+        child_job_types: ['repo_health', 'local_analysis'],
+        code_changes: false,
+        deploys: false,
+        communications: false,
+        spending: false,
+        production_mutation: false,
+      },
+    };
+  }
 
   if (name === 'core.code.build') {
     const orgId = requireOrg(args.org_id);
