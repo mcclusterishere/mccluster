@@ -5,6 +5,7 @@ import { codePatch } from './executors/code-patch.mjs';
 import { objectiveReflection } from './executors/objective-reflection.mjs';
 import { portfolioPlan } from './executors/portfolio-plan.mjs';
 import { gameBuildPlan } from './executors/game-build-plan.mjs';
+import { gamePlaytest } from './executors/game-playtest.mjs';
 
 const executors = new Map([
   ['repo_health', repoHealth],
@@ -13,6 +14,7 @@ const executors = new Map([
   ['objective_reflection', objectiveReflection],
   ['portfolio_plan', portfolioPlan],
   ['game_build_plan', gameBuildPlan],
+  ['game_playtest', gamePlaytest],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
@@ -87,7 +89,7 @@ async function main() {
 }
 
 for (const signal of ['SIGTERM', 'SIGINT']) {
-  process.on(signal, () => {
+  process.on('SIGTERM' === signal ? 'SIGTERM' : 'SIGINT', () => {
     stopping = true;
     log('core_runner_stopping', { signal });
   });
