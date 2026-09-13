@@ -15,7 +15,7 @@ async function sb(env, path, init = {}) {
     ...init,
     headers: { ...headers(env), ...(init.headers || {}) }
   });
-  if (!response.ok) throw new Error(`fabric supabase ${response.status}: ${await response.text()}`);
+  if (!response.ok) throw Object.assign(new Error(`fabric supabase ${response.status}: ${await response.text()}`), { status: response.status });
   if (response.status === 204) return null;
   const text = await response.text();
   return text ? JSON.parse(text) : null;
@@ -27,10 +27,35 @@ function stableStringify(value) {
   return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
 }
 
+function byteLength(text) {
+  return new TextEncoder().encode(String(text)).byteLength;
+}
+
 export function canonicalTimestamp(value) {
   const parsed = new Date(String(value || ''));
-  if (Number.isNaN(parsed.getTime())) throw new Error('fabric event occurred_at must be a valid instant');
+  if (Number.isNaN(parsed.getTime())) throw Object.assign(new Error('fabric event occurred_at must be a valid instant'), { status: 400 });
   return parsed.toISOString();
+}
+
+function assertPayloadPolicy(envelope) {
+  if (envelope?.kind === 'conversation.ingested' && Object.prototype.hasOwnProperty.call(envelope.payload || {}, 'messages')) {
+    throw Object.assign(new Error('raw conversation messages are forbidden in fabric events'), { status: 400 });
+  }
+}
+
+function normalizeEnvelope(envelope) {
+  const normalized = {
+    schema_version: envelope.schema_version ?? 1,
+    event_id: envelope.event_id,
+    org_id: envelope.org_id,
+    trace_id: envelope.trace_id,
+    kind: envelope.kind,
+    origin_node: envelope.origin_node,
+    occurred_at: canonicalTimestamp(envelope.occurred_at),
+    payload: envelope.payload ?? {}
+  };
+  assertPayloadPolicy(normalized);
+  return normalized;
 }
 
 async function sha256(text) {
@@ -40,60 +65,41 @@ async function sha256(text) {
 }
 
 export async function hashEnvelope(envelope) {
-  return sha256(stableStringify({
-    schema_version: envelope.schema_version ?? 1,
-    event_id: envelope.event_id,
-    org_id: envelope.org_id,
-    trace_id: envelope.trace_id,
-    kind: envelope.kind,
-    origin_node: envelope.origin_node,
-    occurred_at: canonicalTimestamp(envelope.occurred_at),
-    payload: envelope.payload ?? {}
-  }));
+  return sha256(stableStringify(normalizeEnvelope(envelope)));
 }
 
 async function existingEvent(env, eventId, orgId = null) {
-  const params = new URLSearchParams({
-    event_id: `eq.${eventId}`,
-    select: '*',
-    limit: '1'
-  });
+  const params = new URLSearchParams({ event_id: `eq.${eventId}`, select: '*', limit: '1' });
   if (orgId) params.set('org_id', `eq.${orgId}`);
   const rows = await sb(env, `/rest/v1/fabric_events?${params.toString()}`);
   return rows?.[0] || null;
 }
 
 async function persistEvent(env, envelope) {
-  const normalized = { ...envelope, occurred_at: canonicalTimestamp(envelope.occurred_at) };
+  const normalized = normalizeEnvelope(envelope);
   const expected = await hashEnvelope(normalized);
-  if (normalized.content_hash !== expected) throw Object.assign(new Error('fabric content_hash mismatch'), { status: 409 });
+  if (envelope.content_hash !== expected) throw Object.assign(new Error('fabric content_hash mismatch'), { status: 409 });
+
+  const row = { ...normalized, content_hash: envelope.content_hash };
+  if (byteLength(JSON.stringify(row)) > MAX_EVENT_BYTES) throw Object.assign(new Error('fabric event too large'), { status: 413 });
 
   const inserted = await sb(env, '/rest/v1/fabric_events?on_conflict=event_id', {
     method: 'POST',
     headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
-    body: JSON.stringify(normalized)
+    body: JSON.stringify(row)
   });
   if (inserted?.length) return { event: inserted[0], duplicate: false };
 
   const existing = await existingEvent(env, normalized.event_id);
   if (!existing) throw new Error(`fabric event ${normalized.event_id} was not persisted`);
-  if (existing.content_hash !== normalized.content_hash) throw Object.assign(new Error('fabric event_id collision'), { status: 409 });
+  if (existing.content_hash !== envelope.content_hash || (await hashEnvelope(existing)) !== existing.content_hash) {
+    throw Object.assign(new Error('fabric event_id collision'), { status: 409 });
+  }
   return { event: existing, duplicate: true };
 }
 
 export async function publishCloudflareEvent(env, { org_id, trace_id, kind, payload = {}, event_id, occurred_at } = {}) {
-  if (!org_id || !kind) throw new Error('fabric event requires org_id and kind');
-
-  // If an immutable event identity already exists, return that canonical row.
-  // This makes retries safe even when the caller is replaying an accepted ingest.
-  if (event_id) {
-    const existing = await existingEvent(env, event_id, org_id);
-    if (existing) {
-      await markAck(env, existing.event_id);
-      return { envelope: existing, event: existing, duplicate: true };
-    }
-  }
-
+  if (!org_id || !kind) throw Object.assign(new Error('fabric event requires org_id and kind'), { status: 400 });
   const envelope = {
     schema_version: 1,
     event_id: event_id || crypto.randomUUID(),
@@ -104,10 +110,10 @@ export async function publishCloudflareEvent(env, { org_id, trace_id, kind, payl
     occurred_at: canonicalTimestamp(occurred_at || new Date().toISOString()),
     payload
   };
-  if (JSON.stringify(envelope).length > MAX_EVENT_BYTES) throw Object.assign(new Error('fabric event too large'), { status: 413 });
+  assertPayloadPolicy(envelope);
   envelope.content_hash = await hashEnvelope(envelope);
   const persisted = await persistEvent(env, envelope);
-  await markAck(env, envelope.event_id);
+  await markAck(env, persisted.event.event_id);
   return { envelope: persisted.event, event: persisted.event, duplicate: persisted.duplicate };
 }
 
@@ -130,12 +136,34 @@ async function markAck(env, eventId) {
   const now = new Date().toISOString();
   await sb(env, '/rest/v1/fabric_receipts?on_conflict=event_id,node', {
     method: 'POST',
-    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
     body: JSON.stringify({ event_id: eventId, node: NODE, state: 'acked', first_seen_at: now, acked_at: now, attempts: 1, updated_at: now })
+  });
+  await sb(env, `/rest/v1/fabric_receipts?event_id=eq.${encodeURIComponent(eventId)}&node=eq.${NODE}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ state: 'acked', acked_at: now, attempts: 1, last_error: null, updated_at: now })
   });
   await sb(env, `/rest/v1/fabric_outbox?event_id=eq.${encodeURIComponent(eventId)}&target_node=eq.${NODE}`, {
     method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
     body: JSON.stringify({ status: 'acked', acked_at: now, locked_at: null, locked_by: null, last_error: null, updated_at: now })
+  });
+}
+
+async function markDead(env, row, error) {
+  const now = new Date().toISOString();
+  await sb(env, `/rest/v1/fabric_outbox?event_id=eq.${encodeURIComponent(row.event_id)}&target_node=eq.${NODE}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      status: 'dead',
+      attempts: Number(row.attempts || 0) + 1,
+      locked_at: null,
+      locked_by: null,
+      last_error: String(error).slice(0, 2000),
+      updated_at: now
+    })
   });
 }
 
@@ -149,7 +177,7 @@ export async function acceptFabricEvent(request, env) {
   }
 
   const text = await request.text();
-  if (text.length > MAX_EVENT_BYTES) return new Response(JSON.stringify({ error: 'fabric event too large' }), { status: 413, headers: { 'content-type': 'application/json' } });
+  if (byteLength(text) > MAX_EVENT_BYTES) return new Response(JSON.stringify({ error: 'fabric event too large' }), { status: 413, headers: { 'content-type': 'application/json' } });
   let envelope;
   try { envelope = text ? JSON.parse(text) : null; }
   catch { return new Response(JSON.stringify({ error: 'invalid fabric JSON' }), { status: 400, headers: { 'content-type': 'application/json' } }); }
@@ -160,11 +188,14 @@ export async function acceptFabricEvent(request, env) {
   if (envelope.origin_node !== sourceNode) {
     return new Response(JSON.stringify({ error: 'fabric origin/source mismatch' }), { status: 409, headers: { 'content-type': 'application/json' } });
   }
-  if (envelope.kind === 'conversation.ingested' && Object.prototype.hasOwnProperty.call(envelope.payload || {}, 'messages')) {
-    return new Response(JSON.stringify({ error: 'raw conversation messages are forbidden in fabric events' }), { status: 400, headers: { 'content-type': 'application/json' } });
+
+  try {
+    envelope.occurred_at = canonicalTimestamp(envelope.occurred_at);
+    assertPayloadPolicy(envelope);
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message || 'invalid fabric envelope' }), { status: error.status || 400, headers: { 'content-type': 'application/json' } });
   }
 
-  envelope.occurred_at = canonicalTimestamp(envelope.occurred_at);
   const hash = await hashEnvelope(envelope);
   if (hash !== envelope.content_hash) return new Response(JSON.stringify({ error: 'fabric content_hash mismatch' }), { status: 409, headers: { 'content-type': 'application/json' } });
   const persisted = await persistEvent(env, envelope);
@@ -174,12 +205,19 @@ export async function acceptFabricEvent(request, env) {
 
 export async function drainFabricOutbox(env, { limit = 100 } = {}) {
   const now = new Date().toISOString();
-  const rows = await sb(env, `/rest/v1/fabric_outbox?target_node=eq.${NODE}&status=in.(pending,leased)&next_attempt_at=lte.${encodeURIComponent(now)}&order=created_at.asc&limit=${limit}&select=event_id`);
+  const boundedLimit = Math.max(1, Math.min(500, Number(limit) || 100));
+  const rows = await sb(env, `/rest/v1/fabric_outbox?target_node=eq.${NODE}&status=in.(pending,leased)&next_attempt_at=lte.${encodeURIComponent(now)}&order=created_at.asc&limit=${boundedLimit}&select=*`);
   let acked = 0;
   for (const row of rows || []) {
     const event = await existingEvent(env, row.event_id);
-    if (!event) continue;
-    if ((await hashEnvelope(event)) !== event.content_hash) continue;
+    if (!event) {
+      await markDead(env, row, 'canonical event missing');
+      continue;
+    }
+    if ((await hashEnvelope(event)) !== event.content_hash) {
+      await markDead(env, row, 'content_hash mismatch');
+      continue;
+    }
     await markAck(env, event.event_id);
     acked += 1;
   }
