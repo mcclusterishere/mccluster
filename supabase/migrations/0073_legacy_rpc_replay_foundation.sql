@@ -1,6 +1,25 @@
 -- Reconstruct production RPCs that later hardening migrations explicitly grant
 -- but that were missing from source-controlled replay history.
 
+-- The music analytics RPCs depend on this historical event exhaust table,
+-- which exists in production but was also absent from the replay chain.
+create table if not exists public.events (
+  id uuid primary key default gen_random_uuid(),
+  at timestamptz default now(),
+  name text not null,
+  path text default '',
+  props jsonb default '{}'::jsonb,
+  uid uuid
+);
+
+alter table public.events enable row level security;
+drop policy if exists "anyone writes the exhaust" on public.events;
+create policy "anyone writes the exhaust" on public.events
+  for insert to anon, authenticated with check (true);
+drop policy if exists "only the desk reads it" on public.events;
+create policy "only the desk reads it" on public.events
+  for select to public using (public.eu_is_admin());
+
 create or replace function public.music_pulse()
 returns json
 language sql
