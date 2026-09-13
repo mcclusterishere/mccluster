@@ -78,17 +78,21 @@ jobs:
           PORT="${OVH_PORT:-22}"
           STAGE="/tmp/mccluster-deploy-${DEPLOY_SHA}"
           ssh -tt -p "$PORT" "$OVH_USER@$OVH_HOST" \
-            "sudo bash '$STAGE/scripts/deploy-ovh-core.sh' '$STAGE' && rm -rf '$STAGE'"
+            "sudo bash '$STAGE/scripts/deploy-ovh-core.sh' '$STAGE' '$DEPLOY_SHA' && rm -rf '$STAGE'"
 
-      - name: Verify deployed services
+      - name: Verify exact deployed revision and services
         env:
           OVH_HOST: ${{ secrets.OVH_HOST }}
           OVH_USER: ${{ secrets.OVH_USER }}
           OVH_PORT: ${{ secrets.OVH_PORT }}
+          DEPLOY_SHA: ${{ steps.commit.outputs.sha }}
         run: |
           PORT="${OVH_PORT:-22}"
           ssh -p "$PORT" "$OVH_USER@$OVH_HOST" \
-            "systemctl is-active mccluster-core-runner.service && systemctl is-active mccluster-core-tool-broker.service"
+            "systemctl is-active mccluster-core-runner.service && \
+             systemctl is-active mccluster-core-tool-broker.service && \
+             grep -Fq '\"commit_sha\":\"$DEPLOY_SHA\"' /opt/mccluster/core/.mccluster-deploy.json && \
+             cat /opt/mccluster/core/.mccluster-deploy.json"
 
       - name: Deployment summary
         run: |
@@ -96,4 +100,5 @@ jobs:
           echo "- Ref: \`${{ inputs.ref }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Commit: \`${{ steps.commit.outputs.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Target: canonical /opt/mccluster/core" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Runtime provenance: \`/opt/mccluster/core/.mccluster-deploy.json\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Rollback snapshot created automatically before sync" >> "$GITHUB_STEP_SUMMARY"
