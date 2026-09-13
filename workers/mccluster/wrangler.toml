@@ -1,5 +1,5 @@
 name = "mccluster"
-main = "src/entry.js"
+main = "src/entry-platform.js"
 compatibility_date = "2026-09-02"
 compatibility_flags = [ "nodejs_compat" ]
 workers_dev = false
@@ -15,8 +15,6 @@ enabled = true
 head_sampling_rate = 0.01
 
 [vars]
-# Client satellite origins are explicitly allowed because inquiry/auth/Connect
-# routes are reached from client sites as well as McCluster-owned surfaces.
 ALLOWED_ORIGINS = "https://matthew.mccluster.org,https://mccluster.org,https://esmer.mccluster.org,https://mcclusterishere.github.io,https://www.esmermusic.com,https://esmermusic.com,http://localhost:8787,http://127.0.0.1:8787,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8099,http://127.0.0.1:8099"
 MCCLUSTER_SUPABASE_PROJECT_REF = "zmnhbrjyhxzhkxmhkexs"
 PUBLIC_ORIGIN = "https://matthew.mccluster.org"
@@ -25,96 +23,22 @@ ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
 META_GRAPH_API_VERSION = "v26.0"
 
-# ---------------------------------------------------------------------------
-# Cloudflare Access in front of the internal spatial console at /internal/seek-first.
-#
-# READ THIS BEFORE SETTING THE TWO VALUES IN THE DASHBOARD.
-#
-# `wrangler deploy` uploads THIS [vars] block as the Worker's complete set of
-# plaintext bindings. A plaintext var added in the dashboard and missing from
-# here is deleted by the next deploy. Secrets (`wrangler secret put`) survive;
-# plaintext vars do not.
-#
-# So setting the two Access values in the dashboard and leaving them commented
-# out here means every deploy silently switches the edge lock back off.
-#
-# SEEK_FIRST_ACCESS_REQUIRED is the guard against that, and it works precisely
-# because it lives in this file: it survives the deploy that clears the values.
-# Set it to "true" once Access is actually working, and a wipe becomes a loud
-# 503 naming the missing binding instead of an open console.
+# `wrangler deploy` uploads THIS [vars] block; keep this guard here so a deploy
+# cannot silently erase a dashboard-only setting and expose the internal console.
 SEEK_FIRST_ACCESS_REQUIRED = "false"
 
-# Pick ONE of the two homes below for the values themselves, not the dashboard.
-#
-#   (a) here, in [vars] -- neither value is a credential. The team domain is a
-#       public hostname, and the AUD tag appears in every assertion Access
-#       issues. Committing them makes the deploy idempotent, which is the whole
-#       problem solved.
-#   (b) as secrets -- `wrangler secret put SEEK_FIRST_ACCESS_TEAM_DOMAIN`, same
-#       for SEEK_FIRST_ACCESS_AUD. Untouched by deploy. Use this if you would
-#       rather not have the AUD tag in git.
-#
-# SEEK_FIRST_ACCESS_TEAM_DOMAIN = "yourteam"   # or yourteam.cloudflareaccess.com
-# SEEK_FIRST_ACCESS_AUD = "<Access application AUD tag>"
-# ---------------------------------------------------------------------------
+# Production secrets are managed with `wrangler secret put` and are never committed.
+# Required core secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+# Other feature secrets remain documented in repository architecture and service modules.
 
-# Secrets required in production (set with wrangler secret put, never commit values):
-# SUPABASE_URL
-# SUPABASE_SERVICE_ROLE_KEY
-# STRIPE_SECRET_KEY
-# STRIPE_CONNECT_WEBHOOK_SECRET (or STRIPE_WEBHOOK_SECRET fallback)
-# RESEND_API_KEY
-# FAL_KEY
-# FAL_ADMIN_KEY  # Admin-scoped fal key required for exact billing-event reconciliation.
-# META_APP_SECRET
-# META_WEBHOOK_VERIFY_TOKEN
-# Instagram access tokens are Worker secrets selected only from the org's enabled
-# org_channels row. Allowed env bindings must match SOCIAL_IG_*_ACCESS_TOKEN.
-#
-# Spatial intelligence / Seek First provider bindings. The backend is complete without
-# values here; add only the credentials for providers you activate:
-# CENSUS_API_KEY
-# EIA_API_KEY
-# DATA_COMMONS_API_KEY
-# BLS_API_KEY
-# FRED_API_KEY
-# FIRMS_MAP_KEY
-# COPERNICUS_CLIENT_ID
-# COPERNICUS_CLIENT_SECRET
-# PLANET_RESEARCH_API_KEY
-# OPENSKY_CLIENT_ID
-# OPENSKY_CLIENT_SECRET
-# TOMTOM_API_KEY
-# AISSTREAM_API_KEY
-# MAPBOX_ACCESS_TOKEN
-# GOOGLE_MAPS_API_KEY
-# CESIUM_ION_TOKEN
-# LL2_API_TOKEN  # optional; Launch Library 2 also supports unauthenticated access
-#
-# Optional non-secret AIS subscription tuning may be set as Worker vars/secrets:
-# AISSTREAM_BOUNDING_BOXES=[[[-90,-180],[90,180]]]
-# AISSTREAM_MESSAGE_TYPES=PositionReport,StandardClassBPositionReport,ExtendedClassBPositionReport,ShipStaticData,StaticDataReport
-
-# Batch unsettled fal jobs, attach completed social variants, process due Instagram
-# publish jobs, and refresh due Instagram insights every five minutes.
 [triggers]
 crons = ["*/5 * * * *"]
 
-# The internal spatial console ships as one text module so the Worker keeps its
-# "no assets directory, npx wrangler deploy" build. Do not add an [assets] block.
 [[rules]]
 type = "Text"
 globs = ["**/*.html"]
 fallthrough = true
 
-# Existing production Durable Objects on this Worker. Keep the class name.
-# Spatial AIS caching deliberately reuses a named instance of HereTenantAgent;
-# do not add a second Durable Object class or migration for geo.
-# Raw payload archive. Every upstream response is stored verbatim, keyed by
-# content hash, so a query can be replayed against exactly the bytes we held at
-# the time rather than against whatever the provider serves today. R2 charges no
-# egress, which is what makes replaying an archive of this shape affordable
-# instead of ruinous.
 [[r2_buckets]]
 binding = "SEEK_FIRST_ARCHIVE"
 bucket_name = "seek-first-archive"
