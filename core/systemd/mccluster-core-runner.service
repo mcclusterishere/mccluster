@@ -11,6 +11,7 @@ SupplementaryGroups=mccluster-work
 WorkingDirectory=/opt/mccluster/core
 Environment=HOME=/var/lib/mccluster-core
 EnvironmentFile=/etc/mccluster/core.env
+EnvironmentFile=-/etc/mccluster/game-runtime.env
 ExecStart=/usr/bin/node /opt/mccluster/core/src/runner.mjs
 Restart=always
 RestartSec=5
@@ -31,7 +32,7 @@ LockPersonality=true
 RestrictNamespaces=true
 SystemCallArchitectures=native
 
-ReadWritePaths=/srv/mccluster /var/lib/mccluster-core
+ReadWritePaths=/srv/mccluster /var/lib/mccluster-core -/var/lib/mccluster/game-artifacts
 MemoryMax=3G
 CPUQuota=300%
 TasksMax=256
