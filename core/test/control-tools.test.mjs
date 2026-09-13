@@ -6,10 +6,17 @@ import { researchWeb } from '../src/tools/research.mjs';
 
 const names = new Set(CONTROL_TOOLS.map((tool) => tool.name));
 
-test('Core exposes repository code game world and web-research tools', () => {
-  for (const name of ['core.repo.inspect', 'core.code.build', 'core.game.build', 'core.world.generate', 'core.research.web']) {
+test('Core exposes repository objective code game world and web-research tools', () => {
+  for (const name of ['core.repo.inspect', 'core.objective.plan', 'core.code.build', 'core.game.build', 'core.world.generate', 'core.research.web']) {
     assert.ok(names.has(name), `missing ${name}`);
   }
+});
+
+test('objective planning tool remains bounded to safe unattended child work', async () => {
+  const source = await readFile(new URL('../src/tools/control.mjs', import.meta.url), 'utf8');
+  assert.match(source, /jobType: 'objective_plan'/);
+  assert.match(source, /child_job_types: \['repo_health', 'local_analysis'\]/);
+  assert.match(source, /production_mutation: false/);
 });
 
 test('preview tool is advertised only when deployment credentials exist', () => {
