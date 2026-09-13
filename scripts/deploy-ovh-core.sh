@@ -2,15 +2,22 @@
 set -Eeuo pipefail
 
 SOURCE_DIR="${1:-}"
+DEPLOY_SHA="${2:-}"
 TARGET_ROOT="${MCCLUSTER_TARGET_ROOT:-/opt/mccluster}"
 CORE_TARGET="${TARGET_ROOT}/core"
 RELEASE_ROOT="${TARGET_ROOT}/releases"
 SYSTEMD_DIR="/etc/systemd/system"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BACKUP_DIR="${RELEASE_ROOT}/predeploy-${STAMP}"
+DEPLOY_MANIFEST="${CORE_TARGET}/.mccluster-deploy.json"
 
 if [[ -z "${SOURCE_DIR}" || ! -d "${SOURCE_DIR}/core" ]]; then
-  echo "usage: $0 <checked-out-repo-dir>" >&2
+  echo "usage: $0 <checked-out-repo-dir> <exact-commit-sha>" >&2
+  exit 2
+fi
+
+if [[ ! "${DEPLOY_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "exact 40-character Git commit SHA required" >&2
   exit 2
 fi
 
@@ -51,6 +58,7 @@ rollback() {
 trap rollback ERR
 
 # Snapshot only the deploy-controlled Core tree. Secrets remain under /etc/mccluster.
+# The deployment manifest lives inside Core, so rollback restores provenance too.
 if [[ -d "${CORE_TARGET}" ]]; then
   mkdir -p "${BACKUP_DIR}/core"
   rsync -a "${CORE_TARGET}/" "${BACKUP_DIR}/core/"
@@ -63,7 +71,12 @@ rsync -a --delete \
   --exclude '.mccluster-artifacts' \
   "${SOURCE_DIR}/core/" "${CORE_TARGET}/"
 
+cat >"${DEPLOY_MANIFEST}" <<EOF
+{"schema_version":1,"commit_sha":"${DEPLOY_SHA}","deployed_at":"$(date -u +%Y-%m-%dT%H:%M:%SZ)"}
+EOF
+
 chown -R root:root "${CORE_TARGET}"
+chmod 0644 "${DEPLOY_MANIFEST}"
 
 # Install the canonical systemd units shipped by the repo.
 for unit in "${SOURCE_DIR}"/core/systemd/*.service "${SOURCE_DIR}"/core/systemd/*.timer; do
@@ -90,4 +103,5 @@ done
 systemctl is-active --quiet mccluster-core-runner.service
 systemctl is-active --quiet mccluster-core-tool-broker.service
 
-printf 'deployed_core=%s\nbackup=%s\n' "${CORE_TARGET}" "${BACKUP_DIR}"
+grep -Fq "\"commit_sha\":\"${DEPLOY_SHA}\"" "${DEPLOY_MANIFEST}"
+printf 'deployed_core=%s\ncommit_sha=%s\nmanifest=%s\nbackup=%s\n' "${CORE_TARGET}" "${DEPLOY_SHA}" "${DEPLOY_MANIFEST}" "${BACKUP_DIR}"
