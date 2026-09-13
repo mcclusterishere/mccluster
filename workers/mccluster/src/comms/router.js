@@ -4,6 +4,8 @@ const MAX_BODY = 64 * 1024;
 const OWNER_COMMAND = /^(STATUS|TAKEOVER|RELEASE)(?:\s+([0-9a-f-]{36}))?\s*$/i;
 const STOP_COMMAND = /^\s*(STOP|UNSUBSCRIBE|CANCEL|END|QUIT)\s*$/i;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const CLAIM_STALE_MS = 2 * 60_000;
+const MAX_RELAY_ATTEMPTS = 3;
 
 function serviceHeaders(env, extra = {}) {
   return {
@@ -126,6 +128,7 @@ async function upsertContact(env, { orgId, address }) {
 
 async function upsertThread(env, { orgId, contactId, device }) {
   const relayAddress = normalizeAddress(device.phone_number);
+  if (!relayAddress) throw Object.assign(new Error('relay device has no valid phone identity'), { status: 409 });
   const rows = await rest(env, 'comms_threads?on_conflict=org_id,contact_id,channel,relay_address', {
     method: 'POST',
     headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
@@ -134,7 +137,7 @@ async function upsertThread(env, { orgId, contactId, device }) {
       contact_id: contactId,
       relay_device_id: device.id,
       channel: 'sms',
-      relay_address: relayAddress || null,
+      relay_address: relayAddress,
       updated_at: new Date().toISOString(),
     }),
   });
@@ -270,11 +273,14 @@ async function handleOwnerCommand(env, { orgId, sourceThread, sourceAddress, bod
 async function handleInbound(request, env) {
   const device = await authenticateRelay(request, env);
   const body = await readJson(request);
+  const relayAddress = normalizeAddress(device.phone_number);
   const from = normalizeAddress(body.from);
-  const to = normalizeAddress(body.to || device.phone_number);
+  const to = normalizeAddress(body.to || relayAddress);
   const text = String(body.body || '').trim().slice(0, 12000);
+  if (!relayAddress) throw Object.assign(new Error('relay device has no valid phone identity'), { status: 409 });
   if (!from || !to || !text) throw Object.assign(new Error('valid from, to and body are required'), { status: 400 });
-  if (from === to || from === normalizeAddress(device.phone_number)) {
+  if (to !== relayAddress) throw Object.assign(new Error('relay destination does not match enrolled SIM number'), { status: 400 });
+  if (from === relayAddress || from === to) {
     return { accepted: false, suppressed: true, reason: 'relay_self_loop' };
   }
   const occurredAt = body.occurred_at && !Number.isNaN(new Date(body.occurred_at).getTime())
@@ -323,8 +329,18 @@ async function handleInbound(request, env) {
   return { accepted: true, assistant_queued: true, thread_id: thread.id, message_id: message.id, job_id: job?.id || null };
 }
 
+async function releaseStaleClaims(env, device) {
+  const staleBefore = new Date(Date.now() - CLAIM_STALE_MS).toISOString();
+  await rest(env, `comms_outbox?org_id=eq.${device.org_id}&relay_device_id=eq.${device.id}&status=eq.claimed&claimed_at=lt.${encodeURIComponent(staleBefore)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ status: 'queued', claimed_at: null, claimed_by: null, updated_at: new Date().toISOString() }),
+  });
+}
+
 async function handleClaim(request, env) {
   const device = await authenticateRelay(request, env);
+  await releaseStaleClaims(env, device);
   const now = new Date().toISOString();
   const params = new URLSearchParams({
     org_id: `eq.${device.org_id}`,
@@ -369,12 +385,30 @@ async function handleDelivery(request, env) {
   const rows = await rest(env, `comms_outbox?id=eq.${outboxId}&org_id=eq.${device.org_id}&relay_device_id=eq.${device.id}&select=*&limit=1`);
   const item = rows?.[0];
   if (!item) throw Object.assign(new Error('outbox item not found'), { status: 404 });
-  const now = new Date().toISOString();
-  const outboxPatch = status === 'failed'
-    ? { status: 'failed', last_error: String(body.error || 'relay send failed').slice(0, 2000), updated_at: now }
-    : { status, last_error: null, updated_at: now };
+  const now = new Date();
+  const nowIso = now.toISOString();
+  let finalStatus = status;
+  let retryQueued = false;
+  let outboxPatch;
+  if (status === 'failed' && Number(item.attempts || 0) < MAX_RELAY_ATTEMPTS) {
+    retryQueued = true;
+    finalStatus = 'queued';
+    const delaySeconds = Math.min(120, 10 * 2 ** Math.max(0, Number(item.attempts || 1) - 1));
+    outboxPatch = {
+      status: 'queued',
+      available_at: new Date(now.getTime() + delaySeconds * 1000).toISOString(),
+      claimed_at: null,
+      claimed_by: null,
+      last_error: String(body.error || 'relay send failed').slice(0, 2000),
+      updated_at: nowIso,
+    };
+  } else if (status === 'failed') {
+    outboxPatch = { status: 'failed', last_error: String(body.error || 'relay send failed').slice(0, 2000), updated_at: nowIso };
+  } else {
+    outboxPatch = { status, last_error: null, updated_at: nowIso };
+  }
   await rest(env, `comms_outbox?id=eq.${item.id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(outboxPatch) });
-  await rest(env, `comms_messages?id=eq.${item.message_id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ status, updated_at: now }) });
+  await rest(env, `comms_messages?id=eq.${item.message_id}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ status: finalStatus, updated_at: nowIso }) });
   await rest(env, 'comms_delivery_events', {
     method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({
       org_id: device.org_id,
@@ -384,16 +418,16 @@ async function handleDelivery(request, env) {
       event: `relay_${status}`,
       status,
       provider_message_id: String(body.provider_message_id || '').slice(0, 500) || null,
-      metadata: { error: body.error ? String(body.error).slice(0, 2000) : null },
+      metadata: { error: body.error ? String(body.error).slice(0, 2000) : null, retry_queued: retryQueued },
     }),
   });
   if (status === 'sent' || status === 'delivered') {
     await rest(env, `comms_threads?id=eq.${item.thread_id}`, {
-      method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ last_outbound_at: now, updated_at: now }),
+      method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ last_outbound_at: nowIso, updated_at: nowIso }),
     });
   }
-  await audit(env, { orgId: device.org_id, threadId: item.thread_id, actorType: 'relay', actorId: device.id, action: `delivery_${status}`, detail: { outbox_id: item.id } });
-  return { accepted: true, outbox_id: item.id, status };
+  await audit(env, { orgId: device.org_id, threadId: item.thread_id, actorType: 'relay', actorId: device.id, action: `delivery_${status}`, detail: { outbox_id: item.id, retry_queued: retryQueued } });
+  return { accepted: true, outbox_id: item.id, status: finalStatus, retry_queued: retryQueued };
 }
 
 async function ownerThreads(env, orgId, url) {
