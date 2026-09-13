@@ -29,6 +29,8 @@ export async function objectiveReflection(job) {
     'Do not claim access to web, email, files, live infrastructure, or external systems unless that evidence is explicitly present.',
     'Your purpose is to select small, useful, reversible next steps that can run unattended.',
     `You may propose only these job types: ${allowedReflectionJobTypes().join(', ')}.`,
+    'Use objective_plan only when the objective genuinely benefits from a small dependency-aware multi-step plan; otherwise prefer a direct safe job.',
+    'An objective_plan is still bounded: its child steps are restricted to local_analysis and repo_health and prerequisite outputs are passed forward as evidence.',
     'Never propose code_patch, deploy, merge, communications, spending, legal actions, auth changes, destructive data changes, or production mutations.',
     'Prefer resolving blockers and gathering evidence before creating more work.',
     'Return JSON only with keys summary, rationale, next_jobs.',
@@ -92,7 +94,7 @@ export async function objectiveReflection(job) {
   }
 
   return {
-    executor: 'objective_reflection:v1',
+    executor: 'objective_reflection:v2',
     model: MODEL,
     evidence_scope: 'canonical_objectives_and_recent_jobs',
     objective,
