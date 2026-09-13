@@ -8,6 +8,7 @@ const SPOOL_DIR = process.env.MCCLUSTER_FABRIC_SPOOL_DIR || '/var/lib/mccluster-
 const EDGE_URL = String(process.env.MCCLUSTER_FABRIC_URL || 'https://api.mccluster.org').replace(/\/$/, '');
 const EDGE_TOKEN = String(process.env.MCCLUSTER_FABRIC_TOKEN || '');
 const MAX_EVENT_BYTES = Math.max(16 * 1024, Number(process.env.MCCLUSTER_FABRIC_MAX_EVENT_BYTES || 128 * 1024));
+const CONVERSATION_EVENT_KEYS = new Set(['provider', 'conversation_id', 'receipt_id', 'message_count', 'payload_hash']);
 
 async function sb(resource, init = {}) {
   const result = await rest(resource, init);
@@ -27,8 +28,21 @@ export function canonicalTimestamp(value) {
 }
 
 function assertPayloadPolicy(envelope) {
-  if (envelope?.kind === 'conversation.ingested' && Object.prototype.hasOwnProperty.call(envelope.payload || {}, 'messages')) {
-    throw new Error('raw conversation messages are forbidden in fabric events');
+  if (envelope?.kind !== 'conversation.ingested') return;
+  const payload = envelope.payload;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('raw conversation messages are forbidden in fabric events; conversation.ingested payload must be reference-only');
+  }
+  const unexpected = Object.keys(payload).filter((key) => !CONVERSATION_EVENT_KEYS.has(key));
+  if (unexpected.length) {
+    throw new Error(`raw conversation messages are forbidden in fabric events; unexpected conversation metadata: ${unexpected.join(', ')}`);
+  }
+  if (!String(payload.conversation_id || '').trim() || !String(payload.receipt_id || '').trim()) {
+    throw new Error('conversation.ingested requires conversation_id and receipt_id references');
+  }
+  const messageCount = Number(payload.message_count);
+  if (!Number.isInteger(messageCount) || messageCount < 0) {
+    throw new Error('conversation.ingested message_count must be a non-negative integer');
   }
 }
 
