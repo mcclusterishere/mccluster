@@ -3,13 +3,38 @@ import { handlePlatformApi } from './platform-api-metered.js';
 import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
-import { fail } from './lib/http.js';
+import { fail, reply } from './lib/http.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
+
+function healthResponse(request, env) {
+  return reply(request, env, {
+    ok: true,
+    service: 'mccluster',
+    worker: 'mccluster',
+    deployment_sha: env.DEPLOY_SHA || 'unknown',
+    deployment_ref: env.DEPLOY_REF || 'unknown',
+    supabase_project_ref: env.MCCLUSTER_SUPABASE_PROJECT_REF || null,
+    capabilities: {
+      platform_api: true,
+      compute_gateway: true,
+      api_rate_limit: true,
+      atomic_metering: true,
+      provider_cogs_reconciliation: true,
+      byok_fail_closed: true,
+    },
+    checked_at: new Date().toISOString(),
+  });
+}
 
 export default {
   async fetch(request, env, ctx) {
     try {
+      const url = new URL(request.url);
+      if (request.method === 'GET' && (url.pathname === '/healthz' || url.pathname === '/v1/health')) {
+        return healthResponse(request, env);
+      }
+
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
 
