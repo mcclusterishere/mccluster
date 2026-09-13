@@ -26,3 +26,14 @@ test('preview executor is non-production by construction', async () => {
   assert.doesNotMatch(source, /--prod(?:uction)?\b/);
   assert.match(source, /VERCEL_TOKEN/);
 });
+
+test('production capability catalog contains no planned lifecycle entries', async () => {
+  const catalog = JSON.parse(await readFile(new URL('../capabilities/catalog.json', import.meta.url), 'utf8'));
+  const planned = catalog.capabilities.filter((capability) => capability.lifecycle === 'planned').map((capability) => capability.id);
+  assert.deepEqual(planned, []);
+  const required = ['image.generate', 'video.generate', 'audio.generate', 'model3d.generate', 'world.generate', 'research.web', 'repo.inspect', 'code.build', 'game.build', 'deploy.preview'];
+  for (const id of required) {
+    assert.equal(catalog.capabilities.find((capability) => capability.id === id)?.lifecycle, 'active', `${id} must be active`);
+    assert.ok(catalog.bindings.some((binding) => binding.capability === id && binding.status === 'active'), `${id} must have an active binding`);
+  }
+});
