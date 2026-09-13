@@ -1,4 +1,4 @@
-const SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health']);
+const SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health', 'objective_plan']);
 
 function boundedString(value, max = 4000) {
   return String(value ?? '').trim().slice(0, max);
