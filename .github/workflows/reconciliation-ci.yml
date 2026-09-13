@@ -72,6 +72,9 @@ jobs:
       - name: Test Initiative OS portfolio planning
         working-directory: core
         run: npm run test:initiative-os
+      - name: Test autonomous game studio production loop
+        working-directory: core
+        run: npm run test:game-studio
       - name: Assert Core security and capability guardrails
         run: |
           grep -F "draft-only" core/src/executors/code-patch.mjs
@@ -87,9 +90,17 @@ jobs:
           grep -F 'objective_reflection only' core/src/executors/portfolio-plan.mjs
           grep -F 'OnCalendar=*-*-* 02:00:00 America/New_York' core/systemd/mccluster-core-portfolio-plan.timer
           grep -F 'OnCalendar=*-*-* 02:30:00 America/New_York' core/systemd/mccluster-core-reflection.timer
-          grep -F '"id": "video.generate"' core/capabilities/catalog.json
-          grep -F '"id": "model3d.generate"' core/capabilities/catalog.json
-          grep -F '"id": "code.build"' core/capabilities/catalog.json
+          node - <<'NODE'
+          const fs = require('fs');
+          const catalog = JSON.parse(fs.readFileSync('core/capabilities/catalog.json', 'utf8'));
+          const required = ['video.generate','model3d.generate','code.build','world.generate','research.web','game.build','deploy.preview'];
+          const byId = new Map(catalog.capabilities.map((capability) => [capability.id, capability]));
+          for (const id of required) {
+            if (byId.get(id)?.lifecycle !== 'active') throw new Error(`${id} is not active`);
+            if (!catalog.bindings.some((binding) => binding.capability === id && binding.status === 'active')) throw new Error(`${id} has no active binding`);
+          }
+          if (catalog.capabilities.some((capability) => capability.lifecycle === 'planned')) throw new Error('production catalog contains planned capabilities');
+          NODE
           grep -F "CORE_CAPABILITY_BINDINGS_JSON" core/src/capabilities/registry.mjs
           if grep -R -nE 'SUPABASE_SERVICE_ROLE_KEY=[^[:space:]]+' core --exclude='*.example'; then
             echo 'A Supabase service-role value appears committed under core/.' >&2
