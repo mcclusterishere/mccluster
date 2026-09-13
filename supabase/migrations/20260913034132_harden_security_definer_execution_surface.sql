@@ -51,8 +51,21 @@ grant execute on function public.eu_is_admin() to anon, authenticated, service_r
 grant execute on function public.eu_is_staff() to anon, authenticated, service_role;
 grant execute on function public.eu_role() to anon, authenticated, service_role;
 grant execute on function public.inbox_is_staff() to anon, authenticated, service_role;
-grant execute on function public.is_org_member(uuid) to anon, authenticated, service_role;
-grant execute on function public.is_org_owner(uuid) to anon, authenticated, service_role;
+
+-- Historical production still had public org-helper wrappers when this migration
+-- first ran. Clean source replay may already have removed them in
+-- 20260909030000_harden_org_helper_policy_dependencies.sql, so grant only when
+-- the compatibility surface is still present rather than recreating it.
+do $$
+begin
+  if to_regprocedure('public.is_org_member(uuid)') is not null then
+    grant execute on function public.is_org_member(uuid) to anon, authenticated, service_role;
+  end if;
+  if to_regprocedure('public.is_org_owner(uuid)') is not null then
+    grant execute on function public.is_org_owner(uuid) to anon, authenticated, service_role;
+  end if;
+end $$;
+
 grant execute on function public.mccluster_is_house_owner() to anon, authenticated, service_role;
 grant execute on function public.shake_is_crew() to anon, authenticated, service_role;
 

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const computeApi = await readFile(new URL('../src/compute-api.js', import.meta.url), 'utf8');
-const routeGuard = await readFile(new URL('../../../supabase/migrations/20260913_008_compute_route_resale_guard.sql', import.meta.url), 'utf8');
-const scopeGuard = await readFile(new URL('../../../supabase/migrations/20260913_009_platform_api_scope_entitlements.sql', import.meta.url), 'utf8');
-const cogsMigration = await readFile(new URL('../../../supabase/migrations/20260913_017_compute_provider_cogs_reconciliation.sql', import.meta.url), 'utf8');
+const routeGuard = await readFile(new URL('../../../supabase/migrations/20260913034837_compute_route_resale_guard.sql', import.meta.url), 'utf8');
+const scopeGuard = await readFile(new URL('../../../supabase/migrations/20260913035004_platform_api_scope_entitlements.sql', import.meta.url), 'utf8');
+const cogsMigration = await readFile(new URL('../../../supabase/migrations/20260913044120_compute_provider_cogs_reconciliation.sql', import.meta.url), 'utf8');
 
 test('BYOK-only providers never fall through to McCluster platform credentials', () => {
   assert.match(computeApi, /provider\.reseller_status === 'byok_only'/);
