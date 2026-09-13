@@ -21,7 +21,7 @@ test('database route selection only admits commercially allowed providers', () =
 
 test('developer API key issuance rejects wildcard privilege escalation', () => {
   assert.match(scopeGuard, /api_enforce_key_scopes/i);
-  assert.match(scopeGuard, /developer_issuable/i);
+  assert.match(scopeGuard, /developer_mintable/i);
   assert.match(scopeGuard, /api_plan_scopes/i);
   assert.match(scopeGuard, /scope/i);
 });
