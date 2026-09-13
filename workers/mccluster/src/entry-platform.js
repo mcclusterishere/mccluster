@@ -1,6 +1,7 @@
 import existing from './entry.js';
 import { handlePlatformApi } from './platform-api.js';
 import { handlePlatformPlanApi } from './platform-api-plans.js';
+import { handleComputeApi } from './compute-api.js';
 import { fail } from './lib/http.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
@@ -8,6 +9,8 @@ export { HereTenantAgent } from './here-tenant-agent.js';
 export default {
   async fetch(request, env, ctx) {
     try {
+      const computeResponse = await handleComputeApi(request, env);
+      if (computeResponse) return computeResponse;
       const planResponse = await handlePlatformPlanApi(request, env);
       if (planResponse) return planResponse;
       const response = await handlePlatformApi(request, env);
