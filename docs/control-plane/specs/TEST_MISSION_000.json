@@ -1,0 +1,93 @@
+{
+  "schema_version": "0.1",
+  "id": "TEST_MISSION_000",
+  "title": "PRIM3 Tactical Sandbox",
+  "campaign": "PRIM3",
+  "engine": "godot",
+  "repository": "mcclusterishere/hitmans-halo",
+  "canon_refs": [
+    "PRIM3 global operations architecture",
+    "Site0 deployment flow",
+    "XCOM-style tactical vertical slice"
+  ],
+  "mission": {
+    "operation_id": "TEST_MISSION_000",
+    "mastery_stage": "sandbox",
+    "objectives": [
+      "Select a squad unit",
+      "Move through the tactical space using action points",
+      "Use cover during contact",
+      "Resolve one hostile actor",
+      "Reach the extraction zone",
+      "Complete mission result flow"
+    ],
+    "required_mechanics": [
+      "unit_selection",
+      "movement",
+      "action_points",
+      "cover",
+      "enemy_turn",
+      "hostile_resolution",
+      "objective_state",
+      "extraction",
+      "mission_result"
+    ],
+    "failure_conditions": [
+      "runtime_crash",
+      "agent_stuck_without_progress",
+      "mission_state_deadlock",
+      "objective_unreachable"
+    ],
+    "completion_conditions": [
+      "objective_reached",
+      "hostile_resolved",
+      "squad_extracted",
+      "mission_result_emitted"
+    ]
+  },
+  "world": {
+    "mode": "synthetic",
+    "halo_context": false,
+    "latitude": null,
+    "longitude": null,
+    "radius_m": 0,
+    "context_refs": []
+  },
+  "playtest": {
+    "seed": 1337,
+    "max_steps": 500,
+    "max_seconds": 300,
+    "scenarios": [
+      "happy_path",
+      "blocked_path",
+      "combat_then_extract"
+    ],
+    "required_evidence": [
+      "telemetry",
+      "visual",
+      "action_trace",
+      "build_log",
+      "runtime_log",
+      "evaluation",
+      "review",
+      "replay_comparison"
+    ]
+  },
+  "acceptance": {
+    "min_completion_rate": 1,
+    "max_crashes": 0,
+    "deterministic_replay_required": true,
+    "max_regressions": 0
+  },
+  "provenance": {
+    "created_from": [
+      "PR #79 autonomous game studio v0 architecture",
+      "owner-approved merge gate"
+    ],
+    "assumptions": [
+      "Visual fidelity is intentionally not an acceptance gate for v0.",
+      "Godot is the first proving engine because the control-plane contract must be demonstrated before higher-cost Unreal automation.",
+      "Halo/Cesium integration is deferred until the embodied repair loop works on a synthetic deterministic arena."
+    ]
+  }
+}
