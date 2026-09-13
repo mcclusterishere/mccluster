@@ -10,6 +10,7 @@ import { attachCompletedVariantAssets, handleSocialRequest } from './social/rout
 import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
 import { handleMetaWebhook } from './social/webhook.js';
 import { handleAiRequest } from './ai/router.js';
+import { acceptFabricEvent, drainFabricOutbox, fabricStatus } from './fabric/router.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -22,12 +23,64 @@ async function authUser(req, env) {
   return res.json();
 }
 
+function serviceHeaders(env) {
+  return {
+    apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+    authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+    'content-type': 'application/json'
+  };
+}
+
+async function fabricEventOrgId(env, eventId) {
+  const params = new URLSearchParams({ event_id: `eq.${eventId}`, select: 'org_id', limit: '1' });
+  const response = await fetch(`${env.SUPABASE_URL}/rest/v1/fabric_events?${params.toString()}`, { headers: serviceHeaders(env) });
+  if (!response.ok) throw new Error(`Fabric organization lookup failed: ${response.status}`);
+  const rows = await response.json().catch(() => []);
+  return rows?.[0]?.org_id || null;
+}
+
+async function userOwnsOrg(env, userId, orgId) {
+  const params = new URLSearchParams({
+    org_id: `eq.${orgId}`,
+    profile_id: `eq.${userId}`,
+    role: 'eq.owner',
+    select: 'org_id',
+    limit: '1'
+  });
+  const response = await fetch(`${env.SUPABASE_URL}/rest/v1/org_members?${params.toString()}`, { headers: serviceHeaders(env) });
+  if (!response.ok) return false;
+  const rows = await response.json().catch(() => []);
+  return Boolean(rows?.length);
+}
+
 export { HereTenantAgent } from './here-tenant-agent.js';
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
+
+    if (path === '/v1/fabric/events' && request.method === 'POST') {
+      try {
+        return await acceptFabricEvent(request, env);
+      } catch (error) {
+        return fail(request, env, error.message || 'Fabric event relay failed', error.status || 500, error.detail);
+      }
+    }
+
+    const fabricStatusMatch = path.match(/^\/v1\/fabric\/events\/([0-9a-f-]{36})$/i);
+    if (fabricStatusMatch && request.method === 'GET') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const orgId = await fabricEventOrgId(env, fabricStatusMatch[1]);
+        if (!orgId) return fail(request, env, 'Fabric event not found', 404);
+        if (!(await userOwnsOrg(env, user.id, orgId))) return fail(request, env, 'Organization owner access required', 403);
+        return reply(request, env, await fabricStatus(env, { eventId: fabricStatusMatch[1], orgId }));
+      } catch (error) {
+        return fail(request, env, error.message || 'Fabric status request failed', error.status || 500, error.detail);
+      }
+    }
 
     try {
       const clientResponse = await handleClientRequest(request, env);
@@ -153,6 +206,9 @@ export default {
 
   async scheduled(_controller, env, ctx) {
     ctx.waitUntil(Promise.all([
+      drainFabricOutbox(env, { limit: 100 }).catch((error) => {
+        console.error(JSON.stringify({ event: 'fabric_cloudflare_relay_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
       reconcilePendingFalCosts(env, { limit: 50 }).catch((error) => {
         console.error(JSON.stringify({
           event: 'media_cost_reconciliation_failed',
