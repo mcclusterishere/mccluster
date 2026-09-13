@@ -35,12 +35,13 @@ export function shouldEscalateInbound({ body, thread, contact } = {}) {
 export function boundedThreadContext(messages, limits = DEFAULT_COMMS_LIMITS) {
   const list = Array.isArray(messages) ? messages : [];
   const selected = [];
-  let remaining = Math.max(1000, Number(limits.maxRecentChars || 24000));
+  let remaining = Math.max(1, Number(limits.maxRecentChars || 24000));
   const maxMessages = Math.max(1, Number(limits.maxRecentMessages || 24));
   for (const row of list.slice(-maxMessages).reverse()) {
     const body = String(row?.body || '').trim();
     if (!body) continue;
     const clipped = body.slice(0, Math.min(4000, remaining));
+    if (!clipped) break;
     selected.push({
       id: row.id,
       direction: row.direction,
