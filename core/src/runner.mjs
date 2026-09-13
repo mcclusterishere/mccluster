@@ -4,6 +4,7 @@ import { localAnalysis } from './executors/local-analysis.mjs';
 import { codePatch } from './executors/code-patch.mjs';
 import { objectiveReflection } from './executors/objective-reflection.mjs';
 import { objectivePlan } from './executors/objective-plan.mjs';
+import { objectiveSynthesis } from './executors/objective-synthesis.mjs';
 import { portfolioPlan } from './executors/portfolio-plan.mjs';
 
 const executors = new Map([
@@ -12,6 +13,7 @@ const executors = new Map([
   ['code_patch', codePatch],
   ['objective_reflection', objectiveReflection],
   ['objective_plan', objectivePlan],
+  ['objective_synthesis', objectiveSynthesis],
   ['portfolio_plan', portfolioPlan],
 ]);
 
