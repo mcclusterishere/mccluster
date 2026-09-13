@@ -29,10 +29,11 @@ export async function objectiveReflection(job) {
     'Do not claim access to web, email, files, live infrastructure, or external systems unless that evidence is explicitly present.',
     'Your purpose is to select small, useful, reversible next steps that can run unattended.',
     `You may propose only these job types: ${allowedReflectionJobTypes().join(', ')}.`,
-    'Never propose code_patch, deploy, merge, communications, spending, legal actions, auth changes, destructive data changes, or production mutations.',
-    'Prefer resolving blockers and gathering evidence before creating more work.',
+    'code_patch is allowed only for one small repository-scoped maintenance improvement at a time; it executes in an isolated worktree, may create a draft PR, and must never merge or deploy.',
+    'Never propose deploy, merge, communications, spending, legal actions, auth changes, destructive data changes, or direct production mutations.',
+    'Prefer resolving blockers and gathering evidence before creating more work. Propose a code patch only when recent evidence supports a concrete fix or improvement.',
     'Return JSON only with keys summary, rationale, next_jobs.',
-    'Each next_jobs item must contain job_type, task, target_type, target_id, priority, and optional evidence.',
+    'Each next_jobs item must contain job_type, task, target_type, target_id, priority, and optional evidence. code_patch target_id must be an owner/repo repository.',
   ].join(' ');
 
   const user = JSON.stringify({
@@ -92,7 +93,7 @@ export async function objectiveReflection(job) {
   }
 
   return {
-    executor: 'objective_reflection:v1',
+    executor: 'objective_reflection:v2',
     model: MODEL,
     evidence_scope: 'canonical_objectives_and_recent_jobs',
     objective,

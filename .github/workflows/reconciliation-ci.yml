@@ -63,6 +63,11 @@ jobs:
       - name: Parse Core runner, broker, and executors
         working-directory: core
         run: npm run check
+      - name: Parse VPS control-plane scripts
+        run: |
+          bash -n scripts/deploy-ovh-core.sh
+          bash -n scripts/mccluster-vps-reconcile.sh
+          bash -n scripts/bootstrap-vps-self-management.sh
       - name: Test provider-independent capability resolution
         working-directory: core
         run: npm run test:capabilities
@@ -85,11 +90,15 @@ jobs:
           grep -F "MCP-Protocol-Version" core/src/tools/mcp-http.mjs
           grep -F "https://api.mccluster.org/v1/media/mcp" core/src/tools/registry.mjs
           grep -F 'ops_agent_jobs' core/src/supabase.mjs
-          grep -F "SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health'])" core/src/reflection-policy.mjs
-          grep -F 'Never propose code_patch' core/src/executors/objective-reflection.mjs
+          grep -F "SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health', 'code_patch'])" core/src/reflection-policy.mjs
+          grep -F 'autonomous_draft_only: true' core/src/reflection-policy.mjs
+          grep -F 'Never propose deploy, merge' core/src/executors/objective-reflection.mjs
           grep -F 'objective_reflection only' core/src/executors/portfolio-plan.mjs
           grep -F 'OnCalendar=*-*-* 02:00:00 America/New_York' core/systemd/mccluster-core-portfolio-plan.timer
-          grep -F 'OnCalendar=*-*-* 02:30:00 America/New_York' core/systemd/mccluster-core-reflection.timer
+          grep -F 'OnUnitActiveSec=2h' core/systemd/mccluster-core-reflection.timer
+          grep -F 'deploy/ovh-production' scripts/mccluster-vps-reconcile.sh
+          grep -F 'merge-base --is-ancestor' scripts/mccluster-vps-reconcile.sh
+          grep -F 'OWNER_JOB_TYPES' workers/mccluster/src/ai/router.js
           node - <<'NODE'
           const fs = require('fs');
           const catalog = JSON.parse(fs.readFileSync('core/capabilities/catalog.json', 'utf8'));
