@@ -75,7 +75,7 @@ export async function handleRelayEnrollment(request, env, user) {
       const label = String(payload.label || 'McCluster Relay').trim().slice(0, 160);
       const phoneNumber = normalizeAddress(payload.phone_number);
       if (!label) throw Object.assign(new Error('label required'), { status: 400 });
-      if (payload.phone_number && !phoneNumber) throw Object.assign(new Error('phone_number must be E.164 or a valid US number'), { status: 400 });
+      if (!phoneNumber) throw Object.assign(new Error('phone_number is required and must be E.164 or a valid US number'), { status: 400 });
       const token = randomToken();
       const tokenHash = await sha256(token);
       const rows = await rest(env, 'comms_relay_devices', {
@@ -84,7 +84,7 @@ export async function handleRelayEnrollment(request, env, user) {
         body: JSON.stringify({
           org_id: orgId,
           label,
-          phone_number: phoneNumber || null,
+          phone_number: phoneNumber,
           token_hash: tokenHash,
           enabled: true,
           capabilities: { sms: true, inbound: true, outbound: true, delivery_receipts: true },
@@ -99,7 +99,7 @@ export async function handleRelayEnrollment(request, env, user) {
           actor_type: 'owner',
           actor_id: user.id,
           action: 'relay_device_enrolled',
-          detail: { device_id: device.id, label, phone_number: phoneNumber || null },
+          detail: { device_id: device.id, label, phone_number: phoneNumber },
         }),
       });
       return reply(request, env, {
