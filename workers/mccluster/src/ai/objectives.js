@@ -44,14 +44,13 @@ export async function queueObjectiveSynthesis(env, { orgId, ingestBody, ingestRe
   const fingerprint = await sha256(`${orgId}\n${provider}\n${conversationId}\n${receiptId}\n${idempotencyKey}`);
   const jobId = deterministicUuid(await sha256(`objective-synthesis:${fingerprint}`));
 
+  // Public ops jobs persist only bounded references. Raw idempotency keys, source URLs,
+  // external conversation identifiers, and transcript content remain inside ai_context.
   const source = {
     provider,
     conversation_id: conversationId,
     receipt_id: receiptId,
-    external_conversation_id: String(ingestBody?.external_conversation_id || '').slice(0, 500),
-    idempotency_key: idempotencyKey,
     fingerprint,
-    source_url: ingestBody?.source_url ? String(ingestBody.source_url).slice(0, 2000) : null,
     observed_at: String(ingestBody?.last_message_at || '').slice(0, 80) || null,
   };
 
