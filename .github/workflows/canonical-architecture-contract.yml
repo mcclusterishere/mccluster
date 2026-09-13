@@ -61,7 +61,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git grep -n -E '^[[:space:]]*name[[:space:]]*=[[:space:]]*["'"']mccluster-core["'"']' -- '*wrangler.toml' '*wrangler.json' '*wrangler.jsonc'; then
+          if grep -R -n -E '^[[:space:]]*name[[:space:]]*=[[:space:]]*"mccluster-core"' workers --include='wrangler.toml'; then
+            echo 'A second Cloudflare Worker named mccluster-core is forbidden.' >&2
+            exit 1
+          fi
+          if grep -R -n -E '"name"[[:space:]]*:[[:space:]]*"mccluster-core"' workers --include='wrangler.json' --include='wrangler.jsonc'; then
             echo 'A second Cloudflare Worker named mccluster-core is forbidden.' >&2
             exit 1
           fi
