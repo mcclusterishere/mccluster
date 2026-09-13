@@ -1,0 +1,86 @@
+name: Deploy OVH Now dc6fcec
+
+on:
+  push:
+    branches:
+      - deploy/ovh-dc6fcec
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-ovh-core
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ovh-production
+    env:
+      DEPLOY_SHA: dc6fcec08f1ea620d0b75c66ff8ff41720419089
+    steps:
+      - name: Checkout exact production revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+          fetch-depth: 1
+
+      - name: Validate Core before transfer
+        working-directory: core
+        run: |
+          npm run check
+          npm test
+
+      - name: Configure SSH
+        env:
+          OVH_SSH_KEY: ${{ secrets.OVH_SSH_KEY }}
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          test -n "$OVH_SSH_KEY"
+          test -n "$OVH_HOST"
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$OVH_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          PORT="${OVH_PORT:-22}"
+          ssh-keyscan -p "$PORT" -H "$OVH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Transfer exact checkout to OVH staging
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          test -n "$OVH_HOST"
+          test -n "$OVH_USER"
+          PORT="${OVH_PORT:-22}"
+          STAGE="/tmp/mccluster-deploy-${DEPLOY_SHA}"
+          ssh -p "$PORT" "$OVH_USER@$OVH_HOST" "rm -rf '$STAGE' && mkdir -p '$STAGE'"
+          rsync -az --delete -e "ssh -p $PORT" ./ "$OVH_USER@$OVH_HOST:$STAGE/"
+
+      - name: Deploy and restart McCluster Core
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          PORT="${OVH_PORT:-22}"
+          STAGE="/tmp/mccluster-deploy-${DEPLOY_SHA}"
+          ssh -tt -p "$PORT" "$OVH_USER@$OVH_HOST" \
+            "sudo bash '$STAGE/scripts/deploy-ovh-core.sh' '$STAGE' && rm -rf '$STAGE'"
+
+      - name: Verify deployed services
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          PORT="${OVH_PORT:-22}"
+          ssh -p "$PORT" "$OVH_USER@$OVH_HOST" \
+            "systemctl is-active mccluster-core-runner.service && systemctl is-active mccluster-core-tool-broker.service"
+
+      - name: Deployment summary
+        run: |
+          echo "### OVH Core one-time deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${DEPLOY_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Target: canonical /opt/mccluster/core" >> "$GITHUB_STEP_SUMMARY"
