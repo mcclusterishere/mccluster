@@ -1,0 +1,118 @@
+name: Canonical Architecture Contract
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  architecture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate canonical architecture manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = 'docs/control-plane/canonical-architecture.json';
+          const a = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const fail = (m) => { throw new Error(m); };
+          if (a.schema_version !== 1 || a.status !== 'canonical') fail('canonical manifest version/status invalid');
+          if (a.law !== 'Products are workloads. McCluster is the platform.') fail('platform law changed without architecture review');
+          if (a.planes?.durable_truth?.system !== 'supabase') fail('durable truth must be Supabase');
+          if (a.planes?.durable_truth?.project_ref !== 'zmnhbrjyhxzhkxmhkexs') fail('canonical Supabase project changed');
+          if (a.planes?.public_edge?.worker !== 'mccluster') fail('canonical Worker must be mccluster');
+          if (a.planes?.public_edge?.source !== 'workers/mccluster') fail('canonical Worker source moved');
+          if (a.planes?.execution?.system !== 'ovh-mccluster-core') fail('canonical execution plane changed');
+          if (a.planes?.execution?.source !== 'core') fail('canonical Core source moved');
+          if (a.planes?.execution?.deployment_ref !== 'deploy/ovh-production') fail('canonical deployment ref changed');
+          if (!Array.isArray(a.superseded_branches) || !a.superseded_branches.length) fail('superseded branch quarantine missing');
+          if (!Array.isArray(a.forbidden_architecture) || !a.forbidden_architecture.length) fail('forbidden architecture rules missing');
+          NODE
+
+      - name: Quarantine superseded PR branches
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const a = JSON.parse(fs.readFileSync('docs/control-plane/canonical-architecture.json', 'utf8'));
+          const head = process.env.HEAD_REF || '';
+          if (a.superseded_branches.includes(head)) {
+            console.error(`Refusing PR from superseded architecture branch: ${head}`);
+            console.error('Salvage useful ideas by rebuilding them on a fresh branch from current main.');
+            process.exit(1);
+          }
+          NODE
+
+      - name: Enforce single canonical public edge
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -n -E '^[[:space:]]*name[[:space:]]*=[[:space:]]*"mccluster-core"' workers --include='wrangler.toml'; then
+            echo 'A second Cloudflare Worker named mccluster-core is forbidden.' >&2
+            exit 1
+          fi
+          if grep -R -n -E '"name"[[:space:]]*:[[:space:]]*"mccluster-core"' workers --include='wrangler.json' --include='wrangler.jsonc'; then
+            echo 'A second Cloudflare Worker named mccluster-core is forbidden.' >&2
+            exit 1
+          fi
+          grep -F 'name = "mccluster"' workers/mccluster/wrangler.toml
+
+      - name: Enforce canonical deployment path
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'deploy/ovh-production' scripts/mccluster-vps-reconcile.sh
+          grep -F 'merge-base --is-ancestor' scripts/mccluster-vps-reconcile.sh
+          grep -F 'deploy/ovh-production' .github/workflows/promote-ovh-production.yml
+          if git grep -n -E 'git checkout[[:space:]]+(main|origin/main)' -- scripts core/systemd ':!scripts/mccluster-vps-reconcile.sh'; then
+            echo 'Routine runtime deployment must not be driven by arbitrary main checkouts.' >&2
+            exit 1
+          fi
+
+      - name: Enforce compute-node authority boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -n 'SUPABASE_SERVICE_ROLE_KEY' -- core/src/compute core/compute-node.env.example core/compute-capabilities.example.json; then
+            echo 'Compute nodes must not hold Supabase service-role authority.' >&2
+            exit 1
+          fi
+
+      - name: Enforce private conversation memory boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'transcript_persisted_in_public_job: false' core/src/executors/objective-synthesis.mjs
+          grep -F 'private_context_reference_only: true' workers/mccluster/src/ai/objectives.js
+          grep -F 'MCCLUSTER_CONTEXT_TOKEN' core/src/context-client.mjs
+
+      - name: Enforce product-as-workload identity law
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'm_people.id' docs/control-plane/ECOSYSTEM.md
+          grep -F 'Do not add a satellite username/account namespace.' docs/control-plane/ECOSYSTEM.md
+
+      - name: Architecture contract summary
+        run: |
+          echo '### Canonical architecture verified' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Supabase is canonical durable truth' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Cloudflare Worker `mccluster` is the public edge' >> "$GITHUB_STEP_SUMMARY"
+          echo '- OVH McCluster Core is the persistent execution plane' >> "$GITHUB_STEP_SUMMARY"
+          echo '- `deploy/ovh-production` is the production promotion pointer' >> "$GITHUB_STEP_SUMMARY"
+          echo '- known superseded architecture branches are quarantined' >> "$GITHUB_STEP_SUMMARY"
+          echo '- products and compute nodes remain workloads, not parallel control planes' >> "$GITHUB_STEP_SUMMARY"

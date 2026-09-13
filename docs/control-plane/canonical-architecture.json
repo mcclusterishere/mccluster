@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "status": "canonical",
+  "law": "Products are workloads. McCluster is the platform.",
+  "planes": {
+    "durable_truth": {
+      "system": "supabase",
+      "project_ref": "zmnhbrjyhxzhkxmhkexs",
+      "rule": "Canonical durable state, identity, objectives, jobs, media, compute, communications, learning, audit and provenance live here. Do not create a second control-plane database or memory database."
+    },
+    "public_edge": {
+      "system": "cloudflare",
+      "worker": "mccluster",
+      "source": "workers/mccluster",
+      "rule": "Public ingress, auth, routing and API normalization only. Do not create a second Worker named mccluster-core or move durable truth into the edge."
+    },
+    "execution": {
+      "system": "ovh-mccluster-core",
+      "source": "core",
+      "deployment_ref": "deploy/ovh-production",
+      "rule": "Persistent execution, local-model inference, tool brokering, objective execution and orchestration run here. Routine deployment is outbound reconciliation from the deployment ref."
+    },
+    "source": {
+      "system": "github",
+      "repository": "mcclusterishere/mccluster",
+      "rule": "Source and tested promotion path. main is authoritative; historical branches are not architecture authorities."
+    },
+    "specialized_compute": {
+      "system": "compute-node-protocol",
+      "rule": "GPU/desktop/specialized nodes are capability workers. They do not receive Supabase service-role authority and do not become independent control planes."
+    }
+  },
+  "authority": {
+    "humans": "Consequential authority: production deploy/rollback authorization, contracts, purchases, legal commitments and other high-impact decisions.",
+    "models": "Propose bounded actions through policy gates. Models do not directly merge, deploy, purchase, sign contracts or bypass authorization.",
+    "products": "Workloads consuming shared identity, data, capabilities and execution. Products do not invent parallel schedulers, identity systems, social graphs or control-plane databases."
+  },
+  "forbidden_architecture": [
+    "second Supabase project used as the McCluster control plane",
+    "second Cloudflare Worker named mccluster-core",
+    "second workflow engine or scheduler duplicating ops_agent_jobs and McCluster Core",
+    "second memory database duplicating private ai_context or canonical durable state",
+    "direct model-to-production deploy, merge, purchase or contract authority",
+    "compute nodes holding Supabase service-role credentials",
+    "satellite products creating parallel McCluster identity namespaces",
+    "routine production deployment by arbitrary SSH checkout instead of deploy/ovh-production reconciliation"
+  ],
+  "superseded_branches": [
+    "reconcile/autonomy-fabric-stack-v1",
+    "reconcile/autonomy-fabric-stack-v1-clean",
+    "reconcile/autonomy-fabric-stack-v2",
+    "core/runner-v0",
+    "core/runtime-v1",
+    "core/node-agent-v1",
+    "control-plane/agent-kit",
+    "control-plane/kill-core-name-on-main"
+  ],
+  "salvage_rule": "Historical branches are evidence, not merge targets. Rebuild useful ideas fresh from current main while preserving current privacy, idempotency, security, deployment and authority contracts."
+}
