@@ -44,7 +44,9 @@ if ! git merge-base --is-ancestor "${TARGET_SHA}" refs/remotes/origin/main; then
 fi
 
 git reset --hard "${TARGET_SHA}"
-git clean -ffd
+# Dedicated reconcile checkout must contain only the promoted revision. Remove ignored
+# build/test residue too so stale local state cannot influence validation or deployment.
+git clean -ffdx
 
 # Validate and deploy using the canonical rollback-safe deployer shipped by the target revision.
 bash "${CHECKOUT}/scripts/deploy-ovh-core.sh" "${CHECKOUT}"
