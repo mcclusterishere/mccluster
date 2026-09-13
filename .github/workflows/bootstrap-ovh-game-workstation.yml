@@ -31,22 +31,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate privileged bootstrap inputs
+        env:
+          GODOT_VERSION: ${{ inputs.godot_version }}
+          BLENDER_VERSION: ${{ inputs.blender_version }}
+        run: |
+          set -euo pipefail
+          SEMVER_RE='^[0-9]+\.[0-9]+\.[0-9]+$'
+          [[ "$GODOT_VERSION" =~ $SEMVER_RE ]] || { echo 'Invalid Godot version; expected numeric x.y.z' >&2; exit 2; }
+          [[ "$BLENDER_VERSION" =~ $SEMVER_RE ]] || { echo 'Invalid Blender version; expected numeric x.y.z' >&2; exit 2; }
+
       - name: Validate bootstrap script
         run: bash -n scripts/bootstrap-ovh-game-workstation.sh
 
-      - name: Configure SSH
+      - name: Configure pinned SSH trust
         env:
           OVH_SSH_KEY: ${{ secrets.OVH_SSH_KEY }}
+          OVH_KNOWN_HOSTS: ${{ secrets.OVH_KNOWN_HOSTS }}
           OVH_HOST: ${{ secrets.OVH_HOST }}
-          OVH_PORT: ${{ secrets.OVH_PORT }}
         run: |
-          test -n "$OVH_SSH_KEY"
-          test -n "$OVH_HOST"
+          set -euo pipefail
+          test -n "$OVH_SSH_KEY" || { echo 'Missing OVH_SSH_KEY' >&2; exit 1; }
+          test -n "$OVH_KNOWN_HOSTS" || { echo 'Missing OVH_KNOWN_HOSTS' >&2; exit 1; }
+          test -n "$OVH_HOST" || { echo 'Missing OVH_HOST' >&2; exit 1; }
           install -d -m 0700 ~/.ssh
           printf '%s\n' "$OVH_SSH_KEY" > ~/.ssh/id_ed25519
           chmod 0600 ~/.ssh/id_ed25519
-          PORT="${OVH_PORT:-22}"
-          ssh-keyscan -p "$PORT" -H "$OVH_HOST" >> ~/.ssh/known_hosts
+          printf '%s\n' "$OVH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/known_hosts
 
       - name: Transfer bootstrap script
         env:
@@ -54,9 +66,10 @@ jobs:
           OVH_USER: ${{ secrets.OVH_USER }}
           OVH_PORT: ${{ secrets.OVH_PORT }}
         run: |
+          set -euo pipefail
           test -n "$OVH_USER"
           PORT="${OVH_PORT:-22}"
-          scp -P "$PORT" scripts/bootstrap-ovh-game-workstation.sh "$OVH_USER@$OVH_HOST:/tmp/bootstrap-ovh-game-workstation.sh"
+          scp -P "$PORT" -o StrictHostKeyChecking=yes scripts/bootstrap-ovh-game-workstation.sh "$OVH_USER@$OVH_HOST:/tmp/bootstrap-ovh-game-workstation.sh"
 
       - name: Install and verify game-production toolchain
         env:
@@ -66,8 +79,9 @@ jobs:
           GODOT_VERSION: ${{ inputs.godot_version }}
           BLENDER_VERSION: ${{ inputs.blender_version }}
         run: |
+          set -euo pipefail
           PORT="${OVH_PORT:-22}"
-          ssh -tt -p "$PORT" "$OVH_USER@$OVH_HOST" \
+          ssh -tt -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST" \
             "sudo GODOT_VERSION='$GODOT_VERSION' BLENDER_VERSION='$BLENDER_VERSION' bash /tmp/bootstrap-ovh-game-workstation.sh && rm -f /tmp/bootstrap-ovh-game-workstation.sh && sudo systemctl daemon-reload && sudo systemctl try-restart mccluster-core-runner.service"
 
       - name: Verify Core can see runtime binaries
@@ -76,8 +90,9 @@ jobs:
           OVH_USER: ${{ secrets.OVH_USER }}
           OVH_PORT: ${{ secrets.OVH_PORT }}
         run: |
+          set -euo pipefail
           PORT="${OVH_PORT:-22}"
-          ssh -p "$PORT" "$OVH_USER@$OVH_HOST" \
+          ssh -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST" \
             "godot --headless --version && blender --version | head -n1 && ffmpeg -version | head -n1 && test -r /etc/mccluster/game-runtime.env"
 
       - name: Summary
@@ -85,5 +100,6 @@ jobs:
           echo '### OVH game workstation bootstrap' >> "$GITHUB_STEP_SUMMARY"
           echo '- Godot: `${{ inputs.godot_version }}`' >> "$GITHUB_STEP_SUMMARY"
           echo '- Blender: `${{ inputs.blender_version }}` LTS' >> "$GITHUB_STEP_SUMMARY"
+          echo '- SSH host identity pinned by `OVH_KNOWN_HOSTS`' >> "$GITHUB_STEP_SUMMARY"
           echo '- FFmpeg / Git LFS / CMake / Ninja / Vulkan tooling installed via apt' >> "$GITHUB_STEP_SUMMARY"
           echo '- Core game runtime environment persisted under `/etc/mccluster/game-runtime.env`' >> "$GITHUB_STEP_SUMMARY"
