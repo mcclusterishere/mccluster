@@ -7,6 +7,7 @@ import { portfolioPlan } from './executors/portfolio-plan.mjs';
 import { gameBuildPlan } from './executors/game-build-plan.mjs';
 import { gamePlaytest } from './executors/game-playtest.mjs';
 import { gameStudioCycle, gameMediaCollect, gameOwnerDecision } from './executors/game-studio-cycle.mjs';
+import { previewDeploy } from './executors/preview-deploy.mjs';
 
 const executors = new Map([
   ['repo_health', repoHealth],
@@ -19,6 +20,7 @@ const executors = new Map([
   ['game_studio_cycle', gameStudioCycle],
   ['game_media_collect', gameMediaCollect],
   ['game_owner_decision', gameOwnerDecision],
+  ['preview_deploy', previewDeploy],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
