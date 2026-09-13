@@ -65,6 +65,17 @@ function numberOr(value, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+async function reconcileProviderCost(env, modelId, inputUnits, outputUnits, quantity, cachedInputUnits) {
+  const rows = await rpc(env, 'compute_actual_model_cost', {
+    p_model_id: modelId,
+    p_input_units: Math.max(0, numberOr(inputUnits)),
+    p_output_units: Math.max(0, numberOr(outputUnits)),
+    p_quantity: Math.max(0, numberOr(quantity, 1)),
+    p_cached_input_units: Math.max(0, numberOr(cachedInputUnits)),
+  });
+  return rows?.[0] || null;
+}
+
 async function routeFor(env, principal, id, input) {
   const selected = await rpc(env, 'compute_select_route', {
     p_request_id: id,
@@ -124,10 +135,6 @@ async function settle(env, id, status, route, usage = {}) {
 }
 
 async function executeConfiguredProvider(env, route, input) {
-  // Provider execution is intentionally adapter-gated. A route is only executable
-  // when it has a verified price, is enabled, and the corresponding secret exists.
-  // This initial gateway supports OpenAI-compatible HTTP providers. Additional
-  // media/3D/GPU adapters plug into the same reservation/settlement contract.
   const modelRows = await service(env, `compute_models?id=eq.${route.model_id}&select=id,provider_key,model_key,billing_unit,metadata&limit=1`);
   const model = modelRows?.[0];
   if (!model) throw Object.assign(new Error('Selected model is unavailable'), { status: 503 });
@@ -167,16 +174,33 @@ async function executeConfiguredProvider(env, route, input) {
   if (!upstream.ok) throw Object.assign(new Error(payload?.error?.message || payload?.message || 'Upstream provider failed'), { status: 502, upstream: payload });
 
   const usage = payload?.usage || {};
+  const inputUnits = usage.prompt_tokens || usage.input_tokens || 0;
+  const outputUnits = usage.completion_tokens || usage.output_tokens || 0;
+  const cachedInputUnits = usage.prompt_tokens_details?.cached_tokens || usage.input_tokens_details?.cached_tokens || 0;
+  let cost = null;
+  if (inputUnits > 0 || outputUnits > 0 || numberOr(input.quantity, 0) > 0) {
+    cost = await reconcileProviderCost(env, model.id, inputUnits, outputUnits, input.quantity ?? 0, cachedInputUnits);
+  }
+
+  const fallbackEstimate = Math.max(0, numberOr(route.estimated_upstream_microusd));
+  const actualCost = cost ? Math.max(0, numberOr(cost.actual_upstream_microusd)) : fallbackEstimate;
+  const costBasis = cost?.cost_basis || {
+    basis: 'route_estimate_missing_provider_usage',
+    provider_key: provider.provider_key,
+    model_key: model.model_key,
+  };
+
   return {
     payload,
-    input_units: usage.prompt_tokens || usage.input_tokens || 0,
-    output_units: usage.completion_tokens || usage.output_tokens || 0,
+    input_units: inputUnits,
+    output_units: outputUnits,
     latency_ms: Date.now() - started,
-    // For safety, exact provider COGS must come from normalized provider accounting.
-    // Until an adapter can calculate exact actual cost, settlement uses the selected
-    // route estimate and records that fact in response metadata.
-    actual_upstream_cost_microusd: route.estimated_upstream_cost_microusd,
-    response_metadata: { cost_basis: 'route_estimate_pending_provider_reconciliation' },
+    actual_upstream_cost_microusd: actualCost,
+    response_metadata: {
+      cost_basis: costBasis,
+      provider_usage_reported: !!payload?.usage,
+      cached_input_units: cachedInputUnits,
+    },
   };
 }
 
@@ -250,7 +274,7 @@ export async function handleComputeApi(request, env) {
   if (reqMatch && request.method === 'GET') {
     if (!hasScope(principal, 'compute:read')) return fail(request, env, 'API key lacks compute:read', 403);
     const id = encodeURIComponent(reqMatch[1]);
-    const rows = await service(env, `compute_requests?request_id=eq.${id}&consumer_id=eq.${principal.consumer.id}&select=request_id,task,capability,provider_key,model_id,status,input_units,output_units,estimated_upstream_cost_microusd,actual_upstream_cost_microusd,retail_cost_microusd,credits_reserved,credits_charged,retry_count,latency_ms,cached,error_code,created_at,completed_at&limit=1`);
+    const rows = await service(env, `compute_requests?request_id=eq.${id}&consumer_id=eq.${principal.consumer.id}&select=request_id,task,capability,provider_key,model_id,status,input_units,output_units,estimated_upstream_cost_microusd,actual_upstream_cost_microusd,retail_cost_microusd,credits_reserved,credits_charged,retry_count,latency_ms,cached,error_code,response_metadata,created_at,completed_at&limit=1`);
     if (!rows?.length) return fail(request, env, 'Compute request not found', 404);
     return reply(request, env, { request: rows[0] });
   }
