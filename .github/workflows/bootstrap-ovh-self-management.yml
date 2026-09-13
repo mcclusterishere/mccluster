@@ -10,6 +10,11 @@ on:
       confirm:
         description: Type BOOTSTRAP_OVH_SELF_MANAGEMENT
         required: true
+  push:
+    branches:
+      - ops/bootstrap-ovh-now
+    paths:
+      - '.github/workflows/bootstrap-ovh-self-management.yml'
 
 permissions:
   contents: read
@@ -20,14 +25,14 @@ concurrency:
 
 jobs:
   bootstrap:
-    if: ${{ inputs.confirm == 'BOOTSTRAP_OVH_SELF_MANAGEMENT' }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.confirm == 'BOOTSTRAP_OVH_SELF_MANAGEMENT') || (github.event_name == 'push' && github.ref == 'refs/heads/ops/bootstrap-ovh-now') }}
     runs-on: ubuntu-latest
     environment: ovh-production
     steps:
       - name: Checkout requested revision
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'deploy/ovh-production' }}
           fetch-depth: 1
 
       - name: Resolve exact commit
