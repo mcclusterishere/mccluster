@@ -38,6 +38,7 @@ jobs:
           node --check workers/mccluster/src/client.js
           node --check workers/mccluster/src/connect.js
           node --check workers/mccluster/src/ai/router.js
+          node --check workers/mccluster/src/ai/objectives.js
           node --check workers/mccluster/src/media/router.js
           node --check workers/mccluster/src/social/router.js
           node --check workers/mccluster/src/prim3/index.js
@@ -45,6 +46,14 @@ jobs:
           node --check js/prim3-sync.js
           node --check js/equity-uprise-institutional.js
           node --check js/equity-uprise-fellowship-live.js
+      - name: Assert private conversation ingestion boundary
+        run: |
+          grep -F 'private_context_reference_only: true' workers/mccluster/src/ai/objectives.js
+          grep -F 'conversation_id: conversationId' workers/mccluster/src/ai/objectives.js
+          if grep -F 'messages:' workers/mccluster/src/ai/objectives.js; then
+            echo 'Objective synthesis enqueue must not persist raw messages in public ops jobs.' >&2
+            exit 1
+          fi
       - name: Reject unresolved reconciliation markers
         run: |
           if git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- . ':!*.lock'; then
@@ -74,6 +83,9 @@ jobs:
       - name: Test bounded objective reflection
         working-directory: core
         run: npm run test:reflection
+      - name: Test private conversation objective synthesis
+        working-directory: core
+        run: npm run test:objective-synthesis
       - name: Test Initiative OS portfolio planning
         working-directory: core
         run: npm run test:initiative-os
@@ -94,6 +106,8 @@ jobs:
           grep -F 'autonomous_draft_only: true' core/src/reflection-policy.mjs
           grep -F 'Never propose deploy, merge' core/src/executors/objective-reflection.mjs
           grep -F 'objective_reflection only' core/src/executors/portfolio-plan.mjs
+          grep -F 'transcript_persisted_in_public_job: false' core/src/executors/objective-synthesis.mjs
+          grep -F 'MCCLUSTER_CONTEXT_TOKEN' core/src/context-client.mjs
           grep -F 'OnCalendar=*-*-* 02:00:00 America/New_York' core/systemd/mccluster-core-portfolio-plan.timer
           grep -F 'OnUnitActiveSec=2h' core/systemd/mccluster-core-reflection.timer
           grep -F 'deploy/ovh-production' scripts/mccluster-vps-reconcile.sh
@@ -124,13 +138,14 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - name: Type-check publication control path
+      - name: Type-check publication and private context control paths
         run: |
-          deno check \
+          deno check --node-modules-dir=auto \
             supabase/functions/_shared/eu-policy-os.ts \
             supabase/functions/eu-publish/index.ts \
-            supabase/functions/eu-worker/index.ts
-      - name: Assert publication safety invariants
+            supabase/functions/eu-worker/index.ts \
+            supabase/functions/context-core/index.ts
+      - name: Assert publication and context safety invariants
         run: |
           grep -F 'form.set("login_passwd", pass)' supabase/functions/eu-worker/index.ts
           if grep -F 'form.set("passwd", pass)' supabase/functions/eu-worker/index.ts; then
@@ -140,6 +155,10 @@ jobs:
           grep -F 'unknown_capability' supabase/functions/eu-worker/index.ts
           grep -F 'request_hash: requestHash' supabase/functions/eu-publish/index.ts
           grep -F 'publication content hash changed after approval' supabase/functions/eu-worker/index.ts
+          grep -F 'x-mccluster-context-token' supabase/functions/context-core/index.ts
+          grep -F 'where c.org_id = ${orgId}::uuid and c.id = ${conversationId}::uuid' supabase/functions/context-core/index.ts
+          grep -F '[functions.context-core]' supabase/config.toml
+          grep -A1 '\[functions.context-core\]' supabase/config.toml | grep -F 'verify_jwt = false'
 
   database:
     name: Supabase migration reset

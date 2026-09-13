@@ -1,4 +1,5 @@
 import { fail, reply } from '../lib/http.js';
+import { queueObjectiveSynthesis } from './objectives.js';
 
 const MAX_BODY = 512 * 1024;
 const OWNER_JOB_TYPES = new Set([
@@ -145,7 +146,7 @@ export async function handleAiRequest(request, env, user) {
   if (path === '/v1/ai' && request.method === 'GET') {
     return reply(request, env, {
       ok: true,
-      harness: 'ai_context-v3',
+      harness: 'ai_context-v4',
       durable_jobs: 'ops_agent_jobs',
       ingest: '/v1/ai/ingest',
       retrieve: '/v1/ai/retrieve',
@@ -153,6 +154,7 @@ export async function handleAiRequest(request, env, user) {
       task: '/v1/ai/task',
       jobs: '/v1/ai/jobs',
       status: '/v1/ai/status',
+      objective_synthesis: 'automatic after successful context ingest',
       allowed_job_types: [...OWNER_JOB_TYPES]
     });
   }
@@ -166,17 +168,14 @@ export async function handleAiRequest(request, env, user) {
     ]);
     return reply(request, env, {
       ok: true,
-      harness: 'ai_context-v3',
-      context: {
-        ingest: 'context-ingest',
-        query: 'context-query',
-        decisions: 'context-decision'
-      },
+      harness: 'ai_context-v4',
+      context: { ingest: 'context-ingest', query: 'context-query', decisions: 'context-decision', core_reader: 'context-core' },
       execution: {
         table: 'ops_agent_jobs',
         jobs: { total, queued, running, failed },
         natural_language_ingress: '/v1/ai/task',
-        explicit_ingress: '/v1/ai/jobs'
+        explicit_ingress: '/v1/ai/jobs',
+        conversation_objectives: 'reference-only objective_synthesis'
       }
     });
   }
@@ -206,11 +205,7 @@ export async function handleAiRequest(request, env, user) {
       queued: true,
       mode: 'autonomous_reflection',
       job,
-      safety: {
-        production_deploy: false,
-        auto_merge: false,
-        unattended_code_patch_limit_per_reflection: 1
-      }
+      safety: { production_deploy: false, auto_merge: false, unattended_code_patch_limit_per_reflection: 1 }
     }, 202);
   }
 
@@ -233,7 +228,22 @@ export async function handleAiRequest(request, env, user) {
     if (!body.org_id) body.org_id = orgId;
     if (body.org_id !== orgId) return fail(request, env, 'cross-org ingestion denied', 403);
     const { status, data } = await callContextFunction(request, env, 'context-ingest', body);
-    return reply(request, env, data, status);
+
+    let synthesis;
+    try {
+      synthesis = await queueObjectiveSynthesis(env, { orgId, ingestBody: body, ingestResult: data });
+    } catch (error) {
+      synthesis = {
+        queued: false,
+        error: 'objective_synthesis_enqueue_failed',
+        detail: String(error?.message || error).slice(0, 500)
+      };
+    }
+
+    const response = data && typeof data === 'object' && !Array.isArray(data)
+      ? { ...data, objective_synthesis: synthesis }
+      : { ingest: data, objective_synthesis: synthesis };
+    return reply(request, env, response, status);
   }
 
   if (path === '/v1/ai/retrieve' && request.method === 'POST') {

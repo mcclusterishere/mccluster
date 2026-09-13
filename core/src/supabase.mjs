@@ -21,11 +21,7 @@ export function buildSupabaseHeaders({ secretKey = SECRET_KEY, legacyServiceKey 
     'content-type': 'application/json',
   };
 
-  // Modern sb_secret_* keys are opaque API keys, not JWTs, and must not be
-  // sent as Authorization: Bearer values. The legacy service_role key is a JWT,
-  // so preserve the bearer header only for backwards compatibility.
   if (!secretKey && legacyServiceKey) base.authorization = `Bearer ${legacyServiceKey}`;
-
   return { ...base, ...extra };
 }
 
@@ -98,6 +94,19 @@ function ownedRunningParams(job) {
     status: 'eq.running',
     locked_by: `eq.${workerId}`,
   }).toString();
+}
+
+export async function checkpointJobInput(job, input) {
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${ownedRunningParams(job)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({
+      input: input && typeof input === 'object' ? input : {},
+      updated_at: new Date().toISOString(),
+    }),
+  });
+  if (!rows.length) throw new Error(`Lost ownership of job ${job.id} while checkpointing input`);
+  return rows[0];
 }
 
 export async function heartbeat(job) {
@@ -174,6 +183,7 @@ export async function recentObjectives({ orgId, limit = 25 } = {}) {
 }
 
 export async function enqueueJob({
+  jobId,
   orgId,
   jobType,
   targetType = 'portfolio',
@@ -186,23 +196,35 @@ export async function enqueueJob({
   if (!orgId) throw new Error('enqueueJob requires orgId');
   if (!jobType) throw new Error('enqueueJob requires jobType');
 
-  const { body: rows = [] } = await rest('ops_agent_jobs', {
+  const row = {
+    org_id: orgId,
+    job_type: jobType,
+    target_type: targetType,
+    target_id: targetId,
+    status: 'queued',
+    priority: Math.min(100, Math.max(0, Number(priority) || 0)),
+    input: input && typeof input === 'object' ? input : {},
+    run_after: runAfter,
+    max_attempts: Math.max(1, Number(maxAttempts) || 3),
+  };
+  if (jobId) row.id = String(jobId);
+
+  const endpoint = jobId ? 'ops_agent_jobs?on_conflict=id' : 'ops_agent_jobs';
+  const prefer = jobId ? 'resolution=ignore-duplicates,return=representation' : 'return=representation';
+  const { body: rows = [] } = await rest(endpoint, {
     method: 'POST',
-    headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({
-      org_id: orgId,
-      job_type: jobType,
-      target_type: targetType,
-      target_id: targetId,
-      status: 'queued',
-      priority: Math.min(100, Math.max(0, Number(priority) || 0)),
-      input: input && typeof input === 'object' ? input : {},
-      run_after: runAfter,
-      max_attempts: Math.max(1, Number(maxAttempts) || 3),
-    }),
+    headers: { Prefer: prefer },
+    body: JSON.stringify(row),
   });
-  if (!rows.length) throw new Error(`Failed to enqueue ${jobType}`);
-  return rows[0];
+  if (rows.length) return rows[0];
+
+  if (jobId) {
+    const params = new URLSearchParams({ id: `eq.${jobId}`, select: '*', limit: '1' });
+    const { body: existing = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+    if (existing.length) return existing[0];
+  }
+
+  throw new Error(`Failed to enqueue ${jobType}`);
 }
 
 export async function hasPendingJob({ orgId, jobType, targetId } = {}) {

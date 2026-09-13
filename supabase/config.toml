@@ -29,8 +29,9 @@ verify_jwt = false
 [functions.connect-onboard]
 verify_jwt = false
 
-# Private cross-model context plane. All three verify the caller again inside
-# the function and enforce organization membership before touching ai_context.
+# Private cross-model context plane. User-facing functions require a Supabase
+# JWT and repeat membership checks in-function. context-core is server-to-server
+# and uses a dedicated constant-time compared MCCLUSTER_CONTEXT_TOKEN instead.
 [functions.context-ingest]
 verify_jwt = true
 
@@ -39,6 +40,9 @@ verify_jwt = true
 
 [functions.context-decision]
 verify_jwt = true
+
+[functions.context-core]
+verify_jwt = false
 
 [functions.intake]
 verify_jwt = false
