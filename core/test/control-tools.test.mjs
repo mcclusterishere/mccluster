@@ -36,4 +36,5 @@ test('production capability catalog contains no planned lifecycle entries', asyn
     assert.equal(catalog.capabilities.find((capability) => capability.id === id)?.lifecycle, 'active', `${id} must be active`);
     assert.ok(catalog.bindings.some((binding) => binding.capability === id && binding.status === 'active'), `${id} must have an active binding`);
   }
+  assert.equal(catalog.capabilities.find((capability) => capability.id === 'deploy.preview')?.description.includes('requires VERCEL_TOKEN'), true);
 });
