@@ -70,6 +70,25 @@ export const CONTROL_TOOLS = Object.freeze([
         priority: { type: 'number' }
       }
     }
+  },
+  {
+    name: 'core.world.generate',
+    title: 'Generate navigable world',
+    description: 'Queue a world-focused PRIM3 production workflow that generates environment direction plus reusable 3D modules and requires owner approval before Godot implementation.',
+    inputSchema: {
+      type: 'object',
+      required: ['org_id', 'prompt'],
+      properties: {
+        org_id: { type: 'string' },
+        prompt: { type: 'string' },
+        repository: { type: 'string' },
+        campaign: { type: 'string' },
+        budget_cents: { type: 'number', minimum: 0 },
+        preference: { type: 'string', enum: ['quality', 'balanced', 'speed', 'price'] },
+        references: { type: 'array' },
+        priority: { type: 'number' }
+      }
+    }
   }
 ]);
 
@@ -142,6 +161,63 @@ export async function callControlTool(name, args = {}) {
       campaign,
       repository,
       state: 'production_queued',
+      safety: { budget_gated: true, owner_review_gated: true, auto_merge: false, production_deploy: false }
+    };
+  }
+
+  if (name === 'core.world.generate') {
+    const orgId = requireOrg(args.org_id);
+    const prompt = text(args.prompt);
+    if (!prompt) throw Object.assign(new Error('prompt is required'), { status: 400 });
+    const repository = requireRepo(args.repository || 'mcclusterishere/hitmans-halo');
+    const campaign = text(args.campaign || 'PRIM3', 200);
+    const deliverables = [
+      {
+        id: 'world-keyframe',
+        label: 'World environment keyframe',
+        capability: 'text-to-image',
+        prompt_suffix: 'wide cinematic environment concept, clear traversal routes, landmarks, cover, verticality and navigable tactical composition, no text'
+      },
+      {
+        id: 'world-module-a',
+        label: 'World modular 3D kit A',
+        capability: 'text-to-3d',
+        prompt_suffix: 'single modular architectural/environment kit piece, fully textured, realistic, clean topology intent, suitable for repeated Godot placement as GLB'
+      },
+      {
+        id: 'world-module-b',
+        label: 'World modular 3D kit B',
+        capability: 'text-to-3d',
+        prompt_suffix: 'single complementary modular world prop or structure, fully textured, realistic, gameplay-readable silhouette, suitable for Godot import as GLB'
+      }
+    ];
+    const job = await enqueueJob({
+      orgId,
+      jobType: 'game_studio_cycle',
+      targetType: 'world',
+      targetId: campaign,
+      priority: Math.min(100, Math.max(0, Number(args.priority ?? 85))),
+      maxAttempts: 3,
+      input: {
+        brief: prompt,
+        repository,
+        campaign,
+        budget_cents: Math.max(0, Number(args.budget_cents || 0)),
+        preference: text(args.preference || 'quality', 50),
+        references: Array.isArray(args.references) ? args.references.slice(0, 20) : [],
+        deliverables,
+        phase: 'world_generation',
+        iteration: 1
+      }
+    });
+    return {
+      queued: true,
+      job_id: job.id,
+      job_type: job.job_type,
+      campaign,
+      repository,
+      state: 'world_generation_queued',
+      expected_flow: ['generate concept + GLBs', 'owner review', 'isolated Godot implementation', 'build/playtest evidence'],
       safety: { budget_gated: true, owner_review_gated: true, auto_merge: false, production_deploy: false }
     };
   }
