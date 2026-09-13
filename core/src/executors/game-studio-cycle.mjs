@@ -4,7 +4,7 @@ import { callCoreCapability, unwrapCapabilityResult } from '../game-studio/capab
 const DEFAULT_DELIVERABLES = Object.freeze([
   { id: 'environment-keyframe', label: 'Environment keyframe', capability: 'text-to-image', prompt_suffix: 'cinematic environment concept art, navigable tactical space, no text, production design sheet quality' },
   { id: 'hero-loadout', label: 'Hero/loadout concept', capability: 'text-to-image', prompt_suffix: 'full-body character and equipment concept, neutral presentation, game production concept art, no text' },
-  { id: 'tactical-prop-set', label: 'Tactical prop set', capability: 'text-to-image', prompt_suffix: 'cohesive prop and interactable set, orthographic-inspired presentation, game-ready production concept art, no text' },
+  { id: 'tactical-prop-3d', label: 'Tactical prop 3D asset', capability: 'text-to-3d', prompt_suffix: 'single modular tactical interactable or environmental prop, fully textured, realistic game-production asset, clean silhouette, suitable for Godot import as GLB' },
 ]);
 
 function text(value, max = 12000) {
@@ -73,6 +73,16 @@ function buildPrompt({ brief, campaign, deliverable, revisionNotes, iteration })
   ].filter(Boolean).join('\n\n');
 }
 
+function approvedAssetSummary(packet) {
+  return (Array.isArray(packet?.candidates) ? packet.candidates : []).map((candidate) => ({
+    deliverable_id: candidate.deliverable_id,
+    label: candidate.label,
+    media_job_id: candidate.media_job_id,
+    model_id: candidate.model_id,
+    assets: candidate.assets,
+  }));
+}
+
 export function createGameStudioExecutors({
   callCapability = callCoreCapability,
   enqueue = enqueueJob,
@@ -101,7 +111,7 @@ export function createGameStudioExecutors({
         metadata: { campaign, iteration, deliverables, requested_job_id: job.id },
       });
       return {
-        executor: 'game_studio_cycle:v1',
+        executor: 'game_studio_cycle:v1.1',
         summary: `Paused ${campaign} production batch pending a generation budget.`,
         state: 'blocked_budget',
         campaign,
@@ -130,6 +140,7 @@ export function createGameStudioExecutors({
         model_id: modelId,
         prompt,
         input: {
+          prompt,
           studio: 'mccluster-autonomous-game-studio',
           campaign,
           deliverable_id: deliverable.id,
@@ -163,14 +174,15 @@ export function createGameStudioExecutors({
         iteration,
         revision_notes: revisionNotes,
         budget_cents: budgetCents,
+        repository: text(input.repository, 500) || 'mcclusterishere/hitmans-halo',
         submissions,
         poll_count: 0,
       },
     });
 
     return {
-      executor: 'game_studio_cycle:v1',
-      summary: `Submitted ${submissions.length} ${campaign} production candidates and queued collection.`,
+      executor: 'game_studio_cycle:v1.1',
+      summary: `Submitted ${submissions.length} ${campaign} production candidates, including 3D where requested, and queued collection.`,
       state: 'generating',
       campaign,
       iteration,
@@ -208,7 +220,7 @@ export function createGameStudioExecutors({
         input: { ...input, poll_count: pollCount + 1 },
       });
       return {
-        executor: 'game_media_collect:v1',
+        executor: 'game_media_collect:v1.1',
         summary: `Generation still running; scheduled collection poll ${pollCount + 1}.`,
         state: 'waiting_generation',
         next_collector_job_id: next.id,
@@ -220,9 +232,10 @@ export function createGameStudioExecutors({
     if (!passed.length) throw new Error('All game studio generation candidates failed');
 
     const packet = {
-      schema_version: '1.0',
+      schema_version: '1.1',
       decision_type: 'game_studio_batch',
       campaign: input.campaign || 'PRIM3',
+      repository: input.repository || 'mcclusterishere/hitmans-halo',
       iteration: input.iteration || 1,
       source_job_id: job.id,
       brief: input.brief || '',
@@ -230,6 +243,7 @@ export function createGameStudioExecutors({
       candidates: passed.map((item) => ({
         deliverable_id: item.deliverable?.id,
         label: item.deliverable?.label,
+        capability: item.deliverable?.capability,
         media_job_id: item.media_job_id,
         model_id: item.model_id,
         provider: item.provider,
@@ -237,7 +251,7 @@ export function createGameStudioExecutors({
         status: item.status,
       })),
       allowed_decisions: ['approve', 'reject'],
-      decision_instruction: 'Approve to advance the selected batch into the next PRIM3 production iteration. Reject with notes to regenerate a revised batch.',
+      decision_instruction: 'Approve to hand these assets and direction to the isolated Godot implementation agent. Reject with notes to regenerate a materially revised batch.',
     };
 
     await signal({
@@ -249,7 +263,7 @@ export function createGameStudioExecutors({
     });
 
     return {
-      executor: 'game_media_collect:v1',
+      executor: 'game_media_collect:v1.1',
       summary: `${packet.campaign} iteration ${packet.iteration} is ready for owner review.`,
       state: 'awaiting_owner_review',
       approval_packet: packet,
@@ -266,39 +280,69 @@ export function createGameStudioExecutors({
     if (!['approve', 'reject'].includes(decision)) throw new Error('game_owner_decision decision must be approve or reject');
     if (!packet.campaign || !packet.brief) throw new Error('game_owner_decision requires approval_packet from game_media_collect');
 
-    const nextIteration = Math.max(1, Math.trunc(number(packet.iteration, 1))) + 1;
-    const next = await enqueue({
-      orgId,
-      jobType: 'game_studio_cycle',
-      targetType: 'campaign',
-      targetId: packet.campaign,
-      priority: 75,
-      input: {
-        campaign: packet.campaign,
-        brief: packet.brief,
-        iteration: nextIteration,
-        budget_cents: Math.max(0, number(input.budget_cents, 0)),
-        approved_candidates: decision === 'approve' ? packet.candidates : [],
-        revision_notes: decision === 'reject' ? notes || 'Owner rejected prior batch; produce a materially different revision.' : notes,
-        phase: decision === 'approve' ? 'advance' : 'revise',
-      },
-    });
+    let next;
+    if (decision === 'approve') {
+      const approved = approvedAssetSummary(packet);
+      next = await enqueue({
+        orgId,
+        jobType: 'code_patch',
+        targetType: 'repository',
+        targetId: packet.repository || 'mcclusterishere/hitmans-halo',
+        priority: 85,
+        maxAttempts: 2,
+        input: {
+          title: `${packet.campaign}: implement approved studio batch ${packet.iteration}`,
+          task: [
+            `Implement the owner-approved ${packet.campaign} game-studio batch in the Godot project.`,
+            `Campaign brief: ${packet.brief}`,
+            notes ? `Owner notes: ${notes}` : '',
+            'Approved media/assets with lineage:',
+            JSON.stringify(approved, null, 2),
+            'Import usable GLB/image/audio assets into the project where appropriate, preserve provenance in a machine-readable manifest, wire them into a bounded playable scene or existing level, and run available Godot/static tests. Do not deploy or merge.',
+          ].filter(Boolean).join('\n\n'),
+          approved_assets: approved,
+          campaign: packet.campaign,
+          studio_iteration: packet.iteration,
+        },
+      });
+    } else {
+      const nextIteration = Math.max(1, Math.trunc(number(packet.iteration, 1))) + 1;
+      next = await enqueue({
+        orgId,
+        jobType: 'game_studio_cycle',
+        targetType: 'campaign',
+        targetId: packet.campaign,
+        priority: 75,
+        input: {
+          campaign: packet.campaign,
+          repository: packet.repository || 'mcclusterishere/hitmans-halo',
+          brief: packet.brief,
+          iteration: nextIteration,
+          budget_cents: Math.max(0, number(input.budget_cents, 0)),
+          revision_notes: notes || 'Owner rejected prior batch; produce a materially different revision.',
+          phase: 'revise',
+        },
+      });
+    }
 
     await signal({
       orgId,
       kind: `game_studio.owner_${decision}`,
       severity: 'info',
-      body: `${packet.campaign} iteration ${packet.iteration} ${decision}d; queued iteration ${nextIteration}.`,
+      body: decision === 'approve'
+        ? `${packet.campaign} iteration ${packet.iteration} approved; queued isolated Godot implementation.`
+        : `${packet.campaign} iteration ${packet.iteration} rejected; queued revised generation batch.`,
       metadata: { decision, notes, prior_packet: packet, next_job_id: next.id },
     });
 
     return {
-      executor: 'game_owner_decision:v1',
-      summary: `${packet.campaign} owner decision '${decision}' recorded; queued iteration ${nextIteration}.`,
-      state: 'continued',
+      executor: 'game_owner_decision:v1.1',
+      summary: decision === 'approve'
+        ? `${packet.campaign} owner approval recorded; queued implementation job.`
+        : `${packet.campaign} owner rejection recorded; queued revised studio batch.`,
+      state: decision === 'approve' ? 'implementation_queued' : 'revision_queued',
       decision,
       next_job_id: next.id,
-      next_iteration: nextIteration,
     };
   }
 
