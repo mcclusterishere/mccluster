@@ -140,7 +140,7 @@ jobs:
           deno-version: v2.x
       - name: Type-check publication and private context control paths
         run: |
-          deno check \
+          deno check --node-modules-dir=auto \
             supabase/functions/_shared/eu-policy-os.ts \
             supabase/functions/eu-publish/index.ts \
             supabase/functions/eu-worker/index.ts \
