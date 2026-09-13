@@ -6,16 +6,22 @@ on:
     paths:
       - 'supabase/migrations/**'
       - 'supabase/tests/api_compute_economics_regression.sql'
+      - 'supabase/tests/api_rate_limit_regression.sql'
       - 'workers/mccluster/src/compute-api.js'
       - 'workers/mccluster/src/platform-api*.js'
+      - 'workers/mccluster/src/api-rate-limit.js'
+      - 'workers/mccluster/src/entry-platform.js'
       - 'workers/mccluster/test/**'
       - '.github/workflows/api-economic-core-ci.yml'
   pull_request:
     paths:
       - 'supabase/migrations/**'
       - 'supabase/tests/api_compute_economics_regression.sql'
+      - 'supabase/tests/api_rate_limit_regression.sql'
       - 'workers/mccluster/src/compute-api.js'
       - 'workers/mccluster/src/platform-api*.js'
+      - 'workers/mccluster/src/api-rate-limit.js'
+      - 'workers/mccluster/src/entry-platform.js'
       - 'workers/mccluster/test/**'
       - '.github/workflows/api-economic-core-ci.yml'
   workflow_dispatch: {}
@@ -38,9 +44,14 @@ jobs:
           node-version: '22'
       - name: Run compute/provider security tests
         run: node --test workers/mccluster/test/compute-security.test.mjs
+      - name: Assert rate limiter precedes API handlers
+        run: |
+          grep -F "enforceApiRateLimit" workers/mccluster/src/entry-platform.js
+          grep -F "api_enforce_rate_limit" workers/mccluster/src/api-rate-limit.js
+          grep -F "status: 429" workers/mccluster/src/api-rate-limit.js
 
   database-regression:
-    name: Credits, billing, and idempotency regression
+    name: Credits, billing, idempotency, and rate-limit regression
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -56,6 +67,10 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/api_compute_economics_regression.sql
+      - name: Run API rate-limit regression suite
+        env:
+          PGPASSWORD: postgres
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/api_rate_limit_regression.sql
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true
