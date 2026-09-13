@@ -18,6 +18,15 @@ export function resolveGodotBinary(env = process.env) {
   return text(env.MCCLUSTER_GODOT_BIN, 1000) || 'godot';
 }
 
+export function resolveArtifactRoot({ artifactRoot, runId, env = process.env, cwd = process.cwd() } = {}) {
+  if (!runId) throw new Error('artifact root requires runId');
+  if (artifactRoot) return artifactRoot;
+  const persistentRoot = text(env.MCCLUSTER_GAME_ARTIFACT_ROOT, 2000);
+  return persistentRoot
+    ? path.join(persistentRoot, runId)
+    : path.join(cwd, '.mccluster-artifacts', runId);
+}
+
 export function buildGodotArgs({ projectPath, scenario }) {
   if (!projectPath) throw new Error('godot runtime requires projectPath');
   if (!scenario?.id) throw new Error('godot runtime requires scenario');
@@ -60,10 +69,7 @@ export async function runGodotPlaytest({
 
   const run = createPlaytestRun(scenario);
   const timeoutMs = integer(scenario.max_seconds, 600, 1, 21600) * 1000;
-  const persistentRoot = text(env.MCCLUSTER_GAME_ARTIFACT_ROOT, 2000);
-  const root = artifactRoot || (persistentRoot
-    ? path.join(persistentRoot, run.run_id)
-    : path.join(process.cwd(), '.mccluster-artifacts', run.run_id));
+  const root = resolveArtifactRoot({ artifactRoot, runId: run.run_id, env });
   await mkdir(root, { recursive: true });
 
   const args = buildGodotArgs({ projectPath, scenario: run.scenario });
