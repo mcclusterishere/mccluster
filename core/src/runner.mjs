@@ -10,6 +10,7 @@ import { gameStudioCycle, gameMediaCollect, gameOwnerDecision, gameImplementatio
 import { gameBranchSmoke } from './executors/game-branch-smoke.mjs';
 import { gameReleaseDecision } from './executors/game-release-decision.mjs';
 import { previewDeploy } from './executors/preview-deploy.mjs';
+import { hostHealth } from './executors/host-health.mjs';
 
 const executors = new Map([
   ['repo_health', repoHealth],
@@ -26,6 +27,7 @@ const executors = new Map([
   ['game_branch_smoke', gameBranchSmoke],
   ['game_release_decision', gameReleaseDecision],
   ['preview_deploy', previewDeploy],
+  ['host_health', hostHealth],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
