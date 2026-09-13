@@ -1,0 +1,77 @@
+name: Deploy McCluster Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/mccluster/**'
+      - '.github/workflows/deploy-mccluster-worker.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-mccluster-worker-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy and verify api.mccluster.org
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Require Cloudflare deployment credentials
+        shell: bash
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo 'Missing CLOUDFLARE_API_TOKEN'; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo 'Missing CLOUDFLARE_ACCOUNT_ID'; exit 1; }
+
+      - name: Deploy canonical mccluster Worker
+        working-directory: workers/mccluster
+        run: >-
+          npx --yes wrangler@4 deploy
+          --var DEPLOY_SHA:${GITHUB_SHA}
+          --var DEPLOY_REF:${GITHUB_REF_NAME}
+
+      - name: Verify deployed commit fingerprint
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            body="$(curl --fail --silent --show-error --max-time 15 https://api.mccluster.org/v1/health || true)"
+            deployed="$(printf '%s' "$body" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).deployment_sha||'')}catch{console.log('')}})")"
+            if [ "$deployed" = "$GITHUB_SHA" ]; then
+              printf '%s\n' "$body"
+              echo "Verified api.mccluster.org is serving $GITHUB_SHA"
+              exit 0
+            fi
+            echo "Attempt $attempt: expected $GITHUB_SHA, got ${deployed:-<none>}"
+            sleep 10
+          done
+          echo 'Deployment fingerprint verification failed.'
+          exit 1
+
+      - name: Verify core capability flags
+        shell: bash
+        run: |
+          curl --fail --silent --show-error https://api.mccluster.org/v1/health | node -e "
+          let d='';
+          process.stdin.on('data',c=>d+=c).on('end',()=>{
+            const j=JSON.parse(d);
+            const c=j.capabilities||{};
+            const required=['platform_api','compute_gateway','api_rate_limit','atomic_metering','provider_cogs_reconciliation','byok_fail_closed'];
+            const missing=required.filter(k=>c[k]!==true);
+            if(missing.length){ console.error('Missing capability flags:', missing.join(',')); process.exit(1); }
+            console.log('Core capability fingerprint verified.');
+          });
+          "
