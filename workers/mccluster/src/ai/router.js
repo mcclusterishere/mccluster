@@ -150,6 +150,7 @@ export async function handleAiRequest(request, env, user) {
       ingest: '/v1/ai/ingest',
       retrieve: '/v1/ai/retrieve',
       decisions: '/v1/ai/decisions',
+      task: '/v1/ai/task',
       jobs: '/v1/ai/jobs',
       status: '/v1/ai/status',
       allowed_job_types: [...OWNER_JOB_TYPES]
@@ -174,9 +175,43 @@ export async function handleAiRequest(request, env, user) {
       execution: {
         table: 'ops_agent_jobs',
         jobs: { total, queued, running, failed },
-        ingress: '/v1/ai/jobs'
+        natural_language_ingress: '/v1/ai/task',
+        explicit_ingress: '/v1/ai/jobs'
       }
     });
+  }
+
+  if (path === '/v1/ai/task' && request.method === 'POST') {
+    const body = await readJson(request);
+    if (body.org_id && body.org_id !== orgId) return fail(request, env, 'cross-org task denied', 403);
+    const task = String(body.task || body.objective || '').trim().slice(0, 12000);
+    if (!task) return fail(request, env, 'task or objective required', 400);
+    const targetId = String(body.target_id || body.repository || 'McCluster').trim().slice(0, 500) || 'McCluster';
+    const job = await enqueueOwnerJob(env, orgId, {
+      job_type: 'objective_reflection',
+      target_type: body.repository ? 'repository' : 'portfolio',
+      target_id: targetId,
+      priority: body.priority ?? 60,
+      max_attempts: body.max_attempts ?? 3,
+      input: {
+        objective: task,
+        task,
+        max_next_jobs: Math.min(3, Math.max(1, Number(body.max_next_jobs ?? 2) || 2)),
+        since_hours: Math.min(72, Math.max(1, Number(body.since_hours ?? 18) || 18)),
+        conversation_origin: body.conversation_origin || null,
+        requested_repository: body.repository || null
+      }
+    });
+    return reply(request, env, {
+      queued: true,
+      mode: 'autonomous_reflection',
+      job,
+      safety: {
+        production_deploy: false,
+        auto_merge: false,
+        unattended_code_patch_limit_per_reflection: 1
+      }
+    }, 202);
   }
 
   if (path === '/v1/ai/jobs' && request.method === 'POST') {
