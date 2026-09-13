@@ -11,6 +11,7 @@ import { processInstagramPublishQueue, syncInstagramInsights } from './social/me
 import { handleMetaWebhook } from './social/webhook.js';
 import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
+import { handleRelayEnrollment } from './comms/enrollment.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -141,6 +142,8 @@ export default {
 
     if (path === '/v1/comms' || path.startsWith('/v1/comms/')) {
       const user = await authUser(request, env);
+      const enrollment = await handleRelayEnrollment(request, env, user);
+      if (enrollment) return enrollment;
       const response = await handleCommsRequest(request, env, user);
       if (response) return response;
     }
