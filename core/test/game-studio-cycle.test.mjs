@@ -12,11 +12,12 @@ function harness() {
   async function callCapability(name, args) {
     calls.push({ name, args });
     if (name === 'media.model.recommend') {
-      return { result: { candidates: [{ model: { id: 'model-image-1' } }] } };
+      return { result: { candidates: [{ model: { id: `model-${args.capability}` } }] } };
     }
     if (name === 'media.generate') {
       const id = `media-${++sequence}`;
-      media.set(id, { id, status: 'completed', assets: [{ url: `https://assets.invalid/${id}.png` }] });
+      const ext = args.model_id.includes('text-to-3d') ? 'glb' : 'png';
+      media.set(id, { id, status: 'completed', assets: [{ url: `https://assets.invalid/${id}.${ext}` }] });
       return { provider: 'test', result: { job: { id, status: 'queued' } } };
     }
     if (name === 'media.job.get') {
@@ -39,7 +40,7 @@ function harness() {
   return { ...createGameStudioExecutors({ callCapability, enqueue, signal }), enqueued, signals, calls };
 }
 
-test('production cycle submits tracked media jobs and schedules collection', async () => {
+test('production cycle submits image and 3D jobs and schedules collection', async () => {
   const h = harness();
   const result = await h.gameStudioCycle({
     id: 'studio-1', org_id: 'org-1', input: { campaign: 'PRIM3', brief: 'Build Site 0 tactical arrival zone.', budget_cents: 300 },
@@ -48,29 +49,48 @@ test('production cycle submits tracked media jobs and schedules collection', asy
   assert.equal(result.submissions.length, 3);
   assert.equal(h.enqueued.at(-1).jobType, 'game_media_collect');
   assert.equal(h.calls.filter((x) => x.name === 'media.generate').length, 3);
+  assert.ok(h.calls.some((x) => x.name === 'media.model.recommend' && x.args.capability === 'text-to-3d'));
 });
 
 test('collector emits owner review packet with generated assets', async () => {
   const h = harness();
-  const cycle = await h.gameStudioCycle({
-    id: 'studio-1', org_id: 'org-1', input: { campaign: 'PRIM3', brief: 'Build Site 0 tactical arrival zone.', budget_cents: 300 },
+  await h.gameStudioCycle({
+    id: 'studio-1', org_id: 'org-1', input: { campaign: 'PRIM3', repository: 'mcclusterishere/hitmans-halo', brief: 'Build Site 0 tactical arrival zone.', budget_cents: 300 },
   });
   const collectorInput = h.enqueued.at(-1).input;
   const result = await h.gameMediaCollect({ id: 'collect-1', org_id: 'org-1', input: collectorInput });
   assert.equal(result.state, 'awaiting_owner_review');
   assert.equal(result.approval_packet.candidates.length, 3);
+  assert.equal(result.approval_packet.repository, 'mcclusterishere/hitmans-halo');
   assert.equal(h.signals.at(-1).kind, 'game_studio.owner_review_required');
+});
+
+test('owner approval hands approved assets to isolated implementation job', async () => {
+  const h = harness();
+  const packet = {
+    campaign: 'PRIM3', repository: 'mcclusterishere/hitmans-halo', brief: 'Site 0', iteration: 2,
+    candidates: [{ deliverable_id: 'tactical-prop-3d', label: 'Tactical prop', assets: [{ url: 'https://assets.invalid/prop.glb' }] }],
+  };
+  const result = await h.gameOwnerDecision({
+    id: 'decision-approve', org_id: 'org-1', input: { decision: 'approve', notes: 'Use this near the arrival ramp.', approval_packet: packet },
+  });
+  assert.equal(result.state, 'implementation_queued');
+  assert.equal(h.enqueued.at(-1).jobType, 'code_patch');
+  assert.equal(h.enqueued.at(-1).targetId, 'mcclusterishere/hitmans-halo');
+  assert.match(h.enqueued.at(-1).input.task, /prop\.glb/);
+  assert.match(h.enqueued.at(-1).input.task, /Godot/i);
 });
 
 test('owner rejection queues revised next iteration', async () => {
   const h = harness();
-  const packet = { campaign: 'PRIM3', brief: 'Site 0', iteration: 2, candidates: [{ deliverable_id: 'environment-keyframe' }] };
+  const packet = { campaign: 'PRIM3', repository: 'mcclusterishere/hitmans-halo', brief: 'Site 0', iteration: 2, candidates: [{ deliverable_id: 'environment-keyframe' }] };
   const result = await h.gameOwnerDecision({
     id: 'decision-1', org_id: 'org-1', input: { decision: 'reject', notes: 'Make it darker and more industrial.', budget_cents: 300, approval_packet: packet },
   });
   assert.equal(result.decision, 'reject');
-  assert.equal(result.next_iteration, 3);
+  assert.equal(result.state, 'revision_queued');
   assert.equal(h.enqueued.at(-1).jobType, 'game_studio_cycle');
+  assert.equal(h.enqueued.at(-1).input.iteration, 3);
   assert.match(h.enqueued.at(-1).input.revision_notes, /darker/i);
 });
 
