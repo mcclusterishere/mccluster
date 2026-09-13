@@ -148,10 +148,7 @@ export async function handleAiRequest(request, env, user) {
           conversation_id: receipt.conversation_id,
           receipt_id: receipt.id,
           message_count: Number(receipt.message_count || 0),
-          payload_hash: String(receipt.payload_hash || '').slice(0, 128),
-          external_conversation_id: String(body.external_conversation_id || '').slice(0, 500),
-          idempotency_key: String(body.idempotency_key || '').slice(0, 500),
-          source_url: body.source_url ? String(body.source_url).slice(0, 2000) : null
+          payload_hash: String(receipt.payload_hash || '').slice(0, 128)
         }
       });
     } catch (error) {
