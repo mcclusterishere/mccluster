@@ -30,7 +30,17 @@ Single source of truth for how the house is wired. Agents: if this disagrees wit
 | Worker source | `workers/mccluster` |
 | Shared tables | Supabase `zmnhbrjyhxzhkxmhkexs` |
 | Product UI | Satellite repos in `registry.json` |
+| Identity | `m_people` + `m_auth_user_links` + `platform_profiles.mccluster_id` |
+| McCluster Network | `network_profiles`, `network_follows`, `network_posts`, `network_reactions`, `network_activity` |
 | Old website copy | `mcclusterishere/Here` — do not deploy from it |
+
+## Identity law
+
+A person has one McCluster ecosystem identity across the main McCluster property, every product satellite, and every participating customer ecosystem. `m_people.id` (`m_uid`) is the immutable internal person key. `platform_profiles.mccluster_id` is the user-chosen, globally unique public login/handle. App/org membership grants local authorization; it does not create a second identity.
+
+Creating an account through a satellite creates/links the same McCluster ecosystem profile. Existing users sign into satellites with their existing McCluster identity. See `docs/architecture/identity-network.md` for the canonical contract.
+
+The McCluster Network is the internal social layer for those identities: profiles, follow graph, native posts/reactions, and a privacy-controlled cross-satellite activity stream. Do not confuse it with the external social publishing subsystem (`social_accounts`, `social_posts`, campaigns, queues).
 
 ## Pipeline rules
 
@@ -47,7 +57,10 @@ Single source of truth for how the house is wired. Agents: if this disagrees wit
 2. Copy `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md` from this kit.
 3. Write an `AGENTS.md` that starts with the control-plane block and then any local law.
 4. Add a row to `docs/control-plane/registry.json`.
-5. Give the client a social backend on the Control desk. Do not invent a scheduler in the satellite.
+5. Consume canonical McCluster identity. Do not add a satellite username/account namespace.
+6. Register app/org membership and permissions separately from identity.
+7. Publish any internal social/activity events into the McCluster Network contract rather than creating a separate satellite social graph.
+8. Give the client an external-social backend on the Control desk when they need publishing/scheduling. Do not invent a scheduler in the satellite.
 
 ## Supabase
 
