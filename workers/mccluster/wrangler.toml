@@ -22,6 +22,7 @@ APEX_ORIGIN = "https://mccluster.org"
 ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
 META_GRAPH_API_VERSION = "v26.0"
+# `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
 SEEK_FIRST_ACCESS_REQUIRED = "false"
 
 # Production secrets are managed with `wrangler secret put` and are never committed.
