@@ -7,6 +7,10 @@ import { authzResponse, verifyCaller } from '../_shared/authz.ts'
 
 const sql = postgres(Deno.env.get('SUPABASE_DB_URL')!, { prepare: false, max: 1 })
 
+type JsonPrimitive = string | number | boolean | null
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
+type JsonObject = { [key: string]: JsonValue }
+
 type Message = {
   id?: string
   role: string
@@ -14,7 +18,7 @@ type Message = {
   content: string
   occurred_at?: string
   ordinal?: number
-  metadata?: Record<string, unknown>
+  metadata?: JsonObject
 }
 
 type Payload = {
@@ -28,7 +32,7 @@ type Payload = {
   model_family?: string
   started_at?: string
   last_message_at?: string
-  metadata?: Record<string, unknown>
+  metadata?: JsonObject
   idempotency_key: string
   messages: Message[]
 }
