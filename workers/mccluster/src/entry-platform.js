@@ -1,5 +1,5 @@
 import existing from './entry.js';
-import { handlePlatformApi } from './platform-api.js';
+import { handlePlatformApi } from './platform-api-metered.js';
 import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
 import { fail } from './lib/http.js';
