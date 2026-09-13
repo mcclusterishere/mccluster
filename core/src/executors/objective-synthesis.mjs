@@ -22,10 +22,7 @@ function sourceScope(job) {
     provider: String(source.provider || 'unknown').slice(0, 120),
     conversation_id: String(source.conversation_id || job.target_id || '').slice(0, 200),
     receipt_id: String(source.receipt_id || '').slice(0, 200),
-    external_conversation_id: String(source.external_conversation_id || '').slice(0, 500),
-    idempotency_key: String(source.idempotency_key || '').slice(0, 500),
     fingerprint: String(source.fingerprint || '').slice(0, 128),
-    source_url: String(source.source_url || '').slice(0, 2000) || null,
     observed_at: String(source.observed_at || '').slice(0, 80) || null,
   };
 }
@@ -47,6 +44,12 @@ function mergeScope(existing, source, synthesis, jobId) {
       updated_at: new Date().toISOString(),
     },
   };
+}
+
+function scopeHasSourceFingerprint(scope, fingerprint) {
+  if (!fingerprint) return false;
+  const sources = Array.isArray(scope?.synthesis?.sources) ? scope.synthesis.sources : [];
+  return sources.some((item) => String(item?.fingerprint || '') === fingerprint);
 }
 
 function validDecisionCheckpoint(value) {
@@ -168,18 +171,23 @@ export async function objectiveSynthesis(job) {
   } else if (synthesis.action === 'update') {
     const existing = activeObjectives.find((item) => String(item.id) === synthesis.objective_id);
     if (!existing) throw new Error(`Active objective ${synthesis.objective_id} was not found for synthesis update`);
-    objective = await updateObjective({
-      orgId: job.org_id,
-      objectiveId: synthesis.objective_id,
-      name: synthesis.name,
-      description: synthesis.description,
-      priority: synthesis.priority,
-      successMetric: synthesis.success_metric,
-      scope: mergeScope(existing.scope, source, synthesis, job.id),
-    });
+    if (scopeHasSourceFingerprint(existing.scope, source.fingerprint)) {
+      objective = existing;
+    } else {
+      objective = await updateObjective({
+        orgId: job.org_id,
+        objectiveId: synthesis.objective_id,
+        name: synthesis.name,
+        description: synthesis.description,
+        priority: synthesis.priority,
+        successMetric: synthesis.success_metric,
+        scope: mergeScope(existing.scope, source, synthesis, job.id),
+      });
+    }
   } else {
     const objectiveId = deterministicUuid(`objective-synthesis:${job.id}:${source.fingerprint}`);
-    objective = await createObjective({
+    const existingCreated = activeObjectives.find((item) => String(item.id) === objectiveId && scopeHasSourceFingerprint(item.scope, source.fingerprint));
+    objective = existingCreated || await createObjective({
       objectiveId,
       orgId: job.org_id,
       name: synthesis.name,
