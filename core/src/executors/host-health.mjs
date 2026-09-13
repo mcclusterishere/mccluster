@@ -24,28 +24,16 @@ function parseJson(text) {
   catch { return null; }
 }
 
-function withFreshness(snapshot, maxAgeMs = 180_000) {
+export function haloSnapshotFreshness(snapshot, nowMs = Date.now(), maxAgeMs = 180_000) {
   if (!snapshot || !snapshot.checked_at) return snapshot;
   const checkedAt = Date.parse(snapshot.checked_at);
   if (!Number.isFinite(checkedAt)) return { ...snapshot, stale: true, age_ms: null };
-  const ageMs = Math.max(0, Date.now() - checkedAt);
+  const ageMs = Math.max(0, nowMs - checkedAt);
   return { ...snapshot, stale: ageMs > maxAgeMs, age_ms: ageMs };
 }
 
 export async function hostHealth() {
-  const [
-    hostname,
-    uptime,
-    disk,
-    memory,
-    runner,
-    broker,
-    reconcileTimer,
-    haloService,
-    haloHealthTimer,
-    godot,
-    blender,
-  ] = await Promise.all([
+  const [hostname, uptime, disk, memory, runner, broker, reconcileTimer, haloService, haloHealthTimer, godot, blender] = await Promise.all([
     run('hostname'),
     run('uptime', ['-p']),
     run('df', ['-h', '/']),
@@ -65,7 +53,7 @@ export async function hostHealth() {
     textFile('/var/lib/hitmans-halo/health/status.json'),
   ]);
 
-  const haloHealth = withFreshness(parseJson(haloHealthText));
+  const haloHealth = haloSnapshotFreshness(parseJson(haloHealthText));
   const haloState = haloHealth?.status || haloService.stdout || 'unknown';
 
   return {
