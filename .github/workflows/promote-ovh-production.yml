@@ -1,0 +1,80 @@
+name: Promote OVH Production Ref
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Exact commit SHA already contained in main
+        required: true
+      confirm:
+        description: Type PROMOTE_OVH to authorize promotion
+        required: true
+      allow_rollback:
+        description: Allow moving deployment ref backward to an older main commit
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: promote-ovh-production
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: ${{ inputs.confirm == 'PROMOTE_OVH' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate target commit
+        env:
+          TARGET_SHA: ${{ inputs.sha }}
+          ALLOW_ROLLBACK: ${{ inputs.allow_rollback }}
+        run: |
+          set -euo pipefail
+          git fetch origin main deploy/ovh-production
+          git cat-file -e "${TARGET_SHA}^{commit}"
+          git merge-base --is-ancestor "${TARGET_SHA}" origin/main || {
+            echo "Target is not contained in main" >&2
+            exit 2
+          }
+          CURRENT="$(git rev-parse origin/deploy/ovh-production)"
+          if [[ "${ALLOW_ROLLBACK}" != "true" ]]; then
+            git merge-base --is-ancestor "${CURRENT}" "${TARGET_SHA}" || {
+              echo "Ref would move backward; set allow_rollback=true for an intentional rollback" >&2
+              exit 3
+            }
+          fi
+
+      - name: Validate Core at target
+        env:
+          TARGET_SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          git checkout --detach "${TARGET_SHA}"
+          cd core
+          npm run check
+          npm test
+
+      - name: Promote deployment ref
+        env:
+          TARGET_SHA: ${{ inputs.sha }}
+          ALLOW_ROLLBACK: ${{ inputs.allow_rollback }}
+        run: |
+          set -euo pipefail
+          if [[ "${ALLOW_ROLLBACK}" == "true" ]]; then
+            git push --force-with-lease origin "${TARGET_SHA}:refs/heads/deploy/ovh-production"
+          else
+            git push origin "${TARGET_SHA}:refs/heads/deploy/ovh-production"
+          fi
+
+      - name: Summary
+        run: |
+          echo "### OVH promotion" >> "$GITHUB_STEP_SUMMARY"
+          echo "- target: \`${{ inputs.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- deployment ref: \`deploy/ovh-production\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- VPS outbound reconciler will pick this up automatically." >> "$GITHUB_STEP_SUMMARY"
