@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildGodotArgs, parseStudioLine, resolveGodotBinary } from '../src/game-studio/godot-runtime.mjs';
+import { buildGodotArgs, parseStudioLine, resolveArtifactRoot, resolveGodotBinary } from '../src/game-studio/godot-runtime.mjs';
 
 const scenario = {
   id: 'TEST_MISSION_000',
@@ -11,6 +11,26 @@ const scenario = {
 test('resolves explicit Godot binary', () => {
   assert.equal(resolveGodotBinary({ MCCLUSTER_GODOT_BIN: '/usr/bin/godot4' }), '/usr/bin/godot4');
   assert.equal(resolveGodotBinary({}), 'godot');
+});
+
+test('routes playtest evidence to configured persistent artifact root', () => {
+  assert.equal(resolveArtifactRoot({
+    runId: 'run-123',
+    env: { MCCLUSTER_GAME_ARTIFACT_ROOT: '/var/lib/mccluster/game-artifacts' },
+    cwd: '/opt/mccluster/core',
+  }), '/var/lib/mccluster/game-artifacts/run-123');
+
+  assert.equal(resolveArtifactRoot({
+    runId: 'run-123',
+    env: {},
+    cwd: '/opt/mccluster/core',
+  }), '/opt/mccluster/core/.mccluster-artifacts/run-123');
+
+  assert.equal(resolveArtifactRoot({
+    artifactRoot: '/tmp/explicit-run',
+    runId: 'run-123',
+    env: { MCCLUSTER_GAME_ARTIFACT_ROOT: '/var/lib/mccluster/game-artifacts' },
+  }), '/tmp/explicit-run');
 });
 
 test('builds bounded headless Godot invocation', () => {
