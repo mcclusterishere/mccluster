@@ -8,7 +8,7 @@ test('extractJsonObject accepts fenced model JSON', () => {
   assert.equal(parsed.summary, 'ok');
 });
 
-test('reflection policy keeps only safe unattended jobs', () => {
+test('reflection policy permits one isolated repository patch but blocks deploys', () => {
   const plan = normalizeReflectionPlan({
     summary: 'advance safely',
     next_jobs: [
@@ -21,7 +21,7 @@ test('reflection policy keeps only safe unattended jobs', () => {
       },
       {
         job_type: 'code_patch',
-        task: 'Change production code.',
+        task: 'Fix the concrete issue identified by recent evidence.',
         target_type: 'repo',
         target_id: 'mcclusterishere/mccluster',
         priority: 99,
@@ -39,9 +39,27 @@ test('reflection policy keeps only safe unattended jobs', () => {
     ],
   }, { maxJobs: 3 });
 
-  assert.deepEqual(plan.next_jobs.map((job) => job.job_type), ['local_analysis', 'repo_health']);
-  assert.equal(plan.dropped_job_count, 2);
+  assert.deepEqual(plan.next_jobs.map((job) => job.job_type), ['local_analysis', 'code_patch', 'repo_health']);
+  assert.equal(plan.next_jobs[1].target_type, 'repository');
+  assert.equal(plan.next_jobs[1].priority, 40);
+  assert.equal(plan.next_jobs[1].input.autonomous_draft_only, true);
+  assert.equal(plan.dropped_job_count, 1);
   assert.equal(plan.next_jobs[0].input.reflection_origin, true);
+});
+
+test('reflection policy permits at most one code patch and requires owner/repo target', () => {
+  const plan = normalizeReflectionPlan({
+    next_jobs: [
+      { job_type: 'code_patch', task: 'first', target_id: 'not-a-repo', priority: 30 },
+      { job_type: 'code_patch', task: 'second', target_id: 'mcclusterishere/mccluster', priority: 30 },
+      { job_type: 'code_patch', task: 'third', target_id: 'mcclusterishere/hitmans-halo', priority: 30 },
+      { job_type: 'repo_health', task: 'inspect', target_id: 'mcclusterishere/mccluster' },
+    ],
+  }, { maxJobs: 3 });
+
+  assert.deepEqual(plan.next_jobs.map((job) => job.job_type), ['code_patch', 'repo_health']);
+  assert.equal(plan.next_jobs[0].target_id, 'mcclusterishere/mccluster');
+  assert.equal(plan.dropped_job_count, 2);
 });
 
 test('reflection policy bounds count, priority, and empty tasks', () => {
