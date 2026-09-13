@@ -1,4 +1,5 @@
 import os from 'node:os';
+import { dependencyEvidenceFromRows, classifyDependencyRows, dependencyIdsFromJob } from './dependency-policy.mjs';
 
 const SB = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SECRET_KEY = String(process.env.SUPABASE_SECRET_KEY || '');
@@ -21,11 +22,7 @@ export function buildSupabaseHeaders({ secretKey = SECRET_KEY, legacyServiceKey 
     'content-type': 'application/json',
   };
 
-  // Modern sb_secret_* keys are opaque API keys, not JWTs, and must not be
-  // sent as Authorization: Bearer values. The legacy service_role key is a JWT,
-  // so preserve the bearer header only for backwards compatibility.
   if (!secretKey && legacyServiceKey) base.authorization = `Bearer ${legacyServiceKey}`;
-
   return { ...base, ...extra };
 }
 
@@ -57,6 +54,59 @@ export async function rest(path, init = {}) {
   }));
 }
 
+export async function dependencyState(job) {
+  const ids = dependencyIdsFromJob(job);
+  if (!ids.length) return { state: 'ready', dependency_ids: [], rows: [] };
+
+  const params = new URLSearchParams({
+    id: `in.(${ids.join(',')})`,
+    select: 'id,job_type,target_type,target_id,status,output,last_error,updated_at',
+    limit: String(ids.length),
+  });
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  return { ...classifyDependencyRows(ids, rows), rows };
+}
+
+async function deferWaitingJob(job) {
+  const now = new Date();
+  const recheckMs = Math.min(5 * 60_000, Math.max(5_000, Number(process.env.MCCLUSTER_DEPENDENCY_RECHECK_MS || 30_000)));
+  const params = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
+  await rest(`ops_agent_jobs?${params.toString()}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      run_after: new Date(now.getTime() + recheckMs).toISOString(),
+      updated_at: now.toISOString(),
+    }),
+  });
+}
+
+async function failBlockedJob(job, dependency) {
+  const now = new Date().toISOString();
+  const params = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
+  const message = `Blocked by failed prerequisite job(s): ${(dependency.failed_ids || []).join(', ')}`.slice(0, 4000);
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ status: 'failed', last_error: message, updated_at: now }),
+  });
+  return rows[0] || null;
+}
+
+function withDependencyEvidence(job, dependency) {
+  const ids = dependency.dependency_ids || [];
+  if (!ids.length) return job.input && typeof job.input === 'object' ? job.input : {};
+  const input = job.input && typeof job.input === 'object' ? job.input : {};
+  const evidence = input.evidence && typeof input.evidence === 'object' ? input.evidence : {};
+  return {
+    ...input,
+    evidence: {
+      ...evidence,
+      plan_dependencies: dependencyEvidenceFromRows(ids, dependency.rows || []),
+    },
+  };
+}
+
 export async function claimNext(supportedTypes) {
   const supported = new Set(supportedTypes);
   if (!supported.size) return null;
@@ -73,6 +123,16 @@ export async function claimNext(supportedTypes) {
 
   for (const job of rows) {
     if (!supported.has(job.job_type)) continue;
+    const dependencies = await dependencyState(job);
+    if (dependencies.state === 'failed') {
+      await failBlockedJob(job, dependencies);
+      continue;
+    }
+    if (dependencies.state === 'waiting') {
+      await deferWaitingJob(job);
+      continue;
+    }
+
     const attempts = Number(job.attempts || 0) + 1;
     const patchParams = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
     const { body: claimed = [] } = await rest(`ops_agent_jobs?${patchParams.toString()}`, {
@@ -81,6 +141,7 @@ export async function claimNext(supportedTypes) {
       body: JSON.stringify({
         status: 'running',
         attempts,
+        input: withDependencyEvidence(job, dependencies),
         locked_at: now,
         locked_by: workerId,
         last_error: null,
@@ -98,6 +159,19 @@ function ownedRunningParams(job) {
     status: 'eq.running',
     locked_by: `eq.${workerId}`,
   }).toString();
+}
+
+export async function checkpointJobInput(job, input) {
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${ownedRunningParams(job)}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({
+      input: input && typeof input === 'object' ? input : {},
+      updated_at: new Date().toISOString(),
+    }),
+  });
+  if (!rows.length) throw new Error(`Lost ownership of job ${job.id} while checkpointing input`);
+  return rows[0];
 }
 
 export async function heartbeat(job) {
@@ -154,7 +228,7 @@ export async function recentJobs({ orgId, sinceHours = 12, limit = 25 } = {}) {
   const since = new Date(Date.now() - Math.max(1, Number(sinceHours)) * 3_600_000).toISOString();
   const params = new URLSearchParams({
     updated_at: `gte.${since}`,
-    select: 'id,org_id,job_type,target_type,target_id,status,priority,output,last_error,attempts,max_attempts,created_at,updated_at',
+    select: 'id,org_id,job_type,target_type,target_id,status,priority,input,output,last_error,attempts,max_attempts,created_at,updated_at',
     order: 'updated_at.desc',
     limit: String(Math.min(100, Math.max(1, Number(limit) || 25))),
   });
@@ -174,6 +248,7 @@ export async function recentObjectives({ orgId, limit = 25 } = {}) {
 }
 
 export async function enqueueJob({
+  jobId,
   orgId,
   jobType,
   targetType = 'portfolio',
@@ -186,23 +261,35 @@ export async function enqueueJob({
   if (!orgId) throw new Error('enqueueJob requires orgId');
   if (!jobType) throw new Error('enqueueJob requires jobType');
 
-  const { body: rows = [] } = await rest('ops_agent_jobs', {
+  const row = {
+    org_id: orgId,
+    job_type: jobType,
+    target_type: targetType,
+    target_id: targetId,
+    status: 'queued',
+    priority: Math.min(100, Math.max(0, Number(priority) || 0)),
+    input: input && typeof input === 'object' ? input : {},
+    run_after: runAfter,
+    max_attempts: Math.max(1, Number(maxAttempts) || 3),
+  };
+  if (jobId) row.id = String(jobId);
+
+  const endpoint = jobId ? 'ops_agent_jobs?on_conflict=id' : 'ops_agent_jobs';
+  const prefer = jobId ? 'resolution=ignore-duplicates,return=representation' : 'return=representation';
+  const { body: rows = [] } = await rest(endpoint, {
     method: 'POST',
-    headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({
-      org_id: orgId,
-      job_type: jobType,
-      target_type: targetType,
-      target_id: targetId,
-      status: 'queued',
-      priority: Math.min(100, Math.max(0, Number(priority) || 0)),
-      input: input && typeof input === 'object' ? input : {},
-      run_after: runAfter,
-      max_attempts: Math.max(1, Number(maxAttempts) || 3),
-    }),
+    headers: { Prefer: prefer },
+    body: JSON.stringify(row),
   });
-  if (!rows.length) throw new Error(`Failed to enqueue ${jobType}`);
-  return rows[0];
+  if (rows.length) return rows[0];
+
+  if (jobId) {
+    const params = new URLSearchParams({ id: `eq.${jobId}`, select: '*', limit: '1' });
+    const { body: existing = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+    if (existing.length) return existing[0];
+  }
+
+  throw new Error(`Failed to enqueue ${jobType}`);
 }
 
 export async function hasPendingJob({ orgId, jobType, targetId } = {}) {
