@@ -29,8 +29,8 @@ verify_jwt = false
 [functions.connect-onboard]
 verify_jwt = false
 
-# Private cross-model context plane. All three verify the caller again inside
-# the function and enforce organization membership before touching ai_context.
+# Private cross-model context plane. User-facing functions verify a caller JWT
+# and organization membership inside the function before touching ai_context.
 [functions.context-ingest]
 verify_jwt = true
 
@@ -39,6 +39,12 @@ verify_jwt = true
 
 [functions.context-decision]
 verify_jwt = true
+
+# Server-to-server private reader used only by McCluster Core. Gateway JWT
+# verification is disabled because the function authenticates with the separate
+# MCCLUSTER_CONTEXT_TOKEN and requires an explicit org + conversation UUID.
+[functions.context-core]
+verify_jwt = false
 
 [functions.intake]
 verify_jwt = false

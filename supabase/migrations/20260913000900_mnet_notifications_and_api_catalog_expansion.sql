@@ -16,8 +16,15 @@ begin
   end if; return new;
 end $$;
 revoke all on function public.mnet_notify_follow() from public,anon,authenticated;
-drop trigger if exists mnet_notify_follow_trg on public.network_follows;
-create trigger mnet_notify_follow_trg after insert or update of status on public.network_follows for each row execute function public.mnet_notify_follow();
+
+do $$
+begin
+  if to_regclass('public.network_follows') is not null then
+    execute 'drop trigger if exists mnet_notify_follow_trg on public.network_follows';
+    execute 'create trigger mnet_notify_follow_trg after insert or update of status on public.network_follows for each row execute function public.mnet_notify_follow()';
+  end if;
+end
+$$;
 
 create or replace function public.mnet_notify_reaction() returns trigger language plpgsql security definer set search_path=public as $$
 declare recipient uuid;
@@ -29,8 +36,15 @@ begin
   end if; return new;
 end $$;
 revoke all on function public.mnet_notify_reaction() from public,anon,authenticated;
-drop trigger if exists mnet_notify_reaction_trg on public.network_reactions;
-create trigger mnet_notify_reaction_trg after insert on public.network_reactions for each row execute function public.mnet_notify_reaction();
+
+do $$
+begin
+  if to_regclass('public.network_reactions') is not null then
+    execute 'drop trigger if exists mnet_notify_reaction_trg on public.network_reactions';
+    execute 'create trigger mnet_notify_reaction_trg after insert on public.network_reactions for each row execute function public.mnet_notify_reaction()';
+  end if;
+end
+$$;
 
 create or replace function public.mnet_notify_reply() returns trigger language plpgsql security definer set search_path=public as $$
 declare recipient uuid;
@@ -44,5 +58,12 @@ begin
   end if; return new;
 end $$;
 revoke all on function public.mnet_notify_reply() from public,anon,authenticated;
-drop trigger if exists mnet_notify_reply_trg on public.network_posts;
-create trigger mnet_notify_reply_trg after insert on public.network_posts for each row execute function public.mnet_notify_reply();
+
+do $$
+begin
+  if to_regclass('public.network_posts') is not null then
+    execute 'drop trigger if exists mnet_notify_reply_trg on public.network_posts';
+    execute 'create trigger mnet_notify_reply_trg after insert on public.network_posts for each row execute function public.mnet_notify_reply()';
+  end if;
+end
+$$;

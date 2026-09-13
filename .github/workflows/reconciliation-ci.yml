@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - reconcile/equity-uprise-20260908
+      - reconcile/autonomy-fabric-stack-v1
   pull_request:
     branches:
       - main
@@ -38,6 +39,8 @@ jobs:
           node --check workers/mccluster/src/client.js
           node --check workers/mccluster/src/connect.js
           node --check workers/mccluster/src/ai/router.js
+          node --check workers/mccluster/src/ai/objectives.js
+          node --check workers/mccluster/src/fabric/router.js
           node --check workers/mccluster/src/media/router.js
           node --check workers/mccluster/src/social/router.js
           node --check workers/mccluster/src/prim3/index.js
@@ -45,6 +48,25 @@ jobs:
           node --check js/prim3-sync.js
           node --check js/equity-uprise-institutional.js
           node --check js/equity-uprise-fellowship-live.js
+      - name: Assert private objective synthesis and Fabric handoff
+        run: |
+          grep -F "queueObjectiveSynthesis" workers/mccluster/src/ai/router.js
+          grep -F "job_type: 'objective_synthesis'" workers/mccluster/src/ai/objectives.js
+          grep -F "private_context_reference_only: true" workers/mccluster/src/ai/objectives.js
+          grep -F "synthesize_objectives === false" workers/mccluster/src/ai/objectives.js
+          grep -F "resolution=ignore-duplicates" workers/mccluster/src/ai/objectives.js
+          grep -F "raw conversation messages are forbidden in fabric events" workers/mccluster/src/fabric/router.js
+          grep -F "fabric origin/source mismatch" workers/mccluster/src/fabric/router.js
+          grep -F "role: 'eq.owner'" workers/mccluster/src/entry.js
+          grep -F "receipt_id: receipt.id" workers/mccluster/src/ai/router.js
+          if grep -nE 'messages[[:space:]]*:' workers/mccluster/src/ai/objectives.js; then
+            echo 'Raw conversation messages must not be copied into public synthesis jobs.' >&2
+            exit 1
+          fi
+          if grep -nE 'external_conversation_id:|idempotency_key:|source_url:' workers/mccluster/src/ai/router.js; then
+            echo 'Fabric conversation events must remain reference-only.' >&2
+            exit 1
+          fi
       - name: Reject unresolved reconciliation markers
         run: |
           if git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- . ':!*.lock'; then
@@ -60,7 +82,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Parse Core runner, broker, and executors
+      - name: Parse Core runner, broker, executors, and Fabric
         working-directory: core
         run: npm run check
       - name: Test provider-independent capability resolution
@@ -72,7 +94,16 @@ jobs:
       - name: Test Initiative OS portfolio planning
         working-directory: core
         run: npm run test:initiative-os
-      - name: Assert Core security and capability guardrails
+      - name: Test dependency-aware objective plans
+        working-directory: core
+        run: npm run test:plans
+      - name: Test conversation objective synthesis
+        working-directory: core
+        run: npm run test:synthesis
+      - name: Test three-node Fabric envelopes
+        working-directory: core
+        run: npm run test:fabric
+      - name: Assert Core security, privacy, and autonomy guardrails
         run: |
           grep -F "draft-only" core/src/executors/code-patch.mjs
           grep -F "git push *" core/opencode/opencode.json
@@ -82,9 +113,21 @@ jobs:
           grep -F "MCP-Protocol-Version" core/src/tools/mcp-http.mjs
           grep -F "https://api.mccluster.org/v1/media/mcp" core/src/tools/registry.mjs
           grep -F 'ops_agent_jobs' core/src/supabase.mjs
-          grep -F "SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health'])" core/src/reflection-policy.mjs
+          grep -F "SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health', 'objective_plan'])" core/src/reflection-policy.mjs
+          grep -F "SAFE_PLAN_JOB_TYPES = new Set(['local_analysis', 'repo_health'])" core/src/plan-policy.mjs
+          grep -F 'plan_dependencies' core/src/supabase.mjs
+          grep -F 'resolution=ignore-duplicates' core/src/supabase.mjs
+          grep -F "['objective_synthesis', objectiveSynthesis]" core/src/runner.mjs
+          grep -F 'MCCLUSTER_CONTEXT_TOKEN' core/src/context-client.mjs
+          grep -F 'transcript_persisted_in_public_job: false' core/src/executors/objective-synthesis.mjs
+          grep -F 'status: '\''active'\''' core/src/objective-store.mjs
+          grep -F 'Never mark objectives completed or cancelled' core/src/executors/objective-synthesis.mjs
           grep -F 'Never propose code_patch' core/src/executors/objective-reflection.mjs
           grep -F 'objective_reflection only' core/src/executors/portfolio-plan.mjs
+          grep -F 'raw conversation messages are forbidden in fabric events' core/src/fabric.mjs
+          grep -F 'resolution=ignore-duplicates' core/src/fabric.mjs
+          grep -F 'ExecStart=/usr/bin/node /opt/mccluster/core/src/fabric-daemon.mjs' core/systemd/mccluster-fabric.service
+          grep -F 'ReadWritePaths=/var/lib/mccluster-core' core/systemd/mccluster-fabric.service
           grep -F 'OnCalendar=*-*-* 02:00:00 America/New_York' core/systemd/mccluster-core-portfolio-plan.timer
           grep -F 'OnCalendar=*-*-* 02:30:00 America/New_York' core/systemd/mccluster-core-reflection.timer
           grep -F '"id": "video.generate"' core/capabilities/catalog.json
@@ -95,21 +138,42 @@ jobs:
             echo 'A Supabase service-role value appears committed under core/.' >&2
             exit 1
           fi
+          if grep -R -nE 'MCCLUSTER_CONTEXT_TOKEN=[^[:space:]]+' core --exclude='*.example'; then
+            echo 'A private context token appears committed under core/.' >&2
+            exit 1
+          fi
+          if grep -R -nE 'MCCLUSTER_FABRIC_TOKEN=[^[:space:]]+' core --exclude='*.example'; then
+            echo 'A Fabric token appears committed under core/.' >&2
+            exit 1
+          fi
 
   edge-functions:
-    name: Equity Uprise Edge Function contracts
+    name: Edge Function contracts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - name: Type-check publication control path
+      - name: Type-check private context and publication paths
         run: |
-          deno check \
+          deno check --node-modules-dir=auto \
+            supabase/functions/context-core/index.ts \
+            supabase/functions/context-ingest/index.ts \
             supabase/functions/_shared/eu-policy-os.ts \
             supabase/functions/eu-publish/index.ts \
             supabase/functions/eu-worker/index.ts
+      - name: Assert private Core context boundary
+        run: |
+          grep -F "x-mccluster-context-token" supabase/functions/context-core/index.ts
+          grep -F "from ai_context.messages" supabase/functions/context-core/index.ts
+          grep -F "[functions.context-core]" supabase/config.toml
+          grep -A1 -F "[functions.context-core]" supabase/config.toml | grep -F "verify_jwt = false"
+          grep -F 'created_at' supabase/functions/context-ingest/index.ts
+          if grep -R -nE 'MCCLUSTER_CONTEXT_TOKEN[[:space:]]*=[[:space:]]*[^[:space:]]+' supabase/functions; then
+            echo 'A private context token value appears committed.' >&2
+            exit 1
+          fi
       - name: Assert publication safety invariants
         run: |
           grep -F 'form.set("login_passwd", pass)' supabase/functions/eu-worker/index.ts

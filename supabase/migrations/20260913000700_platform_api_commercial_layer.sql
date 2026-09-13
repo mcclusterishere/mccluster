@@ -56,7 +56,7 @@ revoke all on public.api_consumers,public.api_keys,public.api_usage_events,publi
 grant select on public.api_products to anon,authenticated;
 revoke all on public.network_notifications from anon; grant select,update on public.network_notifications to authenticated;
 drop policy if exists api_products_public_read on public.api_products; create policy api_products_public_read on public.api_products for select using (enabled=true);
-drop policy if exists network_notifications_self_read on public.network_notifications; create policy network_notifications_self_read on public.network_notifications for select to authenticated using (recipient_m_uid=public.current_m_uid());
-drop policy if exists network_notifications_self_update on public.network_notifications; create policy network_notifications_self_update on public.network_notifications for update to authenticated using (recipient_m_uid=public.current_m_uid()) with check (recipient_m_uid=public.current_m_uid());
+drop policy if exists network_notifications_self_read on public.network_notifications; create policy network_notifications_self_read on public.network_notifications for select to authenticated using (recipient_m_uid=public.m_my_uid());
+drop policy if exists network_notifications_self_update on public.network_notifications; create policy network_notifications_self_update on public.network_notifications for update to authenticated using (recipient_m_uid=public.m_my_uid()) with check (recipient_m_uid=public.m_my_uid());
 create or replace function public.api_credit_balance(p_consumer uuid) returns bigint language sql stable security definer set search_path=public as $$ select coalesce(sum(delta),0)::bigint from public.api_credit_ledger where consumer_id=p_consumer $$;
 revoke all on function public.api_credit_balance(uuid) from public,anon,authenticated;

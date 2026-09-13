@@ -1,4 +1,6 @@
 import { fail, reply } from '../lib/http.js';
+import { publishCloudflareEvent } from '../fabric/router.js';
+import { queueObjectiveSynthesis } from './objectives.js';
 
 const MAX_BODY = 512 * 1024;
 
@@ -87,6 +89,7 @@ export async function handleAiRequest(request, env, user) {
       ok: true,
       harness: 'ai_context-v2',
       durable_jobs: 'ops_agent_jobs',
+      fabric: 'three-node immutable relay',
       ingest: '/v1/ai/ingest',
       retrieve: '/v1/ai/retrieve',
       decisions: '/v1/ai/decisions',
@@ -109,6 +112,12 @@ export async function handleAiRequest(request, env, user) {
         query: 'context-query',
         decisions: 'context-decision'
       },
+      fabric: {
+        events: 'fabric_events',
+        receipts: 'fabric_receipts',
+        outbox: 'fabric_outbox',
+        nodes: ['supabase', 'cloudflare', 'ovh']
+      },
       execution: {
         table: 'ops_agent_jobs',
         jobs: { total, queued, running, failed }
@@ -121,7 +130,50 @@ export async function handleAiRequest(request, env, user) {
     if (!body.org_id) body.org_id = orgId;
     if (body.org_id !== orgId) return fail(request, env, 'cross-org ingestion denied', 403);
     const { status, data } = await callContextFunction(request, env, 'context-ingest', body);
-    return reply(request, env, data, status);
+
+    let fabric;
+    try {
+      const receipt = data?.receipt || {};
+      if (!receipt.id || !receipt.conversation_id || !receipt.created_at) {
+        throw new Error('context ingest receipt is missing immutable relay fields');
+      }
+      fabric = await publishCloudflareEvent(env, {
+        event_id: receipt.id,
+        trace_id: receipt.conversation_id,
+        org_id: orgId,
+        kind: 'conversation.ingested',
+        occurred_at: receipt.created_at,
+        payload: {
+          provider: String(body.provider || '').slice(0, 120),
+          conversation_id: receipt.conversation_id,
+          receipt_id: receipt.id,
+          message_count: Number(receipt.message_count || 0),
+          payload_hash: String(receipt.payload_hash || '').slice(0, 128)
+        }
+      });
+    } catch (error) {
+      fabric = {
+        relayed: false,
+        error: 'fabric_publish_failed',
+        detail: String(error?.message || error).slice(0, 500)
+      };
+    }
+
+    let synthesis;
+    try {
+      synthesis = await queueObjectiveSynthesis(env, { orgId, ingestBody: body, ingestResult: data });
+    } catch (error) {
+      synthesis = {
+        queued: false,
+        error: 'objective_synthesis_enqueue_failed',
+        detail: String(error?.message || error).slice(0, 500),
+      };
+    }
+
+    const response = data && typeof data === 'object' && !Array.isArray(data)
+      ? { ...data, fabric, objective_synthesis: synthesis }
+      : { ingest: data, fabric, objective_synthesis: synthesis };
+    return reply(request, env, response, status);
   }
 
   if (path === '/v1/ai/retrieve' && request.method === 'POST') {
