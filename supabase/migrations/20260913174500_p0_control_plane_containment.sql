@@ -27,11 +27,21 @@ grant execute on function public.eu_role() to authenticated, service_role;
 revoke execute on function public.inbox_is_staff() from public, anon;
 grant execute on function public.inbox_is_staff() to authenticated, service_role;
 
-revoke execute on function public.is_org_member(uuid) from public, anon;
-grant execute on function public.is_org_member(uuid) to authenticated, service_role;
-
-revoke execute on function public.is_org_owner(uuid) from public, anon;
-grant execute on function public.is_org_owner(uuid) to authenticated, service_role;
+-- The canonical replay hardening migration may already have removed the
+-- deprecated public org-helper wrappers after moving all policy dependencies
+-- to private.is_org_member/private.is_org_owner. Harden them only when they
+-- still exist; do not recreate or require the compatibility API.
+do $$
+begin
+  if to_regprocedure('public.is_org_member(uuid)') is not null then
+    revoke execute on function public.is_org_member(uuid) from public, anon;
+    grant execute on function public.is_org_member(uuid) to authenticated, service_role;
+  end if;
+  if to_regprocedure('public.is_org_owner(uuid)') is not null then
+    revoke execute on function public.is_org_owner(uuid) from public, anon;
+    grant execute on function public.is_org_owner(uuid) to authenticated, service_role;
+  end if;
+end $$;
 
 revoke execute on function public.shake_is_crew() from public, anon;
 grant execute on function public.shake_is_crew() to authenticated, service_role;
