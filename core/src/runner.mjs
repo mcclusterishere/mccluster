@@ -6,6 +6,7 @@ import { objectiveReflection } from './executors/objective-reflection.mjs';
 import { portfolioPlan } from './executors/portfolio-plan.mjs';
 import { gameBuildPlan } from './executors/game-build-plan.mjs';
 import { gamePlaytest } from './executors/game-playtest.mjs';
+import { gameStudioCycle, gameMediaCollect, gameOwnerDecision } from './executors/game-studio-cycle.mjs';
 
 const executors = new Map([
   ['repo_health', repoHealth],
@@ -15,6 +16,9 @@ const executors = new Map([
   ['portfolio_plan', portfolioPlan],
   ['game_build_plan', gameBuildPlan],
   ['game_playtest', gamePlaytest],
+  ['game_studio_cycle', gameStudioCycle],
+  ['game_media_collect', gameMediaCollect],
+  ['game_owner_decision', gameOwnerDecision],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
