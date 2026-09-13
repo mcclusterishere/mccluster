@@ -21,7 +21,7 @@ create table if not exists public.comms_relay_devices (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.orgs(id) on delete cascade,
   label text not null,
-  phone_number text,
+  phone_number text not null,
   token_hash text not null unique,
   enabled boolean not null default true,
   last_seen_at timestamptz,
@@ -37,7 +37,7 @@ create table if not exists public.comms_threads (
   contact_id uuid not null references public.comms_contacts(id) on delete cascade,
   relay_device_id uuid references public.comms_relay_devices(id) on delete set null,
   channel text not null default 'sms' check (channel in ('sms')),
-  relay_address text,
+  relay_address text not null,
   mode text not null default 'assistant' check (mode in ('assistant','human','paused','blocked')),
   assistant_enabled boolean not null default true,
   disclosure_sent_at timestamptz,
@@ -61,15 +61,15 @@ create table if not exists public.comms_messages (
   body text not null check (char_length(body) between 1 and 12000),
   status text not null default 'received' check (status in ('received','queued','claimed','sent','delivered','failed','suppressed')),
   external_id text,
-  idempotency_key text,
+  idempotency_key text not null,
   reply_to_message_id uuid references public.comms_messages(id) on delete set null,
   agent_job_id uuid references public.ops_agent_jobs(id) on delete set null,
   occurred_at timestamptz not null default now(),
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint comms_messages_idempotency_uq unique (org_id, idempotency_key)
 );
-create unique index if not exists comms_messages_idempotency_uq on public.comms_messages(org_id, idempotency_key) where idempotency_key is not null;
 create index if not exists comms_messages_thread_time_idx on public.comms_messages(thread_id, occurred_at desc);
 
 create table if not exists public.comms_outbox (
