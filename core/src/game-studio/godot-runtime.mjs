@@ -60,7 +60,10 @@ export async function runGodotPlaytest({
 
   const run = createPlaytestRun(scenario);
   const timeoutMs = integer(scenario.max_seconds, 600, 1, 21600) * 1000;
-  const root = artifactRoot || path.join(process.cwd(), '.mccluster-artifacts', run.run_id);
+  const persistentRoot = text(env.MCCLUSTER_GAME_ARTIFACT_ROOT, 2000);
+  const root = artifactRoot || (persistentRoot
+    ? path.join(persistentRoot, run.run_id)
+    : path.join(process.cwd(), '.mccluster-artifacts', run.run_id));
   await mkdir(root, { recursive: true });
 
   const args = buildGodotArgs({ projectPath, scenario: run.scenario });
