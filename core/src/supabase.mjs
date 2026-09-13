@@ -1,4 +1,5 @@
 import os from 'node:os';
+import { classifyDependencyRows, dependencyEvidence, dependencyIdsFromJob } from './dependency-policy.mjs';
 
 const SB = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SECRET_KEY = String(process.env.SUPABASE_SECRET_KEY || '');
@@ -57,6 +58,76 @@ export async function rest(path, init = {}) {
   }));
 }
 
+function object(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function boundEvidenceValue(value, maxChars = 32_000) {
+  if (value == null) return value;
+  let serialized;
+  try { serialized = JSON.stringify(value); }
+  catch { return { truncated: true, preview: String(value).slice(0, maxChars) }; }
+  if (serialized.length <= maxChars) return value;
+  return {
+    truncated: true,
+    original_chars: serialized.length,
+    preview: serialized.slice(0, maxChars),
+  };
+}
+
+function boundedDependencyEvidence(rows) {
+  return dependencyEvidence(rows).map((entry) => ({
+    ...entry,
+    output: boundEvidenceValue(entry.output),
+    error: typeof entry.error === 'string' ? entry.error.slice(0, 4000) : entry.error,
+  }));
+}
+
+async function dependencyState(job) {
+  const ids = dependencyIdsFromJob(job);
+  if (!ids.length) return { state: 'ready', dependency_ids: [], rows: [] };
+
+  const params = new URLSearchParams({
+    id: `in.(${ids.join(',')})`,
+    select: 'id,job_type,target_type,target_id,status,output,last_error,updated_at',
+  });
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  const normalized = rows.map((row) => ({ ...row, error: row.last_error ?? null }));
+  return classifyDependencyRows(ids, normalized);
+}
+
+async function deferWaitingJob(job, dependencies, now) {
+  const runAfter = new Date(Date.now() + 30_000).toISOString();
+  const params = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
+  await rest(`ops_agent_jobs?${params.toString()}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      run_after: runAfter,
+      updated_at: now,
+      last_error: `waiting for prerequisite jobs: ${[
+        ...(dependencies.pending_ids || []),
+        ...(dependencies.missing_ids || []),
+      ].join(', ')}`.slice(0, 4000),
+    }),
+  });
+}
+
+async function failBlockedJob(job, dependencies, now) {
+  const params = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
+  await rest(`ops_agent_jobs?${params.toString()}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({
+      status: 'failed',
+      locked_at: null,
+      locked_by: null,
+      last_error: `prerequisite job failed: ${(dependencies.failed_ids || []).join(', ')}`.slice(0, 4000),
+      updated_at: now,
+    }),
+  });
+}
+
 export async function claimNext(supportedTypes) {
   const supported = new Set(supportedTypes);
   if (!supported.size) return null;
@@ -73,6 +144,28 @@ export async function claimNext(supportedTypes) {
 
   for (const job of rows) {
     if (!supported.has(job.job_type)) continue;
+
+    const dependencies = await dependencyState(job);
+    if (dependencies.state === 'failed') {
+      await failBlockedJob(job, dependencies, now);
+      continue;
+    }
+    if (dependencies.state === 'waiting') {
+      await deferWaitingJob(job, dependencies, now);
+      continue;
+    }
+
+    const input = object(job.input);
+    const enrichedInput = dependencies.dependency_ids.length
+      ? {
+          ...input,
+          evidence: {
+            ...object(input.evidence),
+            dependencies: boundedDependencyEvidence(dependencies.rows),
+          },
+        }
+      : input;
+
     const attempts = Number(job.attempts || 0) + 1;
     const patchParams = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
     const { body: claimed = [] } = await rest(`ops_agent_jobs?${patchParams.toString()}`, {
@@ -81,6 +174,7 @@ export async function claimNext(supportedTypes) {
       body: JSON.stringify({
         status: 'running',
         attempts,
+        input: enrichedInput,
         locked_at: now,
         locked_by: workerId,
         last_error: null,
@@ -174,6 +268,7 @@ export async function recentObjectives({ orgId, limit = 25 } = {}) {
 }
 
 export async function enqueueJob({
+  jobId,
   orgId,
   jobType,
   targetType = 'portfolio',
@@ -186,23 +281,44 @@ export async function enqueueJob({
   if (!orgId) throw new Error('enqueueJob requires orgId');
   if (!jobType) throw new Error('enqueueJob requires jobType');
 
-  const { body: rows = [] } = await rest('ops_agent_jobs', {
+  const payload = {
+    ...(jobId ? { id: jobId } : {}),
+    org_id: orgId,
+    job_type: jobType,
+    target_type: targetType,
+    target_id: targetId,
+    status: 'queued',
+    priority: Math.min(100, Math.max(0, Number(priority) || 0)),
+    input: input && typeof input === 'object' ? input : {},
+    run_after: runAfter,
+    max_attempts: Math.max(1, Number(maxAttempts) || 3),
+  };
+
+  if (!jobId) {
+    const { body: rows = [] } = await rest('ops_agent_jobs', {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify(payload),
+    });
+    if (!rows.length) throw new Error(`Failed to enqueue ${jobType}`);
+    return rows[0];
+  }
+
+  const { body: inserted = [] } = await rest('ops_agent_jobs?on_conflict=id', {
     method: 'POST',
-    headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({
-      org_id: orgId,
-      job_type: jobType,
-      target_type: targetType,
-      target_id: targetId,
-      status: 'queued',
-      priority: Math.min(100, Math.max(0, Number(priority) || 0)),
-      input: input && typeof input === 'object' ? input : {},
-      run_after: runAfter,
-      max_attempts: Math.max(1, Number(maxAttempts) || 3),
-    }),
+    headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+    body: JSON.stringify(payload),
   });
-  if (!rows.length) throw new Error(`Failed to enqueue ${jobType}`);
-  return rows[0];
+  if (inserted.length) return inserted[0];
+
+  const lookup = new URLSearchParams({ id: `eq.${jobId}`, select: '*', limit: '1' });
+  const { body: existing = [] } = await rest(`ops_agent_jobs?${lookup.toString()}`);
+  const row = existing[0];
+  if (!row) throw new Error(`Failed to enqueue or recover ${jobType} ${jobId}`);
+  if (row.org_id !== orgId || row.job_type !== jobType) {
+    throw new Error(`Deterministic job id collision for ${jobId}`);
+  }
+  return row;
 }
 
 export async function hasPendingJob({ orgId, jobType, targetId } = {}) {
