@@ -135,7 +135,10 @@ async function executeConfiguredProvider(env, route, input) {
   const providerRows = await service(env, `compute_providers?provider_key=eq.${encodeURIComponent(route.provider_key)}&select=provider_key,base_url,status,reseller_status,metadata&limit=1`);
   const provider = providerRows?.[0];
   if (!provider || provider.status !== 'available') throw Object.assign(new Error('Provider route is not available'), { status: 503 });
-  if (!['allowed', 'byok_only'].includes(provider.reseller_status)) throw Object.assign(new Error('Provider is not cleared for commercial execution'), { status: 503 });
+  if (provider.reseller_status === 'byok_only') {
+    throw Object.assign(new Error('Customer BYOK credential required; McCluster platform credentials may not be used for this provider'), { status: 503 });
+  }
+  if (provider.reseller_status !== 'allowed') throw Object.assign(new Error('Provider is not cleared for commercial execution'), { status: 503 });
 
   const secretMap = {
     openai: env.OPENAI_API_KEY,
