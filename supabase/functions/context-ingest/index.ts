@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
   try {
     const result = await sql.begin(async (tx) => {
       const prior = await tx`
-        select id, conversation_id, message_count, payload_hash
+        select id, conversation_id, message_count, payload_hash, created_at
         from ai_context.ingestion_receipts
         where org_id = ${body.org_id}::uuid
           and provider = ${body.provider}
@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
           ${body.org_id}::uuid, ${body.provider}, ${body.idempotency_key}, ${payloadHash},
           ${conversation.id}::uuid, ${body.messages.length}, 'accepted',
           ${tx.json({ inserted_messages: inserted, ingested_by: subject })}
-        ) returning id, conversation_id, message_count, payload_hash
+        ) returning id, conversation_id, message_count, payload_hash, created_at
       `
 
       await tx`select pgmq.send('ai-context-enrich', ${tx.json({ org_id: body.org_id, conversation_id: conversation.id, reason: 'ingest' })})`
