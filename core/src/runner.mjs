@@ -8,6 +8,7 @@ import { gameBuildPlan } from './executors/game-build-plan.mjs';
 import { gamePlaytest } from './executors/game-playtest.mjs';
 import { gameStudioCycle, gameMediaCollect, gameOwnerDecision, gameImplementationCollect } from './executors/game-studio-cycle.mjs';
 import { gameBranchSmoke } from './executors/game-branch-smoke.mjs';
+import { gameReleaseDecision } from './executors/game-release-decision.mjs';
 import { previewDeploy } from './executors/preview-deploy.mjs';
 
 const executors = new Map([
@@ -23,6 +24,7 @@ const executors = new Map([
   ['game_owner_decision', gameOwnerDecision],
   ['game_implementation_collect', gameImplementationCollect],
   ['game_branch_smoke', gameBranchSmoke],
+  ['game_release_decision', gameReleaseDecision],
   ['preview_deploy', previewDeploy],
 ]);
 
