@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { repoHealth } from '../executors/repo-health.mjs';
 import { enqueueJob } from '../supabase.mjs';
+import { researchWeb } from './research.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 
@@ -89,6 +90,20 @@ export const CONTROL_TOOLS = Object.freeze([
         priority: { type: 'number' }
       }
     }
+  },
+  {
+    name: 'core.research.web',
+    title: 'Research the public web',
+    description: 'Run bounded public web discovery with timestamped provenance, preferring a configured search API and falling back to no-key public search.',
+    inputSchema: {
+      type: 'object',
+      required: ['objective'],
+      properties: {
+        objective: { type: 'string' },
+        source_constraints: { type: 'object' },
+        limit: { type: 'integer', minimum: 1, maximum: 10 }
+      }
+    }
   }
 ]);
 
@@ -103,6 +118,10 @@ export async function callControlTool(name, args = {}) {
         dependency_review: args.dependency_review === true
       }
     });
+  }
+
+  if (name === 'core.research.web') {
+    return researchWeb(args);
   }
 
   if (name === 'core.code.build') {
