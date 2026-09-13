@@ -63,7 +63,9 @@ create table if not exists public.comms_messages (
   external_id text,
   idempotency_key text not null,
   reply_to_message_id uuid references public.comms_messages(id) on delete set null,
-  agent_job_id uuid references public.ops_agent_jobs(id) on delete set null,
+  -- Provenance reference only. Deliberately not a foreign key: the durable
+  -- Core queue may be provisioned independently of a clean database replay.
+  agent_job_id uuid,
   occurred_at timestamptz not null default now(),
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
@@ -71,6 +73,7 @@ create table if not exists public.comms_messages (
   constraint comms_messages_idempotency_uq unique (org_id, idempotency_key)
 );
 create index if not exists comms_messages_thread_time_idx on public.comms_messages(thread_id, occurred_at desc);
+create index if not exists comms_messages_agent_job_idx on public.comms_messages(agent_job_id) where agent_job_id is not null;
 
 create table if not exists public.comms_outbox (
   id uuid primary key default gen_random_uuid(),
@@ -120,9 +123,6 @@ create table if not exists public.comms_audit (
 );
 create index if not exists comms_audit_thread_idx on public.comms_audit(thread_id, created_at desc);
 
--- These are private control-plane tables. All external access goes through
--- authenticated Cloudflare/Core surfaces; browser/mobile clients never get
--- direct Data API grants.
 alter table public.comms_contacts enable row level security;
 alter table public.comms_relay_devices enable row level security;
 alter table public.comms_threads enable row level security;
@@ -139,7 +139,6 @@ revoke all on table public.comms_outbox from anon, authenticated;
 revoke all on table public.comms_delivery_events from anon, authenticated;
 revoke all on table public.comms_audit from anon, authenticated;
 
--- Keep server-side service access explicit even on projects with non-default grants.
 grant select, insert, update, delete on table public.comms_contacts to service_role;
 grant select, insert, update, delete on table public.comms_relay_devices to service_role;
 grant select, insert, update, delete on table public.comms_threads to service_role;
