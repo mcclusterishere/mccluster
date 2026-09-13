@@ -1,6 +1,16 @@
 import { fail, reply } from '../lib/http.js';
 
 const MAX_BODY = 512 * 1024;
+const OWNER_JOB_TYPES = new Set([
+  'local_analysis',
+  'repo_health',
+  'objective_reflection',
+  'portfolio_plan',
+  'host_health',
+  'code_patch',
+  'game_studio_cycle',
+  'preview_deploy'
+]);
 
 function serviceHeaders(env) {
   return {
@@ -63,6 +73,56 @@ async function countJobs(env, orgId, status) {
   return match ? Number(match[1]) : null;
 }
 
+async function enqueueOwnerJob(env, orgId, body) {
+  const jobType = String(body.job_type || '').trim();
+  if (!OWNER_JOB_TYPES.has(jobType)) {
+    throw Object.assign(new Error(`unsupported owner job type: ${jobType || '(empty)'}`), { status: 400 });
+  }
+  const targetType = String(body.target_type || 'portfolio').trim().slice(0, 120) || 'portfolio';
+  const targetId = String(body.target_id || 'McCluster').trim().slice(0, 500) || 'McCluster';
+  const input = body.input && typeof body.input === 'object' && !Array.isArray(body.input) ? body.input : {};
+  const priority = Math.min(100, Math.max(0, Number(body.priority ?? 50) || 0));
+  const maxAttempts = Math.min(5, Math.max(1, Number(body.max_attempts ?? 3) || 3));
+  const runAfter = body.run_after ? new Date(body.run_after) : new Date();
+  if (Number.isNaN(runAfter.getTime())) throw Object.assign(new Error('invalid run_after'), { status: 400 });
+
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/ops_agent_jobs`, {
+    method: 'POST',
+    headers: { ...serviceHeaders(env), Prefer: 'return=representation' },
+    body: JSON.stringify({
+      org_id: orgId,
+      job_type: jobType,
+      target_type: targetType,
+      target_id: targetId,
+      status: 'queued',
+      priority,
+      input,
+      run_after: runAfter.toISOString(),
+      max_attempts: maxAttempts
+    })
+  });
+  const rows = await res.json().catch(() => []);
+  if (!res.ok || !rows?.length) {
+    throw Object.assign(new Error(rows?.message || 'failed to enqueue Core job'), { status: 502, detail: rows });
+  }
+  return rows[0];
+}
+
+async function getOwnerJob(env, orgId, jobId) {
+  const params = new URLSearchParams({
+    id: `eq.${jobId}`,
+    org_id: `eq.${orgId}`,
+    select: 'id,org_id,job_type,target_type,target_id,status,priority,input,output,last_error,attempts,max_attempts,locked_by,locked_at,created_at,updated_at',
+    limit: '1'
+  });
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/ops_agent_jobs?${params.toString()}`, {
+    headers: serviceHeaders(env)
+  });
+  const rows = await res.json().catch(() => []);
+  if (!res.ok) throw Object.assign(new Error('failed to read Core job'), { status: 502, detail: rows });
+  return rows?.[0] || null;
+}
+
 export async function handleAiRequest(request, env, user) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -85,12 +145,14 @@ export async function handleAiRequest(request, env, user) {
   if (path === '/v1/ai' && request.method === 'GET') {
     return reply(request, env, {
       ok: true,
-      harness: 'ai_context-v2',
+      harness: 'ai_context-v3',
       durable_jobs: 'ops_agent_jobs',
       ingest: '/v1/ai/ingest',
       retrieve: '/v1/ai/retrieve',
       decisions: '/v1/ai/decisions',
-      status: '/v1/ai/status'
+      jobs: '/v1/ai/jobs',
+      status: '/v1/ai/status',
+      allowed_job_types: [...OWNER_JOB_TYPES]
     });
   }
 
@@ -103,7 +165,7 @@ export async function handleAiRequest(request, env, user) {
     ]);
     return reply(request, env, {
       ok: true,
-      harness: 'ai_context-v2',
+      harness: 'ai_context-v3',
       context: {
         ingest: 'context-ingest',
         query: 'context-query',
@@ -111,9 +173,24 @@ export async function handleAiRequest(request, env, user) {
       },
       execution: {
         table: 'ops_agent_jobs',
-        jobs: { total, queued, running, failed }
+        jobs: { total, queued, running, failed },
+        ingress: '/v1/ai/jobs'
       }
     });
+  }
+
+  if (path === '/v1/ai/jobs' && request.method === 'POST') {
+    const body = await readJson(request);
+    if (body.org_id && body.org_id !== orgId) return fail(request, env, 'cross-org job denied', 403);
+    const job = await enqueueOwnerJob(env, orgId, body);
+    return reply(request, env, { queued: true, job }, 202);
+  }
+
+  const jobMatch = path.match(/^\/v1\/ai\/jobs\/([0-9a-f-]{36})$/i);
+  if (jobMatch && request.method === 'GET') {
+    const job = await getOwnerJob(env, orgId, jobMatch[1]);
+    if (!job) return fail(request, env, 'job not found', 404);
+    return reply(request, env, { job });
   }
 
   if (path === '/v1/ai/ingest' && request.method === 'POST') {
