@@ -72,6 +72,9 @@ jobs:
       - name: Test Initiative OS portfolio planning
         working-directory: core
         run: npm run test:initiative-os
+      - name: Test autonomous game studio production loop
+        working-directory: core
+        run: npm run test:game-studio
       - name: Assert Core security and capability guardrails
         run: |
           grep -F "draft-only" core/src/executors/code-patch.mjs
