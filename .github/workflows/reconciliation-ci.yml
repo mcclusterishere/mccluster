@@ -34,11 +34,15 @@ jobs:
       - name: Parse routing surfaces
         run: |
           node --check workers/mccluster/src/entry.js
+          node --check workers/mccluster/src/entry-platform.js
           node --check workers/mccluster/src/index.js
           node --check workers/mccluster/src/client.js
           node --check workers/mccluster/src/connect.js
           node --check workers/mccluster/src/ai/router.js
           node --check workers/mccluster/src/ai/objectives.js
+          node --check workers/mccluster/src/signals/router.js
+          node --check workers/mccluster/src/comms/router.js
+          node --check workers/mccluster/src/comms/enrollment.js
           node --check workers/mccluster/src/media/router.js
           node --check workers/mccluster/src/social/router.js
           node --check workers/mccluster/src/prim3/index.js
@@ -46,10 +50,13 @@ jobs:
           node --check js/prim3-sync.js
           node --check js/equity-uprise-institutional.js
           node --check js/equity-uprise-fellowship-live.js
-      - name: Assert private conversation ingestion boundary
+      - name: Assert private conversation and universal signal boundaries
         run: |
           grep -F 'private_context_reference_only: true' workers/mccluster/src/ai/objectives.js
-          grep -F 'conversation_id: conversationId' workers/mccluster/src/ai/objectives.js
+          grep -F 'transcript_persisted_here: false' workers/mccluster/src/ai/objectives.js
+          grep -F "path !== '/v1/signals'" workers/mccluster/src/signals/router.js
+          grep -F 'objective_synthesis' workers/mccluster/src/signals/router.js
+          grep -F 'universal_signal_ingress: true' workers/mccluster/src/entry-platform.js
           if grep -F 'messages:' workers/mccluster/src/ai/objectives.js; then
             echo 'Objective synthesis enqueue must not persist raw messages in public ops jobs.' >&2
             exit 1
@@ -83,9 +90,11 @@ jobs:
       - name: Test bounded objective reflection
         working-directory: core
         run: npm run test:reflection
-      - name: Test private conversation objective synthesis
+      - name: Test conversation and canonical-signal objective synthesis
         working-directory: core
-        run: npm run test:objective-synthesis
+        run: |
+          npm run test:objective-synthesis
+          npm run test:signals
       - name: Test Initiative OS portfolio planning
         working-directory: core
         run: npm run test:initiative-os
@@ -108,13 +117,16 @@ jobs:
           grep -F "MCP-Protocol-Version" core/src/tools/mcp-http.mjs
           grep -F "https://api.mccluster.org/v1/media/mcp" core/src/tools/registry.mjs
           grep -F 'ops_agent_jobs' core/src/supabase.mjs
+          grep -F 'ops_signals' core/src/supabase.mjs
           grep -F 'buildCompletionEvidence' core/src/runner.mjs
           grep -F 'assertCompletionEvidence(job, output);' core/src/supabase.mjs
+          grep -F 'canonical_signal_reference' core/src/completion-evidence.mjs
           grep -F 'no completion evidence policy exists for job type' core/src/completion-evidence.mjs
           grep -F "SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health', 'code_patch'])" core/src/reflection-policy.mjs
           grep -F 'autonomous_draft_only: true' core/src/reflection-policy.mjs
           grep -F 'Never propose deploy, merge' core/src/executors/objective-reflection.mjs
           grep -F 'objective_reflection only' core/src/executors/portfolio-plan.mjs
+          grep -F 'signal_count' core/src/executors/portfolio-plan.mjs
           grep -F 'transcript_persisted_in_public_job: false' core/src/executors/objective-synthesis.mjs
           grep -F 'MCCLUSTER_CONTEXT_TOKEN' core/src/context-client.mjs
           grep -F 'mccluster-system-health/v1' core/src/system-health.mjs
@@ -145,21 +157,24 @@ jobs:
           fi
 
   edge-functions:
-    name: Equity Uprise Edge Function contracts
+    name: Edge Function security contracts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           deno-version: v2.x
-      - name: Type-check publication and private context control paths
+      - name: Type-check privileged Edge paths
         run: |
           deno check --node-modules-dir=auto \
             supabase/functions/_shared/eu-policy-os.ts \
             supabase/functions/eu-publish/index.ts \
             supabase/functions/eu-worker/index.ts \
-            supabase/functions/context-core/index.ts
-      - name: Assert publication and context safety invariants
+            supabase/functions/context-core/index.ts \
+            supabase/functions/l3-download/index.ts \
+            supabase/functions/connect-onboard/index.ts \
+            supabase/functions/backend-sub/index.ts
+      - name: Assert Edge authentication and delivery invariants
         run: |
           grep -F 'form.set("login_passwd", pass)' supabase/functions/eu-worker/index.ts
           if grep -F 'form.set("passwd", pass)' supabase/functions/eu-worker/index.ts; then
@@ -171,8 +186,16 @@ jobs:
           grep -F 'publication content hash changed after approval' supabase/functions/eu-worker/index.ts
           grep -F 'x-mccluster-context-token' supabase/functions/context-core/index.ts
           grep -F 'where c.org_id = ${orgId}::uuid and c.id = ${conversationId}::uuid' supabase/functions/context-core/index.ts
-          grep -F '[functions.context-core]' supabase/config.toml
+          grep -F 'l3_issue_download_token' supabase/functions/l3-download/index.ts
+          grep -F 'l3_consume_download_token' supabase/functions/l3-download/index.ts
+          grep -F 'session_already_exchanged' supabase/functions/l3-download/index.ts
+          grep -F "error: 'retired_endpoint'" supabase/functions/connect-onboard/index.ts
+          grep -F "error: 'retired_endpoint'" supabase/functions/backend-sub/index.ts
           grep -A1 '\[functions.context-core\]' supabase/config.toml | grep -F 'verify_jwt = false'
+          grep -A1 '\[functions.connect-onboard\]' supabase/config.toml | grep -F 'verify_jwt = true'
+          grep -A1 '\[functions.backend-sub\]' supabase/config.toml | grep -F 'verify_jwt = true'
+          grep -A1 '\[functions.m-oauth-bootstrap\]' supabase/config.toml | grep -F 'verify_jwt = false'
+          grep -A1 '\[functions.l3-download\]' supabase/config.toml | grep -F 'verify_jwt = false'
 
   database:
     name: Supabase migration reset
@@ -187,6 +210,29 @@ jobs:
         run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Rebuild database from migrations
         run: supabase db reset
+      - name: Assert closure database contracts
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          do $$
+          declare v_count integer;
+          begin
+            select count(*) into v_count
+            from pg_class c join pg_namespace n on n.oid=c.relnamespace
+            where n.nspname='public'
+              and c.relname in ('eu_counts','eu_profiles_public','eu_perspectives_public','shake_open_window')
+              and coalesce(c.reloptions,'{}'::text[]) @> array['security_invoker=true'];
+            if v_count <> 4 then raise exception 'public projection views are not all security_invoker'; end if;
+
+            if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='ops_signals' and column_name='fingerprint') then
+              raise exception 'ops_signals fingerprint contract missing';
+            end if;
+            if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='l3_entitlements' and column_name='token_used_at') then
+              raise exception 'Level 3 one-time token contract missing';
+            end if;
+          end $$;
+          SQL
       - name: Stop isolated stack
         if: always()
         run: supabase stop --no-backup || true
