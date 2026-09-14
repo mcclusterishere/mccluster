@@ -205,19 +205,33 @@ async function computeHealth(orgId) {
 async function edgeHealth() {
   const started = Date.now();
   try {
-    const response = await fetch(`${EDGE_URL}/healthz`, { signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_HEALTH_EDGE_TIMEOUT_MS || 5000)) });
+    const response = await fetch(`${EDGE_URL}/v1/health`, { signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_HEALTH_EDGE_TIMEOUT_MS || 5000)) });
     const body = await response.json().catch(() => null);
     return {
-      url: `${EDGE_URL}/healthz`,
+      url: `${EDGE_URL}/v1/health`,
       reachable: response.ok && body?.ok === true,
       http_status: response.status,
       latency_ms: Date.now() - started,
       service: body?.service || null,
-      revision: body?.revision || null,
+      deployment_sha: body?.deployment_sha || null,
+      deployment_ref: body?.deployment_ref || null,
+      supabase_project_ref: body?.supabase_project_ref || null,
+      capabilities: body?.capabilities || null,
       error: response.ok ? null : `HTTP ${response.status}`,
     };
   } catch (error) {
-    return { url: `${EDGE_URL}/healthz`, reachable: false, http_status: null, latency_ms: Date.now() - started, service: null, revision: null, error: errorText(error) };
+    return {
+      url: `${EDGE_URL}/v1/health`,
+      reachable: false,
+      http_status: null,
+      latency_ms: Date.now() - started,
+      service: null,
+      deployment_sha: null,
+      deployment_ref: null,
+      supabase_project_ref: null,
+      capabilities: null,
+      error: errorText(error),
+    };
   }
 }
 
