@@ -124,6 +124,32 @@ async function getOwnerJob(env, orgId, jobId) {
   return rows?.[0] || null;
 }
 
+async function latestSystemHealth(env, orgId) {
+  const params = new URLSearchParams({
+    org_id: `eq.${orgId}`,
+    job_type: 'eq.host_health',
+    status: 'eq.done',
+    select: 'id,status,output,created_at,updated_at',
+    order: 'updated_at.desc',
+    limit: '1'
+  });
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/ops_agent_jobs?${params.toString()}`, { headers: serviceHeaders(env) });
+  const rows = await res.json().catch(() => []);
+  if (!res.ok) throw Object.assign(new Error('failed to read system health'), { status: 502, detail: rows });
+  const job = rows?.[0] || null;
+  const checkedAt = job?.output?.checked_at || job?.updated_at || null;
+  const ageMs = checkedAt && Number.isFinite(Date.parse(checkedAt)) ? Math.max(0, Date.now() - Date.parse(checkedAt)) : null;
+  const staleAfterMs = 10 * 60_000;
+  return {
+    job,
+    checked_at: checkedAt,
+    age_ms: ageMs,
+    stale: ageMs === null || ageMs > staleAfterMs,
+    stale_after_ms: staleAfterMs,
+    health: job?.output || null
+  };
+}
+
 export async function handleAiRequest(request, env, user) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -154,17 +180,19 @@ export async function handleAiRequest(request, env, user) {
       task: '/v1/ai/task',
       jobs: '/v1/ai/jobs',
       status: '/v1/ai/status',
+      system_health: '/v1/ai/system-health',
       objective_synthesis: 'automatic after successful context ingest',
       allowed_job_types: [...OWNER_JOB_TYPES]
     });
   }
 
   if (path === '/v1/ai/status' && request.method === 'GET') {
-    const [total, queued, running, failed] = await Promise.all([
+    const [total, queued, running, failed, systemHealth] = await Promise.all([
       countJobs(env, orgId),
       countJobs(env, orgId, 'queued'),
       countJobs(env, orgId, 'running'),
-      countJobs(env, orgId, 'failed')
+      countJobs(env, orgId, 'failed'),
+      latestSystemHealth(env, orgId).catch(() => null)
     ]);
     return reply(request, env, {
       ok: true,
@@ -176,8 +204,45 @@ export async function handleAiRequest(request, env, user) {
         natural_language_ingress: '/v1/ai/task',
         explicit_ingress: '/v1/ai/jobs',
         conversation_objectives: 'reference-only objective_synthesis'
-      }
+      },
+      system_health: systemHealth ? {
+        overall: systemHealth.health?.overall || 'unknown',
+        checked_at: systemHealth.checked_at,
+        age_ms: systemHealth.age_ms,
+        stale: systemHealth.stale,
+        endpoint: '/v1/ai/system-health'
+      } : { overall: 'unknown', stale: true, endpoint: '/v1/ai/system-health' }
     });
+  }
+
+  if (path === '/v1/ai/system-health' && request.method === 'GET') {
+    const current = await latestSystemHealth(env, orgId);
+    return reply(request, env, {
+      ok: Boolean(current.health),
+      schema_version: current.health?.schema_version || null,
+      overall: current.health?.overall || 'unknown',
+      checked_at: current.checked_at,
+      age_ms: current.age_ms,
+      stale: current.stale,
+      stale_after_ms: current.stale_after_ms,
+      health_job_id: current.job?.id || null,
+      health: current.health,
+      refresh: { method: 'POST', path: '/v1/ai/system-health' }
+    }, current.health ? 200 : 404);
+  }
+
+  if (path === '/v1/ai/system-health' && request.method === 'POST') {
+    const body = await readJson(request);
+    if (body.org_id && body.org_id !== orgId) return fail(request, env, 'cross-org health refresh denied', 403);
+    const job = await enqueueOwnerJob(env, orgId, {
+      job_type: 'host_health',
+      target_type: 'host',
+      target_id: 'ovh-mccluster-core',
+      priority: body.priority ?? 95,
+      max_attempts: body.max_attempts ?? 2,
+      input: { requested_by: 'owner_api', requested_at: new Date().toISOString() }
+    });
+    return reply(request, env, { queued: true, system_health_refresh: true, job }, 202);
   }
 
   if (path === '/v1/ai/task' && request.method === 'POST') {
