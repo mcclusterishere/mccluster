@@ -92,6 +92,9 @@ jobs:
       - name: Test proof-before-done completion evidence
         working-directory: core
         run: npm run test:evidence
+      - name: Test canonical system health
+        working-directory: core
+        run: npm run test:system-health
       - name: Test autonomous game studio production loop
         working-directory: core
         run: npm run test:game-studio
@@ -114,6 +117,11 @@ jobs:
           grep -F 'objective_reflection only' core/src/executors/portfolio-plan.mjs
           grep -F 'transcript_persisted_in_public_job: false' core/src/executors/objective-synthesis.mjs
           grep -F 'MCCLUSTER_CONTEXT_TOKEN' core/src/context-client.mjs
+          grep -F 'mccluster-system-health/v1' core/src/system-health.mjs
+          grep -F 'assertCompletionEvidence' core/src/system-health.mjs
+          grep -F 'OnUnitActiveSec=5min' core/systemd/mccluster-core-system-health.timer
+          grep -F '/v1/ai/system-health' workers/mccluster/src/ai/router.js
+          grep -F '20260914191500' supabase/migrations/20260914191500_system_health_contract.sql
           grep -F 'OnCalendar=*-*-* 02:00:00 America/New_York' core/systemd/mccluster-core-portfolio-plan.timer
           grep -F 'OnUnitActiveSec=2h' core/systemd/mccluster-core-reflection.timer
           grep -F 'deploy/ovh-production' scripts/mccluster-vps-reconcile.sh
