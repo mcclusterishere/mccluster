@@ -1,0 +1,63 @@
+name: SBOM and Provenance
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+  artifact-metadata: write
+
+jobs:
+  attest-source:
+    name: Attest source and SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Create immutable source artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz --output="mccluster-source-${GITHUB_SHA}.tar.gz" "${GITHUB_SHA}"
+          sha256sum "mccluster-source-${GITHUB_SHA}.tar.gz" > checksums.sha256
+
+      - name: Export GitHub dependency graph SBOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "/repos/${GITHUB_REPOSITORY}/dependency-graph/sbom" --jq '.sbom' > mccluster.spdx.json
+          jq -e '.spdxVersion and .name and .packages' mccluster.spdx.json >/dev/null
+          sha256sum mccluster.spdx.json >> checksums.sha256
+
+      - name: Generate source provenance attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: mccluster-source-${{ github.sha }}.tar.gz
+
+      - name: Generate SBOM attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: mccluster-source-${{ github.sha }}.tar.gz
+          sbom-path: mccluster.spdx.json
+
+      - name: Upload supply-chain evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: mccluster-supply-chain-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 90
+          path: |
+            mccluster-source-${{ github.sha }}.tar.gz
+            mccluster.spdx.json
+            checksums.sha256
