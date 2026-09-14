@@ -1,12 +1,14 @@
 # Supabase project config for the McCluster platform.
 #
-# Every function present in this reconciliation surface declares its gateway
-# mode explicitly so a deploy cannot silently change public/webhook or
-# authenticated control-plane behavior.
+# Every deployed or source-controlled function in the reconciliation surface
+# declares its gateway mode explicitly so a deploy cannot silently weaken or
+# strengthen authentication. verify_jwt=false is allowed only for public
+# intake/webhook/OAuth bootstrap surfaces whose function body implements the
+# required custom boundary.
 
 project_id = "zmnhbrjyhxzhkxmhkexs"
 
-# Existing public/self-authenticated platform surfaces.
+# ---------------- Legacy public/self-authenticated surfaces ----------------
 [functions.checkout]
 verify_jwt = false
 
@@ -22,16 +24,30 @@ verify_jwt = false
 [functions.domain-check]
 verify_jwt = false
 
-# Shared platform functions.
-[functions.backend-sub]
+[functions.pay-now]
 verify_jwt = false
+
+[functions.intake]
+verify_jwt = false
+
+[functions.unsubscribe]
+verify_jwt = false
+
+# Superseded marketplace functions remain JWT-gated until their deployment is
+# replaced by the retirement tombstones in this repository.
+[functions.backend-sub]
+verify_jwt = true
 
 [functions.connect-onboard]
-verify_jwt = false
+verify_jwt = true
 
-# Private cross-model context plane. User-facing functions require a Supabase
-# JWT and repeat membership checks in-function. context-core is server-to-server
-# and uses a dedicated constant-time compared MCCLUSTER_CONTEXT_TOKEN instead.
+[functions.org-connect-onboard]
+verify_jwt = true
+
+[functions.connect-org]
+verify_jwt = true
+
+# ---------------- Context / operations ----------------
 [functions.context-ingest]
 verify_jwt = true
 
@@ -41,14 +57,10 @@ verify_jwt = true
 [functions.context-decision]
 verify_jwt = true
 
+# context-core is server-to-server and uses constant-time compared
+# MCCLUSTER_CONTEXT_TOKEN inside the function.
 [functions.context-core]
 verify_jwt = false
-
-[functions.intake]
-verify_jwt = false
-
-[functions.m-oauth-bootstrap]
-verify_jwt = true
 
 [functions.ops-chat]
 verify_jwt = true
@@ -59,28 +71,32 @@ verify_jwt = true
 [functions.outreach-webhook]
 verify_jwt = false
 
-[functions.pay-now]
-verify_jwt = false
-
 [functions.social]
 verify_jwt = true
 
-[functions.unsubscribe]
+[functions.gev-proxy]
+verify_jwt = true
+
+# One-shot OAuth client bootstrap must run before an OAuth client exists; it
+# fails closed unless M_OAUTH_BOOTSTRAP_NONCE is configured and supplied.
+[functions.m-oauth-bootstrap]
+verify_jwt = false
+
+# ---------------- Payments / provider callbacks ----------------
+[functions.stripe-webhook]
 verify_jwt = false
 
 # ---------------- Equity Uprise Policy OS ----------------
-# Public intake and booking surfaces validate what anonymous callers may do.
 [functions.eu-intake]
 verify_jwt = false
 
 [functions.eu-calendar]
 verify_jwt = false
 
-# Provider callbacks, OAuth callbacks, cron workers and monitors authenticate
-# with provider signatures, one-time state or dedicated internal secrets.
 [functions.eu-google-workspace]
 verify_jwt = false
 
+# Internal worker authenticates with its dedicated request-auth contract.
 [functions.eu-worker]
 verify_jwt = false
 
@@ -99,8 +115,6 @@ verify_jwt = false
 [functions.eu-crossref-callback]
 verify_jwt = false
 
-# Staff/fellow control surfaces require a Supabase user JWT at the gateway and
-# repeat capability/resource authorization inside each function.
 [functions.eu-workspace]
 verify_jwt = true
 
@@ -120,4 +134,38 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.eu-control]
+verify_jwt = true
+
+# ---------------- Level 3 Media ----------------
+[functions.l3-login]
+verify_jwt = false
+
+[functions.l3-subscribe]
+verify_jwt = true
+
+[functions.l3-portal]
+verify_jwt = true
+
+[functions.l3-connect-onboard]
+verify_jwt = true
+
+[functions.l3-checkout]
+verify_jwt = false
+
+# Public delivery bootstrap/consume endpoint. It verifies Stripe payment once,
+# then requires the one-time short-lived entitlement token contract.
+[functions.l3-download]
+verify_jwt = false
+
+[functions.l3-refund]
+verify_jwt = true
+
+[functions.l3-connect-dashboard]
+verify_jwt = true
+
+# ---------------- M Network ----------------
+[functions.mnet-track]
+verify_jwt = false
+
+[functions.mnet-activity]
 verify_jwt = true
