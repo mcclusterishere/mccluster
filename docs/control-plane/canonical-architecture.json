@@ -30,6 +30,14 @@
       "rule": "GPU/desktop/specialized nodes are capability workers. They do not receive Supabase service-role authority and do not become independent control planes."
     }
   },
+  "canonical_orchestration": {
+    "job_system": "ops_agent_jobs",
+    "objective_system": "ops_objectives",
+    "private_conversation_memory": "ai_context",
+    "capability_registry": "core/capabilities/catalog.json",
+    "runner": "core/src/runner.mjs",
+    "tool_broker": "core/src/tool-broker.mjs"
+  },
   "authority": {
     "humans": "Consequential authority: production deploy/rollback authorization, contracts, purchases, legal commitments and other high-impact decisions.",
     "models": "Propose bounded actions through policy gates. Models do not directly merge, deploy, purchase, sign contracts or bypass authorization.",
@@ -39,6 +47,7 @@
     "second Supabase project used as the McCluster control plane",
     "second Cloudflare Worker named mccluster-core",
     "second workflow engine or scheduler duplicating ops_agent_jobs and McCluster Core",
+    "second objective system duplicating ops_objectives",
     "second memory database duplicating private ai_context or canonical durable state",
     "direct model-to-production deploy, merge, purchase or contract authority",
     "compute nodes holding Supabase service-role credentials",
@@ -66,5 +75,9 @@
     "deploy/ovh-dc6fcec",
     "backup/pr93-pre-reconcile-20260913"
   ],
+  "change_control": {
+    "human_and_machine_contracts_change_together": true,
+    "new_parallel_control_plane_roots_forbidden": true
+  },
   "salvage_rule": "Historical branches are evidence, not merge targets. Rebuild useful ideas fresh from current main while preserving current privacy, idempotency, security, deployment and authority contracts."
 }
