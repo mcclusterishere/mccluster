@@ -3,9 +3,21 @@ import { handlePlatformApi } from './platform-api-metered.js';
 import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
 import { enforceApiRateLimit } from './api-rate-limit.js';
+import { handleSignalRequest } from './signals/router.js';
 import { fail, reply } from './lib/http.js';
 
 export { HereTenantAgent } from './here-tenant-agent.js';
+
+async function authUser(req, env) {
+  const authorization = req.headers.get('authorization') || '';
+  if (!authorization.toLowerCase().startsWith('bearer ')) return null;
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  const res = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+    headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization }
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
 
 function healthResponse(request, env) {
   return reply(request, env, {
@@ -22,6 +34,7 @@ function healthResponse(request, env) {
       atomic_metering: true,
       provider_cogs_reconciliation: true,
       byok_fail_closed: true,
+      universal_signal_ingress: true,
     },
     checked_at: new Date().toISOString(),
   });
@@ -37,6 +50,12 @@ export default {
 
       const rateLimitResponse = await enforceApiRateLimit(request, env);
       if (rateLimitResponse) return rateLimitResponse;
+
+      if (url.pathname === '/v1/signals') {
+        const user = await authUser(request, env);
+        const signalResponse = await handleSignalRequest(request, env, user);
+        if (signalResponse) return signalResponse;
+      }
 
       const computeResponse = await handleComputeApi(request, env);
       if (computeResponse) return computeResponse;
