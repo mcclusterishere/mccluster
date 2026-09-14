@@ -37,7 +37,7 @@ function healthySnapshot() {
     compute: { node_count: 0, online: 0, stale_or_offline: 0, status: 'idle', nodes: [] },
     communications: { schema_ready: true, relay_count: 1, enabled_relays: 1, stale_relays: 0, pending_outbox: 0, failed_outbox: 0, paused_threads: 0 },
     prim3: { status: 'ready', godot_available: true, blender_available: true, halo_service_active: true, halo_snapshot_fresh: true, recent_game_failures: 0 },
-    edge: { reachable: true, http_status: 200, latency_ms: 33, service: 'mccluster' },
+    edge: { reachable: true, http_status: 200, latency_ms: 33, service: 'mccluster', deployment_sha: MAIN, deployment_ref: 'main' },
     approvals: { pending_count: 0, pending: [] },
   };
 }
@@ -114,22 +114,59 @@ test('recent post-contract jobs are cryptographically re-verified', () => {
   assert.equal(tampered.invalid, 1);
 });
 
-test('compute freshness and owner approvals are normalized deterministically', () => {
+test('compute freshness uses the canonical node state field', () => {
   const nodes = classifyComputeNodes([
-    { id: 'n1', name: 'gpu-1', status: 'online', last_seen_at: '2026-09-14T19:59:00.000Z' },
-    { id: 'n2', name: 'gpu-2', status: 'online', last_seen_at: '2026-09-14T19:40:00.000Z' },
+    { id: 'n1', display_name: 'gpu-1', state: 'online', last_seen_at: '2026-09-14T19:59:00.000Z' },
+    { id: 'n2', display_name: 'gpu-2', state: 'online', last_seen_at: '2026-09-14T19:40:00.000Z' },
+    { id: 'n3', display_name: 'gpu-3', state: 'quarantined', last_seen_at: '2026-09-14T19:59:30.000Z' },
   ], { nowMs: NOW });
   assert.equal(nodes.online, 1);
-  assert.equal(nodes.stale_or_offline, 1);
+  assert.equal(nodes.stale_or_offline, 2);
+  assert.equal(nodes.nodes[0].state, 'online');
+  assert.equal(nodes.nodes[2].online, false);
+});
 
-  const approvals = deriveApprovals([{
+test('owner approvals are pending only until a later decision exists', () => {
+  const collect = {
     id: 'media-collect-1',
     job_type: 'game_media_collect',
     status: 'done',
     target_id: 'PRIM3',
     updated_at: '2026-09-14T19:50:00.000Z',
     output: { state: 'awaiting_owner_review', approval_packet: { campaign: 'PRIM3', candidates: [{}, {}] } },
-  }]);
-  assert.equal(approvals.pending_count, 1);
-  assert.equal(approvals.pending[0].candidate_count, 2);
+  };
+  const smoke = {
+    id: 'smoke-1',
+    job_type: 'game_branch_smoke',
+    status: 'done',
+    target_id: 'mcclusterishere/hitmans-halo',
+    updated_at: '2026-09-14T19:52:00.000Z',
+    output: { state: 'implementation_validated', evidence: { repository: 'mcclusterishere/hitmans-halo', branch: 'core/job-1', commit: MAIN } },
+  };
+
+  const pending = deriveApprovals([collect, smoke]);
+  assert.equal(pending.pending_count, 2);
+  assert.ok(pending.pending.some((item) => item.type === 'game_studio_batch'));
+  assert.ok(pending.pending.some((item) => item.type === 'game_release'));
+
+  const decided = deriveApprovals([
+    collect,
+    smoke,
+    {
+      id: 'owner-decision-1',
+      job_type: 'game_owner_decision',
+      status: 'done',
+      target_id: 'PRIM3',
+      updated_at: '2026-09-14T19:55:00.000Z',
+      output: { decision: 'approve' },
+    },
+    {
+      id: 'release-decision-1',
+      job_type: 'game_release_decision',
+      status: 'done',
+      updated_at: '2026-09-14T19:56:00.000Z',
+      output: { decision: 'approve', branch: 'core/job-1' },
+    },
+  ]);
+  assert.equal(decided.pending_count, 0);
 });
