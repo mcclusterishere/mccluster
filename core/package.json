@@ -25,7 +25,7 @@
     "test:comms": "node --test test/comms-policy.test.mjs",
     "test:signals": "node --test test/signals.test.mjs",
     "test:initiative-os": "node --test test/signals.test.mjs test/initiative-os.test.mjs",
-    "test:evidence": "node --test test/completion-evidence.test.mjs",
+    "test:evidence": "node --test test/completion-evidence.test.mjs test/completion-evidence-signals.test.mjs",
     "test:system-health": "node --test test/system-health.test.mjs",
     "test:game-studio": "node --test test/game-studio.test.mjs test/game-studio-cycle.test.mjs test/game-release-decision.test.mjs test/game-playtest-contract.test.mjs test/game-spec.test.mjs test/godot-runtime.test.mjs test/staging-gate.test.mjs",
     "test": "node --test test/*.test.mjs",
