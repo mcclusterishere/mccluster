@@ -1,5 +1,6 @@
 import { claimNext, completeJob, failJob, heartbeat, workerId } from './supabase.mjs';
 import { prepareClaimedDagJob } from './objective-dag-store.mjs';
+import { buildCompletionEvidence } from './completion-evidence.mjs';
 import { notifyJobFailure, notifyJobSuccess } from './notifier.mjs';
 import { repoHealth } from './executors/repo-health.mjs';
 import { localAnalysis } from './executors/local-analysis.mjs';
@@ -60,13 +61,24 @@ async function safeNotify(event, fn) {
 async function execute(job) {
   const executor = executors.get(job.job_type);
   if (!executor) throw new Error(`unsupported job type: ${job.job_type}`);
+  const startedAt = new Date().toISOString();
   log('job_started', { job_id: job.id, job_type: job.job_type, target_id: job.target_id, attempt: job.attempts });
   const timer = setInterval(() => { heartbeat(job).catch((error) => log('job_heartbeat_failed', { job_id: job.id, message: error.message })); }, heartbeatMs);
   timer.unref();
   try {
-    const output = await executor(job);
+    const rawOutput = await executor(job);
+    const output = buildCompletionEvidence(job, rawOutput, {
+      startedAt,
+      completedAt: new Date().toISOString(),
+    });
     await completeJob(job, output);
-    log('job_completed', { job_id: job.id, job_type: job.job_type, output_summary: output?.summary || output?.executor || null });
+    log('job_completed', {
+      job_id: job.id,
+      job_type: job.job_type,
+      output_summary: output?.summary || output?.executor || null,
+      evidence_records: output?.completion_evidence?.records?.length || 0,
+      result_sha256: output?.completion_evidence?.result_sha256 || null,
+    });
     await safeNotify('owner_sms', () => notifyJobSuccess(job, output));
   } catch (error) {
     const updated = await failJob(job, error).catch((writeError) => { log('job_failure_write_failed', { job_id: job.id, message: writeError.message }); return null; });

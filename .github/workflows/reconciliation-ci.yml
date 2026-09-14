@@ -89,6 +89,9 @@ jobs:
       - name: Test Initiative OS portfolio planning
         working-directory: core
         run: npm run test:initiative-os
+      - name: Test proof-before-done completion evidence
+        working-directory: core
+        run: npm run test:evidence
       - name: Test autonomous game studio production loop
         working-directory: core
         run: npm run test:game-studio
@@ -102,6 +105,9 @@ jobs:
           grep -F "MCP-Protocol-Version" core/src/tools/mcp-http.mjs
           grep -F "https://api.mccluster.org/v1/media/mcp" core/src/tools/registry.mjs
           grep -F 'ops_agent_jobs' core/src/supabase.mjs
+          grep -F 'buildCompletionEvidence' core/src/runner.mjs
+          grep -F 'assertCompletionEvidence(job, output);' core/src/supabase.mjs
+          grep -F 'no completion evidence policy exists for job type' core/src/completion-evidence.mjs
           grep -F "SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health', 'code_patch'])" core/src/reflection-policy.mjs
           grep -F 'autonomous_draft_only: true' core/src/reflection-policy.mjs
           grep -F 'Never propose deploy, merge' core/src/executors/objective-reflection.mjs

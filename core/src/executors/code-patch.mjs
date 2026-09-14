@@ -74,6 +74,7 @@ export async function codePatch(job) {
   await cleanWorktree(repo, worktree);
   await git(repo, ['branch', '-D', branch], 30_000).catch(() => {});
   await git(repo, ['worktree', 'add', '-b', branch, worktree, 'origin/main'], 120_000);
+  const baseCommit = (await git(worktree, ['rev-parse', 'HEAD'])).stdout.trim();
 
   // Worktrees are shared with the separate mccluster-agent service account.
   await run('chmod', ['-R', 'g+rwX', worktree], { timeoutMs: 30_000 }).catch(() => {});
@@ -108,7 +109,9 @@ export async function codePatch(job) {
       executor: 'code_patch:v1',
       repo: target,
       branch,
+      base_commit: baseCommit,
       changed: false,
+      verification: { git_status_clean: true },
       model: MODEL,
       agent_output_tail: agent.stdout.slice(-12000),
     };
@@ -136,6 +139,7 @@ export async function codePatch(job) {
     'commit', '-m', `core: autonomous job ${short}`,
   ], { cwd: worktree, timeoutMs: 120_000 });
   const commit = (await git(worktree, ['rev-parse', 'HEAD'])).stdout.trim();
+  await git(worktree, ['diff', '--check', baseCommit, commit], 60_000);
 
   let pushed = false;
   let prUrl = null;
@@ -149,6 +153,8 @@ export async function codePatch(job) {
         '',
         `Job: ${job.id}`,
         `Model: ${MODEL}`,
+        `Base commit: ${baseCommit}`,
+        `Produced commit: ${commit}`,
         '',
         'This PR is intentionally draft-only. Core does not auto-merge autonomous code.',
         '',
@@ -173,12 +179,14 @@ export async function codePatch(job) {
     executor: 'code_patch:v1',
     repo: target,
     branch,
+    base_commit: baseCommit,
     commit,
     changed: true,
     files,
     stat,
     pushed,
     draft_pr: prUrl,
+    verification: { git_diff_check: true },
     model: MODEL,
     agent_output_tail: agent.stdout.slice(-12000),
   };
