@@ -31,6 +31,16 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
+    if (path === '/healthz' && request.method === 'GET') {
+      return reply(request, env, {
+        ok: true,
+        service: 'mccluster',
+        contract: 'mccluster-system-health/v1',
+        revision: env.CF_VERSION_METADATA?.id || null,
+        checked_at: new Date().toISOString()
+      });
+    }
+
     try {
       const clientResponse = await handleClientRequest(request, env);
       if (clientResponse) return clientResponse;
