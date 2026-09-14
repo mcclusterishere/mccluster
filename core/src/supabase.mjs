@@ -1,5 +1,6 @@
 import os from 'node:os';
 import { assertCompletionEvidence } from './completion-evidence.mjs';
+import { normalizeSignal } from './signals.mjs';
 
 const SB = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SECRET_KEY = String(process.env.SUPABASE_SECRET_KEY || '');
@@ -243,11 +244,61 @@ export async function hasPendingJob({ orgId, jobType, targetId } = {}) {
   return body.length > 0;
 }
 
-export async function addSignal({ orgId, kind, body, severity = 'info', source = 'mccluster-core', metadata = {} }) {
-  const { body: rows = [] } = await rest('ops_signals', {
+export async function addSignal(input = {}) {
+  const row = normalizeSignal(input);
+  const { body: rows = [] } = await rest('ops_signals?on_conflict=org_id,fingerprint', {
     method: 'POST',
+    headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+    body: JSON.stringify(row),
+  });
+  if (rows.length) return rows[0];
+
+  const params = new URLSearchParams({
+    org_id: `eq.${row.org_id}`,
+    fingerprint: `eq.${row.fingerprint}`,
+    select: '*',
+    limit: '1',
+  });
+  const { body: existing = [] } = await rest(`ops_signals?${params.toString()}`);
+  return existing[0] || null;
+}
+
+export async function recentSignals({ orgId, statuses = ['new', 'queued'], sinceHours = 168, limit = 100 } = {}) {
+  if (!orgId) throw new Error('recentSignals requires orgId');
+  const since = new Date(Date.now() - Math.max(1, Number(sinceHours) || 168) * 3_600_000).toISOString();
+  const params = new URLSearchParams({
+    org_id: `eq.${orgId}`,
+    observed_at: `gte.${since}`,
+    select: '*',
+    order: 'severity.desc,observed_at.desc',
+    limit: String(Math.min(200, Math.max(1, Number(limit) || 100))),
+  });
+  if (Array.isArray(statuses) && statuses.length) params.set('status', `in.(${statuses.map((value) => String(value).replace(/[^a-z_]/g, '')).join(',')})`);
+  const { body = [] } = await rest(`ops_signals?${params.toString()}`);
+  return body;
+}
+
+export async function getSignal({ orgId, signalId } = {}) {
+  if (!orgId || signalId == null) throw new Error('getSignal requires orgId and signalId');
+  const params = new URLSearchParams({ org_id: `eq.${orgId}`, id: `eq.${signalId}`, select: '*', limit: '1' });
+  const { body = [] } = await rest(`ops_signals?${params.toString()}`);
+  return body[0] || null;
+}
+
+export async function markSignal({ orgId, signalId, status, objectiveId = null } = {}) {
+  if (!orgId || signalId == null) throw new Error('markSignal requires orgId and signalId');
+  if (!['new', 'queued', 'consumed', 'ignored', 'failed'].includes(String(status))) throw new Error(`invalid signal status ${status}`);
+  const now = new Date().toISOString();
+  const params = new URLSearchParams({ org_id: `eq.${orgId}`, id: `eq.${signalId}` });
+  const { body: rows = [] } = await rest(`ops_signals?${params.toString()}`, {
+    method: 'PATCH',
     headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({ org_id: orgId, kind, body, severity, source, metadata }),
+    body: JSON.stringify({
+      status,
+      processed_at: ['consumed', 'ignored', 'failed'].includes(status) ? now : null,
+      objective_id: objectiveId || null,
+      updated_at: now,
+    }),
   });
   return rows[0] || null;
 }
