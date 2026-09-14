@@ -184,6 +184,41 @@ export async function recentObjectives({ orgId, limit = 25 } = {}) {
   return body;
 }
 
+export async function recentSignals({ orgId, sinceHours = 168, limit = 100, statuses = ['new', 'processed'] } = {}) {
+  const since = new Date(Date.now() - Math.max(1, Number(sinceHours)) * 3_600_000).toISOString();
+  const params = new URLSearchParams({
+    observed_at: `gte.${since}`,
+    select: '*',
+    order: 'observed_at.desc',
+    limit: String(Math.min(200, Math.max(1, Number(limit) || 100))),
+  });
+  if (orgId) params.set('org_id', `eq.${orgId}`);
+  if (Array.isArray(statuses) && statuses.length) params.set('status', `in.(${statuses.map((value) => String(value).replace(/[^a-z_]/gi, '')).join(',')})`);
+  const { body = [] } = await rest(`ops_signals?${params.toString()}`);
+  return body;
+}
+
+export async function signalById({ orgId, signalId } = {}) {
+  if (!orgId || signalId === null || signalId === undefined || signalId === '') return null;
+  const params = new URLSearchParams({ org_id: `eq.${orgId}`, id: `eq.${signalId}`, select: '*', limit: '1' });
+  const { body = [] } = await rest(`ops_signals?${params.toString()}`);
+  return body[0] || null;
+}
+
+export async function markSignalProcessed({ orgId, signalId, status = 'processed', objectiveId = null } = {}) {
+  if (!orgId || signalId === null || signalId === undefined || signalId === '') return null;
+  if (!['processed', 'ignored', 'failed'].includes(status)) throw new Error(`unsupported signal status: ${status}`);
+  const params = new URLSearchParams({ org_id: `eq.${orgId}`, id: `eq.${signalId}` });
+  const patch = { status, updated_at: new Date().toISOString() };
+  if (objectiveId) patch.objective_id = objectiveId;
+  const { body = [] } = await rest(`ops_signals?${params.toString()}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify(patch),
+  });
+  return body[0] || null;
+}
+
 export async function enqueueJob({
   jobId,
   orgId,
@@ -243,11 +278,43 @@ export async function hasPendingJob({ orgId, jobType, targetId } = {}) {
   return body.length > 0;
 }
 
-export async function addSignal({ orgId, kind, body, severity = 'info', source = 'mccluster-core', metadata = {} }) {
-  const { body: rows = [] } = await rest('ops_signals', {
+export async function addSignal({
+  orgId,
+  signalType,
+  source = 'mccluster-core',
+  sourceRef = null,
+  summary,
+  severity = 50,
+  confidence = 1,
+  payload = {},
+  fingerprint = null,
+  observedAt = new Date().toISOString(),
+} = {}) {
+  if (!orgId || !signalType) throw new Error('addSignal requires orgId and signalType');
+  const row = {
+    org_id: orgId,
+    signal_type: String(signalType).slice(0, 120),
+    source: String(source).slice(0, 120),
+    source_ref: sourceRef ? String(sourceRef).slice(0, 500) : null,
+    severity: Math.min(100, Math.max(0, Number(severity) || 0)),
+    confidence: Math.min(1, Math.max(0, Number(confidence) || 0)),
+    payload: { ...(payload && typeof payload === 'object' ? payload : {}), ...(summary ? { summary: String(summary).slice(0, 4000) } : {}) },
+    fingerprint: fingerprint ? String(fingerprint).slice(0, 128) : null,
+    status: 'new',
+    observed_at: observedAt,
+    updated_at: new Date().toISOString(),
+  };
+  const endpoint = fingerprint ? 'ops_signals?on_conflict=org_id,fingerprint' : 'ops_signals';
+  const { body: rows = [] } = await rest(endpoint, {
     method: 'POST',
-    headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({ org_id: orgId, kind, body, severity, source, metadata }),
+    headers: { Prefer: fingerprint ? 'resolution=ignore-duplicates,return=representation' : 'return=representation' },
+    body: JSON.stringify(row),
   });
-  return rows[0] || null;
+  if (rows[0]) return rows[0];
+  if (fingerprint) {
+    const params = new URLSearchParams({ org_id: `eq.${orgId}`, fingerprint: `eq.${fingerprint}`, select: '*', limit: '1' });
+    const { body = [] } = await rest(`ops_signals?${params.toString()}`);
+    return body[0] || null;
+  }
+  return null;
 }
