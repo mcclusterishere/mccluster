@@ -1,5 +1,6 @@
 import { buildPortfolioPlan } from '../initiative-os.mjs';
-import { enqueueJob, recentJobs, recentObjectives } from '../supabase.mjs';
+import { signalToPortfolioRecord } from '../signal-portfolio.mjs';
+import { enqueueJob, recentJobs, recentObjectives, recentSignals } from '../supabase.mjs';
 
 function bounded(value, max) {
   return String(value ?? '').trim().slice(0, max);
@@ -15,21 +16,32 @@ export async function portfolioPlan(job) {
   if (!job.org_id) throw new Error('portfolio_plan requires org_id');
 
   const objectiveLimit = positiveInt(job.input?.objective_limit, 100, 100);
+  const signalLimit = positiveInt(job.input?.signal_limit, 100, 200);
   const recentJobLimit = positiveInt(job.input?.recent_job_limit, 75, 100);
   const reflectionCount = positiveInt(job.input?.reflection_count, 3, 3);
   const sinceHours = positiveInt(job.input?.since_hours, 24, 168) || 24;
+  const signalSinceHours = positiveInt(job.input?.signal_since_hours, 168, 24 * 90) || 168;
   const portfolio = bounded(job.input?.portfolio || job.target_id || 'McCluster', 500) || 'McCluster';
 
-  const [objectives, jobs] = await Promise.all([
+  const [objectives, signals, jobs] = await Promise.all([
     recentObjectives({ orgId: job.org_id, limit: objectiveLimit || 100 }),
+    recentSignals({ orgId: job.org_id, sinceHours: signalSinceHours, limit: signalLimit || 100 }),
     recentJobs({ orgId: job.org_id, sinceHours, limit: recentJobLimit || 75 }),
   ]);
 
+  const signalRecords = signals.map(signalToPortfolioRecord);
   const plan = buildPortfolioPlan({
-    objectives,
+    objectives: [...objectives, ...signalRecords],
     recentJobs: jobs,
-    maxInitiatives: positiveInt(job.input?.max_initiatives, 20, 50) || 20,
+    maxInitiatives: positiveInt(job.input?.max_initiatives, 30, 50) || 30,
   });
+  plan.canonical_objective_count = objectives.length;
+  plan.signal_count = signals.length;
+  plan.source_counts = {
+    ops_objectives: objectives.length,
+    ops_signals: signals.length,
+    recent_jobs: jobs.length,
+  };
 
   const queuedReflections = [];
   for (const initiative of plan.top_initiatives.slice(0, reflectionCount)) {
@@ -37,7 +49,7 @@ export async function portfolioPlan(job) {
       `Advance the ${initiative.initiative} initiative inside ${initiative.project}.`,
       `This was selected by Initiative OS with score ${initiative.score}.`,
       initiative.blocked ? 'Prioritize identifying and resolving the blocker using reversible evidence-gathering work.' : 'Identify the highest-value reversible next step that can run unattended.',
-      `Canonical objective ids: ${initiative.objective_ids.join(', ') || 'none'}.`,
+      `Canonical objective/signal ids: ${initiative.objective_ids.join(', ') || 'none'}.`,
     ].join(' ');
 
     const created = await enqueueJob({
@@ -55,6 +67,7 @@ export async function portfolioPlan(job) {
         project: initiative.project,
         initiative: initiative.initiative,
         department: initiative.department,
+        source_ids: initiative.objective_ids,
       },
     });
 
@@ -69,9 +82,9 @@ export async function portfolioPlan(job) {
   }
 
   return {
-    executor: 'portfolio_plan:v1',
+    executor: 'portfolio_plan:v2',
     portfolio,
-    summary: `Ranked ${plan.initiative_count} active initiatives and queued ${queuedReflections.length} bounded reflections.`,
+    summary: `Ranked ${plan.initiative_count} initiatives from ${objectives.length} objectives and ${signals.length} signals; queued ${queuedReflections.length} bounded reflections.`,
     plan,
     queued_reflections: queuedReflections,
     safety: {
