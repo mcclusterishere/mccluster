@@ -14,16 +14,24 @@ This document is the human-readable architecture authority. The machine-readable
 | Source and promotion | `mcclusterishere/mccluster` | source, CI, reviewed promotion, deployment refs |
 | Specialized compute | compute-node protocol | GPU/desktop/specialized execution only |
 
+## Canonical orchestration
+
+The canonical durable job system is `ops_agent_jobs`. The canonical objective system is `ops_objectives`. Private conversation memory lives under `ai_context`; public jobs store bounded references rather than raw private transcripts. Semantic capabilities are resolved through `core/capabilities/catalog.json`, executed by `core/src/runner.mjs`, and exposed to Core through `core/src/tool-broker.mjs`.
+
+Conversation ingestion, objective synthesis, dependency-aware plans, communications turns, game-studio jobs, code-patch drafts, host health, and future autonomous work must converge on those canonical systems instead of inventing parallel queues, objective stores, schedulers, workflow engines, or memory databases.
+
 ## Architectural laws
 
 1. Supabase is canonical durable truth. Do not create a second McCluster control-plane database or memory database.
 2. Cloudflare is the public edge, not the durable brain. There is one canonical Worker named `mccluster`; do not create `mccluster-core` as a second Worker.
-3. OVH McCluster Core is the persistent execution plane. Do not create a parallel scheduler or workflow engine that duplicates `ops_agent_jobs`, objective planning, or Core execution.
+3. OVH McCluster Core is the persistent execution plane. Do not create a parallel scheduler or workflow engine that duplicates `ops_agent_jobs`, `ops_objectives`, objective planning, or Core execution.
 4. Products are workloads. They consume shared identity, data, capabilities and execution rather than creating their own platform spine.
 5. Compute nodes are workers. They do not receive Supabase service-role credentials or independent control-plane authority.
 6. Models propose bounded actions through policy gates. Models do not directly merge, deploy, purchase, sign contracts, or bypass human authority.
 7. Production promotion flows through tested source and `deploy/ovh-production`; arbitrary historical branches are never production architecture authorities.
 8. Historical branches may be mined for ideas, but useful concepts must be rebuilt fresh from current `main`.
+9. The human-readable and machine-readable architecture contracts change together. A PR may not silently change one without the other.
+10. New root-level Fabric, event-mesh, scheduler, or orchestrator control planes are forbidden unless this architecture is deliberately revised in the same reviewed change.
 
 ## Superseded branch quarantine
 
@@ -76,6 +84,7 @@ Do not introduce:
 - a second Supabase project as the McCluster control plane;
 - a second Worker named `mccluster-core`;
 - a second scheduler/workflow engine duplicating Core + `ops_agent_jobs`;
+- a second objective system duplicating `ops_objectives`;
 - a second memory store duplicating private `ai_context` or canonical durable state;
 - direct model-to-production deploy/merge/purchase/contract authority;
 - Supabase service-role credentials on compute nodes;

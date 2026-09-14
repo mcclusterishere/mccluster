@@ -36,6 +36,13 @@ jobs:
           if (a.planes?.execution?.system !== 'ovh-mccluster-core') fail('canonical execution plane changed');
           if (a.planes?.execution?.source !== 'core') fail('canonical Core source moved');
           if (a.planes?.execution?.deployment_ref !== 'deploy/ovh-production') fail('canonical deployment ref changed');
+          if (a.canonical_orchestration?.job_system !== 'ops_agent_jobs') fail('canonical job system changed');
+          if (a.canonical_orchestration?.objective_system !== 'ops_objectives') fail('canonical objective system changed');
+          if (a.canonical_orchestration?.private_conversation_memory !== 'ai_context') fail('private conversation memory authority changed');
+          if (a.canonical_orchestration?.runner !== 'core/src/runner.mjs') fail('canonical runner moved');
+          if (a.canonical_orchestration?.tool_broker !== 'core/src/tool-broker.mjs') fail('canonical tool broker moved');
+          if (a.change_control?.human_and_machine_contracts_change_together !== true) fail('paired architecture change control missing');
+          if (a.change_control?.new_parallel_control_plane_roots_forbidden !== true) fail('parallel control-plane root guard missing');
           if (!Array.isArray(a.superseded_branches) || !a.superseded_branches.length) fail('superseded branch quarantine missing');
           if (!Array.isArray(a.forbidden_architecture) || !a.forbidden_architecture.length) fail('forbidden architecture rules missing');
           NODE
@@ -56,6 +63,48 @@ jobs:
             process.exit(1);
           }
           NODE
+
+      - name: Require human and machine architecture law to change together
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          human=0
+          machine=0
+          grep -Fxq 'docs/control-plane/CANONICAL-ARCHITECTURE.md' <<<"$changed" && human=1 || true
+          grep -Fxq 'docs/control-plane/canonical-architecture.json' <<<"$changed" && machine=1 || true
+          if [ "$human" -ne "$machine" ]; then
+            echo 'Architecture law drift detected: human and machine contracts must change together.' >&2
+            exit 1
+          fi
+
+      - name: Reject new root-level parallel control planes
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git diff --name-only --diff-filter=A "$BASE_SHA" "$HEAD_SHA" > /tmp/added-paths
+          if grep -Ei '^(fabric|event-mesh|event_mesh|scheduler|orchestrator)/' /tmp/added-paths; then
+            echo 'New root-level parallel control-plane directory detected.' >&2
+            echo 'Extend McCluster Core or deliberately revise the canonical architecture contract.' >&2
+            exit 1
+          fi
+
+      - name: Enforce canonical job, objective, and capability systems
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'ops_agent_jobs' core/src/supabase.mjs
+          grep -F 'ops_objectives' core/src/objective-store.mjs
+          grep -F 'CORE_CAPABILITY_BINDINGS_JSON' core/src/capabilities/registry.mjs
+          test -f core/src/runner.mjs
+          test -f core/src/tool-broker.mjs
+          test -f core/capabilities/catalog.json
 
       - name: Enforce single canonical public edge
         shell: bash
@@ -113,6 +162,8 @@ jobs:
           echo '- Supabase is canonical durable truth' >> "$GITHUB_STEP_SUMMARY"
           echo '- Cloudflare Worker `mccluster` is the public edge' >> "$GITHUB_STEP_SUMMARY"
           echo '- OVH McCluster Core is the persistent execution plane' >> "$GITHUB_STEP_SUMMARY"
+          echo '- `ops_agent_jobs` and `ops_objectives` remain canonical orchestration state' >> "$GITHUB_STEP_SUMMARY"
           echo '- `deploy/ovh-production` is the production promotion pointer' >> "$GITHUB_STEP_SUMMARY"
           echo '- known superseded architecture branches are quarantined' >> "$GITHUB_STEP_SUMMARY"
+          echo '- architecture docs and machine manifest must change together' >> "$GITHUB_STEP_SUMMARY"
           echo '- products and compute nodes remain workloads, not parallel control planes' >> "$GITHUB_STEP_SUMMARY"
