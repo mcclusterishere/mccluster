@@ -49,11 +49,22 @@
     "reconcile/autonomy-fabric-stack-v1",
     "reconcile/autonomy-fabric-stack-v1-clean",
     "reconcile/autonomy-fabric-stack-v2",
+    "reconcile/core-harness-20260912",
+    "db/reconcile-live-fabric-v1",
+    "openai/three-node-event-mesh-v1",
+    "grok/ai-harness-plane",
     "core/runner-v0",
     "core/runtime-v1",
     "core/node-agent-v1",
+    "core/node-agent-v1-rebuild",
+    "core/autonomous-game-studio-v0.1",
+    "core/autonomous-game-studio-v0.2-reconciled",
     "control-plane/agent-kit",
-    "control-plane/kill-core-name-on-main"
+    "control-plane/kill-core-name-on-main",
+    "ops/bootstrap-ovh-now",
+    "ops/ovh-repo-sync",
+    "deploy/ovh-dc6fcec",
+    "backup/pr93-pre-reconcile-20260913"
   ],
   "salvage_rule": "Historical branches are evidence, not merge targets. Rebuild useful ideas fresh from current main while preserving current privacy, idempotency, security, deployment and authority contracts."
 }
