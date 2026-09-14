@@ -83,12 +83,14 @@ export function verifyRecentCompletionEvidence(jobs, { proofContractSince = PROO
 export function classifyComputeNodes(nodes, { nowMs = Date.now(), onlineWindowMs = 5 * 60_000 } = {}) {
   const normalized = (Array.isArray(nodes) ? nodes : []).map((node) => {
     const seenAge = ageMs(node?.last_seen_at, nowMs);
-    const online = seenAge !== null && seenAge <= onlineWindowMs && text(node?.status).toLowerCase() !== 'disabled';
+    const state = text(node?.state || node?.status || 'unknown').toLowerCase();
+    const unavailable = ['disabled', 'revoked', 'quarantined'].includes(state);
+    const online = seenAge !== null && seenAge <= onlineWindowMs && !unavailable && state === 'online';
     return {
       id: node?.id || null,
       name: node?.display_name || node?.name || null,
-      status: node?.status || 'unknown',
-      trust_state: node?.trust_state || null,
+      state,
+      status: state,
       last_seen_at: node?.last_seen_at || null,
       age_ms: seenAge,
       online,
@@ -220,18 +222,49 @@ export function aggregateSystemHealth(snapshot, { nowMs = Date.now() } = {}) {
 }
 
 export function deriveApprovals(jobs) {
+  const source = Array.isArray(jobs) ? jobs : [];
+  const ownerDecisions = source.filter((job) => job?.job_type === 'game_owner_decision' && job?.status === 'done');
+  const releaseDecisions = new Set(source
+    .filter((job) => job?.job_type === 'game_release_decision' && job?.status === 'done')
+    .map((job) => text(job?.output?.branch))
+    .filter(Boolean));
   const pending = [];
-  for (const job of Array.isArray(jobs) ? jobs : []) {
+
+  for (const job of source) {
     if (job?.status !== 'done') continue;
     if (job.job_type === 'game_media_collect' && job.output?.state === 'awaiting_owner_review') {
-      pending.push({
-        type: 'game_studio_batch',
-        job_id: job.id,
-        campaign: job.output?.approval_packet?.campaign || job.target_id || 'PRIM3',
-        candidate_count: Array.isArray(job.output?.approval_packet?.candidates) ? job.output.approval_packet.candidates.length : 0,
-        updated_at: job.updated_at,
+      const campaign = text(job.output?.approval_packet?.campaign || job.target_id || 'PRIM3');
+      const jobTime = Date.parse(String(job.updated_at || ''));
+      const alreadyDecided = ownerDecisions.some((decision) => {
+        const decisionCampaign = text(decision.target_id || decision.output?.campaign || '');
+        const decisionTime = Date.parse(String(decision.updated_at || ''));
+        return decisionCampaign === campaign && Number.isFinite(jobTime) && Number.isFinite(decisionTime) && decisionTime >= jobTime;
       });
+      if (!alreadyDecided) {
+        pending.push({
+          type: 'game_studio_batch',
+          job_id: job.id,
+          campaign,
+          candidate_count: Array.isArray(job.output?.approval_packet?.candidates) ? job.output.approval_packet.candidates.length : 0,
+          updated_at: job.updated_at,
+        });
+      }
+    }
+
+    if (job.job_type === 'game_branch_smoke' && job.output?.state === 'implementation_validated') {
+      const branch = text(job.output?.evidence?.branch || job.input?.branch);
+      if (branch && !releaseDecisions.has(branch)) {
+        pending.push({
+          type: 'game_release',
+          job_id: job.id,
+          repository: job.output?.evidence?.repository || job.target_id || null,
+          branch,
+          commit_sha: job.output?.evidence?.commit || null,
+          updated_at: job.updated_at,
+        });
+      }
     }
   }
+
   return { pending_count: pending.length, pending: pending.slice(0, 20), newest_at: newestTimestamp(pending) };
 }
