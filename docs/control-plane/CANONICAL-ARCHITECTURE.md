@@ -27,18 +27,37 @@ This document is the human-readable architecture authority. The machine-readable
 
 ## Superseded branch quarantine
 
-The following branches are retained only as historical evidence and are explicitly not merge targets:
+The branches below are retained only as historical evidence and are explicitly not merge targets. The architecture CI contract rejects pull requests whose head branch is listed here through the machine-readable manifest.
+
+### Fabric / event-mesh era
 
 - `reconcile/autonomy-fabric-stack-v1`
 - `reconcile/autonomy-fabric-stack-v1-clean`
 - `reconcile/autonomy-fabric-stack-v2`
+- `reconcile/core-harness-20260912`
+- `db/reconcile-live-fabric-v1`
+- `openai/three-node-event-mesh-v1`
+- `grok/ai-harness-plane`
+
+### Superseded Core runtime variants
+
 - `core/runner-v0`
 - `core/runtime-v1`
 - `core/node-agent-v1`
+- `core/node-agent-v1-rebuild`
+- `core/autonomous-game-studio-v0.1`
+- `core/autonomous-game-studio-v0.2-reconciled`
+
+### Superseded control/deployment paths
+
 - `control-plane/agent-kit`
 - `control-plane/kill-core-name-on-main`
+- `ops/bootstrap-ovh-now`
+- `ops/ovh-repo-sync`
+- `deploy/ovh-dc6fcec`
+- `backup/pr93-pre-reconcile-20260913`
 
-The CI architecture contract rejects pull requests whose head branch is one of these names.
+This quarantine does **not** mean the history is useless. It means those branches cannot define current system shape. Their useful ideas must pass through the salvage protocol below.
 
 ## Salvage protocol
 
