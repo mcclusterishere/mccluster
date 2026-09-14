@@ -1,4 +1,5 @@
 import os from 'node:os';
+import { assertCompletionEvidence } from './completion-evidence.mjs';
 
 const SB = String(process.env.SUPABASE_URL || '').replace(/\/$/, '');
 const SECRET_KEY = String(process.env.SUPABASE_SECRET_KEY || '');
@@ -118,13 +119,14 @@ export async function heartbeat(job) {
 }
 
 export async function completeJob(job, output) {
+  assertCompletionEvidence(job, output);
   const now = new Date().toISOString();
   const { body: rows = [] } = await rest(`ops_agent_jobs?${ownedRunningParams(job)}`, {
     method: 'PATCH',
     headers: { Prefer: 'return=representation' },
     body: JSON.stringify({
       status: 'done',
-      output: output && typeof output === 'object' ? output : { result: output ?? null },
+      output,
       locked_at: null,
       locked_by: null,
       last_error: null,
