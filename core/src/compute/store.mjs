@@ -145,7 +145,9 @@ export async function enqueueComputeTask({ orgId, capability, implementation = n
   return { task: result?.task || null, replayed: Boolean(result?.replayed) };
 }
 
-export async function listNodes({ orgId, liveOnly = false, limit = 100 } = {}) {
+export async function listNodes(options = {}) {
+  const normalized = typeof options === 'string' ? { orgId: options } : (options || {});
+  const { orgId, liveOnly = false, limit = 100 } = normalized;
   const params = new URLSearchParams({
     select: 'id,org_id,display_name,key_fingerprint,protocol_version,agent_version,state,inventory,capabilities,labels,load,max_leases,enrolled_at,last_seen_at,revoked_at,updated_at',
     order: 'last_seen_at.desc',
