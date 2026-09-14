@@ -143,17 +143,33 @@ function policyEvidence(job, output) {
 
     case 'objective_synthesis': {
       requireValue(job, ['ignore', 'create', 'update'].includes(output.action), 'objective synthesis must report ignore|create|update');
-      requireValue(job, Boolean(text(output?.source?.conversation_id)) && Boolean(text(output?.source?.fingerprint)), 'objective synthesis must retain its private context reference and source fingerprint');
-      records.push({
-        kind: 'private_context_reference',
-        conversation_id: text(output.source.conversation_id),
-        fingerprint: text(output.source.fingerprint),
-        action: output.action,
-      });
+      requireValue(job, Boolean(text(output?.source?.fingerprint)), 'objective synthesis must retain its source fingerprint');
+      const conversationId = text(output?.source?.conversation_id);
+      const signalId = text(output?.source?.signal_id);
+      requireValue(job, Boolean(conversationId || signalId), 'objective synthesis must retain a conversation or canonical signal reference');
+      if (conversationId) {
+        records.push({
+          kind: 'private_context_reference',
+          conversation_id: conversationId,
+          signal_id: signalId || null,
+          fingerprint: text(output.source.fingerprint),
+          action: output.action,
+        });
+      } else {
+        records.push({
+          kind: 'canonical_signal_reference',
+          signal_id: signalId,
+          source_type: text(output?.source?.source_type),
+          source_ref: text(output?.source?.source_ref) || null,
+          fingerprint: text(output.source.fingerprint),
+          action: output.action,
+        });
+      }
       if (output.action === 'create' || output.action === 'update') {
         requireValue(job, Boolean(text(output?.objective?.id)), `${output.action} synthesis must report the mutated objective id`);
         records.push({ kind: 'database_mutation', table: 'ops_objectives', record_id: text(output.objective.id), action: output.action });
       }
+      if (signalId) records.push({ kind: 'database_mutation', table: 'ops_signals', record_id: signalId, action: output.action === 'ignore' ? 'ignored' : 'processed' });
       if (output.reflection_job_id) records.push(childJobs(job, [output.reflection_job_id], 'synthesis_reflection'));
       break;
     }
