@@ -1,0 +1,108 @@
+name: Canonical Architecture Contract
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  architecture-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Reject direct resurrection of superseded architecture branches
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          case "$HEAD_REF" in
+            db/reconcile-live-fabric-v1|reconcile/autonomy-fabric-stack-v1|reconcile/autonomy-fabric-stack-v1-clean|reconcile/autonomy-fabric-stack-v2)
+              echo "Direct merge from superseded architecture branch is forbidden: $HEAD_REF" >&2
+              echo "Rebuild required changes on a fresh branch from current main." >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Validate machine-readable architecture manifest
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const p = 'architecture/platform-contract.json';
+          const c = JSON.parse(fs.readFileSync(p, 'utf8'));
+          const expected = {
+            supabase: 'durable_truth',
+            cloudflare: 'public_edge',
+            ovh_core: 'execution_intelligence',
+            github: 'source_and_promotion',
+            compute_nodes: 'specialized_execution',
+            products: 'workloads',
+          };
+          if (c.status !== 'canonical') throw new Error('architecture contract must be canonical');
+          if (c.principle !== 'Products are workloads. McCluster is the platform.') throw new Error('platform principle drifted');
+          for (const [plane, role] of Object.entries(expected)) {
+            if (c.planes?.[plane]?.role !== role) throw new Error(`${plane} role drifted: expected ${role}`);
+          }
+          const blocked = new Set([
+            'db/reconcile-live-fabric-v1',
+            'reconcile/autonomy-fabric-stack-v1',
+            'reconcile/autonomy-fabric-stack-v1-clean',
+            'reconcile/autonomy-fabric-stack-v2',
+          ]);
+          for (const branch of blocked) {
+            if (!c.superseded_branches?.includes(branch)) throw new Error(`missing superseded branch: ${branch}`);
+          }
+          if (c.rules?.single_core_job_system !== 'ops_agent_jobs') throw new Error('canonical job system drifted');
+          if (c.rules?.single_objective_system !== 'ops_objectives') throw new Error('canonical objective system drifted');
+          if (c.rules?.single_durable_truth_plane !== true) throw new Error('multiple durable truth planes are forbidden');
+          if (c.rules?.products_must_not_create_parallel_control_planes !== true) throw new Error('product parallel control planes must remain forbidden');
+          for (const [name, path] of Object.entries(c.canonical_paths || {})) {
+            if (name === 'production_deploy_ref') continue;
+            if (!fs.existsSync(path)) throw new Error(`canonical path missing: ${name} -> ${path}`);
+          }
+          console.log('Canonical architecture manifest validated.');
+          NODE
+
+      - name: Assert canonical runtime systems still exist
+        run: |
+          set -euo pipefail
+          grep -F 'ops_agent_jobs' core/src/supabase.mjs
+          grep -F 'ops_objectives' core/src/objective-store.mjs
+          grep -F 'deploy/ovh-production' .github/workflows/promote-ovh-production.yml
+          grep -F 'deploy/ovh-production' scripts/mccluster-vps-reconcile.sh
+          grep -F 'CORE_CAPABILITY_BINDINGS_JSON' core/src/capabilities/registry.mjs
+          test -f docs/control-plane/CANONICAL-PLATFORM-ARCHITECTURE.md
+
+      - name: Reject new root-level parallel control planes
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git diff --name-only --diff-filter=A "$BASE_SHA" "$HEAD_SHA" > /tmp/added-paths
+          if grep -Ei '^(fabric|event-mesh|event_mesh|scheduler|orchestrator)/' /tmp/added-paths; then
+            echo 'New root-level parallel control-plane directory detected.' >&2
+            echo 'Extend the canonical platform instead, or explicitly revise the architecture contract.' >&2
+            exit 1
+          fi
+
+      - name: Architecture contract summary
+        run: |
+          echo '### Canonical platform architecture verified' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Supabase: durable truth' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Cloudflare: public edge/auth/routing' >> "$GITHUB_STEP_SUMMARY"
+          echo '- OVH Core: execution/intelligence' >> "$GITHUB_STEP_SUMMARY"
+          echo '- GitHub: source/CI/promotion' >> "$GITHUB_STEP_SUMMARY"
+          echo '- compute nodes: bounded specialized execution' >> "$GITHUB_STEP_SUMMARY"
+          echo '- products: workloads, not parallel platforms' >> "$GITHUB_STEP_SUMMARY"
+          echo '- known Fabric-era branches cannot be merged directly' >> "$GITHUB_STEP_SUMMARY"
