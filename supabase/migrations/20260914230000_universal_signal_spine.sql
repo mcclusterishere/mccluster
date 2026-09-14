@@ -28,7 +28,6 @@ create index if not exists ops_signals_objective_idx
 alter table public.ops_signals enable row level security;
 revoke all on table public.ops_signals from public, anon, authenticated;
 grant select, insert, update, delete on table public.ops_signals to service_role;
-grant usage, select on sequence public.ops_signals_id_seq to service_role;
 
 comment on table public.ops_signals is
   'Canonical McCluster signal intake spine. CRM outreach columns remain for backwards compatibility; universal provenance/content lives in source/source_ref/payload/fingerprint.';
