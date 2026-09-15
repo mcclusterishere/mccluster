@@ -87,7 +87,9 @@ export function normalizeSignal(input = {}) {
 
 export function normalizeSignalRecord(record = {}) {
   const payload = record?.payload && typeof record.payload === 'object' && !Array.isArray(record.payload) ? record.payload : {};
-  const metadata = payload.metadata && typeof payload.metadata === 'object' && !Array.isArray(payload.metadata) ? payload.metadata : {};
+  const metadata = payload.metadata && typeof payload.metadata === 'object' && !Array.isArray(payload.metadata)
+    ? payload.metadata
+    : (record?.metadata && typeof record.metadata === 'object' && !Array.isArray(record.metadata) ? record.metadata : {});
   return {
     id: record.id == null ? '' : String(record.id),
     org_id: text(record.org_id, 80),
@@ -96,7 +98,7 @@ export function normalizeSignalRecord(record = {}) {
     source_ref: text(record.source_ref, 500) || null,
     severity: normalizeSeverity(record.severity),
     confidence: clamp(Number.isFinite(Number(record.confidence)) ? Number(record.confidence) : 0.5, 0, 1),
-    content: text(payload.content ?? record.body, 24_000),
+    content: text(payload.content ?? record.content ?? record.body, 24_000),
     metadata,
     fingerprint: text(record.fingerprint, 128),
     status: text(record.status, 40) || 'new',
