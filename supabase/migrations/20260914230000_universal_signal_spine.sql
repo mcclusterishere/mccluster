@@ -16,8 +16,10 @@ alter table public.ops_signals add constraint ops_signals_severity_check check (
 alter table public.ops_signals drop constraint if exists ops_signals_confidence_check;
 alter table public.ops_signals add constraint ops_signals_confidence_check check (confidence between 0 and 1);
 
+-- A regular unique index is intentional here: PostgREST's on_conflict target can
+-- infer it directly, and PostgreSQL still permits multiple NULL fingerprints.
 create unique index if not exists ops_signals_org_fingerprint_uq
-  on public.ops_signals(org_id, fingerprint) where fingerprint is not null;
+  on public.ops_signals(org_id, fingerprint);
 create index if not exists ops_signals_intake_idx
   on public.ops_signals(org_id, status, severity desc, observed_at desc);
 create index if not exists ops_signals_source_idx
@@ -58,7 +60,7 @@ begin
       'metadata',jsonb_build_object('thread_id',new.thread_id,'sender_type',new.sender_type,'message_status',new.status),
       'provenance',jsonb_build_object('source','sms','source_ref',new.id::text)
     ), fp, 'new', coalesce(new.occurred_at, now())
-  ) on conflict (org_id, fingerprint) where fingerprint is not null do nothing;
+  ) on conflict (org_id, fingerprint) do nothing;
   return new;
 end $$;
 revoke all on function public.mccluster_signal_from_comms_message() from public, anon, authenticated;
@@ -84,7 +86,7 @@ begin
       'metadata',coalesce(new.meta,'{}'::jsonb) || jsonb_build_object('conversation_id',new.conv_id,'author',new.author),
       'provenance',jsonb_build_object('source',lower(src),'source_ref',new.id::text)
     ), fp, 'new', coalesce(new.at, now())
-  ) on conflict (org_id, fingerprint) where fingerprint is not null do nothing;
+  ) on conflict (org_id, fingerprint) do nothing;
   return new;
 end $$;
 revoke all on function public.mccluster_signal_from_inbox_message() from public, anon, authenticated;
@@ -110,7 +112,7 @@ begin
       'metadata',coalesce(new.payload,'{}'::jsonb) || jsonb_build_object('trace_id',new.trace_id,'origin_node',new.origin_node,'content_hash',new.content_hash),
       'provenance',jsonb_build_object('source','fabric','source_ref',new.event_id::text)
     ), fp, 'new', coalesce(new.occurred_at, now())
-  ) on conflict (org_id, fingerprint) where fingerprint is not null do nothing;
+  ) on conflict (org_id, fingerprint) do nothing;
   return new;
 end $$;
 revoke all on function public.mccluster_signal_from_fabric_event() from public, anon, authenticated;
