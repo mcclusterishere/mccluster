@@ -13,12 +13,7 @@ function deterministicUuid(hex) {
 }
 
 function serviceHeaders(env, extra = {}) {
-  return {
-    apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-    authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-    'content-type': 'application/json',
-    ...extra,
-  };
+  return { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`, 'content-type': 'application/json', ...extra };
 }
 
 async function readExisting(env, jobId) {
@@ -29,9 +24,33 @@ async function readExisting(env, jobId) {
   return rows?.[0] || null;
 }
 
+async function recordConversationSignal(env, { orgId, provider, conversationId, receiptId, fingerprint, observedAt }) {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/ops_signals?on_conflict=org_id,fingerprint`, {
+    method: 'POST',
+    headers: serviceHeaders(env, { Prefer: 'resolution=ignore-duplicates,return=minimal' }),
+    body: JSON.stringify({
+      org_id: orgId,
+      signal_type: 'private_conversation_receipt',
+      source: provider,
+      source_ref: conversationId,
+      severity: 35,
+      confidence: 1,
+      fingerprint,
+      status: 'consumed',
+      processed_at: new Date().toISOString(),
+      observed_at: observedAt || new Date().toISOString(),
+      payload: {
+        schema_version: 'mccluster-signal/v1',
+        metadata: { conversation_id: conversationId, receipt_id: receiptId, private_context_reference_only: true },
+        provenance: { source: provider, source_ref: conversationId },
+      },
+    }),
+  });
+  if (!res.ok) throw Object.assign(new Error('conversation signal persistence failed'), { status: 502, detail: await res.text().catch(() => '') });
+}
+
 export async function queueObjectiveSynthesis(env, { orgId, ingestBody, ingestResult }) {
   if (ingestBody?.synthesize_objectives === false) return { queued: false, reason: 'disabled' };
-
   const receipt = ingestResult?.receipt || {};
   const conversationId = String(receipt.conversation_id || '').slice(0, 200);
   const receiptId = String(receipt.id || '').slice(0, 200);
@@ -41,41 +60,19 @@ export async function queueObjectiveSynthesis(env, { orgId, ingestBody, ingestRe
   const idempotencyKey = String(ingestBody?.idempotency_key || '').slice(0, 500);
   const fingerprint = await sha256(`${orgId}\n${provider}\n${conversationId}\n${receiptId}\n${idempotencyKey}`);
   const jobId = deterministicUuid(await sha256(`objective-synthesis:${fingerprint}`));
+  const observedAt = String(ingestBody?.last_message_at || '').slice(0, 80) || null;
+  const source = { provider, conversation_id: conversationId, receipt_id: receiptId, fingerprint, observed_at: observedAt };
 
-  const source = {
-    provider,
-    conversation_id: conversationId,
-    receipt_id: receiptId,
-    fingerprint,
-    observed_at: String(ingestBody?.last_message_at || '').slice(0, 80) || null,
-  };
+  await recordConversationSignal(env, { orgId, provider, conversationId, receiptId, fingerprint, observedAt });
 
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/ops_agent_jobs?on_conflict=id`, {
     method: 'POST',
     headers: serviceHeaders(env, { Prefer: 'resolution=ignore-duplicates,return=representation' }),
-    body: JSON.stringify({
-      id: jobId,
-      org_id: orgId,
-      job_type: 'objective_synthesis',
-      target_type: 'conversation',
-      target_id: conversationId,
-      status: 'queued',
-      priority: 45,
-      input: { source, schedule_reflection: ingestBody?.schedule_reflection !== false },
-      max_attempts: 3,
-    }),
+    body: JSON.stringify({ id: jobId, org_id: orgId, job_type: 'objective_synthesis', target_type: 'conversation', target_id: conversationId, status: 'queued', priority: 45, input: { source, schedule_reflection: ingestBody?.schedule_reflection !== false }, max_attempts: 3 }),
   });
   const rows = await res.json().catch(() => []);
   if (!res.ok) throw Object.assign(new Error('failed to queue objective synthesis'), { status: 502, detail: rows });
   const created = rows?.[0] || (await readExisting(env, jobId));
   if (!created) throw Object.assign(new Error('objective synthesis enqueue produced no durable job'), { status: 502 });
-
-  return {
-    queued: Boolean(rows?.length),
-    duplicate: !rows?.length,
-    job_id: created.id,
-    fingerprint,
-    conversation_id: conversationId,
-    private_context_reference_only: true,
-  };
+  return { queued: Boolean(rows?.length), duplicate: !rows?.length, job_id: created.id, fingerprint, conversation_id: conversationId, private_context_reference_only: true };
 }
