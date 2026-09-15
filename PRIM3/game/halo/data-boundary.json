@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "product": "prim3-halo-game",
+  "allow": [
+    "prim3_game.*",
+    "static_game_assets",
+    "reviewed_public_geography_snapshots",
+    "shared_halo_renderer_code"
+  ],
+  "deny": [
+    "halo_ops_live_feeds",
+    "live_flight_streams",
+    "private_crm_records",
+    "production_operational_telemetry",
+    "real_deployment_state",
+    "halo_ops_credentials",
+    "core_production_secrets"
+  ],
+  "default": "deny"
+}

@@ -1,0 +1,22 @@
+[Unit]
+Description=McCluster VPS outbound Git reconciler
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+Environment=HOME=/var/lib/mccluster/reconcile
+Environment=MCCLUSTER_REPO_URL=https://github.com/mcclusterishere/mccluster.git
+Environment=MCCLUSTER_DEPLOY_REF=deploy/ovh-production
+ExecStart=/usr/local/sbin/mccluster-vps-reconcile
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+ReadWritePaths=/opt/mccluster /var/lib/mccluster /etc/systemd/system /run /tmp
+TimeoutStartSec=20min

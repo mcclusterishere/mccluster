@@ -1,0 +1,124 @@
+name: Bootstrap OVH Self Management
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Exact commit SHA already contained in main
+        required: true
+      confirm:
+        description: Type BOOTSTRAP_OVH_SELF_MANAGEMENT
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bootstrap-ovh-self-management
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    if: ${{ inputs.confirm == 'BOOTSTRAP_OVH_SELF_MANAGEMENT' }}
+    runs-on: ubuntu-latest
+    environment: ovh-production
+    steps:
+      - name: Checkout main for provenance validation
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate and checkout exact bootstrap commit
+        id: commit
+        env:
+          TARGET_SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git cat-file -e "${TARGET_SHA}^{commit}"
+          git merge-base --is-ancestor "${TARGET_SHA}" origin/main || {
+            echo "Refusing bootstrap: target commit is not contained in main" >&2
+            exit 2
+          }
+          git checkout --detach "${TARGET_SHA}"
+          RESOLVED_SHA="$(git rev-parse HEAD)"
+          test "$RESOLVED_SHA" = "$TARGET_SHA" || {
+            echo "Refusing bootstrap: target must be an exact full commit SHA" >&2
+            exit 3
+          }
+          echo "sha=$RESOLVED_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Validate bootstrap sources
+        run: |
+          set -euo pipefail
+          bash -n scripts/bootstrap-vps-self-management.sh
+          bash -n scripts/mccluster-vps-reconcile.sh
+          bash -n scripts/deploy-ovh-core.sh
+          cd core
+          npm run check
+          npm test
+
+      - name: Configure pinned SSH trust for one-time bootstrap
+        env:
+          OVH_SSH_KEY: ${{ secrets.OVH_SSH_KEY }}
+          OVH_KNOWN_HOSTS: ${{ secrets.OVH_KNOWN_HOSTS }}
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+        run: |
+          set -euo pipefail
+          test -n "$OVH_SSH_KEY" || { echo 'Missing OVH_SSH_KEY' >&2; exit 1; }
+          test -n "$OVH_KNOWN_HOSTS" || { echo 'Missing OVH_KNOWN_HOSTS' >&2; exit 1; }
+          test -n "$OVH_HOST" || { echo 'Missing OVH_HOST' >&2; exit 1; }
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$OVH_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          printf '%s\n' "$OVH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/known_hosts
+
+      - name: Transfer exact checkout to OVH bootstrap staging
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+          BOOTSTRAP_SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          set -euo pipefail
+          test -n "$OVH_HOST"
+          test -n "$OVH_USER"
+          PORT="${OVH_PORT:-22}"
+          STAGE="/tmp/mccluster-self-bootstrap-${BOOTSTRAP_SHA}"
+          SSH_OPTS="-p $PORT -o StrictHostKeyChecking=yes"
+          ssh $SSH_OPTS "$OVH_USER@$OVH_HOST" "rm -rf '$STAGE' && mkdir -p '$STAGE'"
+          rsync -az --delete -e "ssh $SSH_OPTS" ./ "$OVH_USER@$OVH_HOST:$STAGE/"
+
+      - name: Install outbound self-management
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+          BOOTSTRAP_SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          set -euo pipefail
+          PORT="${OVH_PORT:-22}"
+          STAGE="/tmp/mccluster-self-bootstrap-${BOOTSTRAP_SHA}"
+          ssh -tt -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST" \
+            "sudo bash '$STAGE/scripts/bootstrap-vps-self-management.sh' '$STAGE'; rc=\$?; rm -rf '$STAGE'; exit \$rc"
+
+      - name: Verify self-management and Core
+        env:
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${OVH_PORT:-22}"
+          ssh -p "$PORT" -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST" \
+            "systemctl is-enabled mccluster-vps-reconcile.timer && systemctl is-active mccluster-vps-reconcile.timer && systemctl is-active mccluster-core-runner.service && systemctl is-active mccluster-core-tool-broker.service && cat /var/lib/mccluster/reconcile/deployed_sha"
+
+      - name: Summary
+        run: |
+          echo "### OVH self-management bootstrap" >> "$GITHUB_STEP_SUMMARY"
+          echo "- bootstrap revision: \`${{ steps.commit.outputs.sha }}\` (verified ancestor of \`main\`)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- SSH host identity: pinned by \`OVH_KNOWN_HOSTS\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- routine deployment control: \`deploy/ovh-production\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- normal operation is outbound; SSH is retained only as break-glass access." >> "$GITHUB_STEP_SUMMARY"

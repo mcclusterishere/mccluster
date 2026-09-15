@@ -1,14 +1,9 @@
-# Control plane
+# McCluster control plane
 
-One governed McCluster system with separate edge, data, and execution responsibilities.
+Canonical control-plane decisions and contracts live here.
 
-- Repo/contracts: `mcclusterishere/mccluster`
-- Public Worker: `mccluster`
-- Worker source: `workers/mccluster`
-- API and remote MCP edge: `https://api.mccluster.org`
-- Site: `https://matthew.mccluster.org`
-- Authoritative data: Supabase `zmnhbrjyhxzhkxmhkexs`
-- Persistent execution plane: OVH **McCluster Core**
-- Core contract: [MCCLUSTER-CORE.md](MCCLUSTER-CORE.md)
-
-**There is no Cloudflare Worker named `mccluster-core`.** McCluster Core is the OVH execution plane, not another Worker or source of truth.
+- `AI-HARNESS.md` — model-agnostic memory, decisions, provenance, approvals, and autonomous-loop contract.
+- `MCCLUSTER-CORE.md` — OVH execution-plane boundary and runtime responsibilities.
+- `CAPABILITY-REGISTRY.md` — stable provider-independent capabilities and implementation bindings.
+- `GENERATIVE-MEDIA-HARNESS.md` — multi-provider creative generation, routing, workflows, and asset lineage.
+- `ECOSYSTEM.md` / `SATELLITE.md` — relationship between the canonical backend and product satellites.

@@ -1,10 +1,3 @@
-// media/mcp.js is a thin re-entry into router.js/orchestrator.js/recommend.js,
-// built the same way orchestrator.js already builds a synthetic Request to
-// reuse createGeneration for a bakeoff leg. These tests exist to prove that
-// re-entry actually holds: no auth is skipped, and every tool answers the
-// exact JSON-RPC shape a real MCP client expects, not this repo's own
-// envelope conventions.
-
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -43,14 +36,14 @@ function withPlane({ role, grants }, fn) {
   });
 }
 
-test('MCP_VERSION matches the one protocol this codebase speaks', () => {
+test('MCP_VERSION matches the canonical protocol contract', () => {
   assert.equal(MCP_VERSION, '2026-07-28');
 });
 
-test('tools/list needs no auth and names Director Compare', async () => {
+test('tools/list needs no auth and exposes controlled media tools', async () => {
   const { status, body } = await handleMediaMcp(rpcRequest('tools/list', {}), env, null);
   assert.equal(status, 200);
-  const names = body.result.tools.map((t) => t.name);
+  const names = body.result.tools.map((tool) => tool.name);
   assert.ok(names.includes('media.compare'));
   assert.ok(names.includes('media.generate'));
   assert.ok(names.includes('media.job.get'));
@@ -66,7 +59,7 @@ test('tools/call without a user is rejected before any tool runs', async () => {
   assert.equal(body.error.code, -32001);
 });
 
-test('media.generate still enforces the media.generate capability, not just membership', async () => {
+test('media.generate still enforces media.generate capability', async () => {
   await withPlane({ role: 'viewer', grants: [{ role: 'viewer', capability: 'media.generate', allowed: false }] }, async (seen) => {
     const { status, body } = await handleMediaMcp(
       rpcRequest('tools/call', {
@@ -76,9 +69,6 @@ test('media.generate still enforces the media.generate capability, not just memb
       env,
       { id: 'user-1' }
     );
-    // The transport call itself succeeds (200, valid JSON-RPC) — the
-    // denial surfaces as a tool result the model can read, same as any
-    // other tool failure.
     assert.equal(status, 200);
     assert.equal(body.result.isError, true);
     assert.match(body.result.content[0].text, /does not include media\.generate/);

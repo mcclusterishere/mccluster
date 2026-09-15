@@ -3,13 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-  <title>PRIM3 · Cybersecurity Curriculum</title>
-  <meta name="description" content="PRIM3 is a conventional cybersecurity learning path reinforced by music, story and safe practical labs.">
+  <title>PRIM3 · Learning Management System</title>
+  <meta name="description" content="PRIM3 is a free technology learning path that teaches, reinforces, contextualizes and applies technical knowledge through the PRIM Method after M Account creation.">
   <link rel="canonical" href="https://matthew.mccluster.org/prim3.html">
-  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
-  <meta name="theme-color" content="#0b0908">
+  <link rel="icon" type="image/png" href="assets/img/prim3-tab.png">
+  <meta name="theme-color" content="#090909">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/prim3.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/prim3-course.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/prim3-tracking.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
 </head>
 <body class="prim3-lms">
@@ -18,68 +20,147 @@
   <header class="p3-topbar">
     <a class="p3-house" href="index.html" aria-label="Back to McCluster">McCluster</a>
     <div class="p3-id">
-      <strong>PRIM3</strong>
-      <span>Cybersecurity Curriculum · Foundation</span>
+      <img class="p3-id__mark" src="assets/img/prim3-tab.png" alt="" width="64" height="64">
+      <div><strong>PRIM3</strong><span>Learning Management System</span></div>
     </div>
     <button class="p3-reset" id="resetProgress" type="button">Reset progress</button>
   </header>
 
-  <main class="p3-shell" id="course">
+  <section class="p3-gate" id="courseGate" aria-labelledby="courseGateTitle">
+    <div class="p3-gate__card">
+      <img class="p3-gate__mark" src="assets/img/prim3-tab.png" alt="" width="96" height="96">
+      <p class="p3-gate__eyebrow">Free course · M Account required</p>
+      <h1 id="courseGateTitle">Make an account.<br>Then learn for free.</h1>
+      <p data-gate-note>PRIM3 uses your M Account to keep progress, assessment scores and unlocks attached to you instead of one browser. <strong>There is no course charge after account creation.</strong></p>
+      <p>The curriculum contains 66 focused modules. Three certification foundation modules come first with no song or episode attached. The 21 PRIM3 episode and song units then expand into 63 more modules.</p>
+      <div class="p3-gate__actions">
+        <a href="account.html">Create free M Account</a>
+        <a href="account.html">Sign in</a>
+      </div>
+    </div>
+  </section>
+
+  <main class="p3-shell" id="course" hidden>
+    <div class="p3-sourcebar" id="courseSync" role="status">
+      <span class="p3-sourcebar__light" aria-hidden="true"></span>
+      <b>COURSE SOURCE</b>
+      <span id="courseSource">Connecting to PRIM3…</span>
+      <small id="courseFeedState">SYNCING</small>
+    </div>
+
     <section class="p3-hero" aria-labelledby="p3Title">
       <div class="p3-hero__copy">
-        <p class="p3-kicker">Learning management system</p>
-        <h1 id="p3Title">Learn it normally.<br><span>Remember it differently.</span></h1>
-        <p class="p3-lede">The required path is intentionally conventional: read the lesson, study the terms, pass the assessment, unlock the next module. Music, the show and the game reinforce the same objectives, but they never replace the coursework.</p>
+        <p class="p3-kicker">THE PRIM METHOD</p>
+        <h1 id="p3Title">Learn it. Remember it.<br><span>See it. Do it.</span></h1>
+        <p class="p3-lede">PRIM teaches the same technical knowledge through four connected learning styles. Principles gives you the complete conventional course. Rhythm makes the knowledge easier to remember. Immersion gives the concepts meaning through story. Missions lets you prove that you can use what you learned.</p>
       </div>
       <aside class="p3-progress-card" aria-label="Course progress">
-        <div class="p3-progress-card__line"><span>Foundation progress</span><strong id="progressPercent">0%</strong></div>
+        <div class="p3-progress-card__line"><span>Principles progress</span><strong id="progressPercent">0%</strong></div>
         <div class="p3-progress" aria-hidden="true"><i id="progressBar"></i></div>
         <dl class="p3-stats">
           <div><dt id="passedCount">0</dt><dd>passed</dd></div>
-          <div><dt id="moduleCount">11</dt><dd>modules</dd></div>
-          <div><dt>80%</dt><dd>pass mark</dd></div>
+          <div><dt id="moduleCount">66</dt><dd>modules</dd></div>
+          <div><dt id="passMark">80%</dt><dd>pass mark</dd></div>
         </dl>
-        <button class="p3-primary" id="continueCourse" type="button">Start Module 01</button>
+        <button class="p3-primary" id="continueCourse" type="button">Loading course…</button>
       </aside>
     </section>
 
-    <section class="p3-contract" aria-label="How PRIM3 works">
-      <article><span>01</span><div><b>LEARN</b><p>Required reading, terms and assessments. This controls progression.</p></div><em>REQUIRED</em></article>
-      <article><span>02</span><div><b>REMEMBER</b><p>Songs map technical concepts to repeatable memory cues.</p></div><em>COMPANION</em></article>
-      <article><span>03</span><div><b>WATCH</b><p>The PRIM3 show gives the concepts narrative context.</p></div><em>COMPANION</em></article>
-      <article><span>04</span><div><b>LAB</b><p>Safe simulations and game missions turn concepts into practice.</p></div><em>COMPANION</em></article>
+    <section class="p3-contract" aria-label="How the PRIM Method works">
+      <article><span>P</span><div><b>PRINCIPLES</b><p>Learn it through complete conventional instruction, reasoning, reading and assessment.</p></div><em>REQUIRED</em></article>
+      <article><span>R</span><div><b>RHYTHM</b><p>Remember it through music, repetition, pattern, imagery and memorable language.</p></div><em>REINFORCEMENT</em></article>
+      <article><span>I</span><div><b>IMMERSION</b><p>See it through story, context, pressure, consequence and human meaning.</p></div><em>REINFORCEMENT</em></article>
+      <article><span>M</span><div><b>MISSIONS</b><p>Do it through practical game missions that turn knowledge into applied skill.</p></div><em>PRACTICE</em></article>
+    </section>
+
+    <section class="p3-prim-method" aria-labelledby="primMethodTitle">
+      <div class="p3-prim-method__head">
+        <p class="p3-kicker">ONE CURRICULUM · FOUR WAYS IN</p>
+        <h2 id="primMethodTitle">Your PRIM progress</h2>
+        <p>Principles is the required learning authority. Rhythm, Immersion and Missions are tracked separately so reinforcement can never replace actual instruction.</p>
+      </div>
+      <div class="p3-prim-grid">
+        <article class="p3-prim-card" data-prim="P">
+          <span class="p3-prim-card__letter">P</span><h3>PRINCIPLES</h3><p>Learn it.</p><p class="p3-prim-card__cycle">Principles · Reasoning · Instruction · Mastery</p>
+          <div class="p3-prim-card__meter"><div class="p3-prim-card__value"><strong id="primPValue">0 of 66</strong><span id="primPPercent">0%</span></div><div class="p3-mini-progress"><i id="primPBar"></i></div></div>
+        </article>
+        <article class="p3-prim-card" data-prim="R">
+          <span class="p3-prim-card__letter">R</span><h3>RHYTHM</h3><p>Remember it.</p><p class="p3-prim-card__cycle">Patterns · Rhythm · Imagery · Memory</p>
+          <div class="p3-prim-card__meter"><div class="p3-prim-card__value"><strong id="primRValue">0 of 0</strong><span id="primRPercent">0%</span></div><div class="p3-mini-progress"><i id="primRBar"></i></div></div>
+        </article>
+        <article class="p3-prim-card" data-prim="I">
+          <span class="p3-prim-card__letter">I</span><h3>IMMERSION</h3><p>See it.</p><p class="p3-prim-card__cycle">Plot · Relevance · Immersion · Meaning</p>
+          <div class="p3-prim-card__meter"><div class="p3-prim-card__value"><strong id="primIValue">0 of 0</strong><span id="primIPercent">0%</span></div><div class="p3-mini-progress"><i id="primIBar"></i></div></div>
+        </article>
+        <article class="p3-prim-card" data-prim="M">
+          <span class="p3-prim-card__letter">M</span><h3>MISSIONS</h3><p>Do it.</p><p class="p3-prim-card__cycle">Practice · Response · Interaction · Mastery</p>
+          <div class="p3-prim-card__meter"><div class="p3-prim-card__value"><strong id="primMValue">0 of 0</strong><span id="primMPercent">0%</span></div><div class="p3-mini-progress"><i id="primMBar"></i></div></div>
+        </article>
+      </div>
+      <div class="p3-cert-tracker" aria-label="Certification objective progress">
+        <div class="p3-cert-tracker__head"><h3>Objective progress</h3><p>Passing Principles modules advances every linked certification objective at once. Shared knowledge is credited across exams without duplicate lessons.</p></div>
+        <div class="p3-cert-grid">
+          <article class="p3-cert-card"><div class="p3-cert-card__top"><strong>Security Plus SY0 701</strong><span id="securityObjectiveValue">0 of 28</span></div><small id="securityObjectiveMeta">0 active · 0% topic coverage</small><div class="p3-mini-progress"><i id="securityObjectiveBar"></i></div></article>
+          <article class="p3-cert-card"><div class="p3-cert-card__top"><strong>Network Plus N10 009</strong><span id="networkObjectiveValue">0 of 25</span></div><small id="networkObjectiveMeta">0 active · 0% topic coverage</small><div class="p3-mini-progress"><i id="networkObjectiveBar"></i></div></article>
+          <article class="p3-cert-card"><div class="p3-cert-card__top"><strong>A Plus foundation</strong><span id="aPlusObjectiveValue">0 of 63</span></div><small id="aPlusObjectiveMeta">0 active · 0% precursor coverage</small><div class="p3-mini-progress"><i id="aPlusObjectiveBar"></i></div></article>
+        </div>
+        <p class="p3-method-note"><b>Completion rule:</b> Security Plus and Network Plus are mandatory complete coverage targets. A Plus is tracked as supporting foundation knowledge. Rhythm, Immersion and Missions never substitute for Principles mastery.</p>
+      </div>
+    </section>
+
+    <section class="p3-roadmap" aria-labelledby="trainingRangeTitle">
+      <div class="p3-section-head">
+        <p class="p3-kicker">M · MISSIONS</p>
+        <h2 id="trainingRangeTitle">Training Range 01 · Risk and Controls</h2>
+      </div>
+      <p>Pass Module M01, then enter a deterministic simulator that tests evidence review, risk classification, control selection, and verification. Your required tools remain available at every readiness level, and technical mastery is scored separately from operational performance.</p>
+      <div class="p3-roadmap-flow" aria-label="Training Range 01 flow">
+        <span>M01 PRINCIPLES</span><i>→</i><span>READINESS</span><i>→</i><span>MISSION</span><i>→</i><strong>EVIDENCE TRACE</strong><i>→</i><span>MASTERY</span>
+      </div>
+      <p><a class="p3-primary" href="prim3-range.html">Enter Training Range 01</a></p>
     </section>
 
     <section class="p3-course-grid">
       <aside class="p3-syllabus" aria-label="Course syllabus">
         <div class="p3-section-head">
-          <p class="p3-kicker">Foundation</p>
-          <h2>Syllabus</h2>
+          <p class="p3-kicker">3 foundations · 7 seasons · 21 episode and song units · 66 modules</p>
+          <h2>Principles syllabus</h2>
+          <p class="p3-syllabus__intro">McCluster owns the three certification foundations and the instructional decomposition. PRIM3 owns the canonical songs, episodes, source concepts and future mission requirements. Every source unit still gets three focused Principles modules, while the opening foundation block absorbs important certification material that the album does not cover.</p>
         </div>
         <div id="moduleList" class="p3-module-list"></div>
-        <p class="p3-safety"><b>Lab rule:</b> PRIM3 labs use fictional, local or explicitly authorized systems only. No exercise requires attacking a real third party.</p>
+        <p class="p3-safety"><b>Mission rule:</b> PRIM3 practical work uses fictional, local, owned or explicitly authorized systems. Offensive concepts stay sandboxed, defensive, architectural, evidence based or non operational.</p>
       </aside>
 
       <section class="p3-lesson" id="lessonPanel" aria-live="polite">
         <div class="p3-empty" id="lessonEmpty">
-          <p class="p3-kicker">Coursework</p>
-          <h2>Select an unlocked module.</h2>
-          <p>Your completion state is stored on this device for this foundation build.</p>
+          <p class="p3-kicker">Principles coursework</p>
+          <h2>Select an available module.</h2>
+          <p>The first three modules are certification foundations. PRIM3 source units begin at Module M04. Learner state stays in your M Account.</p>
         </div>
 
         <article id="lessonContent" hidden>
           <header class="p3-lesson-head">
             <div>
-              <p class="p3-kicker" id="lessonNumber">Module 01</p>
+              <p class="p3-kicker" id="lessonNumber">Module M01</p>
               <h2 id="lessonTitle"></h2>
               <p id="lessonSummary"></p>
+              <div class="p3-meta" aria-label="Module metadata">
+                <span id="lessonSeason"></span>
+                <span id="lessonEpisode"></span>
+                <span id="lessonSong"></span>
+              </div>
             </div>
             <span class="p3-status" id="lessonStatus">IN PROGRESS</span>
           </header>
 
           <section class="p3-objectives">
-            <h3>Learning objectives</h3>
+            <div class="p3-section-label"><span>Required</span><b>Learning objectives</b></div>
             <ul id="objectiveList"></ul>
+          </section>
+
+          <section class="p3-concepts">
+            <div class="p3-section-label"><span>Required</span><b>Concept loadout</b></div>
+            <div id="conceptList" class="p3-concept-list"></div>
           </section>
 
           <section class="p3-reading">
@@ -94,7 +175,7 @@
 
           <section class="p3-assessment" id="assessmentSection">
             <div class="p3-section-label"><span>Required</span><b>Assessment</b></div>
-            <p class="p3-assessment__rule">Score at least 80% to pass this module and unlock the next one.</p>
+            <p class="p3-assessment__rule" id="assessmentRule">Score at least 80% to pass this module and unlock the next focused module.</p>
             <form id="quizForm"></form>
             <div class="p3-quiz-actions">
               <button class="p3-primary" id="submitQuiz" type="submit" form="quizForm">Grade assessment</button>
@@ -103,12 +184,19 @@
           </section>
 
           <section class="p3-companions">
-            <div class="p3-section-label"><span>Optional</span><b>Reinforcement</b></div>
+            <div class="p3-section-label"><span>Reinforcement</span><b>One concept. More ways in.</b></div>
             <div class="p3-layer-grid">
-              <article data-layer="remember"><small>02 · REMEMBER</small><b id="musicTitle"></b><p id="musicCopy"></p></article>
-              <article data-layer="watch"><small>03 · WATCH</small><b id="watchTitle"></b><p id="watchCopy"></p></article>
-              <article data-layer="lab"><small>04 · LAB</small><b id="labTitle"></b><p id="labCopy"></p></article>
+              <article data-layer="remember"><small>R · RHYTHM</small><b id="musicTitle"></b><p id="musicCopy"></p></article>
+              <article data-layer="watch"><small>I · IMMERSION</small><b id="watchTitle"></b><p id="watchCopy"></p></article>
+              <article data-layer="lab"><small>M · MISSIONS</small><b id="labTitle"></b><p id="labCopy"></p></article>
             </div>
+            <div class="p3-labroles" id="labRoles"></div>
+          </section>
+
+          <section class="p3-provenance">
+            <div class="p3-section-label"><span>Source</span><b>Curriculum provenance</b></div>
+            <p>Foundation modules are McCluster certification curriculum. Song aligned modules trace to <code>mcclusterishere/Prim3</code>. Infrastructure and exam enrichment is marked separately so the LMS never pretends that a song taught material it did not contain.</p>
+            <ul id="sourceList"></ul>
           </section>
         </article>
       </section>
@@ -117,22 +205,26 @@
     <section class="p3-roadmap">
       <div class="p3-section-head">
         <p class="p3-kicker">Curriculum architecture</p>
-        <h2>One objective set. Four delivery layers.</h2>
+        <h2>One curriculum. Four learning styles. Sixty six Principles modules.</h2>
       </div>
-      <p>The LMS owns competencies and assessment. Every song, episode and game mission points back to those same competencies. That keeps PRIM3 creative without making the credential dependent on consuming entertainment.</p>
-      <div class="p3-roadmap-flow" aria-label="PRIM3 learning flow">
-        <span>READ</span><i>→</i><span>STUDY</span><i>→</i><span>TEST</span><i>→</i><strong>PASS</strong><i>→</i><span>UNLOCK</span>
+      <p><b>Principles</b> carries complete instruction and certification mastery. <b>Rhythm</b> reinforces memory through music. <b>Immersion</b> reinforces meaning through story. <b>Missions</b> will provide practical application through the game. McCluster owns accounts, progress, assessment delivery and enrichment while PRIM3 owns canon, songs, episodes, source concepts and mission requirements.</p>
+      <div class="p3-roadmap-flow" aria-label="PRIM3 publishing flow">
+        <span>P · PRINCIPLES</span><i>→</i><span>R · RHYTHM</span><i>→</i><span>I · IMMERSION</span><i>→</i><strong>M · MISSIONS</strong><i>→</i><span>M ACCOUNT MASTERY</span>
       </div>
     </section>
   </main>
 
   <footer class="p3-footer">
     <strong>PRIM3</strong>
-    <span>McCluster Corp · educational foundation build</span>
+    <span>Learn it · Remember it · See it · Do it</span>
     <a href="whip.html">Whip Equipped archive</a>
   </footer>
 
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/prim3-lessons.js?v=__STAMP__"></script>
   <script src="js/prim3.js?v=__STAMP__"></script>
+  <script src="js/prim3-sync.js?v=__STAMP__"></script>
+  <script src="js/prim3-tracking.js?v=__STAMP__"></script>
 </body>
 </html>

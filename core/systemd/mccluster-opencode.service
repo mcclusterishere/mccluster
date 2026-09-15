@@ -1,0 +1,49 @@
+[Unit]
+Description=McCluster Core low-privilege OpenCode agent
+After=network-online.target ollama.service
+Wants=network-online.target
+Requires=ollama.service
+
+[Service]
+Type=simple
+User=mccluster-agent
+Group=mccluster-agent
+SupplementaryGroups=mccluster-work
+WorkingDirectory=/srv/mccluster/worktrees
+Environment=HOME=/var/lib/mccluster-agent
+Environment=GIT_OPTIONAL_LOCKS=0
+EnvironmentFile=/etc/mccluster/agent.env
+ExecStart=/usr/local/bin/opencode serve --hostname 127.0.0.1 --port 4096
+Restart=always
+RestartSec=5
+UMask=0007
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictNamespaces=true
+SystemCallArchitectures=native
+
+# The autonomous code agent can reach Ollama/OpenCode only on localhost.
+# It cannot exfiltrate repository contents or talk to production APIs.
+IPAddressDeny=any
+IPAddressAllow=localhost
+
+ReadOnlyPaths=/srv/mccluster/repos
+ReadWritePaths=/srv/mccluster/worktrees /var/lib/mccluster-agent
+MemoryMax=9G
+CPUQuota=500%
+TasksMax=512
+
+[Install]
+WantedBy=multi-user.target

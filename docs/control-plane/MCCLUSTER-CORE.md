@@ -21,11 +21,29 @@ Canonical host:
 | --- | --- |
 | Cloudflare Worker `mccluster` at `api.mccluster.org` | Public HTTPS edge, authentication, remote MCP transport, request validation, short-lived orchestration, webhook ingress |
 | Supabase `zmnhbrjyhxzhkxmhkexs` | Authoritative identities, memory, CRM, jobs, costs, lineage, approvals, audit records, and asset metadata |
-| OVH McCluster Core | Persistent harness, Halo runtime, long-running agents, scheduled work, queue consumers, builds, controlled code execution, infrastructure tools, caches, and approved API brokers |
+| OVH McCluster Core | Persistent harness, Halo runtime, long-running agents, scheduled work, queue consumers, builds, code execution, infrastructure tools, caches, API brokers, and provider-independent capability resolution |
 
 The existing rule “There is no Worker named `mccluster-core`” remains true. **McCluster Core is the OVH execution plane, not a Worker name.**
 
 The rule against a competing backend forbids a satellite from inventing parallel auth, Postgres, CRM, memory, billing, or orchestration truth. It does not forbid Core from executing durable work against the canonical Worker/Supabase contracts.
+
+## Capability architecture
+
+Core owns a provider-independent capability namespace. Products and agents request semantic capabilities such as:
+
+- `video.generate`
+- `model3d.generate`
+- `world.generate`
+- `research.web`
+- `code.build`
+- `game.build`
+- `deploy.preview`
+
+Provider/model names belong in capability **bindings**, not capability ids. A binding points one stable capability at an implementation discovered through the normalized tool bus (MCP, ordinary HTTP, or a future native/local adapter).
+
+This keeps website code, agent prompts, and durable workflows stable while providers change underneath them.
+
+The seed catalog lives at `core/capabilities/catalog.json`; the runtime resolver is `core/src/capabilities/registry.mjs`. See `docs/control-plane/CAPABILITY-REGISTRY.md`.
 
 ## Workload contract
 
@@ -37,7 +55,8 @@ Core may host:
 - GitHub and build automation in controlled workspaces;
 - MCP tools requiring long-lived processes, machine access, or execution beyond Worker limits;
 - bounded caches and provider/API brokers;
-- monitoring, health checks, and operational diagnostics.
+- monitoring, health checks, and operational diagnostics;
+- the capability registry and provider-binding resolver used by local agents and remote control-plane callers.
 
 Core must not:
 
@@ -45,13 +64,17 @@ Core must not:
 - become a public unauthenticated API;
 - expose application ports directly to the internet;
 - store secrets in Git or return them through MCP;
-- bypass approval, authorization, budget, provenance, or audit requirements.
+- bypass approval, authorization, budget, provenance, or audit requirements;
+- encode provider names into stable capability ids;
+- claim a planned capability is executable when no live implementation exists.
 
 ## Remote MCP flow
 
 Claude and other remote clients connect over HTTPS to the authenticated MCP surface at `api.mccluster.org`. The Worker handles protocol/authentication and either completes short operations or dispatches durable execution to Core. Core records status and results through the canonical Supabase/Worker contracts.
 
 An asynchronous Core operation returns a durable job identifier. Job state, output references, costs, lineage, and approvals remain authoritative in Supabase.
+
+Core's local broker may consume remote MCP/HTTP tools and present stable capabilities to local agents, but its loopback port is not a second public ingress path.
 
 ## Resource policy
 
@@ -75,9 +98,10 @@ Measure the host before finalizing service limits.
 - Secrets live in restricted server-side environment files or an approved secret store.
 - Services must survive reboot and publish health without exposing secrets.
 - Generated assets are copied into private McCluster storage, hashed, inspected, and assigned canonical storage paths.
+- Capability resolution must fail closed when no active, discoverable binding satisfies the request.
 
 ## Repository roles
 
-- `mcclusterishere/mccluster`: control-plane contracts, Worker, schemas, MCP surface, policies, and Core integration.
+- `mcclusterishere/mccluster`: control-plane contracts, Worker, schemas, MCP surface, policies, Core integration, capability catalog, and binding rules.
 - `mcclusterishere/hitmans-halo`: Halo application and hosted runtime deployed onto Core.
 - Product/client repositories remain satellites and must not create competing sources of truth.

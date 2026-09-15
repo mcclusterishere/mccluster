@@ -1,0 +1,43 @@
+[Unit]
+Description=McCluster Core MCP and HTTP tool broker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mccluster-core
+Group=mccluster-core
+SupplementaryGroups=mccluster-work
+WorkingDirectory=/opt/mccluster/core
+Environment=HOME=/var/lib/mccluster-core
+Environment=CORE_BROKER_HOST=127.0.0.1
+Environment=CORE_BROKER_PORT=4777
+EnvironmentFile=/etc/mccluster/core.env
+ExecStart=/usr/bin/node /opt/mccluster/core/src/tool-broker.mjs
+Restart=always
+RestartSec=5
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictNamespaces=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+ReadWritePaths=/var/lib/mccluster-core
+MemoryMax=512M
+CPUQuota=100%
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target

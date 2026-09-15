@@ -1,5 +1,6 @@
 import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from './lib/http.js';
 import whip from './whip/identity-gateway.js';
+import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
@@ -102,6 +103,10 @@ export default {
 
       if (path === '/v1' && request.method === 'GET') {
         return reply(request, env, CATALOG);
+      }
+
+      if (path === '/v1/prim3' || path.startsWith('/v1/prim3/')) {
+        return prim3.fetch(request, env);
       }
 
       if (path === '/v1/seek-first' || path.startsWith('/v1/seek-first/')) {

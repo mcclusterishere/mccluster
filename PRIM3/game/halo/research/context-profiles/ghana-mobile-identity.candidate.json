@@ -1,0 +1,123 @@
+{
+  "profile_id": "ghana-mobile-identity-v1",
+  "country": "Ghana",
+  "status": "candidate",
+  "as_of": "2026-09-12",
+  "core_candidates": [],
+  "technology_context": {
+    "summary": "Ghana is a mobile-first communications and payments environment with a formal SIM/number registration regime and a large mobile subscriber base. The relevant mission-design fact is not that Ghana is technologically 'behind'; it is that telecom identity, mobile numbers, and electronic/mobile-money systems are unusually visible parts of the security environment.",
+    "adoption_signals": [
+      "National Communications Authority reported more than 44 million mobile voice subscriptions and more than 30 million mobile data subscriptions in June 2026.",
+      "The regulator continues to operate and strengthen a national SIM/number registration framework tied to identity validation.",
+      "The Bank of Ghana describes rapid electronic-payment growth and an expanding mobile-money ecosystem."
+    ],
+    "device_mix": [
+      "Do not assume physical SIM prevalence from geography alone; quantify physical SIM/eSIM/device mix before mission lock."
+    ],
+    "connectivity": [
+      "Mobile connectivity is a major access channel and therefore a useful mission-design surface."
+    ],
+    "payments": [
+      "Electronic payments and mobile money are important enough that the central bank treats fraud controls in these systems as a policy priority."
+    ],
+    "identity_and_auth": [
+      "Subscriber identity and number registration are linked to national identity validation.",
+      "Account-recovery and telecom identity controls are therefore plausible educational surfaces."
+    ],
+    "infrastructure": []
+  },
+  "institution_context": [
+    "National Communications Authority regulates telecom numbering and subscriber registration.",
+    "National Identification Authority participates in identity validation for number registration.",
+    "Bank of Ghana regulates and reports on payment-system fraud and digital-payment risk."
+  ],
+  "threat_context": {
+    "documented_patterns": [
+      "Bank of Ghana has documented SIM-swap attacks, impersonation schemes, unauthorized account access, and broader fraud risks in Ghana's electronic-payment environment.",
+      "Ghana's 2026 number-registration materials explicitly cite prior registration weaknesses as contributing to SIM-swap fraud and other cybercrime."
+    ],
+    "mission_fit": [
+      "social engineering against telecom/customer-service identity recovery",
+      "mobile-number takeover and account-recovery defense",
+      "mobile-money identity protection",
+      "KYC/identity-validation process security",
+      "multi-system incident response spanning carrier, identity provider, and payment account"
+    ],
+    "anti_misconceptions": [
+      "SIM-swap fraud is not exclusive to physical SIM cards and can occur in eSIM environments through account takeover or fraudulent reprovisioning.",
+      "The mission must not teach that Ghana is less advanced than the United States.",
+      "The mission must not imply that Ghana is uniquely vulnerable; the educational value is the locally documented interaction among telecom identity, registration, and digital payments."
+    ]
+  },
+  "cultural_learning": {
+    "implicit_domains": [
+      "regional geography",
+      "language and signage",
+      "urban and transport context",
+      "telecommunications retail/service environment",
+      "digital payment behavior",
+      "music, visual design, and material culture where sourced and narratively appropriate"
+    ],
+    "three_region_goal": "If Ghana is selected, the three missions must use distinct regions or urban contexts and deliberately show internal diversity rather than treating Accra as the whole country.",
+    "guardrails": [
+      "No poverty-tourism framing.",
+      "No generic 'Africa' visual language.",
+      "No invented cultural practice presented as fact.",
+      "Local characters must have agency and expertise rather than serving as exposition devices."
+    ]
+  },
+  "alternative_countries": [],
+  "open_questions": [
+    "What is the current physical-SIM versus eSIM device/profile mix by operator and handset segment?",
+    "Which of the 21 curriculum cores best matches telecom identity and social-engineering learning objectives?",
+    "Which three Ghanaian regions provide distinct and well-sourced cultural, geographic, and infrastructure contexts without forcing the scenario?",
+    "Which existing PRIM3 characters have canonically sourced Ghanaian or West African relationships, if any?"
+  ],
+  "sources": [
+    {
+      "publisher": "National Communications Authority of Ghana",
+      "title": "NCA DG Assures Robust, Consumer-Centric Approach to New SIM Registration Process",
+      "date": "2026-03-18",
+      "url": "https://nca.org.gh/2026/03/18/nca-dg-assures-robust-consumer-centric-approach-to-new-sim-registration-process/",
+      "supports": [
+        "2026 number-registration initiative",
+        "identity-validation and fraud-control rationale",
+        "telecom regulatory context"
+      ]
+    },
+    {
+      "publisher": "National Communications Authority of Ghana",
+      "title": "Registration Process",
+      "date": "accessed 2026-09-12",
+      "url": "https://nca.org.gh/registration-process-2/",
+      "supports": [
+        "SIM registration workflow",
+        "Ghana Card/NIA validation",
+        "subscriber-registration controls"
+      ]
+    },
+    {
+      "publisher": "Bank of Ghana",
+      "title": "Payment Systems Oversight Annual Report 2025",
+      "date": "2026-08",
+      "url": "https://www.bog.gov.gh/wp-content/uploads/2026/08/Payment-Systems-Annual-Report-2025-1.pdf",
+      "supports": [
+        "mobile-money/electronic-payment expansion",
+        "SIM-swap attacks",
+        "impersonation schemes",
+        "unauthorized account access",
+        "social-engineering risk"
+      ]
+    },
+    {
+      "publisher": "Bank of Ghana",
+      "title": "National Payment Systems Strategy 2025-2029",
+      "date": "2026-02",
+      "url": "https://www.bog.gov.gh/wp-content/uploads/2026/02/NATIONAL-PAYMENT-SYSTEMS-STRATEGY-2025-2029.pdf",
+      "supports": [
+        "digital-payment fraud priority",
+        "SIM registration and SIM-swap control policy"
+      ]
+    }
+  ]
+}

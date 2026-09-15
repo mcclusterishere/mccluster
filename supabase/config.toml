@@ -1,9 +1,8 @@
 # Supabase project config for the McCluster platform.
 #
-# Reconciled 2026-09-08 from current main + Claude control-plane hardening +
-# Grok AI harness + Equity Uprise Policy OS. Every function present in this
-# reconciliation surface declares its gateway mode explicitly so a deploy
-# cannot silently change public/webhook or staff-only behavior.
+# Every function present in this reconciliation surface declares its gateway
+# mode explicitly so a deploy cannot silently change public/webhook or
+# authenticated control-plane behavior.
 
 project_id = "zmnhbrjyhxzhkxmhkexs"
 
@@ -23,19 +22,27 @@ verify_jwt = false
 [functions.domain-check]
 verify_jwt = false
 
-# Shared control-plane/service functions harvested from Claude.
-# Public/webhook surfaces authenticate/validate internally where required.
+# Shared platform functions.
 [functions.backend-sub]
 verify_jwt = false
 
 [functions.connect-onboard]
 verify_jwt = false
 
+# Private cross-model context plane. User-facing functions require a Supabase
+# JWT and repeat membership checks in-function. context-core is server-to-server
+# and uses a dedicated constant-time compared MCCLUSTER_CONTEXT_TOKEN instead.
 [functions.context-ingest]
-verify_jwt = false
+verify_jwt = true
 
 [functions.context-query]
 verify_jwt = true
+
+[functions.context-decision]
+verify_jwt = true
+
+[functions.context-core]
+verify_jwt = false
 
 [functions.intake]
 verify_jwt = false

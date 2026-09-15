@@ -10,6 +10,8 @@ import { attachCompletedVariantAssets, handleSocialRequest } from './social/rout
 import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
 import { handleMetaWebhook } from './social/webhook.js';
 import { handleAiRequest } from './ai/router.js';
+import { handleCommsRequest } from './comms/router.js';
+import { handleRelayEnrollment } from './comms/enrollment.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -28,6 +30,16 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
+
+    if (path === '/healthz' && request.method === 'GET') {
+      return reply(request, env, {
+        ok: true,
+        service: 'mccluster',
+        contract: 'mccluster-system-health/v1',
+        revision: env.CF_VERSION_METADATA?.id || null,
+        checked_at: new Date().toISOString()
+      });
+    }
 
     try {
       const clientResponse = await handleClientRequest(request, env);
@@ -61,9 +73,13 @@ export default {
     }
 
     if (path === '/v1/media/mcp' && request.method === 'POST') {
-      const user = await authUser(request, env);
-      const { status, body } = await handleMediaMcp(request, env, user);
-      return reply(request, env, body, status);
+      try {
+        const user = await authUser(request, env);
+        const { status, body } = await handleMediaMcp(request, env, user);
+        return reply(request, env, body, status);
+      } catch (error) {
+        return fail(request, env, error.message || 'Media MCP request failed', error.status || 500, error.detail);
+      }
     }
 
     if (path === '/v1/media/models' && request.method === 'GET') {
@@ -106,7 +122,7 @@ export default {
         const bakeoff = await createBakeoff(request, env, user);
         return reply(request, env, bakeoff, 202);
       } catch (error) {
-        return fail(request, env, error.message || 'Media bakeoff request failed', error.status || 500, error.detail);
+        return fail(request, env, error.message || 'Media bakeoff failed', error.status || 500, error.detail);
       }
     }
 
@@ -134,6 +150,14 @@ export default {
       }
     }
 
+    if (path === '/v1/comms' || path.startsWith('/v1/comms/')) {
+      const user = await authUser(request, env);
+      const enrollment = await handleRelayEnrollment(request, env, user);
+      if (enrollment) return enrollment;
+      const response = await handleCommsRequest(request, env, user);
+      if (response) return response;
+    }
+
     if (path === '/v1/ai' || path.startsWith('/v1/ai/')) {
       try {
         const user = await authUser(request, env);
@@ -150,28 +174,16 @@ export default {
   async scheduled(_controller, env, ctx) {
     ctx.waitUntil(Promise.all([
       reconcilePendingFalCosts(env, { limit: 50 }).catch((error) => {
-        console.error(JSON.stringify({
-          event: 'media_cost_reconciliation_failed',
-          message: error instanceof Error ? error.message : String(error)
-        }));
+        console.error(JSON.stringify({ event: 'media_cost_reconciliation_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       attachCompletedVariantAssets(env).catch((error) => {
-        console.error(JSON.stringify({
-          event: 'social_variant_attachment_failed',
-          message: error instanceof Error ? error.message : String(error)
-        }));
+        console.error(JSON.stringify({ event: 'social_variant_attachment_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       processInstagramPublishQueue(env, { limit: 10 }).catch((error) => {
-        console.error(JSON.stringify({
-          event: 'social_instagram_publish_cycle_failed',
-          message: error instanceof Error ? error.message : String(error)
-        }));
+        console.error(JSON.stringify({ event: 'social_instagram_publish_cycle_failed', message: error instanceof Error ? error.message : String(error) }));
       }),
       syncInstagramInsights(env, { limit: 25 }).catch((error) => {
-        console.error(JSON.stringify({
-          event: 'social_instagram_insights_sync_failed',
-          message: error instanceof Error ? error.message : String(error)
-        }));
+        console.error(JSON.stringify({ event: 'social_instagram_insights_sync_failed', message: error instanceof Error ? error.message : String(error) }));
       })
     ]));
   }

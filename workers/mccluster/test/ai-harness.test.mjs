@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { validateEnvelope, CATALOG } from '../src/ai/envelope.js';
@@ -13,13 +13,13 @@ const ORG = '11111111-1111-1111-1111-111111111111';
 test('catalog advertises the control plane without leaking secrets', () => {
   assert.equal(CATALOG.service, 'mccluster');
   assert.equal(CATALOG.plane, 'control');
-  const paths = CATALOG.routes.map((r) => r.path);
+  const paths = CATALOG.routes.map((route) => route.path);
   assert.ok(paths.includes('/health'));
   assert.ok(paths.includes('/v1/ai/ingest'));
   assert.doesNotMatch(JSON.stringify(CATALOG), /service_role|SUPABASE_SERVICE|FAL_KEY|secret/i);
 });
 
-test('ingest envelope requires org, provider, external id, and idempotency key', () => {
+test('ingest envelope still defines the cross-provider interchange format', () => {
   assert.throws(() => validateEnvelope({}), /org_id required/);
   assert.throws(() => validateEnvelope({ org_id: ORG, provider: 'grok' }), /external_conversation_id/);
   const ok = validateEnvelope({
@@ -46,11 +46,13 @@ test('unknown providers are rejected so adapters cannot invent a parallel memory
   );
 });
 
-test('worker entry delegates AI routes to the harness without replacing the canonical worker', async () => {
+test('worker entry delegates AI and media MCP routes without replacing the canonical worker', async () => {
   const entry = await readFile(resolve(here, '..', 'src', 'entry.js'), 'utf8');
   const index = await readFile(resolve(here, '..', 'src', 'index.js'), 'utf8');
   const tenant = await readFile(resolve(here, '..', 'src', 'here-tenant-agent.js'), 'utf8');
   assert.match(entry, /handleAiRequest/);
+  assert.match(entry, /handleMediaMcp/);
+  assert.match(entry, /\/v1\/media\/mcp/);
   assert.match(entry, /export \{ HereTenantAgent \}/);
   assert.match(index, /path === '\/v1'/);
   assert.match(index, /CATALOG/);
@@ -58,32 +60,38 @@ test('worker entry delegates AI routes to the harness without replacing the cano
   assert.doesNotMatch(tenant, /stub:\s*true/);
 });
 
-test('AI routes require house-owner membership, not any authenticated user', async () => {
+test('AI routes use the evolved context functions and ops_agent_jobs contract', async () => {
   const router = await readFile(resolve(here, '..', 'src', 'ai', 'router.js'), 'utf8');
   assert.match(router, /role=eq\.owner/);
   assert.match(router, /McCluster house owner access required/);
-  assert.match(router, /rpc\(env, 'ai_ingest'/);
-  assert.match(router, /rpc\(env, 'ai_retrieve'/);
-  assert.match(router, /rpc\(env, 'ai_record_decision'/);
+  assert.match(router, /context-ingest/);
+  assert.match(router, /context-query/);
+  assert.match(router, /context-decision/);
+  assert.match(router, /ops_agent_jobs/);
+  assert.doesNotMatch(router, /ai_ingest/);
+  assert.doesNotMatch(router, /ai_retrieve/);
+  assert.doesNotMatch(router, /ai_record_decision/);
+  assert.doesNotMatch(router, /ai_harness_status/);
 });
 
-test('private AI schema is locked away from anon and authenticated', async () => {
-  const files = [
+test('unapplied legacy harness migrations cannot recreate a shadow job/RPC vocabulary', async () => {
+  const migrations = await readdir(resolve(repoRoot, 'supabase', 'migrations'));
+  const legacy = [
     '20260908221900_ai_harness.sql',
     '20260908221901_ai_harness_ops.sql',
     '20260908221902_ai_harness_ingest.sql',
-    '20260908221903_ai_harness_rpc.sql',
+    '20260908221903_ai_harness_rpc.sql'
   ];
-  const sql = (
-    await Promise.all(files.map((name) => readFile(resolve(repoRoot, 'supabase', 'migrations', name), 'utf8')))
-  ).join('\n');
-  assert.match(sql, /create schema if not exists ai_context/);
-  assert.match(sql, /revoke all on schema ai_context from public, anon, authenticated/);
-  assert.match(sql, /revoke all on function public\.ai_ingest\(jsonb\) from public, anon, authenticated/);
-  assert.match(sql, /create table if not exists public\.ops_jobs/);
-  assert.match(sql, /kind text not null default 'fact'/);
-  assert.doesNotMatch(sql, /grant execute on function public\.ai_ingest\(jsonb\) to anon/);
-  assert.doesNotMatch(sql, /grant execute on function public\.ai_ingest\(jsonb\) to authenticated/);
+  for (const name of legacy) assert.equal(migrations.includes(name), false, `${name} must stay retired`);
+});
+
+test('decision ingress verifies a human and writes only to the canonical private decisions table', async () => {
+  const decision = await readFile(resolve(repoRoot, 'supabase', 'functions', 'context-decision', 'index.ts'), 'utf8');
+  assert.match(decision, /\/auth\/v1\/user/);
+  assert.match(decision, /owner.*admin/);
+  assert.match(decision, /ai_context\.decisions/);
+  assert.doesNotMatch(decision, /ops_jobs/);
+  assert.doesNotMatch(decision, /create table/i);
 });
 
 test('health route stays minimal after the catalog was added', async () => {

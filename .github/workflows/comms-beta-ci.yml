@@ -1,0 +1,92 @@
+name: Communications Beta CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'core/src/comms-policy.mjs'
+      - 'core/src/executors/sms-assistant-turn.mjs'
+      - 'core/src/runner.mjs'
+      - 'core/test/comms-policy.test.mjs'
+      - 'workers/mccluster/src/comms/**'
+      - 'workers/mccluster/src/entry.js'
+      - 'supabase/migrations/*communications*'
+      - 'supabase/tests/comms_regression.sql'
+      - '.github/workflows/comms-beta-ci.yml'
+  pull_request:
+    paths:
+      - 'core/src/comms-policy.mjs'
+      - 'core/src/executors/sms-assistant-turn.mjs'
+      - 'core/src/runner.mjs'
+      - 'core/test/comms-policy.test.mjs'
+      - 'workers/mccluster/src/comms/**'
+      - 'workers/mccluster/src/entry.js'
+      - 'supabase/migrations/*communications*'
+      - 'supabase/tests/comms_regression.sql'
+      - '.github/workflows/comms-beta-ci.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: comms-beta-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-contracts:
+    name: Communications source contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Parse communications surfaces
+        run: |
+          node --check workers/mccluster/src/comms/router.js
+          node --check workers/mccluster/src/comms/enrollment.js
+          node --check workers/mccluster/src/entry.js
+          node --check core/src/comms-policy.mjs
+          node --check core/src/executors/sms-assistant-turn.mjs
+          node --check core/src/runner.mjs
+      - name: Run communications policy tests
+        working-directory: core
+        run: npm run test:comms
+      - name: Assert no carrier vendor dependency in transport
+        run: |
+          grep -F "transport: 'android-sim-relay'" workers/mccluster/src/comms/enrollment.js
+          grep -F "outbox_transport: 'android-sim-relay'" core/src/executors/sms-assistant-turn.mjs
+          if grep -R -nEi 'twilio|nexmo|vonage' workers/mccluster/src/comms core/src/executors/sms-assistant-turn.mjs core/src/comms-policy.mjs; then
+            echo 'Communications transport must not depend on a carrier API vendor.' >&2
+            exit 1
+          fi
+      - name: Assert safety and takeover contracts
+        run: |
+          grep -F "McCluster's assistant here" core/src/comms-policy.mjs
+          grep -F "mode: 'paused'" core/src/executors/sms-assistant-turn.mjs
+          grep -F "STOP_COMMAND" workers/mccluster/src/comms/router.js
+          grep -F "TAKEOVER" workers/mccluster/src/comms/router.js
+          grep -F "RELEASE" workers/mccluster/src/comms/router.js
+          grep -F "relay_self_loop" workers/mccluster/src/comms/router.js
+
+  database-regression:
+    name: Communications database regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1
+        with:
+          version: 2.117.0
+      - name: Start isolated Supabase stack
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+      - name: Rebuild database from migrations
+        run: supabase db reset
+      - name: Verify communications security contracts
+        env:
+          PGPASSWORD: postgres
+        run: psql 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' -v ON_ERROR_STOP=1 -f supabase/tests/comms_regression.sql
+      - name: Stop isolated stack
+        if: always()
+        run: supabase stop --no-backup || true

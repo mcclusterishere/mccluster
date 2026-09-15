@@ -15,6 +15,7 @@
   },
   "satellites": [
     {"owner": "mcclusterishere", "repo": "mccluster", "role": "control-plane", "branch": "main"},
+    {"owner": "mcclusterishere", "repo": "Mnet", "role": "social-plane", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Here", "role": "archive-old-website", "branch": "main", "doNotDeploy": true},
     {"owner": "mcclusterishere", "repo": "hitmans-halo", "role": "core-runtime", "branch": "main", "host": "McCluster Core"},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped", "role": "product", "branch": "main"},

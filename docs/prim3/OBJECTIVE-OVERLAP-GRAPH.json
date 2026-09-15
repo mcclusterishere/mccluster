@@ -1,0 +1,289 @@
+{
+  "version": "1.0.0",
+  "course": "prim3-foundation-v3",
+  "status": "CANONICAL_CONCEPT_MASTERY_GRAPH",
+  "purpose": "Teach each canonical concept comprehensively once in LEARN, then credit every certification objective that depends on that concept without duplicating learner work.",
+  "progress_semantics": {
+    "atomic_unit": "canonical_concept",
+    "learn_mastery_required": true,
+    "objective_progress_formula": "required linked concept nodes mastered divided by total required linked concept nodes",
+    "shared_credit_rule": "Mastery of one concept node credits every linked certification objective that requires that concept.",
+    "duplicate_work_rule": "A learner must not repeat substantially identical conventional instruction merely because different certifications number the knowledge differently.",
+    "reinforcement_rule": "REMEMBER, WATCH and LAB status are tracked separately and cannot replace LEARN mastery.",
+    "assessment_rule": "Concept mastery requires conventional instruction plus an assessment or knowledge demonstration appropriate to the concept.",
+    "a_plus_role": "CompTIA A Plus is a tracked precursor and overlap layer, not a mandatory PRIM3 course completion gate.",
+    "lab_status": "DEFERRED_TO_GAME_DESIGN"
+  },
+  "nodes": [
+    {
+      "id": "security_fundamentals_risk",
+      "label": "Security fundamentals, CIA, threats, vulnerabilities and risk",
+      "learn_modules": ["M01"],
+      "security_plus": ["1.1", "1.2", "2.1", "5.2"],
+      "network_plus": ["4.1"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["2.1", "4.6"]
+    },
+    {
+      "id": "identity_access_mfa",
+      "label": "Identity, authentication, authorization, MFA and least privilege",
+      "learn_modules": ["M03", "M14", "M20", "M23", "M26", "M29", "M62"],
+      "security_plus": ["1.2", "4.6"],
+      "network_plus": ["4.1", "4.3"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["2.1", "2.2", "2.7"]
+    },
+    {
+      "id": "cryptography_pki_data_protection",
+      "label": "Encryption, hashing, PKI, certificates and data protection",
+      "learn_modules": ["M03", "M20", "M29", "M35", "M53"],
+      "security_plus": ["1.4", "3.3"],
+      "network_plus": ["4.1", "4.3"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["2.2", "2.3", "2.11"]
+    },
+    {
+      "id": "physical_security",
+      "label": "Physical security, access control and environmental safeguards",
+      "learn_modules": ["M01", "M23", "M34", "M44", "M65"],
+      "security_plus": ["1.2", "2.2", "5.4"],
+      "network_plus": ["2.4", "4.1", "4.2"],
+      "a_plus_core1": ["2.4"],
+      "a_plus_core2": ["2.1", "4.4", "4.5"]
+    },
+    {
+      "id": "change_configuration_management",
+      "label": "Change management, baselines, configuration and rollback",
+      "learn_modules": ["M18", "M31", "M32", "M33", "M52", "M54"],
+      "security_plus": ["1.3", "4.1", "5.1"],
+      "network_plus": ["3.1", "5.1"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["1.2", "4.1", "4.2", "4.3"]
+    },
+    {
+      "id": "social_engineering",
+      "label": "Phishing, impersonation, social engineering and awareness",
+      "learn_modules": ["M13", "M14", "M15"],
+      "security_plus": ["2.2", "5.6"],
+      "network_plus": ["4.2"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["2.5"]
+    },
+    {
+      "id": "malware",
+      "label": "Malware families, indicators, propagation and response",
+      "learn_modules": ["M22", "M28", "M30"],
+      "security_plus": ["2.4", "4.4", "4.8"],
+      "network_plus": ["4.2"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["2.4", "2.6", "3.4"]
+    },
+    {
+      "id": "vulnerability_management",
+      "label": "Vulnerability discovery, prioritization, remediation and validation",
+      "learn_modules": ["M09", "M10", "M12", "M27", "M38", "M52", "M54"],
+      "security_plus": ["2.3", "4.3", "5.5"],
+      "network_plus": ["3.1", "4.3", "5.1"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["2.5", "4.2"]
+    },
+    {
+      "id": "hardening",
+      "label": "Endpoint, application, network and device hardening",
+      "learn_modules": ["M15", "M20", "M27", "M38", "M52", "M53"],
+      "security_plus": ["2.5", "4.1", "4.5"],
+      "network_plus": ["4.3"],
+      "a_plus_core1": ["2.6"],
+      "a_plus_core2": ["2.2", "2.7", "2.10", "2.11"]
+    },
+    {
+      "id": "monitoring_logging_siem",
+      "label": "Telemetry, logging, monitoring, SIEM and alert analysis",
+      "learn_modules": ["M04", "M06", "M11", "M12", "M24", "M30", "M42"],
+      "security_plus": ["4.4", "4.9"],
+      "network_plus": ["3.2", "5.1", "5.5"],
+      "a_plus_core1": ["5.5"],
+      "a_plus_core2": ["3.1", "3.4"]
+    },
+    {
+      "id": "incident_response_forensics",
+      "label": "Incident response, evidence preservation, investigation and forensics",
+      "learn_modules": ["M05", "M06", "M24", "M30", "M35", "M48", "M60"],
+      "security_plus": ["4.8", "4.9"],
+      "network_plus": ["3.2", "5.1"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["2.6", "4.6"]
+    },
+    {
+      "id": "governance_risk_compliance",
+      "label": "Governance, risk, compliance, privacy and third party management",
+      "learn_modules": ["M01", "M05", "M07", "M12", "M17", "M23", "M40", "M43", "M45", "M59"],
+      "security_plus": ["5.1", "5.2", "5.3", "5.4", "5.5"],
+      "network_plus": ["3.1", "4.1"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["4.1", "4.6"]
+    },
+    {
+      "id": "osi_model",
+      "label": "OSI model and layered network reasoning",
+      "learn_modules": ["M02", "M21", "M64", "M66"],
+      "security_plus": ["3.2", "4.4"],
+      "network_plus": ["1.1", "5.1"],
+      "a_plus_core1": ["2.1", "5.5"],
+      "a_plus_core2": []
+    },
+    {
+      "id": "ports_protocols_services",
+      "label": "Ports, protocols, services and traffic types",
+      "learn_modules": ["M02", "M06", "M20", "M41"],
+      "security_plus": ["3.2", "4.5"],
+      "network_plus": ["1.4", "3.4"],
+      "a_plus_core1": ["2.1", "2.3"],
+      "a_plus_core2": ["1.7"]
+    },
+    {
+      "id": "media_connectors",
+      "label": "Copper, coax, fiber, wireless media, transceivers and connectors",
+      "learn_modules": ["M64", "M65", "M66"],
+      "security_plus": ["3.2", "4.2"],
+      "network_plus": ["1.5", "2.4", "5.2"],
+      "a_plus_core1": ["2.5", "2.7", "3.2"],
+      "a_plus_core2": []
+    },
+    {
+      "id": "ip_addressing",
+      "label": "IPv4 addressing, subnetting, DHCP, DNS and IPv6 transition foundations",
+      "learn_modules": ["M02", "M33", "M46"],
+      "security_plus": ["3.2"],
+      "network_plus": ["1.7", "1.8", "3.4", "5.3"],
+      "a_plus_core1": ["2.4", "2.6"],
+      "a_plus_core2": ["1.7"]
+    },
+    {
+      "id": "routing",
+      "label": "Routing, NAT, route selection and gateway behavior",
+      "learn_modules": ["M02", "M40", "M41", "M48"],
+      "security_plus": ["3.2"],
+      "network_plus": ["2.1", "5.3"],
+      "a_plus_core1": ["2.5", "2.6"],
+      "a_plus_core2": ["1.7"]
+    },
+    {
+      "id": "switching",
+      "label": "Switching, VLANs, tagging, aggregation and spanning tree",
+      "learn_modules": ["M02", "M41", "M65"],
+      "security_plus": ["3.2"],
+      "network_plus": ["2.2", "5.3"],
+      "a_plus_core1": ["2.5"],
+      "a_plus_core2": []
+    },
+    {
+      "id": "wireless",
+      "label": "Wireless architecture, threats, encryption, RF and troubleshooting",
+      "learn_modules": ["M19", "M20", "M21", "M61"],
+      "security_plus": ["1.4", "2.2", "2.4", "2.5", "4.1"],
+      "network_plus": ["2.3", "4.2", "4.3", "5.4"],
+      "a_plus_core1": ["2.2", "2.6", "5.5"],
+      "a_plus_core2": ["2.3", "2.10"]
+    },
+    {
+      "id": "cloud_service_models",
+      "label": "Cloud service models, shared responsibility and connectivity",
+      "learn_modules": ["M40", "M42", "M46", "M47"],
+      "security_plus": ["3.1", "5.3"],
+      "network_plus": ["1.3"],
+      "a_plus_core1": ["4.2"],
+      "a_plus_core2": ["1.11"]
+    },
+    {
+      "id": "virtualization_containers",
+      "label": "Virtualization, hypervisors, containers and virtual networking",
+      "learn_modules": ["M41"],
+      "security_plus": ["2.3", "3.1"],
+      "network_plus": ["1.3", "1.6", "1.8", "2.2"],
+      "a_plus_core1": ["4.1", "4.2"],
+      "a_plus_core2": []
+    },
+    {
+      "id": "iot_embedded",
+      "label": "IoT, embedded systems, sensors, segmentation and recovery",
+      "learn_modules": ["M37", "M38", "M39"],
+      "security_plus": ["2.3", "2.5", "3.1", "4.1"],
+      "network_plus": ["1.8", "4.1", "4.3"],
+      "a_plus_core1": ["2.5"],
+      "a_plus_core2": ["2.7"]
+    },
+    {
+      "id": "dr_ha_backups",
+      "label": "Backups, disaster recovery, high availability, RAID and recovery sites",
+      "learn_modules": ["M32", "M42", "M48", "M58", "M59", "M60"],
+      "security_plus": ["3.4", "4.8", "5.2"],
+      "network_plus": ["3.3", "5.1"],
+      "a_plus_core1": ["3.4", "5.2"],
+      "a_plus_core2": ["4.3"]
+    },
+    {
+      "id": "troubleshooting_methodology",
+      "label": "Structured troubleshooting methodology and documentation",
+      "learn_modules": ["M02", "M04", "M09", "M17", "M21", "M33", "M39", "M51", "M54", "M60", "M66"],
+      "security_plus": ["4.3", "4.4", "4.8"],
+      "network_plus": ["5.1"],
+      "a_plus_core1": ["5.1", "5.2", "5.3", "5.4", "5.5", "5.6"],
+      "a_plus_core2": ["3.1", "3.2", "3.3", "3.4", "4.1"]
+    },
+    {
+      "id": "cabling_performance",
+      "label": "Cabling faults, interference, performance and network tools",
+      "learn_modules": ["M21", "M44", "M64", "M65", "M66"],
+      "security_plus": ["3.2", "4.4"],
+      "network_plus": ["5.2", "5.4", "5.5"],
+      "a_plus_core1": ["2.8", "3.2", "5.5"],
+      "a_plus_core2": []
+    },
+    {
+      "id": "hardware_storage_power",
+      "label": "CPU, memory, storage, expansion, power and peripheral foundations",
+      "learn_modules": ["M49", "M50", "M51", "M58"],
+      "security_plus": ["3.1", "4.2"],
+      "network_plus": ["2.4"],
+      "a_plus_core1": ["1.1", "1.2", "3.1", "3.3", "3.4", "3.5", "3.6", "5.1", "5.2", "5.3", "5.4"],
+      "a_plus_core2": ["4.4", "4.5"]
+    },
+    {
+      "id": "os_install_upgrade",
+      "label": "Operating system installation, compatibility, migration and upgrade",
+      "learn_modules": ["M31", "M32", "M33", "M52"],
+      "security_plus": ["1.3", "4.2"],
+      "network_plus": ["3.1", "5.1", "5.3"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["1.1", "1.2", "1.3", "1.4", "1.6", "1.7", "1.8", "1.9", "1.10", "3.1"]
+    },
+    {
+      "id": "asset_disposal",
+      "label": "Asset inventory, retention, sanitization, disposal and evidence exposure",
+      "learn_modules": ["M34", "M35", "M43"],
+      "security_plus": ["4.2", "5.4", "5.6"],
+      "network_plus": ["3.1", "4.1", "4.2"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["2.9", "4.1", "4.5", "4.6"]
+    },
+    {
+      "id": "secure_coding",
+      "label": "Secure coding, input validation, code signing and testing",
+      "learn_modules": ["M25", "M27", "M53", "M54"],
+      "security_plus": ["2.3", "2.4", "4.1", "4.3"],
+      "network_plus": ["3.1", "4.3", "5.1"],
+      "a_plus_core1": [],
+      "a_plus_core2": ["4.8"]
+    },
+    {
+      "id": "automation_iac",
+      "label": "Automation, orchestration, scripting and infrastructure as code",
+      "learn_modules": ["M18", "M42", "M47", "M54"],
+      "security_plus": ["4.7", "5.1"],
+      "network_plus": ["1.8", "3.1", "3.2"],
+      "a_plus_core1": ["4.1", "4.2"],
+      "a_plus_core2": ["4.8"]
+    }
+  ]
+}
