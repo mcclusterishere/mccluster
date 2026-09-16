@@ -1,0 +1,27 @@
+[Unit]
+Description=McCluster stateless preview file gateway
+After=network-online.target
+
+[Service]
+Type=simple
+User=mccluster-core
+Group=mccluster-core
+WorkingDirectory=/opt/mccluster/core
+# This public file server receives no database, provider, or broker credentials.
+EnvironmentFile=-/etc/mccluster/preview.env
+ExecStart=/usr/bin/node /opt/mccluster/core/src/preview-gateway.mjs
+Restart=on-failure
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+InaccessiblePaths=-/etc/mccluster/core.env -/srv/mccluster/repos -/srv/mccluster/worktrees
+ReadWritePaths=/var/lib/mccluster-core/previews
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+MemoryMax=256M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

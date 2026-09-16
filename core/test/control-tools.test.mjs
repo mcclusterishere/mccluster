@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { CONTROL_TOOLS } from '../src/tools/control.mjs';
+import { previewConfigured } from '../src/preview-policy.mjs';
 import { researchWeb } from '../src/tools/research.mjs';
 
 const names = new Set(CONTROL_TOOLS.map((tool) => tool.name));
@@ -19,8 +20,8 @@ test('objective planning tool remains bounded to safe unattended child work', as
   assert.match(source, /production_mutation: false/);
 });
 
-test('preview tool is advertised only when deployment credentials exist', () => {
-  assert.equal(names.has('core.deploy.preview'), Boolean(process.env.VERCEL_TOKEN));
+test('preview tool is advertised only when the owned preview gateway is configured', () => {
+  assert.equal(names.has('core.deploy.preview'), previewConfigured());
 });
 
 test('web research fails closed before network access when objective is missing', async () => {
@@ -31,7 +32,8 @@ test('preview executor is non-production by construction', async () => {
   const source = await readFile(new URL('../src/executors/preview-deploy.mjs', import.meta.url), 'utf8');
   assert.match(source, /production: false/);
   assert.doesNotMatch(source, /--prod(?:uction)?\b/);
-  assert.match(source, /VERCEL_TOKEN/);
+  assert.doesNotMatch(source, /VERCEL_TOKEN/);
+  assert.match(source, /previewConfigured/);
 });
 
 test('production capability catalog contains no planned lifecycle entries', async () => {
@@ -43,5 +45,5 @@ test('production capability catalog contains no planned lifecycle entries', asyn
     assert.equal(catalog.capabilities.find((capability) => capability.id === id)?.lifecycle, 'active', `${id} must be active`);
     assert.ok(catalog.bindings.some((binding) => binding.capability === id && binding.status === 'active'), `${id} must have an active binding`);
   }
-  assert.equal(catalog.capabilities.find((capability) => capability.id === 'deploy.preview')?.description.includes('requires VERCEL_TOKEN'), true);
+  assert.equal(catalog.bindings.find((binding) => binding.capability === 'deploy.preview').economics.hosting, 'owned');
 });

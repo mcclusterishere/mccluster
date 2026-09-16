@@ -14,6 +14,15 @@ This document is the human-readable architecture authority. The machine-readable
 | Source and promotion | `mcclusterishere/mccluster` | source, CI, reviewed promotion, deployment refs |
 | Specialized compute | compute-node protocol | GPU/desktop/specialized execution only |
 
+## MCP transport isolation
+
+`mccluster-mcp` from `workers/mccluster-mcp` is a stateless transport edge on
+`mcp.mccluster.org`. It uses the existing Supabase house-owner gate, capability
+catalog and OVH broker. It owns no identity, durable data, scheduler or jobs.
+The API Worker remains `mccluster`; the forbidden `mccluster-core` Worker is not
+introduced. The legacy `/v1/core/mcp` route remains until clients migrate.
+Activation is a reviewed deployment, separate from implementing this extraction.
+
 ## Canonical orchestration
 
 The canonical durable job system is `ops_agent_jobs`. The canonical objective system is `ops_objectives`. Private conversation memory lives under `ai_context`; public jobs store bounded references rather than raw private transcripts. Semantic capabilities are resolved through `core/capabilities/catalog.json`, executed by `core/src/runner.mjs`, and exposed to Core through `core/src/tool-broker.mjs`.

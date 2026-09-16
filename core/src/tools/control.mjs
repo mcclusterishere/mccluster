@@ -3,9 +3,10 @@ import { repoHealth } from '../executors/repo-health.mjs';
 import { enqueueJob } from '../supabase.mjs';
 import { researchWeb } from './research.mjs';
 import { coreResume } from './resume.mjs';
+import { previewConfigured } from '../preview-policy.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
-const PREVIEW_CONFIGURED = Boolean(process.env.VERCEL_TOKEN);
+const PREVIEW_CONFIGURED = previewConfigured();
 
 function text(value, max = 20000) {
   return String(value ?? '').trim().slice(0, max);
@@ -69,8 +70,8 @@ const BASE_TOOLS = [
 if (PREVIEW_CONFIGURED) {
   BASE_TOOLS.push({
     name: 'core.deploy.preview', title: 'Deploy non-production preview',
-    description: 'Queue a Vercel preview deployment from an approved repository ref; production deployment is never requested.',
-    inputSchema: { type: 'object', required: ['org_id', 'repository', 'ref'], properties: { org_id: { type: 'string' }, repository: { type: 'string' }, ref: { type: 'string' }, directory: { type: 'string' }, priority: { type: 'number' } } }
+    description: 'Queue an approved ref as a temporary static preview on McCluster-owned compute; production deployment is never requested.',
+    inputSchema: { type: 'object', required: ['org_id', 'repository', 'ref'], properties: { org_id: { type: 'string' }, repository: { type: 'string' }, ref: { type: 'string' }, directory: { type: 'string' }, output_dir: { type: 'string' }, ttl_hours: { type: 'number', minimum: 1, maximum: 168 }, priority: { type: 'number' } } }
   });
 }
 
@@ -165,7 +166,7 @@ export async function callControlTool(name, args = {}) {
     const repository = requireRepo(args.repository);
     const ref = text(args.ref, 240);
     if (!ref) throw Object.assign(new Error('ref is required'), { status: 400 });
-    const job = await enqueueJob({ orgId, jobType: 'preview_deploy', targetType: 'repository', targetId: repository, priority: Math.min(100, Math.max(0, Number(args.priority ?? 90))), maxAttempts: 2, input: { repository, ref, directory: text(args.directory || '.', 1000) } });
+    const job = await enqueueJob({ orgId, jobType: 'preview_deploy', targetType: 'repository', targetId: repository, priority: Math.min(100, Math.max(0, Number(args.priority ?? 90))), maxAttempts: 2, input: { repository, ref, directory: text(args.directory || '.', 1000), output_dir: args.output_dir, ttl_hours: args.ttl_hours ?? 24 } });
     return { queued: true, job_id: job.id, job_type: job.job_type, repository, ref, production: false };
   }
 

@@ -82,7 +82,7 @@ test('the MCP route answers an unauthenticated caller with an OAuth challenge, n
 });
 
 test('the Core MCP source files exist and are non-trivial', async () => {
-  for (const path of ['workers/mccluster/src/core/mcp.js', 'workers/mccluster/src/core/oauth-resource.js']) {
+  for (const path of ['workers/mccluster-mcp/src/mcp.js', 'workers/mccluster-mcp/src/oauth-resource.js']) {
     const source = await read(path);
     assert.ok(source.length > 500, `${path} is missing or has been emptied`);
   }
@@ -91,7 +91,7 @@ test('the Core MCP source files exist and are non-trivial', async () => {
 /* ---------- the contract the client already speaks ---------- */
 
 test('the protocol version stays exactly the one working clients negotiated', async () => {
-  const source = await read('workers/mccluster/src/core/mcp.js');
+  const source = await read('workers/mccluster-mcp/src/mcp.js');
   assert.match(source, new RegExp(`MCP_VERSION = '${PROTOCOL_VERSION}'`),
     `protocol must remain ${PROTOCOL_VERSION}; changing it breaks connected clients`);
 
@@ -151,7 +151,7 @@ test('OAuth protected-resource metadata is complete and points at the real autho
 /* ---------- authorization and exposure ---------- */
 
 test('owner-only authorization and signed dispatch are still in the bridge', async () => {
-  const source = await read('workers/mccluster/src/core/mcp.js');
+  const source = await read('workers/mccluster-mcp/src/mcp.js');
   assert.match(source, /role=eq\.owner/, 'the house-owner gate is missing');
   assert.match(source, /slug=eq\.mccluster/, 'the house org lookup is missing');
   assert.match(source, /HMAC/, 'the Worker→Core signing key usage is missing');
@@ -160,7 +160,7 @@ test('owner-only authorization and signed dispatch are still in the bridge', asy
 });
 
 test('the remote allowlist is enforced and still carries media.job.get', async () => {
-  const source = await read('workers/mccluster/src/core/mcp.js');
+  const source = await read('workers/mccluster-mcp/src/mcp.js');
   assert.match(source, /REMOTE_CAPABILITIES = new Set\(/);
   for (const capability of [
     'core.resume', 'system.health', 'media.job.get', 'media.models.search',
@@ -219,7 +219,7 @@ test('the deploy workflow guards before deploying, and verifies after', async ()
   const guard = workflow.indexOf('core-mcp-continuity');
   const upload = workflow.indexOf('versions upload');
   const promote = workflow.indexOf('--version-tag');
-  const check = workflow.indexOf('mcp-contract-check');
+  const check = workflow.indexOf('node scripts/mcp-contract-check');
 
   assert.ok(guard > 0, 'the continuity guard is not run by the deploy workflow');
   assert.ok(upload > 0, 'the staged version upload step is missing');
@@ -233,7 +233,7 @@ test('a failed verification rolls production back instead of leaving a bad build
   const workflow = await read('.github/workflows/deploy-mccluster-worker.yml');
   assert.match(workflow, /deployments list --json/,
     'the previously serving version must be recorded before traffic moves');
-  assert.match(workflow, /if: failure\(\) && steps\.rollback_target\.outputs\.version_id != ''/,
+  assert.match(workflow, /if: failure\(\) && steps\.promote\.outcome != 'skipped' && steps\.rollback_target\.outputs\.allocation != ''/,
     'there is no automatic rollback on verification failure');
   assert.match(workflow, /Automatic rollback from/,
     'the rollback step does not promote the previous version');

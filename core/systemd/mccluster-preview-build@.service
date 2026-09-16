@@ -1,0 +1,29 @@
+[Unit]
+Description=Isolated McCluster preview build %i
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+SupplementaryGroups=mccluster-work
+WorkingDirectory=/build
+ExecStart=/usr/bin/node /run/mccluster-preview-build.mjs
+TimeoutStartSec=1200
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+TemporaryFileSystem=/:ro
+BindReadOnlyPaths=/usr /bin /lib -/lib64 /etc/resolv.conf /etc/hosts /etc/ssl
+BindReadOnlyPaths=/opt/mccluster/core/scripts/preview-build.mjs:/run/mccluster-preview-build.mjs
+BindPaths=/srv/mccluster/worktrees/preview-%i:/build
+ReadWritePaths=/build
+MemoryMax=2G
+CPUQuota=200%
+TasksMax=128

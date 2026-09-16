@@ -1,0 +1,106 @@
+name: Deploy isolated McCluster MCP transport
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/mccluster-mcp/**'
+      - 'scripts/mcp-contract-check.mjs'
+      - 'scripts/worker-deployment-state.mjs'
+      - '.github/workflows/deploy-mccluster-mcp.yml'
+  workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: Create the new transport and its domain for the first time
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: deploy-mccluster-mcp-main
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        shell: bash
+        working-directory: workers/mccluster-mcp
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      BOOTSTRAP: ${{ inputs.bootstrap || false }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Require production source and credentials
+        run: |
+          test "$GITHUB_REF" = refs/heads/main
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+      - name: Verify transport and compile without publishing
+        run: |
+          node --test test/*.test.mjs ../mccluster/test/core-bridge.test.mjs ../mccluster/test/core-oauth-resource.test.mjs ../../scripts/test/*.test.mjs
+          npx --yes wrangler@4.131.1 versions upload --dry-run
+      - name: Record traffic before updating an existing transport
+        id: rollback
+        if: inputs.bootstrap != true
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4.131.1 deployments list --json > /tmp/mcp-before.json
+          allocation="$(node ../../scripts/worker-deployment-state.mjs capture /tmp/mcp-before.json /tmp/mcp-rollback.json)"
+          echo "allocation=$allocation" >> "$GITHUB_OUTPUT"
+      - name: Bootstrap only a confirmed absent transport
+        if: inputs.bootstrap == true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CORE_BROKER_TOKEN: ${{ secrets.CORE_BROKER_TOKEN }}
+          CORE_EDGE_SIGNING_KEY: ${{ secrets.CORE_EDGE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import { writeFile } from 'node:fs/promises';
+          const url = `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/workers/scripts`;
+          const r = await fetch(url, {headers:{authorization:`Bearer ${process.env.CLOUDFLARE_API_TOKEN}`},signal:AbortSignal.timeout(15000)});
+          const body = await r.json();
+          if (!r.ok || body.success !== true || !Array.isArray(body.result)) throw new Error('Cannot prove Worker absence');
+          if (body.result.some(w => w.id === 'mccluster-mcp')) throw new Error('Transport already exists; use the guarded update path');
+          const keys = ['SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','CORE_BROKER_TOKEN','CORE_EDGE_SIGNING_KEY'];
+          if (keys.some(k => !process.env[k])) throw new Error('All four transport secrets must exist before bootstrap');
+          await writeFile('/tmp/mcp-secrets.json',JSON.stringify(Object.fromEntries(keys.map(k=>[k,process.env[k]]))),{mode:0o600});
+          NODE
+          trap 'rm -f /tmp/mcp-secrets.json' EXIT
+          npx --yes wrangler@4.131.1 deploy --secrets-file /tmp/mcp-secrets.json \
+            --var DEPLOY_SHA:${GITHUB_SHA} --var DEPLOY_REF:${GITHUB_REF_NAME}
+      - name: Upload without changing traffic
+        if: inputs.bootstrap != true
+        run: |
+          npx --yes wrangler@4.131.1 versions upload \
+            --tag ${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT} \
+            --var DEPLOY_SHA:${GITHUB_SHA} --var DEPLOY_REF:${GITHUB_REF_NAME}
+      - name: Refuse concurrent external promotion
+        if: inputs.bootstrap != true
+        run: |
+          npx --yes wrangler@4.131.1 deployments list --json > /tmp/mcp-pre-promote.json
+          node ../../scripts/worker-deployment-state.mjs verify /tmp/mcp-pre-promote.json /tmp/mcp-rollback.json
+      - name: Promote exact uploaded version
+        id: promote
+        if: inputs.bootstrap != true
+        run: |
+          npx --yes wrangler@4.131.1 versions deploy \
+            --version-tag ${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}@100 --yes
+      - name: Verify live MCP contract and provenance
+        run: node ../../scripts/mcp-contract-check.mjs --base https://mcp.mccluster.org --sha "$GITHUB_SHA"
+      - name: Restore and verify the previous traffic allocation
+        if: failure() && steps.promote.outcome != 'skipped' && steps.rollback.outputs.allocation != ''
+        env:
+          ALLOCATION: ${{ steps.rollback.outputs.allocation }}
+        run: |
+          set -euo pipefail
+          read -r -a versions <<< "$ALLOCATION"
+          npx --yes wrangler@4.131.1 versions deploy "${versions[@]}" --yes
+          npx --yes wrangler@4.131.1 deployments list --json > /tmp/mcp-restored.json
+          node ../../scripts/worker-deployment-state.mjs verify /tmp/mcp-restored.json /tmp/mcp-rollback.json

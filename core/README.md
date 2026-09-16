@@ -160,7 +160,7 @@ sudo install -m 0644 core/systemd/mccluster-opencode.service /etc/systemd/system
 sudo install -m 0644 core/systemd/mccluster-core-runner.service /etc/systemd/system/
 sudo install -m 0644 core/systemd/mccluster-core-digest.service /etc/systemd/system/
 sudo install -m 0644 core/systemd/mccluster-core-digest.timer /etc/systemd/system/
-sudo install -m 0644 core/systemd/mccluster-tool-broker.service /etc/systemd/system/
+sudo install -m 0644 core/systemd/mccluster-core-tool-broker.service /etc/systemd/system/
 
 sudo mkdir -p /etc/systemd/system/ollama.service.d
 sudo install -m 0644 core/systemd/ollama-mccluster.conf \
@@ -169,7 +169,7 @@ sudo install -m 0644 core/systemd/ollama-mccluster.conf \
 sudo systemctl daemon-reload
 sudo systemctl restart ollama
 sudo systemctl enable --now mccluster-opencode.service
-sudo systemctl enable --now mccluster-tool-broker.service
+sudo systemctl enable --now mccluster-core-tool-broker.service
 sudo systemctl enable --now mccluster-core-runner.service
 sudo systemctl enable --now mccluster-core-digest.timer
 ```
@@ -228,3 +228,12 @@ Do not hand-edit the queue from the VPS. New jobs should come through a reviewed
 `mccluster-core-digest.timer` runs every morning. It summarizes jobs updated in the configured lookback period, writes the digest into `ops_signals`, and sends an SMS when Twilio is configured. Without Twilio it still records the digest and journals the output.
 
 This is intentionally a status report, not a second scheduler. The durable source of work remains `ops_agent_jobs`.
+
+
+### Owned preview deployment
+
+See `docs/control-plane/MCP-CONTINUITY.md` and `MCP-RELEASE-2026-09-16.md`.
+The preview executor publishes static output from an allowlisted repository and
+exact commit, without Vercel. Enable only after verifying the loopback gateway,
+public tunnel, and (for npm builds) the restricted systemd build template and
+Polkit rule on the host. The serving gateway uses `preview.env`, never `core.env`.

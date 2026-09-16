@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-16.2",
+  "catalogVersion": "2026-09-16.3",
   "capabilities": [
     {
       "id": "core.resume",
@@ -691,7 +691,7 @@
     {
       "id": "deploy.preview",
       "title": "Deploy preview",
-      "description": "Queue a non-production Vercel preview from an approved repository ref. Runtime availability requires VERCEL_TOKEN on the Core host.",
+      "description": "Publish an approved ref as a temporary static preview on McCluster-owned compute. Requires explicit self-hosted preview configuration.",
       "domain": "deployment",
       "lifecycle": "active",
       "execution": "async",
@@ -721,6 +721,14 @@
           },
           "directory": {
             "type": "string"
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "ttl_hours": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 168
           }
         }
       },
@@ -1021,14 +1029,16 @@
       "status": "active",
       "priority": 120,
       "economics": {
-        "hosting": "external",
-        "billing": "free"
+        "hosting": "owned",
+        "billing": "compute"
       },
       "features": {
         "async": true,
         "production": false,
-        "provider": "vercel",
-        "credential_gated": true
+        "self_hosted": true,
+        "ttl_cleanup": true,
+        "third_party_deploy_provider": false,
+        "configuration_gated": true
       }
     }
   ]

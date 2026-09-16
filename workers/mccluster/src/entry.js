@@ -33,6 +33,12 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
+    // Activated only after the isolated transport is deployed and verified.
+    // Forward the original request once: retrying a tools/call can duplicate work.
+    if (env.MCP_EDGE && ['/v1/core/mcp', '/v1/core', '/.well-known/oauth-protected-resource'].includes(path)) {
+      return env.MCP_EDGE.fetch(request);
+    }
+
     if (path === '/healthz' && request.method === 'GET') {
       return reply(request, env, {
         ok: true,

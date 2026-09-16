@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'workers/mccluster/**'
+      - 'workers/mccluster-mcp/src/**'
+      - 'scripts/mcp-contract-check.mjs'
+      - 'scripts/worker-deployment-state.mjs'
       - '.github/workflows/deploy-mccluster-worker.yml'
   workflow_dispatch: {}
 
@@ -30,6 +33,13 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
+
+      - name: Require production source branch
+        run: test "$GITHUB_REF" = refs/heads/main
+
+      - name: Install locked Worker dependencies
+        working-directory: workers/mccluster
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Require Cloudflare deployment credentials
         shell: bash
@@ -64,6 +74,7 @@ jobs:
           node --test test/core-mcp-continuity.test.mjs
           node --test test/core-bridge.test.mjs
           node --test test/core-oauth-resource.test.mjs
+          node --test ../mccluster-mcp/test/*.test.mjs ../../scripts/test/*.test.mjs
 
       # STAGED DEPLOY: upload, promote, verify, roll back on failure.
       #
@@ -79,21 +90,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          current="$(npx --yes wrangler@4.131.1 deployments list --json 2>/dev/null \
-            | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{
-                try{
-                  const list=JSON.parse(d);
-                  const latest=Array.isArray(list)?list[0]:null;
-                  const version=latest?.versions?.[0]?.version_id||latest?.version_id||'';
-                  console.log(version);
-                }catch{console.log('')}
-              })" || true)"
-          echo "version_id=${current}" >> "$GITHUB_OUTPUT"
-          if [ -n "$current" ]; then
-            echo "Rollback target: $current"
-          else
-            echo 'No previous version found — rollback will not be available for this run.'
-          fi
+          npx --yes wrangler@4.131.1 deployments list --json > /tmp/worker-before.json
+          allocation="$(node ../../scripts/worker-deployment-state.mjs capture /tmp/worker-before.json /tmp/worker-rollback.json)"
+          echo "allocation=$allocation" >> "$GITHUB_OUTPUT"
+          echo "Recorded complete rollback traffic allocation."
 
       # Uploads and stamps provenance WITHOUT taking traffic. --tag lets the
       # promote step resolve this exact build by commit SHA instead of
@@ -102,16 +102,23 @@ jobs:
         working-directory: workers/mccluster
         run: >-
           npx --yes wrangler@4.131.1 versions upload
-          --tag ${GITHUB_SHA}
+          --tag ${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}
           --message "GitHub Actions ${GITHUB_SHA}"
           --var DEPLOY_SHA:${GITHUB_SHA}
           --var DEPLOY_REF:${GITHUB_REF_NAME}
 
+      - name: Refuse a concurrent external deployment
+        working-directory: workers/mccluster
+        run: |
+          npx --yes wrangler@4.131.1 deployments list --json > /tmp/worker-pre-promote.json
+          node ../../scripts/worker-deployment-state.mjs verify /tmp/worker-pre-promote.json /tmp/worker-rollback.json
+
       - name: Promote the new version to 100% traffic
+        id: promote
         working-directory: workers/mccluster
         run: >-
           npx --yes wrangler@4.131.1 versions deploy
-          --version-tag ${GITHUB_SHA}@100
+          --version-tag ${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}@100
           --message "Promote ${GITHUB_SHA}"
           --yes
 
@@ -170,19 +177,21 @@ jobs:
       # so placing this after every verification covers all of them —
       # fingerprint, MCP contract and capability flags alike.
       - name: Roll back to the last known-good version
-        if: failure() && steps.rollback_target.outputs.version_id != ''
+        if: failure() && steps.promote.outcome != 'skipped' && steps.rollback_target.outputs.allocation != ''
+        env:
+          ROLLBACK_ALLOCATION: ${{ steps.rollback_target.outputs.allocation }}
         working-directory: workers/mccluster
         shell: bash
         run: |
           set -euo pipefail
-          echo "Verification failed. Rolling back to ${{ steps.rollback_target.outputs.version_id }}"
-          npx --yes wrangler@4.131.1 versions deploy \
-            "${{ steps.rollback_target.outputs.version_id }}@100" \
-            --message "Automatic rollback from ${GITHUB_SHA}" \
-            --yes
-          echo 'Rolled back. The failing build was NOT left in production.'
+          read -r -a versions <<< "$ROLLBACK_ALLOCATION"
+          npx --yes wrangler@4.131.1 versions deploy "${versions[@]}" \
+            --message "Automatic rollback from ${GITHUB_SHA}" --yes
+          npx --yes wrangler@4.131.1 deployments list --json > /tmp/worker-restored.json
+          node ../../scripts/worker-deployment-state.mjs verify /tmp/worker-restored.json /tmp/worker-rollback.json
+          echo 'Previous traffic allocation restored and verified.'
 
       - name: Warn when no rollback target existed
-        if: failure() && steps.rollback_target.outputs.version_id == ''
+        if: failure() && steps.promote.outcome != 'skipped' && steps.rollback_target.outputs.allocation == ''
         run: |
           echo '::error::Verification failed and no previous version was recorded — production may be serving a bad build. Roll back manually with: wrangler versions list && wrangler versions deploy <id>@100 --yes'

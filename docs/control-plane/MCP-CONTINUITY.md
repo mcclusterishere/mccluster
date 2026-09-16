@@ -5,7 +5,7 @@ deployment removed it. Nothing failed loudly: the deploy was green, `/healthz`
 was 200, and the only symptom was a `404` where a connector used to be.
 
 This document is the contract that makes that specific outage impossible, and
-the plan for making the MCP surface independent of unrelated Worker work.
+the implementation for making the MCP surface independent of unrelated Worker work. See `MCP-RELEASE-2026-09-16.md` for the current verification and activation boundaries.
 
 ## What happened
 
@@ -56,12 +56,12 @@ deployment on any of:
 4. `/healthz` `deployment_sha` is not an exact 40-character SHA — `unknown` fails
 
 Check 4 matters more than it looks. The workflow stamps `DEPLOY_SHA` on the
-uploaded version, so **production currently reporting `unknown` proves this
-workflow is not what deployed it** — Cloudflare Workers Builds is, and that path
-stamps nothing, guards nothing and cannot roll back. See *Making GitHub Actions
+uploaded version, so **production reporting `unknown` cannot be attributed to an exact source
+commit**. Provider deployment history is required to determine which path last
+deployed it. See *Making GitHub Actions
 the only deploy path* below; until that is applied, check 4 is the tripwire.
 
-## Next: `mcp.mccluster.org` as its own edge service
+## Implemented: isolated MCP transport (activation pending)
 
 The root cause is coupling: the MCP surface rides in the same Worker as media,
 social, site and platform routes, so unrelated work can evict it. The guard
@@ -80,9 +80,8 @@ forbidden name remains `mccluster-core`.
 
 **Migration, in order:**
 
-1. Ship the bridge on `main` behind the guards in this document (done here).
-2. Extract `src/core/**` into `workers/mccluster-mcp` with its own wrangler
-   config and its own deploy workflow, path-filtered to that directory.
+1. Merge the tested continuity change; until then the bridge is implemented on the release branch, not on `main`.
+2. The extraction now lives in `workers/mccluster-mcp`, with its own configuration, tests, and path-filtered deployment workflow. The old module paths re-export the shared implementation.
 3. Point `mcp.mccluster.org` at it. Run both surfaces in parallel.
 4. Keep `api.mccluster.org/v1/core/mcp` as a compatibility route that proxies to
    the new service, so no connected client has to be reconfigured.
@@ -237,42 +236,45 @@ The workflow now runs:
    job reports failure.
 
 So a build that fails its contract is in production for the length of one check,
-not until somebody wakes up. If no previous version was recorded the workflow
-emits an explicit `::error::` with the manual rollback command rather than
-pretending it recovered.
+not until somebody wakes up. If the serving deployment cannot be read and validated, promotion is refused.
+The pinned Wrangler lists deployments oldest first, so the release selects the
+newest by timestamp, preserves split traffic, uses a unique run-specific upload
+tag, rejects intervening external promotions, and verifies the restored allocation.
 
 ## Making GitHub Actions the only deploy path
 
 **Do not apply this yet — it changes Cloudflare production settings.**
 
-Two paths currently deploy this Worker. Cloudflare Workers Builds is wired to
-the repository and deploys on push; the GitHub workflow deploys on push too.
-Workers Builds stamps no `DEPLOY_SHA`, runs no continuity guard, runs no
-contract check and has no rollback — which is why production reports
-`deployment_sha: "unknown"`. Every guarantee in this document is bypassed when
-that path wins.
+The handoff reports two deployment paths: Cloudflare Workers Builds and the
+GitHub workflow. The GitHub workflow is visible in the repository; the current
+Workers Builds configuration still needs provider verification. Production
+reports `deployment_sha: "unknown"`, which proves missing provenance but does
+not identify the deployer. Any path without the continuity guards can bypass
+the guarantees described here.
 
 **A caveat that must be settled before step 2.** `wrangler versions upload`
 and `versions deploy` publish *code*. They are not a complete
 trigger-management path: routes, custom domains, cron triggers and other
-Worker settings are currently being applied by Workers Builds, which is the
-only system applying them today. Disabling it without first proving GitHub
-Actions reconciles those settings would swap a code-continuity problem for a
-routing-continuity one — the same class of outage in a different layer.
+Worker settings require a separate reconciliation path. The handoff identifies
+Workers Builds as their current manager, but that ownership still needs live
+verification. Disabling it before proving that GitHub Actions reconciles those
+settings could break routing even if the code deployment succeeds.
 
 So: **do not mutate production triggers in this patch, and do not disable
 Workers Builds until a separate, guarded trigger reconciliation path exists.**
-That work is its own change, after MCP continuity is restored: enumerate the
-live routes, domains and crons from the Cloudflare API, express them in
-`wrangler.toml`, verify a dry-run reconciles to exactly the live set, and only
-then take the other path away.
+The release now includes `scripts/worker-triggers.py` and a manual review/apply
+workflow. Capture the complete live inventory, make routes, domains, crons,
+workers.dev and preview exposure explicit in Wrangler, review the plan digest,
+and apply only that fresh plan. Missing settings or unreadable inventory fail
+closed. This session lacks Cloudflare credentials, so the API Worker config is
+not guessed and Workers Builds remains unchanged.
 
 Exact steps to collapse to one path, once that prerequisite is met:
 
 1. Confirm which path last deployed: compare the Worker's `modified_on`
    (Cloudflare API) against the GitHub workflow's last successful run. A
-   `deployment_sha` of `unknown` on `/healthz` is itself proof Workers Builds
-   deployed it.
+   `deployment_sha` of `unknown` proves missing provenance. It does not identify
+   the deployer by itself; provider logs are needed to attribute the deployment.
 2. Only after the trigger reconciliation path above exists and has been
    proven: in the Cloudflare dashboard, **Workers & Pages → mccluster →
    Settings → Build**, disconnect the connected Git repository (or set the
@@ -289,27 +291,37 @@ Exact steps to collapse to one path, once that prerequisite is met:
 Until step 2 happens, treat every guarantee here as conditional on which path
 deployed the running Worker.
 
-## Sovereign preview: a deliberate temporary regression
+## Sovereign preview: reconciled in the release branch
 
-This branch is cut from `main`, which still carries the old Vercel-gated
-`deploy.preview` (`PREVIEW_CONFIGURED = Boolean(process.env.VERCEL_TOKEN)`).
-The self-hosted preview gateway that replaces it lives on
-`selfhost/sovereign-media-fabric-v1` and was **not** ported here, to keep this
-branch narrowly about MCP continuity.
+The Vercel dependency is removed from the preview executor, control-tool
+availability and catalog. `previewDeploy` pins the fetched Git commit, publishes
+static assets atomically, excludes private files, enforces quotas and TTLs, and
+returns an owned preview URL. Repeated delivery of the same durable job is
+idempotent.
 
-That is a temporary inheritance, not a decision. **Vercel is not being
-reintroduced as a dependency.** The self-hosted preview implementation —
-`core/src/preview-gateway.mjs`, `core/src/executors/preview-deploy.mjs`, the
-`mccluster-preview-gateway.service` unit and the catalog binding that flips
-`deploy.preview` economics from `external/free` to `owned/compute` — must be
-reconciled onto `main` immediately after MCP continuity is restored. Until then
-`deploy.preview` simply stays unavailable on hosts without `VERCEL_TOKEN`,
-which is the correct failure mode: unavailable, not silently billed.
+The loopback file gateway rejects symlinks (including parent directories),
+path traversal, invalid expiry metadata, expired previews, and unsupported
+methods. It has no Core credential environment. Browser previews use a sandbox
+CSP without same-origin privilege, and cannot register service workers.
+
+Projects with an npm build script run through a root-installed systemd template
+under a separate dynamic user. Its filesystem exposes the disposable worktree
+and runtime binaries only; Core keeps `NoNewPrivileges`. The narrow Polkit rule
+allows Core to start only hexadecimal build-instance names. A committed npm
+lockfile is required, dependency lifecycle scripts are disabled, and no Vercel
+credentials or fallback exist. Dynamic application servers are unsupported:
+the publication contract requires static `index.html` output with relative or
+preview-prefix-aware asset URLs.
+
+`MCCLUSTER_PREVIEW_ENABLED=1` and an HTTPS public base are explicit activation
+requirements. The gateway, tunnel and restricted build service must be verified
+on OVH before enabling the capability. Local tests prove static publication and
+HTTP serving; they do not prove the production systemd/Polkit environment.
 
 ## What is still open
 
-- Two Cloudflare deploy paths with different credential states. Workers Builds
-  is currently authoritative and stamps no SHA. One should be canonical.
+- Confirm Cloudflare deployment history and trigger ownership, then establish
+  one guarded deployment path. The running Worker currently has no SHA evidence.
 - `main` is unprotected; the guards here are only as strong as the requirement
   that CI runs. A required-status-check ruleset on `main` is the other half.
-- The `mccluster-mcp` extraction above is designed, not built.
+- The isolated transport and preview code are built and locally tested; provider activation and authenticated production acceptance remain pending.

@@ -104,6 +104,34 @@ async function readJsonFile(target) {
   }
 }
 
+function record(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function checkedRows(body, path) {
+  const table = String(path).split('?')[0];
+  const fields = {
+    ops_agent_jobs: ['id', 'job_type', 'status'],
+    ops_objectives: ['id', 'name', 'status'],
+    control_approvals: ['id', 'capability'],
+    ops_signals: ['signal_type'],
+    ops_system_contract: ['schema_version', 'migration_version']
+  }[table] || [];
+  const valid = (row) => record(row) && fields.every((field) => Object.hasOwn(row, field))
+    && (table !== 'ops_agent_jobs' || (typeof row.status === 'string' && typeof row.job_type === 'string'));
+  if (!Array.isArray(body) || body.some((row) => !valid(row))) {
+    throw Object.assign(new Error(`Expected an array of rows (objects) from ${String(path).split('?')[0]}`), {
+      code: 'INVALID_SOURCE_SHAPE'
+    });
+  }
+  return body;
+}
+
+function validateFile(read, valid, description) {
+  if (read.status !== SOURCE_OK || valid(read.value)) return read;
+  return { status: SOURCE_INVALID, value: null, error: description };
+}
+
 /* supabase.mjs `rest()` resolves to {body, headers, status}. Reading it
    as though it were the rows is the bug that made two whole sections of
    this file silently return nothing. */
@@ -120,11 +148,13 @@ async function rows(path) {
       { code: 'INVALID_SOURCE_SHAPE' }
     );
   }
-  return body;
+  return checkedRows(body, path);
 }
 
 export async function deployFingerprint() {
-  const read = await readJsonFile(DEPLOY_MANIFEST);
+  const read = validateFile(await readJsonFile(DEPLOY_MANIFEST),
+    (value) => record(value) && /^[0-9a-f]{40}$/.test(value.commit_sha || value.deploy_sha || value.sha || ''),
+    'Invalid deploy manifest: an exact 40-character commit SHA is required');
   const manifest = read.value;
   return {
     /* ok | missing | unavailable | invalid. A corrupt manifest must never
@@ -145,7 +175,11 @@ export async function deployFingerprint() {
 }
 
 export async function catalogVersion() {
-  const read = await readJsonFile(CATALOG_PATH);
+  const read = validateFile(await readJsonFile(CATALOG_PATH),
+    (value) => record(value) && typeof value.catalogVersion === 'string' && value.catalogVersion.trim()
+      && Array.isArray(value.capabilities) && value.capabilities.every(record)
+      && Array.isArray(value.bindings) && value.bindings.every(record),
+    'Invalid capability catalog: version, capabilities and bindings are required');
   const catalog = read.value;
   return {
     catalog_status: read.status,
@@ -290,10 +324,10 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
   const [deploy, catalog, recent, running, queued, objectives, approvals, health] = await Promise.all([
     source(deployFingerprint),
     source(catalogVersion),
-    source(() => recentJobs({ orgId, sinceHours, limit })),
+    source(async () => checkedRows(await recentJobs({ orgId, sinceHours, limit }), 'ops_agent_jobs')),
     source(() => runningJobs(orgId)),
     source(() => queuedJobs(orgId)),
-    source(() => recentObjectives({ orgId, limit })),
+    source(async () => checkedRows(await recentObjectives({ orgId, limit }), 'ops_objectives')),
     source(() => pendingApprovals(orgId)),
     source(() => systemHealth(orgId))
   ]);

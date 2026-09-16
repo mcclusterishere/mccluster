@@ -36,6 +36,7 @@ Canonical ecosystem map for how the house is wired. Agents: if this disagrees wi
 | Operator desk | McCluster Control |
 | API / webhooks | Cloudflare Worker `mccluster` |
 | Worker source | `workers/mccluster` |
+| Stateless MCP transport | `workers/mccluster-mcp` → `mcp.mccluster.org` (activation requires deployment) |
 | Persistent execution / orchestration | OVH McCluster Core from `core/` |
 | Production Core promotion pointer | `deploy/ovh-production` |
 | Shared durable truth | Supabase `zmnhbrjyhxzhkxmhkexs` |
