@@ -1,0 +1,32 @@
+[Unit]
+Description=McCluster authenticated asset ingest service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mccluster-core
+Group=mccluster-core
+WorkingDirectory=/opt/mccluster/core
+EnvironmentFile=-/etc/mccluster/core.env
+ExecStart=/usr/bin/node /opt/mccluster/core/src/asset-ingress.mjs
+Restart=always
+RestartSec=3
+TimeoutStopSec=15
+UMask=0027
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/mccluster-assets
+
+[Install]
+WantedBy=multi-user.target
