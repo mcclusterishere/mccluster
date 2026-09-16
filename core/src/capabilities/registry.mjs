@@ -104,6 +104,72 @@ function featureMatch(binding, requirements = {}) {
   return true;
 }
 
+/* ============================================================
+   SOVEREIGN MEDIA MODE.
+
+   The audit could already report that a capability was resolving to a
+   metered external provider. Reporting is not enforcement: the job
+   still ran and the money was still spent. This is the enforcement,
+   placed in resolve() because resolve() is the one chokepoint every
+   call() goes through — a second gate somewhere else would be a second
+   thing to keep in sync.
+
+     required — a governed capability resolves to owned/self-hosted
+                compute or it does not resolve at all. No silent
+                fallback to FAL or any other pay-per-generation API.
+                With no healthy local implementation the honest answer
+                is "no sovereign capacity, waiting", not a charge.
+     prefer   — self-hosted first; external only when explicitly
+                authorized, per call or by configuration.
+     off      — historical routing, unchanged.
+
+   Default is `off`. Enforcement that switches itself on would change
+   what production does the moment this lands, which is not a decision
+   code gets to make.
+   ============================================================ */
+
+export const SOVEREIGN_MODES = new Set(['required', 'prefer', 'off']);
+
+const DEFAULT_GOVERNED = [
+  'image.generate', 'video.generate', 'audio.generate', 'model3d.generate', 'world.generate'
+];
+
+/* Hosting and billing are the real test. The provider denylist is
+   defence against a binding that claims self-hosted economics while
+   pointing at a hosted inference API — a mislabelled row should not be
+   able to buy its way past the gate. */
+const METERED_PROVIDERS = new Set(['fal', 'minimax', 'tripo', 'higgsfield', 'replicate', 'runpod', 'vercel', 'openai', 'anthropic']);
+
+export function sovereignMode(env = process.env) {
+  const raw = String(env.MCCLUSTER_SOVEREIGN_MEDIA || 'off').trim().toLowerCase();
+  if (!SOVEREIGN_MODES.has(raw)) {
+    throw new Error(`MCCLUSTER_SOVEREIGN_MEDIA must be one of: ${[...SOVEREIGN_MODES].join(', ')}`);
+  }
+  return raw;
+}
+
+export function governedCapabilities(env = process.env) {
+  const raw = env.MCCLUSTER_SOVEREIGN_CAPABILITIES;
+  if (!raw) return new Set(DEFAULT_GOVERNED);
+  const parsed = JSON.parse(raw);
+  if (!Array.isArray(parsed) || !parsed.every((v) => typeof v === 'string' && v.trim())) {
+    throw new Error('MCCLUSTER_SOVEREIGN_CAPABILITIES must be a JSON string array');
+  }
+  return new Set(parsed.map((v) => v.trim()));
+}
+
+export function isSovereignBinding(binding) {
+  const hosting = binding?.economics?.hosting;
+  const billing = binding?.economics?.billing;
+  return ['owned', 'self-hosted'].includes(hosting)
+    && ['free', 'compute'].includes(billing)
+    && !METERED_PROVIDERS.has(String(binding?.provider || '').toLowerCase());
+}
+
+export function externalFallbackAllowed(env = process.env) {
+  return String(env.MCCLUSTER_SOVEREIGN_ALLOW_FALLBACK || '').trim().toLowerCase() === 'true';
+}
+
 function bindingScore(binding, preferOwned = true) {
   const economicScore = preferOwned
     ? (BILLING_SCORE[binding.economics?.billing] || 0) + (HOSTING_SCORE[binding.economics?.hosting] || 0)
@@ -207,7 +273,10 @@ export class CapabilityRegistry {
     return this.snapshot(options);
   }
 
-  async resolve(id, { requirements = {}, force = false, preferOwned = true } = {}) {
+  async resolve(id, {
+    requirements = {}, force = false, preferOwned = true,
+    env = process.env, allowExternalFallback = false
+  } = {}) {
     const capability = this.capabilities.get(id);
     if (!capability) throw Object.assign(new Error(`Unknown capability: ${id}`), { status: 404, code: 'UNKNOWN_CAPABILITY' });
     if (capability.lifecycle !== 'active') {
@@ -232,11 +301,59 @@ export class CapabilityRegistry {
       });
     }
 
+    const mode = sovereignMode(env);
+    const governed = governedCapabilities(env).has(id);
+    let eligible = candidates;
+
+    if (governed && mode !== 'off') {
+      const owned = candidates.filter(isSovereignBinding);
+      const external = candidates.filter((binding) => !isSovereignBinding(binding));
+
+      /* `prefer` only reaches for an external provider when somebody
+         said it may — per call, or by configuration. Silence is not
+         authorization to spend. */
+      const mayFallBack = mode === 'prefer' && (allowExternalFallback === true || externalFallbackAllowed(env));
+
+      if (!owned.length && !mayFallBack) {
+        throw Object.assign(
+          new Error(`No sovereign implementation is healthy for ${id}; waiting rather than spending on an external provider`),
+          {
+            status: 503,
+            code: 'NO_SOVEREIGN_CAPACITY',
+            detail: {
+              capability: id,
+              sovereign_mode: mode,
+              waiting: true,
+              refused_external: external.map((binding) => ({
+                id: binding.id,
+                provider: binding.provider,
+                hosting: binding.economics?.hosting || null,
+                billing: binding.economics?.billing || null
+              })),
+              remedy: mode === 'required'
+                ? 'Enroll a GPU node advertising a local implementation, or set MCCLUSTER_SOVEREIGN_MEDIA=prefer and authorize fallback explicitly.'
+                : 'Authorize fallback for this call, or set MCCLUSTER_SOVEREIGN_ALLOW_FALLBACK=true.'
+            }
+          }
+        );
+      }
+
+      /* In `required` the external bindings are not merely deprioritised,
+         they are removed: they must not be reachable as an alternative
+         either, or something downstream will eventually pick one. */
+      eligible = mode === 'required' ? owned : [...owned, ...(mayFallBack ? external : [])];
+    }
+
     return {
       capability,
-      routingPolicy: { preferOwned },
-      binding: publicBinding(candidates[0], true, preferOwned),
-      alternatives: candidates.slice(1).map((binding) => publicBinding(binding, true, preferOwned)),
+      routingPolicy: {
+        preferOwned,
+        sovereignMode: mode,
+        governed,
+        sovereign: isSovereignBinding(eligible[0])
+      },
+      binding: publicBinding(eligible[0], true, preferOwned),
+      alternatives: eligible.slice(1).map((binding) => publicBinding(binding, true, preferOwned)),
       refreshedAt: toolSnapshot.refreshedAt
     };
   }
