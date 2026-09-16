@@ -39,6 +39,7 @@ const REMOTE_CAPABILITIES = new Set([
   'system.health',
   'media.models.search',
   'media.model.recommend',
+  'media.job.get',
   'repo.inspect',
   // risk: spend, approval: budget-gated
   'image.generate',
