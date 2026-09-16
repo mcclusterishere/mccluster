@@ -63,6 +63,9 @@ Wrangler's local HTTP emulator could not start in this environment:
 `uv_interface_addresses` returned system error 1. Worker compilation and
 handler tests passed, but no local workerd HTTP acceptance is claimed. The
 static preview integration did run against a real Node HTTP server.
+The GitHub workflow also starts both actual Worker entrypoints in workerd and
+runs the five public MCP HTTP assertions against each, using the CI commit SHA.
+Its current-head result is the acceptance gate for that runtime check.
 
 ## Public production observations before activation
 

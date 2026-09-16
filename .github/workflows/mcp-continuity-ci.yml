@@ -28,3 +28,27 @@ jobs:
         run: |
           npx --yes wrangler@4.131.1 versions upload --dry-run --config workers/mccluster/wrangler.toml
           npx --yes wrangler@4.131.1 versions upload --dry-run --config workers/mccluster-mcp/wrangler.toml
+      - name: Verify both Worker HTTP contracts in workerd
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4.131.1 dev --local --ip 127.0.0.1 --port 8877 --inspector-port 0 \
+            --config workers/mccluster/wrangler.toml --var DEPLOY_SHA:"$GITHUB_SHA" > /tmp/api-workerd.log 2>&1 &
+          api_pid=$!
+          npx --yes wrangler@4.131.1 dev --local --ip 127.0.0.1 --port 8878 --inspector-port 0 \
+            --config workers/mccluster-mcp/wrangler.toml --var DEPLOY_SHA:"$GITHUB_SHA" > /tmp/mcp-workerd.log 2>&1 &
+          mcp_pid=$!
+          cleanup() {
+            code=$?
+            kill "$api_pid" "$mcp_pid" 2>/dev/null || true
+            if [ "$code" -ne 0 ]; then cat /tmp/api-workerd.log /tmp/mcp-workerd.log; fi
+            exit "$code"
+          }
+          trap cleanup EXIT
+          for port in 8877 8878; do
+            for attempt in $(seq 1 30); do
+              if curl --fail --silent --max-time 1 "http://127.0.0.1:$port/healthz" > /dev/null; then break; fi
+              sleep 1
+            done
+            node scripts/mcp-contract-check.mjs --base "http://127.0.0.1:$port" --sha "$GITHUB_SHA" --retries 1 --timeout 5000
+          done
