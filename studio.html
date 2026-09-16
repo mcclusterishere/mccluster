@@ -9,8 +9,296 @@
   <link rel="icon" type="image/png" href="assets/img/hm-mark-96.png">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    body.st { background:#090807; color:#f4efe6; min-height:100svh; }
+    .st-shell { max-width:1180px; margin:0 auto; padding:1.2rem 1rem calc(5rem + env(safe-area-inset-bottom)); }
+    .st-top { display:flex; flex-wrap:wrap; align-items:flex-end; gap:.8rem 1.2rem; padding-bottom:1rem; border-bottom:1px solid rgba(244,239,230,.1); }
+    .st-top h1 { margin:0; font-family:var(--display, Anton, Impact, sans-serif); font-weight:400; font-size:clamp(1.8rem,5vw,2.7rem); text-transform:uppercase; line-height:.92; letter-spacing:-.03em; }
+    .st-top h1 i { font-style:normal; color:#e5383b; }
+    .st-who { margin-left:auto; display:flex; align-items:center; gap:.55rem; color:rgba(244,239,230,.62); font-size:.82rem; }
+    .st-btn { appearance:none; border-radius:999px; border:1px solid rgba(244,239,230,.22); background:rgba(244,239,230,.05); color:#f4efe6; padding:.5em 1em; font:800 .64rem/1 var(--body, system-ui); letter-spacing:.14em; text-transform:uppercase; cursor:pointer; }
+    .st-btn:hover { border-color:#e5383b; background:rgba(229,56,59,.16); }
+    .st-btn.go { border:0; background:linear-gradient(120deg,#e5383b,#c1121f); color:#fff; }
+    .st-btn[disabled] { opacity:.45; cursor:default; }
+    .st-gate { max-width:26rem; margin:18vh auto 0; }
+    .st-gate h2 { font-family:var(--display, Anton, Impact, sans-serif); font-weight:400; text-transform:uppercase; font-size:2rem; margin:0 0 .35rem; }
+    .st-gate p { color:rgba(244,239,230,.62); margin:0 0 1.1rem; line-height:1.5; }
+    .st-in, .st-area { width:100%; appearance:none; border:1px solid rgba(244,239,230,.18); background:rgba(244,239,230,.05); color:#f4efe6; border-radius:13px; padding:.85em 1em; font:500 1rem var(--body, system-ui); }
+    .st-in:focus, .st-area:focus { outline:none; border-color:#e5383b; }
+    .st-note { min-height:1.2em; margin:.8rem 0 0; font-size:.86rem; color:rgba(244,239,230,.62); }
+    .st-note.err { color:#ff6b6b; }
+    .lamps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.6rem; margin:1.15rem 0 1.3rem; }
+    .lamp { border-radius:16px; padding:.9rem 1rem; background:rgba(244,239,230,.045); box-shadow:inset 0 0 0 1px rgba(244,239,230,.1); }
+    .lamp b { display:block; font:800 .58rem/1 var(--body, system-ui); letter-spacing:.18em; text-transform:uppercase; color:rgba(244,239,230,.45); margin-bottom:.45rem; }
+    .lamp em { font-style:normal; font-family:var(--display, Anton, Impact, sans-serif); font-size:1.35rem; letter-spacing:-.03em; }
+    .dot { display:inline-block; width:.48rem; height:.48rem; border-radius:50%; margin-right:.4rem; background:#5a564f; vertical-align:2px; }
+    .dot.on { background:#35d07f; box-shadow:0 0 10px rgba(53,208,127,.75); }
+    .dot.off { background:#e5383b; box-shadow:0 0 10px rgba(229,56,59,.55); }
+    .grid { display:grid; grid-template-columns:minmax(280px,.9fr) minmax(320px,1.15fr); gap:.8rem; }
+    .panel { border-radius:18px; background:rgba(244,239,230,.045); box-shadow:inset 0 0 0 1px rgba(244,239,230,.1); overflow:hidden; }
+    .ph { padding:1rem 1.1rem .2rem; font:800 .62rem/1 var(--body, system-ui); letter-spacing:.18em; text-transform:uppercase; color:rgba(244,239,230,.48); }
+    .pb { padding:1rem 1.1rem 1.15rem; display:grid; gap:.85rem; }
+    .kinds { display:grid; grid-template-columns:repeat(3,1fr); gap:.45rem; }
+    .kind { border:1px solid rgba(244,239,230,.16); background:#120f0c; color:#f4efe6; border-radius:12px; padding:.7rem .4rem; text-align:center; cursor:pointer; font:800 .62rem/1.2 var(--body, system-ui); letter-spacing:.1em; text-transform:uppercase; }
+    .kind.on { border-color:#e5383b; background:rgba(229,56,59,.16); }
+    .kind small { display:block; margin-top:.28rem; font-weight:600; letter-spacing:0; text-transform:none; color:rgba(244,239,230,.5); font-size:.68rem; }
+    .st-area { min-height:7.2rem; resize:vertical; }
+    .lab { font:800 .58rem/1 var(--body, system-ui); letter-spacing:.16em; text-transform:uppercase; color:rgba(244,239,230,.45); margin-bottom:.35rem; }
+    .models { display:grid; gap:.4rem; max-height:9.5rem; overflow:auto; }
+    .mod { display:flex; justify-content:space-between; gap:.6rem; align-items:center; border:1px solid rgba(244,239,230,.12); border-radius:11px; padding:.55rem .7rem; cursor:pointer; background:#100d0b; }
+    .mod.on { border-color:#e5383b; }
+    .mod b { font-size:.82rem; }
+    .mod span { color:rgba(244,239,230,.5); font-size:.72rem; }
+    .empty { color:rgba(244,239,230,.5); font-size:.86rem; line-height:1.45; }
+    .jobs { display:grid; gap:.5rem; }
+    .job { border-radius:14px; padding:.75rem .85rem; background:#100d0b; box-shadow:inset 0 0 0 1px rgba(244,239,230,.1); }
+    .job .row { display:flex; justify-content:space-between; gap:.6rem; align-items:baseline; margin-top:.25rem; color:rgba(244,239,230,.55); font-size:.75rem; }
+    .pill { font:800 .58rem/1 var(--body, system-ui); letter-spacing:.12em; text-transform:uppercase; color:#e8c877; }
+    .pill.ok { color:#7dc98f; }
+    .pill.bad { color:#ff6b6b; }
+    .prev { margin-top:.55rem; }
+    .prev img, .prev video { width:100%; max-height:280px; object-fit:contain; border-radius:10px; background:#050505; }
+    .prev a { color:#e8c877; font-size:.8rem; }
+    .hint { font-size:.78rem; color:rgba(244,239,230,.5); line-height:1.45; }
+    @media (max-width:860px){ .lamps,.grid,.kinds { grid-template-columns:1fr 1fr; } .grid { grid-template-columns:1fr; } }
+    @media (max-width:520px){ .lamps { grid-template-columns:1fr 1fr; } }
+    [hidden]{ display:none !important; }
+  </style>
 </head>
-<body>
-  <p>placeholder replaced next</p>
+<body class="st">
+  <div class="st-shell">
+    <section class="st-gate" id="gate">
+      <h2>Studio</h2>
+      <p>Owner desk. Same lock as Control. This is where you make the file.</p>
+      <input class="st-in" id="email" type="email" placeholder="Owner email" autocomplete="email">
+      <input class="st-in" id="pass" type="password" placeholder="Password" autocomplete="current-password" style="margin-top:.55rem">
+      <button class="st-btn go" id="signin" type="button" style="width:100%;margin-top:.7rem;padding:.95em">Open Studio →</button>
+      <button class="st-btn" id="magic" type="button" style="width:100%;margin-top:.45rem">Email me a link</button>
+      <p class="st-note" id="gnote"></p>
+    </section>
+    <main id="board" hidden>
+      <header class="st-top">
+        <div><div class="lab">McCluster · operator</div><h1>Control <i>Studio</i></h1></div>
+        <div class="st-who">
+          <span id="who">—</span>
+          <a class="st-btn" href="control.html">Board</a>
+          <button class="st-btn" id="refresh" type="button">Refresh</button>
+          <button class="st-btn" id="out" type="button">Sign out</button>
+        </div>
+      </header>
+      <div class="lamps">
+        <div class="lamp"><b>API</b><em><i class="dot" id="dApi"></i><span id="vApi">—</span></em></div>
+        <div class="lamp"><b>Factory</b><em><i class="dot" id="dFal"></i><span id="vFal">fal</span></em></div>
+        <div class="lamp"><b>Models on</b><em id="vMods">—</em></div>
+        <div class="lamp"><b>This session</b><em id="vJobs">0 jobs</em></div>
+      </div>
+      <div class="grid">
+        <section class="panel">
+          <div class="ph">01 / Make</div>
+          <div class="pb">
+            <div class="kinds">
+              <button class="kind on" data-kind="image" type="button">Image<small>stills</small></button>
+              <button class="kind" data-kind="video" type="button">Video<small>clips</small></button>
+              <button class="kind" data-kind="3d" type="button">3D<small>GLB</small></button>
+            </div>
+            <div><div class="lab">What to make</div><textarea class="st-area" id="prompt" placeholder="Describe the product, camera, materials. No invented parts."></textarea></div>
+            <div><div class="lab">Reference image URL · optional</div><input class="st-in" id="ref" type="url" placeholder="https://… public photo"></div>
+            <div><div class="lab">Spend cap · cents</div><input class="st-in" id="budget" type="number" min="1" step="1" value="200"></div>
+            <div><div class="lab">Model</div><div class="models" id="models"><p class="empty">Loading allowed models…</p></div></div>
+            <button class="st-btn go" id="go" type="button">Generate →</button>
+            <p class="hint" id="makeHint">Uses FAL_KEY on Worker mccluster. Empty model list means the allow-list is still empty.</p>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="ph">02 / Jobs</div>
+          <div class="pb"><div class="jobs" id="jobs"><p class="empty">Nothing made this session yet.</p></div></div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var API = "https://api.mccluster.org";
+    var KIND = "image"; var MODEL = null; var MODELS = [];
+    var ORG = localStorage.getItem("mcc_org_id") || "";
+    var JOBS = [];
+    try { JOBS = JSON.parse(sessionStorage.getItem("mcc_studio_jobs") || "[]"); } catch (e) { JOBS = []; }
+    function $(id) { return document.getElementById(id); }
+    function token() { return window.MCC_SUPA && MCC_SUPA.token ? MCC_SUPA.token() : Promise.resolve(null); }
+    function note(el, msg, err) { el.textContent = msg || ""; el.className = "st-note" + (err ? " err" : ""); }
+    function saveJobs() { try { sessionStorage.setItem("mcc_studio_jobs", JSON.stringify(JOBS.slice(0, 24))); } catch (e) {} }
+    function api(path, opts) {
+      opts = opts || {};
+      return token().then(function (t) {
+        if (!t) throw new Error("signed out");
+        return fetch(API + path, {
+          method: opts.method || "GET",
+          headers: { authorization: "Bearer " + t, "content-type": "application/json" },
+          body: opts.body ? JSON.stringify(opts.body) : undefined,
+          cache: "no-store"
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (j) {
+            if (!r.ok) throw new Error(j.error || j.message || ("HTTP " + r.status));
+            return j;
+          });
+        });
+      });
+    }
+    function matchModels() {
+      return MODELS.filter(function (m) {
+        var c = String(m.capability || "").toLowerCase();
+        if (KIND === "3d") return c.indexOf("3d") >= 0;
+        if (KIND === "video") return c.indexOf("video") >= 0;
+        return c.indexOf("image") >= 0 && c.indexOf("video") < 0 && c.indexOf("3d") < 0;
+      });
+    }
+    function drawModels() {
+      var box = $("models"); var list = matchModels();
+      $("vMods").textContent = String(MODELS.length);
+      if (!list.length) {
+        MODEL = null;
+        box.innerHTML = '<p class="empty">No enabled model for this type. Key may be on; allow-list is empty.</p>';
+        return;
+      }
+      if (!MODEL || !list.some(function (m) { return m.id === MODEL; })) MODEL = list[0].id;
+      box.innerHTML = list.map(function (m) {
+        return '<div class="mod' + (m.id === MODEL ? " on" : "") + '" data-id="' + m.id + '"><b>' +
+          (m.display_name || m.provider_model_id || m.id) + '</b><span>' + (m.capability || "") + "</span></div>";
+      }).join("");
+      box.querySelectorAll(".mod").forEach(function (el) {
+        el.onclick = function () { MODEL = el.getAttribute("data-id"); drawModels(); };
+      });
+    }
+    function assetUrl(bundle) {
+      var assets = (bundle && bundle.assets) || [];
+      for (var i = 0; i < assets.length; i++) if (assets[i].url) return assets[i];
+      var res = bundle && bundle.job && bundle.job.result; if (!res) return null;
+      var stack = [res];
+      while (stack.length) {
+        var n = stack.pop(); if (!n) continue;
+        if (typeof n === "object") {
+          if (typeof n.url === "string" && /^https?:/i.test(n.url)) return n;
+          Object.keys(n).forEach(function (k) { stack.push(n[k]); });
+        }
+      }
+      return null;
+    }
+    function drawJobs() {
+      $("vJobs").textContent = JOBS.length + (JOBS.length === 1 ? " job" : " jobs");
+      var box = $("jobs");
+      if (!JOBS.length) { box.innerHTML = '<p class="empty">Nothing made this session yet.</p>'; return; }
+      box.innerHTML = JOBS.map(function (j) {
+        var st = String(j.status || "queued");
+        var pill = st === "completed" ? "ok" : (st === "failed" ? "bad" : "");
+        var a = j.asset; var prev = "";
+        if (a && a.url) {
+          var mime = String(a.mime_type || a.content_type || a.url).toLowerCase();
+          if (/png|jpe?g|webp|gif|image/.test(mime)) prev = '<div class="prev"><img src="' + a.url + '" alt=""></div>';
+          else if (/mp4|webm|video/.test(mime)) prev = '<div class="prev"><video src="' + a.url + '" controls></video></div>';
+          else prev = '<div class="prev"><a href="' + a.url + '" target="_blank" rel="noreferrer">Open file ↗</a></div>';
+        }
+        return '<div class="job"><div class="row"><b>' + (j.kind || "job") + '</b><span class="pill ' + pill + '">' + st + "</span></div>" +
+          '<div class="row"><span>' + (j.prompt || "").slice(0, 90) + '</span><span>' + (j.id || "").slice(0, 8) + "</span></div>" + prev + "</div>";
+      }).join("");
+    }
+    function poll(id) {
+      if (!id || !ORG) return;
+      api("/v1/media/jobs/" + id + "?org_id=" + encodeURIComponent(ORG)).then(function (data) {
+        var job = data.job || {};
+        JOBS = JOBS.map(function (j) {
+          if (j.id !== id) return j;
+          j.status = job.status || j.status;
+          j.asset = assetUrl(data) || j.asset;
+          return j;
+        });
+        saveJobs(); drawJobs();
+        if (job.status === "queued" || job.status === "running") setTimeout(function () { poll(id); }, 2800);
+      }).catch(function () {});
+    }
+    function setLamp(id, on) { $(id).className = "dot " + (on ? "on" : "off"); }
+    function load() {
+      $("who").textContent = (window.MCC_AUTH && MCC_AUTH.user() && MCC_AUTH.user().email) || "signed in";
+      fetch(API + "/healthz", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (h) {
+        setLamp("dApi", !!(h && h.ok)); $("vApi").textContent = h && h.ok ? "up" : "down";
+      }).catch(function () { setLamp("dApi", false); $("vApi").textContent = "down"; });
+      return token().then(function (t) {
+        if (!t) return;
+        var uid = window.MCC_SUPA.uid && MCC_SUPA.uid();
+        var q = "org_members?select=org_id,role,orgs(id,slug,name)&profile_id=eq." + encodeURIComponent(uid || "");
+        return fetch(window.MCC_SUPA.url + "/rest/v1/" + q, {
+          headers: { apikey: window.MCC_SUPA.key, authorization: "Bearer " + t }
+        }).then(function (r) { return r.ok ? r.json() : []; }).then(function (rows) {
+          rows = rows || [];
+          var house = rows.find(function (r) { return r.orgs && r.orgs.slug === "mccluster"; }) || rows[0];
+          if (house && house.org_id) { ORG = house.org_id; localStorage.setItem("mcc_org_id", ORG); }
+        }).catch(function () {}).then(function () {
+          return api("/v1/media/models").then(function (d) {
+            MODELS = d.models || [];
+            setLamp("dFal", MODELS.length > 0);
+            $("vFal").textContent = MODELS.length ? "ready" : "key on · list empty";
+            drawModels();
+          }).catch(function (e) {
+            setLamp("dFal", false); $("vFal").textContent = "locked";
+            $("models").innerHTML = '<p class="empty">' + e.message + "</p>";
+          });
+        });
+      }).then(function () {
+        JOBS.forEach(function (j) { if (j.id && j.status !== "completed" && j.status !== "failed") poll(j.id); });
+        drawJobs();
+      });
+    }
+    function boot() { $("gate").hidden = true; $("board").hidden = false; load(); }
+    document.querySelectorAll(".kind").forEach(function (btn) {
+      btn.onclick = function () {
+        KIND = btn.getAttribute("data-kind");
+        document.querySelectorAll(".kind").forEach(function (b) { b.classList.toggle("on", b === btn); });
+        $("budget").value = KIND === "3d" ? "400" : KIND === "video" ? "800" : "200";
+        drawModels();
+      };
+    });
+    $("go").onclick = function () {
+      var prompt = ($("prompt").value || "").trim();
+      var ref = ($("ref").value || "").trim();
+      var budget = Number($("budget").value || 0);
+      var hint = $("makeHint");
+      if (!prompt) { hint.textContent = "Write what to make first."; return; }
+      if (!ORG) { hint.textContent = "No org on this account."; return; }
+      if (!MODEL) { hint.textContent = "No model selected. Allow-list is empty."; return; }
+      $("go").disabled = true; $("go").textContent = "Sending…";
+      var input = { prompt: prompt }; if (ref) input.image_url = ref;
+      api("/v1/media/generate", {
+        method: "POST",
+        body: { org_id: ORG, model_id: MODEL, prompt: prompt, input: input, budget_cents: budget, strategy: "studio:" + KIND }
+      }).then(function (d) {
+        var job = d.job || {};
+        JOBS.unshift({ id: job.id, status: job.status || "queued", kind: KIND, prompt: prompt, asset: null });
+        saveJobs(); drawJobs(); hint.textContent = "Queued."; if (job.id) poll(job.id);
+      }).catch(function (e) { hint.textContent = e.message || "Generate failed."; }).then(function () {
+        $("go").disabled = false; $("go").textContent = "Generate →";
+      });
+    };
+    $("signin").onclick = function () {
+      var em = $("email").value.trim(), pw = $("pass").value;
+      if (!em || !pw) { note($("gnote"), "Email and password.", true); return; }
+      var b = $("signin"); b.disabled = true; b.textContent = "Opening…";
+      window.MCC_AUTH.signInPassword(em, pw).then(boot).catch(function (e) {
+        b.disabled = false; b.textContent = "Open Studio →"; note($("gnote"), String(e && e.message || e), true);
+      });
+    };
+    $("pass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("signin").click(); });
+    $("magic").onclick = function () {
+      var em = $("email").value.trim(); if (!em) { note($("gnote"), "Email first.", true); return; }
+      var b = $("magic"); b.disabled = true;
+      window.MCC_AUTH.signIn(em).then(function () { b.textContent = "Link sent"; note($("gnote"), "Open the mail on this device."); }).catch(function (e) {
+        b.disabled = false; note($("gnote"), String(e && e.message || e), true);
+      });
+    };
+    $("out").onclick = function () { window.MCC_AUTH.signOut().then(function () { location.reload(); }); };
+    $("refresh").onclick = function () { load(); };
+    token().then(function (t) { if (t) boot(); });
+  })();
+  </script>
 </body>
 </html>
