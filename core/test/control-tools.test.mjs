@@ -37,7 +37,8 @@ test('preview executor is self-hosted and non-production by construction', async
   assert.match(source, /hosting: 'owned'/);
   assert.match(source, /provider: 'mccluster-core'/);
   assert.match(source, /MCCLUSTER_PREVIEW_ROOT/);
-  assert.match(source, /git', \['worktree', 'add'/);
+  assert.match(source, /return run\('git', args/);
+  assert.match(source, /await git\(repo, \['worktree', 'add', '--detach', worktree, commit\]/);
   assert.doesNotMatch(source, /VERCEL_TOKEN|vercel\.app|\bvercel\b/i);
   assert.doesNotMatch(source, /--prod(?:uction)?\b/);
 });
