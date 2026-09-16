@@ -1,0 +1,45 @@
+name: Apply WE Manufacture tenant
+
+# One-shot. Registers org `we-manufacture` so public inquiries stop 404ing.
+# Runs only the tenant seed, never a full db push.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    name: Seed we-manufacture org
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Apply tenant seed
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "${SUPABASE_ACCESS_TOKEN:-}" || { echo 'Missing SUPABASE_ACCESS_TOKEN'; exit 1; }
+          python3 - <<'PY'
+          import json, os, pathlib, urllib.error, urllib.request
+          sql = pathlib.Path('supabase/migrations/20260916080000_we_manufacture_org.sql').read_text()
+          req = urllib.request.Request(
+            'https://api.supabase.com/v1/projects/zmnhbrjyhxzhkxmhkexs/database/query',
+            data=json.dumps({'query': sql}).encode(),
+            headers={
+              'Authorization': 'Bearer ' + os.environ['SUPABASE_ACCESS_TOKEN'],
+              'Content-Type': 'application/json',
+            },
+            method='POST',
+          )
+          try:
+            with urllib.request.urlopen(req) as res:
+              print(res.status)
+              print(res.read().decode()[:4000])
+          except urllib.error.HTTPError as e:
+            print(e.status)
+            print(e.read().decode()[:4000])
+            raise SystemExit(1)
+          PY
