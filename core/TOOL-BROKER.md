@@ -44,7 +44,12 @@ MCP:
 
 - `POST /mcp`
 
-A configured `CORE_BROKER_TOKEN` protects every route except `/health`.
+`CORE_BROKER_TOKEN` protects every route except `/health`.
+
+The broker **fails closed**. With neither `CORE_BROKER_TOKEN` nor
+`CORE_EDGE_SIGNING_KEY` configured it answers `503 AUTH_NOT_CONFIGURED` on every
+route except `/health`. It previously allowed all callers when no token was set,
+which was only survivable while port 4777 was unreachable from off the host.
 
 ## MCP behavior
 

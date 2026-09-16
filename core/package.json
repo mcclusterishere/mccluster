@@ -19,6 +19,7 @@
     "game:probe": "node src/game-studio/staging-probe.mjs",
     "game:smoke": "node src/game-studio/staging-probe.mjs --smoke",
     "test:capabilities": "node --test test/capability-registry.test.mjs test/control-tools.test.mjs",
+    "test:edge-auth": "node --test test/broker-edge-auth.test.mjs",
     "test:compute": "node --test test/compute-node-protocol.test.mjs test/node-agent-runtime.test.mjs test/compute-gateway-security.test.mjs test/compute-tool-contract.test.mjs",
     "test:reflection": "node --test test/reflection-policy.test.mjs",
     "test:objective-synthesis": "node --test test/objective-synthesis-policy.test.mjs",
