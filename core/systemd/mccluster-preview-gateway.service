@@ -1,0 +1,27 @@
+[Unit]
+Description=McCluster self-hosted preview gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mccluster-core
+Group=mccluster-core
+WorkingDirectory=/opt/mccluster/core
+EnvironmentFile=-/etc/mccluster/core.env
+ExecStart=/usr/bin/node /opt/mccluster/core/src/preview-gateway.mjs
+Restart=always
+RestartSec=3
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/mccluster-core/previews
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target
