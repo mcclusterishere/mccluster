@@ -48,6 +48,23 @@ jobs:
             exit 1
           }
 
+      # THE GUARD THAT MAKES THE REGRESSION IMPOSSIBLE.
+      #
+      # This workflow deploys on every push touching workers/mccluster/**.
+      # That is exactly how a main without /v1/core/mcp replaced an
+      # MCP-capable production Worker and turned a live connector into a 404.
+      # The continuity suite fails on a source tree that has lost the MCP or
+      # OAuth surface, and it runs here — before the deploy — so such a tree
+      # can never reach Cloudflare.
+      - name: Guard the remote MCP surface (pre-deploy)
+        working-directory: workers/mccluster
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test test/core-mcp-continuity.test.mjs
+          node --test test/core-bridge.test.mjs
+          node --test test/core-oauth-resource.test.mjs
+
       - name: Deploy canonical mccluster Worker
         working-directory: workers/mccluster
         run: >-
@@ -72,6 +89,18 @@ jobs:
           done
           echo 'Deployment fingerprint verification failed.'
           exit 1
+
+      # Source tests prove the route was in the tree that was built. This
+      # proves it is in the thing now answering the internet — including that
+      # an unauthenticated tools/list challenges with OAuth instead of
+      # returning the 404 that tells a client the server is gone.
+      - name: Verify remote MCP contract (post-deploy)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/mcp-contract-check.mjs \
+            --base https://api.mccluster.org \
+            --sha "$GITHUB_SHA"
 
       - name: Verify core capability flags
         shell: bash

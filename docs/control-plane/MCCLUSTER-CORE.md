@@ -76,6 +76,51 @@ An asynchronous Core operation returns a durable job identifier. Job state, outp
 
 Core's local broker may consume remote MCP/HTTP tools and present stable capabilities to local agents, but its loopback port is not a second public ingress path.
 
+### Bridge implementation
+
+The remote flow above is implemented as:
+
+| Hop | Component | Gate |
+| --- | --- | --- |
+| client -> edge | `POST /v1/core/mcp` on Worker `mccluster` | Supabase session **and** McCluster house-owner membership |
+| edge -> Core | `workers/mccluster/src/core/mcp.js` | `CORE_BROKER_TOKEN` plus a per-request HMAC signature (`CORE_EDGE_SIGNING_KEY`) |
+| ingress | Cloudflare Tunnel -> `127.0.0.1:4777` | Core stays loopback-bound; no port is opened on the VPS |
+
+The Worker answers `initialize` and `ping` locally and forwards only
+`tools/list` and `tools/call`. It is not a general proxy, and a 401/403 from
+Core is reported to the client as a 502 edge fault rather than as their own
+authorization failure.
+
+The signature carries a timestamp, a nonce and a digest of the exact request
+body, which is the "replay-resistant validation" this document requires of
+machine-to-machine dispatch. The tunnel is transport, not authorization: the
+hostname is public, so Core's own credentials remain mandatory behind it.
+
+Worker configuration:
+
+- `CORE_BROKER_URL` — var, the tunnel origin (e.g. `https://core.mccluster.org`)
+- `CORE_BROKER_TOKEN` — secret, matches `/etc/mccluster/core.env`
+- `CORE_EDGE_SIGNING_KEY` — secret, matches `/etc/mccluster/core.env`
+- `CORE_BROKER_TIMEOUT_MS` — optional, default 30000
+
+The bridge fails closed. With `CORE_BROKER_URL` or `CORE_BROKER_TOKEN` unset the
+route answers 503 and nothing is dispatched, so an un-provisioned deploy cannot
+half-open the path.
+
+See `docs/control-plane/CORE-MCP-BRIDGE.md` for the invariants, the remote
+capability allowlist, the provisioning checklist and the acceptance criteria,
+and `core/TOOL-BROKER.md` for the wire format.
+
+Remote clients receive the normalized capability surface only. Core's raw,
+provider-namespaced tools are not reachable through this route, no shell or
+arbitrary-command capability is allowlisted, and upstream diagnostics are
+stripped at the edge. Risk and approval semantics are unchanged: a budget-gated
+or review-required capability stays gated in Core whether it is called locally
+or remotely.
+
+**Not yet provisioned.** Code and tests are in place on both hops, but no
+Worker secrets are set and no tunnel exists, so the bridge fails closed.
+
 ## Resource policy
 
 Use the purchased machine productively without making it fragile:

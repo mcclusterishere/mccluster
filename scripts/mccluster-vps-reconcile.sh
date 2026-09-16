@@ -49,7 +49,13 @@ git reset --hard "${TARGET_SHA}"
 git clean -ffdx
 
 # Validate and deploy using the canonical rollback-safe deployer shipped by the target revision.
-bash "${CHECKOUT}/scripts/deploy-ovh-core.sh" "${CHECKOUT}"
+# deploy-ovh-core.sh takes <checkout> <exact-40-char-sha> and exits 2 without
+# the second argument. Passing only the checkout meant autonomous
+# reconciliation could never deploy: every run died on argument validation
+# while the manual workflow, which passes both, kept working. TARGET_SHA is
+# already resolved above and is the exact commit this run verified is
+# contained in origin/main, so it is the only correct value to pass.
+bash "${CHECKOUT}/scripts/deploy-ovh-core.sh" "${CHECKOUT}" "${TARGET_SHA}"
 
 printf '%s\n' "${TARGET_SHA}" > "${STATE_FILE}.tmp"
 mv "${STATE_FILE}.tmp" "${STATE_FILE}"
