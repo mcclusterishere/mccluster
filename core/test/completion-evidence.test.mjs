@@ -36,7 +36,7 @@ const validSamples = [
   [job('game_implementation_collect'), { executor: 'game_implementation_collect:v1', state: 'validation_queued', branch: 'core/job-1', code_job_id: 'code-1', smoke_job_id: 'smoke-1' }],
   [job('game_branch_smoke'), { executor: 'game_branch_smoke:v1', evidence: { repository: 'mcclusterishere/hitmans-halo', branch: 'core/job-1', commit: A, import: { ok: true }, launch: { ok: true } } }],
   [job('game_release_decision'), { executor: 'game_release_decision:v1', state: 'preview_queued', decision: 'approve', preview_job_id: 'preview-1', repository: 'mcclusterishere/hitmans-halo', branch: 'core/job-1' }],
-  [job('preview_deploy'), { executor: 'preview_deploy:v1', production: false, provider: 'vercel', preview_url: 'https://example.vercel.app', repository: 'mcclusterishere/mccluster', ref: 'core/job-1' }],
+  [job('preview_deploy'), { executor: 'preview_deploy:v2-selfhosted', production: false, provider: 'mccluster-core', preview_url: 'https://preview.mccluster.org/p/example/', repository: 'mcclusterishere/mccluster', ref: 'core/job-1' }],
   [job('host_health'), { executor: 'host_health:v2', checked_at: now, host: { hostname: 'mccluster-ovh' }, services: { core_runner: 'active' }, deployment: { deployed_sha: A } }],
   [job('sms_assistant_turn'), { executor: 'sms_assistant_turn:v1', action: 'reply', thread_id: 'thread-1', inbound_message_id: 'in-1', outbound_message_id: 'out-1', outbox_transport: 'android-sim-relay' }],
 ];
@@ -54,7 +54,7 @@ test('every currently supported Core job type can produce and verify evidence', 
 test('tampering with executor output after evidence generation is rejected', () => {
   const currentJob = job('preview_deploy');
   const evidenced = buildCompletionEvidence(currentJob, validSamples.find(([candidate]) => candidate.job_type === 'preview_deploy')[1], { startedAt: now, completedAt: now });
-  evidenced.preview_url = 'https://different.vercel.app';
+  evidenced.preview_url = 'https://preview.mccluster.org/p/different/';
   assert.throws(() => assertCompletionEvidence(currentJob, evidenced), /result digest does not match/);
 });
 
@@ -75,7 +75,7 @@ test('repo_health cannot claim completion when requested tests did not run', () 
 test('preview deployment cannot claim production mutation as preview evidence', () => {
   const currentJob = job('preview_deploy');
   assert.throws(() => buildCompletionEvidence(currentJob, {
-    executor: 'preview_deploy:v1', production: true, provider: 'vercel', preview_url: 'https://example.vercel.app', repository: 'mcclusterishere/mccluster', ref: 'main',
+    executor: 'preview_deploy:v2-selfhosted', production: true, provider: 'mccluster-core', preview_url: 'https://preview.mccluster.org/p/example/', repository: 'mcclusterishere/mccluster', ref: 'main',
   }), /production=false/);
 });
 
