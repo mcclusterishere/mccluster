@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>WE Manufacture · Control</title>
+  <meta name="description" content="The list, the sites, the line. Operator desk for WE Manufacture.">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="assets/img/we-icon-dark.png">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    body.we { background: var(--ink); color: var(--cream); min-height: 100svh; }
+    .we__wrap { max-width: 52rem; margin: 0 auto;
+      padding: clamp(1.4rem,4vw,2.6rem) clamp(1rem,4vw,2rem) calc(6rem + env(safe-area-inset-bottom)); }
+    .we__head { display: flex; flex-wrap: wrap; align-items: center; gap: .9rem 1.2rem;
+      padding-bottom: 1.2rem; box-shadow: inset 0 -1px 0 rgba(244,239,230,.1); }
+    .we__mark { height: 2.2rem; width: auto; }
+    .we__ttl { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(1.7rem,5vw,2.5rem);
+      text-transform: uppercase; line-height: 1; }
+    .we__who { margin-left: auto; display: flex; align-items: center; gap: .7rem;
+      font: 500 .82rem var(--body); color: var(--cream-dim); }
+    .we__btn { -webkit-appearance: none; appearance: none; cursor: pointer; border-radius: 99px;
+      border: 1px solid rgba(244,239,230,.24); background: rgba(244,239,230,.05); color: var(--cream);
+      padding: .5em 1.05em; font: 800 .66rem var(--body); letter-spacing: .16em; text-transform: uppercase;
+      transition: border-color .2s, background .2s; }
+    .we__btn:hover { border-color: var(--ruby-hot); background: rgba(229,56,59,.16); }
+    .we__btn--go { border: 0; background: linear-gradient(120deg,var(--ruby),var(--ruby-hot)); color: #fff; }
+    .we__btn[disabled] { opacity: .55; cursor: default; }
+    .we__gate { max-width: 26rem; margin: clamp(3rem,12vh,7rem) auto; text-align: left; }
+    .we__gate h2 { font-family: var(--display); font-weight: 400; font-size: 2rem; text-transform: uppercase; margin: 0 0 .3rem; }
+    .we__gate p { color: var(--cream-dim); margin: 0 0 1.3rem; font-size: .95rem; line-height: 1.5; }
+    .we__in { width: 100%; -webkit-appearance: none; appearance: none; margin-bottom: .6rem;
+      border: 1px solid rgba(244,239,230,.2); background: rgba(244,239,230,.05); color: var(--cream);
+      border-radius: 13px; padding: .85em 1em; font: 500 1rem var(--body); }
+    .we__in:focus { outline: none; border-color: var(--ruby-hot); }
+    .we__gate .we__btn { width: 100%; margin-top: .35rem; padding: .95em; font-size: .72rem; }
+    .we__note { margin-top: .9rem; font-size: .86rem; color: var(--cream-dim); min-height: 1.2em; }
+    .we__note.is-err { color: var(--ruby-hot); }
+    .we__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem; margin: 1.4rem 0; }
+    .we__stat { border-radius: 18px; padding: .85rem 1rem; background: rgba(244,239,230,.045);
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); }
+    .we__stat b { display: block; font-family: var(--display); font-size: 1.7rem; font-weight: 400; line-height: 1; }
+    .we__stat small { display: block; margin-top: .35rem; font: 800 .62rem var(--body);
+      letter-spacing: .16em; text-transform: uppercase; color: var(--cream-dim); }
+    .we__lanes { display: flex; gap: .45rem; overflow-x: auto; scrollbar-width: none; margin: 0 0 1rem; }
+    .we__lanes::-webkit-scrollbar { display: none; }
+    .we__lanes button { flex: none; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      font: 700 .78rem var(--body); color: var(--cream); background: rgba(244,239,230,.06);
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.12); border-radius: 100px; padding: .5rem 1rem; }
+    .we__lanes button.on { color: #fff; font-weight: 800; background: var(--metal, #8a5a44);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+    .lead { border-radius: 20px; padding: 1rem 1.05rem; margin-bottom: .7rem;
+      background: rgba(244,239,230,.045); box-shadow: inset 0 0 0 1px rgba(244,239,230,.1); }
+    .lead__top { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
+    .lead__top b { font-weight: 800; font-size: 1rem; }
+    .lead__want { font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ruby-hot); }
+    .lead__when { margin-left: auto; font-size: .72rem; color: var(--cream-dim); }
+    .lead__note { margin-top: .45rem; font-size: .9rem; line-height: 1.55; white-space: pre-wrap; }
+    .lead__meta { margin-top: .45rem; font-size: .74rem; color: var(--cream-dim); }
+    .lead__meta .src { display: inline-block; border-radius: 100px; padding: .16rem .6rem; font-weight: 800;
+      background: rgba(229,56,59,.16); color: var(--ruby-hot); }
+    .lead__acts { display: flex; gap: .45rem; flex-wrap: wrap; margin-top: .7rem; }
+    .lead__acts a, .lead__acts button { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; text-decoration: none; font: 800 .7rem var(--body);
+      border-radius: 100px; padding: .42rem .85rem; color: var(--cream);
+      background: rgba(244,239,230,.06); box-shadow: inset 0 0 0 1px rgba(244,239,230,.12); }
+    .lead__acts .reply { background: linear-gradient(120deg,var(--ruby),var(--ruby-hot)); color: #fff; box-shadow: none; }
+    .lead__acts button.on { background: var(--metal, #8a5a44); color: #fff; }
+    .lead.is-closed { opacity: .55; }
+    .we__empty { color: var(--cream-dim); font-size: .92rem; line-height: 1.5; }
+    .we__back { display: inline-block; margin-top: 1.6rem; color: var(--cream-dim); font: 800 .66rem var(--body);
+      letter-spacing: .16em; text-transform: uppercase; text-decoration: none; }
+    .we__back:hover { color: var(--cream); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body class="we">
+  <div class="we__wrap">
+
+    <section class="we__gate" id="weGate">
+      <h2>WE Manufacture</h2>
+      <p>The list, the sites, the line. Operator only — same lock as the Control Plane.</p>
+      <input class="we__in" id="weEmail" type="email" placeholder="Owner email" autocomplete="email">
+      <input class="we__in" id="wePass" type="password" placeholder="Password (optional)" autocomplete="current-password">
+      <button class="we__btn we__btn--go" id="weIn" type="button">Open the desk &rarr;</button>
+      <button class="we__btn" id="weLink" type="button">Email me a sign-in link</button>
+      <p class="we__note" id="weNote"></p>
+    </section>
+
+    <main id="weBoard" hidden>
+      <header class="we__head">
+        <img class="we__mark" src="assets/img/we-icon-dark.png" alt="">
+        <h1 class="we__ttl">WE Manufacture</h1>
+        <div class="we__who">
+          <span id="weUser">—</span>
+          <button class="we__btn" id="weRefresh" type="button">Refresh</button>
+          <button class="we__btn" id="weOut" type="button">Sign out</button>
+        </div>
+      </header>
+
+      <div class="we__stats">
+        <div class="we__stat"><b id="stNew">·</b><small>New</small></div>
+        <div class="we__stat"><b id="stList">·</b><small>The list</small></div>
+        <div class="we__stat"><b id="stSite">·</b><small>Sites</small></div>
+      </div>
+
+      <div class="we__lanes" id="weLanes">
+        <button type="button" class="on" data-lane="All">All</button>
+        <button type="button" data-lane="List">The list</button>
+        <button type="button" data-lane="Site">Sites</button>
+      </div>
+
+      <div id="weLeads"><p class="we__empty">Loading the desk…</p></div>
+      <a class="we__back" href="control.html">← Control Plane</a>
+    </main>
+  </div>
+
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var API = "https://api.mccluster.org";
+    var SLUG = "we-manufacture";
+    var STATUSES = ["new", "needs-reply", "qualified", "confirmed", "archived", "declined"];
+    var ROWS = [];
+    var LANE = "All";
+    var $ = function (id) { return document.getElementById(id); };
+    function esc(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; }
+    function note(msg, err) {
+      var n = $("weNote"); n.textContent = msg || "";
+      n.className = "we__note" + (err ? " is-err" : "");
+    }
+    function token() {
+      return (window.MCC_SUPA && MCC_SUPA.token) ? MCC_SUPA.token() : Promise.resolve(null);
+    }
+    function isSite(r) {
+      var w = ((r.want || "") + " " + (r.page || "") + " " + (r.source || "")).toLowerCase();
+      return /site|municipal|town|gov/.test(w);
+    }
+    function ago(iso) {
+      var m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+      if (m < 60) return m + "m";
+      if (m < 1440) return Math.round(m / 60) + "h";
+      return Math.round(m / 1440) + "d";
+    }
+    function paint(rows) {
+      ROWS = rows || [];
+      var shown = LANE === "All" ? ROWS : ROWS.filter(function (r) {
+        return LANE === "Site" ? isSite(r) : !isSite(r);
+      });
+      $("stNew").textContent = ROWS.filter(function (r) { return r.status === "new" || r.status === "needs-reply"; }).length;
+      $("stList").textContent = ROWS.filter(function (r) { return !isSite(r); }).length;
+      $("stSite").textContent = ROWS.filter(isSite).length;
+      if (!shown.length) {
+        $("weLeads").innerHTML = '<p class="we__empty">' + (LANE === "All"
+          ? "The desk is clear. List signups and site packages land here the moment the site files one."
+          : "Nothing in this lane yet.") + "</p>";
+        return;
+      }
+      $("weLeads").innerHTML = shown.map(function (r) {
+        var reply = "mailto:" + encodeURIComponent(r.email) +
+          "?subject=" + encodeURIComponent("Re: WE Manufacture") +
+          "&body=" + encodeURIComponent("Hey " + r.name + ",\n\nGot your note" + (r.want ? " about " + r.want : "") + ". ");
+        var closed = r.status === "archived" || r.status === "declined" || r.status === "completed";
+        return '<div class="lead' + (closed ? " is-closed" : "") + '" data-id="' + esc(r.id) + '">' +
+          '<div class="lead__top"><b>' + esc(r.name) + "</b>" +
+          (r.want ? '<span class="lead__want">' + esc(r.want) + "</span>" : "") +
+          '<span class="lead__when">' + ago(r.at) + " ago</span></div>" +
+          (r.note ? '<p class="lead__note">' + esc(r.note) + "</p>" : "") +
+          '<p class="lead__meta"><span class="src">' + esc(r.source || "direct") + "</span> · " +
+          esc(r.email) + " · " + esc(r.page || "?") + "</p>" +
+          '<div class="lead__acts">' +
+          '<a class="reply" href="' + reply + '">Reply →</a>' +
+          STATUSES.map(function (st) {
+            return '<button type="button" data-st="' + st + '"' + (r.status === st ? ' class="on"' : "") + ">" + st + "</button>";
+          }).join("") +
+          "</div></div>";
+      }).join("");
+    }
+    function load() {
+      return token().then(function (t) {
+        if (!t) return;
+        return fetch(API + "/v1/clients/" + SLUG + "/inquiries", {
+          headers: { authorization: "Bearer " + t },
+          cache: "no-store"
+        }).then(function (r) {
+          if (r.status === 404) {
+            $("weLeads").innerHTML = '<p class="we__empty">Tenant is not on the plane yet. Apply the WE Manufacture org migration, then refresh.</p>';
+            return;
+          }
+          if (r.status === 403) {
+            $("weLeads").innerHTML = '<p class="we__empty">This account is not an operator of WE Manufacture.</p>';
+            return;
+          }
+          if (!r.ok) throw new Error("Could not read the desk.");
+          return r.json();
+        }).then(function (data) {
+          if (data && data.items) paint(data.items);
+        }).catch(function (e) {
+          $("weLeads").innerHTML = '<p class="we__empty">' + esc(e && e.message || "Could not reach the desk.") + "</p>";
+        });
+      });
+    }
+    function setStatus(id, status, card) {
+      token().then(function (t) {
+        return fetch(API + "/v1/clients/" + SLUG + "/inquiries/" + encodeURIComponent(id), {
+          method: "PATCH",
+          headers: { authorization: "Bearer " + t, "content-type": "application/json" },
+          body: JSON.stringify({ status: status })
+        });
+      }).then(function (r) {
+        if (!r.ok) return;
+        card.querySelectorAll("[data-st]").forEach(function (b) {
+          b.classList.toggle("on", b.getAttribute("data-st") === status);
+        });
+        card.classList.toggle("is-closed", status === "archived" || status === "declined" || status === "completed");
+        ROWS.forEach(function (row) { if (row.id === id) row.status = status; });
+        $("stNew").textContent = ROWS.filter(function (r) { return r.status === "new" || r.status === "needs-reply"; }).length;
+      });
+    }
+    function boot() {
+      $("weGate").hidden = true;
+      $("weBoard").hidden = false;
+      var u = window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user();
+      $("weUser").textContent = (u && u.email) || "signed in";
+      load();
+    }
+
+    $("weIn").addEventListener("click", function () {
+      var em = $("weEmail").value.trim(), pw = $("wePass").value;
+      if (!em) { note("Email first.", true); return; }
+      if (!pw) { note("No password? Use the sign-in link below.", true); return; }
+      var b = $("weIn"); b.disabled = true; b.textContent = "Opening…";
+      window.MCC_AUTH.signInPassword(em, pw).then(boot).catch(function (e) {
+        b.disabled = false; b.textContent = "Open the desk →";
+        note(String(e && e.message || e), true);
+      });
+    });
+    $("wePass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("weIn").click(); });
+    $("weLink").addEventListener("click", function () {
+      var em = $("weEmail").value.trim();
+      if (!em) { note("Email first.", true); return; }
+      var b = $("weLink"); b.disabled = true; b.textContent = "Sending…";
+      window.MCC_AUTH.signIn(em).then(function () {
+        b.textContent = "Link sent";
+        note("Check " + em + ". The link opens this page signed in.");
+      }).catch(function (e) {
+        b.disabled = false; b.textContent = "Email me a sign-in link";
+        note(String(e && e.message || e), true);
+      });
+    });
+    $("weOut").addEventListener("click", function () {
+      window.MCC_AUTH.signOut().then(function () { location.reload(); });
+    });
+    $("weRefresh").addEventListener("click", function () {
+      var b = $("weRefresh"); b.disabled = true; b.textContent = "…";
+      load().then(function () { b.disabled = false; b.textContent = "Refresh"; });
+    });
+    $("weLanes").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-lane]");
+      if (!b) return;
+      LANE = b.getAttribute("data-lane");
+      $("weLanes").querySelectorAll("button").forEach(function (x) { x.classList.toggle("on", x === b); });
+      paint(ROWS);
+    });
+    $("weLeads").addEventListener("click", function (e) {
+      var card = e.target.closest && e.target.closest(".lead");
+      if (!card) return;
+      var st = e.target.closest("[data-st]");
+      if (st) setStatus(card.getAttribute("data-id"), st.getAttribute("data-st"), card);
+    });
+
+    function tryResume() { token().then(function (t) { if (t) boot(); }); }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", tryResume);
+    else tryResume();
+    setTimeout(tryResume, 900);
+  })();
+  </script>
+</body>
+</html>

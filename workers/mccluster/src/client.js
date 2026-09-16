@@ -1,4 +1,5 @@
 import { corsHeaders, fail, reply } from './lib/http.js';
+import { upsertConversation, notifyOwners } from './inquiries.js';
 
 const MAX_BODY_BYTES = 16 * 1024;
 const BOOKING_STATES = new Set([
@@ -109,7 +110,22 @@ async function requireClientMember(request, env, rawSlug) {
     `org_members?org_id=eq.${encodeURIComponent(org.id)}&profile_id=eq.${encodeURIComponent(user.id)}&select=role&limit=1`
   );
   const membership = memberships?.[0];
-  if (!membership) throw Object.assign(new Error('Client tenant access required'), { status: 403 });
+  if (!membership) {
+    /* House owners operate every client tenant from Control. Membership is
+       still the right grant for a client's own staff; this is the plane's
+       override so WE Manufacture (and Esmer, and the next one) can be worked
+       from matthew.mccluster.org without a second login. */
+    const house = await sbRequest(env, 'orgs?slug=eq.mccluster&select=id&limit=1');
+    const houseId = house?.[0]?.id;
+    if (houseId) {
+      const owners = await sbRequest(
+        env,
+        `org_members?org_id=eq.${encodeURIComponent(houseId)}&profile_id=eq.${encodeURIComponent(user.id)}&role=eq.owner&select=org_id&limit=1`
+      );
+      if (owners?.length) return { user, org, role: 'owner' };
+    }
+    throw Object.assign(new Error('Client tenant access required'), { status: 403 });
+  }
   return { user, org, role: membership.role };
 }
 
@@ -173,7 +189,26 @@ async function publicInquiry(request, env) {
     body: row,
     prefer: 'return=representation'
   });
-  return reply(request, env, { ok: true, inquiry: rows?.[0] || null }, 201);
+  const inquiry = rows?.[0] || null;
+  try {
+    const thread = await upsertConversation(env, org, {
+      name,
+      email,
+      want: row.want,
+      note: row.note,
+      page: row.page
+    });
+    await notifyOwners(
+      env,
+      org,
+      { leadId: inquiry?.id, name, email, want: row.want, note: row.note, page: row.page },
+      thread?.convId
+    );
+  } catch {
+    /* The lead is the record. Inbox and email are delivery. A delivery
+       failure must not lose a message that is already saved. */
+  }
+  return reply(request, env, { ok: true, inquiry }, 201);
 }
 
 function authRedirectFor(request) {

@@ -50,6 +50,14 @@ test('Esmer GitHub Pages origin is explicitly allowed', async () => {
   assert.match(source, /https:\/\/esmer\.mccluster\.org/);
 });
 
+test('house owners can operate a client tenant from Control', async () => {
+  const source = await text(clientPath);
+  assert.match(source, /orgs\?slug=eq\.mccluster/);
+  assert.match(source, /role=eq\.owner/);
+  assert.match(source, /upsertConversation/);
+  assert.match(source, /notifyOwners/);
+});
+
 test('client OPTIONS preflight works without database configuration', async () => {
   const request = new Request('https://api.mccluster.org/v1/clients/esmer/me', {
     method: 'OPTIONS',

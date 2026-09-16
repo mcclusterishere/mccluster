@@ -19,6 +19,7 @@
     {"owner": "mcclusterishere", "repo": "Whip-Equipped", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped-Driver", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Whip-Equipped-Rentals", "role": "product", "branch": "main"},
+    {"owner": "mcclusterishere", "repo": "We-manufacture", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "smartchurch", "role": "product", "branch": "main"},
     {"owner": "mcclusterishere", "repo": "Shiloh-Church-BPT-App", "role": "client", "branch": "claude/shiloh-church-bpt-design-x9lnin"},
     {"owner": "mcclusterishere", "repo": "esmer", "role": "client", "branch": "main"},
