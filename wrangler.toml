@@ -27,6 +27,11 @@ APEX_ORIGIN = "https://mccluster.org"
 ALLOW_DEMO_IDENTITIES = "false"
 PUBLIC_APP_URL = "https://matthew.mccluster.org"
 META_GRAPH_API_VERSION = "v26.0"
+# Core remote MCP bridge. Not a secret: it is the tunnel hostname, and Core
+# refuses every request that does not carry CORE_BROKER_TOKEN plus a valid
+# CORE_EDGE_SIGNING_KEY signature. Those two are `wrangler secret put`, never here.
+# The route fails closed (503) until both secrets are set.
+CORE_BROKER_URL = "https://core.mccluster.org"
 
 # The internal spatial console at /internal/seek-first ships as a text module. Without
 # this rule an accidental repo-root deploy fails to bundle the Worker at all,
