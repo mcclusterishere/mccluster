@@ -11,48 +11,48 @@
   <script src="js/theme.js?v=__STAMP__"></script>
   <style>
     body.st { background:#090807; color:#f4efe6; min-height:100svh; }
-    .st-shell { max-width:1180px; margin:0 auto; padding:1.2rem 1rem calc(5rem + env(safe-area-inset-bottom)); }
+    .st-shell { max-width:1220px; margin:0 auto; padding:1.1rem 1rem calc(5rem + env(safe-area-inset-bottom)); }
     .st-top { display:flex; flex-wrap:wrap; align-items:flex-end; gap:.8rem 1.2rem; padding-bottom:1rem; border-bottom:1px solid rgba(244,239,230,.1); }
-    .st-top h1 { margin:0; font-family:var(--display, Anton, Impact, sans-serif); font-weight:400; font-size:clamp(1.8rem,5vw,2.7rem); text-transform:uppercase; line-height:.92; }
+    .st-top h1 { margin:0; font-family:var(--display, Anton, Impact, sans-serif); font-weight:400; font-size:clamp(1.7rem,5vw,2.6rem); text-transform:uppercase; line-height:.92; }
     .st-top h1 i { font-style:normal; color:#e5383b; }
-    .st-who { margin-left:auto; display:flex; align-items:center; gap:.55rem; color:rgba(244,239,230,.62); font-size:.82rem; }
-    .st-btn { appearance:none; border-radius:999px; border:1px solid rgba(244,239,230,.22); background:rgba(244,239,230,.05); color:#f4efe6; padding:.5em 1em; font:800 .64rem/1 var(--body, system-ui); letter-spacing:.14em; text-transform:uppercase; cursor:pointer; }
+    .st-who { margin-left:auto; display:flex; gap:.5rem; align-items:center; color:rgba(244,239,230,.62); font-size:.82rem; }
+    .st-btn { appearance:none; border-radius:999px; border:1px solid rgba(244,239,230,.22); background:rgba(244,239,230,.05); color:#f4efe6; padding:.5em 1em; font:800 .64rem/1 var(--body, system-ui); letter-spacing:.14em; text-transform:uppercase; cursor:pointer; text-decoration:none; }
     .st-btn.go { border:0; background:linear-gradient(120deg,#e5383b,#c1121f); color:#fff; }
-    .st-in, .st-area { width:100%; appearance:none; border:1px solid rgba(244,239,230,.18); background:rgba(244,239,230,.05); color:#f4efe6; border-radius:13px; padding:.85em 1em; font:500 1rem var(--body, system-ui); }
-    .st-area { min-height:6.4rem; resize:vertical; }
+    .st-in, .st-area { width:100%; appearance:none; border:1px solid rgba(244,239,230,.18); background:rgba(244,239,230,.05); color:#f4efe6; border-radius:13px; padding:.8em 1em; font:500 .98rem var(--body, system-ui); }
+    .st-area { min-height:5.6rem; resize:vertical; }
     .lab { font:800 .58rem/1 var(--body, system-ui); letter-spacing:.16em; text-transform:uppercase; color:rgba(244,239,230,.45); margin-bottom:.35rem; }
-    .lamps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.6rem; margin:1.15rem 0 1.3rem; }
-    .lamp { border-radius:16px; padding:.9rem 1rem; background:rgba(244,239,230,.045); box-shadow:inset 0 0 0 1px rgba(244,239,230,.1); }
-    .lamp b { display:block; font:800 .58rem/1 var(--body, system-ui); letter-spacing:.18em; text-transform:uppercase; color:rgba(244,239,230,.45); margin-bottom:.45rem; }
-    .lamp em { font-style:normal; font-family:var(--display, Anton, Impact, sans-serif); font-size:1.25rem; }
-    .dot { display:inline-block; width:.48rem; height:.48rem; border-radius:50%; margin-right:.4rem; background:#5a564f; }
-    .dot.on { background:#35d07f; box-shadow:0 0 10px rgba(53,208,127,.75); }
-    .dot.off { background:#e5383b; }
-    .grid { display:grid; grid-template-columns:minmax(280px,.95fr) minmax(300px,1.05fr); gap:.8rem; }
+    .lamps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.55rem; margin:1.05rem 0 1.15rem; }
+    .lamp { border-radius:16px; padding:.85rem .95rem; background:rgba(244,239,230,.045); box-shadow:inset 0 0 0 1px rgba(244,239,230,.1); }
+    .lamp b { display:block; font:800 .56rem/1 var(--body, system-ui); letter-spacing:.16em; text-transform:uppercase; color:rgba(244,239,230,.45); margin-bottom:.4rem; }
+    .lamp em { font-style:normal; font-family:var(--display, Anton, Impact, sans-serif); font-size:1.2rem; }
+    .dot { display:inline-block; width:.46rem; height:.46rem; border-radius:50%; margin-right:.35rem; background:#5a564f; }
+    .dot.on { background:#35d07f; } .dot.off { background:#e5383b; }
+    .grid { display:grid; grid-template-columns:minmax(300px,1fr) minmax(280px,.92fr); gap:.8rem; }
     .panel { border-radius:18px; background:rgba(244,239,230,.045); box-shadow:inset 0 0 0 1px rgba(244,239,230,.1); }
-    .ph { padding:1rem 1.1rem .2rem; font:800 .62rem/1 var(--body, system-ui); letter-spacing:.18em; text-transform:uppercase; color:rgba(244,239,230,.48); }
-    .pb { padding:1rem 1.1rem 1.15rem; display:grid; gap:.8rem; }
-    .kinds { display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem; }
-    .kind, .chip { border:1px solid rgba(244,239,230,.16); background:#120f0c; color:#f4efe6; border-radius:12px; padding:.65rem .3rem; text-align:center; cursor:pointer; font:800 .58rem/1.2 var(--body, system-ui); letter-spacing:.08em; text-transform:uppercase; }
+    .ph { padding:.95rem 1.05rem .15rem; font:800 .62rem/1 var(--body, system-ui); letter-spacing:.16em; text-transform:uppercase; color:rgba(244,239,230,.48); }
+    .pb { padding:.9rem 1.05rem 1.1rem; display:grid; gap:.72rem; }
+    .kinds { display:grid; grid-template-columns:repeat(4,1fr); gap:.35rem; }
+    .kind, .chip { border:1px solid rgba(244,239,230,.16); background:#120f0c; color:#f4efe6; border-radius:11px; padding:.58rem .25rem; text-align:center; cursor:pointer; font:800 .54rem/1.15 var(--body, system-ui); letter-spacing:.06em; text-transform:uppercase; }
     .kind.on, .chip.on { border-color:#e5383b; background:rgba(229,56,59,.16); }
-    .kind small { display:block; margin-top:.25rem; font-weight:600; letter-spacing:0; text-transform:none; color:rgba(244,239,230,.5); font-size:.64rem; }
-    .chips { display:flex; flex-wrap:wrap; gap:.35rem; }
-    .chip { padding:.45rem .7rem; border-radius:999px; }
-    .drop { border:1px dashed rgba(244,239,230,.22); border-radius:14px; padding:.9rem; text-align:center; color:rgba(244,239,230,.62); font-size:.84rem; }
-    .drop img { width:100%; max-height:180px; object-fit:contain; border-radius:10px; margin-top:.55rem; background:#050505; }
-    .models { display:grid; gap:.4rem; max-height:8.5rem; overflow:auto; }
-    .mod { display:flex; justify-content:space-between; gap:.6rem; border:1px solid rgba(244,239,230,.12); border-radius:11px; padding:.55rem .7rem; cursor:pointer; background:#100d0b; }
+    .kind small { display:block; margin-top:.2rem; font-weight:600; letter-spacing:0; text-transform:none; color:rgba(244,239,230,.5); font-size:.6rem; }
+    .chips { display:flex; flex-wrap:wrap; gap:.32rem; }
+    .chip { padding:.42rem .68rem; border-radius:999px; }
+    .frames { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+    .drop { border:1px dashed rgba(244,239,230,.22); border-radius:13px; padding:.75rem; text-align:center; color:rgba(244,239,230,.6); font-size:.8rem; }
+    .drop img, .drop video { width:100%; max-height:140px; object-fit:contain; border-radius:8px; margin-top:.4rem; background:#050505; }
+    .models { display:grid; gap:.35rem; max-height:7.6rem; overflow:auto; }
+    .mod { display:flex; justify-content:space-between; gap:.5rem; border:1px solid rgba(244,239,230,.12); border-radius:10px; padding:.5rem .65rem; cursor:pointer; background:#100d0b; font-size:.8rem; }
     .mod.on { border-color:#e5383b; }
-    .empty, .hint { color:rgba(244,239,230,.5); font-size:.82rem; line-height:1.45; }
-    .job { border-radius:14px; padding:.75rem .85rem; background:#100d0b; box-shadow:inset 0 0 0 1px rgba(244,239,230,.1); margin-bottom:.5rem; }
-    .job .row { display:flex; justify-content:space-between; gap:.6rem; color:rgba(244,239,230,.55); font-size:.75rem; margin-top:.25rem; }
-    .pill { font:800 .58rem/1 var(--body, system-ui); letter-spacing:.12em; text-transform:uppercase; color:#e8c877; }
+    .empty, .hint { color:rgba(244,239,230,.5); font-size:.8rem; line-height:1.45; }
+    .job { border-radius:14px; padding:.7rem .8rem; background:#100d0b; box-shadow:inset 0 0 0 1px rgba(244,239,230,.1); margin-bottom:.45rem; }
+    .job .row { display:flex; justify-content:space-between; gap:.5rem; color:rgba(244,239,230,.55); font-size:.74rem; margin-top:.22rem; }
+    .pill { font:800 .56rem/1 var(--body, system-ui); letter-spacing:.12em; text-transform:uppercase; color:#e8c877; }
     .pill.ok { color:#7dc98f; } .pill.bad { color:#ff6b6b; }
-    .prev img, .prev video { width:100%; max-height:260px; object-fit:contain; border-radius:10px; background:#050505; margin-top:.5rem; }
-    .st-gate { max-width:26rem; margin:18vh auto 0; }
-    .st-note { min-height:1.2em; margin:.8rem 0 0; font-size:.86rem; color:rgba(244,239,230,.62); }
+    .prev img, .prev video { width:100%; max-height:240px; object-fit:contain; border-radius:10px; background:#050505; margin-top:.45rem; }
+    .st-gate { max-width:26rem; margin:16vh auto 0; }
+    .st-note { min-height:1.1em; margin:.7rem 0 0; font-size:.84rem; color:rgba(244,239,230,.62); }
     .st-note.err { color:#ff6b6b; }
-    @media (max-width:860px){ .lamps,.grid,.kinds { grid-template-columns:1fr 1fr; } .grid { grid-template-columns:1fr; } }
+    @media (max-width:860px){ .lamps,.grid,.kinds,.frames { grid-template-columns:1fr 1fr; } .grid { grid-template-columns:1fr; } }
     [hidden]{ display:none !important; }
   </style>
 </head>
@@ -60,7 +60,7 @@
   <div class="st-shell">
     <section class="st-gate" id="gate">
       <h2>Studio</h2>
-      <p>Same lock as the rest of the plane. Session already open skips this.</p>
+      <p>Director desk. Session already open skips this.</p>
       <input class="st-in" id="email" type="email" placeholder="Email" autocomplete="email">
       <input class="st-in" id="pass" type="password" placeholder="Password" autocomplete="current-password" style="margin-top:.55rem">
       <button class="st-btn go" id="signin" type="button" style="width:100%;margin-top:.7rem;padding:.95em">Open Studio →</button>
@@ -78,48 +78,50 @@
       <div class="lamps">
         <div class="lamp"><b>API</b><em><i class="dot" id="dApi"></i><span id="vApi">—</span></em></div>
         <div class="lamp"><b>Factory</b><em><i class="dot" id="dFal"></i><span id="vFal">fal</span></em></div>
-        <div class="lamp"><b>MiniMax</b><em id="vMx">—</em></div>
-        <div class="lamp"><b>Session</b><em id="vJobs">0 jobs</em></div>
+        <div class="lamp"><b>Director</b><em id="vDir">—</em></div>
+        <div class="lamp"><b>Session</b><em id="vJobs">0</em></div>
       </div>
       <div class="grid">
         <section class="panel">
           <div class="ph">01 / Shot</div>
           <div class="pb">
-            <div class="kinds">
-              <button class="kind on" data-kind="image" type="button">Still<small>image</small></button>
-              <button class="kind" data-kind="video" type="button">Video<small>general</small></button>
-              <button class="kind" data-kind="minimax" type="button">MiniMax<small>Hailuo / H3</small></button>
-              <button class="kind" data-kind="3d" type="button">3D<small>GLB</small></button>
-            </div>
-            <div><div class="lab">Prompt</div><textarea class="st-area" id="prompt" placeholder="Subject, lens, motion, light. Do not invent parts."></textarea></div>
+            <div class="kinds" id="kinds"></div>
+            <div><div class="lab">Prompt</div><textarea class="st-area" id="prompt" placeholder="What changes. What holds. Camera last."></textarea></div>
             <div>
               <div class="lab">Camera</div>
               <div class="chips" id="cams"></div>
             </div>
             <div>
-              <div class="lab">Length</div>
-              <div class="chips">
-                <button class="chip on" data-dur="6" type="button">6s</button>
-                <button class="chip" data-dur="10" type="button">10s</button>
+              <div class="lab">Length · ratio</div>
+              <div class="chips" id="durs"></div>
+              <div class="chips" id="ratios" style="margin-top:.35rem"></div>
+            </div>
+            <div class="frames">
+              <div class="drop">Start / first frame
+                <input id="fileA" type="file" accept="image/*" capture="environment" style="display:block;margin:.55rem auto 0;max-width:100%">
+                <div id="prevA"></div>
+              </div>
+              <div class="drop">End frame
+                <input id="fileB" type="file" accept="image/*" style="display:block;margin:.55rem auto 0;max-width:100%">
+                <div id="prevB"></div>
               </div>
             </div>
-            <div>
-              <div class="lab">First frame · camera roll or files</div>
-              <div class="drop" id="drop">
-                Tap to upload from this phone
-                <input id="file" type="file" accept="image/*" capture="environment" style="display:block;margin:.7rem auto 0;max-width:16rem">
-                <div id="shotPrev"></div>
-              </div>
+            <div class="drop">Source clip · modify / extend / reframe
+              <input id="fileV" type="file" accept="video/*" style="display:block;margin:.55rem auto 0;max-width:100%">
+              <div id="prevV"></div>
             </div>
-            <div><div class="lab">Or a public URL</div><input class="st-in" id="ref" type="url" placeholder="https://…"></div>
-            <div><div class="lab">Spend cap · cents</div><input class="st-in" id="budget" type="number" min="1" value="800"></div>
-            <div><div class="lab">Model</div><div class="models" id="models"><p class="empty">Loading…</p></div></div>
-            <button class="st-btn go" id="go" type="button">Generate →</button>
-            <p class="hint" id="makeHint">MiniMax is Hailuo-02 / H3 on fal. Phone photo becomes image_url. Empty list means the allow-list has no MiniMax row yet.</p>
+            <div><div class="lab">Or public URLs</div>
+              <input class="st-in" id="urlA" type="url" placeholder="Start image or video URL">
+              <input class="st-in" id="urlB" type="url" placeholder="End image URL" style="margin-top:.4rem">
+            </div>
+            <div><div class="lab">Spend cap · cents</div><input class="st-in" id="budget" type="number" min="1" value="1200"></div>
+            <div><div class="lab">Model for this verb</div><div class="models" id="models"><p class="empty">Loading…</p></div></div>
+            <button class="st-btn go" id="go" type="button">Run shot →</button>
+            <p class="hint" id="makeHint">Modify needs a clip. Two-frame needs start + end stills. Generate needs a still or a prompt.</p>
           </div>
         </section>
         <section class="panel">
-          <div class="ph">02 / Jobs</div>
+          <div class="ph">02 / Takes</div>
           <div class="pb"><div id="jobs"><p class="empty">Nothing this session.</p></div></div>
         </section>
       </div>
@@ -130,23 +132,48 @@
   (function () {
     "use strict";
     var API = "https://api.mccluster.org";
-    var KIND = "image", CAM = "locked-off", DUR = 6, MODEL = null, MODELS = [];
+    var KIND = "generate", CAM = "locked-off", DUR = "5s", RATIO = "16:9", MODEL = null, MODELS = [];
     var ORG = localStorage.getItem("mcc_org_id") || "";
-    var REFDATA = "";
+    var START = "", END = "", CLIP = "";
     var JOBS = [];
     try { JOBS = JSON.parse(sessionStorage.getItem("mcc_studio_jobs") || "[]"); } catch (e) {}
-    var CAMS = [
-      ["locked-off", "Locked off"],
-      ["pan-right", "Pan right"],
-      ["pan-left", "Pan left"],
-      ["dolly-in", "Dolly in"],
-      ["orbit", "Orbit"],
-      ["crane-up", "Crane up"],
-      ["handheld", "Handheld"]
+    var KINDS = [
+      ["still", "Still", "image"],
+      ["generate", "Generate", "image→video"],
+      ["twoframe", "Two-frame", "start→end"],
+      ["modify", "Modify", "clip rewrite"],
+      ["extend", "Extend", "continue"],
+      ["reframe", "Reframe", "aspect"],
+      ["minimax", "MiniMax", "Hailuo / H3"],
+      ["3d", "3D", "GLB"]
     ];
+    var CAMS = [["locked-off","Locked off"],["pan-right","Pan right"],["pan-left","Pan left"],["dolly-in","Dolly in"],["orbit","Orbit"],["crane-up","Crane up"],["handheld","Handheld"]];
+    var DURS = ["5s","6s","9s","10s"];
+    var RATIOS = ["16:9","9:16","1:1","4:3","3:4","21:9"];
     function $(id) { return document.getElementById(id); }
     function token() { return window.MCC_SUPA && MCC_SUPA.token ? MCC_SUPA.token() : Promise.resolve(null); }
     function saveJobs() { try { sessionStorage.setItem("mcc_studio_jobs", JSON.stringify(JOBS.slice(0, 24))); } catch (e) {} }
+    function blobOf(s) { return String(s || "").slice(0, 48).toLowerCase(); }
+    function isMini(m) { return /minimax|hailuo|\bh3\b/.test(blobOf((m.provider_model_id||"")+" "+(m.display_name||""))); }
+    function isLuma(m) { return /luma|ray-2|ray2|dream-machine/.test(blobOf((m.provider_model_id||"")+" "+(m.display_name||""))); }
+    function cap(m) { return String(m.capability || "").toLowerCase(); }
+    function pid(m) { return String(m.provider_model_id || "").toLowerCase(); }
+    function matchModels() {
+      return MODELS.filter(function (m) {
+        var c = cap(m), p = pid(m);
+        if (KIND === "still") return c.indexOf("image") >= 0 && c.indexOf("video") < 0 && c.indexOf("3d") < 0;
+        if (KIND === "3d") return c.indexOf("3d") >= 0;
+        if (KIND === "minimax") return isMini(m) || c.indexOf("video") >= 0;
+        if (KIND === "modify") return /modify/.test(p + c) || isLuma(m) || c.indexOf("video") >= 0;
+        if (KIND === "reframe") return /reframe/.test(p + c) || isLuma(m) || c.indexOf("video") >= 0;
+        if (KIND === "extend" || KIND === "twoframe" || KIND === "generate") return c.indexOf("video") >= 0;
+        return true;
+      }).sort(function (a, b) {
+        var as = (KIND === "minimax" && isMini(a) ? 2 : 0) + (isLuma(a) ? 1 : 0);
+        var bs = (KIND === "minimax" && isMini(b) ? 2 : 0) + (isLuma(b) ? 1 : 0);
+        return bs - as;
+      });
+    }
     function api(path, opts) {
       opts = opts || {};
       return token().then(function (t) {
@@ -164,20 +191,26 @@
         });
       });
     }
-    function isMini(m) {
-      var s = ((m.provider_model_id || "") + " " + (m.display_name || "") + " " + (m.id || "")).toLowerCase();
-      return /minimax|hailuo|h3/.test(s);
+    function drawKinds() {
+      $("kinds").innerHTML = KINDS.map(function (k) {
+        return '<button class="kind' + (k[0] === KIND ? " on" : "") + '" data-kind="' + k[0] + '" type="button">' + k[1] + "<small>" + k[2] + "</small></button>";
+      }).join("");
+      $("kinds").querySelectorAll(".kind").forEach(function (b) {
+        b.onclick = function () {
+          KIND = b.getAttribute("data-kind");
+          $("budget").value = KIND === "still" ? "200" : KIND === "3d" ? "400" : "1200";
+          drawKinds(); drawModels();
+        };
+      });
     }
-    function matchModels() {
-      if (KIND === "minimax") {
-        var mx = MODELS.filter(isMini);
-        return mx.length ? mx : MODELS.filter(function (m) { return String(m.capability || "").toLowerCase().indexOf("video") >= 0; });
-      }
-      return MODELS.filter(function (m) {
-        var c = String(m.capability || "").toLowerCase();
-        if (KIND === "3d") return c.indexOf("3d") >= 0;
-        if (KIND === "video") return c.indexOf("video") >= 0;
-        return c.indexOf("image") >= 0 && c.indexOf("video") < 0 && c.indexOf("3d") < 0;
+    function chips(id, items, cur, key, set) {
+      $(id).innerHTML = items.map(function (it) {
+        var v = Array.isArray(it) ? it[0] : it;
+        var lab = Array.isArray(it) ? it[1] : it;
+        return '<button class="chip' + (v === cur ? " on" : "") + '" data-v="' + v + '" type="button">' + lab + "</button>";
+      }).join("");
+      $(id).querySelectorAll(".chip").forEach(function (b) {
+        b.onclick = function () { set(b.getAttribute("data-v")); chips(id, items, set.cur, key, set); };
       });
     }
     function drawCams() {
@@ -187,13 +220,26 @@
       $("cams").querySelectorAll(".chip").forEach(function (b) {
         b.onclick = function () { CAM = b.getAttribute("data-cam"); drawCams(); };
       });
+      $("durs").innerHTML = DURS.map(function (d) {
+        return '<button class="chip' + (d === DUR ? " on" : "") + '" data-d="' + d + '" type="button">' + d + "</button>";
+      }).join("");
+      $("durs").querySelectorAll(".chip").forEach(function (b) {
+        b.onclick = function () { DUR = b.getAttribute("data-d"); drawCams(); };
+      });
+      $("ratios").innerHTML = RATIOS.map(function (r) {
+        return '<button class="chip' + (r === RATIO ? " on" : "") + '" data-r="' + r + '" type="button">' + r + "</button>";
+      }).join("");
+      $("ratios").querySelectorAll(".chip").forEach(function (b) {
+        b.onclick = function () { RATIO = b.getAttribute("data-r"); drawCams(); };
+      });
     }
     function drawModels() {
       var list = matchModels();
-      $("vMx").textContent = String(MODELS.filter(isMini).length);
+      var dir = MODELS.filter(function (m) { return isLuma(m) || isMini(m) || /modify|reframe|extend/.test(pid(m)); }).length;
+      $("vDir").textContent = String(dir);
       if (!list.length) {
         MODEL = null;
-        $("models").innerHTML = '<p class="empty">No enabled model for this shot. Add fal-ai/minimax/hailuo-02/standard/image-to-video (and text-to-video) to media_models.</p>';
+        $("models").innerHTML = '<p class="empty">No enabled model for this verb. Turn on luma-dream-machine/ray-2 (image-to-video, modify, reframe) and MiniMax Hailuo in media_models.</p>';
         return;
       }
       if (!MODEL || !list.some(function (m) { return m.id === MODEL; })) MODEL = list[0].id;
@@ -204,6 +250,22 @@
       $("models").querySelectorAll(".mod").forEach(function (el) {
         el.onclick = function () { MODEL = el.getAttribute("data-id"); drawModels(); };
       });
+    }
+    function readFile(input, maxMb, into, preview, video) {
+      input.onchange = function () {
+        var f = this.files && this.files[0]; if (!f) return;
+        if (f.size > maxMb * 1024 * 1024) { $("makeHint").textContent = "Keep that file under " + maxMb + "MB."; return; }
+        var reader = new FileReader();
+        reader.onload = function () {
+          var data = String(reader.result || "");
+          if (into === "A") START = data;
+          if (into === "B") END = data;
+          if (into === "V") CLIP = data;
+          $(preview).innerHTML = data ? (video ? '<video src="' + data + '" muted playsinline controls></video>' : '<img src="' + data + '" alt="">') : "";
+          $("makeHint").textContent = "Loaded from this phone.";
+        };
+        reader.readAsDataURL(f);
+      };
     }
     function assetUrl(bundle) {
       var assets = (bundle && bundle.assets) || [];
@@ -218,21 +280,34 @@
       return null;
     }
     function drawJobs() {
-      $("vJobs").textContent = JOBS.length + (JOBS.length === 1 ? " job" : " jobs");
+      $("vJobs").textContent = String(JOBS.length);
       if (!JOBS.length) { $("jobs").innerHTML = '<p class="empty">Nothing this session.</p>'; return; }
-      $("jobs").innerHTML = JOBS.map(function (j) {
+      $("jobs").innerHTML = JOBS.map(function (j, i) {
         var st = String(j.status || "queued");
         var pill = st === "completed" ? "ok" : (st === "failed" ? "bad" : "");
-        var a = j.asset, prev = "";
+        var a = j.asset, prev = "", reuse = "";
         if (a && a.url) {
           var mime = String(a.mime_type || a.url).toLowerCase();
           if (/png|jpe?g|webp|gif|image/.test(mime)) prev = '<div class="prev"><img src="' + a.url + '" alt=""></div>';
-          else if (/mp4|webm|video/.test(mime)) prev = '<div class="prev"><video src="' + a.url + '" controls playsinline></video></div>';
-          else prev = '<div class="prev"><a href="' + a.url + '" target="_blank" rel="noreferrer">Open file</a></div>';
+          else if (/mp4|webm|video/.test(mime)) {
+            prev = '<div class="prev"><video src="' + a.url + '" controls playsinline></video></div>';
+            reuse = '<div class="row"><button class="st-btn" type="button" data-reuse="' + i + '">Use as source clip</button></div>';
+          }
         }
         return '<div class="job"><div class="row"><b>' + (j.kind || "job") + '</b><span class="pill ' + pill + '">' + st + "</span></div>" +
-          '<div class="row"><span>' + (j.prompt || "").slice(0, 90) + "</span></div>" + prev + "</div>";
+          '<div class="row"><span>' + (j.prompt || "").slice(0, 90) + "</span></div>" + prev + reuse + "</div>";
       }).join("");
+      $("jobs").querySelectorAll("[data-reuse]").forEach(function (b) {
+        b.onclick = function () {
+          var j = JOBS[Number(b.getAttribute("data-reuse"))];
+          if (j && j.asset && j.asset.url) {
+            CLIP = j.asset.url; $("urlA").value = CLIP;
+            $("prevV").innerHTML = '<video src="' + CLIP + '" muted playsinline controls></video>';
+            KIND = "modify"; drawKinds(); drawModels();
+            $("makeHint").textContent = "Last take is now the source clip.";
+          }
+        };
+      });
     }
     function poll(id) {
       if (!id || !ORG) return;
@@ -278,47 +353,30 @@
         drawJobs();
       });
     }
-    function boot() { $("gate").hidden = true; $("board").hidden = false; drawCams(); load(); }
-    document.querySelectorAll(".kind").forEach(function (btn) {
-      btn.onclick = function () {
-        KIND = btn.getAttribute("data-kind");
-        document.querySelectorAll(".kind").forEach(function (b) { b.classList.toggle("on", b === btn); });
-        $("budget").value = KIND === "3d" ? "400" : KIND === "image" ? "200" : "800";
-        drawModels();
-      };
-    });
-    document.querySelectorAll("[data-dur]").forEach(function (b) {
-      b.onclick = function () {
-        DUR = Number(b.getAttribute("data-dur"));
-        document.querySelectorAll("[data-dur]").forEach(function (x) { x.classList.toggle("on", x === b); });
-      };
-    });
-    $("file").onchange = function () {
-      var f = this.files && this.files[0]; if (!f) return;
-      if (f.size > 8 * 1024 * 1024) { $("makeHint").textContent = "Keep the still under 8MB."; return; }
-      var reader = new FileReader();
-      reader.onload = function () {
-        REFDATA = String(reader.result || "");
-        $("shotPrev").innerHTML = REFDATA ? '<img src="' + REFDATA + '" alt="">' : "";
-        $("makeHint").textContent = "Frame loaded from this phone.";
-      };
-      reader.readAsDataURL(f);
-    };
+    function boot() { $("gate").hidden = true; $("board").hidden = false; drawKinds(); drawCams(); readFile($("fileA"), 8, "A", "prevA", false); readFile($("fileB"), 8, "B", "prevB", false); readFile($("fileV"), 18, "V", "prevV", true); load(); }
     $("go").onclick = function () {
       var prompt = ($("prompt").value || "").trim();
-      var url = ($("ref").value || "").trim();
-      var frame = REFDATA || url;
+      var start = START || ($("urlA").value || "").trim();
+      var end = END || ($("urlB").value || "").trim();
+      var clip = CLIP || ((KIND === "modify" || KIND === "extend" || KIND === "reframe") ? ($("urlA").value || "").trim() : "");
       var hint = $("makeHint");
-      if (!prompt) { hint.textContent = "Write the shot first."; return; }
+      if (KIND !== "reframe" && KIND !== "extend" && !prompt) { hint.textContent = "Write what happens."; return; }
       if (!ORG) { hint.textContent = "No org on this account."; return; }
-      if (!MODEL) { hint.textContent = "No MiniMax/video row enabled yet."; return; }
-      if (KIND === "minimax" && !frame) { hint.textContent = "MiniMax image-to-video needs a first frame. Upload from the phone."; return; }
+      if (!MODEL) { hint.textContent = "No model enabled for this verb."; return; }
+      if ((KIND === "modify" || KIND === "extend" || KIND === "reframe") && !clip) { hint.textContent = "This verb needs a source clip from the phone or a take."; return; }
+      if (KIND === "twoframe" && (!start || !end)) { hint.textContent = "Two-frame needs a start still and an end still."; return; }
+      if ((KIND === "generate" || KIND === "minimax") && !start && !prompt) { hint.textContent = "Need a first frame or a prompt."; return; }
       var spoken = prompt;
-      if (KIND !== "image" && KIND !== "3d") spoken = prompt + " [" + CAM.replace(/-/g, " ") + "] " + DUR + " seconds";
+      if (KIND !== "still" && KIND !== "3d" && KIND !== "reframe") spoken = (prompt ? prompt + " " : "") + "[" + CAM.replace(/-/g, " ") + "]";
+      var input = { prompt: spoken || "continue the motion", aspect_ratio: RATIO, duration: DUR };
+      if (KIND === "still" || KIND === "generate" || KIND === "minimax" || KIND === "twoframe") {
+        if (start) input.image_url = start;
+        if (end) input.end_image_url = end;
+      }
+      if (KIND === "modify" || KIND === "extend" || KIND === "reframe") input.video_url = clip;
+      if (KIND === "extend" && start && !clip) input.video_url = start;
+      if (KIND === "reframe") input.aspect_ratio = RATIO;
       $("go").disabled = true; $("go").textContent = "Sending…";
-      var input = { prompt: spoken };
-      if (frame) input.image_url = frame;
-      if (KIND !== "image" && KIND !== "3d") { input.duration = DUR; input.prompt_optimizer = true; }
       api("/v1/media/generate", {
         method: "POST",
         body: { org_id: ORG, model_id: MODEL, prompt: spoken, input: input, budget_cents: Number($("budget").value || 0), strategy: "studio:" + KIND }
@@ -327,7 +385,7 @@
         JOBS.unshift({ id: job.id, status: job.status || "queued", kind: KIND, prompt: spoken, asset: null });
         saveJobs(); drawJobs(); hint.textContent = "Queued."; if (job.id) poll(job.id);
       }).catch(function (e) { hint.textContent = e.message || "Generate failed."; }).then(function () {
-        $("go").disabled = false; $("go").textContent = "Generate →";
+        $("go").disabled = false; $("go").textContent = "Run shot →";
       });
     };
     $("signin").onclick = function () {
