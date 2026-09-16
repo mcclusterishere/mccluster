@@ -1,1 +1,87 @@
-SEE_ARTIFACT
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Your Account · McCluster</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    html, body { background: var(--ink); }
+    .ac { max-width: 27rem; margin: 0 auto; padding: clamp(4.6rem, 10vh, 6.5rem) clamp(1.1rem, 4vw, 2rem) 9rem; }
+    .ac__k { font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
+    .ac h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.92; font-size: clamp(2.4rem, 11vw, 3.6rem); margin-top: 0.4rem; }
+    .ac__sub { color: var(--cream-dim); line-height: 1.7; margin-top: 0.9rem; font-size: 0.98rem; }
+    .ac__card { border: 1px solid var(--edge); border-radius: 16px; background: var(--glass-hi); padding: 1.15rem; margin-top: 1.6rem; }
+    .ac__lab { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
+    .ac input { width: 100%; margin-top: 0.6rem; padding: 0.95rem 1rem; border-radius: 12px; border: 1px solid rgba(229,56,59,0.4); background: var(--ink-2); color: var(--cream); font-size: 1rem; }
+    .ac__flip { background: none; border: 0; cursor: pointer; padding: 0; margin-top: 0.9rem; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; }
+    .ac__btn { appearance: none; border: 0; cursor: pointer; display: block; width: 100%; margin-top: 0.8rem; padding: 1rem; border-radius: 13px; background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.02rem; text-align: center; text-decoration: none; }
+    .ac__ghost { display: block; text-align: center; text-decoration: none; margin-top: 0.7rem; padding: 0.95rem; border-radius: 13px; border: 1px solid rgba(229,56,59,0.5); color: var(--cream); font-weight: 700; }
+    .ac__note { margin-top: 0.8rem; font-size: 0.8rem; color: var(--cream-dim); }
+    .ac__who { color: var(--cream); font-weight: 700; word-break: break-all; }
+    .ac__out { margin-top: 1rem; background: none; border: 0; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body class="songpage">
+  <main class="ac">
+    <p class="ac__k">McCluster · the agency</p>
+    <h1>Your<br>Account</h1>
+    <div class="ac__card" id="acDoor">
+      <div id="acIn">
+        <p class="ac__lab">Sign in</p>
+        <input type="email" id="acInEmail" placeholder="Email" autocomplete="email">
+        <input type="password" id="acInPass" placeholder="Password" autocomplete="current-password">
+        <button class="ac__btn" id="acGo" type="button">Sign in</button>
+        <button class="ac__flip" id="acSend" type="button">Email me a sign-in link</button>
+      </div>
+      <p class="ac__note" id="acMsg"></p>
+    </div>
+    <div class="ac__card" id="acDesk" hidden>
+      <p class="ac__lab">Your profile</p>
+      <p class="ac__sub"><span class="ac__who" id="acWho"></span></p>
+      <div id="acOps" hidden>
+        <p class="ac__lab" style="margin-top:1.2rem">Operator</p>
+        <p class="ac__sub">The work desk. Not the public shop.</p>
+        <a class="ac__btn" href="studio.html">Open Studio</a>
+        <a class="ac__ghost" href="control.html">Control board</a>
+        <a class="ac__ghost" href="admin.html">Back office</a>
+      </div>
+      <a class="ac__ghost" href="gallery.html">Shop the gallery</a>
+      <button class="ac__out" id="acOut" type="button">Sign out</button>
+    </div>
+    <p class="ac__note" style="margin-top:1.6rem"><a href="studio.html" style="color:var(--cream-dim)">Owner? Studio</a></p>
+  </main>
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    var el = function (id) { return document.getElementById(id); };
+    function paint() {
+      var u = window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user();
+      el("acDoor").hidden = !!u;
+      el("acDesk").hidden = !u;
+      if (!u) return;
+      el("acWho").textContent = u.name || u.email || "signed in";
+      var ops = el("acOps");
+      if (ops) ops.hidden = ((u.email || "").toLowerCase() !== "matthew@mccluster.org");
+    }
+    el("acGo").onclick = function () {
+      var em = el("acInEmail").value.trim(), pw = el("acInPass").value;
+      if (!em || !pw) { el("acMsg").textContent = "Email and password."; return; }
+      MCC_AUTH.signInPassword(em, pw).then(paint).catch(function (e) { el("acMsg").textContent = e.message || "No."; });
+    };
+    el("acSend").onclick = function () {
+      var em = el("acInEmail").value.trim();
+      if (!em) { el("acMsg").textContent = "Email first."; return; }
+      MCC_AUTH.signIn(em).then(function () { el("acMsg").textContent = "Link sent."; }).catch(function (e) { el("acMsg").textContent = e.message || "No."; });
+    };
+    el("acOut").onclick = function () { MCC_AUTH.signOut().then(function () { location.reload(); }); };
+    paint();
+  })();
+  </script>
+</body>
+</html>
