@@ -4,6 +4,9 @@ compatibility_date = "2026-09-02"
 compatibility_flags = [ "nodejs_compat" ]
 workers_dev = false
 
+[build]
+command = 'cd "$(git rev-parse --show-toplevel)/workers/mccluster" && node ../../scripts/worker-build-provenance.mjs'
+
 [observability]
 enabled = true
 

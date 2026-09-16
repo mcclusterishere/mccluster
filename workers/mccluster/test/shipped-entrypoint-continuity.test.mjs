@@ -39,6 +39,7 @@ test('MCP_EDGE is not bound on the API Worker yet', async () => {
 
 test('health on the shipped entry reports deployment_sha so the contract check can trip on unknown', async () => {
   const platform = await read('workers/mccluster/src/entry-platform.js');
-  assert.match(platform, /deployment_sha: env\.DEPLOY_SHA \|\| 'unknown'/,
-    'the live /healthz the contract check hits is the platform wrapper');
+  assert.match(platform, /import \{ build \} from '\.\.\/\.wrangler\/build-provenance\.mjs'/);
+  assert.match(platform, /deployment_sha: build\.dirty \? 'unknown' : build\.sha/,
+    'health must identify the bundled checkout, including builds without DEPLOY_SHA');
 });

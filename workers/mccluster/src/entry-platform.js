@@ -1,4 +1,5 @@
 import existing from './entry.js';
+import { build } from '../.wrangler/build-provenance.mjs';
 import { handlePlatformApi } from './platform-api-metered.js';
 import { handlePlatformPlanApi } from './platform-api-plans.js';
 import { handleComputeApi } from './compute-api.js';
@@ -12,8 +13,8 @@ function healthResponse(request, env) {
     ok: true,
     service: 'mccluster',
     worker: 'mccluster',
-    deployment_sha: env.DEPLOY_SHA || 'unknown',
-    deployment_ref: env.DEPLOY_REF || 'unknown',
+    deployment_sha: build.dirty ? 'unknown' : build.sha,
+    deployment_ref: env.DEPLOY_REF || build.ref,
     supabase_project_ref: env.MCCLUSTER_SUPABASE_PROJECT_REF || null,
     capabilities: {
       platform_api: true,

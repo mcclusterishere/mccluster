@@ -8,6 +8,7 @@ on:
       - 'workers/mccluster-mcp/src/**'
       - 'scripts/mcp-contract-check.mjs'
       - 'scripts/worker-deployment-state.mjs'
+      - 'scripts/worker-build-provenance.mjs'
       - '.github/workflows/deploy-mccluster-worker.yml'
   workflow_dispatch: {}
 
