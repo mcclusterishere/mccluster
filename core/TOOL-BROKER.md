@@ -27,7 +27,11 @@ The service binds to `127.0.0.1:4777` by default.
 
 Health:
 
-- `GET /health`
+- `GET /health` — public liveness (`ok`, `service`) for any caller;
+  the detailed payload (catalog version, capability and tool counts,
+  transports, upstream diagnostics) is returned only to an authenticated
+  caller. A reverse tunnel makes this hostname publicly resolvable, and the
+  diagnostics name internal hosts, so inventory is not public.
 
 Capabilities:
 

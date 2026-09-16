@@ -180,6 +180,24 @@ const server = http.createServer(async (req, res) => {
 
   try {
     if (url.pathname === '/health' && req.method === 'GET') {
+      // Liveness is public; inventory is not. /health used to answer every
+      // caller with the upstream diagnostics, which name internal hosts and
+      // carry the error text of failed upstreams. That was fine while 4777 was
+      // loopback-only, but a reverse tunnel makes this hostname publicly
+      // resolvable, and an unauthenticated detail payload here would hand out
+      // exactly what the Worker strips from tools/list.
+      let authenticated = false;
+      try {
+        authenticate(req, url, Buffer.alloc(0));
+        authenticated = true;
+      } catch {
+        authenticated = false;
+      }
+
+      if (!authenticated) {
+        return json(res, 200, { ok: true, service: 'mccluster-core-tool-broker' });
+      }
+
       const [listedTools, listedCapabilities] = await Promise.all([
         registry.list(),
         capabilities.list()
