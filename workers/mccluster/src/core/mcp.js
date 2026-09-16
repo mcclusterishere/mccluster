@@ -12,7 +12,7 @@
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_BODY = 1_048_576;
-const MCP_VERSION = '2026-07-28';
+const MCP_VERSION = '2025-11-25';
 const EDGE_PROTOCOL = 'mccluster-edge/v1';
 
 // Methods the Worker answers itself so a standard MCP client can complete a
