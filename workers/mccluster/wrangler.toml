@@ -31,6 +31,14 @@ SEEK_FIRST_ACCESS_REQUIRED = "false"
 # until both secrets exist, so deploying this ahead of the tunnel is safe.
 CORE_BROKER_URL = "https://core.mccluster.org"
 
+# MCP_EDGE service binding is intentionally absent.
+# Activate only after workers/mccluster-mcp exists in the Cloudflare account
+# and the public contract at mcp.mccluster.org passes:
+#   [[services]]
+#   binding = "MCP_EDGE"
+#   service = "mccluster-mcp"
+# Binding it earlier fails the API Worker deploy. That change is a second PR.
+
 # Production secrets are managed with `wrangler secret put` and are never committed.
 # Required core secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 # Other feature secrets remain documented in repository architecture and service modules.
