@@ -59,7 +59,7 @@ function brokerToolList() {
         { name: 'mccluster.media.generate', title: 'Raw provider tool' }
       ],
       _meta: {
-        'io.modelcontextprotocol/protocolVersion': '2026-07-28',
+        'io.modelcontextprotocol/protocolVersion': '2025-11-25',
         'mccluster/catalogVersion': '1.4.0',
         'mccluster/diagnostics': [
           { id: 'internal-upstream', transport: 'mcp-http', ok: false, error: 'connect ECONNREFUSED 10.0.0.7:8080' }
@@ -90,7 +90,7 @@ test('initialize is answered at the edge without touching Core', async () => {
   await withPlane({}, async (seen) => {
     const { status, body } = await handleCoreMcp(rpcRequest({ jsonrpc: '2.0', id: 1, method: 'initialize' }), env, null);
     assert.equal(status, 200);
-    assert.equal(body.result.protocolVersion, '2026-07-28');
+    assert.equal(body.result.protocolVersion, '2025-11-25');
     assert.equal(body.result.serverInfo.name, 'mccluster-core');
     assert.equal(seen.length, 0, 'initialize must not reach Core');
   });
