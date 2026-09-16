@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#080808">
+  <title>McCluster Console</title>
+  <meta name="description" content="McCluster Console: owner workspace for conversations, memory, tools, jobs, assets, repositories and system state.">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/mccluster-console.css?v=__STAMP__">
+</head>
+<body>
+  <div class="cc-shell">
+    <aside class="cc-rail" aria-label="McCluster workspace navigation">
+      <div class="cc-brand">
+        <div class="cc-brand__mark"><img src="assets/img/m-mark.png" alt=""></div>
+        <div><div class="cc-brand__word">McCluster</div><div class="cc-brand__sub">Core Console</div></div>
+        <button class="cc-iconbtn" type="button" aria-label="Collapse navigation">‹</button>
+      </div>
+
+      <button class="cc-new" id="ccNew" type="button"><span>New conversation</span><span>＋</span></button>
+
+      <nav class="cc-nav" aria-label="Console sections">
+        <a class="is-active" href="#chat" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v10H9l-4 3z"/></svg><span>Chat</span><span class="cc-count">3</span>
+        </a>
+        <a href="#projects"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h6l2 2h8v9H4z"/></svg><span>Projects</span><span class="cc-count">6</span></a>
+        <a href="#agents"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M6 19c1.1-3.1 3-4.5 6-4.5s4.9 1.4 6 4.5"/></svg><span>Agents</span><span class="cc-count">4</span></a>
+        <a href="#jobs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4zM8 3v3m8-3v3"/></svg><span>Jobs</span><span class="cc-count">12</span></a>
+        <a href="#assets"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="m7 16 4-4 3 3 3-2 2 3"/></svg><span>Asset Vault</span></a>
+        <a href="#repos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6m-6 4h6"/></svg><span>Repositories</span></a>
+        <a href="#system"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1"/></svg><span>System</span></a>
+      </nav>
+
+      <section class="cc-section" aria-labelledby="ccProjectsHeading">
+        <div class="cc-section__head"><span class="cc-section__title" id="ccProjectsHeading">Projects</span><button type="button" aria-label="Create project">＋</button></div>
+        <button class="cc-project" type="button" data-project="McCluster Core"><span class="cc-project__dot"></span><span>McCluster Core</span></button>
+        <button class="cc-project" type="button" data-project="PRIM3"><span class="cc-project__dot" style="background:#7ea8ff;box-shadow:0 0 14px rgba(126,168,255,.48)"></span><span>PRIM3</span></button>
+        <button class="cc-project" type="button" data-project="Whip Equipped"><span class="cc-project__dot" style="background:#d6b35c;box-shadow:0 0 14px rgba(214,179,92,.42)"></span><span>Whip Equipped</span></button>
+        <button class="cc-project" type="button" data-project="Equity Uprise"><span class="cc-project__dot" style="background:#52c47b;box-shadow:0 0 14px rgba(82,196,123,.42)"></span><span>Equity Uprise</span></button>
+      </section>
+
+      <section class="cc-section" aria-labelledby="ccRecentHeading">
+        <div class="cc-section__head"><span class="cc-section__title" id="ccRecentHeading">Recent</span><button type="button" aria-label="Search conversations">⌕</button></div>
+        <button class="cc-thread is-current" type="button" data-thread="sovereign-console"><span class="cc-thread__icon">M</span><span class="cc-thread__copy"><span class="cc-thread__title">Build the sovereign console</span><span class="cc-thread__time">now</span></span></button>
+        <button class="cc-thread" type="button" data-thread="gpu-fabric"><span class="cc-thread__icon">M</span><span class="cc-thread__copy"><span class="cc-thread__title">Blackwell GPU fabric</span><span class="cc-thread__time">34 min</span></span></button>
+        <button class="cc-thread" type="button" data-thread="prim3"><span class="cc-thread__icon">M</span><span class="cc-thread__copy"><span class="cc-thread__title">PRIM3 creature pipeline</span><span class="cc-thread__time">yesterday</span></span></button>
+      </section>
+
+      <div class="cc-rail__footer">
+        <div class="cc-account"><div class="cc-avatar">MM</div><div class="cc-account__meta"><div class="cc-account__name">Owner workspace</div><div class="cc-account__mode">● Sovereign mode</div></div></div>
+      </div>
+    </aside>
+
+    <main class="cc-main" id="chat">
+      <header class="cc-top">
+        <button class="cc-iconbtn cc-top__mobile" id="ccRailToggle" type="button" aria-label="Open navigation">☰</button>
+        <div class="cc-top__title"><span class="cc-top__crumb" id="ccProjectName">McCluster Core</span> / <span id="ccTitle">Build the sovereign console</span></div>
+        <button class="cc-model" type="button" aria-label="Current model"><span class="cc-statusdot"></span><span>Qwen3 8B</span><span>⌄</span></button>
+        <span class="cc-mode">Sovereign</span>
+        <button class="cc-iconbtn" id="ccInspectorToggle" type="button" aria-label="Open context inspector">◫</button>
+      </header>
+
+      <div class="cc-scroll">
+        <div class="cc-threadview" id="ccThread" aria-live="polite"></div>
+      </div>
+
+      <div class="cc-composerwrap">
+        <form class="cc-composer" id="ccComposer">
+          <textarea id="ccInput" rows="1" maxlength="16000" aria-label="Message McCluster" placeholder="Ask McCluster anything. Build, research, inspect, generate, deploy…"></textarea>
+          <div class="cc-composer__bar">
+            <button class="cc-toolbtn" type="button">＋</button>
+            <button class="cc-toolbtn" type="button">Tools</button>
+            <button class="cc-toolbtn" type="button">Attach</button>
+            <span class="cc-composer__model">local-only · owner policy</span>
+            <button class="cc-send" type="submit" aria-label="Send message">↑</button>
+          </div>
+        </form>
+        <div class="cc-hint">McCluster Console · first-party control surface · project memory and execution stay inspectable</div>
+      </div>
+    </main>
+
+    <aside class="cc-inspector" aria-label="Context inspector">
+      <div class="cc-inspector__top"><strong>Context Inspector</strong><span style="margin-left:auto;color:var(--cc-green);font-size:.58rem;font-weight:800;letter-spacing:.08em">LIVE</span></div>
+      <div class="cc-inspector__tabs" role="tablist">
+        <button class="is-active" type="button" data-tab="context" role="tab">Context</button>
+        <button type="button" data-tab="memory" role="tab">Memory</button>
+        <button type="button" data-tab="run" role="tab">Run</button>
+      </div>
+      <div class="cc-inspector__body" id="ccInspectorBody"></div>
+    </aside>
+  </div>
+
+  <button class="cc-scrim" id="ccScrim" type="button" aria-label="Close panel"></button>
+  <script src="js/mccluster-console.js?v=__STAMP__"></script>
+</body>
+</html>
