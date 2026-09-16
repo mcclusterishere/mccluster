@@ -30,7 +30,19 @@ const manifestDir = await mkdtemp(path.join(tmpdir(), 'mccluster-manifest-'));
 const manifestPath = path.join(manifestDir, '.mccluster-deploy.json');
 process.env.MCCLUSTER_DEPLOY_MANIFEST = manifestPath;
 
-const { coreResume, partitionJobs, partitionQueue } = await import('../src/tools/resume.mjs');
+const catalogPath = path.join(manifestDir, 'catalog.json');
+const REAL_CATALOG = JSON.stringify({
+  catalogVersion: '2026-09-16.2',
+  capabilities: [{ id: 'core.resume' }],
+  bindings: [{ id: 'core.resume-local' }]
+});
+await writeFile(catalogPath, REAL_CATALOG);
+process.env.MCCLUSTER_CATALOG_PATH = catalogPath;
+
+const {
+  coreResume, partitionJobs, partitionQueue, readJsonFile,
+  SOURCE_OK, SOURCE_MISSING, SOURCE_UNAVAILABLE, SOURCE_INVALID, SOURCE_PARTIAL
+} = await import('../src/tools/resume.mjs');
 const { CONTROL_TOOLS } = await import('../src/tools/control.mjs');
 
 /* The exact envelope PostgREST + parse() produce. Returning bare rows here
@@ -400,4 +412,170 @@ test('queue partitioning tolerates malformed input', () => {
     const { waiting, stale, scheduled } = partitionQueue(input);
     assert.deepEqual([waiting, stale, scheduled], [[], [], []]);
   }
+});
+
+
+/* ---------- REGRESSION: inner reads must not swallow their own failures ---------- */
+
+/* Each of these is a place where a function returned successfully while
+   its own internal read had failed, so source() saw a clean return and
+   reported `ok`. The wrapper is only ever as honest as what it wraps. */
+
+test('readJsonFile distinguishes ok, missing, unavailable and invalid', async () => {
+  const good = path.join(manifestDir, 'good.json');
+  const bad = path.join(manifestDir, 'bad.json');
+  await writeFile(good, JSON.stringify({ a: 1 }));
+  await writeFile(bad, '{not json at all');
+
+  assert.equal((await readJsonFile(good)).status, SOURCE_OK);
+  assert.equal((await readJsonFile(path.join(manifestDir, 'nope.json'))).status, SOURCE_MISSING);
+
+  const invalid = await readJsonFile(bad);
+  assert.equal(invalid.status, SOURCE_INVALID);
+  assert.notEqual(invalid.status, SOURCE_MISSING,
+    'a corrupt file must never be reported as an absent one');
+  assert.match(invalid.error, /unparseable JSON/);
+
+  /* A directory read fails with EISDIR, not ENOENT — unavailable, not missing. */
+  assert.equal((await readJsonFile(manifestDir)).status, SOURCE_UNAVAILABLE);
+});
+
+test('a malformed deploy manifest cannot produce runtime source ok', async () => {
+  await writeFile(manifestPath, '{"commit_sha": "truncated...');
+  try {
+    const { result } = await resumeWith();
+    assert.equal(result.sources.runtime, SOURCE_INVALID);
+    assert.notEqual(result.sources.runtime, SOURCE_OK);
+    assert.notEqual(result.sources.runtime, SOURCE_MISSING,
+      'corrupt is not the same as "no manifest yet"');
+    assert.ok(result.degraded_sources.includes('runtime'));
+    assert.match(result.source_errors.runtime, /unparseable JSON/);
+    assert.equal(result.runtime.core_commit, null);
+    assert.equal(result.runtime.manifest_present, false);
+  } finally {
+    await writeFile(manifestPath, JSON.stringify({ commit_sha: 'b'.repeat(40) }));
+  }
+});
+
+test('an absent manifest is reported as missing, distinctly from invalid', async () => {
+  await rm(manifestPath, { force: true });
+  try {
+    const { result } = await resumeWith();
+    assert.equal(result.sources.runtime, SOURCE_MISSING);
+    assert.equal(result.runtime.manifest_status, SOURCE_MISSING);
+  } finally {
+    await writeFile(manifestPath, JSON.stringify({ commit_sha: 'b'.repeat(40) }));
+  }
+});
+
+test('an unreadable or malformed catalog cannot produce catalog source ok', async () => {
+  await writeFile(catalogPath, 'catalogVersion: not-json');
+  try {
+    const { result } = await resumeWith();
+    assert.equal(result.sources.catalog, SOURCE_INVALID);
+    assert.ok(result.degraded_sources.includes('catalog'));
+    assert.match(result.source_errors.catalog, /unparseable JSON/);
+    assert.equal(result.catalog.catalog_version, null,
+      'a null version must be accompanied by a non-ok status, never reported alone');
+  } finally {
+    await writeFile(catalogPath, REAL_CATALOG);
+  }
+});
+
+test('a failed ops_signals read cannot produce health source ok', async () => {
+  /* The swallow: systemHealth did .catch(() => []) on signals, so a
+     broken signal feed rendered as "the system has raised nothing" —
+     inside the section whose job is to say whether it is healthy. */
+  const original = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = String(typeof input === 'string' ? input : input.url);
+    if (url.includes('ops_signals')) throw new Error('signals unreachable');
+    return envelope([]);
+  };
+  try {
+    const result = await coreResume({ orgId: ORG, nowMs: NOW });
+    assert.equal(result.sources.health, SOURCE_PARTIAL,
+      'one healthy sub-source and one failed is partial, not ok');
+    assert.notEqual(result.sources.health, SOURCE_OK);
+    assert.equal(result.health.sources.system_contract, SOURCE_OK,
+      'the contract read succeeded and must still say so');
+    assert.equal(result.health.sources.signals, SOURCE_UNAVAILABLE);
+    assert.equal(result.health.recent_signals, null,
+      'unreadable signals must be null, never an empty feed');
+    assert.ok(result.degraded_sources.includes('health'));
+    assert.match(result.source_errors.health, /signals/);
+  } finally { globalThis.fetch = original; }
+});
+
+test('both health sub-sources failing reports unavailable rather than partial', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = String(typeof input === 'string' ? input : input.url);
+    if (url.includes('ops_signals') || url.includes('ops_system_contract')) throw new Error('down');
+    return envelope([]);
+  };
+  try {
+    const result = await coreResume({ orgId: ORG, nowMs: NOW });
+    assert.equal(result.sources.health, SOURCE_UNAVAILABLE);
+    assert.equal(result.health.contract, null);
+    assert.equal(result.health.recent_signals, null);
+  } finally { globalThis.fetch = original; }
+});
+
+test('a non-array PostgREST body is INVALID_SOURCE_SHAPE, not zero rows', async () => {
+  /* A 200 carrying an object means the query did not do what this code
+     thinks it does — a changed view, a singular representation, an error
+     body that still came back 200. Reporting [] turns "the schema moved"
+     into "there is nothing here". */
+  const original = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = String(typeof input === 'string' ? input : input.url);
+    if (url.includes('control_approvals')) {
+      return new Response(JSON.stringify({ message: 'singular representation' }), {
+        status: 200, headers: { 'content-type': 'application/json' }
+      });
+    }
+    return envelope([]);
+  };
+  try {
+    const result = await coreResume({ orgId: ORG, nowMs: NOW });
+    assert.equal(result.sources.approvals, SOURCE_INVALID,
+      'a wrong-shaped 200 is a contract violation, not an outage and not emptiness');
+    assert.equal(result.pending_approvals, null);
+    assert.match(result.source_errors.approvals, /Expected an array of rows/);
+    assert.match(result.source_errors.approvals, /control_approvals/);
+  } finally { globalThis.fetch = original; }
+});
+
+test('a null body is also rejected rather than read as empty', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = String(typeof input === 'string' ? input : input.url);
+    if (url.includes('status=eq.queued')) {
+      return new Response('', { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    return envelope([]);
+  };
+  try {
+    const result = await coreResume({ orgId: ORG, nowMs: NOW });
+    assert.equal(result.sources.queued_jobs, SOURCE_INVALID);
+    assert.equal(result.work.queued_jobs, null);
+  } finally { globalThis.fetch = original; }
+});
+
+test('a genuine empty array is still a valid, known-empty result', async () => {
+  const { result } = await resumeWith({
+    approvals: [], runningJobs: [], queuedJobs: [], objectives: [],
+    signals: [], contract: [], recentJobs: []
+  });
+  assert.equal(result.sources.approvals, SOURCE_OK);
+  assert.equal(result.sources.running_jobs, SOURCE_OK);
+  assert.equal(result.sources.queued_jobs, SOURCE_OK);
+  assert.equal(result.sources.health, SOURCE_OK);
+  assert.deepEqual(result.pending_approvals, [], 'known-empty is [], distinct from null');
+  assert.deepEqual(result.work.stale_running_jobs, []);
+  assert.deepEqual(result.work.stale_queued_jobs, []);
+  assert.deepEqual(result.health.recent_signals, []);
+  assert.deepEqual(result.degraded_sources, []);
+  assert.match(result.next_step_hint, /No approvals pending/);
 });

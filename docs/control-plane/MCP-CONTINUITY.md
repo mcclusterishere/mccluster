@@ -126,12 +126,34 @@ Three deliberate choices.
 It is **read-only**: a session that has just lost its memory is the worst
 possible moment to take an action.
 
-**Unavailable is never empty.** Each source reports `ok` or `unavailable`, and
-an unavailable collection is `null` — never `[]`. An earlier cut degraded a
-failed read to an empty array, so an unreadable approvals table rendered as
-"zero approvals pending", which is the most dangerous possible lie to tell a
-session about to act. `next_step_hint` now leads with *"Approval state
-unavailable — do not assume nothing is pending"* whenever that read fails.
+**Unavailable is never empty.** Each source reports `ok`, `missing`,
+`unavailable`, `invalid` or `partial`, and an unavailable collection is `null`
+— never `[]`. An earlier cut degraded a failed read to an empty array, so an
+unreadable approvals table rendered as "zero approvals pending", which is the
+most dangerous possible lie to tell a session about to act. `next_step_hint`
+leads with *"Approval state unavailable — do not assume nothing is pending"*
+whenever that read fails.
+
+That guarantee only holds if the inner reads do not swallow their own
+failures first, which is a separate bug class and was present:
+
+- `ops_signals` was caught into `[]`, so a broken signal feed read as "the
+  system has raised nothing" — inside the section whose job is to report
+  health. Health now carries `health.sources.system_contract` and
+  `health.sources.signals` independently, so one can be `ok` while the other
+  is `unavailable`, and the section rolls up to `partial`.
+- the deploy manifest collapsed missing, unreadable and corrupt into one
+  `null`. A corrupt manifest is a broken host; an absent one is a host that
+  has never deployed. They are now `invalid` and `missing` respectively.
+- the capability catalog had the same collapse and is fixed the same way.
+- a PostgREST `200` carrying an object where rows were expected was read as
+  zero rows. That is `INVALID_SOURCE_SHAPE` — a changed view or a singular
+  representation means the query no longer does what this code thinks, and
+  reporting emptiness turns "the schema moved under us" into "there is
+  nothing here".
+
+A genuinely empty result is still `[]` with status `ok`, and stays
+distinguishable from every one of the above.
 
 **Neither the lease nor the queue query is time-windowed.** Both failures are
 old by definition. The live queue holds two `objective_reflection` jobs

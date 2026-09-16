@@ -33,7 +33,10 @@ import os from 'node:os';
 import { recentJobs, recentObjectives, rest, workerId } from '../supabase.mjs';
 
 const DEPLOY_MANIFEST = process.env.MCCLUSTER_DEPLOY_MANIFEST || '/opt/mccluster/core/.mccluster-deploy.json';
-const CATALOG_PATH = new URL('../../capabilities/catalog.json', import.meta.url);
+/* Overridable so a test can point at a deliberately corrupt file without
+   editing the real catalog, the same way the manifest path already is. */
+const CATALOG_PATH = process.env.MCCLUSTER_CATALOG_PATH
+  || new URL('../../capabilities/catalog.json', import.meta.url);
 const STALE_LEASE_MS = Number(process.env.MCCLUSTER_STALE_LEASE_MS || 30 * 60_000);
 /* A job that has been queued for a day has not been picked up by any
    worker that understands it. Production currently holds six such jobs
@@ -52,32 +55,89 @@ function compact(error) {
    most dangerous possible lie to tell a session that is about to act.
    So a source now reports whether it answered, and an unavailable
    collection is null, never []. */
+/* The vocabulary. `source()` is only ever as honest as the function
+   inside it, so these are the states an inner read may report rather
+   than absorb. `missing` is a known state, not a failure: a host that
+   has never deployed has no manifest, and that is worth saying plainly.
+   `invalid` is a failure that must never be mistaken for `missing` — a
+   corrupt manifest is a broken host, an absent one is a new host. */
+export const SOURCE_OK = 'ok';
+export const SOURCE_MISSING = 'missing';
+export const SOURCE_UNAVAILABLE = 'unavailable';
+export const SOURCE_INVALID = 'invalid';
+export const SOURCE_PARTIAL = 'partial';
+
+export { readJsonFile };
+
 async function source(fn) {
-  try { return { ok: true, value: await fn(), error: null }; }
-  catch (error) { return { ok: false, value: null, error: compact(error) }; }
+  try { return { ok: true, value: await fn(), error: null, code: null }; }
+  catch (error) {
+    return {
+      ok: false,
+      value: null,
+      error: compact(error),
+      /* A 200 carrying the wrong shape is not an outage, it is a
+         contract violation, and the two want different responses. */
+      code: error?.code === 'INVALID_SOURCE_SHAPE' ? SOURCE_INVALID : SOURCE_UNAVAILABLE
+    };
+  }
 }
 
 function statusOf(result) {
-  return result.ok ? 'ok' : 'unavailable';
+  return result.ok ? SOURCE_OK : (result.code || SOURCE_UNAVAILABLE);
+}
+
+/* Reading a JSON file has four distinguishable outcomes and the previous
+   version collapsed three of them into null. */
+async function readJsonFile(target) {
+  let text;
+  try {
+    text = await readFile(target, 'utf8');
+  } catch (error) {
+    if (error?.code === 'ENOENT') return { status: SOURCE_MISSING, value: null, error: null };
+    return { status: SOURCE_UNAVAILABLE, value: null, error: compact(error) };
+  }
+  try {
+    return { status: SOURCE_OK, value: JSON.parse(text), error: null };
+  } catch (error) {
+    return { status: SOURCE_INVALID, value: null, error: `unparseable JSON: ${compact(error)}` };
+  }
 }
 
 /* supabase.mjs `rest()` resolves to {body, headers, status}. Reading it
    as though it were the rows is the bug that made two whole sections of
    this file silently return nothing. */
 async function rows(path) {
-  const { body = [] } = await rest(path);
-  return Array.isArray(body) ? body : [];
+  const { body } = await rest(path);
+  /* A 200 carrying an object where rows were expected means the query
+     did not do what this code thinks it did — a changed view, a PostgREST
+     singular representation, an error body that still came back 200.
+     Returning [] for that is how "the schema moved under us" becomes
+     "there is nothing here". */
+  if (!Array.isArray(body)) {
+    throw Object.assign(
+      new Error(`Expected an array of rows from ${String(path).split('?')[0]}, received ${body === null ? 'null' : typeof body}`),
+      { code: 'INVALID_SOURCE_SHAPE' }
+    );
+  }
+  return body;
 }
 
 export async function deployFingerprint() {
-  const manifest = await readFile(DEPLOY_MANIFEST, 'utf8').then(JSON.parse).catch(() => null);
+  const read = await readJsonFile(DEPLOY_MANIFEST);
+  const manifest = read.value;
   return {
+    /* ok | missing | unavailable | invalid. A corrupt manifest must never
+       read as "no manifest yet": one is a host that has never deployed,
+       the other is a host whose deploy record is broken. */
+    manifest_status: read.status,
+    manifest_error: read.error,
     /* scripts/deploy-ovh-core.sh writes commit_sha. The other two are
        read only so an older manifest still resolves. */
     core_commit: manifest?.commit_sha || manifest?.deploy_sha || manifest?.sha || null,
     deployed_at: manifest?.deployed_at || null,
     deploy_ref: manifest?.deploy_ref || null,
-    manifest_present: Boolean(manifest),
+    manifest_present: read.status === SOURCE_OK,
     manifest_path: DEPLOY_MANIFEST,
     host: os.hostname(),
     worker_id: workerId
@@ -85,8 +145,11 @@ export async function deployFingerprint() {
 }
 
 export async function catalogVersion() {
-  const catalog = await readFile(CATALOG_PATH, 'utf8').then(JSON.parse).catch(() => null);
+  const read = await readJsonFile(CATALOG_PATH);
+  const catalog = read.value;
   return {
+    catalog_status: read.status,
+    catalog_error: read.error,
     catalog_version: catalog?.catalogVersion || null,
     capabilities: Array.isArray(catalog?.capabilities) ? catalog.capabilities.length : null,
     bindings: Array.isArray(catalog?.bindings) ? catalog.bindings.length : null
@@ -101,22 +164,40 @@ export async function pendingApprovals(orgId) {
   );
 }
 
+/* Two independent reads, reported independently. The previous version
+   swallowed a failed signals query into an empty array, so a broken
+   signal feed rendered as "the system has raised nothing" — inside a
+   section whose entire job is to say whether the system is healthy. */
 export async function systemHealth(orgId) {
-  const contractRows = await rows('ops_system_contract?select=schema_version,migration_version,updated_at&limit=1');
+  const contract = await source(() =>
+    rows('ops_system_contract?select=schema_version,migration_version,updated_at&limit=1'));
   /* signal_type, not kind. severity is an integer in production. */
-  const signalRows = await rows(
+  const signals = await source(() => rows(
     `ops_signals?org_id=eq.${encodeURIComponent(orgId)}`
     + '&select=signal_type,severity,source,observed_at,created_at'
     + '&order=created_at.desc&limit=10'
-  ).catch(() => []);
+  ));
+
   return {
-    contract: contractRows[0] || null,
-    recent_signals: signalRows.map((signal) => ({
-      signal_type: signal.signal_type ?? null,
-      severity: signal.severity ?? null,
-      source: signal.source ?? null,
-      observed_at: signal.observed_at || signal.created_at || null
-    }))
+    sources: {
+      system_contract: statusOf(contract),
+      signals: statusOf(signals)
+    },
+    source_errors: Object.fromEntries(
+      [['system_contract', contract], ['signals', signals]]
+        .filter(([, result]) => !result.ok)
+        .map(([name, result]) => [name, result.error])
+    ),
+    contract: contract.ok ? (contract.value[0] || null) : null,
+    /* null, not [], when the feed could not be read. */
+    recent_signals: signals.ok
+      ? signals.value.map((signal) => ({
+          signal_type: signal.signal_type ?? null,
+          severity: signal.severity ?? null,
+          source: signal.source ?? null,
+          observed_at: signal.observed_at || signal.created_at || null
+        }))
+      : null
   };
 }
 
@@ -217,15 +298,29 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
     source(() => systemHealth(orgId))
   ]);
 
+  /* A section that answered can still have answered badly. The top-level
+     status is derived from what the inner read actually reported, so a
+     corrupt manifest or an unreadable catalog can never surface as `ok`
+     merely because the function returned without throwing. */
+  const runtimeStatus = deploy.ok ? (deploy.value?.manifest_status || SOURCE_OK) : statusOf(deploy);
+  const catalogStatus = catalog.ok ? (catalog.value?.catalog_status || SOURCE_OK) : statusOf(catalog);
+  const healthStatus = !health.ok ? statusOf(health) : (() => {
+    const sub = Object.values(health.value?.sources || {});
+    if (!sub.length) return SOURCE_OK;
+    if (sub.every((status) => status === SOURCE_OK)) return SOURCE_OK;
+    if (sub.every((status) => status !== SOURCE_OK)) return SOURCE_UNAVAILABLE;
+    return SOURCE_PARTIAL;
+  })();
+
   const sources = {
-    runtime: statusOf(deploy),
-    catalog: statusOf(catalog),
+    runtime: runtimeStatus,
+    catalog: catalogStatus,
     recent_jobs: statusOf(recent),
     running_jobs: statusOf(running),
     queued_jobs: statusOf(queued),
     objectives: statusOf(objectives),
     approvals: statusOf(approvals),
-    health: statusOf(health)
+    health: healthStatus
   };
   const degraded = Object.entries(sources)
     .filter(([, status]) => status !== 'ok')
@@ -242,12 +337,22 @@ export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = D
     /* Read this first. Anything listed here is UNKNOWN, not empty. */
     sources,
     degraded_sources: degraded,
-    source_errors: Object.fromEntries(
-      [['runtime', deploy], ['catalog', catalog], ['recent_jobs', recent], ['running_jobs', running],
-       ['queued_jobs', queued], ['objectives', objectives], ['approvals', approvals], ['health', health]]
+    source_errors: Object.fromEntries([
+      ...[['recent_jobs', recent], ['running_jobs', running], ['queued_jobs', queued],
+          ['objectives', objectives], ['approvals', approvals]]
         .filter(([, result]) => !result.ok)
-        .map(([name, result]) => [name, result.error])
-    ),
+        .map(([name, result]) => [name, result.error]),
+      /* These three can fail inside a call that still returned, so their
+         error text comes from the section rather than the wrapper. */
+      ...(runtimeStatus !== SOURCE_OK
+        ? [['runtime', deploy.ok ? (deploy.value?.manifest_error || `manifest ${runtimeStatus}`) : deploy.error]] : []),
+      ...(catalogStatus !== SOURCE_OK
+        ? [['catalog', catalog.ok ? (catalog.value?.catalog_error || `catalog ${catalogStatus}`) : catalog.error]] : []),
+      ...(healthStatus !== SOURCE_OK
+        ? [['health', health.ok
+            ? Object.entries(health.value?.source_errors || {}).map(([k, v]) => `${k}: ${v}`).join('; ') || `health ${healthStatus}`
+            : health.error]] : [])
+    ]),
     workspace: {
       org_id: orgId,
       control_repository: process.env.MCCLUSTER_CANONICAL_REPOSITORY || 'mcclusterishere/mccluster',
