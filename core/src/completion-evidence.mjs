@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 export const COMPLETION_EVIDENCE_SCHEMA = 'mccluster-completion-evidence/v1';
 
 const SHA40 = /^[0-9a-f]{40}$/i;
+const SHA256 = /^[0-9a-f]{64}$/i;
 
 function fail(job, message) {
   throw new Error(`completion evidence rejected for ${job?.job_type || 'unknown'}: ${message}`);
@@ -290,6 +291,33 @@ function policyEvidence(job, output) {
       requireValue(job, validHttpsUrl(output.preview_url), 'preview deployment must report a valid HTTPS URL');
       requireValue(job, Boolean(text(output.provider)), 'preview deployment must identify provider');
       records.push({ kind: 'deployment', environment: 'preview', provider: text(output.provider), url: text(output.preview_url), production: false, repository: text(output.repository), ref: text(output.ref) });
+      break;
+    }
+
+    case 'asset_mirror': {
+      // The point of the job is that the bytes are ours now, so the proof is
+      // a hash and a storage path per asset. A claimed asset that produced
+      // neither did not get mirrored, whatever the summary says.
+      requireValue(job, Number.isInteger(output.claimed) && output.claimed >= 0, 'asset mirror must report how many assets it claimed');
+      requireValue(job, Array.isArray(output.assets), 'asset mirror must report the assets it stored');
+      requireValue(job, output.assets.length === output.mirrored, 'asset mirror reported a different count than it evidenced');
+      for (const asset of output.assets) {
+        requireValue(job, SHA256.test(text(asset.sha256)), 'every mirrored asset must report a sha256 of the stored bytes');
+        requireValue(job, Boolean(text(asset.storage_path)), 'every mirrored asset must report a canonical storage path');
+        requireValue(job, Number.isInteger(asset.bytes) && asset.bytes > 0, 'every mirrored asset must report a non-zero byte count');
+      }
+      records.push({
+        kind: 'assets_mirrored',
+        claimed: output.claimed,
+        mirrored: output.mirrored,
+        failed: output.failed ?? 0,
+        assets: output.assets.map((asset) => ({
+          asset_id: text(asset.asset_id),
+          storage_path: text(asset.storage_path),
+          sha256: text(asset.sha256),
+          bytes: asset.bytes,
+        })),
+      });
       break;
     }
 

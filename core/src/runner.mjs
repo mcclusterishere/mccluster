@@ -16,6 +16,7 @@ import { gameBranchSmoke } from './executors/game-branch-smoke.mjs';
 import { gameReleaseDecision } from './executors/game-release-decision.mjs';
 import { previewDeploy } from './executors/preview-deploy.mjs';
 import { hostHealth } from './executors/host-health.mjs';
+import { assetMirror } from './executors/asset-mirror.mjs';
 import { smsAssistantTurn } from './executors/sms-assistant-turn.mjs';
 
 const executors = new Map([
@@ -36,6 +37,7 @@ const executors = new Map([
   ['game_release_decision', gameReleaseDecision],
   ['preview_deploy', previewDeploy],
   ['host_health', hostHealth],
+  ['asset_mirror', assetMirror],
   ['sms_assistant_turn', smsAssistantTurn],
 ]);
 
