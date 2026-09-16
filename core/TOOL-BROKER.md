@@ -62,6 +62,12 @@ which was only survivable while port 4777 was unreachable from off the host.
 
 The broker targets MCP `2026-07-28` and keeps the public edge separate: remote clients should still reach McCluster through `api.mccluster.org`, not port 4777.
 
+Remote clients reach `/mcp` through the bridge documented in
+`docs/control-plane/CORE-MCP-BRIDGE.md`. That route publishes an explicit
+capability allowlist and never forwards the raw tool names listed above, so the
+two audiences differ: local agents see the whole bus, remote owners see the
+normalized capability surface.
+
 ## Provider-independent resolution
 
 A capability binding carries:

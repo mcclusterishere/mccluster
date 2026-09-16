@@ -46,6 +46,14 @@ jobs:
           node-version: '22'
       - name: Run compute/provider security tests
         run: node --test workers/mccluster/test/compute-security.test.mjs
+      - name: Run remote MCP bridge boundary tests
+        run: node --test workers/mccluster/test/core-bridge.test.mjs
+      - name: Run Core edge-auth replay tests
+        run: node --test core/test/broker-edge-auth.test.mjs
+      - name: Assert the remote bridge is allowlist-gated
+        run: |
+          grep -F "REMOTE_CAPABILITIES" workers/mccluster/src/core/mcp.js
+          grep -F "not exposed to remote clients" workers/mccluster/src/core/mcp.js
       - name: Assert rate limiter precedes API handlers
         run: |
           grep -F "enforceApiRateLimit" workers/mccluster/src/entry-platform.js
