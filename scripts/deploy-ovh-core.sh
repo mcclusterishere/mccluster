@@ -7,6 +7,7 @@ TARGET_ROOT="${MCCLUSTER_TARGET_ROOT:-/opt/mccluster}"
 CORE_TARGET="${TARGET_ROOT}/core"
 RELEASE_ROOT="${TARGET_ROOT}/releases"
 SYSTEMD_DIR="/etc/systemd/system"
+PREVIEW_ROOT="/var/lib/mccluster-core/previews"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BACKUP_DIR="${RELEASE_ROOT}/predeploy-${STAMP}"
 DEPLOY_MANIFEST="${CORE_TARGET}/.mccluster-deploy.json"
@@ -32,6 +33,7 @@ command -v npm >/dev/null
 command -v systemctl >/dev/null
 
 mkdir -p "${RELEASE_ROOT}"
+install -d -o mccluster-core -g mccluster-core -m 0750 "${PREVIEW_ROOT}"
 
 # Validate the incoming Core tree before touching the live install.
 pushd "${SOURCE_DIR}/core" >/dev/null
@@ -49,7 +51,7 @@ rollback() {
     mkdir -p "${CORE_TARGET}"
     rsync -a --delete "${BACKUP_DIR}/core/" "${CORE_TARGET}/"
     systemctl daemon-reload || true
-    for unit in mccluster-core-runner.service mccluster-core-tool-broker.service mccluster-compute-gateway.service mccluster-compute-node.service; do
+    for unit in mccluster-core-runner.service mccluster-core-tool-broker.service mccluster-preview-gateway.service mccluster-compute-gateway.service mccluster-compute-node.service; do
       systemctl try-restart "${unit}" || true
     done
   fi
@@ -93,15 +95,24 @@ for timer in mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mcc
   fi
 done
 
+# The preview gateway is part of the canonical Core surface and is always
+# enabled when its unit ships with the release. It binds to loopback only.
+if systemctl list-unit-files mccluster-preview-gateway.service --no-legend 2>/dev/null | grep -q mccluster-preview-gateway.service; then
+  systemctl enable --now mccluster-preview-gateway.service
+fi
+
 for unit in mccluster-core-tool-broker.service mccluster-compute-gateway.service mccluster-compute-node.service mccluster-core-runner.service; do
   if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q "${unit}"; then
     systemctl restart "${unit}"
   fi
 done
 
-# Runner and broker are the minimum healthy Core surface.
+# Runner, broker and the owned preview gateway are the minimum healthy Core surface.
 systemctl is-active --quiet mccluster-core-runner.service
 systemctl is-active --quiet mccluster-core-tool-broker.service
+systemctl is-active --quiet mccluster-preview-gateway.service
+
+curl -fsS http://127.0.0.1:4799/health >/dev/null
 
 grep -Fq "\"commit_sha\":\"${DEPLOY_SHA}\"" "${DEPLOY_MANIFEST}"
-printf 'deployed_core=%s\ncommit_sha=%s\nmanifest=%s\nbackup=%s\n' "${CORE_TARGET}" "${DEPLOY_SHA}" "${DEPLOY_MANIFEST}" "${BACKUP_DIR}"
+printf 'deployed_core=%s\ncommit_sha=%s\nmanifest=%s\nbackup=%s\npreview_gateway=http://127.0.0.1:4799\n' "${CORE_TARGET}" "${DEPLOY_SHA}" "${DEPLOY_MANIFEST}" "${BACKUP_DIR}"
