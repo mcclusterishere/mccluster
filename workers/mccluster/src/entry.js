@@ -1,5 +1,5 @@
 import core from './index.js';
-import { corsHeaders, fail, logEvent, reply } from './lib/http.js';
+import { fail, logEvent, reply } from './lib/http.js';
 import { handleClientRequest } from './client.js';
 import clientConnect from './connect.js';
 import { createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
@@ -7,37 +7,13 @@ import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 import { handleMediaMcp } from './media/mcp.js';
 import { handleCoreMcp, handleCoreStatus } from './core/mcp.js';
+import { coreOAuthChallenge, coreOAuthMetadataResponse } from './core/oauth-resource.js';
 import { attachCompletedVariantAssets, handleSocialRequest } from './social/router.js';
 import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
 import { handleMetaWebhook } from './social/webhook.js';
 import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
-
-const CORE_MCP_RESOURCE = 'https://api.mccluster.org/v1/core/mcp';
-const CORE_MCP_RESOURCE_METADATA = 'https://api.mccluster.org/.well-known/oauth-protected-resource';
-const SUPABASE_AUTHORIZATION_SERVER = 'https://zmnhbrjyhxzhkxmhkexs.supabase.co/auth/v1';
-
-function coreOAuthMetadata() {
-  return {
-    resource: CORE_MCP_RESOURCE,
-    resource_name: 'McCluster Core',
-    authorization_servers: [SUPABASE_AUTHORIZATION_SERVER],
-    scopes_supported: ['email']
-  };
-}
-
-function coreOAuthChallenge(request, env, body) {
-  return new Response(JSON.stringify(body), {
-    status: 401,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      ...corsHeaders(request, env),
-      'cache-control': 'no-store',
-      'www-authenticate': `Bearer resource_metadata="${CORE_MCP_RESOURCE_METADATA}", scope="email"`
-    }
-  });
-}
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -68,15 +44,7 @@ export default {
     }
 
     if (path === '/.well-known/oauth-protected-resource' && request.method === 'GET') {
-      return new Response(JSON.stringify(coreOAuthMetadata()), {
-        status: 200,
-        headers: {
-          'content-type': 'application/json; charset=utf-8',
-          'access-control-allow-origin': '*',
-          'cache-control': 'public, max-age=3600',
-          'x-content-type-options': 'nosniff'
-        }
-      });
+      return coreOAuthMetadataResponse();
     }
 
     try {
