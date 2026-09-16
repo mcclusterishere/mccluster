@@ -4,7 +4,6 @@ import { enqueueJob } from '../supabase.mjs';
 import { researchWeb } from './research.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
-const PREVIEW_CONFIGURED = Boolean(process.env.VERCEL_TOKEN);
 
 function text(value, max = 20000) {
   return String(value ?? '').trim().slice(0, max);
@@ -52,16 +51,25 @@ const BASE_TOOLS = [
     name: 'core.research.web', title: 'Research the public web',
     description: 'Run bounded public web discovery with timestamped provenance, preferring a configured search API and falling back to no-key public search.',
     inputSchema: { type: 'object', required: ['objective'], properties: { objective: { type: 'string' }, source_constraints: { type: 'object' }, limit: { type: 'integer', minimum: 1, maximum: 10 } } }
+  },
+  {
+    name: 'core.deploy.preview', title: 'Deploy self-hosted preview',
+    description: 'Build an approved repository ref on McCluster-owned compute and publish a temporary non-production preview without a third-party deployment provider.',
+    inputSchema: {
+      type: 'object',
+      required: ['org_id', 'repository', 'ref'],
+      properties: {
+        org_id: { type: 'string' },
+        repository: { type: 'string' },
+        ref: { type: 'string' },
+        directory: { type: 'string' },
+        output_dir: { type: 'string' },
+        ttl_hours: { type: 'number', minimum: 1, maximum: 168 },
+        priority: { type: 'number' }
+      }
+    }
   }
 ];
-
-if (PREVIEW_CONFIGURED) {
-  BASE_TOOLS.push({
-    name: 'core.deploy.preview', title: 'Deploy non-production preview',
-    description: 'Queue a Vercel preview deployment from an approved repository ref; production deployment is never requested.',
-    inputSchema: { type: 'object', required: ['org_id', 'repository', 'ref'], properties: { org_id: { type: 'string' }, repository: { type: 'string' }, ref: { type: 'string' }, directory: { type: 'string' }, priority: { type: 'number' } } }
-  });
-}
 
 export const CONTROL_TOOLS = Object.freeze(BASE_TOOLS);
 
@@ -141,13 +149,35 @@ export async function callControlTool(name, args = {}) {
   }
 
   if (name === 'core.deploy.preview') {
-    if (!PREVIEW_CONFIGURED) throw Object.assign(new Error('deploy.preview is not available on this Core host'), { status: 503 });
     const orgId = requireOrg(args.org_id);
     const repository = requireRepo(args.repository);
     const ref = text(args.ref, 240);
     if (!ref) throw Object.assign(new Error('ref is required'), { status: 400 });
-    const job = await enqueueJob({ orgId, jobType: 'preview_deploy', targetType: 'repository', targetId: repository, priority: Math.min(100, Math.max(0, Number(args.priority ?? 90))), maxAttempts: 2, input: { repository, ref, directory: text(args.directory || '.', 1000) } });
-    return { queued: true, job_id: job.id, job_type: job.job_type, repository, ref, production: false };
+    const job = await enqueueJob({
+      orgId,
+      jobType: 'preview_deploy',
+      targetType: 'repository',
+      targetId: repository,
+      priority: Math.min(100, Math.max(0, Number(args.priority ?? 90))),
+      maxAttempts: 2,
+      input: {
+        repository,
+        ref,
+        directory: text(args.directory || '.', 1000),
+        output_dir: args.output_dir ? text(args.output_dir, 1000) : null,
+        ttl_hours: Math.max(1, Math.min(168, Number(args.ttl_hours || 24)))
+      }
+    });
+    return {
+      queued: true,
+      job_id: job.id,
+      job_type: job.job_type,
+      repository,
+      ref,
+      provider: 'mccluster-core',
+      hosting: 'owned',
+      production: false
+    };
   }
 
   throw Object.assign(new Error(`Unknown control tool: ${name}`), { status: 404 });
