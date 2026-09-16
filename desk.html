@@ -119,7 +119,7 @@
 
     function gate(msg) {
       $("dk").innerHTML = '<div class="gate">' + (msg ? '<p class="err">' + esc(msg) + "</p>" : "") +
-        '<input id="gE" type="email" placeholder="matthew@mccluster.org" autocomplete="username">' +
+        '<input id="gE" type="email" autocomplete="username">' +
         '<input id="gP" type="password" placeholder="Password" autocomplete="current-password">' +
         '<button id="gGo" type="button">Open the desk &#8594;</button></div>';
       $("gGo").onclick = function () {

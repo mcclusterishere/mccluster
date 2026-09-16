@@ -108,29 +108,21 @@
     .pane.on { display: block; }
     .empty { font-size: 0.9rem; color: var(--cream-dim); padding: 1.6rem 0; }
   </style>
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
 </head>
 <body class="songpage" data-masthead="off">
   <main class="bo">
     <p class="bo__k">Owner only · the back office</p>
     <h1>The Back<br>Office</h1>
 
-    <!-- THE DOOR -->
+    <!-- THE DOOR
+         There is no door here any more. This page used to carry its own
+         email/password form whose placeholder printed the owner's address
+         to every anonymous visitor, which told an outsider exactly which
+         account to attack. Sign-in now happens on login.html like everyone
+         else's, and who gets a desk is decided by the database, not by the
+         page: `pull()` answers "not-owner" when RLS refuses the rows. -->
     <section id="door">
-      <p class="bo__sub">Everything the house took in, on one desk: print orders, bookings, the waitlist.
-        Sign in with the owner account.</p>
-      <div class="door">
-        <label for="boEmail">Email</label>
-        <input id="boEmail" type="email" placeholder="matthew@mccluster.org" autocomplete="username" inputmode="email">
-        <label for="boPass">Password</label>
-        <input id="boPass" type="password" placeholder="Your password" autocomplete="current-password">
-        <button class="btn-go" id="boIn" type="button">Open the office &#8594;</button>
-        <p class="note" id="boNote"></p>
-        <div class="alt">
-          <p class="note">No password set? Get a one-time link by email instead.</p>
-          <button class="btn-flat" id="boLink" type="button">Email me a sign-in link</button>
-        </div>
-      </div>
+      <p class="bo__sub" id="boNote">Checking your session&hellip;</p>
     </section>
 
     <!-- THE DESK -->
@@ -222,31 +214,9 @@
     function fail(msg) { var n = $("boNote"); n.className = "note err"; n.textContent = msg; }
     function say(msg) { var n = $("boNote"); n.className = "note"; n.textContent = msg; }
 
-    $("boIn").addEventListener("click", function () {
-      var em = $("boEmail").value.trim(), pw = $("boPass").value;
-      if (!em || !pw) { fail("Email and password, both."); return; }
-      var b = $("boIn"); b.disabled = true; b.textContent = "Opening…";
-      window.MCC_AUTH.signInPassword(em, pw).then(function () {
-        boot();
-      }).catch(function (e) {
-        b.disabled = false; b.textContent = "Open the office →";
-        fail(String(e.message || e));
-      });
-    });
-    $("boPass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("boIn").click(); });
-
-    $("boLink").addEventListener("click", function () {
-      var em = $("boEmail").value.trim();
-      if (!em) { fail("Put the owner email in first."); return; }
-      var b = $("boLink"); b.disabled = true; b.textContent = "Sending…";
-      window.MCC_AUTH.signIn(em).then(function () {
-        b.textContent = "Link sent";
-        say("Check " + em + ". The link opens this page signed in.");
-      }).catch(function (e) {
-        b.disabled = false; b.textContent = "Email me a sign-in link";
-        fail(String(e.message || e));
-      });
-    });
+    function toLogin() {
+      location.replace("login.html?next=" + encodeURIComponent("admin.html"));
+    }
 
     $("boOut").addEventListener("click", function () {
       window.MCC_AUTH.signOut().then(function () { location.reload(); });
@@ -582,27 +552,28 @@
         $("desk").hidden = false;
         var em = "";
         try { em = MCC_SUPA.email() || ""; } catch (e) {}
-        $("boWho").textContent = em || $("boEmail").value.trim() || "the owner";
+        $("boWho").textContent = em || "the owner";
         paint();
       }).catch(function (e) {
         var m = String(e.message || e);
-        if (m === "not-owner") {
-          fail("That account is signed in, but it isn't the owner, so the desk stays shut.");
-          window.MCC_AUTH.signOut();
-        } else if (m !== "signed out") {
-          fail("Couldn't reach the pile: " + m);
-        }
         $("door").hidden = false;
         $("desk").hidden = true;
-        var b = $("boIn"); b.disabled = false; b.textContent = "Open the office →";
+        if (m === "signed out") { toLogin(); return; }
+        if (m === "not-owner") {
+          // Signed in as somebody, just not somebody with rows. Say so
+          // without naming who does have them.
+          fail("That account doesn't have a desk here.");
+          return;
+        }
+        fail("Couldn't reach the pile: " + m);
       });
     }
 
-    // already signed in (magic link landing, or a live session)? go straight in.
-    token().then(function (t) { if (t) boot(); });
+    // A live session (including a magic-link or recovery landing) goes
+    // straight in; anyone else is sent to the one sign-in page.
+    token().then(function (t) { if (t) boot(); else toLogin(); });
   })();
   </script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
 </body>
 </html>

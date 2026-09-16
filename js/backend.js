@@ -245,6 +245,30 @@
         });
       });
     },
+    /* RECOVERY, WITHOUT AN ENUMERATION ORACLE.
+
+       A reset form that answers differently for a known and an unknown
+       address tells an anonymous visitor which addresses have accounts —
+       and on a site with one owner, "which address is the owner" is the
+       only question worth asking. So this resolves the same way whether
+       the address exists, does not exist, or is rate limited, and the
+       caller must show one neutral sentence for all three. The only error
+       surfaced is a malformed request, which says nothing about who has
+       an account.
+
+       Supabase sends the link back to redirectTo with
+       #type=recovery&access_token=…; the landing page exchanges that for a
+       session and calls setPassword. */
+    recoverPassword: function (emailAddr, redirectTo) {
+      var target = URL_ + "/auth/v1/recover";
+      if (redirectTo) target += "?redirect_to=" + encodeURIComponent(redirectTo);
+      return fetch(target, {
+        method: "POST",
+        headers: { apikey: KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailAddr }),
+      }).then(function () { return true; })
+        .catch(function () { return true; });
+    },
     /* set a password: a real cross-device account. Supabase → Auth →
        Providers → Email: if "Confirm email" is ON, this returns no
        session until they confirm; turn it OFF for instant password
@@ -330,6 +354,7 @@
   window.MCC_AUTH = {
     signIn: sb.signIn, signInAnon: sb.signInAnon, signInPassword: sb.signInPassword,
     signUpPassword: sb.signUpPassword, setPassword: sb.setPassword, signOut: sb.signOut, user: sb.user,
+    recoverPassword: sb.recoverPassword,
     googleAvailable: function () { return Boolean(window.MCC && window.MCC.signInWithGoogle); },
     signInWithGoogle: function (redirectTo) {
       if (!window.MCC || !window.MCC.signInWithGoogle) return Promise.reject(new Error('Google sign-in is not loaded'));

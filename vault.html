@@ -79,7 +79,6 @@
       background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo)); box-shadow: inset 0 0 0 1px var(--edge); }
     .vs__acts .hot { color: #fff; background: var(--metal); }
   </style>
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
 </head>
 <body data-masthead="off">
   <main class="vx">
@@ -107,17 +106,18 @@
         .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.status === 204 ? null : r.json(); });
     }
 
-    /* ---- gate ---- */
+    /* ---- gate ----
+       This page used to carry its own sign-in form whose placeholder
+       printed the owner's address, and then decided who was the owner in
+       the browser by comparing that address. Both are gone: sign-in is
+       login.html like everywhere else, and the vault opens only if the
+       database hands over the rows. */
+    function toLogin() {
+      location.replace("login.html?next=" + encodeURIComponent("vault.html"));
+    }
     function gate(msg) {
-      $("vxIn").innerHTML = '<div class="vx__gate">' +
-        (msg ? '<p class="vx__err">' + esc(msg) + "</p>" : "") +
-        '<input id="vgEmail" type="email" placeholder="matthew@mccluster.org" autocomplete="username">' +
-        '<input id="vgPass" type="password" placeholder="Password" autocomplete="current-password">' +
-        '<button id="vgGo" type="button">Open the vault &#8594;</button></div>';
-      $("vgGo").onclick = function () {
-        MCC_AUTH.signInPassword($("vgEmail").value.trim(), $("vgPass").value)
-          .then(boot).catch(function () { gate("That didn't open it. Check the password."); });
-      };
+      if (!msg) { toLogin(); return; }
+      $("vxIn").innerHTML = '<div class="vx__gate"><p class="vx__err">' + esc(msg) + "</p></div>";
     }
 
     /* ---- paint ---- */
@@ -232,13 +232,15 @@
       ]).then(function (r) {
         ASSETS = r[0]; PEOPLE = r[1]; paint();
       }).catch(function () {
-        gate("Signed in, but the vault refused the read. Run docs/the-vault.sql, and make sure this is the owner account.");
+        gate("Signed in, but the vault refused the read. Run docs/the-vault.sql, and make sure this account owns these rows.");
       });
     }
-    if (MCC_SUPA.token() && MCC_SUPA.email() === "matthew@mccluster.org") boot(); else gate();
+    // A session gets to try; RLS decides whether it gets rows. Comparing an
+    // email in the browser decided nothing — anyone could edit it — while
+    // publishing which address to attack.
+    if (MCC_SUPA.token()) boot(); else toLogin();
   })();
   </script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
 </body>
 </html>

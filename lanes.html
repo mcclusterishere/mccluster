@@ -109,7 +109,7 @@
 
     function gate(msg) {
       $("lxIn").innerHTML = '<div class="gate">' + (msg ? '<p class="err">' + esc(msg) + "</p>" : "") +
-        '<input id="gEmail" type="email" placeholder="matthew@mccluster.org" autocomplete="username">' +
+        '<input id="gEmail" type="email" autocomplete="username">' +
         '<input id="gPass" type="password" placeholder="Password" autocomplete="current-password">' +
         '<button id="gGo" type="button">Open the desk &#8594;</button></div>';
       $("gGo").onclick = function () {
