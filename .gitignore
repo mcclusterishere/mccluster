@@ -11,6 +11,8 @@ dist/
 # the services pin their dependencies — CI runs npm ci against these
 !apps/*/package-lock.json
 !packages/*/package-lock.json
+!workers/mccluster/package-lock.json
+__pycache__/
 
 # Agent scratch: harnesses, contact sheets and renders. 68MB of it, and
 # this repo publishes to GitHub Pages — none of it belongs on the site.

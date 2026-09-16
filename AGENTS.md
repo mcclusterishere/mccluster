@@ -19,7 +19,7 @@ If you skip it, you will invent a second backend, race a git push, or break a cl
 | Durable Object class that MUST stay exported | `HereTenantAgent` |
 
 **There is no Worker named `mccluster-core`. Do not create one.**
-The only Cloudflare Worker is `mccluster`. Only call routes that Worker actually serves.
+The canonical API Worker is `mccluster`. The approved `mccluster-mcp` extraction is a stateless transport edge for the same Core and Supabase authority; see the paired canonical architecture documents. Only call routes actually served by these Workers.
 
 **McCluster is the backend AND the control plane.** Product repos are satellites. Client sites are tenants. None of them own auth, billing, social, CRM, or admin.
 

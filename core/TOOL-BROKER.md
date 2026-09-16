@@ -27,7 +27,11 @@ The service binds to `127.0.0.1:4777` by default.
 
 Health:
 
-- `GET /health`
+- `GET /health` — public liveness (`ok`, `service`) for any caller;
+  the detailed payload (catalog version, capability and tool counts,
+  transports, upstream diagnostics) is returned only to an authenticated
+  caller. A reverse tunnel makes this hostname publicly resolvable, and the
+  diagnostics name internal hosts, so inventory is not public.
 
 Capabilities:
 
@@ -44,7 +48,12 @@ MCP:
 
 - `POST /mcp`
 
-A configured `CORE_BROKER_TOKEN` protects every route except `/health`.
+`CORE_BROKER_TOKEN` protects every route except `/health`.
+
+The broker **fails closed**. With neither `CORE_BROKER_TOKEN` nor
+`CORE_EDGE_SIGNING_KEY` configured it answers `503 AUTH_NOT_CONFIGURED` on every
+route except `/health`. It previously allowed all callers when no token was set,
+which was only survivable while port 4777 was unreachable from off the host.
 
 ## MCP behavior
 
@@ -56,6 +65,12 @@ A configured `CORE_BROKER_TOKEN` protects every route except `/health`.
 `tools/call` checks the capability registry first. If the name is a capability, Core resolves the highest-priority available binding and delegates through the raw tool bus. Otherwise the name is treated as a raw tool.
 
 The broker targets MCP `2026-07-28` and keeps the public edge separate: remote clients should still reach McCluster through `api.mccluster.org`, not port 4777.
+
+Remote clients reach `/mcp` through the bridge documented in
+`docs/control-plane/CORE-MCP-BRIDGE.md`. That route publishes an explicit
+capability allowlist and never forwards the raw tool names listed above, so the
+two audiences differ: local agents see the whole bus, remote owners see the
+normalized capability surface.
 
 ## Provider-independent resolution
 

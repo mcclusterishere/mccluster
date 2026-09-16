@@ -6,6 +6,8 @@ import { createGeneration, getGeneration, handleFalWebhook, listModels, reconcil
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 import { handleMediaMcp } from './media/mcp.js';
+import { handleCoreMcp, handleCoreStatus } from './core/mcp.js';
+import { coreOAuthChallenge, coreOAuthMetadataResponse } from './core/oauth-resource.js';
 import { attachCompletedVariantAssets, handleSocialRequest } from './social/router.js';
 import { processInstagramPublishQueue, syncInstagramInsights } from './social/meta.js';
 import { handleMetaWebhook } from './social/webhook.js';
@@ -31,6 +33,12 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '') || '/';
 
+    // Activated only after the isolated transport is deployed and verified.
+    // Forward the original request once: retrying a tools/call can duplicate work.
+    if (env.MCP_EDGE && ['/v1/core/mcp', '/v1/core', '/.well-known/oauth-protected-resource'].includes(path)) {
+      return env.MCP_EDGE.fetch(request);
+    }
+
     if (path === '/healthz' && request.method === 'GET') {
       return reply(request, env, {
         ok: true,
@@ -39,6 +47,10 @@ export default {
         revision: env.CF_VERSION_METADATA?.id || null,
         checked_at: new Date().toISOString()
       });
+    }
+
+    if (path === '/.well-known/oauth-protected-resource' && request.method === 'GET') {
+      return coreOAuthMetadataResponse();
     }
 
     try {
@@ -79,6 +91,27 @@ export default {
         return reply(request, env, body, status);
       } catch (error) {
         return fail(request, env, error.message || 'Media MCP request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/core/mcp' && request.method === 'POST') {
+      try {
+        const user = await authUser(request, env);
+        const { status, body } = await handleCoreMcp(request, env, user);
+        if (status === 401) return coreOAuthChallenge(request, env, body);
+        return reply(request, env, body, status);
+      } catch (error) {
+        return fail(request, env, error.message || 'Core MCP request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/core' && request.method === 'GET') {
+      try {
+        const user = await authUser(request, env);
+        const { status, body } = await handleCoreStatus(request, env, user);
+        return reply(request, env, body, status);
+      } catch (error) {
+        return fail(request, env, error.message || 'Core status request failed', error.status || 500, error.detail);
       }
     }
 

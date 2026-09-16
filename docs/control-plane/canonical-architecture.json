@@ -12,7 +12,16 @@
       "system": "cloudflare",
       "worker": "mccluster",
       "source": "workers/mccluster",
-      "rule": "Public ingress, auth, routing and API normalization only. Do not create a second Worker named mccluster-core or move durable truth into the edge."
+      "rule": "Public ingress, auth, routing and API normalization only. Do not create a second Worker named mccluster-core or move durable truth into the edge.",
+      "transport_edges": [
+        {
+          "worker": "mccluster-mcp",
+          "source": "workers/mccluster-mcp",
+          "host": "mcp.mccluster.org",
+          "state": "stateless",
+          "authority": "Same Supabase house-owner authorization and OVH Core broker; no separate identity, storage, jobs or orchestration."
+        }
+      ]
     },
     "execution": {
       "system": "ovh-mccluster-core",

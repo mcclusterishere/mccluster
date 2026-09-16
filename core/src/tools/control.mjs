@@ -2,9 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { repoHealth } from '../executors/repo-health.mjs';
 import { enqueueJob } from '../supabase.mjs';
 import { researchWeb } from './research.mjs';
+import { coreResume } from './resume.mjs';
+import { previewConfigured } from '../preview-policy.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
-const PREVIEW_CONFIGURED = Boolean(process.env.VERCEL_TOKEN);
+const PREVIEW_CONFIGURED = previewConfigured();
 
 function text(value, max = 20000) {
   return String(value ?? '').trim().slice(0, max);
@@ -23,6 +25,16 @@ function requireOrg(value) {
 }
 
 const BASE_TOOLS = [
+  {
+    /* The rehydration call. A fresh model session — or the same one
+       after its context window rolled — asks this first and gets the
+       durable state it lost, instead of re-deriving it or asking the
+       owner. Read-only by construction: a session that has just lost
+       its memory is the worst possible moment to take an action. */
+    name: 'core.resume', title: 'Resume a McCluster working session',
+    description: 'Return the current workspace, running/queued work, stale leases, pending approvals, capability catalog version, system health and exact deploy commit. Read-only; queues and changes nothing.',
+    inputSchema: { type: 'object', required: ['org_id'], properties: { org_id: { type: 'string' }, since_hours: { type: 'integer', minimum: 1, maximum: 168 }, limit: { type: 'integer', minimum: 1, maximum: 50 } }, additionalProperties: false }
+  },
   {
     name: 'core.repo.inspect', title: 'Inspect repository',
     description: 'Read cloned repository state and optionally run already-installed contract tests without modifying source.',
@@ -58,14 +70,22 @@ const BASE_TOOLS = [
 if (PREVIEW_CONFIGURED) {
   BASE_TOOLS.push({
     name: 'core.deploy.preview', title: 'Deploy non-production preview',
-    description: 'Queue a Vercel preview deployment from an approved repository ref; production deployment is never requested.',
-    inputSchema: { type: 'object', required: ['org_id', 'repository', 'ref'], properties: { org_id: { type: 'string' }, repository: { type: 'string' }, ref: { type: 'string' }, directory: { type: 'string' }, priority: { type: 'number' } } }
+    description: 'Queue an approved ref as a temporary static preview on McCluster-owned compute; production deployment is never requested.',
+    inputSchema: { type: 'object', required: ['org_id', 'repository', 'ref'], properties: { org_id: { type: 'string' }, repository: { type: 'string' }, ref: { type: 'string' }, directory: { type: 'string' }, output_dir: { type: 'string' }, ttl_hours: { type: 'number', minimum: 1, maximum: 168 }, priority: { type: 'number' } } }
   });
 }
 
 export const CONTROL_TOOLS = Object.freeze(BASE_TOOLS);
 
 export async function callControlTool(name, args = {}) {
+  if (name === 'core.resume') {
+    return coreResume({
+      orgId: requireOrg(args.org_id),
+      sinceHours: Math.min(168, Math.max(1, Number(args.since_hours || 24))),
+      limit: Math.min(50, Math.max(1, Number(args.limit || 25)))
+    });
+  }
+
   if (name === 'core.repo.inspect') {
     const repository = requireRepo(args.repository);
     return repoHealth({ id: `tool-${randomUUID()}`, target_id: repository, input: { tests: args.tests === true, dependency_review: args.dependency_review === true } });
@@ -146,7 +166,7 @@ export async function callControlTool(name, args = {}) {
     const repository = requireRepo(args.repository);
     const ref = text(args.ref, 240);
     if (!ref) throw Object.assign(new Error('ref is required'), { status: 400 });
-    const job = await enqueueJob({ orgId, jobType: 'preview_deploy', targetType: 'repository', targetId: repository, priority: Math.min(100, Math.max(0, Number(args.priority ?? 90))), maxAttempts: 2, input: { repository, ref, directory: text(args.directory || '.', 1000) } });
+    const job = await enqueueJob({ orgId, jobType: 'preview_deploy', targetType: 'repository', targetId: repository, priority: Math.min(100, Math.max(0, Number(args.priority ?? 90))), maxAttempts: 2, input: { repository, ref, directory: text(args.directory || '.', 1000), output_dir: args.output_dir, ttl_hours: args.ttl_hours ?? 24 } });
     return { queued: true, job_id: job.id, job_type: job.job_type, repository, ref, production: false };
   }
 

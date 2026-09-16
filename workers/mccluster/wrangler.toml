@@ -24,6 +24,20 @@ PUBLIC_APP_URL = "https://matthew.mccluster.org"
 META_GRAPH_API_VERSION = "v26.0"
 # `wrangler deploy` uploads THIS [vars] block, so the fail-closed console access flag must stay here instead of dashboard-only configuration.
 SEEK_FIRST_ACCESS_REQUIRED = "false"
+# Core remote MCP bridge origin (the Cloudflare Tunnel hostname). Not a secret:
+# Core refuses any request lacking CORE_BROKER_TOKEN plus a valid
+# CORE_EDGE_SIGNING_KEY signature, so the hostname alone grants nothing.
+# Those two are `wrangler secret put` only. /v1/core/mcp fails closed (503)
+# until both secrets exist, so deploying this ahead of the tunnel is safe.
+CORE_BROKER_URL = "https://core.mccluster.org"
+
+# MCP_EDGE service binding is intentionally absent.
+# Activate only after workers/mccluster-mcp exists in the Cloudflare account
+# and the public contract at mcp.mccluster.org passes:
+#   [[services]]
+#   binding = "MCP_EDGE"
+#   service = "mccluster-mcp"
+# Binding it earlier fails the API Worker deploy. That change is a second PR.
 
 # Production secrets are managed with `wrangler secret put` and are never committed.
 # Required core secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
