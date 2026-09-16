@@ -1,54 +1,268 @@
-/* core.resume is the rehydration contract, so the properties that matter
-   are: it never acts, it degrades per-section rather than all-or-nothing,
-   and it tells a resuming session the truth about stuck work instead of
-   presenting a dead lease as progress. */
+/* core.resume is the rehydration contract.
+ *
+ * The first cut of this module passed its unit tests and was broken in
+ * production in four separate ways, because every one of its failures is
+ * SILENT: a wrong column name, a misread response envelope and a wrong
+ * manifest field all produce an empty list or a null, which reads exactly
+ * like a quiet, healthy system. A resuming model would have believed it.
+ *
+ * So these tests drive coreResume() end to end against the real shapes:
+ * the {body, headers, status} envelope supabase.mjs actually resolves, and
+ * the manifest scripts/deploy-ovh-core.sh actually writes. Each regression
+ * named below maps to a defect that shipped.
+ */
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { partitionJobs } from '../src/tools/resume.mjs';
-import { CONTROL_TOOLS } from '../src/tools/control.mjs';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+const ORG = '00000000-0000-4000-8000-000000000001';
+const NOW = Date.parse('2026-09-16T12:00:00Z');
+
+/* supabase.mjs reads its configuration at import time and refuses to run
+   unconfigured, so the environment is set before the module graph loads. */
+process.env.SUPABASE_URL ||= 'https://db.test';
+process.env.SUPABASE_SECRET_KEY ||= 'test-secret-key';
+
+const manifestDir = await mkdtemp(path.join(tmpdir(), 'mccluster-manifest-'));
+const manifestPath = path.join(manifestDir, '.mccluster-deploy.json');
+process.env.MCCLUSTER_DEPLOY_MANIFEST = manifestPath;
+
+const { coreResume, partitionJobs } = await import('../src/tools/resume.mjs');
+const { CONTROL_TOOLS } = await import('../src/tools/control.mjs');
+
+/* The exact envelope PostgREST + parse() produce. Returning bare rows here
+   would let the destructuring bug pass, which is how it shipped. */
+function envelope(body) {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { 'content-type': 'application/json' }
+  });
+}
+
+/* Route matching is deliberately ordered and most-specific-first: the
+   running-lease URL contains BOTH `ops_agent_jobs?org_id` and
+   `status=eq.running`, so a generic-first match silently answers the
+   lease query with the recent-jobs fixture and hides every orphan. */
+function withDatabase(routes) {
+  const seen = [];
+  const original = globalThis.fetch;
+  const ordered = [
+    ['status=eq.running', routes.running],
+    ['ops_agent_jobs', routes.recent],
+    ['ops_objectives', routes.objectives],
+    ['control_approvals', routes.approvals],
+    ['ops_system_contract', routes.contract],
+    ['ops_signals', routes.signals]
+  ];
+  globalThis.fetch = async (input) => {
+    const url = String(typeof input === 'string' ? input : input.url);
+    seen.push(url);
+    for (const [fragment, body] of ordered) {
+      if (url.includes(fragment)) return envelope(body ?? []);
+    }
+    return envelope([]);
+  };
+  return { seen, restore() { globalThis.fetch = original; } };
+}
+
+const RUNNING_JOBS = [
+  { id: 'fresh', status: 'running', job_type: 'repo_health', target_id: 'mcclusterishere/mccluster', updated_at: '2026-09-16T11:55:00Z', attempts: 1 },
+  { id: 'orphan', status: 'running', job_type: 'objective_reflection', target_id: 'McCluster', updated_at: '2026-09-13T06:31:00Z', attempts: 1 }
+];
+
+const RECENT_JOBS = [
+  { id: 'q1', status: 'queued', job_type: 'local_analysis', target_id: 'McCluster' },
+  { id: 'f1', status: 'failed', job_type: 'repo_health', target_id: 'x', last_error: 'repository not cloned' }
+];
+
+async function resumeWith(overrides = {}) {
+  const db = withDatabase({
+    recent: overrides.recentJobs ?? RECENT_JOBS,
+    running: overrides.runningJobs ?? RUNNING_JOBS,
+    objectives: overrides.objectives ?? [],
+    approvals: overrides.approvals ?? [],
+    contract: overrides.contract ?? [],
+    signals: overrides.signals ?? []
+  });
+  try {
+    return { result: await coreResume({ orgId: ORG, nowMs: NOW }), seen: db.seen };
+  } finally {
+    db.restore();
+  }
+}
+
+/* ---------- the tool contract ---------- */
 
 test('core.resume is published as a read-only control tool', () => {
   const tool = CONTROL_TOOLS.find((item) => item.name === 'core.resume');
   assert.ok(tool, 'core.resume is not in the control tool list');
   assert.deepEqual(tool.inputSchema.required, ['org_id']);
   assert.equal(tool.inputSchema.additionalProperties, false);
-  assert.match(tool.description, /[Rr]ead-only/);
-  /* The description is what a model reads before calling it. If it ever
-     stops saying it changes nothing, a resuming session may hesitate to
-     call the one thing it should always call first. */
   assert.match(tool.description, /queues and changes nothing/i);
 });
 
-test('a job running past the stale threshold is reported as stale, not active', () => {
-  const now = Date.parse('2026-09-16T12:00:00Z');
-  const { active, stale } = partitionJobs([
-    { id: 'fresh', status: 'running', job_type: 'repo_health', updated_at: '2026-09-16T11:55:00Z' },
-    { id: 'orphan', status: 'running', job_type: 'objective_reflection', updated_at: '2026-09-13T06:31:00Z' },
-    { id: 'done', status: 'done', job_type: 'local_analysis', updated_at: '2026-09-16T11:00:00Z' }
-  ], now);
+/* ---------- REGRESSION: manifest field name ---------- */
 
+test('commit_sha from the deploy manifest becomes runtime.core_commit', async () => {
+  /* scripts/deploy-ovh-core.sh writes exactly this shape. The first cut
+     read deploy_sha and therefore always reported a null commit. */
+  await writeFile(manifestPath, JSON.stringify({
+    schema_version: 1,
+    commit_sha: 'e10d97d51e734d15896d6d55209914c937b3d722',
+    deployed_at: '2026-09-16T08:30:00Z'
+  }));
+  const { result } = await resumeWith();
+  assert.equal(result.runtime.core_commit, 'e10d97d51e734d15896d6d55209914c937b3d722',
+    'commit_sha must be read; a null commit makes every parity claim untrustworthy');
+  assert.equal(result.runtime.manifest_present, true);
+  assert.equal(result.runtime.deployed_at, '2026-09-16T08:30:00Z');
+});
+
+test('a legacy manifest naming deploy_sha still resolves', async () => {
+  await writeFile(manifestPath, JSON.stringify({ deploy_sha: 'a'.repeat(40) }));
+  const { result } = await resumeWith();
+  assert.equal(result.runtime.core_commit, 'a'.repeat(40));
+});
+
+test('a missing manifest reports absent rather than crashing the whole call', async () => {
+  /* The manifest path is resolved once at module load, as it is in a
+     long-running Core process, so this removes the file rather than
+     repointing the variable. */
+  await rm(manifestPath, { force: true });
+  const { result } = await resumeWith();
+  assert.equal(result.runtime.core_commit, null);
+  assert.equal(result.runtime.manifest_present, false);
+  assert.ok(result.work, 'the rest of the payload must still be produced');
+  await writeFile(manifestPath, JSON.stringify({ commit_sha: 'b'.repeat(40) }));
+});
+
+/* ---------- REGRESSION: the rest() envelope ---------- */
+
+test('pending approvals are actually returned', async () => {
+  /* The first cut read rest() as if it resolved rows, so this list was
+     always empty — the one category a resuming session cannot clear by
+     itself silently read as "nothing owed". */
+  const { result } = await resumeWith({
+    approvals: [{
+      id: 'appr-1', capability: 'infra.mutate', resource_type: 'host', resource_id: 'ovh-core',
+      reason: 'reboot after kernel update', created_at: '2026-09-16T10:00:00Z', expires_at: '2026-09-16T10:30:00Z'
+    }]
+  });
+  assert.equal(result.pending_approvals.length, 1);
+  assert.equal(result.pending_approvals[0].capability, 'infra.mutate');
+  assert.equal(result.pending_approvals[0].resource, 'host:ovh-core');
+  assert.match(result.next_step_hint, /approval\(s\) are waiting/,
+    'approvals must lead the hint — they are what a human owes the system');
+});
+
+test('recent signals use the production column signal_type', async () => {
+  const { result, seen } = await resumeWith({
+    signals: [{ signal_type: 'repo_health_failed', severity: 3, source: 'mccluster-core', observed_at: '2026-09-16T06:22:00Z' }],
+    contract: [{ schema_version: 'mccluster-system-health/v1', migration_version: '20260914191500' }]
+  });
+  assert.equal(result.health.recent_signals.length, 1, 'signals were not read back');
+  assert.equal(result.health.recent_signals[0].signal_type, 'repo_health_failed');
+  assert.equal(result.health.recent_signals[0].severity, 3, 'severity is an integer in production');
+  assert.equal(result.health.contract.migration_version, '20260914191500');
+
+  const signalQuery = seen.find((url) => url.includes('ops_signals'));
+  assert.ok(signalQuery, 'ops_signals was never queried');
+  assert.match(signalQuery, /select=signal_type/, 'the query must select signal_type');
+  assert.doesNotMatch(signalQuery, /[?&]select=[^&]*\bkind\b/,
+    'there is no `kind` column in production; selecting it 400s the query');
+});
+
+/* ---------- REGRESSION: objective column ---------- */
+
+test('objective name is returned, using the production column', async () => {
+  const { result } = await resumeWith({
+    objectives: [{ id: 'obj-1', name: 'Restore remote MCP continuity', status: 'active', priority: 90 }]
+  });
+  assert.equal(result.work.objectives.length, 1);
+  assert.equal(result.work.objectives[0].name, 'Restore remote MCP continuity');
+  assert.equal(result.work.objectives[0].status, 'active');
+  assert.equal(result.work.objectives[0].priority, 90);
+});
+
+/* ---------- REGRESSION: stale leases must not depend on the time window ---------- */
+
+test('a 3-day-old running job appears in stale_running_jobs even with since_hours=24', async () => {
+  /* The orphan is deliberately absent from the recent-jobs response: a
+     job stuck since 13 September is outside any 24-hour window, which is
+     precisely why the window cannot be the only source. */
+  const db = withDatabase({ running: RUNNING_JOBS, recent: RECENT_JOBS });
+  try {
+    const result = await coreResume({ orgId: ORG, sinceHours: 24, nowMs: NOW });
+    assert.deepEqual(result.work.stale_running_jobs.map((j) => j.id), ['orphan'],
+      'a multi-day orphaned lease must always surface, whatever the window');
+    assert.ok(result.work.stale_running_jobs[0].age_ms > 3 * 24 * 60 * 60 * 1000);
+    assert.deepEqual(result.work.active_jobs.map((j) => j.id), ['fresh']);
+    assert.match(result.work.stale_running_jobs[0].job_type, /objective_reflection/);
+  } finally {
+    db.restore();
+  }
+});
+
+test('the running-job query is not time-windowed', async () => {
+  const { seen } = await resumeWith();
+  const runningQuery = seen.find((url) => url.includes('status=eq.running'));
+  assert.ok(runningQuery, 'no dedicated running-job query was issued');
+  assert.doesNotMatch(runningQuery, /updated_at=gte/,
+    'the lease query must not inherit a time window, or old orphans stay hidden');
+});
+
+test('the hint calls out stale leases when nothing is waiting on a human', async () => {
+  const { result } = await resumeWith({ approvals: [] });
+  assert.match(result.next_step_hint, /orphaned leases/);
+});
+
+/* ---------- degradation ---------- */
+
+test('one failing source does not take the whole payload down', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = String(typeof input === 'string' ? input : input.url);
+    if (url.includes('control_approvals')) throw new Error('approvals unreachable');
+    return envelope([]);
+  };
+  try {
+    const result = await coreResume({ orgId: ORG, nowMs: NOW });
+    assert.ok(result.schema, 'the payload must still be produced');
+    assert.ok(result.runtime, 'other sections must survive');
+    assert.deepEqual(result.pending_approvals, [],
+      'a failed section degrades to empty rather than throwing');
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('org_id is required', async () => {
+  await assert.rejects(() => coreResume({}), /org_id is required/);
+});
+
+/* ---------- lease partitioning ---------- */
+
+test('a job running past the stale threshold is reported as stale, not active', () => {
+  const { active, stale } = partitionJobs(RUNNING_JOBS, NOW);
   assert.deepEqual(active.map((j) => j.id), ['fresh']);
-  assert.deepEqual(stale.map((j) => j.id), ['orphan'],
-    'a three-day-old running job is an orphaned lease, and must not look like work in flight');
-  assert.ok(stale[0].age_ms > 24 * 60 * 60 * 1000);
+  assert.deepEqual(stale.map((j) => j.id), ['orphan']);
 });
 
 test('only running jobs are partitioned; other statuses are not smuggled in', () => {
   const { active, stale } = partitionJobs([
     { id: 'q', status: 'queued', updated_at: '2026-09-16T11:00:00Z' },
     { id: 'f', status: 'failed', updated_at: '2026-09-16T11:00:00Z' }
-  ], Date.parse('2026-09-16T12:00:00Z'));
+  ], NOW);
   assert.deepEqual(active, []);
   assert.deepEqual(stale, []);
 });
 
-test('a job with an unparseable timestamp is treated as active, not silently dropped', () => {
-  const { active, stale } = partitionJobs(
-    [{ id: 'x', status: 'running', updated_at: 'not-a-date' }],
-    Date.parse('2026-09-16T12:00:00Z')
-  );
-  assert.equal(active.length + stale.length, 1, 'the job must still be reported somewhere');
+test('a job with an unparseable timestamp is still reported somewhere', () => {
+  const { active, stale } = partitionJobs([{ id: 'x', status: 'running', updated_at: 'not-a-date' }], NOW);
+  assert.equal(active.length + stale.length, 1);
 });
 
 test('partitioning tolerates a missing or malformed job list', () => {

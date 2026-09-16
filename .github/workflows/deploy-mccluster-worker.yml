@@ -65,12 +65,55 @@ jobs:
           node --test test/core-bridge.test.mjs
           node --test test/core-oauth-resource.test.mjs
 
-      - name: Deploy canonical mccluster Worker
+      # STAGED DEPLOY: upload, promote, verify, roll back on failure.
+      #
+      # `wrangler deploy` promotes in one step, so a post-deploy check can
+      # only ever tell you production is already broken. The pinned CLI
+      # (4.131.1) supports versioned deploys, so the upload and the traffic
+      # switch are separated: the new version is built and stored without
+      # serving anyone, the previously serving version is recorded as a
+      # rollback target, and only then does traffic move.
+      - name: Record the currently serving version (rollback target)
+        id: rollback_target
+        working-directory: workers/mccluster
+        shell: bash
+        run: |
+          set -euo pipefail
+          current="$(npx --yes wrangler@4.131.1 deployments list --json 2>/dev/null \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{
+                try{
+                  const list=JSON.parse(d);
+                  const latest=Array.isArray(list)?list[0]:null;
+                  const version=latest?.versions?.[0]?.version_id||latest?.version_id||'';
+                  console.log(version);
+                }catch{console.log('')}
+              })" || true)"
+          echo "version_id=${current}" >> "$GITHUB_OUTPUT"
+          if [ -n "$current" ]; then
+            echo "Rollback target: $current"
+          else
+            echo 'No previous version found — rollback will not be available for this run.'
+          fi
+
+      # Uploads and stamps provenance WITHOUT taking traffic. --tag lets the
+      # promote step resolve this exact build by commit SHA instead of
+      # scraping a version id out of stdout.
+      - name: Upload new Worker version (not serving)
         working-directory: workers/mccluster
         run: >-
-          npx --yes wrangler@4.131.1 deploy
+          npx --yes wrangler@4.131.1 versions upload
+          --tag ${GITHUB_SHA}
+          --message "GitHub Actions ${GITHUB_SHA}"
           --var DEPLOY_SHA:${GITHUB_SHA}
           --var DEPLOY_REF:${GITHUB_REF_NAME}
+
+      - name: Promote the new version to 100% traffic
+        working-directory: workers/mccluster
+        run: >-
+          npx --yes wrangler@4.131.1 versions deploy
+          --version-tag ${GITHUB_SHA}@100
+          --message "Promote ${GITHUB_SHA}"
+          --yes
 
       - name: Verify deployed commit fingerprint
         shell: bash
@@ -101,6 +144,28 @@ jobs:
           node scripts/mcp-contract-check.mjs \
             --base https://api.mccluster.org \
             --sha "$GITHUB_SHA"
+
+      # If any verification above failed, production is serving a build that
+      # does not meet its contract. Put the last known-good version back
+      # before the job reports failure, so the outage lasts for the length of
+      # one check rather than until a human wakes up.
+      - name: Roll back to the last known-good version
+        if: failure() && steps.rollback_target.outputs.version_id != ''
+        working-directory: workers/mccluster
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Verification failed. Rolling back to ${{ steps.rollback_target.outputs.version_id }}"
+          npx --yes wrangler@4.131.1 versions deploy \
+            "${{ steps.rollback_target.outputs.version_id }}@100" \
+            --message "Automatic rollback from ${GITHUB_SHA}" \
+            --yes
+          echo 'Rolled back. The failing build was NOT left in production.'
+
+      - name: Warn when no rollback target existed
+        if: failure() && steps.rollback_target.outputs.version_id == ''
+        run: |
+          echo '::error::Verification failed and no previous version was recorded — production may be serving a bad build. Roll back manually with: wrangler versions list && wrangler versions deploy <id>@100 --yes'
 
       - name: Verify core capability flags
         shell: bash

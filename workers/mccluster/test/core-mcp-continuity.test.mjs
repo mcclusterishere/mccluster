@@ -214,14 +214,44 @@ test('the Worker ships CORE_BROKER_URL, without which the bridge is dead on arri
   assert.doesNotMatch(wrangler, /CORE_EDGE_SIGNING_KEY\s*=/, 'CORE_EDGE_SIGNING_KEY must never be a var');
 });
 
-test('the deploy workflow runs this guard before it deploys, and verifies after', async () => {
+test('the deploy workflow guards before deploying, and verifies after', async () => {
   const workflow = await read('.github/workflows/deploy-mccluster-worker.yml');
-  const guardIndex = workflow.indexOf('core-mcp-continuity');
-  const deployIndex = workflow.indexOf('wrangler@4.131.1 deploy');
-  assert.ok(guardIndex > 0, 'the continuity guard is not run by the deploy workflow');
-  assert.ok(deployIndex > 0, 'the deploy step is missing');
-  assert.ok(guardIndex < deployIndex,
-    'the guard must run BEFORE the deploy, or it cannot prevent the regression it exists for');
-  assert.match(workflow, /mcp-contract-check/,
-    'the post-deploy synthetic contract check is not wired in');
+  const guard = workflow.indexOf('core-mcp-continuity');
+  const upload = workflow.indexOf('versions upload');
+  const promote = workflow.indexOf('--version-tag');
+  const check = workflow.indexOf('mcp-contract-check');
+
+  assert.ok(guard > 0, 'the continuity guard is not run by the deploy workflow');
+  assert.ok(upload > 0, 'the staged version upload step is missing');
+  assert.ok(promote > 0, 'the promote step is missing');
+  assert.ok(check > 0, 'the post-deploy synthetic contract check is not wired in');
+  assert.ok(guard < upload && upload < promote && promote < check,
+    'order must be guard -> upload -> promote -> verify; a guard after the deploy prevents nothing');
+});
+
+test('a failed verification rolls production back instead of leaving a bad build serving', async () => {
+  const workflow = await read('.github/workflows/deploy-mccluster-worker.yml');
+  /* The whole point of separating upload from promote: without a recorded
+     rollback target and an automatic revert, a post-deploy check can only
+     report that production is already broken. */
+  assert.match(workflow, /deployments list --json/,
+    'the previously serving version must be recorded before traffic moves');
+  assert.match(workflow, /if: failure\(\) && steps\.rollback_target\.outputs\.version_id != ''/,
+    'there is no automatic rollback on verification failure');
+  assert.match(workflow, /Automatic rollback from/,
+    'the rollback step does not promote the previous version');
+
+  const promote = workflow.indexOf('--version-tag');
+  const rollback = workflow.indexOf('Roll back to the last known-good');
+  assert.ok(rollback > promote, 'the rollback step must come after promotion');
+});
+
+test('provenance stamping survives the staged flow', async () => {
+  const workflow = await read('.github/workflows/deploy-mccluster-worker.yml');
+  /* The SHA is stamped on `versions upload`, not on a plain `deploy`. If
+     this moves and nobody notices, /healthz goes back to reporting
+     "unknown" and the contract check's fourth assertion starts failing. */
+  const upload = workflow.slice(workflow.indexOf('versions upload'), workflow.indexOf('Promote the new version'));
+  assert.match(upload, /--var DEPLOY_SHA:\$\{GITHUB_SHA\}/, 'DEPLOY_SHA is not stamped on the uploaded version');
+  assert.match(upload, /--tag \$\{GITHUB_SHA\}/, 'the version is not tagged with the commit, so promote cannot resolve it');
 });

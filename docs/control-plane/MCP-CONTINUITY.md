@@ -38,10 +38,12 @@ that has lost the MCP or OAuth surface, and the deploy workflow runs it
 - the remote allowlist, including `core.resume` and `media.job.get`
 - raw provider-tool filtering (`restrictToolList`)
 - `CORE_BROKER_URL` present in `[vars]`, and the two credentials absent from it
-- that the workflow runs the guard before deploying and the contract check after
+- that the workflow order is guard → upload → promote → verify
+- that a failed verification rolls production back
+- that `DEPLOY_SHA` is stamped on the uploaded version
 
 Verified by deliberately reintroducing the regression: stripping the imports and
-routes from `entry.js` fails 3 of the 13 guard tests. Restoring passes 13/13.
+routes from `entry.js` fails 3 of the 15 guard tests. Restoring passes 15/15.
 
 ### Post-deploy: the surface is actually being served
 
@@ -53,12 +55,11 @@ deployment on any of:
 3. unauthenticated `POST tools/list` is **404**, or is not 401 with a `Bearer ... resource_metadata=` challenge
 4. `/healthz` `deployment_sha` is not an exact 40-character SHA — `unknown` fails
 
-Check 4 matters more than it looks. The deploy workflow already stamps
-`--var DEPLOY_SHA:${GITHUB_SHA}`, so **production currently reporting `unknown`
-proves this workflow is not what deployed it** — Cloudflare Workers Builds is,
-and that path stamps nothing and verifies nothing. Two deploy paths, and the
-authoritative one has no contract. Collapsing to one is the outstanding
-decision; until then, check 4 is the tripwire.
+Check 4 matters more than it looks. The workflow stamps `DEPLOY_SHA` on the
+uploaded version, so **production currently reporting `unknown` proves this
+workflow is not what deployed it** — Cloudflare Workers Builds is, and that path
+stamps nothing, guards nothing and cannot roll back. See *Making GitHub Actions
+the only deploy path* below; until that is applied, check 4 is the tripwire.
 
 ## Next: `mcp.mccluster.org` as its own edge service
 
@@ -132,9 +133,10 @@ Source work is complete and pushed; the following needs Cloudflare and VPS
 access that this session does not have.
 
 **1. Merge and let the guarded workflow deploy.**
-Open a PR from `claude/core-mcp-continuity` to `main`. On merge, the workflow
-runs the continuity guard, deploys, then runs the contract check. If the bridge
-is missing or the live surface does not answer, the deploy fails loudly.
+Open a PR from `claude/core-mcp-continuity` to `main`. On merge the workflow
+runs the continuity guard, records the serving version, uploads and promotes the
+new one, then verifies. If the bridge is missing the guard stops it before
+Cloudflare; if the live surface does not answer, it rolls back automatically.
 
 **2. Set the two Worker secrets** (never vars, never committed):
 
@@ -170,6 +172,87 @@ node scripts/mcp-contract-check.mjs --base https://api.mccluster.org
 `"${CHECKOUT}" "${TARGET_SHA}"`. Until this ships to the host, autonomous
 self-reconciliation has been failing on argument validation on every run since
 the SHA guard landed.
+
+## Staged deploy and automatic rollback
+
+`wrangler deploy` promotes in one step, so a post-deploy check can only tell
+you production is already broken. Wrangler 4.131.1 — the version this workflow
+pins — supports versioned deploys, verified against the installed CLI rather
+than assumed:
+
+```
+wrangler versions upload  [--tag] [--message] [--var]
+wrangler versions deploy  [<version-id>@<pct>..] [--version-tag] [--yes]
+wrangler deployments list [--json]
+```
+
+The workflow now runs:
+
+1. **record** the currently serving version (`deployments list --json`) as the
+   rollback target;
+2. **upload** the new version with `--tag $GITHUB_SHA` and the `DEPLOY_SHA` /
+   `DEPLOY_REF` vars — built and stored, serving nobody;
+3. **promote** it with `versions deploy --version-tag $GITHUB_SHA@100`, which
+   resolves the exact build by tag rather than scraping a version id out of
+   stdout;
+4. **verify** the fingerprint, the MCP contract and the capability flags;
+5. **roll back** to the recorded version if any verification failed, before the
+   job reports failure.
+
+So a build that fails its contract is in production for the length of one check,
+not until somebody wakes up. If no previous version was recorded the workflow
+emits an explicit `::error::` with the manual rollback command rather than
+pretending it recovered.
+
+## Making GitHub Actions the only deploy path
+
+**Do not apply this yet — it changes Cloudflare production settings.**
+
+Two paths currently deploy this Worker. Cloudflare Workers Builds is wired to
+the repository and deploys on push; the GitHub workflow deploys on push too.
+Workers Builds stamps no `DEPLOY_SHA`, runs no continuity guard, runs no
+contract check and has no rollback — which is why production reports
+`deployment_sha: "unknown"`. Every guarantee in this document is bypassed when
+that path wins.
+
+Exact steps to collapse to one path:
+
+1. Confirm which path last deployed: compare the Worker's `modified_on`
+   (Cloudflare API) against the GitHub workflow's last successful run. A
+   `deployment_sha` of `unknown` on `/healthz` is itself proof Workers Builds
+   deployed it.
+2. In the Cloudflare dashboard: **Workers & Pages → mccluster → Settings →
+   Build**. Disconnect the connected Git repository (or set the build to
+   non-production / disable automatic deployments if you want to keep build
+   previews).
+3. Confirm `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` exist in the
+   GitHub `production` environment — the workflow already fails closed without
+   them.
+4. Push a trivial change under `workers/mccluster/` and confirm the workflow
+   runs guard → upload → promote → verify, and that `/healthz` reports that
+   exact SHA.
+5. Once `/healthz` reports a real 40-character SHA, the contract check's fourth
+   assertion becomes a permanent tripwire against the old path returning.
+
+Until step 2 happens, treat every guarantee here as conditional on which path
+deployed the running Worker.
+
+## Sovereign preview: a deliberate temporary regression
+
+This branch is cut from `main`, which still carries the old Vercel-gated
+`deploy.preview` (`PREVIEW_CONFIGURED = Boolean(process.env.VERCEL_TOKEN)`).
+The self-hosted preview gateway that replaces it lives on
+`selfhost/sovereign-media-fabric-v1` and was **not** ported here, to keep this
+branch narrowly about MCP continuity.
+
+That is a temporary inheritance, not a decision. **Vercel is not being
+reintroduced as a dependency.** The self-hosted preview implementation —
+`core/src/preview-gateway.mjs`, `core/src/executors/preview-deploy.mjs`, the
+`mccluster-preview-gateway.service` unit and the catalog binding that flips
+`deploy.preview` economics from `external/free` to `owned/compute` — must be
+reconciled onto `main` immediately after MCP continuity is restored. Until then
+`deploy.preview` simply stays unavailable on hosts without `VERCEL_TOKEN`,
+which is the correct failure mode: unavailable, not silently billed.
 
 ## What is still open
 
