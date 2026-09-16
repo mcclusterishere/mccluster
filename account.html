@@ -28,58 +28,88 @@
 </head>
 <body class="songpage">
   <main class="ac">
-    <p class="ac__k">McCluster · the agency</p>
+    <p class="ac__k">McCluster</p>
     <h1>Your<br>Account</h1>
     <div class="ac__card" id="acDoor">
-      <div id="acIn">
-        <p class="ac__lab">Sign in</p>
-        <input type="email" id="acInEmail" placeholder="Email" autocomplete="email">
-        <input type="password" id="acInPass" placeholder="Password" autocomplete="current-password">
-        <button class="ac__btn" id="acGo" type="button">Sign in</button>
-        <button class="ac__flip" id="acSend" type="button">Email me a sign-in link</button>
-      </div>
+      <p class="ac__lab">Sign in</p>
+      <input type="email" id="acInEmail" placeholder="Email" autocomplete="email">
+      <input type="password" id="acInPass" placeholder="Password" autocomplete="current-password">
+      <button class="ac__btn" id="acGo" type="button">Sign in</button>
+      <button class="ac__flip" id="acSend" type="button">Email me a sign-in link</button>
       <p class="ac__note" id="acMsg"></p>
     </div>
     <div class="ac__card" id="acDesk" hidden>
-      <p class="ac__lab">Your profile</p>
+      <p class="ac__lab">Signed in</p>
       <p class="ac__sub"><span class="ac__who" id="acWho"></span></p>
-      <div id="acOps" hidden>
-        <p class="ac__lab" style="margin-top:1.2rem">Operator</p>
-        <p class="ac__sub">The work desk. Not the public shop.</p>
-        <a class="ac__btn" href="studio.html">Open Studio</a>
-        <a class="ac__ghost" href="control.html">Control board</a>
-        <a class="ac__ghost" href="admin.html">Back office</a>
-      </div>
       <a class="ac__ghost" href="gallery.html">Shop the gallery</a>
+      <a class="ac__ghost" href="console.html">Client console</a>
       <button class="ac__out" id="acOut" type="button">Sign out</button>
     </div>
-    <p class="ac__note" style="margin-top:1.6rem"><a href="studio.html" style="color:var(--cream-dim)">Owner? Studio</a></p>
   </main>
   <script src="js/backend.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
   (function () {
     var el = function (id) { return document.getElementById(id); };
+    var HOUSE = "matthew@mccluster.org";
+
+    function stayOnAccount() {
+      return /(?:\?|&)stay=1(?:&|$)/.test(location.search);
+    }
+
+    function openPlane() {
+      if (stayOnAccount()) return false;
+      location.replace("studio.html");
+      return true;
+    }
+
+    function houseOwner(user) {
+      if (!user) return Promise.resolve(false);
+      if ((user.email || "").toLowerCase() === HOUSE) return Promise.resolve(true);
+      if (!window.MCC_SUPA || !MCC_SUPA.token) return Promise.resolve(false);
+      var uid = MCC_SUPA.uid && MCC_SUPA.uid();
+      if (!uid) return Promise.resolve(false);
+      return MCC_SUPA.token().then(function (t) {
+        if (!t) return false;
+        var q = "org_members?select=role,orgs(slug)&profile_id=eq." + encodeURIComponent(uid);
+        return fetch(MCC_SUPA.url + "/rest/v1/" + q, {
+          headers: { apikey: MCC_SUPA.key, authorization: "Bearer " + t }
+        }).then(function (r) { return r.ok ? r.json() : []; }).then(function (rows) {
+          return (rows || []).some(function (row) {
+            var slug = row.orgs && row.orgs.slug;
+            return row.role === "owner" && (!slug || slug === "mccluster");
+          });
+        }).catch(function () { return false; });
+      });
+    }
+
     function paint() {
       var u = window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user();
       el("acDoor").hidden = !!u;
       el("acDesk").hidden = !u;
       if (!u) return;
       el("acWho").textContent = u.name || u.email || "signed in";
-      var ops = el("acOps");
-      if (ops) ops.hidden = ((u.email || "").toLowerCase() !== "matthew@mccluster.org");
+      houseOwner(u).then(function (yes) { if (yes) openPlane(); });
     }
+
     el("acGo").onclick = function () {
       var em = el("acInEmail").value.trim(), pw = el("acInPass").value;
       if (!em || !pw) { el("acMsg").textContent = "Email and password."; return; }
-      MCC_AUTH.signInPassword(em, pw).then(paint).catch(function (e) { el("acMsg").textContent = e.message || "No."; });
+      MCC_AUTH.signInPassword(em, pw).then(paint).catch(function (e) {
+        el("acMsg").textContent = e.message || "That did not open.";
+      });
     };
+    el("acInPass").addEventListener("keydown", function (e) { if (e.key === "Enter") el("acGo").click(); });
     el("acSend").onclick = function () {
       var em = el("acInEmail").value.trim();
       if (!em) { el("acMsg").textContent = "Email first."; return; }
-      MCC_AUTH.signIn(em).then(function () { el("acMsg").textContent = "Link sent."; }).catch(function (e) { el("acMsg").textContent = e.message || "No."; });
+      MCC_AUTH.signIn(em).then(function () {
+        el("acMsg").textContent = "Link sent. Open it on this device.";
+      }).catch(function (e) { el("acMsg").textContent = e.message || "That did not send."; });
     };
-    el("acOut").onclick = function () { MCC_AUTH.signOut().then(function () { location.reload(); }); };
+    el("acOut").onclick = function () {
+      MCC_AUTH.signOut().then(function () { location.reload(); });
+    };
     paint();
   })();
   </script>
