@@ -13,6 +13,19 @@ const BUILTIN_MCP_SERVERS = [
     url: 'https://api.mccluster.org/v1/media/mcp',
     protocolVersion: '2026-07-28',
     bearerEnv: 'MCCLUSTER_API_BEARER'
+  },
+  /* The infrastructure control surface. Core discovers the same actions
+     the operator console offers, through the same capability gate: the
+     reads and the reversible work it can do unattended, and the
+     consequential ones it can only ask for. Nothing here gives Core
+     provider credentials — the Worker holds those, and the ladder in
+     public.ops_action_policy decides what this bearer may reach. */
+  {
+    id: 'mccluster-ops',
+    namespace: 'ops',
+    url: 'https://api.mccluster.org/v1/ops/mcp',
+    protocolVersion: '2026-07-28',
+    bearerEnv: 'MCCLUSTER_API_BEARER'
   }
 ];
 

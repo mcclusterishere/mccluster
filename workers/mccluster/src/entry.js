@@ -12,6 +12,9 @@ import { handleMetaWebhook } from './social/webhook.js';
 import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
+import { handleOpsRequest } from './ops/router.js';
+import { handleOpsMcp } from './ops/mcp.js';
+import { captureEstateSnapshot } from './ops/snapshot.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -158,6 +161,27 @@ export default {
       if (response) return response;
     }
 
+    /* THE OPERATIONS SURFACE.
+
+       Ahead of /v1/ai on purpose: /v1/ops is how the house changes
+       itself, and the MCP route is checked first so a model speaking
+       JSON-RPC does not fall through to the REST router's 404. Both
+       end up in the same runAction, with the same capability ladder
+       and the same ledger. */
+    if (path === '/v1/ops/mcp') {
+      try {
+        const { status, body } = await handleOpsMcp(request, env);
+        return reply(request, env, body, status);
+      } catch (error) {
+        return fail(request, env, error.message || 'Operations MCP request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/ops' || path.startsWith('/v1/ops/')) {
+      const response = await handleOpsRequest(request, env);
+      if (response) return response;
+    }
+
     if (path === '/v1/ai' || path.startsWith('/v1/ai/')) {
       try {
         const user = await authUser(request, env);
@@ -184,6 +208,14 @@ export default {
       }),
       syncInstagramInsights(env, { limit: 25 }).catch((error) => {
         console.error(JSON.stringify({ event: 'social_instagram_insights_sync_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      /* Infrastructure drift is only visible if somebody is looking. The
+         cron looks, unattended, and writes what it saw to
+         ops_infra_snapshots so the board can show a trend rather than a
+         single instant. Read-only by construction: it runs the read
+         actions and nothing else. */
+      captureEstateSnapshot(env).catch((error) => {
+        console.error(JSON.stringify({ event: 'ops_estate_snapshot_failed', message: error instanceof Error ? error.message : String(error) }));
       })
     ]));
   }

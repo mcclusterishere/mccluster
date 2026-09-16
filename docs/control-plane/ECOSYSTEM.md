@@ -35,6 +35,8 @@ Canonical ecosystem map for how the house is wired. Agents: if this disagrees wi
 | Public pages | GitHub Pages from `mcclusterishere/mccluster` → matthew.mccluster.org |
 | Operator desk | McCluster Control |
 | API / webhooks | Cloudflare Worker `mccluster` |
+| Infrastructure control | `/v1/ops` on Worker `mccluster` — see `INFRASTRUCTURE-CONTROL.md` |
+| What the plane may act on | `ops_estate_nodes`, seeded from `registry.json` |
 | Worker source | `workers/mccluster` |
 | Persistent execution / orchestration | OVH McCluster Core from `core/` |
 | Production Core promotion pointer | `deploy/ovh-production` |
@@ -63,7 +65,8 @@ The McCluster Network is the internal social layer for those identities: profile
 - Supabase is durable truth; Cloudflare is ingress/routing; OVH Core is persistent execution. Do not collapse those roles into a parallel stack.
 - Routine OVH production promotion goes through `deploy/ovh-production`; historical branches are not deployment sources.
 - Compute nodes are capability workers and must not receive Supabase service-role credentials.
-- Humans retain consequential authority; models do not directly merge, deploy, purchase, or sign contracts.
+- Humans retain consequential authority; models do not directly merge, deploy, purchase, or sign contracts. `/v1/ops` enforces this: `infra.mutate` is high risk and needs an owner-decided approval bound to the exact request.
+- Infrastructure changes go through `/v1/ops`, on the estate, in the ledger. Agents do not hold provider tokens of their own.
 - Humans push product; CI must not push onto an open PR branch.
 - `Here` does not ship matthew.mccluster.org or mccluster.org.
 

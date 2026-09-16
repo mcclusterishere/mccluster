@@ -36,7 +36,11 @@
     "private_conversation_memory": "ai_context",
     "capability_registry": "core/capabilities/catalog.json",
     "runner": "core/src/runner.mjs",
-    "tool_broker": "core/src/tool-broker.mjs"
+    "tool_broker": "core/src/tool-broker.mjs",
+    "infrastructure_control": "/v1/ops on worker mccluster",
+    "infrastructure_estate": "ops_estate_nodes",
+    "infrastructure_action_policy": "ops_action_policy",
+    "infrastructure_ledger": "control_commands"
   },
   "authority": {
     "humans": "Consequential authority: production deploy/rollback authorization, contracts, purchases, legal commitments and other high-impact decisions.",
@@ -50,6 +54,8 @@
     "second objective system duplicating ops_objectives",
     "second memory database duplicating private ai_context or canonical durable state",
     "direct model-to-production deploy, merge, purchase or contract authority",
+    "infrastructure change path bypassing /v1/ops capability gates, the estate or the control ledger",
+    "agents, satellites or compute nodes holding their own GitHub, Cloudflare, Supabase management or OVH credentials",
     "compute nodes holding Supabase service-role credentials",
     "satellite products creating parallel McCluster identity namespaces",
     "routine production deployment by arbitrary SSH checkout instead of deploy/ovh-production reconciliation"

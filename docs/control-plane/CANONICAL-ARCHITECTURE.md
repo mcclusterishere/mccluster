@@ -20,6 +20,12 @@ The canonical durable job system is `ops_agent_jobs`. The canonical objective sy
 
 Conversation ingestion, objective synthesis, dependency-aware plans, communications turns, game-studio jobs, code-patch drafts, host health, and future autonomous work must converge on those canonical systems instead of inventing parallel queues, objective stores, schedulers, workflow engines, or memory databases.
 
+## Canonical infrastructure control
+
+Acting on the infrastructure — GitHub, Cloudflare, the Supabase project, the OVH host, the public site and the satellites — is `/v1/ops` on Worker `mccluster`. `ops_estate_nodes` bounds what may be acted on, `ops_action_policy` binds each action to a capability, and `control_commands` is the ledger. Authorization is the existing control ladder: `infra.read`, `infra.operate`, and `infra.mutate`, which is high risk and therefore requires a `control_approvals` row a house owner decided, bound to the exact request hash.
+
+Provider credentials live on the Worker and nowhere else. Agents, satellites and compute nodes do not hold GitHub, Cloudflare, Supabase management or OVH credentials of their own, and no second path may reach a provider around the capability gate and the ledger. See `INFRASTRUCTURE-CONTROL.md`.
+
 ## Architectural laws
 
 1. Supabase is canonical durable truth. Do not create a second McCluster control-plane database or memory database.
@@ -27,7 +33,7 @@ Conversation ingestion, objective synthesis, dependency-aware plans, communicati
 3. OVH McCluster Core is the persistent execution plane. Do not create a parallel scheduler or workflow engine that duplicates `ops_agent_jobs`, `ops_objectives`, objective planning, or Core execution.
 4. Products are workloads. They consume shared identity, data, capabilities and execution rather than creating their own platform spine.
 5. Compute nodes are workers. They do not receive Supabase service-role credentials or independent control-plane authority.
-6. Models propose bounded actions through policy gates. Models do not directly merge, deploy, purchase, sign contracts, or bypass human authority.
+6. Models propose bounded actions through policy gates. Models do not directly merge, deploy, purchase, sign contracts, or bypass human authority. On infrastructure this is enforced rather than asserted: `/v1/ops` refuses every `infra.mutate` action without an owner-decided approval bound to that exact request.
 7. Production promotion flows through tested source and `deploy/ovh-production`; arbitrary historical branches are never production architecture authorities.
 8. Historical branches may be mined for ideas, but useful concepts must be rebuilt fresh from current `main`.
 9. The human-readable and machine-readable architecture contracts change together. A PR may not silently change one without the other.

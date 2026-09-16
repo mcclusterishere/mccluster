@@ -73,6 +73,32 @@
     .cp__rows span { color: var(--cream-dim); }
     .cp__rows b { font-weight: 700; }
 
+    /* ---- the operations desk ----
+       The board above says what the house is. This says what can be done
+       to it, and every control on it is drawn from /v1/ops — nothing here
+       is a hardcoded list of actions, so an action revoked in the database
+       disappears from the screen without a deploy. */
+    .cp__ops { display: grid; gap: .55rem; margin-top: .9rem; }
+    .cp__act { display: grid; grid-template-columns: 1fr auto; gap: .5rem 1rem; align-items: center;
+      padding: .7rem .9rem; border-radius: 14px; background: rgba(244,239,230,.04);
+      box-shadow: inset 0 0 0 1px rgba(244,239,230,.09); }
+    .cp__act b { font-weight: 700; font-size: .92rem; }
+    .cp__act small { display: block; color: var(--cream-dim); font-size: .8rem; line-height: 1.4; }
+    .cp__tag { display: inline-block; margin-right: .45em; border-radius: 99px; padding: .15em .6em;
+      font: 800 .58rem var(--body); letter-spacing: .12em; text-transform: uppercase; }
+    .cp__tag--read { background: rgba(244,239,230,.12); color: var(--cream-dim); }
+    .cp__tag--operate { background: rgba(232,178,64,.18); color: #e8b240; }
+    .cp__tag--mutate { background: rgba(229,56,59,.2); color: var(--ruby-hot); }
+    .cp__tag--off { background: rgba(244,239,230,.08); color: rgba(244,239,230,.45); }
+    .cp__sel { -webkit-appearance: none; appearance: none; border-radius: 10px; max-width: 100%;
+      border: 1px solid rgba(244,239,230,.2); background: rgba(11,9,8,.7); color: var(--cream);
+      padding: .55em .8em; font: 500 .85rem var(--body); }
+    .cp__out { margin-top: .8rem; padding: .9rem 1rem; border-radius: 14px; overflow-x: auto;
+      background: rgba(11,9,8,.6); box-shadow: inset 0 0 0 1px rgba(244,239,230,.1);
+      font: 500 .78rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap;
+      color: var(--cream-dim); max-height: 24rem; }
+    .cp__out.is-err { color: var(--ruby-hot); }
+
     .cp__sect { margin-top: 2.2rem; }
     .cp__sect > h2 { font-family: var(--display); font-weight: 400; font-size: 1.5rem;
       text-transform: uppercase; margin: 0 0 .8rem; }
@@ -114,6 +140,46 @@
       </header>
 
       <div class="cp__grid" id="cpTiles"></div>
+
+      <!-- THE OPERATIONS DESK -->
+      <section class="cp__sect">
+        <h2>The estate</h2>
+        <p class="cp__sub" id="cpEstateNote">Reading the estate…</p>
+        <div class="cp__grid" id="cpEstate"></div>
+      </section>
+
+      <section class="cp__sect">
+        <h2>Act on the house</h2>
+        <p class="cp__sub">
+          Read actions run on sight. Reversible ones are written to the ledger.
+          Consequential ones need an approval a house owner decided — ask for one here,
+          approve it here, then run it.
+        </p>
+        <div class="cp__act" style="margin-top:.9rem">
+          <div>
+            <select class="cp__sel" id="cpAction"><option>Loading the catalogue…</option></select>
+            <small id="cpActionNote">&nbsp;</small>
+          </div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end">
+            <button class="cp__btn" id="cpDry" type="button">Dry run</button>
+            <button class="cp__btn cp__btn--go" id="cpRun" type="button">Run</button>
+          </div>
+        </div>
+        <textarea class="cp__in" id="cpParams" rows="3" spellcheck="false"
+          style="margin-top:.55rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem">{}</textarea>
+        <pre class="cp__out" id="cpResult">Pick an action.</pre>
+      </section>
+
+      <section class="cp__sect">
+        <h2>Waiting on you</h2>
+        <p class="cp__sub" id="cpApprNote">No approvals pending.</p>
+        <div class="cp__ops" id="cpAppr"></div>
+      </section>
+
+      <section class="cp__sect">
+        <h2>What the plane has done</h2>
+        <div class="cp__ops" id="cpRuns"></div>
+      </section>
 
       <section class="cp__sect">
         <h2>Registered apps</h2>
@@ -256,7 +322,245 @@
         drawApps(r[1].apps);
         var u = r[1].status && r[1].status.operator;
         $("cpUser").textContent = u && u.email ? u.email : "signed in";
+        /* the operations desk loads after the board, and on its own
+           failure path: no credential on the Worker yet must not stop
+           the status tiles from drawing */
+        return loadOps().catch(function () {});
       });
+    }
+
+
+    /* ============================================================
+       THE OPERATIONS DESK.
+
+       Everything below draws itself from /v1/ops. The catalogue decides
+       what appears; the database behind it decides what the catalogue
+       says. An action the owner switches off in ops_action_policy stops
+       being on this screen without anybody redeploying the site — which
+       is the whole reason the policy lives in a table.
+
+       The three-step shape for a consequential action (ask -> approve ->
+       run) is deliberately visible rather than hidden behind a
+       confirmation dialog: an approval is a real row with an expiry and a
+       hash, and pretending otherwise would teach the operator the wrong
+       thing about what just happened.
+       ============================================================ */
+    var CATALOG = null;
+
+    function api(path, opts) {
+      return token().then(function (t) {
+        if (!t) throw new Error("Signed out.");
+        var o = opts || {};
+        return fetch(API + path, {
+          method: o.method || "GET",
+          headers: { authorization: "Bearer " + t, "content-type": "application/json" },
+          body: o.body ? JSON.stringify(o.body) : undefined,
+          cache: "no-store"
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (j) {
+            if (!r.ok) throw Object.assign(new Error(j.error || ("HTTP " + r.status)), { detail: j.detail });
+            return j;
+          });
+        });
+      });
+    }
+
+    function show(value, isErr) {
+      var el = $("cpResult");
+      el.textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+      el.className = "cp__out" + (isErr ? " is-err" : "");
+    }
+
+    function rung(capability) {
+      if (capability === "infra.mutate") return ["mutate", "cp__tag--mutate"];
+      if (capability === "infra.operate") return ["reversible", "cp__tag--operate"];
+      return ["read", "cp__tag--read"];
+    }
+
+    function selectedAction() {
+      var id = $("cpAction").value;
+      return (CATALOG && CATALOG.actions || []).filter(function (a) { return a.id === id; })[0] || null;
+    }
+
+    function params() {
+      var raw = $("cpParams").value.trim() || "{}";
+      try { return JSON.parse(raw); }
+      catch (e) { throw new Error("Parameters are not valid JSON."); }
+    }
+
+    function drawCatalog(cat) {
+      CATALOG = cat;
+      var sel = $("cpAction");
+      var grouped = {};
+      cat.actions.forEach(function (a) { (grouped[a.domain] = grouped[a.domain] || []).push(a); });
+      sel.innerHTML = Object.keys(grouped).map(function (domain) {
+        return '<optgroup label="' + esc(domain) + '">' + grouped[domain].map(function (a) {
+          /* An action whose provider has no credentials yet is shown and
+             disabled: the operator should know the reach exists and what
+             it is waiting for, not wonder why it vanished. */
+          return '<option value="' + esc(a.id) + '"' + (a.available ? "" : " disabled") + '>' +
+            esc(a.id) + (a.available ? "" : " · not configured") + "</option>";
+        }).join("") + "</optgroup>";
+      }).join("");
+      describeAction();
+    }
+
+    function describeAction() {
+      var a = selectedAction();
+      if (!a) { $("cpActionNote").textContent = ""; return; }
+      var r = rung(a.capability);
+      $("cpActionNote").innerHTML =
+        '<span class="cp__tag ' + r[1] + '">' + r[0] + "</span>" + esc(a.summary) +
+        (a.required && a.required.length ? " <b>Needs: " + esc(a.required.join(", ")) + "</b>" : "");
+      var hint = {};
+      (a.required || []).forEach(function (k) { hint[k] = ""; });
+      if (a.target && !hint.node_key) hint.node_key = "";
+      $("cpParams").value = JSON.stringify(hint, null, 2);
+      $("cpRun").textContent = a.capability === "infra.mutate" ? "Ask, then run" : "Run";
+    }
+
+    function run(dry) {
+      var a = selectedAction();
+      if (!a) return;
+      var body;
+      try { body = { action: a.id, params: params(), dry_run: !!dry }; }
+      catch (e) { show(e.message, true); return; }
+      /* A mutating run that is not a dry run gets a key, so a doubled
+         click or a lost response cannot cost a second reboot. */
+      if (!dry && a.mutates) body.idempotency_key = a.id + ":" + Date.now();
+      var appr = $("cpParams").dataset.approval;
+      if (!dry && appr) body.approval_id = appr;
+
+      show("Running " + a.id + (dry ? " (dry run)…" : "…"));
+      api("/v1/ops/run", { method: "POST", body: body }).then(function (r) {
+        show(r);
+        delete $("cpParams").dataset.approval;
+        if (!dry && a.mutates) loadRuns();
+      }).catch(function (e) {
+        if (e.detail && e.detail.code === "approval_required") {
+          askApproval(a, body.params, e);
+          return;
+        }
+        show({ error: e.message, detail: e.detail || null }, true);
+      });
+    }
+
+    function askApproval(action, p, cause) {
+      show({
+        blocked: cause.message,
+        next: "Opening an approval request for this exact call…"
+      }, true);
+      var reason = window.prompt("Why does " + action.id + " need to run?", "");
+      if (reason === null) { show("Cancelled. Nothing ran.", true); return; }
+      api("/v1/ops/approvals", { method: "POST", body: { action: action.id, params: p, reason: reason } })
+        .then(function (r) {
+          show(r);
+          loadApprovals();
+        })
+        .catch(function (e) { show({ error: e.message, detail: e.detail || null }, true); });
+    }
+
+    function loadApprovals() {
+      return api("/v1/ops/approvals?state=pending").then(function (r) {
+        var rows = r.approvals || [];
+        $("cpApprNote").textContent = rows.length
+          ? rows.length + " waiting. Approving one lets that exact call run once, until it expires."
+          : "No approvals pending.";
+        $("cpAppr").innerHTML = rows.map(function (ap) {
+          return '<div class="cp__act"><div><b>' + esc(ap.capability) + " · " + esc(ap.resource_id || "") + "</b>" +
+            "<small>" + esc(ap.reason || "No reason given.") + " · expires " + esc(ap.expires_at || "") + "</small></div>" +
+            '<div style="display:flex;gap:.4rem">' +
+            '<button class="cp__btn cp__btn--go" data-approve="' + esc(ap.id) + '" type="button">Approve</button>' +
+            '<button class="cp__btn" data-deny="' + esc(ap.id) + '" type="button">Deny</button></div></div>';
+        }).join("");
+      }).catch(function () { $("cpApprNote").textContent = "Could not read approvals."; });
+    }
+
+    function decide(id, state) {
+      api("/v1/ops/approvals/" + id + "/decide", { method: "POST", body: { state: state } })
+        .then(function (r) {
+          show(r);
+          if (state === "approved") {
+            /* The approval is bound to one exact call, so the next run
+               from this screen carries it automatically. */
+            $("cpParams").dataset.approval = id;
+          }
+          loadApprovals();
+        })
+        .catch(function (e) { show({ error: e.message, detail: e.detail || null }, true); });
+    }
+
+    function loadRuns() {
+      return api("/v1/ops/runs?limit=12").then(function (r) {
+        $("cpRuns").innerHTML = (r.commands || []).map(function (c) {
+          var tone = c.status === "executed" ? "cp__tag--read" : c.status === "failed" ? "cp__tag--mutate" : "cp__tag--operate";
+          return '<div class="cp__act"><div><b>' + esc(c.action || c.capability) + "</b><small>" +
+            esc(c.resource_type || "") + " · " + esc(c.resource_id || "") + " · " + esc(c.created_at || "") +
+            (c.error ? " · " + esc(c.error) : "") + "</small></div>" +
+            '<span class="cp__tag ' + tone + '">' + esc(c.status) + "</span></div>";
+        }).join("") || '<p class="cp__sub">Nothing yet.</p>';
+      }).catch(function () { $("cpRuns").innerHTML = '<p class="cp__sub">Could not read the ledger.</p>'; });
+    }
+
+    function drawEstate(state) {
+      var panels = state.panels || {};
+      var tiles = [];
+
+      var sites = panels.sites || {};
+      tiles.push(card("Sites", sites.available && !(sites.down || []).length ? "is-up" : (sites.available ? "is-down" : ""),
+        sites.available ? (sites.up + "/" + sites.probed) : "—",
+        sites.available ? ((sites.down || []).length ? "Down: " + sites.down.join(", ") : "Every site answered.")
+                        : "Not read.",
+        []));
+
+      var host = panels.host || {};
+      tiles.push(card("The host", host.available ? (host.running ? "is-up" : "is-down") : "",
+        host.available ? (host.running ? "running" : String(host.state || "stopped")) : "—",
+        host.available ? (host.service_name + " · " + (host.zone || "")) :
+          (host.reason === "provider_not_configured" ? "Add the OVH keys to see the VPS." : "Not read."),
+        host.available ? [["Cores", host.vcore], ["Memory MB", host.memory_mb]] : []));
+
+      var db = panels.database || {};
+      tiles.push(card("Database", db.available ? (db.status === "ACTIVE_HEALTHY" ? "is-up" : "is-down") : "",
+        db.available ? String(db.status || "—") : "—",
+        db.available ? (db.project_ref + " · " + (db.region || "")) :
+          (db.reason === "provider_not_configured" ? "Add SUPABASE_MANAGEMENT_TOKEN to administer the project." : "Not read."),
+        (panels.migrations && panels.migrations.available) ? [["Migrations", panels.migrations.applied], ["Latest", panels.migrations.latest]] : []));
+
+      var edge = panels.edge || {};
+      tiles.push(card("Cloudflare", edge.available ? ((edge.forbidden_present || []).length ? "is-down" : "is-up") : "",
+        edge.available ? String((edge.workers || []).length) : "—",
+        edge.available ? ((edge.forbidden_present || []).length
+            ? "A forbidden Worker exists: " + edge.forbidden_present.join(", ")
+            : "Workers on the account.")
+          : (edge.reason === "provider_not_configured" ? "Add the Cloudflare token to see the edge." : "Not read."),
+        (panels.worker && panels.worker.available && panels.worker.current_deployment)
+          ? [["Deployed", (panels.worker.current_deployment.created_on || "").slice(0, 10)]] : []));
+
+      var repo = panels.control_repo || {};
+      tiles.push(card("Control repo", repo.available ? "is-up" : "", repo.available && repo.head ? repo.head.sha.slice(0, 7) : "—",
+        repo.available ? (repo.default_branch + " · " + (repo.head ? repo.head.message.split("\n")[0] : ""))
+          : (repo.reason === "provider_not_configured" ? "Add GITHUB_CONTROL_TOKEN to reach the repositories." : "Not read."),
+        repo.available ? [["Open PRs", (repo.open_pull_requests || []).length]] : []));
+
+      var queue = panels.core_queue || {};
+      tiles.push(card("Core queue", queue.available ? "is-up" : "", queue.available ? String(queue.count) : "—",
+        "Jobs waiting for the host.", []));
+
+      $("cpEstate").innerHTML = tiles.join("");
+
+      var unconfigured = Object.keys(state.providers || {}).filter(function (k) { return !state.providers[k].configured; });
+      $("cpEstateNote").textContent = state.estate.enabled + " of " + state.estate.nodes + " nodes live" +
+        (unconfigured.length ? " · waiting on credentials for: " + unconfigured.join(", ") : " · every provider connected");
+    }
+
+    function loadOps() {
+      return Promise.all([
+        api("/v1/ops").then(drawCatalog).catch(function (e) { $("cpActionNote").textContent = e.message; }),
+        api("/v1/ops/state").then(drawEstate).catch(function (e) { $("cpEstateNote").textContent = e.message; }),
+        loadApprovals(),
+        loadRuns()
+      ]);
     }
 
     function boot() {
@@ -296,6 +600,16 @@
     $("cpRefresh").addEventListener("click", function () {
       var b = $("cpRefresh"); b.disabled = true; b.textContent = "…";
       load().then(function () { b.disabled = false; b.textContent = "Refresh"; });
+    });
+
+    $("cpAction").addEventListener("change", describeAction);
+    $("cpRun").addEventListener("click", function () { run(false); });
+    $("cpDry").addEventListener("click", function () { run(true); });
+    $("cpAppr").addEventListener("click", function (e) {
+      var ok = e.target.getAttribute && e.target.getAttribute("data-approve");
+      var no = e.target.getAttribute && e.target.getAttribute("data-deny");
+      if (ok) decide(ok, "approved");
+      if (no) decide(no, "denied");
     });
 
     /* a magic-link landing arrives already signed in, so the gate should

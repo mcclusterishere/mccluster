@@ -38,7 +38,8 @@ The only Cloudflare Worker is `mccluster`. Only call routes that Worker actually
 9. **Do not invent infrastructure names.** The Worker is `mccluster`. The API host is `api.mccluster.org`. If a name is not in this table, it does not exist.
 10. **Keep exporting `HereTenantAgent`.** Worker `mccluster` already has Durable Objects of that class. A deploy that drops the export dies with Cloudflare error 10064. Do not run a delete-class migration unless the owner says wipe those objects.
 11. **Never draw a logo.** See the section below. This one has already cost a rewrite.
-12. **`mcclusterishere/Here` is dead.** It publishes nothing: its deploy workflows are disabled and it has no CNAME. Do not write to it. If a task seems to want it, say so in the chat and work here instead.
+12. **Infrastructure changes go through the plane, not through your own tokens.** `/v1/ops` on Worker `mccluster` is how the house acts on GitHub, Cloudflare, Supabase, the OVH host, the site and the satellites: capability-gated, estate-bounded, written to `control_commands`. `infra.mutate` (merge to a default branch, roll a Worker back, change DNS, apply writing SQL, reboot or stop the host) is high risk and needs an approval a house **owner** decided, bound to that exact request. Do not add a second path around it, and do not give a satellite or an agent provider credentials of its own. Read `docs/control-plane/INFRASTRUCTURE-CONTROL.md` before touching that surface.
+13. **`mcclusterishere/Here` is dead.** It publishes nothing: its deploy workflows are disabled and it has no CNAME. Do not write to it. If a task seems to want it, say so in the chat and work here instead.
 
 ## THE LOGOS ARE NOT YOURS TO DRAW
 

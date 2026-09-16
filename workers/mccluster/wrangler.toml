@@ -28,6 +28,16 @@ SEEK_FIRST_ACCESS_REQUIRED = "false"
 # Production secrets are managed with `wrangler secret put` and are never committed.
 # Required core secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 # Other feature secrets remain documented in repository architecture and service modules.
+#
+# Infrastructure control (/v1/ops) reaches a provider only once its secrets are
+# set. Each one fails closed on its own: unset means those actions answer
+# `provider_not_configured` naming what they need, and the rest of the surface
+# keeps working. Scope every token to the least it can be — see
+# docs/control-plane/INFRASTRUCTURE-CONTROL.md.
+#   GITHUB_CONTROL_TOKEN                          repositories + Actions on the registry repos
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   Workers/DNS/cache/storage reads and the two gated writes
+#   SUPABASE_MANAGEMENT_TOKEN                     management API for zmnhbrjyhxzhkxmhkexs
+#   OVH_APPLICATION_KEY, OVH_APPLICATION_SECRET, OVH_CONSUMER_KEY, OVH_ENDPOINT   the VPS running Core
 
 [triggers]
 crons = ["*/5 * * * *"]
