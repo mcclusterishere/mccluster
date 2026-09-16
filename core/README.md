@@ -183,12 +183,12 @@ Authenticate GitHub **only for `mccluster-core`** using a credential mechanism y
 ## Verify
 
 ```bash
-sudo systemctl status ollama mccluster-opencode mccluster-tool-broker mccluster-core-runner --no-pager
+sudo systemctl status ollama mccluster-opencode mccluster-core-tool-broker mccluster-core-runner --no-pager
 sudo systemctl list-timers mccluster-core-digest.timer
 curl -s http://127.0.0.1:11434/api/tags | jq '.models[].name'
 curl -s http://127.0.0.1:4777/health | jq
 curl -s http://127.0.0.1:4777/v1/capabilities | jq '.capabilities[] | {id,available,providers}'
-sudo journalctl -u mccluster-core-runner -u mccluster-opencode -u mccluster-tool-broker -n 100 --no-pager
+sudo journalctl -u mccluster-core-runner -u mccluster-opencode -u mccluster-core-tool-broker -n 100 --no-pager
 ```
 
 The runner logs one JSON object per lifecycle event, so journald can be shipped later without changing the application protocol.
