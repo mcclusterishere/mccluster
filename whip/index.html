@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WE 125 | Connected 125cc Motorcycle by Whip Equipped</title>
+  <meta name="description" content="WE 125 is a connected 125cc-class motorcycle in development by Whip Equipped, designed for riders, fleets, rentals and community programs with planned U.S. final assembly in Georgia." />
+  <meta name="theme-color" content="#050505" />
+  <meta property="og:title" content="WE 125 | Connected urban mobility" />
+  <meta property="og:description" content="A 125cc-class motorcycle in development by Whip Equipped — designed as the first hardware layer of a connected mobility platform." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="../assets/img/we-icon.png" />
+  <style>
+    :root {
+      --orange:#F6AD62;
+      --orange2:#F58B58;
+      --coral:#F04449;
+      --red:#ED3F46;
+      --black:#050505;
+      --ink:#111111;
+      --charcoal:#3F3F40;
+      --paper:#FFFFFF;
+      --cream:#FBF8F4;
+      --muted:#727276;
+      --line:rgba(17,17,17,.10);
+      --gradient:linear-gradient(110deg,var(--orange) 0%,#F67855 42%,var(--coral) 100%);
+      --shadow:0 24px 70px rgba(0,0,0,.16);
+      --radius:28px;
+      --max:1180px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;line-height:1.5}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+    button,a{ -webkit-tap-highlight-color:transparent }
+    .wrap{width:min(var(--max),calc(100% - 36px));margin-inline:auto}
+    .topbar{position:sticky;top:0;z-index:50;background:rgba(5,5,5,.92);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.08)}
+    .nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:28px}
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .brand img{height:42px;width:auto;max-width:190px;object-fit:contain}
+    .navlinks{display:flex;gap:22px;align-items:center;font-size:13px;font-weight:760;color:rgba(255,255,255,.72)}
+    .navlinks a:hover{color:#fff}
+    .nav-cta{padding:11px 16px;border-radius:999px;background:var(--gradient);color:#fff!important;box-shadow:0 9px 24px rgba(240,68,73,.22)}
+
+    .hero{position:relative;overflow:hidden;background:var(--black);color:#fff;min-height:680px;padding:92px 0 70px}
+    .hero:before{content:"";position:absolute;width:620px;height:620px;border-radius:50%;right:-160px;top:-220px;background:radial-gradient(circle,rgba(240,68,73,.28),rgba(240,68,73,0) 68%)}
+    .hero:after{content:"";position:absolute;left:-12%;right:-12%;bottom:-250px;height:360px;border-radius:50% 50% 0 0/36% 36% 0 0;background:var(--gradient);transform:rotate(-2.5deg)}
+    .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(330px,.8fr);gap:56px;align-items:center}
+    .eyebrow{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.16em;color:rgba(255,255,255,.65)}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--coral);box-shadow:0 0 0 5px rgba(240,68,73,.14)}
+    h1{font-size:clamp(64px,10vw,122px);line-height:.82;letter-spacing:-.08em;margin:24px 0 28px;font-weight:950}
+    h1 span{display:block;background:var(--gradient);background-clip:text;-webkit-background-clip:text;color:transparent}
+    .lead{max-width:720px;font-size:clamp(20px,2.5vw,30px);line-height:1.16;letter-spacing:-.035em;color:rgba(255,255,255,.9);font-weight:680}
+    .sublead{max-width:670px;margin-top:22px;font-size:16px;color:rgba(255,255,255,.61)}
+    .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 20px;border-radius:999px;font-size:14px;font-weight:850;border:1px solid transparent;transition:.18s ease}
+    .btn-primary{background:var(--gradient);color:#fff;box-shadow:0 16px 36px rgba(240,68,73,.22)}
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 18px 42px rgba(240,68,73,.3)}
+    .btn-ghost{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff}
+    .btn-ghost:hover{background:rgba(255,255,255,.1)}
+
+    .brief{position:relative;border:1px solid rgba(255,255,255,.11);border-radius:34px;padding:26px;background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.035));backdrop-filter:blur(24px);box-shadow:0 40px 90px rgba(0,0,0,.35)}
+    .brief-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:28px}
+    .brief-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:850;color:rgba(255,255,255,.55)}
+    .status{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;background:rgba(246,173,98,.12);border:1px solid rgba(246,173,98,.22);font-size:10px;font-weight:850;color:var(--orange)}
+    .status i{width:6px;height:6px;border-radius:50%;background:var(--orange);display:block}
+    .brief-name{font-size:36px;line-height:1;letter-spacing:-.06em;font-weight:930;margin-bottom:24px}
+    .metric{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;padding:15px 0;border-top:1px solid rgba(255,255,255,.1)}
+    .metric:first-of-type{border-top:0}
+    .metric small{font-size:11px;color:rgba(255,255,255,.52)}
+    .metric strong{font-size:17px;letter-spacing:-.03em}
+    .brief-note{font-size:11px;color:rgba(255,255,255,.42);margin-top:18px;line-height:1.5}
+
+    .band{background:#fff;border-bottom:1px solid var(--line)}
+    .band-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+    .band-item{padding:28px 24px;border-left:1px solid var(--line)}
+    .band-item:first-child{border-left:0}
+    .band-item strong{display:block;font-size:16px;letter-spacing:-.03em}
+    .band-item small{display:block;margin-top:6px;color:var(--muted);font-size:12px}
+
+    section{padding:100px 0}
+    .section-dark{background:#0b0b0c;color:#fff}
+    .section-white{background:#fff}
+    .section-head{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:52px;margin-bottom:54px;align-items:start}
+    .kicker{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.16em;color:var(--coral)}
+    h2{font-size:clamp(42px,6vw,76px);line-height:.92;letter-spacing:-.065em;margin:12px 0 0;font-weight:930}
+    .section-copy{font-size:20px;line-height:1.38;letter-spacing:-.025em;color:var(--charcoal);max-width:650px}
+    .section-dark .section-copy{color:rgba(255,255,255,.64)}
+
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .card{position:relative;overflow:hidden;border-radius:var(--radius);padding:28px;background:#fff;border:1px solid var(--line);box-shadow:0 12px 34px rgba(0,0,0,.045);min-height:260px}
+    .section-dark .card{background:#121214;border-color:rgba(255,255,255,.08);box-shadow:none}
+    .card-no{font-size:11px;font-weight:900;color:var(--coral);letter-spacing:.12em}
+    .card h3{font-size:25px;line-height:1.02;letter-spacing:-.045em;margin:34px 0 12px}
+    .card p{margin:0;color:var(--muted);font-size:14px;line-height:1.58}
+    .section-dark .card p{color:rgba(255,255,255,.52)}
+    .card-glow:after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-80px;bottom:-95px;background:radial-gradient(circle,rgba(240,68,73,.18),transparent 68%)}
+
+    .thesis{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .thesis-main{border-radius:34px;padding:44px;background:var(--gradient);color:#fff;min-height:390px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow)}
+    .thesis-main h3{font-size:clamp(42px,6vw,74px);line-height:.9;letter-spacing:-.07em;margin:0;max-width:620px}
+    .thesis-main p{max-width:560px;margin:0;font-size:16px;color:rgba(255,255,255,.88)}
+    .thesis-side{border-radius:34px;padding:38px;background:var(--black);color:#fff;display:flex;flex-direction:column;justify-content:space-between;min-height:390px}
+    .thesis-side img{width:120px;height:auto}
+    .thesis-side h3{font-size:32px;line-height:1;letter-spacing:-.055em;margin:20px 0 14px}
+    .thesis-side p{margin:0;color:rgba(255,255,255,.58);font-size:15px;max-width:480px}
+
+    .feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    .feature{padding:28px;border-radius:24px;background:#fff;border:1px solid var(--line)}
+    .feature-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:30px}
+    .feature-icon{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:var(--gradient);color:#fff;font-size:18px;font-weight:900}
+    .feature-tag{font-size:10px;text-transform:uppercase;letter-spacing:.12em;font-weight:850;color:var(--muted)}
+    .feature h3{font-size:24px;letter-spacing:-.04em;margin:0 0 10px}
+    .feature p{font-size:14px;color:var(--muted);margin:0;line-height:1.6}
+
+    .roadmap{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid rgba(255,255,255,.09);border-radius:32px;overflow:hidden}
+    .road-step{padding:30px 26px;min-height:300px;border-left:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column}
+    .road-step:first-child{border-left:0}
+    .road-step .num{font-size:11px;font-weight:900;letter-spacing:.14em;color:var(--orange)}
+    .road-step h3{font-size:24px;line-height:1.05;letter-spacing:-.045em;margin:50px 0 14px}
+    .road-step p{font-size:13px;color:rgba(255,255,255,.5);margin:0;line-height:1.6}
+    .road-step .state{margin-top:auto;padding-top:24px;font-size:11px;font-weight:850;color:rgba(255,255,255,.78)}
+
+    .stake-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+    .stake{border-radius:28px;background:#fff;border:1px solid var(--line);padding:30px;display:grid;grid-template-columns:1fr auto;gap:28px;align-items:end}
+    .stake small{display:block;color:var(--coral);font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:10px;margin-bottom:12px}
+    .stake h3{font-size:26px;line-height:1.05;letter-spacing:-.045em;margin:0 0 10px}
+    .stake p{color:var(--muted);font-size:13px;line-height:1.55;margin:0;max-width:520px}
+    .stake-link{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--black);color:#fff;font-size:20px;font-weight:800;transition:.18s ease}
+    .stake:hover .stake-link{transform:translate(2px,-2px);background:var(--coral)}
+
+    .disclosure{border:1px solid var(--line);border-radius:24px;padding:22px 24px;background:rgba(255,255,255,.65);font-size:12px;color:var(--muted);line-height:1.6;margin-top:32px}
+    .disclosure strong{color:var(--ink)}
+
+    .contact{padding:90px 0;background:var(--gradient);color:#fff}
+    .contact-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:end}
+    .contact h2{margin:0;max-width:780px}
+    .contact p{font-size:16px;color:rgba(255,255,255,.88);max-width:640px;margin:24px 0 0}
+    .contact-actions{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+    .contact-actions .btn{background:#fff;color:var(--ink)}
+    .contact-actions .btn.secondary{background:rgba(5,5,5,.92);color:#fff}
+
+    footer{background:var(--black);color:#fff;padding:42px 0}
+    .foot{display:flex;justify-content:space-between;gap:30px;align-items:center}
+    .foot img{height:36px;width:auto}
+    .foot-copy{text-align:right;color:rgba(255,255,255,.45);font-size:11px;line-height:1.6}
+
+    @media (max-width:900px){
+      .navlinks a:not(.nav-cta){display:none}
+      .hero{padding-top:68px;min-height:auto}
+      .hero-grid,.section-head,.thesis,.contact-grid{grid-template-columns:1fr}
+      .hero-grid{gap:40px}
+      .brief{max-width:640px}
+      .band-grid{grid-template-columns:1fr 1fr}
+      .band-item:nth-child(3){border-left:0;border-top:1px solid var(--line)}
+      .band-item:nth-child(4){border-top:1px solid var(--line)}
+      .cards{grid-template-columns:1fr 1fr}
+      .roadmap{grid-template-columns:1fr 1fr}
+      .road-step:nth-child(3){border-left:0;border-top:1px solid rgba(255,255,255,.09)}
+      .road-step:nth-child(4){border-top:1px solid rgba(255,255,255,.09)}
+      .stake-grid{grid-template-columns:1fr}
+    }
+    @media (max-width:620px){
+      .wrap{width:min(100% - 24px,var(--max))}
+      .nav{height:64px}
+      .brand img{height:34px;max-width:148px}
+      .nav-cta{font-size:11px;padding:9px 12px}
+      .hero{padding:54px 0 60px}
+      h1{font-size:68px}
+      .lead{font-size:23px}
+      .brief{padding:22px;border-radius:26px}
+      .band-grid,.cards,.feature-grid,.roadmap{grid-template-columns:1fr}
+      .band-item,.band-item:nth-child(3),.band-item:nth-child(4){border-left:0;border-top:1px solid var(--line)}
+      .band-item:first-child{border-top:0}
+      section{padding:72px 0}
+      .section-head{gap:24px;margin-bottom:36px}
+      h2{font-size:48px}
+      .section-copy{font-size:17px}
+      .cards{gap:12px}
+      .card{min-height:220px}
+      .thesis-main,.thesis-side{min-height:330px;padding:30px}
+      .thesis-main h3{font-size:50px}
+      .road-step,.road-step:nth-child(3),.road-step:nth-child(4){border-left:0;border-top:1px solid rgba(255,255,255,.09);min-height:230px}
+      .road-step:first-child{border-top:0}
+      .road-step h3{margin-top:32px}
+      .stake{grid-template-columns:1fr auto;padding:24px}
+      .contact{padding:72px 0}
+      .foot{align-items:flex-start;flex-direction:column}
+      .foot-copy{text-align:left}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap nav">
+      <a class="brand" href="#top" aria-label="Whip Equipped home">
+        <img src="../assets/img/we-logo-dark.png" alt="Whip Equipped" />
+      </a>
+      <nav class="navlinks" aria-label="Primary">
+        <a href="#platform">Platform</a>
+        <a href="#manufacturing">Manufacturing</a>
+        <a href="#stakeholders">Work with WE</a>
+        <a class="nav-cta" href="mailto:matthew@mccluster.org?subject=WE%20125%20Founding%20Interest">Join the founding list</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow"><span class="dot"></span> Development program • Whip Equipped</div>
+          <h1>WE <span>125</span></h1>
+          <div class="lead">A connected 125cc-class motorcycle designed as the first hardware layer of the Whip Equipped mobility platform.</div>
+          <p class="sublead">Built for direct riders, rental fleets, clubs and connected operations — with U.S. final assembly planned in Georgia and a target price positioned below the established mini-motorcycle category leaders.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="mailto:matthew@mccluster.org?subject=WE%20125%20Founding%20Rider%20Interest&body=Name%3A%0ACity%2FState%3A%0AHow%20would%20you%20use%20the%20bike%3F%3A%0A">Join as a founding rider →</a>
+            <a class="btn btn-ghost" href="#stakeholders">Fleet, dealer or project inquiry</a>
+          </div>
+        </div>
+
+        <aside class="brief" aria-label="WE 125 development brief">
+          <div class="brief-top">
+            <span class="brief-label">Current development brief</span>
+            <span class="status"><i></i> In development</span>
+          </div>
+          <div class="brief-name">WE 125</div>
+          <div class="metric"><small>Vehicle class</small><strong>~125cc</strong></div>
+          <div class="metric"><small>Working target MSRP</small><strong>$2,995</strong></div>
+          <div class="metric"><small>Assembly strategy</small><strong>U.S. final assembly</strong></div>
+          <div class="metric"><small>Connected layer</small><strong>WE platform</strong></div>
+          <div class="metric"><small>Launch geography</small><strong>Georgia planned</strong></div>
+          <p class="brief-note">Targets are developmental and may change after prototype validation, supplier finalization, certification and launch planning.</p>
+        </aside>
+      </div>
+    </section>
+
+    <div class="band">
+      <div class="wrap band-grid">
+        <div class="band-item"><strong>Direct-first launch</strong><small>Build demand before traditional dealer scale.</small></div>
+        <div class="band-item"><strong>Connected by design</strong><small>Vehicle hardware and software planned together.</small></div>
+        <div class="band-item"><strong>Fleet-ready thesis</strong><small>Rental and utilization are part of the product.</small></div>
+        <div class="band-item"><strong>Georgia assembly</strong><small>Active site-selection and production planning.</small></div>
+      </div>
+    </div>
+
+    <section class="section-white" id="platform">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <div class="kicker">The bigger idea</div>
+            <h2>The motorcycle is only the first layer.</h2>
+          </div>
+          <p class="section-copy">WE is being designed around the relationship between the vehicle, its owner and the network around it. The long-term opportunity is not only selling a motorcycle once — it is connecting mobility hardware to software that can keep working for riders and operators every day.</p>
+        </div>
+
+        <div class="cards">
+          <article class="card card-glow"><span class="card-no">01 / LOCATION</span><h3>Know where the vehicle is.</h3><p>GPS/GNSS location, trip history and vehicle status are being evaluated as core connected capabilities, with appropriate user and privacy controls.</p></article>
+          <article class="card card-glow"><span class="card-no">02 / SECURITY</span><h3>Build for recovery, not just alarms.</h3><p>Theft-recovery workflows, geofencing and tamper-aware connected hardware are part of the prototype integration brief.</p></article>
+          <article class="card card-glow"><span class="card-no">03 / OPERATIONS</span><h3>Turn one bike into a managed asset.</h3><p>Maintenance intervals, utilization, device health and vehicle assignment are intended to flow into the same operating layer.</p></article>
+          <article class="card card-glow"><span class="card-no">04 / RENTAL</span><h3>Rent the vehicle when it should be earning.</h3><p>Whip Equipped already treats rental and fleet operation as first-class product surfaces. The motorcycle program extends that thesis to WE hardware.</p></article>
+          <article class="card card-glow"><span class="card-no">05 / FLEET</span><h3>Give operators one connected view.</h3><p>Rental companies and small fleets are a launch lane, not an afterthought. The objective is a vehicle that can participate in an operator workflow from day one.</p></article>
+          <article class="card card-glow"><span class="card-no">06 / SERVICE</span><h3>Create recurring value after the sale.</h3><p>Some connected services may ultimately carry a monthly or annual service fee. Final packaging and pricing will follow actual device, cellular, backend and support costs.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="thesis">
+          <article class="thesis-main">
+            <div class="kicker" style="color:#fff">Vehicle thesis</div>
+            <h3>Mechanically mature. Visually proprietary.</h3>
+            <p>WE is not trying to reinvent every mechanical component. The program is built around proven component architecture where practical, then concentrates differentiation in integration, bodywork, lighting, ergonomics, controls, finishes, connected hardware and the software experience around the vehicle.</p>
+          </article>
+          <article class="thesis-side">
+            <img src="../assets/img/we-mark-white.png" alt="Whip Equipped mark" />
+            <div>
+              <h3>One vehicle. Multiple jobs.</h3>
+              <p>A personal motorcycle can also be a fleet asset, a rental asset, a club/community platform and a connected endpoint. That changes how WE thinks about both distribution and lifetime revenue.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-white">
+      <div class="wrap">
+        <div class="section-head">
+          <div><div class="kicker">Launch lanes</div><h2>Demand does not have to come from one channel.</h2></div>
+          <p class="section-copy">The launch plan is intentionally broader than a traditional motorcycle dealership rollout. WE can validate demand directly while building the financing, valuation, service and inventory structures needed for wider dealer distribution later.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature"><div class="feature-top"><div class="feature-icon">R</div><div class="feature-tag">Direct</div></div><h3>Founding riders</h3><p>Direct interest, deposits only when appropriate, community feedback and early product validation through WE-controlled customer relationships.</p></article>
+          <article class="feature"><div class="feature-top"><div class="feature-icon">F</div><div class="feature-tag">Commercial</div></div><h3>Rental & fleet operators</h3><p>Connected hardware, location, utilization and rental integration create a different value proposition than simply being a lower-priced motorcycle.</p></article>
+          <article class="feature"><div class="feature-top"><div class="feature-icon">C</div><div class="feature-tag">Community</div></div><h3>Clubs & group editions</h3><p>Riding communities can help validate styling, ergonomics, use cases and tailored editions before expensive production decisions are frozen.</p></article>
+          <article class="feature"><div class="feature-top"><div class="feature-icon">D</div><div class="feature-tag">Later-stage</div></div><h3>Dealer & service network</h3><p>Dealer scale comes after the fundamentals: manufacturer identity, vehicle valuation, financing, warranty, parts, service support and predictable delivery.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-dark" id="manufacturing">
+      <div class="wrap">
+        <div class="section-head">
+          <div><div class="kicker">Development path</div><h2>Build the bike. Prove it. Certify it. Scale it.</h2></div>
+          <p class="section-copy">WE plans U.S. final assembly in Georgia. Oreion Motors is providing technical, prototype, manufacturing-planning and certification support to the project. WE remains an independent company and project owner.</p>
+        </div>
+        <div class="roadmap">
+          <article class="road-step"><span class="num">01</span><h3>Prototype</h3><p>Freeze the practical mechanical package, connected-hardware interfaces and production-intent direction through physical prototype work.</p><div class="state">ACTIVE WORKSTREAM</div></article>
+          <article class="road-step"><span class="num">02</span><h3>Compliance testing</h3><p>Complete the applicable federal emissions, sound, braking and manufacturer/VIN work required for the intended U.S. on-road configuration.</p><div class="state">PROGRAM DEFINED</div></article>
+          <article class="road-step"><span class="num">03</span><h3>Georgia assembly</h3><p>Select the facility, validate the assembly process, staffing, quality gates, inbound components and finished-vehicle logistics.</p><div class="state">SITE SELECTION ACTIVE</div></article>
+          <article class="road-step"><span class="num">04</span><h3>Launch & scale</h3><p>Serve direct, fleet and community demand first while the financing, valuation, service and dealer infrastructure matures.</p><div class="state">FOUNDING DEMAND BUILD</div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="stakeholders">
+      <div class="wrap">
+        <div class="section-head">
+          <div><div class="kicker">Work with WE</div><h2>Pick the conversation you need.</h2></div>
+          <p class="section-copy">The program is early enough for the right riders, operators, suppliers, dealers and public-sector stakeholders to help shape it — without pretending the finished production motorcycle already exists.</p>
+        </div>
+
+        <div class="stake-grid">
+          <a class="stake" href="mailto:matthew@mccluster.org?subject=WE%20125%20Founding%20Rider%20Interest&body=Name%3A%0ACity%2FState%3A%0AWhat%20do%20you%20ride%20today%3F%3A%0AHow%20would%20you%20use%20WE%20125%3F%3A%0A"><div><small>Riders</small><h3>Join the founding list</h3><p>Tell us what you ride, how you would use WE 125 and what would make the product compelling enough to switch or add one.</p></div><span class="stake-link">↗</span></a>
+          <a class="stake" href="mailto:matthew@mccluster.org?subject=WE%20125%20Fleet%20%2F%20Rental%20Inquiry&body=Company%3A%0AFleet%20size%3A%0ACity%2FState%3A%0AUse%20case%3A%0A"><div><small>Fleet / rental</small><h3>Evaluate connected deployment</h3><p>Discuss fleet size, rental use, telematics requirements, utilization and what a pilot would need to look like.</p></div><span class="stake-link">↗</span></a>
+          <a class="stake" href="mailto:matthew@mccluster.org?subject=WE%20125%20Dealer%20%2F%20Service%20Discovery&body=Dealership%3A%0ALocation%3A%0ACurrent%20brands%3A%0AOpening%20order%20range%3A%0A"><div><small>Dealers / service</small><h3>Help define the future dealer program</h3><p>WE is gathering real requirements for financing, valuation, margin, parts, warranty, service and realistic opening-order quantities.</p></div><span class="stake-link">↗</span></a>
+          <a class="stake" href="mailto:matthew@mccluster.org?subject=WE%20125%20Supplier%20%2F%20Manufacturing%20Inquiry&body=Company%3A%0ACapability%3A%0ALocation%3A%0AContact%3A%0A"><div><small>Suppliers</small><h3>Support prototype-to-production</h3><p>Domestic-source candidates include fabricated metal, brackets, enclosures, formed parts, fixtures and production-support capabilities.</p></div><span class="stake-link">↗</span></a>
+          <a class="stake" href="mailto:matthew@mccluster.org?subject=WE%20125%20Economic%20Development%20%2F%20Government&body=Organization%3A%0ACommunity%20%2F%20Agency%3A%0AHow%20you%20may%20support%20the%20project%3A%0A"><div><small>Economic development / government</small><h3>Discuss the Georgia assembly project</h3><p>Site selection, utility coordination, facility support, workforce, financing and project diligence are active workstreams.</p></div><span class="stake-link">↗</span></a>
+          <a class="stake" href="mailto:matthew@mccluster.org?subject=WE%20125%20Motorcycle%20Club%20%2F%20Community%20Program&body=Club%20%2F%20Group%3A%0ALocation%3A%0AMembers%3A%0AWhat%20you%20would%20want%20to%20shape%3A%0A"><div><small>Clubs / communities</small><h3>Shape a community edition</h3><p>Give early feedback on styling, ergonomics, colorways, accessories, group use and what would matter to your riders.</p></div><span class="stake-link">↗</span></a>
+        </div>
+
+        <div class="disclosure"><strong>Development disclosure:</strong> WE 125 is a product under development. Final specifications, certification status, manufacturing location, production timing, connected features, subscription/service pricing and MSRP may change. Nothing on this page is an offer to sell an uncertified vehicle, a financing commitment, or a guarantee of availability. Production sales will be subject to applicable regulatory, manufacturing and commercial requirements.</div>
+      </div>
+    </section>
+
+    <section class="contact">
+      <div class="wrap contact-grid">
+        <div>
+          <h2>Build the first WE vehicle with us.</h2>
+          <p>Whether you are a rider, fleet operator, supplier, dealer, club, lender or economic-development organization, use the right lane above or contact WE directly.</p>
+        </div>
+        <div class="contact-actions">
+          <a class="btn" href="mailto:matthew@mccluster.org?subject=WE%20125%20Inquiry">matthew@mccluster.org</a>
+          <a class="btn secondary" href="#top">Back to top ↑</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap foot">
+      <img src="../assets/img/we-logo-dark.png" alt="Whip Equipped" />
+      <div class="foot-copy">WE / Whip Equipped • Connected mobility in development<br />© 2026 McCluster ecosystem. Product information subject to change.</div>
+    </div>
+  </footer>
+</body>
+</html>
