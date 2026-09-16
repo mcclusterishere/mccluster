@@ -30,7 +30,7 @@ const manifestDir = await mkdtemp(path.join(tmpdir(), 'mccluster-manifest-'));
 const manifestPath = path.join(manifestDir, '.mccluster-deploy.json');
 process.env.MCCLUSTER_DEPLOY_MANIFEST = manifestPath;
 
-const { coreResume, partitionJobs } = await import('../src/tools/resume.mjs');
+const { coreResume, partitionJobs, partitionQueue } = await import('../src/tools/resume.mjs');
 const { CONTROL_TOOLS } = await import('../src/tools/control.mjs');
 
 /* The exact envelope PostgREST + parse() produce. Returning bare rows here
@@ -51,6 +51,7 @@ function withDatabase(routes) {
   const original = globalThis.fetch;
   const ordered = [
     ['status=eq.running', routes.running],
+    ['status=eq.queued', routes.queued],
     ['ops_agent_jobs', routes.recent],
     ['ops_objectives', routes.objectives],
     ['control_approvals', routes.approvals],
@@ -73,6 +74,17 @@ const RUNNING_JOBS = [
   { id: 'orphan', status: 'running', job_type: 'objective_reflection', target_id: 'McCluster', updated_at: '2026-09-13T06:31:00Z', attempts: 1 }
 ];
 
+/* The real 6 September batch: one instant, attempts 0, job types no Core
+   executor claims. Deliberately absent from RECENT_JOBS, because they are
+   ten days outside any 24-hour window — which is the bug. */
+const QUEUED_JOBS = [
+  'stakeholder_map', 'lead_rescore', 'campaign_optimizer',
+  'exposure_scan', 'crm_reconcile', 'objective_discovery'
+].map((job_type, i) => ({
+  id: `sept6-${i}`, status: 'queued', job_type, target_id: 'McCluster',
+  attempts: 0, run_after: '2026-09-06T01:08:33.439Z', created_at: '2026-09-06T01:08:33.439Z'
+}));
+
 const RECENT_JOBS = [
   { id: 'q1', status: 'queued', job_type: 'local_analysis', target_id: 'McCluster' },
   { id: 'f1', status: 'failed', job_type: 'repo_health', target_id: 'x', last_error: 'repository not cloned' }
@@ -82,6 +94,7 @@ async function resumeWith(overrides = {}) {
   const db = withDatabase({
     recent: overrides.recentJobs ?? RECENT_JOBS,
     running: overrides.runningJobs ?? RUNNING_JOBS,
+    queued: overrides.queuedJobs ?? QUEUED_JOBS,
     objectives: overrides.objectives ?? [],
     approvals: overrides.approvals ?? [],
     contract: overrides.contract ?? [],
@@ -222,20 +235,16 @@ test('the hint calls out stale leases when nothing is waiting on a human', async
 /* ---------- degradation ---------- */
 
 test('one failing source does not take the whole payload down', async () => {
-  const original = globalThis.fetch;
-  globalThis.fetch = async (input) => {
-    const url = String(typeof input === 'string' ? input : input.url);
-    if (url.includes('control_approvals')) throw new Error('approvals unreachable');
-    return envelope([]);
-  };
+  const db = withFailingSource('control_approvals');
   try {
     const result = await coreResume({ orgId: ORG, nowMs: NOW });
     assert.ok(result.schema, 'the payload must still be produced');
     assert.ok(result.runtime, 'other sections must survive');
-    assert.deepEqual(result.pending_approvals, [],
-      'a failed section degrades to empty rather than throwing');
+    /* Degrading, not throwing — but degraded is null and named, never []. */
+    assert.equal(result.pending_approvals, null);
+    assert.equal(result.sources.approvals, 'unavailable');
   } finally {
-    globalThis.fetch = original;
+    db.restore();
   }
 });
 
@@ -270,5 +279,125 @@ test('partitioning tolerates a missing or malformed job list', () => {
     const { active, stale } = partitionJobs(input);
     assert.deepEqual(active, []);
     assert.deepEqual(stale, []);
+  }
+});
+
+
+/* ---------- REGRESSION: unavailable must never render as empty ---------- */
+
+function withFailingSource(fragment) {
+  const original = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = String(typeof input === 'string' ? input : input.url);
+    if (url.includes(fragment)) throw new Error(`${fragment} unreachable`);
+    return envelope([]);
+  };
+  return { restore() { globalThis.fetch = original; } };
+}
+
+test('failed approval retrieval is NOT reported as zero approvals', async () => {
+  /* The defect: attempt(fn, []) spread an array into an object, yielding
+     {error}, which the caller then coerced back to []. A session told
+     "no approvals pending" when the table could not be read would proceed
+     as though a human owed it nothing. */
+  const db = withFailingSource('control_approvals');
+  try {
+    const result = await coreResume({ orgId: ORG, nowMs: NOW });
+    assert.equal(result.pending_approvals, null,
+      'unavailable approvals must be null, never an empty list');
+    assert.notDeepEqual(result.pending_approvals, [],
+      'an empty list would be indistinguishable from "nothing is pending"');
+    assert.equal(result.sources.approvals, 'unavailable');
+    assert.ok(result.degraded_sources.includes('approvals'));
+    assert.match(result.source_errors.approvals, /unreachable/);
+    assert.match(result.next_step_hint, /Approval state unavailable/);
+    assert.match(result.next_step_hint, /do not assume nothing is pending/i);
+  } finally { db.restore(); }
+});
+
+test('failed running-job retrieval is NOT reported as zero active or stale jobs', async () => {
+  const db = withFailingSource('status=eq.running');
+  try {
+    const result = await coreResume({ orgId: ORG, nowMs: NOW });
+    assert.equal(result.work.active_jobs, null);
+    assert.equal(result.work.stale_running_jobs, null,
+      'an unreadable lease table must not look like "no orphans"');
+    assert.equal(result.sources.running_jobs, 'unavailable');
+    assert.ok(result.degraded_sources.includes('running_jobs'));
+  } finally { db.restore(); }
+});
+
+test('failed queue retrieval is NOT reported as an empty queue', async () => {
+  const db = withFailingSource('status=eq.queued');
+  try {
+    const result = await coreResume({ orgId: ORG, nowMs: NOW });
+    assert.equal(result.work.queued_jobs, null);
+    assert.equal(result.work.stale_queued_jobs, null);
+    assert.equal(result.sources.queued_jobs, 'unavailable');
+  } finally { db.restore(); }
+});
+
+test('degraded sources are named explicitly and healthy ones are marked ok', async () => {
+  const db = withFailingSource('ops_objectives');
+  try {
+    const result = await coreResume({ orgId: ORG, nowMs: NOW });
+    assert.equal(result.sources.objectives, 'unavailable');
+    assert.equal(result.work.objectives, null);
+    assert.deepEqual(result.degraded_sources, ['objectives']);
+    assert.equal(result.sources.approvals, 'ok', 'healthy sources must still report ok');
+    assert.match(result.next_step_hint, /Partial state only/);
+    assert.match(result.next_step_hint, /unknown, not empty/);
+  } finally { db.restore(); }
+});
+
+test('a fully healthy read reports no degraded sources', async () => {
+  const { result } = await resumeWith({ approvals: [] });
+  assert.deepEqual(result.degraded_sources, []);
+  assert.deepEqual(result.source_errors, {});
+  assert.deepEqual(result.pending_approvals, [], 'genuinely zero is [] — distinct from null');
+  for (const status of Object.values(result.sources)) assert.equal(status, 'ok');
+});
+
+/* ---------- REGRESSION: old queued jobs must be visible ---------- */
+
+test('the six Sept-6 queued jobs are surfaced despite being outside the 24h window', async () => {
+  /* No running jobs here: stale leases legitimately outrank a stale queue
+     in the hint, and this test is about the queue. */
+  const { result } = await resumeWith({ runningJobs: [] });
+  const stale = result.work.stale_queued_jobs;
+  assert.equal(stale.length, 6, 'all six long-queued jobs must surface');
+  assert.deepEqual(stale.map((j) => j.job_type).sort(), [
+    'campaign_optimizer', 'crm_reconcile', 'exposure_scan',
+    'lead_rescore', 'objective_discovery', 'stakeholder_map'
+  ]);
+  assert.ok(stale[0].waiting_ms > 9 * 24 * 60 * 60 * 1000, 'these have waited more than nine days');
+  assert.match(result.next_step_hint, /sat queued beyond the stale threshold/);
+});
+
+test('the queued-job query is not time-windowed', async () => {
+  const { seen } = await resumeWith();
+  const queueQuery = seen.find((url) => url.includes('status=eq.queued'));
+  assert.ok(queueQuery, 'no dedicated queued-job query was issued');
+  assert.doesNotMatch(queueQuery, /updated_at=gte/,
+    'the queue query must not inherit a window, or old backlog stays hidden');
+  assert.match(queueQuery, /run_after/, 'run_after is needed to tell scheduled work from stale work');
+});
+
+test('a job deliberately scheduled for the future is waiting, not stale', () => {
+  const { waiting, stale, scheduled } = partitionQueue([
+    { id: 'later', status: 'queued', job_type: 'digest', run_after: '2026-09-17T00:00:00Z', created_at: '2026-09-01T00:00:00Z' },
+    { id: 'old', status: 'queued', job_type: 'crm_reconcile', run_after: '2026-09-06T01:08:33Z', created_at: '2026-09-06T01:08:33Z' },
+    { id: 'fresh', status: 'queued', job_type: 'repo_health', created_at: '2026-09-16T11:50:00Z' }
+  ], NOW);
+  assert.deepEqual(scheduled.map((j) => j.id), ['later'],
+    'a future run_after is scheduled work, not a stuck job');
+  assert.deepEqual(stale.map((j) => j.id), ['old']);
+  assert.deepEqual(waiting.map((j) => j.id), ['fresh']);
+});
+
+test('queue partitioning tolerates malformed input', () => {
+  for (const input of [null, undefined, 'nonsense', {}]) {
+    const { waiting, stale, scheduled } = partitionQueue(input);
+    assert.deepEqual([waiting, stale, scheduled], [[], [], []]);
   }
 });

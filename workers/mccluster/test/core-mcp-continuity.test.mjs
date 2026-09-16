@@ -231,19 +231,36 @@ test('the deploy workflow guards before deploying, and verifies after', async ()
 
 test('a failed verification rolls production back instead of leaving a bad build serving', async () => {
   const workflow = await read('.github/workflows/deploy-mccluster-worker.yml');
-  /* The whole point of separating upload from promote: without a recorded
-     rollback target and an automatic revert, a post-deploy check can only
-     report that production is already broken. */
   assert.match(workflow, /deployments list --json/,
     'the previously serving version must be recorded before traffic moves');
   assert.match(workflow, /if: failure\(\) && steps\.rollback_target\.outputs\.version_id != ''/,
     'there is no automatic rollback on verification failure');
   assert.match(workflow, /Automatic rollback from/,
     'the rollback step does not promote the previous version');
+});
 
-  const promote = workflow.indexOf('--version-tag');
+test('rollback runs AFTER every production verification, not in the middle of them', async () => {
+  const workflow = await read('.github/workflows/deploy-mccluster-worker.yml');
+  const promote = workflow.indexOf('Promote the new version');
+  const fingerprint = workflow.indexOf('Verify deployed commit fingerprint');
+  const contract = workflow.indexOf('Verify remote MCP contract');
+  const capability = workflow.indexOf('Verify core capability flags');
   const rollback = workflow.indexOf('Roll back to the last known-good');
-  assert.ok(rollback > promote, 'the rollback step must come after promotion');
+  const warn = workflow.indexOf('Warn when no rollback target existed');
+
+  for (const [name, index] of Object.entries({ promote, fingerprint, contract, capability, rollback, warn })) {
+    assert.ok(index > 0, `step missing from the workflow: ${name}`);
+  }
+
+  /* Steps run in order, so a rollback placed mid-list is evaluated before
+     the verifications below it. A failure in the LAST check would then
+     find the rollback already behind it and leave the bad version live —
+     which is exactly the gap this asserts is closed. */
+  assert.ok(
+    promote < fingerprint && fingerprint < contract && contract < capability && capability < rollback,
+    'order must be promote -> fingerprint -> MCP contract -> capability -> rollback'
+  );
+  assert.ok(warn > capability, 'the no-rollback-target warning must also follow every verification');
 });
 
 test('provenance stamping survives the staged flow', async () => {

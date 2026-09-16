@@ -112,6 +112,7 @@ owner.
 `core.resume` (capability `core.resume`, risk `read`, approval `none`, exposed
 on the remote allowlist) returns in one call:
 
+- `sources` and `degraded_sources` — per-source health, read first
 - workspace identity — org, control repository, edge, Supabase project ref
 - runtime — Core commit, deploy ref, deployed-at, host, worker id
 - catalog — catalog version, capability and binding counts
@@ -120,12 +121,26 @@ on the remote allowlist) returns in one call:
 - health — system contract version and recent signals
 - a `next_step_hint` leading with approvals, then stale leases, then failures
 
-Two deliberate choices. It is **read-only**: a session that has just lost its
-memory is the worst possible moment to take an action. And stale `running` jobs
-are reported in their own bucket rather than folded into active work, because a
-lease held by a dead worker looks exactly like progress — the live queue
-currently has two `objective_reflection` jobs `running` since 13 September for
-precisely that reason.
+Three deliberate choices.
+
+It is **read-only**: a session that has just lost its memory is the worst
+possible moment to take an action.
+
+**Unavailable is never empty.** Each source reports `ok` or `unavailable`, and
+an unavailable collection is `null` — never `[]`. An earlier cut degraded a
+failed read to an empty array, so an unreadable approvals table rendered as
+"zero approvals pending", which is the most dangerous possible lie to tell a
+session about to act. `next_step_hint` now leads with *"Approval state
+unavailable — do not assume nothing is pending"* whenever that read fails.
+
+**Neither the lease nor the queue query is time-windowed.** Both failures are
+old by definition. The live queue holds two `objective_reflection` jobs
+`running` since 13 September, and six jobs — `stakeholder_map`,
+`lead_rescore`, `campaign_optimizer`, `exposure_scan`, `crm_reconcile`,
+`objective_discovery` — queued at a single instant on 6 September that no Core
+executor claims. A 24-hour window hid all eight. Queue age is measured from
+`run_after` when set, so work deliberately scheduled for later is reported as
+`scheduled_jobs`, not as a stuck backlog.
 
 ## Production runbook
 
@@ -215,16 +230,31 @@ contract check and has no rollback — which is why production reports
 `deployment_sha: "unknown"`. Every guarantee in this document is bypassed when
 that path wins.
 
-Exact steps to collapse to one path:
+**A caveat that must be settled before step 2.** `wrangler versions upload`
+and `versions deploy` publish *code*. They are not a complete
+trigger-management path: routes, custom domains, cron triggers and other
+Worker settings are currently being applied by Workers Builds, which is the
+only system applying them today. Disabling it without first proving GitHub
+Actions reconciles those settings would swap a code-continuity problem for a
+routing-continuity one — the same class of outage in a different layer.
+
+So: **do not mutate production triggers in this patch, and do not disable
+Workers Builds until a separate, guarded trigger reconciliation path exists.**
+That work is its own change, after MCP continuity is restored: enumerate the
+live routes, domains and crons from the Cloudflare API, express them in
+`wrangler.toml`, verify a dry-run reconciles to exactly the live set, and only
+then take the other path away.
+
+Exact steps to collapse to one path, once that prerequisite is met:
 
 1. Confirm which path last deployed: compare the Worker's `modified_on`
    (Cloudflare API) against the GitHub workflow's last successful run. A
    `deployment_sha` of `unknown` on `/healthz` is itself proof Workers Builds
    deployed it.
-2. In the Cloudflare dashboard: **Workers & Pages → mccluster → Settings →
-   Build**. Disconnect the connected Git repository (or set the build to
-   non-production / disable automatic deployments if you want to keep build
-   previews).
+2. Only after the trigger reconciliation path above exists and has been
+   proven: in the Cloudflare dashboard, **Workers & Pages → mccluster →
+   Settings → Build**, disconnect the connected Git repository (or set the
+   build to non-production / disable automatic deployments to keep previews).
 3. Confirm `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` exist in the
    GitHub `production` environment — the workflow already fails closed without
    them.

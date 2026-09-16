@@ -145,10 +145,30 @@ jobs:
             --base https://api.mccluster.org \
             --sha "$GITHUB_SHA"
 
-      # If any verification above failed, production is serving a build that
-      # does not meet its contract. Put the last known-good version back
-      # before the job reports failure, so the outage lasts for the length of
-      # one check rather than until a human wakes up.
+      - name: Verify core capability flags
+        shell: bash
+        run: |
+          curl --fail --silent --show-error https://api.mccluster.org/v1/health | node -e "
+          let d='';
+          process.stdin.on('data',c=>d+=c).on('end',()=>{
+            const j=JSON.parse(d);
+            const c=j.capabilities||{};
+            const required=['platform_api','compute_gateway','api_rate_limit','atomic_metering','provider_cogs_reconciliation','byok_fail_closed'];
+            const missing=required.filter(k=>c[k]!==true);
+            if(missing.length){ console.error('Missing capability flags:', missing.join(',')); process.exit(1); }
+            console.log('Core capability fingerprint verified.');
+          });
+          "
+
+      # ROLLBACK RUNS LAST, AFTER EVERY VERIFICATION.
+      #
+      # Placement is the whole correctness argument. GitHub Actions runs
+      # steps in order, so a rollback sitting mid-list is evaluated before
+      # the verifications below it have run: a failure in the LAST check
+      # would find the rollback step already behind it and leave the bad
+      # version serving. `if: failure()` is true for any earlier failure,
+      # so placing this after every verification covers all of them —
+      # fingerprint, MCP contract and capability flags alike.
       - name: Roll back to the last known-good version
         if: failure() && steps.rollback_target.outputs.version_id != ''
         working-directory: workers/mccluster
@@ -166,18 +186,3 @@ jobs:
         if: failure() && steps.rollback_target.outputs.version_id == ''
         run: |
           echo '::error::Verification failed and no previous version was recorded — production may be serving a bad build. Roll back manually with: wrangler versions list && wrangler versions deploy <id>@100 --yes'
-
-      - name: Verify core capability flags
-        shell: bash
-        run: |
-          curl --fail --silent --show-error https://api.mccluster.org/v1/health | node -e "
-          let d='';
-          process.stdin.on('data',c=>d+=c).on('end',()=>{
-            const j=JSON.parse(d);
-            const c=j.capabilities||{};
-            const required=['platform_api','compute_gateway','api_rate_limit','atomic_metering','provider_cogs_reconciliation','byok_fail_closed'];
-            const missing=required.filter(k=>c[k]!==true);
-            if(missing.length){ console.error('Missing capability flags:', missing.join(',')); process.exit(1); }
-            console.log('Core capability fingerprint verified.');
-          });
-          "

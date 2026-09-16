@@ -35,17 +35,30 @@ import { recentJobs, recentObjectives, rest, workerId } from '../supabase.mjs';
 const DEPLOY_MANIFEST = process.env.MCCLUSTER_DEPLOY_MANIFEST || '/opt/mccluster/core/.mccluster-deploy.json';
 const CATALOG_PATH = new URL('../../capabilities/catalog.json', import.meta.url);
 const STALE_LEASE_MS = Number(process.env.MCCLUSTER_STALE_LEASE_MS || 30 * 60_000);
+/* A job that has been queued for a day has not been picked up by any
+   worker that understands it. Production currently holds six such jobs
+   from 6 September whose job_type no executor claims. */
+const STALE_QUEUE_MS = Number(process.env.MCCLUSTER_STALE_QUEUE_MS || 24 * 60 * 60_000);
 
 function compact(error) {
   return String(error?.message || error || 'unknown error').slice(0, 300);
 }
 
-/* Every section degrades on its own. A session recovering from context
-   loss must still get the parts that are readable when one source is
-   down — an all-or-nothing bootstrap fails exactly when it is needed. */
-async function attempt(fn, fallback) {
-  try { return await fn(); }
-  catch (error) { return { ...fallback, error: compact(error) }; }
+/* Every section degrades on its own — an all-or-nothing bootstrap fails
+   exactly when it is needed. But degrading must not look like good news.
+   The previous version fell back to an empty array, which a caller then
+   could not distinguish from "there is genuinely nothing here": a
+   failed approvals read rendered as zero pending approvals, which is the
+   most dangerous possible lie to tell a session that is about to act.
+   So a source now reports whether it answered, and an unavailable
+   collection is null, never []. */
+async function source(fn) {
+  try { return { ok: true, value: await fn(), error: null }; }
+  catch (error) { return { ok: false, value: null, error: compact(error) }; }
+}
+
+function statusOf(result) {
+  return result.ok ? 'ok' : 'unavailable';
 }
 
 /* supabase.mjs `rest()` resolves to {body, headers, status}. Reading it
@@ -107,6 +120,50 @@ export async function systemHealth(orgId) {
   };
 }
 
+/* THE QUEUE QUERY IS NOT TIME-WINDOWED EITHER, FOR THE SAME REASON.
+ *
+ * Queued work was still being read out of the 24-hour recent-history
+ * window. Production holds six jobs queued at a single instant on
+ * 6 September — stakeholder_map, lead_rescore, campaign_optimizer,
+ * exposure_scan, crm_reconcile, objective_discovery — none of which any
+ * Core executor claims. Every one of them was invisible to a resuming
+ * session, which is precisely the backlog it most needs to see. */
+export async function queuedJobs(orgId) {
+  return rows(
+    `ops_agent_jobs?org_id=eq.${encodeURIComponent(orgId)}&status=eq.queued`
+    + '&select=id,job_type,target_id,status,attempts,run_after,created_at,updated_at'
+    + '&order=created_at.asc&limit=100'
+  );
+}
+
+/* Queue age is measured from run_after when it is set — a job
+   deliberately scheduled for later is not stale, it is waiting — and
+   from created_at otherwise. */
+export function partitionQueue(jobs, nowMs = Date.now(), staleMs = STALE_QUEUE_MS) {
+  const list = Array.isArray(jobs) ? jobs : [];
+  const waiting = [];
+  const stale = [];
+  const scheduled = [];
+  for (const job of list) {
+    if (job?.status !== 'queued') continue;
+    const runAfter = Date.parse(String(job.run_after || ''));
+    const created = Date.parse(String(job.created_at || ''));
+    const entry = {
+      id: job.id, job_type: job.job_type, target_id: job.target_id,
+      queued_at: job.created_at || null, run_after: job.run_after || null,
+      attempts: job.attempts ?? null,
+      age_ms: Number.isFinite(created) ? nowMs - created : null
+    };
+    if (Number.isFinite(runAfter) && runAfter > nowMs) { scheduled.push(entry); continue; }
+    const eligibleSince = Number.isFinite(runAfter) ? runAfter : created;
+    const waitingFor = Number.isFinite(eligibleSince) ? nowMs - eligibleSince : null;
+    entry.waiting_ms = waitingFor;
+    if (waitingFor !== null && waitingFor > staleMs) stale.push(entry);
+    else waiting.push(entry);
+  }
+  return { waiting, stale, scheduled };
+}
+
 /* THE LEASE QUERY IS NOT TIME-WINDOWED, ON PURPOSE.
  *
  * Orphaned leases are the failure this section exists to surface, and
@@ -149,73 +206,112 @@ export function partitionJobs(jobs, nowMs = Date.now(), staleMs = STALE_LEASE_MS
 export async function coreResume({ orgId, sinceHours = 24, limit = 25, nowMs = Date.now() } = {}) {
   if (!orgId) throw Object.assign(new Error('org_id is required'), { status: 400 });
 
-  const [deploy, catalog, recent, running, objectives, approvals, health] = await Promise.all([
-    attempt(deployFingerprint, { manifest_present: false, core_commit: null }),
-    attempt(catalogVersion, { catalog_version: null }),
-    attempt(() => recentJobs({ orgId, sinceHours, limit }), []),
-    attempt(() => runningJobs(orgId), []),
-    attempt(() => recentObjectives({ orgId, limit }), []),
-    attempt(() => pendingApprovals(orgId), []),
-    attempt(() => systemHealth(orgId), {})
+  const [deploy, catalog, recent, running, queued, objectives, approvals, health] = await Promise.all([
+    source(deployFingerprint),
+    source(catalogVersion),
+    source(() => recentJobs({ orgId, sinceHours, limit })),
+    source(() => runningJobs(orgId)),
+    source(() => queuedJobs(orgId)),
+    source(() => recentObjectives({ orgId, limit })),
+    source(() => pendingApprovals(orgId)),
+    source(() => systemHealth(orgId))
   ]);
 
-  const recentList = Array.isArray(recent) ? recent : [];
-  const runningList = Array.isArray(running) ? running : [];
-  const { active, stale } = partitionJobs(runningList, nowMs);
-  const queued = recentList.filter((job) => job?.status === 'queued');
-  const failed = recentList.filter((job) => job?.status === 'failed');
-  const approvalList = Array.isArray(approvals) ? approvals : [];
+  const sources = {
+    runtime: statusOf(deploy),
+    catalog: statusOf(catalog),
+    recent_jobs: statusOf(recent),
+    running_jobs: statusOf(running),
+    queued_jobs: statusOf(queued),
+    objectives: statusOf(objectives),
+    approvals: statusOf(approvals),
+    health: statusOf(health)
+  };
+  const degraded = Object.entries(sources)
+    .filter(([, status]) => status !== 'ok')
+    .map(([name]) => name);
+
+  const recentList = recent.ok && Array.isArray(recent.value) ? recent.value : [];
+  const leases = running.ok ? partitionJobs(running.value, nowMs) : null;
+  const queue = queued.ok ? partitionQueue(queued.value, nowMs) : null;
+  const failed = recent.ok ? recentList.filter((job) => job?.status === 'failed') : null;
 
   return {
-    schema: 'mccluster-resume/v1',
+    schema: 'mccluster-resume/v2',
     generated_at: new Date(nowMs).toISOString(),
+    /* Read this first. Anything listed here is UNKNOWN, not empty. */
+    sources,
+    degraded_sources: degraded,
+    source_errors: Object.fromEntries(
+      [['runtime', deploy], ['catalog', catalog], ['recent_jobs', recent], ['running_jobs', running],
+       ['queued_jobs', queued], ['objectives', objectives], ['approvals', approvals], ['health', health]]
+        .filter(([, result]) => !result.ok)
+        .map(([name, result]) => [name, result.error])
+    ),
     workspace: {
       org_id: orgId,
       control_repository: process.env.MCCLUSTER_CANONICAL_REPOSITORY || 'mcclusterishere/mccluster',
       edge: process.env.MCCLUSTER_EDGE_URL || 'https://api.mccluster.org',
       supabase_project: process.env.MCCLUSTER_SUPABASE_PROJECT_REF || 'zmnhbrjyhxzhkxmhkexs'
     },
-    runtime: deploy,
-    catalog,
+    runtime: deploy.ok ? deploy.value : null,
+    catalog: catalog.ok ? catalog.value : null,
     work: {
-      active_jobs: active,
-      /* Named `stale_running_jobs` rather than folded into active so a
-         resuming model reports them as a problem, not as progress. */
-      stale_running_jobs: stale,
+      /* null means the query failed. [] means there genuinely are none. */
+      active_jobs: leases ? leases.active : null,
+      stale_running_jobs: leases ? leases.stale : null,
       stale_lease_threshold_ms: STALE_LEASE_MS,
-      queued_jobs: queued.map((job) => ({ id: job.id, job_type: job.job_type, target_id: job.target_id })),
-      recent_failures: failed.slice(0, 10).map((job) => ({
+      queued_jobs: queue ? queue.waiting : null,
+      stale_queued_jobs: queue ? queue.stale : null,
+      scheduled_jobs: queue ? queue.scheduled : null,
+      stale_queue_threshold_ms: STALE_QUEUE_MS,
+      recent_failures: failed ? failed.slice(0, 10).map((job) => ({
         id: job.id, job_type: job.job_type, last_error: String(job.last_error || '').slice(0, 300)
-      })),
-      objectives: (Array.isArray(objectives) ? objectives : []).slice(0, 10).map((objective) => ({
-        id: objective.id,
-        /* production column is `name` */
-        name: objective.name ?? null,
-        status: objective.status ?? null,
-        priority: objective.priority ?? null
-      }))
+      })) : null,
+      objectives: objectives.ok
+        ? (Array.isArray(objectives.value) ? objectives.value : []).slice(0, 10).map((objective) => ({
+            id: objective.id,
+            name: objective.name ?? null,
+            status: objective.status ?? null,
+            priority: objective.priority ?? null
+          }))
+        : null
     },
-    /* What a human owes the system. A resuming session should lead with
-       this: it is the only category it cannot clear by itself. */
-    pending_approvals: approvalList.map((row) => ({
-      id: row.id, capability: row.capability,
-      resource: `${row.resource_type || ''}:${row.resource_id || ''}`,
-      reason: row.reason, expires_at: row.expires_at
-    })),
-    health,
-    next_step_hint: buildHint({ approvals: approvalList, stale, failed })
+    pending_approvals: approvals.ok
+      ? (Array.isArray(approvals.value) ? approvals.value : []).map((row) => ({
+          id: row.id, capability: row.capability,
+          resource: `${row.resource_type || ''}:${row.resource_id || ''}`,
+          reason: row.reason, expires_at: row.expires_at
+        }))
+      : null,
+    health: health.ok ? health.value : null,
+    next_step_hint: buildHint({ degraded, approvalsOk: approvals.ok, approvals: approvals.ok ? approvals.value : null, leases, queue, failed })
   };
 }
 
-function buildHint({ approvals, stale, failed }) {
-  if (approvals.length) {
+/* Unavailability outranks everything. A session told "no approvals
+   pending" when the approvals table could not be read would proceed as
+   though a human owed it nothing — the single worst conclusion this
+   payload can produce. */
+function buildHint({ degraded, approvalsOk, approvals, leases, queue, failed }) {
+  if (!approvalsOk) {
+    return 'Approval state unavailable — do not assume nothing is pending. Re-check before taking any consequential action.'
+      + (degraded.length > 1 ? ` Other degraded sources: ${degraded.filter((d) => d !== 'approvals').join(', ')}.` : '');
+  }
+  if (Array.isArray(approvals) && approvals.length) {
     return `${approvals.length} approval(s) are waiting on a house owner; nothing consequential proceeds until they are decided.`;
   }
-  if (stale.length) {
-    return `${stale.length} job(s) have been 'running' beyond the stale threshold — likely orphaned leases, not work in flight.`;
+  if (degraded.length) {
+    return `Partial state only — these sources did not answer: ${degraded.join(', ')}. Treat them as unknown, not empty.`;
   }
-  if (failed.length) {
+  if (leases?.stale?.length) {
+    return `${leases.stale.length} job(s) have been 'running' beyond the stale threshold — likely orphaned leases, not work in flight.`;
+  }
+  if (queue?.stale?.length) {
+    return `${queue.stale.length} job(s) have sat queued beyond the stale threshold — likely no executor claims their job_type.`;
+  }
+  if (failed?.length) {
     return `${failed.length} recent job failure(s) to triage.`;
   }
-  return 'No approvals pending, no stale leases, no recent failures.';
+  return 'No approvals pending, no stale leases, no stale queue, no recent failures.';
 }
