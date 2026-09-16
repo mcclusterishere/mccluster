@@ -30,7 +30,8 @@ test('wrangler ships entry-platform.js, which must fall through to entry.js', as
 
 test('MCP_EDGE is not bound on the API Worker yet', async () => {
   const wrangler = await read('workers/mccluster/wrangler.toml');
-  assert.doesNotMatch(wrangler, /binding\s*=\s*"MCP_EDGE"/,
+  const activeConfig = wrangler.split('\n').filter(line => !/^\s*#/.test(line)).join('\n');
+  assert.doesNotMatch(activeConfig, /binding\s*=\s*"MCP_EDGE"/,
     'binding MCP_EDGE before mccluster-mcp exists in the account will fail the API Worker deploy');
   assert.match(wrangler, /MCP_EDGE service binding is intentionally absent/,
     'the activation comment must stay so the next PR does not guess the binding');
