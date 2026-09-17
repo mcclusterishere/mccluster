@@ -435,6 +435,25 @@ async function ownerThreads(env, orgId, url) {
   return rest(env, `comms_threads?org_id=eq.${orgId}&select=*,comms_contacts(address,display_name,blocked)&order=updated_at.desc&limit=${limit}`);
 }
 
+/* The operator console needs the transcript, and it cannot read it itself:
+   comms_messages is revoked from `authenticated` and granted only to
+   service_role, and the thread list deliberately does not embed messages.
+   This is the narrow read that closes that gap, under the same owner gate
+   as every other owner route here. */
+async function ownerThreadMessages(env, orgId, threadId, url) {
+  const thread = await threadById(env, orgId, threadId);
+  if (!thread) throw Object.assign(new Error('thread not found'), { status: 404 });
+  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit') || 100)));
+  const messages = await rest(
+    env,
+    `comms_messages?thread_id=eq.${threadId}&org_id=eq.${orgId}&select=id,direction,sender_type,body,status,external_id,agent_job_id,occurred_at,metadata,created_at&order=occurred_at.asc&limit=${limit}`,
+  );
+  const contacts = thread.contact_id
+    ? await rest(env, `comms_contacts?id=eq.${thread.contact_id}&select=address,display_name,blocked&limit=1`)
+    : null;
+  return { thread: { ...thread, comms_contacts: contacts?.[0] || null }, messages: messages || [] };
+}
+
 async function ownerThreadAction(request, env, orgId, threadId, action) {
   const thread = await threadById(env, orgId, threadId);
   if (!thread) throw Object.assign(new Error('thread not found'), { status: 404 });
@@ -494,6 +513,7 @@ export async function handleCommsRequest(request, env, user) {
         beta: 1,
         routes: {
           threads: '/v1/comms/threads',
+          thread_messages: '/v1/comms/threads/{id}/messages',
           relay_inbound: '/v1/comms/relay/inbound',
           relay_claim: '/v1/comms/relay/outbox/claim',
           relay_delivery: '/v1/comms/relay/delivery',
@@ -502,6 +522,10 @@ export async function handleCommsRequest(request, env, user) {
     }
     if (path === '/v1/comms/threads' && request.method === 'GET') {
       return reply(request, env, { threads: await ownerThreads(env, orgId, url) });
+    }
+    const messagesMatch = path.match(/^\/v1\/comms\/threads\/([0-9a-f-]{36})\/messages$/i);
+    if (messagesMatch && request.method === 'GET') {
+      return reply(request, env, await ownerThreadMessages(env, orgId, messagesMatch[1], url));
     }
     const match = path.match(/^\/v1\/comms\/threads\/([0-9a-f-]{36})\/(takeover|release|send)$/i);
     if (match && request.method === 'POST') {
