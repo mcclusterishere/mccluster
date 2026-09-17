@@ -21,106 +21,51 @@
       <h1>Control Room</h1>
     </div>
     <p>Operator access to the canonical McCluster control plane. Sign in with the same account already used by the platform.</p>
-    <label>
-      <span class="sr-only">Owner email</span>
-      <input class="cr-input" id="cpEmail" type="email" placeholder="Owner email" autocomplete="email">
-    </label>
-    <label>
-      <span class="sr-only">Password</span>
-      <input class="cr-input" id="cpPass" type="password" placeholder="Password (optional)" autocomplete="current-password">
-    </label>
-    <div class="cr-gate__actions">
-      <button class="cr-btn cr-btn--primary" id="cpIn" type="button">Open Control Room</button>
-      <button class="cr-btn" id="cpLink" type="button">Email me a sign-in link</button>
-    </div>
+    <label><span class="sr-only">Owner email</span><input class="cr-input" id="cpEmail" type="email" placeholder="Owner email" autocomplete="email"></label>
+    <label><span class="sr-only">Password</span><input class="cr-input" id="cpPass" type="password" placeholder="Password (optional)" autocomplete="current-password"></label>
+    <div class="cr-gate__actions"><button class="cr-btn cr-btn--primary" id="cpIn" type="button">Open Control Room</button><button class="cr-btn" id="cpLink" type="button">Email me a sign-in link</button></div>
     <p class="cr-note" id="cpNote" role="status" aria-live="polite"></p>
   </section>
 
   <div class="cr-shell" id="crApp" hidden>
     <aside class="cr-rail" aria-label="Control Room navigation">
-      <a class="cr-rail__brand" href="#home" aria-label="McCluster Control Room">
-        <img src="assets/img/hm-mark-wide.webp" alt="">
-      </a>
+      <a class="cr-rail__brand" href="#home" aria-label="McCluster Control Room"><img src="assets/img/hm-mark-wide.webp" alt=""></a>
       <nav class="cr-nav">
-        <button class="cr-nav__item" type="button" data-surface="home">
-          <span class="cr-nav__icon" aria-hidden="true">⌂</span><span class="cr-nav__label">Home</span>
-        </button>
-        <button class="cr-nav__item" type="button" data-surface="work">
-          <span class="cr-nav__icon" aria-hidden="true">◫</span><span class="cr-nav__label">Work</span>
-        </button>
-        <button class="cr-nav__item" type="button" data-surface="create">
-          <span class="cr-nav__icon" aria-hidden="true">✦</span><span class="cr-nav__label">Create</span>
-        </button>
-        <button class="cr-nav__item" type="button" data-surface="system">
-          <span class="cr-nav__icon" aria-hidden="true">⚙</span><span class="cr-nav__label">System</span>
-        </button>
-        <button class="cr-nav__item" type="button" data-surface="apps">
-          <span class="cr-nav__icon" aria-hidden="true">⠿</span><span class="cr-nav__label">Apps</span>
-        </button>
+        <button class="cr-nav__item" type="button" data-surface="home"><span class="cr-nav__icon" aria-hidden="true">⌂</span><span class="cr-nav__label">Home</span></button>
+        <button class="cr-nav__item" type="button" data-surface="work"><span class="cr-nav__icon" aria-hidden="true">◫</span><span class="cr-nav__label">Work</span></button>
+        <button class="cr-nav__item" type="button" data-surface="create"><span class="cr-nav__icon" aria-hidden="true">✦</span><span class="cr-nav__label">Create</span></button>
+        <button class="cr-nav__item" type="button" data-surface="system"><span class="cr-nav__icon" aria-hidden="true">⚙</span><span class="cr-nav__label">System</span></button>
+        <button class="cr-nav__item" type="button" data-surface="apps"><span class="cr-nav__icon" aria-hidden="true">⠿</span><span class="cr-nav__label">Apps</span></button>
       </nav>
-      <div class="cr-rail__foot">
-        <button class="cr-avatar" id="crAccount" type="button" aria-label="Account menu">M</button>
-      </div>
+      <div class="cr-rail__foot"><button class="cr-avatar" id="crAccount" type="button" aria-label="Account menu">M</button></div>
     </aside>
 
     <header class="cr-topbar">
       <div class="cr-topbar__title" id="crTopTitle">Home</div>
-      <button class="cr-command" id="crCommandOpen" type="button" aria-label="Search or command McCluster">
-        <span>Search or command McCluster…</span><kbd>⌘K</kbd>
-      </button>
-      <div class="cr-topbar__meta">
-        <span class="cr-env">PROD</span>
-        <span class="cr-health-dot" id="crHealthDot" title="Checking system health"></span>
-      </div>
+      <button class="cr-command" id="crCommandOpen" type="button" aria-label="Search or command McCluster"><span>Search or command McCluster…</span><kbd>⌘K</kbd></button>
+      <div class="cr-topbar__meta"><span class="cr-env">PROD</span><span class="cr-health-dot" id="crHealthDot" title="Checking system health"></span></div>
     </header>
 
-    <main class="cr-main" id="crMain">
-      <div class="cr-surface" id="crSurface"></div>
-    </main>
+    <main class="cr-main" id="crMain"><div class="cr-surface" id="crSurface"></div></main>
 
     <aside class="cr-inspector" id="crInspector" aria-hidden="true" aria-label="Selected item details">
-      <header class="cr-inspector__head">
-        <div>
-          <h2 class="cr-inspector__title" id="crInspectorTitle">Details</h2>
-          <p class="cr-inspector__sub" id="crInspectorSub">McCluster Control Room</p>
-        </div>
-        <button class="cr-icon-btn" id="crInspectorClose" type="button" aria-label="Close details">×</button>
-      </header>
+      <header class="cr-inspector__head"><div><h2 class="cr-inspector__title" id="crInspectorTitle">Details</h2><p class="cr-inspector__sub" id="crInspectorSub">McCluster Control Room</p></div><button class="cr-icon-btn" id="crInspectorClose" type="button" aria-label="Close details">×</button></header>
       <nav class="cr-inspector__tabs" id="crInspectorTabs" aria-label="Detail sections"></nav>
       <div class="cr-inspector__body" id="crInspectorBody"></div>
     </aside>
 
     <nav class="cr-bottom" aria-label="Control Room navigation">
-      <button class="cr-nav__item" type="button" data-surface="home">
-        <span class="cr-nav__icon" aria-hidden="true">⌂</span><span class="cr-nav__label">Home</span>
-      </button>
-      <button class="cr-nav__item" type="button" data-surface="work">
-        <span class="cr-nav__icon" aria-hidden="true">◫</span><span class="cr-nav__label">Work</span>
-      </button>
-      <button class="cr-nav__item" type="button" data-surface="create">
-        <span class="cr-nav__icon" aria-hidden="true">✦</span><span class="cr-nav__label">Create</span>
-      </button>
-      <button class="cr-nav__item" type="button" data-surface="system">
-        <span class="cr-nav__icon" aria-hidden="true">⚙</span><span class="cr-nav__label">System</span>
-      </button>
-      <button class="cr-nav__item" type="button" data-surface="apps">
-        <span class="cr-nav__icon" aria-hidden="true">⠿</span><span class="cr-nav__label">Apps</span>
-      </button>
+      <button class="cr-nav__item" type="button" data-surface="home"><span class="cr-nav__icon" aria-hidden="true">⌂</span><span class="cr-nav__label">Home</span></button>
+      <button class="cr-nav__item" type="button" data-surface="work"><span class="cr-nav__icon" aria-hidden="true">◫</span><span class="cr-nav__label">Work</span></button>
+      <button class="cr-nav__item" type="button" data-surface="create"><span class="cr-nav__icon" aria-hidden="true">✦</span><span class="cr-nav__label">Create</span></button>
+      <button class="cr-nav__item" type="button" data-surface="system"><span class="cr-nav__icon" aria-hidden="true">⚙</span><span class="cr-nav__label">System</span></button>
+      <button class="cr-nav__item" type="button" data-surface="apps"><span class="cr-nav__icon" aria-hidden="true">⠿</span><span class="cr-nav__label">Apps</span></button>
     </nav>
   </div>
 
-  <div class="cr-palette" id="crPalette" aria-hidden="true">
-    <div class="cr-palette__dialog" role="dialog" aria-modal="true" aria-label="Search or command McCluster">
-      <input class="cr-palette__input" id="crPaletteInput" type="search" autocomplete="off" placeholder="Search, navigate, or give McCluster an objective…" aria-label="Search Control Room">
-      <div class="cr-palette__results" id="crPaletteResults"></div>
-    </div>
-  </div>
+  <div class="cr-palette" id="crPalette" aria-hidden="true"><div class="cr-palette__dialog" role="dialog" aria-modal="true" aria-label="Search or command McCluster"><input class="cr-palette__input" id="crPaletteInput" type="search" autocomplete="off" placeholder="Search, navigate, or give McCluster an objective…" aria-label="Search Control Room"><div class="cr-palette__results" id="crPaletteResults"></div></div></div>
 
-  <aside class="cr-account-menu" id="crAccountMenu" aria-label="Account actions">
-    <div class="cr-account-menu__email" id="crAccountEmail">signed in</div>
-    <button class="cr-btn cr-btn--ghost" id="crRefresh" type="button">Refresh Control Room</button>
-    <button class="cr-btn cr-btn--danger" id="crOut" type="button">Sign out</button>
-  </aside>
+  <aside class="cr-account-menu" id="crAccountMenu" aria-label="Account actions"><div class="cr-account-menu__email" id="crAccountEmail">signed in</div><button class="cr-btn cr-btn--ghost" id="crRefresh" type="button">Refresh Control Room</button><button class="cr-btn cr-btn--danger" id="crOut" type="button">Sign out</button></aside>
 
   <script src="js/backend.js?v=__STAMP__"></script>
   <script src="js/control-room-v2.js?v=__STAMP__"></script>
