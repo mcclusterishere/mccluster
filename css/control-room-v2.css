@@ -152,3 +152,48 @@
   .cr-input--sm{max-width:none}
   .cr-convo__actions .cr-btn{flex:1 1 auto}
 }
+
+/* ---------------------------------------------------------------
+   Generation lifecycle, explicit model selection, transcript paging.
+   --------------------------------------------------------------- */
+
+/* The canvas grid is 12 columns and control-room.css defines spans 3-8
+   only, so a full-width panel had no class and collapsed to 1/12 of the
+   row. The generation panel is the one full-width panel in the system. */
+.cr-span-12{grid-column:span 12}
+
+.cr-modelpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:7px}
+.cr-modelpick__item{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--cr-line);border-radius:var(--cr-radius-sm);background:var(--cr-panel-2);cursor:pointer}
+.cr-modelpick__item:hover{border-color:var(--cr-line-strong)}
+.cr-modelpick__item.is-on{border-color:var(--cr-ruby);background:rgba(199,34,43,.12)}
+.cr-modelpick__item input{accent-color:var(--cr-ruby);flex:0 0 auto}
+.cr-modelpick__item span{display:grid;min-width:0}
+.cr-modelpick__item b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-modelpick__item small{font-size:10px;color:var(--cr-faint)}
+
+.cr-genjobs{display:grid;gap:9px;margin-top:4px}
+.cr-genjob{border:1px solid var(--cr-line);border-radius:var(--cr-radius-sm);background:var(--cr-panel-2);padding:11px 12px;display:grid;gap:8px}
+.cr-genjob__head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.cr-genjob__head b{font-size:12px}
+.cr-genjob__meta{margin-left:auto;font-size:10px;color:var(--cr-faint);font-variant-numeric:tabular-nums}
+.cr-genjob__head .cr-icon-btn{flex:0 0 auto}
+.cr-genjob__note{margin:0;font-size:11px;color:var(--cr-dim);line-height:1.5}
+.cr-genjob__note--stopped{color:var(--cr-warn)}
+.cr-genjob__foot{display:flex;gap:7px}
+.cr-genjob__assets{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px}
+.cr-genasset{appearance:none;border:1px solid var(--cr-line);border-radius:9px;background:var(--cr-bg);padding:0;overflow:hidden;cursor:pointer;aspect-ratio:1;display:grid;place-items:center;color:var(--cr-faint);font-size:10px}
+.cr-genasset:hover{border-color:var(--cr-line-strong)}
+.cr-genasset img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* A spinner already exists for the boot state; reused for live jobs. */
+.cr-spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--cr-line-strong);border-top-color:var(--cr-ruby-hot);display:inline-block;animation:cr-spin .7s linear infinite;flex:0 0 auto}
+@keyframes cr-spin{to{transform:rotate(360deg)}}
+
+.cr-convo__earlier{display:flex;justify-content:center;padding:0 0 10px;margin:0}
+.cr-convo__earlier.cr-muted{font-size:10px;color:var(--cr-faint);text-align:center;margin:0 0 10px}
+.cr-more{display:flex;justify-content:center;margin-top:12px}
+
+@media (max-width:720px){
+  .cr-modelpick{grid-template-columns:1fr}
+  .cr-genjob__meta{margin-left:0;width:100%}
+}

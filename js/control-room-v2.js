@@ -46,9 +46,9 @@
     threadFilter: "all",
     jobFilter: "all",
     pipelineStage: "all",
-    mediaModels: null,
-    generation: null,
     resources: null,
+    socialAccounts: null,
+    leadTotal: null,
     pending: {},
     drafts: {},
     search: ""
@@ -71,34 +71,17 @@
     spatial: { title: "Spatial Intelligence", href: API + "/internal/seek-first", subtitle: "Protected Seek First console", external: true }
   };
 
-  function esc(value) {
-    var d = document.createElement("i");
-    d.textContent = value == null ? "" : String(value);
-    return d.innerHTML;
-  }
-  function text(value, fallback) { return value === null || value === undefined || value === "" ? (fallback == null ? "—" : fallback) : String(value); }
-  function count(value) { var n = Number(value); return Number.isFinite(n) ? n : 0; }
-  function titleCase(value) { return String(value || "").replace(/[-_]+/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
-  function ago(value) {
-    if (!value) return "—";
-    var t = new Date(value).getTime();
-    if (!Number.isFinite(t)) return text(value);
-    var s = Math.max(1, Math.round((Date.now() - t) / 1000));
-    if (s < 60) return s + "s";
-    if (s < 3600) return Math.round(s / 60) + "m";
-    if (s < 86400) return Math.round(s / 3600) + "h";
-    return Math.round(s / 86400) + "d";
-  }
-  function moneyCents(value) {
-    var n = Number(value);
-    if (!Number.isFinite(n)) return "—";
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(n / 100);
-  }
-  function formatDate(value) {
-    if (!value) return "—";
-    try { return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value)); }
-    catch (e) { return String(value); }
-  }
+  /* Formatting and source-result primitives live in js/control-room/
+     format.js and sources.js. Bound to locals so every call site below is
+     unchanged. */
+  var fmt = window.CR.fmt, SRC = window.CR.sources;
+  var esc = fmt.esc, text = fmt.text, count = fmt.count, titleCase = fmt.titleCase;
+  var ago = fmt.ago, moneyCents = fmt.moneyCents, formatDate = fmt.formatDate;
+  var durationBetween = fmt.durationBetween, stateClass = fmt.stateClass, jsonText = fmt.jsonText;
+  var okResult = SRC.okResult, badResult = SRC.badResult, classifySourceError = SRC.classifySourceError;
+  var src = SRC.src, rowsOf = SRC.rowsOf, dataOf = SRC.dataOf, pickRows = SRC.pickRows;
+  var sourceBanner = SRC.sourceBanner, sourceStates = SRC.sourceStates;
+
   function token() { return window.MCC_SUPA && window.MCC_SUPA.token ? window.MCC_SUPA.token() : Promise.resolve(null); }
   function sbBase() { return window.MCC_SUPA && window.MCC_SUPA.url; }
   function sbKey() { return window.MCC_SUPA && window.MCC_SUPA.key; }
@@ -141,69 +124,30 @@
         cache: "no-store",
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
       }).then(function (r) {
-        if (!r.ok) throw new Error("Supabase " + r.status);
+        if (!r.ok) {
+          /* The status has to travel with the error, otherwise the source
+             classifier cannot tell a refused read (401/403) from a broken
+             one (5xx) and reports every Supabase failure as "unavailable". */
+          return r.text().then(function (body) {
+            var detail = null;
+            try { detail = body ? JSON.parse(body) : null; } catch (e) { detail = null; }
+            var message = (detail && (detail.message || detail.hint || detail.error)) || ("Supabase " + r.status);
+            throw Object.assign(new Error(message), { status: r.status, detail: detail });
+          });
+        }
         if (r.status === 204) return null;
-        return r.json().catch(function () { return null; });
+        return r.json().catch(function () { return null; }).then(function (rows) {
+          /* PostgREST reports the unpaginated total in Content-Range when
+             asked, which is how a view can say "showing 50 of 812". */
+          if (!opts.count) return rows;
+          var range = r.headers.get("content-range") || "";
+          var total = Number(String(range).split("/")[1]);
+          return { rows: rows || [], total: Number.isFinite(total) ? total : null };
+        });
       });
     });
   }
 
-  /* SOURCE RESULTS.
-
-     Unavailable is not empty. An operator who cannot tell "there are no
-     leads" from "the leads query failed" will act on a view that is lying
-     to them, so every read returns a result carrying its own state and no
-     failure is ever silently rewritten into an empty list. */
-  function okResult(data) { return { ok: true, state: "ok", data: data, message: "" }; }
-  function badResult(kind, message, status) { return { ok: false, state: kind, data: null, message: message || "", status: status || 0 }; }
-  function classifySourceError(e) {
-    var status = e && e.status;
-    var message = (e && e.message) || "Request failed";
-    if (message === "signed out") return badResult("unauthorized", "This session is not signed in.", 401);
-    if (status === 401 || status === 403) return badResult("unauthorized", message, status);
-    if (status === 404 || status === 501) return badResult("unsupported", message, status);
-    if (status === 429) return badResult("degraded", message, status);
-    if (!status || status >= 500) return badResult("unavailable", message, status || 0);
-    return badResult("failed", message, status);
-  }
-  function src(promise) { return promise.then(okResult).catch(function (e) { return classifySourceError(e); }); }
-  /* Views still want a plain array to iterate. This is the ONLY place a
-     failed result becomes [], and the result itself stays in state.sources
-     so the view can say why the list is short. */
-  function rowsOf(result) { var d = result && result.ok ? result.data : null; return Array.isArray(d) ? d : []; }
-  function dataOf(result) { return result && result.ok ? result.data : null; }
-  function pickRows(result, key) {
-    if (!result || !result.ok) return [];
-    var d = result.data;
-    if (Array.isArray(d)) return d;
-    return d && Array.isArray(d[key]) ? d[key] : [];
-  }
-
-  var SOURCE_COPY = {
-    unauthorized: ["Not authorized", "This operator session is not permitted to read this source."],
-    unavailable: ["Source unavailable", "The canonical source did not respond. This is not the same as having no records."],
-    unsupported: ["Not supported yet", "No canonical endpoint exists for this view."],
-    degraded: ["Degraded", "The source is rate limiting or partially responding."],
-    failed: ["Request failed", "The canonical source rejected this request."]
-  };
-  function sourceBanner(result, label) {
-    if (!result || result.ok) return "";
-    var copy = SOURCE_COPY[result.state] || SOURCE_COPY.failed;
-    var kind = result.state === "unsupported" ? "info" : (result.state === "unauthorized" ? "warn" : "bad");
-    return '<div class="cr-source cr-source--' + esc(result.state) + '">' +
-      '<span class="' + stateClass(kind) + '">' + esc(copy[0]) + '</span>' +
-      '<div class="cr-source__text"><b>' + esc(label || "Source") + '</b><span>' + esc(copy[1]) + '</span>' +
-      (result.message ? '<code>' + esc(result.message) + (result.status ? " · HTTP " + result.status : "") + '</code>' : "") +
-      '</div><button class="cr-btn cr-btn--ghost" type="button" data-action="refresh">Retry</button></div>';
-  }
-  /* Renders the honest state of a list: failed sources are named, and an
-     empty list only ever reads as "empty" when the read actually succeeded. */
-  function sourceStates(entries) {
-    return entries.filter(function (e) { return e[1] && !e[1].ok; })
-      .map(function (e) { return sourceBanner(e[1], e[0]); }).join("");
-  }
-  function anyFailed(results) { return results.some(function (r) { return r && !r.ok; }); }
-  function stateClass(kind) { return "cr-state cr-state--" + (kind || "info"); }
   function note(message, bad) { var n = $("cpNote"); if (!n) return; n.textContent = message || ""; n.className = "cr-note" + (bad ? " is-err" : ""); }
 
   function normalizeCreateView(v) {
@@ -437,6 +381,7 @@
     return true;
   }
 
+  var TRANSCRIPT_PAGE = 50;
   var DELIVERY_KIND = { delivered: "ok", sent: "ok", received: "info", queued: "warn", claimed: "warn", failed: "bad", suppressed: "bad" };
   function renderTranscript(threadId) {
     var result = state.transcripts[threadId];
@@ -446,7 +391,18 @@
     if (!messages.length) {
       return '<div class="cr-convo__body">' + empty("No messages yet", "This thread exists but carries no messages in comms_messages.") + '</div>';
     }
-    return '<div class="cr-convo__body">' + messages.map(function (m) {
+    /* Older messages are fetched on request rather than capped silently: a
+       transcript that simply stops at N looks like the whole conversation. */
+    var earlierBusy = state.pending["earlier:" + threadId];
+    var earlierError = state.pending["earlierError:" + threadId];
+    var head = result.data.has_more
+      ? '<div class="cr-convo__earlier">' +
+          '<button class="cr-btn cr-btn--ghost" type="button" data-action="load-earlier" data-id="' + esc(threadId) + '"' + (earlierBusy ? " disabled" : "") + '>' +
+          (earlierBusy ? "Loading…" : "Load earlier messages") + '</button></div>'
+      : '<p class="cr-convo__earlier cr-muted">Start of the conversation.</p>';
+    return '<div class="cr-convo__body">' + head +
+      (earlierError ? sourceBanner(earlierError, "Earlier messages") : "") +
+      messages.map(function (m) {
       var out = m.direction === "outbound";
       var kind = DELIVERY_KIND[m.status] || "info";
       return '<div class="cr-msg' + (out ? " cr-msg--out" : "") + '">' +
@@ -524,7 +480,7 @@
     delete state.transcripts[threadId];
     /* The request is started and registered BEFORE the loading render, because
        that render is what re-enters this function via render()'s auto-load. */
-    var pending = src(request("/v1/comms/threads/" + encodeURIComponent(threadId) + "/messages?limit=200")).then(function (result) {
+    var pending = src(request("/v1/comms/threads/" + encodeURIComponent(threadId) + "/messages?limit=" + TRANSCRIPT_PAGE)).then(function (result) {
       delete transcriptInflight[threadId];
       state.transcripts[threadId] = result;
       if (result.ok && result.data && result.data.thread) {
@@ -538,19 +494,121 @@
     return pending;
   }
 
+  /* Walks backwards through the thread with the server's keyset cursor and
+     prepends the older page. Messages are keyed by id on merge because a
+     cursor page can legitimately overlap the page before it. */
+  function loadEarlier(threadId) {
+    var current = state.transcripts[threadId];
+    if (!current || !current.ok || !current.data || !current.data.has_more) return;
+    if (state.pending["earlier:" + threadId]) return;
+    state.pending["earlier:" + threadId] = true;
+    render();
+    var q = "/v1/comms/threads/" + encodeURIComponent(threadId) + "/messages?limit=" + TRANSCRIPT_PAGE +
+      "&before=" + encodeURIComponent(current.data.next_before || "") +
+      (current.data.next_before_id ? "&before_id=" + encodeURIComponent(current.data.next_before_id) : "");
+    src(request(q)).then(function (page) {
+      delete state.pending["earlier:" + threadId];
+      if (!page.ok) { state.pending["earlierError:" + threadId] = page; render(); return; }
+      delete state.pending["earlierError:" + threadId];
+      var older = (page.data && page.data.messages) || [];
+      var seen = {};
+      var merged = older.concat(current.data.messages || []).filter(function (m) {
+        if (seen[m.id]) return false;
+        seen[m.id] = true;
+        return true;
+      });
+      state.transcripts[threadId] = okResult(Object.assign({}, current.data, {
+        messages: merged,
+        has_more: Boolean(page.data && page.data.has_more),
+        next_before: page.data && page.data.next_before,
+        next_before_id: page.data && page.data.next_before_id
+      }));
+      render();
+    });
+  }
+
   /* The four persisted lead states. These are the states the `leads` table
      actually stores — the console does not invent a fifth. */
   var LEAD_STAGES = ["new", "replied", "booked", "closed"];
   var LEAD_STAGE_LABELS = { "new": "New", replied: "Contacted", booked: "Booked", closed: "Closed" };
 
-  function pipelineLeads() {
-    var q = String(state.search || "").trim().toLowerCase();
-    return state.leads.filter(function (l) {
-      if (state.pipelineStage !== "all" && (l.status || "new") !== state.pipelineStage) return false;
-      if (!q) return true;
-      return [l.name, l.email, l.want, l.note, l.campaign, l.source, l.page, l.status]
-        .filter(Boolean).join(" ").toLowerCase().indexOf(q) >= 0;
+  /* LEAD QUERY.
+
+     Search runs on the server. Filtering the loaded page in the browser can
+     only ever find leads that happened to be in it, so a search that came
+     back empty could not be trusted to mean "no such lead". */
+  var LEAD_PAGE = 200;
+  var LEAD_SEARCH_COLUMNS = ["name", "email", "want", "note", "campaign", "source", "page"];
+
+  function leadQueryPath(limit, offset) {
+    var q = String(state.search || "").trim();
+    var parts = ["select=*", "order=at.desc", "limit=" + limit, "offset=" + (offset || 0)];
+    if (state.pipelineStage !== "all") parts.push("status=eq." + encodeURIComponent(state.pipelineStage));
+    if (q) {
+      /* PostgREST `or` with ilike. Commas and parens would break out of the
+         filter group, so they are stripped rather than escaped. */
+      var safe = q.replace(/[(),*]/g, " ").trim();
+      if (safe) {
+        parts.push("or=(" + LEAD_SEARCH_COLUMNS.map(function (c) {
+          return c + ".ilike.*" + encodeURIComponent(safe) + "*";
+        }).join(",") + ")");
+      }
+    }
+    return "leads?" + parts.join("&");
+  }
+
+  function runLeadQuery(append) {
+    var offset = append ? state.leads.length : 0;
+    var key = leadQueryPath(LEAD_PAGE, offset);
+    state.pending.leads = true;
+    if (!append) state.leadTotal = null;
+    render();
+    return src(supa(key, { count: true, prefer: "count=exact" })).then(function (result) {
+      delete state.pending.leads;
+      /* A newer keystroke already superseded this response. */
+      if (leadQueryPath(LEAD_PAGE, offset) !== key) return;
+      state.sources.leads = result.ok ? okResult((result.data && result.data.rows) || []) : result;
+      var rows = result.ok ? ((result.data && result.data.rows) || []) : [];
+      state.leads = append ? state.leads.concat(rows) : rows;
+      state.leadTotal = result.ok && result.data ? result.data.total : null;
+      render();
     });
+  }
+
+  var leadSearchTimer = null;
+  function scheduleLeadQuery() {
+    clearTimeout(leadSearchTimer);
+    leadSearchTimer = setTimeout(function () { runLeadQuery(false); }, 260);
+  }
+
+  /* The board renders whatever the current server query returned. */
+  function pipelineLeads() { return state.leads; }
+
+  /* States what the loaded rows actually represent: which query produced
+     them, and how many the server says match it. */
+  function leadScopeNote() {
+    if (state.pending.leads) return '<p class="cr-derived">Querying leads…</p>';
+    if (!state.sources.leads || !state.sources.leads.ok) return "";
+    var bits = [];
+    var q = String(state.search || "").trim();
+    if (q) bits.push('matching "' + q + '"');
+    if (state.pipelineStage !== "all") bits.push("in " + (LEAD_STAGE_LABELS[state.pipelineStage] || state.pipelineStage));
+    var scope = bits.length ? " " + bits.join(" ") : "";
+    if (state.leadTotal === null || state.leadTotal === undefined) {
+      return '<p class="cr-derived">Showing ' + state.leads.length + ' lead' + (state.leads.length === 1 ? "" : "s") + scope + '. The server did not report a total.</p>';
+    }
+    if (state.leadTotal > state.leads.length) {
+      return '<p class="cr-derived">Showing ' + state.leads.length + ' of ' + state.leadTotal + ' leads' + scope + '. Search runs on the server, so this covers every lead, not just the loaded page.</p>';
+    }
+    return '<p class="cr-derived">' + state.leadTotal + ' lead' + (state.leadTotal === 1 ? "" : "s") + scope + '.</p>';
+  }
+
+  function leadMore() {
+    if (state.pending.leads) return "";
+    if (state.leadTotal === null || state.leadTotal === undefined) return "";
+    if (state.leads.length >= state.leadTotal) return "";
+    return '<div class="cr-more"><button class="cr-btn" type="button" data-action="more-leads">Load ' +
+      Math.min(LEAD_PAGE, state.leadTotal - state.leads.length) + ' more</button></div>';
   }
 
   function renderPipeline() {
@@ -565,12 +623,14 @@
         }).join("") : '<div class="cr-board__empty">' +
           (state.sources.leads && state.sources.leads.ok ? "No records" : "Not readable") + '</div>') + '</div></section>';
     }).join("") + '</div>';
-    var chips = '<div class="cr-filterchips"><button class="cr-chip' + (state.pipelineStage === "all" ? " is-on" : "") + '" type="button" data-stage-filter="all">All <b>' + state.leads.length + '</b></button>' +
+    /* Counts are of the loaded set; the server's total for the current query
+       is stated separately so a partial page is never mistaken for the whole
+       pipeline. */
+    var chips = '<div class="cr-filterchips"><button class="cr-chip' + (state.pipelineStage === "all" ? " is-on" : "") + '" type="button" data-stage-filter="all">All</button>' +
       LEAD_STAGES.map(function (s) {
-        var n = state.leads.filter(function (l) { return (l.status || "new") === s; }).length;
-        return '<button class="cr-chip' + (state.pipelineStage === s ? " is-on" : "") + '" type="button" data-stage-filter="' + s + '">' + esc(LEAD_STAGE_LABELS[s]) + ' <b>' + n + '</b></button>';
+        return '<button class="cr-chip' + (state.pipelineStage === s ? " is-on" : "") + '" type="button" data-stage-filter="' + s + '">' + esc(LEAD_STAGE_LABELS[s]) + '</button>';
       }).join("") + '</div>';
-    return banner + chips + board;
+    return banner + chips + leadScopeNote() + board + leadMore();
   }
 
   function personRows() {
@@ -682,54 +742,21 @@
       '<div class="cr-creative-canvas"><div class="cr-node cr-node--brief"><small>Brief</small><strong>' + esc(project.objective || project.name || "Project brief") + '</strong></div>' +
       '<div class="cr-node-link">→</div><div class="cr-node"><small>Variants</small><strong>' + st.variants + ' creative output' + (st.variants === 1 ? "" : "s") + '</strong></div>' +
       '<div class="cr-node-link">→</div><div class="cr-node"><small>Distribution</small><strong>' + (st.scheduled + st.posts) + ' post object' + ((st.scheduled + st.posts) === 1 ? "" : "s") + '</strong></div></div>' +
-      '<div class="cr-grid">' + panel("Variants", variants.length + " total", '<div class="cr-list">' + (variants.slice(0, 8).map(function (v) { return row(v.variant_key || "Variant", v.hook || v.hypothesis || "Generated creative", v.score == null ? titleCase(v.status || "") : "Score " + v.score, v.status === "ready" ? "ok" : "ai", "inspect-variant", { id: v.id, badge: v.status || "variant" }); }).join("") || '<div class="cr-panel__body cr-muted">No variants yet.</div>') + '</div>', "cr-span-6") +
+      '<div class="cr-grid">' + panel("Variants", variants.length + " total", '<div class="cr-list">' + (variants.slice(0, 8).map(function (v) {
+        /* A publishable variant gets the real publish path; one without
+           resolvable media does not, because the backend would refuse it. */
+        return row(v.variant_key || "Variant", v.hook || v.hypothesis || "Generated creative",
+          variantIsPublishable(v) ? "Publish" : (v.score == null ? titleCase(v.status || "") : "Score " + v.score),
+          v.status === "ready" ? "ok" : "ai",
+          variantIsPublishable(v) ? "open-publish" : "inspect-variant",
+          { id: v.id, badge: v.status || "variant" });
+      }).join("") || '<div class="cr-panel__body cr-muted">No variants yet.</div>') + '</div>', "cr-span-6") +
       panel("Published / queued", (st.scheduled + st.posts) + " items", '<div class="cr-list">' + (posts.slice(0, 8).map(function (p) { return row(p.caption || "Published post", p.publish_mode || "post", ago(p.published_at), "ok", "inspect-post", { id: p.id, badge: "Published" }); }).join("") || '<div class="cr-panel__body cr-muted">Nothing published yet.</div>') + '</div>', "cr-span-6") + '</div>';
   }
 
-  /* GENERATION.
-
-     Runs against the real /v1/media endpoints. Models are read from the
-     canonical catalog rather than hard-coded, a refused generation is
-     reported with the backend's own reason, and nothing here claims a job
-     was created unless the Worker returned one. */
-  function loadMediaModels(force) {
-    if (state.mediaModels && !force) return Promise.resolve(state.mediaModels);
-    return src(request("/v1/media/models")).then(function (result) {
-      state.mediaModels = result; render(); return result;
-    });
-  }
-  function modelRows() { return pickRows(state.mediaModels, "models"); }
-
-  function renderGenerator() {
-    var models = modelRows();
-    var gen = state.generation;
-    var busy = state.pending.generate;
-    var body;
-    if (!state.mediaModels) {
-      body = '<div class="cr-panel__body"><p class="cr-muted">The model catalog has not been read yet.</p>' +
-        '<button class="cr-btn cr-btn--primary" type="button" data-action="load-models">Load models</button></div>';
-    } else if (!state.mediaModels.ok) {
-      body = '<div class="cr-panel__body">' + sourceBanner(state.mediaModels, "Media models") + '</div>';
-    } else if (!models.length) {
-      body = '<div class="cr-panel__body">' + empty("No models enabled", "The catalog read succeeded but returned no enabled media models, so there is nothing to generate with.") + '</div>';
-    } else {
-      body = '<div class="cr-panel__body cr-gen">' +
-        '<select class="cr-select" id="crGenModel" aria-label="Model">' + models.map(function (m) {
-          return '<option value="' + esc(m.id) + '">' + esc(m.label || m.provider_model_id || m.id) + ' · ' + esc(m.capability || "") + '</option>';
-        }).join("") + '</select>' +
-        '<textarea class="cr-textarea" id="crGenPrompt" rows="3" placeholder="Describe what to generate…"></textarea>' +
-        '<div class="cr-gen__row">' +
-        '<input class="cr-input cr-input--sm" id="crGenBudget" type="number" min="1" placeholder="Budget (cents, optional)">' +
-        '<button class="cr-btn cr-btn--primary" type="button" data-action="generate"' + (busy ? " disabled" : "") + '>' + (busy ? "Submitting…" : "Generate") + '</button>' +
-        '<button class="cr-btn" type="button" data-action="bakeoff"' + (busy || models.length < 2 ? " disabled" : "") + ' title="Runs the same prompt across the first models in the catalog">Bakeoff</button>' +
-        '</div>' +
-        (gen && !gen.ok ? sourceBanner(gen, "Generation") : "") +
-        (gen && gen.ok ? '<div class="cr-gen__ok"><span class="' + stateClass("ok") + '">Queued</span> ' + esc(gen.summary || "Job created") +
-          (gen.jobId ? ' <button class="cr-btn cr-btn--ghost" type="button" data-action="inspect-media-job" data-id="' + esc(gen.jobId) + '">Open job</button>' : "") + '</div>' : "") +
-        '</div>';
-    }
-    return panel("Generate", "real media compute", body, "cr-span-12");
-  }
+  /* Generation lives in js/control-room/media.js: catalog, explicit model
+     selection, submission, and following each job to a terminal state. */
+  function renderGenerator() { return window.CR.media.renderPanel(); }
 
   function renderProjects() {
     if (state.selectedProjectId) {
@@ -793,7 +820,19 @@
     var summary = '<div class="cr-filterchips">' + Object.keys(counts).map(function (k) {
       return '<span class="cr-chip is-static">' + esc(titleCase(k)) + ' <b>' + counts[k] + '</b></span>';
     }).join("") + '</div>';
-    return banner + summary + '<div class="cr-schedule"><div class="cr-list">' + items.map(function (it) { return row(it.title, formatDate(it.when), titleCase(it.state), it.kind, it.action, { id: it.id, badge: it.state }); }).join("") + '</div></div>';
+    /* Distribution targets are real rows; a queue with no connected account
+       cannot publish, and that is worth stating on this view. */
+    var accounts = socialAccountRows();
+    var accountNote = "";
+    if (state.socialAccounts && state.socialAccounts.ok) {
+      accountNote = accounts.length
+        ? '<p class="cr-derived">Publishing to ' + accounts.length + ' connected account' + (accounts.length === 1 ? "" : "s") + ': ' +
+            esc(accounts.map(function (a) { return (a.display_name || a.handle || a.external_account_id) + " (" + (a.platform || "?") + ")"; }).join(", ")) + '.</p>'
+        : '<div class="cr-gap"><b>No connected social account.</b><span>social_accounts is empty for this organization, so nothing here can be published even where a variant is ready.</span></div>';
+    } else if (state.socialAccounts && !state.socialAccounts.ok) {
+      accountNote = sourceBanner(state.socialAccounts, "Social accounts");
+    }
+    return banner + accountNote + summary + '<div class="cr-schedule"><div class="cr-list">' + items.map(function (it) { return row(it.title, formatDate(it.when), titleCase(it.state), it.kind, it.action, { id: it.id, badge: it.state }); }).join("") + '</div></div>';
   }
   function renderCreate() {
     var body = state.createView === "projects" ? renderProjects() : (state.createView === "library" ? renderLibrary() : renderSchedule());
@@ -858,8 +897,11 @@
     state.jobs.filter(function (j) { return j.status === "failed"; }).forEach(function (j) {
       events.push({ id: j.id, action: "inspect-job", severity: "ERROR", source: "Core", message: titleCase(j.job_type) + ": " + text(j.last_error, "job failed"), time: j.updated_at || j.created_at, kind: "bad" });
     });
-    state.mediaJobs.filter(function (j) { return j.status === "failed" || j.status === "error"; }).forEach(function (j) {
-      events.push({ id: j.id, action: "inspect-media-job", severity: "ERROR", source: "Media", message: text(j.error || (j.result && j.result.error), "Media job failed"), time: j.updated_at || j.created_at, kind: "bad" });
+    /* media_jobs.error is jsonb defaulting to '{}', which is truthy even when
+       empty — reading it as a plain value puts "[object Object]" in front of
+       an operator. jsonText resolves it to real text or nothing. */
+    state.mediaJobs.filter(function (j) { return j.status === "failed"; }).forEach(function (j) {
+      events.push({ id: j.id, action: "inspect-media-job", severity: "ERROR", source: "Media", message: jsonText(j.error) || jsonText(j.result && j.result.error) || "Media job failed", time: j.updated_at || j.created_at, kind: "bad" });
     });
     state.publishJobs.filter(function (p) { return p.state === "failed"; }).forEach(function (p) {
       events.push({ id: p.id, action: "inspect-publish", severity: "ERROR", source: "Social", message: text(p.last_error, "Publish job failed"), time: p.updated_at || p.scheduled_at, kind: "bad" });
@@ -884,6 +926,70 @@
       '<p class="cr-derived">McCluster has no log or trace pipeline. These are the failures the canonical tables record, plus any source this console could not read.</p>' +
       renderTable([{ label: "Time", html: function (r) { return esc(ago(r.time)); } }, { label: "Severity", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.severity) + '</span>'; } }, { label: "Source", key: "source" }, { label: "Message", key: "message" }], events, "No events");
   }
+  /* SOCIAL ACCOUNTS + PUBLISHING.
+
+     POST /v1/social/publish exists and was never wired, so a finished variant
+     could be looked at but not sent anywhere. Publishing needs a real target
+     account, so the account list is read on demand when Create is opened. */
+  function loadSocialAccounts(force) {
+    if (state.socialAccounts && !force) return Promise.resolve();
+    state.socialAccounts = null;
+    return src(request("/v1/social/accounts")).then(function (result) {
+      state.socialAccounts = result;
+      render();
+    });
+  }
+  function socialAccountRows() { return pickRows(state.socialAccounts, "accounts"); }
+
+  function variantIsPublishable(v) {
+    /* The backend accepts a variant only when it can resolve media from it. */
+    return Boolean(v && (v.output_asset_id || v.video_asset_id));
+  }
+
+  function openPublish(variantId) {
+    var v = findById(state.variants, variantId);
+    if (!v) return;
+    var accounts = socialAccountRows();
+    var busy = state.pending["publish:" + variantId];
+    var failure = state.pending["publishError:" + variantId];
+    var done = state.pending["publishOk:" + variantId];
+
+    var body;
+    if (!state.socialAccounts) {
+      body = inspectorSection("Target", '<p class="cr-muted">Reading connected social accounts…</p>');
+      loadSocialAccounts();
+    } else if (!state.socialAccounts.ok) {
+      body = inspectorSection("Target", sourceBanner(state.socialAccounts, "Social accounts"));
+    } else if (!accounts.length) {
+      body = inspectorSection("Target", '<div class="cr-gap"><b>No social account is connected.</b>' +
+        '<span>POST /v1/social/publish requires an account_id, and this organization has no rows in social_accounts. Connect an account before publishing.</span></div>');
+    } else {
+      body = inspectorSection("Target", '<div class="cr-gen">' +
+        '<select class="cr-select" id="crPubAccount" aria-label="Account">' + accounts.map(function (a) {
+          return '<option value="' + esc(a.id) + '">' + esc(a.display_name || a.handle || a.external_account_id) + ' · ' + esc(a.platform || "") + '</option>';
+        }).join("") + '</select>' +
+        '<select class="cr-select" id="crPubMode" aria-label="Publish mode">' +
+          '<option value="trial">trial</option><option value="reel">reel</option></select>' +
+        '<textarea class="cr-textarea" id="crPubCaption" rows="2" placeholder="Caption (defaults to the variant caption)">' + esc(v.caption || "") + '</textarea>' +
+        '<input class="cr-input" id="crPubWhen" type="datetime-local" aria-label="Schedule for (optional)">' +
+        '</div>');
+    }
+
+    openInspector({
+      title: "Publish " + (v.variant_key || "variant"),
+      subtitle: "Create · Schedule",
+      description: "Queues a real publish job through the canonical social backend.",
+      props: [["Variant", v.variant_key], ["Status", v.status], ["Asset", v.output_asset_id || v.video_asset_id || "—"]],
+      custom: body +
+        (failure ? inspectorSection("Not queued", sourceBanner(failure, "Publish")) : "") +
+        (done ? inspectorSection("Queued", '<p class="cr-muted">Publish job ' + esc(done) + ' created.</p>') : ""),
+      actions: accounts.length && state.socialAccounts && state.socialAccounts.ok
+        ? '<button class="cr-btn cr-btn--primary" type="button" data-action="publish-variant" data-id="' + esc(variantId) + '"' + (busy ? " disabled" : "") + '>' + (busy ? "Queueing…" : "Queue publish") + '</button>'
+        : "",
+      tabs: ["overview", "raw", "ai"], raw: v
+    });
+  }
+
   /* Resources reads the platform surfaces on demand rather than on every
      Control Room boot — they are only meaningful on this view. */
   function loadResources(force) {
@@ -984,6 +1090,17 @@
     bindSurfaceControls();
     /* Selecting a thread and landing on the inbox both need the transcript;
        doing it after render keeps the fetch out of the render path. */
+    /* Create's own sources load when Create is opened, the same way the
+       inbox loads a transcript — not behind a button the operator has to
+       find first. */
+    if (state.surface === "create" && !state.socialAccounts && !state.pending.socialAccounts) {
+      state.pending.socialAccounts = true;
+      loadSocialAccounts().then(function () { delete state.pending.socialAccounts; });
+    }
+    if (state.surface === "create" && state.createView === "projects" && !state.pending.mediaModels && !window.CR.media.state.catalog) {
+      state.pending.mediaModels = true;
+      window.CR.media.loadCatalog().then(function () { delete state.pending.mediaModels; });
+    }
     if (state.surface === "work" && state.workView === "inbox" && state.selectedThreadId && !state.transcripts[state.selectedThreadId] && !state.pending["transcript:" + state.selectedThreadId]) {
       state.pending["transcript:" + state.selectedThreadId] = true;
       var pendingId = state.selectedThreadId;
@@ -1103,14 +1220,6 @@
       actions: controls, activity: activity, raw: t, tabs: ["overview", "activity", "raw", "ai"]
     });
   }
-  function durationBetween(a, b) {
-    var start = a ? new Date(a).getTime() : 0, end = b ? new Date(b).getTime() : 0;
-    if (!start || !end || end < start) return "—";
-    var ms = end - start;
-    if (ms < 1000) return ms + "ms";
-    if (ms < 60000) return (ms / 1000).toFixed(1) + "s";
-    return Math.round(ms / 60000) + "m";
-  }
   function payloadBlock(title, value) {
     if (value === null || value === undefined || (typeof value === "object" && !Object.keys(value).length)) return "";
     return inspectorSection(title, '<pre class="cr-raw">' + esc(typeof value === "string" ? value : JSON.stringify(value, null, 2)) + '</pre>');
@@ -1140,19 +1249,29 @@
       custom: detail, activity: activity, raw: j, tabs: ["overview", "activity", "raw", "ai"]
     });
   }
+  /* Media jobs can come from the loaded snapshot or from a generation that
+     is still being followed this session; both resolve here. */
+  function allMediaJobs() { return state.mediaJobs.concat(window.CR.media.trackedJobs()); }
+  function allMediaAssets() { return state.mediaAssets.concat(window.CR.media.generatedAssets()); }
+
   function inspectMediaJob(id) {
-    var j = findById(state.mediaJobs, id); if (!j) return;
+    var j = findById(allMediaJobs(), id); if (!j) return;
     var detail = "";
-    var err = j.error || (j.result && j.result.error);
-    if (err) detail += inspectorSection("Failure", '<p class="cr-fail">' + esc(typeof err === "string" ? err : JSON.stringify(err)) + '</p>');
+    var err = jsonText(j.error) || jsonText(j.result && j.result.error);
+    if (err) detail += inspectorSection("Failure", '<p class="cr-fail">' + esc(err) + '</p>');
     detail += payloadBlock("Input", j.input || j.request);
     detail += payloadBlock("Result", j.result || j.output);
-    var assets = state.mediaAssets.filter(function (a) { return String(a.job_id || a.media_job_id) === String(j.id); });
+    /* Cost is shown only where the backend settled or estimated a number. */
+    var cost = [];
+    if (j.actual_cost_cents !== null && j.actual_cost_cents !== undefined) cost.push(["Actual cost", moneyCents(j.actual_cost_cents)]);
+    if (j.estimated_cost_cents !== null && j.estimated_cost_cents !== undefined) cost.push(["Estimated cost", moneyCents(j.estimated_cost_cents)]);
+    var assets = allMediaAssets().filter(function (a) { return String(a.job_id || a.media_job_id) === String(j.id); });
     openInspector({
       title: titleCase(j.capability || j.kind || "Media job"), subtitle: "Create · " + titleCase(j.status || "job"),
       description: "Canonical media_jobs record.",
       props: [["Status", j.status], ["Provider", j.provider], ["Model", j.provider_model_id || j.model_id],
-        ["Run time", durationBetween(j.created_at, j.updated_at)], ["Created", formatDate(j.created_at)]],
+        ["Run time", durationBetween(j.created_at || j.submitted_at, j.completed_at || j.updated_at)],
+        ["Created", formatDate(j.created_at)], ["Completed", formatDate(j.completed_at)]].concat(cost),
       custom: detail,
       related: assets.length
         ? '<div class="cr-list">' + assets.map(function (a) { return row(assetName(a), "Produced asset", titleCase(a.media_type || a.type || "asset"), "ok", "inspect-asset", { id: a.id, badge: "Asset" }); }).join("") + '</div>'
@@ -1168,11 +1287,11 @@
     openInspector({ title: s.title, subtitle: "System resource", description: s.sub, props: [["State", s.value]].concat(extra), raw: key === "core" ? state.ai : (key === "host" ? state.aiHealth : state.status), tabs: ["overview", "activity", "raw", "ai"] });
   }
   function inspectAsset(id) {
-    var a = findById(state.mediaAssets, id); if (!a) return;
+    var a = findById(allMediaAssets(), id); if (!a) return;
     /* Lineage is only shown where a real job row backs it — an asset whose
        producing job is not in the snapshot says so instead of implying one. */
     var jobId = a.job_id || a.media_job_id;
-    var job = jobId ? findById(state.mediaJobs, jobId) : null;
+    var job = jobId ? findById(allMediaJobs(), jobId) : null;
     var lineage = job
       ? '<div class="cr-list">' + row(titleCase(job.capability || job.kind || "Media job"), "Produced this asset", titleCase(job.status || ""), job.status === "failed" ? "bad" : "ok", "inspect-media-job", { id: job.id, badge: "Job" }) + '</div>'
       : (jobId ? '<p class="cr-muted">This asset references job ' + esc(jobId) + ', which is not in the current media job snapshot.</p>'
@@ -1283,6 +1402,8 @@
   function runAction(action, el) {
     if (!action) return;
     if (action.indexOf("open-bridge:") === 0) { openBridge(action.split(":")[1]); return; }
+    /* Generation owns its own actions; everything else falls through. */
+    if (window.CR.media.handleAction(action, el)) return;
     if (action === "home") setSurface("home");
     else if (action === "work-inbox") setSurface("work", "inbox");
     else if (action === "work-pipeline") setSurface("work", "pipeline");
@@ -1315,7 +1436,36 @@
     else if (action === "inspect-request") inspectRequest(el.getAttribute("data-id"));
     else if (action === "open-project") { state.selectedProjectId = el.getAttribute("data-id"); render(); }
     else if (action === "close-project") { state.selectedProjectId = null; render(); }
-    else if (action === "filters") openInspector({ title: "Filters", subtitle: titleCase(currentView()), description: "Filters are contextual to this view and use the same full-screen sheet on mobile.", props: [["View", titleCase(currentView())], ["Records", state.surface === "work" ? state.leads.length + state.threads.length : "contextual"]], tabs: ["overview", "ai"] });
+    else if (action === "filters") {
+      /* This used to open a panel that described filtering and filtered
+         nothing. It now drives the same state the chips do, which is what
+         makes it usable on a phone where the chip row is cramped. */
+      var stageButtons = [["all", "All stages"]].concat(LEAD_STAGES.map(function (st) { return [st, LEAD_STAGE_LABELS[st]]; }))
+        .map(function (pair) {
+          return '<button class="cr-btn' + (state.pipelineStage === pair[0] ? " cr-btn--primary" : "") + '" type="button" data-action="set-stage" data-stage="' + esc(pair[0]) + '">' + esc(pair[1]) + '</button>';
+        }).join("");
+      var queueButtons = THREAD_QUEUES.map(function (q) {
+        return '<button class="cr-btn' + (state.threadFilter === q[0] ? " cr-btn--primary" : "") + '" type="button" data-action="set-queue" data-queue="' + esc(q[0]) + '">' + esc(q[1]) + '</button>';
+      }).join("");
+      openInspector({
+        title: "Filters", subtitle: "Work · " + titleCase(state.workView),
+        description: "Stage filters the server lead query. Queue filters the loaded conversations.",
+        custom: inspectorSection("Lead stage", '<div class="cr-inspector__actions">' + stageButtons + '</div>') +
+          inspectorSection("Conversation queue", '<div class="cr-inspector__actions">' + queueButtons + '</div>') +
+          inspectorSection("Search", '<p class="cr-muted">' +
+            (state.search ? 'Filtering by "' + esc(state.search) + '". ' : "No search term. ") +
+            'Lead search runs against the whole table, not just the loaded page.</p>' +
+            (state.search ? '<button class="cr-btn" type="button" data-action="clear-search">Clear search</button>' : "")),
+        tabs: ["overview"]
+      });
+    }
+    else if (action === "set-stage") { state.pipelineStage = el.getAttribute("data-stage"); runLeadQuery(false); runAction("filters", el); }
+    else if (action === "set-queue") { state.threadFilter = el.getAttribute("data-queue"); render(); runAction("filters", el); }
+    else if (action === "clear-search") {
+      state.search = "";
+      var box = $("crWorkSearch"); if (box) box.value = "";
+      runLeadQuery(false); closeInspector();
+    }
     else if (action === "new-work") openInspector({
       title: "Create a record", subtitle: "Work · " + titleCase(state.workView),
       /* Stated plainly rather than offering a create form that would have
@@ -1429,7 +1579,6 @@
         });
       }
     }
-    else if (action === "load-models") { loadMediaModels(true); }
     else if (action === "refresh-health") {
       state.pending.health = true; render();
       src(request("/v1/ai/system-health", { method: "POST", body: {} })).then(function (result) {
@@ -1439,43 +1588,40 @@
         render();
       });
     }
-    else if (action === "generate" || action === "bakeoff") {
-      var modelSel = $("crGenModel"), promptBox = $("crGenPrompt"), budgetBox = $("crGenBudget");
-      var prompt = promptBox && promptBox.value.trim();
-      if (!prompt) { state.generation = badResult("failed", "A prompt is required.", 0); render(); return; }
-      var budget = budgetBox && budgetBox.value ? Number(budgetBox.value) : null;
-      var payload = { prompt: prompt };
-      if (budget) payload.budget_cents = budget;
-      if (state.org && state.org.id) payload.org_id = state.org.id;
-      var genPath;
-      if (action === "bakeoff") {
-        /* The catalog decides which models compete; the console does not
-           invent model ids. The backend caps a bakeoff at five. */
-        payload.model_ids = modelRows().slice(0, 3).map(function (m) { return m.id; });
-        genPath = "/v1/media/bakeoff";
-      } else {
-        payload.model_id = modelSel && modelSel.value;
-        genPath = "/v1/media/generate";
-      }
-      state.pending.generate = true; state.generation = null; render();
-      src(request(genPath, { method: "POST", body: payload })).then(function (result) {
-        delete state.pending.generate;
-        if (!result.ok) { state.generation = result; render(); return; }
-        var d = result.data || {};
-        var job = d.job || (Array.isArray(d.jobs) && d.jobs[0]) || null;
-        /* Only claim success for what actually came back. */
-        state.generation = {
-          ok: true,
-          jobId: job && job.id,
-          summary: action === "bakeoff"
-            ? ((d.jobs && d.jobs.length) || 0) + " bakeoff job(s) created"
-            : (job ? titleCase(job.status || "queued") + " · " + text(job.provider_model_id || job.model_id, "model") : "Accepted")
-        };
-        if (job) state.mediaJobs.unshift(job);
-        render();
+    else if (action === "inspect-media-job") { inspectMediaJob(el.getAttribute("data-id")); }
+    else if (action === "inspect-generated-asset") { inspectAsset(el.getAttribute("data-id")); }
+    else if (action === "load-earlier") { loadEarlier(el.getAttribute("data-id")); }
+    else if (action === "more-leads") { runLeadQuery(true); }
+    else if (action === "open-publish") { openPublish(el.getAttribute("data-id")); }
+    else if (action === "publish-variant") {
+      var vid = el.getAttribute("data-id");
+      var accountId = $("crPubAccount") && $("crPubAccount").value;
+      if (!accountId) { state.pending["publishError:" + vid] = badResult("failed", "Select an account.", 0); openPublish(vid); return; }
+      var when = $("crPubWhen") && $("crPubWhen").value;
+      var pubBody = {
+        account_id: accountId,
+        variant_id: vid,
+        publish_mode: ($("crPubMode") && $("crPubMode").value) || "trial"
+      };
+      var caption = $("crPubCaption") && $("crPubCaption").value.trim();
+      if (caption) pubBody.caption = caption;
+      /* datetime-local has no zone; send a real instant. */
+      if (when) pubBody.scheduled_at = new Date(when).toISOString();
+      if (state.org && state.org.id) pubBody.org_id = state.org.id;
+
+      state.pending["publish:" + vid] = true;
+      delete state.pending["publishError:" + vid];
+      openPublish(vid);
+      src(request("/v1/social/publish", { method: "POST", body: pubBody })).then(function (result) {
+        delete state.pending["publish:" + vid];
+        if (!result.ok) { state.pending["publishError:" + vid] = result; openPublish(vid); return; }
+        var job = result.data && result.data.publish_job;
+        state.pending["publishOk:" + vid] = (job && job.id) || "created";
+        /* The new job belongs in Schedule immediately, not after a reload. */
+        if (job) state.publishJobs.unshift(job);
+        openPublish(vid); render();
       });
     }
-    else if (action === "inspect-media-job") { inspectMediaJob(el.getAttribute("data-id")); }
     else if (action === "ai-context") {
       var q = $("crAiContextInput") && $("crAiContextInput").value.trim(); submitCoreTask(q, el.getAttribute("data-context"));
     } else if (action === "open-platform") {
@@ -1509,12 +1655,20 @@
   }
   function bindSurfaceControls() {
     bindActions($("crSurface"));
+    window.CR.media.bind($("crSurface"));
     var select = $("crViewSelect");
     if (select) select.addEventListener("change", function () { if (state.surface === "work") setSurface("work", select.value); else if (state.surface === "create") setSurface("create", select.value); else if (state.surface === "system") setSurface("system", select.value); });
     var search = $("crWorkSearch");
     if (search) {
       search.value = state.search || "";
-      search.addEventListener("input", function () { state.search = search.value; filterCurrentView(search.value); });
+      search.addEventListener("input", function () {
+        state.search = search.value;
+        /* Work is backed by the leads table, so its search is a server query.
+           The DOM filter still runs so thread rows in the same view narrow
+           immediately while the query is in flight. */
+        filterCurrentView(search.value);
+        if (state.surface === "work") scheduleLeadQuery();
+      });
     }
     var hero = $("crHeroInput"); if (hero) hero.addEventListener("keydown", function (e) { if (e.key === "Enter") handleCommand(hero.value); });
 
@@ -1527,7 +1681,11 @@
       b.addEventListener("click", function () { state.jobFilter = b.getAttribute("data-job-filter"); render(); });
     });
     document.querySelectorAll("[data-stage-filter]").forEach(function (b) {
-      b.addEventListener("click", function () { state.pipelineStage = b.getAttribute("data-stage-filter"); render(); });
+      b.addEventListener("click", function () {
+        state.pipelineStage = b.getAttribute("data-stage-filter");
+        /* The stage is part of the server query, not a client-side slice. */
+        runLeadQuery(false);
+      });
     });
 
     /* A re-render must not eat a half-written reply. */
@@ -1573,7 +1731,7 @@
       return discoverOrg().then(function (org) {
         return Promise.all([
           src(request("/v1/status")), src(request("/v1/apps")), src(request("/v1/ai/status")), src(request("/v1/ai/system-health")),
-          src(request("/v1/comms/threads?limit=100")), src(supa("leads?select=*&order=at.desc&limit=400")),
+          src(request("/v1/comms/threads?limit=100")), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact" })),
           src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
           src(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200")), loadCreative(org)
         ]).then(function (r) {
@@ -1594,7 +1752,14 @@
       state.status = dataOf(state.sources.status); state.ai = dataOf(state.sources.ai); state.aiHealth = dataOf(state.sources.aiHealth);
       state.apps = pickRows(state.sources.apps, "apps");
       state.threads = pickRows(state.sources.threads, "threads");
-      state.leads = rowsOf(state.sources.leads); state.siteRequests = rowsOf(state.sources.siteRequests); state.jobs = rowsOf(state.sources.jobs);
+      /* The leads read is counted, so it returns {rows,total} rather than a
+         bare array. Unwrap it and keep the source result array-shaped so
+         every downstream reader stays unchanged. */
+      var leadPayload = dataOf(state.sources.leads);
+      state.leads = leadPayload && Array.isArray(leadPayload.rows) ? leadPayload.rows : rowsOf(state.sources.leads);
+      state.leadTotal = leadPayload && leadPayload.total !== undefined ? leadPayload.total : null;
+      if (state.sources.leads.ok) state.sources.leads = okResult(state.leads);
+      state.siteRequests = rowsOf(state.sources.siteRequests); state.jobs = rowsOf(state.sources.jobs);
       state.mediaAssets = rowsOf(state.sources.mediaAssets); state.mediaJobs = rowsOf(state.sources.mediaJobs);
       state.campaigns = rowsOf(state.sources.campaigns); state.variants = rowsOf(state.sources.variants);
       state.publishJobs = rowsOf(state.sources.publishJobs); state.posts = rowsOf(state.sources.posts);
@@ -1626,6 +1791,27 @@
     window.addEventListener("hashchange", function () { readHash(); state.selectedProjectId = null; closeInspector(); render(); });
   }
   function tryResume() { token().then(function (t) { if (t && $("crApp").hidden) boot(); }); }
+  /* The media module renders into the Create canvas and needs the shell's
+     request client, panel chrome and render loop. It owns nothing else. */
+  window.CR.media.init({
+    request: request,
+    panel: panel,
+    render: render,
+    orgId: function () { return state.org && state.org.id; },
+    /* A finished job's output belongs in the canonical Library, so a settled
+       job refreshes the asset and job sources rather than only living in the
+       generation panel. */
+    onJobSettled: function (record) {
+      if (record.job) {
+        var idx = state.mediaJobs.findIndex(function (j) { return String(j.id) === String(record.job.id); });
+        if (idx >= 0) state.mediaJobs[idx] = record.job; else state.mediaJobs.unshift(record.job);
+      }
+      (record.assets || []).forEach(function (a) {
+        if (!state.mediaAssets.some(function (x) { return String(x.id) === String(a.id); })) state.mediaAssets.unshift(a);
+      });
+    }
+  });
+
   function init() { bindAuth(); bindShell(); bindActions(document); tryResume(); setTimeout(tryResume, 700); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

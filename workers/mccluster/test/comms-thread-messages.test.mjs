@@ -65,10 +65,11 @@ function get(path) {
 }
 
 test('owner thread messages returns the transcript with delivery state', async () => {
+  /* Newest-first, the way the query orders it. */
   const sb = supabase({
     messages: [
-      { id: 'm1', direction: 'inbound', sender_type: 'contact', body: 'hello', status: 'received', occurred_at: '2026-09-17T00:00:00Z' },
-      { id: 'm2', direction: 'outbound', sender_type: 'owner', body: 'hi back', status: 'delivered', occurred_at: '2026-09-17T00:01:00Z' }
+      { id: 'm2', direction: 'outbound', sender_type: 'owner', body: 'hi back', status: 'delivered', occurred_at: '2026-09-17T00:01:00Z' },
+      { id: 'm1', direction: 'inbound', sender_type: 'contact', body: 'hello', status: 'received', occurred_at: '2026-09-17T00:00:00Z' }
     ]
   });
 
@@ -131,6 +132,86 @@ test('a non-owner cannot read a transcript', async () => {
     const body = await response.text();
     assert.ok(!body.includes('private'), 'must not leak message bodies to a non-owner');
   });
+});
+
+test('the newest page comes back oldest-first with a cursor when more remain', async () => {
+  /* 4 stored messages, page size 2: the operator should get the two newest,
+     in reading order, plus the cursor that walks backwards. */
+  const stored = [
+    { id: 'm4', occurred_at: '2026-09-17T00:04:00Z', body: 'fourth' },
+    { id: 'm3', occurred_at: '2026-09-17T00:03:00Z', body: 'third' },
+    { id: 'm2', occurred_at: '2026-09-17T00:02:00Z', body: 'second' },
+    { id: 'm1', occurred_at: '2026-09-17T00:01:00Z', body: 'first' }
+  ];
+  const sb = supabase({ messages: stored });
+
+  await withFetchMock(sb.handler, async () => {
+    const response = await handleCommsRequest(get(`/v1/comms/threads/${THREAD_ID}/messages?limit=2`), env, OWNER);
+    const body = await response.json();
+
+    assert.equal(body.messages.length, 2, 'the extra look-ahead row must not be returned');
+    assert.deepEqual(body.messages.map((m) => m.id), ['m3', 'm4'], 'oldest-first within the page');
+    assert.equal(body.has_more, true);
+    assert.equal(body.next_before, '2026-09-17T00:03:00Z');
+    assert.equal(body.next_before_id, 'm3');
+  });
+
+  const read = sb.calls.find((c) => c.href.includes('/rest/v1/comms_messages'));
+  assert.ok(read.href.includes('order=occurred_at.desc,id.desc'), 'must page from the newest end');
+  assert.ok(read.href.includes('limit=3'), 'must request one extra row to detect more');
+});
+
+test('has_more is false when the page exactly drains the thread', async () => {
+  const sb = supabase({ messages: [{ id: 'm2', occurred_at: '2026-09-17T00:02:00Z' }, { id: 'm1', occurred_at: '2026-09-17T00:01:00Z' }] });
+
+  await withFetchMock(sb.handler, async () => {
+    const response = await handleCommsRequest(get(`/v1/comms/threads/${THREAD_ID}/messages?limit=2`), env, OWNER);
+    const body = await response.json();
+    assert.equal(body.messages.length, 2);
+    assert.equal(body.has_more, false, 'exactly-full page with nothing behind it is not "more"');
+  });
+});
+
+test('a cursor with an id tiebreak pages messages sharing a timestamp', async () => {
+  const sb = supabase({ messages: [] });
+
+  await withFetchMock(sb.handler, async () => {
+    await handleCommsRequest(
+      get(`/v1/comms/threads/${THREAD_ID}/messages?limit=25&before=2026-09-17T00:03:00Z&before_id=m3`),
+      env,
+      OWNER
+    );
+  });
+
+  const read = sb.calls.find((c) => c.href.includes('/rest/v1/comms_messages'));
+  /* Without the id tiebreak, messages stamped identically to the cursor are
+     skipped entirely on the next page. */
+  assert.ok(read.href.includes('or=('), 'composite keyset cursor expected');
+  assert.ok(read.href.includes('occurred_at.lt.'), 'older-than clause expected');
+  assert.ok(read.href.includes('id.lt.m3'), 'id tiebreak expected');
+});
+
+test('a cursor without an id falls back to a plain timestamp bound', async () => {
+  const sb = supabase({ messages: [] });
+
+  await withFetchMock(sb.handler, async () => {
+    await handleCommsRequest(get(`/v1/comms/threads/${THREAD_ID}/messages?before=2026-09-17T00:03:00Z`), env, OWNER);
+  });
+
+  const read = sb.calls.find((c) => c.href.includes('/rest/v1/comms_messages'));
+  assert.ok(read.href.includes('occurred_at=lt.'), 'plain bound expected');
+  assert.ok(!read.href.includes('or=('), 'no composite cursor without an id');
+});
+
+test('limit is clamped so a caller cannot ask for the whole table', async () => {
+  const sb = supabase({ messages: [] });
+
+  await withFetchMock(sb.handler, async () => {
+    await handleCommsRequest(get(`/v1/comms/threads/${THREAD_ID}/messages?limit=100000`), env, OWNER);
+  });
+
+  const read = sb.calls.find((c) => c.href.includes('/rest/v1/comms_messages'));
+  assert.ok(read.href.includes('limit=201'), 'clamped to 200 (+1 look-ahead)');
 });
 
 test('POST is not accepted on the messages route', async () => {
