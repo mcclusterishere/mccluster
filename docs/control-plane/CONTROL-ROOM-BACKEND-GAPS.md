@@ -101,27 +101,31 @@ narrow contract is a retained, org-scoped event list.
 
 ---
 
-## 5. Aggregate spend — only per-job cost exists
+## 5. Aggregate spend — RESOLVED for media
 
-**Blocked view:** System · Resources
+**Status:** closed by `GET /v1/media/usage`.
 
-**Current behaviour:** the console shows `compute/balance` fields where the
-backend returns them, and per-job `estimated_cost_cents` / `actual_cost_cents`
-on media jobs (the latter reconciled by `GET /v1/media/jobs/{id}`). It shows
-no totals, no burn rate and no provider COGS, because none are exposed.
+Every control on media spend is per job — the table-boundary trigger refuses a
+paid job without a budget and a preflight estimate — but nothing aggregated, so
+many individually-approved jobs could drain a funded provider account with no
+route able to say so.
 
-**What is missing:** no rollup endpoint. The data largely exists in
-`media_jobs` and the compute ledger, but there is no route that aggregates it,
-and the browser cannot aggregate what it cannot page through.
+`GET /v1/media/usage?from&to&group_by=day|provider|capability|model` aggregates
+the existing `media_cost_events` ledger via `public.media_usage_rollup`. It
+reports settled actuals, reservations still in flight, and a `committed_cents`
+figure (settled actuals plus unreleased reservations) — the number that answers
+"how much of the funded balance is gone or spoken for". It reads the ledger and
+computes no figure of its own. System · Resources shows it, labelled settled
+versus in flight.
 
-**Smallest contract that would unblock it**
+**Still missing:** a *cap*. This is visibility, not enforcement — there is no
+org-level or monthly media budget that refuses the next job. Spend is now
+observable but still not bounded in aggregate.
 
-- `GET /v1/compute/usage?from&to&group_by=provider|capability|day`
-  → `{ rows: [{ key, jobs, estimated_cost_cents, actual_cost_cents }], total }`.
+**Smallest contract that would add enforcement**
 
-Until that exists the console will not display a spend figure it computed
-itself, because a number an operator reads as "what McCluster spent" must come
-from the system that settled it.
+- An org media allowance checked inside `enforce_media_job_spend_guard()`
+  against the rollup, refusing at the table boundary like the per-job rules do.
 
 ---
 

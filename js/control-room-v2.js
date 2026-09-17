@@ -1013,9 +1013,10 @@
     return Promise.all([
       src(request("/v1/compute/balance")),
       src(request("/v1/platform/catalog")),
-      src(request("/v1/developer/consumers"))
+      src(request("/v1/developer/consumers")),
+      src(request("/v1/media/usage?group_by=capability"))
     ]).then(function (r) {
-      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2] };
+      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2], usage: r[3] };
       render();
     });
   }
@@ -1052,7 +1053,26 @@
           : '<p class="cr-muted">The balance endpoint responded but reported no monetary fields. No spend figure is shown because none was returned.</p>';
       }
       var consumerRows = pickRows(res.consumers, "consumers");
-      usage = '<div class="cr-panel__body">' + balanceBody +
+      /* Media spend, from the ledger. Shown because the backend settles these
+         amounts — nothing here is computed by the browser. */
+      var spendBody = "";
+      var usageResult = res.usage;
+      if (!usageResult) spendBody = "";
+      else if (!usageResult.ok) spendBody = sourceBanner(usageResult, "Media spend");
+      else {
+        var t = (usageResult.data && usageResult.data.totals) || {};
+        var spendRows = [["Settled", moneyCents(t.actual_cents)], ["Committed", moneyCents(t.committed_cents)]];
+        if (t.unsettled_cents) spendRows.push(["Still in flight", moneyCents(t.unsettled_cents) + " (" + count(t.in_flight_jobs) + " job" + (count(t.in_flight_jobs) === 1 ? "" : "s") + ")"]);
+        spendRows.push(["Jobs", String(count(t.jobs))]);
+        spendBody = '<h3 class="cr-subhead">Media spend · last 30 days</h3>' + props(spendRows) +
+          ((usageResult.data && usageResult.data.rows || []).length
+            ? '<div class="cr-list">' + usageResult.data.rows.slice(0, 8).map(function (row2) {
+                return row(titleCase(row2.key), count(row2.jobs) + " job" + (count(row2.jobs) === 1 ? "" : "s"), moneyCents(row2.committed_cents), "info", "system-resources");
+              }).join("") + '</div>'
+            : '<p class="cr-muted">No media jobs in this window.</p>');
+      }
+
+      usage = '<div class="cr-panel__body">' + balanceBody + spendBody +
         '<h3 class="cr-subhead">API consumers</h3>' +
         (!res.consumers.ok ? sourceBanner(res.consumers, "Developer consumers")
           : (consumerRows.length
