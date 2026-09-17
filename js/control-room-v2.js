@@ -48,6 +48,7 @@
     pipelineStage: "all",
     resources: null,
     socialAccounts: null,
+    decisions: [],
     leadTotal: null,
     pending: {},
     drafts: {},
@@ -280,6 +281,19 @@
     if (awaiting.length) items.push({ title: awaiting.length + " conversation" + (awaiting.length === 1 ? "" : "s") + " awaiting a reply", sub: "The last message on these threads came in, not out.", kind: "warn", action: "work-inbox" });
     var human = state.threads.filter(threadOwned);
     if (human.length) items.push({ title: human.length + " conversation" + (human.length === 1 ? "" : "s") + " in your control", sub: "Automation is paused on these threads until you release them.", kind: "warn", action: "work-inbox" });
+    /* A decision sitting at "proposed" is literally something waiting on the
+       owner, so it belongs at the top of Needs you rather than in a room of
+       its own. High and critical risk are called out separately because those
+       are the ones that should not sit. */
+    var pending = state.decisions.filter(function (d) { return (d.status || "") === "proposed"; });
+    pending.filter(function (d) { return ["high", "critical"].indexOf(d.risk_class) >= 0; })
+      .slice(0, 5)
+      .forEach(function (d) {
+        items.push({ title: d.title || "Decision awaiting you", sub: titleCase(d.risk_class) + " risk · proposed " + ago(d.created_at), kind: "bad", action: "inspect-decision", id: d.id });
+      });
+    var routine = pending.filter(function (d) { return ["high", "critical"].indexOf(d.risk_class) < 0; });
+    if (routine.length) items.push({ title: routine.length + " decision" + (routine.length === 1 ? "" : "s") + " awaiting you", sub: "Proposed in the AI context plane, not yet approved or rejected.", kind: "warn", action: "inspect-decision", id: routine[0].id });
+
     var newLeads = state.leads.filter(function (l) { return (l.status || "new") === "new"; });
     if (newLeads.length) items.push({ title: newLeads.length + " lead" + (newLeads.length === 1 ? "" : "s") + " never answered", sub: "Still in the new stage in the canonical leads table.", kind: "warn", action: "work-pipeline" });
     /* A source that could not be read is itself something that needs the
@@ -318,7 +332,7 @@
     var c = state.status && state.status.counts || {};
     var attention = attentionItems();
     var activeJobs = state.jobs.filter(function (j) { return ["queued", "running"].indexOf(j.status) >= 0; });
-    var inboxRows = attention.length ? attention.map(function (it) { return row(it.title, it.sub, "Open", it.kind, it.action, { badge: it.kind === "bad" ? "Issue" : "Review" }); }).join("") :
+    var inboxRows = attention.length ? attention.map(function (it) { return row(it.title, it.sub, "Open", it.kind, it.action, { id: it.id, badge: it.kind === "bad" ? "Issue" : "Review" }); }).join("") :
       '<div class="cr-panel__body"><span class="' + stateClass("ok") + '">All clear</span><p class="cr-muted">No instrumented exception currently needs you.</p></div>';
     var workRows = activeJobs.slice(0, 6).map(function (j) {
       return row(titleCase(j.job_type), text(j.target_id, j.target_type), titleCase(j.status), j.status === "running" ? "ai" : "info", "inspect-job", { id: j.id, badge: j.status });
@@ -1254,6 +1268,32 @@
   function allMediaJobs() { return state.mediaJobs.concat(window.CR.media.trackedJobs()); }
   function allMediaAssets() { return state.mediaAssets.concat(window.CR.media.generatedAssets()); }
 
+  /* Decisions are read-only here. The write path (POST /v1/ai/decisions)
+     records a new decision; there is no approve/reject transition route, so
+     this shows the record and says what is missing rather than offering a
+     button that cannot persist. */
+  function inspectDecision(id) {
+    var d = findById(state.decisions, id) || state.decisions[0];
+    if (!d) return;
+    var risky = ["high", "critical"].indexOf(d.risk_class) >= 0;
+    openInspector({
+      title: d.title || "Decision",
+      subtitle: "Decision · " + titleCase(d.status || "proposed"),
+      description: d.decision || d.rationale_summary || "Recorded in the private AI context plane.",
+      props: [["Status", d.status], ["Risk", d.risk_class], ["Proposed", formatDate(d.created_at)],
+        ["Proposed by", d.proposed_by], ["Supersedes", d.supersedes_id]],
+      custom: (d.status === "proposed"
+        ? inspectorSection("Waiting on you", '<div class="cr-gap"><b>No approve or reject route exists.</b>' +
+            '<span>ai_context.decisions records a status, but the backend exposes no transition endpoint, so this decision cannot be approved or rejected from here. Recording a superseding decision is the only supported write.</span></div>')
+        : "") +
+        (risky ? inspectorSection("Risk", '<p class="cr-fail">' + esc(titleCase(d.risk_class)) + ' risk. This was flagged at record time.</p>') : ""),
+      related: d.source_conversation_id
+        ? '<p class="cr-muted">Source conversation: <span class="cr-mono">' + esc(d.source_conversation_id) + '</span></p>'
+        : '<p class="cr-muted">No source conversation is recorded on this decision.</p>',
+      raw: d, tabs: ["overview", "related", "raw", "ai"]
+    });
+  }
+
   function inspectMediaJob(id) {
     var j = findById(allMediaJobs(), id); if (!j) return;
     var detail = "";
@@ -1590,6 +1630,7 @@
     }
     else if (action === "inspect-media-job") { inspectMediaJob(el.getAttribute("data-id")); }
     else if (action === "inspect-generated-asset") { inspectAsset(el.getAttribute("data-id")); }
+    else if (action === "inspect-decision") { inspectDecision(el.getAttribute("data-id")); }
     else if (action === "load-earlier") { loadEarlier(el.getAttribute("data-id")); }
     else if (action === "more-leads") { runLeadQuery(true); }
     else if (action === "open-publish") { openPublish(el.getAttribute("data-id")); }
@@ -1731,11 +1772,12 @@
       return discoverOrg().then(function (org) {
         return Promise.all([
           src(request("/v1/status")), src(request("/v1/apps")), src(request("/v1/ai/status")), src(request("/v1/ai/system-health")),
+          src(request("/v1/ai/decisions?limit=25")),
           src(request("/v1/comms/threads?limit=100")), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact" })),
           src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
           src(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200")), loadCreative(org)
         ]).then(function (r) {
-          return { org: org, status: r[0], apps: r[1], ai: r[2], aiHealth: r[3], threads: r[4], leads: r[5], siteRequests: r[6], jobs: r[7], creative: r[8] };
+          return { org: org, status: r[0], apps: r[1], ai: r[2], aiHealth: r[3], decisions: r[4], threads: r[5], leads: r[6], siteRequests: r[7], jobs: r[8], creative: r[9] };
         });
       });
     });
@@ -1744,13 +1786,14 @@
       var signedOut = badResult("unauthorized", "This session is not signed in.", 401);
       state.sources = {
         health: r[0], status: a.status || signedOut, apps: a.apps || signedOut, ai: a.ai || signedOut, aiHealth: a.aiHealth || signedOut,
-        threads: a.threads || signedOut, leads: a.leads || signedOut, siteRequests: a.siteRequests || signedOut, jobs: a.jobs || signedOut,
+        decisions: a.decisions || signedOut, threads: a.threads || signedOut, leads: a.leads || signedOut, siteRequests: a.siteRequests || signedOut, jobs: a.jobs || signedOut,
         mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
       state.health = dataOf(state.sources.health); state.org = a.org || null;
       state.status = dataOf(state.sources.status); state.ai = dataOf(state.sources.ai); state.aiHealth = dataOf(state.sources.aiHealth);
       state.apps = pickRows(state.sources.apps, "apps");
+      state.decisions = pickRows(state.sources.decisions, "decisions");
       state.threads = pickRows(state.sources.threads, "threads");
       /* The leads read is counted, so it returns {rows,total} rather than a
          bare array. Unwrap it and keep the source result array-shaped so

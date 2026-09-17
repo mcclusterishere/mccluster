@@ -146,7 +146,52 @@ platform does not know how to attribute.
 
 ---
 
-## 7. Publish jobs cannot be retried or cancelled
+## 7. Decisions cannot be approved or rejected
+
+**Blocked view:** Home · Needs you → decision inspector
+
+**Current behaviour:** decisions are now readable. `GET /v1/ai/decisions` lists
+them, proposed ones surface on Home (high and critical risk called out
+individually), and the inspector shows the record. A proposed decision cannot
+be approved or rejected from the console, and the inspector says so.
+
+**What is missing:** `ai_context.decisions` stores a `status`, but the only
+write path is `POST /v1/ai/decisions`, which records a *new* decision. There is
+no transition route, so the only supported way to change a position is to
+record a superseding decision via `supersedes_id`.
+
+**Smallest contract that would unblock it**
+
+- `POST /v1/ai/decisions/{id}/status` `{ status, note }`, restricted to the
+  same house-owner gate, writing `status`, `approved_by` and `approved_at`.
+
+Deliberately a status transition rather than a general update: the decision
+text itself is a record of what was proposed and should not be editable.
+
+---
+
+## 8. `ai_context.decisions` has no accurate migration
+
+**Affects:** everything above that touches decisions.
+
+The live table — the one `context-decision` writes and now reads — has columns
+`title`, `decision`, `rationale_summary`, `risk_class`, `status`,
+`proposed_by`, `source_conversation_id`, `source_message_ids`,
+`supersedes_id`, `metadata`, `created_at`, and allows the status `superseded`.
+
+The only `ai_context` migration that exists in git is on the branch
+`chore/port-ai-context-migrations`, and it is a **stale draft**: it defines
+`decisions` with `rationale`, `requires_approval`, `approved_by`,
+`approved_at`, `executed_at` and `provenance`, and its status CHECK does not
+allow `superseded`. It would not create the table the platform actually uses.
+
+**What is needed:** capture the live `ai_context` schema from the database and
+commit it, rather than applying the draft. This is the same class of drift
+already recorded for the `ops_*` tables.
+
+---
+
+## 9. Publish jobs cannot be retried or cancelled
 
 **Blocked view:** Create · Schedule
 
@@ -176,3 +221,11 @@ route. The runtime claims and advances jobs itself.
   assets and reconciles actual cost.
 - **Lead search.** PostgREST supports server-side `ilike` search and exact
   counts, so lead search covers the whole table rather than the loaded page.
+- **Reading decisions.** `GET /v1/ai/decisions` was added as a method on the
+  route that already records them. It reuses the existing house-owner gate,
+  forwards the caller's own token so the edge function still applies its
+  owner/admin check, and pages with a keyset cursor. It is not a new namespace,
+  and deliberately not a general record-read adapter: only two record types
+  need Worker mediation at all (`comms_messages`, revoked from `authenticated`;
+  and `ai_context.decisions`, in a schema PostgREST does not expose), and each
+  has its own narrow route.
