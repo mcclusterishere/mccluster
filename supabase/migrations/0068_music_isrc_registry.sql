@@ -1,6 +1,49 @@
--- McCluster Music Registry: first-party ISRC allocation.
--- Prefix is intentionally blank/inactive until the US ISRC Agency allocates one.
--- Only service_role may administer registrants or allocate codes.
+-- McCluster Music Registry: canonical music catalog + first-party ISRC allocation.
+-- The live database already had the eu_* music tables; these IF NOT EXISTS
+-- definitions make a clean repository replay converge to that same schema.
+
+create table if not exists public.eu_music_works (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.orgs(id) on delete cascade,
+  initiative_id uuid,
+  title text not null,
+  iswc text not null default '',
+  writers jsonb not null default '[]'::jsonb,
+  publishers jsonb not null default '[]'::jsonb,
+  rights jsonb not null default '{}'::jsonb,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.eu_recordings (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.orgs(id) on delete cascade,
+  initiative_id uuid,
+  work_id uuid references public.eu_music_works(id) on delete set null,
+  artifact_id uuid,
+  title text not null,
+  version_title text not null default '',
+  artist text not null default '',
+  featured_artists jsonb not null default '[]'::jsonb,
+  isrc text not null default '',
+  duration_ms integer,
+  recording_year integer,
+  master_owner text not null default '',
+  p_line text not null default '',
+  c_line text not null default '',
+  language text not null default 'en',
+  explicit boolean not null default false,
+  audio_ref jsonb not null default '{}'::jsonb,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.eu_music_works enable row level security;
+alter table public.eu_recordings enable row level security;
+revoke all on public.eu_music_works, public.eu_recordings from anon;
+revoke insert, update, delete on public.eu_music_works, public.eu_recordings from authenticated;
 
 create table if not exists public.music_isrc_registrants (
   org_id uuid primary key references public.orgs(id) on delete cascade,
@@ -91,6 +134,7 @@ $$;
 revoke all on function public.music_assign_isrc(uuid) from public, anon, authenticated;
 grant execute on function public.music_assign_isrc(uuid) to service_role;
 
+-- Resolve McCluster by stable slug rather than embedding an environment-specific UUID.
 insert into public.music_isrc_registrants(org_id)
-values ('1c0733be-69b5-4e65-abe7-377b492c296b')
+select id from public.orgs where slug = 'mccluster'
 on conflict (org_id) do nothing;
