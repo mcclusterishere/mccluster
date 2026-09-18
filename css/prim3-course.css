@@ -8,6 +8,10 @@ body:has(#courseGate:not([hidden])) .p3-reset{display:none}
 .p3-gate[hidden]{display:none!important}
 .p3-gate__card{width:min(560px,100%);padding:clamp(1.5rem,5vw,2.6rem);border:1px solid rgba(244,239,230,.18);background:#151310;box-shadow:0 24px 80px rgba(0,0,0,.35)}
 .p3-gate__mark{width:72px;height:72px;border-radius:5px;object-fit:cover;display:block;margin-bottom:1.25rem}
+/* The full lockup, not a square crop: it is a wide composition and the
+   wordmark has to be legible. Transparent PNG, so the card shows through. */
+.p3-gate__lockup{display:block;width:min(320px,80%);height:auto;margin:0 0 1.1rem -.5rem}
+@media(max-width:620px){.p3-gate__lockup{width:min(260px,88%);margin-left:-.3rem}}
 .p3-gate__eyebrow{margin:0 0 .55rem;font-size:.68rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#e35a5d}
 .p3-gate h1{margin:0;font-size:clamp(2.1rem,7vw,4rem);line-height:.96;text-transform:uppercase;overflow-wrap:break-word}
 .p3-gate p{color:#c8c0b3;line-height:1.65;max-width:46ch}.p3-gate strong{color:#fff}
