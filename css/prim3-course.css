@@ -8,9 +8,22 @@ body:has(#courseGate:not([hidden])) .p3-reset{display:none}
 .p3-gate[hidden]{display:none!important}
 .p3-gate__card{width:min(560px,100%);padding:clamp(1.5rem,5vw,2.6rem);border:1px solid rgba(244,239,230,.18);background:#151310;box-shadow:0 24px 80px rgba(0,0,0,.35)}
 .p3-gate__mark{width:72px;height:72px;border-radius:5px;object-fit:cover;display:block;margin-bottom:1.25rem}
+/* The full lockup, not a square crop: it is a wide composition and the
+   wordmark has to be legible. Transparent PNG, so the card shows through. */
+.p3-gate__lockup{display:block;width:min(320px,80%);height:auto;margin:0 0 1.1rem -.5rem}
+@media(max-width:620px){.p3-gate__lockup{width:min(260px,88%);margin-left:-.3rem}}
 .p3-gate__eyebrow{margin:0 0 .55rem;font-size:.68rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#e35a5d}
-.p3-gate h1{margin:0;font-size:clamp(2.1rem,7vw,4rem);line-height:.96;text-transform:uppercase}
+.p3-gate h1{margin:0;font-size:clamp(2.1rem,7vw,4rem);line-height:.96;text-transform:uppercase;overflow-wrap:break-word}
 .p3-gate p{color:#c8c0b3;line-height:1.65;max-width:46ch}.p3-gate strong{color:#fff}
+/* Two audiences on the gate: someone who wants to learn, and someone who
+   teaches or wants to partner. Same card, same system, no new visual language. */
+.p3-gate__audience{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-top:1.4rem}
+.p3-gate__aud{padding:.95rem 1rem;border:1px solid rgba(244,239,230,.14);background:#0f0e0c}
+.p3-gate__aud h2{margin:0 0 .4rem;font-size:.72rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#f4efe6}
+.p3-gate__aud p{margin:0;font-size:.82rem;line-height:1.55;color:#b9b1a5;max-width:none}
+.p3-gate__aud-link{display:inline-block;margin-top:.6rem;font-size:.76rem;font-weight:800;letter-spacing:.04em;color:#e35a5d;text-decoration:none;border-bottom:1px solid rgba(227,90,93,.45);padding-bottom:1px}
+.p3-gate__aud-link:hover{color:#fff;border-bottom-color:#fff}
+@media(max-width:620px){.p3-gate__audience{grid-template-columns:1fr}}
 .p3-gate__actions{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:1.3rem}.p3-gate__actions a{display:inline-flex;justify-content:center;align-items:center;min-height:46px;padding:.7rem 1rem;border:1px solid #e5383b;text-decoration:none;font-weight:900;letter-spacing:.04em}.p3-gate__actions a:first-child{background:#e5383b;color:#fff}.p3-gate__actions a:last-child{color:#f4efe6;background:transparent}
 .p3-sourcebar{display:flex;align-items:center;gap:.65rem;min-height:38px;padding:.55rem .75rem;border:1px solid var(--p3-line);background:#eae6dd;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--p3-muted)}
 .p3-sourcebar__light{width:7px;height:7px;border-radius:50%;background:var(--p3-warn);box-shadow:0 0 0 3px rgba(139,100,25,.12)}
