@@ -136,3 +136,58 @@ test('the pocket player banks a durable url, never a signed one', async () => {
   assert.match(html, /src: row\.getAttribute\("data-preview-src"\) \|\| row\.getAttribute\("data-src"\)/,
     'the pocket must prefer the durable public preview');
 });
+
+test('the committed preview is really only the preview', async () => {
+  /* The guard that matters: nothing stops someone dropping the whole record
+     in as the "preview" file. A constant-bitrate MP3's length is its byte
+     count, so the file itself is checked against what the registry claims,
+     rather than trusting the filename. */
+  const { stat } = await import('node:fs/promises');
+  for (const t of await gatedTracks()) {
+    const seconds = t.gated.preview_seconds;
+    assert.ok(seconds > 0, `${t.title}: no preview_seconds declared`);
+    const { size } = await stat(join(ROOT, t.src));
+    const expected = (128000 / 8) * seconds;          // 128kbps CBR
+    assert.ok(size < expected * 1.6,
+      `${t.title}: ${t.src} is ${size} bytes, far past the ${seconds}s it claims ` +
+      `(~${Math.round(expected)}). The full record may have been committed as the preview.`);
+  }
+});
+
+test('every offered format has a recipe and lives under the track slug', async () => {
+  const script = await read('scripts/publish-gated-track.mjs');
+  const recipes = [...script.matchAll(/^ {2}(\w+): \{/gm)].map((m) => m[1]);
+  assert.ok(recipes.includes('m4r'), 'the ringtone recipe must exist');
+  for (const t of await gatedTracks()) {
+    const slug = t.gated.object.split('/')[0];
+    for (const f of t.gated.formats || []) {
+      assert.ok(recipes.includes(f.ext),
+        `${t.title}: .${f.ext} is offered but publish-gated-track.mjs has no recipe for it`);
+      assert.equal(f.object.split('/')[0], slug,
+        `${t.title}: ${f.object} does not live under ${slug}/`);
+      assert.equal(f.object.split('.').pop(), f.ext,
+        `${t.title}: ${f.object} does not end in .${f.ext}`);
+    }
+  }
+});
+
+test('an iPhone ringtone is cut to something iOS will actually install', async () => {
+  /* iOS refuses an .m4r longer than 40 seconds. A recipe without a duration
+     cap produces a file that downloads fine and then silently will not
+     install, which is worse than not offering it. */
+  const script = await read('scripts/publish-gated-track.mjs');
+  const m4r = /m4r: \{[^}]*\}/s.exec(script);
+  assert.ok(m4r, 'no m4r recipe');
+  const cap = /'-t', '(\d+)'/.exec(m4r[0]);
+  assert.ok(cap, 'the ringtone recipe must cap its duration');
+  assert.ok(Number(cap[1]) <= 40, `ringtone cap is ${cap[1]}s; iOS will not install past 40s`);
+});
+
+test('the unlock call to action asks for the song, not for paperwork', async () => {
+  const html = await read('album.html');
+  assert.match(html, /FULL SONG/, 'the locked row should offer the record');
+  assert.doesNotMatch(html, />Free account</, 'the old mechanism-first copy is gone');
+  assert.match(html, /@keyframes unlockFlash/, 'the call to action flashes');
+  assert.match(html, /prefers-reduced-motion: reduce\)\s*\{\s*\.tr \.reclock \.unlock \{ animation: none/,
+    'and stops for anyone who asked the OS for less motion');
+});

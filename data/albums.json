@@ -211,8 +211,28 @@
      "gated": {
       "bucket": "mcc-gated-audio",
       "object": "niggy-nigg/niggy-nigg.mp3",
-      "preview_seconds": 12,
-      "download_as": "Niggy Nigg Niggr.mp3"
+      "preview_seconds": 4,
+      "download_as": "Niggy Nigg Niggr",
+      "formats": [
+       {
+        "ext": "mp3",
+        "label": "MP3",
+        "note": "plays anywhere",
+        "object": "niggy-nigg/niggy-nigg.mp3"
+       },
+       {
+        "ext": "m4r",
+        "label": "Ringtone",
+        "note": "iPhone",
+        "object": "niggy-nigg/niggy-nigg.m4r"
+       },
+       {
+        "ext": "wav",
+        "label": "WAV",
+        "note": "lossless",
+        "object": "niggy-nigg/niggy-nigg.wav"
+       }
+      ]
      }
     }
    ]

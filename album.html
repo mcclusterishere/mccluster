@@ -191,11 +191,20 @@
 
     /* the gate on a record: one small slot in the row, never a banner */
     .tr .reclock { flex: none; display: flex; align-items: center; }
-    .tr .reclock .unlock { font-family: var(--ui); font-weight: 800; font-size: 0.66rem;
-      letter-spacing: 0.02em; text-decoration: none; white-space: nowrap;
-      color: var(--cream); padding: 0.32rem 0.6rem; border-radius: 999px;
-      background: color-mix(in srgb, var(--pulse) 26%, transparent);
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pulse) 46%, transparent); }
+    .tr .reclock .unlock { font-family: var(--ui); text-decoration: none; white-space: nowrap;
+      display: grid; gap: 0.05rem; text-align: center; line-height: 1.05;
+      color: #fff; padding: 0.34rem 0.7rem; border-radius: 999px;
+      background: var(--pulse); animation: unlockFlash 1.5s ease-in-out infinite;
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--pulse) 70%, transparent); }
+    .tr .reclock .unlock b { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.04em; }
+    .tr .reclock .unlock span { font-weight: 700; font-size: 0.56rem; opacity: 0.9; letter-spacing: 0.02em; }
+    @keyframes unlockFlash {
+      0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pulse) 72%, transparent); filter: none; }
+      50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--pulse) 0%, transparent); filter: brightness(1.22); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .tr .reclock .unlock { animation: none; }
+    }
     .tr .reclock .gonetxt { font-family: var(--ui); font-weight: 700; font-size: 0.66rem;
       color: var(--cream-dim); white-space: nowrap; opacity: 0.75; }
     .tr .reclock .dl { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
@@ -210,6 +219,24 @@
     /* a locked row still says how long the PREVIEW is, so the clock in
        the row is never lying about what this file actually contains */
     .tr li.locked .t small::after { content: " · preview"; color: var(--cream-dim); }
+
+    /* the format picker: a strip inside the row, never a modal */
+    .tr li.picking { flex-wrap: wrap; }
+    .tr .fmts { flex: 0 0 100%; display: flex; gap: 0.4rem; margin: 0.55rem 0 0.15rem; }
+    .tr .fmts button { flex: 1; -webkit-appearance: none; appearance: none; border: 0;
+      cursor: pointer; touch-action: manipulation; font-family: var(--ui);
+      display: grid; gap: 0.06rem; padding: 0.42rem 0.3rem; border-radius: 12px;
+      color: var(--cream); text-align: center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.04));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13); }
+    .tr .fmts button b { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.02em; }
+    .tr .fmts button span { font-weight: 600; font-size: 0.56rem; color: var(--cream-dim); }
+    .tr .fmts button.is-busy { opacity: 0.5; }
+    /* one missing format does not make the record unavailable, so it says so
+       on its own line and the others still work */
+    .tr .fmts button.is-gone { opacity: 0.45; }
+    .tr .fmts button.is-gone b { text-decoration: line-through; }
+    .tr .fmts button.is-gone span::after { content: " · not up yet"; }
     @keyframes eq { 0%,100% { height: 4px; } 50% { height: 14px; } }
 
     /* the deck: the mini player riding above the bar */
@@ -831,7 +858,8 @@
       return '<li data-src="' + t.src + '"' +
         (g ? ' data-gated-bucket="' + escAttr(g.bucket) + '"' +
              ' data-gated-object="' + escAttr(g.object) + '"' +
-             ' data-gated-name="' + escAttr(g.download_as || (t.title + ".mp3")) + '"' +
+             ' data-gated-name="' + escAttr(g.download_as || t.title) + '"' +
+             ' data-gated-formats="' + escAttr(JSON.stringify(g.formats || [])) + '"' +
              ' data-preview-src="' + escAttr(t.src) + '"' : "") +
         (t.video ? ' data-video="' + t.video + '"' : "") +
         (t.poster ? ' data-poster="' + t.poster + '"' : "") +
@@ -982,6 +1010,32 @@
         probe.src = "";
       });
     }
+    function rowFormats(row) {
+      try { return JSON.parse(row.getAttribute("data-gated-formats") || "[]"); }
+      catch (e) { return []; }
+    }
+    function closeFormats(row) {
+      var sheet = row.querySelector("[data-fmts]");
+      if (sheet) sheet.remove();
+      row.classList.remove("picking");
+    }
+    /* The picker is a strip inside the row, not a modal. A modal over a
+       track list steals the whole screen to answer "which file", and on a
+       phone that is the difference between one tap and three. */
+    function toggleFormats(row, formats) {
+      if (row.querySelector("[data-fmts]")) { closeFormats(row); return; }
+      rows.forEach(closeFormats);
+      var sheet = document.createElement("div");
+      sheet.className = "fmts";
+      sheet.setAttribute("data-fmts", "");
+      sheet.innerHTML = formats.map(function (f, i) {
+        return '<button type="button" data-fmt="' + i + '">' +
+          "<b>" + esc(f.label || f.ext.toUpperCase()) + "</b>" +
+          (f.note ? "<span>" + esc(f.note) + "</span>" : "") + "</button>";
+      }).join("");
+      row.appendChild(sheet);
+      row.classList.add("picking");
+    }
     function gatedRows() {
       return rows.filter(function (r) { return r.getAttribute("data-gated-bucket"); });
     }
@@ -1024,7 +1078,12 @@
         }
       } else if (out.state === "preview") {
         row.classList.add("locked");
-        slot.innerHTML = '<a class="unlock" href="account.html">Free account</a>';
+        /* The ask, not the mechanism. Nobody wants "an account" — they came
+           for the rest of the record, so the button says that. It flashes
+           because this is the one thing on the row worth interrupting for,
+           and it stops flashing for anyone who asked the OS for less motion. */
+        slot.innerHTML = '<a class="unlock" href="account.html">' +
+          '<b>FULL SONG</b><span>tap here · free</span></a>';
         /* back to the preview if a sign-out invalidated a signed URL */
         var pv = row.getAttribute("data-preview-src");
         if (pv && row.getAttribute("data-src") !== pv) {
@@ -1059,16 +1118,43 @@
       });
     }
     document.getElementById("tracks").addEventListener("click", function (e) {
+      var pick = e.target.closest ? e.target.closest("[data-fmt]") : null;
+      if (pick) {
+        e.stopPropagation(); e.preventDefault();
+        var prow = pick.closest("li");
+        var fmts = rowFormats(prow);
+        var chosen = fmts[Number(pick.getAttribute("data-fmt"))];
+        if (!chosen) return;
+        pick.classList.add("is-busy");
+        window.MCC_GATED.download(
+          { bucket: prow.getAttribute("data-gated-bucket"), object: chosen.object },
+          prow.getAttribute("data-gated-name") + "." + chosen.ext
+        ).then(function (out) {
+          pick.classList.remove("is-busy");
+          /* A format that is not uploaded yet must say so on ITS OWN line.
+             Repainting the whole row would claim the record is unavailable
+             when only the ringtone is missing. */
+          if (out && out.state !== "saved") pick.classList.add("is-gone");
+          else closeFormats(prow);
+        });
+        return;
+      }
       var b = e.target.closest ? e.target.closest("[data-dl]") : null;
       if (!b) return;
       e.stopPropagation(); e.preventDefault();
       var row = b.closest("li");
+      var formats = rowFormats(row);
+      if (formats.length > 1) { toggleFormats(row, formats); return; }
       b.disabled = true;
-      window.MCC_GATED.download(gateSpec(row), row.getAttribute("data-gated-name"))
-        .then(function (out) {
-          b.disabled = false;
-          if (out && out.state !== "saved") paintGate(row, out);
-        });
+      var only = formats[0];
+      var spec = only
+        ? { bucket: row.getAttribute("data-gated-bucket"), object: only.object }
+        : gateSpec(row);
+      var name = row.getAttribute("data-gated-name") + (only ? "." + only.ext : ".mp3");
+      window.MCC_GATED.download(spec, name).then(function (out) {
+        b.disabled = false;
+        if (out && out.state !== "saved") paintGate(row, out);
+      });
     }, true);
     /* registered once the signer exists, not at parse time: this inline
        script runs before the deferred module, so an early call here would

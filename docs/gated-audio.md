@@ -6,7 +6,7 @@ split is the whole security model.
 | | where it lives | who can get it |
 | --- | --- | --- |
 | preview cut | `assets/audio/<slug>-preview.mp3`, committed | anyone |
-| master | private Supabase bucket `mcc-gated-audio`, never committed | signed-in listeners, via a signed URL |
+| master, every format | private Supabase bucket `mcc-gated-audio`, never committed | signed-in listeners, via a signed URL |
 
 The site is a static host. A file committed under `assets/` is world-readable
 the moment it deploys, so a "locked" player pointed at a committed master is
@@ -44,9 +44,37 @@ Needs the service key, for one command, from the owner's machine. It is never
 committed, never printed, and never sent to a browser.
 
 ```
-SUPABASE_SERVICE_ROLE_KEY=... node scripts/publish-gated-track.mjs ~/Music/niggy-nigg.mp3 niggy-nigg
-SUPABASE_SERVICE_ROLE_KEY=... node scripts/publish-gated-track.mjs --check x niggy-nigg
+SUPABASE_SERVICE_ROLE_KEY=... node scripts/publish-gated-track.mjs ~/Music/niggy-nigg.wav niggy-nigg
+SUPABASE_SERVICE_ROLE_KEY=... node scripts/publish-gated-track.mjs --check niggy-nigg
 ```
+
+Hand it the best master you have. It reads the track's `formats` out of
+`data/albums.json` and makes every one of them from that single file, so
+adding a format to the registry is all it takes to start offering it. Needs
+`ffmpeg` on PATH. `--check` lists what is up there and uploads nothing.
+
+## Formats
+
+`formats` is a list on the gated block. Each entry needs `ext`, `label` and
+`object`; `note` is the small grey line under the label in the picker.
+
+```json
+"formats": [
+  { "ext": "mp3", "label": "MP3",      "note": "plays anywhere", "object": "niggy-nigg/niggy-nigg.mp3" },
+  { "ext": "m4r", "label": "Ringtone", "note": "iPhone",         "object": "niggy-nigg/niggy-nigg.m4r" },
+  { "ext": "wav", "label": "WAV",      "note": "lossless",       "object": "niggy-nigg/niggy-nigg.wav" }
+]
+```
+
+Recipes live in `scripts/publish-gated-track.mjs`. `mp3`, `wav`, `flac`,
+`m4a` and `m4r` exist; a format in the registry with no recipe fails loudly
+rather than uploading nothing. **The ringtone is capped at 30 seconds** —
+iOS silently refuses to install an `.m4r` longer than 40, which would
+download fine and then do nothing.
+
+One format missing from the bucket marks only its own button in the picker.
+The record does not become unavailable because the ringtone has not been
+uploaded yet.
 
 `supabase/migrations/20260918230000_gated_audio.sql` must be applied first or
 the bucket does not exist. **No workflow applies migrations in this repo** —
