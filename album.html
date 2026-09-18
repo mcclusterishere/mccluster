@@ -188,6 +188,28 @@
     .tr .eq i { width: 3px; background: #fff; border-radius: 2px; animation: eq 0.9s ease-in-out infinite; }
     .tr .eq i:nth-child(2) { animation-delay: 0.25s; } .tr .eq i:nth-child(3) { animation-delay: 0.5s; }
     .tr li.on.playing .eq { display: flex; }
+
+    /* the gate on a record: one small slot in the row, never a banner */
+    .tr .reclock { flex: none; display: flex; align-items: center; }
+    .tr .reclock .unlock { font-family: var(--ui); font-weight: 800; font-size: 0.66rem;
+      letter-spacing: 0.02em; text-decoration: none; white-space: nowrap;
+      color: var(--cream); padding: 0.32rem 0.6rem; border-radius: 999px;
+      background: color-mix(in srgb, var(--pulse) 26%, transparent);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pulse) 46%, transparent); }
+    .tr .reclock .gonetxt { font-family: var(--ui); font-weight: 700; font-size: 0.66rem;
+      color: var(--cream-dim); white-space: nowrap; opacity: 0.75; }
+    .tr .reclock .dl { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+      touch-action: manipulation; width: 34px; height: 34px; border-radius: 50%; padding: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0.035));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+      display: grid; place-items: center; color: rgba(244,239,230,0.55); }
+    .tr .reclock .dl svg { width: 15px; height: 15px; display: block; fill: none;
+      stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tr .reclock .dl:hover { color: var(--cream); }
+    .tr .reclock .dl[disabled] { opacity: 0.45; cursor: default; }
+    /* a locked row still says how long the PREVIEW is, so the clock in
+       the row is never lying about what this file actually contains */
+    .tr li.locked .t small::after { content: " · preview"; color: var(--cream-dim); }
     @keyframes eq { 0%,100% { height: 4px; } 50% { height: 14px; } }
 
     /* the deck: the mini player riding above the bar */
@@ -600,7 +622,16 @@
 
     <section id="album" aria-label="The album">
       <ul class="tr" id="tracks"></ul>
-      <audio id="deck" preload="metadata"></audio>
+      <!-- crossorigin is load-bearing, not decoration. A gated track plays
+           from a signed Supabase URL, which is another origin, and without
+           this the element is TAINTED: js/chamber.js runs the deck through
+           createMediaElementSource, and a tainted element pushes silence
+           through that graph. The record would look like it was playing and
+           make no sound. js/filament.js also refetches the source to draw
+           the waveform and cannot decode an opaque response. Supabase
+           Storage answers with access-control-allow-origin: *, so anonymous
+           CORS satisfies both, and same-origin tracks are unaffected. -->
+      <audio id="deck" preload="metadata" crossorigin="anonymous"></audio>
     </section>
 
     <!-- THE PLAYLISTS: app rows: tap the chip for a taste, tap the row to enter -->
@@ -722,6 +753,10 @@
     var deck = document.getElementById("deck");
     var rows = [];
     function esc(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; }
+    /* esc() leaves quotes alone, which is fine inside an element and wrong
+       inside an attribute. Anything that lands in a data- attribute goes
+       through this instead. */
+    function escAttr(x) { return esc(x).replace(/"/g, "&quot;"); }
 
     /* THE ROTATION: the local heart: saved songs, this device's playlist */
     var ROT_KEY = "mcc_rotation";
@@ -784,7 +819,12 @@
     };
 
     function trackRow(t, i) {
+      var g = t.gated || null;
       return '<li data-src="' + t.src + '"' +
+        (g ? ' data-gated-bucket="' + escAttr(g.bucket) + '"' +
+             ' data-gated-object="' + escAttr(g.object) + '"' +
+             ' data-gated-name="' + escAttr(g.download_as || (t.title + ".mp3")) + '"' +
+             ' data-preview-src="' + escAttr(t.src) + '"' : "") +
         (t.video ? ' data-video="' + t.video + '"' : "") +
         (t.poster ? ' data-poster="' + t.poster + '"' : "") +
         (t.lyrics ? ' data-lyrics="' + t.lyrics + '"' : "") +
@@ -799,6 +839,7 @@
         '<span class="t">' + esc(t.title) +
         '<small>' + esc(t.sub || t.albName || "") + '<span data-plays></span></small></span>' +
         '<span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
+        (g ? '<span class="reclock" data-reclock></span>' : "") +
         '<button class="hrt" type="button" data-hrt aria-label="Save to My Rotation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2l-1.1-1C6.2 15 3.2 12.3 3.2 9 3.2 6.4 5.3 4.3 7.9 4.3c1.5 0 3 .7 4.1 1.9 1.1-1.2 2.6-1.9 4.1-1.9 2.6 0 4.7 2.1 4.7 4.7 0 3.3-3 6-7.7 10.2z"/></svg></button>' +
         '<span class="d">-:--</span>' +
         /* The row used to carry an arrow out to a per-track page. Those
@@ -843,6 +884,7 @@
       document.getElementById("tracks").innerHTML = queue.map(trackRow).join("");
       rows = Array.prototype.slice.call(document.querySelectorAll("#tracks li"));
       paintHearts();
+      paintGates();
       buildRails(data, pls);
       fetchPlays();
       init();
@@ -892,6 +934,138 @@
       var row = b.closest("li");
       b.classList.toggle("on", toggleRotation(row.getAttribute("data-albslug"), row.getAttribute("data-title")));
     }, true);
+
+    /* ============================================================
+       THE GATE ON A RECORD. Some tracks ship a short preview here and
+       keep the master in a private Supabase bucket. js/gated-audio.js
+       does the asking; this only paints the answer and repoints the row.
+
+       Three states, three different sentences, because they are three
+       different situations and a listener can act on only one of them:
+         locked      → make an account, the record is waiting
+         unlocked    → play it, and here is the file to keep
+         unavailable → our fault, not yours
+
+       The swap is live. Sign in in another tab while a preview is
+       playing and the master takes over at the same second, because
+       the preview is the head of the same master and the clock lines
+       up. Nothing restarts.
+       ============================================================ */
+    /* The clock on a row is read off whatever that row actually points at,
+       which for a gated track changes under it: locked it is the 12-second
+       preview, unlocked it is the master. Shared with init()'s first pass so
+       an unlocked row does not sit there claiming the preview's length. */
+    function rowTime(s) {
+      s = Math.max(0, Math.round(s || 0));
+      return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    }
+    function probeDuration(row) {
+      var probe = new Audio();
+      probe.preload = "metadata";
+      probe.src = row.getAttribute("data-src");
+      probe.addEventListener("loadedmetadata", function () {
+        var cell = row.querySelector(".d");
+        if (cell) cell.textContent = rowTime(probe.duration);
+        probe.src = "";
+      });
+    }
+    function gatedRows() {
+      return rows.filter(function (r) { return r.getAttribute("data-gated-bucket"); });
+    }
+    function gateSpec(row) {
+      return {
+        bucket: row.getAttribute("data-gated-bucket"),
+        object: row.getAttribute("data-gated-object")
+      };
+    }
+    function swapCurrent(row) {
+      /* "is this the row the deck is on" comes off the DOM, not off init()'s
+         cursor: the deck and its index live inside init(), and reaching into
+         that scope from out here is how this threw a ReferenceError and took
+         the download button down with it. paintRows() owns the "on" class. */
+      if (!row.classList.contains("on")) return;
+      var at = deck.currentTime, wasPlaying = !deck.paused;
+      deck.src = row.getAttribute("data-src");
+      deck.addEventListener("loadedmetadata", function once() {
+        deck.removeEventListener("loadedmetadata", once);
+        if (at && at < deck.duration) { try { deck.currentTime = at; } catch (e) {} }
+        if (wasPlaying) deck.play().catch(function () {});
+      });
+    }
+    function paintGate(row, out) {
+      var slot = row.querySelector("[data-reclock]");
+      if (!slot) return;
+      row.classList.remove("locked", "unlocked", "gone");
+      /* the slot is painted before the source is swapped, so a swap that
+         ever fails cannot also cost the listener the button */
+      if (out.state === "full") {
+        row.classList.add("unlocked");
+        slot.innerHTML = '<button class="dl" type="button" data-dl ' +
+          'aria-label="Download ' + escAttr(row.getAttribute("data-title")) + '">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+          '<path d="M12 3v11m0 0l-4-4m4 4l4-4M4 19h16"/></svg></button>';
+        if (row.getAttribute("data-src") !== out.url) {
+          row.setAttribute("data-src", out.url);
+          swapCurrent(row);
+          probeDuration(row);
+        }
+      } else if (out.state === "preview") {
+        row.classList.add("locked");
+        slot.innerHTML = '<a class="unlock" href="account.html">Free account</a>';
+        /* back to the preview if a sign-out invalidated a signed URL */
+        var pv = row.getAttribute("data-preview-src");
+        if (pv && row.getAttribute("data-src") !== pv) {
+          row.setAttribute("data-src", pv);
+          swapCurrent(row);
+          probeDuration(row);
+        }
+      } else {
+        row.classList.add("gone");
+        slot.innerHTML = '<span class="gonetxt" title="The full track could not be reached">Unavailable</span>';
+      }
+    }
+    function paintGates() {
+      var list = gatedRows();
+      if (!list.length) return;
+      /* js/gated-audio.js is deferred and this runs off a fetch, so either
+         one can land first. Paint the locked default now either way, and
+         wait for the signer rather than giving up on it. */
+      list.forEach(function (row) { paintGate(row, { state: "preview" }); });
+      if (!window.MCC_GATED) {
+        window.addEventListener("mcc:gated-ready", function once() {
+          window.removeEventListener("mcc:gated-ready", once);
+          paintGates();
+        });
+        return;
+      }
+      watchGate();
+      list.forEach(function (row) {
+        window.MCC_GATED.resolve(gateSpec(row)).then(function (out) {
+          paintGate(row, out);
+        });
+      });
+    }
+    document.getElementById("tracks").addEventListener("click", function (e) {
+      var b = e.target.closest ? e.target.closest("[data-dl]") : null;
+      if (!b) return;
+      e.stopPropagation(); e.preventDefault();
+      var row = b.closest("li");
+      b.disabled = true;
+      window.MCC_GATED.download(gateSpec(row), row.getAttribute("data-gated-name"))
+        .then(function (out) {
+          b.disabled = false;
+          if (out && out.state !== "saved") paintGate(row, out);
+        });
+    }, true);
+    /* registered once the signer exists, not at parse time: this inline
+       script runs before the deferred module, so an early call here would
+       have silently dropped every sign-out repaint */
+    var gateWatching = false;
+    function watchGate() {
+      if (gateWatching || !window.MCC_GATED) return;
+      gateWatching = true;
+      window.MCC_GATED.onChange(function () { paintGates(); });
+    }
 
     /* THE COUNTER: plays read back from the platform's first-party
        analytics mirror (the same events GA4 counts land in the events
@@ -1005,15 +1179,7 @@
     var el = function (id) { return document.getElementById(id); };
 
     /* durations on the rows: metadata only, one probe per track */
-    rows.forEach(function (row) {
-      var probe = new Audio();
-      probe.preload = "metadata";
-      probe.src = row.getAttribute("data-src");
-      probe.addEventListener("loadedmetadata", function () {
-        row.querySelector(".d").textContent = fmt(probe.duration);
-        probe.src = "";
-      });
-    });
+    rows.forEach(probeDuration);
 
     function announce(playing) {
       window.dispatchEvent(new CustomEvent("mcc:nowplaying", {
@@ -1495,5 +1661,10 @@
   <script src="js/intuition.js?v=__STAMP__"></script>
   <script src="js/pip.js?v=__STAMP__"></script>
   <script defer src="js/here-material.js?v=__STAMP__"></script>
+  <!-- the gate on a record: the M session, then the signer that trades it
+       for a URL to the master. Both load after the shelf paints, because a
+       locked row is the correct first frame and never a spinner. -->
+  <script defer src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script defer src="js/gated-audio.js?v=__STAMP__"></script>
 </body>
 </html>

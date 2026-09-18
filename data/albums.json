@@ -182,7 +182,7 @@
   {
    "slug": "singles",
    "name": "Singles",
-   "tag": "The singles",
+   "tag": "The singles · 2 tracks",
    "art": "assets/img/m-mark.png",
    "by": "Between the albums.",
    "tracks": [
@@ -193,6 +193,16 @@
      "poster": "assets/frames/coffeecam_0001.jpg",
      "lyrics": "data/lyrics/upset.json",
      "reel": "data/reels/upset.json"
+    },
+    {
+     "title": "niggy nigg",
+     "src": "assets/audio/niggy-nigg-preview.mp3",
+     "gated": {
+      "bucket": "mcc-gated-audio",
+      "object": "niggy-nigg/niggy-nigg.mp3",
+      "preview_seconds": 12,
+      "download_as": "niggy nigg.mp3"
+     }
     }
    ]
   }
