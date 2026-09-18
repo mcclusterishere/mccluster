@@ -37,12 +37,31 @@
     inspector: null,
     loading: false,
     error: null,
-    refreshedAt: null
+    refreshedAt: null,
+    /* Per-source results. Keyed by the same names as the data fields above,
+       so any view can ask why its list is short instead of guessing. */
+    sources: {},
+    selectedThreadId: null,
+    transcripts: {},
+    threadFilter: "all",
+    jobFilter: "all",
+    pipelineStage: "all",
+    resources: null,
+    socialAccounts: null,
+    decisions: [],
+    leadTotal: null,
+    pending: {},
+    drafts: {},
+    search: ""
   };
 
   var bridge = {
-    desk: { title: "The Desk", href: "chat.html", subtitle: "Current public conversation surface" },
-    crm: { title: "CRM", href: "crm.html", subtitle: "Legacy lead surface retained during migration" },
+    /* The Desk and the CRM are no longer operator bridges: Work/Inbox reads
+       the canonical transcript and owns takeover/release/send, and
+       Work/Pipeline reads and writes lead stage directly. Both pages remain
+       on the site for their own audiences; the Control Room no longer sends
+       an operator to them to do work it now does natively. */
+    crm: { title: "CRM", href: "crm.html", subtitle: "Legacy lead surface, superseded by Work · Pipeline" },
     backOffice: { title: "Back Office", href: "admin.html", subtitle: "Legacy order and booking surface retained during migration" },
     studio: { title: "Studio", href: "studio.html", subtitle: "Existing media generation tools" },
     assetLab: { title: "Asset Lab", href: "asset-lab.html", subtitle: "Existing asset tool" },
@@ -53,34 +72,17 @@
     spatial: { title: "Spatial Intelligence", href: API + "/internal/seek-first", subtitle: "Protected Seek First console", external: true }
   };
 
-  function esc(value) {
-    var d = document.createElement("i");
-    d.textContent = value == null ? "" : String(value);
-    return d.innerHTML;
-  }
-  function text(value, fallback) { return value === null || value === undefined || value === "" ? (fallback == null ? "—" : fallback) : String(value); }
-  function count(value) { var n = Number(value); return Number.isFinite(n) ? n : 0; }
-  function titleCase(value) { return String(value || "").replace(/[-_]+/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
-  function ago(value) {
-    if (!value) return "—";
-    var t = new Date(value).getTime();
-    if (!Number.isFinite(t)) return text(value);
-    var s = Math.max(1, Math.round((Date.now() - t) / 1000));
-    if (s < 60) return s + "s";
-    if (s < 3600) return Math.round(s / 60) + "m";
-    if (s < 86400) return Math.round(s / 3600) + "h";
-    return Math.round(s / 86400) + "d";
-  }
-  function moneyCents(value) {
-    var n = Number(value);
-    if (!Number.isFinite(n)) return "—";
-    return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(n / 100);
-  }
-  function formatDate(value) {
-    if (!value) return "—";
-    try { return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value)); }
-    catch (e) { return String(value); }
-  }
+  /* Formatting and source-result primitives live in js/control-room/
+     format.js and sources.js. Bound to locals so every call site below is
+     unchanged. */
+  var fmt = window.CR.fmt, SRC = window.CR.sources;
+  var esc = fmt.esc, text = fmt.text, count = fmt.count, titleCase = fmt.titleCase;
+  var ago = fmt.ago, moneyCents = fmt.moneyCents, formatDate = fmt.formatDate;
+  var durationBetween = fmt.durationBetween, stateClass = fmt.stateClass, jsonText = fmt.jsonText;
+  var okResult = SRC.okResult, badResult = SRC.badResult, classifySourceError = SRC.classifySourceError;
+  var src = SRC.src, rowsOf = SRC.rowsOf, dataOf = SRC.dataOf, pickRows = SRC.pickRows;
+  var sourceBanner = SRC.sourceBanner, sourceStates = SRC.sourceStates;
+
   function token() { return window.MCC_SUPA && window.MCC_SUPA.token ? window.MCC_SUPA.token() : Promise.resolve(null); }
   function sbBase() { return window.MCC_SUPA && window.MCC_SUPA.url; }
   function sbKey() { return window.MCC_SUPA && window.MCC_SUPA.key; }
@@ -123,15 +125,30 @@
         cache: "no-store",
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
       }).then(function (r) {
-        if (!r.ok) throw new Error("Supabase " + r.status);
+        if (!r.ok) {
+          /* The status has to travel with the error, otherwise the source
+             classifier cannot tell a refused read (401/403) from a broken
+             one (5xx) and reports every Supabase failure as "unavailable". */
+          return r.text().then(function (body) {
+            var detail = null;
+            try { detail = body ? JSON.parse(body) : null; } catch (e) { detail = null; }
+            var message = (detail && (detail.message || detail.hint || detail.error)) || ("Supabase " + r.status);
+            throw Object.assign(new Error(message), { status: r.status, detail: detail });
+          });
+        }
         if (r.status === 204) return null;
-        return r.json().catch(function () { return null; });
+        return r.json().catch(function () { return null; }).then(function (rows) {
+          /* PostgREST reports the unpaginated total in Content-Range when
+             asked, which is how a view can say "showing 50 of 812". */
+          if (!opts.count) return rows;
+          var range = r.headers.get("content-range") || "";
+          var total = Number(String(range).split("/")[1]);
+          return { rows: rows || [], total: Number.isFinite(total) ? total : null };
+        });
       });
     });
   }
 
-  function settle(promise, fallback) { return promise.catch(function () { return fallback; }); }
-  function stateClass(kind) { return "cr-state cr-state--" + (kind || "info"); }
   function note(message, bad) { var n = $("cpNote"); if (!n) return; n.textContent = message || ""; n.className = "cr-note" + (bad ? " is-err" : ""); }
 
   function normalizeCreateView(v) {
@@ -254,21 +271,68 @@
 
   function attentionItems() {
     var items = [];
-    if (!state.health || !state.health.ok) items.push({ title: "API health unavailable", sub: "api.mccluster.org did not report healthy.", kind: "bad", action: "system-overview" });
+    if (!state.sources.health || !state.sources.health.ok) items.push({ title: "Edge health unreachable", sub: "api.mccluster.org/health did not respond.", kind: "bad", action: "system-overview" });
+    else if (!state.health || !state.health.ok) items.push({ title: "API reports unhealthy", sub: "The edge responded but did not report healthy.", kind: "bad", action: "system-overview" });
     if (state.status && state.status.database && !state.status.database.reachable) items.push({ title: "Database unavailable", sub: "Canonical Supabase reachability failed.", kind: "bad", action: "system-overview" });
     if (state.aiHealth && state.aiHealth.stale) items.push({ title: "Host health is stale", sub: "Core has not recorded a fresh host health result.", kind: "warn", action: "system-workload" });
     var failed = state.jobs.filter(function (j) { return j.status === "failed"; });
     if (failed.length) items.push({ title: failed.length + " failed workload" + (failed.length === 1 ? "" : "s"), sub: "Inspect the execution queue and failure output.", kind: "bad", action: "system-workload" });
-    var human = state.threads.filter(function (t) { return t.mode === "human"; });
-    if (human.length) items.push({ title: human.length + " conversation" + (human.length === 1 ? "" : "s") + " in human control", sub: "Automation is paused on these threads.", kind: "warn", action: "work-inbox" });
+    var awaiting = state.threads.filter(function (t) { return threadInQueue(t, "inbound"); });
+    if (awaiting.length) items.push({ title: awaiting.length + " conversation" + (awaiting.length === 1 ? "" : "s") + " awaiting a reply", sub: "The last message on these threads came in, not out.", kind: "warn", action: "work-inbox" });
+    var human = state.threads.filter(threadOwned);
+    if (human.length) items.push({ title: human.length + " conversation" + (human.length === 1 ? "" : "s") + " in your control", sub: "Automation is paused on these threads until you release them.", kind: "warn", action: "work-inbox" });
+    /* A decision sitting at "proposed" is literally something waiting on the
+       owner, so it belongs at the top of Needs you rather than in a room of
+       its own. High and critical risk are called out separately because those
+       are the ones that should not sit. */
+    var pending = state.decisions.filter(function (d) { return (d.status || "") === "proposed"; });
+    pending.filter(function (d) { return ["high", "critical"].indexOf(d.risk_class) >= 0; })
+      .slice(0, 5)
+      .forEach(function (d) {
+        items.push({ title: d.title || "Decision awaiting you", sub: titleCase(d.risk_class) + " risk · proposed " + ago(d.created_at), kind: "bad", action: "inspect-decision", id: d.id });
+      });
+    var routine = pending.filter(function (d) { return ["high", "critical"].indexOf(d.risk_class) < 0; });
+    if (routine.length) items.push({ title: routine.length + " decision" + (routine.length === 1 ? "" : "s") + " awaiting you", sub: "Proposed in the AI context plane, not yet approved or rejected.", kind: "warn", action: "inspect-decision", id: routine[0].id });
+
+    var newLeads = state.leads.filter(function (l) { return (l.status || "new") === "new"; });
+    if (newLeads.length) items.push({ title: newLeads.length + " lead" + (newLeads.length === 1 ? "" : "s") + " never answered", sub: "Still in the new stage in the canonical leads table.", kind: "warn", action: "work-pipeline" });
+    /* A source that could not be read is itself something that needs the
+       operator — a quiet screen must never be the result of a failed query. */
+    Object.keys(state.sources).forEach(function (key) {
+      var s = state.sources[key];
+      if (s && !s.ok && s.state !== "unsupported") {
+        items.push({ title: titleCase(key) + " could not be read", sub: s.message || ("Source state: " + s.state), kind: s.state === "unauthorized" ? "warn" : "bad", action: "system-observability" });
+      }
+    });
     return items;
+  }
+
+  /* What actually changed, read from the newest canonical record in each
+     surface. Replaces the decorative signal graphic that showed nothing. */
+  function recentActivity() {
+    var items = [];
+    function newest(rows, when) {
+      return rows.slice().sort(function (a, b) { return new Date(when(b) || 0) - new Date(when(a) || 0); })[0];
+    }
+    var t = newest(state.threads, function (x) { return x.updated_at; });
+    if (t) items.push({ title: threadLabel(t), sub: threadOwned(t) ? "You have this thread" : "Assistant handling", when: t.updated_at, kind: "ai", action: "inspect-thread", id: t.id, badge: "Message" });
+    var l = newest(state.leads, function (x) { return x.at || x.created_at; });
+    if (l) items.push({ title: l.name || l.email || "Lead", sub: text(l.want || l.campaign, "New business"), when: l.at || l.created_at, kind: "info", action: "inspect-lead", id: l.id, badge: "Lead" });
+    var j = newest(state.jobs, function (x) { return x.updated_at || x.created_at; });
+    if (j) items.push({ title: titleCase(j.job_type), sub: "Core workload · " + titleCase(j.status || ""), when: j.updated_at || j.created_at, kind: j.status === "failed" ? "bad" : "ai", action: "inspect-job", id: j.id, badge: "Job" });
+    var a = newest(state.mediaAssets, function (x) { return x.created_at; });
+    if (a) items.push({ title: assetName(a), sub: "Newest generated asset", when: a.created_at, kind: "ok", action: "inspect-asset", id: a.id, badge: "Asset" });
+    var p = newest(state.posts, function (x) { return x.published_at; });
+    if (p) items.push({ title: text(p.caption, "Published post"), sub: "Distribution", when: p.published_at, kind: "ok", action: "inspect-post", id: p.id, badge: "Post" });
+    if (!items.length) items.push({ title: "No canonical activity", sub: "No conversation, lead, job, asset, or post was returned.", when: state.refreshedAt, kind: "info", action: "refresh", badge: "Idle" });
+    return items.sort(function (x, y) { return new Date(y.when || 0) - new Date(x.when || 0); });
   }
 
   function renderHome() {
     var c = state.status && state.status.counts || {};
     var attention = attentionItems();
     var activeJobs = state.jobs.filter(function (j) { return ["queued", "running"].indexOf(j.status) >= 0; });
-    var inboxRows = attention.length ? attention.map(function (it) { return row(it.title, it.sub, "Open", it.kind, it.action, { badge: it.kind === "bad" ? "Issue" : "Review" }); }).join("") :
+    var inboxRows = attention.length ? attention.map(function (it) { return row(it.title, it.sub, "Open", it.kind, it.action, { id: it.id, badge: it.kind === "bad" ? "Issue" : "Review" }); }).join("") :
       '<div class="cr-panel__body"><span class="' + stateClass("ok") + '">All clear</span><p class="cr-muted">No instrumented exception currently needs you.</p></div>';
     var workRows = activeJobs.slice(0, 6).map(function (j) {
       return row(titleCase(j.job_type), text(j.target_id, j.target_type), titleCase(j.status), j.status === "running" ? "ai" : "info", "inspect-job", { id: j.id, badge: j.status });
@@ -285,7 +349,9 @@
       '<div class="cr-grid cr-home-grid">' +
       panel("Needs you", attention.length ? attention.length + " item" + (attention.length === 1 ? "" : "s") : "clear", '<div class="cr-list">' + inboxRows + '</div>', "cr-span-7") +
       panel("Working now", activeJobs.length + " active", '<div class="cr-list">' + workRows + '</div>', "cr-span-5") +
-      panel("Signals", "ingestion surface", '<div class="cr-panel__body"><div class="cr-signal-map cr-signal-map--v2"><span class="cr-signal-node n1"></span><span class="cr-signal-node n2"></span><span class="cr-signal-node n3"></span><span class="cr-signal-node n4"></span><span class="cr-signal-line l1"></span><span class="cr-signal-line l2"></span><span class="cr-signal-line l3"></span><div class="cr-signal-map__legend"><span>Communications</span><span>GitHub / Core</span><span>Creative</span><span>Applications</span></div></div><p class="cr-muted">Reserved for canonical ingestion signals. Hitman Halo can deepen this visualization without creating another top-level control plane.</p></div>', "cr-span-7") +
+      panel("Recent activity", "last change per surface", '<div class="cr-list">' + recentActivity().map(function (a) {
+        return row(a.title, a.sub, ago(a.when), a.kind, a.action, a.id ? { id: a.id, badge: a.badge } : { badge: a.badge });
+      }).join("") + '</div>', "cr-span-7") +
       panel("System pulse", state.health && state.health.ok ? "operational" : "check", '<div class="cr-list">' +
         row("API Worker", "api.mccluster.org", state.health && state.health.ok ? "Healthy" : "Check", state.health && state.health.ok ? "ok" : "bad", "system-overview") +
         row("Database", "Canonical Supabase", state.status && state.status.database && state.status.database.reachable ? "Healthy" : "Check", state.status && state.status.database && state.status.database.reachable ? "ok" : "warn", "system-overview") +
@@ -307,24 +373,278 @@
     return items.sort(function (a, b) { return new Date(b.when || 0).getTime() - new Date(a.when || 0).getTime(); });
   }
 
+  /* CONVERSATION OWNERSHIP.
+
+     The one thing this screen must never be ambiguous about is who owns a
+     thread. An operator typing into a conversation the assistant still
+     controls — or assuming a handover happened when it did not — is the
+     failure that matters, so ownership is stated in the list, in the
+     header, and in the composer's enabled state, all read from `mode`. */
+  function threadOwned(t) { return (t && t.mode) === "human"; }
+  function ownerPill(t) { return threadOwned(t) ? '<span class="' + stateClass("ok") + '">You have it</span>' : '<span class="' + stateClass("ai") + '">Assistant</span>'; }
+
+  var THREAD_QUEUES = [["all", "All"], ["human", "You have it"], ["assistant", "Assistant"], ["inbound", "Awaiting reply"]];
+  function threadInQueue(t, queue) {
+    if (queue === "human") return threadOwned(t);
+    if (queue === "assistant") return !threadOwned(t);
+    if (queue === "inbound") {
+      var inbound = t.last_inbound_at ? new Date(t.last_inbound_at).getTime() : 0;
+      var outbound = t.last_outbound_at ? new Date(t.last_outbound_at).getTime() : 0;
+      return inbound > outbound;
+    }
+    return true;
+  }
+
+  var TRANSCRIPT_PAGE = 50;
+  var DELIVERY_KIND = { delivered: "ok", sent: "ok", received: "info", queued: "warn", claimed: "warn", failed: "bad", suppressed: "bad" };
+  function renderTranscript(threadId) {
+    var result = state.transcripts[threadId];
+    if (!result) return '<div class="cr-convo__body">' + empty("Loading conversation", "Reading the canonical transcript.") + '</div>';
+    if (!result.ok) return '<div class="cr-convo__body">' + sourceBanner(result, "Transcript") + '</div>';
+    var messages = (result.data && result.data.messages) || [];
+    if (!messages.length) {
+      return '<div class="cr-convo__body">' + empty("No messages yet", "This thread exists but carries no messages in comms_messages.") + '</div>';
+    }
+    /* Older messages are fetched on request rather than capped silently: a
+       transcript that simply stops at N looks like the whole conversation. */
+    var earlierBusy = state.pending["earlier:" + threadId];
+    var earlierError = state.pending["earlierError:" + threadId];
+    var head = result.data.has_more
+      ? '<div class="cr-convo__earlier">' +
+          '<button class="cr-btn cr-btn--ghost" type="button" data-action="load-earlier" data-id="' + esc(threadId) + '"' + (earlierBusy ? " disabled" : "") + '>' +
+          (earlierBusy ? "Loading…" : "Load earlier messages") + '</button></div>'
+      : '<p class="cr-convo__earlier cr-muted">Start of the conversation.</p>';
+    return '<div class="cr-convo__body">' + head +
+      (earlierError ? sourceBanner(earlierError, "Earlier messages") : "") +
+      messages.map(function (m) {
+      var out = m.direction === "outbound";
+      var kind = DELIVERY_KIND[m.status] || "info";
+      return '<div class="cr-msg' + (out ? " cr-msg--out" : "") + '">' +
+        '<div class="cr-msg__meta"><span>' + esc(titleCase(m.sender_type || m.direction || "message")) + '</span>' +
+        '<span>' + esc(ago(m.occurred_at || m.created_at)) + '</span>' +
+        '<span class="' + stateClass(kind) + '">' + esc(m.status || "—") + '</span></div>' +
+        '<div class="cr-msg__body">' + esc(m.body || "") + '</div></div>';
+    }).join("") + '</div>';
+  }
+
+  function renderConversation(thread) {
+    if (!thread) return '<div class="cr-convo">' + empty("Select a conversation", "Pick a thread to read its transcript and take control.") + '</div>';
+    var owned = threadOwned(thread);
+    var c = contactFromThread(thread);
+    var sending = state.pending["send:" + thread.id];
+    var switching = state.pending["mode:" + thread.id];
+    var failure = state.pending["error:" + thread.id];
+    return '<div class="cr-convo">' +
+      '<header class="cr-convo__head"><div><b>' + esc(threadLabel(thread)) + '</b>' +
+      '<p class="cr-muted">' + esc(c.address || thread.relay_address || "—") + ' · ' + esc(thread.channel || "sms") + ' · last activity ' + esc(ago(thread.updated_at)) + '</p></div>' +
+      ownerPill(thread) + '</header>' +
+      renderTranscript(thread.id) +
+      (failure ? '<div class="cr-convo__error">' + sourceBanner(failure, "Last action") + '</div>' : "") +
+      '<footer class="cr-convo__foot">' +
+      '<textarea class="cr-textarea" id="crReply" rows="2" placeholder="' +
+      (owned ? "Reply as the operator…" : "Take the thread over before replying.") + '"' + (owned && !sending ? "" : " disabled") + '></textarea>' +
+      '<div class="cr-convo__actions">' +
+      (owned
+        ? '<button class="cr-btn cr-btn--primary" type="button" data-action="thread-send" data-id="' + esc(thread.id) + '"' + (sending ? " disabled" : "") + '>' + (sending ? "Queueing…" : "Send") + '</button>' +
+          '<button class="cr-btn" type="button" data-action="thread-mode" data-id="' + esc(thread.id) + '" data-mode="release"' + (switching ? " disabled" : "") + '>' + (switching ? "Working…" : "Return to assistant") + '</button>'
+        : '<button class="cr-btn" type="button" disabled title="Take the thread over first — the assistant currently owns it.">Send</button>' +
+          '<button class="cr-btn cr-btn--primary" type="button" data-action="thread-mode" data-id="' + esc(thread.id) + '" data-mode="takeover"' + (switching ? " disabled" : "") + '>' + (switching ? "Working…" : "Take over") + '</button>') +
+      '<button class="cr-btn cr-btn--ghost" type="button" data-action="inspect-thread" data-id="' + esc(thread.id) + '">Details</button>' +
+      '</div></footer></div>';
+  }
+
   function renderWorkInbox() {
-    var items = unifiedInbox();
-    if (!items.length) return '<div class="cr-canvas">' + empty("Inbox is clear", "No conversations, leads, or requests were returned by the canonical sources.") + '</div>';
-    return '<div class="cr-canvas"><div class="cr-feed">' + items.slice(0, 120).map(function (it) {
-      return row(it.title, it.sub, ago(it.when), it.kind, it.action, { id: it.id, badge: it.type });
-    }).join("") + '</div></div>';
+    var threadsResult = state.sources.threads;
+    var banners = sourceStates([["Conversations", threadsResult], ["Leads", state.sources.leads], ["Site requests", state.sources.siteRequests]]);
+    var visible = state.threads.filter(function (t) { return threadInQueue(t, state.threadFilter); });
+    var selected = state.threads.find(function (t) { return String(t.id) === String(state.selectedThreadId); }) || null;
+    var other = unifiedInbox().filter(function (it) { return it.action !== "inspect-thread"; });
+
+    var list = visible.length
+      ? visible.map(function (t) {
+          return '<button type="button" class="cr-thread' + (String(t.id) === String(state.selectedThreadId) ? " is-on" : "") + '" data-action="select-thread" data-id="' + esc(t.id) + '">' +
+            '<span class="cr-thread__top"><b>' + esc(threadLabel(t)) + '</b><time>' + esc(ago(t.updated_at)) + '</time></span>' +
+            '<span class="cr-thread__sub">' + ownerPill(t) + '<em>' + esc(t.channel || "sms") + '</em></span></button>';
+        }).join("")
+      : (threadsResult && threadsResult.ok
+          ? '<div class="cr-board__empty">No conversations in this queue.</div>'
+          : '<div class="cr-board__empty">Conversations could not be read.</div>');
+
+    return banners + '<div class="cr-inbox">' +
+      '<div class="cr-inbox__list"><div class="cr-filterchips cr-filterchips--inbox">' +
+      THREAD_QUEUES.map(function (q) {
+        var n = state.threads.filter(function (t) { return threadInQueue(t, q[0]); }).length;
+        return '<button class="cr-chip' + (state.threadFilter === q[0] ? " is-on" : "") + '" type="button" data-thread-filter="' + q[0] + '">' + esc(q[1]) + ' <b>' + n + '</b></button>';
+      }).join("") + '</div><div class="cr-threadlist">' + list + '</div>' +
+      (other.length ? '<div class="cr-inbox__other"><h3>Other incoming work</h3><div class="cr-list">' +
+        other.slice(0, 40).map(function (it) { return row(it.title, it.sub, ago(it.when), it.kind, it.action, { id: it.id, badge: it.type }); }).join("") + '</div></div>' : "") +
+      '</div>' + renderConversation(selected) + '</div>';
+  }
+
+  /* Loads a transcript once per selection and re-renders when it lands.
+     A failed read is stored as a failed result, never as an empty list. */
+  var transcriptInflight = {};
+  function loadTranscript(threadId, force) {
+    if (!threadId) return Promise.resolve();
+    if (state.transcripts[threadId] && !force) return Promise.resolve();
+    /* A forced reload clears the cached transcript and re-renders, which is
+       exactly the condition render()'s auto-load watches for — without this
+       guard the two paths race and fetch the same thread twice. */
+    if (transcriptInflight[threadId]) return transcriptInflight[threadId];
+    delete state.transcripts[threadId];
+    /* The request is started and registered BEFORE the loading render, because
+       that render is what re-enters this function via render()'s auto-load. */
+    var pending = src(request("/v1/comms/threads/" + encodeURIComponent(threadId) + "/messages?limit=" + TRANSCRIPT_PAGE)).then(function (result) {
+      delete transcriptInflight[threadId];
+      state.transcripts[threadId] = result;
+      if (result.ok && result.data && result.data.thread) {
+        var idx = state.threads.findIndex(function (t) { return String(t.id) === String(threadId); });
+        if (idx >= 0) state.threads[idx] = Object.assign({}, state.threads[idx], result.data.thread);
+      }
+      render();
+    });
+    transcriptInflight[threadId] = pending;
+    render(); /* shows the loading state; safe now that the guard is set */
+    return pending;
+  }
+
+  /* Walks backwards through the thread with the server's keyset cursor and
+     prepends the older page. Messages are keyed by id on merge because a
+     cursor page can legitimately overlap the page before it. */
+  function loadEarlier(threadId) {
+    var current = state.transcripts[threadId];
+    if (!current || !current.ok || !current.data || !current.data.has_more) return;
+    if (state.pending["earlier:" + threadId]) return;
+    state.pending["earlier:" + threadId] = true;
+    render();
+    var q = "/v1/comms/threads/" + encodeURIComponent(threadId) + "/messages?limit=" + TRANSCRIPT_PAGE +
+      "&before=" + encodeURIComponent(current.data.next_before || "") +
+      (current.data.next_before_id ? "&before_id=" + encodeURIComponent(current.data.next_before_id) : "");
+    src(request(q)).then(function (page) {
+      delete state.pending["earlier:" + threadId];
+      if (!page.ok) { state.pending["earlierError:" + threadId] = page; render(); return; }
+      delete state.pending["earlierError:" + threadId];
+      var older = (page.data && page.data.messages) || [];
+      var seen = {};
+      var merged = older.concat(current.data.messages || []).filter(function (m) {
+        if (seen[m.id]) return false;
+        seen[m.id] = true;
+        return true;
+      });
+      state.transcripts[threadId] = okResult(Object.assign({}, current.data, {
+        messages: merged,
+        has_more: Boolean(page.data && page.data.has_more),
+        next_before: page.data && page.data.next_before,
+        next_before_id: page.data && page.data.next_before_id
+      }));
+      render();
+    });
+  }
+
+  /* The four persisted lead states. These are the states the `leads` table
+     actually stores — the console does not invent a fifth. */
+  var LEAD_STAGES = ["new", "replied", "booked", "closed"];
+  var LEAD_STAGE_LABELS = { "new": "New", replied: "Contacted", booked: "Booked", closed: "Closed" };
+
+  /* LEAD QUERY.
+
+     Search runs on the server. Filtering the loaded page in the browser can
+     only ever find leads that happened to be in it, so a search that came
+     back empty could not be trusted to mean "no such lead". */
+  var LEAD_PAGE = 200;
+  var LEAD_SEARCH_COLUMNS = ["name", "email", "want", "note", "campaign", "source", "page"];
+
+  function leadQueryPath(limit, offset) {
+    var q = String(state.search || "").trim();
+    var parts = ["select=*", "order=at.desc", "limit=" + limit, "offset=" + (offset || 0)];
+    if (state.pipelineStage !== "all") parts.push("status=eq." + encodeURIComponent(state.pipelineStage));
+    if (q) {
+      /* PostgREST `or` with ilike. Commas and parens would break out of the
+         filter group, so they are stripped rather than escaped. */
+      var safe = q.replace(/[(),*]/g, " ").trim();
+      if (safe) {
+        parts.push("or=(" + LEAD_SEARCH_COLUMNS.map(function (c) {
+          return c + ".ilike.*" + encodeURIComponent(safe) + "*";
+        }).join(",") + ")");
+      }
+    }
+    return "leads?" + parts.join("&");
+  }
+
+  function runLeadQuery(append) {
+    var offset = append ? state.leads.length : 0;
+    var key = leadQueryPath(LEAD_PAGE, offset);
+    state.pending.leads = true;
+    if (!append) state.leadTotal = null;
+    render();
+    return src(supa(key, { count: true, prefer: "count=exact" })).then(function (result) {
+      delete state.pending.leads;
+      /* A newer keystroke already superseded this response. */
+      if (leadQueryPath(LEAD_PAGE, offset) !== key) return;
+      state.sources.leads = result.ok ? okResult((result.data && result.data.rows) || []) : result;
+      var rows = result.ok ? ((result.data && result.data.rows) || []) : [];
+      state.leads = append ? state.leads.concat(rows) : rows;
+      state.leadTotal = result.ok && result.data ? result.data.total : null;
+      render();
+    });
+  }
+
+  var leadSearchTimer = null;
+  function scheduleLeadQuery() {
+    clearTimeout(leadSearchTimer);
+    leadSearchTimer = setTimeout(function () { runLeadQuery(false); }, 260);
+  }
+
+  /* The board renders whatever the current server query returned. */
+  function pipelineLeads() { return state.leads; }
+
+  /* States what the loaded rows actually represent: which query produced
+     them, and how many the server says match it. */
+  function leadScopeNote() {
+    if (state.pending.leads) return '<p class="cr-derived">Querying leads…</p>';
+    if (!state.sources.leads || !state.sources.leads.ok) return "";
+    var bits = [];
+    var q = String(state.search || "").trim();
+    if (q) bits.push('matching "' + q + '"');
+    if (state.pipelineStage !== "all") bits.push("in " + (LEAD_STAGE_LABELS[state.pipelineStage] || state.pipelineStage));
+    var scope = bits.length ? " " + bits.join(" ") : "";
+    if (state.leadTotal === null || state.leadTotal === undefined) {
+      return '<p class="cr-derived">Showing ' + state.leads.length + ' lead' + (state.leads.length === 1 ? "" : "s") + scope + '. The server did not report a total.</p>';
+    }
+    if (state.leadTotal > state.leads.length) {
+      return '<p class="cr-derived">Showing ' + state.leads.length + ' of ' + state.leadTotal + ' leads' + scope + '. Search runs on the server, so this covers every lead, not just the loaded page.</p>';
+    }
+    return '<p class="cr-derived">' + state.leadTotal + ' lead' + (state.leadTotal === 1 ? "" : "s") + scope + '.</p>';
+  }
+
+  function leadMore() {
+    if (state.pending.leads) return "";
+    if (state.leadTotal === null || state.leadTotal === undefined) return "";
+    if (state.leads.length >= state.leadTotal) return "";
+    return '<div class="cr-more"><button class="cr-btn" type="button" data-action="more-leads">Load ' +
+      Math.min(LEAD_PAGE, state.leadTotal - state.leads.length) + ' more</button></div>';
   }
 
   function renderPipeline() {
-    var stages = ["new", "replied", "booked", "closed"];
-    var labels = { "new": "New", replied: "Contacted", booked: "Booked", closed: "Closed" };
-    return '<div class="cr-board">' + stages.map(function (stage) {
-      var rows = state.leads.filter(function (l) { return (l.status || "new") === stage; });
-      return '<section class="cr-board__col"><header><span>' + esc(labels[stage]) + '</span><b>' + rows.length + '</b></header><div class="cr-board__stack">' +
+    var banner = sourceBanner(state.sources.leads, "Leads");
+    var leads = pipelineLeads();
+    var stages = state.pipelineStage === "all" ? LEAD_STAGES : [state.pipelineStage];
+    var board = '<div class="cr-board">' + stages.map(function (stage) {
+      var rows = leads.filter(function (l) { return (l.status || "new") === stage; });
+      return '<section class="cr-board__col"><header><span>' + esc(LEAD_STAGE_LABELS[stage] || titleCase(stage)) + '</span><b>' + rows.length + '</b></header><div class="cr-board__stack">' +
         (rows.length ? rows.map(function (l) {
           return '<button type="button" class="cr-card" data-action="inspect-lead" data-id="' + esc(l.id) + '"><strong>' + esc(l.name || l.email || "Lead") + '</strong><span>' + esc(l.want || l.campaign || "Inquiry") + '</span><small>' + esc(ago(l.at || l.created_at)) + '</small></button>';
-        }).join("") : '<div class="cr-board__empty">No records</div>') + '</div></section>';
+        }).join("") : '<div class="cr-board__empty">' +
+          (state.sources.leads && state.sources.leads.ok ? "No records" : "Not readable") + '</div>') + '</div></section>';
     }).join("") + '</div>';
+    /* Counts are of the loaded set; the server's total for the current query
+       is stated separately so a partial page is never mistaken for the whole
+       pipeline. */
+    var chips = '<div class="cr-filterchips"><button class="cr-chip' + (state.pipelineStage === "all" ? " is-on" : "") + '" type="button" data-stage-filter="all">All</button>' +
+      LEAD_STAGES.map(function (s) {
+        return '<button class="cr-chip' + (state.pipelineStage === s ? " is-on" : "") + '" type="button" data-stage-filter="' + s + '">' + esc(LEAD_STAGE_LABELS[s]) + '</button>';
+      }).join("") + '</div>';
+    return banner + chips + leadScopeNote() + board + leadMore();
   }
 
   function personRows() {
@@ -347,12 +667,18 @@
       rows.map(function (r) { return '<tr' + (r.action ? ' data-action="' + esc(r.action) + '" data-id="' + esc(r.id) + '" tabindex="0"' : "") + '>' + columns.map(function (c) { return '<td>' + (c.html ? c.html(r) : esc(text(r[c.key], ""))) + '</td>'; }).join("") + '</tr>'; }).join("") + '</tbody></table></div>';
   }
 
+  /* States a view's real backing rather than letting a derived view imply a
+     first-class record type that does not exist yet. */
+  function derivedNote(text) { return '<p class="cr-derived">' + esc(text) + '</p>'; }
+
   function renderPeople() {
     var people = personRows();
-    return renderTable([
-      { label: "Person", key: "name" }, { label: "Contact", key: "contact" }, { label: "Relationship", key: "source" },
-      { label: "Last activity", html: function (r) { return esc(ago(r.last)); } }
-    ], people.map(function (p) { p.action = p.thread ? "inspect-thread" : "inspect-lead"; return p; }), "No people yet");
+    return sourceStates([["Leads", state.sources.leads], ["Conversations", state.sources.threads]]) +
+      derivedNote("People are derived from canonical leads and conversation contacts. There is no separate people table yet, so a person exists here only where one of those records does.") +
+      renderTable([
+        { label: "Person", key: "name" }, { label: "Contact", key: "contact" }, { label: "Relationship", key: "source" },
+        { label: "Last activity", html: function (r) { return esc(ago(r.last)); } }
+      ], people.map(function (p) { p.action = p.thread ? "inspect-thread" : "inspect-lead"; return p; }), "No people yet");
   }
 
   function renderCompanies() {
@@ -364,12 +690,18 @@
       companyMap[k].people += 1;
     });
     var companies = Object.keys(companyMap).map(function (k) { return companyMap[k]; });
-    return renderTable([{ label: "Company", key: "name" }, { label: "People", key: "people" }, { label: "Last activity", html: function (r) { return esc(ago(r.last)); } }], companies, "No company records yet");
+    /* Backend gap, stated rather than papered over with invented rows. */
+    var gap = companies.length ? "" : '<div class="cr-gap"><b>No company model exists yet.</b><span>Companies are grouped from a company field on leads. No lead currently carries one, and there is no companies table or endpoint in the canonical backend — so this view is truthfully empty rather than filled with manufactured organizations.</span></div>';
+    return sourceBanner(state.sources.leads, "Leads") + gap +
+      (companies.length ? derivedNote("Grouped from the company field on canonical leads.") : "") +
+      (companies.length ? renderTable([{ label: "Company", key: "name" }, { label: "People", key: "people" }, { label: "Last activity", html: function (r) { return esc(ago(r.last)); } }], companies, "No company records yet") : "");
   }
 
   function renderClients() {
     var rows = state.leads.filter(function (l) { return l.status === "booked" || l.status === "closed"; }).map(function (l) { return { id: l.id, action: "inspect-lead", name: l.name || l.email, service: l.want || l.campaign || "Client work", status: l.status, last: l.at || l.created_at }; });
-    return renderTable([{ label: "Client", key: "name" }, { label: "Work", key: "service" }, { label: "State", key: "status" }, { label: "Last activity", html: function (r) { return esc(ago(r.last)); } }], rows, "No client records yet");
+    return sourceBanner(state.sources.leads, "Leads") +
+      derivedNote("Clients are leads that reached booked or closed. That is the only client signal the canonical schema persists.") +
+      renderTable([{ label: "Client", key: "name" }, { label: "Work", key: "service" }, { label: "State", key: "status" }, { label: "Last activity", html: function (r) { return esc(ago(r.last)); } }], rows, "No client records yet");
   }
 
   function renderTasks() {
@@ -377,13 +709,20 @@
     state.leads.filter(function (l) { return l.status !== "closed"; }).forEach(function (l) {
       tasks.push({ id: l.id, action: "inspect-lead", task: l.status === "new" ? "Reply to " + (l.name || l.email || "lead") : (l.status === "replied" ? "Advance " + (l.name || "lead") : "Confirm next step with " + (l.name || "client")), related: l.want || l.campaign || "Lead", due: l.at || l.created_at });
     });
-    return renderTable([{ label: "Next action", key: "task" }, { label: "Related", key: "related" }, { label: "Since", html: function (r) { return esc(ago(r.due)); } }], tasks, "No open next actions");
+    state.jobs.filter(function (j) { return j.status === "failed"; }).forEach(function (j) {
+      tasks.push({ id: j.id, action: "inspect-job", task: "Resolve failed " + titleCase(j.job_type), related: text(j.target_id, j.target_type), due: j.updated_at || j.created_at });
+    });
+    return sourceStates([["Leads", state.sources.leads], ["Workload", state.sources.jobs]]) +
+      '<div class="cr-gap"><b>Tasks are derived, not stored.</b><span>There is no canonical tasks table, so nothing here can be created, assigned, or checked off. These are the open next actions implied by leads that have not closed and by failed Core jobs.</span></div>' +
+      renderTable([{ label: "Next action", key: "task" }, { label: "Related", key: "related" }, { label: "Since", html: function (r) { return esc(ago(r.due)); } }], tasks, "No open next actions");
   }
 
   function renderOrdersBookings(view) {
     var lane = view === "orders" ? "orders" : "bookings";
     var rows = state.leads.filter(function (l) { return leadLane(l) === lane; }).map(function (l) { return { id: l.id, action: "inspect-lead", name: l.name || l.email, item: l.want || l.note || l.campaign || titleCase(lane), status: l.status || "new", last: l.at || l.created_at }; });
-    return renderTable([{ label: view === "orders" ? "Customer" : "Contact", key: "name" }, { label: view === "orders" ? "Order" : "Booking", key: "item" }, { label: "State", key: "status" }, { label: "Received", html: function (r) { return esc(ago(r.last)); } }], rows, "No " + view + " yet");
+    return sourceBanner(state.sources.leads, "Leads") +
+      '<div class="cr-gap"><b>' + esc(titleCase(view)) + ' are lead lanes, not their own records.</b><span>The canonical schema has no ' + esc(view) + ' table. These rows are leads routed to the ' + esc(lane) + ' lane by campaign, so there is no fulfilment state, amount, or line item to show and none is invented here.</span></div>' +
+      renderTable([{ label: view === "orders" ? "Customer" : "Contact", key: "name" }, { label: view === "orders" ? "Order" : "Booking", key: "item" }, { label: "State", key: "status" }, { label: "Received", html: function (r) { return esc(ago(r.last)); } }], rows, "No " + view + " yet");
   }
 
   function renderWorkView(view) {
@@ -417,9 +756,21 @@
       '<div class="cr-creative-canvas"><div class="cr-node cr-node--brief"><small>Brief</small><strong>' + esc(project.objective || project.name || "Project brief") + '</strong></div>' +
       '<div class="cr-node-link">→</div><div class="cr-node"><small>Variants</small><strong>' + st.variants + ' creative output' + (st.variants === 1 ? "" : "s") + '</strong></div>' +
       '<div class="cr-node-link">→</div><div class="cr-node"><small>Distribution</small><strong>' + (st.scheduled + st.posts) + ' post object' + ((st.scheduled + st.posts) === 1 ? "" : "s") + '</strong></div></div>' +
-      '<div class="cr-grid">' + panel("Variants", variants.length + " total", '<div class="cr-list">' + (variants.slice(0, 8).map(function (v) { return row(v.variant_key || "Variant", v.hook || v.hypothesis || "Generated creative", v.score == null ? titleCase(v.status || "") : "Score " + v.score, v.status === "ready" ? "ok" : "ai", "inspect-variant", { id: v.id, badge: v.status || "variant" }); }).join("") || '<div class="cr-panel__body cr-muted">No variants yet.</div>') + '</div>', "cr-span-6") +
+      '<div class="cr-grid">' + panel("Variants", variants.length + " total", '<div class="cr-list">' + (variants.slice(0, 8).map(function (v) {
+        /* A publishable variant gets the real publish path; one without
+           resolvable media does not, because the backend would refuse it. */
+        return row(v.variant_key || "Variant", v.hook || v.hypothesis || "Generated creative",
+          variantIsPublishable(v) ? "Publish" : (v.score == null ? titleCase(v.status || "") : "Score " + v.score),
+          v.status === "ready" ? "ok" : "ai",
+          variantIsPublishable(v) ? "open-publish" : "inspect-variant",
+          { id: v.id, badge: v.status || "variant" });
+      }).join("") || '<div class="cr-panel__body cr-muted">No variants yet.</div>') + '</div>', "cr-span-6") +
       panel("Published / queued", (st.scheduled + st.posts) + " items", '<div class="cr-list">' + (posts.slice(0, 8).map(function (p) { return row(p.caption || "Published post", p.publish_mode || "post", ago(p.published_at), "ok", "inspect-post", { id: p.id, badge: "Published" }); }).join("") || '<div class="cr-panel__body cr-muted">Nothing published yet.</div>') + '</div>', "cr-span-6") + '</div>';
   }
+
+  /* Generation lives in js/control-room/media.js: catalog, explicit model
+     selection, submission, and following each job to a terminal state. */
+  function renderGenerator() { return window.CR.media.renderPanel(); }
 
   function renderProjects() {
     if (state.selectedProjectId) {
@@ -427,8 +778,17 @@
       if (project) return renderProjectWorkspace(project);
       state.selectedProjectId = null;
     }
-    if (!state.campaigns.length) return '<div class="cr-canvas">' + empty("No creative projects yet", "Create remains wired to the canonical media and social backends. Existing Studio stays available while projects begin accumulating here.", "Open Studio", "open-bridge:studio") + '</div>';
-    return '<div class="cr-project-grid">' + state.campaigns.map(function (c) {
+    var banner = sourceStates([["Projects", state.sources.campaigns], ["Variants", state.sources.variants]]);
+    var generator = '<div class="cr-grid">' + renderGenerator() + '</div>';
+    if (!state.campaigns.length) {
+      return banner + generator + '<div class="cr-canvas">' + empty(
+        state.sources.campaigns && state.sources.campaigns.ok ? "No creative projects yet" : "Projects not readable",
+        state.sources.campaigns && state.sources.campaigns.ok
+          ? "social_campaigns returned no rows. Generation above still runs against the canonical media backend."
+          : "The project query did not succeed, so this is not a statement that no projects exist."
+      ) + '</div>';
+    }
+    return banner + generator + '<div class="cr-project-grid">' + state.campaigns.map(function (c) {
       var st = projectStats(c.id);
       return '<button type="button" class="cr-project-card" data-action="open-project" data-id="' + esc(c.id) + '"><span class="' + stateClass(c.status === "active" ? "ok" : "info") + '">' + esc(c.status || "draft") + '</span><strong>' + esc(c.name || "Campaign") + '</strong><p>' + esc(c.objective || "Creative project") + '</p><footer><span>' + st.variants + ' variants</span><span>' + st.posts + ' published</span></footer></button>';
     }).join("") + '</div>';
@@ -436,8 +796,16 @@
 
   function assetName(a) { return a.name || a.filename || a.file_name || a.kind || a.type || ("Asset " + String(a.id || "").slice(0, 8)); }
   function renderLibrary() {
-    if (!state.mediaAssets.length) return '<div class="cr-canvas">' + empty("Library is empty", "No media_assets records were visible to this operator session.", "Open Asset Lab", "open-bridge:assetLab") + '</div>';
-    return '<div class="cr-asset-grid">' + state.mediaAssets.slice(0, 120).map(function (a) {
+    var banner = sourceStates([["Assets", state.sources.mediaAssets], ["Media jobs", state.sources.mediaJobs]]);
+    if (!state.mediaAssets.length) {
+      return banner + '<div class="cr-canvas">' + empty(
+        state.sources.mediaAssets && state.sources.mediaAssets.ok ? "Library is empty" : "Library not readable",
+        state.sources.mediaAssets && state.sources.mediaAssets.ok
+          ? "media_assets returned no rows for this operator session."
+          : "The asset query did not succeed, so this is not a statement that no assets exist.",
+        "Open Asset Lab", "open-bridge:assetLab") + '</div>';
+    }
+    return banner + '<div class="cr-asset-grid">' + state.mediaAssets.slice(0, 120).map(function (a) {
       var url = a.url || a.public_url || a.storage_url || a.signed_url || "";
       var kind = a.media_type || a.type || a.kind || "asset";
       return '<button class="cr-asset-card" type="button" data-action="inspect-asset" data-id="' + esc(a.id) + '">' +
@@ -451,8 +819,34 @@
     state.publishJobs.forEach(function (p) { items.push({ id: p.id, action: "inspect-publish", state: p.state || "queued", title: (p.payload && p.payload.caption) || "Scheduled post", when: p.scheduled_at, kind: p.state === "failed" ? "bad" : "info" }); });
     state.posts.forEach(function (p) { items.push({ id: p.id, action: "inspect-post", state: "published", title: p.caption || "Published post", when: p.published_at, kind: "ok" }); });
     items.sort(function (a, b) { return new Date(a.when || 0) - new Date(b.when || 0); });
-    if (!items.length) return '<div class="cr-canvas">' + empty("Nothing scheduled", "Publishing objects will appear here as drafts, queued work, scheduled posts, failures, and published output.") + '</div>';
-    return '<div class="cr-schedule"><div class="cr-list">' + items.map(function (it) { return row(it.title, formatDate(it.when), titleCase(it.state), it.kind, it.action, { id: it.id, badge: it.state }); }).join("") + '</div></div>';
+    var banner = sourceStates([["Publish queue", state.sources.publishJobs], ["Published posts", state.sources.posts]]);
+    var readable = state.sources.publishJobs && state.sources.publishJobs.ok && state.sources.posts && state.sources.posts.ok;
+    if (!items.length) {
+      return banner + '<div class="cr-canvas">' + empty(
+        readable ? "Nothing scheduled" : "Schedule not readable",
+        readable
+          ? "social_publish_jobs and social_posts both returned no rows. There is nothing queued, scheduled, failed, or published."
+          : "A publishing source did not respond, so this is not a statement that nothing is scheduled."
+      ) + '</div>';
+    }
+    var counts = { queued: 0, scheduled: 0, failed: 0, published: 0 };
+    items.forEach(function (it) { if (counts[it.state] === undefined) counts[it.state] = 0; counts[it.state] += 1; });
+    var summary = '<div class="cr-filterchips">' + Object.keys(counts).map(function (k) {
+      return '<span class="cr-chip is-static">' + esc(titleCase(k)) + ' <b>' + counts[k] + '</b></span>';
+    }).join("") + '</div>';
+    /* Distribution targets are real rows; a queue with no connected account
+       cannot publish, and that is worth stating on this view. */
+    var accounts = socialAccountRows();
+    var accountNote = "";
+    if (state.socialAccounts && state.socialAccounts.ok) {
+      accountNote = accounts.length
+        ? '<p class="cr-derived">Publishing to ' + accounts.length + ' connected account' + (accounts.length === 1 ? "" : "s") + ': ' +
+            esc(accounts.map(function (a) { return (a.display_name || a.handle || a.external_account_id) + " (" + (a.platform || "?") + ")"; }).join(", ")) + '.</p>'
+        : '<div class="cr-gap"><b>No connected social account.</b><span>social_accounts is empty for this organization, so nothing here can be published even where a variant is ready.</span></div>';
+    } else if (state.socialAccounts && !state.socialAccounts.ok) {
+      accountNote = sourceBanner(state.socialAccounts, "Social accounts");
+    }
+    return banner + accountNote + summary + '<div class="cr-schedule"><div class="cr-list">' + items.map(function (it) { return row(it.title, formatDate(it.when), titleCase(it.state), it.kind, it.action, { id: it.id, badge: it.state }); }).join("") + '</div></div>';
   }
   function renderCreate() {
     var body = state.createView === "projects" ? renderProjects() : (state.createView === "library" ? renderLibrary() : renderSchedule());
@@ -479,33 +873,229 @@
   }
   function renderSystemOverview() {
     var services = serviceRows();
-    return '<div class="cr-kpis">' + kpi("API", state.health && state.health.ok ? "UP" : "—", "edge") + kpi("Database", state.status && state.status.database && state.status.database.reachable ? "UP" : "—", "truth") + kpi("Jobs", String(state.jobs.filter(function (x) { return ["queued", "running"].indexOf(x.status) >= 0; }).length), "active") + kpi("Failures", String(state.jobs.filter(function (x) { return x.status === "failed"; }).length), "workload") + '</div>' +
+    return sourceStates([["Edge health", state.sources.health], ["Operator status", state.sources.status], ["Core", state.sources.ai], ["Host health", state.sources.aiHealth]]) +
+      '<div class="cr-kpis">' + kpi("API", state.health && state.health.ok ? "UP" : "—", "edge") + kpi("Database", state.status && state.status.database && state.status.database.reachable ? "UP" : "—", "truth") + kpi("Jobs", String(state.jobs.filter(function (x) { return ["queued", "running"].indexOf(x.status) >= 0; }).length), "active") + kpi("Failures", String(state.jobs.filter(function (x) { return x.status === "failed"; }).length), "workload") + '</div>' +
       '<div class="cr-grid">' + panel("Live topology", "click a resource", '<div class="cr-panel__body">' + renderTopology() + '</div>', "cr-span-7") +
       panel("Services", "canonical status", '<div class="cr-list">' + services.map(function (s) { return row(s.title, s.sub, s.value, s.kind, "inspect-service", { key: s.key, badge: s.kind === "ai" ? "AI" : s.kind }); }).join("") + '</div>', "cr-span-5") + '</div>';
   }
+  var JOB_FILTERS = ["all", "running", "queued", "failed", "done"];
   function renderWorkload() {
-    if (!state.jobs.length) return '<div class="cr-canvas">' + empty("No workload visible", "No ops_agent_jobs records were visible to this operator session.") + '</div>';
-    var rows = state.jobs.slice(0, 150).map(function (j) { return { id: j.id, action: "inspect-job", state: j.status, work: titleCase(j.job_type), target: text(j.target_id, j.target_type), age: ago(j.created_at), attempts: String(count(j.attempts)) + "/" + String(count(j.max_attempts) || 1) }; });
-    return '<div class="cr-workbar cr-workbar--system"><div class="cr-filterchips"><button class="cr-chip" data-job-filter="all">All</button><button class="cr-chip" data-job-filter="running">Running</button><button class="cr-chip" data-job-filter="queued">Queued</button><button class="cr-chip" data-job-filter="failed">Failed</button></div></div>' +
-      renderTable([{ label: "State", html: function (r) { var k = r.state === "failed" ? "bad" : (r.state === "running" ? "ai" : (r.state === "done" ? "ok" : "info")); return '<span class="' + stateClass(k) + '">' + esc(r.state) + '</span>'; } }, { label: "Work", key: "work" }, { label: "Target", key: "target" }, { label: "Started", key: "age" }, { label: "Attempts", key: "attempts" }], rows, "No jobs");
+    var banner = sourceBanner(state.sources.jobs, "Workload (ops_agent_jobs)");
+    var chips = '<div class="cr-workbar cr-workbar--system"><div class="cr-filterchips">' +
+      JOB_FILTERS.map(function (f) {
+        var n = f === "all" ? state.jobs.length : state.jobs.filter(function (j) { return j.status === f; }).length;
+        return '<button class="cr-chip' + (state.jobFilter === f ? " is-on" : "") + '" type="button" data-job-filter="' + f + '">' + esc(titleCase(f)) + ' <b>' + n + '</b></button>';
+      }).join("") + '</div>' +
+      '<button class="cr-btn" type="button" data-action="refresh-health">Run system health</button></div>';
+
+    if (!state.jobs.length) {
+      return banner + chips + '<div class="cr-canvas">' + empty(
+        state.sources.jobs && state.sources.jobs.ok ? "No workload records" : "Workload not readable",
+        state.sources.jobs && state.sources.jobs.ok
+          ? "ops_agent_jobs returned zero rows for this operator session."
+          : "The workload query did not succeed, so this is not a statement that no work exists."
+      ) + '</div>';
+    }
+    var filtered = state.jobFilter === "all" ? state.jobs : state.jobs.filter(function (j) { return j.status === state.jobFilter; });
+    var rows = filtered.slice(0, 150).map(function (j) {
+      return { id: j.id, action: "inspect-job", state: j.status, work: titleCase(j.job_type), target: text(j.target_id, j.target_type), age: ago(j.created_at), attempts: String(count(j.attempts)) + "/" + String(count(j.max_attempts) || 1) };
+    });
+    return banner + chips +
+      renderTable([{ label: "State", html: function (r) { var k = r.state === "failed" ? "bad" : (r.state === "running" ? "ai" : (r.state === "done" ? "ok" : "info")); return '<span class="' + stateClass(k) + '">' + esc(r.state) + '</span>'; } }, { label: "Work", key: "work" }, { label: "Target", key: "target" }, { label: "Started", key: "age" }, { label: "Attempts", key: "attempts" }], rows, "No jobs in this filter");
+  }
+  /* Observability shows only what the backend actually recorded. There is no
+     log pipeline to read, so this is the failure ledger the canonical tables
+     already carry — never synthesized log lines. */
+  function observedEvents() {
+    var events = [];
+    state.jobs.filter(function (j) { return j.status === "failed"; }).forEach(function (j) {
+      events.push({ id: j.id, action: "inspect-job", severity: "ERROR", source: "Core", message: titleCase(j.job_type) + ": " + text(j.last_error, "job failed"), time: j.updated_at || j.created_at, kind: "bad" });
+    });
+    /* media_jobs.error is jsonb defaulting to '{}', which is truthy even when
+       empty — reading it as a plain value puts "[object Object]" in front of
+       an operator. jsonText resolves it to real text or nothing. */
+    state.mediaJobs.filter(function (j) { return j.status === "failed"; }).forEach(function (j) {
+      events.push({ id: j.id, action: "inspect-media-job", severity: "ERROR", source: "Media", message: jsonText(j.error) || jsonText(j.result && j.result.error) || "Media job failed", time: j.updated_at || j.created_at, kind: "bad" });
+    });
+    state.publishJobs.filter(function (p) { return p.state === "failed"; }).forEach(function (p) {
+      events.push({ id: p.id, action: "inspect-publish", severity: "ERROR", source: "Social", message: text(p.last_error, "Publish job failed"), time: p.updated_at || p.scheduled_at, kind: "bad" });
+    });
+    if (state.aiHealth && state.aiHealth.stale) events.push({ id: "host", action: "inspect-service", severity: "WARN", source: "OVH", message: "Host health result is stale", time: state.aiHealth.checked_at, kind: "warn" });
+    Object.keys(state.sources).forEach(function (key) {
+      var s = state.sources[key];
+      /* A source the console could not read is itself an observable event —
+         otherwise a broken read looks like a quiet system. */
+      if (s && !s.ok) events.push({ id: key, action: "refresh", severity: s.state === "unsupported" ? "INFO" : "WARN", source: "Console", message: titleCase(key) + " source " + s.state + (s.message ? ": " + s.message : ""), time: state.refreshedAt, kind: s.state === "unsupported" ? "info" : "warn" });
+    });
+    return events.sort(function (a, b) { return new Date(b.time || 0) - new Date(a.time || 0); });
   }
   function renderObservability() {
-    var events = [];
-    state.jobs.filter(function (j) { return j.status === "failed"; }).forEach(function (j) { events.push({ id: j.id, action: "inspect-job", severity: "ERROR", source: "Core", message: titleCase(j.job_type) + ": " + text(j.last_error, "job failed"), time: j.updated_at || j.created_at, kind: "bad" }); });
-    if (state.aiHealth && state.aiHealth.stale) events.push({ id: "host", action: "inspect-service", severity: "WARN", source: "OVH", message: "Host health result is stale", time: state.aiHealth.checked_at, kind: "warn" });
-    if (!events.length) events.push({ id: "health", action: "inspect-service", severity: "INFO", source: "System", message: "No instrumented failures in the current snapshot", time: state.refreshedAt, kind: "ok" });
-    return '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">Live snapshot</span></div><div class="cr-filterchips"><button class="cr-chip">All services</button><button class="cr-chip">Severity</button><button class="cr-chip">Time</button></div></div>' +
+    var events = observedEvents();
+    var head = '<div class="cr-observe-head"><div><strong>Events</strong><span class="cr-live-dot">Snapshot ' + esc(ago(state.refreshedAt)) + ' old</span></div>' +
+      '<button class="cr-btn cr-btn--ghost" type="button" data-action="refresh">Re-read</button></div>';
+    if (!events.length) {
+      return head + '<div class="cr-canvas">' + empty("No recorded failures", "Every canonical source read cleanly and no job, media, or publish record is in a failed state. This is a real result, not an empty log view.") + '</div>';
+    }
+    return head +
+      '<p class="cr-derived">McCluster has no log or trace pipeline. These are the failures the canonical tables record, plus any source this console could not read.</p>' +
       renderTable([{ label: "Time", html: function (r) { return esc(ago(r.time)); } }, { label: "Severity", html: function (r) { return '<span class="' + stateClass(r.kind) + '">' + esc(r.severity) + '</span>'; } }, { label: "Source", key: "source" }, { label: "Message", key: "message" }], events, "No events");
+  }
+  /* SOCIAL ACCOUNTS + PUBLISHING.
+
+     POST /v1/social/publish exists and was never wired, so a finished variant
+     could be looked at but not sent anywhere. Publishing needs a real target
+     account, so the account list is read on demand when Create is opened. */
+  function loadSocialAccounts(force) {
+    if (state.socialAccounts && !force) return Promise.resolve();
+    state.socialAccounts = null;
+    return src(request("/v1/social/accounts")).then(function (result) {
+      state.socialAccounts = result;
+      render();
+    });
+  }
+  function socialAccountRows() { return pickRows(state.socialAccounts, "accounts"); }
+
+  function variantIsPublishable(v) {
+    /* The backend accepts a variant only when it can resolve media from it. */
+    return Boolean(v && (v.output_asset_id || v.video_asset_id));
+  }
+
+  function openPublish(variantId) {
+    var v = findById(state.variants, variantId);
+    if (!v) return;
+    var accounts = socialAccountRows();
+    var busy = state.pending["publish:" + variantId];
+    var failure = state.pending["publishError:" + variantId];
+    var done = state.pending["publishOk:" + variantId];
+
+    var body;
+    if (!state.socialAccounts) {
+      body = inspectorSection("Target", '<p class="cr-muted">Reading connected social accounts…</p>');
+      loadSocialAccounts();
+    } else if (!state.socialAccounts.ok) {
+      body = inspectorSection("Target", sourceBanner(state.socialAccounts, "Social accounts"));
+    } else if (!accounts.length) {
+      body = inspectorSection("Target", '<div class="cr-gap"><b>No social account is connected.</b>' +
+        '<span>POST /v1/social/publish requires an account_id, and this organization has no rows in social_accounts. Connect an account before publishing.</span></div>');
+    } else {
+      body = inspectorSection("Target", '<div class="cr-gen">' +
+        '<select class="cr-select" id="crPubAccount" aria-label="Account">' + accounts.map(function (a) {
+          return '<option value="' + esc(a.id) + '">' + esc(a.display_name || a.handle || a.external_account_id) + ' · ' + esc(a.platform || "") + '</option>';
+        }).join("") + '</select>' +
+        '<select class="cr-select" id="crPubMode" aria-label="Publish mode">' +
+          '<option value="trial">trial</option><option value="reel">reel</option></select>' +
+        '<textarea class="cr-textarea" id="crPubCaption" rows="2" placeholder="Caption (defaults to the variant caption)">' + esc(v.caption || "") + '</textarea>' +
+        '<input class="cr-input" id="crPubWhen" type="datetime-local" aria-label="Schedule for (optional)">' +
+        '</div>');
+    }
+
+    openInspector({
+      title: "Publish " + (v.variant_key || "variant"),
+      subtitle: "Create · Schedule",
+      description: "Queues a real publish job through the canonical social backend.",
+      props: [["Variant", v.variant_key], ["Status", v.status], ["Asset", v.output_asset_id || v.video_asset_id || "—"]],
+      custom: body +
+        (failure ? inspectorSection("Not queued", sourceBanner(failure, "Publish")) : "") +
+        (done ? inspectorSection("Queued", '<p class="cr-muted">Publish job ' + esc(done) + ' created.</p>') : ""),
+      actions: accounts.length && state.socialAccounts && state.socialAccounts.ok
+        ? '<button class="cr-btn cr-btn--primary" type="button" data-action="publish-variant" data-id="' + esc(variantId) + '"' + (busy ? " disabled" : "") + '>' + (busy ? "Queueing…" : "Queue publish") + '</button>'
+        : "",
+      tabs: ["overview", "raw", "ai"], raw: v
+    });
+  }
+
+  /* Resources reads the platform surfaces on demand rather than on every
+     Control Room boot — they are only meaningful on this view. */
+  function loadResources(force) {
+    if (state.resources && !force) return Promise.resolve();
+    state.resources = { loading: true };
+    render();
+    return Promise.all([
+      src(request("/v1/compute/balance")),
+      src(request("/v1/platform/catalog")),
+      src(request("/v1/developer/consumers")),
+      src(request("/v1/media/usage?group_by=capability"))
+    ]).then(function (r) {
+      state.resources = { loading: false, balance: r[0], catalog: r[1], consumers: r[2], usage: r[3] };
+      render();
+    });
   }
   function renderResources() {
     var providers = [
-      { name: "OpenAI / model providers", state: state.ai && state.ai.ok ? "Available through Core" : "Inspect Core", kind: state.ai && state.ai.ok ? "ai" : "warn" },
+      { name: "Core / model routing", state: state.ai && state.ai.ok ? "Available through Core" : "Inspect Core", kind: state.ai && state.ai.ok ? "ai" : "warn" },
       { name: "Supabase", state: state.status && state.status.database && state.status.database.reachable ? "Connected" : "Check", kind: state.status && state.status.database && state.status.database.reachable ? "ok" : "warn" },
       { name: "Cloudflare", state: state.health && state.health.ok ? "Connected" : "Check", kind: state.health && state.health.ok ? "ok" : "warn" },
-      { name: "Social channels", state: state.status && Array.isArray(state.status.channels) ? state.status.channels.filter(function (x) { return x.enabled; }).length + " enabled" : "—", kind: "info" }
+      { name: "Social channels", state: state.status && Array.isArray(state.status.channels) ? state.status.channels.filter(function (x) { return x.enabled; }).length + " enabled" : "Not reported", kind: "info" }
     ];
-    return '<div class="cr-grid">' + panel("Connections", "provider state", '<div class="cr-list">' + providers.map(function (p) { return row(p.name, "Canonical connection", p.state, p.kind, "inspect-resource", { key: p.name, badge: p.kind }); }).join("") + '</div>', "cr-span-7") +
-      panel("Usage & spend", "traceable, not guessed", '<div class="cr-panel__body"><p class="cr-muted">The Control Room will show cost only where a canonical metering source exists. This UI does not invent spend. Current visible workload: <b>' + esc(String(state.jobs.length)) + '</b> Core jobs and <b>' + esc(String(state.mediaJobs.length)) + '</b> media jobs.</p><button class="cr-btn" data-action="open-platform">Open platform details</button></div>', "cr-span-5") + '</div>';
+
+    var res = state.resources;
+    var usage;
+    if (!res) {
+      usage = '<div class="cr-panel__body"><p class="cr-muted">Compute balance, platform catalog, and API consumers have not been read yet.</p>' +
+        '<button class="cr-btn cr-btn--primary" type="button" data-action="load-resources">Read platform state</button></div>';
+    } else if (res.loading) {
+      usage = '<div class="cr-panel__body"><p class="cr-muted">Reading canonical platform state…</p></div>';
+    } else {
+      var balance = res.balance;
+      var balanceBody;
+      if (!balance.ok) balanceBody = sourceBanner(balance, "Compute balance");
+      else {
+        var b = balance.data || {};
+        /* Only rendered because the backend returned these figures. Nothing
+           here is derived, projected, or filled in when a field is absent. */
+        var money = [];
+        if (b.balance_cents !== undefined) money.push(["Balance", moneyCents(b.balance_cents)]);
+        if (b.reserved_cents !== undefined) money.push(["Reserved", moneyCents(b.reserved_cents)]);
+        if (b.spent_cents !== undefined) money.push(["Spent", moneyCents(b.spent_cents)]);
+        if (b.currency) money.push(["Currency", b.currency]);
+        balanceBody = money.length
+          ? props(money)
+          : '<p class="cr-muted">The balance endpoint responded but reported no monetary fields. No spend figure is shown because none was returned.</p>';
+      }
+      var consumerRows = pickRows(res.consumers, "consumers");
+      /* Media spend, from the ledger. Shown because the backend settles these
+         amounts — nothing here is computed by the browser. */
+      var spendBody = "";
+      var usageResult = res.usage;
+      if (!usageResult) spendBody = "";
+      else if (!usageResult.ok) spendBody = sourceBanner(usageResult, "Media spend");
+      else {
+        var t = (usageResult.data && usageResult.data.totals) || {};
+        var spendRows = [["Settled", moneyCents(t.actual_cents)], ["Committed", moneyCents(t.committed_cents)]];
+        if (t.unsettled_cents) spendRows.push(["Still in flight", moneyCents(t.unsettled_cents) + " (" + count(t.in_flight_jobs) + " job" + (count(t.in_flight_jobs) === 1 ? "" : "s") + ")"]);
+        spendRows.push(["Jobs", String(count(t.jobs))]);
+        spendBody = '<h3 class="cr-subhead">Media spend · last 30 days</h3>' + props(spendRows) +
+          ((usageResult.data && usageResult.data.rows || []).length
+            ? '<div class="cr-list">' + usageResult.data.rows.slice(0, 8).map(function (row2) {
+                return row(titleCase(row2.key), count(row2.jobs) + " job" + (count(row2.jobs) === 1 ? "" : "s"), moneyCents(row2.committed_cents), "info", "system-resources");
+              }).join("") + '</div>'
+            : '<p class="cr-muted">No media jobs in this window.</p>');
+      }
+
+      usage = '<div class="cr-panel__body">' + balanceBody + spendBody +
+        '<h3 class="cr-subhead">API consumers</h3>' +
+        (!res.consumers.ok ? sourceBanner(res.consumers, "Developer consumers")
+          : (consumerRows.length
+            ? '<div class="cr-list">' + consumerRows.slice(0, 20).map(function (c) {
+                /* Key material is never rendered; identity and state only. */
+                return row(c.name || c.label || c.id, text(c.scope || c.plan, "consumer"), titleCase(c.status || "active"), c.status === "revoked" ? "bad" : "ok", "inspect-consumer", { id: c.id, badge: "API" });
+              }).join("") + '</div>'
+            : '<p class="cr-muted">No API consumers are registered.</p>')) + '</div>';
+    }
+
+    var catalogBody = !res || res.loading ? '<p class="cr-muted">Not read yet.</p>'
+      : (!res.catalog.ok ? sourceBanner(res.catalog, "Platform catalog")
+        : '<div class="cr-list">' + (pickRows(res.catalog, "products").length
+          ? pickRows(res.catalog, "products").slice(0, 20).map(function (p) { return row(p.name || p.id, text(p.description, "Platform product"), text(p.status, "listed"), "info", "inspect-resource", { key: p.id || p.name }); }).join("")
+          : '<p class="cr-muted">The catalog returned no products.</p>') + '</div>');
+
+    return '<div class="cr-grid">' +
+      panel("Connections", "provider state", '<div class="cr-list">' + providers.map(function (p) { return row(p.name, "Canonical connection", p.state, p.kind, "inspect-resource", { key: p.name, badge: p.kind }); }).join("") + '</div>', "cr-span-6") +
+      panel("Usage & access", "only what the backend reports", usage, "cr-span-6") +
+      panel("Platform catalog", "registered products", '<div class="cr-panel__body">' + catalogBody + '</div>', "cr-span-6") +
+      panel("Applications", state.apps.length + " registered", sourceBanner(state.sources.apps, "Apps") + '<div class="cr-list">' +
+        (state.apps.length ? state.apps.slice(0, 20).map(function (a) { return row(a.name || a.app_key, text(a.product_family, "registered application"), text(a.kind, "app"), "info", "apps"); }).join("")
+          : '<p class="cr-panel__body cr-muted">No registered applications were returned.</p>') + '</div>', "cr-span-6") + '</div>';
   }
   function renderSystem() {
     var body = state.systemView === "overview" ? renderSystemOverview() : (state.systemView === "workload" ? renderWorkload() : (state.systemView === "observability" ? renderObservability() : renderResources()));
@@ -532,6 +1122,24 @@
     else if (state.surface === "system") root.innerHTML = renderSystem();
     else root.innerHTML = renderApps();
     bindSurfaceControls();
+    /* Selecting a thread and landing on the inbox both need the transcript;
+       doing it after render keeps the fetch out of the render path. */
+    /* Create's own sources load when Create is opened, the same way the
+       inbox loads a transcript — not behind a button the operator has to
+       find first. */
+    if (state.surface === "create" && !state.socialAccounts && !state.pending.socialAccounts) {
+      state.pending.socialAccounts = true;
+      loadSocialAccounts().then(function () { delete state.pending.socialAccounts; });
+    }
+    if (state.surface === "create" && state.createView === "projects" && !state.pending.mediaModels && !window.CR.media.state.catalog) {
+      state.pending.mediaModels = true;
+      window.CR.media.loadCatalog().then(function () { delete state.pending.mediaModels; });
+    }
+    if (state.surface === "work" && state.workView === "inbox" && state.selectedThreadId && !state.transcripts[state.selectedThreadId] && !state.pending["transcript:" + state.selectedThreadId]) {
+      state.pending["transcript:" + state.selectedThreadId] = true;
+      var pendingId = state.selectedThreadId;
+      loadTranscript(pendingId).then(function () { delete state.pending["transcript:" + pendingId]; });
+    }
   }
 
   function inspectorSection(title, html) { return '<section class="cr-inspector__section"><h3>' + esc(title) + '</h3>' + html + '</section>'; }
@@ -585,20 +1193,151 @@
   function findById(rows, id) { return rows.find(function (r) { return String(r.id) === String(id); }); }
   function inspectLead(id) {
     var l = findById(state.leads, id); if (!l) return;
-    var buttons = ["new", "replied", "booked", "closed"].map(function (st) { return '<button class="cr-btn' + (l.status === st ? ' cr-btn--primary' : '') + '" type="button" data-action="lead-status" data-id="' + esc(l.id) + '" data-status="' + st + '">' + esc(titleCase(st)) + '</button>'; }).join("");
-    openInspector({ title: l.name || l.email || "Lead", subtitle: "Work · " + titleCase(l.status || "new"), description: l.note || l.want || "Business relationship", props: [["Email", l.email], ["Status", l.status || "new"], ["Source", l.source || l.campaign || "direct"], ["Received", formatDate(l.at || l.created_at)]], actions: buttons, raw: l });
+    var busy = state.pending["lead:" + id];
+    var writeError = state.pending["leadError:" + id];
+    var buttons = LEAD_STAGES.map(function (st) {
+      return '<button class="cr-btn' + (l.status === st ? ' cr-btn--primary' : '') + '" type="button" data-action="lead-status" data-id="' + esc(l.id) + '" data-status="' + st + '"' + (busy ? " disabled" : "") + '>' + esc(LEAD_STAGE_LABELS[st]) + '</button>';
+    }).join("");
+    var custom = "";
+    if (busy) custom += inspectorSection("Saving", '<p class="cr-muted">Writing the new stage to the canonical leads table…</p>');
+    /* A refused write is reported, and the stage shown has already been
+       rolled back to what the database still holds. */
+    if (writeError) custom += inspectorSection("Stage not saved", sourceBanner(writeError, "leads update"));
+    var related = '<div class="cr-list">' + (l.email
+      ? state.threads.filter(function (t) { return String(contactFromThread(t).address || "").toLowerCase() === String(l.email).toLowerCase(); })
+          .map(function (t) { return row(threadLabel(t), "Conversation", ago(t.updated_at), "ai", "inspect-thread", { id: t.id, badge: "Thread" }); }).join("")
+      : "") + '</div>';
+    openInspector({
+      title: l.name || l.email || "Lead",
+      subtitle: "Work · " + titleCase(l.status || "new"),
+      description: l.note || l.want || "Business relationship",
+      props: [["Email", l.email], ["Phone", l.phone], ["Status", l.status || "new"], ["Wants", l.want],
+        ["Source", l.source || "direct"], ["Campaign", l.campaign], ["Page", l.page],
+        ["Received", formatDate(l.at || l.created_at)]],
+      custom: custom, actions: buttons,
+      related: related.indexOf("cr-row") >= 0 ? related : '<p class="cr-muted">No conversation is linked to this lead by address.</p>',
+      raw: l, tabs: ["overview", "related", "raw", "ai"]
+    });
   }
   function inspectThread(id) {
     var t = findById(state.threads, id); if (!t) return;
-    var c = contactFromThread(t); var human = t.mode === "human";
-    var controls = '<button class="cr-btn cr-btn--primary" type="button" data-action="thread-mode" data-id="' + esc(t.id) + '" data-mode="' + (human ? "release" : "takeover") + '">' + (human ? "Return to AI" : "Take over") + '</button>' +
-      '<button class="cr-btn" type="button" data-action="thread-compose" data-id="' + esc(t.id) + '">Send message</button>';
-    openInspector({ title: c.display_name || c.address || "Conversation", subtitle: human ? "Human control" : "AI handling", description: human ? "Automation is paused for this thread." : "The assistant may continue handling this thread under the existing communications policy.", props: [["Channel", t.channel || "sms"], ["Address", c.address || "—"], ["Mode", t.mode || "assistant"], ["Updated", formatDate(t.updated_at)]], actions: controls, raw: t });
+    var c = contactFromThread(t); var human = threadOwned(t);
+    var busy = state.pending["mode:" + t.id];
+    var controls = '<button class="cr-btn cr-btn--primary" type="button" data-action="thread-mode" data-id="' + esc(t.id) + '" data-mode="' + (human ? "release" : "takeover") + '"' + (busy ? " disabled" : "") + '>' + (busy ? "Working…" : (human ? "Return to assistant" : "Take over")) + '</button>' +
+      '<button class="cr-btn" type="button" data-action="thread-compose" data-id="' + esc(t.id) + '">Open conversation</button>';
+    /* Activity is the delivery ledger: an operator chasing a message that
+       never left needs to see the state the relay actually recorded. */
+    var transcript = state.transcripts[t.id];
+    var activity;
+    if (!transcript) activity = '<p class="cr-muted">Open the conversation to load its delivery history.</p>';
+    else if (!transcript.ok) activity = sourceBanner(transcript, "Transcript");
+    else {
+      var messages = (transcript.data && transcript.data.messages) || [];
+      activity = messages.length
+        ? '<div class="cr-trace">' + messages.slice(-12).map(function (m) {
+            var cls = m.status === "failed" || m.status === "suppressed" ? "is-bad" : (m.status === "delivered" || m.status === "sent" ? "is-done" : "");
+            return '<div class="' + cls + '">' + esc(titleCase(m.sender_type || m.direction)) + ' · ' + esc(m.status || "—") + ' <span>' + esc(formatDate(m.occurred_at || m.created_at)) + '</span></div>';
+          }).join("") + '</div>'
+        : '<p class="cr-muted">No messages recorded on this thread.</p>';
+    }
+    var failure = state.pending["error:" + t.id];
+    openInspector({
+      threadId: t.id,
+      title: c.display_name || c.address || "Conversation",
+      subtitle: human ? "You have it" : "Assistant handling",
+      description: human ? "Automation is paused for this thread." : "The assistant may continue handling this thread under the existing communications policy.",
+      props: [["Channel", t.channel || "sms"], ["Address", c.address || "—"], ["Mode", t.mode || "assistant"],
+        ["Assistant", t.assistant_enabled === false ? "disabled" : "enabled"],
+        ["Last inbound", formatDate(t.last_inbound_at)], ["Last outbound", formatDate(t.last_outbound_at)],
+        ["Updated", formatDate(t.updated_at)]],
+      custom: failure ? inspectorSection("Last action failed", sourceBanner(failure, "Thread action")) : "",
+      actions: controls, activity: activity, raw: t, tabs: ["overview", "activity", "raw", "ai"]
+    });
+  }
+  function payloadBlock(title, value) {
+    if (value === null || value === undefined || (typeof value === "object" && !Object.keys(value).length)) return "";
+    return inspectorSection(title, '<pre class="cr-raw">' + esc(typeof value === "string" ? value : JSON.stringify(value, null, 2)) + '</pre>');
   }
   function inspectJob(id) {
     var j = findById(state.jobs, id); if (!j) return;
-    var activity = '<div class="cr-trace"><div class="is-done">Created <span>' + esc(formatDate(j.created_at)) + '</span></div><div class="' + (j.status === "running" ? "is-live" : "") + '">Execution <span>' + esc(titleCase(j.status || "unknown")) + '</span></div>' + (j.last_error ? '<div class="is-bad">Error <span>' + esc(j.last_error) + '</span></div>' : "") + '</div>';
-    openInspector({ title: titleCase(j.job_type), subtitle: "Workload · " + titleCase(j.status), description: "Durable job in ops_agent_jobs.", props: [["Target", j.target_id || j.target_type], ["Priority", j.priority], ["Attempts", count(j.attempts) + "/" + count(j.max_attempts)], ["Updated", formatDate(j.updated_at)]], activity: activity, raw: j, tabs: ["overview", "activity", "raw", "ai"] });
+    var failed = j.status === "failed";
+    var activity = '<div class="cr-trace">' +
+      '<div class="is-done">Created <span>' + esc(formatDate(j.created_at)) + '</span></div>' +
+      (j.started_at ? '<div class="is-done">Started <span>' + esc(formatDate(j.started_at)) + '</span></div>' : "") +
+      '<div class="' + (j.status === "running" ? "is-live" : (failed ? "is-bad" : "is-done")) + '">Execution <span>' + esc(titleCase(j.status || "unknown")) + '</span></div>' +
+      (j.finished_at ? '<div class="is-done">Finished <span>' + esc(formatDate(j.finished_at)) + '</span></div>' : "") +
+      (j.last_error ? '<div class="is-bad">Error <span>' + esc(j.last_error) + '</span></div>' : "") + '</div>';
+    /* A failure is only useful if the operator can see what went in, what
+       came back, and how long it ran — all of which the row already holds. */
+    var detail = "";
+    if (j.last_error) detail += inspectorSection("Failure", '<p class="cr-fail">' + esc(j.last_error) + '</p>');
+    detail += payloadBlock("Input", j.payload || j.input);
+    detail += payloadBlock("Result", j.result || j.output);
+    openInspector({
+      title: titleCase(j.job_type), subtitle: "Workload · " + titleCase(j.status),
+      description: "Durable job in ops_agent_jobs.",
+      props: [["Target", j.target_id || j.target_type], ["Target type", j.target_type], ["Priority", j.priority],
+        ["Attempts", count(j.attempts) + "/" + count(j.max_attempts)],
+        ["Run time", durationBetween(j.started_at || j.created_at, j.finished_at || j.updated_at)],
+        ["Created", formatDate(j.created_at)], ["Updated", formatDate(j.updated_at)]],
+      custom: detail, activity: activity, raw: j, tabs: ["overview", "activity", "raw", "ai"]
+    });
+  }
+  /* Media jobs can come from the loaded snapshot or from a generation that
+     is still being followed this session; both resolve here. */
+  function allMediaJobs() { return state.mediaJobs.concat(window.CR.media.trackedJobs()); }
+  function allMediaAssets() { return state.mediaAssets.concat(window.CR.media.generatedAssets()); }
+
+  /* Decisions are read-only here. The write path (POST /v1/ai/decisions)
+     records a new decision; there is no approve/reject transition route, so
+     this shows the record and says what is missing rather than offering a
+     button that cannot persist. */
+  function inspectDecision(id) {
+    var d = findById(state.decisions, id) || state.decisions[0];
+    if (!d) return;
+    var risky = ["high", "critical"].indexOf(d.risk_class) >= 0;
+    openInspector({
+      title: d.title || "Decision",
+      subtitle: "Decision · " + titleCase(d.status || "proposed"),
+      description: d.decision || d.rationale_summary || "Recorded in the private AI context plane.",
+      props: [["Status", d.status], ["Risk", d.risk_class], ["Proposed", formatDate(d.created_at)],
+        ["Proposed by", d.proposed_by], ["Supersedes", d.supersedes_id]],
+      custom: (d.status === "proposed"
+        ? inspectorSection("Waiting on you", '<div class="cr-gap"><b>No approve or reject route exists.</b>' +
+            '<span>ai_context.decisions records a status, but the backend exposes no transition endpoint, so this decision cannot be approved or rejected from here. Recording a superseding decision is the only supported write.</span></div>')
+        : "") +
+        (risky ? inspectorSection("Risk", '<p class="cr-fail">' + esc(titleCase(d.risk_class)) + ' risk. This was flagged at record time.</p>') : ""),
+      related: d.source_conversation_id
+        ? '<p class="cr-muted">Source conversation: <span class="cr-mono">' + esc(d.source_conversation_id) + '</span></p>'
+        : '<p class="cr-muted">No source conversation is recorded on this decision.</p>',
+      raw: d, tabs: ["overview", "related", "raw", "ai"]
+    });
+  }
+
+  function inspectMediaJob(id) {
+    var j = findById(allMediaJobs(), id); if (!j) return;
+    var detail = "";
+    var err = jsonText(j.error) || jsonText(j.result && j.result.error);
+    if (err) detail += inspectorSection("Failure", '<p class="cr-fail">' + esc(err) + '</p>');
+    detail += payloadBlock("Input", j.input || j.request);
+    detail += payloadBlock("Result", j.result || j.output);
+    /* Cost is shown only where the backend settled or estimated a number. */
+    var cost = [];
+    if (j.actual_cost_cents !== null && j.actual_cost_cents !== undefined) cost.push(["Actual cost", moneyCents(j.actual_cost_cents)]);
+    if (j.estimated_cost_cents !== null && j.estimated_cost_cents !== undefined) cost.push(["Estimated cost", moneyCents(j.estimated_cost_cents)]);
+    var assets = allMediaAssets().filter(function (a) { return String(a.job_id || a.media_job_id) === String(j.id); });
+    openInspector({
+      title: titleCase(j.capability || j.kind || "Media job"), subtitle: "Create · " + titleCase(j.status || "job"),
+      description: "Canonical media_jobs record.",
+      props: [["Status", j.status], ["Provider", j.provider], ["Model", j.provider_model_id || j.model_id],
+        ["Run time", durationBetween(j.created_at || j.submitted_at, j.completed_at || j.updated_at)],
+        ["Created", formatDate(j.created_at)], ["Completed", formatDate(j.completed_at)]].concat(cost),
+      custom: detail,
+      related: assets.length
+        ? '<div class="cr-list">' + assets.map(function (a) { return row(assetName(a), "Produced asset", titleCase(a.media_type || a.type || "asset"), "ok", "inspect-asset", { id: a.id, badge: "Asset" }); }).join("") + '</div>'
+        : '<p class="cr-muted">No asset rows reference this job.</p>',
+      raw: j, tabs: ["overview", "related", "raw", "ai"]
+    });
   }
   function inspectService(key) {
     var s = serviceRows().find(function (x) { return x.key === key; }) || { title: "System", sub: "McCluster", value: "Inspect" };
@@ -607,7 +1346,26 @@
     if (key === "host" && state.aiHealth) extra = [["Overall", state.aiHealth.overall], ["Checked", formatDate(state.aiHealth.checked_at)], ["Stale", state.aiHealth.stale ? "yes" : "no"]];
     openInspector({ title: s.title, subtitle: "System resource", description: s.sub, props: [["State", s.value]].concat(extra), raw: key === "core" ? state.ai : (key === "host" ? state.aiHealth : state.status), tabs: ["overview", "activity", "raw", "ai"] });
   }
-  function inspectAsset(id) { var a = findById(state.mediaAssets, id); if (!a) return; openInspector({ title: assetName(a), subtitle: "Create · Library", description: "Canonical media asset.", props: [["Type", a.media_type || a.type || a.kind], ["Created", formatDate(a.created_at)], ["Job", a.job_id || a.media_job_id || "—"], ["Provider", a.provider || a.model_id || "—"]], raw: a, tabs: ["overview", "related", "raw", "ai"] }); }
+  function inspectAsset(id) {
+    var a = findById(allMediaAssets(), id); if (!a) return;
+    /* Lineage is only shown where a real job row backs it — an asset whose
+       producing job is not in the snapshot says so instead of implying one. */
+    var jobId = a.job_id || a.media_job_id;
+    var job = jobId ? findById(allMediaJobs(), jobId) : null;
+    var lineage = job
+      ? '<div class="cr-list">' + row(titleCase(job.capability || job.kind || "Media job"), "Produced this asset", titleCase(job.status || ""), job.status === "failed" ? "bad" : "ok", "inspect-media-job", { id: job.id, badge: "Job" }) + '</div>'
+      : (jobId ? '<p class="cr-muted">This asset references job ' + esc(jobId) + ', which is not in the current media job snapshot.</p>'
+               : '<p class="cr-muted">No producing job is recorded on this asset.</p>');
+    var url = a.url || a.public_url || a.storage_url || a.signed_url || "";
+    openInspector({
+      title: assetName(a), subtitle: "Create · Library", description: "Canonical media asset.",
+      props: [["Type", a.media_type || a.type || a.kind], ["Created", formatDate(a.created_at)],
+        ["Job", jobId || "—"], ["Provider", a.provider || job && job.provider || "—"],
+        ["Model", a.model_id || job && (job.provider_model_id || job.model_id) || "—"]],
+      custom: url ? inspectorSection("Source", '<a class="cr-btn" href="' + esc(url) + '" target="_blank" rel="noopener">Open original</a>') : "",
+      related: lineage, raw: a, tabs: ["overview", "related", "raw", "ai"]
+    });
+  }
   function inspectVariant(id) { var v = findById(state.variants, id); if (!v) return; openInspector({ title: v.variant_key || "Variant", subtitle: "Create · Project", description: v.hypothesis || v.hook || "Creative variant", props: [["Status", v.status], ["Score", v.score], ["Media job", v.media_job_id], ["Created", formatDate(v.created_at)]], raw: v, tabs: ["overview", "related", "raw", "ai"] }); }
   function inspectPost(id) { var p = findById(state.posts, id); if (!p) return; openInspector({ title: "Published post", subtitle: "Create · Schedule", description: p.caption || "Published content", props: [["Mode", p.publish_mode], ["Published", formatDate(p.published_at)], ["Permalink", p.permalink || "—"]], raw: p, tabs: ["overview", "activity", "raw", "ai"] }); }
   function inspectPublish(id) { var p = findById(state.publishJobs, id); if (!p) return; openInspector({ title: "Publishing job", subtitle: "Create · Schedule", description: p.payload && p.payload.caption || "Scheduled distribution", props: [["State", p.state], ["Scheduled", formatDate(p.scheduled_at)], ["Mode", p.publish_mode || "—"]], raw: p, tabs: ["overview", "activity", "raw", "ai"] }); }
@@ -629,6 +1387,21 @@
   function handleCommand(query) {
     var q = String(query || "").trim(); var lower = q.toLowerCase(); if (!q) { openPalette(); return; }
     var routes = [
+      /* Intents that land the operator on a specific object, not just a
+         surface. Each one only fires where the backing data actually is. */
+      [/\b(failed|failing|broken|errors?)\b/i, function () {
+        state.jobFilter = "failed"; setSurface("system", "workload");
+      }],
+      [/\b(waiting|unanswered|needs? (a )?reply|awaiting)\b/i, function () {
+        state.threadFilter = "inbound";
+        var first = state.threads.filter(function (t) { return threadInQueue(t, "inbound"); })[0];
+        if (first) state.selectedThreadId = first.id;
+        setSurface("work", "inbox");
+      }],
+      [/\b(run|check) (system )?health\b/i, function () {
+        setSurface("system", "workload");
+        runAction("refresh-health", null);
+      }],
       [/^(home|attention|today)$/i, function () { setSurface("home"); }],
       [/\b(inbox|messages?|conversations?|desk)\b/i, function () { setSurface("work", "inbox"); }],
       [/\b(pipeline|leads?|deals?|opportunit)/i, function () { setSurface("work", "pipeline"); }],
@@ -648,6 +1421,21 @@
       [/\b(apps?|whip|prim3|halo|spatial|manufacture)\b/i, function () { setSurface("apps"); }]
     ];
     for (var i = 0; i < routes.length; i += 1) { if (routes[i][0].test(lower)) { closePalette(); routes[i][1](); return; } }
+
+    /* Open a named person before treating the text as an objective — typing
+       a client's name should find them, not queue a Core task about them. */
+    var lead = state.leads.find(function (l) {
+      return [l.name, l.email].filter(Boolean).some(function (v) { return String(v).toLowerCase().indexOf(lower) >= 0; });
+    });
+    if (lead) { closePalette(); setSurface("work", "pipeline"); inspectLead(lead.id); return; }
+    var thread = state.threads.find(function (t) {
+      var c = contactFromThread(t);
+      return [c.display_name, c.address].filter(Boolean).some(function (v) { return String(v).toLowerCase().indexOf(lower) >= 0; });
+    });
+    if (thread) { closePalette(); state.selectedThreadId = thread.id; setSurface("work", "inbox"); return; }
+    var project = state.campaigns.find(function (c) { return String(c.name || "").toLowerCase().indexOf(lower) >= 0; });
+    if (project) { closePalette(); state.selectedProjectId = project.id; setSurface("create", "projects"); state.selectedProjectId = project.id; render(); return; }
+
     closePalette(); submitCoreTask(q);
   }
 
@@ -655,7 +1443,11 @@
     return [
       ["Home", "Attention, signals, current work", "home"], ["Work · Inbox", "Unified incoming work", "work-inbox"], ["Work · Pipeline", "Leads and opportunities", "work-pipeline"], ["Work · People", "Canonical people", "work-people"],
       ["Create · Projects", "Creative objectives and canvas", "create-projects"], ["Create · Library", "Canonical assets", "create-library"], ["Create · Schedule", "Distribution and publishing", "create-schedule"],
-      ["System · Overview", "Topology and service health", "system-overview"], ["System · Workload", "Agents, jobs, queues", "system-workload"], ["System · Observability", "Events, traces, incidents", "system-observability"], ["System · Resources", "Providers, usage, API access", "system-resources"], ["Apps", "Specialized products", "apps"]
+      ["System · Overview", "Topology and service health", "system-overview"], ["System · Workload", "Agents, jobs, queues", "system-workload"], ["System · Observability", "Events, traces, incidents", "system-observability"], ["System · Resources", "Providers, usage, API access", "system-resources"], ["Apps", "Specialized products", "apps"],
+      /* Object-level intents, not just destinations. */
+      ["Show failed work", "Workload, filtered to failures", "goto-failed"],
+      ["Open waiting conversations", "Threads whose last message came in", "goto-waiting"],
+      ["Run system health", "Ask Core for a fresh host health result", "refresh-health"]
     ];
   }
   function renderPalette(filter) {
@@ -670,6 +1462,8 @@
   function runAction(action, el) {
     if (!action) return;
     if (action.indexOf("open-bridge:") === 0) { openBridge(action.split(":")[1]); return; }
+    /* Generation owns its own actions; everything else falls through. */
+    if (window.CR.media.handleAction(action, el)) return;
     if (action === "home") setSurface("home");
     else if (action === "work-inbox") setSurface("work", "inbox");
     else if (action === "work-pipeline") setSurface("work", "pipeline");
@@ -682,6 +1476,13 @@
     else if (action === "system-observability") setSurface("system", "observability");
     else if (action === "system-resources") setSurface("system", "resources");
     else if (action === "apps") setSurface("apps");
+    else if (action === "goto-failed") { state.jobFilter = "failed"; setSurface("system", "workload"); }
+    else if (action === "goto-waiting") {
+      state.threadFilter = "inbound";
+      var waiting = state.threads.filter(function (t) { return threadInQueue(t, "inbound"); })[0];
+      if (waiting) state.selectedThreadId = waiting.id;
+      setSurface("work", "inbox");
+    }
     else if (action === "refresh") load(true);
     else if (action === "hero-command") handleCommand($("crHeroInput") && $("crHeroInput").value);
     else if (action === "inspect-lead") inspectLead(el.getAttribute("data-id"));
@@ -695,21 +1496,194 @@
     else if (action === "inspect-request") inspectRequest(el.getAttribute("data-id"));
     else if (action === "open-project") { state.selectedProjectId = el.getAttribute("data-id"); render(); }
     else if (action === "close-project") { state.selectedProjectId = null; render(); }
-    else if (action === "filters") openInspector({ title: "Filters", subtitle: titleCase(currentView()), description: "Filters are contextual to this view and use the same full-screen sheet on mobile.", props: [["View", titleCase(currentView())], ["Records", state.surface === "work" ? state.leads.length + state.threads.length : "contextual"]], tabs: ["overview", "ai"] });
-    else if (action === "new-work") openInspector({ title: "Create", subtitle: "Work · " + titleCase(state.workView), description: "Creation remains routed to canonical record sources; no browser-only shadow record is created.", actions: '<button class="cr-btn" data-open-href="crm.html">Open current CRM creator</button>', tabs: ["overview", "ai"] });
+    else if (action === "filters") {
+      /* This used to open a panel that described filtering and filtered
+         nothing. It now drives the same state the chips do, which is what
+         makes it usable on a phone where the chip row is cramped. */
+      var stageButtons = [["all", "All stages"]].concat(LEAD_STAGES.map(function (st) { return [st, LEAD_STAGE_LABELS[st]]; }))
+        .map(function (pair) {
+          return '<button class="cr-btn' + (state.pipelineStage === pair[0] ? " cr-btn--primary" : "") + '" type="button" data-action="set-stage" data-stage="' + esc(pair[0]) + '">' + esc(pair[1]) + '</button>';
+        }).join("");
+      var queueButtons = THREAD_QUEUES.map(function (q) {
+        return '<button class="cr-btn' + (state.threadFilter === q[0] ? " cr-btn--primary" : "") + '" type="button" data-action="set-queue" data-queue="' + esc(q[0]) + '">' + esc(q[1]) + '</button>';
+      }).join("");
+      openInspector({
+        title: "Filters", subtitle: "Work · " + titleCase(state.workView),
+        description: "Stage filters the server lead query. Queue filters the loaded conversations.",
+        custom: inspectorSection("Lead stage", '<div class="cr-inspector__actions">' + stageButtons + '</div>') +
+          inspectorSection("Conversation queue", '<div class="cr-inspector__actions">' + queueButtons + '</div>') +
+          inspectorSection("Search", '<p class="cr-muted">' +
+            (state.search ? 'Filtering by "' + esc(state.search) + '". ' : "No search term. ") +
+            'Lead search runs against the whole table, not just the loaded page.</p>' +
+            (state.search ? '<button class="cr-btn" type="button" data-action="clear-search">Clear search</button>' : "")),
+        tabs: ["overview"]
+      });
+    }
+    else if (action === "set-stage") { state.pipelineStage = el.getAttribute("data-stage"); runLeadQuery(false); runAction("filters", el); }
+    else if (action === "set-queue") { state.threadFilter = el.getAttribute("data-queue"); render(); runAction("filters", el); }
+    else if (action === "clear-search") {
+      state.search = "";
+      var box = $("crWorkSearch"); if (box) box.value = "";
+      runLeadQuery(false); closeInspector();
+    }
+    else if (action === "new-work") openInspector({
+      title: "Create a record", subtitle: "Work · " + titleCase(state.workView),
+      /* Stated plainly rather than offering a create form that would have
+         nowhere canonical to write. */
+      description: "There is no canonical write route for creating a lead, task, order, or booking from the Control Room. Records arrive from the site's own capture forms and the communications relay. Nothing is created in the browser.",
+      custom: inspectorSection("What you can do here", '<p class="cr-muted">Stage changes on an existing lead persist through Work · Pipeline. Conversations can be taken over and replied to in Work · Inbox.</p>'),
+      actions: '<button class="cr-btn" data-open-href="crm.html">Open the legacy CRM creator</button>',
+      tabs: ["overview", "ai"]
+    });
+    else if (action === "select-thread") {
+      state.selectedThreadId = el.getAttribute("data-id");
+      delete state.pending["error:" + state.selectedThreadId];
+      render(); /* render() owns transcript loading for the selected thread */
+    }
     else if (action === "lead-status") {
+      /* A status write that fails must not look like one that worked. The
+         previous version had no rejection path at all, so a refused PATCH
+         left the new status sitting on screen as if it had persisted. */
       var lid = el.getAttribute("data-id"), st = el.getAttribute("data-status");
-      supa("leads?id=eq." + encodeURIComponent(lid), { method: "PATCH", body: { status: st }, prefer: "return=minimal" }).then(function () { var lead = findById(state.leads, lid); if (lead) lead.status = st; inspectLead(lid); render(); });
+      var lead = findById(state.leads, lid); if (!lead) return;
+      var previous = lead.status;
+      state.pending["lead:" + lid] = true; inspectLead(lid);
+      supa("leads?id=eq." + encodeURIComponent(lid), { method: "PATCH", body: { status: st }, prefer: "return=minimal" })
+        .then(function () { lead.status = st; delete state.pending["lead:" + lid]; delete state.pending["leadError:" + lid]; inspectLead(lid); render(); })
+        .catch(function (e) {
+          lead.status = previous;
+          delete state.pending["lead:" + lid];
+          state.pending["leadError:" + lid] = classifySourceError(e);
+          inspectLead(lid); render();
+        });
     } else if (action === "thread-mode") {
       var tid = el.getAttribute("data-id"), mode = el.getAttribute("data-mode");
-      request("/v1/comms/threads/" + encodeURIComponent(tid) + "/" + mode, { method: "POST", body: {} }).then(function () { return load(true); }).then(function () { inspectThread(tid); });
+      state.pending["mode:" + tid] = true; delete state.pending["error:" + tid]; render();
+      request("/v1/comms/threads/" + encodeURIComponent(tid) + "/" + mode, { method: "POST", body: {} })
+        .then(function () {
+          /* Ownership is re-read, never assumed. The reload below merges the
+             thread row the server returns, so if the handover did not
+             actually take effect the console keeps showing the old owner
+             instead of an optimistic flip the backend never made. */
+          delete state.pending["mode:" + tid];
+          return loadTranscript(tid, true);
+        })
+        .then(function () {
+          render();
+          if (state.inspector && state.inspector.threadId === tid) inspectThread(tid);
+        })
+        .catch(function (e) {
+          delete state.pending["mode:" + tid];
+          state.pending["error:" + tid] = classifySourceError(e);
+          render();
+        });
     } else if (action === "thread-compose") {
-      var threadId = el.getAttribute("data-id");
-      openInspector({ title: "Send message", subtitle: "Human control", description: "This queues through the existing communications outbox and Android SIM relay.", custom: inspectorSection("Message", '<textarea id="crThreadMessage" class="cr-textarea" rows="6" placeholder="Write message…"></textarea>'), actions: '<button class="cr-btn cr-btn--primary" type="button" data-action="thread-send" data-id="' + esc(threadId) + '">Queue message</button>', tabs: ["overview"] });
+      var composeId = el.getAttribute("data-id");
+      setSurface("work", "inbox");
+      state.selectedThreadId = composeId;
+      render();
     } else if (action === "thread-send") {
-      var sendId = el.getAttribute("data-id"), body = $("crThreadMessage") && $("crThreadMessage").value.trim(); if (!body) return;
-      request("/v1/comms/threads/" + encodeURIComponent(sendId) + "/send", { method: "POST", body: { body: body } }).then(function () { closeInspector(); return load(true); });
-    } else if (action === "ai-context") {
+      var sendId = el.getAttribute("data-id");
+      var box = $("crReply") || $("crThreadMessage");
+      var body = box && box.value.trim();
+      if (!body) { state.pending["error:" + sendId] = badResult("failed", "Nothing to send.", 0); render(); return; }
+      state.pending["send:" + sendId] = true; delete state.pending["error:" + sendId]; render();
+      request("/v1/comms/threads/" + encodeURIComponent(sendId) + "/send", { method: "POST", body: { body: body } })
+        .then(function () {
+          delete state.pending["send:" + sendId];
+          delete state.drafts[sendId];
+          var live = $("crReply"); if (live) live.value = "";
+          return loadTranscript(sendId, true);
+        })
+        .catch(function (e) {
+          delete state.pending["send:" + sendId];
+          state.pending["error:" + sendId] = classifySourceError(e);
+          render();
+        });
+    } else if (action === "inspect-resource") {
+      /* These rows were rendered with an action that had no handler, so the
+         click did nothing. A connection resolves to the service it actually
+         is; a catalog product shows the record the catalog returned. */
+      var rkey = el.getAttribute("data-key");
+      var serviceKey = { "Core / model routing": "core", "Supabase": "db", "Cloudflare": "api" }[rkey];
+      if (serviceKey) { inspectService(serviceKey); return; }
+      var products = state.resources ? pickRows(state.resources.catalog, "products") : [];
+      var product = products.find(function (p) { return String(p.id || p.name) === String(rkey); });
+      if (product) {
+        openInspector({
+          title: product.name || product.id, subtitle: "System · Platform catalog",
+          description: text(product.description, "Registered platform product"),
+          props: [["Id", product.id], ["Status", product.status], ["Plan", product.plan]],
+          raw: product, tabs: ["overview", "raw", "ai"]
+        });
+        return;
+      }
+      openInspector({
+        title: text(rkey, "Resource"), subtitle: "System · Resources",
+        description: "This connection is reported by the operator status payload. There is no dedicated endpoint behind it, so there is nothing further to open.",
+        props: [["Resource", rkey]], tabs: ["overview", "ai"]
+      });
+    } else if (action === "load-resources") { loadResources(true); }
+    else if (action === "inspect-consumer") {
+      var consumers = state.resources ? pickRows(state.resources.consumers, "consumers") : [];
+      var consumer = findById(consumers, el.getAttribute("data-id"));
+      if (consumer) {
+        /* Deliberately property-listed rather than raw-dumped: a consumer
+           record can carry key material and this console does not render
+           secrets it does not need to show. */
+        openInspector({
+          title: consumer.name || consumer.label || "API consumer", subtitle: "System · Resources",
+          description: "Registered platform API consumer.",
+          props: [["Status", consumer.status], ["Scope", consumer.scope], ["Plan", consumer.plan], ["Created", formatDate(consumer.created_at)]],
+          tabs: ["overview", "ai"]
+        });
+      }
+    }
+    else if (action === "refresh-health") {
+      state.pending.health = true; render();
+      src(request("/v1/ai/system-health", { method: "POST", body: {} })).then(function (result) {
+        delete state.pending.health;
+        state.sources.aiHealth = result;
+        if (result.ok) state.aiHealth = result.data;
+        render();
+      });
+    }
+    else if (action === "inspect-media-job") { inspectMediaJob(el.getAttribute("data-id")); }
+    else if (action === "inspect-generated-asset") { inspectAsset(el.getAttribute("data-id")); }
+    else if (action === "inspect-decision") { inspectDecision(el.getAttribute("data-id")); }
+    else if (action === "load-earlier") { loadEarlier(el.getAttribute("data-id")); }
+    else if (action === "more-leads") { runLeadQuery(true); }
+    else if (action === "open-publish") { openPublish(el.getAttribute("data-id")); }
+    else if (action === "publish-variant") {
+      var vid = el.getAttribute("data-id");
+      var accountId = $("crPubAccount") && $("crPubAccount").value;
+      if (!accountId) { state.pending["publishError:" + vid] = badResult("failed", "Select an account.", 0); openPublish(vid); return; }
+      var when = $("crPubWhen") && $("crPubWhen").value;
+      var pubBody = {
+        account_id: accountId,
+        variant_id: vid,
+        publish_mode: ($("crPubMode") && $("crPubMode").value) || "trial"
+      };
+      var caption = $("crPubCaption") && $("crPubCaption").value.trim();
+      if (caption) pubBody.caption = caption;
+      /* datetime-local has no zone; send a real instant. */
+      if (when) pubBody.scheduled_at = new Date(when).toISOString();
+      if (state.org && state.org.id) pubBody.org_id = state.org.id;
+
+      state.pending["publish:" + vid] = true;
+      delete state.pending["publishError:" + vid];
+      openPublish(vid);
+      src(request("/v1/social/publish", { method: "POST", body: pubBody })).then(function (result) {
+        delete state.pending["publish:" + vid];
+        if (!result.ok) { state.pending["publishError:" + vid] = result; openPublish(vid); return; }
+        var job = result.data && result.data.publish_job;
+        state.pending["publishOk:" + vid] = (job && job.id) || "created";
+        /* The new job belongs in Schedule immediately, not after a reload. */
+        if (job) state.publishJobs.unshift(job);
+        openPublish(vid); render();
+      });
+    }
+    else if (action === "ai-context") {
       var q = $("crAiContextInput") && $("crAiContextInput").value.trim(); submitCoreTask(q, el.getAttribute("data-context"));
     } else if (action === "open-platform") {
       inspectService("api");
@@ -742,46 +1716,120 @@
   }
   function bindSurfaceControls() {
     bindActions($("crSurface"));
+    window.CR.media.bind($("crSurface"));
     var select = $("crViewSelect");
     if (select) select.addEventListener("change", function () { if (state.surface === "work") setSurface("work", select.value); else if (state.surface === "create") setSurface("create", select.value); else if (state.surface === "system") setSurface("system", select.value); });
-    var search = $("crWorkSearch"); if (search) search.addEventListener("input", function () { filterCurrentView(search.value); });
+    var search = $("crWorkSearch");
+    if (search) {
+      search.value = state.search || "";
+      search.addEventListener("input", function () {
+        state.search = search.value;
+        /* Work is backed by the leads table, so its search is a server query.
+           The DOM filter still runs so thread rows in the same view narrow
+           immediately while the query is in flight. */
+        filterCurrentView(search.value);
+        if (state.surface === "work") scheduleLeadQuery();
+      });
+    }
     var hero = $("crHeroInput"); if (hero) hero.addEventListener("keydown", function (e) { if (e.key === "Enter") handleCommand(hero.value); });
+
+    /* These chips were rendered before but never bound, so the workload
+       filters looked live and did nothing. They filter state now. */
+    document.querySelectorAll("[data-thread-filter]").forEach(function (b) {
+      b.addEventListener("click", function () { state.threadFilter = b.getAttribute("data-thread-filter"); render(); });
+    });
+    document.querySelectorAll("[data-job-filter]").forEach(function (b) {
+      b.addEventListener("click", function () { state.jobFilter = b.getAttribute("data-job-filter"); render(); });
+    });
+    document.querySelectorAll("[data-stage-filter]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.pipelineStage = b.getAttribute("data-stage-filter");
+        /* The stage is part of the server query, not a client-side slice. */
+        runLeadQuery(false);
+      });
+    });
+
+    /* A re-render must not eat a half-written reply. */
+    var reply = $("crReply");
+    if (reply && state.selectedThreadId) {
+      reply.value = state.drafts[state.selectedThreadId] || "";
+      reply.addEventListener("input", function () { state.drafts[state.selectedThreadId] = reply.value; });
+      reply.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+          var send = document.querySelector('[data-action="thread-send"]');
+          if (send && !send.disabled) send.click();
+        }
+      });
+    }
+    if (state.search) filterCurrentView(state.search);
   }
 
-  function discoverOrg() { return settle(supa("orgs?slug=eq.mccluster&select=id,slug,name&limit=1"), []).then(function (rows) { return rows && rows[0] || null; }); }
+  function discoverOrg() { return src(supa("orgs?slug=eq.mccluster&select=id,slug,name&limit=1")).then(function (r) { return rowsOf(r)[0] || null; }); }
   function loadCreative(org) {
     var orgId = org && org.id;
-    var direct = [
-      settle(supa("media_assets?select=*&order=created_at.desc&limit=150"), []),
-      settle(supa("media_jobs?select=*&order=created_at.desc&limit=120"), []),
-      settle(supa("social_campaigns?select=*&order=created_at.desc&limit=100" + (orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "")), []),
-      settle(supa("social_variants?select=*&order=created_at.desc&limit=200" + (orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "")), []),
-      settle(supa("social_publish_jobs?select=*&order=scheduled_at.desc&limit=200" + (orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "")), []),
-      settle(supa("social_posts?select=*&order=published_at.desc&limit=200" + (orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "")), [])
-    ];
-    return Promise.all(direct).then(function (r) { return { mediaAssets: r[0] || [], mediaJobs: r[1] || [], campaigns: r[2] || [], variants: r[3] || [], publishJobs: r[4] || [], posts: r[5] || [] }; });
+    var scope = orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "";
+    return Promise.all([
+      src(supa("media_assets?select=*&order=created_at.desc&limit=150")),
+      src(supa("media_jobs?select=*&order=created_at.desc&limit=120")),
+      src(supa("social_campaigns?select=*&order=created_at.desc&limit=100" + scope)),
+      src(supa("social_variants?select=*&order=created_at.desc&limit=200" + scope)),
+      src(supa("social_publish_jobs?select=*&order=scheduled_at.desc&limit=200" + scope)),
+      src(supa("social_posts?select=*&order=published_at.desc&limit=200" + scope))
+    ]).then(function (r) {
+      return { mediaAssets: r[0], mediaJobs: r[1], campaigns: r[2], variants: r[3], publishJobs: r[4], posts: r[5] };
+    });
   }
 
   function load(force) {
     if (state.loading && !force) return Promise.resolve();
     state.loading = true; state.error = null; render();
-    var health = settle(fetch(API + "/health", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }), null);
+    var health = src(fetch(API + "/health", { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw Object.assign(new Error("Edge health returned HTTP " + r.status), { status: r.status });
+      return r.json();
+    }));
     var authed = token().then(function (t) {
-      if (!t) return {};
+      if (!t) return { signedOut: true };
       return discoverOrg().then(function (org) {
-        var base = [
-          settle(request("/v1/status"), null), settle(request("/v1/apps"), { apps: [] }), settle(request("/v1/ai/status"), null), settle(request("/v1/ai/system-health"), null),
-          settle(request("/v1/comms/threads?limit=100"), { threads: [] }), settle(supa("leads?select=*&order=at.desc&limit=400"), []), settle(supa("site_requests?select=*&order=created_at.desc&limit=100"), []),
-          settle(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200"), []), loadCreative(org)
-        ];
-        return Promise.all(base).then(function (r) { return { org: org, status: r[0], apps: r[1] && r[1].apps || [], ai: r[2], aiHealth: r[3], threads: r[4] && r[4].threads || [], leads: r[5] || [], siteRequests: r[6] || [], jobs: r[7] || [], creative: r[8] || {} }; });
+        return Promise.all([
+          src(request("/v1/status")), src(request("/v1/apps")), src(request("/v1/ai/status")), src(request("/v1/ai/system-health")),
+          src(request("/v1/ai/decisions?limit=25")),
+          src(request("/v1/comms/threads?limit=100")), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact" })),
+          src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
+          src(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200")), loadCreative(org)
+        ]).then(function (r) {
+          return { org: org, status: r[0], apps: r[1], ai: r[2], aiHealth: r[3], decisions: r[4], threads: r[5], leads: r[6], siteRequests: r[7], jobs: r[8], creative: r[9] };
+        });
       });
     });
     return Promise.all([health, authed]).then(function (r) {
-      var a = r[1] || {}; state.health = r[0]; state.org = a.org || null; state.status = a.status || null; state.apps = a.apps || []; state.ai = a.ai || null; state.aiHealth = a.aiHealth || null; state.threads = a.threads || []; state.leads = a.leads || []; state.siteRequests = a.siteRequests || []; state.jobs = a.jobs || [];
-      state.mediaAssets = a.creative && a.creative.mediaAssets || []; state.mediaJobs = a.creative && a.creative.mediaJobs || []; state.campaigns = a.creative && a.creative.campaigns || []; state.variants = a.creative && a.creative.variants || []; state.publishJobs = a.creative && a.creative.publishJobs || []; state.posts = a.creative && a.creative.posts || [];
-      state.refreshedAt = new Date().toISOString(); if (!state.status) state.error = "Operator status unavailable";
-    }).catch(function (e) { state.error = e.message || "Control Room state unavailable"; }).then(function () { state.loading = false; render(); });
+      var a = r[1] || {}; var c = a.creative || {};
+      var signedOut = badResult("unauthorized", "This session is not signed in.", 401);
+      state.sources = {
+        health: r[0], status: a.status || signedOut, apps: a.apps || signedOut, ai: a.ai || signedOut, aiHealth: a.aiHealth || signedOut,
+        decisions: a.decisions || signedOut, threads: a.threads || signedOut, leads: a.leads || signedOut, siteRequests: a.siteRequests || signedOut, jobs: a.jobs || signedOut,
+        mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
+        variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
+      };
+      state.health = dataOf(state.sources.health); state.org = a.org || null;
+      state.status = dataOf(state.sources.status); state.ai = dataOf(state.sources.ai); state.aiHealth = dataOf(state.sources.aiHealth);
+      state.apps = pickRows(state.sources.apps, "apps");
+      state.decisions = pickRows(state.sources.decisions, "decisions");
+      state.threads = pickRows(state.sources.threads, "threads");
+      /* The leads read is counted, so it returns {rows,total} rather than a
+         bare array. Unwrap it and keep the source result array-shaped so
+         every downstream reader stays unchanged. */
+      var leadPayload = dataOf(state.sources.leads);
+      state.leads = leadPayload && Array.isArray(leadPayload.rows) ? leadPayload.rows : rowsOf(state.sources.leads);
+      state.leadTotal = leadPayload && leadPayload.total !== undefined ? leadPayload.total : null;
+      if (state.sources.leads.ok) state.sources.leads = okResult(state.leads);
+      state.siteRequests = rowsOf(state.sources.siteRequests); state.jobs = rowsOf(state.sources.jobs);
+      state.mediaAssets = rowsOf(state.sources.mediaAssets); state.mediaJobs = rowsOf(state.sources.mediaJobs);
+      state.campaigns = rowsOf(state.sources.campaigns); state.variants = rowsOf(state.sources.variants);
+      state.publishJobs = rowsOf(state.sources.publishJobs); state.posts = rowsOf(state.sources.posts);
+      state.refreshedAt = new Date().toISOString();
+      state.error = state.sources.status.ok ? null : state.sources.status.message || "Operator status unavailable";
+    }).catch(function (e) { state.error = e.message || "Control Room state unavailable"; })
+      .then(function () { state.loading = false; render(); });
   }
 
   function boot() { $("cpGate").hidden = true; $("crApp").hidden = false; readHash(); setHash(true); render(); load(); }
@@ -806,6 +1854,27 @@
     window.addEventListener("hashchange", function () { readHash(); state.selectedProjectId = null; closeInspector(); render(); });
   }
   function tryResume() { token().then(function (t) { if (t && $("crApp").hidden) boot(); }); }
+  /* The media module renders into the Create canvas and needs the shell's
+     request client, panel chrome and render loop. It owns nothing else. */
+  window.CR.media.init({
+    request: request,
+    panel: panel,
+    render: render,
+    orgId: function () { return state.org && state.org.id; },
+    /* A finished job's output belongs in the canonical Library, so a settled
+       job refreshes the asset and job sources rather than only living in the
+       generation panel. */
+    onJobSettled: function (record) {
+      if (record.job) {
+        var idx = state.mediaJobs.findIndex(function (j) { return String(j.id) === String(record.job.id); });
+        if (idx >= 0) state.mediaJobs[idx] = record.job; else state.mediaJobs.unshift(record.job);
+      }
+      (record.assets || []).forEach(function (a) {
+        if (!state.mediaAssets.some(function (x) { return String(x.id) === String(a.id); })) state.mediaAssets.unshift(a);
+      });
+    }
+  });
+
   function init() { bindAuth(); bindShell(); bindActions(document); tryResume(); setTimeout(tryResume, 700); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

@@ -38,6 +38,33 @@ async function readJson(request) {
   catch { throw Object.assign(new Error('invalid json'), { status: 400 }); }
 }
 
+/* Reads the same context function over GET. The caller's own bearer token is
+   forwarded exactly as the POST path does, so the function still identifies the
+   human and applies its own owner/admin check — the Worker does not widen it. */
+async function readContextFunction(request, env, name, params) {
+  const authorization = request.headers.get('authorization') || '';
+  const query = new URLSearchParams();
+  Object.keys(params).forEach((key) => {
+    const value = params[key];
+    if (value !== null && value !== undefined && value !== '') query.set(key, String(value));
+  });
+  const res = await fetch(`${env.SUPABASE_URL}/functions/v1/${name}?${query.toString()}`, {
+    method: 'GET',
+    headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization }
+  });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
+  if (!res.ok) {
+    const message = data?.error || data?.message || `${name} failed`;
+    throw Object.assign(new Error(message), {
+      status: res.status >= 400 && res.status < 500 ? res.status : 502,
+      detail: data
+    });
+  }
+  return { status: res.status, data };
+}
+
 async function callContextFunction(request, env, name, body) {
   const authorization = request.headers.get('authorization') || '';
   const res = await fetch(`${env.SUPABASE_URL}/functions/v1/${name}`, {
@@ -323,6 +350,25 @@ export async function handleAiRequest(request, env, user) {
     if (payload.org_id !== orgId) return fail(request, env, 'cross-org retrieval denied', 403);
     const { status, data } = await callContextFunction(request, env, 'context-query', payload);
     return reply(request, env, data, status);
+  }
+
+  /* Reading decisions back. This is a method on the route that already records
+     them, not a new namespace: the house-owner gate above already applies, and
+     the function re-checks org membership itself. */
+  if (path === '/v1/ai/decisions' && request.method === 'GET') {
+    try {
+      const { status, data } = await readContextFunction(request, env, 'context-decision', {
+        org_id: orgId,
+        status: url.searchParams.get('status'),
+        risk_class: url.searchParams.get('risk_class'),
+        limit: url.searchParams.get('limit'),
+        before: url.searchParams.get('before'),
+        before_id: url.searchParams.get('before_id')
+      });
+      return reply(request, env, data, status);
+    } catch (error) {
+      return fail(request, env, error.message || 'decision read failed', error.status || 502, error.detail);
+    }
   }
 
   if (path === '/v1/ai/decisions' && request.method === 'POST') {

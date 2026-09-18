@@ -2,7 +2,7 @@ import core from './index.js';
 import { fail, logEvent, reply } from './lib/http.js';
 import { handleClientRequest } from './client.js';
 import clientConnect from './connect.js';
-import { createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
+import { getUsage, createGeneration, getGeneration, handleFalWebhook, listModels, reconcilePendingFalCosts } from './media/router.js';
 import { createBakeoff } from './media/orchestrator.js';
 import { recommendModels } from './media/recommend.js';
 import { handleMediaMcp } from './media/mcp.js';
@@ -112,6 +112,16 @@ export default {
         return reply(request, env, body, status);
       } catch (error) {
         return fail(request, env, error.message || 'Core status request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/media/usage' && request.method === 'GET') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        return reply(request, env, await getUsage(request, env, user));
+      } catch (error) {
+        return fail(request, env, error.message || 'Media usage request failed', error.status || 500, error.detail);
       }
     }
 

@@ -435,6 +435,59 @@ async function ownerThreads(env, orgId, url) {
   return rest(env, `comms_threads?org_id=eq.${orgId}&select=*,comms_contacts(address,display_name,blocked)&order=updated_at.desc&limit=${limit}`);
 }
 
+/* The operator console needs the transcript, and it cannot read it itself:
+   comms_messages is revoked from `authenticated` and granted only to
+   service_role, and the thread list deliberately does not embed messages.
+   This is the narrow read that closes that gap, under the same owner gate
+   as every other owner route here. */
+const MESSAGE_COLUMNS = 'id,direction,sender_type,body,status,external_id,agent_job_id,occurred_at,metadata,created_at';
+
+/* Pages backwards from the newest message, because that is what an operator
+   opens a thread to see. Paging is keyset, not offset: a message arriving
+   mid-read shifts every offset by one and would silently skip a message,
+   which on a transcript means an operator reads a conversation that is
+   missing a line. The cursor is (occurred_at, id) so messages sharing a
+   timestamp still page correctly. */
+async function ownerThreadMessages(env, orgId, threadId, url) {
+  const thread = await threadById(env, orgId, threadId);
+  if (!thread) throw Object.assign(new Error('thread not found'), { status: 404 });
+
+  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit') || 50)));
+  const before = url.searchParams.get('before');
+  const beforeId = url.searchParams.get('before_id');
+
+  let cursor = '';
+  if (before) {
+    const at = encodeURIComponent(before);
+    cursor = beforeId
+      ? `&or=(occurred_at.lt.${at},and(occurred_at.eq.${at},id.lt.${encodeURIComponent(beforeId)}))`
+      : `&occurred_at=lt.${at}`;
+  }
+
+  /* One extra row answers "is there more" without a second count query. */
+  const page = await rest(
+    env,
+    `comms_messages?thread_id=eq.${threadId}&org_id=eq.${orgId}&select=${MESSAGE_COLUMNS}${cursor}&order=occurred_at.desc,id.desc&limit=${limit + 1}`,
+  );
+  const rows = Array.isArray(page) ? page : [];
+  const hasMore = rows.length > limit;
+  const window = hasMore ? rows.slice(0, limit) : rows;
+  const oldest = window[window.length - 1] || null;
+
+  const contacts = thread.contact_id
+    ? await rest(env, `comms_contacts?id=eq.${thread.contact_id}&select=address,display_name,blocked&limit=1`)
+    : null;
+
+  return {
+    thread: { ...thread, comms_contacts: contacts?.[0] || null },
+    /* Returned oldest-first so the client can render without reversing. */
+    messages: window.slice().reverse(),
+    has_more: hasMore,
+    next_before: oldest ? oldest.occurred_at : null,
+    next_before_id: oldest ? oldest.id : null,
+  };
+}
+
 async function ownerThreadAction(request, env, orgId, threadId, action) {
   const thread = await threadById(env, orgId, threadId);
   if (!thread) throw Object.assign(new Error('thread not found'), { status: 404 });
@@ -494,6 +547,7 @@ export async function handleCommsRequest(request, env, user) {
         beta: 1,
         routes: {
           threads: '/v1/comms/threads',
+          thread_messages: '/v1/comms/threads/{id}/messages',
           relay_inbound: '/v1/comms/relay/inbound',
           relay_claim: '/v1/comms/relay/outbox/claim',
           relay_delivery: '/v1/comms/relay/delivery',
@@ -502,6 +556,10 @@ export async function handleCommsRequest(request, env, user) {
     }
     if (path === '/v1/comms/threads' && request.method === 'GET') {
       return reply(request, env, { threads: await ownerThreads(env, orgId, url) });
+    }
+    const messagesMatch = path.match(/^\/v1\/comms\/threads\/([0-9a-f-]{36})\/messages$/i);
+    if (messagesMatch && request.method === 'GET') {
+      return reply(request, env, await ownerThreadMessages(env, orgId, messagesMatch[1], url));
     }
     const match = path.match(/^\/v1\/comms\/threads\/([0-9a-f-]{36})\/(takeover|release|send)$/i);
     if (match && request.method === 'POST') {

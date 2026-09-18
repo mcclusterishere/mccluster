@@ -74,6 +74,7 @@ export const CATALOG = {
     { path: '/v1/fees/quote', method: 'GET', auth: 'none' },
     { path: '/v1/ai/ingest', method: 'POST', auth: 'house-owner' },
     { path: '/v1/ai/retrieve', method: 'POST', auth: 'house-owner' },
+    { path: '/v1/ai/decisions', method: 'GET', auth: 'house-owner' },
     { path: '/v1/ai/decisions', method: 'POST', auth: 'house-owner' },
     { path: '/v1/ai/status', method: 'GET', auth: 'house-owner' },
     { path: '/v1/media/models', method: 'GET', auth: 'user' },

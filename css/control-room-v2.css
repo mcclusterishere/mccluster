@@ -67,3 +67,133 @@
   .cr-raw{max-height:none}
 }
 @media(max-width:420px){.cr-asset-grid{grid-template-columns:1fr 1fr}.cr-data-table{min-width:560px}}
+
+/* ---------------------------------------------------------------
+   Functional depth: source honesty, conversations, generation.
+   These extend the existing Control Room system — same tokens, same
+   panel/row vocabulary. No second design language.
+   --------------------------------------------------------------- */
+
+/* Unavailable is not empty: a failed source gets a visible, named banner
+   with the backend's own reason, never a silent empty list. */
+.cr-source{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;margin-bottom:12px;border:1px solid var(--cr-line-strong);border-radius:var(--cr-radius-sm);background:var(--cr-panel)}
+.cr-source--unavailable,.cr-source--failed{border-color:rgba(239,90,99,.42)}
+.cr-source--unauthorized{border-color:rgba(240,180,77,.42)}
+.cr-source--unsupported{border-color:var(--cr-line)}
+.cr-source__text{flex:1;min-width:0;display:grid;gap:3px}
+.cr-source__text b{font-size:12px}
+.cr-source__text span{color:var(--cr-dim);font-size:11px;line-height:1.5}
+.cr-source__text code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:var(--cr-faint);word-break:break-word}
+.cr-source .cr-btn{flex:0 0 auto}
+
+.cr-derived{margin:0 0 12px;color:var(--cr-faint);font-size:11px;line-height:1.6}
+/* A named backend gap, stated instead of filled with invented records. */
+.cr-gap{display:grid;gap:4px;padding:12px 13px;margin-bottom:12px;border:1px dashed var(--cr-line-strong);border-radius:var(--cr-radius-sm);background:rgba(255,255,255,.015)}
+.cr-gap b{font-size:12px}
+.cr-gap span{color:var(--cr-dim);font-size:11px;line-height:1.55}
+.cr-fail{margin:0;padding:10px 12px;border-radius:var(--cr-radius-sm);background:rgba(239,90,99,.09);border:1px solid rgba(239,90,99,.3);color:var(--cr-text);font-size:12px;line-height:1.55;word-break:break-word}
+.cr-subhead{margin:16px 0 8px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--cr-faint)}
+
+.cr-chip.is-on{background:var(--cr-ruby);border-color:var(--cr-ruby);color:#fff}
+.cr-chip.is-static{cursor:default;opacity:.85}
+.cr-chip b{font-variant-numeric:tabular-nums;opacity:.75;margin-left:2px}
+.cr-input--sm{max-width:180px}
+
+/* Inbox: thread list beside the conversation. */
+.cr-inbox{display:grid;grid-template-columns:320px minmax(0,1fr);gap:12px;align-items:start}
+.cr-inbox__list{display:grid;gap:10px;min-width:0}
+.cr-filterchips--inbox{padding-bottom:2px}
+.cr-threadlist{border:1px solid var(--cr-line);border-radius:var(--cr-radius);background:var(--cr-panel);overflow:hidden;max-height:min(58vh,560px);overflow-y:auto}
+.cr-thread{appearance:none;display:block;width:100%;text-align:left;font:inherit;color:var(--cr-text);background:transparent;border:0;border-bottom:1px solid var(--cr-line);padding:11px 13px;cursor:pointer}
+.cr-thread:last-child{border-bottom:0}
+.cr-thread:hover{background:rgba(255,255,255,.025)}
+.cr-thread.is-on{background:rgba(199,34,43,.14)}
+.cr-thread__top{display:flex;align-items:baseline;gap:9px}
+.cr-thread__top b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-thread__top time{margin-left:auto;font-size:10px;color:var(--cr-faint);font-variant-numeric:tabular-nums}
+.cr-thread__sub{display:flex;align-items:center;gap:7px;margin-top:5px}
+.cr-thread__sub em{font-style:normal;font-size:10px;color:var(--cr-faint)}
+.cr-inbox__other{border:1px solid var(--cr-line);border-radius:var(--cr-radius);background:var(--cr-panel);overflow:hidden}
+.cr-inbox__other h3{margin:0;padding:11px 13px;border-bottom:1px solid var(--cr-line);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--cr-faint)}
+
+.cr-convo{display:flex;flex-direction:column;min-height:420px;max-height:min(72vh,720px);border:1px solid var(--cr-line);border-radius:var(--cr-radius);background:var(--cr-panel);overflow:hidden}
+.cr-convo__head{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--cr-line);background:var(--cr-panel-2)}
+.cr-convo__head>div{flex:1;min-width:0}
+.cr-convo__head b{font-size:13px}
+.cr-convo__head .cr-muted{margin:3px 0 0}
+.cr-convo__body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:11px}
+.cr-convo__error{padding:0 14px}
+.cr-convo__foot{padding:12px 14px;border-top:1px solid var(--cr-line);background:var(--cr-panel-2)}
+.cr-convo__actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center}
+
+.cr-msg{max-width:82%}
+.cr-msg--out{margin-left:auto}
+.cr-msg__meta{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-size:10px;color:var(--cr-faint)}
+.cr-msg--out .cr-msg__meta{justify-content:flex-end}
+.cr-msg__body{padding:9px 12px;border-radius:12px;background:var(--cr-panel-2);border:1px solid var(--cr-line);font-size:12px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.cr-msg--out .cr-msg__body{background:rgba(199,34,43,.13);border-color:rgba(199,34,43,.3)}
+
+/* Generation lives inside Create, not in a second Studio shell. */
+.cr-gen{display:grid;gap:9px}
+.cr-gen__row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cr-gen__ok{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12px;color:var(--cr-dim)}
+
+/* Same capabilities on a phone: the inbox stacks rather than dropping
+   the conversation, and the conversation keeps every action. */
+@media (max-width:1080px){
+  .cr-inbox{grid-template-columns:minmax(0,1fr)}
+  .cr-threadlist{max-height:44vh}
+  .cr-convo{max-height:none;min-height:360px}
+}
+@media (max-width:720px){
+  .cr-source{flex-direction:column;align-items:stretch}
+  .cr-msg{max-width:92%}
+  .cr-gen__row{flex-direction:column;align-items:stretch}
+  .cr-input--sm{max-width:none}
+  .cr-convo__actions .cr-btn{flex:1 1 auto}
+}
+
+/* ---------------------------------------------------------------
+   Generation lifecycle, explicit model selection, transcript paging.
+   --------------------------------------------------------------- */
+
+/* The canvas grid is 12 columns and control-room.css defines spans 3-8
+   only, so a full-width panel had no class and collapsed to 1/12 of the
+   row. The generation panel is the one full-width panel in the system. */
+.cr-span-12{grid-column:span 12}
+
+.cr-modelpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:7px}
+.cr-modelpick__item{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--cr-line);border-radius:var(--cr-radius-sm);background:var(--cr-panel-2);cursor:pointer}
+.cr-modelpick__item:hover{border-color:var(--cr-line-strong)}
+.cr-modelpick__item.is-on{border-color:var(--cr-ruby);background:rgba(199,34,43,.12)}
+.cr-modelpick__item input{accent-color:var(--cr-ruby);flex:0 0 auto}
+.cr-modelpick__item span{display:grid;min-width:0}
+.cr-modelpick__item b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-modelpick__item small{font-size:10px;color:var(--cr-faint)}
+
+.cr-genjobs{display:grid;gap:9px;margin-top:4px}
+.cr-genjob{border:1px solid var(--cr-line);border-radius:var(--cr-radius-sm);background:var(--cr-panel-2);padding:11px 12px;display:grid;gap:8px}
+.cr-genjob__head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.cr-genjob__head b{font-size:12px}
+.cr-genjob__meta{margin-left:auto;font-size:10px;color:var(--cr-faint);font-variant-numeric:tabular-nums}
+.cr-genjob__head .cr-icon-btn{flex:0 0 auto}
+.cr-genjob__note{margin:0;font-size:11px;color:var(--cr-dim);line-height:1.5}
+.cr-genjob__note--stopped{color:var(--cr-warn)}
+.cr-genjob__foot{display:flex;gap:7px}
+.cr-genjob__assets{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:7px}
+.cr-genasset{appearance:none;border:1px solid var(--cr-line);border-radius:9px;background:var(--cr-bg);padding:0;overflow:hidden;cursor:pointer;aspect-ratio:1;display:grid;place-items:center;color:var(--cr-faint);font-size:10px}
+.cr-genasset:hover{border-color:var(--cr-line-strong)}
+.cr-genasset img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* A spinner already exists for the boot state; reused for live jobs. */
+.cr-spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--cr-line-strong);border-top-color:var(--cr-ruby-hot);display:inline-block;animation:cr-spin .7s linear infinite;flex:0 0 auto}
+@keyframes cr-spin{to{transform:rotate(360deg)}}
+
+.cr-convo__earlier{display:flex;justify-content:center;padding:0 0 10px;margin:0}
+.cr-convo__earlier.cr-muted{font-size:10px;color:var(--cr-faint);text-align:center;margin:0 0 10px}
+.cr-more{display:flex;justify-content:center;margin-top:12px}
+
+@media (max-width:720px){
+  .cr-modelpick{grid-template-columns:1fr}
+  .cr-genjob__meta{margin-left:0;width:100%}
+}
