@@ -182,10 +182,20 @@
   {
    "slug": "singles",
    "name": "Singles",
-   "tag": "The singles",
+   "tag": "The singles · 2 tracks",
    "art": "assets/img/m-mark.png",
    "by": "Between the albums.",
    "tracks": [
+    {
+     "title": "niggy nigg",
+     "sub": "preview · account required for full track + download",
+     "src": "https://zmnhbrjyhxzhkxmhkexs.supabase.co/functions/v1/song-niggy-nigg?preview=1",
+     "gated": "song-niggy-nigg",
+     "download": "https://zmnhbrjyhxzhkxmhkexs.supabase.co/functions/v1/song-niggy-nigg?download=1",
+     "video": "assets/video/nightscroll.mp4",
+     "poster": "assets/frames/nightscroll_0001.jpg",
+     "pulse": "#e5383b"
+    },
     {
      "title": "Upset",
      "src": "assets/audio/upset.mp3",
