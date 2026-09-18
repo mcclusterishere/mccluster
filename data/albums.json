@@ -182,7 +182,7 @@
   {
    "slug": "singles",
    "name": "Singles",
-   "tag": "The singles · 2 tracks",
+   "tag": "The singles",
    "art": "assets/img/m-mark.png",
    "by": "Between the albums.",
    "tracks": [
@@ -193,15 +193,26 @@
      "poster": "assets/frames/coffeecam_0001.jpg",
      "lyrics": "data/lyrics/upset.json",
      "reel": "data/reels/upset.json"
-    },
+    }
+   ]
+  },
+  {
+   "slug": "cia-mind-control",
+   "name": "CIA Mind Control",
+   "artist": "KKK",
+   "tag": "The album · 1 track",
+   "art": "assets/img/cia-mind-control-cover.jpg",
+   "by": "",
+   "tracks": [
     {
-     "title": "niggy nigg",
+     "title": "Niggy Nigg Niggr",
      "src": "assets/audio/niggy-nigg-preview.mp3",
+     "poster": "assets/img/cia-mind-control-cover.jpg",
      "gated": {
       "bucket": "mcc-gated-audio",
       "object": "niggy-nigg/niggy-nigg.mp3",
       "preview_seconds": 12,
-      "download_as": "niggy nigg.mp3"
+      "download_as": "Niggy Nigg Niggr.mp3"
      }
     }
    ]

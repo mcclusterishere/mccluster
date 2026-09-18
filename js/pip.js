@@ -318,7 +318,7 @@
     try {
       m.metadata = new window.MediaMetadata({
         title: st.title || "The record",
-        artist: "Matthew McCluster",
+        artist: st.artist || "Matthew McCluster",
         album: albumName(st.album),
         artwork: art,
       });

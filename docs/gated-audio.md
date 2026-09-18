@@ -22,13 +22,13 @@ URL. Nothing about the enforcement lives in JavaScript.
 
    ```json
    {
-     "title": "niggy nigg",
+     "title": "Niggy Nigg Niggr",
      "src": "assets/audio/niggy-nigg-preview.mp3",
      "gated": {
        "bucket": "mcc-gated-audio",
        "object": "niggy-nigg/niggy-nigg.mp3",
        "preview_seconds": 12,
-       "download_as": "niggy nigg.mp3"
+       "download_as": "Niggy Nigg Niggr.mp3"
      }
    }
    ```
@@ -84,10 +84,23 @@ all three.
    the DOM, passes a presence assertion, and paints across the viewport. The
    row slot is `.reclock`.
 
-## Known gap
+## Billing an album to another name
 
-The pocket player (`js/pip.js`) reads `data/albums.json` and plays `src`, so
-it plays the **preview** for everyone, signed in or not. That is safe — it
-never exposes a master — but a signed-in listener gets the short cut there
-while `album.html` gives them the full one. Wiring `MCC_GATED` into `pip.js`
-is the fix; it has not been done.
+`data/albums.json` takes an optional `artist` on an album. Without it a record
+bills to Matthew McCluster, which is what every other album wants. With it the
+album header, the now-playing sheet, the phone lock screen and the default
+credit line all follow that name instead. The copyright footer does not: that
+is a rights notice, not a credit, and the owner is still the owner.
+
+## Known gaps
+
+- The pocket player (`js/pip.js`) reads `data/albums.json` and plays `src`, so
+  it plays the **preview** for everyone, signed in or not. That is safe — it
+  never exposes a master — but a signed-in listener gets the short cut there
+  while `album.html` gives them the full one. It does now bank the durable
+  preview URL rather than an expiring signed one, so resume is not broken.
+- `data/catalogue.json` carries a real `QT6KV` ISRC per track. Nothing in this
+  repo exports it — the DDEX worker reads `eu_releases`/`eu_recordings` in the
+  database, not these files — so a display credit here reaches no distributor
+  today. If that ever changes, the `credit` field is rights metadata and needs
+  to say what the rights actually are.

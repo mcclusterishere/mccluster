@@ -613,7 +613,11 @@
       <div>
         <p class="alb__k" id="albTag" data-daypart="The album">The album</p>
         <h1 id="albName">I AM HERE</h1>
-        <p class="alb__by">by <b>Matthew McCluster</b> · <span id="albBy">Have no fear.</span></p>
+        <!-- The artist is per-album, not per-site. Most records here are
+             McCluster's own and say so; an album that carries an "artist"
+             in data/albums.json bills under that name instead. The separator
+             only appears when there is a tagline to separate. -->
+        <p class="alb__by">by <b id="albArtist">Matthew McCluster</b><span id="albBySep"> · </span><span id="albBy">Have no fear.</span></p>
         <button class="alb__play" id="playAll" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>Play</button>
         <!-- THE LABEL RAIL: install it, download it, syndicate it -->
         <div class="lrail" id="labelRail" aria-label="The label"></div>
@@ -664,7 +668,7 @@
     </div>
     <div class="now__meta">
       <div class="now__title" id="nowTitle">·</div>
-      <p class="now__by">Matthew McCluster</p>
+      <p class="now__by" id="nowBy">Matthew McCluster</p>
     </div>
     <div class="now__deck">
       <button class="now__seek" id="nowSeek" type="button" aria-label="Seek"><i><b id="nowSeekFill"></b></i></button>
@@ -752,6 +756,10 @@
     var INLINE = {}; /* the cut's lyrics + reel ride the row, not files */
     var deck = document.getElementById("deck");
     var rows = [];
+    /* HOUSE is whose records these are by default; ARTIST is who THIS
+       album is billed to. They differ only when data/albums.json says so. */
+    var HOUSE = "Matthew McCluster";
+    var ARTIST = HOUSE;
     function esc(x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; }
     /* esc() leaves quotes alone, which is fine inside an element and wrong
        inside an attribute. Anything that lands in a data- attribute goes
@@ -871,7 +879,7 @@
         (data.albums || []).forEach(function (a) { if (a.slug === ALBUM) alb = a; });
         if (!alb) alb = data.albums[0];
         ALBUM = alb.slug;
-        head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art };
+        head = { name: alb.name, tag: alb.tag || ("The album · " + alb.tracks.length + " tracks"), by: alb.by || "", art: alb.art, artist: alb.artist || "" };
         queue = alb.tracks.map(function (t) { return Object.assign({}, t, { albSlug: alb.slug, albName: "", art: alb.art }); });
       }
       document.getElementById("albArt").src = head.art;
@@ -879,6 +887,11 @@
       document.getElementById("albName").textContent = head.name;
       document.getElementById("albTag").textContent = head.tag;
       document.getElementById("albBy").textContent = head.by || "";
+      /* an album may be billed to someone other than the house */
+      ARTIST = head.artist || HOUSE;
+      document.getElementById("albArtist").textContent = ARTIST;
+      document.getElementById("nowBy").textContent = ARTIST;
+      document.getElementById("albBySep").hidden = !head.by;
       document.getElementById("nowFrom").textContent = "Playing from " + head.name;
       document.querySelector(".deckbar__art").src = head.art;
       document.getElementById("tracks").innerHTML = queue.map(trackRow).join("");
@@ -1201,13 +1214,19 @@
       if (cur < 0) { window.MCC_POCKET.clear(); return; }
       var row = rows[cur];
       if (!row) return;
+      /* A gated row's data-src is a SIGNED URL that expires within the hour.
+         Banking that means the pocket tries to resume a record from a dead
+         link on the next page. Bank the durable public preview instead: the
+         pocket picks the record back up, and album.html re-signs the master
+         when the listener comes back to it. */
       window.MCC_POCKET.save({
-        src: row.getAttribute("data-src") || "",
+        src: row.getAttribute("data-preview-src") || row.getAttribute("data-src") || "",
         video: row.getAttribute("data-video") || "",
         poster: row.getAttribute("data-poster") || "",
         lyrics: row.getAttribute("data-lyrics") || "",
         title: row.getAttribute("data-title") || "",
         album: row.getAttribute("data-albslug") || ALBUM,
+        artist: ARTIST,
         t: deck.currentTime || 0,
         playing: !deck.paused,
         at: Date.now(),
@@ -1233,7 +1252,7 @@
       if (!("mediaSession" in navigator) || cur < 0) return;
       navigator.mediaSession.metadata = new MediaMetadata({
         title: rows[cur].getAttribute("data-title"),
-        artist: "Matthew McCluster",
+        artist: ARTIST,
         album: document.getElementById("albName").textContent,
         artwork: [{ src: rows[cur].getAttribute("data-art") || document.getElementById("albArt").src, type: "image/jpeg" }],
       });
@@ -1410,7 +1429,7 @@
       now.dataset.on = "1";
       el("nowTitle").textContent = row.getAttribute("data-title");
       el("nowCred").textContent = CRED[(row.getAttribute("data-title") || "").toLowerCase()] ||
-        "Written & performed by Matthew McCluster · QT6KV";
+        "Written & performed by " + ARTIST + " · QT6KV";
       var reelSrc = row.getAttribute("data-reel") || "";
       loadReel(reelSrc);
       if (!reelSrc) {

@@ -108,3 +108,31 @@ test('the bucket is private and only signed-in listeners may read it', async () 
   assert.doesNotMatch(sql, /for (insert|update|delete)/,
     'no browser-side write policy belongs on a bucket of masters');
 });
+
+test('an album billed to another name says so everywhere it credits', async () => {
+  /* The artist was hardcoded in five places on album.html. An album that
+     carries an "artist" in data/albums.json is billed to that name in the
+     header, the now-playing sheet, the MediaSession metadata the phone lock
+     screen reads, and the default credit line. The copyright footer is a
+     rights notice, not a credit, and deliberately still names the owner. */
+  const { albums } = JSON.parse(await read('data/albums.json'));
+  const billed = albums.filter((a) => a.artist);
+  if (!billed.length) return;
+  const html = await read('album.html');
+  assert.match(html, /ARTIST = head\.artist \|\| HOUSE/, 'the album must set the billed artist');
+  for (const id of ['albArtist', 'nowBy']) {
+    assert.match(html, new RegExp(`getElementById\\("${id}"\\)\\.textContent = ARTIST`),
+      `#${id} must follow the billed artist`);
+  }
+  assert.match(html, /artist: ARTIST,/, 'MediaSession must follow the billed artist');
+  assert.doesNotMatch(html, /artist: "Matthew McCluster"/, 'no hardcoded artist left in the player');
+  assert.match(html, /© 2026 Matthew McCluster/, 'the rights notice stays with the owner');
+});
+
+test('the pocket player banks a durable url, never a signed one', async () => {
+  /* A signed URL dies within the hour. Banking it means the pocket tries to
+     resume the record from a dead link on the next page the listener opens. */
+  const html = await read('album.html');
+  assert.match(html, /src: row\.getAttribute\("data-preview-src"\) \|\| row\.getAttribute\("data-src"\)/,
+    'the pocket must prefer the durable public preview');
+});
