@@ -34,7 +34,7 @@
         <div id="redirectUri" class="redirect"></div>
         <div id="scopes"></div>
       </div>
-      <p>McCluster Core remains owner-gated. Approval gives this client an OAuth token for your identity; tool-level budget and review controls still apply.</p>
+      <p>Approval gives this client an OAuth token for your identity and only the permissions shown above. Resource-specific authorization is enforced by the requested service.</p>
       <div class="actions">
         <button id="deny" class="secondary">Deny</button>
         <button id="approve" class="primary">Approve</button>
@@ -48,7 +48,6 @@
 
   const SUPABASE_URL='https://zmnhbrjyhxzhkxmhkexs.supabase.co';
   const SUPABASE_KEY='sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4';
-  const CORE_STATUS='https://api.mccluster.org/v1/core';
   const supabase=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{flowType:'pkce',persistSession:true,autoRefreshToken:true}});
   const $=s=>document.querySelector(s);
   const authorizationId=new URLSearchParams(location.search).get('authorization_id');
@@ -69,18 +68,8 @@
     return data.user||null;
   }
 
-  async function requireHouseOwner(){
-    const {data:{session}}=await supabase.auth.getSession();
-    if(!session?.access_token)throw new Error('Sign in is required.');
-    const res=await fetch(CORE_STATUS,{headers:{authorization:`Bearer ${session.access_token}`}});
-    if(res.status===403)throw new Error('This McCluster account is not a house owner.');
-    if(res.status===401)throw new Error('Your session expired. Sign in again.');
-    if(!res.ok)throw new Error('McCluster Core owner verification is unavailable.');
-  }
-
   async function renderConsent(user){
     if(!authorizationId){msg('Missing OAuth authorization request.');return;}
-    await requireHouseOwner();
     const {data,error}=await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
     if(error){msg(error.message);return;}
     if(data?.redirect_url&&!data?.authorization_id){location.assign(data.redirect_url);return;}
@@ -97,7 +86,7 @@
     await importLegacySession();
     const user=await getUser();
     if(!user){$('#login').hidden=false;return;}
-    try{await renderConsent(user);}catch(error){msg(error.message||'Unable to verify McCluster owner access.');}
+    await renderConsent(user);
   }
 
   $('#signin').onclick=async()=>{
@@ -106,12 +95,11 @@
     $('#signin').disabled=false;
     if(error){msg(error.message);return;}
     const user=await getUser();
-    if(user){try{await renderConsent(user);}catch(e){msg(e.message||'Unable to verify McCluster owner access.');}}
+    if(user)await renderConsent(user);
   };
 
   $('#approve').onclick=async()=>{
     msg('');$('#approve').disabled=true;
-    try{await requireHouseOwner();}catch(error){msg(error.message);$('#approve').disabled=false;return;}
     const {data,error}=await supabase.auth.oauth.approveAuthorization(authorizationId);
     if(error){msg(error.message);$('#approve').disabled=false;return;}
     location.assign(data.redirect_url);
