@@ -81,7 +81,11 @@ html[data-theme="light"] {
   max-width: var(--music-measure);
   min-height:100vh;min-height: 100svh;
   margin: 0 auto;
-  padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3.5rem) 12rem;
+  /* NOT 12rem. This is a flex column and the comments block is a sibling
+     AFTER </main>, so bottom padding here is not bar clearance — it is a
+     hole between the footer and the comments. body.has-appbar clears the
+     bar; [data-comments] clears the deck. */
+  padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3.5rem) 3rem;
 }
 
 .music-room--album .top { order: 0; margin-bottom: clamp(2.5rem, 6vw, 5rem); }

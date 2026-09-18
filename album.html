@@ -77,8 +77,21 @@
       background-attachment: fixed; }
     /* THE GLASS: surfaces pour light: a gradient fill and a catchlight
        riding the top edge, so everything reads dimensional, not painted */
-    .hr { max-width: 44rem; margin: 0 auto; padding: clamp(4.2rem, 8vh, 5.5rem) clamp(1.1rem, 4vw, 2rem) 12rem;
+    /* 12rem of bottom padding used to live here to clear the fixed bottom
+       bar, from before js/tabbar.js applied body.has-appbar. Both apply now,
+       and the comments block sits AFTER </main> — so that 192px was not
+       clearance at all, it was a 232px hole punched between the footer and
+       the comments. Normal rhythm here; the real clearance is below, on the
+       last thing in the document, where it belongs. */
+    .hr { max-width: 44rem; margin: 0 auto; padding: clamp(4.2rem, 8vh, 5.5rem) clamp(1.1rem, 4vw, 2rem) 3rem;
       position: relative; z-index: 2; }
+
+    /* The comments are the last flow content, and two fixed things float
+       over them: the app bar, which body.has-appbar already pays 96px for,
+       and the deck. Measured with a record playing, the deck's top edge sits
+       189px off the bottom, so 96px more is what actually clears it — 5rem
+       left the last line 13px under the deck. */
+    [data-comments] { margin-bottom: 6rem; }
 
     /* THE ROOM: the record's film behind everything */
     .room { position: fixed; inset: 0; z-index: 0; opacity: 0; transition: opacity 1.2s ease; }

@@ -191,3 +191,25 @@ test('the unlock call to action asks for the song, not for paperwork', async () 
   assert.match(html, /prefers-reduced-motion: reduce\)\s*\{\s*\.tr \.reclock \.unlock \{ animation: none/,
     'and stops for anyone who asked the OS for less motion');
 });
+
+test('no bar clearance is parked mid-document', async () => {
+  /* The album page puts its comments block AFTER </main>. Bottom padding on
+     .hr therefore is not clearance for the fixed bottom bar — it is a hole
+     punched between the footer and the comments, and it was 12rem (232px of
+     nothing on screen). body.has-appbar clears the bar; [data-comments]
+     clears the deck. Neither job belongs to .hr. */
+  const html = await read('album.html');
+  assert.match(html, /<div data-comments=/, 'the comments block still follows main');
+  for (const f of ['css/music-director.css', 'css/music-director-base.css']) {
+    const css = await read(f);
+    const rule = /\.music-room--album \.hr \{[^}]*\}/s.exec(css);
+    assert.ok(rule, `${f}: no .hr rule`);
+    const pad = /padding:[^;]*?(\d+(?:\.\d+)?)rem;/.exec(rule[0]);
+    assert.ok(pad, `${f}: .hr has no padding shorthand`);
+    assert.ok(Number(pad[1]) <= 4,
+      `${f}: .hr bottom padding is ${pad[1]}rem — that lands between the footer ` +
+      `and the comments, not under the bar`);
+  }
+  assert.match(html, /\[data-comments\] \{ margin-bottom: 6rem; \}/,
+    'the last content must clear the deck, whose top sits 189px off the bottom');
+});
