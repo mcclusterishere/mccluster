@@ -680,6 +680,49 @@
     });
   }
 
+  /* ============================================================
+     THE BUTTON IS THE ONLY PART OF THIS FUNNEL THAT WAS NEVER RECORDED.
+
+     Flipping a mode, searching an address and picking one all reported
+     themselves already. The tap that actually starts a purchase did not,
+     so the ledger could say what was offered and the site could say who
+     looked, and nothing anywhere could say who decided. A funnel missing
+     its last step is not a funnel.
+
+     WHAT IT BANKS, AND WHY THE PRICE IS IN IT. The offer, the mode, and
+     the exact figure ON SCREEN at the moment of the tap. Everything in
+     this file exists to stop a card showing one number while the
+     checkout charges another; recording what was shown is what makes
+     that checkable after the fact instead of arguable. The number is
+     read from the same priceOf() the card painted from, never typed.
+
+     It rides MCC_TRACK, which now lands in the house's own table with
+     the address, the device and the account attached, so this is a real
+     record rather than a page counting to itself.
+     ============================================================ */
+  function mountBuy(panel, L, o, mode) {
+    var btn = panel.querySelector(".buy__go");
+    if (!btn || !window.MCC_TRACK) return;
+    btn.addEventListener("click", function () {
+      var pr = priceOf(L, o.id, mode) || {};
+      var c = ((o.checkout || {})[mode]) || {};
+      window.MCC_TRACK("offer_buy_click", {
+        offer: o.id,
+        mode: mode,
+        /* An unapproved price is a real state, not a missing value: the
+           card sent them to the questions instead of to a card form, and
+           that is the thing worth knowing about the tap. */
+        approved: pr.approved === true,
+        amount: pr.amount != null ? pr.amount : (pr.from != null ? pr.from : null),
+        cadence: pr.cadence || null,
+        offering: c.offering || null,
+        /* set by the address box when a name was chosen */
+        domain: btn.getAttribute("data-domain") || null,
+        to: (btn.getAttribute("href") || "").split("?")[0],
+      });
+    });
+  }
+
   function buyBody(L, o, mode) {
     var c = ((o.checkout || {})[mode]) || {};
     var pr = priceOf(L, o.id, mode);
@@ -822,6 +865,7 @@
       var modes0 = (o.billing_modes || o.modes || ["m"])
         .filter(function (m) { return (o.checkout || {})[m]; });
       mountDomain(panel, L, o, modes0[0]);
+      mountBuy(panel, L, o, modes0[0]);
 
       if (!tabs.length) return;
 
@@ -835,6 +879,7 @@
         panel.setAttribute("aria-labelledby", btn.id);
         panel.innerHTML = buyBody(L, o, btn.dataset.mode);
         mountDomain(panel, L, o, btn.dataset.mode);
+        mountBuy(panel, L, o, btn.dataset.mode);
         if (window.MCC_TRACK) window.MCC_TRACK("offer_mode_view", { offer: o.id, mode: btn.dataset.mode });
       }
       tabs.forEach(function (btn) {

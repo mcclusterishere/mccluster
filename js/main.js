@@ -1520,7 +1520,7 @@
       "environmental-injustice": "Environmental Injustice",
       "here": "Here",
     };
-    function bankToPocket() {
+    function bankToPocket(force) {
       if (!window.MCC_POCKET) return;
       var a = tracks[currentTrack];
       /* nothing playing is not a state worth carrying: banking it would
@@ -1533,7 +1533,7 @@
         t: a.currentTime || 0,
         playing: !a.paused,
         at: Date.now(),
-      });
+      }, force);
     }
     /* and it comes back with them. Arriving here from any other page, the
        banked position names a file and a second; if that file is one of the
@@ -1562,11 +1562,14 @@
       if (pr && pr.then) pr.then(function () { setSound(true); }).catch(function () {});
     })();
 
-    window.addEventListener("pagehide", bankToPocket);
+    /* Both paths force past the ten-second remote throttle: the write that
+       happens as somebody walks away carries the second they left on, and
+       throttling that one is how the position got lost. */
+    window.addEventListener("pagehide", function () { bankToPocket(true); });
     /* pagehide does not fire on every bfcache-less path on every browser,
        and a tab hidden mid-song is the same intent as leaving */
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "hidden") bankToPocket();
+      if (document.visibilityState === "hidden") bankToPocket(true);
     });
 
     ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
