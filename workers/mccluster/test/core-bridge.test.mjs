@@ -56,6 +56,10 @@ function brokerToolList() {
         { name: 'compute.task.get', title: 'Read compute task', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
         { name: 'research.web', title: 'Research web', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
         { name: 'objective.plan', title: 'Plan objective', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'none' } },
+        { name: 'ontology.schema', title: 'Ontology schema', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
+        { name: 'ontology.query', title: 'Ontology query', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
+        { name: 'ontology.neighbors', title: 'Ontology neighbors', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
+        { name: 'ontology.action.apply', title: 'Ontology action', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'owner-policy-gated' } },
         { name: 'model3d.generate', title: 'Generate 3D model', _meta: { 'mccluster/risk': 'spend', 'mccluster/approval': 'budget-gated', 'mccluster/providers': ['fal'] } },
         { name: 'code.build', title: 'Build', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'review-required' } },
         { name: 'game.build', title: 'Build game', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'review-required' } },
@@ -79,7 +83,7 @@ function withPlane({ role = 'owner', broker, brokerStatus = 200 } = {}, fn) {
   const original = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
     const href = String(url);
-    seen.push({ href, headers: init?.headers || {} });
+    seen.push({ href, headers: init?.headers || {}, body: init?.body });
     if (href.includes('/rest/v1/orgs?')) return jsonResponse([{ id: ORG_ID }]);
     if (href.includes('/rest/v1/org_members?')) return jsonResponse(role ? [{ org_id: ORG_ID }] : []);
     if (href.includes('/mcp')) return jsonResponse(broker ?? brokerToolList(), brokerStatus);
@@ -131,7 +135,7 @@ test('tools/list publishes only allowlisted capabilities', async () => {
     const { status, body } = await handleCoreMcp(rpcRequest({ jsonrpc: '2.0', id: 5, method: 'tools/list' }), env, OWNER);
     assert.equal(status, 200);
     const names = body.result.tools.map((tool) => tool.name);
-    assert.deepEqual(names.sort(), ['ai.chat', 'code.build', 'compute.task.get', 'game.build', 'model3d.generate', 'objective.plan', 'research.web', 'system.health']);
+    assert.deepEqual(names.sort(), ['ai.chat', 'code.build', 'compute.task.get', 'game.build', 'model3d.generate', 'objective.plan', 'ontology.action.apply', 'ontology.neighbors', 'ontology.query', 'ontology.schema', 'research.web', 'system.health']);
     assert.ok(!names.includes('mccluster.media.generate'), 'raw provider tool leaked');
   });
 });
@@ -289,5 +293,43 @@ test('status reports the bridge and signed-dispatch state for an owner', async (
     assert.equal(body.ok, true);
     assert.equal(body.signed_dispatch, true);
     assert.equal(body.core.tools, 30);
+  });
+});
+
+
+test('tools/call overwrites client actor metadata with authenticated owner identity before signing', async () => {
+  const called = { jsonrpc: '2.0', id: 16, result: { content: [{ type: 'text', text: '{"ok":true}' }] } };
+  await withPlane({ broker: called }, async (seen) => {
+    const { status } = await handleCoreMcp(
+      rpcRequest({
+        jsonrpc: '2.0',
+        id: 16,
+        method: 'tools/call',
+        params: {
+          name: 'ontology.action.apply',
+          arguments: {
+            org_id: ORG_ID,
+            action_key: 'object_tag',
+            target_object_id: ORG_ID,
+            parameters: { tags: ['owner'] }
+          },
+          _meta: {
+            'mccluster/actor': {
+              user_id: 'bbbbbbbb-0000-4000-8000-000000000002',
+              kind: 'system'
+            }
+          }
+        }
+      }),
+      env,
+      OWNER
+    );
+    assert.equal(status, 200);
+    const dispatch = seen.find((call) => call.href === 'https://core.example.org/mcp');
+    assert.ok(dispatch?.body, 'signed dispatch body missing');
+    const forwarded = JSON.parse(new TextDecoder().decode(dispatch.body));
+    assert.equal(forwarded.params._meta['mccluster/actor'].user_id, OWNER.id);
+    assert.equal(forwarded.params._meta['mccluster/actor'].kind, 'owner');
+    assert.equal(forwarded.params._meta['mccluster/actor'].source, 'cloudflare-owner-session');
   });
 });
