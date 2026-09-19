@@ -35,12 +35,19 @@ jobs:
         uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c
         with:
           gradle-version: '9.6.0'
+      - name: Locate Android SDK manager
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort -V | tail -1)"
+          test -n "$SDKMANAGER"
+          echo "SDKMANAGER=$SDKMANAGER" >> "$GITHUB_ENV"
       - name: Ensure Android 36 SDK
         shell: bash
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" 'platforms;android-36' 'build-tools;36.0.0'
       - name: Build debug APK
         working-directory: android/mccluster-sms-relay
         run: gradle :app:assembleDebug --no-daemon --stacktrace
