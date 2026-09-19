@@ -75,6 +75,11 @@ const GEO_HEADERS = [
   "cf-ipcountry", "cf-region", "cf-region-code", "cf-ipcity", "cf-postal-code",
   "cf-iplatitude", "cf-iplongitude", "cf-timezone", "cf-ipcontinent",
   "cf-asn", "cf-as-organization", "cf-ray", "cf-ipasnum",
+  "cf-colo", "cf-metro-code", "cf-is-eu-country",
+  "cf-http-protocol", "cf-tls-version", "cf-tls-cipher",
+  "cf-client-tcp-rtt", "cf-client-quic-rtt", "cf-edge-delivery-rate",
+  "cf-client-accept-encoding", "cf-request-priority",
+  "cf-bot-score", "cf-verified-bot", "cf-static-resource",
   "x-vercel-ip-country", "x-vercel-ip-country-region", "x-vercel-ip-city",
   "x-vercel-ip-latitude", "x-vercel-ip-longitude", "x-vercel-ip-timezone",
   "fly-region", "fly-client-ip", "x-country-code", "x-region", "x-deno-region",
@@ -226,6 +231,10 @@ Deno.serve(async (req) => {
     // A nameless event is not an event. Skipping it beats failing the
     // batch it arrived in, which would lose the events either side of it.
     if (!name) continue;
+    /* A privacy signal also blocks any consent-gated precise-location event
+       if a forged or stale browser client tries to send one anyway. */
+    if (quiet && name === "precise_location") continue;
+
     rows.push({
       name,
       path: str(ev.path, MAX_PATH) ?? "",
