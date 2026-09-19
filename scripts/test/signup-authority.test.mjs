@@ -20,7 +20,7 @@ import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
-const MIGRATION = 'supabase/migrations/20260919120000_fan_profiles.sql';
+const MIGRATION = 'supabase/migrations/20260919042036_fan_profiles.sql';
 
 test('the intake table carries no authority column at all', async () => {
   /* The cheapest guarantee available: a table with no role, no org and
