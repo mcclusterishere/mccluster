@@ -131,6 +131,9 @@ jobs:
             fi
           done
 
+      - name: Validate Supabase function auth manifest
+        run: node scripts/supabase-function-config-check.mjs
+
       - name: Security contract summary
         run: |
           echo 'Production security invariants verified:' >> "$GITHUB_STEP_SUMMARY"
