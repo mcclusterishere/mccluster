@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const migration = await readFile(new URL('../../supabase/migrations/20260919060000_operational_ontology_v1.sql', import.meta.url), 'utf8');
+const migration = await readFile(new URL('../../supabase/migrations/20260919053445_operational_ontology_v1.sql', import.meta.url), 'utf8');
 const ontology = await readFile(new URL('../src/tools/ontology.mjs', import.meta.url), 'utf8');
 
 test('ontology v1 has objects links actions runs and lineage', () => {
