@@ -52,6 +52,9 @@ const REMOTE_CAPABILITIES = new Set([
   'media.job.get',
   'repo.inspect',
   'objective.plan',
+  'ontology.schema',
+  'ontology.query',
+  'ontology.neighbors',
   // risk: spend, approval: budget-gated
   'image.generate',
   'video.generate',
@@ -61,7 +64,8 @@ const REMOTE_CAPABILITIES = new Set([
   // risk: write, approval: review-required
   'code.build',
   'game.build',
-  'deploy.preview'
+  'deploy.preview',
+  'ontology.action.apply'
 ]);
 
 function serviceHeaders(env) {
@@ -318,7 +322,18 @@ export async function handleCoreMcp(request, env, user) {
   }
 
   try {
-    const forwarded = { jsonrpc: '2.0', id, method, params: rpc?.params ?? {} };
+    const forwardedParams = { ...(rpc?.params ?? {}) };
+    if (method === 'tools/call') {
+      forwardedParams._meta = {
+        ...(forwardedParams._meta || {}),
+        'mccluster/actor': {
+          user_id: user.id,
+          kind: 'owner',
+          source: 'cloudflare-owner-session'
+        }
+      };
+    }
+    const forwarded = { jsonrpc: '2.0', id, method, params: forwardedParams };
     const body = await callBroker(env, { path: '/mcp', payload: forwarded });
     return { status: 200, body: method === 'tools/list' ? restrictToolList(body) : body };
   } catch (error) {
