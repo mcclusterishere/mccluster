@@ -143,8 +143,8 @@ create table if not exists public.ops_ontology_action_runs (
   foreign key (org_id, action_key)
     references public.ops_ontology_action_types(org_id, action_key)
     on delete restrict,
-  foreign key (target_object_id, org_id)
-    references public.ops_ontology_objects(id, org_id)
+  foreign key (target_object_id)
+    references public.ops_ontology_objects(id)
     on delete set null
 );
 create unique index if not exists ops_ontology_action_runs_idempotency_idx
@@ -465,7 +465,9 @@ declare
   v_org uuid;
 begin
   select id into v_org from public.orgs where slug='mccluster' limit 1;
-  if v_org is null then return coalesce(new,old); end if;
+  if v_org is null then
+    if tg_op='DELETE' then return old; else return new; end if;
+  end if;
 
   if tg_op='DELETE' then
     perform private.ops_ontology_delete_source_object(
@@ -704,8 +706,8 @@ begin
       ),
       version=version+1,
       updated_at=now()
-    where id=v_object.id
-    returning to_jsonb(public.ops_ontology_objects.*) into v_after;
+    where id=v_object.id;
+    select to_jsonb(o) into v_after from public.ops_ontology_objects o where o.id=v_object.id;
 
   elsif v_effect='tag' then
     v_tags := coalesce(p_parameters->'tags','[]'::jsonb);
@@ -717,8 +719,8 @@ begin
     end if;
 
     if exists (
-      select 1 from jsonb_array_elements(v_tags) e
-      where jsonb_typeof(e)<>'string' or char_length(trim(e #>> '{}'))>120
+      select 1 from jsonb_array_elements(v_tags) as e(value)
+      where jsonb_typeof(e.value)<>'string' or char_length(trim(e.value #>> '{}'))>120
     ) then
       update public.ops_ontology_action_runs
         set status='failed',error='each tag must be a string of at most 120 characters',finished_at=now()
@@ -730,8 +732,8 @@ begin
       set properties=jsonb_set(properties,'{_tags}',v_tags,true),
           version=version+1,
           updated_at=now()
-    where id=v_object.id
-    returning to_jsonb(public.ops_ontology_objects.*) into v_after;
+    where id=v_object.id;
+    select to_jsonb(o) into v_after from public.ops_ontology_objects o where o.id=v_object.id;
 
   elsif v_effect='link' then
     begin
@@ -811,6 +813,15 @@ begin
   return jsonb_build_object('ok',true,'duplicate',false,'action_run',to_jsonb(v_run),'after',v_after);
 end
 $$;
+
+
+revoke all on function private.ops_ontology_ensure_base_types(uuid) from public, anon, authenticated;
+revoke all on function private.ops_ontology_upsert_source_object(uuid,text,text,text,jsonb,jsonb,timestamptz) from public, anon, authenticated;
+revoke all on function private.ops_ontology_delete_source_object(uuid,text,text,jsonb) from public, anon, authenticated;
+revoke all on function private.ops_ontology_sync_org() from public, anon, authenticated;
+revoke all on function private.ops_ontology_sync_objective() from public, anon, authenticated;
+revoke all on function private.ops_ontology_sync_job() from public, anon, authenticated;
+revoke all on function private.ops_ontology_sync_app() from public, anon, authenticated;
 
 revoke all on function public.ops_ontology_schema_service(uuid) from public, anon, authenticated;
 revoke all on function public.ops_ontology_query_service(uuid,text,text,integer) from public, anon, authenticated;
