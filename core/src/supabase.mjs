@@ -6,6 +6,9 @@ const SECRET_KEY = String(process.env.SUPABASE_SECRET_KEY || '');
 const LEGACY_SERVICE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '');
 const API_KEY = SECRET_KEY || LEGACY_SERVICE_KEY;
 export const workerId = String(process.env.MCCLUSTER_CORE_ID || `core:${os.hostname()}:${process.pid}`);
+const STALE_JOB_MS = Math.max(60_000, Number(process.env.MCCLUSTER_STALE_JOB_MS || 10 * 60_000));
+const STALE_SWEEP_MS = Math.max(15_000, Number(process.env.MCCLUSTER_STALE_SWEEP_MS || 60_000));
+let lastStaleSweepAt = 0;
 
 function configured() {
   if (!SB || !API_KEY) {
@@ -54,9 +57,61 @@ export async function rest(path, init = {}) {
   }));
 }
 
+export async function recoverStaleJobs({ now = new Date() } = {}) {
+  const nowIso = now.toISOString();
+  const cutoff = new Date(now.getTime() - STALE_JOB_MS).toISOString();
+
+  const params = new URLSearchParams({
+    status: 'eq.running',
+    locked_at: `lt.${cutoff}`,
+    select: 'id,attempts,max_attempts,locked_at,locked_by',
+    order: 'locked_at.asc',
+    limit: '100',
+  });
+
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  let recovered = 0;
+
+  for (const job of rows) {
+    const attempts = Number(job.attempts || 0);
+    const maxAttempts = Math.max(1, Number(job.max_attempts || 3));
+    const exhausted = attempts >= maxAttempts;
+    const patch = {
+      status: exhausted ? 'failed' : 'queued',
+      locked_at: null,
+      locked_by: null,
+      last_error: exhausted
+        ? 'Recovered stale worker lock after final attempt; marked failed'
+        : 'Recovered stale worker lock after heartbeat expired',
+      updated_at: nowIso,
+    };
+    if (!exhausted) patch.run_after = nowIso;
+
+    const match = new URLSearchParams({
+      id: `eq.${job.id}`,
+      status: 'eq.running',
+      locked_at: `eq.${job.locked_at}`,
+    });
+    const { body: updated = [] } = await rest(`ops_agent_jobs?${match.toString()}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify(patch),
+    });
+    if (updated.length) recovered += 1;
+  }
+
+  return recovered;
+}
+
 export async function claimNext(supportedTypes) {
   const supported = new Set(supportedTypes);
   if (!supported.size) return null;
+
+  const sweepNow = Date.now();
+  if (sweepNow - lastStaleSweepAt >= STALE_SWEEP_MS) {
+    lastStaleSweepAt = sweepNow;
+    await recoverStaleJobs();
+  }
 
   const now = new Date().toISOString();
   const params = new URLSearchParams({
@@ -244,10 +299,38 @@ export async function hasPendingJob({ orgId, jobType, targetId } = {}) {
 }
 
 export async function addSignal({ orgId, kind, body, severity = 'info', source = 'mccluster-core', metadata = {} }) {
+  const severityMap = {
+    debug: 0,
+    info: 1,
+    notice: 2,
+    warn: 3,
+    warning: 3,
+    error: 4,
+    critical: 5,
+  };
+
+  const numericSeverity = Number.isFinite(Number(severity))
+    ? Number(severity)
+    : (severityMap[String(severity).toLowerCase()] ?? 1);
+
+  const payload = {
+    body,
+    ...metadata,
+  };
+
   const { body: rows = [] } = await rest('ops_signals', {
     method: 'POST',
     headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({ org_id: orgId, kind, body, severity, source, metadata }),
+    body: JSON.stringify({
+      org_id: orgId,
+      signal_type: kind,
+      source,
+      severity: numericSeverity,
+      confidence: 1,
+      payload,
+      observed_at: new Date().toISOString(),
+    }),
   });
+
   return rows[0] || null;
 }

@@ -148,12 +148,21 @@ export function aggregateSystemHealth(snapshot, { nowMs = Date.now() } = {}) {
 
   if (supabase.reachable !== true) {
     degradation(degradationList, 'supabase', 'unreachable', 'critical', 'Canonical Supabase could not be queried.', supabase.error ? { error: supabase.error } : null);
-  } else if (supabase.contract?.parity !== true) {
-    degradation(degradationList, 'supabase', 'migration_contract_drift', 'warning', 'Live Supabase system contract does not match the repository contract.', {
-      expected_migration: SYSTEM_CONTRACT_MIGRATION,
-      live_migration: supabase.contract?.migration_version || null,
-      error: supabase.contract?.error || null,
-    });
+  } else {
+    if (supabase.contract?.parity !== true) {
+      degradation(degradationList, 'supabase', 'migration_contract_drift', 'warning', 'Live Supabase system contract does not match the repository contract.', {
+        expected_migration: SYSTEM_CONTRACT_MIGRATION,
+        live_migration: supabase.contract?.migration_version || null,
+        error: supabase.contract?.error || null,
+      });
+    }
+    if (supabase.migration_attestation?.parity !== true) {
+      degradation(degradationList, 'supabase', 'supabase_migration_ledger_drift', 'critical', 'Live Supabase migration ledger does not match the GitHub drift contract.', {
+        expected: supabase.migration_attestation?.expected || null,
+        live: supabase.migration_attestation?.live || null,
+        error: supabase.migration_attestation?.error || null,
+      });
+    }
   }
 
   if (finite(jobs.counts?.failed) > 0) {

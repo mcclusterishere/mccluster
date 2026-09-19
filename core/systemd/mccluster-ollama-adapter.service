@@ -1,0 +1,26 @@
+[Unit]
+Description=McCluster local Ollama compute adapter
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mccluster-node
+Group=mccluster-node
+WorkingDirectory=/opt/mccluster/core
+Environment=MCCLUSTER_OLLAMA_URL=http://127.0.0.1:11434
+Environment=MCCLUSTER_OLLAMA_MODEL=qwen3:8b
+Environment=MCCLUSTER_OLLAMA_ADAPTER_PORT=4790
+ExecStart=/usr/bin/node /opt/mccluster/core/src/compute/ollama-adapter.mjs
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

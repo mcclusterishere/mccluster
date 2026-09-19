@@ -15,6 +15,7 @@ import {
 const execFileAsync = promisify(execFile);
 const REPOSITORY = process.env.MCCLUSTER_CANONICAL_REPOSITORY || 'mcclusterishere/mccluster';
 const EDGE_URL = String(process.env.MCCLUSTER_EDGE_URL || 'https://api.mccluster.org').replace(/\/$/, '');
+const DRIFT_CONTRACT_URL = new URL('../../drift-contract.json', import.meta.url);
 
 async function run(command, args = [], timeout = 5000) {
   try {
@@ -90,7 +91,41 @@ async function supabaseHealth(orgId) {
   try {
     await rest('ops_agent_jobs?select=id&limit=1');
   } catch (error) {
-    return { reachable: false, project_ref: supabaseProjectRef(), error: errorText(error), contract: { parity: false, error: 'canonical database unreachable' } };
+    return {
+      reachable: false,
+      project_ref: supabaseProjectRef(),
+      error: errorText(error),
+      contract: { parity: false, error: 'canonical database unreachable' },
+      migration_attestation: { parity: false, error: 'canonical database unreachable' },
+    };
+  }
+
+  let migrationAttestation;
+  try {
+    const expectedDocument = parseJson(await readFile(DRIFT_CONTRACT_URL, 'utf8'));
+    const expected = expectedDocument?.supabase || null;
+    const { body } = await rest('rpc/system_migration_attestation', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    const live = Array.isArray(body) ? body[0] : body;
+    const projectRef = supabaseProjectRef();
+    migrationAttestation = {
+      expected,
+      live,
+      parity: Boolean(
+        expected &&
+        live &&
+        projectRef === expected.project_ref &&
+        Number(live.migration_count) === Number(expected.migration_count) &&
+        String(live.latest_version || '') === String(expected.latest_version || '') &&
+        String(live.latest_name || '') === String(expected.latest_name || '') &&
+        String(live.ledger_sha256 || '') === String(expected.ledger_sha256 || '')
+      ),
+      error: null,
+    };
+  } catch (error) {
+    migrationAttestation = { expected: null, live: null, parity: false, error: errorText(error) };
   }
 
   let contract;
@@ -108,7 +143,7 @@ async function supabaseHealth(orgId) {
     contract = { schema_version: null, migration_version: null, updated_at: null, parity: false, error: errorText(error) };
   }
 
-  return { reachable: true, project_ref: supabaseProjectRef(), org_id: orgId || null, contract, error: null };
+  return { reachable: true, project_ref: supabaseProjectRef(), org_id: orgId || null, contract, migration_attestation: migrationAttestation, error: null };
 }
 
 async function jobHealth(orgId) {

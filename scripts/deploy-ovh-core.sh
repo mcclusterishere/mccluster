@@ -70,8 +70,13 @@ rollback() {
     elif [[ -f "${BACKUP_DIR}/new-preview-rule" ]]; then
       rm -f /etc/polkit-1/rules.d/50-mccluster-preview-build.rules
     fi
+    if [[ -f "${BACKUP_DIR}/node-capabilities.json" ]]; then
+      install -o root -g mccluster-node -m 0640 "${BACKUP_DIR}/node-capabilities.json" /etc/mccluster-node/capabilities.json
+    elif [[ -f "${BACKUP_DIR}/new-node-capabilities" ]]; then
+      rm -f /etc/mccluster-node/capabilities.json
+    fi
     systemctl daemon-reload || true
-    for unit in mccluster-core-runner.service mccluster-core-tool-broker.service mccluster-preview-gateway.service mccluster-compute-gateway.service mccluster-compute-node.service; do
+    for unit in mccluster-core-runner.service mccluster-core-tool-broker.service mccluster-preview-gateway.service mccluster-compute-gateway.service mccluster-ollama-adapter.service mccluster-compute-node.service; do
       systemctl try-restart "${unit}" || true
     done
   fi
@@ -128,6 +133,22 @@ for unit in "${SOURCE_DIR}"/core/systemd/*.service "${SOURCE_DIR}"/core/systemd/
   install -m 0644 "${unit}" "${SYSTEMD_DIR}/$(basename "${unit}")"
 done
 
+# Canonicalize non-secret compute-node capabilities from Git when this host
+# declares a known node name. Node identity and enrollment secrets remain local.
+if [[ -r /etc/mccluster-node/node.env ]]; then
+  NODE_NAME="$(sed -n 's/^MCCLUSTER_NODE_NAME=//p' /etc/mccluster-node/node.env | tail -n 1)"
+  NODE_MANIFEST_SOURCE="${SOURCE_DIR}/core/node-manifests/${NODE_NAME}.json"
+  if [[ -n "${NODE_NAME}" && -f "${NODE_MANIFEST_SOURCE}" ]]; then
+    install -d -o root -g mccluster-node -m 0750 /etc/mccluster-node
+    if [[ -f /etc/mccluster-node/capabilities.json ]]; then
+      cp -p /etc/mccluster-node/capabilities.json "${BACKUP_DIR}/node-capabilities.json"
+    else
+      touch "${BACKUP_DIR}/new-node-capabilities"
+    fi
+    install -o root -g mccluster-node -m 0640 "${NODE_MANIFEST_SOURCE}" /etc/mccluster-node/capabilities.json
+  fi
+fi
+
 systemctl daemon-reload
 
 # Keep timers enabled; restart only services that already exist on this host.
@@ -137,7 +158,7 @@ for timer in mccluster-core-digest.timer mccluster-core-portfolio-plan.timer mcc
   fi
 done
 
-for unit in mccluster-core-tool-broker.service mccluster-compute-gateway.service mccluster-compute-node.service mccluster-core-runner.service; do
+for unit in mccluster-core-tool-broker.service mccluster-compute-gateway.service mccluster-ollama-adapter.service mccluster-compute-node.service mccluster-core-runner.service; do
   if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q "${unit}"; then
     systemctl restart "${unit}"
   fi
