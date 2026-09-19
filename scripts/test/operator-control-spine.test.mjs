@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../../js/control-room-v2.js', import.meta.url), 'utf8');
 const mcp = await readFile(new URL('../../workers/mccluster-mcp/src/mcp.js', import.meta.url), 'utf8');
 const catalog = JSON.parse(await readFile(new URL('../../core/capabilities/catalog.json', import.meta.url), 'utf8'));
-const chatMigration = await readFile(new URL('../../supabase/migrations/20260919043000_operator_local_ai_chat.sql', import.meta.url), 'utf8');
+const chatMigration = await readFile(new URL('../../supabase/migrations/20260919043433_operator_local_ai_chat.sql', import.meta.url), 'utf8');
 
 test('Operator OS commands the signed Core MCP surface, not the legacy task route', () => {
   assert.match(source, /request\("\/v1\/core\/mcp"/);
