@@ -14,6 +14,7 @@ import { handleMetaWebhook } from './social/webhook.js';
 import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
+import { handleAnalyticsRequest } from './analytics/router.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -52,6 +53,27 @@ export default {
     if (path === '/.well-known/oauth-protected-resource' && request.method === 'GET') {
       return coreOAuthMetadataResponse();
     }
+
+    if (path === '/a.js' && request.method === 'GET') {
+      const site = (url.searchParams.get('site') || '').trim();
+      const consent = (url.searchParams.get('consent') || 'required').trim();
+      if (!/^mca_[a-f0-9]{32}$/i.test(site)) {
+        return new Response('/* invalid McCluster Analytics site key */', {
+          status: 400,
+          headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-store' }
+        });
+      }
+      const js = `(function(){var s=document.createElement("script");s.async=true;s.src="https://mccluster.org/js/mc-analytics.js";s.dataset.site=${JSON.stringify(site)};s.dataset.consent=${JSON.stringify(consent)};(document.head||document.documentElement).appendChild(s);}());`;
+      return new Response(js, {
+        headers: {
+          'content-type': 'application/javascript; charset=utf-8',
+          'cache-control': 'public, max-age=300, stale-while-revalidate=86400',
+          'access-control-allow-origin': '*',
+          'x-content-type-options': 'nosniff'
+        }
+      });
+    }
+
 
     /* ============================================================
        TELEMETRY INTAKE — the house's own eyes, on the house's own domain.
@@ -146,6 +168,11 @@ export default {
          The collector reads both names. */
       put('sec-gpc', request.headers.get('sec-gpc'));
       put('dnt', request.headers.get('dnt'));
+      /* Site-bound analytics needs the embedding page origin to prove that a
+         public pixel key is being used by a domain the customer verified. */
+      put('origin', request.headers.get('origin'));
+      put('referer', request.headers.get('referer'));
+      put('sec-fetch-site', request.headers.get('sec-fetch-site'));
 
       /* A visitor's own token, when they have one, so the collector can
          attribute the event. It is verified there, never here. */
@@ -166,6 +193,16 @@ export default {
         return new Response(JSON.stringify({ ok: false, reason: 'collector unreachable' }), {
           status: 502, headers: { ...cors, 'content-type': 'application/json' }
         });
+      }
+    }
+
+    if (path === '/v1/analytics' || path.startsWith('/v1/analytics/')) {
+      try {
+        const user = await authUser(request, env);
+        const analyticsResponse = await handleAnalyticsRequest(request, env, user);
+        if (analyticsResponse) return analyticsResponse;
+      } catch (error) {
+        return fail(request, env, error.message || 'Analytics request failed', error.status || 500, error.detail);
       }
     }
 
