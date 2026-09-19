@@ -56,7 +56,7 @@ jobs:
         with:
           version: 2.117.0
       - name: Start isolated Supabase stack
-        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+        run: bash scripts/supabase-local-reset-with-replay.sh start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Rebuild database including compute fabric
         run: bash scripts/supabase-local-reset-with-replay.sh
       - name: Stop isolated stack
