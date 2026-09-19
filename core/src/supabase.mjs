@@ -8,6 +8,7 @@ const API_KEY = SECRET_KEY || LEGACY_SERVICE_KEY;
 export const workerId = String(process.env.MCCLUSTER_CORE_ID || `core:${os.hostname()}:${process.pid}`);
 const STALE_JOB_MS = Math.max(60_000, Number(process.env.MCCLUSTER_STALE_JOB_MS || 10 * 60_000));
 const STALE_SWEEP_MS = Math.max(15_000, Number(process.env.MCCLUSTER_STALE_SWEEP_MS || 60_000));
+const UNSUPPORTED_JOB_GRACE_MS = Math.max(60_000, Number(process.env.MCCLUSTER_UNSUPPORTED_JOB_GRACE_MS || 10 * 60_000));
 let lastStaleSweepAt = 0;
 
 function configured() {
@@ -103,6 +104,41 @@ export async function recoverStaleJobs({ now = new Date() } = {}) {
   return recovered;
 }
 
+export async function quarantineUnsupportedJobs(supportedTypes, { now = new Date() } = {}) {
+  const supported = new Set(supportedTypes || []);
+  const cutoff = new Date(now.getTime() - UNSUPPORTED_JOB_GRACE_MS).toISOString();
+  const nowIso = now.toISOString();
+  const params = new URLSearchParams({
+    status: 'eq.queued',
+    created_at: `lt.${cutoff}`,
+    select: 'id,job_type,created_at',
+    order: 'created_at.asc',
+    limit: '200',
+  });
+
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  let quarantined = 0;
+
+  for (const job of rows) {
+    if (supported.has(job.job_type)) continue;
+    const match = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
+    const { body: updated = [] } = await rest(`ops_agent_jobs?${match.toString()}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        status: 'failed',
+        locked_at: null,
+        locked_by: null,
+        last_error: `Unsupported job type quarantined by Core: ${job.job_type}`,
+        updated_at: nowIso,
+      }),
+    });
+    if (updated.length) quarantined += 1;
+  }
+
+  return quarantined;
+}
+
 export async function claimNext(supportedTypes) {
   const supported = new Set(supportedTypes);
   if (!supported.size) return null;
@@ -110,7 +146,9 @@ export async function claimNext(supportedTypes) {
   const sweepNow = Date.now();
   if (sweepNow - lastStaleSweepAt >= STALE_SWEEP_MS) {
     lastStaleSweepAt = sweepNow;
-    await recoverStaleJobs();
+    const sweepDate = new Date(sweepNow);
+    await recoverStaleJobs({ now: sweepDate });
+    await quarantineUnsupportedJobs([...supported], { now: sweepDate });
   }
 
   const now = new Date().toISOString();
