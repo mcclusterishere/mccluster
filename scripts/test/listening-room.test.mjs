@@ -230,3 +230,81 @@ test('crawlers do not get a vote in what the shelf shows first', async () => {
   assert.match(sql, /and e\.is_bot is not true/,
     'a crawler pressing play is not an audience');
 });
+
+/* ---------------------------------------------------------------
+   6. THE ART DIRECTION IS THE HOUSE'S, NOT A SECOND ONE
+   --------------------------------------------------------------- */
+
+test('the listening room is built from the album room\'s vocabulary', async () => {
+  /* The first build of this page invented its own flat list styling and
+     read as a spreadsheet about records rather than a place to play them.
+     The card, chip and row classes are album.html's, and they live in a
+     shared stylesheet so the two rooms cannot drift into two products. */
+  const html = await read('listen.html');
+  assert.match(html, /href="css\/music-room\.css/,
+    'the shared vocabulary must be loaded, not re-invented');
+  assert.match(html, /class="music-room music-room--listen"|music-room music-room--listen/,
+    'the room must declare itself a music room so the per-room overrides apply');
+  for (const cls of ['greet', 'chips', 'feat', 'lib__k', 'tr']) {
+    assert.match(html, new RegExp(`class="[^"]*\\b${cls}\\b`),
+      `${cls} is the house's class for this element and must be the one used`);
+  }
+});
+
+test('the shared vocabulary states the debt it owes album.html', async () => {
+  /* These rules are duplicated: album.html still carries its own inline
+     copy. That is a deliberate trade — cutting open a four-hundred-line
+     style block with its own cascade was a bigger risk than this page was
+     worth — but an undocumented duplicate is how two rooms drift apart. */
+  const css = await read('css/music-room.css');
+  assert.match(css, /album\.html/,
+    'the file must name where the rules came from');
+  assert.match(css, /BOTH places|both places/,
+    'and warn that a change has to be made twice until the debt is paid');
+});
+
+test('the deck shows before it asks anyone to read', async () => {
+  /* A discovery room opens on rails of art, not an index: somebody who has
+     not decided what to play cannot be helped by a list. The index stays,
+     underneath, for the people who already know. */
+  const js = await read('js/listen.js');
+  assert.match(js, /function card\(t\)/, 'tracks must be able to render as cards');
+  assert.match(js, /function albumCard\(a\)/, 'so must albums');
+  assert.match(js, /class="feat__bg"/, 'the art is the card, not a thumbnail on it');
+  const html = await read('listen.html');
+  assert.ok(html.indexOf('id="top"') < html.indexOf('id="all"'),
+    'the rails must come before the index');
+});
+
+test('a search puts the browse aids away', async () => {
+  const js = await read('js/listen.js');
+  assert.match(js, /el\("topWrap"\)\.hidden = searching \|\| chip !== "all";/,
+    'the start-here rail is for people who have not decided yet');
+  assert.match(js, /el\("shelfWrap"\)\.hidden = searching/,
+    'so is the shelf');
+});
+
+test('the flat list numbers itself, not each album', async () => {
+  /* Eighteen tracks across eight records numbered by their place on their
+     own album restarts at 1 seven times, which reads as a bug. */
+  const js = await read('js/listen.js');
+  assert.match(js, /function row\(t, i\)/, 'the row must know its place in the list');
+  assert.match(js, /'<span class="n">' \+ \(i \+ 1\) \+ "<\/span>"/,
+    'and print that, not the album position');
+  assert.doesNotMatch(code(js), /class="n">' \+ t\.no/,
+    'the per-album number belongs in the album room');
+});
+
+test('a heart tapped here is the same act as one tapped in the album room', async () => {
+  /* Same storage key, same row shape, same event — otherwise the discovery
+     room would collect saves the player could not see and the ranking
+     would not count. */
+  const js = await read('js/listen.js');
+  const album = await read('album.html');
+  assert.match(js, /var ROT_KEY = "mcc_rotation";/, 'the same store album.html writes');
+  assert.match(album, /ROT_KEY = "mcc_rotation"/, 'which is still what the album room uses');
+  assert.match(js, /kept\.push\(\{ album: alb, title: title \}\)/,
+    'the same row shape, or the album room cannot read it back');
+  assert.match(js, /MCC_TRACK\(added \? "rotation_add" : "rotation_drop"/,
+    'and the same event, which is what the ranking counts');
+});

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Listen: every record, one room · Matthew McCluster</title>
-  <meta name="description" content="The whole McCluster catalogue in one place: every album and every track, ordered by what listeners actually play, with a search that indexes the lot.">
+  <meta name="description" content="The whole McCluster catalogue in one room: every album and every track, ordered by what listeners actually play, with a search that indexes the lot.">
   <link rel="canonical" href="https://matthew.mccluster.org/listen.html">
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
   <link rel="manifest" href="manifest.json">
@@ -20,74 +20,54 @@
   <script src="js/theme.js?v=__STAMP__"></script>
   <style>
     html, body { background: var(--ink); }
-    .ls { max-width: 42rem; margin: 0 auto; padding: clamp(1.2rem, 4vh, 2rem) clamp(1.1rem, 4vw, 2rem) 10rem; }
+    .ls { max-width: 42rem; margin: 0 auto;
+      padding: clamp(1rem, 3vh, 1.6rem) clamp(1.1rem, 4vw, 2rem) 10rem; }
+
     .ls__top { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
-    .ls__ava { width: 2rem; height: 2rem; border-radius: 50%; display: block; }
+    .ls__ava { width: 2.1rem; height: 2.1rem; border-radius: 50%; display: block; }
     .ls__acts { display: flex; gap: 0.5rem; }
-    .ls__circle { width: 2.1rem; height: 2.1rem; border-radius: 50%; display: grid; place-items: center;
-      background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px var(--edge); border: 0;
+    .ls__circle { width: 2.2rem; height: 2.2rem; border-radius: 50%; display: grid; place-items: center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.045));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13); border: 0;
       color: var(--cream); text-decoration: none; cursor: pointer; }
     .ls__circle svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 2;
       stroke-linecap: round; stroke-linejoin: round; }
-    .ls h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.88;
-      font-size: clamp(2.4rem, 12vw, 4rem); margin: 1.1rem 0 0.35rem; }
-    .ls__sub { color: var(--cream-dim); font-size: 0.93rem; line-height: 1.6; }
 
-    /* THE FIELD. The old magnifying glass was a link to the registry; this is
-       the search it always looked like. */
-    .ls__find { position: relative; margin: 1.3rem 0 0.4rem; }
-    .ls__find svg { position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%);
-      width: 1.05rem; height: 1.05rem; fill: none; stroke: var(--cream-dim); stroke-width: 2;
+    /* THE FIELD. The old magnifying glass was a link to the registry; this
+       is the search it always looked like, sized like something you tap. */
+    .ls__find { position: relative; margin: 1.5rem 0 0; }
+    .ls__find > svg { position: absolute; left: 1.05rem; top: 50%; transform: translateY(-50%);
+      width: 1.1rem; height: 1.1rem; fill: none; stroke: var(--cream-dim); stroke-width: 2;
       stroke-linecap: round; pointer-events: none; }
     #q { width: 100%; -webkit-appearance: none; appearance: none; border: 0; border-radius: 100px;
-      font-family: var(--body); font-weight: 600; font-size: 1rem; color: var(--cream);
-      padding: 0.9rem 2.8rem 0.9rem 2.7rem; background: rgba(255,255,255,0.06);
-      box-shadow: inset 0 0 0 1px var(--edge); }
-    #q::placeholder { color: var(--cream-dim); font-weight: 500; }
-    #q:focus { outline: none; box-shadow: inset 0 0 0 1px var(--ruby-hot); }
-    #qClear { position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%);
-      width: 1.9rem; height: 1.9rem; border-radius: 50%; border: 0; cursor: pointer;
-      background: rgba(255,255,255,0.1); color: var(--cream); font-size: 1rem; line-height: 1; }
-    .ls__count { font-size: 0.78rem; color: var(--cream-dim); letter-spacing: 0.04em; margin: 0.55rem 0.2rem 0; }
+      font-family: var(--ui); font-weight: 700; font-size: 1rem; color: var(--cream);
+      padding: 1rem 3rem 1rem 2.9rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.11), rgba(255,255,255,0.045));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.13); }
+    #q::placeholder { color: var(--cream-dim); font-weight: 600; }
+    #q::-webkit-search-cancel-button { display: none; }
+    #q:focus { outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 2px var(--ruby-hot); }
+    #qClear { position: absolute; right: 0.55rem; top: 50%; transform: translateY(-50%);
+      width: 2rem; height: 2rem; border-radius: 50%; border: 0; cursor: pointer;
+      background: rgba(255,255,255,0.12); color: var(--cream); font-size: 1.05rem; line-height: 1; }
+    .ls__count { font-family: var(--ui); font-weight: 700; font-size: 0.78rem; color: var(--cream-dim);
+      margin: 0.7rem 0.3rem 0; }
 
-    .ls__k { font-size: 0.68rem; letter-spacing: 0.26em; text-transform: uppercase;
-      color: var(--ruby-text); font-weight: 800; margin: 2.1rem 0 0.7rem; }
-
-    /* the shelf: tap an album, it plays */
-    .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.9rem; }
-    .shelf a { display: block; text-decoration: none; color: var(--cream); }
-    .shelf .cov { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 14px; background: var(--ink-2);
-      box-shadow: 0 14px 40px -16px rgba(0,0,0,0.9), 0 0 0 1px rgba(229,56,59,0.25);
-      transition: transform 0.15s ease; }
-    .shelf a:hover .cov, .shelf a:active .cov { transform: translateY(-3px); }
-    .shelf b { display: block; font-family: var(--display); font-weight: 400; font-size: 0.98rem;
-      margin-top: 0.5rem; line-height: 1.15; }
-    .shelf small { color: var(--cream-dim); font-size: 0.72rem; }
-
-    /* the rows */
-    .tks { list-style: none; padding: 0; margin: 0; }
-    .tk { border-bottom: 1px solid rgba(244,239,230,0.09); }
-    .tk__go { display: grid; grid-template-columns: 2.6rem minmax(0,1fr) auto; align-items: center;
-      column-gap: 0.85rem; padding: 0.6rem 0.15rem; text-decoration: none; color: inherit; }
-    .tk__go:hover, .tk__go:active { background: rgba(255,255,255,0.04); }
-    .tk__art { width: 2.6rem; height: 2.6rem; border-radius: 8px; object-fit: cover; display: block;
-      background: var(--ink-2); }
-    .tk__mid { min-width: 0; }
-    .tk__t { display: block; font-family: var(--display); font-weight: 400; font-size: 1rem;
-      color: var(--cream); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tk__sub { display: block; font-size: 0.74rem; color: var(--cream-dim); margin-top: 0.12rem;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tk__end { display: flex; align-items: center; gap: 0.5rem; }
-    .tk__len { font-size: 0.74rem; color: var(--cream-dim); font-variant-numeric: tabular-nums; }
-    .tk__heart { color: var(--ruby-hot); font-size: 0.8rem; }
-    .tk__lock { color: var(--ruby-text); font-size: 0.5rem; vertical-align: middle; }
-    .tk--empty { padding: 1.1rem 0.2rem; color: var(--cream-dim); font-size: 0.88rem; line-height: 1.6; }
-    .ls__note { margin-top: 1.8rem; color: var(--cream-dim); font-size: 0.8rem; line-height: 1.7; }
+    /* the album card in a rail: the art is the card, not a thumbnail */
+    .feat__card.is-album > small { min-height: 0; }
+    .ls__empty { font-family: var(--ui); color: var(--cream-dim); font-size: 0.9rem; line-height: 1.7;
+      padding: 1.4rem 0.3rem; }
+    .ls__note { margin-top: 2.4rem; color: var(--cream-dim); font-size: 0.8rem; line-height: 1.7;
+      font-family: var(--ui); }
     .ls__note a { color: var(--ruby-text); text-decoration: none; }
+    .ls__sec[hidden] { display: none; }
   </style>
+  <link rel="stylesheet" href="css/music-room.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
 </head>
-<body class="songpage music-room">
+<body class="songpage music-room music-room--listen">
   <main class="ls">
 
     <header class="ls__top">
@@ -105,8 +85,9 @@
       </div>
     </header>
 
-    <h1>Listen</h1>
-    <p class="ls__sub">Every record in one room, in the order listeners put them.</p>
+    <div class="greet">Have no fear.</div>
+    <p class="greet__sub">Every record McCluster has put out, in one room &mdash; in the order
+      listeners put them.</p>
 
     <div class="ls__find">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
@@ -116,19 +97,38 @@
     </div>
     <p class="ls__count" id="count" hidden></p>
 
-    <section id="topWrap" aria-label="Most played">
-      <p class="ls__k" id="topK">Start here</p>
-      <ul class="tks" id="top"></ul>
+    <div class="chips" id="chips" role="tablist" aria-label="Filter">
+      <button type="button" class="on" data-chip="all">All</button>
+      <button type="button" data-chip="albums">Albums</button>
+      <button type="button" data-chip="tracks">Tracks</button>
+      <button type="button" data-chip="saved">Saved</button>
+    </div>
+
+    <!-- THE DISCOVERY DECK. Rails first, index last: somebody who knows what
+         they want uses the field, and everybody else is here to be shown
+         something. -->
+    <section class="ls__sec" id="topWrap" aria-label="Where to start">
+      <p class="lib__k" id="topK">Start here</p>
+      <p class="lib__why" id="topWhy">The six the room opens on.</p>
+      <div class="feat" id="top"></div>
     </section>
 
-    <section id="shelfWrap" aria-label="The albums">
-      <p class="ls__k">The shelf</p>
-      <div class="shelf" id="shelf"></div>
+    <section class="ls__sec" id="rotWrap" aria-label="Your rotation" hidden>
+      <p class="lib__k">In your rotation</p>
+      <p class="lib__why">Saved on this device. Nobody else can see this list.</p>
+      <div class="feat" id="rot"></div>
     </section>
 
-    <section aria-label="Every track">
-      <p class="ls__k" id="allK">Everything</p>
-      <ul class="tks" id="all"><li class="tk tk--empty">Opening the shelf&hellip;</li></ul>
+    <section class="ls__sec" id="shelfWrap" aria-label="The albums">
+      <p class="lib__k">The shelf</p>
+      <p class="lib__why" id="shelfWhy">Every record, front to back.</p>
+      <div class="feat" id="shelf"></div>
+    </section>
+
+    <section class="ls__sec" id="allWrap" aria-label="Every track">
+      <p class="lib__k" id="allK">Everything</p>
+      <p class="lib__why" id="allWhy">All of it, in one list.</p>
+      <ul class="tr" id="all"><li><span class="t">Opening the shelf&hellip;</span></li></ul>
     </section>
 
     <p class="ls__note">Written &amp; performed by Matthew McCluster unless credited otherwise.

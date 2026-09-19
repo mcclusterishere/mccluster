@@ -646,3 +646,49 @@ html[data-theme="light"] .music-room--album .tr .eq i { background: var(--music-
 .lc__already-go { display: inline-block; margin-top: 0.9rem; font-weight: 800; font-size: 0.84rem;
   color: var(--cream); text-decoration: underline; text-underline-offset: 4px; }
 .lc__already-go:hover { color: var(--music-gold, #e8c877); }
+
+/* ============================================================
+   THE LISTENING ROOM.
+
+   Same art direction as the album room, different job. The album
+   room opens on one record and its film; this one opens on the
+   whole shelf and has to answer "what should I put on" before it
+   answers anything else.
+
+   So it borrows the album's headline treatment — Anton, uppercase,
+   filling the width — and keeps the pill chips rather than the
+   album's squared ones, because here they are a live filter the
+   listener taps repeatedly rather than a mode switch they set once.
+   ============================================================ */
+.music-room--listen .greet {
+  margin-top: clamp(1.4rem, 4vw, 2.6rem);
+  font-family: var(--sig);
+  text-transform: uppercase;
+  font-size: clamp(2.8rem, 13vw, 5rem);
+  line-height: 0.88;
+}
+.music-room--listen .greet__sub { max-width: 34rem; margin: 0.7rem 0 0; }
+
+/* THE ART IS THE PRODUCT HERE, SO IT STAYS LEGIBLE. The album room blurs
+   its curated cards hard, which is right there: they sit under a record
+   that is already on screen and the blur keeps them from competing with
+   it. In the listening room the cards ARE the offer — eight covers doing
+   the work of persuading somebody to press play — and a five-pixel blur
+   turns them into mush. Less blur, and the scrim does the legibility work
+   instead: transparent where the art is, opaque under the type. */
+.music-room--listen .feat__smoke {
+  backdrop-filter: blur(1px) saturate(1.1);
+  -webkit-backdrop-filter: blur(1px) saturate(1.1);
+  background: linear-gradient(170deg,
+    rgba(9,7,5,0.62) 0%,
+    rgba(9,7,5,0.30) 34%,
+    rgba(9,7,5,0.52) 62%,
+    rgba(9,7,5,0.88) 100%);
+}
+.music-room--listen .feat__card { padding: 1.05rem 1.1rem 0.95rem; }
+.music-room--listen .feat__card > b { font-size: 1.22rem; text-shadow: 0 2px 18px rgba(0,0,0,0.85); }
+.music-room--listen .feat__card > small { min-height: 0; margin-top: 0.28rem;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.8); }
+/* a taller card, so the cover has room to be a cover */
+.music-room--listen .feat__card { min-height: 12.5rem; display: flex; flex-direction: column; }
+.music-room--listen .feat__acts { margin-top: auto; }
