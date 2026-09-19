@@ -149,14 +149,18 @@
        a cell on every long-press and shoves the held tab out of its column.
        If a tab is ever added or removed, every wing changes with it. */
     music: {
-      home: "album.html",
+      /* THE TAP GOES TO THE WHOLE SHELF, NOT ONE RECORD. `home` is what a
+         tap on a winged tab actually navigates to — see dest below, which
+         prefers it over the anchor's own href — so changing the href in
+         thirty-three pages moved nothing until this line moved too. */
+      home: "listen.html",
       slots: [
+        ["listen.html", "disc", "Listen", { title: "Listen: every record",
+          sub: "The whole shelf in one room, ordered by what listeners actually play, with a search across every track, album and credit." }],
         ["album.html", "note", "The album", { title: "I AM HERE, the album",
           sub: "Six tracks in the site's own player: the deck, lock-screen controls, and a memory. It picks up where you left off." }],
         ["films.html", "film", "Lyric Videos", { title: "Lyric videos, one swipe",
           sub: "The whole catalog as lyric videos. Swipe, and every record plays its own scene-cut film with the words live on the picture." }],
-        ["catalogue.html", "disc", "Catalogue", { title: "The whole catalogue",
-          sub: "Every record in one room, with the credits, the runtime, and where each one streams." }],
         ["license.html", "card", "License", { title: "License the music",
           sub: "Sync, film, ads, church rooms: what the record costs to use, who to ask, and what comes back signed." }],
       ],
@@ -255,6 +259,7 @@
   var ORDER = ["music", "uprise", "home", "sites", "profile"];
   /* the coin: the wing this page lives in wears the filled gold circle */
   var PAGE_WING = {
+    "listen.html": "music",
     "album.html": "music", "films.html": "music", "catalogue.html": "music",
     "license.html": "music",
     /* the civic world got its own tab, so the four rooms that used to sit

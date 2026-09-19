@@ -44,6 +44,48 @@ test('no page sends the Music tab to a single album', async () => {
     `the Music tab must open the listening room: ${offenders.join(', ')}`);
 });
 
+test('the tab actually navigates to the room, href notwithstanding', async () => {
+  /* THIS IS THE ONE THE FIRST PASS MISSED. Thirty-three pages had their
+     href changed, every test agreed, and tapping the tab still opened the
+     album — because a tab with a wing does not use its own href. The
+     dispatcher reads WINGS[key].home and prefers it:
+
+        var dest = w ? w.home : (slot || a.getAttribute("href"));
+
+     So the href is the fallback for a tab that has no wing, and Music has
+     one. Asserting markup proved nothing about where a tap goes. */
+  const js = await read('js/tabbar.js');
+  const wing = js.slice(js.indexOf('  var WINGS = {'));
+  const music = wing.slice(wing.indexOf('music: {'), wing.indexOf('uprise: {'));
+  assert.match(music, /home: "listen\.html"/,
+    'the music wing must open the listening room, because home is what a tap uses');
+  assert.match(js, /var dest = w \? w\.home : \(slot \|\| a\.getAttribute\("href"\)\);/,
+    'if this dispatch changes, the assertion above stops covering the tap');
+});
+
+test('the listening room lights the Music tab', async () => {
+  /* PAGE_WING is what fills the coin on the tab for the page you are on. A
+     room missing from it is a room where the bar says you are nowhere. */
+  const js = await read('js/tabbar.js');
+  const map = js.slice(js.indexOf('var PAGE_WING = {'));
+  assert.match(map.slice(0, 600), /"listen\.html": "music"/,
+    'the room belongs to the Music wing and the bar should say so');
+});
+
+test('the music wing still carries exactly four rooms', async () => {
+  /* The bar's own trim law, stated at WINGS: an open wing is the same
+     five-cell bar, so a wing carries four rooms and no more. Adding the
+     listening room without removing one would shrink the capsule on every
+     long-press and shove the held tab out of its column. */
+  const js = await read('js/tabbar.js');
+  const wing = js.slice(js.indexOf('  var WINGS = {'));
+  const music = wing.slice(wing.indexOf('music: {'), wing.indexOf('uprise: {'));
+  const slots = music.match(/\["[a-z0-9-]+\.html",/g) || [];
+  assert.equal(slots.length, 4,
+    `the music wing must carry four rooms, found ${slots.length}: ${slots.join(' ')}`);
+  assert.match(music, /\["listen\.html",/, 'and the listening room must be one of them');
+});
+
 test('the bar built for pages that lack one agrees with the bar they ship', async () => {
   /* js/tabbar.js builds the capsule for any page without its own copy. It
      had its own hardcoded destination, so fixing the markup alone would
