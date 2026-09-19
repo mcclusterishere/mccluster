@@ -414,10 +414,14 @@ test('the privacy signal is honoured, not merely written down', async () => {
     'both names must count');
   assert.match(ts, /const quiet = optedOut\(h\);/,
     'the decision must be made once, before any row is built');
-  for (const field of ['ip', 'deviceId', 'sessionId']) {
+  for (const field of ['ip', 'sessionId']) {
     assert.match(ts, new RegExp(`const ${field} = quiet \\?`),
       `${field} follows a person between sittings and must not survive the signal`);
   }
+  assert.match(ts, /const persistentAllowed = !quiet && \(site\.legacy \|\| consentState === "granted"\);/,
+    'persistent customer identity must require both no privacy opt-out and explicit consent');
+  assert.match(ts, /const deviceId = persistentAllowed \?/,
+    'deviceId must be downstream of the privacy-and-consent gate');
   assert.match(ts, /city: quiet \? null : g\.city/,
     'the city must go; the country may stay, because a count is not a person');
   assert.match(ts, /country: g\.country,/,
