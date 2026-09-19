@@ -1,0 +1,38 @@
+name: OVH SSH Secret Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/ovh-ssh-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ssh-smoke:
+    name: Verify pinned SSH credentials only
+    runs-on: ubuntu-latest
+    environment: ovh-production
+    steps:
+      - name: Configure pinned SSH trust
+        env:
+          OVH_SSH_KEY: ${{ secrets.OVH_SSH_KEY }}
+          OVH_KNOWN_HOSTS: ${{ secrets.OVH_KNOWN_HOSTS }}
+          OVH_HOST: ${{ secrets.OVH_HOST }}
+          OVH_USER: ${{ secrets.OVH_USER }}
+          OVH_PORT: ${{ secrets.OVH_PORT }}
+        run: |
+          set -euo pipefail
+          test -n "$OVH_SSH_KEY"
+          test -n "$OVH_KNOWN_HOSTS"
+          test -n "$OVH_HOST"
+          test -n "$OVH_USER"
+          install -d -m 0700 ~/.ssh
+          printf '%s\n' "$OVH_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 0600 ~/.ssh/id_ed25519
+          printf '%s\n' "$OVH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 0600 ~/.ssh/known_hosts
+          PORT="${OVH_PORT:-22}"
+          ssh -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$OVH_USER@$OVH_HOST" \
+            "printf 'OVH_SSH_OK\\n'; hostname; id -un"
