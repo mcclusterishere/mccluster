@@ -215,19 +215,33 @@ test('the Worker ships CORE_BROKER_URL, without which the bridge is dead on arri
   assert.doesNotMatch(wrangler, /CORE_EDGE_SIGNING_KEY\s*=/, 'CORE_EDGE_SIGNING_KEY must never be a var');
 });
 
-test('the deploy workflow guards before deploying, and verifies after', async () => {
+test('automatic Cloudflare Git deployment is verified, while manual fallback stays staged', async () => {
   const workflow = await read('.github/workflows/deploy-mccluster-worker.yml');
-  const guard = workflow.indexOf('core-mcp-continuity');
-  const upload = workflow.indexOf('versions upload');
-  const promote = workflow.indexOf('--version-tag');
-  const check = workflow.indexOf('node scripts/mcp-contract-check');
 
-  assert.ok(guard > 0, 'the continuity guard is not run by the deploy workflow');
-  assert.ok(upload > 0, 'the staged version upload step is missing');
-  assert.ok(promote > 0, 'the promote step is missing');
-  assert.ok(check > 0, 'the post-deploy synthetic contract check is not wired in');
+  const verifierStart = workflow.indexOf('verify-git-deploy:');
+  const deployStart = workflow.indexOf('\n  deploy:', verifierStart);
+  assert.ok(verifierStart > 0 && deployStart > verifierStart, 'workflow must have separate verifier and manual deploy jobs');
+
+  const verifier = workflow.slice(verifierStart, deployStart);
+  assert.match(verifier, /github\.event_name == 'push'/, 'automatic push path must be verification-only');
+  assert.match(verifier, /core-mcp-continuity/, 'automatic verifier must run continuity tests');
+  assert.match(verifier, /Wait for Cloudflare Git to serve this exact commit/, 'automatic verifier must wait for the exact live SHA');
+  assert.match(verifier, /node scripts\/mcp-contract-check/, 'automatic verifier must test the live MCP contract');
+  assert.doesNotMatch(verifier, /versions upload|versions deploy/, 'automatic verifier must not be a second Cloudflare publisher');
+
+  const deploy = workflow.slice(deployStart);
+  const guard = deploy.indexOf('core-mcp-continuity');
+  const upload = deploy.indexOf('versions upload');
+  const promote = deploy.indexOf('--version-tag');
+  const check = deploy.indexOf('node scripts/mcp-contract-check');
+
+  assert.match(deploy, /github\.event_name == 'workflow_dispatch'/, 'Wrangler publisher must be manual fallback only');
+  assert.ok(guard > 0, 'manual fallback continuity guard is missing');
+  assert.ok(upload > 0, 'manual fallback staged upload is missing');
+  assert.ok(promote > 0, 'manual fallback promote step is missing');
+  assert.ok(check > 0, 'manual fallback post-deploy verification is missing');
   assert.ok(guard < upload && upload < promote && promote < check,
-    'order must be guard -> upload -> promote -> verify; a guard after the deploy prevents nothing');
+    'manual fallback order must be guard -> upload -> promote -> verify');
 });
 
 test('a failed verification rolls production back instead of leaving a bad build serving', async () => {
@@ -240,36 +254,36 @@ test('a failed verification rolls production back instead of leaving a bad build
     'the rollback step does not promote the previous version');
 });
 
-test('rollback runs AFTER every production verification, not in the middle of them', async () => {
+test('manual fallback rollback runs AFTER every production verification', async () => {
   const workflow = await read('.github/workflows/deploy-mccluster-worker.yml');
-  const promote = workflow.indexOf('Promote the new version');
-  const fingerprint = workflow.indexOf('Verify deployed commit fingerprint');
-  const contract = workflow.indexOf('Verify remote MCP contract');
-  const capability = workflow.indexOf('Verify core capability flags');
-  const rollback = workflow.indexOf('Roll back to the last known-good');
-  const warn = workflow.indexOf('Warn when no rollback target existed');
+  const deployStart = workflow.indexOf('\n  deploy:');
+  assert.ok(deployStart > 0, 'manual deploy job missing');
+  const deploy = workflow.slice(deployStart);
+
+  const promote = deploy.indexOf('Promote the new version');
+  const fingerprint = deploy.indexOf('Verify deployed commit fingerprint');
+  const contract = deploy.indexOf('Verify remote MCP contract');
+  const capability = deploy.indexOf('Verify core capability flags');
+  const rollback = deploy.indexOf('Roll back to the last known-good');
+  const warn = deploy.indexOf('Warn when no rollback target existed');
 
   for (const [name, index] of Object.entries({ promote, fingerprint, contract, capability, rollback, warn })) {
-    assert.ok(index > 0, `step missing from the workflow: ${name}`);
+    assert.ok(index > 0, `step missing from the manual workflow: ${name}`);
   }
 
-  /* Steps run in order, so a rollback placed mid-list is evaluated before
-     the verifications below it. A failure in the LAST check would then
-     find the rollback already behind it and leave the bad version live —
-     which is exactly the gap this asserts is closed. */
   assert.ok(
     promote < fingerprint && fingerprint < contract && contract < capability && capability < rollback,
-    'order must be promote -> fingerprint -> MCP contract -> capability -> rollback'
+    'manual fallback order must be promote -> fingerprint -> MCP contract -> capability -> rollback'
   );
-  assert.ok(warn > capability, 'the no-rollback-target warning must also follow every verification');
+  assert.ok(warn > capability, 'the no-rollback-target warning must also follow every manual verification');
 });
 
-test('provenance stamping survives the staged flow', async () => {
+test('manual fallback provenance stamping survives the staged flow', async () => {
   const workflow = await read('.github/workflows/deploy-mccluster-worker.yml');
-  /* The SHA is stamped on `versions upload`, not on a plain `deploy`. If
-     this moves and nobody notices, /healthz goes back to reporting
-     "unknown" and the contract check's fourth assertion starts failing. */
-  const upload = workflow.slice(workflow.indexOf('versions upload'), workflow.indexOf('Promote the new version'));
-  assert.match(upload, /--var DEPLOY_SHA:\$\{GITHUB_SHA\}/, 'DEPLOY_SHA is not stamped on the uploaded version');
-  assert.match(upload, /--tag \$\{GITHUB_SHA\}/, 'the version is not tagged with the commit, so promote cannot resolve it');
+  const deployStart = workflow.indexOf('\n  deploy:');
+  assert.ok(deployStart > 0, 'manual deploy job missing');
+  const deploy = workflow.slice(deployStart);
+  const upload = deploy.slice(deploy.indexOf('versions upload'), deploy.indexOf('Promote the new version'));
+  assert.match(upload, /--var DEPLOY_SHA:\$\{GITHUB_SHA\}/, 'DEPLOY_SHA is not stamped on the manually uploaded version');
+  assert.match(upload, /--tag \$\{GITHUB_SHA\}/, 'manual version is not tagged with the commit, so promote cannot resolve it');
 });
