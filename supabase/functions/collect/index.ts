@@ -65,9 +65,32 @@ function callerIp(h: Headers_): string | null {
   return first || h.get("cf-connecting-ip") || h.get("x-real-ip") || null;
 }
 
-// Geo is whatever the edge chose to tell us. Cloudflare always sends the
-// country; region and city depend on the plan, and Deno Deploy uses different
-// names again. Ask for all of them, accept none of them, never guess.
+// Geo is whatever the edge chose to tell us, and which edge is serving this
+// varies. Cloudflare always sends the country and sends region/city/ASN on
+// some plans; Deno Deploy uses different names again; Fly and Vercel others.
+// Ask for all of them, accept none of them, never guess — and keep the raw
+// header set in `edge` so the next widening of this function is driven by what
+// actually arrived in production rather than by what the docs promised.
+const GEO_HEADERS = [
+  "cf-ipcountry", "cf-region", "cf-region-code", "cf-ipcity", "cf-postal-code",
+  "cf-iplatitude", "cf-iplongitude", "cf-timezone", "cf-ipcontinent",
+  "cf-asn", "cf-as-organization", "cf-ray", "cf-ipasnum",
+  "x-vercel-ip-country", "x-vercel-ip-country-region", "x-vercel-ip-city",
+  "x-vercel-ip-latitude", "x-vercel-ip-longitude", "x-vercel-ip-timezone",
+  "fly-region", "fly-client-ip", "x-country-code", "x-region", "x-deno-region",
+  "accept-language", "sec-ch-ua-platform", "sec-ch-ua-mobile", "sec-ch-ua",
+  "dnt", "sec-gpc",
+];
+
+function edgeFacts(h: Headers_): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const n of GEO_HEADERS) {
+    const v = h.get(n);
+    if (v) out[n] = v.slice(0, 200);
+  }
+  return out;
+}
+
 function geo(h: Headers_) {
   const pick = (...names: string[]) => {
     for (const n of names) {
@@ -76,11 +99,34 @@ function geo(h: Headers_) {
     }
     return null;
   };
+  const num = (v: string | null) => {
+    if (!v) return null;
+    const f = Number(v);
+    return Number.isFinite(f) ? f : null;
+  };
   return {
     country: pick("cf-ipcountry", "x-vercel-ip-country", "x-country-code"),
     region: pick("cf-region", "x-vercel-ip-country-region", "x-region"),
     city: pick("cf-ipcity", "x-vercel-ip-city"),
+    postal: pick("cf-postal-code"),
+    latitude: num(pick("cf-iplatitude", "x-vercel-ip-latitude")),
+    longitude: num(pick("cf-iplongitude", "x-vercel-ip-longitude")),
+    timezone: pick("cf-timezone", "x-vercel-ip-timezone"),
+    asn: (() => {
+      const a = num(pick("cf-asn", "cf-ipasnum"));
+      return a != null ? Math.trunc(a) : null;
+    })(),
+    asn_org: pick("cf-as-organization"),
   };
+}
+
+// A crawler is traffic, not an audience, and mixing the two quietly ruins
+// every number downstream. Marked rather than dropped: a rising crawl is
+// itself worth being able to see.
+const BOT = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|playwright|curl|wget|python-requests|axios|go-http|java\/|scrapy|lighthouse|gtmetrix|pingdom|uptime|monitor|facebookexternalhit|preview|embed/i;
+function looksLikeBot(ua: string | null): boolean {
+  if (!ua) return true;   // no user agent at all is not a person with a browser
+  return BOT.test(ua);
 }
 
 // An IP is only stored if it is actually an address. A malformed value would
@@ -144,7 +190,9 @@ Deno.serve(async (req) => {
   const h = req.headers;
   const ip = validIp(callerIp(h));
   const g = geo(h);
+  const edge = edgeFacts(h);
   const ua = str(h.get("user-agent"), MAX_UA);
+  const bot = looksLikeBot(ua);
   const uid = await resolveUid(h.get("authorization"));
 
   // Client-minted, and labelled as such. See the header note.
@@ -173,6 +221,14 @@ Deno.serve(async (req) => {
       country: g.country,
       region: g.region,
       city: g.city,
+      postal: g.postal,
+      latitude: g.latitude,
+      longitude: g.longitude,
+      timezone: g.timezone,
+      asn: g.asn,
+      asn_org: g.asn_org,
+      is_bot: bot,
+      edge,
       device_id: deviceId,
       session_id: sessionId,
       device,

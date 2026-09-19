@@ -55,7 +55,24 @@ window.MCC_TRACK = (function () {
   /* Self-contained constants: this file loads before backend.js. */
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
   var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
-  var COLLECT = SB_URL + "/functions/v1/collect";
+  /* FIRST-PARTY FIRST, AND NOT ONLY ON PRINCIPLE.
+
+     api.mccluster.org is this house's own domain, so no blocklist carries
+     it — and roughly a third of real visitors never appear in Google
+     Analytics because every ad blocker ships google-analytics.com by
+     default. Those people appear here.
+
+     The Worker is also the only thing in the chain that can see where a
+     visitor actually is. A request arriving at a Supabase edge function
+     carries cf-ray and nothing else; the country, city, timezone, ASN and
+     network name live on `request.cf`, which exists only inside the
+     Worker. That was measured against production, not assumed.
+
+     The Supabase function stays as the fallback: it is the writer either
+     way, and a house that cannot reach its own Worker should still be
+     able to count. */
+  var COLLECT = "https://api.mccluster.org/v1/collect";
+  var COLLECT_FALLBACK = SB_URL + "/functions/v1/collect";
 
   function store(read) {
     try { return read(); } catch (e) { return null; }
@@ -190,7 +207,15 @@ window.MCC_TRACK = (function () {
        thing somebody did and recording everything except that. */
     if (keepalive) opts.keepalive = true;
     try {
-      fetch(COLLECT, opts).catch(function () {});
+      fetch(COLLECT, opts).then(function (r) {
+        /* A blocked or unreachable first-party route is worth one retry at
+           the writer directly. Not a loop: two attempts, then the batch is
+           gone, because nobody's page should stall over a statistic. */
+        if (!r || r.ok) return;
+        return fetch(COLLECT_FALLBACK, opts).catch(function () {});
+      }).catch(function () {
+        try { fetch(COLLECT_FALLBACK, opts).catch(function () {}); } catch (e2) {}
+      });
     } catch (e) { /* a statistic is never worth an exception in a page */ }
   }
 
@@ -461,3 +486,439 @@ window.MCC_MODEL = (function () {
   return { profile: profile, suggest: suggest, shown: shown, pitch: pitch, persuade: persuade, observe: observe,
     reset: function () { try { localStorage.removeItem(KEY); } catch (e) {} } };
 })();
+
+/* ============================================================
+   THE INSTRUMENT PANEL — what Google would not tell you.
+
+   Google Analytics answers "how many". It will not answer "who,
+   on what, from where, and what did they actually do" — because
+   it throws the address away on ingest, samples the rest, hands
+   back buckets instead of rows, and is blocked outright for a
+   third of visitors by any ad blocker. None of those are
+   oversights. They are the product.
+
+   This is the opposite shape. Every sensor below writes a row
+   through MCC_TRACK, which lands in public.events with the
+   address, the network, the device and the account attached, and
+   the owner can run SQL against it. What is here that GA4
+   structurally cannot give you:
+
+     rage clicks and dead clicks    — where the page fights people
+     per-section attention          — what was actually READ, not scrolled past
+     form field timing              — which question made them stop
+     exit intent                    — the moment they decided to go
+     per-visitor Core Web Vitals    — real speed, not a lab score
+     JS errors with stacks          — the bugs only visitors see
+     GPU, battery, memory, network  — what they are actually on
+     raw rows, forever, in SQL      — no sampling, no 14-month cap
+
+   THE TWO THINGS THIS DELIBERATELY DOES NOT DO, so nobody has to
+   wonder later:
+
+   It never records what anybody TYPES. Field names, focus order
+   and timing, yes — those say which question cost you the lead.
+   The characters, no. Anything that looks like a password, a
+   card, or a one-time code is not instrumented at all, not even
+   for timing.
+
+   It does not fingerprint to defeat a cleared browser. The device
+   id is a random value in localStorage. Canvas, audio and font
+   hashing exist specifically to re-identify somebody who has
+   erased their data, which is the one analytics practice
+   regulators actually prosecute, and it would buy nothing here:
+   knowing your own audience does not require beating them.
+
+   DISCLOSURE IS A REAL OBLIGATION AND IT IS NOT HANDLED IN CODE.
+   Connecticut's CTDPA — McCluster Corp is a Connecticut public
+   charity — requires a privacy notice that says what is collected
+   and why. policy.html needs a paragraph describing this. That is
+   a writing task, not a config flag, and it is not done yet.
+   ============================================================ */
+(function (root) {
+  "use strict";
+
+  var T = function (n, p) { if (root.MCC_TRACK) root.MCC_TRACK(n, p || {}); };
+  var doc = root.document;
+  if (!doc) return;
+
+  function now() { return Date.now(); }
+  /* declared up here because the exit-intent sensor reads it, and a reader
+     should not have to trust hoisting to see that it is set */
+  var T0 = Date.now();
+  function n2(x) { return Math.round(x * 100) / 100; }
+  function safe(fn) { try { return fn(); } catch (e) { return null; } }
+
+  /* A short, stable description of an element: enough to find it again in
+     the markup, never its contents. */
+  function describe(el) {
+    if (!el || !el.tagName) return null;
+    var id = el.id ? "#" + el.id : "";
+    var cls = "";
+    if (el.className && typeof el.className === "string") {
+      cls = "." + el.className.trim().split(/\s+/).slice(0, 2).join(".");
+    }
+    var txt = "";
+    if (el.textContent) txt = el.textContent.trim().replace(/\s+/g, " ").slice(0, 60);
+    return {
+      tag: el.tagName.toLowerCase(),
+      sel: (el.tagName.toLowerCase() + id + cls).slice(0, 120),
+      text: txt || null,
+      href: el.getAttribute ? (el.getAttribute("href") || null) : null,
+      cta: el.getAttribute ? (el.getAttribute("data-cta") || null) : null,
+    };
+  }
+
+  /* =========================================================
+     1. THE VISITOR'S HISTORY WITH THIS HOUSE
+     GA4 calls everyone "new" or "returning" and stops there.
+     ========================================================= */
+  var HIST = "mcc_hist";
+  var hist = safe(function () { return JSON.parse(localStorage.getItem(HIST) || "null"); })
+    || { first: now(), last: 0, visits: 0, pages: 0 };
+  var gap = now() - (hist.last || 0);
+  var newVisit = gap > 30 * 60 * 1000;
+  if (newVisit) hist.visits = (hist.visits || 0) + 1;
+  hist.pages = (hist.pages || 0) + 1;
+  hist.last = now();
+  safe(function () { localStorage.setItem(HIST, JSON.stringify(hist)); });
+
+  var DAY = 86400000;
+  var visitor = {
+    visits: hist.visits,
+    pages_all_time: hist.pages,
+    days_known: Math.floor((now() - hist.first) / DAY),
+    days_since_last: newVisit ? Math.floor(gap / DAY) : 0,
+    returning: hist.visits > 1,
+  };
+
+  /* =========================================================
+     2. THE MACHINE — deeper than a user-agent string
+     ========================================================= */
+  function gpu() {
+    return safe(function () {
+      var c = doc.createElement("canvas");
+      var gl = c.getContext("webgl") || c.getContext("experimental-webgl");
+      if (!gl) return null;
+      var dbg = gl.getExtension("WEBGL_debug_renderer_info");
+      /* The renderer string, as an attribute of the machine. Not hashed,
+         not combined with anything, not used to identify a return visit. */
+      return dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)).slice(0, 120) : null;
+    });
+  }
+
+  var machine = {
+    gpu: gpu(),
+    touch: safe(function () { return navigator.maxTouchPoints || 0; }),
+    colors: safe(function () { return screen.colorDepth; }),
+    dark: safe(function () { return matchMedia("(prefers-color-scheme: dark)").matches; }),
+    reduced: safe(function () { return matchMedia("(prefers-reduced-motion: reduce)").matches; }),
+    orient: safe(function () { return screen.orientation && screen.orientation.type; }),
+    pdf: safe(function () { return navigator.pdfViewerEnabled; }),
+    cookies: safe(function () { return navigator.cookieEnabled; }),
+    langs: safe(function () { return (navigator.languages || []).slice(0, 4).join(","); }),
+  };
+
+  safe(function () {
+    if (!navigator.getBattery) return;
+    navigator.getBattery().then(function (b) {
+      T("device_power", { level: n2(b.level), charging: b.charging });
+    }).catch(function () {});
+  });
+
+  /* =========================================================
+     3. THE PAGE VIEW — the anchor row every other row hangs off
+     ========================================================= */
+  T("page_view", {
+    title: (doc.title || "").slice(0, 120),
+    url: location.pathname + location.search,
+    visitor: visitor,
+    machine: machine,
+    new_visit: newVisit,
+  });
+
+  /* =========================================================
+     4. CLICKS — including the two kinds that mean something is wrong
+
+     A RAGE CLICK is three or more taps in the same small area inside
+     a second: the signal of something that looks pressable and is not.
+     A DEAD CLICK is a tap that changed nothing — no navigation, no DOM
+     mutation, no focus change. Both are the most actionable numbers in
+     analytics and neither exists in GA4 at any price.
+     ========================================================= */
+  var recent = [];
+  var mutated = false;
+  var mo = safe(function () {
+    var m = new MutationObserver(function () { mutated = true; });
+    m.observe(doc.documentElement, { childList: true, subtree: true, attributes: true });
+    return m;
+  });
+
+  doc.addEventListener("click", function (e) {
+    var el = e.target;
+    var d = describe(el && el.closest ? (el.closest("a,button,[role=button],[data-cta],input,label") || el) : el);
+    if (!d) return;
+
+    var t = now();
+    recent = recent.filter(function (r) { return t - r.t < 1000; });
+    var near = recent.filter(function (r) {
+      return Math.abs(r.x - e.clientX) < 40 && Math.abs(r.y - e.clientY) < 40;
+    });
+    recent.push({ t: t, x: e.clientX, y: e.clientY });
+
+    var payload = {
+      el: d.sel, text: d.text, href: d.href, cta: d.cta,
+      x: e.clientX, y: e.clientY,
+      /* where on the page, not just where on the screen */
+      pct_x: n2(e.pageX / Math.max(1, doc.documentElement.scrollWidth) * 100),
+      pct_y: n2(e.pageY / Math.max(1, doc.documentElement.scrollHeight) * 100),
+    };
+
+    if (near.length >= 2) {
+      T("rage_click", payload);
+      recent = [];
+      return;
+    }
+
+    T("click", payload);
+
+    /* Dead click: give the page a beat to navigate, mutate or focus. If
+       nothing at all happened, the tap went nowhere. */
+    mutated = false;
+    var url0 = location.href, active0 = doc.activeElement;
+    var interactive = d.tag === "a" || d.tag === "button" || d.tag === "input" ||
+      d.tag === "select" || d.tag === "textarea" || d.tag === "label" || !!d.cta;
+    setTimeout(function () {
+      if (!interactive) return;
+      if (mutated || location.href !== url0 || doc.activeElement !== active0) return;
+      T("dead_click", payload);
+    }, 450);
+  }, { passive: true, capture: true });
+
+  /* =========================================================
+     5. SCROLL — depth, and the speed that separates reading from fleeing
+     ========================================================= */
+  var depth = 0, marks = {}, lastY = 0, lastT = now(), fastest = 0;
+  root.addEventListener("scroll", function () {
+    var h = doc.documentElement.scrollHeight - root.innerHeight;
+    if (h <= 0) return;
+    /* CLAMPED, BECAUSE THE DENOMINATOR MOVES. On a page whose height
+       shrinks after you have scrolled — a multi-step form collapsing a
+       finished step, a filter hiding rows — scrollY can exceed the new
+       scrollable height and the ratio goes past 1. The old sensor did not
+       clamp, and onboard.html has been reporting an average scroll depth
+       of 289% in production, which is the tell. */
+    var pct = Math.min(100, Math.max(0, Math.round(scrollY / h * 100)));
+    if (pct > depth) depth = pct;
+    [25, 50, 75, 90, 100].forEach(function (m) {
+      if (pct >= m && !marks[m]) { marks[m] = now(); T("scroll_depth", { pct: m }); }
+    });
+    var t = now(), dt = t - lastT;
+    if (dt > 80) {
+      var v = Math.abs(scrollY - lastY) / dt * 1000;
+      if (v > fastest) fastest = Math.round(v);
+      lastY = scrollY; lastT = t;
+    }
+  }, { passive: true });
+
+  /* =========================================================
+     6. ATTENTION — which parts of the page were actually looked at
+
+     Scroll depth says the pixels went past. This says the section sat
+     in the viewport for real seconds. It is the difference between
+     "they reached the pricing" and "they read the pricing".
+     ========================================================= */
+  var watched = [];
+  safe(function () {
+    if (!root.IntersectionObserver) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        var rec = en.target.__mccAtt || (en.target.__mccAtt = { seen: 0, since: 0 });
+        if (en.isIntersecting) { rec.since = now(); }
+        else if (rec.since) { rec.seen += now() - rec.since; rec.since = 0; }
+      });
+    }, { threshold: 0.5 });
+    var sel = "section,[data-section],[id]>h2,article,.buy,.offer,footer";
+    [].slice.call(doc.querySelectorAll(sel)).slice(0, 40).forEach(function (el) {
+      io.observe(el); watched.push(el);
+    });
+  });
+
+  function attention() {
+    var out = [];
+    watched.forEach(function (el) {
+      var rec = el.__mccAtt;
+      if (!rec) return;
+      var ms = rec.seen + (rec.since ? now() - rec.since : 0);
+      if (ms > 900) {
+        var d = describe(el);
+        out.push({ sel: d && d.sel, s: Math.round(ms / 1000) });
+      }
+    });
+    return out.sort(function (a, b) { return b.s - a.s; }).slice(0, 12);
+  }
+
+  /* =========================================================
+     7. FORMS — which question cost you the lead
+
+     NAMES AND TIMING ONLY. The characters somebody types are never
+     read, and a field that could hold a secret is not instrumented at
+     all. That is not caution for its own sake: a form analytics tool
+     that captures values is a breach waiting for its disclosure
+     letter, and it would answer no question this does not.
+     ========================================================= */
+  var SECRET = /pass|pwd|card|cvc|cvv|ccnum|credit|secure|otp|code|token|ssn|social|routing|account.*num/i;
+  function secret(el) {
+    if (!el || !el.tagName) return true;
+    var t = (el.type || "").toLowerCase();
+    if (t === "password" || t === "hidden") return true;
+    var s = [el.name, el.id, el.autocomplete, el.getAttribute("aria-label")].join(" ");
+    return SECRET.test(s);
+  }
+  function fieldName(el) {
+    return String(el.name || el.id || el.getAttribute("aria-label") || el.type || "field").slice(0, 60);
+  }
+
+  var fields = {}, order = [], formStarted = false, lastField = null;
+  doc.addEventListener("focusin", function (e) {
+    var el = e.target;
+    if (!el || !/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || secret(el)) return;
+    var k = fieldName(el);
+    if (!fields[k]) { fields[k] = { ms: 0, visits: 0, edits: 0 }; order.push(k); }
+    fields[k].visits++;
+    fields[k].since = now();
+    lastField = k;
+    if (!formStarted) { formStarted = true; T("form_start", { field: k, form: (el.form && (el.form.id || el.form.name)) || null }); }
+  }, true);
+
+  doc.addEventListener("focusout", function (e) {
+    var el = e.target;
+    if (!el || !fields[fieldName(el)]) return;
+    var f = fields[fieldName(el)];
+    if (f.since) { f.ms += now() - f.since; f.since = 0; }
+  }, true);
+
+  /* A correction is a backspace or a delete: the field was answered and
+     then re-answered, which is hesitation you can see. The key identity
+     is all that is read — never the character. */
+  doc.addEventListener("keydown", function (e) {
+    if (e.key !== "Backspace" && e.key !== "Delete") return;
+    var el = e.target;
+    if (!el || !/^(INPUT|TEXTAREA)$/.test(el.tagName) || secret(el)) return;
+    var f = fields[fieldName(el)];
+    if (f) f.edits++;
+  }, true);
+
+  doc.addEventListener("submit", function (e) {
+    T("form_submit", { form: (e.target && (e.target.id || e.target.name)) || null, fields: order.length });
+  }, true);
+
+  function formState() {
+    if (!formStarted) return null;
+    var out = {};
+    Object.keys(fields).forEach(function (k) {
+      var f = fields[k];
+      out[k] = { s: Math.round((f.ms + (f.since ? now() - f.since : 0)) / 1000), visits: f.visits, edits: f.edits };
+    });
+    return { order: order.slice(0, 20), last: lastField, detail: out };
+  }
+
+  /* =========================================================
+     8. EXIT INTENT — the moment they decided to leave
+     ========================================================= */
+  var exited = false;
+  doc.addEventListener("mouseout", function (e) {
+    if (exited || e.clientY > 8 || e.relatedTarget) return;
+    exited = true;
+    T("exit_intent", { depth: depth, s: Math.round((now() - T0) / 1000) });
+  });
+
+  /* =========================================================
+     9. COPY — what somebody thought was worth taking
+     ========================================================= */
+  doc.addEventListener("copy", function () {
+    var sel = safe(function () { return String(getSelection()); }) || "";
+    T("copy", { chars: sel.length, text: sel.trim().replace(/\s+/g, " ").slice(0, 120) });
+  });
+
+  /* =========================================================
+     10. ERRORS — the bugs that only ever happen to visitors
+     ========================================================= */
+  root.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    T("js_error", {
+      msg: String(e.message).slice(0, 200),
+      src: String(e.filename || "").slice(0, 160),
+      line: e.lineno || null, col: e.colno || null,
+    });
+  });
+  root.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    T("js_rejection", { msg: String((r && (r.message || r)) || "").slice(0, 200) });
+  });
+
+  /* =========================================================
+     11. SPEED, AS THE VISITOR ACTUALLY EXPERIENCED IT
+
+     A lab score describes a machine in a data centre. These are the
+     real numbers off the real phone on the real network.
+     ========================================================= */
+  var vitals = {};
+  function po(type, cb, extra) {
+    safe(function () {
+      var o = new PerformanceObserver(function (l) { l.getEntries().forEach(cb); });
+      o.observe(Object.assign({ type: type, buffered: true }, extra || {}));
+    });
+  }
+  po("largest-contentful-paint", function (en) { vitals.lcp = Math.round(en.startTime); });
+  po("layout-shift", function (en) { if (!en.hadRecentInput) vitals.cls = n2((vitals.cls || 0) + en.value); });
+  po("event", function (en) { if (en.duration > (vitals.inp || 0)) vitals.inp = Math.round(en.duration); }, { durationThreshold: 40 });
+  po("first-input", function (en) { vitals.fid = Math.round(en.processingStart - en.startTime); });
+  safe(function () {
+    var n = performance.getEntriesByType("navigation")[0];
+    if (!n) return;
+    vitals.ttfb = Math.round(n.responseStart);
+    vitals.dom = Math.round(n.domContentLoadedEventEnd);
+    vitals.load = Math.round(n.loadEventEnd);
+    vitals.type = n.type;
+  });
+
+  /* =========================================================
+     12. THE ACCOUNTING — time here, time away, and the whole shape
+         of the visit, sent once when the page goes
+     ========================================================= */
+  var visible = 0, hidden = 0, blurs = 0, since = now(), isHidden = false;
+  doc.addEventListener("visibilitychange", function () {
+    var t = now();
+    if (doc.visibilityState === "hidden") { visible += t - since; blurs++; isHidden = true; }
+    else { hidden += t - since; isHidden = false; }
+    since = t;
+  });
+
+  var sent = false;
+  function report() {
+    if (sent) return;
+    var t = now();
+    if (isHidden) hidden += t - since; else visible += t - since;
+    since = t;
+    if (t - T0 < 1200) return;   /* a bounce off a mistyped URL teaches nothing */
+    sent = true;
+    T("page_leave", {
+      s: Math.round((t - T0) / 1000),
+      visible_s: Math.round(visible / 1000),
+      hidden_s: Math.round(hidden / 1000),
+      away: blurs,
+      depth: depth,
+      fastest_scroll: fastest,
+      read: attention(),
+      form: formState(),
+      vitals: vitals,
+      exit_intent: exited,
+    });
+  }
+  doc.addEventListener("visibilitychange", function () {
+    if (doc.visibilityState === "hidden") report();
+  });
+  root.addEventListener("pagehide", report);
+
+  root.MCC_SENSE = { visitor: visitor, machine: machine, attention: attention, vitals: function () { return vitals; } };
+})(window);
