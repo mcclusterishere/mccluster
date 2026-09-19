@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 138,
-  "latest_version": "20260919094323",
-  "latest_name": "native_telemetry_page_health_legacy_bridge",
-  "ledger_sha256": "838b581ac8f7825f0ac1aead603e69de2a696ded39aded7f6874a8c5c5e13b9f",
+  "migration_count": 140,
+  "latest_version": "20260919114112",
+  "latest_name": "client_table_privilege_hardening",
+  "ledger_sha256": "89f7e011b008252d086558b85ec8cea67f97a4af5621c85ecffb42af1861ea77",
   "migrations": [
     {
       "version": "20260722211609",
@@ -558,6 +558,14 @@
     {
       "version": "20260919094323",
       "name": "native_telemetry_page_health_legacy_bridge"
+    },
+    {
+      "version": "20260919113319",
+      "name": "revoke_client_ddl_table_privileges"
+    },
+    {
+      "version": "20260919114112",
+      "name": "client_table_privilege_hardening"
     }
   ]
 }
