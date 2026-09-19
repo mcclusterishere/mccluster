@@ -1,4 +1,4 @@
-import { addSignal, recentJobs } from './supabase.mjs';
+import { addSignal, houseOrgId, recentJobs } from './supabase.mjs';
 import { sendSms } from './notifier.mjs';
 
 const ORG_ID = process.env.MCCLUSTER_ORG_ID || '';
@@ -35,17 +35,32 @@ export async function buildDigest() {
 
 async function main() {
   const digest = await buildDigest();
-  const sms = await sendSms(digest.body);
-  if (ORG_ID) {
-    await addSignal({
-      orgId: ORG_ID,
-      kind: 'core_morning_digest',
-      body: digest.body,
-      severity: digest.counts.failed ? 'warn' : 'info',
-      metadata: { counts: digest.counts, sms_sent: sms.sent, sms_status: sms.status ?? null },
-    });
+
+  /* RECORD FIRST, THEN TRY TO DELIVER.
+     Delivery is the part that is allowed to be missing — Twilio is not
+     configured here, so sendSms() returns twilio_not_configured and always
+     will until somebody sets it up. The REPORT is not allowed to be missing.
+     Writing it before the send means a morning with no text still leaves a
+     morning with a report, which is the whole point of thinking overnight. */
+  const orgId = ORG_ID || (await houseOrgId());
+  let recorded = false;
+  if (orgId) {
+    try {
+      await addSignal({
+        orgId,
+        kind: 'core_morning_digest',
+        body: digest.body,
+        severity: digest.counts.failed ? 'warn' : 'info',
+        metadata: { counts: digest.counts, jobs: digest.jobs, window_hours: HOURS },
+      });
+      recorded = true;
+    } catch (error) {
+      console.error(JSON.stringify({ event: 'core_digest_record_failed', message: error.message }));
+    }
   }
-  console.log(JSON.stringify({ event: 'core_digest', ...digest, sms }));
+
+  const sms = await sendSms(digest.body);
+  console.log(JSON.stringify({ event: 'core_digest', ...digest, recorded, org_id: orgId || null, sms }));
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

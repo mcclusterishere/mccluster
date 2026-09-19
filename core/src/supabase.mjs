@@ -336,6 +336,28 @@ export async function hasPendingJob({ orgId, jobType, targetId } = {}) {
   return body.length > 0;
 }
 
+/* THE HOUSE ORG, WHEN NOBODY SET MCCLUSTER_ORG_ID.
+ *
+ * The morning digest recorded itself only `if (ORG_ID)`, and that variable is
+ * not set on the node. So every morning at 07:30 the digest was built, the SMS
+ * attempt came back twilio_not_configured, and the report was dropped on the
+ * floor without a trace — ops_signals held exactly one row, a hand-run test.
+ *
+ * Resolving the slug is one cheap lookup and it is cached for the life of the
+ * process, so a missing environment variable costs a round trip instead of the
+ * whole report. */
+const HOUSE_SLUG = process.env.MCCLUSTER_ORG_SLUG || 'mccluster';
+let houseOrgPromise = null;
+
+export function houseOrgId() {
+  if (!houseOrgPromise) {
+    houseOrgPromise = rest(`orgs?slug=eq.${encodeURIComponent(HOUSE_SLUG)}&select=id&limit=1`)
+      .then((rows) => (Array.isArray(rows) && rows[0] ? String(rows[0].id) : null))
+      .catch(() => null);
+  }
+  return houseOrgPromise;
+}
+
 export async function addSignal({ orgId, kind, body, severity = 'info', source = 'mccluster-core', metadata = {} }) {
   const severityMap = {
     debug: 0,
