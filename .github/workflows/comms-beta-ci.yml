@@ -63,7 +63,7 @@ jobs:
           fi
       - name: Assert safety and takeover contracts
         run: |
-          grep -F "McCluster's assistant here" core/src/comms-policy.mjs
+          grep -F "personal assistant here" core/src/comms-policy.mjs
           grep -F "mode: 'paused'" core/src/executors/sms-assistant-turn.mjs
           grep -F "STOP_COMMAND" workers/mccluster/src/comms/router.js
           grep -F "TAKEOVER" workers/mccluster/src/comms/router.js
