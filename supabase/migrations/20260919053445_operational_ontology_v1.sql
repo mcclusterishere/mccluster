@@ -7,6 +7,27 @@
 create extension if not exists pgcrypto;
 create schema if not exists private;
 
+-- Production already had ops_objectives before this migration, but the table
+-- was never replayable from Git. Ontology is the first fresh-reset consumer
+-- that requires it, so canonicalize the exact live table contract here before
+-- attaching ontology triggers. On production this block is intentionally a
+-- no-op; on a clean rebuild it closes the historical replay gap.
+create table if not exists public.ops_objectives (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null,
+  name text not null,
+  description text,
+  status text not null default 'active',
+  priority integer not null default 50,
+  success_metric jsonb not null default '{}'::jsonb,
+  scope jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.ops_objectives enable row level security;
+revoke all on table public.ops_objectives from public, anon, authenticated;
+grant all on table public.ops_objectives to service_role;
+
 create table if not exists public.ops_ontology_types (
   org_id uuid not null references public.orgs(id) on delete cascade,
   type_key text not null check (type_key ~ '^[a-z][a-z0-9_]{0,79}$'),
