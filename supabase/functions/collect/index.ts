@@ -120,6 +120,23 @@ function geo(h: Headers_) {
   };
 }
 
+// GLOBAL PRIVACY CONTROL, HONOURED RATHER THAN MERELY LOGGED.
+//
+// privacy.html states plainly that this site honours GPC and Do Not Track. A
+// sentence in a privacy notice that the code does not implement is not a
+// courtesy that went unwritten — it is a deceptive practice, and the notice
+// is the thing regulators read first. So this is where that sentence is made
+// true.
+//
+// The visit still counts. A page view with nobody attached to it is exactly
+// what somebody sending this signal is asking for, and it keeps the traffic
+// numbers honest rather than quietly under-reporting. What is dropped is
+// everything that could point back at a person, and it is dropped before the
+// row is built rather than cleaned up afterwards.
+function optedOut(h: Headers_): boolean {
+  return h.get("sec-gpc") === "1" || h.get("dnt") === "1";
+}
+
 // A crawler is traffic, not an audience, and mixing the two quietly ruins
 // every number downstream. Marked rather than dropped: a rising crawl is
 // itself worth being able to see.
@@ -188,17 +205,19 @@ Deno.serve(async (req) => {
   if (!incoming.length) return json({ ok: true, written: 0 });
 
   const h = req.headers;
-  const ip = validIp(callerIp(h));
+  const quiet = optedOut(h);
+  const ip = quiet ? null : validIp(callerIp(h));
   const g = geo(h);
-  const edge = edgeFacts(h);
+  const edge = quiet ? { opted_out: "1" } : edgeFacts(h);
   const ua = str(h.get("user-agent"), MAX_UA);
   const bot = looksLikeBot(ua);
   const uid = await resolveUid(h.get("authorization"));
 
   // Client-minted, and labelled as such. See the header note.
-  const deviceId = str(body.device_id, 64);
-  const sessionId = str(body.session_id, 64);
-  const device = obj(body.device);
+  // Nothing that follows a visitor between sittings survives the signal.
+  const deviceId = quiet ? null : str(body.device_id, 64);
+  const sessionId = quiet ? null : str(body.session_id, 64);
+  const device = quiet ? {} : obj(body.device);
 
   const rows: Record<string, unknown>[] = [];
   for (const e of incoming.slice(0, MAX_EVENTS)) {
@@ -217,16 +236,20 @@ Deno.serve(async (req) => {
       // Observed. Never read from the body.
       uid,
       ip,
-      user_agent: ua,
+      // Under the signal the country and the timezone stay, because a count
+      // of where the traffic came from is not a person, and everything
+      // narrower than that goes: the city, the postal code, the coordinates,
+      // the network operator and the user agent.
+      user_agent: quiet ? null : ua,
       country: g.country,
-      region: g.region,
-      city: g.city,
-      postal: g.postal,
-      latitude: g.latitude,
-      longitude: g.longitude,
+      region: quiet ? null : g.region,
+      city: quiet ? null : g.city,
+      postal: quiet ? null : g.postal,
+      latitude: quiet ? null : g.latitude,
+      longitude: quiet ? null : g.longitude,
       timezone: g.timezone,
-      asn: g.asn,
-      asn_org: g.asn_org,
+      asn: quiet ? null : g.asn,
+      asn_org: quiet ? null : g.asn_org,
       is_bot: bot,
       edge,
       device_id: deviceId,

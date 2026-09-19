@@ -835,9 +835,40 @@ window.MCC_MODEL = (function () {
   /* =========================================================
      9. COPY — what somebody thought was worth taking
      ========================================================= */
+  /* WHOSE WORDS ARE THEY. That a copy happened, and how much came with it,
+     is always worth recording and is never anybody's personal data. The text
+     itself only is when it is the house's own writing on a public page.
+     Three cases where it is not, and all three record the length alone:
+     a signed-in surface, where what is painted on screen is the visitor's
+     own account data; a field or a contenteditable, where the words are
+     something they typed, which this file does not read; and anything the
+     page has marked private. */
+  function housesOwnWords(node) {
+    var el = node && (node.nodeType === 1 ? node : node.parentElement);
+    for (; el; el = el.parentElement) {
+      var t = el.tagName;
+      if (t === "INPUT" || t === "TEXTAREA") return false;
+      if (el.isContentEditable) return false;
+      if (el.hasAttribute && el.hasAttribute("data-private")) return false;
+    }
+    return true;
+  }
+  function signedIn() {
+    return !!safe(function () {
+      var s = JSON.parse(localStorage.getItem("mccdb_session") || "null");
+      return s && s.access_token;
+    });
+  }
+
   doc.addEventListener("copy", function () {
-    var sel = safe(function () { return String(getSelection()); }) || "";
-    T("copy", { chars: sel.length, text: sel.trim().replace(/\s+/g, " ").slice(0, 120) });
+    var s = safe(function () { return getSelection(); });
+    var sel = String(s || "");
+    var quotable = !!s && !signedIn() &&
+      housesOwnWords(s.anchorNode) && housesOwnWords(s.focusNode);
+    T("copy", {
+      chars: sel.length,
+      text: quotable ? sel.trim().replace(/\s+/g, " ").slice(0, 120) : null,
+    });
   });
 
   /* =========================================================

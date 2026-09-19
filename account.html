@@ -80,7 +80,11 @@
          and no membership column: nothing typed here can make anybody an
          admin. The two consents are separate, optional, and gate nothing —
          the record is already unlocked by the time this form is on screen. -->
-    <div class="ac__card fan" id="fanCard" hidden>
+    <!-- data-private: everything painted below is the visitor's own record —
+         legal name, street address, phone. The copy sensor in js/analytics.js
+         reads this attribute and will record that a copy happened without
+         ever banking the words. -->
+    <div class="ac__card fan" id="fanCard" data-private hidden>
       <p class="ac__lab">Your details</p>
       <p class="ac__sub" id="fanWhy">Tell us where to send things. The music is already unlocked.</p>
 
@@ -107,7 +111,8 @@
         <input type="checkbox" id="fnShare">
         <span id="fnShareLabel">Share my details with partners McCluster works with.</span>
       </label>
-      <p class="fan__fine">Both are optional and neither unlocks anything. You can change them here any time.</p>
+      <p class="fan__fine">Both are optional and neither unlocks anything. You can change them here any time.
+        <a href="privacy.html">What we record, and how to have it deleted</a>.</p>
 
       <button class="ac__btn" id="fnSave" type="button">Save</button>
       <p class="ac__note" id="fnMsg"></p>

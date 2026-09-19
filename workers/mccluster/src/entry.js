@@ -116,6 +116,15 @@ export default {
       put('cf-ipcontinent', cf.continent);
       put('cf-asn', cf.asn);
       put('cf-as-organization', cf.asOrganization);
+      /* THE OPT-OUT HAS TO SURVIVE THE HOP. This route builds a fresh header
+         set rather than passing the request's own through, which means any
+         header not named here is dropped — and a privacy signal that gets
+         dropped on the way to the only thing that acts on it is worse than
+         never having been sent, because the notice says it is honoured.
+         The collector reads both names. */
+      put('sec-gpc', request.headers.get('sec-gpc'));
+      put('dnt', request.headers.get('dnt'));
+
       /* A visitor's own token, when they have one, so the collector can
          attribute the event. It is verified there, never here. */
       const auth = request.headers.get('authorization');

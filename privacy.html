@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Privacy: what this site records, and what it never does · Matthew McCluster</title>
+  <meta name="description" content="Plainly: what matthew.mccluster.org records about a visit, what it deliberately does not record, who it is shared with, how long it is kept, and how to have it deleted.">
+  <link rel="canonical" href="https://matthew.mccluster.org/privacy.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Privacy: what this site records">
+  <meta property="og:description" content="The whole list, in plain English. No Google Analytics, no advertising pixels, nothing sold to anyone.">
+  <meta property="og:url" content="https://matthew.mccluster.org/privacy.html">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    .pv { max-width: 42rem; margin: 0 auto; padding: clamp(3.4rem, 8vh, 5rem) clamp(1.1rem, 4vw, 2rem) 9rem;
+      font-family: var(--body); color: var(--cream); }
+    .pv__k { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--ruby-hot); }
+    .pv h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.9;
+      font-size: clamp(2.2rem, 10vw, 3.6rem); margin: 0.4rem 0 0.7rem; }
+    .pv__lede { color: var(--cream-dim); font-size: 1rem; line-height: 1.75; max-width: 54ch; }
+    .pv h2 { font-family: var(--sig); text-transform: uppercase; font-size: clamp(1.1rem, 4.4vw, 1.5rem);
+      line-height: 1; margin: 2.6rem 0 0.6rem; }
+    .pv p { font-size: 0.95rem; line-height: 1.75; color: var(--cream-dim); margin: 0 0 0.9rem; }
+    .pv b { color: var(--cream); }
+    .pv ul { margin: 0 0 1rem; padding-left: 1.1rem; }
+    .pv li { font-size: 0.95rem; line-height: 1.7; color: var(--cream-dim); margin-bottom: 0.4rem; }
+    .pv__note { border-radius: 14px; padding: 1rem 1.1rem; margin: 1.3rem 0;
+      background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px var(--edge); }
+    .pv__note p:last-child { margin-bottom: 0; }
+    .pv__date { margin-top: 2.6rem; font-size: 0.78rem; letter-spacing: 0.04em; color: var(--cream-dim); opacity: 0.75; }
+    .pv a { color: var(--ruby-hot); }
+  </style>
+</head>
+<body class="songpage">
+  <main>
+    <section class="pv">
+
+      <p class="pv__k">matthew.mccluster.org &middot; privacy</p>
+      <h1>What this site<br>records about you.</h1>
+      <p class="pv__lede">The whole list, in plain English, including the parts most sites leave
+        vague. This site runs <b>no Google Analytics, no advertising pixel and no third-party
+        tracker</b> of any kind. What it measures, it measures itself, and keeps to itself.</p>
+
+      <h2>What the server sees</h2>
+      <p>Every request to every website on the internet arrives carrying an address, because
+        that is how a reply finds its way back. This one writes it down:</p>
+      <ul>
+        <li>Your <b>IP address</b>.</li>
+        <li>An <b>approximate location worked out from that address</b> &mdash; country, region,
+          city, postal code, an approximate latitude and longitude, and a timezone. This is
+          derived from the network, not from your device's location services, and it is
+          accurate to roughly a city. It is not your street.</li>
+        <li>The <b>network you are on</b> &mdash; its operator's name and number, which is
+          usually your internet provider or mobile carrier.</li>
+        <li>Your <b>browser's user-agent string</b>, and whether the request looks automated.</li>
+      </ul>
+      <p>These are observed on arrival, not asked for. A browser cannot be asked for its own
+        address &mdash; there is no such thing &mdash; which is precisely why the recording
+        happens on the server instead of in the page.</p>
+
+      <h2>What your browser volunteers</h2>
+      <p>Alongside that, the page notes what the device can say about itself: screen size and
+        colour depth, orientation, graphics hardware, touch support, language preferences,
+        dark-mode and reduced-motion settings, whether cookies are on, battery level and
+        charging state, and the speed of the connection. This is how the site is kept working on
+        real phones rather than on a developer's desk.</p>
+
+      <h2>How a visit is counted</h2>
+      <ul>
+        <li>A <b>random identifier stored in your browser</b>, so a return visit can be told from
+          a first one. It is a random number and nothing else. <b>Clearing your browser data
+          genuinely erases it</b>, and the next visit is a stranger.</li>
+        <li>A <b>session identifier</b> for one sitting, which lapses after thirty minutes of
+          nothing.</li>
+        <li>If you are <b>signed in</b>, your account, verified against the login server.</li>
+      </ul>
+      <div class="pv__note">
+        <p><b>Deliberately not done:</b> there is no canvas, audio or font fingerprinting here.
+          Those techniques exist specifically to recognise somebody who has cleared their data,
+          which makes them a tracking measure rather than a counting one. The identifier this
+          site uses is one you can actually get rid of.</p>
+      </div>
+
+      <h2>What you do while you are here</h2>
+      <p>Which pages you open and for how long; how far down you read and which sections held
+        your attention; what you click, and the clicks that indicate the page is fighting you
+        &mdash; a button tapped repeatedly, or one that did nothing. Errors that only ever
+        happen to visitors. How quickly the page actually loaded on your device. When a form is
+        started, which fields were visited in which order, how long each took and how often it
+        was corrected. That a selection was copied, and how long it was.</p>
+
+      <h2>What is never recorded</h2>
+      <ul>
+        <li><b>Nothing you type.</b> Form measurement records field names, order and timing. The
+          characters are never read, ever.</li>
+        <li><b>Password, payment and one-time-code fields are not instrumented at all</b>, not
+          even for timing.</li>
+        <li><b>Text you copy on a signed-in page, or out of any field, is not kept</b> &mdash;
+          only the fact that a copy happened and its length. What is on screen there is your
+          information, not this site's.</li>
+        <li>No microphone, no camera, no clipboard reading, no location from your device's own
+          location services.</li>
+      </ul>
+
+      <h2>Who it is shared with</h2>
+      <p><b>Nobody.</b> This data is not sold, not rented, not traded, and not handed to
+        advertisers, data brokers or analytics companies &mdash; because there are none involved.
+        It lives on infrastructure this site runs, is readable only by the site's owner, and is
+        used to make the thing work better and to understand what people came for. It would be
+        disclosed only where the law requires it.</p>
+
+      <h2>How long it is kept</h2>
+      <p>Behavioural records are retained for up to <b>400 days</b> and then purged. Ask sooner
+        and it goes sooner.</p>
+
+      <h2>Your rights, and how to use them</h2>
+      <p>Wherever you live, and regardless of whether your state or country has a law that
+        grants them, you can ask for any of the following and it will be honoured:</p>
+      <ul>
+        <li><b>See it</b> &mdash; a copy of what is held about you.</li>
+        <li><b>Correct it</b> if something is wrong.</li>
+        <li><b>Delete it</b> &mdash; all of it.</li>
+        <li><b>Take it with you</b> in a portable format.</li>
+        <li><b>Object</b> to the measurement entirely.</li>
+      </ul>
+      <p>Write to <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a> and say which.
+        No account or special form is needed; if you are not signed in, say roughly when and
+        from where you visited so the right records can be found. A reply comes within 45 days.
+        If a request is refused you may appeal by replying, and that appeal gets a written
+        answer.</p>
+      <p>Connecticut residents may also contact the Office of the Attorney General. There is no
+        sale of personal data and no targeted advertising to opt out of here, because neither
+        happens.</p>
+
+      <h2>Turning it off</h2>
+      <p>The site honours <b>Global Privacy Control</b> and the browser's Do Not Track setting
+        where they are sent. Blocking the measurement entirely with any content blocker is fine;
+        nothing on the site depends on it, and nothing will be withheld from you for it.</p>
+
+      <p class="pv__date">Last updated 19 September 2026. Questions:
+        <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a>.</p>
+
+    </section>
+  </main>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="whip.html" data-appnav="sites">
+      <img class="appbar__we" src="assets/img/we-icon-dark-bar.png" alt="">
+      <span>Whip</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+</body>
+</html>

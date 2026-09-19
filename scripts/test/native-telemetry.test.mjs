@@ -319,3 +319,74 @@ test('scroll depth is clamped, because the denominator moves', async () => {
   assert.match(js, /Math\.min\(100, Math\.max\(0, Math\.round\(scrollY \/ h \* 100\)\)\)/,
     'a page that shrinks after scrolling must not report more than 100%');
 });
+
+/* ---------------------------------------------------------------
+   5. THE NOTICE, AND THE CODE THAT HAS TO MATCH IT
+   --------------------------------------------------------------- */
+
+test('the site tells visitors what it records', async () => {
+  /* The collection shipped before the disclosure did. Everything above this
+     line observes an address, a city, a network and a device; none of it was
+     written down anywhere a visitor could read it, which is the part a
+     regulator opens first. */
+  const html = await read('privacy.html');
+  for (const fact of [/IP address/i, /device/i, /network/i, /delete/i]) {
+    assert.match(html, fact, `the notice must name what is actually collected: ${fact}`);
+  }
+  assert.match(html, /matthew@mccluster\.org/,
+    'a right nobody can exercise is not a right: the notice must say where to write');
+  assert.doesNotMatch(html, /Google Analytics[^.]*\bis\b(?![^.]*no\b)/i,
+    'the notice must not claim a tag the site does not run');
+});
+
+test('the copy sensor does not take what belongs to the visitor', async () => {
+  /* It banked 120 characters of any selection. On a signed-in surface the
+     words painted on screen ARE the visitor's own record — their address,
+     their order, their message — so the sensor was quietly collecting
+     personal data from the one place it had no business reading. */
+  const js = code(await read('js/analytics.js'));
+  assert.match(js, /function signedIn\(\)/,
+    'the sensor must be able to tell an account surface from a public page');
+  assert.match(js, /function housesOwnWords\(node\)/,
+    'the sensor must be able to tell its own writing from somebody else\'s');
+  assert.match(js, /t === "INPUT" \|\| t === "TEXTAREA"/,
+    'a selection inside a field is something they typed, which is never read');
+  assert.match(js, /el\.isContentEditable/,
+    'a contenteditable is a field wearing a different tag');
+  assert.match(js, /data-private/,
+    'a page must be able to mark itself unquotable');
+  assert.match(js, /text: quotable \?/,
+    'the text must be conditional; the length always survives');
+});
+
+test('the privacy signal is honoured, not merely written down', async () => {
+  /* GEO_HEADERS already collected sec-gpc and dnt — into a column, as
+     trivia, while every identifying field was written anyway. The notice
+     now says the signal is honoured, and a claim in a privacy notice that
+     the code does not implement is the violation by itself. */
+  const ts = await read('supabase/functions/collect/index.ts');
+  assert.match(ts, /function optedOut\(h: Headers_\)/,
+    'the signal must be read');
+  assert.match(ts, /h\.get\("sec-gpc"\) === "1" \|\| h\.get\("dnt"\) === "1"/,
+    'both names must count');
+  assert.match(ts, /const quiet = optedOut\(h\);/,
+    'the decision must be made once, before any row is built');
+  for (const field of ['ip', 'deviceId', 'sessionId']) {
+    assert.match(ts, new RegExp(`const ${field} = quiet \\?`),
+      `${field} follows a person between sittings and must not survive the signal`);
+  }
+  assert.match(ts, /city: quiet \? null : g\.city/,
+    'the city must go; the country may stay, because a count is not a person');
+  assert.match(ts, /country: g\.country,/,
+    'the visit must still be counted, or the signal becomes under-reporting');
+});
+
+test('the signal survives the Worker hop', async () => {
+  /* The intake route builds a fresh header set, so anything not named there
+     never reaches the only code that acts on it. */
+  const js = await read('workers/mccluster/src/entry.js');
+  assert.match(js, /put\('sec-gpc', request\.headers\.get\('sec-gpc'\)\)/,
+    'GPC must be forwarded to the collector');
+  assert.match(js, /put\('dnt', request\.headers\.get\('dnt'\)\)/,
+    'Do Not Track must be forwarded too');
+});

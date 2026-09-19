@@ -279,6 +279,10 @@ html { scroll-behavior: smooth; }
          shop took the tab, so this line is now the page's only door.
          Deleting it orphans a whole room. */
       { href: "hitman-facility.html", label: "HITMAN: Prim3 Site 0" },
+      /* The site measures every visit itself — address, network, device,
+         what was clicked. This map is the only door to the page that says
+         so, and a disclosure nobody can reach is not a disclosure. */
+      { href: "privacy.html",   label: "Privacy: what this site records" },
     ] },
   ];
 
