@@ -1,12 +1,7 @@
 name: Deploy isolated McCluster MCP transport
+# api.mccluster.org/v1/core/mcp is the automatic production transport.
+# This isolated transport is manual/bootstrap-only until MCP_EDGE is deliberately activated.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'workers/mccluster-mcp/**'
-      - 'scripts/mcp-contract-check.mjs'
-      - 'scripts/worker-deployment-state.mjs'
-      - '.github/workflows/deploy-mccluster-mcp.yml'
   workflow_dispatch:
     inputs:
       bootstrap:
