@@ -16,7 +16,7 @@ const NOW = Date.parse('2026-09-14T20:00:00.000Z');
 
 function healthySnapshot() {
   return {
-    source: { repository: 'mcclusterishere/mccluster', github_main_sha: MAIN, observed_at: '2026-09-14T19:59:58.000Z' },
+    source: { repository: 'mcclusterishere/mccluster', github_main_sha: MAIN, github_promoted_sha: MAIN, promoted_ref: 'deploy/ovh-production', observed_at: '2026-09-14T19:59:58.000Z' },
     host: { hostname: 'mccluster-ovh', uptime: 'up 1 day', disk_root: 'ok', memory: 'ok' },
     services: {
       core_runner: 'active',
@@ -61,6 +61,19 @@ test('source/runtime SHA drift is explicit degradation', () => {
   assert.equal(health.overall, 'degraded');
   assert.equal(health.deployment.sha_match, false);
   assert.ok(health.degradation.some((item) => item.code === 'source_runtime_drift'));
+});
+
+test('promotion lag does not masquerade as runtime drift', () => {
+  const snapshot = healthySnapshot();
+  snapshot.source.github_main_sha = OTHER;
+  snapshot.source.github_promoted_sha = MAIN;
+  snapshot.deployment.deployed_sha = MAIN;
+  const health = aggregateSystemHealth(snapshot, { nowMs: NOW });
+  assert.equal(health.overall, 'ok');
+  assert.equal(health.deployment.sha_match, true);
+  assert.equal(health.deployment.promotion_lag, true);
+  assert.equal(health.source.github_promoted_sha, MAIN);
+  assert.ok(!health.degradation.some((item) => item.code === 'source_runtime_drift'));
 });
 
 test('unreachable Supabase or inactive Core runner is a hard failure', () => {
