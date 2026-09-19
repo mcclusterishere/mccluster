@@ -163,7 +163,7 @@ test('the remote allowlist is enforced and still carries media.job.get', async (
   const source = await read('workers/mccluster-mcp/src/mcp.js');
   assert.match(source, /REMOTE_CAPABILITIES = new Set\(/);
   for (const capability of [
-    'core.resume', 'system.health', 'ai.chat', 'research.web', 'objective.plan',
+    'core.resume', 'system.health', 'ai.chat', 'compute.task.get', 'research.web', 'objective.plan',
     'media.job.get', 'media.models.search', 'image.generate', 'video.generate',
     'audio.generate', 'model3d.generate', 'world.generate', 'game.build'
   ]) {
