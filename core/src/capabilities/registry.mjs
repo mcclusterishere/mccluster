@@ -126,6 +126,32 @@ function publicBinding(binding, available, preferOwned = true) {
   };
 }
 
+const DEFAULT_SOVEREIGN_CAPABILITIES = new Set(['image.generate', 'video.generate', 'audio.generate', 'model3d.generate']);
+const KNOWN_HOSTED_METERED_PROVIDERS = new Set(['fal', 'replicate', 'runway', 'openai']);
+
+export function sovereignMode(env = process.env) {
+  const value = String(env?.MCCLUSTER_SOVEREIGN_MEDIA || 'off').trim().toLowerCase();
+  if (!['off', 'prefer', 'required'].includes(value)) {
+    throw new Error('MCCLUSTER_SOVEREIGN_MEDIA must be one of: off, prefer, required');
+  }
+  return value;
+}
+
+export function governedCapabilities(env = process.env) {
+  const raw = env?.MCCLUSTER_SOVEREIGN_CAPABILITIES;
+  if (!raw) return new Set(DEFAULT_SOVEREIGN_CAPABILITIES);
+  const values = String(raw).split(',').map((value) => value.trim()).filter(Boolean);
+  return new Set(values);
+}
+
+export function isSovereignBinding(binding) {
+  const provider = String(binding?.provider || '').toLowerCase();
+  if (KNOWN_HOSTED_METERED_PROVIDERS.has(provider)) return false;
+  const hosting = binding?.economics?.hosting;
+  const billing = binding?.economics?.billing;
+  return (hosting === 'owned' || hosting === 'self-hosted') && (billing === 'free' || billing === 'compute');
+}
+
 function liveBindings(staticBindings, toolSnapshot, capabilities) {
   const bindings = [...staticBindings];
   const ids = new Set(bindings.map((binding) => binding.id));
@@ -207,7 +233,7 @@ export class CapabilityRegistry {
     return this.snapshot(options);
   }
 
-  async resolve(id, { requirements = {}, force = false, preferOwned = true } = {}) {
+  async resolve(id, { requirements = {}, force = false, preferOwned = true, env = process.env, allowExternalFallback = false } = {}) {
     const capability = this.capabilities.get(id);
     if (!capability) throw Object.assign(new Error(`Unknown capability: ${id}`), { status: 404, code: 'UNKNOWN_CAPABILITY' });
     if (capability.lifecycle !== 'active') {
@@ -232,11 +258,44 @@ export class CapabilityRegistry {
       });
     }
 
+    const mode = sovereignMode(env);
+    const governed = governedCapabilities(env).has(id);
+    let routed = candidates;
+    let sovereign = false;
+
+    if (governed && mode !== 'off') {
+      const sovereignCandidates = candidates.filter(isSovereignBinding);
+      const externalCandidates = candidates.filter((binding) => !isSovereignBinding(binding));
+      const fallbackAuthorized = mode === 'prefer' && (
+        allowExternalFallback === true ||
+        String(env?.MCCLUSTER_SOVEREIGN_ALLOW_FALLBACK || '').toLowerCase() === 'true'
+      );
+
+      if (!sovereignCandidates.length && !fallbackAuthorized) {
+        throw Object.assign(new Error(`No sovereign capacity is available for ${id}`), {
+          status: 503,
+          code: 'NO_SOVEREIGN_CAPACITY',
+          detail: {
+            capability: id,
+            waiting: true,
+            refused_external: externalCandidates.map((binding) => publicBinding(binding, true, preferOwned))
+          }
+        });
+      }
+
+      if (sovereignCandidates.length) {
+        sovereign = true;
+        routed = mode === 'required' || !fallbackAuthorized
+          ? sovereignCandidates
+          : [...sovereignCandidates, ...externalCandidates];
+      }
+    }
+
     return {
       capability,
-      routingPolicy: { preferOwned },
-      binding: publicBinding(candidates[0], true, preferOwned),
-      alternatives: candidates.slice(1).map((binding) => publicBinding(binding, true, preferOwned)),
+      routingPolicy: { preferOwned, sovereignMode: mode, governed, sovereign },
+      binding: publicBinding(routed[0], true, preferOwned),
+      alternatives: routed.slice(1).map((binding) => publicBinding(binding, true, preferOwned)),
       refreshedAt: toolSnapshot.refreshedAt
     };
   }

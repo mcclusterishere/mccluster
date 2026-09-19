@@ -14,6 +14,9 @@ import { handleMetaWebhook } from './social/webhook.js';
 import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
+import { handleOpsRequest } from './ops/router.js';
+import { handleOpsMcp } from './ops/mcp.js';
+import { captureEstateSnapshot } from './ops/snapshot.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -201,6 +204,20 @@ export default {
       if (response) return response;
     }
 
+    if (path === '/v1/ops/mcp') {
+      try {
+        const { status, body } = await handleOpsMcp(request, env);
+        return reply(request, env, body, status);
+      } catch (error) {
+        return fail(request, env, error.message || 'Operations MCP request failed', error.status || 500, error.detail);
+      }
+    }
+
+    if (path === '/v1/ops' || path.startsWith('/v1/ops/')) {
+      const response = await handleOpsRequest(request, env);
+      if (response) return response;
+    }
+
     if (path === '/v1/ai' || path.startsWith('/v1/ai/')) {
       try {
         const user = await authUser(request, env);
@@ -227,6 +244,9 @@ export default {
       }),
       syncInstagramInsights(env, { limit: 25 }).catch((error) => {
         console.error(JSON.stringify({ event: 'social_instagram_insights_sync_failed', message: error instanceof Error ? error.message : String(error) }));
+      }),
+      captureEstateSnapshot(env).catch((error) => {
+        console.error(JSON.stringify({ event: 'ops_estate_snapshot_failed', message: error instanceof Error ? error.message : String(error) }));
       })
     ]));
   }

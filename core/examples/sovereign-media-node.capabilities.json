@@ -1,0 +1,108 @@
+{
+  "labels": {
+    "role": "sovereign-media",
+    "tier": "ephemeral-gpu",
+    "owner": "mccluster"
+  },
+  "max_leases": 1,
+  "capabilities": [
+    {
+      "capability": "image.generate",
+      "implementation": "local.flux",
+      "backend": "local-http",
+      "model": "FLUX-family open weights",
+      "version": "pin-at-deploy",
+      "features": {
+        "self_hosted": true,
+        "open_weights": true,
+        "text_to_image": true,
+        "reference_images": true,
+        "commercial_use": true
+      },
+      "input_schema": { "type": "object" },
+      "output_schema": { "type": "object" },
+      "max_concurrency": 1,
+      "min_vram_bytes": 12884901888,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4821/generate",
+        "health_url": "http://127.0.0.1:4821/health",
+        "timeout_ms": 3600000
+      }
+    },
+    {
+      "capability": "video.generate",
+      "implementation": "local.minimax-h3",
+      "backend": "local-http",
+      "model": "MiniMax H3 open weights",
+      "version": "pin-at-deploy",
+      "features": {
+        "self_hosted": true,
+        "open_weights": true,
+        "text_to_video": true,
+        "image_to_video": true,
+        "first_last_frame": true,
+        "native_audio": true,
+        "commercial_use": true
+      },
+      "input_schema": { "type": "object" },
+      "output_schema": { "type": "object" },
+      "max_concurrency": 1,
+      "min_vram_bytes": 25769803776,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4822/generate",
+        "health_url": "http://127.0.0.1:4822/health",
+        "timeout_ms": 7200000
+      }
+    },
+    {
+      "capability": "audio.generate",
+      "implementation": "local.stable-audio-open",
+      "backend": "local-http",
+      "model": "Stable Audio Open or successor open weights",
+      "version": "pin-at-deploy",
+      "features": {
+        "self_hosted": true,
+        "open_weights": true,
+        "text_to_audio": true,
+        "commercial_use": true
+      },
+      "input_schema": { "type": "object" },
+      "output_schema": { "type": "object" },
+      "max_concurrency": 1,
+      "min_vram_bytes": 12884901888,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4823/generate",
+        "health_url": "http://127.0.0.1:4823/health",
+        "timeout_ms": 3600000
+      }
+    },
+    {
+      "capability": "model3d.generate",
+      "implementation": "local.hunyuan3d",
+      "backend": "local-http",
+      "model": "Hunyuan3D open weights",
+      "version": "pin-at-deploy",
+      "features": {
+        "self_hosted": true,
+        "open_weights": true,
+        "text_to_3d": true,
+        "image_to_3d": true,
+        "format_glb": true,
+        "commercial_use": true
+      },
+      "input_schema": { "type": "object" },
+      "output_schema": { "type": "object" },
+      "max_concurrency": 1,
+      "min_vram_bytes": 17179869184,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4824/generate",
+        "health_url": "http://127.0.0.1:4824/health",
+        "timeout_ms": 3600000
+      }
+    }
+  ]
+}
