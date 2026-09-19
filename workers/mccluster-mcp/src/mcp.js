@@ -44,10 +44,13 @@ const REMOTE_CAPABILITIES = new Set([
   // starts by guessing.
   'core.resume',
   'system.health',
+  'ai.chat',
+  'research.web',
   'media.models.search',
   'media.model.recommend',
   'media.job.get',
   'repo.inspect',
+  'objective.plan',
   // risk: spend, approval: budget-gated
   'image.generate',
   'video.generate',
@@ -56,6 +59,7 @@ const REMOTE_CAPABILITIES = new Set([
   'world.generate',
   // risk: write, approval: review-required
   'code.build',
+  'game.build',
   'deploy.preview'
 ]);
 
