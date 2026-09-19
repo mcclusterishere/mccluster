@@ -45,3 +45,14 @@ test('owner approvals stay human-gated at Cloudflare', () => {
   assert.match(source, /data-action="approval-decide"/);
   assert.match(source, /pending_approvals/);
 });
+
+
+test('resident local AI chat is durable and multi-turn', () => {
+  assert.match(source, /SURFACES = \["home", "ai", "work", "create", "system", "apps"\]/);
+  assert.match(source, /ops_ai_threads/);
+  assert.match(source, /ops_ai_messages/);
+  assert.match(source, /function waitForAiTask\(/);
+  assert.match(source, /callCoreTool\("ai\.chat", \{ messages: history/);
+  assert.match(source, /compute_task_id/);
+  assert.match(source, /Message McCluster AI/);
+});
