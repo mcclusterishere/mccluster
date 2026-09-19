@@ -293,6 +293,27 @@ function policyEvidence(job, output) {
       break;
     }
 
+    case 'lead_rescore': {
+      requireValue(job, finite(output.recomputed_count), 'lead rescore must report recomputed_count');
+      requireValue(job, Number(output.recomputed_count) >= 0, 'lead rescore recomputed_count cannot be negative');
+      requireValue(job, Boolean(text(output.summary)), 'lead rescore must report a summary');
+      if (output.target_score !== null && output.target_score !== undefined) {
+        requireValue(
+          job,
+          output.target_score && typeof output.target_score === 'object' && !Array.isArray(output.target_score),
+          'lead rescore target_score must be an object when present',
+        );
+      }
+      records.push({
+        kind: 'database_recompute',
+        operation: 'ops_recompute_lead_scores',
+        recomputed_count: Number(output.recomputed_count),
+        target_company_id: job?.target_type === 'company' ? text(job?.target_id) : null,
+        target_score_present: Boolean(output.target_score),
+      });
+      break;
+    }
+
     case 'host_health': {
       requireValue(job, validDate(output.checked_at), 'host health must report checked_at');
       requireValue(job, Boolean(text(output?.host?.hostname)), 'host health must report hostname');
