@@ -4,6 +4,7 @@ import { enqueueJob } from '../supabase.mjs';
 import { researchWeb } from './research.mjs';
 import { coreResume } from './resume.mjs';
 import { previewConfigured } from '../preview-policy.mjs';
+import { computeTaskById } from '../compute/store.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PREVIEW_CONFIGURED = previewConfigured();
@@ -34,6 +35,11 @@ const BASE_TOOLS = [
     name: 'core.resume', title: 'Resume a McCluster working session',
     description: 'Return the current workspace, running/queued work, stale leases, pending approvals, capability catalog version, system health and exact deploy commit. Read-only; queues and changes nothing.',
     inputSchema: { type: 'object', required: ['org_id'], properties: { org_id: { type: 'string' }, since_hours: { type: 'integer', minimum: 1, maximum: 168 }, limit: { type: 'integer', minimum: 1, maximum: 50 } }, additionalProperties: false }
+  },
+  {
+    name: 'core.compute.task.get', title: 'Read compute task',
+    description: 'Read one durable compute task owned by the requested organization, including status, result, and error. Read-only.',
+    inputSchema: { type: 'object', required: ['org_id', 'task_id'], properties: { org_id: { type: 'string' }, task_id: { type: 'string' } }, additionalProperties: false }
   },
   {
     name: 'core.repo.inspect', title: 'Inspect repository',
@@ -84,6 +90,15 @@ export async function callControlTool(name, args = {}) {
       sinceHours: Math.min(168, Math.max(1, Number(args.since_hours || 24))),
       limit: Math.min(50, Math.max(1, Number(args.limit || 25)))
     });
+  }
+
+  if (name === 'core.compute.task.get') {
+    const orgId = requireOrg(args.org_id);
+    const taskId = text(args.task_id, 100);
+    if (!taskId) throw Object.assign(new Error('task_id is required'), { status: 400 });
+    const task = await computeTaskById({ orgId, taskId });
+    if (!task) throw Object.assign(new Error('compute task not found'), { status: 404 });
+    return { task };
   }
 
   if (name === 'core.repo.inspect') {
