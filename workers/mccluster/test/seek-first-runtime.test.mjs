@@ -8,8 +8,8 @@ import { sourceByKey } from '../src/seek-first/source-registry.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..', '..', '..');
-const migrationPath = resolve(repoRoot, 'supabase', 'migrations', '20260909034000_spatial_intelligence.sql');
-const idempotencyPath = resolve(repoRoot, 'supabase', 'migrations', '20260909034100_spatial_observation_idempotency.sql');
+const migrationPath = resolve(repoRoot, 'supabase', 'replay_migrations', '20260909034000_spatial_intelligence.sql');
+const idempotencyPath = resolve(repoRoot, 'supabase', 'replay_migrations', '20260909034100_spatial_observation_idempotency.sql');
 const tenantAgentPath = resolve(here, '..', 'src', 'here-tenant-agent.js');
 
 function fakeJson(data, status = 200) {
