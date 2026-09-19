@@ -5,6 +5,7 @@ on:
     paths:
       - "core/**"
       - "supabase/migrations/**"
+      - "supabase/production-ledger.json"
       - "scripts/deploy-ovh-core.sh"
       - "scripts/mccluster-vps-reconcile.sh"
       - "scripts/control-plane-drift-contract-check.mjs"
@@ -14,6 +15,7 @@ on:
     paths:
       - "core/**"
       - "supabase/migrations/**"
+      - "supabase/production-ledger.json"
       - "scripts/deploy-ovh-core.sh"
       - "scripts/mccluster-vps-reconcile.sh"
       - "scripts/control-plane-drift-contract-check.mjs"

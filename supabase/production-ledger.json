@@ -1,0 +1,563 @@
+{
+  "schema_version": "mccluster-supabase-production-ledger/v1",
+  "project_ref": "zmnhbrjyhxzhkxmhkexs",
+  "production_sql_cutover_version": "20260919020830",
+  "migration_count": 138,
+  "latest_version": "20260919094323",
+  "latest_name": "native_telemetry_page_health_legacy_bridge",
+  "ledger_sha256": "838b581ac8f7825f0ac1aead603e69de2a696ded39aded7f6874a8c5c5e13b9f",
+  "migrations": [
+    {
+      "version": "20260722211609",
+      "name": "crm_leads"
+    },
+    {
+      "version": "20260722211851",
+      "name": "connect_saas_providers"
+    },
+    {
+      "version": "20260722212010",
+      "name": "creator_cuts"
+    },
+    {
+      "version": "20260812011721",
+      "name": "offerings_ledger"
+    },
+    {
+      "version": "20260812011734",
+      "name": "domain_hosting_offerings"
+    },
+    {
+      "version": "20260812011844",
+      "name": "activation_sprints"
+    },
+    {
+      "version": "20260812011904",
+      "name": "management_upgrade_offerings"
+    },
+    {
+      "version": "20260812013014",
+      "name": "link_offerings_to_square_plans"
+    },
+    {
+      "version": "20260812031505",
+      "name": "customer_music_licence"
+    },
+    {
+      "version": "20260818001911",
+      "name": "equity_uprise_platform"
+    },
+    {
+      "version": "20260818002042",
+      "name": "equity_uprise_seed"
+    },
+    {
+      "version": "20260818002120",
+      "name": "shake_delivery"
+    },
+    {
+      "version": "20260818002640",
+      "name": "harden_function_surface"
+    },
+    {
+      "version": "20260819182354",
+      "name": "inbox"
+    },
+    {
+      "version": "20260819182749",
+      "name": "inbox_view_runs_as_caller"
+    },
+    {
+      "version": "20260823194420",
+      "name": "inbox_outbound"
+    },
+    {
+      "version": "20260823194602",
+      "name": "brain_kb_memory_costs"
+    },
+    {
+      "version": "20260823194630",
+      "name": "memory_note_atomic"
+    },
+    {
+      "version": "20260823194658",
+      "name": "more_channels"
+    },
+    {
+      "version": "20260823194743",
+      "name": "tenancy_orgs"
+    },
+    {
+      "version": "20260823194808",
+      "name": "kb_search_scoped_to_org"
+    },
+    {
+      "version": "20260823194845",
+      "name": "mcp_tool_layer"
+    },
+    {
+      "version": "20260823194901",
+      "name": "ai_experiments"
+    },
+    {
+      "version": "20260823194912",
+      "name": "hosting_year"
+    },
+    {
+      "version": "20260823195041",
+      "name": "org_helpers_out_of_the_api"
+    },
+    {
+      "version": "20260824222918",
+      "name": "outreach_engine"
+    },
+    {
+      "version": "20260829141551",
+      "name": "domains"
+    },
+    {
+      "version": "20260903032322",
+      "name": "whip_mobility_tables"
+    },
+    {
+      "version": "20260903032332",
+      "name": "whip_mobility_indexes_and_rls"
+    },
+    {
+      "version": "20260903032356",
+      "name": "whip_mobility_seed"
+    },
+    {
+      "version": "20260904210053",
+      "name": "enforce_unique_gmail_campaign_message"
+    },
+    {
+      "version": "20260905194659",
+      "name": "client_connect"
+    },
+    {
+      "version": "20260905194708",
+      "name": "esmer_client_org"
+    },
+    {
+      "version": "20260905194724",
+      "name": "inquiry_notifications"
+    },
+    {
+      "version": "20260905194732",
+      "name": "sso_client_registry"
+    },
+    {
+      "version": "20260906010741",
+      "name": "add_outreach_autopilot_layer"
+    },
+    {
+      "version": "20260906010959",
+      "name": "wire_autopilot_event_loop"
+    },
+    {
+      "version": "20260906011339",
+      "name": "ai_context_private_memory_v2"
+    },
+    {
+      "version": "20260906021256",
+      "name": "add_media_harness_core"
+    },
+    {
+      "version": "20260906021421",
+      "name": "extend_media_harness_memory"
+    },
+    {
+      "version": "20260906023108",
+      "name": "m_account_identity_devices"
+    },
+    {
+      "version": "20260906023153",
+      "name": "m_account_identity_spine"
+    },
+    {
+      "version": "20260906023449",
+      "name": "m_account_device_touch"
+    },
+    {
+      "version": "20260906023705",
+      "name": "m_account_people_layer"
+    },
+    {
+      "version": "20260906024102",
+      "name": "m_account_policy_and_index_hardening"
+    },
+    {
+      "version": "20260906024210",
+      "name": "lock_migrations_table_from_client_roles"
+    },
+    {
+      "version": "20260906024642",
+      "name": "m_account_uid_rpc"
+    },
+    {
+      "version": "20260906042755",
+      "name": "control_authority"
+    },
+    {
+      "version": "20260906042843",
+      "name": "media_cost_controls"
+    },
+    {
+      "version": "20260906043809",
+      "name": "media_cost_precision"
+    },
+    {
+      "version": "20260906043822",
+      "name": "media_release_precision"
+    },
+    {
+      "version": "20260906174445",
+      "name": "social_growth_engine"
+    },
+    {
+      "version": "20260906181758",
+      "name": "control_plane_authority_v2"
+    },
+    {
+      "version": "20260907064732",
+      "name": "capability_role_reconciliation"
+    },
+    {
+      "version": "20260907073345",
+      "name": "social_publish_lease_and_connect"
+    },
+    {
+      "version": "20260907090014",
+      "name": "social_hardening_p0"
+    },
+    {
+      "version": "20260907095808",
+      "name": "identity_spine_house_owner_p0"
+    },
+    {
+      "version": "20260908142728",
+      "name": "close_anonymous_rpc_holes"
+    },
+    {
+      "version": "20260908160951",
+      "name": "esmer_canonical_host"
+    },
+    {
+      "version": "20260908161740",
+      "name": "org_invitations"
+    },
+    {
+      "version": "20260908233303",
+      "name": "reconcile_social_credential_and_lease"
+    },
+    {
+      "version": "20260908233607",
+      "name": "media_spend_guard"
+    },
+    {
+      "version": "20260908233828",
+      "name": "equity_uprise_policy_graph_tables"
+    },
+    {
+      "version": "20260908234055",
+      "name": "equity_uprise_capabilities_and_rls_enable"
+    },
+    {
+      "version": "20260908234117",
+      "name": "equity_uprise_research_rls_and_grants"
+    },
+    {
+      "version": "20260908234300",
+      "name": "equity_uprise_automation_tables"
+    },
+    {
+      "version": "20260908234320",
+      "name": "equity_uprise_automation_seed_and_rls"
+    },
+    {
+      "version": "20260908234352",
+      "name": "equity_uprise_worker_rpc_and_booking_tokens"
+    },
+    {
+      "version": "20260908234509",
+      "name": "equity_uprise_publication_tables"
+    },
+    {
+      "version": "20260908234531",
+      "name": "equity_uprise_publication_rls_and_targets"
+    },
+    {
+      "version": "20260908234602",
+      "name": "equity_uprise_outreach_bridge"
+    },
+    {
+      "version": "20260908234946",
+      "name": "close_view_rls_bypass"
+    },
+    {
+      "version": "20260908235028",
+      "name": "revoke_anon_writes_on_legacy_eu_tables"
+    },
+    {
+      "version": "20260908235526",
+      "name": "tmp_diag_request_headers"
+    },
+    {
+      "version": "20260908235745",
+      "name": "rate_limit_anonymous_inserts"
+    },
+    {
+      "version": "20260908235839",
+      "name": "tmp_diag_roles"
+    },
+    {
+      "version": "20260908235924",
+      "name": "rate_limit_use_jwt_role"
+    },
+    {
+      "version": "20260909000034",
+      "name": "rate_limit_add_global_ceiling"
+    },
+    {
+      "version": "20260909000102",
+      "name": "tmp_diag_pt429"
+    },
+    {
+      "version": "20260909000135",
+      "name": "drop_rate_limit_diagnostics"
+    },
+    {
+      "version": "20260909232205",
+      "name": "level_3_media_client_org"
+    },
+    {
+      "version": "20260909235047",
+      "name": "level_3_media_social_channels"
+    },
+    {
+      "version": "20260909235739",
+      "name": "leads_status_vocabulary"
+    },
+    {
+      "version": "20260910000258",
+      "name": "level_3_media_credential_binding"
+    },
+    {
+      "version": "20260911224719",
+      "name": "create_prim3_course_progress"
+    },
+    {
+      "version": "20260912072716",
+      "name": "compute_node_protocol"
+    },
+    {
+      "version": "20260912220809",
+      "name": "mccluster_fabric_v1"
+    },
+    {
+      "version": "20260913014855",
+      "name": "level3_media_self_service_commerce"
+    },
+    {
+      "version": "20260913014905",
+      "name": "level3_auth_rate_limit"
+    },
+    {
+      "version": "20260913015117",
+      "name": "level3_owner_self_service_settings"
+    },
+    {
+      "version": "20260913015458",
+      "name": "level3_public_storefront_profile"
+    },
+    {
+      "version": "20260913015626",
+      "name": "level3_public_product_catalog_rpc"
+    },
+    {
+      "version": "20260913020628",
+      "name": "rename_cluster_id_to_mccluster_id"
+    },
+    {
+      "version": "20260913021158",
+      "name": "mccluster_identity_and_network_foundation"
+    },
+    {
+      "version": "20260913022344",
+      "name": "mnet_phase1_social_data_plane"
+    },
+    {
+      "version": "20260913022505",
+      "name": "mnet_phase1_outbox_and_features"
+    },
+    {
+      "version": "20260913022547",
+      "name": "mnet_phase1_security_hardening"
+    },
+    {
+      "version": "20260913023331",
+      "name": "mnet_surface_onboarding_and_scoped_feed"
+    },
+    {
+      "version": "20260913023354",
+      "name": "mnet_scaffold_registered_product_client_surfaces"
+    },
+    {
+      "version": "20260913023410",
+      "name": "mnet_global_feed_for_main_network_surfaces"
+    },
+    {
+      "version": "20260913023845",
+      "name": "mnet_platform_api_commercial_layer"
+    },
+    {
+      "version": "20260913024042",
+      "name": "platform_api_credit_exhaustion_guard"
+    },
+    {
+      "version": "20260913024201",
+      "name": "mnet_notifications_and_api_catalog_expansion"
+    },
+    {
+      "version": "20260913024228",
+      "name": "platform_api_plan_and_billing_scaffold"
+    },
+    {
+      "version": "20260913032256",
+      "name": "mccluster_compute_gateway_cost_ledger"
+    },
+    {
+      "version": "20260913032327",
+      "name": "mccluster_compute_pricing_router"
+    },
+    {
+      "version": "20260913032514",
+      "name": "mccluster_compute_benchmark_catalog"
+    },
+    {
+      "version": "20260913033224",
+      "name": "harden_migration_ledger"
+    },
+    {
+      "version": "20260913034016",
+      "name": "compute_reservation_tenant_safe_idempotency"
+    },
+    {
+      "version": "20260913034132",
+      "name": "harden_security_definer_execution_surface"
+    },
+    {
+      "version": "20260913034837",
+      "name": "compute_route_resale_guard"
+    },
+    {
+      "version": "20260913035004",
+      "name": "platform_api_scope_entitlements"
+    },
+    {
+      "version": "20260913040002",
+      "name": "platform_api_atomic_usage_metering"
+    },
+    {
+      "version": "20260913040800",
+      "name": "platform_api_monthly_allowance_overage_spend_guard"
+    },
+    {
+      "version": "20260913041323",
+      "name": "security_definer_execute_hardening"
+    },
+    {
+      "version": "20260913041742",
+      "name": "fix_remaining_function_search_paths"
+    },
+    {
+      "version": "20260913043637",
+      "name": "platform_api_rate_limit_enforcement"
+    },
+    {
+      "version": "20260913044120",
+      "name": "compute_provider_cogs_reconciliation"
+    },
+    {
+      "version": "20260913175353",
+      "name": "p0_remove_anonymous_execution_from_identity_helpers"
+    },
+    {
+      "version": "20260913175422",
+      "name": "p0_revoke_client_grants_from_sensitive_backend_tables"
+    },
+    {
+      "version": "20260913182443",
+      "name": "seed_fal_text_to_3d_model"
+    },
+    {
+      "version": "20260913182810",
+      "name": "seed_fal_text_to_video_model"
+    },
+    {
+      "version": "20260913213000",
+      "name": "mccluster_communications_beta"
+    },
+    {
+      "version": "20260914191500",
+      "name": "system_health_contract"
+    },
+    {
+      "version": "20260918222848",
+      "name": "private_song_asset_chunks"
+    },
+    {
+      "version": "20260918225707",
+      "name": "music_isrc_registry"
+    },
+    {
+      "version": "20260919020830",
+      "name": "compute_gateway_hardening_live_reconcile"
+    },
+    {
+      "version": "20260919021007",
+      "name": "compute_capability_concurrency_live_reconcile"
+    },
+    {
+      "version": "20260919021013",
+      "name": "compute_crypto_search_path_reconcile"
+    },
+    {
+      "version": "20260919021348",
+      "name": "control_plane_drift_attestation"
+    },
+    {
+      "version": "20260919031008",
+      "name": "canonical_lead_scoring_queue_contract"
+    },
+    {
+      "version": "20260919042036",
+      "name": "fan_profiles"
+    },
+    {
+      "version": "20260919043433",
+      "name": "operator_local_ai_chat"
+    },
+    {
+      "version": "20260919053445",
+      "name": "operational_ontology_v1"
+    },
+    {
+      "version": "20260919055029",
+      "name": "universal_ingestion_entity_resolution_v1"
+    },
+    {
+      "version": "20260919093553",
+      "name": "native_telemetry_columns"
+    },
+    {
+      "version": "20260919094143",
+      "name": "native_telemetry_views"
+    },
+    {
+      "version": "20260919094323",
+      "name": "native_telemetry_page_health_legacy_bridge"
+    }
+  ]
+}
