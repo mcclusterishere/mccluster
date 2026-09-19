@@ -47,7 +47,8 @@ test('invalid model output escalates instead of inventing a reply', () => {
   assert.equal(normalizeAssistantDecision({ action: 'hack', reply: 'nope' }).action, 'escalate');
 });
 
-test('first automated reply clearly identifies the assistant', () => {
-  assert.equal(withAssistantDisclosure('Thanks. What time works?', null), "McCluster's assistant here — Thanks. What time works?");
+test('first automated reply clearly identifies PRIM3 personal assistant', () => {
+  assert.equal(withAssistantDisclosure('Thanks. What time works?', null), "PRIM3's personal assistant here — Thanks. What time works?");
+  assert.equal(withAssistantDisclosure('Thanks.', null, 'Matthew'), "Matthew's personal assistant here — Thanks.");
   assert.equal(withAssistantDisclosure('Thanks.', '2026-09-13T00:00:00Z'), 'Thanks.');
 });
