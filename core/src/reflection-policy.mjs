@@ -1,5 +1,11 @@
 const SAFE_JOB_TYPES = new Set(['local_analysis', 'repo_health', 'code_patch']);
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const ALLOWED_REPOS = new Set(
+  String(process.env.MCCLUSTER_CODE_REPOS || 'mcclusterishere/mccluster')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean),
+);
 
 function boundedString(value, max = 4000) {
   return String(value ?? '').trim().slice(0, max);
@@ -49,6 +55,11 @@ export function normalizeReflectionPlan(value, { maxJobs = 2 } = {}) {
     let targetType = boundedString(candidate.target_type || 'portfolio', 120) || 'portfolio';
     const targetId = boundedString(candidate.target_id || 'McCluster', 500) || 'McCluster';
     let priority = clampInteger(candidate.priority, 0, 100, 25);
+
+    if (jobType === 'repo_health' || jobType === 'code_patch') {
+      if (!REPO.test(targetId) || !ALLOWED_REPOS.has(targetId)) continue;
+      targetType = 'repository';
+    }
 
     if (jobType === 'code_patch') {
       if (codePatchCount >= 1) continue;
