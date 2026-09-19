@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { createCapabilityRegistry } from './capabilities/registry.mjs';
 import { createToolRegistry } from './tools/registry.mjs';
 import { createEdgeVerifier, DEFAULT_EDGE_CLOCK_SKEW_MS } from './broker-edge-auth.mjs';
@@ -29,6 +30,16 @@ function json(res, status, body, extraHeaders = {}) {
     ...extraHeaders
   });
   res.end(payload);
+}
+
+function deployedRevision() {
+  try {
+    const parsed = JSON.parse(readFileSync('/opt/mccluster/core/.mccluster-deploy.json', 'utf8'));
+    const sha = String(parsed?.commit_sha || '');
+    return /^[a-f0-9]{40}$/.test(sha) ? sha : null;
+  } catch {
+    return null;
+  }
 }
 
 function secretEqual(received, expected) {
@@ -195,7 +206,11 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (!authenticated) {
-        return json(res, 200, { ok: true, service: 'mccluster-core-tool-broker' });
+        return json(res, 200, {
+          ok: true,
+          service: 'mccluster-core-tool-broker',
+          deployment_sha: deployedRevision()
+        });
       }
 
       const [listedTools, listedCapabilities] = await Promise.all([
@@ -206,6 +221,7 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, {
         ok: true,
         service: 'mccluster-core-tool-broker',
+        deployment_sha: deployedRevision(),
         catalog_version: listedCapabilities.catalogVersion,
         capabilities: {
           declared: listedCapabilities.capabilities.length,
