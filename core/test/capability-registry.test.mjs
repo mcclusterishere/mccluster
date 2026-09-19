@@ -38,6 +38,19 @@ const catalog = {
       outputSchema: { type: 'object' }
     },
     {
+      id: 'ai.chat',
+      title: 'AI chat',
+      description: 'Self-hosted conversational inference',
+      domain: 'ai',
+      lifecycle: 'active',
+      execution: 'async',
+      risk: 'read',
+      approval: 'none',
+      interfaces: ['mcp', 'http', 'agent'],
+      inputSchema: { type: 'object', properties: { prompt: { type: 'string' } } },
+      outputSchema: { type: 'object' }
+    },
+    {
       id: 'model3d.generate',
       title: '3D',
       description: '3D generation',
@@ -201,4 +214,27 @@ test('planned capabilities fail closed even if a compute node advertises an impl
     () => registry.resolve('video.generate'),
     (error) => error.code === 'CAPABILITY_NOT_ACTIVE' && error.status === 409
   );
+});
+
+
+test('live compute ai.chat becomes a first-class self-hosted capability', async () => {
+  const tools = fakeTools([{
+    name: 'compute.ai.chat.local123',
+    transport: 'compute',
+    capabilityBinding: {
+      id: 'compute.ai.chat.local123',
+      capability: 'ai.chat',
+      provider: 'mccluster-compute',
+      transport: 'compute',
+      status: 'active',
+      priority: 100,
+      economics: { hosting: 'self-hosted', billing: 'compute' },
+      features: { chat: true, json: true, self_hosted: true }
+    }
+  }]);
+  const registry = new CapabilityRegistry({ toolRegistry: tools, catalog });
+  const resolved = await registry.resolve('ai.chat', { requirements: { self_hosted: true } });
+  assert.equal(resolved.binding.provider, 'mccluster-compute');
+  assert.equal(resolved.binding.tool, 'compute.ai.chat.local123');
+  assert.deepEqual(resolved.binding.economics, { hosting: 'self-hosted', billing: 'compute' });
 });
