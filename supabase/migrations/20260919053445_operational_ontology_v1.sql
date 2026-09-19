@@ -28,6 +28,35 @@ alter table public.ops_objectives enable row level security;
 revoke all on table public.ops_objectives from public, anon, authenticated;
 grant all on table public.ops_objectives to service_role;
 
+-- Same historical replay gap for the canonical durable job queue. Production
+-- already carries this exact contract; clean rebuilds need it before ontology
+-- can attach its materialization trigger.
+create table if not exists public.ops_agent_jobs (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null,
+  objective_id uuid references public.ops_objectives(id) on delete set null,
+  job_type text not null,
+  target_type text,
+  target_id text,
+  status text not null default 'queued',
+  priority integer not null default 50,
+  input jsonb not null default '{}'::jsonb,
+  output jsonb not null default '{}'::jsonb,
+  attempts integer not null default 0,
+  max_attempts integer not null default 3,
+  run_after timestamptz not null default now(),
+  locked_at timestamptz,
+  locked_by text,
+  last_error text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists ops_agent_jobs_queue_idx
+  on public.ops_agent_jobs(status, run_after, priority desc);
+alter table public.ops_agent_jobs enable row level security;
+revoke all on table public.ops_agent_jobs from public, anon, authenticated;
+grant all on table public.ops_agent_jobs to service_role;
+
 create table if not exists public.ops_ontology_types (
   org_id uuid not null references public.orgs(id) on delete cascade,
   type_key text not null check (type_key ~ '^[a-z][a-z0-9_]{0,79}$'),
