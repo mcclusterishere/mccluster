@@ -35,8 +35,6 @@ jobs:
         uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c
         with:
           gradle-version: '9.6.0'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@07976c6290703d34c16d382cb36445f98bb43b1f
       - name: Ensure Android 36 SDK
         shell: bash
         run: |
