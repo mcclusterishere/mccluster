@@ -7,7 +7,7 @@
 
   var API = "https://api.mccluster.org";
   var $ = function (id) { return document.getElementById(id); };
-  var SURFACES = ["home", "work", "create", "system", "apps"];
+  var SURFACES = ["home", "ai", "work", "create", "system", "apps"];
   var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings"];
   var CREATE_VIEWS = ["projects", "library", "schedule"];
   var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
@@ -22,6 +22,12 @@
     apps: [],
     ai: null,
     aiHealth: null,
+    aiThreads: [],
+    aiMessages: {},
+    selectedAiThreadId: null,
+    aiChatPending: false,
+    aiChatError: null,
+    aiChatDraft: "",
     coreBridge: null,
     coreTools: [],
     coreResume: null,
@@ -224,6 +230,174 @@
     });
   }
 
+
+  function aiThreadById(id) {
+    return state.aiThreads.find(function (thread) { return String(thread.id) === String(id); }) || null;
+  }
+
+  function aiMessagesFor(threadId) {
+    return (threadId && state.aiMessages[threadId]) || [];
+  }
+
+  function aiTaskAnswer(task) {
+    var output = task && task.output || {};
+    var answer = output.content || output.text || output.answer;
+    return typeof answer === "string" ? answer.trim() : "";
+  }
+
+  function loadAiMessages(threadId, force) {
+    if (!threadId) return Promise.resolve([]);
+    if (!force && state.aiMessages[threadId]) return Promise.resolve(state.aiMessages[threadId]);
+    var key = "aiMessages:" + threadId;
+    if (state.pending[key]) return Promise.resolve([]);
+    state.pending[key] = true;
+    return supa("ops_ai_messages?select=*&thread_id=eq." + encodeURIComponent(threadId) + "&order=created_at.asc&limit=200")
+      .then(function (rows) {
+        state.aiMessages[threadId] = Array.isArray(rows) ? rows : [];
+        delete state.pending[key];
+        delete state.pending[key + ":error"];
+        render();
+        return state.aiMessages[threadId];
+      })
+      .catch(function (error) {
+        delete state.pending[key];
+        state.pending[key + ":error"] = classifySourceError(error);
+        render();
+        return [];
+      });
+  }
+
+  function createAiThread() {
+    if (!state.org || !state.org.id) return Promise.reject(new Error("McCluster organization is unavailable"));
+    if (state.pending.aiThreadCreate) return Promise.reject(new Error("A new chat is already being created"));
+    state.pending.aiThreadCreate = true;
+    return supa("ops_ai_threads?select=*", {
+      method: "POST",
+      body: { org_id: state.org.id, title: "New chat" },
+      prefer: "return=representation"
+    }).then(function (rows) {
+      var thread = Array.isArray(rows) ? rows[0] : null;
+      if (!thread || !thread.id) throw new Error("Chat thread was not created");
+      state.aiThreads.unshift(thread);
+      state.selectedAiThreadId = thread.id;
+      state.aiMessages[thread.id] = [];
+      state.aiChatDraft = "";
+      delete state.pending.aiThreadCreate;
+      render();
+      return thread;
+    }).catch(function (error) {
+      delete state.pending.aiThreadCreate;
+      state.aiChatError = error.message || String(error);
+      render();
+      throw error;
+    });
+  }
+
+  function saveAiMessage(thread, payload) {
+    return supa("ops_ai_messages?select=*", {
+      method: "POST",
+      body: {
+        thread_id: thread.id,
+        org_id: thread.org_id,
+        role: payload.role,
+        content: payload.content,
+        model: payload.model || null,
+        implementation: payload.implementation || null,
+        compute_task_id: payload.compute_task_id || null,
+        metadata: payload.metadata || {}
+      },
+      prefer: "return=representation"
+    }).then(function (rows) {
+      var saved = Array.isArray(rows) ? rows[0] : null;
+      if (!saved) throw new Error("Chat message was not persisted");
+      return saved;
+    });
+  }
+
+  function waitForAiTask(taskId, attempts) {
+    attempts = attempts || 60;
+    if (!taskId || !state.org || !state.org.id) return Promise.reject(new Error("Compute task identity unavailable"));
+    function poll(left) {
+      return callCoreTool("compute.task.get", { org_id: state.org.id, task_id: taskId }).then(function (payload) {
+        var task = payload && payload.task;
+        if (!task) throw new Error("AI compute task disappeared");
+        if (task.status === "done") return task;
+        if (task.status === "failed" || task.status === "canceled") {
+          throw new Error(task.last_error || ("AI compute task " + task.status));
+        }
+        if (left <= 1) throw new Error("AI compute task did not reach a terminal state");
+        return sleep(2000).then(function () { return poll(left - 1); });
+      });
+    }
+    return poll(attempts);
+  }
+
+  function sendAiMessage(value) {
+    var content = String(value || "").trim();
+    if (!content || state.aiChatPending) return Promise.resolve();
+    state.aiChatError = null;
+    var threadPromise = state.selectedAiThreadId
+      ? Promise.resolve(aiThreadById(state.selectedAiThreadId))
+      : createAiThread();
+
+    return threadPromise.then(function (thread) {
+      if (!thread) throw new Error("Select or create a chat first");
+      state.aiChatPending = true;
+      state.aiChatDraft = "";
+      render();
+      return saveAiMessage(thread, { role: "user", content: content }).then(function (saved) {
+        var messages = aiMessagesFor(thread.id);
+        messages.push(saved);
+        state.aiMessages[thread.id] = messages;
+        if (thread.title === "New chat") thread.title = content.replace(/\s+/g, " ").slice(0, 80);
+        thread.last_message_at = saved.created_at;
+        render();
+
+        var history = messages
+          .filter(function (message) { return ["system", "user", "assistant"].indexOf(message.role) >= 0; })
+          .slice(-24)
+          .map(function (message) {
+            return { role: message.role, content: String(message.content || "").slice(0, 6000) };
+          });
+        history.unshift({
+          role: "system",
+          content: "You are McCluster AI, the resident assistant running on McCluster-owned compute. Continue this conversation naturally. Be precise about what you know. Never claim an external action happened unless the system actually performed it. Your conversation history is durably stored by McCluster."
+        });
+        return callCoreTool("ai.chat", { messages: history, temperature: 0.3, num_ctx: 8192 })
+          .then(function (queued) {
+            var task = queued && queued.task;
+            if (!task || !task.id) throw new Error("Home AI did not return a durable compute task");
+            return waitForAiTask(task.id, 60);
+          })
+          .then(function (task) {
+            var answer = aiTaskAnswer(task);
+            if (!answer) throw new Error("Local AI completed without response content");
+            var output = task.output || {};
+            return saveAiMessage(thread, {
+              role: "assistant",
+              content: answer,
+              model: output.model || null,
+              implementation: task.implementation || task.selected_implementation || null,
+              compute_task_id: task.id,
+              metadata: { capability: "ai.chat", task_status: task.status }
+            });
+          })
+          .then(function (savedAssistant) {
+            state.aiMessages[thread.id].push(savedAssistant);
+            thread.last_message_at = savedAssistant.created_at;
+            state.aiThreads.sort(function (a, b) {
+              return new Date(b.last_message_at || b.updated_at || 0) - new Date(a.last_message_at || a.updated_at || 0);
+            });
+          });
+      });
+    }).catch(function (error) {
+      state.aiChatError = error.message || String(error);
+    }).then(function () {
+      state.aiChatPending = false;
+      render();
+    });
+  }
+
   function note(message, bad) { var n = $("cpNote"); if (!n) return; n.textContent = message || ""; n.className = "cr-note" + (bad ? " is-err" : ""); }
 
   function normalizeCreateView(v) {
@@ -401,6 +575,61 @@
     if (p) items.push({ title: text(p.caption, "Published post"), sub: "Distribution", when: p.published_at, kind: "ok", action: "inspect-post", id: p.id, badge: "Post" });
     if (!items.length) items.push({ title: "No canonical activity", sub: "No conversation, lead, job, asset, or post was returned.", when: state.refreshedAt, kind: "info", action: "refresh", badge: "Idle" });
     return items.sort(function (x, y) { return new Date(y.when || 0) - new Date(x.when || 0); });
+  }
+
+
+  function renderAi() {
+    if (!state.selectedAiThreadId && state.aiThreads.length) state.selectedAiThreadId = state.aiThreads[0].id;
+    var selected = aiThreadById(state.selectedAiThreadId);
+    var messages = selected ? aiMessagesFor(selected.id) : [];
+    var messageError = selected && state.pending["aiMessages:" + selected.id + ":error"];
+    var ready = coreToolAvailable("ai.chat");
+
+    var threads = state.aiThreads.length
+      ? state.aiThreads.map(function (thread) {
+          return '<button class="cr-ai-thread' + (selected && String(selected.id) === String(thread.id) ? " is-on" : "") +
+            '" type="button" data-action="ai-select-thread" data-id="' + esc(thread.id) + '">' +
+            '<b>' + esc(thread.title || "New chat") + '</b><small>' + esc(ago(thread.last_message_at || thread.updated_at || thread.created_at)) + '</small></button>';
+        }).join("")
+      : '<p class="cr-muted" style="padding:4px 6px">No chats yet.</p>';
+
+    var body;
+    if (selected && state.pending["aiMessages:" + selected.id] && !messages.length) {
+      body = '<div class="cr-ai-chat__empty"><strong>Loading this conversation…</strong><span>Reading durable messages from McCluster.</span></div>';
+    } else if (!messages.length) {
+      body = '<div class="cr-ai-chat__empty"><strong>Talk to your own AI.</strong><span>This conversation runs through McCluster Core to your self-hosted model and is stored in your own Supabase.</span></div>';
+    } else {
+      body = messages.map(function (message) {
+        var mine = message.role === "user";
+        var label = mine ? "You" : (message.role === "assistant" ? "McCluster AI" : titleCase(message.role));
+        var detail = !mine && (message.model || message.implementation)
+          ? " · " + [message.model, message.implementation].filter(Boolean).join(" · ")
+          : "";
+        return '<div class="cr-ai-message cr-ai-message--' + (mine ? "user" : "assistant") + '">' +
+          '<div class="cr-ai-message__meta"><span>' + esc(label) + '</span><span>' + esc(ago(message.created_at)) + detail + '</span></div>' +
+          '<div class="cr-ai-message__body">' + esc(message.content || "") + '</div></div>';
+      }).join("");
+    }
+    if (state.aiChatPending) {
+      body += '<div class="cr-ai-message cr-ai-message--assistant cr-ai-message--pending"><div class="cr-ai-message__meta"><span>McCluster AI</span><span>local compute</span></div><div class="cr-ai-message__body"><span class="cr-spin"></span> Thinking on your compute…</div></div>';
+    }
+
+    return renderHeader("AI", "A persistent conversation with the resident McCluster model running through your own control plane.") +
+      sourceBanner(state.sources.aiThreads, "AI conversations") +
+      '<div class="cr-ai-chat">' +
+        '<aside class="cr-ai-chat__sidebar"><div class="cr-ai-chat__sidehead">' +
+          '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-new-thread"' + (state.pending.aiThreadCreate ? " disabled" : "") + '>+ New chat</button>' +
+          '<span class="cr-ai-local">' + (ready ? "LOCAL READY" : "AI OFFLINE") + '</span></div>' +
+          '<div class="cr-ai-chat__threads">' + threads + '</div></aside>' +
+        '<section class="cr-ai-chat__main">' +
+          '<header class="cr-ai-chat__head"><div><b>' + esc(selected ? selected.title : "McCluster AI") + '</b><p>ai.chat → McCluster compute fabric → self-hosted model</p></div><span class="cr-ai-local">' + (ready ? "QWEN LOCAL" : "CHECK CORE") + '</span></header>' +
+          '<div class="cr-ai-chat__messages">' + (messageError ? sourceBanner(messageError, "Conversation") : "") + body + '</div>' +
+          '<footer class="cr-ai-chat__composer">' +
+            (state.aiChatError ? '<p class="cr-fail">' + esc(state.aiChatError) + '</p>' : "") +
+            '<div class="cr-ai-chat__composerbox"><textarea class="cr-textarea" id="crAiComposer" rows="2" placeholder="Message McCluster AI…" aria-label="Message McCluster AI"' + (!ready || state.aiChatPending ? " disabled" : "") + '></textarea>' +
+            '<button class="cr-btn cr-btn--primary" type="button" data-action="ai-send"' + (!ready || state.aiChatPending ? " disabled" : "") + '>Send</button></div>' +
+            '<p class="cr-ai-chat__hint">Enter to send · Shift+Enter for a new line · conversation persists in McCluster.</p>' +
+          '</footer></section></div>';
   }
 
   function renderHome() {
@@ -1265,6 +1494,7 @@
     var root = $("crSurface"); if (!root) return;
     if (state.loading && !state.status && !state.health) root.innerHTML = renderLoading();
     else if (state.surface === "home") root.innerHTML = renderHome();
+    else if (state.surface === "ai") root.innerHTML = renderAi();
     else if (state.surface === "work") root.innerHTML = renderWork();
     else if (state.surface === "create") root.innerHTML = renderCreate();
     else if (state.surface === "system") root.innerHTML = renderSystem();
@@ -1275,6 +1505,9 @@
     /* Create's own sources load when Create is opened, the same way the
        inbox loads a transcript — not behind a button the operator has to
        find first. */
+    if (state.surface === "ai" && state.selectedAiThreadId && !state.aiMessages[state.selectedAiThreadId] && !state.pending["aiMessages:" + state.selectedAiThreadId]) {
+      loadAiMessages(state.selectedAiThreadId);
+    }
     if (state.surface === "create" && !state.socialAccounts && !state.pending.socialAccounts) {
       state.pending.socialAccounts = true;
       loadSocialAccounts().then(function () { delete state.pending.socialAccounts; });
@@ -1572,6 +1805,7 @@
         runAction("refresh-health", null);
       }],
       [/^(home|attention|today)$/i, function () { setSurface("home"); }],
+      [/\b(ai|chat|qwen|home ai|mccluster ai)\b/i, function () { setSurface("ai"); }],
       [/\b(inbox|messages?|conversations?|desk)\b/i, function () { setSurface("work", "inbox"); }],
       [/\b(pipeline|leads?|deals?|opportunit)/i, function () { setSurface("work", "pipeline"); }],
       [/\b(people|person|contacts?)\b/i, function () { setSurface("work", "people"); }],
@@ -1610,7 +1844,7 @@
 
   function paletteCommands() {
     return [
-      ["Home", "Attention, signals, current work", "home"], ["Work · Inbox", "Unified incoming work", "work-inbox"], ["Work · Pipeline", "Leads and opportunities", "work-pipeline"], ["Work · People", "Canonical people", "work-people"],
+      ["Home", "Attention, signals, current work", "home"], ["McCluster AI", "Persistent chat with your self-hosted model", "ai"], ["Work · Inbox", "Unified incoming work", "work-inbox"], ["Work · Pipeline", "Leads and opportunities", "work-pipeline"], ["Work · People", "Canonical people", "work-people"],
       ["Create · Projects", "Creative objectives and canvas", "create-projects"], ["Create · Library", "Canonical assets", "create-library"], ["Create · Schedule", "Distribution and publishing", "create-schedule"],
       ["System · Command", "Speak to the signed Core capability bus", "system-command"], ["System · Overview", "Topology and service health", "system-overview"], ["System · Workload", "Agents, jobs, queues", "system-workload"], ["System · Observability", "Events, traces, incidents", "system-observability"], ["System · Resources", "Providers, usage, API access", "system-resources"], ["Apps", "Specialized products", "apps"],
       /* Object-level intents, not just destinations. */
@@ -1634,6 +1868,10 @@
     /* Generation owns its own actions; everything else falls through. */
     if (window.CR.media.handleAction(action, el)) return;
     if (action === "home") setSurface("home");
+    else if (action === "ai") setSurface("ai");
+    else if (action === "ai-new-thread") createAiThread();
+    else if (action === "ai-select-thread") { state.selectedAiThreadId = el.getAttribute("data-id"); state.aiChatError = null; render(); }
+    else if (action === "ai-send") { var aiInput = $("crAiComposer"); sendAiMessage(aiInput && aiInput.value); }
     else if (action === "work-inbox") setSurface("work", "inbox");
     else if (action === "work-pipeline") setSurface("work", "pipeline");
     else if (action === "work-people") setSurface("work", "people");
@@ -1990,6 +2228,18 @@
         }
       });
     }
+    var aiComposerInput = $("crAiComposer");
+    if (aiComposerInput) {
+      aiComposerInput.value = state.aiChatDraft || "";
+      aiComposerInput.addEventListener("input", function () { state.aiChatDraft = aiComposerInput.value; });
+      aiComposerInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          var send = document.querySelector('[data-action="ai-send"]');
+          if (send && !send.disabled) send.click();
+        }
+      });
+    }
     if (state.search) filterCurrentView(state.search);
   }
 
@@ -2027,13 +2277,15 @@
           src(request("/v1/ai/decisions?limit=25")),
           src(request("/v1/comms/threads?limit=100")), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact" })),
           src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
-          src(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200")), loadCreative(org)
+          src(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200")),
+          src(supa("ops_ai_threads?select=*&org_id=eq." + encodeURIComponent(org.id) + "&status=eq.active&order=last_message_at.desc&limit=100")),
+          loadCreative(org)
         ]).then(function (r) {
           return {
             org: org,
             coreBridge: r[0], coreTools: r[1], coreResume: r[2],
             status: r[3], apps: r[4], ai: r[5], aiHealth: r[6], decisions: r[7],
-            threads: r[8], leads: r[9], siteRequests: r[10], jobs: r[11], creative: r[12]
+            threads: r[8], leads: r[9], siteRequests: r[10], jobs: r[11], aiThreads: r[12], creative: r[13]
           };
         });
       });
@@ -2045,6 +2297,7 @@
         health: r[0], coreBridge: a.coreBridge || signedOut, coreTools: a.coreTools || signedOut, coreResume: a.coreResume || signedOut,
         status: a.status || signedOut, apps: a.apps || signedOut, ai: a.ai || signedOut, aiHealth: a.aiHealth || signedOut,
         decisions: a.decisions || signedOut, threads: a.threads || signedOut, leads: a.leads || signedOut, siteRequests: a.siteRequests || signedOut, jobs: a.jobs || signedOut,
+        aiThreads: a.aiThreads || signedOut,
         mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
@@ -2065,6 +2318,9 @@
       state.leadTotal = leadPayload && leadPayload.total !== undefined ? leadPayload.total : null;
       if (state.sources.leads.ok) state.sources.leads = okResult(state.leads);
       state.siteRequests = rowsOf(state.sources.siteRequests); state.jobs = rowsOf(state.sources.jobs);
+      state.aiThreads = rowsOf(state.sources.aiThreads);
+      if (state.selectedAiThreadId && !aiThreadById(state.selectedAiThreadId)) state.selectedAiThreadId = null;
+      if (!state.selectedAiThreadId && state.aiThreads.length) state.selectedAiThreadId = state.aiThreads[0].id;
       state.mediaAssets = rowsOf(state.sources.mediaAssets); state.mediaJobs = rowsOf(state.sources.mediaJobs);
       state.campaigns = rowsOf(state.sources.campaigns); state.variants = rowsOf(state.sources.variants);
       state.publishJobs = rowsOf(state.sources.publishJobs); state.posts = rowsOf(state.sources.posts);
