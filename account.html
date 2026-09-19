@@ -16,6 +16,14 @@
     .ac__sub { color: var(--cream-dim); line-height: 1.7; margin-top: 0.9rem; font-size: 0.98rem; }
     .ac__card { border: 1px solid var(--edge); border-radius: 16px; background: var(--glass-hi); padding: 1.15rem; margin-top: 1.6rem; }
     .ac__lab { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
+    .fan__row { display: flex; gap: 0.6rem; }
+    .fan__row input { flex: 1; min-width: 0; }
+    .fan__check { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.9rem;
+      font-size: 0.86rem; line-height: 1.35; color: var(--cream); cursor: pointer; }
+    .fan__check input { width: auto; margin: 0.15rem 0 0; flex: none; }
+    .fan__check.is-off { opacity: 0.45; cursor: default; }
+    .fan__fine { margin-top: 0.8rem; font-size: 0.74rem; line-height: 1.45; color: var(--cream-dim); }
+    .fan__note { margin-top: 0.4rem; font-size: 0.74rem; color: var(--cream-dim); }
     .ac input { width: 100%; margin-top: 0.6rem; padding: 0.95rem 1rem; border-radius: 12px; border: 1px solid rgba(229,56,59,0.4); background: var(--ink-2); color: var(--cream); font-size: 1rem; }
     .ac__flip { background: none; border: 0; cursor: pointer; padding: 0; margin-top: 0.9rem; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; }
     .ac__btn { appearance: none; border: 0; cursor: pointer; display: block; width: 100%; margin-top: 0.8rem; padding: 1rem; border-radius: 13px; background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.02rem; text-align: center; text-decoration: none; }
@@ -45,8 +53,46 @@
       <a class="ac__ghost" href="console.html">Client console</a>
       <button class="ac__out" id="acOut" type="button">Sign out</button>
     </div>
+
+    <!-- THE INTAKE. Writes to public.fan_profiles, which has no role, no org
+         and no membership column: nothing typed here can make anybody an
+         admin. The two consents are separate, optional, and gate nothing —
+         the record is already unlocked by the time this form is on screen. -->
+    <div class="ac__card fan" id="fanCard" hidden>
+      <p class="ac__lab">Your details</p>
+      <p class="ac__sub" id="fanWhy">Tell us where to send things. The music is already unlocked.</p>
+
+      <input type="text" id="fnLegal" placeholder="Full legal name" autocomplete="name">
+      <input type="text" id="fnAddr1" placeholder="Address" autocomplete="address-line1">
+      <input type="text" id="fnAddr2" placeholder="Apt, suite (optional)" autocomplete="address-line2">
+      <div class="fan__row">
+        <input type="text" id="fnCity" placeholder="City" autocomplete="address-level2">
+        <input type="text" id="fnRegion" placeholder="State" autocomplete="address-level1">
+      </div>
+      <div class="fan__row">
+        <input type="text" id="fnPostal" placeholder="ZIP" autocomplete="postal-code" inputmode="numeric">
+        <input type="text" id="fnCountry" placeholder="Country" autocomplete="country-name">
+      </div>
+      <input type="tel" id="fnPhone" placeholder="Phone" autocomplete="tel" inputmode="tel">
+      <p class="fan__note" id="fnPhoneNote" hidden></p>
+      <input type="number" id="fnBirth" placeholder="Year you were born" inputmode="numeric" min="1900" max="2100">
+
+      <label class="fan__check">
+        <input type="checkbox" id="fnMarketing">
+        <span>Email me about new records, shows and drops.</span>
+      </label>
+      <label class="fan__check" id="fnShareWrap">
+        <input type="checkbox" id="fnShare">
+        <span id="fnShareLabel">Share my details with partners McCluster works with.</span>
+      </label>
+      <p class="fan__fine">Both are optional and neither unlocks anything. You can change them here any time.</p>
+
+      <button class="ac__btn" id="fnSave" type="button">Save</button>
+      <p class="ac__note" id="fnMsg"></p>
+    </div>
   </main>
   <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/fan-intake.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
   (function () {
@@ -89,7 +135,12 @@
       el("acDesk").hidden = !u;
       if (!u) return;
       el("acWho").textContent = u.name || u.email || "signed in";
-      houseOwner(u).then(function (yes) { if (yes) openPlane(); });
+      houseOwner(u).then(function (yes) {
+        if (yes) { openPlane(); return; }
+        /* Everyone who is not the house owner is a listener, and a listener
+           gets the intake rather than a desk. */
+        openFan();
+      });
     }
 
     el("acGo").onclick = function () {
@@ -110,6 +161,91 @@
     el("acOut").onclick = function () {
       MCC_AUTH.signOut().then(function () { location.reload(); });
     };
+
+    /* ---------------------------------------------------------------
+       THE INTAKE. Painted only for a signed-in listener, and never for
+       the house owner, who is already being redirected to the studio.
+       --------------------------------------------------------------- */
+    var FAN = ["fnLegal","fnAddr1","fnAddr2","fnCity","fnRegion","fnPostal",
+               "fnCountry","fnPhone","fnBirth"];
+    var COL = { fnLegal:"legal_name", fnAddr1:"address_line1", fnAddr2:"address_line2",
+                fnCity:"city", fnRegion:"region", fnPostal:"postal_code",
+                fnCountry:"country", fnPhone:"phone_e164", fnBirth:"birth_year" };
+
+    /* The unlock links carry ?from=<slug>. It is only a marketing segment —
+       the database derives the tier from it and neither value grants a
+       thing — so an edited URL buys nobody anything. */
+    function source() {
+      var m = /(?:\?|&)from=([a-z0-9-]{1,40})/i.exec(location.search);
+      return m ? m[1].toLowerCase() : "";
+    }
+
+    /* Sharing a minor's details onward is a different question from sharing
+       an adult's, and the database refuses it outright. Saying so here means
+       the box does not sit there looking tickable when it is not. */
+    function syncShareGate() {
+      var ok = window.MCC_FAN.adult(el("fnBirth").value);
+      var wrap = el("fnShareWrap"), box = el("fnShare");
+      wrap.classList.toggle("is-off", !ok);
+      box.disabled = !ok;
+      if (!ok) box.checked = false;
+      el("fnShareLabel").textContent = ok
+        ? "Share my details with partners McCluster works with."
+        : "Sharing with partners is only offered to listeners 18 or older.";
+    }
+
+    function paintFan(row) {
+      FAN.forEach(function (id) {
+        var v = row ? row[COL[id]] : "";
+        el(id).value = (v === null || v === undefined) ? "" : v;
+      });
+      el("fnMarketing").checked = !!(row && row.marketing_consent);
+      el("fnShare").checked = !!(row && row.share_consent);
+      syncShareGate();
+      if (row && row.phone_e164 && !row.phone_verified_at) {
+        el("fnPhoneNote").hidden = false;
+        el("fnPhoneNote").textContent = "Phone saved, not yet verified.";
+      }
+    }
+
+    function openFan() {
+      el("fanCard").hidden = false;
+      if (source()) el("fanWhy").textContent =
+        "The record is unlocked and downloading. Tell us where to send the rest.";
+      window.MCC_FAN.load().then(paintFan).catch(function () { syncShareGate(); });
+      /* Text messaging is off in this project, so the form does not pretend
+         a code is coming. It still keeps the number. */
+      window.MCC_FAN.phoneEnabled().then(function (on) {
+        if (on) return;
+        el("fnPhoneNote").hidden = false;
+        el("fnPhoneNote").textContent =
+          "We keep your number but cannot text a code yet — SMS is not switched on.";
+      });
+    }
+
+    el("fnBirth").addEventListener("input", syncShareGate);
+
+    el("fnSave").onclick = function () {
+      var values = { source: source() };
+      FAN.forEach(function (id) { values[COL[id]] = el(id).value.trim(); });
+      values.birth_year = values.birth_year ? Number(values.birth_year) : null;
+      values.marketing_consent = el("fnMarketing").checked;
+      values.share_consent = el("fnShare").checked && !el("fnShare").disabled;
+      el("fnSave").disabled = true;
+      el("fnMsg").textContent = "Saving…";
+      window.MCC_FAN.save(values).then(function (row) {
+        el("fnSave").disabled = false;
+        el("fnMsg").textContent = "Saved.";
+        /* Repaint from what the DATABASE returned, not from what was typed:
+           the trigger may have refused a consent or cleared a verification,
+           and the form must show what is actually stored. */
+        paintFan(row);
+      }).catch(function (e) {
+        el("fnSave").disabled = false;
+        el("fnMsg").textContent = e.message || "That did not save.";
+      });
+    };
+
     paint();
   })();
   </script>

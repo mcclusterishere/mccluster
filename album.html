@@ -1095,7 +1095,12 @@
            for the rest of the record, so the button says that. It flashes
            because this is the one thing on the row worth interrupting for,
            and it stops flashing for anyone who asked the OS for less motion. */
-        slot.innerHTML = '<a class="unlock" href="account.html">' +
+        /* ?from carries the record into the intake so the listener is told
+           why they are being asked. It is a marketing segment and nothing
+           more: the database derives the tier from it, and neither value
+           grants any access, so an edited URL is worth nothing. */
+        var from = (row.getAttribute("data-gated-object") || "").split("/")[0];
+        slot.innerHTML = '<a class="unlock" href="account.html?from=' + escAttr(from) + '">' +
           '<b>FULL SONG</b><span>tap here · free</span></a>';
         /* back to the preview if a sign-out invalidated a signed URL */
         var pv = row.getAttribute("data-preview-src");
