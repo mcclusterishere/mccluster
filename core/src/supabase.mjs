@@ -230,13 +230,38 @@ export async function completeJob(job, output) {
   return rows[0];
 }
 
+/* A FAILED SUBPROCESS KNOWS WHY IT FAILED. SAY SO.
+ *
+ * run() rejects with the child's stdout and stderr hanging off error.result,
+ * and failJob threw all of it away and stored only the message. The first
+ * autonomous code_patch run recorded exactly "/usr/local/bin/opencode exited
+ * with 1" — true, useless, and unreachable without SSH to the node. Keeping a
+ * tail of what the process actually said is the difference between a fixable
+ * report and a shrug. Tails, not the whole stream: this column is read in a
+ * digest and a control room, not a log viewer. */
+function failureDetail(error) {
+  const result = error && typeof error === 'object' ? error.result : null;
+  if (!result) return '';
+  const tail = (value, max) => {
+    const text = String(value ?? '').trim();
+    if (!text) return '';
+    return text.length > max ? `…${text.slice(-max)}` : text;
+  };
+  const stderr = tail(result.stderr, 1200);
+  const stdout = stderr ? '' : tail(result.stdout, 800);
+  const parts = [];
+  if (stderr) parts.push(`stderr: ${stderr}`);
+  if (stdout) parts.push(`stdout: ${stdout}`);
+  return parts.length ? `\n${parts.join('\n')}` : '';
+}
+
 export async function failJob(job, error) {
   const now = new Date();
   const attempts = Number(job.attempts || 0);
   const maxAttempts = Math.max(1, Number(job.max_attempts || 3));
   const exhausted = attempts >= maxAttempts;
   const delayMinutes = Math.min(60, Math.max(2, 2 ** Math.max(1, attempts)));
-  const message = String(error?.message || error || 'unknown error').slice(0, 4000);
+  const message = `${String(error?.message || error || 'unknown error')}${failureDetail(error)}`.slice(0, 4000);
   const patch = {
     status: exhausted ? 'failed' : 'queued',
     locked_at: null,
