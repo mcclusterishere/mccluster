@@ -6,6 +6,7 @@ import { coreResume } from './resume.mjs';
 import { previewConfigured } from '../preview-policy.mjs';
 import { computeTaskById } from '../compute/store.mjs';
 import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
+import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PREVIEW_CONFIGURED = previewConfigured();
@@ -74,7 +75,7 @@ const BASE_TOOLS = [
   }
 ];
 
-BASE_TOOLS.push(...ONTOLOGY_TOOLS);
+BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS);
 
 if (PREVIEW_CONFIGURED) {
   BASE_TOOLS.push({
@@ -189,6 +190,9 @@ export async function callControlTool(name, args = {}, options = {}) {
   }
 
   if (name.startsWith('core.ontology.')) return callOntologyTool(name, args, options);
+  if (name.startsWith('core.ingest.') || name.startsWith('core.entity.') || name.startsWith('core.facts.')) {
+    return callIngestionTool(name, args, options);
+  }
 
   throw Object.assign(new Error(`Unknown control tool: ${name}`), { status: 404 });
 }

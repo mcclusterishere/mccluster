@@ -55,6 +55,10 @@ const REMOTE_CAPABILITIES = new Set([
   'ontology.schema',
   'ontology.query',
   'ontology.neighbors',
+  'ingest.connectors',
+  'ingest.records',
+  'entity.aliases',
+  'facts.query',
   // risk: spend, approval: budget-gated
   'image.generate',
   'video.generate',
@@ -65,7 +69,12 @@ const REMOTE_CAPABILITIES = new Set([
   'code.build',
   'game.build',
   'deploy.preview',
-  'ontology.action.apply'
+  'ontology.action.apply',
+  'ingest.run.begin',
+  'ingest.record.write',
+  'ingest.run.finish',
+  'entity.resolve',
+  'facts.claim'
 ]);
 
 function serviceHeaders(env) {

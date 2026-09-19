@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-19.2",
+  "catalogVersion": "2026-09-19.3",
   "capabilities": [
     {
       "id": "core.resume",
@@ -1081,6 +1081,312 @@
         "governance",
         "lineage"
       ]
+    },
+    {
+      "id": "ingest.connectors",
+      "title": "Read ingestion connectors",
+      "description": "Read connector registry, cursors, policies and health.",
+      "domain": "ingestion",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ingestion",
+        "connectors",
+        "provenance"
+      ]
+    },
+    {
+      "id": "ingest.records",
+      "title": "Read ingested source records",
+      "description": "Read content-addressed source records with provenance and trace ids.",
+      "domain": "ingestion",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ingestion",
+        "records",
+        "provenance"
+      ]
+    },
+    {
+      "id": "ingest.run.begin",
+      "title": "Begin ingestion run",
+      "description": "Begin a governed initial, incremental, replay or manual connector run.",
+      "domain": "ingestion",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ingestion",
+        "replay",
+        "cursor"
+      ]
+    },
+    {
+      "id": "ingest.record.write",
+      "title": "Write ingest record",
+      "description": "Write one content-addressed source record through the governed ingestion contract.",
+      "domain": "ingestion",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ingestion",
+        "idempotency",
+        "provenance"
+      ]
+    },
+    {
+      "id": "ingest.run.finish",
+      "title": "Finish ingestion run",
+      "description": "Finalize connector cursor and observable success/partial/failure state.",
+      "domain": "ingestion",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ingestion",
+        "replay",
+        "recovery"
+      ]
+    },
+    {
+      "id": "entity.aliases",
+      "title": "Read entity aliases",
+      "description": "Read candidate, resolved and rejected external identity aliases.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "entity-resolution",
+        "aliases",
+        "provenance"
+      ]
+    },
+    {
+      "id": "entity.resolve",
+      "title": "Resolve entity alias",
+      "description": "Owner-attributed resolution of an external alias to an ontology object.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "entity-resolution",
+        "governance",
+        "lineage"
+      ]
+    },
+    {
+      "id": "facts.query",
+      "title": "Read fact claims",
+      "description": "Read provenance-backed facts, including conflicting values.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "facts",
+        "provenance",
+        "conflicts"
+      ]
+    },
+    {
+      "id": "facts.claim",
+      "title": "Record fact claim",
+      "description": "Record a source-backed fact claim without silently overwriting competing evidence.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "facts",
+        "provenance",
+        "conflicts"
+      ]
     }
   ],
   "bindings": [
@@ -1486,6 +1792,159 @@
         "owner_attributed": true,
         "lineage": true,
         "bounded_effects": true
+      }
+    },
+    {
+      "id": "core.ingest-connectors",
+      "capability": "ingest.connectors",
+      "provider": "mccluster-core",
+      "tool": "core.ingest.connectors",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.ingest-records",
+      "capability": "ingest.records",
+      "provider": "mccluster-core",
+      "tool": "core.ingest.records",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.ingest-run-begin",
+      "capability": "ingest.run.begin",
+      "provider": "mccluster-core",
+      "tool": "core.ingest.run.begin",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.ingest-record-write",
+      "capability": "ingest.record.write",
+      "provider": "mccluster-core",
+      "tool": "core.ingest.record.write",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.ingest-run-finish",
+      "capability": "ingest.run.finish",
+      "provider": "mccluster-core",
+      "tool": "core.ingest.run.finish",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.entity-aliases",
+      "capability": "entity.aliases",
+      "provider": "mccluster-core",
+      "tool": "core.entity.aliases",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.entity-resolve",
+      "capability": "entity.resolve",
+      "provider": "mccluster-core",
+      "tool": "core.entity.resolve",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.facts-query",
+      "capability": "facts.query",
+      "provider": "mccluster-core",
+      "tool": "core.facts.query",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.facts-claim",
+      "capability": "facts.claim",
+      "provider": "mccluster-core",
+      "tool": "core.facts.claim",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
       }
     }
   ]
