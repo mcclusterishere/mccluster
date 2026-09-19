@@ -77,6 +77,10 @@ jobs:
           bash -n scripts/deploy-ovh-core.sh
           bash -n scripts/mccluster-vps-reconcile.sh
           bash -n scripts/bootstrap-vps-self-management.sh
+      - name: Test Operator OS control spine
+        run: |
+          node --check js/control-room-v2.js
+          node --test scripts/test/operator-control-spine.test.mjs
       - name: Test provider-independent capability resolution
         working-directory: core
         run: npm run test:capabilities
