@@ -1192,6 +1192,23 @@
     return '<pre class="cr-code">' + esc(JSON.stringify(result.data || result, null, 2)) + '</pre>';
   }
 
+  function pendingApprovalRows() {
+    return state.coreResume && Array.isArray(state.coreResume.pending_approvals)
+      ? state.coreResume.pending_approvals
+      : [];
+  }
+
+  function renderPendingApprovals() {
+    var approvals = pendingApprovalRows();
+    if (!approvals.length) return '<p class="cr-muted">No control-plane approvals are waiting on you.</p>';
+    return '<div class="cr-list">' + approvals.map(function (approval) {
+      return '<div class="cr-row"><div class="cr-row__main"><b>' + esc(approval.capability || "Approval") + '</b>' +
+        '<small>' + esc(approval.resource || "") + (approval.reason ? " · " + esc(approval.reason) : "") + '</small></div>' +
+        '<div class="cr-row__end"><button class="cr-btn cr-btn--primary" type="button" data-action="approval-decide" data-id="' + esc(approval.id) + '" data-decision="approve">Approve</button>' +
+        '<button class="cr-btn" type="button" data-action="approval-decide" data-id="' + esc(approval.id) + '" data-decision="deny">Deny</button></div></div>';
+    }).join("") + '</div>';
+  }
+
   function renderCommandCenter() {
     var tools = state.coreTools.map(function (tool) { return tool.name; });
     var bridgeOk = Boolean(state.coreBridge && state.coreBridge.ok && state.coreBridge.signed_dispatch);
@@ -1201,6 +1218,7 @@
         kpi("Capabilities", String(tools.length), "owner surface") +
         kpi("Home AI", coreToolAvailable("ai.chat") ? "READY" : "OFFLINE", "self-hosted compute") +
         kpi("Planner", coreToolAvailable("objective.plan") ? "READY" : "OFFLINE", "durable objectives") +
+        kpi("Approvals", String(pendingApprovalRows().length), "owner decisions") +
       '</div>' +
       '<div class="cr-grid">' +
         panel("Command center", "same capability bus used by agents", '<div class="cr-panel__body">' +
@@ -1212,6 +1230,7 @@
             '<button class="cr-btn cr-btn--ghost" type="button" data-action="command-resume"' + (coreToolAvailable("core.resume") ? "" : " disabled") + '>Resume durable state</button>' +
           '</div></div>', "cr-span-7") +
         panel("Last command", "canonical result", '<div class="cr-panel__body">' + commandResultHtml() + '</div>', "cr-span-5") +
+        panel("Owner approvals", pendingApprovalRows().length + " pending", '<div class="cr-panel__body">' + renderPendingApprovals() + '</div>', "cr-span-12") +
         panel("Control spine", "no assistant in the middle", '<div class="cr-panel__body">' +
           '<p class="cr-muted">Operator OS authenticates at Cloudflare, dispatches through the signed MCP bridge, Core resolves a stable capability, Supabase records durable work, and compute nodes execute it. Results return through the same path.</p>' +
           '<div class="cr-list">' +
@@ -1672,6 +1691,27 @@
         state.commandResult = { kind: "resume", data: result }; render();
       }).catch(function (e) {
         state.commandResult = { error: e.message || String(e) }; render();
+      });
+    }
+    else if (action === "approval-decide") {
+      var approvalId = el && el.getAttribute("data-id");
+      var decision = el && el.getAttribute("data-decision");
+      if (!approvalId || !decision) return;
+      state.pending["approval:" + approvalId] = true; render();
+      request("/v1/ai/approvals/" + encodeURIComponent(approvalId) + "/decision", {
+        method: "POST",
+        body: { decision: decision }
+      }).then(function (result) {
+        delete state.pending["approval:" + approvalId];
+        state.commandResult = { kind: "approval", data: result };
+        return callCoreTool("core.resume", { org_id: state.org.id, since_hours: 24, limit: 25 });
+      }).then(function (resume) {
+        state.coreResume = resume;
+        render();
+      }).catch(function (e) {
+        delete state.pending["approval:" + approvalId];
+        state.commandResult = { error: e.message || String(e) };
+        render();
       });
     }
     else if (action === "inspect-lead") inspectLead(el.getAttribute("data-id"));
