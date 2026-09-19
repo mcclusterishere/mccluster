@@ -8,6 +8,54 @@ function bounded(value, max) {
   return String(value ?? '').slice(0, max);
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function fetchReflectionResponse(messages, {
+  fetchImpl = globalThis.fetch,
+  sleepImpl = sleep,
+  attempts = Math.min(5, Math.max(1, Number(process.env.MCCLUSTER_OLLAMA_RETRY_ATTEMPTS || 3))),
+  timeoutMs = Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000),
+} = {}) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetchImpl(`${OLLAMA}/api/chat`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          model: MODEL,
+          stream: false,
+          messages,
+          options: {
+            temperature: 0.1,
+            num_ctx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
+          },
+        }),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (response.ok) return data;
+
+      const error = new Error(data?.error || `Ollama returned ${response.status}`);
+      if (response.status < 500 || attempt === attempts) throw Object.assign(error, { retryable: false });
+      lastError = error;
+    } catch (error) {
+      if (error?.retryable === false || error?.name === 'TimeoutError' || error?.name === 'AbortError' || attempt === attempts) {
+        throw error;
+      }
+      lastError = error;
+    }
+
+    await sleepImpl(Math.min(5_000, 500 * (2 ** (attempt - 1))));
+  }
+
+  throw lastError || new Error('Ollama reflection failed');
+}
+
 export async function objectiveReflection(job) {
   if (!job.org_id) throw new Error('objective_reflection requires org_id');
 
@@ -43,26 +91,10 @@ export async function objectiveReflection(job) {
     recent_jobs: jobs,
   });
 
-  const response = await fetch(`${OLLAMA}/api/chat`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      model: MODEL,
-      stream: false,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-      options: {
-        temperature: 0.1,
-        num_ctx: Number(process.env.MCCLUSTER_OLLAMA_CONTEXT || 16384),
-      },
-    }),
-    signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_OLLAMA_TIMEOUT_MS || 10 * 60_000)),
-  });
-
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(data?.error || `Ollama returned ${response.status}`);
+  const data = await fetchReflectionResponse([
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ]);
   const text = String(data?.message?.content || '').trim();
   if (!text) throw new Error('Ollama returned an empty reflection');
 

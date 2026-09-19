@@ -37,3 +37,9 @@ test('public Core liveness exposes only safe deployment provenance', async () =>
   assert.match(source, /\.mccluster-deploy\.json/);
   assert.match(source, /if \(!authenticated\)/);
 });
+
+test('Core runner gets enough graceful-stop time to finish bounded local-model jobs', async () => {
+  const source = await read('core/systemd/mccluster-core-runner.service');
+  assert.match(source, /TimeoutStopSec=11min/);
+  assert.match(source, /Restart=always/);
+});
