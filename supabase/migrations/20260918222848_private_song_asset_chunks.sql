@@ -1,5 +1,0 @@
--- Historical production-ledger anchor for 20260918222848_private_song_asset_chunks.
--- The original production migration was applied before canonical Git reconciliation.
--- Historical schema reconstruction is provided by the numbered replay migrations.
--- Intentionally no-op: this exact version/name file exists so Supabase Git integration
--- can reconcile the remote migration ledger without re-applying historical DDL.
