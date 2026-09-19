@@ -38,3 +38,10 @@ test('edge allowlist and capability catalog carry the command spine', () => {
   assert.ok(catalog.bindings.some((entry) => entry.capability === 'compute.task.get' && entry.status === 'active'));
   assert.ok(catalog.bindings.some((entry) => entry.capability === 'objective.plan' && entry.status === 'active'));
 });
+
+
+test('owner approvals stay human-gated at Cloudflare', () => {
+  assert.match(source, /\/v1\/ai\/approvals\/.*\/decision/);
+  assert.match(source, /data-action="approval-decide"/);
+  assert.match(source, /pending_approvals/);
+});
