@@ -82,7 +82,7 @@ jobs:
       - name: Start isolated Supabase stack
         run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Rebuild database from migrations
-        run: supabase db reset
+        run: bash scripts/supabase-local-reset-with-replay.sh
       - name: Verify communications security contracts
         env:
           PGPASSWORD: postgres
