@@ -70,7 +70,7 @@ test('source contracts preserve tenant, credential, queue and grant invariants',
     readFile(resolve(workerRoot, 'src/social/router.js'), 'utf8'),
     readFile(resolve(workerRoot, 'src/social/meta.js'), 'utf8'),
     readFile(resolve(workerRoot, 'src/media/router.js'), 'utf8'),
-    readFile(resolve(repoRoot, 'supabase/migrations/20260907040300_social_hardening.sql'), 'utf8')
+    readFile(resolve(repoRoot, 'supabase/replay_migrations/20260907040300_social_hardening.sql'), 'utf8')
   ]);
 
   assert.doesNotMatch(socialRouter, /order=added_at\.asc&limit=1/);
