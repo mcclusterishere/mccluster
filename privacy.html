@@ -34,6 +34,14 @@
     .pv__note p:last-child { margin-bottom: 0; }
     .pv__date { margin-top: 2.6rem; font-size: 0.78rem; letter-spacing: 0.04em; color: var(--cream-dim); opacity: 0.75; }
     .pv a { color: var(--ruby-hot); }
+    .pv h1 em { font-style: normal; color: var(--ruby-hot); }
+    .pv__sum { border-radius: 16px; padding: 1.15rem 1.25rem; margin: 1.8rem 0 0.4rem;
+      background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px var(--edge); }
+    .pv__sum p { margin: 0 0 0.75rem; font-weight: 800; color: var(--cream);
+      font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; }
+    .pv__sum ul { margin: 0; padding-left: 1.05rem; }
+    .pv__sum li:last-child { margin-bottom: 0; }
+    .pv__why { display: block; margin-top: 0.15rem; opacity: 0.85; }
   </style>
 </head>
 <body class="songpage">
@@ -41,106 +49,139 @@
     <section class="pv">
 
       <p class="pv__k">matthew.mccluster.org &middot; privacy</p>
-      <h1>What this site<br>records about you.</h1>
-      <p class="pv__lede">The whole list, in plain English, including the parts most sites leave
-        vague. This site runs <b>no Google Analytics, no advertising pixel and no third-party
-        tracker</b> of any kind. What it measures, it measures itself, and keeps to itself.</p>
+      <h1>What we record.<br>And what we <em>refuse</em> to.</h1>
+      <p class="pv__lede">This site runs <b>no Google Analytics, no advertising pixel and no
+        third-party tracker of anything</b>. Nothing here is sold, rented or traded &mdash; not
+        as a promise, but because there is no one in this stack to sell it to. What the site
+        measures, it measures itself and keeps to itself. Below is the whole list, in plain
+        English, including the parts these notices usually leave vague.</p>
 
-      <h2>What the server sees</h2>
-      <p>Every request to every website on the internet arrives carrying an address, because
-        that is how a reply finds its way back. This one writes it down:</p>
+      <div class="pv__sum">
+        <p>The short version</p>
+        <ul>
+          <li>We record your <b>IP address</b>, an <b>approximate city-level location</b>, your
+            <b>network provider</b> and what your <b>device</b> can tell us about itself.</li>
+          <li>We record <b>what you click, how far you read and where the page frustrated
+            you</b>.</li>
+          <li>We <b>never record what you type</b>. Not one character.</li>
+          <li>We <b>never give any of it to anyone</b>.</li>
+          <li>Ask for it to be deleted and it is deleted.</li>
+        </ul>
+      </div>
+
+      <h2>What arrives with your visit</h2>
+      <p>Every request to every website on the internet carries an address, because that is how
+        a reply finds its way back. This one writes it down, along with what the network says
+        about itself:</p>
       <ul>
-        <li>Your <b>IP address</b>.</li>
+        <li>Your <b>IP address</b>.
+          <span class="pv__why">Why: it is the only thing that distinguishes one visitor from
+            another before anyone signs in, and it is how abuse gets stopped.</span></li>
         <li>An <b>approximate location worked out from that address</b> &mdash; country, region,
-          city, postal code, an approximate latitude and longitude, and a timezone. This is
-          derived from the network, not from your device's location services, and it is
-          accurate to roughly a city. It is not your street.</li>
-        <li>The <b>network you are on</b> &mdash; its operator's name and number, which is
-          usually your internet provider or mobile carrier.</li>
-        <li>Your <b>browser's user-agent string</b>, and whether the request looks automated.</li>
+          city, postal code, an approximate latitude and longitude, and a timezone.
+          <span class="pv__why">Why: so the site knows which audiences it is actually reaching.
+            This comes from the network, never from your device's location services. It is
+            accurate to roughly a city. <b>It is not your street.</b></span></li>
+        <li>The <b>network you are on</b> &mdash; its operator's name and number, usually your
+          internet provider or mobile carrier.
+          <span class="pv__why">Why: a page that is fast on fibre and unusable on a phone in a
+            dead zone is a problem you cannot see any other way.</span></li>
+        <li>Your browser's <b>user-agent string</b>, and whether the request looks automated.
+          <span class="pv__why">Why: roughly half of all web traffic is robots, and counting
+            them as an audience makes every other number a lie.</span></li>
       </ul>
-      <p>These are observed on arrival, not asked for. A browser cannot be asked for its own
-        address &mdash; there is no such thing &mdash; which is precisely why the recording
-        happens on the server instead of in the page.</p>
+      <p>These are observed on arrival rather than asked for. A browser cannot be asked for its
+        own address &mdash; there is no such thing &mdash; which is exactly why this happens on
+        the server instead of in the page.</p>
 
-      <h2>What your browser volunteers</h2>
-      <p>Alongside that, the page notes what the device can say about itself: screen size and
+      <h2>What your device volunteers</h2>
+      <p>Alongside that, the page notes what your device can say about itself: <b>screen size and
         colour depth, orientation, graphics hardware, touch support, language preferences,
         dark-mode and reduced-motion settings, whether cookies are on, battery level and
-        charging state, and the speed of the connection. This is how the site is kept working on
-        real phones rather than on a developer's desk.</p>
+        charging state, and connection speed</b>.</p>
+      <p>This is the honest reason a site works on a three-year-old phone on a bad connection:
+        somebody looked at what real visitors were actually holding instead of testing on a
+        developer's desk. Your reduced-motion setting is respected because it is read.</p>
 
       <h2>How a visit is counted</h2>
       <ul>
-        <li>A <b>random identifier stored in your browser</b>, so a return visit can be told from
-          a first one. It is a random number and nothing else. <b>Clearing your browser data
-          genuinely erases it</b>, and the next visit is a stranger.</li>
-        <li>A <b>session identifier</b> for one sitting, which lapses after thirty minutes of
-          nothing.</li>
-        <li>If you are <b>signed in</b>, your account, verified against the login server.</li>
+        <li>A <b>random identifier stored in your browser</b>, so a return visit can be told
+          from a first one. It is a random number and nothing else.
+          <span class="pv__why"><b>Clearing your browser data genuinely erases it</b>, and the
+            next visit is a stranger.</span></li>
+        <li>A <b>session identifier</b> for a single sitting, which lapses after thirty minutes
+          of nothing.</li>
+        <li>If you are <b>signed in</b>, your account &mdash; verified against the login server,
+          never taken on the browser's word.</li>
       </ul>
       <div class="pv__note">
-        <p><b>Deliberately not done:</b> there is no canvas, audio or font fingerprinting here.
-          Those techniques exist specifically to recognise somebody who has cleared their data,
-          which makes them a tracking measure rather than a counting one. The identifier this
-          site uses is one you can actually get rid of.</p>
+        <p><b>Worth saying out loud:</b> there is no canvas, audio or font fingerprinting here.
+          Those techniques exist specifically to recognise somebody who has cleared their data
+          &mdash; which makes them a tracking measure rather than a counting one. Most sites
+          that claim to respect your choices still use them. The identifier here is one you can
+          actually get rid of, and getting rid of it actually works.</p>
       </div>
 
       <h2>What you do while you are here</h2>
-      <p>Which pages you open and for how long; how far down you read and which sections held
-        your attention; what you click, and the clicks that indicate the page is fighting you
-        &mdash; a button tapped repeatedly, or one that did nothing. Errors that only ever
-        happen to visitors. How quickly the page actually loaded on your device. When a form is
-        started, which fields were visited in which order, how long each took and how often it
-        was corrected. That a selection was copied, and how long it was.</p>
+      <p>Which pages you open and for how long. How far down you read, and which sections held
+        your attention. What you click &mdash; including the clicks that mean the page is
+        fighting you, like a button tapped three times because nothing happened. Errors that
+        only ever happen to visitors and never to the person who built it. How quickly the page
+        actually loaded on your device rather than on a fast connection somewhere else. When a
+        form is started, which fields were visited in which order, how long each took and how
+        often it was corrected. That a selection was copied, and how long it was.</p>
+      <p>All of it exists to answer one question: where is this site wasting your time?</p>
 
       <h2>What is never recorded</h2>
+      <p>These are hard limits in the code, not intentions:</p>
       <ul>
         <li><b>Nothing you type.</b> Form measurement records field names, order and timing. The
-          characters are never read, ever.</li>
-        <li><b>Password, payment and one-time-code fields are not instrumented at all</b>, not
-          even for timing.</li>
+          characters themselves are never read. Ever.</li>
+        <li><b>Password, payment and one-time-code fields are not instrumented at all</b> &mdash;
+          not even for timing.</li>
         <li><b>Text you copy on a signed-in page, or out of any field, is not kept</b> &mdash;
-          only the fact that a copy happened and its length. What is on screen there is your
+          only that a copy happened and how long it was. What is on screen there is your
           information, not this site's.</li>
-        <li>No microphone, no camera, no clipboard reading, no location from your device's own
-          location services.</li>
+        <li><b>No microphone, no camera, no clipboard reading</b>, and nothing from your
+          device's own location services.</li>
       </ul>
 
-      <h2>Who it is shared with</h2>
-      <p><b>Nobody.</b> This data is not sold, not rented, not traded, and not handed to
-        advertisers, data brokers or analytics companies &mdash; because there are none involved.
-        It lives on infrastructure this site runs, is readable only by the site's owner, and is
-        used to make the thing work better and to understand what people came for. It would be
-        disclosed only where the law requires it.</p>
+      <h2>Who else sees it</h2>
+      <p><b>Nobody.</b> Not sold, not rented, not traded, not handed to advertisers, data brokers
+        or analytics companies &mdash; because there are none involved to hand it to. It lives on
+        infrastructure this site runs, is readable only by the site's owner, and exists to make
+        the thing work better and to understand what people came for. It would be disclosed only
+        where the law actually requires it.</p>
 
       <h2>How long it is kept</h2>
-      <p>Behavioural records are retained for up to <b>400 days</b> and then purged. Ask sooner
-        and it goes sooner.</p>
+      <p>Behavioural records are kept for up to <b>400 days</b> and then purged automatically.
+        Ask sooner and it goes sooner.</p>
 
       <h2>Your rights, and how to use them</h2>
-      <p>Wherever you live, and regardless of whether your state or country has a law that
-        grants them, you can ask for any of the following and it will be honoured:</p>
+      <p>Wherever you live &mdash; and regardless of whether your state or country has a law
+        granting them &mdash; you can ask for any of these and it will be honoured:</p>
       <ul>
-        <li><b>See it</b> &mdash; a copy of what is held about you.</li>
-        <li><b>Correct it</b> if something is wrong.</li>
+        <li><b>See it</b> &mdash; a copy of everything held about you.</li>
+        <li><b>Correct it</b>, if something is wrong.</li>
         <li><b>Delete it</b> &mdash; all of it.</li>
-        <li><b>Take it with you</b> in a portable format.</li>
+        <li><b>Take it with you</b>, in a portable format.</li>
         <li><b>Object</b> to the measurement entirely.</li>
       </ul>
       <p>Write to <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a> and say which.
-        No account or special form is needed; if you are not signed in, say roughly when and
+        No account and no special form &mdash; if you are not signed in, say roughly when and
         from where you visited so the right records can be found. A reply comes within 45 days.
-        If a request is refused you may appeal by replying, and that appeal gets a written
+        If a request is refused you can appeal by replying, and the appeal gets a written
         answer.</p>
       <p>Connecticut residents may also contact the Office of the Attorney General. There is no
         sale of personal data and no targeted advertising to opt out of here, because neither
-        happens.</p>
+        one happens.</p>
 
       <h2>Turning it off</h2>
       <p>The site honours <b>Global Privacy Control</b> and the browser's Do Not Track setting
-        where they are sent. Blocking the measurement entirely with any content blocker is fine;
-        nothing on the site depends on it, and nothing will be withheld from you for it.</p>
+        wherever they are sent: the visit still gets counted, and your address, device,
+        identifiers, city and network provider are all dropped before anything is written.</p>
+      <p>Blocking the measurement outright with any content blocker is also completely fine.
+        Nothing on this site depends on it, and nothing will be withheld from you for it.</p>
 
       <p class="pv__date">Last updated 19 September 2026. Questions:
         <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a>.</p>
