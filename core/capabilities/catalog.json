@@ -797,6 +797,45 @@
       ]
     },
     {
+      "id": "compute.task.get",
+      "title": "Read compute task",
+      "description": "Read the durable state and result of one McCluster compute task.",
+      "domain": "compute",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "task_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "task_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "compute",
+        "task",
+        "result",
+        "read"
+      ]
+    },
+    {
       "id": "objective.plan",
       "title": "Plan an objective",
       "description": "Queue a bounded dependency-aware plan of safe unattended analysis and inspection work.",
@@ -1169,6 +1208,23 @@
         "dependency_aware": true,
         "safe_children_only": true,
         "production_mutation": false
+      }
+    },
+    {
+      "id": "core.compute-task-get",
+      "capability": "compute.task.get",
+      "provider": "mccluster-core",
+      "tool": "core.compute.task.get",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 220,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "durable_state": true
       }
     }
   ]
