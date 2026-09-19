@@ -155,7 +155,7 @@ as $$
   limit match_count;
 $$;
 
-comment on function public.kb_search is
+comment on function public.kb_search(text, vector, integer, integer) is
   'Hybrid retrieval by reciprocal rank fusion. Works with no embedding at all, in which case it is pure full-text.';
 
 -- ============================================================
