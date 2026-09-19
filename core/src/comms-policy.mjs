@@ -78,9 +78,10 @@ export function normalizeAssistantDecision(value) {
   return { action: 'reply', reason, reply };
 }
 
-export function withAssistantDisclosure(reply, disclosureSentAt) {
+export function withAssistantDisclosure(reply, disclosureSentAt, ownerAlias = 'PRIM3') {
   const body = String(reply || '').trim();
   if (!body) return '';
   if (disclosureSentAt) return body;
-  return `McCluster's assistant here — ${body}`.slice(0, 1600);
+  const alias = String(ownerAlias || 'PRIM3').trim().slice(0, 80) || 'PRIM3';
+  return `${alias}'s personal assistant here — ${body}`.slice(0, 1600);
 }
