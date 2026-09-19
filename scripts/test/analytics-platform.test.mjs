@@ -8,7 +8,7 @@ test('customer pixel is one line and site scoped', async()=>{
   const sdk=await read('js/mc-analytics.js');
   const worker=await read('workers/mccluster/src/entry.js');
   assert.match(worker,/path === '\/a\.js'/);
-  assert.match(worker,/mca_\[a-f0-9\]\{32\}/i);
+  assert.ok(worker.includes("/^mca_[a-f0-9]{32}$/i"), 'loader must validate the public site-key shape');
   assert.match(worker,/https:\/\/mccluster\.org\/js\/mc-analytics\.js/);
   assert.match(sdk,/var ROOT = "mca:" \+ siteKey \+ ":"/);
   assert.match(sdk,/mca_consent|CONSENT_KEY/);
