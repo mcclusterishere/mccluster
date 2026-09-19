@@ -53,6 +53,7 @@ function brokerToolList() {
       tools: [
         { name: 'system.health', title: 'System health', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
         { name: 'ai.chat', title: 'Home-base AI', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none', 'mccluster/providers': ['mccluster-compute'] } },
+        { name: 'compute.task.get', title: 'Read compute task', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
         { name: 'research.web', title: 'Research web', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
         { name: 'objective.plan', title: 'Plan objective', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'none' } },
         { name: 'model3d.generate', title: 'Generate 3D model', _meta: { 'mccluster/risk': 'spend', 'mccluster/approval': 'budget-gated', 'mccluster/providers': ['fal'] } },
@@ -130,7 +131,7 @@ test('tools/list publishes only allowlisted capabilities', async () => {
     const { status, body } = await handleCoreMcp(rpcRequest({ jsonrpc: '2.0', id: 5, method: 'tools/list' }), env, OWNER);
     assert.equal(status, 200);
     const names = body.result.tools.map((tool) => tool.name);
-    assert.deepEqual(names.sort(), ['ai.chat', 'code.build', 'game.build', 'model3d.generate', 'objective.plan', 'research.web', 'system.health']);
+    assert.deepEqual(names.sort(), ['ai.chat', 'code.build', 'compute.task.get', 'game.build', 'model3d.generate', 'objective.plan', 'research.web', 'system.health']);
     assert.ok(!names.includes('mccluster.media.generate'), 'raw provider tool leaked');
   });
 });
