@@ -27,6 +27,7 @@ Absolute prevention of every transient mismatch is impossible during deployments
 - Every new production schema mutation must have a migration file under its actual production version and name.
 - `supabase/production-ledger.json` records the complete ordered production ledger returned by Supabase, including the historical era that predates canonical Git reconciliation.
 - Legacy `0001_...` style migrations are clean-replay reconstruction files. They rebuild historical state but do **not** claim to be the original Supabase migration versions.
+- Every production ledger version/name also has an exact timestamped file. Pre-cutover historical files may be comment-only ledger anchors when the actual schema reconstruction already lives in the numbered replay layer; this prevents Supabase Git integration from treating valid remote versions as missing without double-applying historical DDL.
 - `production_sql_cutover_version` in the ledger marks the point from which exact production-version SQL is mandatory. The current cutover is `20260919020830`.
 - The backend-only `system_migration_attestation()` RPC exposes only:
   - migration count;

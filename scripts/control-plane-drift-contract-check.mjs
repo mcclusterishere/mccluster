@@ -92,9 +92,9 @@ const cutover = String(ledger?.production_sql_cutover_version || '');
 if (!/^\d{14}$/.test(cutover)) {
   failures.push('production_sql_cutover_version must be a 14-digit migration version');
 } else {
-  for (const row of ledgerRows.filter((item) => item.version >= cutover)) {
+  for (const row of ledgerRows) {
     const exact = `${row.version}_${row.name}.sql`;
-    if (!files.includes(exact)) failures.push(`missing exact post-cutover production migration: ${exact}`);
+    if (!files.includes(exact)) failures.push(`missing exact production-ledger migration anchor: ${exact}`);
   }
 
   for (const item of timestamped.filter((row) => row.version >= cutover)) {

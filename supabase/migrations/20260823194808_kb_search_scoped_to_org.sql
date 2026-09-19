@@ -1,0 +1,5 @@
+-- Historical production-ledger anchor for 20260823194808_kb_search_scoped_to_org.
+-- The original production migration was applied before canonical Git reconciliation.
+-- Historical schema reconstruction is provided by the numbered replay migrations.
+-- Intentionally no-op: this exact version/name file exists so Supabase Git integration
+-- can reconcile the remote migration ledger without re-applying historical DDL.
