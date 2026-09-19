@@ -31,10 +31,16 @@ verify_jwt = false
 
 # Shared platform functions.
 [functions.backend-sub]
-verify_jwt = false
+verify_jwt = true
 
 [functions.connect-onboard]
-verify_jwt = false
+verify_jwt = true
+
+[functions.connect-org]
+verify_jwt = true
+
+[functions.org-connect-onboard]
+verify_jwt = true
 
 # Private cross-model context plane. User-facing functions require a Supabase
 # JWT and repeat membership checks in-function. context-core is server-to-server
@@ -55,7 +61,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.m-oauth-bootstrap]
-verify_jwt = true
+verify_jwt = false
 
 [functions.ops-chat]
 verify_jwt = true
@@ -64,6 +70,9 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.outreach-webhook]
+verify_jwt = false
+
+[functions.stripe-webhook]
 verify_jwt = false
 
 [functions.pay-now]
