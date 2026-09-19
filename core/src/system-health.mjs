@@ -137,13 +137,16 @@ export function aggregateSystemHealth(snapshot, { nowMs = Date.now() } = {}) {
   }
 
   const githubSha = text(source.github_main_sha);
+  const promotedSha = text(source.github_promoted_sha);
   const deployedSha = text(deployment.deployed_sha);
-  const shaValid = SHA40.test(githubSha) && SHA40.test(deployedSha);
-  const shaMatch = shaValid && githubSha.toLowerCase() === deployedSha.toLowerCase();
+  const runtimeShaValid = SHA40.test(promotedSha) && SHA40.test(deployedSha);
+  const shaMatch = runtimeShaValid && promotedSha.toLowerCase() === deployedSha.toLowerCase();
+  const promotionLag = SHA40.test(githubSha) && SHA40.test(promotedSha) && githubSha.toLowerCase() !== promotedSha.toLowerCase();
   if (!SHA40.test(githubSha)) degradation(degradationList, 'source', 'github_main_unknown', 'warning', 'Exact GitHub main SHA is unavailable.');
+  if (!SHA40.test(promotedSha)) degradation(degradationList, 'source', 'github_promoted_unknown', 'warning', 'Exact OVH promoted GitHub SHA is unavailable.');
   if (!SHA40.test(deployedSha)) degradation(degradationList, 'deployment', 'deployed_sha_unknown', 'warning', 'Exact OVH deployed SHA is unavailable.');
-  if (SHA40.test(githubSha) && SHA40.test(deployedSha) && !shaMatch) {
-    degradation(degradationList, 'deployment', 'source_runtime_drift', 'warning', 'OVH is not running the current GitHub main revision.', { github_main_sha: githubSha, deployed_sha: deployedSha });
+  if (SHA40.test(promotedSha) && SHA40.test(deployedSha) && !shaMatch) {
+    degradation(degradationList, 'deployment', 'source_runtime_drift', 'warning', 'OVH runtime does not match the promoted production revision.', { github_promoted_sha: promotedSha, promoted_ref: source.promoted_ref || 'deploy/ovh-production', deployed_sha: deployedSha });
   }
 
   if (supabase.reachable !== true) {
@@ -210,13 +213,15 @@ export function aggregateSystemHealth(snapshot, { nowMs = Date.now() } = {}) {
     source: {
       repository: source.repository || 'mcclusterishere/mccluster',
       github_main_sha: githubSha || null,
+      github_promoted_sha: promotedSha || null,
+      promoted_ref: source.promoted_ref || null,
       observed_at: source.observed_at || null,
       error: source.error || null,
     },
     host,
     services,
     runtime,
-    deployment: { ...deployment, sha_match: shaMatch },
+    deployment: { ...deployment, sha_match: shaMatch, promotion_lag: promotionLag },
     supabase,
     jobs,
     compute,

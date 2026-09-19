@@ -54,24 +54,39 @@ export function haloSnapshotFreshness(snapshot, nowMs = Date.now(), maxAgeMs = 1
   return { ...snapshot, stale: snapshotAgeMs > maxAgeMs, age_ms: snapshotAgeMs };
 }
 
-async function githubMain() {
+async function githubCommit(ref, headers) {
+  const response = await fetch(`https://api.github.com/repos/${REPOSITORY}/commits/${encodeURIComponent(ref)}`, {
+    headers,
+    signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_HEALTH_GITHUB_TIMEOUT_MS || 5000)),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(body?.message || `GitHub returned ${response.status} for ${ref}`);
+  return body?.sha || null;
+}
+
+async function githubSource() {
   const headers = {
     accept: 'application/vnd.github+json',
     'user-agent': 'mccluster-core-system-health',
     'x-github-api-version': '2022-11-28',
   };
   if (process.env.GITHUB_TOKEN) headers.authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
-  try {
-    const response = await fetch(`https://api.github.com/repos/${REPOSITORY}/commits/main`, {
-      headers,
-      signal: AbortSignal.timeout(Number(process.env.MCCLUSTER_HEALTH_GITHUB_TIMEOUT_MS || 5000)),
-    });
-    const body = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(body?.message || `GitHub returned ${response.status}`);
-    return { repository: REPOSITORY, github_main_sha: body?.sha || null, observed_at: new Date().toISOString(), error: null };
-  } catch (error) {
-    return { repository: REPOSITORY, github_main_sha: null, observed_at: new Date().toISOString(), error: errorText(error) };
-  }
+  const promotedRef = process.env.MCCLUSTER_OVH_DEPLOY_REF || 'deploy/ovh-production';
+  const [main, promoted] = await Promise.allSettled([
+    githubCommit('main', headers),
+    githubCommit(promotedRef, headers),
+  ]);
+  const errors = [];
+  if (main.status === 'rejected') errors.push(`main: ${errorText(main.reason)}`);
+  if (promoted.status === 'rejected') errors.push(`${promotedRef}: ${errorText(promoted.reason)}`);
+  return {
+    repository: REPOSITORY,
+    github_main_sha: main.status === 'fulfilled' ? main.value : null,
+    github_promoted_sha: promoted.status === 'fulfilled' ? promoted.value : null,
+    promoted_ref: promotedRef,
+    observed_at: new Date().toISOString(),
+    error: errors.length ? errors.join('; ') : null,
+  };
 }
 
 async function countRows(table, filters = {}) {
@@ -297,7 +312,7 @@ export async function hostHealth(job = {}) {
   const haloHealth = haloSnapshotFreshness(parseJson(haloHealthText));
 
   const [source, supabase, jobs, compute, communications, edge] = await Promise.all([
-    githubMain(),
+    githubSource(),
     supabaseHealth(orgId),
     jobHealth(orgId),
     computeHealth(orgId),
