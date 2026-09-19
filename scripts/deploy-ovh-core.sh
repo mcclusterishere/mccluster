@@ -77,7 +77,9 @@ rollback() {
     fi
     systemctl daemon-reload || true
     for unit in mccluster-core-runner.service mccluster-core-tool-broker.service mccluster-preview-gateway.service mccluster-compute-gateway.service mccluster-ollama-adapter.service mccluster-compute-node.service; do
-      systemctl try-restart "${unit}" || true
+      if systemctl list-unit-files "${unit}" --no-legend 2>/dev/null | grep -q "${unit}"; then
+        systemctl try-restart "${unit}" || true
+      fi
     done
   fi
   exit "${rc}"

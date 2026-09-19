@@ -18,5 +18,5 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
 ProtectSystem=full
-ReadWritePaths=/opt/mccluster /var/lib/mccluster /etc/systemd/system /run /tmp
+ReadWritePaths=/opt/mccluster /var/lib/mccluster /etc/systemd/system /etc/polkit-1/rules.d /etc/mccluster-node /run /tmp
 TimeoutStartSec=20min
