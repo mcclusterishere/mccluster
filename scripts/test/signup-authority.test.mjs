@@ -123,3 +123,30 @@ test('no signup page hands out a role, and only one email is hardcoded as admin'
   assert.deepEqual(offenders, [],
     `these signup surfaces try to write a role or membership: ${offenders.join(', ')}`);
 });
+
+test('social sign-in follows Supabase and is never hardcoded on', async () => {
+  /* A button for a provider Supabase has switched off sends people to a
+     provider error page, which is worse than no button. The row therefore
+     reads /auth/v1/settings and paints only what is live — which also means
+     enabling Google is a dashboard toggle, not a deploy.
+
+     This was a real gap: js/mcc-auth.js has carried signInWithGoogle and a
+     "Continue with Google" button for a while, but nothing on the site had
+     the #acOauth element it mounts into, so the button could never appear
+     no matter what the dashboard said. */
+  const html = await read('account.html');
+  assert.match(html, /MCC\.providers\(\)/, 'the row must ask Supabase which providers are live');
+  assert.match(html, /if \(!live\[key\]\) return;/, 'a provider that is off gets no button');
+  assert.match(html, /el\("acSocialRow"\)\.hidden = !any;/,
+    'the whole row hides when nothing is live');
+  assert.match(html, /js\/mcc-auth\.js/, 'the page must load the client that owns the PKCE exchange');
+  assert.match(html, /location\.origin \+ "\/auth\/\?next=\/account\.html"/,
+    'sign-in must return through the callback page that completes the exchange');
+});
+
+test('the OAuth callback page completes the exchange and refuses off-site redirects', async () => {
+  const html = await read('auth/index.html');
+  assert.match(html, /window\.MCC\.complete\(\)/, 'the callback must finish the PKCE exchange');
+  assert.match(html, /raw\.charAt\(0\) !== '\/' \|\| raw\.charAt\(1\) === '\/'/,
+    'next= must be a same-origin path, or an open redirect walks out of the sign-in');
+});

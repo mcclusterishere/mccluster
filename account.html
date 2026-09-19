@@ -24,6 +24,18 @@
     .fan__check.is-off { opacity: 0.45; cursor: default; }
     .fan__fine { margin-top: 0.8rem; font-size: 0.74rem; line-height: 1.45; color: var(--cream-dim); }
     .fan__note { margin-top: 0.4rem; font-size: 0.74rem; color: var(--cream-dim); }
+    .ac__or { position: relative; text-align: center; margin: 1.2rem 0 0.9rem; }
+    .ac__or::before { content: ""; position: absolute; left: 0; right: 0; top: 50%;
+      border-top: 1px solid rgba(244,239,230,0.16); }
+    .ac__or span { position: relative; background: var(--ink-2); padding: 0 0.7rem;
+      font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cream-dim); }
+    .ac__prov { width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+      margin-top: 0.55rem; padding: 0.85rem 1rem; border-radius: 12px; cursor: pointer;
+      font: 600 0.95rem var(--ui); color: var(--cream);
+      background: rgba(244,239,230,0.06); border: 1px solid rgba(244,239,230,0.22); }
+    .ac__prov:hover { background: rgba(244,239,230,0.1); }
+    .ac__prov[disabled] { opacity: 0.55; cursor: default; }
+    .ac__prov svg { width: 18px; height: 18px; flex: none; }
     .ac input { width: 100%; margin-top: 0.6rem; padding: 0.95rem 1rem; border-radius: 12px; border: 1px solid rgba(229,56,59,0.4); background: var(--ink-2); color: var(--cream); font-size: 1rem; }
     .ac__flip { background: none; border: 0; cursor: pointer; padding: 0; margin-top: 0.9rem; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; }
     .ac__btn { appearance: none; border: 0; cursor: pointer; display: block; width: 100%; margin-top: 0.8rem; padding: 1rem; border-radius: 13px; background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.02rem; text-align: center; text-decoration: none; }
@@ -45,6 +57,16 @@
       <button class="ac__btn" id="acGo" type="button">Sign in</button>
       <button class="ac__flip" id="acSend" type="button">Email me a sign-in link</button>
       <p class="ac__note" id="acMsg"></p>
+
+      <!-- SOCIAL SIGN-IN. Painted only for providers Supabase actually has
+           switched on, read live from /auth/v1/settings — a button for a
+           provider that is off sends people to a Google error page, which is
+           worse than no button. js/mcc-auth.js owns the PKCE exchange and
+           /auth/index.html finishes it. -->
+      <div class="ac__social" id="acSocialRow" hidden>
+        <p class="ac__or"><span>or</span></p>
+        <div id="acProviders"></div>
+      </div>
     </div>
     <div class="ac__card" id="acDesk" hidden>
       <p class="ac__lab">Signed in</p>
@@ -92,6 +114,9 @@
     </div>
   </main>
   <script src="js/backend.js?v=__STAMP__"></script>
+  <!-- The social door. It shares mccdb_session with backend.js, so a Google
+       sign-in lands in exactly the same session the email form produces. -->
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/fan-intake.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
@@ -222,6 +247,54 @@
           "We keep your number but cannot text a code yet — SMS is not switched on.";
       });
     }
+
+    /* ---------------------------------------------------------------
+       THE SOCIAL DOOR. Asks Supabase which providers are live and paints
+       only those. Nothing here is hardcoded on: flipping Google on in the
+       dashboard makes the button appear by itself, and flipping it off
+       makes it vanish, with no deploy either way.
+       --------------------------------------------------------------- */
+    var PROVIDERS = [
+      ['google', 'Continue with Google',
+       '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+       '<path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8a12 12 0 1 1 7.9-21l5.7-5.7A20 20 0 1 0 24 44a20 20 0 0 0 19.6-23.9z"/>' +
+       '<path fill="#FF3D00" d="m6.3 14.7 6.6 4.8A12 12 0 0 1 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7A20 20 0 0 0 6.3 14.7z"/>' +
+       '<path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A11.9 11.9 0 0 1 12.7 28l-6.5 5A20 20 0 0 0 24 44z"/>' +
+       '<path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2A19.9 19.9 0 0 0 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>'],
+      ['apple', 'Continue with Apple', ''],
+      ['facebook', 'Continue with Facebook', ''],
+      ['x', 'Continue with X', ''],
+    ];
+
+    function mountProviders() {
+      if (!window.MCC || !MCC.providers) return;
+      MCC.providers().then(function (live) {
+        var host = el("acProviders");
+        var any = false;
+        host.innerHTML = "";
+        PROVIDERS.forEach(function (spec) {
+          var key = spec[0];
+          if (!live[key]) return;          /* off in Supabase → no button */
+          any = true;
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "ac__prov";
+          b.innerHTML = spec[2] + "<span>" + spec[1] + "</span>";
+          b.addEventListener("click", function () {
+            b.disabled = true;
+            /* /auth/ finishes the PKCE exchange and then forwards here. */
+            MCC.signInWithProvider(key, location.origin + "/auth/?next=/account.html")
+              .catch(function (e) {
+                b.disabled = false;
+                el("acMsg").textContent = e.message || ("Could not start " + key + " sign-in.");
+              });
+          });
+          host.appendChild(b);
+        });
+        el("acSocialRow").hidden = !any;
+      }).catch(function () { /* the email form is always there */ });
+    }
+    mountProviders();
 
     el("fnBirth").addEventListener("input", syncShareGate);
 
