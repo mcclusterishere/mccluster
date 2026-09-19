@@ -60,8 +60,8 @@ create or replace function auth.jwt() returns jsonb language sql stable as $$ se
 grant usage on schema public, auth to anon, authenticated, service_role;
 SQL
 
-cp "$REPO/supabase/migrations/0017_equity_uprise_platform.sql" "$WORK/0017.sql"
-cp "$REPO/supabase/migrations/0018_equity_uprise_seed.sql"     "$WORK/0018.sql"
+cp "$REPO/supabase/replay_migrations/0017_equity_uprise_platform.sql" "$WORK/0017.sql"
+cp "$REPO/supabase/replay_migrations/0018_equity_uprise_seed.sql"     "$WORK/0018.sql"
 chmod -R a+rX "$WORK"
 
 PSQL="PATH=$PGBIN:\$PATH psql -h $WORK -p $PORT -U pg -d postgres -v ON_ERROR_STOP=1 -q"
