@@ -5,6 +5,7 @@ import { researchWeb } from './research.mjs';
 import { coreResume } from './resume.mjs';
 import { previewConfigured } from '../preview-policy.mjs';
 import { computeTaskById } from '../compute/store.mjs';
+import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PREVIEW_CONFIGURED = previewConfigured();
@@ -73,6 +74,8 @@ const BASE_TOOLS = [
   }
 ];
 
+BASE_TOOLS.push(...ONTOLOGY_TOOLS);
+
 if (PREVIEW_CONFIGURED) {
   BASE_TOOLS.push({
     name: 'core.deploy.preview', title: 'Deploy non-production preview',
@@ -83,7 +86,7 @@ if (PREVIEW_CONFIGURED) {
 
 export const CONTROL_TOOLS = Object.freeze(BASE_TOOLS);
 
-export async function callControlTool(name, args = {}) {
+export async function callControlTool(name, args = {}, options = {}) {
   if (name === 'core.resume') {
     return coreResume({
       orgId: requireOrg(args.org_id),
@@ -184,6 +187,8 @@ export async function callControlTool(name, args = {}) {
     const job = await enqueueJob({ orgId, jobType: 'preview_deploy', targetType: 'repository', targetId: repository, priority: Math.min(100, Math.max(0, Number(args.priority ?? 90))), maxAttempts: 2, input: { repository, ref, directory: text(args.directory || '.', 1000), output_dir: args.output_dir, ttl_hours: args.ttl_hours ?? 24 } });
     return { queued: true, job_id: job.id, job_type: job.job_type, repository, ref, production: false };
   }
+
+  if (name.startsWith('core.ontology.')) return callOntologyTool(name, args, options);
 
   throw Object.assign(new Error(`Unknown control tool: ${name}`), { status: 404 });
 }

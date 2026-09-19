@@ -29,6 +29,21 @@ The canonical durable job system is `ops_agent_jobs`. The canonical objective sy
 
 Conversation ingestion, objective synthesis, dependency-aware plans, communications turns, game-studio jobs, code-patch drafts, host health, and future autonomous work must converge on those canonical systems instead of inventing parallel queues, objective stores, schedulers, workflow engines, or memory databases.
 
+## Operational ontology
+
+The operational ontology is a semantic and kinetic layer **inside the canonical Supabase/Core architecture**, not a new control plane.
+
+- `ops_ontology_types` defines organization-scoped object types.
+- `ops_ontology_objects` materializes selected canonical records with source provenance.
+- `ops_ontology_link_types` and `ops_ontology_links` create typed relationships.
+- `ops_ontology_action_types` declares bounded governed actions.
+- `ops_ontology_action_runs` and `ops_ontology_lineage` preserve attribution, idempotency, results, and change evidence.
+- Core exposes the stable capabilities `ontology.schema`, `ontology.query`, `ontology.neighbors`, and `ontology.action.apply`.
+
+The ontology does not replace canonical domain tables. Source-backed fields are synchronized from those tables; v1 actions may only write the ontology's owner-controlled annotations/tags or compatible typed links. External side effects, money movement, deployment, communications, and production mutations continue through their existing capability/policy gates.
+
+Remote ontology writes are attributable to the authenticated house owner because Cloudflare overwrites actor metadata and includes it inside the signed edge-to-Core MCP request.
+
 ## Architectural laws
 
 1. Supabase is canonical durable truth. Do not create a second McCluster control-plane database or memory database.

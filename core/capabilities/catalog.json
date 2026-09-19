@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-19.1",
+  "catalogVersion": "2026-09-19.2",
   "capabilities": [
     {
       "id": "core.resume",
@@ -889,6 +889,198 @@
         "planning",
         "autonomy"
       ]
+    },
+    {
+      "id": "ontology.schema",
+      "title": "Read operational ontology schema",
+      "description": "Read McCluster object types, link types, and governed action types for one organization.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ontology",
+        "schema",
+        "digital-twin"
+      ]
+    },
+    {
+      "id": "ontology.query",
+      "title": "Query operational ontology",
+      "description": "Read materialized operational objects with canonical source provenance.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "type_key": {
+            "type": "string"
+          },
+          "object_key": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ontology",
+        "objects",
+        "query",
+        "provenance"
+      ]
+    },
+    {
+      "id": "ontology.neighbors",
+      "title": "Traverse ontology links",
+      "description": "Traverse typed incoming and outgoing links around an operational object.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "object_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "object_id": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out",
+              "both"
+            ]
+          },
+          "link_key": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ontology",
+        "links",
+        "graph",
+        "query"
+      ]
+    },
+    {
+      "id": "ontology.action.apply",
+      "title": "Apply governed ontology action",
+      "description": "Apply a bounded owner-attributed ontology action with durable action-run and lineage evidence. V1 effects are internal annotations, tags, and compatible typed links.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "action_key",
+          "target_object_id",
+          "parameters"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "action_key": {
+            "type": "string"
+          },
+          "target_object_id": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object"
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "approval_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ontology",
+        "actions",
+        "governance",
+        "lineage"
+      ]
     }
   ],
   "bindings": [
@@ -1225,6 +1417,75 @@
       "features": {
         "read_only": true,
         "durable_state": true
+      }
+    },
+    {
+      "id": "core.ontology-schema",
+      "capability": "ontology.schema",
+      "provider": "mccluster-core",
+      "tool": "core.ontology.schema",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 230,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.ontology-query",
+      "capability": "ontology.query",
+      "provider": "mccluster-core",
+      "tool": "core.ontology.query",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 230,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "materialized_objects": true
+      }
+    },
+    {
+      "id": "core.ontology-neighbors",
+      "capability": "ontology.neighbors",
+      "provider": "mccluster-core",
+      "tool": "core.ontology.neighbors",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 230,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "graph_traversal": true
+      }
+    },
+    {
+      "id": "core.ontology-action-apply",
+      "capability": "ontology.action.apply",
+      "provider": "mccluster-core",
+      "tool": "core.ontology.action.apply",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 230,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "owner_attributed": true,
+        "lineage": true,
+        "bounded_effects": true
       }
     }
   ]

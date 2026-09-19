@@ -45,7 +45,17 @@
     "private_conversation_memory": "ai_context",
     "capability_registry": "core/capabilities/catalog.json",
     "runner": "core/src/runner.mjs",
-    "tool_broker": "core/src/tool-broker.mjs"
+    "tool_broker": "core/src/tool-broker.mjs",
+    "operational_ontology": {
+      "object_types": "ops_ontology_types",
+      "objects": "ops_ontology_objects",
+      "link_types": "ops_ontology_link_types",
+      "links": "ops_ontology_links",
+      "action_types": "ops_ontology_action_types",
+      "action_runs": "ops_ontology_action_runs",
+      "lineage": "ops_ontology_lineage",
+      "rule": "Semantic/kinetic layer over canonical Supabase domain tables. It does not replace source-of-truth tables, the job system, objective system, memory, or policy gates."
+    }
   },
   "authority": {
     "humans": "Consequential authority: production deploy/rollback authorization, contracts, purchases, legal commitments and other high-impact decisions.",
