@@ -126,6 +126,7 @@ comment on function public.memory_note(uuid, text, text, real, uuid) is
 -- happily serve the whole ledger to anybody.
 -- ============================================================
 
+drop view if exists public.ai_spend_24h;
 create or replace view public.ai_spend_24h
   with (security_invoker = true) as
   select coalesce(sum(cost_micros), 0)::bigint as cost_micros,
