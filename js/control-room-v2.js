@@ -10,7 +10,7 @@
   var SURFACES = ["home", "work", "create", "system", "apps"];
   var WORK_VIEWS = ["inbox", "pipeline", "people", "companies", "clients", "tasks", "orders", "bookings"];
   var CREATE_VIEWS = ["projects", "library", "schedule"];
-  var SYSTEM_VIEWS = ["overview", "workload", "observability", "resources"];
+  var SYSTEM_VIEWS = ["command", "overview", "workload", "observability", "resources"];
 
   var state = {
     surface: "home",
@@ -22,6 +22,10 @@
     apps: [],
     ai: null,
     aiHealth: null,
+    coreBridge: null,
+    coreTools: [],
+    coreResume: null,
+    commandResult: null,
     org: null,
     threads: [],
     leads: [],
@@ -110,6 +114,77 @@
         });
       });
     });
+  }
+
+  var coreRpcSeq = 1;
+  function coreMcp(method, params) {
+    return request("/v1/core/mcp", {
+      method: "POST",
+      body: {
+        jsonrpc: "2.0",
+        id: "operator-" + Date.now() + "-" + (coreRpcSeq++),
+        method: method,
+        params: params || {}
+      }
+    }).then(function (rpc) {
+      if (rpc && rpc.error) {
+        var err = new Error(rpc.error.message || "Core MCP error");
+        err.detail = rpc.error;
+        throw err;
+      }
+      return rpc && rpc.result;
+    });
+  }
+
+  function parseCoreToolResult(result) {
+    if (result && result.isError) {
+      var failed = result.content && result.content[0] && result.content[0].text;
+      throw new Error(failed || "Core tool failed");
+    }
+    var raw = result && result.content && result.content[0] && result.content[0].text;
+    if (!raw) return result;
+    try { return JSON.parse(raw); } catch (e) { return { text: raw }; }
+  }
+
+  function unwrapCoreResult(value) {
+    var current = value, depth = 0;
+    while (current && current.result && typeof current.result === "object" && depth < 4) {
+      current = current.result;
+      depth += 1;
+    }
+    return current;
+  }
+
+  function callCoreTool(name, args) {
+    return coreMcp("tools/call", { name: name, arguments: args || {} })
+      .then(parseCoreToolResult)
+      .then(unwrapCoreResult);
+  }
+
+  function coreToolAvailable(name) {
+    return state.coreTools.some(function (tool) { return tool && tool.name === name; });
+  }
+
+  function sleep(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
+
+  function waitForComputeTask(taskId, attempts) {
+    attempts = attempts || 45;
+    if (!taskId || !state.org || !state.org.id) return Promise.reject(new Error("Compute task identity unavailable"));
+    function poll(left) {
+      return callCoreTool("compute.task.get", { org_id: state.org.id, task_id: taskId }).then(function (payload) {
+        var task = payload && payload.task;
+        if (!task) throw new Error("Compute task disappeared");
+        state.commandResult = { kind: "ai", task: task };
+        render();
+        if (task.status === "done") return task;
+        if (task.status === "failed" || task.status === "canceled") {
+          throw new Error(task.last_error || ("Compute task " + task.status));
+        }
+        if (left <= 1) return task;
+        return sleep(2000).then(function () { return poll(left - 1); });
+      });
+    }
+    return poll(attempts);
   }
 
   function supa(path, opts) {
@@ -858,7 +933,13 @@
     return [
       { key: "api", title: "Cloudflare / API", sub: "api.mccluster.org", value: state.health && state.health.ok ? "Healthy" : "Check", kind: state.health && state.health.ok ? "ok" : "bad" },
       { key: "db", title: "Supabase", sub: "Canonical data plane", value: s.database && s.database.reachable ? "Healthy" : "Check", kind: s.database && s.database.reachable ? "ok" : "warn" },
-      { key: "core", title: "Core / AI", sub: "ai_context-v4 · ops_agent_jobs", value: state.ai && state.ai.ok ? "Healthy" : "Inspect", kind: state.ai && state.ai.ok ? "ai" : "warn" },
+      {
+        key: "core",
+        title: "Core / AI",
+        sub: state.coreBridge && state.coreBridge.signed_dispatch ? "Signed Cloudflare → Core MCP" : "Control bridge not verified",
+        value: state.coreBridge && state.coreBridge.ok ? state.coreTools.length + " tools" : "Inspect",
+        kind: state.coreBridge && state.coreBridge.ok ? "ai" : "warn"
+      },
       { key: "host", title: "OVH host", sub: state.aiHealth && state.aiHealth.checked_at ? "Checked " + ago(state.aiHealth.checked_at) + " ago" : "No fresh host health", value: state.aiHealth && !state.aiHealth.stale ? titleCase(state.aiHealth.overall || "Healthy") : "Refresh", kind: state.aiHealth && !state.aiHealth.stale ? "ok" : "warn" },
       { key: "comms", title: "Communications", sub: state.threads.length + " thread" + (state.threads.length === 1 ? "" : "s"), value: "Live", kind: "info" },
       { key: "creative", title: "Creative", sub: state.mediaJobs.length + " media job" + (state.mediaJobs.length === 1 ? "" : "s"), value: state.mediaJobs.some(function (x) { return x.status === "failed"; }) ? "Check" : "Ready", kind: state.mediaJobs.some(function (x) { return x.status === "failed"; }) ? "warn" : "ok" }
@@ -873,7 +954,7 @@
   }
   function renderSystemOverview() {
     var services = serviceRows();
-    return sourceStates([["Edge health", state.sources.health], ["Operator status", state.sources.status], ["Core", state.sources.ai], ["Host health", state.sources.aiHealth]]) +
+    return sourceStates([["Edge health", state.sources.health], ["Core bridge", state.sources.coreBridge], ["Durable resume", state.sources.coreResume], ["Operator status", state.sources.status], ["Core", state.sources.ai], ["Host health", state.sources.aiHealth]]) +
       '<div class="cr-kpis">' + kpi("API", state.health && state.health.ok ? "UP" : "—", "edge") + kpi("Database", state.status && state.status.database && state.status.database.reachable ? "UP" : "—", "truth") + kpi("Jobs", String(state.jobs.filter(function (x) { return ["queued", "running"].indexOf(x.status) >= 0; }).length), "active") + kpi("Failures", String(state.jobs.filter(function (x) { return x.status === "failed"; }).length), "workload") + '</div>' +
       '<div class="cr-grid">' + panel("Live topology", "click a resource", '<div class="cr-panel__body">' + renderTopology() + '</div>', "cr-span-7") +
       panel("Services", "canonical status", '<div class="cr-list">' + services.map(function (s) { return row(s.title, s.sub, s.value, s.kind, "inspect-service", { key: s.key, badge: s.kind === "ai" ? "AI" : s.kind }); }).join("") + '</div>', "cr-span-5") + '</div>';
@@ -1097,9 +1178,76 @@
         (state.apps.length ? state.apps.slice(0, 20).map(function (a) { return row(a.name || a.app_key, text(a.product_family, "registered application"), text(a.kind, "app"), "info", "apps"); }).join("")
           : '<p class="cr-panel__body cr-muted">No registered applications were returned.</p>') + '</div>', "cr-span-6") + '</div>';
   }
+  function commandResultHtml() {
+    var result = state.commandResult;
+    if (!result) return '<p class="cr-muted">No command has run in this session.</p>';
+    if (result.error) return '<div class="cr-gap"><b>Command failed</b><span>' + esc(result.error) + '</span></div>';
+    if (result.kind === "ai" && result.task) {
+      var task = result.task;
+      var answer = task.output && (task.output.content || task.output.text || task.output.answer);
+      return props([["Task", task.id], ["Status", task.status], ["Implementation", task.implementation || "automatic"], ["Updated", formatDate(task.updated_at)]]) +
+        (answer ? inspectorSection("Home-base AI", '<p class="cr-muted">' + esc(answer) + '</p>') :
+          '<p class="cr-muted">The durable compute task is ' + esc(task.status || "unknown") + '. This view polls the canonical task record; it does not invent a result.</p>');
+    }
+    return '<pre class="cr-code">' + esc(JSON.stringify(result.data || result, null, 2)) + '</pre>';
+  }
+
+  function pendingApprovalRows() {
+    return state.coreResume && Array.isArray(state.coreResume.pending_approvals)
+      ? state.coreResume.pending_approvals
+      : [];
+  }
+
+  function renderPendingApprovals() {
+    var approvals = pendingApprovalRows();
+    if (!approvals.length) return '<p class="cr-muted">No control-plane approvals are waiting on you.</p>';
+    return '<div class="cr-list">' + approvals.map(function (approval) {
+      return '<div class="cr-row"><div class="cr-row__main"><b>' + esc(approval.capability || "Approval") + '</b>' +
+        '<small>' + esc(approval.resource || "") + (approval.reason ? " · " + esc(approval.reason) : "") + '</small></div>' +
+        '<div class="cr-row__end"><button class="cr-btn cr-btn--primary" type="button" data-action="approval-decide" data-id="' + esc(approval.id) + '" data-decision="approve">Approve</button>' +
+        '<button class="cr-btn" type="button" data-action="approval-decide" data-id="' + esc(approval.id) + '" data-decision="deny">Deny</button></div></div>';
+    }).join("") + '</div>';
+  }
+
+  function renderCommandCenter() {
+    var tools = state.coreTools.map(function (tool) { return tool.name; });
+    var bridgeOk = Boolean(state.coreBridge && state.coreBridge.ok && state.coreBridge.signed_dispatch);
+    return sourceStates([["Core bridge", state.sources.coreBridge], ["Capabilities", state.sources.coreTools], ["Durable state", state.sources.coreResume]]) +
+      '<div class="cr-kpis">' +
+        kpi("Bridge", bridgeOk ? "SIGNED" : "CHECK", "Cloudflare → Core") +
+        kpi("Capabilities", String(tools.length), "owner surface") +
+        kpi("Home AI", coreToolAvailable("ai.chat") ? "READY" : "OFFLINE", "self-hosted compute") +
+        kpi("Planner", coreToolAvailable("objective.plan") ? "READY" : "OFFLINE", "durable objectives") +
+        kpi("Approvals", String(pendingApprovalRows().length), "owner decisions") +
+      '</div>' +
+      '<div class="cr-grid">' +
+        panel("Command center", "same capability bus used by agents", '<div class="cr-panel__body">' +
+          '<textarea id="crSystemCommand" class="cr-textarea" rows="5" placeholder="Tell the McCluster control plane what you want done…"></textarea>' +
+          '<div class="cr-inspector__actions">' +
+            '<button class="cr-btn cr-btn--primary" type="button" data-action="command-plan"' + (coreToolAvailable("objective.plan") ? "" : " disabled") + '>Plan objective</button>' +
+            '<button class="cr-btn" type="button" data-action="command-ai"' + (coreToolAvailable("ai.chat") ? "" : " disabled") + '>Ask home AI</button>' +
+            '<button class="cr-btn" type="button" data-action="command-research"' + (coreToolAvailable("research.web") ? "" : " disabled") + '>Research web</button>' +
+            '<button class="cr-btn cr-btn--ghost" type="button" data-action="command-resume"' + (coreToolAvailable("core.resume") ? "" : " disabled") + '>Resume durable state</button>' +
+          '</div></div>', "cr-span-7") +
+        panel("Last command", "canonical result", '<div class="cr-panel__body">' + commandResultHtml() + '</div>', "cr-span-5") +
+        panel("Owner approvals", pendingApprovalRows().length + " pending", '<div class="cr-panel__body">' + renderPendingApprovals() + '</div>', "cr-span-12") +
+        panel("Control spine", "no assistant in the middle", '<div class="cr-panel__body">' +
+          '<p class="cr-muted">Operator OS authenticates at Cloudflare, dispatches through the signed MCP bridge, Core resolves a stable capability, Supabase records durable work, and compute nodes execute it. Results return through the same path.</p>' +
+          '<div class="cr-list">' +
+            row("Cloudflare edge", "owner auth + signed dispatch", bridgeOk ? "Ready" : "Check", bridgeOk ? "ok" : "warn", "inspect-service", { key: "api", badge: "Edge" }) +
+            row("Core broker", "capability routing + policy", state.coreBridge && state.coreBridge.ok ? "Ready" : "Check", state.coreBridge && state.coreBridge.ok ? "ai" : "warn", "inspect-service", { key: "core", badge: "Core" }) +
+            row("Durable state", "Supabase objectives, jobs, approvals", state.coreResume ? "Ready" : "Check", state.coreResume ? "ok" : "warn", "inspect-service", { key: "db", badge: "State" }) +
+            row("Self-hosted AI", "ai.chat via compute fabric", coreToolAvailable("ai.chat") ? "Ready" : "Check", coreToolAvailable("ai.chat") ? "ai" : "warn", "inspect-service", { key: "host", badge: "Compute" }) +
+          '</div></div>', "cr-span-12") +
+      '</div>';
+  }
+
   function renderSystem() {
-    var body = state.systemView === "overview" ? renderSystemOverview() : (state.systemView === "workload" ? renderWorkload() : (state.systemView === "observability" ? renderObservability() : renderResources()));
-    return renderHeader("System", "Operate the machine through Overview, Workload, Observability, and Resources.", { values: SYSTEM_VIEWS, selected: state.systemView }) + body;
+    var body = state.systemView === "command" ? renderCommandCenter()
+      : (state.systemView === "overview" ? renderSystemOverview()
+      : (state.systemView === "workload" ? renderWorkload()
+      : (state.systemView === "observability" ? renderObservability() : renderResources())));
+    return renderHeader("System", "Command, observe, and intervene through one canonical control plane.", { values: SYSTEM_VIEWS, selected: state.systemView }) + body;
   }
 
   function appCard(title, subtitle, href, meta, external) {
@@ -1378,10 +1526,31 @@
 
   function submitCoreTask(task, context) {
     var value = String(task || "").trim(); if (!value) return Promise.resolve();
-    return request("/v1/ai/task", { method: "POST", body: { task: context ? (context + "\n\n" + value) : value, conversation_origin: "control-room" } }).then(function (r) {
-      if (r && r.job) { state.jobs.unshift(r.job); openInspector({ title: "Objective queued", subtitle: "Canonical Core", description: value, props: [["Job", r.job.id], ["Type", r.job.job_type], ["Status", r.job.status], ["Target", r.job.target_id]], raw: r.job, tabs: ["overview", "raw", "ai"] }); }
-      return r;
-    }).catch(function (e) { openInspector({ title: "Core could not queue that", subtitle: "Command failed", description: e.message || String(e), props: [["Requested", value], ["Backend", "Canonical /v1/ai/task"]] }); });
+    if (!state.org || !state.org.id) return Promise.reject(new Error("McCluster organization is unavailable"));
+    var objective = context ? (context + "\n\n" + value) : value;
+    return callCoreTool("objective.plan", {
+      org_id: state.org.id,
+      objective: objective,
+      target_id: "McCluster",
+      max_steps: 8,
+      since_hours: 48,
+      priority: 70
+    }).then(function (result) {
+      state.commandResult = { kind: "plan", data: result };
+      openInspector({
+        title: "Objective queued",
+        subtitle: "Signed Core capability bus",
+        description: value,
+        props: [["Job", result.job_id], ["Type", result.job_type], ["Planner", "objective.plan"], ["Production mutation", result.safety && result.safety.production_mutation ? "allowed" : "blocked"]],
+        raw: result,
+        tabs: ["overview", "raw", "ai"]
+      });
+      load(true);
+      return result;
+    }).catch(function (e) {
+      state.commandResult = { error: e.message || String(e) };
+      openInspector({ title: "Core could not queue that", subtitle: "Command failed", description: e.message || String(e), props: [["Requested", value], ["Backend", "Signed /v1/core/mcp → objective.plan"]] });
+    });
   }
 
   function handleCommand(query) {
@@ -1443,7 +1612,7 @@
     return [
       ["Home", "Attention, signals, current work", "home"], ["Work · Inbox", "Unified incoming work", "work-inbox"], ["Work · Pipeline", "Leads and opportunities", "work-pipeline"], ["Work · People", "Canonical people", "work-people"],
       ["Create · Projects", "Creative objectives and canvas", "create-projects"], ["Create · Library", "Canonical assets", "create-library"], ["Create · Schedule", "Distribution and publishing", "create-schedule"],
-      ["System · Overview", "Topology and service health", "system-overview"], ["System · Workload", "Agents, jobs, queues", "system-workload"], ["System · Observability", "Events, traces, incidents", "system-observability"], ["System · Resources", "Providers, usage, API access", "system-resources"], ["Apps", "Specialized products", "apps"],
+      ["System · Command", "Speak to the signed Core capability bus", "system-command"], ["System · Overview", "Topology and service health", "system-overview"], ["System · Workload", "Agents, jobs, queues", "system-workload"], ["System · Observability", "Events, traces, incidents", "system-observability"], ["System · Resources", "Providers, usage, API access", "system-resources"], ["Apps", "Specialized products", "apps"],
       /* Object-level intents, not just destinations. */
       ["Show failed work", "Workload, filtered to failures", "goto-failed"],
       ["Open waiting conversations", "Threads whose last message came in", "goto-waiting"],
@@ -1471,6 +1640,7 @@
     else if (action === "create-projects") setSurface("create", "projects");
     else if (action === "create-library") setSurface("create", "library");
     else if (action === "create-schedule") setSurface("create", "schedule");
+    else if (action === "system-command") setSurface("system", "command");
     else if (action === "system-overview") setSurface("system", "overview");
     else if (action === "system-workload") setSurface("system", "workload");
     else if (action === "system-observability") setSurface("system", "observability");
@@ -1485,6 +1655,65 @@
     }
     else if (action === "refresh") load(true);
     else if (action === "hero-command") handleCommand($("crHeroInput") && $("crHeroInput").value);
+    else if (action === "command-plan") {
+      var planBox = $("crSystemCommand"), planText = planBox && planBox.value.trim();
+      if (planText) submitCoreTask(planText);
+    }
+    else if (action === "command-ai") {
+      var aiBox = $("crSystemCommand"), aiText = aiBox && aiBox.value.trim();
+      if (!aiText || !state.org) return;
+      state.commandResult = { kind: "ai", task: { status: "queueing" } }; render();
+      callCoreTool("ai.chat", { prompt: aiText, temperature: 0.2 }).then(function (queued) {
+        var task = queued && queued.task;
+        if (!task || !task.id) throw new Error("Home AI did not return a durable compute task");
+        state.commandResult = { kind: "ai", task: task }; render();
+        return waitForComputeTask(task.id, 45);
+      }).then(function (task) {
+        state.commandResult = { kind: "ai", task: task }; render();
+      }).catch(function (e) {
+        state.commandResult = { error: e.message || String(e) }; render();
+      });
+    }
+    else if (action === "command-research") {
+      var researchBox = $("crSystemCommand"), researchText = researchBox && researchBox.value.trim();
+      if (!researchText) return;
+      state.commandResult = { kind: "research", data: { state: "running" } }; render();
+      callCoreTool("research.web", { objective: researchText, limit: 6 }).then(function (result) {
+        state.commandResult = { kind: "research", data: result }; render();
+      }).catch(function (e) {
+        state.commandResult = { error: e.message || String(e) }; render();
+      });
+    }
+    else if (action === "command-resume") {
+      if (!state.org) return;
+      callCoreTool("core.resume", { org_id: state.org.id, since_hours: 24, limit: 25 }).then(function (result) {
+        state.coreResume = result;
+        state.commandResult = { kind: "resume", data: result }; render();
+      }).catch(function (e) {
+        state.commandResult = { error: e.message || String(e) }; render();
+      });
+    }
+    else if (action === "approval-decide") {
+      var approvalId = el && el.getAttribute("data-id");
+      var decision = el && el.getAttribute("data-decision");
+      if (!approvalId || !decision) return;
+      state.pending["approval:" + approvalId] = true; render();
+      request("/v1/ai/approvals/" + encodeURIComponent(approvalId) + "/decision", {
+        method: "POST",
+        body: { decision: decision }
+      }).then(function (result) {
+        delete state.pending["approval:" + approvalId];
+        state.commandResult = { kind: "approval", data: result };
+        return callCoreTool("core.resume", { org_id: state.org.id, since_hours: 24, limit: 25 });
+      }).then(function (resume) {
+        state.coreResume = resume;
+        render();
+      }).catch(function (e) {
+        delete state.pending["approval:" + approvalId];
+        state.commandResult = { error: e.message || String(e) };
+        render();
+      });
+    }
     else if (action === "inspect-lead") inspectLead(el.getAttribute("data-id"));
     else if (action === "inspect-thread") inspectThread(el.getAttribute("data-id"));
     else if (action === "inspect-job") inspectJob(el.getAttribute("data-id"));
@@ -1791,13 +2020,21 @@
       if (!t) return { signedOut: true };
       return discoverOrg().then(function (org) {
         return Promise.all([
+          src(request("/v1/core")),
+          src(coreMcp("tools/list")),
+          src(callCoreTool("core.resume", { org_id: org.id, since_hours: 24, limit: 25 })),
           src(request("/v1/status")), src(request("/v1/apps")), src(request("/v1/ai/status")), src(request("/v1/ai/system-health")),
           src(request("/v1/ai/decisions?limit=25")),
           src(request("/v1/comms/threads?limit=100")), src(supa(leadQueryPath(LEAD_PAGE, 0), { count: true, prefer: "count=exact" })),
           src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
           src(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200")), loadCreative(org)
         ]).then(function (r) {
-          return { org: org, status: r[0], apps: r[1], ai: r[2], aiHealth: r[3], decisions: r[4], threads: r[5], leads: r[6], siteRequests: r[7], jobs: r[8], creative: r[9] };
+          return {
+            org: org,
+            coreBridge: r[0], coreTools: r[1], coreResume: r[2],
+            status: r[3], apps: r[4], ai: r[5], aiHealth: r[6], decisions: r[7],
+            threads: r[8], leads: r[9], siteRequests: r[10], jobs: r[11], creative: r[12]
+          };
         });
       });
     });
@@ -1805,12 +2042,17 @@
       var a = r[1] || {}; var c = a.creative || {};
       var signedOut = badResult("unauthorized", "This session is not signed in.", 401);
       state.sources = {
-        health: r[0], status: a.status || signedOut, apps: a.apps || signedOut, ai: a.ai || signedOut, aiHealth: a.aiHealth || signedOut,
+        health: r[0], coreBridge: a.coreBridge || signedOut, coreTools: a.coreTools || signedOut, coreResume: a.coreResume || signedOut,
+        status: a.status || signedOut, apps: a.apps || signedOut, ai: a.ai || signedOut, aiHealth: a.aiHealth || signedOut,
         decisions: a.decisions || signedOut, threads: a.threads || signedOut, leads: a.leads || signedOut, siteRequests: a.siteRequests || signedOut, jobs: a.jobs || signedOut,
         mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
       state.health = dataOf(state.sources.health); state.org = a.org || null;
+      state.coreBridge = dataOf(state.sources.coreBridge);
+      var coreToolsPayload = dataOf(state.sources.coreTools);
+      state.coreTools = coreToolsPayload && Array.isArray(coreToolsPayload.tools) ? coreToolsPayload.tools : [];
+      state.coreResume = dataOf(state.sources.coreResume);
       state.status = dataOf(state.sources.status); state.ai = dataOf(state.sources.ai); state.aiHealth = dataOf(state.sources.aiHealth);
       state.apps = pickRows(state.sources.apps, "apps");
       state.decisions = pickRows(state.sources.decisions, "decisions");

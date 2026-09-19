@@ -145,6 +145,18 @@ export async function enqueueComputeTask({ orgId, capability, implementation = n
   return { task: result?.task || null, replayed: Boolean(result?.replayed) };
 }
 
+export async function computeTaskById({ orgId, taskId } = {}) {
+  if (!orgId || !taskId) return null;
+  const params = new URLSearchParams({
+    id: eq(taskId),
+    org_id: eq(orgId),
+    select: 'id,org_id,capability,implementation,input,requirements,priority,status,run_after,attempts,max_attempts,locked_by_node_id,locked_at,output,last_error,metadata,created_at,updated_at',
+    limit: '1'
+  });
+  const { body = [] } = await rest(`ops_compute_tasks?${params}`);
+  return body[0] || null;
+}
+
 export async function listNodes(options = {}) {
   const normalized = typeof options === 'string' ? { orgId: options } : (options || {});
   const { orgId, liveOnly = false, limit = 100 } = normalized;

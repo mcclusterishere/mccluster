@@ -151,6 +151,34 @@ async function getOwnerJob(env, orgId, jobId) {
   return rows?.[0] || null;
 }
 
+async function decideOwnerApproval(env, orgId, approvalId, actorId, decision) {
+  const state = decision === 'approve' ? 'approved' : decision === 'deny' ? 'denied' : null;
+  if (!state) throw Object.assign(new Error('decision must be approve or deny'), { status: 400 });
+
+  const params = new URLSearchParams({
+    id: `eq.${approvalId}`,
+    org_id: `eq.${orgId}`,
+    state: 'eq.pending',
+    expires_at: `gt.${new Date().toISOString()}`,
+    select: 'id,org_id,capability,resource_type,resource_id,reason,state,requested_by,decided_by,created_at,decided_at,expires_at'
+  });
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/control_approvals?${params.toString()}`, {
+    method: 'PATCH',
+    headers: { ...serviceHeaders(env), Prefer: 'return=representation' },
+    body: JSON.stringify({
+      state,
+      decided_by: actorId,
+      decided_at: new Date().toISOString()
+    })
+  });
+  const rows = await res.json().catch(() => []);
+  if (!res.ok) throw Object.assign(new Error(rows?.message || 'approval decision failed'), { status: 502, detail: rows });
+  if (!rows?.length) {
+    throw Object.assign(new Error('approval is no longer pending, does not belong to this organization, or has expired'), { status: 409 });
+  }
+  return rows[0];
+}
+
 async function latestSystemHealth(env, orgId) {
   const params = new URLSearchParams({
     org_id: `eq.${orgId}`,
@@ -355,6 +383,18 @@ export async function handleAiRequest(request, env, user) {
   /* Reading decisions back. This is a method on the route that already records
      them, not a new namespace: the house-owner gate above already applies, and
      the function re-checks org membership itself. */
+  const approvalMatch = path.match(/^\/v1\/ai\/approvals\/([0-9a-f-]{36})\/decision$/i);
+  if (approvalMatch && request.method === 'POST') {
+    const body = await readJson(request);
+    const decision = String(body.decision || '').trim().toLowerCase();
+    try {
+      const approval = await decideOwnerApproval(env, orgId, approvalMatch[1], user.id, decision);
+      return reply(request, env, { approval }, 200);
+    } catch (error) {
+      return fail(request, env, error.message || 'approval decision failed', error.status || 500, error.detail);
+    }
+  }
+
   if (path === '/v1/ai/decisions' && request.method === 'GET') {
     try {
       const { status, data } = await readContextFunction(request, env, 'context-decision', {
