@@ -116,6 +116,28 @@ export default {
       put('cf-ipcontinent', cf.continent);
       put('cf-asn', cf.asn);
       put('cf-as-organization', cf.asOrganization);
+
+      /* CONNECTION QUALITY AND TRANSPORT. These are observed by Cloudflare,
+         not asserted by the browser body. They are useful for answering
+         whether a conversion problem is a page problem or a network problem.
+         Deliberately excluded: JA3/JA4 and TLS-client fingerprint hashes. */
+      put('cf-colo', cf.colo);
+      put('cf-metro-code', cf.metroCode);
+      put('cf-is-eu-country', cf.isEUCountry);
+      put('cf-http-protocol', cf.httpProtocol);
+      put('cf-tls-version', cf.tlsVersion);
+      put('cf-tls-cipher', cf.tlsCipher);
+      put('cf-client-tcp-rtt', cf.clientTcpRtt);
+      put('cf-client-quic-rtt', cf.clientQuicRtt);
+      put('cf-edge-delivery-rate', cf.edgeL4 && cf.edgeL4.deliveryRate);
+      put('cf-client-accept-encoding', cf.clientAcceptEncoding);
+      put('cf-request-priority', cf.requestPriority);
+
+      /* Bot Management fields are classification signals, not identity.
+         Fingerprint values such as ja3Hash/ja4 are intentionally not sent. */
+      put('cf-bot-score', cf.botManagement && cf.botManagement.score);
+      put('cf-verified-bot', cf.botManagement && cf.botManagement.verifiedBot);
+      put('cf-static-resource', cf.botManagement && cf.botManagement.staticResource);
       /* THE OPT-OUT HAS TO SURVIVE THE HOP. This route builds a fresh header
          set rather than passing the request's own through, which means any
          header not named here is dropped — and a privacy signal that gets

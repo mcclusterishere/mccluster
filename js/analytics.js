@@ -121,19 +121,44 @@ window.MCC_TRACK = (function () {
   }
 
   /* ---- what the browser can honestly say about itself ---- */
+  function connectionFacts() {
+    var out = { online: navigator.onLine !== false };
+    try {
+      var n = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      if (!n) return out;
+      if (n.type) out.type = n.type;
+      if (n.effectiveType) out.effective = n.effectiveType;
+      if (typeof n.downlink === "number") out.downlink_mbps = n.downlink;
+      if (typeof n.downlinkMax === "number") out.downlink_max_mbps = n.downlinkMax;
+      if (typeof n.rtt === "number") out.rtt_ms = n.rtt;
+      if (typeof n.saveData === "boolean") out.save_data = n.saveData;
+    } catch (e) {}
+    return out;
+  }
+
   function deviceFacts() {
     var d = {};
     try {
       d.w = screen.width; d.h = screen.height;
+      d.aw = screen.availWidth; d.ah = screen.availHeight;
       d.vw = window.innerWidth; d.vh = window.innerHeight;
       d.dpr = window.devicePixelRatio || 1;
       d.tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      d.tz_offset_min = new Date().getTimezoneOffset();
       d.lang = navigator.language || "";
       d.platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
       d.mobile = !!(navigator.userAgentData && navigator.userAgentData.mobile);
+      d.vendor = navigator.vendor || "";
+      d.touch = navigator.maxTouchPoints || 0;
+      d.webdriver = navigator.webdriver === true;
+      d.online = navigator.onLine !== false;
+      d.network = connectionFacts();
+      d.webgpu = !!navigator.gpu;
+      d.wasm = typeof WebAssembly === "object";
+      d.webrtc = typeof RTCPeerConnection !== "undefined";
+      d.service_worker = "serviceWorker" in navigator;
       if (navigator.hardwareConcurrency) d.cpu = navigator.hardwareConcurrency;
       if (navigator.deviceMemory) d.mem = navigator.deviceMemory;
-      if (navigator.connection && navigator.connection.effectiveType) d.net = navigator.connection.effectiveType;
       /* Standalone means installed to a home screen, which is a different
          kind of visitor and worth being able to count separately. */
       d.standalone = !!(window.matchMedia && matchMedia("(display-mode: standalone)").matches) ||
@@ -606,6 +631,21 @@ window.MCC_MODEL = (function () {
     });
   }
 
+  function networkState() {
+    return safe(function () {
+      var n = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      var out = { online: navigator.onLine !== false };
+      if (!n) return out;
+      if (n.type) out.type = n.type;
+      if (n.effectiveType) out.effective = n.effectiveType;
+      if (typeof n.downlink === "number") out.downlink_mbps = n2(n.downlink);
+      if (typeof n.downlinkMax === "number") out.downlink_max_mbps = n2(n.downlinkMax);
+      if (typeof n.rtt === "number") out.rtt_ms = Math.round(n.rtt);
+      if (typeof n.saveData === "boolean") out.save_data = n.saveData;
+      return out;
+    }) || { online: navigator.onLine !== false };
+  }
+
   var machine = {
     gpu: gpu(),
     touch: safe(function () { return navigator.maxTouchPoints || 0; }),
@@ -613,9 +653,15 @@ window.MCC_MODEL = (function () {
     dark: safe(function () { return matchMedia("(prefers-color-scheme: dark)").matches; }),
     reduced: safe(function () { return matchMedia("(prefers-reduced-motion: reduce)").matches; }),
     orient: safe(function () { return screen.orientation && screen.orientation.type; }),
+    orient_angle: safe(function () { return screen.orientation && screen.orientation.angle; }),
     pdf: safe(function () { return navigator.pdfViewerEnabled; }),
     cookies: safe(function () { return navigator.cookieEnabled; }),
     langs: safe(function () { return (navigator.languages || []).slice(0, 4).join(","); }),
+    network: networkState(),
+    online: navigator.onLine !== false,
+    webdriver: navigator.webdriver === true,
+    webgpu: !!navigator.gpu,
+    service_worker: "serviceWorker" in navigator,
   };
 
   safe(function () {
@@ -624,6 +670,79 @@ window.MCC_MODEL = (function () {
       T("device_power", { level: n2(b.level), charging: b.charging });
     }).catch(function () {});
   });
+
+  /* Network state can change during a visit (Wi-Fi -> cellular, tunnel,
+     offline/online). Record the transition rather than assuming the first
+     page-view still describes the connection ten minutes later. */
+  safe(function () {
+    var n = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (n && n.addEventListener) n.addEventListener("change", function () {
+      T("network_change", { reason: "connection", network: networkState() });
+    });
+  });
+  root.addEventListener("online", function () {
+    T("network_change", { reason: "online", network: networkState() });
+  });
+  root.addEventListener("offline", function () {
+    T("network_change", { reason: "offline", network: networkState() });
+  });
+
+  /* Precise location is special: the browser owns the permission prompt.
+     Never manufacture a location, never infer a street from fingerprinting,
+     and never prompt on page load. If permission is already granted we may
+     read it; otherwise MCC_LOCATION.request() must be called from an explicit
+     user action. */
+  function privacyQuiet() {
+    return navigator.globalPrivacyControl === true ||
+      navigator.doNotTrack === "1" || root.doNotTrack === "1";
+  }
+  function geoNumber(value, places) {
+    if (typeof value !== "number" || !isFinite(value)) return null;
+    var k = Math.pow(10, places);
+    return Math.round(value * k) / k;
+  }
+  function preciseLocation() {
+    return new Promise(function (resolve) {
+      if (privacyQuiet()) return resolve({ ok: false, reason: "privacy_signal" });
+      if (!navigator.geolocation) return resolve({ ok: false, reason: "unsupported" });
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        var co = pos.coords || {};
+        var payload = {
+          source: "browser_geolocation",
+          lat: geoNumber(co.latitude, 5),
+          lon: geoNumber(co.longitude, 5),
+          accuracy_m: geoNumber(co.accuracy, 1),
+          altitude_m: geoNumber(co.altitude, 1),
+          altitude_accuracy_m: geoNumber(co.altitudeAccuracy, 1),
+          heading_deg: geoNumber(co.heading, 1),
+          speed_mps: geoNumber(co.speed, 2),
+          observed_at: new Date(pos.timestamp || Date.now()).toISOString(),
+        };
+        T("precise_location", payload);
+        resolve({ ok: true, location: payload });
+      }, function (err) {
+        resolve({ ok: false, reason: "denied_or_unavailable", code: err && err.code || null });
+      }, { enableHighAccuracy: true, maximumAge: 300000, timeout: 10000 });
+    });
+  }
+  root.MCC_LOCATION = {
+    request: preciseLocation,
+    status: function () {
+      if (privacyQuiet()) return Promise.resolve("privacy_signal");
+      if (!navigator.permissions || !navigator.permissions.query) return Promise.resolve("unknown");
+      return navigator.permissions.query({ name: "geolocation" }).then(function (p) { return p.state; }).catch(function () { return "unknown"; });
+    },
+  };
+  if (!privacyQuiet() && navigator.permissions && navigator.permissions.query) {
+    navigator.permissions.query({ name: "geolocation" }).then(function (p) {
+      T("location_permission", { state: p.state });
+      if (p.state === "granted") preciseLocation();
+      p.addEventListener && p.addEventListener("change", function () {
+        T("location_permission", { state: p.state });
+        if (p.state === "granted") preciseLocation();
+      });
+    }).catch(function () {});
+  }
 
   /* =========================================================
      3. THE PAGE VIEW — the anchor row every other row hangs off
@@ -911,6 +1030,14 @@ window.MCC_MODEL = (function () {
     vitals.dom = Math.round(n.domContentLoadedEventEnd);
     vitals.load = Math.round(n.loadEventEnd);
     vitals.type = n.type;
+    vitals.protocol = n.nextHopProtocol || null;
+    vitals.dns_ms = Math.max(0, Math.round(n.domainLookupEnd - n.domainLookupStart));
+    vitals.connect_ms = Math.max(0, Math.round(n.connectEnd - n.connectStart));
+    vitals.tls_ms = n.secureConnectionStart > 0 ? Math.max(0, Math.round(n.connectEnd - n.secureConnectionStart)) : null;
+    vitals.response_ms = Math.max(0, Math.round(n.responseEnd - n.responseStart));
+    vitals.transfer_bytes = Number(n.transferSize || 0);
+    vitals.encoded_bytes = Number(n.encodedBodySize || 0);
+    vitals.decoded_bytes = Number(n.decodedBodySize || 0);
   });
 
   /* =========================================================
