@@ -26,6 +26,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
 const MIGRATION = 'supabase/migrations/20260919093553_native_telemetry_columns.sql';
 const LOCKDOWN  = 'supabase/pending_migrations/20260919999000_native_telemetry_lockdown.sql';
+const ANALYTICS_PLATFORM = 'supabase/migrations/20260919133905_analytics_platform_multitenant_v1.sql';
 
 /* An assertion that something is ABSENT has to read the code and not the
    prose. Everything here is commented on the scale this house writes at,
@@ -170,23 +171,22 @@ test('the telemetry table is under migration control and the browser cannot writ
   }
 });
 
-test('the lockdown is a separate migration, because the live site is still writing', async () => {
-  /* Adding the columns and revoking the browser's insert in one migration
-     would have stopped roughly 2,300 events a day from landing between the
-     schema going up and the new client reaching matthew.mccluster.org. The
-     columns shipped first on purpose; this one waits for the deploy. */
-  const sql = await read(LOCKDOWN);
-  assert.match(sql, /NOT YET APPLIED/,
-    'the file must say plainly that it is pending, so nobody runs it early');
-  assert.match(sql, /alter table public\.events force row level security;/,
-    'force, so a future view cannot read around it — that already went wrong once on eu_profiles');
-  assert.match(sql, /drop policy if exists "anyone writes the exhaust" on public\.events;/,
-    'the open insert must be withdrawn once the server is the writer');
-  assert.match(sql, /revoke insert on table public\.events from anon, authenticated;/,
-    'an anonymous browser may not write rows carrying an observed address');
+test('the live analytics migration closes browser writes and the pending file is remainder-only', async () => {
+  const live = await read(ANALYTICS_PLATFORM);
+  assert.match(live, /drop policy if exists "anyone writes the exhaust" on public\.events;/,
+    'the production migration must withdraw the legacy open insert policy');
+  assert.match(live, /revoke insert on public\.events from anon, authenticated;/,
+    'the production migration must revoke direct browser writes');
+  const pending = await read(LOCKDOWN);
+  assert.match(pending, /REMAINDER ONLY/,
+    'the old lockdown file must no longer pretend browser-write closure is pending');
+  assert.match(pending, /alter table public\.events force row level security;/,
+    'force RLS remains an explicit owner hardening decision');
+  assert.doesNotMatch(sqlCode(pending), /drop policy if exists "anyone writes the exhaust"|revoke insert on (?:table )?public\.events/,
+    'already-applied write closure must not be duplicated in the pending remainder');
   const cols = await read(MIGRATION);
   assert.doesNotMatch(sqlCode(cols), /revoke insert|force row level security/,
-    'the additive migration must not carry the lockdown');
+    'the original additive telemetry migration remains additive');
 });
 
 test('there is a retention lever, and nothing pulls it automatically', async () => {
