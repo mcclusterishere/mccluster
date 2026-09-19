@@ -59,3 +59,14 @@ test('Core computes action hash and requires signed actor context', () => {
   assert.match(ontology, /p_request_hash: requestHash/);
   assert.match(ontology, /ops_ontology_apply_action_service/);
 });
+
+
+test('ontology migration closes the historical objectives replay gap exactly enough for fresh rebuilds', () => {
+  assert.match(migration, /create table if not exists public\.ops_objectives/);
+  assert.match(migration, /status text not null default 'active'/);
+  assert.match(migration, /priority integer not null default 50/);
+  assert.match(migration, /success_metric jsonb not null default '\{\}'::jsonb/);
+  assert.match(migration, /scope jsonb not null default '\{\}'::jsonb/);
+  assert.match(migration, /revoke all on table public\.ops_objectives from public, anon, authenticated/);
+  assert.match(migration, /grant all on table public\.ops_objectives to service_role/);
+});
