@@ -28,4 +28,13 @@ for replay in "${replays[@]}"; do
   cp "$replay" "$ACTIVE/$name"
 done
 
-supabase db reset "$@"
+mode="${1:-reset}"
+if [[ "$mode" = "start" ]]; then
+  shift
+  supabase start "$@"
+elif [[ "$mode" = "reset" ]]; then
+  shift || true
+  supabase db reset "$@"
+else
+  supabase db reset "$@"
+fi
