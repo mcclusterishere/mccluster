@@ -60,6 +60,15 @@ function brokerToolList() {
         { name: 'ontology.query', title: 'Ontology query', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
         { name: 'ontology.neighbors', title: 'Ontology neighbors', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
         { name: 'ontology.action.apply', title: 'Ontology action', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'owner-policy-gated' } },
+        { name: 'ingest.connectors', title: 'Ingest connectors', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
+        { name: 'ingest.records', title: 'Ingest records', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
+        { name: 'ingest.run.begin', title: 'Begin ingest run', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'owner-policy-gated' } },
+        { name: 'ingest.record.write', title: 'Write ingest record', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'owner-policy-gated' } },
+        { name: 'ingest.run.finish', title: 'Finish ingest run', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'owner-policy-gated' } },
+        { name: 'entity.aliases', title: 'Entity aliases', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
+        { name: 'entity.resolve', title: 'Resolve entity alias', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'owner-policy-gated' } },
+        { name: 'facts.query', title: 'Fact claims', _meta: { 'mccluster/risk': 'read', 'mccluster/approval': 'none' } },
+        { name: 'facts.claim', title: 'Record fact claim', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'owner-policy-gated' } },
         { name: 'model3d.generate', title: 'Generate 3D model', _meta: { 'mccluster/risk': 'spend', 'mccluster/approval': 'budget-gated', 'mccluster/providers': ['fal'] } },
         { name: 'code.build', title: 'Build', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'review-required' } },
         { name: 'game.build', title: 'Build game', _meta: { 'mccluster/risk': 'write', 'mccluster/approval': 'review-required' } },
@@ -135,7 +144,7 @@ test('tools/list publishes only allowlisted capabilities', async () => {
     const { status, body } = await handleCoreMcp(rpcRequest({ jsonrpc: '2.0', id: 5, method: 'tools/list' }), env, OWNER);
     assert.equal(status, 200);
     const names = body.result.tools.map((tool) => tool.name);
-    assert.deepEqual(names.sort(), ['ai.chat', 'code.build', 'compute.task.get', 'game.build', 'model3d.generate', 'objective.plan', 'ontology.action.apply', 'ontology.neighbors', 'ontology.query', 'ontology.schema', 'research.web', 'system.health']);
+    assert.deepEqual(names.sort(), ['ai.chat', 'code.build', 'compute.task.get', 'entity.aliases', 'entity.resolve', 'facts.claim', 'facts.query', 'game.build', 'ingest.connectors', 'ingest.record.write', 'ingest.records', 'ingest.run.begin', 'ingest.run.finish', 'model3d.generate', 'objective.plan', 'ontology.action.apply', 'ontology.neighbors', 'ontology.query', 'ontology.schema', 'research.web', 'system.health']);
     assert.ok(!names.includes('mccluster.media.generate'), 'raw provider tool leaked');
   });
 });
