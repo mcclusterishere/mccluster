@@ -224,6 +224,11 @@ html { scroll-behavior: smooth; }
       { href: "films.html",     label: "Lyric videos: every record, with the words" },
     ] },
     { group: "The music", rooms: [
+      /* The listening room, first: it is what the Music tab opens and the
+         only page that carries every record at once. The catalogue below
+         is the registry — ISRC codes and credits — which is a different
+         errand from wanting something to play. */
+      { href: "listen.html",    label: "Listen: every record, one room" },
       { href: "catalogue.html", label: "The whole catalogue" },
       { href: "films.html",     label: "Lyric videos" },
       { href: "license.html",   label: "License the music" },

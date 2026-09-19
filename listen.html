@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Listen: every record, one room · Matthew McCluster</title>
+  <meta name="description" content="The whole McCluster catalogue in one place: every album and every track, ordered by what listeners actually play, with a search that indexes the lot.">
+  <link rel="canonical" href="https://matthew.mccluster.org/listen.html">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <meta property="og:type" content="music.playlist">
+  <meta property="og:title" content="Listen: every record, one room">
+  <meta property="og:description" content="Every album, every track, ordered by what listeners actually play.">
+  <meta property="og:url" content="https://matthew.mccluster.org/listen.html">
+  <meta property="og:image" content="https://matthew.mccluster.org/assets/img/here-cover.jpg">
+  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    html, body { background: var(--ink); }
+    .ls { max-width: 42rem; margin: 0 auto; padding: clamp(1.2rem, 4vh, 2rem) clamp(1.1rem, 4vw, 2rem) 10rem; }
+    .ls__top { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
+    .ls__ava { width: 2rem; height: 2rem; border-radius: 50%; display: block; }
+    .ls__acts { display: flex; gap: 0.5rem; }
+    .ls__circle { width: 2.1rem; height: 2.1rem; border-radius: 50%; display: grid; place-items: center;
+      background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px var(--edge); border: 0;
+      color: var(--cream); text-decoration: none; cursor: pointer; }
+    .ls__circle svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round; }
+    .ls h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.88;
+      font-size: clamp(2.4rem, 12vw, 4rem); margin: 1.1rem 0 0.35rem; }
+    .ls__sub { color: var(--cream-dim); font-size: 0.93rem; line-height: 1.6; }
+
+    /* THE FIELD. The old magnifying glass was a link to the registry; this is
+       the search it always looked like. */
+    .ls__find { position: relative; margin: 1.3rem 0 0.4rem; }
+    .ls__find svg { position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%);
+      width: 1.05rem; height: 1.05rem; fill: none; stroke: var(--cream-dim); stroke-width: 2;
+      stroke-linecap: round; pointer-events: none; }
+    #q { width: 100%; -webkit-appearance: none; appearance: none; border: 0; border-radius: 100px;
+      font-family: var(--body); font-weight: 600; font-size: 1rem; color: var(--cream);
+      padding: 0.9rem 2.8rem 0.9rem 2.7rem; background: rgba(255,255,255,0.06);
+      box-shadow: inset 0 0 0 1px var(--edge); }
+    #q::placeholder { color: var(--cream-dim); font-weight: 500; }
+    #q:focus { outline: none; box-shadow: inset 0 0 0 1px var(--ruby-hot); }
+    #qClear { position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%);
+      width: 1.9rem; height: 1.9rem; border-radius: 50%; border: 0; cursor: pointer;
+      background: rgba(255,255,255,0.1); color: var(--cream); font-size: 1rem; line-height: 1; }
+    .ls__count { font-size: 0.78rem; color: var(--cream-dim); letter-spacing: 0.04em; margin: 0.55rem 0.2rem 0; }
+
+    .ls__k { font-size: 0.68rem; letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--ruby-text); font-weight: 800; margin: 2.1rem 0 0.7rem; }
+
+    /* the shelf: tap an album, it plays */
+    .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.9rem; }
+    .shelf a { display: block; text-decoration: none; color: var(--cream); }
+    .shelf .cov { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 14px; background: var(--ink-2);
+      box-shadow: 0 14px 40px -16px rgba(0,0,0,0.9), 0 0 0 1px rgba(229,56,59,0.25);
+      transition: transform 0.15s ease; }
+    .shelf a:hover .cov, .shelf a:active .cov { transform: translateY(-3px); }
+    .shelf b { display: block; font-family: var(--display); font-weight: 400; font-size: 0.98rem;
+      margin-top: 0.5rem; line-height: 1.15; }
+    .shelf small { color: var(--cream-dim); font-size: 0.72rem; }
+
+    /* the rows */
+    .tks { list-style: none; padding: 0; margin: 0; }
+    .tk { border-bottom: 1px solid rgba(244,239,230,0.09); }
+    .tk__go { display: grid; grid-template-columns: 2.6rem minmax(0,1fr) auto; align-items: center;
+      column-gap: 0.85rem; padding: 0.6rem 0.15rem; text-decoration: none; color: inherit; }
+    .tk__go:hover, .tk__go:active { background: rgba(255,255,255,0.04); }
+    .tk__art { width: 2.6rem; height: 2.6rem; border-radius: 8px; object-fit: cover; display: block;
+      background: var(--ink-2); }
+    .tk__mid { min-width: 0; }
+    .tk__t { display: block; font-family: var(--display); font-weight: 400; font-size: 1rem;
+      color: var(--cream); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tk__sub { display: block; font-size: 0.74rem; color: var(--cream-dim); margin-top: 0.12rem;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tk__end { display: flex; align-items: center; gap: 0.5rem; }
+    .tk__len { font-size: 0.74rem; color: var(--cream-dim); font-variant-numeric: tabular-nums; }
+    .tk__heart { color: var(--ruby-hot); font-size: 0.8rem; }
+    .tk__lock { color: var(--ruby-text); font-size: 0.5rem; vertical-align: middle; }
+    .tk--empty { padding: 1.1rem 0.2rem; color: var(--cream-dim); font-size: 0.88rem; line-height: 1.6; }
+    .ls__note { margin-top: 1.8rem; color: var(--cream-dim); font-size: 0.8rem; line-height: 1.7; }
+    .ls__note a { color: var(--ruby-text); text-decoration: none; }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage music-room">
+  <main class="ls">
+
+    <header class="ls__top">
+      <img class="ls__ava" src="assets/img/m-mark.png" alt="McCluster">
+      <div class="ls__acts">
+        <a class="ls__circle" href="album.html?playlist=my-rotation" aria-label="My rotation">
+          <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.6-9-9c-1.2-2.7 0.6-6 3.8-6 2 0 3.4 1.2 5.2 3.2C13.8 6.2 15.2 5 17.2 5c3.2 0 5 3.3 3.8 6-2 4.4-9 9-9 9z"/></svg>
+        </a>
+        <a class="ls__circle" href="catalogue.html" aria-label="The registered catalogue">
+          <svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+        </a>
+        <button class="ls__circle" id="themeFlip" type="button" aria-label="Light or dark">
+          <svg viewBox="0 0 24 24"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <h1>Listen</h1>
+    <p class="ls__sub">Every record in one room, in the order listeners put them.</p>
+
+    <div class="ls__find">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
+             placeholder="Search every track, album or credit" aria-label="Search the catalogue">
+      <button id="qClear" type="button" aria-label="Clear the search" hidden>&times;</button>
+    </div>
+    <p class="ls__count" id="count" hidden></p>
+
+    <section id="topWrap" aria-label="Most played">
+      <p class="ls__k" id="topK">Start here</p>
+      <ul class="tks" id="top"></ul>
+    </section>
+
+    <section id="shelfWrap" aria-label="The albums">
+      <p class="ls__k">The shelf</p>
+      <div class="shelf" id="shelf"></div>
+    </section>
+
+    <section aria-label="Every track">
+      <p class="ls__k" id="allK">Everything</p>
+      <ul class="tks" id="all"><li class="tk tk--empty">Opening the shelf&hellip;</li></ul>
+    </section>
+
+    <p class="ls__note">Written &amp; performed by Matthew McCluster unless credited otherwise.
+      The registered discography, with ISRC codes, is <a href="catalogue.html">the catalog</a>.
+      Licensing &amp; sync: <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a></p>
+
+  </main>
+
+  <!-- THE BAR: Music · Equity Uprise · HERE · Whip · Profile. -->
+  <nav class="appbar" aria-label="Sections">
+    <a class="appbar__tab" id="appbarNP" href="listen.html" data-appnav="music">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Music</span>
+    </a>
+    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
+      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
+      <span>Equity Uprise</span>
+    </a>
+    <a class="appbar__tab" href="index.html" data-appnav="home">
+      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
+      <span>HERE</span>
+    </a>
+    <a class="appbar__tab" href="whip.html" data-appnav="sites">
+      <img class="appbar__we" src="assets/img/we-icon-dark-bar.png" alt="">
+      <span>Whip</span>
+    </a>
+    <a class="appbar__tab" href="account.html" data-appnav="profile">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="js/masthead.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script src="js/listen.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script defer src="js/here-material.js?v=__STAMP__"></script>
+</body>
+</html>

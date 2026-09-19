@@ -76,7 +76,7 @@
     nav.className = "appbar";
     nav.setAttribute("aria-label", "Sections");
     nav.innerHTML =
-      '<a class="appbar__tab" id="appbarNP" href="' + ROOT + 'album.html" data-appnav="music">' +
+      '<a class="appbar__tab" id="appbarNP" href="' + ROOT + 'listen.html" data-appnav="music">' +
         eqSvg(true) + '<span>Music</span></a>' +
       '<a class="appbar__tab" href="' + ROOT + 'equity-uprise.html" data-appnav="uprise">' +
         eqSvg(false) + '<span>Equity Uprise</span></a>' +

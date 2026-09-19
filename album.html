@@ -750,7 +750,7 @@
   <div data-comments="the-album"></div>
 
   <nav class="appbar" aria-label="Sections">
-    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
+    <a class="appbar__tab" id="appbarNP" href="listen.html" data-appnav="music">
       <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
       <span>Music</span>
     </a>
@@ -793,6 +793,13 @@
     var ALBUM = (Q0.get("album") || "here").toLowerCase();
     var PL = (Q0.get("playlist") || "").toLowerCase();
     var TRACK = Q0.get("track") || ""; /* a creator cut, straight from the database */
+    /* THE TAP FROM THE LISTENING ROOM. listen.html lists every track in the
+       house and links each one here; without this the tap landed on track
+       one of the right album, which is the same complaint the room was
+       built to fix, one level down. Matched on title because that is the
+       key the rows already carry and the only one all three data sources
+       agree on. */
+    var WANT = Q0.get("t") || "";
     var INLINE = {}; /* the cut's lyrics + reel ride the row, not files */
     var deck = document.getElementById("deck");
     var rows = [];
@@ -1485,11 +1492,27 @@
     /* the memory: pick up exactly where you left off (paused, ready) */
     try {
       var r0 = JSON.parse(localStorage.getItem(KEY));
+      /* AN ASKED-FOR RECORD BEATS A REMEMBERED SEAT. Somebody who tapped a
+         specific track wants that track, not the one they left half-played
+         last week — so a resolved ?t= cancels both the pocket and the saved
+         position rather than racing them. An unresolvable one falls through
+         to the ordinary resume, because a bad link should still open the
+         room. */
+      var want = WANT
+        ? rows.findIndex(function (r) {
+            return (r.getAttribute("data-title") || "").toLowerCase() === WANT.toLowerCase();
+          })
+        : -1;
+      if (want > -1) {
+        load(want, 0);
+        if (window.MCC_TRACK) window.MCC_TRACK("listen_open", { track: rows[want].getAttribute("data-title"), album: ALBUM });
+        r0 = null;
+      }
       /* COMING BACK FROM THE POCKET. If the corner player kept the record
          moving on another page, its second is newer than the one this album
          banked on the way out — so it wins, and the listener lands exactly
          where the music actually is rather than where they left this page. */
-      var pk = window.MCC_POCKET && window.MCC_POCKET.read();
+      var pk = want > -1 ? null : (window.MCC_POCKET && window.MCC_POCKET.read());
       if (pk && pk.title) {
         var at = rows.findIndex(function (r) { return r.getAttribute("data-title") === pk.title; });
         if (at > -1) {
