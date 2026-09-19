@@ -1,0 +1,233 @@
+/* THE HOUSE'S OWN EYES, AND A RECORD THAT COMES BACK WHERE IT LEFT.
+   ============================================================
+   Three complaints, one root cause in each, pinned here so the next
+   change cannot quietly undo them.
+
+   1. The record restarted from the top. Both players banked the
+      position on `pagehide` alone, which a phone leaving for another
+      app never fires. js/main.js already listened for the hidden
+      state and js/pip.js and album.html did not, which is exactly why
+      the behaviour was INCONSISTENT rather than simply broken.
+
+   2. The analytics were notional. js/analytics.js posted to a table
+      with no migration behind it and threw the failure away, while
+      still loading Google's tag.
+
+   3. The offer funnel had no last step. Looking was recorded. Deciding
+      was not.
+   ============================================================ */
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile, readdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const read = (p) => readFile(join(ROOT, p), 'utf8');
+const MIGRATION = 'supabase/migrations/20260919061500_native_telemetry.sql';
+
+/* An assertion that something is ABSENT has to read the code and not the
+   prose. Everything here is commented on the scale this house writes at,
+   and those comments necessarily name what was removed and why — so a
+   plain grep for the old direct insert finds the paragraph explaining
+   that it is gone and calls it a regression. Strip the commentary, test
+   the program. */
+const code = (src) => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
+const sqlCode = (src) => src.replace(/^\s*--.*$/gm, ' ');
+
+/* ---------------------------------------------------------------
+   1. THE POSITION SURVIVES LEAVING
+   --------------------------------------------------------------- */
+
+test('every player banks the position when the page is hidden, not only on pagehide', async () => {
+  /* `pagehide` covers a navigation inside the browser. Switching apps
+     only HIDES the page, and iOS and the in-app browsers then reclaim
+     the tab whenever they want the memory — so a listener who left for
+     Instagram came back to the top of the record. visibilitychange is
+     the signal that actually arrives, while the page can still write. */
+  for (const [file, src] of Object.entries({
+    'js/pip.js': await read('js/pip.js'),
+    'album.html': await read('album.html'),
+    'js/main.js': await read('js/main.js'),
+  })) {
+    assert.match(src, /visibilitychange/,
+      `${file} must bank the position when the page is hidden`);
+    assert.match(src, /document\.visibilityState === ["']hidden["']/,
+      `${file} must act on the hidden state specifically`);
+    assert.match(src, /addEventListener\(["']pagehide["']/,
+      `${file} must keep pagehide for the in-browser navigation it does cover`);
+  }
+});
+
+test('the write on the way out is never dropped by the throttle', async () => {
+  /* Ten seconds is right for a position written while a record plays and
+     wrong for the one written as somebody walks away: that one carries
+     the second they actually left on. The throttle was eating it. */
+  const pip = await read('js/pip.js');
+  assert.match(pip, /function pushRemote\(s, force\)/,
+    'the remote push must be able to be forced');
+  assert.match(pip, /if \(!force && now - lastPush < 10000\)/,
+    'the throttle must yield to a forced push, not ignore it');
+  assert.match(pip, /function stash\(playing, force\)/,
+    'the local stash must be forceable too');
+  assert.match(pip, /stash\(!audio\.paused, true\)/,
+    'the teardown path must force');
+
+  const album = await read('album.html');
+  assert.match(album, /function bank\(\) \{ save\(true\); \}/,
+    'the album must force its teardown save');
+  const main = await read('js/main.js');
+  assert.match(main, /bankToPocket\(true\)/,
+    'the front page must force its teardown save');
+});
+
+test('the last write survives the page being torn down', async () => {
+  /* An ordinary fetch is cancelled the moment teardown starts, which
+     makes the most important write of a listen the least likely to land. */
+  const pip = await read('js/pip.js');
+  assert.match(pip, /if \(keepalive\) opts\.keepalive = true;/,
+    'the remote position write must be able to outlive the page');
+  assert.match(pip, /remote\("POST", s, force\)/,
+    'a forced push must be the one that sets keepalive');
+});
+
+test('coming back from the cache re-reads where the music actually is', async () => {
+  /* Back button and app-switch return can restore a page from the
+     back/forward cache with no script re-run: the resume already
+     happened, once, on the original load. */
+  for (const [file, src] of Object.entries({
+    'js/pip.js': await read('js/pip.js'),
+    'album.html': await read('album.html'),
+  })) {
+    assert.match(src, /addEventListener\(["']pageshow["']/,
+      `${file} must handle a restored page`);
+    assert.match(src, /\.persisted/,
+      `${file} must only re-read when the page actually came from the cache`);
+  }
+});
+
+/* ---------------------------------------------------------------
+   2. THE ANALYTICS ARE THE HOUSE'S OWN
+   --------------------------------------------------------------- */
+
+test('Google is gone from the analytics client, not merely switched off', async () => {
+  const js = await read('js/analytics.js');
+  for (const ghost of [/googletagmanager/i, /\bgtag\b/, /\bfbq\b/, /dataLayer/,
+                       /ANALYTICS_ID/, /META_PIXEL/, /GADS_/]) {
+    assert.doesNotMatch(js, ghost,
+      `${ghost} must not survive: an empty constant is still a loader waiting for an id`);
+  }
+});
+
+test('the collector is a server, because a page cannot see its own address', async () => {
+  const js = await read('js/analytics.js');
+  assert.match(js, /\/functions\/v1\/collect/,
+    'events must go to the collector, not straight at the table');
+  assert.doesNotMatch(code(js), /\/rest\/v1\/events/,
+    'a direct insert from the browser cannot carry an observed address');
+  /* The token travels; the uid does not. Decoding a token here and
+     asserting its subject would let anyone file events as anyone. */
+  assert.match(js, /"Bearer " \+ s\.access_token/,
+    'the session token must be sent for the collector to verify');
+});
+
+test('the collector observes the address and never accepts one', async () => {
+  const ts = await read('supabase/functions/collect/index.ts');
+  assert.match(ts, /function callerIp/, 'the address must come from the request headers');
+  assert.match(ts, /cf-connecting-ip/, 'the edge header is the source of truth');
+  assert.doesNotMatch(ts, /body\.ip|ev\.ip|\bbody\.user_agent\b|\bbody\.country\b/,
+    'nothing observed may be read out of the body a visitor controls');
+  assert.match(ts, /await resolveUid\(/,
+    'a signed-in visitor must be verified, not believed');
+  assert.match(ts, /auth\/v1\/user/,
+    'only the auth server can say whether a token is real');
+  /* A batch is a page's worth of intent. Anything a browser can drive
+     without limit gets a ceiling. */
+  assert.match(ts, /MAX_EVENTS/, 'the batch must be bounded');
+  assert.match(ts, /MAX_BODY_BYTES/, 'the body must be bounded');
+});
+
+test('the collector says when it could not write', async () => {
+  /* The old path wrapped its insert in a catch that discarded the
+     failure, against a table that had no migration. That is
+     indistinguishable from working, which is the whole complaint. */
+  const ts = await read('supabase/functions/collect/index.ts');
+  assert.match(ts, /reason: `insert \$\{r\.status\}`/,
+    'a failed insert must be reported, so a check of the endpoint tells the truth');
+});
+
+test('the telemetry table is under migration control and the browser cannot write to it', async () => {
+  const sql = await read(MIGRATION);
+  assert.match(sql, /create table if not exists public\.events/,
+    'the table the site has been posting to for months must exist in a migration');
+  /* create table if not exists is a no-op against an existing table, so
+     the new columns have to be added separately or the installation that
+     most needs them is the one that silently skips them. */
+  for (const col of ['device_id', 'session_id', 'ip', 'user_agent', 'country']) {
+    assert.match(sql, new RegExp(`add column if not exists\\s+${col}\\b`),
+      `${col} must be added to a table that may already exist`);
+  }
+  assert.match(sql, /alter table public\.events force row level security;/,
+    'force, so a future view cannot read around it — that already went wrong once on eu_profiles');
+  assert.match(sql, /drop policy if exists "anyone writes the exhaust" on public\.events;/,
+    'the open insert must be withdrawn now the server is the writer');
+  assert.match(sql, /revoke all on table public\.events from anon;/,
+    'an anonymous browser may not write rows carrying an observed address');
+  assert.match(sql, /public\.eu_role\(\) = 'admin'/,
+    'behavioural data with addresses attached is owner-only');
+});
+
+test('there is a retention lever, and nothing pulls it automatically', async () => {
+  const sql = await read(MIGRATION);
+  assert.match(sql, /create or replace function public\.events_purge/,
+    'an address kept forever should be a decision somebody made');
+  assert.doesNotMatch(sqlCode(sql), /cron\.schedule|ops_maintenance_tick/,
+    'the retention period is an owner decision, not a side effect of adding a column');
+});
+
+/* ---------------------------------------------------------------
+   3. THE OFFER FUNNEL HAS ITS LAST STEP
+   --------------------------------------------------------------- */
+
+test('the buy tap is recorded with the price that was on screen', async () => {
+  /* This file exists to stop a card showing one number while checkout
+     charges another. Recording what was shown is what makes that
+     checkable afterwards instead of arguable. */
+  const js = await read('js/offers.js');
+  assert.match(js, /MCC_TRACK\("offer_buy_click"/,
+    'the tap that starts a purchase must be recorded');
+  assert.match(js, /var pr = priceOf\(L, o\.id, mode\) \|\| \{\};/,
+    'the price banked must be read from the same source the card painted from');
+  assert.match(js, /approved: pr\.approved === true/,
+    'an unapproved price is a real state and must be recorded as one');
+});
+
+test('the buy handler is re-attached every time the card repaints', async () => {
+  /* buyBody() rebuilds the panel whenever the mode toggle moves, so a
+     listener attached once at load is a listener that stops existing the
+     first time somebody flips to Equity. mountDomain already learned this. */
+  const js = code(await read('js/offers.js'));
+  /* the lookbehind drops the declaration, leaving the call sites */
+  const calls = js.match(/(?<!function )mountBuy\(panel, L, o, /g) || [];
+  assert.equal(calls.length, 2,
+    'mountBuy must run on the first paint and on every repaint, like mountDomain');
+  const domain = js.match(/(?<!function )mountDomain\(panel, L, o, /g) || [];
+  assert.equal(calls.length, domain.length,
+    'the buy handler must be wired wherever the address box is');
+});
+
+/* ---------------------------------------------------------------
+   the scrub
+   --------------------------------------------------------------- */
+
+test('no page reintroduces a third-party tag', async () => {
+  const files = (await readdir(ROOT)).filter((f) => f.endsWith('.html'));
+  const offenders = [];
+  for (const f of files) {
+    let src;
+    try { src = await read(f); } catch { continue; }
+    if (/googletagmanager\.com|connect\.facebook\.net|google-analytics\.com/.test(src)) offenders.push(f);
+  }
+  assert.deepEqual(offenders, [],
+    `these pages load a third-party tag: ${offenders.join(', ')}`);
+});

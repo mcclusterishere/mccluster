@@ -1,32 +1,37 @@
 /* ============================================================
-   Analytics: the one wrapper every page calls.
-   Two optional destinations, both dormant until configured:
+   THE HOUSE'S OWN EYES.
 
-   1. ANALYTICS_ID: Google Analytics 4 Measurement ID
-      (GA4 Admin → Data Streams, looks like "G-XXXXXXXXXX").
-   2. TRACK_ENDPOINT: the future first-party collector on the
-      McCluster Control Room backend (an HTTPS URL that accepts
-      a JSON POST). Events go over as anonymous, consented,
-      aggregate signals. No identifiers, no profiles.
+   This used to be a Google Analytics loader with a first-party copy
+   bolted to the side. Google is gone. Not disabled behind an empty
+   constant — removed, along with the Meta pixel and the Google Ads
+   conversion tag, none of which ever had an ID pasted into them.
 
-   While both are empty, MCC_TRACK is a silent no-op: no
-   tracking, no external requests. No secrets belong in this
-   file. Endpoints only, keys live server-side.
+   What replaced it is not a thinner version of the same thing. It is
+   the collector itself: supabase/functions/collect, on the platform's
+   own infrastructure, writing to public.events, readable by the owner
+   without logging into anybody's dashboard or accepting anybody's terms.
+
+   WHY THE SERVER IS THE WRITER NOW. This file used to POST straight to
+   /rest/v1/events. That works for a name and a path, and it cannot
+   work for the thing the owner actually asked for: a page cannot see
+   its own IP address. There is no API for it. Every client-side trick
+   for getting one is a request to a third party, which is the exact
+   dependency being removed. The address exists on the request, at the
+   edge, and nowhere else — so the collector has to be a server, and
+   once it is, the address, the user agent and the country stop being
+   claims and become observations.
+
+   The old direct insert was also wrapped in a .catch that discarded
+   the failure, against a table that had no migration behind it. A
+   collector that silently drops everything is indistinguishable from
+   one that works. The collector answers now, and the answer is real.
+
+   WHAT LEAVES THIS BROWSER. An event name, the path, the small bag of
+   properties the calling page chose, a device id, a session id, and
+   what the browser can honestly say about itself: screen, timezone,
+   platform, language. MCC_MODEL below still runs entirely on-device
+   and still sends nothing.
    ============================================================ */
-
-window.ANALYTICS_ID = "G-38KDY01Z2V";
-window.TRACK_ENDPOINT = "";
-
-/* Ad platforms, dormant until the IDs are pasted in.
-   META_PIXEL_ID: Meta Events Manager → your pixel → the 15-16 digit ID.
-   GADS_ID / GADS_LABEL: Google Ads → Tools → Conversions → your
-   "Booked call" action → tag setup ("AW-XXXXXXXXX" + label).
-   The win we count: a booked call. MCC_CONVERT fires it everywhere. */
-window.ADS = {
-  META_PIXEL_ID: "",
-  GADS_ID: "",
-  GADS_LABEL: "",
-};
 
 /* Lead intake: the Apps Script web app URL (ends in /exec) that appends
    rows to the leads Sheet. While empty, every lead button keeps its plain
@@ -47,20 +52,84 @@ if ("serviceWorker" in navigator) {
 }
 
 window.MCC_TRACK = (function () {
-  var gaId = window.ANALYTICS_ID;
-  var endpoint = window.TRACK_ENDPOINT;
-
-  /* ---- the first-party mirror: the platform's own eyes ----
-     Google keeps its copy behind Google's login; this copy lands in
-     the platform's own database (docs/analytics-schema.sql) and
-     Mission Control reads it live. Write-only from here; the anon
-     key can insert an event, never read one back. Self-contained
-     constants because this file loads before backend.js. */
+  /* Self-contained constants: this file loads before backend.js. */
   var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
-  /* acquisition, first-party: where every soul CAME from. Referrer +
-     UTM tags bank once (first touch), ride every event as props.acq,
-     and fire one 'acquired' event: the numbers Google used to keep
-     behind its own login now live in the platform's own table. */
+  var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+  var COLLECT = SB_URL + "/functions/v1/collect";
+
+  function store(read) {
+    try { return read(); } catch (e) { return null; }
+  }
+
+  function uuid() {
+    try {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      var b = new Uint8Array(16);
+      crypto.getRandomValues(b);
+      b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+      var h = [].map.call(b, function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+      return h.slice(0, 8) + "-" + h.slice(8, 12) + "-" + h.slice(12, 16) + "-" + h.slice(16, 20) + "-" + h.slice(20);
+    } catch (e) {
+      return "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    }
+  }
+
+  /* ---- the device ----
+     A random id kept in localStorage. Deliberately NOT a fingerprint
+     computed from canvas, fonts or audio: those are built to survive a
+     person clearing their data, which makes them a tracking measure
+     rather than a counting one. This one distinguishes browsers, and
+     clearing the store genuinely clears it. */
+  var DEVICE_KEY = "mcc_device";
+  var deviceId = store(function () { return localStorage.getItem(DEVICE_KEY); });
+  if (!deviceId) {
+    deviceId = uuid();
+    store(function () { localStorage.setItem(DEVICE_KEY, deviceId); return 1; });
+  }
+
+  /* ---- the visit ----
+     One session is one sitting. Half an hour of nothing ends it, which
+     is the same rule every analytics product uses and the reason a
+     return the next morning reads as a return rather than a long tail
+     on yesterday. */
+  var SESSION_KEY = "mcc_session";
+  var SESSION_GAP_MS = 30 * 60 * 1000;
+  function sessionId() {
+    var now = Date.now();
+    var s = store(function () { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); });
+    if (!s || !s.id || now - (s.at || 0) > SESSION_GAP_MS) s = { id: uuid(), at: now };
+    else s.at = now;
+    store(function () { sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); return 1; });
+    return s.id;
+  }
+
+  /* ---- what the browser can honestly say about itself ---- */
+  function deviceFacts() {
+    var d = {};
+    try {
+      d.w = screen.width; d.h = screen.height;
+      d.vw = window.innerWidth; d.vh = window.innerHeight;
+      d.dpr = window.devicePixelRatio || 1;
+      d.tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      d.lang = navigator.language || "";
+      d.platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
+      d.mobile = !!(navigator.userAgentData && navigator.userAgentData.mobile);
+      if (navigator.hardwareConcurrency) d.cpu = navigator.hardwareConcurrency;
+      if (navigator.deviceMemory) d.mem = navigator.deviceMemory;
+      if (navigator.connection && navigator.connection.effectiveType) d.net = navigator.connection.effectiveType;
+      /* Standalone means installed to a home screen, which is a different
+         kind of visitor and worth being able to count separately. */
+      d.standalone = !!(window.matchMedia && matchMedia("(display-mode: standalone)").matches) ||
+        !!window.navigator.standalone;
+    } catch (e) {}
+    return d;
+  }
+
+  /* ---- acquisition, first-party: where every soul CAME from ----
+     Referrer and UTM tags bank once, on the first page of the first
+     visit, ride every later event as props.acq, and fire one 'acquired'
+     event. The numbers Google used to keep behind its own login now
+     live in the house's own table. */
   var ACQ = null;
   try {
     ACQ = JSON.parse(localStorage.getItem("mcc_acq") || "null");
@@ -77,75 +146,95 @@ window.MCC_TRACK = (function () {
         at: new Date().toISOString().slice(0, 10),
       };
       localStorage.setItem("mcc_acq", JSON.stringify(ACQ));
-      setTimeout(function () { if (window.MCC_TRACK) window.MCC_TRACK("acquired", { src: ACQ.src, med: ACQ.med, cmp: ACQ.cmp, plug: ACQ.plug }); }, 500);
+      setTimeout(function () {
+        if (window.MCC_TRACK) window.MCC_TRACK("acquired", { src: ACQ.src, med: ACQ.med, cmp: ACQ.cmp, plug: ACQ.plug });
+      }, 500);
     }
   } catch (e4) { ACQ = null; }
-  var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
-  function mirror(name, params) {
+
+  /* The session token, when there is one, so the collector can attribute
+     the event to an account. It is VERIFIED there, never believed — this
+     is the token itself, not a uid this file decoded and asserted. */
+  function bearer() {
+    var s = store(function () { return JSON.parse(localStorage.getItem("mccdb_session") || "null"); });
+    return s && s.access_token ? "Bearer " + s.access_token : null;
+  }
+
+  /* ---- the queue ----
+     One request per event is a request per click, which on a slow phone
+     is measurably worse than the thing being measured. Events gather and
+     go in batches: when enough pile up, a couple of seconds after the
+     first one, and unconditionally the moment the page is hidden. */
+  var BATCH = 12;
+  var LINGER_MS = 2500;
+  var queue = [];
+  var timer = null;
+
+  function send(batch, keepalive) {
+    if (!batch.length) return;
+    var headers = { "Content-Type": "application/json", apikey: SB_KEY };
+    var auth = bearer();
+    if (auth) headers.Authorization = auth;
+    var opts = {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify({
+        device_id: deviceId,
+        session_id: sessionId(),
+        device: deviceFacts(),
+        events: batch,
+      }),
+    };
+    /* keepalive hands the request to the browser to finish after this
+       page is gone. It is the difference between recording the last
+       thing somebody did and recording everything except that. */
+    if (keepalive) opts.keepalive = true;
     try {
-      params = params || {};
-      if (ACQ && !params.acq) params.acq = ACQ.src + "/" + ACQ.med + (ACQ.cmp ? "/" + ACQ.cmp : "");
-      var uid = null;
-      try {
-        var s = JSON.parse(localStorage.getItem("mccdb_session") || "null");
-        if (s && s.access_token) uid = JSON.parse(atob(s.access_token.split(".")[1])).sub || null;
-      } catch (e2) {}
-      fetch(SB_URL + "/rest/v1/events", {
-        method: "POST",
-        keepalive: true,
-        headers: { "Content-Type": "application/json", apikey: SB_KEY, Prefer: "return=minimal" },
-        body: JSON.stringify({ name: name, path: location.pathname.split("/").pop() || "index.html", props: params || {}, uid: uid }),
-      }).catch(function () {});
-    } catch (e) {}
+      fetch(COLLECT, opts).catch(function () {});
+    } catch (e) { /* a statistic is never worth an exception in a page */ }
   }
 
-  var gtag = null;
-  if (gaId) {
-    var s = document.createElement("script");
-    s.async = true;
-    s.src = "https://www.googletagmanager.com/gtag/js?id=" + gaId;
-    document.head.appendChild(s);
-    window.dataLayer = window.dataLayer || [];
-    gtag = function () { window.dataLayer.push(arguments); };
-    window.gtag = gtag;
-    gtag("js", new Date());
-    gtag("config", gaId, { anonymize_ip: true });
+  function flush(keepalive) {
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (!queue.length) return;
+    var batch = queue;
+    queue = [];
+    send(batch, keepalive);
   }
 
-  /* ---- ad pixels: load only when an ID is configured ---- */
-  var ads = window.ADS || {};
-  if (ads.META_PIXEL_ID) {
-    !(function (f, b, e, v, n, t, s) {
-      if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
-      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = "2.0"; n.queue = [];
-      t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
-    })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
-    window.fbq("init", ads.META_PIXEL_ID);
-    window.fbq("track", "PageView");
-  }
-  if (ads.GADS_ID && gtag) gtag("config", ads.GADS_ID);
+  /* HIDDEN IS THE ONLY RELIABLE GOODBYE ON A PHONE. pagehide covers an
+     in-browser navigation and little else; switching apps only hides the
+     page, and the tab may never get another instruction. Same lesson the
+     player learned the hard way in js/pip.js. */
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") flush(true);
+  });
+  window.addEventListener("pagehide", function () { flush(true); });
 
-  /* The one win that counts: a booked call. Fires GA4 + Google Ads + Meta. */
+  function queueEvent(name, params) {
+    queue.push({
+      name: String(name || "").slice(0, 120),
+      path: location.pathname.split("/").pop() || "index.html",
+      props: params || {},
+      referrer: document.referrer || null,
+    });
+    if (queue.length >= BATCH) flush(false);
+    else if (!timer) timer = setTimeout(function () { flush(false); }, LINGER_MS);
+  }
+
+  /* The one win that counts: a booked call. First-party, like everything
+     else here — there is no ad platform left to tell. */
   window.MCC_CONVERT = function (label) {
-    if (gtag) {
-      gtag("event", "book_call", { label: label || "" });
-      if (ads.GADS_ID && ads.GADS_LABEL) gtag("event", "conversion", { send_to: ads.GADS_ID + "/" + ads.GADS_LABEL });
-    }
-    if (window.fbq) window.fbq("track", "Schedule", { content_name: label || "book_call" });
+    queueEvent("conversion", { goal: "book_call", label: label || "" });
+    flush(false);
   };
 
   return function (name, params) {
     params = params || {};
-    if (gtag) gtag("event", name, params);
-    mirror(name, params);
+    if (ACQ && !params.acq) params.acq = ACQ.src + "/" + ACQ.med + (ACQ.cmp ? "/" + ACQ.cmp : "");
+    queueEvent(name, params);
     // any booking CTA anywhere on the site counts as the conversion
     if (name === "cta_click" && /book-call|offer-claim/.test(params.label || "")) window.MCC_CONVERT(params.label);
-    if (endpoint) {
-      // fire-and-forget; sendBeacon survives page exits
-      var payload = JSON.stringify({ event: name, params: params, path: location.pathname, ts: Date.now() });
-      if (navigator.sendBeacon) navigator.sendBeacon(endpoint, payload);
-      else fetch(endpoint, { method: "POST", body: payload, keepalive: true }).catch(function () {});
-    }
   };
 })();
 

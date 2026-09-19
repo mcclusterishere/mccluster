@@ -1303,9 +1303,9 @@
         detail: { title: cur > -1 ? rows[cur].getAttribute("data-title") : "I AM HERE", href: "#np", playing: !!playing },
       }));
     }
-    function save() {
+    function save(force) {
       try { localStorage.setItem(KEY, JSON.stringify({ album: ALBUM, i: cur, t: deck.currentTime || 0, paused: deck.paused })); } catch (e) {}
-      pocket();
+      pocket(force);
     }
 
     /* THE POCKET HANDOFF. Everything the corner player on every other page
@@ -1313,7 +1313,7 @@
        sheet, the title, the second, and whether it was still running when
        they walked. js/pip.js reads it; the album never shows the pocket
        itself, because the real player is right here. */
-    function pocket() {
+    function pocket(force) {
       if (!window.MCC_POCKET) return;
       if (cur < 0) { window.MCC_POCKET.clear(); return; }
       var row = rows[cur];
@@ -1334,10 +1334,8 @@
         t: deck.currentTime || 0,
         playing: !deck.paused,
         at: Date.now(),
-      });
+      }, force);
     }
-    /* a walk-away mid-song must bank the true second, not the last 8th tick */
-    window.addEventListener("pagehide", pocket);
     function paintRows() {
       rows.forEach(function (r, i) {
         r.classList.toggle("on", i === cur);
@@ -1424,7 +1422,57 @@
     var tick = 0;
     deck.addEventListener("timeupdate", function () { paintDeck(); roomTick(); if (++tick % 8 === 0) save(); });
     deck.addEventListener("ended", function () { next(); }); // the record keeps spinning, wraps at the end
-    window.addEventListener("pagehide", save);
+
+    /* ============================================================
+       BANKING THE SECOND SOMEBODY ACTUALLY LEFT ON.
+
+       `pagehide` was the only thing listened for here, and it does not
+       fire when a phone leaves for another app — the page is hidden, not
+       unloaded. iOS and the Instagram and Facebook in-app browsers then
+       reclaim the tab whenever they want the memory, and the last
+       position written was whatever the 8th timeupdate tick happened to
+       catch, up to two seconds stale and frequently absent altogether.
+       Coming back started the record from the top.
+
+       `visibilitychange` to hidden is the signal that actually arrives,
+       on every mobile browser, while the page can still write. It forces
+       past both throttles: this write is the one that has to be right.
+       ============================================================ */
+    function bank() { save(true); }
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") bank();
+    });
+    window.addEventListener("pagehide", bank);
+
+    /* A RESTORED PAGE NEVER RAN ITS RESTORE.
+
+       Back button, and returning from another app, can hand this page
+       back from the back/forward cache with no script re-run: the resume
+       block at the bottom of this file already executed, once, on the
+       original load. If the pocket carried the record on while this page
+       sat in the cache, the deck is now behind the music. Re-reading on a
+       restored show is what makes the back button land where the record
+       actually is. */
+    window.addEventListener("pageshow", function (e) {
+      if (!e || !e.persisted) return;
+      var pk = window.MCC_POCKET && window.MCC_POCKET.read();
+      if (!pk || !pk.title) return;
+      var at = rows.findIndex(function (r) { return r.getAttribute("data-title") === pk.title; });
+      if (at < 0) return;
+      var drift = pk.playing && pk.at ? Math.min(30, (Date.now() - pk.at) / 1000) : 0;
+      var want = (pk.t || 0) + drift;
+      /* SAME RECORD IS A SEEK, NOT A RELOAD. A restored page may have had
+         its deck resumed by the browser already; tearing the source down
+         and rebuilding it to move a few seconds is an audible stutter for
+         no reason. Only a different track is worth a load(). */
+      if (at === cur) {
+        if (Math.abs((deck.currentTime || 0) - want) > 2) {
+          try { deck.currentTime = want; } catch (err) {}
+        }
+        return;
+      }
+      load(at, want);
+    });
 
     if ("mediaSession" in navigator) {
       navigator.mediaSession.setActionHandler("play", function () { play(); });

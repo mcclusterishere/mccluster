@@ -110,7 +110,7 @@
     return Boolean(window.MCC_SUPA && window.MCC_SUPA.url && window.MCC_SUPA.key && window.MCC_SUPA.token);
   }
 
-  function remote(method, body) {
+  function remote(method, body, keepalive) {
     if (!signedIn()) return Promise.resolve(null);
     return window.MCC_SUPA.token().then(function (tok) {
       if (!tok) return null;
@@ -119,6 +119,10 @@
       var headers = { apikey: window.MCC_SUPA.key, Authorization: "Bearer " + tok };
       var url = window.MCC_SUPA.url + "/rest/v1/listener_state";
       var opts = { method: method, headers: headers, cache: "no-store" };
+      /* The last write of a listen happens as the page is being torn down,
+         and an ordinary fetch is cancelled the moment that starts. keepalive
+         hands the request to the browser to finish without us. */
+      if (keepalive) opts.keepalive = true;
       if (method === "GET") {
         url += "?profile_id=eq." + encodeURIComponent(uid) + "&select=state,updated_at&limit=1";
       } else {
@@ -147,18 +151,25 @@
   }
 
   var lastPush = 0;
-  function pushRemote(s) {
+  /* THE LAST WRITE IS THE ONE THAT MATTERS, AND IT USED TO BE THE ONE DROPPED.
+     Ten seconds is the right spacing for a position being written while a
+     record plays. It is the wrong rule for the write that happens as somebody
+     walks away: that one carries the second they actually left on, and the
+     throttle was silently eating it whenever they left within ten seconds of
+     the last tick. `force` is every teardown path; the throttle keeps the
+     steady state cheap. */
+  function pushRemote(s, force) {
     if (!s || !signedIn()) return;
     var now = Date.now();
-    if (now - lastPush < 10000) return;   /* a position, not a telemetry stream */
+    if (!force && now - lastPush < 10000) return;   /* a position, not a telemetry stream */
     lastPush = now;
-    remote("POST", s);
+    remote("POST", s, force);
   }
 
   /* ---------- the album side: keep the position current ---------- */
   window.MCC_POCKET = {
-    /* called by the album as it plays */
-    save: function (s) { write(s); pushRemote(s); },
+    /* called by the album as it plays; force on the way out of the page */
+    save: function (s, force) { write(s); pushRemote(s, force); },
     read: read,
     /* Local only. The front page calls this whenever its sound toggle is off,
        which is not the same statement as "this listener has stopped the
@@ -424,16 +435,16 @@
   /* the position is written back continuously, so the album resumes here
      and so does the next page they open */
   var lastStash = 0;
-  function stash(playing) {
+  function stash(playing, force) {
     if (stopped) return;
     var now = Date.now();
-    if (now - lastStash < 900) return;
+    if (!force && now - lastStash < 900) return;
     lastStash = now;
     st.t = audio ? audio.currentTime : st.t;
     st.playing = !!playing;
     st.at = now;
     write(st);
-    pushRemote(st);
+    pushRemote(st, force);
   }
 
   /* ---------- the lyric line, same source the album uses ---------- */
@@ -592,11 +603,58 @@
     [].forEach.call(box.querySelectorAll('a[href="' + HOME + '"]'), function (a) {
       a.addEventListener("click", go);
     });
-    /* leaving this page: bank the exact second so the next one continues it */
-    window.addEventListener("pagehide", function () {
+    /* ============================================================
+       LEAVING IS NOT ONE EVENT, AND pagehide IS THE ONE THAT FIRES LEAST.
+
+       This used to bank the second on `pagehide` alone. That covers a
+       navigation inside the browser and almost nothing else. Switch to
+       another app — which on a phone is most of how people leave — and
+       the page is merely HIDDEN: `pagehide` never fires, and if the
+       system later reclaims the tab to free memory, as iOS and the
+       Instagram and Facebook in-app browsers do aggressively, the
+       position dies with it. The record came back at the top, which is
+       exactly the complaint.
+
+       `visibilitychange` to hidden is the one signal every mobile
+       browser actually delivers, and it is delivered while the page is
+       still alive enough to write. It is the primary save now;
+       `pagehide` stays for the in-browser navigation it does cover.
+       Both force, because the second somebody walked on is worth more
+       than the throttle that was dropping it.
+       ============================================================ */
+    function bank() {
       if (stopped || !audio) return;
       lastStash = 0;
-      stash(!audio.paused);
+      stash(!audio.paused, true);
+    }
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") bank();
+    });
+    window.addEventListener("pagehide", bank);
+
+    /* COMING BACK IS NOT ALWAYS A LOAD.
+
+       Back button and app-switch return can restore this page from the
+       back/forward cache, where no script re-runs: `mount()` already
+       happened, `st` is whatever it was, and meanwhile the album page or
+       another tab may have moved the record on. Re-reading on a restored
+       show is what keeps the tile honest about where the music is. */
+    window.addEventListener("pageshow", function (e) {
+      if (!e || !e.persisted || stopped || !audio) return;
+      var fresh = read();
+      if (!fresh || !fresh.src || (fresh.at || 0) <= (st.at || 0)) return;
+      /* ONLY THE SECOND IS CORRECTED HERE, AND ONLY FOR THE SAME RECORD.
+         A restored tile still has the title, film and lyric of whatever it
+         mounted with. If the listener moved to a different track on another
+         page, adopting that state without rebuilding the tile would seek
+         this audio to a position belonging to a song the tile is not
+         showing. A different record is left alone: the tile is still
+         holding a real one, and the next navigation rebuilds it properly. */
+      if (fresh.src !== st.src) return;
+      st = fresh;
+      if (Math.abs((audio.currentTime || 0) - (st.t || 0)) > 2) {
+        try { audio.currentTime = st.t || 0; } catch (err) {}
+      }
     });
     if (window.MCC_TRACK) window.MCC_TRACK("pocket_open", { song: st.title });
   }
