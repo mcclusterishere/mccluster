@@ -70,3 +70,14 @@ test('ontology migration closes the historical objectives replay gap exactly eno
   assert.match(migration, /revoke all on table public\.ops_objectives from public, anon, authenticated/);
   assert.match(migration, /grant all on table public\.ops_objectives to service_role/);
 });
+
+
+test('ontology migration closes the historical durable-job replay gap', () => {
+  assert.match(migration, /create table if not exists public\.ops_agent_jobs/);
+  assert.match(migration, /objective_id uuid references public\.ops_objectives\(id\) on delete set null/);
+  assert.match(migration, /status text not null default 'queued'/);
+  assert.match(migration, /max_attempts integer not null default 3/);
+  assert.match(migration, /create index if not exists ops_agent_jobs_queue_idx/);
+  assert.match(migration, /revoke all on table public\.ops_agent_jobs from public, anon, authenticated/);
+  assert.match(migration, /grant all on table public\.ops_agent_jobs to service_role/);
+});
