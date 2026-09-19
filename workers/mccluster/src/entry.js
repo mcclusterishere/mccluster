@@ -196,11 +196,14 @@ export default {
       }
     }
 
-    try {
-      const analyticsResponse = await handleAnalyticsRequest(request, env, await authUser(request, env));
-      if (analyticsResponse) return analyticsResponse;
-    } catch (error) {
-      return fail(request, env, error.message || 'Analytics request failed', error.status || 500, error.detail);
+    if (path === '/v1/analytics' || path.startsWith('/v1/analytics/')) {
+      try {
+        const user = await authUser(request, env);
+        const analyticsResponse = await handleAnalyticsRequest(request, env, user);
+        if (analyticsResponse) return analyticsResponse;
+      } catch (error) {
+        return fail(request, env, error.message || 'Analytics request failed', error.status || 500, error.detail);
+      }
     }
 
     try {
