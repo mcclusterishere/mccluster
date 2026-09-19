@@ -25,7 +25,7 @@ import { dirname, join } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
 const MIGRATION = 'supabase/migrations/20260919093553_native_telemetry_columns.sql';
-const LOCKDOWN  = 'supabase/migrations/20260919999000_native_telemetry_lockdown.sql';
+const LOCKDOWN  = 'supabase/pending_migrations/20260919999000_native_telemetry_lockdown.sql';
 
 /* An assertion that something is ABSENT has to read the code and not the
    prose. Everything here is commented on the scale this house writes at,

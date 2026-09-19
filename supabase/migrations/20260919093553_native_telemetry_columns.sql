@@ -12,7 +12,7 @@
 -- with the anon key. Revoking that in the same breath as adding the columns
 -- would have stopped roughly 2,300 events a day landing until the new client
 -- deployed. The lockdown is a separate migration, applied after the site is
--- live: see 20260919999000_native_telemetry_lockdown.sql.
+-- live: see supabase/pending_migrations/20260919999000_native_telemetry_lockdown.sql.
 --
 -- `create table if not exists` is a no-op against a table that already
 -- exists, which is why every column below is added on its own line. Writing
