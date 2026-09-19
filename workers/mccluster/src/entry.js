@@ -53,6 +53,91 @@ export default {
       return coreOAuthMetadataResponse();
     }
 
+    /* ============================================================
+       TELEMETRY INTAKE — the house's own eyes, on the house's own domain.
+
+       Two things only a Worker can do, and both of them matter.
+
+       IT SEES WHERE THE VISITOR ACTUALLY IS. `request.cf` carries the
+       country, region, city, postal code, latitude, longitude, timezone
+       and — the one nothing else gives you — the ASN and the network's
+       name. Supabase edge functions do not receive any of that: a
+       request arriving there carries `cf-ray` and nothing else, which
+       was measured rather than assumed. So the enrichment has to happen
+       here, at the only place that holds the facts.
+
+       IT IS NOT BLOCKED. api.mccluster.org is first-party. Every
+       blocklist in every ad blocker carries the Google and Meta
+       endpoints, and a third of visitors never appear in Google
+       Analytics for exactly that reason. They appear here.
+
+       This route enriches and forwards; it deliberately does not write.
+       supabase/functions/collect stays the single writer of
+       public.events, so there is one place where a row is shaped, one
+       place that validates, and no second copy to drift.
+       ============================================================ */
+    if (path === '/v1/collect') {
+      const origin = request.headers.get('origin') || '*';
+      const cors = {
+        'access-control-allow-origin': origin,
+        'access-control-allow-headers': 'authorization, apikey, content-type',
+        'access-control-allow-methods': 'POST, OPTIONS',
+        'access-control-max-age': '86400',
+        'vary': 'origin'
+      };
+      if (request.method === 'OPTIONS') return new Response('ok', { headers: cors });
+      if (request.method !== 'POST') {
+        return new Response(JSON.stringify({ ok: false, reason: 'POST only' }), {
+          status: 405, headers: { ...cors, 'content-type': 'application/json' }
+        });
+      }
+
+      const cf = request.cf || {};
+      const headers = {
+        'content-type': 'application/json',
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        'user-agent': request.headers.get('user-agent') || '',
+        'cf-connecting-ip': request.headers.get('cf-connecting-ip') || ''
+      };
+      /* The collector already knows how to read these names, so the
+         enrichment arrives as the headers Cloudflare would have sent if
+         Supabase had forwarded them. One reader, one vocabulary. */
+      const put = (name, value) => {
+        if (value !== undefined && value !== null && value !== '') headers[name] = String(value);
+      };
+      put('cf-ipcountry', cf.country);
+      put('cf-region', cf.region);
+      put('cf-region-code', cf.regionCode);
+      put('cf-ipcity', cf.city);
+      put('cf-postal-code', cf.postalCode);
+      put('cf-iplatitude', cf.latitude);
+      put('cf-iplongitude', cf.longitude);
+      put('cf-timezone', cf.timezone);
+      put('cf-ipcontinent', cf.continent);
+      put('cf-asn', cf.asn);
+      put('cf-as-organization', cf.asOrganization);
+      /* A visitor's own token, when they have one, so the collector can
+         attribute the event. It is verified there, never here. */
+      const auth = request.headers.get('authorization');
+      if (auth) headers.authorization = auth;
+
+      try {
+        const upstream = await fetch(`${env.SUPABASE_URL}/functions/v1/collect`, {
+          method: 'POST',
+          headers,
+          body: await request.text()
+        });
+        return new Response(await upstream.text(), {
+          status: upstream.status,
+          headers: { ...cors, 'content-type': 'application/json' }
+        });
+      } catch (error) {
+        return new Response(JSON.stringify({ ok: false, reason: 'collector unreachable' }), {
+          status: 502, headers: { ...cors, 'content-type': 'application/json' }
+        });
+      }
+    }
+
     try {
       const clientResponse = await handleClientRequest(request, env);
       if (clientResponse) return clientResponse;

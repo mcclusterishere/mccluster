@@ -24,7 +24,8 @@ import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
-const MIGRATION = 'supabase/migrations/20260919061500_native_telemetry.sql';
+const MIGRATION = 'supabase/migrations/20260919093553_native_telemetry_columns.sql';
+const LOCKDOWN  = 'supabase/migrations/20260919999000_native_telemetry_lockdown.sql';
 
 /* An assertion that something is ABSENT has to read the code and not the
    prose. Everything here is commented on the scale this house writes at,
@@ -167,18 +168,29 @@ test('the telemetry table is under migration control and the browser cannot writ
     assert.match(sql, new RegExp(`add column if not exists\\s+${col}\\b`),
       `${col} must be added to a table that may already exist`);
   }
+});
+
+test('the lockdown is a separate migration, because the live site is still writing', async () => {
+  /* Adding the columns and revoking the browser's insert in one migration
+     would have stopped roughly 2,300 events a day from landing between the
+     schema going up and the new client reaching matthew.mccluster.org. The
+     columns shipped first on purpose; this one waits for the deploy. */
+  const sql = await read(LOCKDOWN);
+  assert.match(sql, /NOT YET APPLIED/,
+    'the file must say plainly that it is pending, so nobody runs it early');
   assert.match(sql, /alter table public\.events force row level security;/,
     'force, so a future view cannot read around it — that already went wrong once on eu_profiles');
   assert.match(sql, /drop policy if exists "anyone writes the exhaust" on public\.events;/,
-    'the open insert must be withdrawn now the server is the writer');
-  assert.match(sql, /revoke all on table public\.events from anon;/,
+    'the open insert must be withdrawn once the server is the writer');
+  assert.match(sql, /revoke insert on table public\.events from anon, authenticated;/,
     'an anonymous browser may not write rows carrying an observed address');
-  assert.match(sql, /public\.eu_role\(\) = 'admin'/,
-    'behavioural data with addresses attached is owner-only');
+  const cols = await read(MIGRATION);
+  assert.doesNotMatch(sqlCode(cols), /revoke insert|force row level security/,
+    'the additive migration must not carry the lockdown');
 });
 
 test('there is a retention lever, and nothing pulls it automatically', async () => {
-  const sql = await read(MIGRATION);
+  const sql = await read(LOCKDOWN);
   assert.match(sql, /create or replace function public\.events_purge/,
     'an address kept forever should be a decision somebody made');
   assert.doesNotMatch(sqlCode(sql), /cron\.schedule|ops_maintenance_tick/,
@@ -230,4 +242,80 @@ test('no page reintroduces a third-party tag', async () => {
   }
   assert.deepEqual(offenders, [],
     `these pages load a third-party tag: ${offenders.join(', ')}`);
+});
+
+/* ---------------------------------------------------------------
+   4. THE INSTRUMENT PANEL — depth, and the two limits on it
+   --------------------------------------------------------------- */
+
+test('the sensor suite is present and wired to the collector', async () => {
+  const js = await read('js/analytics.js');
+  for (const sensor of ['page_view', 'click', 'rage_click', 'dead_click', 'scroll_depth',
+                        'form_start', 'form_submit', 'exit_intent', 'copy',
+                        'js_error', 'js_rejection', 'page_leave', 'device_power']) {
+    assert.match(js, new RegExp(`T\\("${sensor}"`),
+      `${sensor} must be instrumented — it is one of the things GA4 cannot give you`);
+  }
+});
+
+test('nothing anybody types is ever read', async () => {
+  /* The hard line. Field names, focus order and timing say which question
+     cost you the lead; the characters say nothing extra and turn a funnel
+     into a breach waiting for its disclosure letter. */
+  const js = code(await read('js/analytics.js'));
+  const sense = js.slice(js.indexOf('THE INSTRUMENT PANEL') >= 0 ? 0 : 0);
+  assert.doesNotMatch(sense, /\bel\.value\b|\btarget\.value\b|\be\.target\.value\b/,
+    'no sensor may read the value of an input');
+  /* Every key the sensors compare against, listed. A keystroke sensor that
+     grew a third case would show up here as a third name. */
+  const keys = [...sense.matchAll(/e\.key\s*[!=]==\s*["']([^"']+)["']/g)].map((m) => m[1]);
+  assert.deepEqual([...new Set(keys)].sort(), ['Backspace', 'Delete'],
+    'key identity is read only to count corrections, never to capture characters');
+  assert.match(js, /var SECRET = \/pass\|pwd\|card\|cvc/,
+    'fields that could hold a secret must be recognised');
+  assert.match(js, /if \(t === "password" \|\| t === "hidden"\) return true;/,
+    'a password field must not be instrumented at all, not even for timing');
+});
+
+test('the device id is not a fingerprint built to survive a cleared browser', async () => {
+  const js = code(await read('js/analytics.js'));
+  /* A canvas/audio/font hash exists specifically to re-identify somebody who
+     erased their data. The GPU renderer string is kept as an attribute of the
+     machine, which is a different thing: it is never hashed or combined into
+     an identifier. */
+  assert.doesNotMatch(js, /toDataURL|getImageData|createAnalyser|OfflineAudioContext/,
+    'no canvas or audio fingerprinting');
+  assert.match(js, /localStorage\.setItem\(DEVICE_KEY, deviceId\)/,
+    'the device id must be a stored random value, so clearing the store clears it');
+});
+
+test('the Worker route enriches and forwards, and is not a second writer', async () => {
+  /* Measured, not assumed: a request reaching a Supabase edge function carries
+     cf-ray and nothing else, so the geo has to be attached upstream. */
+  const js = await read('workers/mccluster/src/entry.js');
+  assert.match(js, /path === '\/v1\/collect'/, 'the first-party intake route must exist');
+  assert.match(js, /request\.cf/, 'only the Worker can see where the visitor is');
+  for (const f of ['asn', 'asOrganization', 'city', 'postalCode', 'latitude', 'timezone']) {
+    assert.match(js, new RegExp(`cf\\.${f}\\b`), `${f} must be forwarded`);
+  }
+  assert.match(js, /\$\{env\.SUPABASE_URL\}\/functions\/v1\/collect/,
+    'the Worker must forward to the collector, not write its own rows');
+  assert.doesNotMatch(js.slice(js.indexOf("path === '/v1/collect'")).slice(0, 4000),
+    /rest\/v1\/events/,
+    'there must be exactly one writer of public.events');
+});
+
+test('the client prefers the first-party domain and can still fall back', async () => {
+  const js = await read('js/analytics.js');
+  assert.match(js, /var COLLECT = "https:\/\/api\.mccluster\.org\/v1\/collect"/,
+    'first-party, because a blocklist carries google-analytics.com and not this');
+  assert.match(js, /COLLECT_FALLBACK/,
+    'a house that cannot reach its own Worker should still be able to count');
+});
+
+test('scroll depth is clamped, because the denominator moves', async () => {
+  /* onboard.html was reporting an average scroll depth of 289% in production. */
+  const js = await read('js/analytics.js');
+  assert.match(js, /Math\.min\(100, Math\.max\(0, Math\.round\(scrollY \/ h \* 100\)\)\)/,
+    'a page that shrinks after scrolling must not report more than 100%');
 });
