@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-16.3",
+  "catalogVersion": "2026-09-19.1",
   "capabilities": [
     {
       "id": "core.resume",
       "title": "Resume working session",
-      "description": "Return durable McCluster session state \u2014 workspace, active and stale work, pending approvals, catalog version, system health and exact deploy commit \u2014 so a model can rehydrate after context loss. Read-only.",
+      "description": "Return durable McCluster session state — workspace, active and stale work, pending approvals, catalog version, system health and exact deploy commit — so a model can rehydrate after context loss. Read-only.",
       "domain": "control",
       "lifecycle": "active",
       "execution": "sync",
@@ -739,6 +739,117 @@
         "deployment",
         "preview"
       ]
+    },
+    {
+      "id": "ai.chat",
+      "title": "Home-base AI chat",
+      "description": "Run a bounded conversational inference on McCluster-owned compute without naming a model or provider.",
+      "domain": "ai",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "num_ctx": {
+            "type": "integer"
+          },
+          "json": {
+            "type": "boolean"
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "prompt"
+            ]
+          },
+          {
+            "required": [
+              "messages"
+            ]
+          }
+        ]
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ai",
+        "chat",
+        "self-hosted",
+        "compute"
+      ]
+    },
+    {
+      "id": "objective.plan",
+      "title": "Plan an objective",
+      "description": "Queue a bounded dependency-aware plan of safe unattended analysis and inspection work.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "objective"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "objective": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string"
+          },
+          "max_steps": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "since_hours": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 168
+          },
+          "priority": {
+            "type": "number"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "objective",
+        "planning",
+        "autonomy"
+      ]
     }
   ],
   "bindings": [
@@ -1039,6 +1150,25 @@
         "ttl_cleanup": true,
         "third_party_deploy_provider": false,
         "configuration_gated": true
+      }
+    },
+    {
+      "id": "core.objective-plan",
+      "capability": "objective.plan",
+      "provider": "mccluster-core",
+      "tool": "core.objective.plan",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "async": true,
+        "dependency_aware": true,
+        "safe_children_only": true,
+        "production_mutation": false
       }
     }
   ]
