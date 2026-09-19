@@ -37,6 +37,7 @@ const validSamples = [
   [job('game_branch_smoke'), { executor: 'game_branch_smoke:v1', evidence: { repository: 'mcclusterishere/hitmans-halo', branch: 'core/job-1', commit: A, import: { ok: true }, launch: { ok: true } } }],
   [job('game_release_decision'), { executor: 'game_release_decision:v1', state: 'preview_queued', decision: 'approve', preview_job_id: 'preview-1', repository: 'mcclusterishere/hitmans-halo', branch: 'core/job-1' }],
   [job('preview_deploy'), { executor: 'preview_deploy:v1', production: false, provider: 'vercel', preview_url: 'https://example.vercel.app', repository: 'mcclusterishere/mccluster', ref: 'core/job-1' }],
+  [job('lead_rescore'), { executor: 'lead_rescore:v1', summary: 'Lead scores refreshed for organization org-1', recomputed_count: 7, target_score: null }],
   [job('host_health'), { executor: 'host_health:v2', checked_at: now, host: { hostname: 'mccluster-ovh' }, services: { core_runner: 'active' }, deployment: { deployed_sha: A } }],
   [job('sms_assistant_turn'), { executor: 'sms_assistant_turn:v1', action: 'reply', thread_id: 'thread-1', inbound_message_id: 'in-1', outbound_message_id: 'out-1', outbox_transport: 'android-sim-relay' }],
 ];
@@ -89,6 +90,21 @@ test('SMS reply must carry a durable outbound message identifier', () => {
 test('completion writes cannot accept a raw executor result without evidence', () => {
   const currentJob = job('local_analysis');
   assert.throws(() => assertCompletionEvidence(currentJob, { executor: 'local_analysis:v1', model: 'qwen3:8b', analysis: {} }), /completion_evidence envelope is required/);
+});
+
+test('lead_rescore cannot claim completion without a bounded recompute count', () => {
+  const currentJob = job('lead_rescore');
+  assert.throws(() => buildCompletionEvidence(currentJob, {
+    executor: 'lead_rescore:v1',
+    summary: 'claimed refresh',
+    target_score: null,
+  }), /recomputed_count/);
+  assert.throws(() => buildCompletionEvidence(currentJob, {
+    executor: 'lead_rescore:v1',
+    summary: 'claimed refresh',
+    recomputed_count: -1,
+    target_score: null,
+  }), /cannot be negative/);
 });
 
 test('future executor types fail closed until an evidence policy is added', () => {
