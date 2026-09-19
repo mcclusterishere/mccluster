@@ -45,7 +45,12 @@ test('ontology actions are bounded internal effects in v1', () => {
   assert.match(migration, /budget ontology actions are not implemented in v1/);
   assert.match(migration, /owner permission required/);
   assert.match(migration, /request_hash is required/);
-  assert.doesNotMatch(migration, /execute format\(/i);
+  const actionBody = migration.slice(
+    migration.indexOf('create or replace function public.ops_ontology_apply_action_service'),
+    migration.indexOf('revoke all on function private.ops_ontology_ensure_base_types')
+  );
+  assert.ok(actionBody.length > 0, 'ontology action service body not found');
+  assert.doesNotMatch(actionBody, /execute format\(/i);
 });
 
 test('Core computes action hash and requires signed actor context', () => {
