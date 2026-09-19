@@ -439,3 +439,37 @@ test('the signal survives the Worker hop', async () => {
   assert.match(js, /put\('dnt', request\.headers\.get\('dnt'\)\)/,
     'Do Not Track must be forwarded too');
 });
+
+/* ---------------------------------------------------------------
+   6. THE INTAKE CARD — where the disclosure is linked and the
+      personal data is actually typed
+   --------------------------------------------------------------- */
+
+test('the consent boxes are boxes', async () => {
+  /* `.ac input { width: 100% }` matched the consent checkboxes as well as
+     the text fields, so each box stretched to the full width of the card
+     and pushed its own label past the edge, where it wrapped one word per
+     line. The guard that existed, `.fan__check input { width: auto }`, has
+     the SAME specificity and lost on source order — which is why the fix
+     is a type selector and not another class. */
+  const html = await read('account.html');
+  assert.match(html, /\.ac input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\) \{/,
+    'the field treatment must exclude the controls it was never meant for');
+  assert.match(html, /\.fan__check input\[type="checkbox"\] \{[^}]*width: 1\.1rem/,
+    'a checkbox must be sized, not stretched');
+  assert.match(html, /\.fan__check span \{ flex: 1; min-width: 0; \}/,
+    'and its label must take the rest of the row and wrap inside it');
+});
+
+test('the link to the notice is visible as a link', async () => {
+  /* The intake card is the one form on the site that collects a legal name
+     and a street address, so it carries the link to privacy.html. It
+     inherited the fine print's dim grey with no underline and read as one
+     more sentence of boilerplate, which is the same failure as not linking
+     it at all. */
+  const html = await read('account.html');
+  assert.match(html, /<a href="privacy\.html">/,
+    'the form that collects the data must link the notice about it');
+  assert.match(html, /\.fan__fine a \{[^}]*text-decoration: underline/,
+    'and the link must look like one');
+});

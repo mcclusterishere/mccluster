@@ -23,6 +23,14 @@
     .fan__check input { width: auto; margin: 0.15rem 0 0; flex: none; }
     .fan__check.is-off { opacity: 0.45; cursor: default; }
     .fan__fine { margin-top: 0.8rem; font-size: 0.74rem; line-height: 1.45; color: var(--cream-dim); }
+    /* The privacy notice is linked from here because this is the form that
+       collects a legal name and a street address. It inherited the fine
+       print's dim grey and carried no underline, so it read as one more
+       sentence of boilerplate — which is the same failure as not linking it
+       at all. */
+    .fan__fine a { color: var(--cream); text-decoration: underline;
+      text-decoration-color: rgba(229,56,59,0.7); text-underline-offset: 3px;
+      text-decoration-thickness: 1.5px; }
     .fan__note { margin-top: 0.4rem; font-size: 0.74rem; color: var(--cream-dim); }
     .ac__or { position: relative; text-align: center; margin: 1.2rem 0 0.9rem; }
     .ac__or::before { content: ""; position: absolute; left: 0; right: 0; top: 50%;
@@ -36,10 +44,43 @@
     .ac__prov:hover { background: rgba(244,239,230,0.1); }
     .ac__prov[disabled] { opacity: 0.55; cursor: default; }
     .ac__prov svg { width: 18px; height: 18px; flex: none; }
-    .ac input { width: 100%; margin-top: 0.6rem; padding: 0.95rem 1rem; border-radius: 12px; border: 1px solid rgba(229,56,59,0.4); background: var(--ink-2); color: var(--cream); font-size: 1rem; }
+    /* THE FIELD TREATMENT, AND THE TWO THINGS THAT WERE WRONG WITH IT.
+       width:100% was matching the consent checkboxes as well as the text
+       fields, so each one grew to the full width of the card and shoved its
+       own label out past the edge, where it wrapped a word at a time. The
+       rule that was supposed to stop that, `.fan__check input { width: auto }`,
+       has the SAME specificity as `.ac input` and loses on source order, so
+       the type selector here is what actually settles it.
+       And the ruby border: in this house that colour means something is
+       wrong, so a blank form read as eight failed validations at once. The
+       neutral inset edge is what license.html and the listening room use.
+       Ruby is kept for focus, where it means "this one". */
+    .ac input:not([type="checkbox"]):not([type="radio"]) {
+      width: 100%; margin-top: 0.6rem; padding: 0.9rem 1rem; border-radius: 13px;
+      -webkit-appearance: none; appearance: none; border: 0;
+      background: rgba(255,255,255,0.06); box-shadow: inset 0 0 0 1px var(--edge);
+      color: var(--cream); font-family: var(--body); font-size: 1rem; }
+    .ac input:not([type="checkbox"]):not([type="radio"])::placeholder {
+      color: var(--cream-dim); }
+    .ac input:not([type="checkbox"]):not([type="radio"]):focus {
+      outline: none; box-shadow: inset 0 0 0 1px var(--ruby-hot); }
+    /* the box is a box: sized, not stretched, and aligned to the first line
+       of its own label rather than to the middle of a wrapped paragraph */
+    .fan__check input[type="checkbox"] {
+      flex: none; width: 1.1rem; height: 1.1rem; margin: 0.12rem 0 0;
+      accent-color: var(--ruby-hot); }
+    .fan__check span { flex: 1; min-width: 0; }
     .ac__flip { background: none; border: 0; cursor: pointer; padding: 0; margin-top: 0.9rem; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; }
     .ac__btn { appearance: none; border: 0; cursor: pointer; display: block; width: 100%; margin-top: 0.8rem; padding: 1rem; border-radius: 13px; background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.02rem; text-align: center; text-decoration: none; }
-    .ac__ghost { display: block; text-align: center; text-decoration: none; margin-top: 0.7rem; padding: 0.95rem; border-radius: 13px; border: 1px solid rgba(229,56,59,0.5); color: var(--cream); font-weight: 700; }
+    /* One ruby thing per card. The Save button is the action; these are
+       doors beside it, so they take the same neutral edge the fields now
+       wear. Two red-outlined buttons above a red Save button made all three
+       look equally urgent, which is the same as none of them being. */
+    .ac__ghost { display: block; text-align: center; text-decoration: none; margin-top: 0.7rem;
+      padding: 0.95rem; border-radius: 13px; border: 0;
+      background: rgba(255,255,255,0.06); box-shadow: inset 0 0 0 1px var(--edge);
+      color: var(--cream); font-weight: 700; }
+    .ac__ghost:hover { background: rgba(255,255,255,0.1); }
     .ac__note { margin-top: 0.8rem; font-size: 0.8rem; color: var(--cream-dim); }
     .ac__who { color: var(--cream); font-weight: 700; word-break: break-all; }
     .ac__out { margin-top: 1rem; background: none; border: 0; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
