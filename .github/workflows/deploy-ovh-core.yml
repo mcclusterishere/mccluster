@@ -1,6 +1,8 @@
 name: Deploy OVH Core
 
 on:
+  push:
+    branches: [deploy/ovh-production]
   workflow_dispatch:
     inputs:
       sha:
@@ -19,7 +21,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ inputs.confirm == 'DEPLOY_OVH' }}
+    if: ${{ github.event_name == 'push' || inputs.confirm == 'DEPLOY_OVH' }}
     runs-on: ubuntu-latest
     environment: ovh-production
     steps:
@@ -32,7 +34,7 @@ jobs:
       - name: Validate and checkout exact production commit
         id: commit
         env:
-          TARGET_SHA: ${{ inputs.sha }}
+          TARGET_SHA: ${{ github.event_name == 'push' && github.sha || inputs.sha }}
         run: |
           set -euo pipefail
           git fetch origin main
