@@ -25,7 +25,8 @@ import { dirname, join } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
 const MIGRATION = 'supabase/migrations/20260919093553_native_telemetry_columns.sql';
-const LOCKDOWN  = 'supabase/migrations/20260919999000_native_telemetry_lockdown.sql';
+const LOCKDOWN  = 'supabase/pending_migrations/20260919999000_native_telemetry_lockdown.sql';
+const ANALYTICS_PLATFORM = 'supabase/migrations/20260919133905_analytics_platform_multitenant_v1.sql';
 
 /* An assertion that something is ABSENT has to read the code and not the
    prose. Everything here is commented on the scale this house writes at,
@@ -170,23 +171,22 @@ test('the telemetry table is under migration control and the browser cannot writ
   }
 });
 
-test('the lockdown is a separate migration, because the live site is still writing', async () => {
-  /* Adding the columns and revoking the browser's insert in one migration
-     would have stopped roughly 2,300 events a day from landing between the
-     schema going up and the new client reaching matthew.mccluster.org. The
-     columns shipped first on purpose; this one waits for the deploy. */
-  const sql = await read(LOCKDOWN);
-  assert.match(sql, /NOT YET APPLIED/,
-    'the file must say plainly that it is pending, so nobody runs it early');
-  assert.match(sql, /alter table public\.events force row level security;/,
-    'force, so a future view cannot read around it — that already went wrong once on eu_profiles');
-  assert.match(sql, /drop policy if exists "anyone writes the exhaust" on public\.events;/,
-    'the open insert must be withdrawn once the server is the writer');
-  assert.match(sql, /revoke insert on table public\.events from anon, authenticated;/,
-    'an anonymous browser may not write rows carrying an observed address');
+test('the live analytics migration closes browser writes and the pending file is remainder-only', async () => {
+  const live = await read(ANALYTICS_PLATFORM);
+  assert.match(live, /drop policy if exists "anyone writes the exhaust" on public\.events;/,
+    'the production migration must withdraw the legacy open insert policy');
+  assert.match(live, /revoke insert on public\.events from anon, authenticated;/,
+    'the production migration must revoke direct browser writes');
+  const pending = await read(LOCKDOWN);
+  assert.match(pending, /REMAINDER ONLY/,
+    'the old lockdown file must no longer pretend browser-write closure is pending');
+  assert.match(pending, /alter table public\.events force row level security;/,
+    'force RLS remains an explicit owner hardening decision');
+  assert.doesNotMatch(sqlCode(pending), /drop policy if exists "anyone writes the exhaust"|revoke insert on (?:table )?public\.events/,
+    'already-applied write closure must not be duplicated in the pending remainder');
   const cols = await read(MIGRATION);
   assert.doesNotMatch(sqlCode(cols), /revoke insert|force row level security/,
-    'the additive migration must not carry the lockdown');
+    'the original additive telemetry migration remains additive');
 });
 
 test('there is a retention lever, and nothing pulls it automatically', async () => {
@@ -252,7 +252,8 @@ test('the sensor suite is present and wired to the collector', async () => {
   const js = await read('js/analytics.js');
   for (const sensor of ['page_view', 'click', 'rage_click', 'dead_click', 'scroll_depth',
                         'form_start', 'form_submit', 'exit_intent', 'copy',
-                        'js_error', 'js_rejection', 'page_leave', 'device_power']) {
+                        'js_error', 'js_rejection', 'page_leave', 'device_power',
+                        'network_change', 'location_permission', 'precise_location']) {
     assert.match(js, new RegExp(`T\\("${sensor}"`),
       `${sensor} must be instrumented — it is one of the things GA4 cannot give you`);
   }
@@ -287,6 +288,10 @@ test('the device id is not a fingerprint built to survive a cleared browser', as
     'no canvas or audio fingerprinting');
   assert.match(js, /localStorage\.setItem\(DEVICE_KEY, deviceId\)/,
     'the device id must be a stored random value, so clearing the store clears it');
+  assert.doesNotMatch(js, /new\s+RTCPeerConnection|createDataChannel|onicecandidate|getStats\(/,
+    'network telemetry must not probe local addresses through WebRTC');
+  assert.doesNotMatch(js, /\bimei\b|serialNumber|macAddress/i,
+    'the browser collector must not attempt hardware identifier collection');
 });
 
 test('the Worker route enriches and forwards, and is not a second writer', async () => {
@@ -295,14 +300,52 @@ test('the Worker route enriches and forwards, and is not a second writer', async
   const js = await read('workers/mccluster/src/entry.js');
   assert.match(js, /path === '\/v1\/collect'/, 'the first-party intake route must exist');
   assert.match(js, /request\.cf/, 'only the Worker can see where the visitor is');
-  for (const f of ['asn', 'asOrganization', 'city', 'postalCode', 'latitude', 'timezone']) {
+  for (const f of ['asn', 'asOrganization', 'city', 'postalCode', 'latitude', 'timezone',
+                    'colo', 'metroCode', 'httpProtocol', 'tlsVersion', 'tlsCipher',
+                    'clientTcpRtt', 'clientQuicRtt', 'clientAcceptEncoding', 'requestPriority']) {
     assert.match(js, new RegExp(`cf\\.${f}\\b`), `${f} must be forwarded`);
   }
+  assert.match(js, /cf\.edgeL4 && cf\.edgeL4\.deliveryRate/,
+    'edge delivery rate must be forwarded when Cloudflare exposes it');
+  assert.match(js, /cf\.botManagement && cf\.botManagement\.score/,
+    'bot score may be forwarded as classification metadata');
+  const route = code(js.slice(js.indexOf("path === '/v1/collect'")).slice(0, 6500));
+  assert.doesNotMatch(route, /ja3Hash|\bja4\b|tlsClientCiphersSha1|tlsClientExtensionsSha1/,
+    'transport telemetry must not become a TLS fingerprint');
   assert.match(js, /\$\{env\.SUPABASE_URL\}\/functions\/v1\/collect/,
     'the Worker must forward to the collector, not write its own rows');
   assert.doesNotMatch(js.slice(js.indexOf("path === '/v1/collect'")).slice(0, 4000),
     /rest\/v1\/events/,
     'there must be exactly one writer of public.events');
+});
+
+test('network telemetry records quality and transitions without inventing identity', async () => {
+  const js = await read('js/analytics.js');
+  for (const fact of ['effectiveType', 'downlink', 'rtt', 'saveData', 'navigator.onLine']) {
+    assert.match(js, new RegExp(fact.replace('.', '\\.')),
+      `${fact} must be part of the network snapshot`);
+  }
+  assert.match(js, /addEventListener\("change", function \(\) \{\s*T\("network_change"/,
+    'connection changes must be recorded during a visit');
+  assert.match(js, /nextHopProtocol/,
+    'navigation transport protocol must be attached to real-user performance data');
+});
+
+test('precise location is permission-gated and privacy signals win', async () => {
+  const js = await read('js/analytics.js');
+  const ts = await read('supabase/functions/collect/index.ts');
+  assert.match(js, /root\.MCC_LOCATION = \{/,
+    'the site must expose an explicit location request hook');
+  assert.match(js, /navigator\.permissions\.query\(\{ name: "geolocation" \}\)/,
+    'the browser permission state must be checked before automatic reads');
+  assert.match(js, /if \(p\.state === "granted"\) preciseLocation\(\);/,
+    'automatic precise reads are allowed only after permission was already granted');
+  assert.match(js, /enableHighAccuracy: true/,
+    'an explicitly granted location should use the device location service rather than IP inference');
+  assert.match(js, /function privacyQuiet\(\)/,
+    'client-side privacy signals must short-circuit precise location');
+  assert.match(ts, /if \(quiet && name === "precise_location"\) continue;/,
+    'the server must reject precise-location rows under GPC/DNT even if a client forges them');
 });
 
 test('the client prefers the first-party domain and can still fall back', async () => {
@@ -330,7 +373,7 @@ test('the site tells visitors what it records', async () => {
      written down anywhere a visitor could read it, which is the part a
      regulator opens first. */
   const html = await read('privacy.html');
-  for (const fact of [/IP address/i, /device/i, /network/i, /delete/i]) {
+  for (const fact of [/IP address/i, /device/i, /network/i, /precise device location/i, /delete/i]) {
     assert.match(html, fact, `the notice must name what is actually collected: ${fact}`);
   }
   assert.match(html, /matthew@mccluster\.org/,
@@ -371,14 +414,20 @@ test('the privacy signal is honoured, not merely written down', async () => {
     'both names must count');
   assert.match(ts, /const quiet = optedOut\(h\);/,
     'the decision must be made once, before any row is built');
-  for (const field of ['ip', 'deviceId', 'sessionId']) {
+  for (const field of ['ip', 'sessionId']) {
     assert.match(ts, new RegExp(`const ${field} = quiet \\?`),
       `${field} follows a person between sittings and must not survive the signal`);
   }
+  assert.match(ts, /const persistentAllowed = !quiet && \(site\.legacy \|\| consentState === "granted"\);/,
+    'persistent customer identity must require both no privacy opt-out and explicit consent');
+  assert.match(ts, /const deviceId = persistentAllowed \?/,
+    'deviceId must be downstream of the privacy-and-consent gate');
   assert.match(ts, /city: quiet \? null : g\.city/,
     'the city must go; the country may stay, because a count is not a person');
   assert.match(ts, /country: g\.country,/,
     'the visit must still be counted, or the signal becomes under-reporting');
+  assert.match(ts, /if \(quiet && name === "precise_location"\) continue;/,
+    'a privacy signal must also suppress consent-gated precise location rows');
 });
 
 test('the signal survives the Worker hop', async () => {

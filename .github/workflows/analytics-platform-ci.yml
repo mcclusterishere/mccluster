@@ -1,0 +1,55 @@
+name: Analytics Platform CI
+
+on:
+  pull_request:
+    paths:
+      - 'analytics.html'
+      - 'js/mc-analytics.js'
+      - 'js/analytics-product.js'
+      - 'workers/mccluster/src/entry.js'
+      - 'workers/mccluster/src/analytics/**'
+      - 'supabase/functions/collect/**'
+      - 'supabase/migrations/**'
+      - 'scripts/test/analytics-platform.test.mjs'
+      - '.github/workflows/analytics-platform-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'analytics.html'
+      - 'js/mc-analytics.js'
+      - 'js/analytics-product.js'
+      - 'workers/mccluster/src/entry.js'
+      - 'workers/mccluster/src/analytics/**'
+      - 'supabase/functions/collect/**'
+      - 'supabase/migrations/**'
+      - 'scripts/test/analytics-platform.test.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  analytics-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Parse analytics client and edge router
+        run: |
+          node --check js/mc-analytics.js
+          node --check js/analytics-product.js
+          node --check workers/mccluster/src/analytics/router.js
+          node --check workers/mccluster/src/entry.js
+      - name: Run analytics product contracts
+        run: node --test scripts/test/analytics-platform.test.mjs
+
+  collector-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
+        with:
+          deno-version: v2.x
+      - name: Type-check collector
+        run: deno check supabase/functions/collect/index.ts

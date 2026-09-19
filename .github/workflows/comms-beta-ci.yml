@@ -63,7 +63,7 @@ jobs:
           fi
       - name: Assert safety and takeover contracts
         run: |
-          grep -F "McCluster's assistant here" core/src/comms-policy.mjs
+          grep -F "personal assistant here" core/src/comms-policy.mjs
           grep -F "mode: 'paused'" core/src/executors/sms-assistant-turn.mjs
           grep -F "STOP_COMMAND" workers/mccluster/src/comms/router.js
           grep -F "TAKEOVER" workers/mccluster/src/comms/router.js
@@ -80,9 +80,9 @@ jobs:
         with:
           version: 2.117.0
       - name: Start isolated Supabase stack
-        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+        run: bash scripts/supabase-local-reset-with-replay.sh start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Rebuild database from migrations
-        run: supabase db reset
+        run: bash scripts/supabase-local-reset-with-replay.sh
       - name: Verify communications security contracts
         env:
           PGPASSWORD: postgres

@@ -1,0 +1,5 @@
+-- Historical production-ledger anchor for 20260908234055_equity_uprise_capabilities_and_rls_enable.
+-- The original production migration was applied before canonical Git reconciliation.
+-- Historical schema reconstruction is provided by the numbered replay migrations.
+-- Intentionally no-op: this exact version/name file exists so Supabase Git integration
+-- can reconcile the remote migration ledger without re-applying historical DDL.

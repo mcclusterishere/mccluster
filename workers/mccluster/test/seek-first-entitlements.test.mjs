@@ -104,7 +104,7 @@ test('the entitlement decision is threaded into persistence, and force cannot ov
 
 test('the entity history migration keeps evidence instead of overwriting it', async () => {
   const sql = await readFile(
-    resolve(repoRoot, 'supabase', 'migrations', '20260909040000_spatial_entity_history.sql'), 'utf8');
+    resolve(repoRoot, 'supabase', 'replay_migrations', '20260909040000_spatial_entity_history.sql'), 'utf8');
   assert.match(sql, /create table if not exists public\.seek_first_entity_revisions/i);
   assert.match(sql, /after insert or update on public\.seek_first_entities/i);
   assert.match(sql, /create or replace function public\.seek_first_timeline/i);

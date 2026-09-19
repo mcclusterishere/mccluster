@@ -37,10 +37,10 @@ $RUNAS "PATH=$PGBIN:\$PATH initdb -D $WORK/pg -U pg --auth=trust" > "$WORK/initd
 $RUNAS "PATH=$PGBIN:\$PATH pg_ctl -D $WORK/pg -o '-k $WORK -p $PORT -c listen_addresses=' -l $WORK/pg.log start" >/dev/null
 
 # psql runs as the cluster's owner, so the SQL has to be readable by it
-cp "$REPO/supabase/migrations/0017_equity_uprise_platform.sql" "$WORK/0017.sql"
-cp "$REPO/supabase/migrations/0018_equity_uprise_seed.sql"     "$WORK/0018.sql"
-cp "$REPO/supabase/migrations/0019_shake_delivery.sql"        "$WORK/0019.sql"
-cp "$REPO/supabase/migrations/0020_harden_function_surface.sql" "$WORK/0020.sql"
+cp "$REPO/supabase/replay_migrations/0017_equity_uprise_platform.sql" "$WORK/0017.sql"
+cp "$REPO/supabase/replay_migrations/0018_equity_uprise_seed.sql"     "$WORK/0018.sql"
+cp "$REPO/supabase/replay_migrations/0019_shake_delivery.sql"        "$WORK/0019.sql"
+cp "$REPO/supabase/replay_migrations/0020_harden_function_surface.sql" "$WORK/0020.sql"
 cp "$REPO/supabase/tests/eu_platform_test.sql"                 "$WORK/test.sql"
 
 # The shim has to exist before 0017, because 0017's policies reference

@@ -15,6 +15,10 @@ EnvironmentFile=-/etc/mccluster/game-runtime.env
 ExecStart=/usr/bin/node /opt/mccluster/core/src/runner.mjs
 Restart=always
 RestartSec=5
+# A bounded local-model job may run for up to ten minutes. On deploy, let the
+# runner finish and release its database lease instead of SIGKILLing it at
+# systemd's default stop timeout and leaving a stale running job behind.
+TimeoutStopSec=11min
 UMask=0007
 
 NoNewPrivileges=true

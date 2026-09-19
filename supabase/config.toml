@@ -31,10 +31,16 @@ verify_jwt = false
 
 # Shared platform functions.
 [functions.backend-sub]
-verify_jwt = false
+verify_jwt = true
 
 [functions.connect-onboard]
-verify_jwt = false
+verify_jwt = true
+
+[functions.connect-org]
+verify_jwt = true
+
+[functions.org-connect-onboard]
+verify_jwt = true
 
 # Private cross-model context plane. User-facing functions require a Supabase
 # JWT and repeat membership checks in-function. context-core is server-to-server
@@ -55,7 +61,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.m-oauth-bootstrap]
-verify_jwt = true
+verify_jwt = false
 
 [functions.ops-chat]
 verify_jwt = true
@@ -64,6 +70,9 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.outreach-webhook]
+verify_jwt = false
+
+[functions.stripe-webhook]
 verify_jwt = false
 
 [functions.pay-now]
@@ -127,4 +136,40 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.eu-control]
+verify_jwt = true
+
+# Reconciled live production functions recovered from Supabase on 2026-09-19.
+# These entries preserve the gateway modes that were active at reconciliation.
+
+[functions.gev-proxy]
+verify_jwt = true
+
+[functions.l3-login]
+verify_jwt = false
+
+[functions.l3-subscribe]
+verify_jwt = true
+
+[functions.l3-portal]
+verify_jwt = true
+
+[functions.l3-connect-onboard]
+verify_jwt = true
+
+[functions.l3-checkout]
+verify_jwt = false
+
+[functions.l3-download]
+verify_jwt = false
+
+[functions.l3-refund]
+verify_jwt = true
+
+[functions.l3-connect-dashboard]
+verify_jwt = true
+
+[functions.mnet-track]
+verify_jwt = false
+
+[functions.mnet-activity]
 verify_jwt = true

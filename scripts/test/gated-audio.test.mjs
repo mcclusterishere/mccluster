@@ -99,7 +99,7 @@ test('the gated registry and the publisher agree on where the master lives', asy
 });
 
 test('the bucket is private and only signed-in listeners may read it', async () => {
-  const sql = await read('supabase/migrations/20260918230000_gated_audio.sql');
+  const sql = await read('supabase/replay_migrations/20260918230000_gated_audio.sql');
   assert.match(sql, /'mcc-gated-audio',\s*'mcc-gated-audio',\s*false/,
     'the bucket must be created private');
   assert.match(sql, /for select\s+to authenticated/,

@@ -1,0 +1,24 @@
+[Unit]
+Description=McCluster PRIM3 Android/SIM relay bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mccluster-core
+Group=mccluster-core
+EnvironmentFile=/etc/mccluster/core.env
+ExecStart=/usr/bin/node /opt/mccluster/core/src/relay/smsgate-bridge.mjs
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/mccluster
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

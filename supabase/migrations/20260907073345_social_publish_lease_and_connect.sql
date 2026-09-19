@@ -1,0 +1,5 @@
+-- Historical production-ledger anchor for 20260907073345_social_publish_lease_and_connect.
+-- The original production migration was applied before canonical Git reconciliation.
+-- Historical schema reconstruction is provided by the numbered replay migrations.
+-- Intentionally no-op: this exact version/name file exists so Supabase Git integration
+-- can reconcile the remote migration ledger without re-applying historical DDL.

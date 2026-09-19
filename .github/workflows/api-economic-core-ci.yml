@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'supabase/migrations/**'
+      - 'supabase/replay_migrations/**'
+      - 'scripts/supabase-local-reset-with-replay.sh'
       - 'supabase/tests/api_compute_economics_regression.sql'
       - 'supabase/tests/api_rate_limit_regression.sql'
       - 'supabase/tests/compute_cogs_regression.sql'
@@ -17,6 +19,8 @@ on:
   pull_request:
     paths:
       - 'supabase/migrations/**'
+      - 'supabase/replay_migrations/**'
+      - 'scripts/supabase-local-reset-with-replay.sh'
       - 'supabase/tests/api_compute_economics_regression.sql'
       - 'supabase/tests/api_rate_limit_regression.sql'
       - 'supabase/tests/compute_cogs_regression.sql'
@@ -62,9 +66,9 @@ jobs:
         with:
           version: 2.117.0
       - name: Start isolated Supabase stack
-        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+        run: bash scripts/supabase-local-reset-with-replay.sh start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
       - name: Rebuild database from migrations
-        run: supabase db reset
+        run: bash scripts/supabase-local-reset-with-replay.sh
       - name: Run API and compute economic regression suite
         env:
           PGPASSWORD: postgres

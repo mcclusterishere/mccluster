@@ -248,7 +248,7 @@ test('the licensing firewall still runs on top of a town policy', async () => {
 
 test('the audit table is append-only in the database, not only in the Worker', async () => {
   const migration = await readFile(
-    resolve(repoRoot, 'supabase/migrations/20260910234500_spatial_governance_and_audit.sql'),
+    resolve(repoRoot, 'supabase/replay_migrations/20260910234500_spatial_governance_and_audit.sql'),
     'utf8'
   );
   assert.match(migration, /before update or delete on public\.seek_first_query_audit/);

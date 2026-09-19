@@ -1,3 +1,5 @@
+import { sendOwnerSmsViaRelay } from './comms-owner-notify.mjs';
+
 const SUCCESS_NOTIFY_TYPES = new Set([
   'code_patch',
   'game_media_collect',
@@ -39,13 +41,25 @@ function successMessage(job, output = {}) {
 
 export async function sendSms(message) {
   if (!smsEnabled()) return { sent: false, reason: 'sms_disabled' };
+
+  const text = compact(message, 1200);
+  try {
+    const relay = await sendOwnerSmsViaRelay(text);
+    if (relay?.sent) return relay;
+    if (process.env.MCCLUSTER_SMS_REQUIRE_RELAY === '1') return relay;
+  } catch (error) {
+    if (process.env.MCCLUSTER_SMS_REQUIRE_RELAY === '1') {
+      return { sent: false, reason: 'relay_error', error: compact(error.message, 500) };
+    }
+  }
+
   const cfg = requiredTwilio();
-  if (!cfg) return { sent: false, reason: 'twilio_not_configured' };
+  if (!cfg) return { sent: false, reason: 'relay_not_configured' };
 
   const body = new URLSearchParams({
     To: cfg.to,
     From: cfg.from,
-    Body: compact(message, 1200),
+    Body: text,
   });
   const response = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(cfg.accountSid)}/Messages.json`,
@@ -61,7 +75,7 @@ export async function sendSms(message) {
   );
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(data?.message || `Twilio returned ${response.status}`);
-  return { sent: true, sid: data?.sid || null, status: data?.status || null, auth_mode: cfg.authMode };
+  return { sent: true, sid: data?.sid || null, status: data?.status || null, auth_mode: cfg.authMode, transport: 'twilio' };
 }
 
 export async function notifyJobSuccess(job, output) {
