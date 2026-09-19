@@ -137,3 +137,39 @@ verify_jwt = true
 
 [functions.eu-control]
 verify_jwt = true
+
+# Reconciled live production functions recovered from Supabase on 2026-09-19.
+# These entries preserve the gateway modes that were active at reconciliation.
+
+[functions.gev-proxy]
+verify_jwt = true
+
+[functions.l3-login]
+verify_jwt = false
+
+[functions.l3-subscribe]
+verify_jwt = true
+
+[functions.l3-portal]
+verify_jwt = true
+
+[functions.l3-connect-onboard]
+verify_jwt = true
+
+[functions.l3-checkout]
+verify_jwt = false
+
+[functions.l3-download]
+verify_jwt = false
+
+[functions.l3-refund]
+verify_jwt = true
+
+[functions.l3-connect-dashboard]
+verify_jwt = true
+
+[functions.mnet-track]
+verify_jwt = false
+
+[functions.mnet-activity]
+verify_jwt = true
