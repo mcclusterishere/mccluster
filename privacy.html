@@ -80,8 +80,11 @@
         <li>An <b>approximate location worked out from that address</b> &mdash; country, region,
           city, postal code, an approximate latitude and longitude, and a timezone.
           <span class="pv__why">Why: so the site knows which audiences it is actually reaching.
-            This comes from the network, never from your device's location services. It is
-            accurate to roughly a city. <b>It is not your street.</b></span></li>
+            This comes from the network and is ordinarily accurate only to roughly a city.</span></li>
+        <li>If you explicitly grant the browser's location permission, the site can also record a
+          <b>precise device location</b> together with the accuracy reported by the device.
+          <span class="pv__why">The site does not silently request this permission. A first-time
+            location prompt must come from an explicit action, and the browser can revoke it.</span></li>
         <li>The <b>network you are on</b> &mdash; its operator's name and number, usually your
           internet provider or mobile carrier, plus connection-quality and transport information
           the edge can observe: data-center region, HTTP/TLS version, round-trip time, delivery
