@@ -27,7 +27,11 @@ function healthySnapshot() {
     },
     runtime: { godot: '4.5', blender: '4.4', halo: { status: 'healthy', stale: false } },
     deployment: { deployed_sha: MAIN, last_success: { sha: MAIN }, halo_sha: MAIN },
-    supabase: { reachable: true, contract: { parity: true, schema_version: SYSTEM_HEALTH_SCHEMA, migration_version: SYSTEM_CONTRACT_MIGRATION } },
+    supabase: {
+      reachable: true,
+      contract: { parity: true, schema_version: SYSTEM_HEALTH_SCHEMA, migration_version: SYSTEM_CONTRACT_MIGRATION },
+      migration_attestation: { parity: true, expected: { latest_version: 'expected' }, live: { latest_version: 'expected' } },
+    },
     jobs: {
       counts: { total: 10, queued: 0, running: 0, failed: 0, done: 10 },
       stale_running_count: 0,
@@ -77,6 +81,18 @@ test('missing live migration contract and communications schema are never called
   assert.equal(health.overall, 'degraded');
   assert.ok(health.degradation.some((item) => item.code === 'migration_contract_drift'));
   assert.ok(health.degradation.some((item) => item.code === 'schema_not_ready'));
+});
+
+test('migration ledger attestation drift is a hard failure', () => {
+  const snapshot = healthySnapshot();
+  snapshot.supabase.migration_attestation = {
+    parity: false,
+    expected: { latest_version: '20260919021348', ledger_sha256: 'expected' },
+    live: { latest_version: '20260919021013', ledger_sha256: 'different' },
+  };
+  const health = aggregateSystemHealth(snapshot, { nowMs: NOW });
+  assert.equal(health.overall, 'fail');
+  assert.ok(health.degradation.some((item) => item.code === 'supabase_migration_ledger_drift' && item.severity === 'critical'));
 });
 
 test('invalid #10 evidence is a hard health failure', () => {

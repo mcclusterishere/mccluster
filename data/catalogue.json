@@ -1,7 +1,7 @@
 {
  "generated_at": "2026-07-09T17:37:58.808Z",
  "isrc_prefix": "QT6KV",
- "count": 14,
+ "count": 15,
  "tracks": [
   {
    "slug": "who-did-the-shoot",
@@ -174,6 +174,20 @@
    "order": 11,
    "no": 14,
    "isrc": "QT6KV2600017"
+  },
+  {
+   "slug": "niggy-nigg",
+   "title": "Niggy Nigg Niggr",
+   "credit": "KKK",
+   "album": "CIA Mind Control",
+   "page": "album.html?album=cia-mind-control",
+   "length": "0:25",
+   "available": true,
+   "gated": true,
+   "order": 12,
+   "no": 15,
+   "isrc": "QT6KV2600018",
+   "albumSlug": "cia-mind-control"
   }
  ]
 }

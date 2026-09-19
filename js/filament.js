@@ -49,6 +49,13 @@
 
   function build(src) {
     if (!src) return;
+    /* The query is dropped for the CACHE KEY only, so the same record read
+       through two URLs is drawn once. It must never be dropped from the
+       REQUEST: a gated track plays from a signed Supabase URL whose token
+       lives in that query, and fetching the stripped URL asks storage for
+       the object with no authorization. That comes back as a JSON error,
+       which then goes into decodeAudioData and throws "Unable to decode
+       audio data" on every gated record. Fetch what the deck is playing. */
     var key = src.split("?")[0];
     want = key;
     if (cache[key]) {
@@ -58,7 +65,7 @@
       fit();
       return;
     }
-    fetch(key)
+    fetch(src)
       .then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); })
       .then(function (buf) {
         if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();

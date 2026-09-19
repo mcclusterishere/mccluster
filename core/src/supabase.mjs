@@ -6,6 +6,10 @@ const SECRET_KEY = String(process.env.SUPABASE_SECRET_KEY || '');
 const LEGACY_SERVICE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '');
 const API_KEY = SECRET_KEY || LEGACY_SERVICE_KEY;
 export const workerId = String(process.env.MCCLUSTER_CORE_ID || `core:${os.hostname()}:${process.pid}`);
+const STALE_JOB_MS = Math.max(60_000, Number(process.env.MCCLUSTER_STALE_JOB_MS || 10 * 60_000));
+const STALE_SWEEP_MS = Math.max(15_000, Number(process.env.MCCLUSTER_STALE_SWEEP_MS || 60_000));
+const UNSUPPORTED_JOB_GRACE_MS = Math.max(60_000, Number(process.env.MCCLUSTER_UNSUPPORTED_JOB_GRACE_MS || 10 * 60_000));
+let lastStaleSweepAt = 0;
 
 function configured() {
   if (!SB || !API_KEY) {
@@ -54,9 +58,98 @@ export async function rest(path, init = {}) {
   }));
 }
 
+export async function recoverStaleJobs({ now = new Date() } = {}) {
+  const nowIso = now.toISOString();
+  const cutoff = new Date(now.getTime() - STALE_JOB_MS).toISOString();
+
+  const params = new URLSearchParams({
+    status: 'eq.running',
+    locked_at: `lt.${cutoff}`,
+    select: 'id,attempts,max_attempts,locked_at,locked_by',
+    order: 'locked_at.asc',
+    limit: '100',
+  });
+
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  let recovered = 0;
+
+  for (const job of rows) {
+    const attempts = Number(job.attempts || 0);
+    const maxAttempts = Math.max(1, Number(job.max_attempts || 3));
+    const exhausted = attempts >= maxAttempts;
+    const patch = {
+      status: exhausted ? 'failed' : 'queued',
+      locked_at: null,
+      locked_by: null,
+      last_error: exhausted
+        ? 'Recovered stale worker lock after final attempt; marked failed'
+        : 'Recovered stale worker lock after heartbeat expired',
+      updated_at: nowIso,
+    };
+    if (!exhausted) patch.run_after = nowIso;
+
+    const match = new URLSearchParams({
+      id: `eq.${job.id}`,
+      status: 'eq.running',
+      locked_at: `eq.${job.locked_at}`,
+    });
+    const { body: updated = [] } = await rest(`ops_agent_jobs?${match.toString()}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify(patch),
+    });
+    if (updated.length) recovered += 1;
+  }
+
+  return recovered;
+}
+
+export async function quarantineUnsupportedJobs(supportedTypes, { now = new Date() } = {}) {
+  const supported = new Set(supportedTypes || []);
+  const cutoff = new Date(now.getTime() - UNSUPPORTED_JOB_GRACE_MS).toISOString();
+  const nowIso = now.toISOString();
+  const params = new URLSearchParams({
+    status: 'eq.queued',
+    created_at: `lt.${cutoff}`,
+    select: 'id,job_type,created_at',
+    order: 'created_at.asc',
+    limit: '200',
+  });
+
+  const { body: rows = [] } = await rest(`ops_agent_jobs?${params.toString()}`);
+  let quarantined = 0;
+
+  for (const job of rows) {
+    if (supported.has(job.job_type)) continue;
+    const match = new URLSearchParams({ id: `eq.${job.id}`, status: 'eq.queued' });
+    const { body: updated = [] } = await rest(`ops_agent_jobs?${match.toString()}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        status: 'failed',
+        locked_at: null,
+        locked_by: null,
+        last_error: `Unsupported job type quarantined by Core: ${job.job_type}`,
+        updated_at: nowIso,
+      }),
+    });
+    if (updated.length) quarantined += 1;
+  }
+
+  return quarantined;
+}
+
 export async function claimNext(supportedTypes) {
   const supported = new Set(supportedTypes);
   if (!supported.size) return null;
+
+  const sweepNow = Date.now();
+  if (sweepNow - lastStaleSweepAt >= STALE_SWEEP_MS) {
+    lastStaleSweepAt = sweepNow;
+    const sweepDate = new Date(sweepNow);
+    await recoverStaleJobs({ now: sweepDate });
+    await quarantineUnsupportedJobs([...supported], { now: sweepDate });
+  }
 
   const now = new Date().toISOString();
   const params = new URLSearchParams({
@@ -137,13 +230,38 @@ export async function completeJob(job, output) {
   return rows[0];
 }
 
+/* A FAILED SUBPROCESS KNOWS WHY IT FAILED. SAY SO.
+ *
+ * run() rejects with the child's stdout and stderr hanging off error.result,
+ * and failJob threw all of it away and stored only the message. The first
+ * autonomous code_patch run recorded exactly "/usr/local/bin/opencode exited
+ * with 1" — true, useless, and unreachable without SSH to the node. Keeping a
+ * tail of what the process actually said is the difference between a fixable
+ * report and a shrug. Tails, not the whole stream: this column is read in a
+ * digest and a control room, not a log viewer. */
+function failureDetail(error) {
+  const result = error && typeof error === 'object' ? error.result : null;
+  if (!result) return '';
+  const tail = (value, max) => {
+    const text = String(value ?? '').trim();
+    if (!text) return '';
+    return text.length > max ? `…${text.slice(-max)}` : text;
+  };
+  const stderr = tail(result.stderr, 1200);
+  const stdout = stderr ? '' : tail(result.stdout, 800);
+  const parts = [];
+  if (stderr) parts.push(`stderr: ${stderr}`);
+  if (stdout) parts.push(`stdout: ${stdout}`);
+  return parts.length ? `\n${parts.join('\n')}` : '';
+}
+
 export async function failJob(job, error) {
   const now = new Date();
   const attempts = Number(job.attempts || 0);
   const maxAttempts = Math.max(1, Number(job.max_attempts || 3));
   const exhausted = attempts >= maxAttempts;
   const delayMinutes = Math.min(60, Math.max(2, 2 ** Math.max(1, attempts)));
-  const message = String(error?.message || error || 'unknown error').slice(0, 4000);
+  const message = `${String(error?.message || error || 'unknown error')}${failureDetail(error)}`.slice(0, 4000);
   const patch = {
     status: exhausted ? 'failed' : 'queued',
     locked_at: null,
@@ -243,11 +361,61 @@ export async function hasPendingJob({ orgId, jobType, targetId } = {}) {
   return body.length > 0;
 }
 
+/* THE HOUSE ORG, WHEN NOBODY SET MCCLUSTER_ORG_ID.
+ *
+ * The morning digest recorded itself only `if (ORG_ID)`, and that variable is
+ * not set on the node. So every morning at 07:30 the digest was built, the SMS
+ * attempt came back twilio_not_configured, and the report was dropped on the
+ * floor without a trace — ops_signals held exactly one row, a hand-run test.
+ *
+ * Resolving the slug is one cheap lookup and it is cached for the life of the
+ * process, so a missing environment variable costs a round trip instead of the
+ * whole report. */
+const HOUSE_SLUG = process.env.MCCLUSTER_ORG_SLUG || 'mccluster';
+let houseOrgPromise = null;
+
+export function houseOrgId() {
+  if (!houseOrgPromise) {
+    houseOrgPromise = rest(`orgs?slug=eq.${encodeURIComponent(HOUSE_SLUG)}&select=id&limit=1`)
+      .then((rows) => (Array.isArray(rows) && rows[0] ? String(rows[0].id) : null))
+      .catch(() => null);
+  }
+  return houseOrgPromise;
+}
+
 export async function addSignal({ orgId, kind, body, severity = 'info', source = 'mccluster-core', metadata = {} }) {
+  const severityMap = {
+    debug: 0,
+    info: 1,
+    notice: 2,
+    warn: 3,
+    warning: 3,
+    error: 4,
+    critical: 5,
+  };
+
+  const numericSeverity = Number.isFinite(Number(severity))
+    ? Number(severity)
+    : (severityMap[String(severity).toLowerCase()] ?? 1);
+
+  const payload = {
+    body,
+    ...metadata,
+  };
+
   const { body: rows = [] } = await rest('ops_signals', {
     method: 'POST',
     headers: { Prefer: 'return=representation' },
-    body: JSON.stringify({ org_id: orgId, kind, body, severity, source, metadata }),
+    body: JSON.stringify({
+      org_id: orgId,
+      signal_type: kind,
+      source,
+      severity: numericSeverity,
+      confidence: 1,
+      payload,
+      observed_at: new Date().toISOString(),
+    }),
   });
+
   return rows[0] || null;
 }

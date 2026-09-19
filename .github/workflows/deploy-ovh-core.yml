@@ -1,13 +1,15 @@
-name: Deploy OVH Core
+name: Verify or manually deploy OVH Core
 
 on:
+  push:
+    branches: [deploy/ovh-production]
   workflow_dispatch:
     inputs:
       sha:
         description: Exact commit SHA already contained in main
         required: true
       confirm:
-        description: Type DEPLOY_OVH to authorize server mutation
+        description: Type DEPLOY_OVH to authorize break-glass SSH deployment
         required: true
 
 permissions:
@@ -18,8 +20,50 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify-self-reconcile:
+    name: Verify OVH self-reconciliation
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate approved production revision
+        env:
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git cat-file -e "${TARGET_SHA}^{commit}"
+          git merge-base --is-ancestor "${TARGET_SHA}" origin/main || {
+            echo "Refusing verification: deploy ref is not contained in main" >&2
+            exit 2
+          }
+
+      - name: Wait for OVH to self-reconcile to exact commit
+        env:
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 24); do
+            body="$(curl --fail --silent --show-error --max-time 15 https://core.mccluster.org/health || true)"
+            deployed="$(printf '%s' "$body" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{console.log(JSON.parse(d).deployment_sha||'')}catch{console.log('')}})")"
+            if [[ "$deployed" = "$TARGET_SHA" ]]; then
+              printf '%s\n' "$body"
+              echo "Verified OVH self-reconciled to $TARGET_SHA"
+              exit 0
+            fi
+            echo "Attempt $attempt: expected $TARGET_SHA, got ${deployed:-<none>}"
+            sleep 10
+          done
+          echo "OVH self-reconciliation did not converge to $TARGET_SHA" >&2
+          exit 1
+
   deploy:
-    if: ${{ inputs.confirm == 'DEPLOY_OVH' }}
+    name: Break-glass SSH deploy
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.confirm == 'DEPLOY_OVH' }}
     runs-on: ubuntu-latest
     environment: ovh-production
     steps:
@@ -43,10 +87,7 @@ jobs:
           }
           git checkout --detach "${TARGET_SHA}"
           RESOLVED_SHA="$(git rev-parse HEAD)"
-          test "$RESOLVED_SHA" = "$TARGET_SHA" || {
-            echo "Refusing deployment: target must be an exact full commit SHA" >&2
-            exit 3
-          }
+          test "$RESOLVED_SHA" = "$TARGET_SHA"
           echo "sha=$RESOLVED_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Validate Core before transfer
@@ -115,12 +156,3 @@ jobs:
              systemctl is-active mccluster-core-tool-broker.service && \
              grep -Fq '\"commit_sha\":\"$DEPLOY_SHA\"' /opt/mccluster/core/.mccluster-deploy.json && \
              cat /opt/mccluster/core/.mccluster-deploy.json"
-
-      - name: Deployment summary
-        run: |
-          echo "### OVH Core deployment" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Commit: \`${{ steps.commit.outputs.sha }}\` (verified ancestor of \`main\`)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- SSH host identity: pinned by \`OVH_KNOWN_HOSTS\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Target: canonical /opt/mccluster/core" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Runtime provenance: \`/opt/mccluster/core/.mccluster-deploy.json\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Rollback snapshot created automatically before sync" >> "$GITHUB_STEP_SUMMARY"

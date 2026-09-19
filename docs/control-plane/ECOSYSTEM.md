@@ -38,6 +38,7 @@ Canonical ecosystem map for how the house is wired. Agents: if this disagrees wi
 | Infrastructure control | `/v1/ops` on Worker `mccluster` — see `INFRASTRUCTURE-CONTROL.md` |
 | What the plane may act on | `ops_estate_nodes`, seeded from `registry.json` |
 | Worker source | `workers/mccluster` |
+| Stateless MCP transport | `workers/mccluster-mcp` → `mcp.mccluster.org` (activation requires deployment) |
 | Persistent execution / orchestration | OVH McCluster Core from `core/` |
 | Production Core promotion pointer | `deploy/ovh-production` |
 | Shared durable truth | Supabase `zmnhbrjyhxzhkxmhkexs` |

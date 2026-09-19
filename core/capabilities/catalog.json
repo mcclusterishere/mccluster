@@ -1,38 +1,1951 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-13.2",
+  "catalogVersion": "2026-09-19.3",
   "capabilities": [
-    {"id":"system.health","title":"System health","description":"Read health from the canonical McCluster control-plane edge.","domain":"system","lifecycle":"active","execution":"sync","risk":"read","approval":"none","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","properties":{},"additionalProperties":false},"outputSchema":{"type":"object"},"tags":["control-plane","health"]},
-    {"id":"media.models.search","title":"Search media models","description":"Discover enabled generative-media implementations by provider or media capability.","domain":"media","lifecycle":"active","execution":"sync","risk":"read","approval":"none","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","properties":{"capability":{"type":"string"},"provider":{"type":"string"}}},"outputSchema":{"type":"object"},"tags":["media","discovery"]},
-    {"id":"media.model.recommend","title":"Recommend a media model","description":"Rank media implementations for task fit, controls, quality, speed, and price.","domain":"media","lifecycle":"active","execution":"sync","risk":"read","approval":"none","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["capability"],"properties":{"capability":{"type":"string"},"preference":{"type":"string","enum":["quality","balanced","speed","price"]},"required":{"type":"object"},"top_k":{"type":"integer","minimum":1,"maximum":10}}},"outputSchema":{"type":"object"},"tags":["media","routing"]},
-    {"id":"media.generate","title":"Generate media with an explicit model","description":"Submit a tracked media-generation job through McCluster budget, cost, and lineage controls.","domain":"media","lifecycle":"active","execution":"async","risk":"spend","approval":"budget-gated","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["org_id","model_id"],"properties":{"org_id":{"type":"string"},"model_id":{"type":"string"},"prompt":{"type":"string"},"input":{"type":"object"},"budget_cents":{"type":"number","minimum":0}}},"outputSchema":{"type":"object"},"tags":["media","generation","budgeted"]},
-    {"id":"media.job.get","title":"Get media job","description":"Read a media job, provider result, costs, and asset lineage.","domain":"media","lifecycle":"active","execution":"sync","risk":"read","approval":"none","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["org_id","job_id"],"properties":{"org_id":{"type":"string"},"job_id":{"type":"string"}}},"outputSchema":{"type":"object"},"tags":["media","jobs","lineage"]},
-    {"id":"image.generate","title":"Generate image","description":"Provider-independent tracked image generation through McCluster routing, budgets, and lineage.","domain":"media.image","lifecycle":"active","execution":"async","risk":"spend","approval":"budget-gated","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["org_id","prompt"],"properties":{"org_id":{"type":"string"},"prompt":{"type":"string"},"references":{"type":"array"},"preference":{"type":"string"},"budget_cents":{"type":"number","minimum":0}}},"outputSchema":{"type":"object"},"tags":["media","image"]},
-    {"id":"video.generate","title":"Generate video","description":"Provider-independent tracked video generation for PRIM3 shots, trailers, and sequences.","domain":"media.video","lifecycle":"active","execution":"async","risk":"spend","approval":"budget-gated","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["org_id","prompt"],"properties":{"org_id":{"type":"string"},"prompt":{"type":"string"},"references":{"type":"array"},"duration_seconds":{"type":"number"},"aspect_ratio":{"type":"string"},"preference":{"type":"string"},"budget_cents":{"type":"number","minimum":0}}},"outputSchema":{"type":"object"},"tags":["media","video","prim3"]},
-    {"id":"audio.generate","title":"Generate audio","description":"Provider-independent tracked voice, music, or sound-effect generation.","domain":"media.audio","lifecycle":"active","execution":"async","risk":"spend","approval":"budget-gated","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["org_id","prompt"],"properties":{"org_id":{"type":"string"},"prompt":{"type":"string"},"kind":{"type":"string","enum":["voice","music","sfx"]},"preference":{"type":"string"},"budget_cents":{"type":"number","minimum":0}}},"outputSchema":{"type":"object"},"tags":["media","audio"]},
-    {"id":"model3d.generate","title":"Generate 3D model","description":"Generate reusable tracked 3D assets with GLB output without exposing provider-specific request syntax.","domain":"spatial.asset","lifecycle":"active","execution":"async","risk":"spend","approval":"budget-gated","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["org_id","prompt"],"properties":{"org_id":{"type":"string"},"prompt":{"type":"string"},"references":{"type":"array"},"target_format":{"type":"string","enum":["glb"]},"preference":{"type":"string"},"budget_cents":{"type":"number","minimum":0}}},"outputSchema":{"type":"object"},"tags":["3d","asset","prim3"]},
-    {"id":"world.generate","title":"Generate navigable world","description":"Queue a durable world-production workflow that generates concepts and GLB modules, pauses for owner review, then hands approved assets to isolated Godot implementation.","domain":"spatial.world","lifecycle":"active","execution":"async","risk":"spend","approval":"budget-gated","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["org_id","prompt"],"properties":{"org_id":{"type":"string"},"prompt":{"type":"string"},"repository":{"type":"string"},"campaign":{"type":"string"},"references":{"type":"array"},"preference":{"type":"string"},"budget_cents":{"type":"number","minimum":0}}},"outputSchema":{"type":"object"},"tags":["3d","world","game","prim3"]},
-    {"id":"research.web","title":"Research the web","description":"Run bounded current public-web discovery with timestamped provenance and source URLs.","domain":"research","lifecycle":"active","execution":"sync","risk":"read","approval":"none","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["objective"],"properties":{"objective":{"type":"string"},"source_constraints":{"type":"object"},"limit":{"type":"integer","minimum":1,"maximum":10}}},"outputSchema":{"type":"object"},"tags":["research","web","provenance"]},
-    {"id":"repo.inspect","title":"Inspect repository","description":"Read repository state, recent commits, drift, and optional installed tests without modifying source.","domain":"code","lifecycle":"active","execution":"sync","risk":"read","approval":"none","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["repository"],"properties":{"repository":{"type":"string"},"tests":{"type":"boolean"},"dependency_review":{"type":"boolean"}}},"outputSchema":{"type":"object"},"tags":["code","repository"]},
-    {"id":"code.build","title":"Build code","description":"Queue an isolated reviewed code change that may create a draft branch/PR but never auto-merges or deploys.","domain":"code","lifecycle":"active","execution":"async","risk":"write","approval":"review-required","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["org_id","repository","task"],"properties":{"org_id":{"type":"string"},"repository":{"type":"string"},"task":{"type":"string"},"title":{"type":"string"},"allowed_paths":{"type":"array","items":{"type":"string"}},"priority":{"type":"number"}}},"outputSchema":{"type":"object"},"tags":["code","agent","draft-pr"]},
-    {"id":"game.build","title":"Build game experience","description":"Queue the durable PRIM3 autonomous production loop with real media generation, owner review, isolated implementation, and playtest stages.","domain":"game","lifecycle":"active","execution":"async","risk":"write","approval":"review-required","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["org_id","brief"],"properties":{"org_id":{"type":"string"},"brief":{"type":"string"},"repository":{"type":"string"},"campaign":{"type":"string"},"budget_cents":{"type":"number","minimum":0},"preference":{"type":"string"}}},"outputSchema":{"type":"object"},"tags":["game","code","media","3d","prim3"]},
-    {"id":"deploy.preview","title":"Deploy preview","description":"Queue a non-production Vercel preview from an approved repository ref. Runtime availability requires VERCEL_TOKEN on the Core host.","domain":"deployment","lifecycle":"active","execution":"async","risk":"write","approval":"review-required","interfaces":["http","mcp","agent"],"inputSchema":{"type":"object","required":["org_id","repository","ref"],"properties":{"org_id":{"type":"string"},"repository":{"type":"string"},"ref":{"type":"string"},"directory":{"type":"string"}}},"outputSchema":{"type":"object"},"tags":["deployment","preview"]}
+    {
+      "id": "core.resume",
+      "title": "Resume working session",
+      "description": "Return durable McCluster session state — workspace, active and stale work, pending approvals, catalog version, system health and exact deploy commit — so a model can rehydrate after context loss. Read-only.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "since_hours": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "continuity",
+        "session"
+      ]
+    },
+    {
+      "id": "system.health",
+      "title": "System health",
+      "description": "Read health from the canonical McCluster control-plane edge.",
+      "domain": "system",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control-plane",
+        "health"
+      ]
+    },
+    {
+      "id": "media.models.search",
+      "title": "Search media models",
+      "description": "Discover enabled generative-media implementations by provider or media capability.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "capability": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "media",
+        "discovery"
+      ]
+    },
+    {
+      "id": "media.model.recommend",
+      "title": "Recommend a media model",
+      "description": "Rank media implementations for task fit, controls, quality, speed, and price.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "capability"
+        ],
+        "properties": {
+          "capability": {
+            "type": "string"
+          },
+          "preference": {
+            "type": "string",
+            "enum": [
+              "quality",
+              "balanced",
+              "speed",
+              "price"
+            ]
+          },
+          "required": {
+            "type": "object"
+          },
+          "top_k": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "media",
+        "routing"
+      ]
+    },
+    {
+      "id": "media.generate",
+      "title": "Generate media with an explicit model",
+      "description": "Submit a tracked media-generation job through McCluster budget, cost, and lineage controls.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "model_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "model_id": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "input": {
+            "type": "object"
+          },
+          "budget_cents": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "media",
+        "generation",
+        "budgeted"
+      ]
+    },
+    {
+      "id": "media.job.get",
+      "title": "Get media job",
+      "description": "Read a media job, provider result, costs, and asset lineage.",
+      "domain": "media",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "job_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "job_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "media",
+        "jobs",
+        "lineage"
+      ]
+    },
+    {
+      "id": "image.generate",
+      "title": "Generate image",
+      "description": "Provider-independent tracked image generation through McCluster routing, budgets, and lineage.",
+      "domain": "media.image",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "prompt"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "references": {
+            "type": "array"
+          },
+          "preference": {
+            "type": "string"
+          },
+          "budget_cents": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "media",
+        "image"
+      ]
+    },
+    {
+      "id": "video.generate",
+      "title": "Generate video",
+      "description": "Provider-independent tracked video generation for PRIM3 shots, trailers, and sequences.",
+      "domain": "media.video",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "prompt"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "references": {
+            "type": "array"
+          },
+          "duration_seconds": {
+            "type": "number"
+          },
+          "aspect_ratio": {
+            "type": "string"
+          },
+          "preference": {
+            "type": "string"
+          },
+          "budget_cents": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "media",
+        "video",
+        "prim3"
+      ]
+    },
+    {
+      "id": "audio.generate",
+      "title": "Generate audio",
+      "description": "Provider-independent tracked voice, music, or sound-effect generation.",
+      "domain": "media.audio",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "prompt"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "voice",
+              "music",
+              "sfx"
+            ]
+          },
+          "preference": {
+            "type": "string"
+          },
+          "budget_cents": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "media",
+        "audio"
+      ]
+    },
+    {
+      "id": "model3d.generate",
+      "title": "Generate 3D model",
+      "description": "Generate reusable tracked 3D assets with GLB output without exposing provider-specific request syntax.",
+      "domain": "spatial.asset",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "prompt"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "references": {
+            "type": "array"
+          },
+          "target_format": {
+            "type": "string",
+            "enum": [
+              "glb"
+            ]
+          },
+          "preference": {
+            "type": "string"
+          },
+          "budget_cents": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "3d",
+        "asset",
+        "prim3"
+      ]
+    },
+    {
+      "id": "world.generate",
+      "title": "Generate navigable world",
+      "description": "Queue a durable world-production workflow that generates concepts and GLB modules, pauses for owner review, then hands approved assets to isolated Godot implementation.",
+      "domain": "spatial.world",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "spend",
+      "approval": "budget-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "prompt"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "string"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "references": {
+            "type": "array"
+          },
+          "preference": {
+            "type": "string"
+          },
+          "budget_cents": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "3d",
+        "world",
+        "game",
+        "prim3"
+      ]
+    },
+    {
+      "id": "research.web",
+      "title": "Research the web",
+      "description": "Run bounded current public-web discovery with timestamped provenance and source URLs.",
+      "domain": "research",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "objective"
+        ],
+        "properties": {
+          "objective": {
+            "type": "string"
+          },
+          "source_constraints": {
+            "type": "object"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "research",
+        "web",
+        "provenance"
+      ]
+    },
+    {
+      "id": "repo.inspect",
+      "title": "Inspect repository",
+      "description": "Read repository state, recent commits, drift, and optional installed tests without modifying source.",
+      "domain": "code",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "repository"
+        ],
+        "properties": {
+          "repository": {
+            "type": "string"
+          },
+          "tests": {
+            "type": "boolean"
+          },
+          "dependency_review": {
+            "type": "boolean"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "code",
+        "repository"
+      ]
+    },
+    {
+      "id": "code.build",
+      "title": "Build code",
+      "description": "Queue an isolated reviewed code change that may create a draft branch/PR but never auto-merges or deploys.",
+      "domain": "code",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "review-required",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "repository",
+          "task"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "string"
+          },
+          "task": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "allowed_paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "priority": {
+            "type": "number"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "code",
+        "agent",
+        "draft-pr"
+      ]
+    },
+    {
+      "id": "game.build",
+      "title": "Build game experience",
+      "description": "Queue the durable PRIM3 autonomous production loop with real media generation, owner review, isolated implementation, and playtest stages.",
+      "domain": "game",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "review-required",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "brief"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "brief": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "string"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "budget_cents": {
+            "type": "number",
+            "minimum": 0
+          },
+          "preference": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "game",
+        "code",
+        "media",
+        "3d",
+        "prim3"
+      ]
+    },
+    {
+      "id": "deploy.preview",
+      "title": "Deploy preview",
+      "description": "Publish an approved ref as a temporary static preview on McCluster-owned compute. Requires explicit self-hosted preview configuration.",
+      "domain": "deployment",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "review-required",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "repository",
+          "ref"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "repository": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "output_dir": {
+            "type": "string"
+          },
+          "ttl_hours": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 168
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "deployment",
+        "preview"
+      ]
+    },
+    {
+      "id": "ai.chat",
+      "title": "Home-base AI chat",
+      "description": "Run a bounded conversational inference on McCluster-owned compute without naming a model or provider.",
+      "domain": "ai",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "num_ctx": {
+            "type": "integer"
+          },
+          "json": {
+            "type": "boolean"
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "prompt"
+            ]
+          },
+          {
+            "required": [
+              "messages"
+            ]
+          }
+        ]
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ai",
+        "chat",
+        "self-hosted",
+        "compute"
+      ]
+    },
+    {
+      "id": "compute.task.get",
+      "title": "Read compute task",
+      "description": "Read the durable state and result of one McCluster compute task.",
+      "domain": "compute",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "task_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "task_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "compute",
+        "task",
+        "result",
+        "read"
+      ]
+    },
+    {
+      "id": "objective.plan",
+      "title": "Plan an objective",
+      "description": "Queue a bounded dependency-aware plan of safe unattended analysis and inspection work.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "objective"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "objective": {
+            "type": "string"
+          },
+          "target_id": {
+            "type": "string"
+          },
+          "max_steps": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "since_hours": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 168
+          },
+          "priority": {
+            "type": "number"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "control",
+        "objective",
+        "planning",
+        "autonomy"
+      ]
+    },
+    {
+      "id": "ontology.schema",
+      "title": "Read operational ontology schema",
+      "description": "Read McCluster object types, link types, and governed action types for one organization.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ontology",
+        "schema",
+        "digital-twin"
+      ]
+    },
+    {
+      "id": "ontology.query",
+      "title": "Query operational ontology",
+      "description": "Read materialized operational objects with canonical source provenance.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "type_key": {
+            "type": "string"
+          },
+          "object_key": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ontology",
+        "objects",
+        "query",
+        "provenance"
+      ]
+    },
+    {
+      "id": "ontology.neighbors",
+      "title": "Traverse ontology links",
+      "description": "Traverse typed incoming and outgoing links around an operational object.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "object_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "object_id": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "in",
+              "out",
+              "both"
+            ]
+          },
+          "link_key": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ontology",
+        "links",
+        "graph",
+        "query"
+      ]
+    },
+    {
+      "id": "ontology.action.apply",
+      "title": "Apply governed ontology action",
+      "description": "Apply a bounded owner-attributed ontology action with durable action-run and lineage evidence. V1 effects are internal annotations, tags, and compatible typed links.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id",
+          "action_key",
+          "target_object_id",
+          "parameters"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "action_key": {
+            "type": "string"
+          },
+          "target_object_id": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object"
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "approval_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ontology",
+        "actions",
+        "governance",
+        "lineage"
+      ]
+    },
+    {
+      "id": "ingest.connectors",
+      "title": "Read ingestion connectors",
+      "description": "Read connector registry, cursors, policies and health.",
+      "domain": "ingestion",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ingestion",
+        "connectors",
+        "provenance"
+      ]
+    },
+    {
+      "id": "ingest.records",
+      "title": "Read ingested source records",
+      "description": "Read content-addressed source records with provenance and trace ids.",
+      "domain": "ingestion",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ingestion",
+        "records",
+        "provenance"
+      ]
+    },
+    {
+      "id": "ingest.run.begin",
+      "title": "Begin ingestion run",
+      "description": "Begin a governed initial, incremental, replay or manual connector run.",
+      "domain": "ingestion",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ingestion",
+        "replay",
+        "cursor"
+      ]
+    },
+    {
+      "id": "ingest.record.write",
+      "title": "Write ingest record",
+      "description": "Write one content-addressed source record through the governed ingestion contract.",
+      "domain": "ingestion",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ingestion",
+        "idempotency",
+        "provenance"
+      ]
+    },
+    {
+      "id": "ingest.run.finish",
+      "title": "Finish ingestion run",
+      "description": "Finalize connector cursor and observable success/partial/failure state.",
+      "domain": "ingestion",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "ingestion",
+        "replay",
+        "recovery"
+      ]
+    },
+    {
+      "id": "entity.aliases",
+      "title": "Read entity aliases",
+      "description": "Read candidate, resolved and rejected external identity aliases.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "entity-resolution",
+        "aliases",
+        "provenance"
+      ]
+    },
+    {
+      "id": "entity.resolve",
+      "title": "Resolve entity alias",
+      "description": "Owner-attributed resolution of an external alias to an ontology object.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "entity-resolution",
+        "governance",
+        "lineage"
+      ]
+    },
+    {
+      "id": "facts.query",
+      "title": "Read fact claims",
+      "description": "Read provenance-backed facts, including conflicting values.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "facts",
+        "provenance",
+        "conflicts"
+      ]
+    },
+    {
+      "id": "facts.claim",
+      "title": "Record fact claim",
+      "description": "Record a source-backed fact claim without silently overwriting competing evidence.",
+      "domain": "ontology",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "org_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "facts",
+        "provenance",
+        "conflicts"
+      ]
+    }
   ],
   "bindings": [
-    {"id":"worker.health","capability":"system.health","provider":"mccluster-worker","tool":"mccluster.health","transport":"http","status":"active","priority":100,"economics":{"hosting":"owned","billing":"free"},"features":{"authenticated":false}},
-    {"id":"worker.media-model-search","capability":"media.models.search","provider":"mccluster-worker","tool":"mccluster.media.models.search","transport":"mcp-http","status":"active","priority":100,"economics":{"hosting":"owned","billing":"free"},"features":{"registry":true}},
-    {"id":"worker.media-recommend","capability":"media.model.recommend","provider":"mccluster-worker","tool":"mccluster.media.recommend","transport":"mcp-http","status":"active","priority":100,"economics":{"hosting":"owned","billing":"free"},"features":{"quality_routing":true,"budget_preference":true}},
-    {"id":"worker.media-generate","capability":"media.generate","provider":"mccluster-worker","tool":"mccluster.media.generate","transport":"mcp-http","status":"active","priority":100,"economics":{"hosting":"external","billing":"metered"},"features":{"async":true,"budgeted":true,"lineage":true,"authenticated":true,"upstream":"fal"}},
-    {"id":"worker.media-job-get","capability":"media.job.get","provider":"mccluster-worker","tool":"mccluster.media.job.get","transport":"mcp-http","status":"active","priority":100,"economics":{"hosting":"owned","billing":"free"},"features":{"lineage":true,"costs":true,"authenticated":true}},
-    {"id":"worker.image-generate","capability":"image.generate","provider":"mccluster-worker","tool":"mccluster.image.generate","transport":"mcp-http","status":"active","priority":100,"economics":{"hosting":"external","billing":"metered"},"features":{"async":true,"budgeted":true,"lineage":true,"authenticated":true,"upstream":"fal"}},
-    {"id":"worker.video-generate","capability":"video.generate","provider":"mccluster-worker","tool":"mccluster.video.generate","transport":"mcp-http","status":"active","priority":100,"economics":{"hosting":"external","billing":"metered"},"features":{"async":true,"budgeted":true,"lineage":true,"authenticated":true,"upstream":"fal"}},
-    {"id":"worker.audio-generate","capability":"audio.generate","provider":"mccluster-worker","tool":"mccluster.audio.generate","transport":"mcp-http","status":"active","priority":100,"economics":{"hosting":"external","billing":"metered"},"features":{"async":true,"budgeted":true,"lineage":true,"authenticated":true,"upstream":"fal"}},
-    {"id":"worker.model3d-generate","capability":"model3d.generate","provider":"mccluster-worker","tool":"mccluster.model3d.generate","transport":"mcp-http","status":"active","priority":100,"economics":{"hosting":"external","billing":"metered"},"features":{"async":true,"budgeted":true,"lineage":true,"authenticated":true,"upstream":"fal","format_glb":true}},
-    {"id":"core.world-generate","capability":"world.generate","provider":"mccluster-core","tool":"core.world.generate","transport":"local-control","status":"active","priority":120,"economics":{"hosting":"owned","billing":"compute"},"features":{"async":true,"godot":true,"model3d":true,"owner_review":true,"budgeted":true}},
-    {"id":"core.research-web","capability":"research.web","provider":"mccluster-core","tool":"core.research.web","transport":"local-control","status":"active","priority":120,"economics":{"hosting":"owned","billing":"free"},"features":{"provenance":true,"public_web":true,"bounded":true}},
-    {"id":"core.repo-inspect","capability":"repo.inspect","provider":"mccluster-core","tool":"core.repo.inspect","transport":"local-control","status":"active","priority":120,"economics":{"hosting":"owned","billing":"free"},"features":{"read_only":true,"local_git":true}},
-    {"id":"core.code-build","capability":"code.build","provider":"mccluster-core","tool":"core.code.build","transport":"local-control","status":"active","priority":120,"economics":{"hosting":"owned","billing":"compute"},"features":{"async":true,"isolated_worktree":true,"draft_pr":true,"auto_merge":false}},
-    {"id":"core.game-build","capability":"game.build","provider":"mccluster-core","tool":"core.game.build","transport":"local-control","status":"active","priority":120,"economics":{"hosting":"owned","billing":"compute"},"features":{"async":true,"owner_review":true,"budgeted":true,"godot":true}},
-    {"id":"core.deploy-preview","capability":"deploy.preview","provider":"mccluster-core","tool":"core.deploy.preview","transport":"local-control","status":"active","priority":120,"economics":{"hosting":"external","billing":"free"},"features":{"async":true,"production":false,"provider":"vercel","credential_gated":true}}
+    {
+      "id": "core.resume-local",
+      "capability": "core.resume",
+      "provider": "mccluster-core",
+      "tool": "core.resume",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "self_hosted": true
+      }
+    },
+    {
+      "id": "worker.health",
+      "capability": "system.health",
+      "provider": "mccluster-worker",
+      "tool": "mccluster.health",
+      "transport": "http",
+      "status": "active",
+      "priority": 100,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "authenticated": false
+      }
+    },
+    {
+      "id": "worker.media-model-search",
+      "capability": "media.models.search",
+      "provider": "mccluster-worker",
+      "tool": "mccluster.media.models.search",
+      "transport": "mcp-http",
+      "status": "active",
+      "priority": 100,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "registry": true
+      }
+    },
+    {
+      "id": "worker.media-recommend",
+      "capability": "media.model.recommend",
+      "provider": "mccluster-worker",
+      "tool": "mccluster.media.recommend",
+      "transport": "mcp-http",
+      "status": "active",
+      "priority": 100,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "quality_routing": true,
+        "budget_preference": true
+      }
+    },
+    {
+      "id": "worker.media-generate",
+      "capability": "media.generate",
+      "provider": "mccluster-worker",
+      "tool": "mccluster.media.generate",
+      "transport": "mcp-http",
+      "status": "active",
+      "priority": 100,
+      "economics": {
+        "hosting": "external",
+        "billing": "metered"
+      },
+      "features": {
+        "async": true,
+        "budgeted": true,
+        "lineage": true,
+        "authenticated": true,
+        "upstream": "fal"
+      }
+    },
+    {
+      "id": "worker.media-job-get",
+      "capability": "media.job.get",
+      "provider": "mccluster-worker",
+      "tool": "mccluster.media.job.get",
+      "transport": "mcp-http",
+      "status": "active",
+      "priority": 100,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "lineage": true,
+        "costs": true,
+        "authenticated": true
+      }
+    },
+    {
+      "id": "worker.image-generate",
+      "capability": "image.generate",
+      "provider": "mccluster-worker",
+      "tool": "mccluster.image.generate",
+      "transport": "mcp-http",
+      "status": "active",
+      "priority": 100,
+      "economics": {
+        "hosting": "external",
+        "billing": "metered"
+      },
+      "features": {
+        "async": true,
+        "budgeted": true,
+        "lineage": true,
+        "authenticated": true,
+        "upstream": "fal"
+      }
+    },
+    {
+      "id": "worker.video-generate",
+      "capability": "video.generate",
+      "provider": "mccluster-worker",
+      "tool": "mccluster.video.generate",
+      "transport": "mcp-http",
+      "status": "active",
+      "priority": 100,
+      "economics": {
+        "hosting": "external",
+        "billing": "metered"
+      },
+      "features": {
+        "async": true,
+        "budgeted": true,
+        "lineage": true,
+        "authenticated": true,
+        "upstream": "fal"
+      }
+    },
+    {
+      "id": "worker.audio-generate",
+      "capability": "audio.generate",
+      "provider": "mccluster-worker",
+      "tool": "mccluster.audio.generate",
+      "transport": "mcp-http",
+      "status": "active",
+      "priority": 100,
+      "economics": {
+        "hosting": "external",
+        "billing": "metered"
+      },
+      "features": {
+        "async": true,
+        "budgeted": true,
+        "lineage": true,
+        "authenticated": true,
+        "upstream": "fal"
+      }
+    },
+    {
+      "id": "worker.model3d-generate",
+      "capability": "model3d.generate",
+      "provider": "mccluster-worker",
+      "tool": "mccluster.model3d.generate",
+      "transport": "mcp-http",
+      "status": "active",
+      "priority": 100,
+      "economics": {
+        "hosting": "external",
+        "billing": "metered"
+      },
+      "features": {
+        "async": true,
+        "budgeted": true,
+        "lineage": true,
+        "authenticated": true,
+        "upstream": "fal",
+        "format_glb": true
+      }
+    },
+    {
+      "id": "core.world-generate",
+      "capability": "world.generate",
+      "provider": "mccluster-core",
+      "tool": "core.world.generate",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 120,
+      "economics": {
+        "hosting": "owned",
+        "billing": "compute"
+      },
+      "features": {
+        "async": true,
+        "godot": true,
+        "model3d": true,
+        "owner_review": true,
+        "budgeted": true
+      }
+    },
+    {
+      "id": "core.research-web",
+      "capability": "research.web",
+      "provider": "mccluster-core",
+      "tool": "core.research.web",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 120,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "provenance": true,
+        "public_web": true,
+        "bounded": true
+      }
+    },
+    {
+      "id": "core.repo-inspect",
+      "capability": "repo.inspect",
+      "provider": "mccluster-core",
+      "tool": "core.repo.inspect",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 120,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "local_git": true
+      }
+    },
+    {
+      "id": "core.code-build",
+      "capability": "code.build",
+      "provider": "mccluster-core",
+      "tool": "core.code.build",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 120,
+      "economics": {
+        "hosting": "owned",
+        "billing": "compute"
+      },
+      "features": {
+        "async": true,
+        "isolated_worktree": true,
+        "draft_pr": true,
+        "auto_merge": false
+      }
+    },
+    {
+      "id": "core.game-build",
+      "capability": "game.build",
+      "provider": "mccluster-core",
+      "tool": "core.game.build",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 120,
+      "economics": {
+        "hosting": "owned",
+        "billing": "compute"
+      },
+      "features": {
+        "async": true,
+        "owner_review": true,
+        "budgeted": true,
+        "godot": true
+      }
+    },
+    {
+      "id": "core.deploy-preview",
+      "capability": "deploy.preview",
+      "provider": "mccluster-core",
+      "tool": "core.deploy.preview",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 120,
+      "economics": {
+        "hosting": "owned",
+        "billing": "compute"
+      },
+      "features": {
+        "async": true,
+        "production": false,
+        "self_hosted": true,
+        "ttl_cleanup": true,
+        "third_party_deploy_provider": false,
+        "configuration_gated": true
+      }
+    },
+    {
+      "id": "core.objective-plan",
+      "capability": "objective.plan",
+      "provider": "mccluster-core",
+      "tool": "core.objective.plan",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "async": true,
+        "dependency_aware": true,
+        "safe_children_only": true,
+        "production_mutation": false
+      }
+    },
+    {
+      "id": "core.compute-task-get",
+      "capability": "compute.task.get",
+      "provider": "mccluster-core",
+      "tool": "core.compute.task.get",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 220,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "durable_state": true
+      }
+    },
+    {
+      "id": "core.ontology-schema",
+      "capability": "ontology.schema",
+      "provider": "mccluster-core",
+      "tool": "core.ontology.schema",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 230,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.ontology-query",
+      "capability": "ontology.query",
+      "provider": "mccluster-core",
+      "tool": "core.ontology.query",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 230,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "materialized_objects": true
+      }
+    },
+    {
+      "id": "core.ontology-neighbors",
+      "capability": "ontology.neighbors",
+      "provider": "mccluster-core",
+      "tool": "core.ontology.neighbors",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 230,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": true,
+        "graph_traversal": true
+      }
+    },
+    {
+      "id": "core.ontology-action-apply",
+      "capability": "ontology.action.apply",
+      "provider": "mccluster-core",
+      "tool": "core.ontology.action.apply",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 230,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "owner_attributed": true,
+        "lineage": true,
+        "bounded_effects": true
+      }
+    },
+    {
+      "id": "core.ingest-connectors",
+      "capability": "ingest.connectors",
+      "provider": "mccluster-core",
+      "tool": "core.ingest.connectors",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.ingest-records",
+      "capability": "ingest.records",
+      "provider": "mccluster-core",
+      "tool": "core.ingest.records",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.ingest-run-begin",
+      "capability": "ingest.run.begin",
+      "provider": "mccluster-core",
+      "tool": "core.ingest.run.begin",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.ingest-record-write",
+      "capability": "ingest.record.write",
+      "provider": "mccluster-core",
+      "tool": "core.ingest.record.write",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.ingest-run-finish",
+      "capability": "ingest.run.finish",
+      "provider": "mccluster-core",
+      "tool": "core.ingest.run.finish",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.entity-aliases",
+      "capability": "entity.aliases",
+      "provider": "mccluster-core",
+      "tool": "core.entity.aliases",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.entity-resolve",
+      "capability": "entity.resolve",
+      "provider": "mccluster-core",
+      "tool": "core.entity.resolve",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.facts-query",
+      "capability": "facts.query",
+      "provider": "mccluster-core",
+      "tool": "core.facts.query",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    },
+    {
+      "id": "core.facts-claim",
+      "capability": "facts.claim",
+      "provider": "mccluster-core",
+      "tool": "core.facts.claim",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 235,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "governed": true,
+        "provenance": true
+      }
+    }
   ]
 }

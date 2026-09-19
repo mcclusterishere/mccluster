@@ -1,0 +1,50 @@
+{
+  "max_leases": 1,
+  "labels": {
+    "site": "ovh-primary",
+    "trust": "owned",
+    "role": "control-cpu"
+  },
+  "capabilities": [
+    {
+      "capability": "ai.chat",
+      "implementation": "qwen3.8b.local",
+      "backend": "ollama",
+      "model": "qwen3:8b",
+      "version": "1",
+      "features": {
+        "chat": true,
+        "json": true,
+        "self_hosted": true
+      },
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "prompt": { "type": "string" },
+          "messages": { "type": "array" },
+          "temperature": { "type": "number" },
+          "num_ctx": { "type": "integer" },
+          "json": { "type": "boolean" }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "model": { "type": "string" },
+          "content": { "type": "string" },
+          "usage": { "type": "object" }
+        }
+      },
+      "max_concurrency": 1,
+      "min_vram_bytes": 0,
+      "executor": {
+        "type": "http",
+        "url": "http://127.0.0.1:4790/execute",
+        "health_url": "http://127.0.0.1:4790/health",
+        "health_method": "GET",
+        "health_timeout_ms": 3000,
+        "timeout_ms": 600000
+      }
+    }
+  ]
+}

@@ -251,20 +251,41 @@
     try { sessionStorage.setItem("mcc_premiere", "1"); } catch (e) {}
     var prem = document.createElement("div");
     prem.id = "prem";
-    var words = h1.textContent.trim().split(/\s+/);
+    /* The curtain has to go up before anything is known — that is its job —
+       but album.html only learns which record this is once data/albums.json
+       comes back, which is after this runs. Reading the h1 now therefore
+       announced the MARKUP DEFAULT, so every album premiered as "I AM HERE".
+       Paint whatever is there, then repaint if the page names the record
+       while the curtain is still down. */
+    function premWords(text) {
+      return text.trim().split(/\s+/).map(function (w, i) {
+        return '<span style="animation-delay:' + (0.7 + i * 0.16) + 's">' + w + "</span>";
+      }).join(" ");
+    }
     prem.innerHTML = '<div class="in">' +
       '<img src="assets/img/m-mark.png" alt="">' +
       '<p class="k">McCluster Sound</p>' +
-      '<div class="t">' + words.map(function (w, i) {
-        return '<span style="animation-delay:' + (0.7 + i * 0.16) + 's">' + w + "</span>";
-      }).join(" ") + "</div>" +
+      '<div class="t">' + premWords(h1.textContent) + "</div>" +
       '<div class="seam"></div></div>';
     document.body.appendChild(prem);
+    /* Watched, not announced. An event would race: this file is deferred and
+       album.html names the record from a fetch callback, so either can land
+       first and a listener registered second hears nothing. The h1 is the
+       thing both sides already agree on, so watch it. setType() rewrites the
+       h1 into per-character spans, but only once the curtain is down. */
+    var premWatch = new MutationObserver(function () {
+      var slot = prem.parentNode && prem.querySelector(".t");
+      var named = h1.textContent.trim();
+      if (!slot || !named) return;
+      slot.innerHTML = premWords(named);
+    });
+    premWatch.observe(h1, { childList: true, characterData: true, subtree: true });
     var closed = false;
     function houseLights() {
       if (closed) return;
       closed = true;
       prem.classList.add("out");
+      premWatch.disconnect();
       setTimeout(function () { prem.remove(); }, 750);
       setType();
     }

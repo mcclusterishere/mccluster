@@ -81,7 +81,11 @@ html[data-theme="light"] {
   max-width: var(--music-measure);
   min-height:100vh;min-height: 100svh;
   margin: 0 auto;
-  padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3.5rem) 12rem;
+  /* NOT 12rem. This is a flex column and the comments block is a sibling
+     AFTER </main>, so bottom padding here is not bar clearance — it is a
+     hole between the footer and the comments. body.has-appbar clears the
+     bar; [data-comments] clears the deck. */
+  padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 4vw, 3.5rem) 3rem;
 }
 
 .music-room--album .top { order: 0; margin-bottom: clamp(2.5rem, 6vw, 5rem); }
@@ -134,7 +138,11 @@ html[data-theme="light"] {
   max-width: 7ch;
   margin: 0.35rem 0 1rem;
   font-size: clamp(5rem, 11vw, 10.5rem);
-  line-height: 0.77;
+  /* 0.77 set two lines of Anton caps on top of each other. max-width is 7ch,
+     so every album whose name does not fit one line wrapped and collided —
+     EQUITY UPRISE did it long before CIA MIND CONTROL did. 0.88 still reads
+     as tight monument type on one line and clears the caps on two. */
+  line-height: 0.88;
   letter-spacing: -0.035em;
 }
 

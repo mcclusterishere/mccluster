@@ -10,6 +10,7 @@
     "supabaseRef": "zmnhbrjyhxzhkxmhkexs",
     "workerSource": "workers/mccluster",
     "durableObjectClass": "HereTenantAgent",
+    "mcpTransport": {"worker": "mccluster-mcp", "source": "workers/mccluster-mcp", "domain": "mcp.mccluster.org", "stateless": true},
     "forbiddenWorkerNames": ["mccluster-core", "McCluster-Core", "here-agent-platform"]
   },
   "satellites": [

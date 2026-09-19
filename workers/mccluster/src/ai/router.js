@@ -38,6 +38,33 @@ async function readJson(request) {
   catch { throw Object.assign(new Error('invalid json'), { status: 400 }); }
 }
 
+/* Reads the same context function over GET. The caller's own bearer token is
+   forwarded exactly as the POST path does, so the function still identifies the
+   human and applies its own owner/admin check — the Worker does not widen it. */
+async function readContextFunction(request, env, name, params) {
+  const authorization = request.headers.get('authorization') || '';
+  const query = new URLSearchParams();
+  Object.keys(params).forEach((key) => {
+    const value = params[key];
+    if (value !== null && value !== undefined && value !== '') query.set(key, String(value));
+  });
+  const res = await fetch(`${env.SUPABASE_URL}/functions/v1/${name}?${query.toString()}`, {
+    method: 'GET',
+    headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, authorization }
+  });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = { raw: text }; }
+  if (!res.ok) {
+    const message = data?.error || data?.message || `${name} failed`;
+    throw Object.assign(new Error(message), {
+      status: res.status >= 400 && res.status < 500 ? res.status : 502,
+      detail: data
+    });
+  }
+  return { status: res.status, data };
+}
+
 async function callContextFunction(request, env, name, body) {
   const authorization = request.headers.get('authorization') || '';
   const res = await fetch(`${env.SUPABASE_URL}/functions/v1/${name}`, {
@@ -122,6 +149,34 @@ async function getOwnerJob(env, orgId, jobId) {
   const rows = await res.json().catch(() => []);
   if (!res.ok) throw Object.assign(new Error('failed to read Core job'), { status: 502, detail: rows });
   return rows?.[0] || null;
+}
+
+async function decideOwnerApproval(env, orgId, approvalId, actorId, decision) {
+  const state = decision === 'approve' ? 'approved' : decision === 'deny' ? 'denied' : null;
+  if (!state) throw Object.assign(new Error('decision must be approve or deny'), { status: 400 });
+
+  const params = new URLSearchParams({
+    id: `eq.${approvalId}`,
+    org_id: `eq.${orgId}`,
+    state: 'eq.pending',
+    expires_at: `gt.${new Date().toISOString()}`,
+    select: 'id,org_id,capability,resource_type,resource_id,reason,state,requested_by,decided_by,created_at,decided_at,expires_at'
+  });
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/control_approvals?${params.toString()}`, {
+    method: 'PATCH',
+    headers: { ...serviceHeaders(env), Prefer: 'return=representation' },
+    body: JSON.stringify({
+      state,
+      decided_by: actorId,
+      decided_at: new Date().toISOString()
+    })
+  });
+  const rows = await res.json().catch(() => []);
+  if (!res.ok) throw Object.assign(new Error(rows?.message || 'approval decision failed'), { status: 502, detail: rows });
+  if (!rows?.length) {
+    throw Object.assign(new Error('approval is no longer pending, does not belong to this organization, or has expired'), { status: 409 });
+  }
+  return rows[0];
 }
 
 async function latestSystemHealth(env, orgId) {
@@ -323,6 +378,37 @@ export async function handleAiRequest(request, env, user) {
     if (payload.org_id !== orgId) return fail(request, env, 'cross-org retrieval denied', 403);
     const { status, data } = await callContextFunction(request, env, 'context-query', payload);
     return reply(request, env, data, status);
+  }
+
+  /* Reading decisions back. This is a method on the route that already records
+     them, not a new namespace: the house-owner gate above already applies, and
+     the function re-checks org membership itself. */
+  const approvalMatch = path.match(/^\/v1\/ai\/approvals\/([0-9a-f-]{36})\/decision$/i);
+  if (approvalMatch && request.method === 'POST') {
+    const body = await readJson(request);
+    const decision = String(body.decision || '').trim().toLowerCase();
+    try {
+      const approval = await decideOwnerApproval(env, orgId, approvalMatch[1], user.id, decision);
+      return reply(request, env, { approval }, 200);
+    } catch (error) {
+      return fail(request, env, error.message || 'approval decision failed', error.status || 500, error.detail);
+    }
+  }
+
+  if (path === '/v1/ai/decisions' && request.method === 'GET') {
+    try {
+      const { status, data } = await readContextFunction(request, env, 'context-decision', {
+        org_id: orgId,
+        status: url.searchParams.get('status'),
+        risk_class: url.searchParams.get('risk_class'),
+        limit: url.searchParams.get('limit'),
+        before: url.searchParams.get('before'),
+        before_id: url.searchParams.get('before_id')
+      });
+      return reply(request, env, data, status);
+    } catch (error) {
+      return fail(request, env, error.message || 'decision read failed', error.status || 502, error.detail);
+    }
   }
 
   if (path === '/v1/ai/decisions' && request.method === 'POST') {

@@ -1,0 +1,9 @@
+// Permit only starting a bounded build instance. No stop/edit/enable/manage-unit-files.
+polkit.addRule(function(action, subject) {
+  if (action.id === 'org.freedesktop.systemd1.manage-units'
+      && subject.user === 'mccluster-core'
+      && action.lookup('verb') === 'start'
+      && /^mccluster-preview-build@[a-f0-9]{32}\.service$/.test(action.lookup('unit') || '')) {
+    return polkit.Result.YES;
+  }
+});

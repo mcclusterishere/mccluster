@@ -2,18 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Your Account · McCluster</title>
   <meta name="robots" content="noindex">
-  <meta name="description" content="Your account with the McCluster agency. Sign in, see your record, pay an invoice.">
-  <link rel="canonical" href="https://matthew.mccluster.org/account.html">
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0b0908">
-  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
-  <meta name="theme-color" content="#0a0807">
-
-  <link rel="preload" href="assets/fonts/anton-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <style>
@@ -22,296 +14,314 @@
     .ac__k { font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
     .ac h1 { font-family: var(--sig); text-transform: uppercase; line-height: 0.92; font-size: clamp(2.4rem, 11vw, 3.6rem); margin-top: 0.4rem; }
     .ac__sub { color: var(--cream-dim); line-height: 1.7; margin-top: 0.9rem; font-size: 0.98rem; }
-    .ac__card { border: 1px solid var(--edge); border-radius: 16px; background: var(--glass-hi); padding: 1.15rem 1.15rem 1.3rem; margin-top: 1.6rem; }
+    .ac__card { border: 1px solid var(--edge); border-radius: 16px; background: var(--glass-hi); padding: 1.15rem; margin-top: 1.6rem; }
     .ac__lab { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
-    .ac input { width: 100%; margin-top: 0.6rem; padding: 0.95rem 1rem; border-radius: 12px; border: 1px solid rgba(229,56,59,0.4);
-      background: var(--ink-2); color: var(--cream); font-size: 1rem; }
-    .ac__flip { background: none; border: 0; cursor: pointer; padding: 0; margin-top: 0.9rem;
-      color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; }
-    .ac__meta { list-style: none; padding: 0; margin: 0.7rem 0 0; display: grid; gap: 0.3rem; }
-    .ac__meta li { color: var(--cream-dim); font-size: 0.86rem; }
-    .ac__meta b { color: var(--cream); font-weight: 700; }
-    .ac__btn { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; touch-action: manipulation; display: block; width: 100%;
-      margin-top: 0.8rem; padding: 1rem; border-radius: 13px; background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.02rem; }
-    .ac__btn[disabled] { background: #2a241d; color: #8a8172; }
-    .ac__ghost { display: block; text-align: center; text-decoration: none; margin-top: 0.7rem; padding: 0.95rem; border-radius: 13px;
-      border: 1px solid rgba(229,56,59,0.5); color: var(--cream); font-weight: 700; }
-    .ac__note { margin-top: 0.8rem; font-size: 0.8rem; color: var(--cream-dim); line-height: 1.6; }
-    /* the owner's door: quiet, not hidden. The gate is on admin.html. */
-    .ac__owner { margin-top: 2.2rem; padding-top: 1.1rem; border-top: 1px solid var(--edge); }
-    .ac__owner a { display: inline-flex; align-items: center; gap: 0.45rem;
-      font-size: 0.76rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--cream-dim); text-decoration: none; }
-    .ac__owner a:hover, .ac__owner a:focus-visible { color: var(--ruby-text); }
+    .fan__row { display: flex; gap: 0.6rem; }
+    .fan__row input { flex: 1; min-width: 0; }
+    .fan__check { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.9rem;
+      font-size: 0.86rem; line-height: 1.35; color: var(--cream); cursor: pointer; }
+    .fan__check input { width: auto; margin: 0.15rem 0 0; flex: none; }
+    .fan__check.is-off { opacity: 0.45; cursor: default; }
+    .fan__fine { margin-top: 0.8rem; font-size: 0.74rem; line-height: 1.45; color: var(--cream-dim); }
+    .fan__note { margin-top: 0.4rem; font-size: 0.74rem; color: var(--cream-dim); }
+    .ac__or { position: relative; text-align: center; margin: 1.2rem 0 0.9rem; }
+    .ac__or::before { content: ""; position: absolute; left: 0; right: 0; top: 50%;
+      border-top: 1px solid rgba(244,239,230,0.16); }
+    .ac__or span { position: relative; background: var(--ink-2); padding: 0 0.7rem;
+      font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cream-dim); }
+    .ac__prov { width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+      margin-top: 0.55rem; padding: 0.85rem 1rem; border-radius: 12px; cursor: pointer;
+      font: 600 0.95rem var(--ui); color: var(--cream);
+      background: rgba(244,239,230,0.06); border: 1px solid rgba(244,239,230,0.22); }
+    .ac__prov:hover { background: rgba(244,239,230,0.1); }
+    .ac__prov[disabled] { opacity: 0.55; cursor: default; }
+    .ac__prov svg { width: 18px; height: 18px; flex: none; }
+    .ac input { width: 100%; margin-top: 0.6rem; padding: 0.95rem 1rem; border-radius: 12px; border: 1px solid rgba(229,56,59,0.4); background: var(--ink-2); color: var(--cream); font-size: 1rem; }
+    .ac__flip { background: none; border: 0; cursor: pointer; padding: 0; margin-top: 0.9rem; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; }
+    .ac__btn { appearance: none; border: 0; cursor: pointer; display: block; width: 100%; margin-top: 0.8rem; padding: 1rem; border-radius: 13px; background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.02rem; text-align: center; text-decoration: none; }
+    .ac__ghost { display: block; text-align: center; text-decoration: none; margin-top: 0.7rem; padding: 0.95rem; border-radius: 13px; border: 1px solid rgba(229,56,59,0.5); color: var(--cream); font-weight: 700; }
+    .ac__note { margin-top: 0.8rem; font-size: 0.8rem; color: var(--cream-dim); }
     .ac__who { color: var(--cream); font-weight: 700; word-break: break-all; }
-    .rec { list-style: none; padding: 0; margin: 0.9rem 0 0; display: grid; gap: 0.55rem; }
-    .rec li { border: 1px solid rgba(244,239,230,0.1); border-radius: 12px; padding: 0.75rem 0.85rem; background: rgba(10,8,7,0.6); }
-    .rec b { color: var(--cream); display: block; font-size: 0.95rem; }
-    .rec small { color: var(--cream-dim); font-size: 0.78rem; }
-    .rec .st { float: right; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color:var(--ruby-text); font-weight: 800; }
     .ac__out { margin-top: 1rem; background: none; border: 0; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; cursor: pointer; }
     [hidden] { display: none !important; }
   </style>
-  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
 </head>
 <body class="songpage">
-
   <main class="ac">
-    <p class="ac__k">McCluster · the agency</p>
+    <p class="ac__k">McCluster</p>
     <h1>Your<br>Account</h1>
-
-    <!-- signed out: make the profile. The store runs on it -->
     <div class="ac__card" id="acDoor">
-            <!-- Google sits ABOVE both panels because it is the fastest way in and
-           produces the same McCluster account either path creates. Hidden
-           unless js/mcc-auth.js loaded, so a failed script shows no dead
-           button. It is also hidden by the script when the provider is off
-           in Supabase, rather than offering a button that 400s. -->
-      <div id="acOauth" hidden>
-        <button class="ac__btn" id="acGoogle" type="button">Continue with Google</button>
-        <p class="ac__sub" style="margin:0.6rem 0 1.2rem">or use an email address</p>
-      </div>
-      <div id="acMake">
-        <p class="ac__lab">Make your profile</p>
-        <p class="ac__sub" style="margin-top:0.5rem">The gallery is a store and your profile is the register. Every print, file, and booking lands on your record, on any device.</p>
-        <input type="text" id="acName" placeholder="Your name" autocomplete="name" maxlength="80">
-        <input type="email" id="acEmail" placeholder="Email" autocomplete="email" inputmode="email" maxlength="120">
-        <input type="tel" id="acPhone" placeholder="Phone" autocomplete="tel" inputmode="tel" maxlength="30">
-        <input type="password" id="acPass" placeholder="Password (8+ characters)" autocomplete="new-password" maxlength="80">
-        <button class="ac__btn" id="acJoin">Make my profile</button>
-        <button class="ac__flip" id="acToIn" type="button">Already have one? Sign in</button>
-      </div>
-      <div id="acIn" hidden>
-        <p class="ac__lab">Sign in</p>
-        <input type="email" id="acInEmail" placeholder="Email" autocomplete="email" inputmode="email" maxlength="120">
-        <input type="password" id="acInPass" placeholder="Password" autocomplete="current-password" maxlength="80">
-        <button class="ac__btn" id="acGo">Sign in</button>
-        <button class="ac__flip" id="acSend" type="button">No password? Email me a sign-in link</button>
-        <button class="ac__flip" id="acToMake" type="button" style="margin-left:0.9rem">New here? Make a profile</button>
-      </div>
+      <p class="ac__lab">Sign in</p>
+      <input type="email" id="acInEmail" placeholder="Email" autocomplete="email">
+      <input type="password" id="acInPass" placeholder="Password" autocomplete="current-password">
+      <button class="ac__btn" id="acGo" type="button">Sign in</button>
+      <button class="ac__flip" id="acSend" type="button">Email me a sign-in link</button>
       <p class="ac__note" id="acMsg"></p>
-    </div>
 
-    <!-- signed in: the record -->
+      <!-- SOCIAL SIGN-IN. Painted only for providers Supabase actually has
+           switched on, read live from /auth/v1/settings — a button for a
+           provider that is off sends people to a Google error page, which is
+           worse than no button. js/mcc-auth.js owns the PKCE exchange and
+           /auth/index.html finishes it. -->
+      <div class="ac__social" id="acSocialRow" hidden>
+        <p class="ac__or"><span>or</span></p>
+        <div id="acProviders"></div>
+      </div>
+    </div>
     <div class="ac__card" id="acDesk" hidden>
-      <p class="ac__lab">Your profile</p>
-      <p class="ac__sub" style="margin-top:0.4rem"><span class="ac__who" id="acWho">&hellip;</span></p>
-      <ul class="ac__meta" id="acMeta"></ul>
-      <p class="ac__lab" style="margin-top:1.2rem">Your record</p>
-      <ul class="rec" id="acRec"><li><small>Loading…</small></li></ul>
-      <a class="ac__btn" style="text-decoration:none;text-align:center" href="gallery.html" data-cta="account-shop">Shop the gallery</a>
-      <a class="ac__ghost" href="pay.html?offer=approved-invoice" data-cta="account-pay">Pay an invoice · Apple&nbsp;Pay / Google&nbsp;Pay</a>
-
-      <!-- A PASSWORD ON THE ACCOUNT YOU ALREADY HAVE.
-
-           Coming in through Google, or through a sign-in link, makes a real
-           account but never a password — and nothing here could add one
-           afterwards, so those accounts stayed password-less forever and
-           every password box on the site was a lock whose key had never
-           been cut. This cuts it. Same account, same record, one more way
-           in: the one that works where a browser redirect does not, which
-           is most things that are not a browser. -->
-      <p class="ac__lab" style="margin-top:1.2rem">Password</p>
-      <p class="ac__sub" style="margin-top:0.4rem">Set one and email&nbsp;+&nbsp;password works anywhere, alongside however you sign in now. Changing it later works the same way.</p>
-      <input type="password" id="acNewPass" placeholder="New password (8+ characters)" autocomplete="new-password" maxlength="80">
-      <button class="ac__btn" id="acSetPass">Set my password</button>
-      <p class="ac__note" id="acPwMsg"></p>
-
-      <button class="ac__out" id="acOut">Sign out</button>
+      <p class="ac__lab">Signed in</p>
+      <p class="ac__sub"><span class="ac__who" id="acWho"></span></p>
+      <a class="ac__ghost" href="gallery.html">Shop the gallery</a>
+      <a class="ac__ghost" href="console.html">Client console</a>
+      <button class="ac__out" id="acOut" type="button">Sign out</button>
     </div>
 
-    <p class="ac__note" style="margin-top:1.4rem">Questions, bookings, anything: <a href="mailto:matthew@mccluster.org" style="color:var(--ruby-text);text-decoration:none">matthew@mccluster.org</a></p>
+    <!-- THE INTAKE. Writes to public.fan_profiles, which has no role, no org
+         and no membership column: nothing typed here can make anybody an
+         admin. The two consents are separate, optional, and gate nothing —
+         the record is already unlocked by the time this form is on screen. -->
+    <div class="ac__card fan" id="fanCard" hidden>
+      <p class="ac__lab">Your details</p>
+      <p class="ac__sub" id="fanWhy">Tell us where to send things. The music is already unlocked.</p>
 
-    <!-- THE OWNER'S WAY IN.
+      <input type="text" id="fnLegal" placeholder="Full legal name" autocomplete="name">
+      <input type="text" id="fnAddr1" placeholder="Address" autocomplete="address-line1">
+      <input type="text" id="fnAddr2" placeholder="Apt, suite (optional)" autocomplete="address-line2">
+      <div class="fan__row">
+        <input type="text" id="fnCity" placeholder="City" autocomplete="address-level2">
+        <input type="text" id="fnRegion" placeholder="State" autocomplete="address-level1">
+      </div>
+      <div class="fan__row">
+        <input type="text" id="fnPostal" placeholder="ZIP" autocomplete="postal-code" inputmode="numeric">
+        <input type="text" id="fnCountry" placeholder="Country" autocomplete="country-name">
+      </div>
+      <input type="tel" id="fnPhone" placeholder="Phone" autocomplete="tel" inputmode="tel">
+      <p class="fan__note" id="fnPhoneNote" hidden></p>
+      <input type="number" id="fnBirth" placeholder="Year you were born" inputmode="numeric" min="1900" max="2100">
 
-         admin.html has had a full owner sign-in the whole time — email and
-         password, or a magic link, with the desk itself checking on the
-         server and refusing anyone who is not the owner. What it did not
-         have was a door: nothing on the site linked to it, so the only way
-         in was typing the filename. This is the door, on the room the
-         Profile tab already opens.
+      <label class="fan__check">
+        <input type="checkbox" id="fnMarketing">
+        <span>Email me about new records, shows and drops.</span>
+      </label>
+      <label class="fan__check" id="fnShareWrap">
+        <input type="checkbox" id="fnShare">
+        <span id="fnShareLabel">Share my details with partners McCluster works with.</span>
+      </label>
+      <p class="fan__fine">Both are optional and neither unlocks anything. You can change them here any time.</p>
 
-         It is safe to show to everyone. The gate is on admin.html and it is
-         real — a signed-in visitor who is not the owner gets told the desk
-         stays shut. So this is quiet, not hidden; hiding it would only have
-         kept hiding it from the owner. -->
-    <p class="ac__owner">
-      <a href="admin.html" data-cta="account-owner">
-        <svg viewBox="0 0 24 24" aria-hidden="true" width="13" height="13"><path d="M6 10V7a6 6 0 1 1 12 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="10" width="16" height="10.5" rx="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-        Owner? Open the back office
-      </a>
-    </p>
+      <button class="ac__btn" id="fnSave" type="button">Save</button>
+      <p class="ac__note" id="fnMsg"></p>
+    </div>
   </main>
-
-  <!-- THE BAR: Music · Equity Uprise · HERE · Hitman Halo · Profile. One tap goes where it says; hold a tab to open its wing. -->
-  <nav class="appbar" aria-label="Sections">
-    <a class="appbar__tab" id="appbarNP" href="album.html" data-appnav="music">
-      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path class="np-arrow" d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="np-arrow" d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect class="np-bar" x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect class="np-bar" x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect class="np-bar" x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect class="np-bar" x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
-      <span>Music</span>
-    </a>
-    <a class="appbar__tab" href="equity-uprise.html" data-appnav="uprise">
-      <svg class="appbar__eq" viewBox="0 0 45.7 24" aria-hidden="true"><path d="M0 5.01H11.59V8.64H3.84V12.41H10.7V16.05H3.84V20.24H11.8V24H0Z"/><rect x="14.82" y="11.25" width="8.57" height="2.6" rx="0.5"/><rect x="14.82" y="16.05" width="8.57" height="2.61" rx="0.5"/><path d="M26.2 16.4C32 15 37.4 11.6 42 5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M45.6 0.4 44.9 6.5 39.9 2.8Z"/><rect x="25.99" y="18.8" width="4.05" height="5.2" rx="0.7"/><rect x="31.21" y="16.88" width="3.98" height="7.12" rx="0.7"/><rect x="36.43" y="14.06" width="4.05" height="9.94" rx="0.7"/><rect x="41.64" y="10.63" width="4.05" height="13.37" rx="0.7"/></svg>
-      <span>Equity Uprise</span>
-    </a>
-    <a class="appbar__tab" href="index.html" data-appnav="home">
-      <img class="appbar__m" src="assets/img/m-mark.png" alt="">
-      <span>HERE</span>
-    </a>
-    <a class="appbar__tab" href="whip.html" data-appnav="sites">
-      <img class="appbar__we" src="assets/img/we-icon-dark-bar.png" alt="">
-      <span>Whip</span>
-    </a>
-    <a class="appbar__tab" href="account.html" data-appnav="profile">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
-      <span>Profile</span>
-    </a>
-  </nav>
-
-  <script src="js/masthead.js?v=__STAMP__"></script>
-  <script src="js/analytics.js?v=__STAMP__"></script>
-  <script src="js/mcc-auth.js?v=__STAMP__"></script>
   <script src="js/backend.js?v=__STAMP__"></script>
-  <script src="js/network.js?v=__STAMP__"></script>
+  <!-- The social door. It shares mccdb_session with backend.js, so a Google
+       sign-in lands in exactly the same session the email form produces. -->
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/fan-intake.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
   (function () {
-    "use strict";
     var el = function (id) { return document.getElementById(id); };
+    var HOUSE = "matthew@mccluster.org";
+
+    function stayOnAccount() {
+      return /(?:\?|&)stay=1(?:&|$)/.test(location.search);
+    }
+
+    function openPlane() {
+      if (stayOnAccount()) return false;
+      location.replace("studio.html");
+      return true;
+    }
+
+    function houseOwner(user) {
+      if (!user) return Promise.resolve(false);
+      if ((user.email || "").toLowerCase() === HOUSE) return Promise.resolve(true);
+      if (!window.MCC_SUPA || !MCC_SUPA.token) return Promise.resolve(false);
+      var uid = MCC_SUPA.uid && MCC_SUPA.uid();
+      if (!uid) return Promise.resolve(false);
+      return MCC_SUPA.token().then(function (t) {
+        if (!t) return false;
+        var q = "org_members?select=role,orgs(slug)&profile_id=eq." + encodeURIComponent(uid);
+        return fetch(MCC_SUPA.url + "/rest/v1/" + q, {
+          headers: { apikey: MCC_SUPA.key, authorization: "Bearer " + t }
+        }).then(function (r) { return r.ok ? r.json() : []; }).then(function (rows) {
+          return (rows || []).some(function (row) {
+            var slug = row.orgs && row.orgs.slug;
+            return row.role === "owner" && (!slug || slug === "mccluster");
+          });
+        }).catch(function () { return false; });
+      });
+    }
+
     function paint() {
-      var u = window.MCC_AUTH && window.MCC_AUTH.user && window.MCC_AUTH.user();
+      var u = window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user();
       el("acDoor").hidden = !!u;
       el("acDesk").hidden = !u;
       if (!u) return;
-      el("acWho").textContent = u.name || u.email || "Instant account (no email yet)";
-      el("acMeta").innerHTML =
-        (u.email ? "<li>Email · <b>" + u.email + "</b></li>" : "") +
-        (u.phone ? "<li>Phone · <b>" + u.phone + "</b></li>" : "");
-      if (window.MCC_TRACK) window.MCC_TRACK("account_view", {});
-      var rec = el("acRec");
-      if (window.MCC_NET && window.MCC_NET.myDeals) {
-        window.MCC_NET.myDeals().then(function (rows) {
-          rows = rows || [];
-          if (!rows.length) { rec.innerHTML = "<li><small>Nothing on the record yet. Your bookings and receipts with the agency will land here.</small></li>"; return; }
-          rec.innerHTML = rows.slice(0, 12).map(function (d) {
-            var price = d.terms && d.terms.price ? "$" + (+d.terms.price).toLocaleString() : "";
-            return "<li><span class='st'>" + (d.status || "open") + "</span><b>" + (d.title || d.kind || "Deal") + "</b><small>" +
-              [price, (d.updated_at || "").slice(0, 10)].filter(Boolean).join(" · ") + "</small></li>";
-          }).join("");
-        }).catch(function () { rec.innerHTML = "<li><small>The record is warming up. Check back in a moment.</small></li>"; });
-      } else {
-        rec.innerHTML = "<li><small>Your bookings and receipts with the agency land here.</small></li>";
+      el("acWho").textContent = u.name || u.email || "signed in";
+      houseOwner(u).then(function (yes) {
+        if (yes) { openPlane(); return; }
+        /* Everyone who is not the house owner is a listener, and a listener
+           gets the intake rather than a desk. */
+        openFan();
+      });
+    }
+
+    el("acGo").onclick = function () {
+      var em = el("acInEmail").value.trim(), pw = el("acInPass").value;
+      if (!em || !pw) { el("acMsg").textContent = "Email and password."; return; }
+      MCC_AUTH.signInPassword(em, pw).then(paint).catch(function (e) {
+        el("acMsg").textContent = e.message || "That did not open.";
+      });
+    };
+    el("acInPass").addEventListener("keydown", function (e) { if (e.key === "Enter") el("acGo").click(); });
+    el("acSend").onclick = function () {
+      var em = el("acInEmail").value.trim();
+      if (!em) { el("acMsg").textContent = "Email first."; return; }
+      MCC_AUTH.signIn(em).then(function () {
+        el("acMsg").textContent = "Link sent. Open it on this device.";
+      }).catch(function (e) { el("acMsg").textContent = e.message || "That did not send."; });
+    };
+    el("acOut").onclick = function () {
+      MCC_AUTH.signOut().then(function () { location.reload(); });
+    };
+
+    /* ---------------------------------------------------------------
+       THE INTAKE. Painted only for a signed-in listener, and never for
+       the house owner, who is already being redirected to the studio.
+       --------------------------------------------------------------- */
+    var FAN = ["fnLegal","fnAddr1","fnAddr2","fnCity","fnRegion","fnPostal",
+               "fnCountry","fnPhone","fnBirth"];
+    var COL = { fnLegal:"legal_name", fnAddr1:"address_line1", fnAddr2:"address_line2",
+                fnCity:"city", fnRegion:"region", fnPostal:"postal_code",
+                fnCountry:"country", fnPhone:"phone_e164", fnBirth:"birth_year" };
+
+    /* The unlock links carry ?from=<slug>. It is only a marketing segment —
+       the database derives the tier from it and neither value grants a
+       thing — so an edited URL buys nobody anything. */
+    function source() {
+      var m = /(?:\?|&)from=([a-z0-9-]{1,40})/i.exec(location.search);
+      return m ? m[1].toLowerCase() : "";
+    }
+
+    /* Sharing a minor's details onward is a different question from sharing
+       an adult's, and the database refuses it outright. Saying so here means
+       the box does not sit there looking tickable when it is not. */
+    function syncShareGate() {
+      var ok = window.MCC_FAN.adult(el("fnBirth").value);
+      var wrap = el("fnShareWrap"), box = el("fnShare");
+      wrap.classList.toggle("is-off", !ok);
+      box.disabled = !ok;
+      if (!ok) box.checked = false;
+      el("fnShareLabel").textContent = ok
+        ? "Share my details with partners McCluster works with."
+        : "Sharing with partners is only offered to listeners 18 or older.";
+    }
+
+    function paintFan(row) {
+      FAN.forEach(function (id) {
+        var v = row ? row[COL[id]] : "";
+        el(id).value = (v === null || v === undefined) ? "" : v;
+      });
+      el("fnMarketing").checked = !!(row && row.marketing_consent);
+      el("fnShare").checked = !!(row && row.share_consent);
+      syncShareGate();
+      if (row && row.phone_e164 && !row.phone_verified_at) {
+        el("fnPhoneNote").hidden = false;
+        el("fnPhoneNote").textContent = "Phone saved, not yet verified.";
       }
     }
-    var msg = el("acMsg");
-    function flip(showIn) {
-      el("acMake").hidden = showIn;
-      el("acIn").hidden = !showIn;
-      msg.textContent = "";
+
+    function openFan() {
+      el("fanCard").hidden = false;
+      if (source()) el("fanWhy").textContent =
+        "The record is unlocked and downloading. Tell us where to send the rest.";
+      window.MCC_FAN.load().then(paintFan).catch(function () { syncShareGate(); });
+      /* Text messaging is off in this project, so the form does not pretend
+         a code is coming. It still keeps the number. */
+      window.MCC_FAN.phoneEnabled().then(function (on) {
+        if (on) return;
+        el("fnPhoneNote").hidden = false;
+        el("fnPhoneNote").textContent =
+          "We keep your number but cannot text a code yet — SMS is not switched on.";
+      });
     }
-    el("acToIn").addEventListener("click", function () { flip(true); });
-    el("acToMake").addEventListener("click", function () { flip(false); });
 
-    el("acJoin").addEventListener("click", function () {
-      var name = (el("acName").value || "").trim();
-      var em = (el("acEmail").value || "").trim();
-      var ph = (el("acPhone").value || "").trim();
-      var pw = el("acPass").value || "";
-      if (!name) { msg.textContent = "Your name goes on the record. Type it first."; return; }
-      if (!/^\S+@\S+\.\S+$/.test(em)) { msg.textContent = "Type the whole email address."; return; }
-      if (!ph) { msg.textContent = "A phone number, for order questions and nothing else."; return; }
-      if (pw.length < 8) { msg.textContent = "Password needs 8 characters or more."; return; }
-      var btn = this; btn.disabled = true; btn.textContent = "Making it…";
-      window.MCC_AUTH.signUpPassword(em, pw, { name: name, phone: ph }).then(function (res) {
-        if (window.MCC_TRACK) window.MCC_TRACK("profile_created", { via: "account" });
-        if (res && res.confirm) {
-          msg.textContent = "One more step: confirm the email we just sent and you're in.";
-          btn.innerHTML = "Check your email " + '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;display:inline-block"><path d="M4 12.5l5.2 5.2L20 6.8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-          return;
-        }
-        paint();
-      }).catch(function (e) {
-        btn.disabled = false; btn.textContent = "Make my profile";
-        msg.textContent = /registered|exists/i.test(e.message || "")
-          ? "That email already has a profile. Sign in instead."
-          : (e.message || "That didn't go through. Try again.");
-      });
-    });
+    /* ---------------------------------------------------------------
+       THE SOCIAL DOOR. Asks Supabase which providers are live and paints
+       only those. Nothing here is hardcoded on: flipping Google on in the
+       dashboard makes the button appear by itself, and flipping it off
+       makes it vanish, with no deploy either way.
+       --------------------------------------------------------------- */
+    var PROVIDERS = [
+      ['google', 'Continue with Google',
+       '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+       '<path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8a12 12 0 1 1 7.9-21l5.7-5.7A20 20 0 1 0 24 44a20 20 0 0 0 19.6-23.9z"/>' +
+       '<path fill="#FF3D00" d="m6.3 14.7 6.6 4.8A12 12 0 0 1 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7A20 20 0 0 0 6.3 14.7z"/>' +
+       '<path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A11.9 11.9 0 0 1 12.7 28l-6.5 5A20 20 0 0 0 24 44z"/>' +
+       '<path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2A19.9 19.9 0 0 0 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>'],
+      ['apple', 'Continue with Apple', ''],
+      ['facebook', 'Continue with Facebook', ''],
+      ['x', 'Continue with X', ''],
+    ];
 
-    el("acGo").addEventListener("click", function () {
-      var em = (el("acInEmail").value || "").trim();
-      var pw = el("acInPass").value || "";
-      if (!/^\S+@\S+\.\S+$/.test(em) || !pw) { msg.textContent = "Email and password, both."; return; }
-      var btn = this; btn.disabled = true; btn.textContent = "Signing in…";
-      window.MCC_AUTH.signInPassword(em, pw).then(function () {
-        if (window.MCC_TRACK) window.MCC_TRACK("profile_signin", {});
-        paint();
-      }).catch(function (e) {
-        btn.disabled = false; btn.textContent = "Sign in";
-        msg.textContent = e.message || "That didn't turn the lock. Check both fields.";
-      });
-    });
-
-    /* Google is offered only when the module loaded AND the provider is
-       actually enabled on the project. Asking the public settings endpoint
-       costs one request and avoids showing a button that cannot work —
-       google is currently false there, so today this stays hidden. */
-    (function () {
-      var wrap = el("acOauth"), btn = el("acGoogle");
-      if (!wrap || !btn || !window.MCC_AUTH || !window.MCC_AUTH.googleAvailable()) return;
-      fetch("https://zmnhbrjyhxzhkxmhkexs.supabase.co/auth/v1/settings", {
-        headers: { apikey: "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4" }
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (j) {
-          if (!j || !j.external || !j.external.google) return;
-          wrap.hidden = false;
-          btn.addEventListener("click", function () {
-            btn.disabled = true;
-            window.MCC_AUTH.signInWithGoogle(location.origin + "/auth/?next=/account.html")
-              .catch(function (e) { btn.disabled = false; el("acMsg").textContent = e.message || "Could not start Google sign-in."; });
+    function mountProviders() {
+      if (!window.MCC || !MCC.providers) return;
+      MCC.providers().then(function (live) {
+        var host = el("acProviders");
+        var any = false;
+        host.innerHTML = "";
+        PROVIDERS.forEach(function (spec) {
+          var key = spec[0];
+          if (!live[key]) return;          /* off in Supabase → no button */
+          any = true;
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "ac__prov";
+          b.innerHTML = spec[2] + "<span>" + spec[1] + "</span>";
+          b.addEventListener("click", function () {
+            b.disabled = true;
+            /* /auth/ finishes the PKCE exchange and then forwards here. */
+            MCC.signInWithProvider(key, location.origin + "/auth/?next=/account.html")
+              .catch(function (e) {
+                b.disabled = false;
+                el("acMsg").textContent = e.message || ("Could not start " + key + " sign-in.");
+              });
           });
-        })
-        .catch(function () { /* leave it hidden; email still works */ });
-    })();
+          host.appendChild(b);
+        });
+        el("acSocialRow").hidden = !any;
+      }).catch(function () { /* the email form is always there */ });
+    }
+    mountProviders();
 
-    el("acSend").addEventListener("click", function () {
-      var em = (el("acInEmail").value || "").trim();
-      if (!/^\S+@\S+\.\S+$/.test(em)) { msg.textContent = "Type the whole email address first."; return; }
-      var btn = this; btn.disabled = true;
-      window.MCC_AUTH.signIn(em).then(function () {
-        msg.textContent = "Sent. Open the link on this device and you land back here, signed in.";
-        if (window.MCC_TRACK) window.MCC_TRACK("account_link_sent", {});
-      }).catch(function () {
-        btn.disabled = false;
-        msg.textContent = "That didn't send. Try again in a minute (links are rate-limited).";
-      });
-    });
-    el("acSetPass").addEventListener("click", function () {
-      var pwMsg = el("acPwMsg");
-      var pw = el("acNewPass").value || "";
-      if (pw.length < 8) { pwMsg.textContent = "Password needs 8 characters or more."; return; }
-      if (!(window.MCC_AUTH && window.MCC_AUTH.setPassword)) { pwMsg.textContent = "Sign-in is still loading. One moment, then try again."; return; }
-      var btn = this; btn.disabled = true; btn.textContent = "Setting it…";
-      window.MCC_AUTH.setPassword(pw).then(function () {
-        el("acNewPass").value = "";
-        pwMsg.textContent = "Done. Email and password now works on this account, anywhere.";
-        btn.textContent = "Password set";
-        if (window.MCC_TRACK) window.MCC_TRACK("password_set", { via: "account" });
+    el("fnBirth").addEventListener("input", syncShareGate);
+
+    el("fnSave").onclick = function () {
+      var values = { source: source() };
+      FAN.forEach(function (id) { values[COL[id]] = el(id).value.trim(); });
+      values.birth_year = values.birth_year ? Number(values.birth_year) : null;
+      values.marketing_consent = el("fnMarketing").checked;
+      values.share_consent = el("fnShare").checked && !el("fnShare").disabled;
+      el("fnSave").disabled = true;
+      el("fnMsg").textContent = "Saving…";
+      window.MCC_FAN.save(values).then(function (row) {
+        el("fnSave").disabled = false;
+        el("fnMsg").textContent = "Saved.";
+        /* Repaint from what the DATABASE returned, not from what was typed:
+           the trigger may have refused a consent or cleared a verification,
+           and the form must show what is actually stored. */
+        paintFan(row);
       }).catch(function (e) {
-        pwMsg.textContent = (e && e.message) || "That password did not take.";
-        btn.disabled = false; btn.textContent = "Set my password";
+        el("fnSave").disabled = false;
+        el("fnMsg").textContent = e.message || "That did not save.";
       });
-    });
+    };
 
-    el("acOut").addEventListener("click", function () {
-      if (window.MCC_AUTH && window.MCC_AUTH.signOut) window.MCC_AUTH.signOut();
-      location.reload();
-    });
     paint();
-    window.addEventListener("mcc:auth", paint);
   })();
   </script>
   <script defer src="js/pip.js?v=__STAMP__"></script>
-  <script defer src="js/here-material.js?v=__STAMP__"></script>
 </body>
 </html>

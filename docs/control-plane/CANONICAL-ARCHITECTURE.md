@@ -14,6 +14,15 @@ This document is the human-readable architecture authority. The machine-readable
 | Source and promotion | `mcclusterishere/mccluster` | source, CI, reviewed promotion, deployment refs |
 | Specialized compute | compute-node protocol | GPU/desktop/specialized execution only |
 
+## MCP transport isolation
+
+`mccluster-mcp` from `workers/mccluster-mcp` is a stateless transport edge on
+`mcp.mccluster.org`. It uses the existing Supabase house-owner gate, capability
+catalog and OVH broker. It owns no identity, durable data, scheduler or jobs.
+The API Worker remains `mccluster`; the forbidden `mccluster-core` Worker is not
+introduced. The legacy `/v1/core/mcp` route remains until clients migrate.
+Activation is a reviewed deployment, separate from implementing this extraction.
+
 ## Canonical orchestration
 
 The canonical durable job system is `ops_agent_jobs`. The canonical objective system is `ops_objectives`. Private conversation memory lives under `ai_context`; public jobs store bounded references rather than raw private transcripts. Semantic capabilities are resolved through `core/capabilities/catalog.json`, executed by `core/src/runner.mjs`, and exposed to Core through `core/src/tool-broker.mjs`.
@@ -25,6 +34,20 @@ Conversation ingestion, objective synthesis, dependency-aware plans, communicati
 Acting on the infrastructure — GitHub, Cloudflare, the Supabase project, the OVH host, the public site and the satellites — is `/v1/ops` on Worker `mccluster`. `ops_estate_nodes` bounds what may be acted on, `ops_action_policy` binds each action to a capability, and `control_commands` is the ledger. Authorization is the existing control ladder: `infra.read`, `infra.operate`, and `infra.mutate`, which is high risk and therefore requires a `control_approvals` row a house owner decided, bound to the exact request hash.
 
 Provider credentials live on the Worker and nowhere else. Agents, satellites and compute nodes do not hold GitHub, Cloudflare, Supabase management or OVH credentials of their own, and no second path may reach a provider around the capability gate and the ledger. See `INFRASTRUCTURE-CONTROL.md`.
+## Operational ontology
+
+The operational ontology is a semantic and kinetic layer **inside the canonical Supabase/Core architecture**, not a new control plane.
+
+- `ops_ontology_types` defines organization-scoped object types.
+- `ops_ontology_objects` materializes selected canonical records with source provenance.
+- `ops_ontology_link_types` and `ops_ontology_links` create typed relationships.
+- `ops_ontology_action_types` declares bounded governed actions.
+- `ops_ontology_action_runs` and `ops_ontology_lineage` preserve attribution, idempotency, results, and change evidence.
+- Core exposes the stable capabilities `ontology.schema`, `ontology.query`, `ontology.neighbors`, and `ontology.action.apply`.
+
+The ontology does not replace canonical domain tables. Source-backed fields are synchronized from those tables; v1 actions may only write the ontology's owner-controlled annotations/tags or compatible typed links. External side effects, money movement, deployment, communications, and production mutations continue through their existing capability/policy gates.
+
+Remote ontology writes are attributable to the authenticated house owner because Cloudflare overwrites actor metadata and includes it inside the signed edge-to-Core MCP request.
 
 ## Architectural laws
 

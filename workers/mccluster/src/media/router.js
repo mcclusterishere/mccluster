@@ -202,6 +202,40 @@ export async function reconcileFalJobCost(env, job) {
   return { ...result, settled_job: result.settled > 0 ? job.id : null };
 }
 
+/* Media spend, aggregated from the media_cost_events ledger.
+
+   Every other control on spend is per job, so nothing could answer "how much
+   of the funded provider balance is gone". Membership is enough to read it —
+   this exposes no prompt, asset or model input, only amounts the ledger
+   already settled or reserved. */
+export async function getUsage(request, env, user) {
+  const url = new URL(request.url);
+  const org = await getOrg(env, user.id, url.searchParams.get('org_id'));
+
+  const groupBy = (url.searchParams.get('group_by') || 'day').toLowerCase();
+  if (!['day', 'provider', 'capability', 'model'].includes(groupBy)) {
+    throw Object.assign(new Error('group_by must be day, provider, capability, or model'), { status: 400 });
+  }
+
+  const parseWhen = (name) => {
+    const raw = url.searchParams.get(name);
+    if (!raw) return null;
+    const when = new Date(raw);
+    if (Number.isNaN(when.getTime())) throw Object.assign(new Error(`${name} must be a timestamp`), { status: 400 });
+    return when.toISOString();
+  };
+
+  const rollup = await rpc(env, 'media_usage_rollup', {
+    p_org_id: org.org_id,
+    p_from: parseWhen('from'),
+    p_to: parseWhen('to'),
+    p_group_by: groupBy
+  });
+  /* PostgREST returns a scalar function result directly or wrapped in a
+     single-element array depending on the call shape. */
+  return Array.isArray(rollup) ? rollup[0] : rollup;
+}
+
 export async function listModels(request, env) {
   const url = new URL(request.url);
   const capability = url.searchParams.get('capability');

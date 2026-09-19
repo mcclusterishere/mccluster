@@ -12,7 +12,16 @@
       "system": "cloudflare",
       "worker": "mccluster",
       "source": "workers/mccluster",
-      "rule": "Public ingress, auth, routing and API normalization only. Do not create a second Worker named mccluster-core or move durable truth into the edge."
+      "rule": "Public ingress, auth, routing and API normalization only. Do not create a second Worker named mccluster-core or move durable truth into the edge.",
+      "transport_edges": [
+        {
+          "worker": "mccluster-mcp",
+          "source": "workers/mccluster-mcp",
+          "host": "mcp.mccluster.org",
+          "state": "stateless",
+          "authority": "Same Supabase house-owner authorization and OVH Core broker; no separate identity, storage, jobs or orchestration."
+        }
+      ]
     },
     "execution": {
       "system": "ovh-mccluster-core",
@@ -40,7 +49,17 @@
     "infrastructure_control": "/v1/ops on worker mccluster",
     "infrastructure_estate": "ops_estate_nodes",
     "infrastructure_action_policy": "ops_action_policy",
-    "infrastructure_ledger": "control_commands"
+    "infrastructure_ledger": "control_commands",
+    "operational_ontology": {
+      "object_types": "ops_ontology_types",
+      "objects": "ops_ontology_objects",
+      "link_types": "ops_ontology_link_types",
+      "links": "ops_ontology_links",
+      "action_types": "ops_ontology_action_types",
+      "action_runs": "ops_ontology_action_runs",
+      "lineage": "ops_ontology_lineage",
+      "rule": "Semantic/kinetic layer over canonical Supabase domain tables. It does not replace source-of-truth tables, the job system, objective system, memory, or policy gates."
+    }
   },
   "authority": {
     "humans": "Consequential authority: production deploy/rollback authorization, contracts, purchases, legal commitments and other high-impact decisions.",

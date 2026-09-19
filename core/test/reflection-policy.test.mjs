@@ -66,7 +66,7 @@ test('reflection policy bounds count, priority, and empty tasks', () => {
   const plan = normalizeReflectionPlan({
     next_jobs: [
       { job_type: 'local_analysis', task: 'one', priority: 500 },
-      { job_type: 'repo_health', task: 'two', priority: -5 },
+      { job_type: 'repo_health', task: 'two', target_id: 'mcclusterishere/mccluster', priority: -5 },
       { job_type: 'local_analysis', task: 'three' },
       { job_type: 'local_analysis', task: 'four' },
       { job_type: 'local_analysis', task: '' },

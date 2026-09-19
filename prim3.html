@@ -6,7 +6,9 @@
   <title>PRIM3 · Learning Management System</title>
   <meta name="description" content="PRIM3 is a free technology learning path that teaches, reinforces, contextualizes and applies technical knowledge through the PRIM Method after M Account creation.">
   <link rel="canonical" href="https://matthew.mccluster.org/prim3.html">
-  <link rel="icon" type="image/png" href="assets/img/prim3-tab.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/prim3-mark-32.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/img/prim3-mark-512.png">
+  <link rel="apple-touch-icon" href="assets/img/prim3-mark-180.png">
   <meta name="theme-color" content="#090909">
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <link rel="stylesheet" href="css/prim3.css?v=__STAMP__">
@@ -28,11 +30,27 @@
 
   <section class="p3-gate" id="courseGate" aria-labelledby="courseGateTitle">
     <div class="p3-gate__card">
-      <img class="p3-gate__mark" src="assets/img/prim3-tab.png" alt="" width="96" height="96">
+      <img class="p3-gate__lockup" src="assets/img/prim3-lockup-512.png" alt="PRIM3" width="512" height="366">
       <p class="p3-gate__eyebrow">Free course · M Account required</p>
-      <h1 id="courseGateTitle">Make an account.<br>Then learn for free.</h1>
+      <h1 id="courseGateTitle">Security,<br>taught four ways.</h1>
+      <p>PRIM3 is a cybersecurity course. The name is the method: <strong>P</strong>rinciples, <strong>R</strong>hythm, <strong>I</strong>mmersion, <strong>M</strong>issions. You read the material, a song makes it stick, the story shows why it matters, and a lab proves you can use it. Principles is the graded course. The other three reinforce it and never replace it.</p>
+      <!-- Status slot. js/prim3.js replaces this text with sign-in and course
+           feed messages, so lasting copy must not live here. -->
       <p data-gate-note>PRIM3 uses your M Account to keep progress, assessment scores and unlocks attached to you instead of one browser. <strong>There is no course charge after account creation.</strong></p>
-      <p>The curriculum contains 66 focused modules. Three certification foundation modules come first with no song or episode attached. The 21 PRIM3 episode and song units then expand into 63 more modules.</p>
+
+      <div class="p3-gate__audience">
+        <div class="p3-gate__aud">
+          <h2>If you want to learn</h2>
+          <p>Start at module one. No security background needed. 66 focused modules, assessments, and progress that follows your account instead of your browser.</p>
+          <a class="p3-gate__aud-link" href="account.html">Create a free account</a>
+        </div>
+        <div class="p3-gate__aud">
+          <h2>If you teach, or want to partner</h2>
+          <p>The curriculum maps to certification objectives and can be run with your own cohorts. Tell us what you teach and we will send the objective map.</p>
+          <a class="p3-gate__aud-link" href="hire.html?about=prim3-educators">Talk to us about PRIM3</a>
+        </div>
+      </div>
+
       <div class="p3-gate__actions">
         <a href="account.html">Create free M Account</a>
         <a href="account.html">Sign in</a>
@@ -226,5 +244,6 @@
   <script src="js/prim3.js?v=__STAMP__"></script>
   <script src="js/prim3-sync.js?v=__STAMP__"></script>
   <script src="js/prim3-tracking.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
 </body>
 </html>
