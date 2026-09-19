@@ -2,11 +2,103 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 140,
-  "latest_version": "20260919114112",
-  "latest_name": "client_table_privilege_hardening",
-  "ledger_sha256": "89f7e011b008252d086558b85ec8cea67f97a4af5621c85ecffb42af1861ea77",
+  "migration_count": 164,
+  "latest_version": "20260919120233",
+  "latest_name": "public_projection_invoker_boundaries",
+  "ledger_sha256": "9bafa40d793b2d0422dcd6ad23651d0835df9f4e1173047f74a082ce638394b0",
   "migrations": [
+    {
+      "version": "0001",
+      "name": "crm"
+    },
+    {
+      "version": "0002",
+      "name": "connect_saas"
+    },
+    {
+      "version": "0003",
+      "name": "creator_cuts"
+    },
+    {
+      "version": "0004",
+      "name": "print_shop"
+    },
+    {
+      "version": "0005",
+      "name": "comments"
+    },
+    {
+      "version": "0006",
+      "name": "rights_flags"
+    },
+    {
+      "version": "0007",
+      "name": "offerings"
+    },
+    {
+      "version": "0008",
+      "name": "site_requests"
+    },
+    {
+      "version": "0009",
+      "name": "offer_configurations"
+    },
+    {
+      "version": "0010",
+      "name": "domain_hosting_offerings"
+    },
+    {
+      "version": "0011",
+      "name": "activation_sprints"
+    },
+    {
+      "version": "0012",
+      "name": "management_upgrade_offerings"
+    },
+    {
+      "version": "0013",
+      "name": "link_offerings_to_square_plans"
+    },
+    {
+      "version": "0014",
+      "name": "square_recurring_routing"
+    },
+    {
+      "version": "0015",
+      "name": "recurring_sells_where_it_can_sell"
+    },
+    {
+      "version": "0016",
+      "name": "customer_music_licence"
+    },
+    {
+      "version": "0017",
+      "name": "equity_uprise_platform"
+    },
+    {
+      "version": "0018",
+      "name": "equity_uprise_seed"
+    },
+    {
+      "version": "0019",
+      "name": "shake_delivery"
+    },
+    {
+      "version": "0020",
+      "name": "harden_function_surface"
+    },
+    {
+      "version": "0021",
+      "name": "inbox"
+    },
+    {
+      "version": "0022",
+      "name": "inbox_outbound"
+    },
+    {
+      "version": "0023",
+      "name": "brain"
+    },
     {
       "version": "20260722211609",
       "name": "crm_leads"
@@ -566,6 +658,10 @@
     {
       "version": "20260919114112",
       "name": "client_table_privilege_hardening"
+    },
+    {
+      "version": "20260919120233",
+      "name": "public_projection_invoker_boundaries"
     }
   ]
 }

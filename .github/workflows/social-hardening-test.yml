@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - 'workers/mccluster/**'
-      - 'supabase/migrations/20260907040300_social_hardening.sql'
+      - 'supabase/replay_migrations/20260907040300_social_hardening.sql'
       - '.github/workflows/social-hardening-test.yml'
   workflow_dispatch: {}
 

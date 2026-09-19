@@ -26,8 +26,10 @@ Absolute prevention of every transient mismatch is impossible during deployments
 
 - Every new production schema mutation must have a migration file under its actual production version and name.
 - `supabase/production-ledger.json` records the complete ordered production ledger returned by Supabase, including the historical era that predates canonical Git reconciliation.
-- Legacy `0001_...` style migrations are clean-replay reconstruction files. They rebuild historical state but do **not** claim to be the original Supabase migration versions.
-- Every production ledger version/name also has an exact timestamped file. Pre-cutover historical files may be comment-only ledger anchors when the actual schema reconstruction already lives in the numbered replay layer; this prevents Supabase Git integration from treating valid remote versions as missing without double-applying historical DDL.
+- `supabase/migrations/` is production-only: every SQL file in it must correspond 1:1 to a version/name already present in the live production ledger.
+- Historical reconstruction SQL lives under `supabase/replay_migrations/` and is staged only into disposable/local databases by `scripts/supabase-local-reset-with-replay.sh`; Supabase production must never execute replay-only aliases.
+- Registered legacy `0001_...` through `0023_...` versions remain in `supabase/migrations/` only as comment-only `REPLAY_ANCHOR_ONLY` files, while their executable reconstruction SQL lives in the replay directory.
+- Pre-cutover production versions may be comment-only ledger anchors when the original DDL was never captured under its live version; the replay layer reconstructs that historical state for clean local resets without inventing new production migrations.
 - `production_sql_cutover_version` in the ledger marks the point from which exact production-version SQL is mandatory. The current cutover is `20260919020830`.
 - The backend-only `system_migration_attestation()` RPC exposes only:
   - migration count;
@@ -35,7 +37,7 @@ Absolute prevention of every transient mismatch is impossible during deployments
   - SHA-256 of the ordered migration ledger.
 - `core/drift-contract.json` pins the expected canonical production attestation.
 - CI recomputes the SHA-256 of the complete committed production ledger and rejects count, ordering, version, name, or hash drift.
-- CI also requires every post-cutover ledger entry to have the exact `<version>_<name>.sql` file and rejects post-cutover migration files that are not in the production ledger.
+- CI requires every ledger entry to have the exact `<version>_<name>.sql` file and rejects **any** active migration file that is absent from the production ledger.
 - Host health treats migration-ledger mismatch as **critical**.
 - Emergency live migrations must be mirrored into Git with their actual production version before unrelated work continues.
 

@@ -5,6 +5,8 @@ on:
     paths:
       - "core/**"
       - "supabase/migrations/**"
+      - "supabase/replay_migrations/**"
+      - "scripts/supabase-local-reset-with-replay.sh"
       - "supabase/production-ledger.json"
       - "scripts/deploy-ovh-core.sh"
       - "scripts/mccluster-vps-reconcile.sh"
@@ -15,6 +17,8 @@ on:
     paths:
       - "core/**"
       - "supabase/migrations/**"
+      - "supabase/replay_migrations/**"
+      - "scripts/supabase-local-reset-with-replay.sh"
       - "supabase/production-ledger.json"
       - "scripts/deploy-ovh-core.sh"
       - "scripts/mccluster-vps-reconcile.sh"
