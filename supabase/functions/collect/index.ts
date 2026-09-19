@@ -192,6 +192,61 @@ const str = (v: unknown, max: number): string | null => {
 const obj = (v: unknown): Record<string, unknown> =>
   v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : {};
 
+const SITE_KEY = /^mca_[a-f0-9]{32}$/i;
+
+function requestHost(h: Headers_): string | null {
+  for (const name of ["origin", "referer"]) {
+    const raw = h.get(name);
+    if (!raw || raw === "null") continue;
+    try {
+      const u = new URL(raw);
+      const host = u.hostname.toLowerCase().replace(/\.$/, "");
+      if (host) return host;
+    } catch {}
+  }
+  return null;
+}
+
+async function serviceRows(path: string): Promise<Record<string, unknown>[]> {
+  const r = await fetch(`${SB}/rest/v1/${path}`, {
+    headers: { apikey: SRV, Authorization: `Bearer ${SRV}`, Accept: "application/json" },
+  });
+  if (!r.ok) throw new Error(`service lookup ${r.status}`);
+  const rows = await r.json().catch(() => []);
+  return Array.isArray(rows) ? rows : [];
+}
+
+async function resolveAnalyticsSite(body: Record<string, unknown>, h: Headers_) {
+  const key = str(body.site_key, 64);
+  if (!key) return { siteId: null, host: null, consentMode: null, legacy: true };
+  if (!SITE_KEY.test(key)) return { error: "invalid site key", status: 403 };
+
+  const host = requestHost(h);
+  if (!host) return { error: "origin required", status: 403 };
+
+  try {
+    const sites = await serviceRows(
+      `analytics_sites?public_key=eq.${encodeURIComponent(key)}&status=eq.active&select=id,consent_mode&limit=1`
+    );
+    const site = sites[0];
+    if (!site || typeof site.id !== "string") return { error: "unknown site", status: 403 };
+
+    const domains = await serviceRows(
+      `analytics_site_domains?site_id=eq.${encodeURIComponent(site.id)}&hostname=eq.${encodeURIComponent(host)}&enabled=eq.true&verified_at=not.is.null&select=id&limit=1`
+    );
+    if (!domains.length) return { error: "unverified domain", status: 403 };
+
+    return {
+      siteId: site.id,
+      host,
+      consentMode: typeof site.consent_mode === "string" ? site.consent_mode : "required",
+      legacy: false,
+    };
+  } catch {
+    return { error: "site verification unavailable", status: 502 };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ ok: false, reason: "POST only" }, 405);
@@ -210,6 +265,12 @@ Deno.serve(async (req) => {
   if (!incoming.length) return json({ ok: true, written: 0 });
 
   const h = req.headers;
+  const site = await resolveAnalyticsSite(body, h);
+  if ("error" in site) return json({ ok: false, reason: site.error }, site.status);
+  const consentState = str(body.consent_state, 32);
+  if (!site.legacy && site.consentMode !== "cookieless" && consentState !== "granted") {
+    return json({ ok: true, written: 0, reason: "consent required" });
+  }
   const quiet = optedOut(h);
   const ip = quiet ? null : validIp(callerIp(h));
   const g = geo(h);
@@ -220,7 +281,8 @@ Deno.serve(async (req) => {
 
   // Client-minted, and labelled as such. See the header note.
   // Nothing that follows a visitor between sittings survives the signal.
-  const deviceId = quiet ? null : str(body.device_id, 64);
+  const persistentAllowed = !quiet && (site.legacy || consentState === "granted");
+  const deviceId = persistentAllowed ? str(body.device_id, 64) : null;
   const sessionId = quiet ? null : str(body.session_id, 64);
   const device = quiet ? {} : obj(body.device);
 
@@ -236,6 +298,8 @@ Deno.serve(async (req) => {
     if (quiet && name === "precise_location") continue;
 
     rows.push({
+      site_id: site.siteId,
+      source_host: site.host,
       name,
       path: str(ev.path, MAX_PATH) ?? "",
       props: obj(ev.props),
