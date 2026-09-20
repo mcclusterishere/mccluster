@@ -138,6 +138,73 @@ Deno.serve(async (req) => {
       return json({ ok: true, url, expires_in: 3600 });
     }
 
+    if (action === "operator-dashboard") {
+      if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
+      const { data: tracks, error: trackError } = await admin.from("creator_tracks")
+        .select("id,m_uid,title,artist,status,rights_status,access_mode,genre,created_at,published_at,moderation_note")
+        .in("status", ["pending_review", "approved", "published", "rejected"])
+        .order("created_at", { ascending: false }).limit(100);
+      if (trackError) throw trackError;
+      const { data: creators } = await admin.from("music_creator_profiles")
+        .select("m_uid,handle,artist_name,verification_state,payout_state,status");
+      const { data: offers } = await admin.from("music_license_offers")
+        .select("id,track_id,title,license_type,price_cents,currency,active,checkout_enabled,platform_fee_bps")
+        .order("created_at", { ascending: false }).limit(200);
+      return json({ ok: true, tracks: tracks || [], creators: creators || [], offers: offers || [] });
+    }
+
+    if (action === "operator-review") {
+      if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
+      const trackId = clean(body.track_id, 80);
+      const decision = clean(body.decision, 30);
+      const note = clean(body.note, 1200);
+      if (!trackId || !["publish", "approve", "reject", "review"].includes(decision)) {
+        return json({ error: "invalid review request" }, 400);
+      }
+      const patch: Record<string, unknown> = { moderation_note: note, updated_at: new Date().toISOString() };
+      if (decision === "publish") {
+        patch.status = "published";
+        patch.rights_status = "cleared";
+        patch.published_at = new Date().toISOString();
+      } else if (decision === "approve") {
+        patch.status = "approved";
+        patch.rights_status = "cleared";
+      } else if (decision === "reject") {
+        patch.status = "rejected";
+        patch.rights_status = "disputed";
+      } else {
+        patch.status = "pending_review";
+        patch.rights_status = "review";
+      }
+      const { data: updated, error } = await admin.from("creator_tracks")
+        .update(patch).eq("id", trackId)
+        .select("id,title,status,rights_status,published_at,moderation_note").single();
+      if (error) throw error;
+      return json({ ok: true, track: updated });
+    }
+
+    if (action === "operator-license") {
+      if (!(await houseOps(who.user.id))) return json({ error: "operator permission required" }, 403);
+      const offerId = clean(body.offer_id, 80);
+      const enabled = body.enabled === true;
+      const { data: offer } = await admin.from("music_license_offers")
+        .select("id,track_id").eq("id", offerId).limit(1).maybeSingle();
+      if (!offer) return json({ error: "offer not found" }, 404);
+      if (enabled) {
+        const { data: track } = await admin.from("creator_tracks")
+          .select("status,rights_status").eq("id", offer.track_id).limit(1).maybeSingle();
+        if (!track || track.status !== "published" || track.rights_status !== "cleared") {
+          return json({ error: "publish and clear the track before enabling checkout" }, 409);
+        }
+      }
+      const { data: updated, error } = await admin.from("music_license_offers")
+        .update({ active: enabled, checkout_enabled: enabled, updated_at: new Date().toISOString() })
+        .eq("id", offerId)
+        .select("id,track_id,active,checkout_enabled").single();
+      if (error) throw error;
+      return json({ ok: true, offer: updated });
+    }
+
     return json({ error: "unknown action" }, 400);
   } catch (error) {
     console.error("music-access", error);
