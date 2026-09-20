@@ -8,7 +8,8 @@ test('Mnet has production primitives for media, moderation, direct messages, and
   const migration=await read('supabase/migrations/20260920071811_mnet_real_network_v1.sql');
   for(const table of [
     'network_media_assets','network_reports','network_conversations',
-    'network_conversation_members','network_messages'
+    'network_conversation_members','network_messages','network_blocks',
+    'network_mutes','network_bookmarks','network_connections'
   ]) assert.match(migration,new RegExp('create table if not exists public\\.'+table));
   assert.match(migration,/mnet-media','mnet-media',false/);
   assert.match(migration,/create or replace function public\.mnet_discover/);
@@ -46,6 +47,7 @@ test('Mnet Worker exposes a real social graph and safety API', async()=>{
   const routes=[
     '/v1/mnet/discover',
     '/v1/mnet/bookmarks',
+    '/v1/mnet/blocks',
     '/v1/mnet/reports',
     '/v1/mnet/conversations',
     '/v1/mnet/media/upload-url',
@@ -86,6 +88,8 @@ test('Mnet client exposes discovery, messaging, media, bookmarks, follow, and sa
   assert.match(html,/id="mnPersonDialog"/);
   assert.match(html,/id="mnConversationDialog"/);
   assert.match(js,/function loadDiscover\(\)/);
+  assert.match(js,/function loadBlocked\(\)/);
+  assert.match(html,/id="mnShowBlocked"/);
   assert.match(js,/function loadConversations\(\)/);
   assert.match(js,/function uploadMediaFiles\(files\)/);
   assert.match(js,/function toggleBookmark\(/);
