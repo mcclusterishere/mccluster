@@ -408,19 +408,73 @@
     showGate("profile");
   }
 
+  function setAuthMode(mode) {
+    var create = mode === "create";
+    $("mnCreateNameWrap").hidden = !create;
+    $("mnConfirmWrap").hidden = !create;
+    $("mnSignInTab").classList.toggle("is-active", !create);
+    $("mnCreateTab").classList.toggle("is-active", create);
+    $("mnSignInTab").setAttribute("aria-selected", create ? "false" : "true");
+    $("mnCreateTab").setAttribute("aria-selected", create ? "true" : "false");
+    $("mnPassword").setAttribute("autocomplete", create ? "new-password" : "current-password");
+    $("mnAuthGo").textContent = create ? "Create account" : "Sign in";
+    $("mnPasswordHint").textContent = create
+      ? "Use at least 8 characters. This password follows your M Account across McCluster."
+      : "Use the password on your M Account. One-time login links are no longer used.";
+    $("mnSignedOut").setAttribute("data-auth-mode", create ? "create" : "signin");
+    setStatus($("mnAuthStatus"), "");
+  }
+
+  function enterAfterAuth() {
+    return MCC.user().then(function (user) {
+      state.user = user;
+      if (!user) throw new Error("Your session did not open.");
+      if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
+      return MCC.autoTouch().catch(function () {}).then(bootstrap);
+    });
+  }
+
+  function submitPasswordAuth() {
+    var create = $("mnSignedOut").getAttribute("data-auth-mode") === "create";
+    var email = $("mnEmail").value.trim(), password = $("mnPassword").value;
+    var button = $("mnAuthGo");
+    if (!email || !password) { setStatus($("mnAuthStatus"), "Enter your email and password.", "error"); return; }
+    if (create && password.length < 8) { setStatus($("mnAuthStatus"), "Use at least 8 characters.", "error"); return; }
+    if (create && password !== $("mnPassword2").value) { setStatus($("mnAuthStatus"), "Those passwords do not match.", "error"); return; }
+    if (create && !$("mnCreateName").value.trim()) { setStatus($("mnAuthStatus"), "Add your display name.", "error"); return; }
+
+    button.disabled = true;
+    button.textContent = create ? "Creating…" : "Signing in…";
+    setStatus($("mnAuthStatus"), "");
+
+    var action = create
+      ? MCC.signUpWithPassword(email, password, { name:$("mnCreateName").value.trim(), full_name:$("mnCreateName").value.trim() })
+      : MCC.signInWithPassword(email, password);
+
+    Promise.resolve(action).then(function (result) {
+      if (create && result && result.confirm) {
+        setStatus($("mnAuthStatus"), "Account created. Confirm the email address once, then sign in here with the password you just made.", "ok");
+        return null;
+      }
+      return enterAfterAuth();
+    }).catch(function (e) {
+      setStatus($("mnAuthStatus"), e.message || (create ? "Could not create that account." : "Could not sign in."), "error");
+    }).finally(function () {
+      button.disabled = false;
+      button.textContent = create ? "Create account" : "Sign in";
+    });
+  }
+
   function boot() {
     mountProviders();
-    $("mnEmailGo").onclick = function () {
-      var email = $("mnEmail").value.trim();
-      if (!email) { setStatus($("mnAuthStatus"), "Enter your email.", "error"); return; }
-      $("mnEmailGo").disabled = true;
-      setStatus($("mnAuthStatus"), "Sending…");
-      MCC.signInWithEmail(email, location.origin + "/auth/?next=/mnet.html").then(function () {
-        setStatus($("mnAuthStatus"), "Check your email and open the link on this device.", "ok");
-      }).catch(function (e) {
-        setStatus($("mnAuthStatus"), e.message || "Could not send the link.", "error");
-      }).finally(function () { $("mnEmailGo").disabled = false; });
-    };
+    setAuthMode("signin");
+    $("mnSignInTab").onclick = function () { setAuthMode("signin"); };
+    $("mnCreateTab").onclick = function () { setAuthMode("create"); };
+    $("mnAuthGo").onclick = submitPasswordAuth;
+    $("mnPassword").addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && $("mnSignedOut").getAttribute("data-auth-mode") !== "create") submitPasswordAuth();
+    });
+    $("mnPassword2").addEventListener("keydown", function (e) { if (e.key === "Enter") submitPasswordAuth(); });
     $("mnProfileForm").addEventListener("submit", saveProfile);
     $("mnProfileBack").onclick = function () { showGate("app"); setView("profile"); };
     $("mnPost").onclick = createPost;
