@@ -418,9 +418,10 @@
     $("mnCreateTab").setAttribute("aria-selected", create ? "true" : "false");
     $("mnPassword").setAttribute("autocomplete", create ? "new-password" : "current-password");
     $("mnAuthGo").textContent = create ? "Create account" : "Sign in";
-    $("mnPasswordHint").textContent = create
-      ? "Use at least 8 characters. This password follows your M Account across McCluster."
-      : "Use the password on your M Account. One-time login links are no longer used.";
+    $("mnPasswordHint").hidden = !create;
+    $("mnPasswordHint").textContent = "Use at least 8 characters.";
+    $("mnForgot").hidden = create;
+    $("mnResend").hidden = true;
     $("mnSignedOut").setAttribute("data-auth-mode", create ? "create" : "signin");
     setStatus($("mnAuthStatus"), "");
   }
@@ -441,19 +442,27 @@
     if (!email || !password) { setStatus($("mnAuthStatus"), "Enter your email and password.", "error"); return; }
     if (create && password.length < 8) { setStatus($("mnAuthStatus"), "Use at least 8 characters.", "error"); return; }
     if (create && password !== $("mnPassword2").value) { setStatus($("mnAuthStatus"), "Those passwords do not match.", "error"); return; }
-    if (create && !$("mnCreateName").value.trim()) { setStatus($("mnAuthStatus"), "Add your display name.", "error"); return; }
 
     button.disabled = true;
     button.textContent = create ? "Creating…" : "Signing in…";
     setStatus($("mnAuthStatus"), "");
 
+    var name = $("mnCreateName").value.trim() || email.split("@")[0];
     var action = create
-      ? MCC.signUpWithPassword(email, password, { name:$("mnCreateName").value.trim(), full_name:$("mnCreateName").value.trim() })
+      ? MCC.signUpWithPassword(email, password, { name:name, full_name:name })
       : MCC.signInWithPassword(email, password);
 
     Promise.resolve(action).then(function (result) {
+      if (create && result && result.existing) {
+        setAuthMode("signin");
+        $("mnEmail").value = email;
+        setStatus($("mnAuthStatus"), "An account already exists for that email. Sign in, or use Forgot password.", "error");
+        return null;
+      }
       if (create && result && result.confirm) {
-        setStatus($("mnAuthStatus"), "Account created. Confirm the email address once, then sign in here with the password you just made.", "ok");
+        state.pendingVerificationEmail = email;
+        setStatus($("mnAuthStatus"), "Check your email to verify your address. After verification, sign in with the password you just created.", "ok");
+        $("mnResend").hidden = false;
         return null;
       }
       return enterAfterAuth();
@@ -471,6 +480,26 @@
     $("mnSignInTab").onclick = function () { setAuthMode("signin"); };
     $("mnCreateTab").onclick = function () { setAuthMode("create"); };
     $("mnAuthGo").onclick = submitPasswordAuth;
+    $("mnForgot").onclick = function () {
+      var email = $("mnEmail").value.trim(), button = $("mnForgot");
+      if (!email) { setStatus($("mnAuthStatus"), "Enter your email first.", "error"); $("mnEmail").focus(); return; }
+      button.disabled = true; button.textContent = "Sending…"; setStatus($("mnAuthStatus"), "");
+      MCC.requestPasswordReset(email, location.origin + "/reset-password.html").then(function () {
+        setStatus($("mnAuthStatus"), "Check your email for a password reset link.", "ok");
+      }).catch(function (e) {
+        setStatus($("mnAuthStatus"), e.message || "Could not send the reset email.", "error");
+      }).finally(function () { button.disabled = false; button.textContent = "Forgot password?"; });
+    };
+    $("mnResend").onclick = function () {
+      var email = state.pendingVerificationEmail || $("mnEmail").value.trim(), button = $("mnResend");
+      if (!email) return;
+      button.disabled = true; button.textContent = "Sending…";
+      MCC.resendSignupVerification(email).then(function () {
+        setStatus($("mnAuthStatus"), "Verification email sent. Check your inbox and spam folder.", "ok");
+      }).catch(function (e) {
+        setStatus($("mnAuthStatus"), e.message || "Could not resend verification.", "error");
+      }).finally(function () { button.disabled = false; button.textContent = "Resend verification email"; });
+    };
     $("mnPassword").addEventListener("keydown", function (e) {
       if (e.key === "Enter" && $("mnSignedOut").getAttribute("data-auth-mode") !== "create") submitPasswordAuth();
     });
