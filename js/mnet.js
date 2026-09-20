@@ -380,6 +380,13 @@
       $("mnNotifBadge").textContent = unread > 99 ? "99+" : unread;
       renderNotifications(rows);
       setStatus($("mnNotificationStatus"), "");
+      return rows;
+    }).catch(function () { return []; });
+  }
+
+  function markNotificationsRead() {
+    return api("/v1/mnet/notifications/read", { method:"POST", body:{} }).then(function () {
+      $("mnNotifBadge").hidden = true;
     }).catch(function () {});
   }
 
@@ -391,7 +398,7 @@
       var tab = document.querySelector('[data-mn-view="' + view + '"]');
       if (tab) tab.classList.toggle("is-active", view === name);
     });
-    if (name === "notifications") loadNotificationsSilently();
+    if (name === "notifications") loadNotificationsSilently().then(markNotificationsRead);
     if (name === "profile") paintSelf();
     window.scrollTo({ top:0, behavior:"smooth" });
   }
