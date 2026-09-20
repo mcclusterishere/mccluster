@@ -113,3 +113,15 @@ test('business query parser returns daily signup breakdown without guessing', ()
   assert.equal(answer.metric,'users.created_by_day');
   assert.deepEqual(answer.value,snapshot.users.created_by_day);
 });
+
+
+test('business query parser refuses ambiguous time scope instead of returning all-time totals', ()=>{
+  const snapshot={
+    window:null,
+    users:{total:26,created_in_window:null,confirmed_total:25,unconfirmed_total:1,confirmed_in_window:null,unconfirmed_in_window:null,percent_created_in_window:null,created_by_day:[]},
+    mnet:{profiles:{total:27,created_in_window:null},posts:{total:0,created_in_window:null},follows:{total:0,created_in_window:null},reactions:{total:0,created_in_window:null}}
+  };
+  const answer=answerBusinessQuestion('How many new users this week?',snapshot);
+  assert.equal(answer.understood,false);
+  assert.match(answer.answer,/time-scoped question/);
+});
