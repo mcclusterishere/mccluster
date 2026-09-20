@@ -150,6 +150,21 @@ try {
         return e.defaultPrevented && s.webkitUserSelect === "none";
       }));
     }],
+    ["mnet.html", async (p) => {
+      check("mnet: social shell exists", await p.locator("#mnFeed").count() === 1 &&
+        await p.locator("#mnProfileGate").count() === 1 &&
+        await p.locator("#mnNotificationsView").count() === 1);
+      check("mnet: person tab is the Mnet door", await p.evaluate(() => {
+        const tab = document.querySelector('[data-appnav="profile"]');
+        return !!tab && /mnet\.html$/.test(new URL(tab.href).pathname) &&
+          (tab.textContent || "").trim() === "Mnet";
+      }));
+      check("mnet: account remains a secondary door", await p.evaluate(() =>
+        !![...document.querySelectorAll("a")].find((a) => /account\.html\?stay=1$/.test(a.getAttribute("href") || ""))));
+      check("mnet: composer and thread are native network controls",
+        await p.locator("#mnPostBody").count() === 1 && await p.locator("#mnThread").count() === 1);
+    }],
+
     ["merch.html", async (p) => {
       /* THE HOUSE'S BUSINESS STAYS THE HOUSE'S. Every ledger a page fetches
          is downloadable by anyone who guesses the path, so the supplier, the
