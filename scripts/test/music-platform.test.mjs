@@ -106,3 +106,47 @@ test('operator review desk is gated by existing ops authority', async()=>{
   assert.match(access,/houseOps\(who\.user\.id\)/);
   assert.match(access,/ops\.use/);
 });
+
+
+test('Music V2 uses one shell across listener, creator, licensing and operator surfaces', async()=>{
+  const surfaces=[
+    'listen.html','album.html','catalogue.html','creator.html',
+    'music-creator.html','music-admin.html','music-creator-terms.html'
+  ];
+  for(const path of surfaces){
+    const html=await read(path);
+    assert.match(html,/music-v2/, path+' must opt into Music V2');
+    assert.match(html,/music-system-v2\.css/, path+' must load the shared Music V2 stylesheet');
+    assert.match(html,/music-contextbar/, path+' must expose the shared music context bar');
+  }
+});
+
+test('unified transport expands from mini player into full Now Playing', async()=>{
+  const engine=await read('js/music-engine.js');
+  const css=await read('css/music-system-v2.css');
+  assert.match(engine,/id = "musicMini"/);
+  assert.match(engine,/id = "musicNow"/);
+  assert.match(engine,/function openNow\(\)/);
+  assert.match(engine,/function playAdjacent\(delta\)/);
+  assert.match(engine,/setActionHandler\("previoustrack"/);
+  assert.match(engine,/setActionHandler\("nexttrack"/);
+  assert.match(engine,/music_now_open/);
+  assert.match(css,/\.music-now\.is-open/);
+  assert.match(css,/\.music-mini__open/);
+});
+
+test('Listen V2 makes discovery and Creator Studio part of one product', async()=>{
+  const html=await read('listen.html');
+  assert.match(html,/Listen now\./);
+  assert.match(html,/For artists &amp; creators/);
+  assert.match(html,/Open Creator Studio/);
+  assert.match(html,/aria-current="page">Listen/);
+});
+
+test('Music V2 design contract documents the external interaction references', async()=>{
+  const design=await read('docs/music/DESIGN-SYSTEM-V2.md');
+  assert.match(design,/Apple Music Listen Now hierarchy/);
+  assert.match(design,/Apple Music Now Playing/);
+  assert.match(design,/Spotify artist profile hierarchy/);
+  assert.match(design,/No second auth system, second music backend, or second player engine/);
+});
