@@ -211,19 +211,16 @@
     entitlements: function () {
       return api("entitlements?select=sku,expires_at").then(function (rows) { return rows || []; }).catch(function () { return []; });
     },
-    signIn: function (emailAddr) {
-      return fetch(URL_ + "/auth/v1/otp", {
-        method: "POST",
-        headers: { apikey: KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailAddr, create_user: true, options: { email_redirect_to: location.origin + location.pathname } }),
-      }).then(function (r) {
-        if (!r.ok) return r.json().then(function (j) { throw new Error(j.msg || j.error_description || "sign-in failed"); });
-        return true;
-      });
+    /* Passwordless email sign-in is intentionally disabled. The public
+       account flow is email + password; old callers get an explicit error
+       instead of quietly sending another one-time link. */
+    signIn: function () {
+      return Promise.reject(new Error("Passwordless email sign-in is disabled. Use your email and password."));
     },
     signOut: function () {
       jdel("session");
       try { localStorage.removeItem("mcc_sess_keep"); } catch (e) {}
+      try { window.dispatchEvent(new CustomEvent("mcc:auth-changed", { detail: { signed_in: false } })); } catch (e) {}
       return Promise.resolve();
     },
     /* the admin door: email + password, no inbox in the loop.
@@ -241,6 +238,7 @@
           }
           saveSession({ access_token: j.access_token, refresh_token: j.refresh_token || "" });
           window.MCC_DB = sb;
+          try { window.dispatchEvent(new CustomEvent("mcc:auth-changed", { detail: { signed_in: true } })); } catch (e) {}
           return true;
         });
       });
@@ -252,6 +250,7 @@
        `data` rides into user_metadata; the store profile keeps the
        buyer's name and phone there, on the account, not the device. */
     signUpPassword: function (emailAddr, pass, data) {
+      if (String(pass || "").length < 8) return Promise.reject(new Error("Use at least 8 characters for your password."));
       return fetch(URL_ + "/auth/v1/signup", {
         method: "POST",
         headers: { apikey: KEY, "Content-Type": "application/json" },
@@ -262,6 +261,7 @@
           if (j.access_token) {
             saveSession({ access_token: j.access_token, refresh_token: j.refresh_token || "" });
             window.MCC_DB = sb;
+            try { window.dispatchEvent(new CustomEvent("mcc:auth-changed", { detail: { signed_in: true } })); } catch (e) {}
             return { session: true };
           }
           return { session: false, confirm: true };
