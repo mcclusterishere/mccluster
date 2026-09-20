@@ -153,10 +153,10 @@
   }
 
   $("createSite").onclick=createSite;
-  $("sendLink").onclick=function(){
-    var email=$("email").value.trim();if(!email)return;
-    $("authMsg").textContent="Sending…";
-    AUTH.signIn(email).then(function(){$("authMsg").textContent="Check your email for the sign-in link.";}).catch(function(e){$("authMsg").textContent=e.message;});
+  $("signIn").onclick=function(){
+    var email=$("email").value.trim(),password=$("password").value;if(!email||!password)return;
+    $("authMsg").textContent="Signing in…";
+    AUTH.signInPassword(email,password).then(function(){location.reload();}).catch(function(e){$("authMsg").textContent=e.message;});
   };
   boot();
 })();
