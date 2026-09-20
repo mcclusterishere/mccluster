@@ -56,21 +56,19 @@
         handle: p.handle || "",
         preview_seconds: 30
       }));
-      return '<article class="feat__card creator-card">' +
-        '<a class="creator-card__hit" href="music-creator.html?handle=' + encodeURIComponent(p.handle || "") + '">' +
-          '<img class="feat__bg" src="' + attr(art) + '" alt="" loading="lazy">' +
-          '<span class="feat__smoke"></span>' +
-          '<span class="feat__why">' + esc(t.access_mode === "public" ? "Open play" : t.access_mode === "purchase" ? "Preview · licensable" : "Full track with M Account") + '</span>' +
-          '<b>' + esc(t.title) + '</b>' +
-          '<small>' + esc(artist) + (t.genre ? " · " + esc(t.genre) : "") + '</small>' +
-        '</a>' +
+      return '<a class="feat__card creator-card" href="music-creator.html?handle=' + encodeURIComponent(p.handle || "") + '">' +
+        '<img class="feat__bg" src="' + attr(art) + '" alt="" loading="lazy">' +
+        '<span class="feat__smoke"></span>' +
+        '<span class="feat__why">' + esc(t.access_mode === "public" ? "Open play" : t.access_mode === "purchase" ? "Preview · licensable" : "Full track with M Account") + '</span>' +
+        '<b>' + esc(t.title) + '</b>' +
+        '<small>' + esc(artist) + (t.genre ? " · " + esc(t.genre) : "") + '</small>' +
         '<span class="feat__acts">' +
           '<span class="feat__play" role="button" tabindex="0" aria-label="Play ' + attr(t.title) + '" aria-pressed="false" data-music-play data-creator-track="' + attr(t.id) + '">' +
             '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>' +
           '</span>' +
           '<span class="feat__n">' + esc(t.access_mode === "purchase" ? "Preview" : "Play") + '</span>' +
         '</span>' +
-      '</article>';
+      '</a>';
     }).join("");
 
     if (root.MCC_TRACK) root.MCC_TRACK("music_creator_rail_view", { tracks: tracks.length });
