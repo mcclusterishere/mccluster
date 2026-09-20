@@ -56,6 +56,42 @@ Future developer-console UI should consume these endpoints rather than directly 
 
 Returns the platform capability catalog, application registry, API product/meter definitions, version and authentication model.
 
+## Operator business analytics
+
+These routes answer aggregate business questions from the canonical McCluster backend. They are **operator-only**: the caller must be signed in, belong to the `mccluster` organization, and hold the existing `ops.use` capability. They never return raw auth-user rows or email addresses.
+
+`GET /v1/analytics/business?window=5d`
+
+Returns an aggregate snapshot for an optional rolling window. Supported window syntax is `24h`, `5d`, `2w`. The snapshot currently includes:
+
+- total users;
+- users created in the requested window;
+- confirmed / unconfirmed user counts;
+- percentage of the total user base created in the window;
+- signup counts by local calendar day;
+- Mnet profile, post, follow, and reaction totals and window counts.
+
+`POST /v1/analytics/ask`
+
+Body:
+
+```json
+{
+  "question": "How many users joined in the last 5 days?"
+}
+```
+
+The route maps natural-language business questions onto the fixed metric catalog above. It does **not** generate or execute arbitrary SQL. Example supported questions:
+
+- `How many users do we have?`
+- `How many users joined in the last 5 days?`
+- `What percentage of users joined in the last 7 days?`
+- `Show new users by day for the last 2 weeks.`
+- `How many Mnet posts were created in the last 30 days?`
+- `How many follows do we have?`
+
+An optional explicit `window` field may override the window parsed from the question.
+
 ## Mnet API
 
 Mnet uses the same API host.

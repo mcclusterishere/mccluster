@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { parseBusinessWindow, answerBusinessQuestion } from '../../workers/mccluster/src/analytics/router.js';
 
 const read=(p)=>readFile(p,'utf8');
 
@@ -56,4 +57,71 @@ test('dashboard provisions sites, DNS verification, and copyable pixel', async()
   assert.match(router,/cloudflare-dns\.com\/dns-query/);
   assert.match(router,/_mccluster-analytics/);
   assert.match(html,/Your sites\. Your data\. Your pixel\./);
+});
+
+test('operator business analytics is capability-gated and never exposes raw auth rows', async()=>{
+  const router=await read('workers/mccluster/src/analytics/router.js');
+  assert.match(router,/\/v1\/analytics\/business/);
+  assert.match(router,/\/v1\/analytics\/ask/);
+  assert.match(router,/requireCapability\(env, membership, 'ops\.use'\)/);
+  assert.match(router,/auth\/v1\/admin\/users/);
+  assert.doesNotMatch(router,/select=.*email/i, 'business analytics must return aggregate counts, not user email rows');
+});
+
+test('business query parser understands rolling user-growth questions', ()=>{
+  const now=new Date('2026-09-20T04:00:00.000Z');
+  const win=parseBusinessWindow('How many users joined in the last 5 days?', now);
+  assert.equal(win.amount,5);
+  assert.equal(win.unit,'day');
+  assert.equal(win.since,'2026-09-15T04:00:00.000Z');
+
+  const snapshot={
+    generated_at:now.toISOString(),
+    window:win,
+    users:{
+      total:26,
+      created_in_window:20,
+      confirmed_total:25,
+      unconfirmed_total:1,
+      confirmed_in_window:19,
+      unconfirmed_in_window:1,
+      percent_created_in_window:76.9,
+      created_by_day:[{day:'2026-09-18',count:1},{day:'2026-09-19',count:19}]
+    },
+    mnet:{
+      profiles:{total:27,created_in_window:20},
+      posts:{total:3,created_in_window:2},
+      follows:{total:4,created_in_window:4},
+      reactions:{total:9,created_in_window:7}
+    }
+  };
+  const answer=answerBusinessQuestion('How many of these users are from the last 5 days?',snapshot);
+  assert.equal(answer.understood,true);
+  assert.equal(answer.metric,'users.created_in_window');
+  assert.equal(answer.value,20);
+  assert.match(answer.answer,/76\.9% of 26 total users/);
+});
+
+test('business query parser returns daily signup breakdown without guessing', ()=>{
+  const win=parseBusinessWindow('last 2 weeks',new Date('2026-09-20T04:00:00.000Z'));
+  const snapshot={
+    window:win,
+    users:{total:30,created_in_window:3,confirmed_total:30,unconfirmed_total:0,confirmed_in_window:3,unconfirmed_in_window:0,percent_created_in_window:10,created_by_day:[{day:'2026-09-18',count:1},{day:'2026-09-19',count:2}]},
+    mnet:{profiles:{total:30,created_in_window:3},posts:{total:0,created_in_window:0},follows:{total:0,created_in_window:0},reactions:{total:0,created_in_window:0}}
+  };
+  const answer=answerBusinessQuestion('Show new users by day for the last 2 weeks',snapshot);
+  assert.equal(answer.metric,'users.created_by_day');
+  assert.deepEqual(answer.value,snapshot.users.created_by_day);
+});
+
+
+test('business query parser refuses ambiguous time scope instead of returning all-time totals', ()=>{
+  const snapshot={
+    window:null,
+    users:{total:26,created_in_window:null,confirmed_total:25,unconfirmed_total:1,confirmed_in_window:null,unconfirmed_in_window:null,percent_created_in_window:null,created_by_day:[]},
+    mnet:{profiles:{total:27,created_in_window:null},posts:{total:0,created_in_window:null},follows:{total:0,created_in_window:null},reactions:{total:0,created_in_window:null}}
+  };
+  const answer=answerBusinessQuestion('How many new users this week?',snapshot);
+  assert.equal(answer.understood,false);
+  assert.match(answer.answer,/time-scoped question/);
 });
