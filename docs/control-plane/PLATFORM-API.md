@@ -65,12 +65,16 @@ Current endpoints:
 - `GET /v1/mnet/bootstrap?app_key=...` — user-session surface bootstrap (`profile` versus `feed`).
 - `GET /v1/mnet/feed?app_key=...&limit=...&before=...` — user-scoped feed; API keys with `mnet:read` receive public feed data.
 - `GET /v1/mnet/people/:mcclusterId` — canonical McCluster/Mnet public identity.
-- `PATCH /v1/mnet/profile?app_key=...` — universal profile update, McCluster-user session only.
-- `POST /v1/mnet/posts?app_key=...` — native post creation, McCluster-user session only.
-- `POST /v1/mnet/posts/:postId/reactions` — reaction mutation.
+- `PATCH /v1/mnet/profile?app_key=...` — universal profile update, including the canonical McCluster ID when supplied; McCluster-user session only.
+- `POST /v1/mnet/posts?app_key=...` — native post creation, or a persistent comment when `reply_to_id` is supplied; McCluster-user session only.
+- `GET /v1/mnet/posts/:postId/replies` — visible first-level comments with author/profile hydration.
+- `POST /v1/mnet/posts/:postId/reactions` — add a reaction.
+- `DELETE /v1/mnet/posts/:postId/reactions` — remove the current user's reaction.
 - `POST /v1/mnet/people/:mcclusterId/follow` — follow.
 - `DELETE /v1/mnet/people/:mcclusterId/follow` — unfollow.
 - `GET /v1/mnet/notifications` — current person's notifications.
+
+Feed responses hydrate post items with the public author-card fields needed by first-party clients plus reaction/reply counts and the current user's like state. Reply posts remain addressable through the replies endpoint instead of being duplicated as top-level feed cards.
 
 External API keys start read-oriented. Write access should be deliberately granted with scopes rather than letting an integration impersonate a human by default.
 
