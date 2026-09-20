@@ -16,5 +16,5 @@ Public edge: `https://matthew.mccluster.org` (apex `mccluster.org` is the same p
 API Worker: `mccluster` on `https://api.mccluster.org`.
 Source: `workers/mccluster`.
 
-10. **Never draw a logo.** The artwork the owner supplies is the only source of truth for any mark, forever. Do not trace it, approximate it, recolour it, or add a plate or tile it does not already contain. Cropping a supplied file is fine; adding a shape is drawing. If the variant you need does not exist, ask. See `AGENTS.md` → "THE LOGOS ARE NOT YOURS TO DRAW".
+10. **Never draw a logo.** The artwork the owner supplies is the only source of truth for any mark, forever. Do not trace it, approximate it, recolour it, or add a plate or tile it does not already contain. Do not crop supplied artwork. Scale the complete supplied artwork proportionally only. Adding a shape is drawing. If the variant you need does not exist, ask. See `AGENTS.md` → "THE LOGOS ARE NOT YOURS TO DRAW".
 11. **`mcclusterishere/Here` is the old repo and publishes nothing.** Do not write to it. If a task looks like it belongs there, say so in the chat and work in this repo instead.
