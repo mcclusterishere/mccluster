@@ -38,8 +38,8 @@
      and still resolves.
    Its clothes live in uprise-world.html; this file only drives.
    ============================================================ */
-import * as THREE from "../vendor/three.module.min.js";
-import { OutlineEffect } from "../vendor/three-addons/effects/OutlineEffect.js";
+import * as THREE from "../../vendor/three.module.min.js";
+import { OutlineEffect } from "../../vendor/three-addons/effects/OutlineEffect.js";
 
 /* the ink is a very dark blue-brown, never pure black — same as
    the world's, so the two sequences are drawn with one pen */

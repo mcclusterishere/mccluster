@@ -55,11 +55,11 @@
    equity-uprise.html, never a replacement for it — with WebGL off
    or reduced motion on, the documents are still right there.
    ============================================================ */
-import * as THREE from "../vendor/three.module.min.js";
-import { EffectComposer } from "../vendor/three-addons/postprocessing/EffectComposer.js";
-import { Pass } from "../vendor/three-addons/postprocessing/Pass.js";
-import { UnrealBloomPass } from "../vendor/three-addons/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "../vendor/three-addons/postprocessing/OutputPass.js";
+import * as THREE from "../../vendor/three.module.min.js";
+import { EffectComposer } from "../../vendor/three-addons/postprocessing/EffectComposer.js";
+import { Pass } from "../../vendor/three-addons/postprocessing/Pass.js";
+import { UnrealBloomPass } from "../../vendor/three-addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "../../vendor/three-addons/postprocessing/OutputPass.js";
 
 /* ---------- world constants ---------- */
 /* PLANET RADIUS.

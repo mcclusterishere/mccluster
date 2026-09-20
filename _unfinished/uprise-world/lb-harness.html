@@ -1,11 +1,23 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>landmark harness</title>
+<html lang="en"><head><meta charset="utf-8">
+  <!-- A local inspection harness, not a room. It is not linked from the
+       site, which keeps people out and does nothing about crawlers: the
+       map at robots.txt invites agents as well as search engines, and
+       "prop lab" in a search result for this house is somebody else's
+       first impression of it. Every other working desk here carries this
+       line; these three had been missed. -->
+  <meta name="robots" content="noindex, nofollow">
+  <!-- Moved here from the site root on 2026-09-20. These harnesses import
+       js/uprise-*.js, which had already been moved into this folder, so at
+       the root they were three broken pages that the Pages deploy was
+       publishing to matthew.mccluster.org while deliberately excluding the
+       code they harness. Here they sit beside it and the imports resolve. --><title>landmark harness</title>
 <style>html,body{margin:0;background:#dfe7e6}canvas{display:block}</style></head>
 <body data-no-appbar><canvas id="c"></canvas>
 <script type="module">
-import * as THREE from "./vendor/three.module.min.js";
-import { OutlineEffect } from "./vendor/three-addons/effects/OutlineEffect.js";
-import { build, triangles } from "./js/uprise-landmarks.js";
+import * as THREE from "../../vendor/three.module.min.js";
+import { OutlineEffect } from "../../vendor/three-addons/effects/OutlineEffect.js";
+import { build, triangles } from "./uprise-landmarks.js";
 
 const canvas = document.getElementById("c");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });

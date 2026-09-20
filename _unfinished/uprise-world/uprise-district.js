@@ -26,7 +26,7 @@
    is drawn as pavement and left unlabelled.
    ============================================================ */
 
-import * as THREE_DEFAULT from "../vendor/three.module.min.js";
+import * as THREE_DEFAULT from "../../vendor/three.module.min.js";
 import { H, build } from "./uprise-landmarks.js";
 import { makeKit, fenceRun } from "./uprise-props.js";
 

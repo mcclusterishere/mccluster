@@ -19,7 +19,6 @@ import { dirname, join } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
 const json = async (p) => JSON.parse(await read(p));
-const REACH   = 'supabase/migrations/20260919104500_track_reach_public_ranking.sql';
 const SIGNALS = 'supabase/migrations/20260919150000_track_recommendation_signals.sql';
 
 const code = (src) => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
@@ -226,49 +225,48 @@ test('an asked-for track beats both resumes', async () => {
    5. THE ONE DOOR OUT OF THE OWNER-ONLY TABLE
    --------------------------------------------------------------- */
 
-test('the ranking view publishes an order and never the numbers', async () => {
+test('the public views leak nothing identifying', async () => {
   /* public.events is owner-only and carries an address, a network and a
-     device. This view is the single thing about it an anonymous visitor can
-     read, so what it selects IS the security argument. */
-  const sql = sqlCode(await read(REACH));
-  assert.match(sql, /grant select on public\.v_track_reach to anon, authenticated;/,
-    'the shelf order is public because the shelf is public');
-  for (const leak of [/\bip\b/, /device_id\s*(,|$)/m, /session_id/, /\buid\b/, /user_agent/, /\bat\b\s*(,|$)/m]) {
-    assert.doesNotMatch(sql.replace(/count\(distinct e\.device_id\)/g, 'COUNTED'), leak,
-      `${leak} must not appear in a view an anonymous visitor can read`);
+     device. These two views are the only things about it an anonymous
+     visitor can read, so what they select IS the security argument. */
+  const sql = sqlCode(await read(SIGNALS));
+  assert.match(sql, /grant select on public\.v_track_signals  to anon, authenticated;/,
+    'the ordering is public because the shelf is public');
+  assert.match(sql, /grant select on public\.v_track_affinity to anon, authenticated;/,
+    'and so is the similarity matrix');
+  /* device_id and session_id are read INSIDE the views — that is the whole
+     computation — so the check is on what survives into a select list. */
+  const published = [
+    sql.slice(sql.indexOf('select\n  r.k as track_key'), sql.indexOf('from ranked r')),
+    sql.slice(sql.indexOf('select\n  p.k as track_key'), sql.indexOf('from pairs p')),
+  ].join('\n');
+  for (const leak of [/\bip\b/, /device_id/, /session_id/, /\buid\b/, /user_agent/, /\be\.at\b/]) {
+    assert.doesNotMatch(published, leak,
+      `${leak} must not survive into a view an anonymous visitor can read`);
   }
-  /* The counts are computed and then left behind: only the position and the
-     relative index survive into the select list. */
-  assert.match(sql, /rank\(\) over \(order by weight desc, key\) as position/,
-    'the order must be published');
-  assert.match(sql, /round\(100\.0 \* weight \/ max\(weight\) over \(\)\)::int/,
-    'the index must be relative, so a total cannot be read off it');
-  assert.match(sql, /end as reach/, 'and it must be the column named reach');
-  const selectList = sql.slice(sql.lastIndexOf('select\n  key as track_key'), sql.indexOf('where weight > 0'));
-  assert.doesNotMatch(selectList, /\bplays\b|\blisteners\b|\badds\b|\bdrops\b/,
-    'raw totals are the owner\'s to publish, not a side effect of sorting a shelf');
 });
 
-test('the ranking view is the deliberate exception, and says so', async () => {
-  /* Every other telemetry view is security_invoker precisely so the
-     owner-only policy governs it. This one cannot be, or it would return
-     nothing to the visitors it exists for — which makes it the one place a
-     careless column becomes a disclosure. */
-  const sql = await read(REACH);
+test('the signal views are the deliberate exception, and say so', async () => {
+  /* Every telemetry view added with the collector is security_invoker
+     precisely so the owner-only policy governs it. These cannot be, or they
+     would return nothing to the visitors they exist for — which makes them
+     the one place a careless column becomes a disclosure. */
+  const sql = await read(SIGNALS);
   assert.doesNotMatch(sqlCode(sql), /with \(security_invoker/,
-    'this view must run as its owner, or the room has no order');
-  assert.match(sql, /DELIBERATELY NOT security_invoker/,
+    'these views must run as their owner, or the room has no order');
+  assert.match(sql, /WHAT IS PUBLISHED, AND WHAT IS STILL NOT/,
     'the exception must be stated where the next person edits it');
-  assert.match(sql, /comment on view public\.v_track_reach is/,
-    'and recorded on the object itself, where a schema dump shows it');
-
+  for (const v of ['v_track_signals', 'v_track_affinity']) {
+    assert.match(sql, new RegExp(`comment on view public\\.${v} is`),
+      `${v} must carry its warning on the object, where a schema dump shows it`);
+  }
   const views = await read('supabase/migrations/20260919094143_native_telemetry_views.sql');
   assert.match(views, /security_invoker = true/,
     'the owner-only views must stay owner-only');
 });
 
 test('crawlers do not get a vote in what the shelf shows first', async () => {
-  const sql = sqlCode(await read(REACH));
+  const sql = sqlCode(await read(SIGNALS));
   assert.match(sql, /and e\.is_bot is not true/,
     'a crawler pressing play is not an audience');
 });

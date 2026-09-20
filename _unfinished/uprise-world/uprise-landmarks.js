@@ -27,7 +27,7 @@
    Inventing a landmark is worse than not shipping one.
    ============================================================ */
 
-import * as THREE_DEFAULT from "../vendor/three.module.min.js";
+import * as THREE_DEFAULT from "../../vendor/three.module.min.js";
 
 export const SLUGS = ["bridgeport-city-hall", "ct-legislative-office-building", "georgia-state-capitol", "docket-516"];
 

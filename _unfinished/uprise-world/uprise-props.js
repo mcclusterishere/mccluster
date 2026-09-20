@@ -25,7 +25,7 @@
    renderer.
    ============================================================ */
 
-import * as THREE_DEFAULT from "../vendor/three.module.min.js";
+import * as THREE_DEFAULT from "../../vendor/three.module.min.js";
 import { H } from "./uprise-landmarks.js";
 
 const { cel, mergeGeoms, shadowed } = H;

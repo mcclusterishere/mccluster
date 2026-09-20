@@ -16,9 +16,10 @@
    want. The card, chip and row vocabulary is album.html's, moved into
    css/music-room.css so the two rooms are one product.
 
-   WHAT ORDERS IT. public.v_track_reach, which collapses album_play and
-   rotation_add into a position and a 0-100 index and publishes neither
-   the counts nor anything identifying.
+   WHAT ORDERS IT. public.v_track_signals and public.v_track_affinity —
+   a Wilson-bounded keep rate, a seven-day-half-life momentum and an
+   item-to-item similarity matrix, each published as a position or a
+   relative score and never as a count or an identifier.
 
    WHAT HAPPENS WHEN THAT IS NOT THERE. A new deploy, a blocked request,
    a database asleep: the room still opens, ordered by the shelf, and
