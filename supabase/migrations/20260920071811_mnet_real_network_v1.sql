@@ -2,6 +2,16 @@
 -- Adds the missing production primitives: media, moderation reports, direct messaging,
 -- realtime delivery, discovery, and block/mute-aware feed semantics.
 
+-- Historical production has the canonical public McCluster handle on
+-- platform_profiles, but clean source-controlled resets can predate that column.
+-- Reconcile the identity column before Mnet discovery compiles against it.
+alter table public.platform_profiles
+  add column if not exists mccluster_id text;
+
+create unique index if not exists platform_profiles_mccluster_id_unique_ci
+  on public.platform_profiles (lower(mccluster_id))
+  where mccluster_id is not null and btrim(mccluster_id) <> '';
+
 create table if not exists public.network_media_assets (
   id uuid primary key default gen_random_uuid(),
   owner_m_uid uuid not null references public.m_people(id) on delete cascade default public.current_m_uid(),
