@@ -29,6 +29,12 @@
     var parts = String(name || "M").trim().split(/\s+/).filter(Boolean);
     return (parts.slice(0, 2).map(function (p) { return p.charAt(0); }).join("") || "M").toUpperCase();
   }
+  function safeHttpUrl(value) {
+    try {
+      var u = new URL(String(value || ""), location.origin);
+      return /^(https?:)$/.test(u.protocol) ? u.href : "";
+    } catch (e) { return ""; }
+  }
   function timeAgo(iso) {
     var d = new Date(iso), ms = Date.now() - d.getTime();
     if (!Number.isFinite(ms)) return "";
@@ -57,9 +63,10 @@
   function identity() { return state.boot && state.boot.identity || {}; }
 
   function setAvatar(img, fallback, url, name) {
+    var safe = safeHttpUrl(url);
     if (img) {
-      if (url) {
-        img.src = url;
+      if (safe) {
+        img.src = safe;
         img.hidden = false;
         img.onerror = function () { img.hidden = true; };
       } else img.hidden = true;
@@ -72,23 +79,27 @@
     $("mnMe").hidden = false;
     setAvatar($("mnAvatar"), $("mnAvatarFallback"), p.avatar_url, name);
     $("mnComposerAvatar").textContent = initials(name);
-    if (p.avatar_url) {
-      $("mnComposerAvatar").style.backgroundImage = "url(" + JSON.stringify(p.avatar_url).slice(1,-1) + ")";
+    var avatar = safeHttpUrl(p.avatar_url);
+    if (avatar) {
+      $("mnComposerAvatar").style.backgroundImage = "url(" + JSON.stringify(avatar) + ")";
       $("mnComposerAvatar").style.backgroundSize = "cover";
       $("mnComposerAvatar").textContent = "";
+    } else {
+      $("mnComposerAvatar").style.backgroundImage = "";
     }
     $("mnProfileName").textContent = p.display_name || name;
     $("mnProfileHandle").textContent = id.mccluster_id ? "@" + id.mccluster_id : "";
     $("mnProfileHeadline").textContent = p.headline || "";
     $("mnProfileBio").textContent = p.bio || "";
-    $("mnProfileBanner").style.backgroundImage = p.banner_url ? "url(" + JSON.stringify(p.banner_url).slice(1,-1) + ")" : "";
+    var banner = safeHttpUrl(p.banner_url);
+    $("mnProfileBanner").style.backgroundImage = banner ? "url(" + JSON.stringify(banner) + ")" : "";
     $("mnProfileAvatar").textContent = initials(name);
-    $("mnProfileAvatar").style.backgroundImage = p.avatar_url ? "url(" + JSON.stringify(p.avatar_url).slice(1,-1) + ")" : "";
-    if (p.avatar_url) $("mnProfileAvatar").textContent = "";
-    var site = $("mnProfileWebsite");
-    if (p.website_url) {
-      site.href = p.website_url;
-      site.textContent = p.website_url.replace(/^https?:\/\//, "");
+    $("mnProfileAvatar").style.backgroundImage = avatar ? "url(" + JSON.stringify(avatar) + ")" : "";
+    if (avatar) $("mnProfileAvatar").textContent = "";
+    var site = $("mnProfileWebsite"), website = safeHttpUrl(p.website_url);
+    if (website) {
+      site.href = website;
+      site.textContent = website.replace(/^https?:\/\//, "");
       site.hidden = false;
     } else site.hidden = true;
   }
@@ -186,8 +197,9 @@
     actor = actor || {};
     var name = actor.display_name || actor.mccluster_id || "Mnet member";
     var handle = actor.mccluster_id ? "@" + actor.mccluster_id : "McCluster";
-    var av = actor.avatar_url
-      ? '<img src="' + esc(actor.avatar_url) + '" alt="">'
+    var avatar = safeHttpUrl(actor.avatar_url);
+    var av = avatar
+      ? '<img src="' + esc(avatar) + '" alt="">'
       : esc(initials(name));
     return '<div class="mn__author-avatar">' + av + '</div>' +
       '<div class="mn__author-meta"><span class="mn__author-name">' + esc(name) + '</span>' +
