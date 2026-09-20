@@ -182,10 +182,78 @@ create index if not exists network_mutes_expiry_idx
   on public.network_mutes(muter_m_uid, expires_at)
   where expires_at is not null;
 
+create table if not exists public.network_bookmarks (
+  m_uid uuid not null references public.m_people(id) on delete cascade,
+  post_id uuid not null references public.network_posts(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (m_uid, post_id)
+);
+create index if not exists network_bookmarks_created_idx
+  on public.network_bookmarks(m_uid, created_at desc);
+
+create table if not exists public.network_connections (
+  id uuid primary key default gen_random_uuid(),
+  requester_m_uid uuid not null references public.m_people(id) on delete cascade,
+  addressee_m_uid uuid not null references public.m_people(id) on delete cascade,
+  status text not null default 'pending' check (status in ('pending','accepted','declined')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (requester_m_uid <> addressee_m_uid)
+);
+create unique index if not exists network_connections_pair_idx
+  on public.network_connections (
+    least(requester_m_uid, addressee_m_uid),
+    greatest(requester_m_uid, addressee_m_uid)
+  );
+
 alter table public.network_blocks enable row level security;
 alter table public.network_mutes enable row level security;
-revoke all on public.network_blocks, public.network_mutes from public, anon, authenticated;
-grant all on public.network_blocks, public.network_mutes to service_role;
+alter table public.network_bookmarks enable row level security;
+alter table public.network_connections enable row level security;
+
+drop policy if exists network_blocks_owner_read on public.network_blocks;
+create policy network_blocks_owner_read on public.network_blocks for select to authenticated
+using (blocker_m_uid=public.current_m_uid());
+drop policy if exists network_blocks_owner_insert on public.network_blocks;
+create policy network_blocks_owner_insert on public.network_blocks for insert to authenticated
+with check (blocker_m_uid=public.current_m_uid());
+drop policy if exists network_blocks_owner_delete on public.network_blocks;
+create policy network_blocks_owner_delete on public.network_blocks for delete to authenticated
+using (blocker_m_uid=public.current_m_uid());
+
+drop policy if exists network_mutes_owner_read on public.network_mutes;
+create policy network_mutes_owner_read on public.network_mutes for select to authenticated
+using (muter_m_uid=public.current_m_uid());
+drop policy if exists network_mutes_owner_insert on public.network_mutes;
+create policy network_mutes_owner_insert on public.network_mutes for insert to authenticated
+with check (muter_m_uid=public.current_m_uid());
+drop policy if exists network_mutes_owner_update on public.network_mutes;
+create policy network_mutes_owner_update on public.network_mutes for update to authenticated
+using (muter_m_uid=public.current_m_uid()) with check (muter_m_uid=public.current_m_uid());
+drop policy if exists network_mutes_owner_delete on public.network_mutes;
+create policy network_mutes_owner_delete on public.network_mutes for delete to authenticated
+using (muter_m_uid=public.current_m_uid());
+
+drop policy if exists network_bookmarks_owner_read on public.network_bookmarks;
+create policy network_bookmarks_owner_read on public.network_bookmarks for select to authenticated
+using (m_uid=public.current_m_uid());
+drop policy if exists network_bookmarks_owner_insert on public.network_bookmarks;
+create policy network_bookmarks_owner_insert on public.network_bookmarks for insert to authenticated
+with check (m_uid=public.current_m_uid());
+drop policy if exists network_bookmarks_owner_delete on public.network_bookmarks;
+create policy network_bookmarks_owner_delete on public.network_bookmarks for delete to authenticated
+using (m_uid=public.current_m_uid());
+
+drop policy if exists network_connections_member_read on public.network_connections;
+create policy network_connections_member_read on public.network_connections for select to authenticated
+using (requester_m_uid=public.current_m_uid() or addressee_m_uid=public.current_m_uid());
+
+revoke all on public.network_blocks, public.network_mutes, public.network_bookmarks, public.network_connections from public, anon;
+grant select,insert,delete on public.network_blocks to authenticated;
+grant select,insert,update,delete on public.network_mutes to authenticated;
+grant select,insert,delete on public.network_bookmarks to authenticated;
+grant select on public.network_connections to authenticated;
+grant all on public.network_blocks, public.network_mutes, public.network_bookmarks, public.network_connections to service_role;
 
 create or replace function public.mnet_is_blocked_pair(p_a uuid,p_b uuid)
 returns boolean language sql stable security definer set search_path=pg_catalog,public as $$
