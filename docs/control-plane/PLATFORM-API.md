@@ -74,7 +74,7 @@ Current endpoints:
 - `DELETE /v1/mnet/people/:mcclusterId/follow` — unfollow.
 - `GET /v1/mnet/notifications` — current person's notifications.
 
-Feed responses hydrate post items with the public author-card fields needed by first-party clients plus reaction/reply counts and the current user's like state. Reply posts remain addressable through the replies endpoint instead of being duplicated as top-level feed cards.
+Signed-in first-party feed responses hydrate post items with the public author-card fields needed by the client plus reaction/reply counts and the current user's like state. Reply posts remain addressable through the replies endpoint instead of being duplicated as top-level feed cards.
 
 External API keys start read-oriented. Write access should be deliberately granted with scopes rather than letting an integration impersonate a human by default.
 
