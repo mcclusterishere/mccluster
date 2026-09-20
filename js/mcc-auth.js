@@ -33,7 +33,17 @@
   function del(store, key) { try { root[store].removeItem(key); } catch (e) { /* storage may be blocked */ } }
 
   function readSession() {
-    try { return JSON.parse(get('localStorage', SESSION) || 'null'); } catch (e) { return null; }
+    try {
+      var raw = get('localStorage', SESSION);
+      /* backend.js has always kept a second copy specifically so a transient
+         write/clear cannot make an active member look anonymous. mcc-auth.js
+         must honor the same contract because Mnet loads this module directly. */
+      if (!raw) {
+        raw = get('localStorage', KEEP);
+        if (raw) set('localStorage', SESSION, raw);
+      }
+      return JSON.parse(raw || 'null');
+    } catch (e) { return null; }
   }
 
   function writeSession(s) {
