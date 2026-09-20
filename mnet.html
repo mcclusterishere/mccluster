@@ -34,7 +34,7 @@
           <button class="mn__auth-tab" id="mnCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
         </div>
         <div id="mnCreateNameWrap" hidden>
-          <label class="mn__label" for="mnCreateName">Display name</label>
+          <label class="mn__label" for="mnCreateName">Display name <span>optional</span></label>
           <input class="mn__input" id="mnCreateName" type="text" autocomplete="name" placeholder="Your name">
         </div>
         <label class="mn__label" for="mnEmail">Email</label>
@@ -46,8 +46,10 @@
           <input class="mn__input" id="mnPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Type it again">
         </div>
         <button class="mn__primary" id="mnAuthGo" type="button">Sign in</button>
-        <p class="mn__hint" id="mnPasswordHint">Use the password on your M Account. One-time login links are no longer used.</p>
+        <button class="mn__text-button" id="mnForgot" type="button">Forgot password?</button>
+        <p class="mn__hint" id="mnPasswordHint" hidden>Use at least 8 characters.</p>
         <p class="mn__status" id="mnAuthStatus" role="status"></p>
+        <button class="mn__text-button" id="mnResend" type="button" hidden>Resend verification email</button>
         <div id="mnProviders" hidden>
           <div class="mn__or"><span>or</span></div>
           <div id="mnProviderButtons"></div>
