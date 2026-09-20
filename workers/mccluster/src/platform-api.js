@@ -28,7 +28,7 @@ async function networkActors(env,muids=[]){
   const ids=uniq(muids).filter(uuidLike); if(!ids.length)return {};
   const inIds=ids.join(',');
   const [profiles,links]=await Promise.all([
-    service(env,`network_profiles?m_uid=in.(${inIds})&select=m_uid,display_name,headline,bio,avatar_url,banner_url,website_url,verification_state`),
+    service(env,`network_profiles?m_uid=in.(${inIds})&select=m_uid,display_name,avatar_url,verification_state`),
     service(env,`m_auth_user_links?m_uid=in.(${inIds})&is_primary=eq.true&select=m_uid,auth_user_id`)
   ]);
   const authIds=uniq((links||[]).map(x=>x.auth_user_id));
