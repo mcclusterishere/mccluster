@@ -238,7 +238,6 @@
       });
     });
     $("wePass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("weIn").click(); });
-    });
     $("weOut").addEventListener("click", function () {
       window.MCC_AUTH.signOut().then(function () { location.reload(); });
     });
