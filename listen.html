@@ -66,32 +66,29 @@
   <link rel="stylesheet" href="css/music-room.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
 </head>
-<body class="songpage music-room music-room--listen">
+<body class="songpage music-room music-room--listen music-v2">
   <main class="ls">
 
-    <header class="ls__top">
-      <img class="ls__ava" src="assets/img/m-mark.png" alt="McCluster">
-      <div class="ls__acts">
-        <a class="ls__circle" href="album.html?playlist=my-rotation" aria-label="My rotation">
-          <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.6-9-9c-1.2-2.7 0.6-6 3.8-6 2 0 3.4 1.2 5.2 3.2C13.8 6.2 15.2 5 17.2 5c3.2 0 5 3.3 3.8 6-2 4.4-9 9-9 9z"/></svg>
-        </a>
-        <a class="ls__circle" href="catalogue.html" aria-label="The registered catalogue">
-          <svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
-        </a>
-        <a class="ls__circle" href="creator.html" aria-label="Creator Studio">
-          <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 14v5h14v-5"/></svg>
-        </a>
-        <button class="ls__circle" id="themeFlip" type="button" aria-label="Light or dark">
+    <header class="music-contextbar">
+      <a class="music-contextbar__brand" href="listen.html" aria-label="McCluster Music home">
+        <img src="assets/img/m-mark.png" alt="">
+        <span>Music</span>
+      </a>
+      <nav class="music-contextbar__nav" aria-label="Music">
+        <a href="listen.html" aria-current="page">Listen</a>
+        <a href="catalogue.html">Library</a>
+        <a href="creator.html">Creator Studio</a>
+        <button class="music-contextbar__icon" id="themeFlip" type="button" aria-label="Light or dark">
           <svg viewBox="0 0 24 24"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
         </button>
-      </div>
+      </nav>
     </header>
 
-    <div class="greet">Have no fear.</div>
-    <p class="greet__sub">Every record McCluster has put out, in one room &mdash; in the order
-      listeners put them.</p>
+    <div class="greet">Listen now.</div>
+    <p class="greet__sub">McCluster records, independent creators, and the songs people are actually reaching for &mdash; all in one player.</p>
 
     <div class="ls__find">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
@@ -108,6 +105,14 @@
       <button type="button" data-chip="saved">Saved</button>
     </div>
 
+    <section class="music-launch" aria-label="Creator Studio">
+      <div>
+        <span>For artists &amp; creators</span>
+        <strong>Put your music in the same ecosystem people are listening in.</strong>
+      </div>
+      <a href="creator.html">Open Creator Studio</a>
+    </section>
+
     <!-- THE DECK. Every rail below is one algorithm, and it only exists on
          the page when that algorithm has something to say. A rail headed
          with a method and filled with a fallback is worse than no rail. -->
@@ -119,43 +124,43 @@
     </section>
 
     <section class="ls__sec" id="finWrap" aria-label="Finish the record" hidden>
-      <p class="lib__k">Finish the record</p>
+      <p class="lib__k">Continue listening</p>
       <p class="lib__why" id="finWhy">Albums you started and have not played out.</p>
       <div class="feat" id="fin"></div>
     </section>
 
     <section class="ls__sec" id="riseWrap" aria-label="Rising" hidden>
-      <p class="lib__k">Rising</p>
+      <p class="lib__k">Trending now</p>
       <p class="lib__why">Most played this week, not most played ever.</p>
       <div class="feat" id="rise"></div>
     </section>
 
     <section class="ls__sec" id="keptWrap" aria-label="Most kept" hidden>
-      <p class="lib__k">Most kept</p>
+      <p class="lib__k">Most saved</p>
       <p class="lib__why">Ranked by how often a listener saves it after playing it.</p>
       <div class="feat" id="kept"></div>
     </section>
 
     <section class="ls__sec" id="deepWrap" aria-label="Deep cuts" hidden>
-      <p class="lib__k">Deep cuts</p>
+      <p class="lib__k">Hidden gems</p>
       <p class="lib__why">Kept far more often than they are found.</p>
       <div class="feat" id="deep"></div>
     </section>
 
     <section class="ls__sec" id="rotWrap" aria-label="Your rotation" hidden>
-      <p class="lib__k">In your rotation</p>
+      <p class="lib__k">Your library</p>
       <p class="lib__why">Saved on this device. Nobody else can see this list.</p>
       <div class="feat" id="rot"></div>
     </section>
 
     <section class="ls__sec" id="shelfWrap" aria-label="The albums">
-      <p class="lib__k">The shelf</p>
+      <p class="lib__k">Albums</p>
       <p class="lib__why">Every record, front to back.</p>
       <div class="feat" id="shelf"></div>
     </section>
 
     <section class="ls__sec" id="allWrap" aria-label="Every track">
-      <p class="lib__k" id="allK">Everything</p>
+      <p class="lib__k" id="allK">Songs</p>
       <p class="lib__why" id="allWhy">All of it, in one list.</p>
       <ul class="tr" id="all"><li><span class="t">Opening the shelf&hellip;</span></li></ul>
     </section>
