@@ -297,7 +297,10 @@ async function handleMnet(req,env,path,url){
     const rows=await service(env,`network_posts?author_m_uid=eq.${resolved.m_uid}&reply_to_id=is.null&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&order=created_at.desc&limit=${limit+1}&select=*`);
     const visible=[];
     for(const post of rows||[]){if(external?(post.visibility==='public'):(await canReadNetworkPost(env,viewer,post)))visible.push(post)}
-    const page=visible.slice(0,limit),hydrated=await hydratePostRows(env,page,viewer),next=visible.length>limit?page[page.length-1]?.created_at||null:null;
+    const page=visible.slice(0,limit),hydrated=await hydratePostRows(env,page,viewer);
+    let next=null;
+    if(visible.length>limit)next=page[page.length-1]?.created_at||null;
+    else if((rows||[]).length>limit)next=rows[rows.length-1]?.created_at||null;
     if(external)await meter(env,external,'mnet.read',path,req.method,200,null,start);
     return reply(req,env,{posts:hydrated,next_before:next});
   }
@@ -325,6 +328,14 @@ async function handleMnet(req,env,path,url){
     if(!rows?.length)return fail(req,env,'Post not found',404);
     const at=new Date().toISOString();await service(env,`network_posts?id=eq.${postOne[1]}&author_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({deleted_at:at,updated_at:at})});
     return reply(req,env,{deleted:true});
+  }
+
+  if(path==='/v1/mnet/blocks'&&req.method==='GET'){
+    if(external)return fail(req,env,'Blocked people require a McCluster user session',403);
+    const muid=await currentMuid(env,user.id);
+    const rows=await service(env,`network_blocks?blocker_m_uid=eq.${muid}&order=created_at.desc&limit=200&select=blocked_m_uid,created_at`);
+    const actors=await networkActors(env,(rows||[]).map(x=>x.blocked_m_uid));
+    return reply(req,env,{blocks:(rows||[]).map(x=>({...x,profile:actors[x.blocked_m_uid]||{m_uid:x.blocked_m_uid}}))});
   }
 
   if(path==='/v1/mnet/bookmarks'&&req.method==='GET'){
@@ -407,8 +418,8 @@ async function handleMnet(req,env,path,url){
     if(external)return fail(req,env,'Messages require a McCluster user session',403);const muid=await currentMuid(env,user.id),mine=await service(env,`network_conversation_members?conversation_id=eq.${messages[1]}&m_uid=eq.${muid}&member_state=neq.left&select=*&limit=1`);if(!mine?.length)return fail(req,env,'Conversation not found',404);
     const limit=Math.min(100,Math.max(1,Number(url.searchParams.get('limit')||50))),before=url.searchParams.get('before');
     const rows=await service(env,`network_messages?conversation_id=eq.${messages[1]}&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&order=created_at.desc&limit=${limit+1}&select=*`);
-    const page=(rows||[]).slice(0,limit),actors=await networkActors(env,page.map(x=>x.sender_m_uid));await userRpc(req,env,'mnet_mark_conversation_read',{p_conversation_id:messages[1]}).catch(()=>null);
-    return reply(req,env,{messages:page.reverse().map(x=>({...x,sender:actors[x.sender_m_uid]||{m_uid:x.sender_m_uid}})),next_before:(rows||[]).length>limit?page[page.length-1]?.created_at||null:null});
+    const page=(rows||[]).slice(0,limit),cursor=(rows||[]).length>limit?page[page.length-1]?.created_at||null:null,actors=await networkActors(env,page.map(x=>x.sender_m_uid));await userRpc(req,env,'mnet_mark_conversation_read',{p_conversation_id:messages[1]}).catch(()=>null);
+    return reply(req,env,{messages:page.slice().reverse().map(x=>({...x,sender:actors[x.sender_m_uid]||{m_uid:x.sender_m_uid}})),next_before:cursor});
   }
   if(messages&&req.method==='POST'){
     if(external)return fail(req,env,'Messages require a McCluster user session',403);const b=await json(req),id=await userRpc(req,env,'mnet_send_message',{p_conversation_id:messages[1],p_body:String(b.body||''),p_media:Array.isArray(b.media)?b.media:[]});
