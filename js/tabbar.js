@@ -99,9 +99,9 @@
       '<a class="appbar__tab" href="' + ROOT + 'whip.html" data-appnav="sites">' +
         '<img class="appbar__we" src="' + ROOT + 'assets/img/we-icon-dark-bar.png" alt="">' +
         '<span>Whip</span></a>' +
-      '<a class="appbar__tab" href="' + ROOT + 'account.html" data-appnav="profile">' +
+      '<a class="appbar__tab" href="' + ROOT + 'mnet.html" data-appnav="profile">' +
         '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/>' +
-        '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Profile</span></a>';
+        '<path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>Mnet</span></a>';
     document.body.appendChild(nav);
     return nav;
   }
@@ -229,18 +229,14 @@
       ],
     },
     profile: {
-      home: "account.html",
+      home: "mnet.html",
       slots: [
-        ["account.html", "key", "Sign in", { title: "Your account",
-          sub: "A sign-in link lands in your email, no password. Your record with the agency lives here.",
-          dyn: function () {
-            var u = window.MCC_AUTH && window.MCC_AUTH.user && window.MCC_AUTH.user();
-            return u ? "Signed in as " + (u.email || "your instant account") + ". Your bookings and receipts are on the record." : null;
-          } }],
+        ["mnet.html", "folk", "Mnet", { title: "Mnet",
+          sub: "The McCluster network: your profile, posts, comments, reactions and the activity happening across the ecosystem." }],
+        ["account.html?stay=1", "key", "Account", { title: "Your M Account",
+          sub: "Sign in, manage credentials and keep the same identity across every McCluster-powered product." }],
         ["console.html", "desk", "Console", { title: "The client console",
           sub: "If the studio runs your site, this is your back room: file a change, watch it land, see your plan." }],
-        ["shots.html", "shot", "Shot Wall", { title: "The Shot Wall",
-          sub: "Were you at the event? Find your photo on the wall. The first one's free with a follow, the whole pack is a few dollars." }],
         ["press.html", "paper", "Press Kit", { title: "Press and media kit",
           sub: "The bio, the headshots, the logo files and the credential scans, in the sizes a newsroom asks for." }],
       ],
@@ -272,7 +268,7 @@
     "hire.html": "home",
     "ecosystem.html": "home",
     "portfolio.html": "home", "shots.html": "home", "production.html": "home", "archive.html": "home", "gallery.html": "home", "prints.html": "home",
-    "account.html": "profile", "pay.html": "profile", "console.html": "profile", "onboard.html": "profile",
+    "mnet.html": "profile", "account.html": "profile", "pay.html": "profile", "console.html": "profile", "onboard.html": "profile",
     "press.html": "profile", "matthew-mccluster.html": "profile", "crm.html": "profile",
     /* the fifth wing: the studio and the rooms it shares a column with.
        shakes.html and shake-desk.html are not listed because they are not
