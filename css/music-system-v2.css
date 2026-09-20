@@ -37,6 +37,9 @@ body.music-v2{font-family:var(--ui,system-ui,-apple-system,sans-serif);backgroun
 .music-contextbar__nav{display:flex;gap:6px;align-items:center}
 .music-contextbar__nav a{color:var(--music-muted);text-decoration:none;font-size:12px;font-weight:750;padding:8px 10px;border-radius:999px}
 .music-contextbar__nav a[aria-current="page"],.music-contextbar__nav a:hover{color:var(--music-text);background:rgba(255,255,255,.07)}
+.music-contextbar__icon{width:34px;height:34px;border-radius:50%;border:1px solid var(--music-border);background:transparent;color:var(--music-muted);display:grid;place-items:center;cursor:pointer}
+.music-contextbar__icon:hover{color:var(--music-text);background:rgba(255,255,255,.06)}
+.music-contextbar__icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 /* listening room becomes a real content surface, not a stack of glass cards */
 .music-v2.music-room--listen .ls{max-width:none;width:var(--music-shell);padding:18px 0 150px}
@@ -61,6 +64,11 @@ body.music-v2{font-family:var(--ui,system-ui,-apple-system,sans-serif);backgroun
 }
 .music-v2 .chips button.on{background:var(--music-text);color:#0a0a0c;border-color:transparent;box-shadow:none}
 
+.music-launch{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:4px 0 34px;padding:17px 18px;border:1px solid var(--music-border);border-radius:14px;background:linear-gradient(135deg,rgba(229,56,59,.12),rgba(255,255,255,.025))}
+.music-launch div{display:grid;gap:4px}
+.music-launch span{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#ff8b8d;font-weight:800}
+.music-launch strong{font-size:13px;line-height:1.35}
+.music-launch a{flex:none;text-decoration:none;color:#09090b;background:#fff;border-radius:9px;padding:10px 12px;font-size:11px;font-weight:800}
 .music-v2 .ls__sec{margin-top:2.1rem}
 .music-v2 .lib__k{font-size:20px;letter-spacing:-.025em;margin:0 0 3px}
 .music-v2 .lib__why{font-size:12px;color:var(--music-muted);margin:0 0 13px}
@@ -218,6 +226,8 @@ body.music-v2 .appbar__tab[aria-current="page"],body.music-v2 .appbar__tab.is-ac
   :root{--music-shell:calc(100vw - 24px);--music-card:min(46vw,11.7rem)}
   .music-contextbar__nav a{padding:7px 8px}
   .music-contextbar__nav a:nth-child(3){display:none}
+  .music-launch{align-items:flex-start;flex-direction:column}
+  .music-launch a{width:100%;box-sizing:border-box;text-align:center}
   .music-v2 .creator-grid{grid-template-columns:1fr}
   .music-v2 .creator-card.wide{grid-column:auto}
   .music-v2 .creator-head{display:block}
