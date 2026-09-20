@@ -20,6 +20,9 @@
   audio.setAttribute("playsinline", "");
   var previewLimit = 0;
   var startedAt = 0;
+  var CREATOR_TRACKS = {};
+  var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+  var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
 
   function esc(x) {
     var d = doc.createElement("i");
@@ -152,6 +155,7 @@
   }
 
   function sourceFor(t) {
+    if (t.creatorTrackId) return creatorSourceFor(t);
     if (!t.gated) return Promise.resolve({ state: "full", url: t.src });
     return gateReady().then(function (g) {
       if (!g) return { state: "preview", url: t.src, reason: "auth-loading" };
@@ -160,6 +164,97 @@
         if (out.state === "preview") return { state: "preview", url: t.src, reason: out.reason };
         return out;
       });
+    });
+  }
+
+
+  function sessionToken() {
+    try {
+      var ss = root.MCC && root.MCC.session && root.MCC.session();
+      return ss && ss.access_token ? ss.access_token : "";
+    } catch (e) { return ""; }
+  }
+
+  function publicObject(bucket, path) {
+    if (!bucket || !path) return "";
+    return SB_URL + "/storage/v1/object/public/" + encodeURIComponent(bucket) + "/" +
+      String(path).split("/").map(encodeURIComponent).join("/");
+  }
+
+  function creatorSourceFor(t) {
+    var preview = t.previewUrl || publicObject(t.preview_bucket, t.preview_path) || t.audio_url || "";
+    var token = sessionToken();
+    if (!token) {
+      return Promise.resolve(preview
+        ? { state: "preview", url: preview, reason: "account" }
+        : { state: "unavailable", reason: "preview-missing" });
+    }
+    return fetch(SB_URL + "/functions/v1/music-access", {
+      method: "POST",
+      headers: {
+        apikey: SB_KEY,
+        authorization: "Bearer " + token,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ action: "stream", track_id: t.creatorTrackId })
+    }).then(function (r) {
+      if (r.ok) return r.json().then(function (d) {
+        return d && d.url ? { state: "full", url: d.url } : { state: "unavailable", reason: "no-url" };
+      });
+      if (r.status === 402) return preview
+        ? { state: "preview", url: preview, reason: "purchase" }
+        : { state: "unavailable", reason: "purchase" };
+      if (r.status === 401 || r.status === 403) return preview
+        ? { state: "preview", url: preview, reason: "account" }
+        : { state: "unavailable", reason: "account" };
+      return { state: "unavailable", reason: "http-" + r.status };
+    }).catch(function () {
+      return preview ? { state: "preview", url: preview, reason: "network" } : { state: "unavailable", reason: "network" };
+    });
+  }
+
+  function registerCreatorTrack(t) {
+    if (!t || !t.id) return;
+    CREATOR_TRACKS[String(t.id)] = Object.assign({}, t, {
+      creatorTrackId: String(t.id),
+      albumSlug: "creator:" + String(t.id),
+      albumName: t.release_name || "Community",
+      artist: t.artist || t.artist_name || "Independent creator",
+      art: t.art_url || t.avatar_url || "assets/img/m-mark.png",
+      title: t.title || "Untitled"
+    });
+  }
+
+  function openCreatorTrack(id, force) {
+    var t = CREATOR_TRACKS[String(id)] || null;
+    if (!t) return Promise.reject(new Error("Creator track not registered"));
+    var same = current && current.creatorTrackId === t.creatorTrackId;
+    if (same && !force) {
+      if (audio.paused) return audio.play().then(function () { return { state: currentAccess }; });
+      audio.pause();
+      return Promise.resolve({ state: currentAccess });
+    }
+    current = t;
+    currentAccess = "loading";
+    previewLimit = Number(t.preview_seconds || 30);
+    paint();
+    return creatorSourceFor(t).then(function (out) {
+      if (out.state !== "full" && out.state !== "preview") {
+        currentAccess = "unavailable";
+        paint();
+        throw new Error(out.reason || "Track unavailable");
+      }
+      currentAccess = out.state;
+      previewLimit = out.state === "preview" ? Number(t.preview_seconds || 30) : 0;
+      audio.src = out.url;
+      audio.currentTime = 0;
+      startedAt = Date.now();
+      setMedia(t);
+      paint();
+      trackEvent("music_play", { source: "creator_discovery", creator_track_id: t.creatorTrackId, access_state: out.state });
+      trackEvent(out.state === "full" ? "music_full_play" : "music_preview_play",
+        { source: "creator_discovery", creator_track_id: t.creatorTrackId });
+      return audio.play().then(function () { return out; }).catch(function () { return out; });
     });
   }
 
@@ -271,7 +366,9 @@
     if (!b) return;
     e.preventDefault();
     e.stopPropagation();
-    openTrack(b.getAttribute("data-album"), b.getAttribute("data-track")).catch(function () {});
+    var creatorId = b.getAttribute("data-creator-track");
+    if (creatorId) openCreatorTrack(creatorId).catch(function () {});
+    else openTrack(b.getAttribute("data-album"), b.getAttribute("data-track")).catch(function () {});
   }, true);
   doc.addEventListener("keydown", function (e) {
     if (e.key !== "Enter" && e.key !== " ") return;
@@ -290,6 +387,8 @@
 
   root.MCC_MUSIC = {
     play: openTrack,
+    playCreator: openCreatorTrack,
+    registerCreatorTrack: registerCreatorTrack,
     pause: function () { audio.pause(); },
     audio: audio,
     current: function () { return current; },
