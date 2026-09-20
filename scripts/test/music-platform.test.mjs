@@ -38,7 +38,7 @@ test('discovery has one persistent transport and inline play controls', async()=
   assert.match(listen,/music-inline-play/);
   assert.match(engine,/var audio = new Audio\(\)/);
   assert.match(engine,/id = "musicMini"/);
-  assert.match(engine,/MCC_GATED\.resolve/);
+  assert.match(engine,/g\.resolve\(t\.gated\)/);
   assert.match(engine,/music_preview_play/);
   assert.match(engine,/music_full_play/);
 });
