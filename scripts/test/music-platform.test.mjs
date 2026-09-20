@@ -173,3 +173,18 @@ test('mobile player is anchored above bottom tabs and expands full screen', asyn
   assert.match(css,/\.music-now\{[\s\S]*position:fixed;inset:0/);
   assert.match(css,/\.music-now__artwrap\{[\s\S]*width:min\(78vw,355px\)/);
 });
+
+
+test('Now Playing preserves live video artwork instead of flattening every track to cover art', async()=>{
+  const engine=await read('js/music-engine.js');
+  const css=await read('css/music-system-v2.css');
+  const albums=await read('data/albums.json');
+  assert.match(engine,/id="musicNowFilm"/);
+  assert.match(engine,/function paintNowVisual\(art\)/);
+  assert.match(engine,/function syncNowFilm\(hard\)/);
+  assert.match(engine,/current\.video \|\| current\.video_url/);
+  assert.match(engine,/audio\.currentTime % film\.duration/);
+  assert.match(css,/\.music-now__artwrap\.has-video \.music-now__film\{opacity:1\}/);
+  assert.match(css,/prefers-reduced-motion: reduce/);
+  assert.match(albums,/"video":/);
+});
