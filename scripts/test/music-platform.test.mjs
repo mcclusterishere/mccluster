@@ -44,7 +44,7 @@ test('discovery has one persistent transport and inline play controls', async()=
 });
 
 test('creator system reuses M identity and keeps masters private', async()=>{
-  const migration=await read('supabase/migrations/20260920043000_music_creator_platform_v1.sql');
+  const migration=await read('supabase/migrations/20260920041011_music_creator_platform_v1.sql');
   const studio=await read('js/music-creator-studio.js');
   assert.match(migration,/music_creator_profiles/);
   assert.match(migration,/m_uid uuid primary key references public\.m_people/);
@@ -71,7 +71,7 @@ test('derivative and parody releases cannot self-clear commercial rights', async
 });
 
 test('music licensing creates native orders and entitlements and refunds revoke them', async()=>{
-  const commerce=await read('supabase/migrations/20260920044500_music_commerce_v1.sql');
+  const commerce=await read('supabase/migrations/20260920041250_music_commerce_v1.sql');
   const checkout=await read('supabase/functions/music-checkout/index.ts');
   const webhook=await read('supabase/functions/stripe-webhook/index.ts');
   assert.match(commerce,/create table if not exists public\.music_orders/);
