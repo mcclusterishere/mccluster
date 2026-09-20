@@ -71,6 +71,10 @@
       accent-color: var(--ruby-hot); }
     .fan__check span { flex: 1; min-width: 0; }
     .ac__flip { background: none; border: 0; cursor: pointer; padding: 0; margin-top: 0.9rem; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; }
+    .ac__tabs { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; margin-bottom:.85rem; padding:.28rem; border:1px solid var(--edge); border-radius:13px; background:rgba(255,255,255,.025); }
+    .ac__tab { border:0; border-radius:9px; padding:.7rem .6rem; cursor:pointer; background:transparent; color:var(--cream-dim); font:800 .78rem var(--ui); }
+    .ac__tab.is-on { background:rgba(255,255,255,.08); color:var(--cream); }
+    .ac__passnote { margin-top:.65rem; color:var(--cream-dim); font-size:.75rem; line-height:1.45; }
     .ac__btn { appearance: none; border: 0; cursor: pointer; display: block; width: 100%; margin-top: 0.8rem; padding: 1rem; border-radius: 13px; background: var(--ruby-hot); color: #fff; font-weight: 800; font-size: 1.02rem; text-align: center; text-decoration: none; }
     /* One ruby thing per card. The Save button is the action; these are
        doors beside it, so they take the same neutral edge the fields now
@@ -92,12 +96,30 @@
     <p class="ac__k">McCluster</p>
     <h1>Your<br>Account</h1>
     <div class="ac__card" id="acDoor">
-      <p class="ac__lab">Sign in</p>
-      <input type="email" id="acInEmail" placeholder="Email" autocomplete="email">
-      <input type="password" id="acInPass" placeholder="Password" autocomplete="current-password">
-      <button class="ac__btn" id="acGo" type="button">Sign in</button>
-      <button class="ac__flip" id="acSend" type="button">Email me a sign-in link</button>
-      <p class="ac__note" id="acMsg"></p>
+      <div class="ac__tabs" role="tablist" aria-label="M Account">
+        <button class="ac__tab is-on" id="acSignInTab" type="button" role="tab" aria-selected="true">Sign in</button>
+        <button class="ac__tab" id="acCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
+      </div>
+
+      <div id="acSignInPane">
+        <p class="ac__lab">Sign in with your password</p>
+        <input type="email" id="acInEmail" placeholder="Email" autocomplete="email">
+        <input type="password" id="acInPass" placeholder="Password" autocomplete="current-password">
+        <button class="ac__btn" id="acGo" type="button">Sign in</button>
+        <p class="ac__passnote">No one-time login links. Your M Account uses the password you created.</p>
+        <p class="ac__note" id="acMsg"></p>
+      </div>
+
+      <div id="acCreatePane" hidden>
+        <p class="ac__lab">Create your M Account</p>
+        <input type="text" id="acCreateName" placeholder="Display name" autocomplete="name">
+        <input type="email" id="acCreateEmail" placeholder="Email" autocomplete="email">
+        <input type="password" id="acCreatePass" placeholder="Create password" autocomplete="new-password" minlength="8">
+        <input type="password" id="acCreatePass2" placeholder="Confirm password" autocomplete="new-password" minlength="8">
+        <button class="ac__btn" id="acCreateGo" type="button">Create account</button>
+        <p class="ac__passnote">Use at least 8 characters. This password signs you into McCluster and Mnet on any device.</p>
+        <p class="ac__note" id="acCreateMsg"></p>
+      </div>
 
       <!-- SOCIAL SIGN-IN. Painted only for providers Supabase actually has
            switched on, read live from /auth/v1/settings — a button for a
@@ -206,29 +228,66 @@
       el("acDesk").hidden = !u;
       if (!u) return;
       el("acWho").textContent = u.name || u.email || "signed in";
+      if (!stayOnAccount()) {
+        location.replace("mnet.html");
+        return;
+      }
       houseOwner(u).then(function (yes) {
         if (yes) { openPlane(); return; }
-        /* Everyone who is not the house owner is a listener, and a listener
-           gets the intake rather than a desk. */
         openFan();
       });
     }
 
+    function setAuthMode(mode) {
+      var create = mode === "create";
+      el("acSignInPane").hidden = create;
+      el("acCreatePane").hidden = !create;
+      el("acSignInTab").classList.toggle("is-on", !create);
+      el("acCreateTab").classList.toggle("is-on", create);
+      el("acSignInTab").setAttribute("aria-selected", create ? "false" : "true");
+      el("acCreateTab").setAttribute("aria-selected", create ? "true" : "false");
+      setTimeout(function () {
+        var target = create ? el("acCreateName") : el("acInEmail");
+        if (target) target.focus();
+      }, 0);
+    }
+
+    el("acSignInTab").onclick = function () { setAuthMode("signin"); };
+    el("acCreateTab").onclick = function () { setAuthMode("create"); };
+
     el("acGo").onclick = function () {
-      var em = el("acInEmail").value.trim(), pw = el("acInPass").value;
-      if (!em || !pw) { el("acMsg").textContent = "Email and password."; return; }
-      MCC_AUTH.signInPassword(em, pw).then(paint).catch(function (e) {
+      var em = el("acInEmail").value.trim(), pw = el("acInPass").value, btn = el("acGo");
+      if (!em || !pw) { el("acMsg").textContent = "Enter your email and password."; return; }
+      btn.disabled = true; btn.textContent = "Signing in…"; el("acMsg").textContent = "";
+      MCC_AUTH.signInPassword(em, pw).then(function () {
+        if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
+        paint();
+      }).catch(function (e) {
         el("acMsg").textContent = e.message || "That did not open.";
-      });
+      }).finally(function () { btn.disabled = false; btn.textContent = "Sign in"; });
     };
     el("acInPass").addEventListener("keydown", function (e) { if (e.key === "Enter") el("acGo").click(); });
-    el("acSend").onclick = function () {
-      var em = el("acInEmail").value.trim();
-      if (!em) { el("acMsg").textContent = "Email first."; return; }
-      MCC_AUTH.signIn(em).then(function () {
-        el("acMsg").textContent = "Link sent. Open it on this device.";
-      }).catch(function (e) { el("acMsg").textContent = e.message || "That did not send."; });
+
+    el("acCreateGo").onclick = function () {
+      var name = el("acCreateName").value.trim(), em = el("acCreateEmail").value.trim();
+      var pw = el("acCreatePass").value, pw2 = el("acCreatePass2").value, btn = el("acCreateGo");
+      if (!name || !em || !pw) { el("acCreateMsg").textContent = "Name, email, and password are required."; return; }
+      if (pw.length < 8) { el("acCreateMsg").textContent = "Use at least 8 characters."; return; }
+      if (pw !== pw2) { el("acCreateMsg").textContent = "Those passwords do not match."; return; }
+      btn.disabled = true; btn.textContent = "Creating…"; el("acCreateMsg").textContent = "";
+      MCC_AUTH.signUpPassword(em, pw, { name: name, full_name: name }).then(function (result) {
+        if (result && result.session) {
+          if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
+          paint();
+          return;
+        }
+        el("acCreateMsg").textContent = "Account created. Check your email once to confirm the address, then come back and sign in with the password you just made.";
+      }).catch(function (e) {
+        el("acCreateMsg").textContent = e.message || "Could not create that account.";
+      }).finally(function () { btn.disabled = false; btn.textContent = "Create account"; });
     };
+    el("acCreatePass2").addEventListener("keydown", function (e) { if (e.key === "Enter") el("acCreateGo").click(); });
+
     el("acOut").onclick = function () {
       MCC_AUTH.signOut().then(function () { location.reload(); });
     };
