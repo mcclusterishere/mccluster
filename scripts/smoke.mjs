@@ -154,15 +154,30 @@ try {
       check("mnet: social shell exists", await p.locator("#mnFeed").count() === 1 &&
         await p.locator("#mnProfileGate").count() === 1 &&
         await p.locator("#mnNotificationsView").count() === 1);
-      check("mnet: person tab is the Mnet door", await p.evaluate(() => {
+      check("mnet: signed-out door is password auth", await p.locator("#mnPassword").count() === 1 &&
+        await p.locator("#mnAuthGo").count() === 1 && await p.locator("#mnCreateTab").count() === 1);
+      check("mnet: passwordless login copy is gone", await p.evaluate(() =>
+        !/email me a sign-in link|send sign-in link/i.test(document.body.innerText)));
+      check("mnet: signed-out person tab is Sign in", await p.evaluate(() => {
         const tab = document.querySelector('[data-appnav="profile"]');
-        return !!tab && /mnet\.html$/.test(new URL(tab.href).pathname) &&
-          (tab.textContent || "").trim() === "Mnet";
+        return !!tab && /account\.html$/.test(new URL(tab.href).pathname) &&
+          /Sign in/.test(tab.textContent || "") && document.body.dataset.mccAuth === "out";
       }));
-      check("mnet: account remains a secondary door", await p.evaluate(() =>
-        !![...document.querySelectorAll("a")].find((a) => /account\.html\?stay=1$/.test(a.getAttribute("href") || ""))));
+      check("mnet: global shell paints explicit guest state", await p.locator("#mccAuthChip").count() === 1 &&
+        /Guest/.test(await p.locator("#mccAuthChip").innerText()));
       check("mnet: composer and thread are native network controls",
         await p.locator("#mnPostBody").count() === 1 && await p.locator("#mnThread").count() === 1);
+    }],
+
+    ["account.html", async (p) => {
+      check("account: create-account mode exists", await p.locator("#acCreateTab").count() === 1 &&
+        await p.locator("#acCreatePass").count() === 1 && await p.locator("#acCreatePass2").count() === 1);
+      check("account: magic-link login is absent", await p.evaluate(() =>
+        !/email me a sign-in link|send sign-in link/i.test(document.body.innerText)));
+      check("account: person tab is sign-in while signed out", await p.evaluate(() => {
+        const tab = document.querySelector('[data-appnav="profile"]');
+        return !!tab && /account\.html$/.test(new URL(tab.href).pathname) && /Sign in/.test(tab.textContent || "");
+      }));
     }],
 
     ["merch.html", async (p) => {
