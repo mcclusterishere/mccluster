@@ -5,6 +5,7 @@ on:
     paths:
       - 'listen.html'
       - 'album.html'
+      - 'catalogue.html'
       - 'creator.html'
       - 'music-creator.html'
       - 'music-admin.html'
@@ -22,6 +23,7 @@ on:
     paths:
       - 'listen.html'
       - 'album.html'
+      - 'catalogue.html'
       - 'creator.html'
       - 'music-creator.html'
       - 'music-admin.html'
