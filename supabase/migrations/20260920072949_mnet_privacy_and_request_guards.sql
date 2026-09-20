@@ -33,14 +33,19 @@ drop policy if exists network_profiles_read on public.network_profiles;
 create policy network_profiles_read on public.network_profiles
 for select to public using (
   m_uid=public.current_m_uid()
-  or visibility='public'
   or (
-    visibility='network'
-    and exists(
-      select 1 from public.network_follows f
-      where f.follower_m_uid=public.current_m_uid()
-        and f.followed_m_uid=network_profiles.m_uid
-        and f.status='following'
+    not public.mnet_is_blocked_pair(public.current_m_uid(),network_profiles.m_uid)
+    and (
+      visibility='public'
+      or (
+        visibility='network'
+        and exists(
+          select 1 from public.network_follows f
+          where f.follower_m_uid=public.current_m_uid()
+            and f.followed_m_uid=network_profiles.m_uid
+            and f.status='following'
+        )
+      )
     )
   )
 );
