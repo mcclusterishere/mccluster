@@ -214,6 +214,18 @@ export function answerBusinessQuestion(question, snapshot) {
   const wantsDaily = /\b(by day|daily|each day|per day)\b/.test(lower);
   const wantsPercent = /%|\bpercent(?:age)?\b|\bwhat share\b/.test(lower);
   const windowed = Boolean(snapshot.window);
+  const temporalIntent = /\b(joined|new|created|signed\s*up|recent|today|yesterday|week|month|day|hour)\b/.test(lower);
+
+  // Never convert a time-scoped question into an all-time answer merely
+  // because the time phrase was outside the bounded parser's vocabulary.
+  // Ambiguity is safer than a confident lie in an operator console.
+  if (temporalIntent && !windowed) {
+    return {
+      understood: false,
+      answer: 'I understood that as a time-scoped question, but not the window. Use a rolling window like "last 24 hours", "last 5 days", or "last 2 weeks".',
+      supported_window_examples: ['24h', '5d', '2w']
+    };
+  }
 
   if (/\b(users?|accounts?|signups?|members?)\b/.test(lower)) {
     let metric = 'users.total';
