@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mnet · McCluster</title>
+  <meta name="description" content="Mnet is the first-party social network inside McCluster.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/mnet.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+</head>
+<body class="songpage">
+  <main class="mn">
+    <header class="mn__top">
+      <a class="mn__brand" href="mnet.html" aria-label="Mnet home">
+        <span class="mn__brand-mark">M</span>
+        <span><strong>Mnet</strong><small>McCluster Network</small></span>
+      </a>
+      <button class="mn__avatar-btn" id="mnMe" type="button" aria-label="Open your profile" hidden>
+        <span id="mnAvatarFallback">M</span>
+        <img id="mnAvatar" alt="" hidden>
+      </button>
+    </header>
+
+    <section class="mn__gate" id="mnSignedOut">
+      <p class="mn__eyebrow">One account. One network.</p>
+      <h1>People, posts, and everything happening across McCluster.</h1>
+      <p class="mn__lede">Sign in with the same M Account you use everywhere else. Your identity, follows, posts and profile stay with you across the ecosystem.</p>
+      <div class="mn__panel">
+        <label class="mn__label" for="mnEmail">Email</label>
+        <input class="mn__input" id="mnEmail" type="email" autocomplete="email" placeholder="you@example.com">
+        <button class="mn__primary" id="mnEmailGo" type="button">Email me a sign-in link</button>
+        <p class="mn__status" id="mnAuthStatus" role="status"></p>
+        <div id="mnProviders" hidden>
+          <div class="mn__or"><span>or</span></div>
+          <div id="mnProviderButtons"></div>
+        </div>
+        <a class="mn__text-link" href="account.html?stay=1">Use a password or manage your M Account</a>
+      </div>
+    </section>
+
+    <section class="mn__gate" id="mnProfileGate" hidden>
+      <button class="mn__back" id="mnProfileBack" type="button" hidden>← Back to feed</button>
+      <p class="mn__eyebrow">Your Mnet identity</p>
+      <h1 id="mnProfileTitle">Finish your profile.</h1>
+      <p class="mn__lede">Your McCluster ID is your public handle everywhere. The rest is your universal profile.</p>
+      <form class="mn__panel mn__profile-form" id="mnProfileForm">
+        <label class="mn__label" for="mnHandle">McCluster ID</label>
+        <div class="mn__handle-row"><span>@</span><input class="mn__input" id="mnHandle" maxlength="32" autocomplete="username" placeholder="yourname" required></div>
+        <p class="mn__hint">3–32 characters. Letters, numbers, dot, underscore and hyphen.</p>
+
+        <label class="mn__label" for="mnDisplay">Display name</label>
+        <input class="mn__input" id="mnDisplay" maxlength="120" autocomplete="name" placeholder="Your name" required>
+
+        <label class="mn__label" for="mnHeadline">Headline</label>
+        <input class="mn__input" id="mnHeadline" maxlength="180" placeholder="What are you working on?">
+
+        <label class="mn__label" for="mnBio">Bio</label>
+        <textarea class="mn__input mn__textarea" id="mnBio" maxlength="1200" rows="5" placeholder="Tell the network about yourself."></textarea>
+
+        <label class="mn__label" for="mnAvatarUrl">Avatar URL <span>optional</span></label>
+        <input class="mn__input" id="mnAvatarUrl" type="url" inputmode="url" placeholder="https://…">
+
+        <label class="mn__label" for="mnWebsite">Website <span>optional</span></label>
+        <input class="mn__input" id="mnWebsite" type="url" inputmode="url" placeholder="https://…">
+
+        <button class="mn__primary" id="mnProfileSave" type="submit">Save profile and enter Mnet</button>
+        <p class="mn__status" id="mnProfileStatus" role="status"></p>
+      </form>
+    </section>
+
+    <section class="mn__app" id="mnApp" hidden>
+      <nav class="mn__tabs" aria-label="Mnet">
+        <button type="button" class="is-active" data-mn-view="feed">Feed</button>
+        <button type="button" data-mn-view="notifications">Notifications <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
+        <button type="button" data-mn-view="profile">Me</button>
+      </nav>
+
+      <section class="mn__view" id="mnFeedView">
+        <article class="mn__composer">
+          <div class="mn__composer-head">
+            <span class="mn__mini-avatar" id="mnComposerAvatar">M</span>
+            <textarea id="mnPostBody" maxlength="20000" rows="3" placeholder="Post something to Mnet…" aria-label="Post text"></textarea>
+          </div>
+          <div class="mn__composer-actions">
+            <label>
+              <span class="sr-only">Post visibility</span>
+              <select id="mnVisibility">
+                <option value="public">Public</option>
+                <option value="network">Network</option>
+                <option value="private">Only me</option>
+              </select>
+            </label>
+            <button class="mn__post" id="mnPost" type="button">Post</button>
+          </div>
+          <p class="mn__status" id="mnPostStatus" role="status"></p>
+        </article>
+
+        <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
+        <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
+        <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
+      </section>
+
+      <section class="mn__view" id="mnNotificationsView" hidden>
+        <div class="mn__section-head">
+          <div><p class="mn__eyebrow">Mnet</p><h2>Notifications</h2></div>
+          <button class="mn__quiet" id="mnRefreshNotifications" type="button">Refresh</button>
+        </div>
+        <div class="mn__notifications" id="mnNotifications"></div>
+        <p class="mn__status mn__status--center" id="mnNotificationStatus"></p>
+      </section>
+
+      <section class="mn__view" id="mnProfileView" hidden>
+        <div class="mn__profile-card">
+          <div class="mn__profile-banner" id="mnProfileBanner"></div>
+          <div class="mn__profile-card-body">
+            <div class="mn__profile-avatar" id="mnProfileAvatar">M</div>
+            <button class="mn__quiet" id="mnEditProfile" type="button">Edit profile</button>
+            <h2 id="mnProfileName"></h2>
+            <p class="mn__handle" id="mnProfileHandle"></p>
+            <p class="mn__profile-headline" id="mnProfileHeadline"></p>
+            <p class="mn__profile-bio" id="mnProfileBio"></p>
+            <a class="mn__profile-link" id="mnProfileWebsite" target="_blank" rel="noopener" hidden></a>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <dialog class="mn__thread" id="mnThread">
+    <div class="mn__thread-head">
+      <strong>Comments</strong>
+      <button type="button" id="mnThreadClose" aria-label="Close comments">×</button>
+    </div>
+    <div id="mnThreadRoot"></div>
+    <div class="mn__replies" id="mnReplies"></div>
+    <form class="mn__reply-box" id="mnReplyForm">
+      <textarea id="mnReplyBody" maxlength="20000" rows="2" placeholder="Write a comment…" aria-label="Comment"></textarea>
+      <button class="mn__post" type="submit">Reply</button>
+    </form>
+    <p class="mn__status" id="mnReplyStatus"></p>
+  </dialog>
+
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/mnet.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>
