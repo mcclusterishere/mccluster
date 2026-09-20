@@ -59,15 +59,15 @@ Rules, no exceptions:
 - **Do not recolour a supplied mark.** If it does not read on a ground, the
   answer is the variant the owner supplied for that ground, or a plate the
   brand itself uses — never a hue you picked.
-- **Do not composite one.** Cropping a supplied file is fine. Adding a shape
+- **Do not composite one.** Do not crop supplied artwork. Scale the complete supplied artwork proportionally only. Adding a shape
   the supplied file does not contain is drawing.
 - **If the variant you need does not exist, ask for it.** A missing asset is a
   question for the owner, not a gap to fill.
+- **For PRIM3 specifically, use the full uncropped owner-supplied artwork.** Resize only by proportional scaling; never crop a PRIM3 mark or lockup to make it fit a UI slot.
 
 ### Whip Equipped — the supplied kit
 
-Under `assets/img/`, every file cropped or resampled from the owner's artwork
-and nothing else:
+Under `assets/img/`, preserve the complete supplied artwork when resizing. Do not create new cropped variants. Existing derivatives are not authority to crop future artwork:
 
 | File | What it is | Ground |
 | --- | --- | --- |
