@@ -217,6 +217,10 @@ drop policy if exists music_creator_tracks_delete on public.creator_tracks;
 create policy music_creator_tracks_delete on public.creator_tracks for delete to authenticated
 using (m_uid=public.current_m_uid() and status in ('draft','rejected','archived'));
 
+drop policy if exists music_license_offers_read on public.music_license_offers;
+drop policy if exists music_license_offers_insert on public.music_license_offers;
+drop policy if exists music_license_offers_update on public.music_license_offers;
+drop policy if exists music_license_offers_delete on public.music_license_offers;
 create policy music_license_offers_read on public.music_license_offers for select to anon,authenticated
 using (active=true or creator_m_uid=public.current_m_uid());
 create policy music_license_offers_insert on public.music_license_offers for insert to authenticated
@@ -226,6 +230,8 @@ using (creator_m_uid=public.current_m_uid()) with check (creator_m_uid=public.cu
 create policy music_license_offers_delete on public.music_license_offers for delete to authenticated
 using (creator_m_uid=public.current_m_uid() and active=false);
 
+drop policy if exists music_rights_attestations_read on public.music_rights_attestations;
+drop policy if exists music_rights_attestations_insert on public.music_rights_attestations;
 create policy music_rights_attestations_read on public.music_rights_attestations for select to authenticated
 using (creator_m_uid=public.current_m_uid());
 create policy music_rights_attestations_insert on public.music_rights_attestations for insert to authenticated
