@@ -164,6 +164,29 @@
     });
   }
 
+  /* Authentication and Mnet availability are different states. A network/API
+     failure must never throw a signed-in member back at the login form. */
+  function showSignedInLoadError(error) {
+    showGate("app");
+    var host = $("mnFeed");
+    host.innerHTML = '<div class="mn__empty">You are signed in. Mnet could not load the feed right now.</div>';
+    var retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "mn__more";
+    retry.textContent = "Retry Mnet";
+    retry.onclick = function () {
+      retry.disabled = true;
+      setStatus($("mnFeedStatus"), "Loading Mnet…");
+      bootstrap().catch(function (e) {
+        retry.disabled = false;
+        showSignedInLoadError(e);
+      });
+    };
+    host.appendChild(retry);
+    setStatus($("mnFeedStatus"), "Your M Account is still signed in.", "error");
+    try { console.warn("[mnet] signed-in bootstrap failed", error); } catch (e) {}
+  }
+
   function saveProfile(event) {
     event.preventDefault();
     var button = $("mnProfileSave");
@@ -431,7 +454,12 @@
       state.user = user;
       if (!user) throw new Error("Your session did not open.");
       if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
-      return MCC.autoTouch().catch(function () {}).then(bootstrap);
+      return MCC.autoTouch().catch(function () {}).then(function () {
+        return bootstrap().catch(function (error) {
+          showSignedInLoadError(error);
+          return null;
+        });
+      });
     });
   }
 
@@ -517,9 +545,23 @@
 
     MCC.user().then(function (user) {
       state.user = user;
-      if (!user) { showGate("signedout"); return; }
-      return MCC.autoTouch().catch(function () {}).then(bootstrap);
-    }).catch(function () { showGate("signedout"); });
+      if (!user) {
+        var existing = MCC.session && MCC.session();
+        if (existing && existing.access_token) showSignedInLoadError(new Error("Could not verify the existing session."));
+        else showGate("signedout");
+        return;
+      }
+      return MCC.autoTouch().catch(function () {}).then(function () {
+        return bootstrap().catch(function (error) {
+          showSignedInLoadError(error);
+          return null;
+        });
+      });
+    }).catch(function (error) {
+      var existing = MCC.session && MCC.session();
+      if (existing && existing.access_token) showSignedInLoadError(error);
+      else showGate("signedout");
+    });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
