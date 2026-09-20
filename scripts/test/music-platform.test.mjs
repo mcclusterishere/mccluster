@@ -150,3 +150,26 @@ test('Music V2 design contract documents the external interaction references', a
   assert.match(design,/Spotify artist profile hierarchy/);
   assert.match(design,/No second auth system, second music backend, or second player engine/);
 });
+
+
+test('Music V2 is mobile-first dark by contract, not desktop-first responsive', async()=>{
+  const css=await read('css/music-system-v2.css');
+  const firstMedia=css.indexOf('@media(');
+  const baseShell=css.indexOf('--music-shell:calc(100vw - 24px)');
+  const mobileGrid=css.indexOf('.music-v2 .creator-grid{display:grid;grid-template-columns:1fr');
+  const darkBg=css.indexOf('--music-bg:#050506');
+  assert.ok(baseShell > -1 && baseShell < firstMedia, 'phone-width shell must be a base rule');
+  assert.ok(mobileGrid > -1 && mobileGrid < firstMedia, 'one-column creator layout must be a base rule');
+  assert.ok(darkBg > -1 && darkBg < firstMedia, 'dark palette must be a base rule');
+  assert.match(css,/@media\(min-width:700px\)/);
+  assert.match(css,/@media\(min-width:980px\)/);
+  assert.doesNotMatch(css,/@media\(max-width:/, 'Music V2 should enhance upward from mobile');
+});
+
+test('mobile player is anchored above bottom tabs and expands full screen', async()=>{
+  const css=await read('css/music-system-v2.css');
+  assert.match(css,/left:8px;right:8px;width:auto/);
+  assert.match(css,/bottom:calc\(var\(--appbar-h,76px\) \+ env\(safe-area-inset-bottom,0px\) \+ 5px\)/);
+  assert.match(css,/\.music-now\{[\s\S]*position:fixed;inset:0/);
+  assert.match(css,/\.music-now__artwrap\{[\s\S]*width:min\(78vw,355px\)/);
+});
