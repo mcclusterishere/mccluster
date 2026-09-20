@@ -221,14 +221,15 @@
       return;
     }
 
-    if (film.getAttribute("src") !== video) {
+    var changed = film.getAttribute("src") !== video;
+    if (changed) {
       film.src = video;
       film.muted = true;
       film.loop = true;
       film.playsInline = true;
       film.load();
     }
-    syncNowFilm(true);
+    syncNowFilm(changed);
   }
 
   function sameItem(a, b) {
