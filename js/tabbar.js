@@ -127,15 +127,15 @@
   }
   if (!dock) dock = buildBar();
 
-  /* Mnet owns the person column now. Many older pages still carry a
-     hand-written copy of the bar, so normalize that existing fifth tab at
-     runtime instead of editing the same navigation markup across dozens of
-     pages. The account page remains available inside the Profile/Mnet wing. */
+  /* The fifth column is auth-aware. Start conservatively as a sign-in door;
+     the shared state controller below promotes it to Feed as soon as a real
+     McCluster session is verified. This also normalizes the many older pages
+     that still carry a hand-written copy of the bar. */
   var mnetTab = dock.querySelector('[data-appnav="profile"]');
   if (mnetTab) {
-    mnetTab.href = ROOT + "mnet.html";
-    var mnetLabel = mnetTab.querySelector("span");
-    if (mnetLabel) mnetLabel.textContent = "Mnet";
+    mnetTab.href = ROOT + "account.html";
+    var mnetLabel = mnetTab.querySelector("span:last-child");
+    if (mnetLabel) mnetLabel.textContent = "Sign in";
   }
 
   /* the page tail clears the bar; the padding rule existed in the
@@ -297,6 +297,139 @@
   if (hereTab) hereTab.classList.add("is-here");
   var HOME_BAR = dock.innerHTML;
   var wingOn = null;
+  var AUTH_STATE = { signed_in: false, verified: false, user: null };
+
+  function readAuthSession() {
+    try { return JSON.parse(localStorage.getItem("mccdb_session") || "null"); }
+    catch (e) { return null; }
+  }
+  function jwtPayload(token) {
+    try {
+      var raw = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (raw.length % 4) raw += "=";
+      return JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(raw), function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join("")));
+    } catch (e) { return {}; }
+  }
+  function authDisplay(user, payload) {
+    var meta = (user && user.user_metadata) || payload.user_metadata || {};
+    var email = (user && user.email) || payload.email || "";
+    return meta.name || meta.full_name || (email ? email.split("@")[0] : "Member");
+  }
+  function authInitials(value) {
+    return String(value || "M").trim().split(/\s+/).slice(0, 2)
+      .map(function (p) { return p.charAt(0); }).join("").toUpperCase() || "M";
+  }
+  function ensureAuthStyle() {
+    if (document.getElementById("mccAuthStateStyle")) return;
+    var style = document.createElement("style");
+    style.id = "mccAuthStateStyle";
+    style.textContent =
+      ".mcc-auth-chip{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(5.45rem + env(safe-area-inset-bottom));z-index:999;display:flex;align-items:center;gap:.42rem;max-width:min(72vw,18rem);padding:.42rem .62rem;border:1px solid rgba(244,239,230,.18);border-radius:999px;background:rgba(14,14,15,.88);backdrop-filter:blur(14px);color:rgba(244,239,230,.78);text-decoration:none;font:700 .68rem/1.1 var(--ui,system-ui);box-shadow:0 8px 24px rgba(0,0,0,.2)}"+
+      ".mcc-auth-chip__dot{width:.46rem;height:.46rem;border-radius:50%;background:#787878;box-shadow:0 0 0 3px rgba(255,255,255,.04)}"+
+      ".mcc-auth-in .mcc-auth-chip{color:var(--cream,#f4efe6);border-color:rgba(229,56,59,.42)}"+
+      ".mcc-auth-in .mcc-auth-chip__dot{background:#6fd584;box-shadow:0 0 0 3px rgba(111,213,132,.11)}"+
+      ".appbar__auth-avatar{width:1.55rem;height:1.55rem;display:grid;place-items:center;border-radius:50%;background:rgba(229,56,59,.17);box-shadow:inset 0 0 0 1px rgba(229,56,59,.5);font:900 .58rem/1 var(--ui,system-ui);letter-spacing:0}"+
+      ".mcc-auth-in .appbar [data-appnav=profile]{color:var(--cream,#f4efe6)}"+
+      ".mcc-auth-in .appbar [data-appnav=profile]::after{content:'';position:absolute;top:.34rem;right:calc(50% - .9rem);width:.42rem;height:.42rem;border-radius:50%;background:#6fd584;box-shadow:0 0 0 2px rgba(14,14,15,.9)}"+
+      "@media(max-width:420px){.mcc-auth-chip{bottom:calc(5.15rem + env(safe-area-inset-bottom));font-size:.62rem;padding:.38rem .55rem}}";
+    document.head.appendChild(style);
+  }
+  function paintAuthState(signedIn, user, verified) {
+    AUTH_STATE = { signed_in: !!signedIn, verified: !!verified, user: user || null };
+    var body = document.body;
+    body.classList.toggle("mcc-auth-in", !!signedIn);
+    body.classList.toggle("mcc-auth-out", !signedIn);
+    body.setAttribute("data-mcc-auth", signedIn ? "in" : "out");
+
+    var session = readAuthSession();
+    var payload = session && session.access_token ? jwtPayload(session.access_token) : {};
+    var name = authDisplay(user, payload);
+    var tab = dock.querySelector('[data-appnav="profile"]');
+    if (tab) {
+      var label = tab.querySelector("span:last-child");
+      var svg = tab.querySelector(":scope > svg");
+      var av = tab.querySelector(".appbar__auth-avatar");
+      tab.href = signedIn ? ROOT + "mnet.html" : ROOT + "account.html";
+      tab.setAttribute("aria-label", signedIn ? "Open your Mnet feed" : "Sign in or create an account");
+      tab.classList.toggle("is-authenticated", !!signedIn);
+      if (label) label.textContent = signedIn ? "Feed" : "Sign in";
+      if (signedIn) {
+        if (!av) {
+          av = document.createElement("span");
+          av.className = "appbar__auth-avatar";
+          if (label) tab.insertBefore(av, label); else tab.appendChild(av);
+        }
+        av.textContent = authInitials(name);
+        av.hidden = false;
+        if (svg) svg.style.display = "none";
+      } else {
+        if (av) av.hidden = true;
+        if (svg) svg.style.display = "";
+      }
+    }
+
+    ensureAuthStyle();
+    var chip = document.getElementById("mccAuthChip");
+    if (!chip) {
+      chip = document.createElement("a");
+      chip.id = "mccAuthChip";
+      chip.className = "mcc-auth-chip";
+      chip.innerHTML = '<span class="mcc-auth-chip__dot" aria-hidden="true"></span><span class="mcc-auth-chip__text"></span>';
+      document.body.appendChild(chip);
+    }
+    chip.href = signedIn ? ROOT + "mnet.html" : ROOT + "account.html";
+    chip.querySelector(".mcc-auth-chip__text").textContent =
+      signedIn ? ("Signed in · " + name) : "Guest · Sign in";
+    window.MCC_AUTH_STATE = AUTH_STATE;
+    try { window.dispatchEvent(new CustomEvent("mcc:auth-state", { detail: AUTH_STATE })); } catch (e) {}
+    if (!wingOn) HOME_BAR = dock.innerHTML;
+  }
+  function loadCanonicalAuth() {
+    if (window.MCC && typeof window.MCC.user === "function") return Promise.resolve(window.MCC);
+    return new Promise(function (resolve, reject) {
+      var existing = document.querySelector('script[data-mcc-auth-loader]');
+      if (existing) {
+        existing.addEventListener("load", function () { resolve(window.MCC); }, { once: true });
+        existing.addEventListener("error", reject, { once: true });
+        return;
+      }
+      var script = document.createElement("script");
+      script.src = ROOT + "js/mcc-auth.js?v=__STAMP__";
+      script.async = true;
+      script.setAttribute("data-mcc-auth-loader", "1");
+      script.onload = function () { resolve(window.MCC); };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+  function refreshAuthState() {
+    var session = readAuthSession();
+    if (!session || !session.access_token) {
+      paintAuthState(false, null, true);
+      return Promise.resolve(AUTH_STATE);
+    }
+    var payload = jwtPayload(session.access_token);
+    var exp = Number(payload.exp || 0) * 1000;
+    paintAuthState(exp > Date.now(), null, false);
+    return loadCanonicalAuth().then(function (mcc) {
+      if (!mcc || typeof mcc.user !== "function") throw new Error("Auth unavailable");
+      return mcc.user();
+    }).then(function (user) {
+      paintAuthState(!!user, user, true);
+      return AUTH_STATE;
+    }).catch(function () {
+      paintAuthState(false, null, true);
+      return AUTH_STATE;
+    });
+  }
+
+  refreshAuthState();
+  window.addEventListener("storage", function (e) {
+    if (!e || e.key === "mccdb_session" || e.key === "mcc_sess_keep") refreshAuthState();
+  });
+  window.addEventListener("mcc:auth-changed", refreshAuthState);
 
   var ICONS = {
     film: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 5v4M12 5v4M17 5v4"/>',
@@ -578,6 +711,7 @@
        A held press never reaches this line (the lpFired gate above swallows
        it), so hold-to-open-the-music-wing is untouched. */
     var dest = w ? w.home : (slot || a.getAttribute("href"));
+    if (key === "profile") dest = AUTH_STATE.signed_in ? ROOT + "mnet.html" : ROOT + "account.html";
 
     /* This column used to open the desk widget in place instead of sailing
        anywhere, because the tab WAS Chat. It is the Closet now, and a tab
@@ -601,7 +735,14 @@
   }, true);
   window.addEventListener("pageshow", function () { clearTimeout(lpTimer); veilOff(); unpeek(); revert(); });
 
-  window.MCC_BAR = { morph: morph, revert: revert, peek: peek, wing: function () { return wingOn; } };
+  window.MCC_BAR = {
+    morph: morph,
+    revert: revert,
+    peek: peek,
+    wing: function () { return wingOn; },
+    refreshAuth: refreshAuthState,
+    auth: function () { return AUTH_STATE; }
+  };
   if (window.MCC_TRACK) window.MCC_TRACK("bar_boot", { page: location.pathname.split("/").pop() });
 
 })();
