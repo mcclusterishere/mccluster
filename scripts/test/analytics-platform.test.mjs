@@ -125,3 +125,56 @@ test('business query parser refuses ambiguous time scope instead of returning al
   assert.equal(answer.understood,false);
   assert.match(answer.answer,/time-scoped question/);
 });
+
+
+test('business analytics covers platform traffic and music commerce without raw customer rows', async()=>{
+  const router=await read('workers/mccluster/src/analytics/router.js');
+  assert.match(router,/page_views:/);
+  assert.match(router,/music:/);
+  assert.match(router,/creator_tracks:/);
+  assert.match(router,/platform_fee_cents/);
+  assert.match(router,/status=eq\.paid|status: 'eq\.paid'/);
+  assert.doesNotMatch(router,/customer_email.*return json/i, 'aggregate analytics must not emit customer email rows');
+});
+
+test('business query parser answers music, creator and platform questions', ()=>{
+  const win=parseBusinessWindow('last 7 days',new Date('2026-09-20T04:00:00.000Z'));
+  const snapshot={
+    window:win,
+    users:{total:26,created_in_window:20,confirmed_total:25,unconfirmed_total:1,confirmed_in_window:19,unconfirmed_in_window:1,active_in_window:18,percent_created_in_window:76.9,created_by_day:[]},
+    platform:{events:{total:20000,in_window:4200},page_views:{total:1500,in_window:300},clicks:{total:3800,in_window:900},acquisitions:{total:2000,in_window:410}},
+    mnet:{profiles:{total:27,created_in_window:20},posts:{total:3,created_in_window:2},follows:{total:4,created_in_window:4},reactions:{total:9,created_in_window:7}},
+    music:{
+      legacy_album_plays:{total:3097,in_window:200},
+      inline_plays:{total:40,in_window:40},
+      plays:{total:3137,in_window:240},
+      preview_plays:{total:15,in_window:15},
+      full_plays:{total:25,in_window:25},
+      completions:{total:9,in_window:9},
+      creators:{total:4,created_in_window:2},
+      creator_tracks:{total:11,created_in_window:5},
+      published_tracks:7,
+      active_license_offers:3,
+      paid_orders:{total:6,in_window:2},
+      entitlements:{total:5,created_in_window:2},
+      revenue:{gross_cents:12000,platform_fee_cents:1800,creator_net_cents:10200,gross_cents_in_window:4000,platform_fee_cents_in_window:600,creator_net_cents_in_window:3400}
+    }
+  };
+
+  const music=answerBusinessQuestion('How many music plays were there in the last 7 days?',snapshot);
+  assert.equal(music.metric,'music.plays.in_window');
+  assert.equal(music.value,240);
+
+  const creators=answerBusinessQuestion('How many creators joined in the last 7 days?',snapshot);
+  assert.equal(creators.metric,'music.creators.created_in_window');
+  assert.equal(creators.value,2);
+
+  const revenue=answerBusinessQuestion('How much music revenue in the last 7 days?',snapshot);
+  assert.equal(revenue.metric,'music.revenue.gross_cents_in_window');
+  assert.equal(revenue.value,4000);
+  assert.match(revenue.answer,/\$40\.00/);
+
+  const views=answerBusinessQuestion('How many page views in the last 7 days?',snapshot);
+  assert.equal(views.metric,'platform.page_views.in_window');
+  assert.equal(views.value,300);
+});

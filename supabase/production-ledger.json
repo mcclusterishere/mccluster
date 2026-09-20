@@ -2,10 +2,10 @@
   "schema_version": "mccluster-supabase-production-ledger/v1",
   "project_ref": "zmnhbrjyhxzhkxmhkexs",
   "production_sql_cutover_version": "20260919020830",
-  "migration_count": 167,
+  "migration_count": 172,
   "latest_version": "20260920045944",
   "latest_name": "fix_mnet_bootstrap_trigger_call",
-  "ledger_sha256": "846a13b1683810e1c64afea46fdbbac167c9c1a9c21c009d4530f840332ad66b",
+  "ledger_sha256": "13e84b79fe74c1ff060582fea553444dfc48e4e37bbf0ed470576a40d2df6f97",
   "migrations": [
     {
       "version": "0001",
@@ -652,6 +652,10 @@
       "name": "native_telemetry_page_health_legacy_bridge"
     },
     {
+      "version": "20260919104500",
+      "name": "track_reach_public_ranking"
+    },
+    {
       "version": "20260919113319",
       "name": "revoke_client_ddl_table_privileges"
     },
@@ -670,6 +674,22 @@
     {
       "version": "20260919150000",
       "name": "track_recommendation_signals"
+    },
+    {
+      "version": "20260920035720",
+      "name": "gated_audio_bucket_live"
+    },
+    {
+      "version": "20260920035813",
+      "name": "music_publish_bootstrap_tokens"
+    },
+    {
+      "version": "20260920041011",
+      "name": "music_creator_platform_v1"
+    },
+    {
+      "version": "20260920041250",
+      "name": "music_commerce_v1"
     },
     {
       "version": "20260920045944",

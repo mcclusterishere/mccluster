@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Creator Studio · McCluster Music</title>
+  <meta name="description" content="Create a McCluster Music creator profile, upload releases, submit rights information, and configure licensing.">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-creator.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-engine.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+</head>
+<body class="songpage">
+  <main class="creator-shell">
+    <header class="creator-head">
+      <div>
+        <div class="creator-kicker">McCluster Music</div>
+        <h1>Creator Studio</h1>
+      </div>
+      <p>One M Account becomes your creator identity. Upload a master, choose what listeners can hear, submit the rights record, and send the release into review.</p>
+    </header>
+
+    <section class="creator-gate creator-card wide" id="creatorGate">
+      <h2>Sign in to publish.</h2>
+      <p>Your creator profile attaches to the same M Account and Mnet identity you already use across the platform.</p>
+      <a class="creator-btn primary" href="account.html?next=creator.html">Sign in or create M Account</a>
+    </section>
+
+    <div class="creator-grid" id="creatorApp" hidden>
+      <section class="creator-card">
+        <h2>Your creator identity</h2>
+        <p>This is the public profile listeners see. It is an extension of your M Account, not a separate login.</p>
+        <form class="creator-form" id="profileForm">
+          <div class="creator-field"><label for="creatorHandle">Handle</label><input id="creatorHandle" name="handle" autocomplete="off" placeholder="artist-name" required pattern="[a-z0-9._-]{3,40}"></div>
+          <div class="creator-field"><label for="creatorName">Artist / creator name</label><input id="creatorName" name="artist_name" required maxlength="160"></div>
+          <div class="creator-field"><label for="creatorBio">Bio</label><textarea id="creatorBio" name="bio" maxlength="2000"></textarea></div>
+          <div class="creator-field"><label for="creatorWebsite">Website</label><input id="creatorWebsite" name="website_url" type="url" placeholder="https://"></div>
+          <label class="creator-check"><input id="creatorTerms" type="checkbox" required><span>I accept the <a href="music-creator-terms.html" target="_blank">Creator Hosting & Licensing Terms</a>.</span></label>
+          <div class="creator-actions"><button class="creator-btn primary" type="submit">Save creator profile</button><a class="creator-btn quiet" id="publicProfile" href="#" hidden>View public profile</a></div>
+          <div class="creator-status" id="profileStatus"></div>
+        </form>
+      </section>
+
+      <section class="creator-card">
+        <h2>Your releases</h2>
+        <p>Drafts and review status live here. Published releases appear automatically in discovery.</p>
+        <div class="creator-list" id="creatorTracks"><div class="creator-status">No releases yet.</div></div>
+      </section>
+
+      <section class="creator-card wide">
+        <h2>Submit a release</h2>
+        <p>Private masters never become public URLs. Account-only and licensable tracks use a public preview plus a private master; public tracks may publish the same audio openly.</p>
+        <form class="creator-form two" id="trackForm">
+          <div class="creator-field"><label for="trackTitle">Title</label><input id="trackTitle" required maxlength="220"></div>
+          <div class="creator-field"><label for="trackArtist">Artist credit</label><input id="trackArtist" maxlength="220"></div>
+          <div class="creator-field"><label for="trackGenre">Genre</label><input id="trackGenre" maxlength="80"></div>
+          <div class="creator-field"><label for="trackAccess">Listener access</label>
+            <select id="trackAccess">
+              <option value="account">Full track with free M Account</option>
+              <option value="public">Public full play</option>
+              <option value="purchase">Preview until licensed / purchased</option>
+            </select>
+          </div>
+          <div class="creator-field wide"><label for="trackDescription">Release notes</label><textarea id="trackDescription" maxlength="2000"></textarea></div>
+          <div class="creator-field"><label for="trackMaster">Master audio</label><input id="trackMaster" type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/flac" required></div>
+          <div class="creator-field"><label for="trackPreview">Preview audio</label><input id="trackPreview" type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,audio/wav"><small id="previewHelp" style="color:var(--mc-dim)">Required for account-only and licensable tracks.</small></div>
+          <div class="creator-field wide"><label for="trackArt">Artwork</label><input id="trackArt" type="file" accept="image/jpeg,image/png,image/webp,image/avif"></div>
+
+          <div class="creator-field wide">
+            <span class="creator-label">Rights declaration</span>
+            <label class="creator-check"><input id="ownsMaster" type="checkbox" required><span>I own or control the master recording.</span></label>
+            <label class="creator-check"><input id="controlsComposition" type="checkbox" required><span>I own/control the composition or have permission to distribute and license it.</span></label>
+            <label class="creator-check"><input id="samplesCleared" type="checkbox" required><span>Any samples/interpolations are cleared, or none are used.</span></label>
+            <label class="creator-check"><input id="collaboratorsCleared" type="checkbox" required><span>All collaborators have authorized this release.</span></label>
+            <label class="creator-check"><input id="isDerivative" type="checkbox"><span>This is a parody, remix, cover, or other derivative work.</span></label>
+          </div>
+          <div class="creator-field wide" id="derivativeField" hidden><label for="derivativePermissions">Derivative / parody permissions and basis</label><textarea id="derivativePermissions" placeholder="Identify the underlying work and the permissions or rights basis you rely on."></textarea></div>
+
+          <div class="creator-field"><label for="licensePrice">Optional commercial license price (USD)</label><input id="licensePrice" type="number" min="1" step="1" placeholder="100"></div>
+          <div class="creator-field"><label for="licenseTitle">License label</label><input id="licenseTitle" value="Commercial license" maxlength="120"></div>
+          <div class="creator-field wide"><label for="licenseTerms">License terms</label><textarea id="licenseTerms" placeholder="Describe permitted usage, term, territory, media, attribution, and exclusions."></textarea></div>
+
+          <label class="creator-check wide"><input id="releaseTerms" type="checkbox" required><span>I authorize McCluster to host, stream, promote, and deliver this release under the Creator Terms, and I understand derivative/parody works are held for manual rights review before licensing can go live.</span></label>
+          <div class="creator-actions wide"><button class="creator-btn primary" id="submitTrack" type="submit">Upload & submit for review</button></div>
+          <div class="creator-status wide" id="trackStatus"></div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/mcc-auth.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script type="module" src="js/music-creator-studio.js?v=__STAMP__"></script>
+</body>
+</html>

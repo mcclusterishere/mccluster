@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Music Review Desk · McCluster</title>
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/music-creator.css?v=__STAMP__">
+</head>
+<body class="songpage">
+<main class="creator-shell">
+  <header class="creator-head">
+    <div><div class="creator-kicker">Operator only</div><h1>Music Review Desk</h1></div>
+    <p>Rights review, publication, and checkout activation. This surface uses the existing <code>ops.use</code> authority and service-side writes.</p>
+  </header>
+  <section class="creator-gate creator-card wide" id="adminGate">
+    <h2>Operator access required.</h2>
+    <p>Sign in with an M Account that holds McCluster <code>ops.use</code>.</p>
+    <a class="creator-btn primary" href="account.html?next=music-admin.html">Sign in</a>
+  </section>
+  <div id="adminApp" hidden>
+    <section class="creator-card wide">
+      <h2>Release queue</h2>
+      <p>Publishing also marks the rights record cleared. Use “Review” when the release needs more documentation, and “Reject” for a rights conflict.</p>
+      <div id="adminTracks"><div class="creator-status">Loading…</div></div>
+    </section>
+    <section class="creator-card wide" style="margin-top:16px">
+      <h2>License offers</h2>
+      <p>Checkout cannot be activated until the release is published and rights-cleared.</p>
+      <div id="adminOffers"><div class="creator-status">Loading…</div></div>
+    </section>
+  </div>
+</main>
+<script src="js/mcc-auth.js?v=__STAMP__"></script>
+<script src="js/tabbar.js?v=__STAMP__"></script>
+<script src="js/music-admin.js?v=__STAMP__"></script>
+</body>
+</html>

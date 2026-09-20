@@ -225,14 +225,11 @@
         "label": "Ringtone",
         "note": "iPhone",
         "object": "niggy-nigg/niggy-nigg.m4r"
-       },
-       {
-        "ext": "wav",
-        "label": "WAV",
-        "note": "lossless",
-        "object": "niggy-nigg/niggy-nigg.wav"
        }
-      ]
+      ],
+      "access_mode": "account",
+      "preview_visibility": "signed_out_only",
+      "full_visibility": "signed_in"
      }
     }
    ]

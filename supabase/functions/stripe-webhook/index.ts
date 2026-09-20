@@ -37,6 +37,55 @@ function stateFor(a: Stripe.Account) {
   };
 }
 
+async function grantMusicOrder(session: Stripe.Checkout.Session) {
+  const orderId = session.metadata?.music_order_id || "";
+  if (!orderId || session.metadata?.kind !== "music_license_sale" || session.payment_status !== "paid") return;
+  const rows = await db(`music_orders?id=eq.${encodeURIComponent(orderId)}&select=id,offer_id,track_id,customer_user_id,customer_email,status&limit=1`);
+  const order = rows?.[0];
+  if (!order) throw new Error(`music order ${orderId} not found`);
+  const email = String(session.customer_details?.email || session.customer_email || order.customer_email || "").toLowerCase();
+  await db(`music_orders?id=eq.${encodeURIComponent(orderId)}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      status: "paid",
+      stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : null,
+      customer_email: email,
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }),
+  });
+  const existing = await db(`music_entitlements?order_id=eq.${encodeURIComponent(orderId)}&select=id&limit=1`);
+  if (!existing?.length) {
+    await db("music_entitlements", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        order_id: orderId,
+        offer_id: order.offer_id,
+        track_id: order.track_id,
+        user_id: order.customer_user_id || session.metadata?.customer_user_id || null,
+        customer_email: email,
+      }),
+    });
+  }
+}
+
+async function revokeMusicByPaymentIntent(paymentIntent: string) {
+  if (!paymentIntent) return;
+  const rows = await db(`music_orders?stripe_payment_intent_id=eq.${encodeURIComponent(paymentIntent)}&select=id&limit=1`);
+  const order = rows?.[0];
+  if (!order) return;
+  const at = new Date().toISOString();
+  await db(`music_orders?id=eq.${encodeURIComponent(order.id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "refunded", refunded_at: at, updated_at: at }),
+  });
+  await db(`music_entitlements?order_id=eq.${encodeURIComponent(order.id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ revoked_at: at }),
+  });
+}
+
 Deno.serve(async (req) => {
   const sig = req.headers.get("stripe-signature") || "";
   const raw = await req.text();
@@ -53,8 +102,6 @@ Deno.serve(async (req) => {
 
     if (event.type === "account.updated") {
       const a = event.data.object as Stripe.Account;
-      // Legacy creator/provider records remain supported while client orgs move
-      // to org_stripe_accounts.
       await patchBy("providers", "stripe_acct", a.id, { charges_enabled: a.charges_enabled === true });
       await db(`org_stripe_accounts?stripe_account_id=eq.${encodeURIComponent(a.id)}&livemode=eq.${event.livemode}`, {
         method: "PATCH",
@@ -67,6 +114,32 @@ Deno.serve(async (req) => {
       if (s.mode === "subscription" && s.metadata?.uid) {
         await patchBy("providers", "uid", s.metadata.uid, { plan: "premium" });
       }
+      await grantMusicOrder(s);
+    }
+
+    if (event.type === "checkout.session.expired") {
+      const s = event.data.object as Stripe.Checkout.Session;
+      if (s.metadata?.kind === "music_license_sale" && s.metadata.music_order_id) {
+        await db(`music_orders?id=eq.${encodeURIComponent(s.metadata.music_order_id)}&status=eq.pending`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: "canceled", updated_at: new Date().toISOString() }),
+        });
+      }
+    }
+
+    if (event.type === "payment_intent.payment_failed") {
+      const p = event.data.object as Stripe.PaymentIntent;
+      if (p.metadata?.kind === "music_license_sale" && p.metadata.music_order_id) {
+        await db(`music_orders?id=eq.${encodeURIComponent(p.metadata.music_order_id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: "failed", stripe_payment_intent_id: p.id, updated_at: new Date().toISOString() }),
+        });
+      }
+    }
+
+    if (event.type === "charge.refunded") {
+      const c = event.data.object as Stripe.Charge;
+      await revokeMusicByPaymentIntent(typeof c.payment_intent === "string" ? c.payment_intent : "");
     }
 
     if (event.type === "customer.subscription.deleted") {

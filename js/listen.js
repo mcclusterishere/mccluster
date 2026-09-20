@@ -174,7 +174,7 @@
       "<b>" + esc(t.title) + "</b>" +
       "<small>" + esc(t.album) + "</small>" +
       '<span class="feat__acts">' +
-        '<span class="feat__play">' + PLAY + "</span>" +
+        '<span class="feat__play" role="button" tabindex="0" aria-label="Play ' + escAttr(t.title) + '" aria-pressed="false" data-music-play data-album="' + escAttr(t.albumSlug) + '" data-track="' + escAttr(t.title) + '">' + PLAY + "</span>" +
         '<span class="feat__n">' + esc(t.length || "Play") + "</span>" +
       "</span></a>";
   }
@@ -207,6 +207,7 @@
           "<small>" + esc(t.album) + (t.credit ? " &middot; " + esc(t.credit) : "") + "</small>" +
         "</span>" +
       "</a>" +
+      '<button class="music-inline-play" type="button" aria-label="Play ' + escAttr(t.title) + '" aria-pressed="false" data-music-play data-album="' + escAttr(t.albumSlug) + '" data-track="' + escAttr(t.title) + '">' + PLAY + "</button>" +
       '<span class="d">' + esc(t.length) + "</span>" +
       '<button class="hrt' + (on ? " on" : "") + '" type="button" data-alb="' + escAttr(t.albumSlug) +
         '" data-title="' + escAttr(t.title) + '" aria-pressed="' + (on ? "true" : "false") +
