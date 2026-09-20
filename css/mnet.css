@@ -17,6 +17,9 @@ html, body { background: var(--ink); }
 .mn__lede { max-width: 37rem; margin-top: 1rem; color: var(--cream-dim); font-size: 1rem; line-height: 1.65; }
 .mn__panel, .mn__composer, .mn__post-card, .mn__profile-card, .mn__notification { border: 1px solid var(--edge); background: var(--glass-hi); border-radius: 18px; }
 .mn__panel { margin-top: 1.6rem; padding: 1.15rem; }
+.mn__auth-tabs { display:grid; grid-template-columns:1fr 1fr; gap:.3rem; margin-bottom:.9rem; padding:.26rem; border:1px solid var(--edge); border-radius:13px; background:rgba(255,255,255,.025); }
+.mn__auth-tab { border:0; border-radius:9px; padding:.7rem .55rem; cursor:pointer; color:var(--cream-dim); background:transparent; font:800 .76rem/1 var(--ui); }
+.mn__auth-tab.is-active { color:var(--cream); background:rgba(255,255,255,.08); }
 .mn__label { display: block; margin: 1rem 0 .4rem; color: var(--cream-dim); font: 750 .69rem/1.2 var(--ui); letter-spacing: .09em; text-transform: uppercase; }
 .mn__label:first-child { margin-top: 0; }
 .mn__label span { font-weight: 500; letter-spacing: 0; text-transform: none; }
