@@ -83,9 +83,8 @@
       <h2>WE Manufacture</h2>
       <p>The list, the sites, the line. Operator only — same lock as the Control Plane.</p>
       <input class="we__in" id="weEmail" type="email" placeholder="Owner email" autocomplete="email">
-      <input class="we__in" id="wePass" type="password" placeholder="Password (optional)" autocomplete="current-password">
+      <input class="we__in" id="wePass" type="password" placeholder="Password" autocomplete="current-password">
       <button class="we__btn we__btn--go" id="weIn" type="button">Open the desk &rarr;</button>
-      <button class="we__btn" id="weLink" type="button">Email me a sign-in link</button>
       <p class="we__note" id="weNote"></p>
     </section>
 
@@ -231,7 +230,7 @@
     $("weIn").addEventListener("click", function () {
       var em = $("weEmail").value.trim(), pw = $("wePass").value;
       if (!em) { note("Email first.", true); return; }
-      if (!pw) { note("No password? Use the sign-in link below.", true); return; }
+      if (!pw) { note("Password required.", true); return; }
       var b = $("weIn"); b.disabled = true; b.textContent = "Opening…";
       window.MCC_AUTH.signInPassword(em, pw).then(boot).catch(function (e) {
         b.disabled = false; b.textContent = "Open the desk →";
@@ -239,17 +238,6 @@
       });
     });
     $("wePass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("weIn").click(); });
-    $("weLink").addEventListener("click", function () {
-      var em = $("weEmail").value.trim();
-      if (!em) { note("Email first.", true); return; }
-      var b = $("weLink"); b.disabled = true; b.textContent = "Sending…";
-      window.MCC_AUTH.signIn(em).then(function () {
-        b.textContent = "Link sent";
-        note("Check " + em + ". The link opens this page signed in.");
-      }).catch(function (e) {
-        b.disabled = false; b.textContent = "Email me a sign-in link";
-        note(String(e && e.message || e), true);
-      });
     });
     $("weOut").addEventListener("click", function () {
       window.MCC_AUTH.signOut().then(function () { location.reload(); });
