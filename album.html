@@ -1082,7 +1082,7 @@
     function paintGate(row, out) {
       var slot = row.querySelector("[data-reclock]");
       if (!slot) return;
-      row.classList.remove("locked", "unlocked", "gone");
+      row.classList.remove("locked", "unlocked", "gone", "unlocking");
       /* the slot is painted before the source is swapped, so a swap that
          ever fails cannot also cost the listener the button */
       if (out.state === "full") {
@@ -1121,13 +1121,39 @@
         slot.innerHTML = '<span class="gonetxt" title="The full track could not be reached">Unavailable</span>';
       }
     }
+    function hasStoredSession() {
+      try {
+        var raw = localStorage.getItem("mccdb_session");
+        if (!raw) return false;
+        var s = JSON.parse(raw);
+        return !!(s && s.access_token);
+      } catch (e) { return false; }
+    }
+    function paintGateOpening(row) {
+      var slot = row.querySelector("[data-reclock]");
+      row.classList.remove("locked", "unlocked", "gone");
+      row.classList.add("unlocking");
+      if (slot) slot.innerHTML = '<span class="gonetxt">Opening full track&hellip;</span>';
+      /* A signed-in listener must never race the public preview while the
+         private URL is being minted. An empty source is deliberate here:
+         the row becomes playable the moment resolve() returns the master. */
+      row.setAttribute("data-src", "");
+    }
     function paintGates() {
       var list = gatedRows();
       if (!list.length) return;
-      /* js/gated-audio.js is deferred and this runs off a fetch, so either
-         one can land first. Paint the locked default now either way, and
-         wait for the signer rather than giving up on it. */
-      list.forEach(function (row) { paintGate(row, { state: "preview" }); });
+
+      /* Preview is a signed-OUT state, not a second edition of the song.
+         If a session already exists, never paint or arm the preview even for
+         the few milliseconds before the signer module finishes loading. */
+      var signed = window.MCC_GATED
+        ? window.MCC_GATED.signedIn()
+        : hasStoredSession();
+      list.forEach(function (row) {
+        if (signed) paintGateOpening(row);
+        else paintGate(row, { state: "preview" });
+      });
+
       if (!window.MCC_GATED) {
         window.addEventListener("mcc:gated-ready", function once() {
           window.removeEventListener("mcc:gated-ready", once);
