@@ -127,6 +127,17 @@
   }
   if (!dock) dock = buildBar();
 
+  /* Mnet owns the person column now. Many older pages still carry a
+     hand-written copy of the bar, so normalize that existing fifth tab at
+     runtime instead of editing the same navigation markup across dozens of
+     pages. The account page remains available inside the Profile/Mnet wing. */
+  var mnetTab = dock.querySelector('[data-appnav="profile"]');
+  if (mnetTab) {
+    mnetTab.href = ROOT + "mnet.html";
+    var mnetLabel = mnetTab.querySelector("span");
+    if (mnetLabel) mnetLabel.textContent = "Mnet";
+  }
+
   /* the page tail clears the bar; the padding rule existed in the
      stylesheet for months while nothing ever applied the class */
   document.body.classList.add("has-appbar");
