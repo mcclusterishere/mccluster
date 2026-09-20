@@ -57,6 +57,17 @@ async function resolveMnetPerson(env,id){
   const np=await service(env,`network_profiles?m_uid=eq.${m_uid}&select=*&limit=1`);
   return {identity:p[0],m_uid,profile:np?.[0]||null};
 }
+async function canReadNetworkProfile(env,muid,resolved){
+  if(!resolved?.profile)return false;
+  if(resolved.profile.visibility==='public'||resolved.m_uid===muid)return true;
+  if(!muid||resolved.profile.visibility==='private')return false;
+  if(await networkBlocked(env,muid,resolved.m_uid))return false;
+  if(resolved.profile.visibility==='network'){
+    const rows=await service(env,`network_follows?follower_m_uid=eq.${muid}&followed_m_uid=eq.${resolved.m_uid}&status=eq.following&select=follower_m_uid&limit=1`);
+    return !!rows?.length;
+  }
+  return false;
+}
 async function callMnetMedia(req,env,body){
   const auth=req.headers.get('authorization')||'';
   const res=await fetch(`${env.SUPABASE_URL}/functions/v1/mnet-media`,{
@@ -190,25 +201,24 @@ async function handleMnet(req,env,path,url){
   const person=path.match(/^\/v1\/mnet\/people\/([^/]+)$/);
   if(person&&req.method==='GET'){
     const id=decodeURIComponent(person[1]),resolved=await resolveMnetPerson(env,id); if(!resolved)return fail(req,env,'Person not found',404);
+    const me=external?null:await currentMuid(env,user.id);
+    if(!(await canReadNetworkProfile(env,me,resolved)))return fail(req,env,'Person not found',404);
     let following=false,blocked=false,muted=false,followers=0,followingCount=0,posts=0;
-    if(!external){
-      const me=await currentMuid(env,user.id);
-      if(me&&me!==resolved.m_uid){
-        if(await networkBlocked(env,me,resolved.m_uid))return fail(req,env,'Person not found',404);
-        const [f,b,m]=await Promise.all([
-          service(env,`network_follows?follower_m_uid=eq.${me}&followed_m_uid=eq.${resolved.m_uid}&status=eq.following&select=follower_m_uid&limit=1`),
-          service(env,`network_blocks?blocker_m_uid=eq.${me}&blocked_m_uid=eq.${resolved.m_uid}&select=blocker_m_uid&limit=1`),
-          service(env,`network_mutes?muter_m_uid=eq.${me}&muted_m_uid=eq.${resolved.m_uid}&select=muter_m_uid,expires_at&limit=1`)
-        ]);
-        following=!!f?.length;blocked=!!b?.length;muted=!!m?.length;
-      }
+    if(me&&me!==resolved.m_uid){
+      const [f,b,m]=await Promise.all([
+        service(env,`network_follows?follower_m_uid=eq.${me}&followed_m_uid=eq.${resolved.m_uid}&status=eq.following&select=follower_m_uid&limit=1`),
+        service(env,`network_blocks?blocker_m_uid=eq.${me}&blocked_m_uid=eq.${resolved.m_uid}&select=blocker_m_uid&limit=1`),
+        service(env,`network_mutes?muter_m_uid=eq.${me}&muted_m_uid=eq.${resolved.m_uid}&select=muter_m_uid,expires_at&limit=1`)
+      ]);
+      following=!!f?.length;blocked=!!b?.length;muted=!!m?.length;
     }
     const [fc,fg,pc]=await Promise.all([
       service(env,`network_follows?followed_m_uid=eq.${resolved.m_uid}&status=eq.following&select=follower_m_uid`),
       service(env,`network_follows?follower_m_uid=eq.${resolved.m_uid}&status=eq.following&select=followed_m_uid`),
       service(env,`network_posts?author_m_uid=eq.${resolved.m_uid}&deleted_at=is.null&reply_to_id=is.null&select=id,visibility`)
     ]);
-    followers=(fc||[]).length;followingCount=(fg||[]).length;posts=(pc||[]).filter(x=>external?x.visibility==='public':true).length;
+    followers=(fc||[]).length;followingCount=(fg||[]).length;
+    posts=(pc||[]).filter(x=>resolved.m_uid===me||x.visibility==='public'||(x.visibility==='network'&&following)).length;
     if(external)await meter(env,external,'mnet.read',path,req.method,200,null,start);
     return reply(req,env,{identity:resolved.identity,profile:resolved.profile,following,blocked,muted,counts:{followers,following:followingCount,posts}});
   }
@@ -279,8 +289,8 @@ async function handleMnet(req,env,path,url){
   const personPosts=path.match(/^\/v1\/mnet\/people\/([^/]+)\/posts$/);
   if(personPosts&&req.method==='GET'){
     const resolved=await resolveMnetPerson(env,decodeURIComponent(personPosts[1])); if(!resolved)return fail(req,env,'Person not found',404);
-    let viewer=null;if(external)viewer=null;else viewer=await currentMuid(env,user.id);
-    if(viewer&&await networkBlocked(env,viewer,resolved.m_uid))return fail(req,env,'Person not found',404);
+    const viewer=external?null:await currentMuid(env,user.id);
+    if(!(await canReadNetworkProfile(env,viewer,resolved)))return fail(req,env,'Person not found',404);
     const limit=Math.min(50,Math.max(1,Number(url.searchParams.get('limit')||20))),before=url.searchParams.get('before');
     const rows=await service(env,`network_posts?author_m_uid=eq.${resolved.m_uid}&reply_to_id=is.null&deleted_at=is.null${before?`&created_at=lt.${encodeURIComponent(before)}`:''}&order=created_at.desc&limit=${limit+1}&select=*`);
     const visible=[];
