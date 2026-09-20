@@ -65,6 +65,6 @@ jobs:
           deno-version: v2.x
       - name: Type-check music edge functions
         run: |
-          deno check supabase/functions/music-access/index.ts
-          deno check supabase/functions/music-checkout/index.ts
-          deno check supabase/functions/stripe-webhook/index.ts
+          deno check --node-modules-dir=auto supabase/functions/music-access/index.ts
+          deno check --node-modules-dir=auto supabase/functions/music-checkout/index.ts
+          deno check --node-modules-dir=auto supabase/functions/stripe-webhook/index.ts
