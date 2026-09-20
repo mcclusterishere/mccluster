@@ -34,6 +34,9 @@ html, body { background: var(--ink); }
 .mn__primary { width: 100%; margin-top: .85rem; padding: .95rem 1rem; }
 .mn__primary:disabled, .mn__post:disabled { opacity: .55; cursor: default; }
 .mn__text-link { display: block; margin-top: .9rem; color: var(--cream-dim); text-align: center; font-size: .79rem; }
+.mn__text-button { display:block; margin:.72rem auto 0; padding:0; border:0; background:none; color:var(--cream-dim); text-decoration:underline; text-underline-offset:3px; cursor:pointer; font:700 .78rem/1.25 var(--ui); }
+.mn__text-button:hover { color:var(--cream); }
+.mn__text-button:disabled { opacity:.55; cursor:default; }
 .mn__or { position: relative; margin: 1.15rem 0 .7rem; text-align: center; color: var(--cream-dim); font-size: .7rem; text-transform: uppercase; }
 .mn__or::before { content:""; position:absolute; left:0; right:0; top:50%; border-top:1px solid var(--edge); }
 .mn__or span { position: relative; padding: 0 .7rem; background: var(--ink-2); }
