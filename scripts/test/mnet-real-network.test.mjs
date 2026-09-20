@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const read=(p)=>readFile(p,'utf8');
 
 test('Mnet has production primitives for media, moderation, direct messages, and realtime', async()=>{
-  const migration=await read('supabase/migrations/20260920070000_mnet_real_network_v1.sql');
+  const migration=await read('supabase/migrations/20260920071811_mnet_real_network_v1.sql');
   for(const table of [
     'network_media_assets','network_reports','network_conversations',
     'network_conversation_members','network_messages'
@@ -19,8 +19,8 @@ test('Mnet has production primitives for media, moderation, direct messages, and
 });
 
 test('message-request recipients cannot bypass acceptance and conversation RLS is non-recursive', async()=>{
-  const rls=await read('supabase/migrations/20260920070500_mnet_conversation_rls_fix.sql');
-  const privacy=await read('supabase/migrations/20260920071000_mnet_privacy_and_request_guards.sql');
+  const rls=await read('supabase/migrations/20260920071931_mnet_conversation_rls_fix.sql');
+  const privacy=await read('supabase/migrations/20260920072949_mnet_privacy_and_request_guards.sql');
   assert.match(rls,/mnet_is_conversation_member/);
   assert.match(rls,/security definer/);
   assert.match(rls,/network_conversation_members_member_read/);
@@ -31,7 +31,7 @@ test('message-request recipients cannot bypass acceptance and conversation RLS i
 
 test('Mnet media is private and only exposed through authenticated authorization', async()=>{
   const media=await read('supabase/functions/mnet-media/index.ts');
-  const migration=await read('supabase/migrations/20260920070000_mnet_real_network_v1.sql');
+  const migration=await read('supabase/migrations/20260920071811_mnet_real_network_v1.sql');
   assert.match(migration,/'mnet-media','mnet-media',false/);
   assert.match(media,/admin\.auth\.getUser\(token\)/);
   assert.match(media,/network_media_assets/);
@@ -69,7 +69,7 @@ test('reaction, post, profile, and media access fail closed through visibility c
 });
 
 test('feed semantics exclude blocked and muted actors', async()=>{
-  const migration=await read('supabase/migrations/20260920070000_mnet_real_network_v1.sql');
+  const migration=await read('supabase/migrations/20260920071811_mnet_real_network_v1.sql');
   assert.match(migration,/not public\.mnet_is_blocked_pair\(me\.m_uid,f\.actor_m_uid\)/);
   assert.match(migration,/network_mutes nm/);
   assert.match(migration,/nm\.muter_m_uid=me\.m_uid/);
@@ -100,7 +100,7 @@ test('Mnet client exposes discovery, messaging, media, bookmarks, follow, and sa
 test('Mnet keeps one canonical M Account identity instead of creating a second auth system', async()=>{
   const html=await read('mnet.html');
   const js=await read('js/mnet.js');
-  const migration=await read('supabase/migrations/20260920070000_mnet_real_network_v1.sql');
+  const migration=await read('supabase/migrations/20260920071811_mnet_real_network_v1.sql');
   assert.match(html,/Manage your M Account/);
   assert.match(js,/MCC\.signInWithPassword/);
   assert.match(js,/MCC\.signUpWithPassword/);
