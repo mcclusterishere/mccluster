@@ -599,11 +599,12 @@
     .now__doors #nowNap { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; }
     .now__doors #nowNap.on { color: #fff; background: linear-gradient(165deg,#ff5a5c,#b3121b); }
   </style>
+  <link rel="stylesheet" href="css/music-system-v2.css?v=__STAMP__">
   <link rel="stylesheet" href="css/music-director.css?v=__STAMP__">
   <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
   <link rel="stylesheet" href="css/deskchat.css?v=__STAMP__">
 </head>
-<body class="songpage music-room music-room--album">
+<body class="songpage music-room music-room--album music-v2">
   <!-- THE ROOM: the page lives inside the playing record's film:
        blurred, dimmed, scene-cutting with the reels. Spotify shows
        you a list; this room shows you the world of the song. -->
@@ -614,19 +615,16 @@
 
   <main class="hr">
     <!-- THE TOP ROW: the face, the search, the saves: the app opens like an app -->
-    <header class="top">
-      <img class="top__ava" src="assets/img/m-mark.png" alt="McCluster">
-      <div class="top__acts">
-        <a class="top__circle" href="catalogue.html" aria-label="The catalog">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-        </a>
-        <a class="top__circle" href="album.html?playlist=my-rotation" aria-label="My Rotation">
-          <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.6-9-9c-1.2-2.7 0.6-6 3.8-6 2 0 3.4 1.2 5.2 3.2C13.8 6.2 15.2 5 17.2 5c3.2 0 5 3.3 3.8 6-2 4.4-9 9-9 9z"/></svg>
-        </a>
-        <button class="top__circle" id="themeFlip" type="button" aria-label="Light or dark">
+    <header class="music-contextbar">
+      <a class="music-contextbar__brand" href="listen.html"><img src="assets/img/m-mark.png" alt=""><span>Music</span></a>
+      <nav class="music-contextbar__nav" aria-label="Music">
+        <a href="listen.html">Listen</a>
+        <a href="catalogue.html">Library</a>
+        <a href="creator.html">Creator Studio</a>
+        <button class="music-contextbar__icon" id="themeFlip" type="button" aria-label="Light or dark">
           <svg viewBox="0 0 24 24"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
         </button>
-      </div>
+      </nav>
     </header>
     <div class="greet">Have no fear.</div>
     <p class="greet__sub">McCluster is here. The whole catalog, one room.</p>
