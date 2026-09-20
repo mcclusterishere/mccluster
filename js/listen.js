@@ -64,6 +64,9 @@
 
   var TRACKS = [];
   var ALBUMS = [];
+  var BY_KEY = {};
+  var NEIGHBOURS = {};
+  var AFFINITY_ROWS = 0;
   var q = "";
   var chip = "all";
   /* Whether anything actually ranked. The rail is headed on what the data
@@ -75,13 +78,23 @@
   /* ---------------------------------------------------------------
      THE INDEX
      --------------------------------------------------------------- */
-  function build(albums, cat, reach) {
+  function build(albums, cat, signals, affinity) {
     ALBUMS = (albums && albums.albums) || [];
     var meta = {};
     ((cat && cat.tracks) || []).forEach(function (t) { meta[key(t.title)] = t; });
     var rank = {};
-    (reach || []).forEach(function (r) { rank[key(r.track_key)] = r; });
-    RANKED = (reach || []).length > 0;
+    (signals || []).forEach(function (r) { rank[key(r.track_key)] = r; });
+    RANKED = (signals || []).length > 0;
+
+    /* The similarity matrix, indexed by seed. Only the top few neighbours of
+       each track are fetched: past that the scores are noise and the payload
+       grows with the square of the catalogue. */
+    NEIGHBOURS = {};
+    (affinity || []).forEach(function (r) {
+      var k = key(r.track_key);
+      (NEIGHBOURS[k] || (NEIGHBOURS[k] = [])).push({ k: key(r.other_key), score: Number(r.score) || 0 });
+    });
+    AFFINITY_ROWS = (affinity || []).length;
 
     var out = [];
     ALBUMS.forEach(function (a, ai) {
@@ -106,11 +119,16 @@
              and cannot collide. */
           seq: (ai * 1000) + i,
           position: r ? r.position : null,
-          reach: r ? r.reach : 0,
+          keep: r ? r.keep_score : 0,
+          momentum: r ? r.momentum_score : 0,
+          momentumRank: r ? r.momentum_rank : null,
+          deepCut: !!(r && r.deep_cut),
         });
       });
     });
     TRACKS = out;
+    BY_KEY = {};
+    out.forEach(function (t) { BY_KEY[t.k] = t; });
   }
 
   function byReach(a, b) {
@@ -147,10 +165,11 @@
   /* ---------------------------------------------------------------
      THE CARD — the art IS the card, the way the album room does it
      --------------------------------------------------------------- */
-  function card(t) {
+  function card(t, why) {
     return '<a class="feat__card" href="' + escAttr(href(t)) + '" data-cta="listen-card">' +
       '<img class="feat__bg" src="' + escAttr(t.art) + '" alt="" loading="lazy">' +
       '<span class="feat__smoke"></span>' +
+      (why ? '<span class="feat__why">' + esc(why) + "</span>" : "") +
       "<b>" + esc(t.title) + "</b>" +
       "<small>" + esc(t.album) + "</small>" +
       '<span class="feat__acts">' +
@@ -195,6 +214,101 @@
   }
 
   /* ---------------------------------------------------------------
+     THE RECOMMENDERS
+
+     Two halves, and the split is deliberate. The server computes what is
+     true of everybody — a Wilson-bounded keep rate, a decayed momentum, a
+     co-occurrence matrix — and publishes it with no identifier on it. The
+     browser computes what is true of itself, from its own history, and
+     never asks the server who it is. Personalisation happens where the
+     person already is.
+     --------------------------------------------------------------- */
+
+  /* This device's own recent plays, newest first. Written by js/analytics.js
+     on every album_play, capped, and cleared when the visitor clears their
+     storage. */
+  function heard() {
+    var h = (root.MCC_HEARD && root.MCC_HEARD.read()) || [];
+    return h.filter(function (r) { return r && r.t; });
+  }
+
+  /* BECAUSE YOU PLAYED X — item-to-item collaborative filtering.
+     Each of the last few plays is a seed; its neighbours in the published
+     similarity matrix are candidates; a candidate that several seeds agree
+     on scores higher than one that a single seed likes a lot. Recency
+     weights the seeds, because what somebody played an hour ago says more
+     about now than what they played last month. Anything already heard is
+     dropped: this rail exists to find the next record, not to re-describe
+     the last one. */
+  var SEEDS = 4;
+  function becausePlayed() {
+    var h = heard().slice(0, SEEDS);
+    if (!h.length || !AFFINITY_ROWS) return [];
+    var seen = {};
+    heard().forEach(function (r) { seen[key(r.t)] = true; });
+
+    var pool = {};
+    h.forEach(function (row, i) {
+      var seedKey = key(row.t);
+      var weight = 1 / (i + 1);          // 1, ½, ⅓, ¼ by recency
+      (NEIGHBOURS[seedKey] || []).forEach(function (n) {
+        if (seen[n.k] || !BY_KEY[n.k]) return;
+        var e = pool[n.k] || (pool[n.k] = { k: n.k, score: 0, best: 0, seed: row.t });
+        e.score += n.score * weight;
+        /* the card names the seed that contributed most, so the reason on
+           it is true rather than a summary of four */
+        if (n.score * weight > e.best) { e.best = n.score * weight; e.seed = row.t; }
+      });
+    });
+    return Object.keys(pool).map(function (k) { return pool[k]; })
+      .sort(function (a, b) { return b.score - a.score; })
+      .slice(0, 8)
+      .map(function (e) { return { t: BY_KEY[e.k], why: "Plays with " + e.seed }; });
+  }
+
+  /* FINISH THE RECORD — the one recommender that needs no server at all.
+     An album somebody started and did not play out is the most obvious
+     thing to put in front of them, and for an artist who releases albums it
+     is worth more than any similarity score. */
+  function finishTheRecord() {
+    var h = heard();
+    if (!h.length) return [];
+    var seen = {};
+    h.forEach(function (r) { seen[key(r.t)] = true; });
+
+    var out = [];
+    ALBUMS.forEach(function (a) {
+      var tracks = TRACKS.filter(function (t) { return t.albumSlug === a.slug; });
+      if (tracks.length < 2) return;
+      var done = tracks.filter(function (t) { return seen[t.k]; }).length;
+      if (!done || done === tracks.length) return;
+      var next = tracks.filter(function (t) { return !seen[t.k]; })[0];
+      if (next) out.push({ t: next, why: done + " of " + tracks.length + " played", done: done / tracks.length });
+    });
+    /* the album closest to finished goes first: the shortest ask wins */
+    return out.sort(function (x, y) { return y.done - x.done; }).slice(0, 6);
+  }
+
+  /* A rail sorts by the signal it is about. Ranking "Rising" by the keep
+     rank put the fourth-fastest-climbing track at the head of it and the
+     actual leader three cards along, which is the rail quietly not doing
+     the thing its heading claims. */
+  function pick(fn, why, rankOf) {
+    var order = rankOf || function (t) { return t.position || 99; };
+    return TRACKS.filter(fn)
+      .sort(function (a, b) { return order(a) - order(b); })
+      .slice(0, 8)
+      .map(function (t) { return { t: t, why: typeof why === "function" ? why(t) : why }; });
+  }
+
+  function rail(id, wrapId, items) {
+    var wrap = el(wrapId);
+    wrap.hidden = !items.length;
+    if (items.length) el(id).innerHTML = items.map(function (x) { return card(x.t, x.why); }).join("");
+    return items.length;
+  }
+
+  /* ---------------------------------------------------------------
      THE PAINT
      --------------------------------------------------------------- */
   function paint() {
@@ -205,8 +319,12 @@
 
     /* A search is its own view: the rails are a browse aid and they get out
        of the way the moment somebody says what they came for. */
-    var showRails = !searching && (chip === "all" || chip === "albums" || chip === "saved");
-    el("topWrap").hidden = searching || chip !== "all";
+    /* A search is its own view: the rails are a browse aid and they get out
+       of the way the moment somebody says what they came for. */
+    var showRails = !searching && chip !== "tracks";
+    ["ffWrap", "finWrap", "riseWrap", "keptWrap", "deepWrap"].forEach(function (id) {
+      if (searching || chip !== "all") el(id).hidden = true;
+    });
     el("shelfWrap").hidden = searching || (chip !== "all" && chip !== "albums");
     el("rotWrap").hidden = searching || !mine.length || (chip !== "all" && chip !== "saved");
     el("allWrap").hidden = chip === "albums" && !searching;
@@ -232,12 +350,25 @@
         : "Nothing saved yet. Tap a heart and it lands here.") + "</span></li>";
 
     if (showRails) {
-      el("topK").textContent = RANKED ? "Most played" : "Start here";
-      el("topWhy").textContent = RANKED
-        ? "What listeners are actually reaching for."
-        : "The six the room opens on.";
-      el("top").innerHTML = TRACKS.slice().sort(byReach).slice(0, 6).map(card).join("");
-      el("rot").innerHTML = mine.slice(0, 8).map(card).join("");
+      /* Each rail is one method, and it is on the page only when that method
+         produced something. A recommender with nothing to say says nothing;
+         it does not fall back to the top of the catalogue wearing a
+         personalised heading. */
+      rail("ff",   "ffWrap",   becausePlayed());
+      rail("fin",  "finWrap",  finishTheRecord());
+      rail("rise", "riseWrap", pick(
+        function (t) { return t.momentumRank && t.momentumRank <= 8 && t.momentum > 0; },
+        function (t) { return t.momentum >= 60 ? "Climbing" : "Up this week"; },
+        function (t) { return t.momentumRank || 99; }));
+      rail("kept", "keptWrap", pick(
+        function (t) { return t.position && t.position <= 8 && !t.deepCut; },
+        function (t) { return t.position === 1 ? "Most kept in the catalogue" : "Kept after playing"; }));
+      rail("deep", "deepWrap", pick(
+        function (t) { return t.deepCut; }, "Kept more than it is found",
+        function (t) { return t.position || 99; }));
+      rail("rot",  "rotWrap",  mine.slice(0, 8).map(function (t) {
+        return { t: t, why: "Saved on this device" };
+      }));
       el("shelf").innerHTML = ALBUMS.map(albumCard).join("");
     }
   }
@@ -252,21 +383,29 @@
     });
   };
 
+  var sb = function (path) {
+    /* Every rail the server feeds is an enhancement. A failure resolves to
+       nothing and that rail simply does not appear, which is the honest
+       outcome: a section headed with a method and filled with a fallback is
+       worse than no section. */
+    return j(SB_URL + "/rest/v1/" + path, {
+      headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY },
+      cache: "no-cache",
+    }).catch(function () { return null; });
+  };
+
   Promise.all([
     j("data/albums.json"),
     j("data/catalogue.json").catch(function () { return null; }),
-    /* The order is an enhancement. A failure here is not a failure of the
-       page, so it resolves to nothing and the shelf order stands. */
-    j(SB_URL + "/rest/v1/v_track_reach?select=track_key,position,reach&order=position.asc", {
-      headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY },
-      cache: "no-cache",
-    }).catch(function () { return null; }),
+    sb("v_track_signals?select=track_key,position,keep_score,momentum_score,momentum_rank,deep_cut"),
+    sb("v_track_affinity?select=track_key,other_key,score&rn=lte.6&order=score.desc"),
   ]).then(function (all) {
-    build(all[0], all[1], all[2]);
+    build(all[0], all[1], all[2], all[3]);
     paint();
     if (root.MCC_TRACK) {
       root.MCC_TRACK("listen_view", {
-        tracks: TRACKS.length, albums: ALBUMS.length, ranked: RANKED,
+        tracks: TRACKS.length, albums: ALBUMS.length,
+        ranked: RANKED, affinity: AFFINITY_ROWS, heard: heard().length,
       });
     }
   }).catch(function () {

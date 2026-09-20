@@ -104,13 +104,38 @@
       <button type="button" data-chip="saved">Saved</button>
     </div>
 
-    <!-- THE DISCOVERY DECK. Rails first, index last: somebody who knows what
-         they want uses the field, and everybody else is here to be shown
-         something. -->
-    <section class="ls__sec" id="topWrap" aria-label="Where to start">
-      <p class="lib__k" id="topK">Start here</p>
-      <p class="lib__why" id="topWhy">The six the room opens on.</p>
-      <div class="feat" id="top"></div>
+    <!-- THE DECK. Every rail below is one algorithm, and it only exists on
+         the page when that algorithm has something to say. A rail headed
+         with a method and filled with a fallback is worse than no rail. -->
+
+    <section class="ls__sec" id="ffWrap" aria-label="Because you played" hidden>
+      <p class="lib__k" id="ffK">Because you played it</p>
+      <p class="lib__why">Tracks that turn up in the same sitting as the ones you play.</p>
+      <div class="feat" id="ff"></div>
+    </section>
+
+    <section class="ls__sec" id="finWrap" aria-label="Finish the record" hidden>
+      <p class="lib__k">Finish the record</p>
+      <p class="lib__why" id="finWhy">Albums you started and have not played out.</p>
+      <div class="feat" id="fin"></div>
+    </section>
+
+    <section class="ls__sec" id="riseWrap" aria-label="Rising" hidden>
+      <p class="lib__k">Rising</p>
+      <p class="lib__why">Most played this week, not most played ever.</p>
+      <div class="feat" id="rise"></div>
+    </section>
+
+    <section class="ls__sec" id="keptWrap" aria-label="Most kept" hidden>
+      <p class="lib__k">Most kept</p>
+      <p class="lib__why">Ranked by how often a listener saves it after playing it.</p>
+      <div class="feat" id="kept"></div>
+    </section>
+
+    <section class="ls__sec" id="deepWrap" aria-label="Deep cuts" hidden>
+      <p class="lib__k">Deep cuts</p>
+      <p class="lib__why">Kept far more often than they are found.</p>
+      <div class="feat" id="deep"></div>
     </section>
 
     <section class="ls__sec" id="rotWrap" aria-label="Your rotation" hidden>
@@ -121,7 +146,7 @@
 
     <section class="ls__sec" id="shelfWrap" aria-label="The albums">
       <p class="lib__k">The shelf</p>
-      <p class="lib__why" id="shelfWhy">Every record, front to back.</p>
+      <p class="lib__why">Every record, front to back.</p>
       <div class="feat" id="shelf"></div>
     </section>
 

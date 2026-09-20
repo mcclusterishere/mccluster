@@ -513,6 +513,55 @@ window.MCC_MODEL = (function () {
 })();
 
 /* ============================================================
+   THE DEVICE'S OWN HISTORY, AND WHY IT IS KEPT HERE.
+
+   The listening room recommends from two things: an aggregate the
+   server computes for everybody, and what THIS browser has played.
+   The second half could have been a server query — "tell me what
+   device X listened to" — and deliberately is not.
+
+   Asking that question would mean the server assembling a named
+   listening profile per device and handing it back over the wire,
+   which is a different and much heavier thing to hold than the
+   anonymous aggregates in v_track_signals. The plays themselves are
+   already recorded, and they have to be for any of this to work; what
+   this avoids is the profile. The browser keeps its own forty most
+   recent tracks, joins them against a public similarity matrix that
+   names no one, and nobody ever has to answer "who is this and what
+   do they like".
+
+   It clears when the visitor clears their storage, like the device id
+   and the rotation, and the room simply stops personalising.
+   ============================================================ */
+(function (root) {
+  "use strict";
+  var KEY = "mcc_heard";
+  var CAP = 40;
+  function safe(fn) { try { return fn(); } catch (e) { return null; } }
+  function read() {
+    var v = safe(function () { return JSON.parse(localStorage.getItem(KEY)); });
+    return Object.prototype.toString.call(v) === "[object Array]" ? v : [];
+  }
+  root.MCC_HEARD = { read: read };
+
+  var orig = root.MCC_TRACK;
+  root.MCC_TRACK = function (name, params) {
+    if (name === "album_play" && params && params.track) {
+      /* Most recent first, one entry per track: playing a record four times
+         should make it the freshest thing in the list, not four of the forty
+         slots. */
+      safe(function () {
+        var t = String(params.track);
+        var list = read().filter(function (r) { return r && r.t !== t; });
+        list.unshift({ t: t, a: String(params.album || ""), at: Date.now() });
+        localStorage.setItem(KEY, JSON.stringify(list.slice(0, CAP)));
+      });
+    }
+    return orig ? orig(name, params) : undefined;
+  };
+})(window);
+
+/* ============================================================
    THE INSTRUMENT PANEL — what Google would not tell you.
 
    Google Analytics answers "how many". It will not answer "who,

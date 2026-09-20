@@ -19,7 +19,8 @@ import { dirname, join } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
 const json = async (p) => JSON.parse(await read(p));
-const REACH = 'supabase/migrations/20260919104500_track_reach_public_ranking.sql';
+const REACH   = 'supabase/migrations/20260919104500_track_reach_public_ranking.sql';
+const SIGNALS = 'supabase/migrations/20260919150000_track_recommendation_signals.sql';
 
 const code = (src) => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
 const sqlCode = (src) => src.replace(/^\s*--.*$/gm, ' ');
@@ -164,9 +165,8 @@ test('every playable track reaches the index', async () => {
 
 test('the room opens when the ranking does not', async () => {
   const js = await read('js/listen.js');
-  const fetchBlock = js.slice(js.indexOf('/rest/v1/v_track_reach'));
-  assert.match(fetchBlock.slice(0, 400), /catch\(function \(\) \{ return null; \}\)/,
-    'a failed ranking must resolve to nothing, never reject the page');
+  assert.match(js, /return j\(SB_URL \+ "\/rest\/v1\/" \+ path, \{[\s\S]{0,200}?catch\(function \(\) \{ return null; \}\)/,
+    'a failed signal fetch must resolve to nothing, never reject the page');
   assert.match(js, /if \(a\.position && b\.position\) return a\.position - b\.position;/,
     'ranked tracks order by rank');
   assert.match(js, /return a\.seq - b\.seq;/,
@@ -187,13 +187,13 @@ test('the rail is headed on what the data can actually support', async () => {
      counted for — and the first person to disagree with the order would be
      right. */
   const js = await read('js/listen.js');
-  assert.match(js, /RANKED = \(reach \|\| \[\]\)\.length > 0;/,
+  assert.match(js, /RANKED = \(signals \|\| \[\]\)\.length > 0;/,
     'the page must know whether anything actually ranked');
-  assert.match(js, /RANKED \? "Most played" : "Start here"/,
-    'the heading must follow the data, not the intention');
-  const html = await read('listen.html');
-  assert.match(html, /id="topK">Start here</,
-    'the honest heading must be the one that ships in the markup');
+  /* The honest-heading problem is now solved one level up: a rail whose
+     method produced nothing is not headed differently, it is not on the
+     page. rail() is what enforces that. */
+  assert.match(js, /wrap\.hidden = !items\.length;/,
+    'a rail with nothing to show must be absent, not relabelled');
 });
 
 /* ---------------------------------------------------------------
@@ -310,18 +310,19 @@ test('the deck shows before it asks anyone to read', async () => {
      not decided what to play cannot be helped by a list. The index stays,
      underneath, for the people who already know. */
   const js = await read('js/listen.js');
-  assert.match(js, /function card\(t\)/, 'tracks must be able to render as cards');
+  assert.match(js, /function card\(t, why\)/,
+    'a card must be able to say why it is in front of you');
   assert.match(js, /function albumCard\(a\)/, 'so must albums');
   assert.match(js, /class="feat__bg"/, 'the art is the card, not a thumbnail on it');
   const html = await read('listen.html');
-  assert.ok(html.indexOf('id="top"') < html.indexOf('id="all"'),
+  assert.ok(html.indexOf('id="ff"') < html.indexOf('id="all"'),
     'the rails must come before the index');
 });
 
 test('a search puts the browse aids away', async () => {
   const js = await read('js/listen.js');
-  assert.match(js, /el\("topWrap"\)\.hidden = searching \|\| chip !== "all";/,
-    'the start-here rail is for people who have not decided yet');
+  assert.match(js, /\["ffWrap", "finWrap", "riseWrap", "keptWrap", "deepWrap"\]\.forEach/,
+    'every algorithmic rail is for people who have not decided yet');
   assert.match(js, /el\("shelfWrap"\)\.hidden = searching/,
     'so is the shelf');
 });
@@ -349,4 +350,112 @@ test('a heart tapped here is the same act as one tapped in the album room', asyn
     'the same row shape, or the album room cannot read it back');
   assert.match(js, /MCC_TRACK\(added \? "rotation_add" : "rotation_drop"/,
     'and the same event, which is what the ranking counts');
+});
+
+/* ---------------------------------------------------------------
+   7. THE RECOMMENDERS — each rail is a named method
+   --------------------------------------------------------------- */
+
+test('the keep rate is smoothed before the confidence bound, not after', async () => {
+  /* MEASURED, NOT ASSUMED. Run against a fixture, a bare Wilson lower bound
+     put a track with two plays and two saves SECOND — its 95% floor is 0.34,
+     which beats a forty-listener track's honest 0.31. The interval is that
+     wide at n = 2. Crediting every track with a prior of pseudo-listeners at
+     the catalogue's own mean fixes it: the two-play track falls to 0.25 and
+     lands below. Without the prior this view recommends flukes. */
+  const sql = sqlCode(await read(SIGNALS));
+  assert.match(sql, /\), prior as \(/, 'the prior must be its own step');
+  assert.match(sql, /sum\(j\.kept\)::numeric \/ sum\(greatest\(j\.listeners, j\.kept\)\)/,
+    "the prior's rate must come from the catalogue, not from a number somebody liked");
+  assert.match(sql, /\(j\.kept::numeric \+ pr\.c \* pr\.m\)/,
+    'the successes must be smoothed toward it');
+  assert.match(sql, /greatest\(j\.listeners, j\.kept\)::numeric \+ pr\.m as n/,
+    'and the trials with it, or the proportion is not a proportion');
+  assert.match(sql, /3\.8416/, 'z² for the 95% Wilson bound must still be there');
+});
+
+test('a pair only one person ever played is never published', async () => {
+  /* The affinity view is readable by anyone. A co-occurrence with support of
+     one IS a single visitor's listening session, so the floor is a privacy
+     control before it is a quality one. */
+  const sql = sqlCode(await read(SIGNALS));
+  assert.match(sql, /where p\.co_devices >= 3/,
+    'a pair needs several distinct devices behind it before it leaves the building');
+  assert.match(sql, /count\(distinct a\.device_id\)\s+as co_devices/,
+    'and support must be counted in devices, not in sessions one device can repeat');
+});
+
+test('the affinity is cosine, so a popular track is not everyone\'s neighbour', async () => {
+  const sql = sqlCode(await read(SIGNALS));
+  assert.match(sql, /p\.co_sessions \/ sqrt\(ta\.sessions \* tb\.sessions\)/,
+    'co-occurrence must be normalised by both tracks\' own totals');
+});
+
+test('the signal views publish scores and never counts', async () => {
+  /* Same discipline as the view they replace: anonymous readers get an
+     ordering, not a volume. */
+  const sql = sqlCode(await read(SIGNALS));
+  const select = sql.slice(sql.indexOf('select\n  r.k as track_key'), sql.indexOf('from ranked r'));
+  assert.doesNotMatch(select, /\br\.plays\b|\br\.listeners\b|\br\.kept\b/,
+    'raw totals are the owner\'s to publish, not a side effect of ordering a rail');
+  assert.match(select, /100 \* r\.keep_lb \/ max\(r\.keep_lb\) over \(\)/,
+    'the keep rate must be relative to the best track, so no absolute rate leaks');
+  assert.match(sql, /drop view if exists public\.v_track_reach;/,
+    'the view this replaces must go, or there are two rankings to drift apart');
+});
+
+test('a rail sorts by the signal it is named after', async () => {
+  /* Ranking "Rising" by the keep rank put the fourth-fastest climber at the
+     head of it and the actual leader three cards along — a rail quietly not
+     doing the thing its heading claims. Caught in a browser, not by reading
+     it. */
+  const js = await read('js/listen.js');
+  assert.match(js, /function pick\(fn, why, rankOf\)/,
+    'a rail must be able to state its own ordering');
+  assert.match(js, /function \(t\) \{ return t\.momentumRank \|\| 99; \}\)\);/,
+    'Rising must order by momentum');
+});
+
+test('every recommended card carries its own reason', async () => {
+  /* A section heading explains a whole rail. The label on the card explains
+     that card, which is what lets one rail mix sources honestly. */
+  const js = await read('js/listen.js');
+  assert.match(js, /why \? '<span class="feat__why">' \+ esc\(why\) \+ "<\/span>" : ""/,
+    'the card must render a reason when it has one');
+  for (const reason of [/"Plays with " \+ e\.seed/, /done \+ " of " \+ tracks\.length \+ " played"/,
+                        /"Climbing" : "Up this week"/, /"Kept more than it is found"/]) {
+    assert.match(js, reason, `${reason} must be one of the reasons a card can give`);
+  }
+  const css = await read('css/music-room.css');
+  assert.match(css, /\.feat__why \{[\s\S]*?background: rgba\(9,7,5,0\.68\)/,
+    'the label must carry its own contrast, because it lands on artwork nobody art-directed for it');
+});
+
+test('personalisation never asks the server who you are', async () => {
+  /* The server publishes what is true of everybody and holds no per-device
+     profile; the browser joins its own history against that. The alternative
+     — asking "what did device X listen to" — means assembling and shipping a
+     named listening profile, which is a much heavier thing to hold. */
+  const js = await read('js/analytics.js');
+  assert.match(js, /root\.MCC_HEARD = \{ read: read \};/,
+    'the device must keep its own history');
+  assert.match(js, /name === "album_play" && params && params\.track/,
+    'written from the play itself, so both players feed it');
+
+  const listen = await read('js/listen.js');
+  assert.doesNotMatch(code(listen), /device_id=eq\.|device_id=in\.|\bmcc_device\b/,
+    'the room must never query the server by device id');
+  assert.match(listen, /function becausePlayed\(\)/, 'the recommender must be local');
+  assert.match(listen, /if \(seen\[n\.k\] \|\| !BY_KEY\[n\.k\]\) return;/,
+    'something already heard is not a recommendation');
+});
+
+test('the local history is capped and deduplicated', async () => {
+  /* Unbounded, it grows forever in somebody's browser; undeduplicated, four
+     plays of one record fill four of the slots. */
+  const js = await read('js/analytics.js');
+  assert.match(js, /var CAP = 40;/, 'the history must be bounded');
+  assert.match(js, /list\.slice\(0, CAP\)/, 'and actually truncated');
+  assert.match(js, /read\(\)\.filter\(function \(r\) \{ return r && r\.t !== t; \}\)/,
+    'one entry per track, most recent first');
 });

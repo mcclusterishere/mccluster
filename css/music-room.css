@@ -42,6 +42,25 @@
 .feat__card::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(115deg, transparent 32%, rgba(255,255,255,0.16) 44%,
     rgba(255,255,255,0.03) 52%, transparent 62%); }
+/* THE REASON, ABOVE THE TITLE. Every recommendation deck worth copying puts
+   why an item is in front of you above the item itself — Apple Music's "MADE
+   FOR YOU" over the station name. A section heading can only explain a whole
+   rail; this explains one card, which is what lets a rail mix sources without
+   lying about any of them. */
+/* It carries its own backing rather than trusting the scrim. Ruby over the
+   darker half of a cover is fine and over a bright one — the silver M on
+   Singles, the blue on PRIM3 — it vanishes, and a reason nobody can read is
+   the same as no reason. The pill makes contrast a property of the label
+   instead of a property of whichever artwork it landed on. */
+.feat__why { display: inline-block; max-width: 100%; font-family: var(--ui); font-weight: 800;
+  font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #ff6a6c; background: rgba(9,7,5,0.68); border-radius: 100px;
+  padding: 0.22rem 0.52rem; margin-bottom: 0.4rem;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top;
+  /* the card is a flex column in this room, so without this the pill is
+     stretched to the full width by align-items and stops being a pill */
+  align-self: flex-start; }
 .feat__card > b { display: block; font-family: var(--ui); font-weight: 800; font-size: 1.3rem;
   line-height: 1.1; text-shadow: 0 1px 14px rgba(0,0,0,0.6); }
 .feat__card > small { display: block; font-family: var(--ui); font-weight: 700; font-size: 0.68rem;
