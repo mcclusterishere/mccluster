@@ -109,3 +109,55 @@ html, body { background: var(--ink); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+
+
+/* REAL NETWORK SURFACES */
+.mn__tabs { grid-template-columns: repeat(5,minmax(0,1fr)); }
+.mn__tabs button { font-size: .68rem; padding-inline: .25rem; }
+.mn__search-row { display:grid; grid-template-columns:1fr auto; gap:.55rem; align-items:center; margin-bottom:.85rem; }
+.mn__search-row .mn__input { margin:0; }
+.mn__people,.mn__conversations { display:grid; gap:.65rem; }
+.mn__person-row,.mn__conversation-row { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:.7rem; align-items:center; padding:.82rem .9rem; border:1px solid var(--edge); border-radius:16px; background:var(--glass-hi); }
+.mn__person-row button,.mn__conversation-row button { border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
+.mn__person-copy,.mn__conversation-copy { min-width:0; }
+.mn__person-name,.mn__conversation-name { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:800 .88rem/1.25 var(--ui); }
+.mn__person-sub,.mn__conversation-sub { display:block; margin-top:.2rem; overflow:hidden; color:var(--cream-dim); text-overflow:ellipsis; white-space:nowrap; font-size:.72rem; }
+.mn__follow { border:1px solid var(--edge)!important; border-radius:999px!important; padding:.55rem .7rem!important; color:var(--cream)!important; font:800 .7rem/1 var(--ui)!important; }
+.mn__follow.is-active { color:var(--ruby-text)!important; }
+.mn__author-link { display:contents; cursor:pointer; }
+.mn__media-queue { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.45rem; margin:.55rem 0 .7rem 2.95rem; }
+.mn__media-chip { position:relative; min-height:4.8rem; border-radius:12px; overflow:hidden; display:grid; place-items:center; padding:.45rem; background:rgba(255,255,255,.06); color:var(--cream-dim); font-size:.67rem; text-align:center; }
+.mn__media-chip img,.mn__media-chip video { width:100%; height:100%; max-height:7rem; object-fit:cover; }
+.mn__media-chip button { position:absolute; top:.25rem; right:.25rem; width:1.55rem; height:1.55rem; border:0; border-radius:50%; background:rgba(0,0,0,.75); color:#fff; cursor:pointer; }
+.mn__attach { margin-right:auto; border:0; background:transparent; color:var(--cream-dim); cursor:pointer; font:750 .72rem/1 var(--ui); }
+.mn__post-media { display:grid; gap:.35rem; margin-top:.8rem; }
+.mn__post-media.is-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.mn__post-media-item { overflow:hidden; border-radius:14px; background:#050505; }
+.mn__post-media-item img,.mn__post-media-item video { display:block; width:100%; max-height:32rem; object-fit:cover; }
+.mn__post-media-item audio { width:100%; display:block; }
+.mn__post-media-loading { min-height:8rem; display:grid; place-items:center; color:var(--cream-dim); font-size:.75rem; }
+.mn__person-sheet { padding:1rem; }
+.mn__person-hero { min-height:8rem; border-radius:16px; background:linear-gradient(135deg,rgba(229,56,59,.2),rgba(244,239,230,.04)); background-size:cover; background-position:center; }
+.mn__person-main { position:relative; padding:3.1rem .15rem .35rem; }
+.mn__person-main .mn__profile-avatar { left:.1rem; }
+.mn__person-actions { display:flex; flex-wrap:wrap; gap:.45rem; margin:.8rem 0 1rem; }
+.mn__person-actions button { border:1px solid var(--edge); border-radius:999px; padding:.58rem .75rem; background:transparent; color:var(--cream); cursor:pointer; font:750 .72rem var(--ui); }
+.mn__person-actions .is-primary { background:var(--ruby-hot); border-color:var(--ruby-hot); color:#fff; }
+.mn__profile-counts { display:flex; gap:1rem; margin-top:.7rem; color:var(--cream-dim); font-size:.76rem; }
+.mn__profile-counts strong { color:var(--cream); }
+.mn__person-posts { display:grid; gap:.65rem; margin-top:.8rem; }
+.mn__messages { display:grid; gap:.48rem; padding:.85rem; min-height:10rem; max-height:55vh; overflow:auto; }
+.mn__message { max-width:82%; padding:.62rem .72rem; border-radius:14px; background:rgba(255,255,255,.07); }
+.mn__message.is-mine { margin-left:auto; background:color-mix(in srgb,var(--ruby-hot) 42%,var(--ink-2)); }
+.mn__message p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.45; font-size:.9rem; }
+.mn__message small { display:block; margin-top:.28rem; color:var(--cream-dim); font-size:.63rem; }
+.mn__accept { width:calc(100% - 1.6rem); margin:.8rem .8rem 0; }
+.mn__conversation-dialog .mn__reply-box { position:sticky; bottom:0; }
+.mn__danger { color:#ff8e8e!important; }
+.mn__notice { padding:.7rem .8rem; border-radius:12px; background:rgba(255,255,255,.05); color:var(--cream-dim); font-size:.76rem; line-height:1.45; }
+@media (max-width: 420px) {
+  .mn { padding-inline:.75rem; }
+  .mn__tabs { margin-inline:-.25rem; }
+  .mn__tabs button { font-size:.62rem; }
+  .mn__media-queue { margin-left:0; }
+}

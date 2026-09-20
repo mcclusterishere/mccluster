@@ -91,7 +91,9 @@
     <section class="mn__app" id="mnApp" hidden>
       <nav class="mn__tabs" aria-label="Mnet">
         <button type="button" class="is-active" data-mn-view="feed">Feed</button>
-        <button type="button" data-mn-view="notifications">Notifications <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
+        <button type="button" data-mn-view="discover">Discover</button>
+        <button type="button" data-mn-view="messages">Messages <span class="mn__badge" id="mnMessageBadge" hidden></span></button>
+        <button type="button" data-mn-view="notifications">Alerts <span class="mn__badge" id="mnNotifBadge" hidden></span></button>
         <button type="button" data-mn-view="profile">Me</button>
       </nav>
 
@@ -101,7 +103,11 @@
             <span class="mn__mini-avatar" id="mnComposerAvatar">M</span>
             <textarea id="mnPostBody" maxlength="20000" rows="3" placeholder="Post something to Mnet…" aria-label="Post text"></textarea>
           </div>
+          <div class="mn__media-queue" id="mnMediaQueue" hidden></div>
           <div class="mn__composer-actions">
+            <label class="mn__attach" for="mnMediaInput">Photo / video
+              <input id="mnMediaInput" type="file" accept="image/*,video/*,audio/*" multiple hidden>
+            </label>
             <label>
               <span class="sr-only">Post visibility</span>
               <select id="mnVisibility">
@@ -112,12 +118,35 @@
             </label>
             <button class="mn__post" id="mnPost" type="button">Post</button>
           </div>
+          <p class="mn__status" id="mnMediaStatus" role="status"></p>
           <p class="mn__status" id="mnPostStatus" role="status"></p>
         </article>
 
         <div class="mn__feed" id="mnFeed" aria-live="polite"></div>
         <button class="mn__more" id="mnMore" type="button" hidden>Load more</button>
         <p class="mn__status mn__status--center" id="mnFeedStatus" role="status"></p>
+      </section>
+
+      <section class="mn__view" id="mnDiscoverView" hidden>
+        <div class="mn__section-head">
+          <div><p class="mn__eyebrow">Mnet</p><h2>Discover people</h2></div>
+          <button class="mn__quiet" id="mnShowBlocked" type="button">Blocked</button>
+        </div>
+        <div class="mn__search-row">
+          <input class="mn__input" id="mnDiscoverQuery" type="search" autocomplete="off" placeholder="Search people or @handles">
+          <button class="mn__post" id="mnDiscoverGo" type="button">Search</button>
+        </div>
+        <div class="mn__people" id="mnDiscoverResults"></div>
+        <p class="mn__status mn__status--center" id="mnDiscoverStatus"></p>
+      </section>
+
+      <section class="mn__view" id="mnMessagesView" hidden>
+        <div class="mn__section-head">
+          <div><p class="mn__eyebrow">Mnet</p><h2>Messages</h2></div>
+          <button class="mn__quiet" id="mnRefreshMessages" type="button">Refresh</button>
+        </div>
+        <div class="mn__conversations" id="mnConversations"></div>
+        <p class="mn__status mn__status--center" id="mnMessageStatus"></p>
       </section>
 
       <section class="mn__view" id="mnNotificationsView" hidden>
@@ -158,6 +187,28 @@
       <button class="mn__post" type="submit">Reply</button>
     </form>
     <p class="mn__status" id="mnReplyStatus"></p>
+  </dialog>
+
+  <dialog class="mn__thread mn__person-dialog" id="mnPersonDialog">
+    <div class="mn__thread-head">
+      <strong>Profile</strong>
+      <button type="button" id="mnPersonClose" aria-label="Close profile">×</button>
+    </div>
+    <div id="mnPersonBody"></div>
+  </dialog>
+
+  <dialog class="mn__thread mn__conversation-dialog" id="mnConversationDialog">
+    <div class="mn__thread-head">
+      <strong id="mnConversationTitle">Messages</strong>
+      <button type="button" id="mnConversationClose" aria-label="Close messages">×</button>
+    </div>
+    <button class="mn__primary mn__accept" id="mnAcceptConversation" type="button" hidden>Accept message request</button>
+    <div class="mn__messages" id="mnConversationMessages"></div>
+    <form class="mn__reply-box" id="mnMessageForm">
+      <textarea id="mnMessageBody" maxlength="20000" rows="2" placeholder="Write a message…" aria-label="Message"></textarea>
+      <button class="mn__post" type="submit">Send</button>
+    </form>
+    <p class="mn__status" id="mnConversationStatus"></p>
   </dialog>
 
   <script src="js/mcc-auth.js?v=__STAMP__"></script>
