@@ -632,3 +632,53 @@ body.music-v2 .appbar__tab.is-active{color:#fff}
 @media(prefers-reduced-motion:reduce){
   .music-now,.music-now__sheet{transition:none}
 }
+
+
+/* ---------- LIVE VIDEO ARTWORK IN NOW PLAYING ----------
+   Video is a first-class artwork mode, not a separate destination.
+   The cover remains mounted underneath as the instant fallback/poster. */
+.music-v2 .music-now__artwrap{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  background:#111114;
+}
+.music-v2 .music-now__art,
+.music-v2 .music-now__film{
+  width:100%;
+  height:100%;
+  display:block;
+  border-radius:inherit;
+  object-fit:cover;
+}
+.music-v2 .music-now__art{
+  position:relative;
+  z-index:1;
+  opacity:1;
+  transition:opacity .22s ease;
+}
+.music-v2 .music-now__film{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  opacity:0;
+  pointer-events:none;
+  background:#0a0a0c;
+  transition:opacity .22s ease;
+}
+.music-v2 .music-now__artwrap.has-video .music-now__film{opacity:1}
+.music-v2 .music-now__artwrap.has-video .music-now__art{opacity:0}
+.music-v2 .music-now__artwrap.has-video::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:3;
+  pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.055);
+  border-radius:inherit;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .music-v2 .music-now__artwrap.has-video .music-now__film{opacity:0}
+  .music-v2 .music-now__artwrap.has-video .music-now__art{opacity:1}
+}

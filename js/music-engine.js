@@ -92,7 +92,10 @@
           '<a class="music-now__detail" id="musicNowDetail" href="listen.html">Details</a>' +
         '</header>' +
         '<div class="music-now__stage">' +
-          '<div class="music-now__artwrap"><img id="musicNowArt" class="music-now__art" alt=""></div>' +
+          '<div class="music-now__artwrap" id="musicNowArtwrap">' +
+            '<video id="musicNowFilm" class="music-now__film" muted loop playsinline preload="metadata" aria-hidden="true"></video>' +
+            '<img id="musicNowArt" class="music-now__art" alt="">' +
+          '</div>' +
           '<div class="music-now__meta">' +
             '<div><h2 id="musicNowTitle">Nothing playing</h2><p id="musicNowArtist"></p></div>' +
             '<em id="musicNowAccess" class="music-now__access"></em>' +
@@ -138,6 +141,7 @@
     });
     doc.getElementById("musicNowPrev").addEventListener("click", function () { playAdjacent(-1); });
     doc.getElementById("musicNowNext").addEventListener("click", function () { playAdjacent(1); });
+    doc.getElementById("musicNowFilm").addEventListener("loadedmetadata", function () { syncNowFilm(true); });
     now.addEventListener("click", function (e) {
       if (e.target === now) closeNow();
     });
@@ -156,6 +160,7 @@
     doc.body.classList.add("music-now-open");
     trackEvent("music_now_open", {});
     paint();
+    syncNowFilm(true);
   }
 
   function closeNow() {
@@ -164,6 +169,67 @@
     now.classList.remove("is-open");
     now.setAttribute("aria-hidden", "true");
     doc.body.classList.remove("music-now-open");
+    syncNowFilm(false);
+  }
+
+  var prefersReducedMotion = !!(root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  function syncNowFilm(hard) {
+    var film = doc.getElementById("musicNowFilm");
+    var wrap = doc.getElementById("musicNowArtwrap");
+    var now = doc.getElementById("musicNow");
+    if (!film || !wrap || !now) return;
+    var active = wrap.classList.contains("has-video") && now.classList.contains("is-open") && !prefersReducedMotion;
+    if (!active) {
+      try { film.pause(); } catch (e) {}
+      return;
+    }
+    if (film.duration && isFinite(film.duration) && film.duration > 0) {
+      var want = audio.currentTime % film.duration;
+      var drift = Math.abs((film.currentTime || 0) - want);
+      if (hard || drift > 0.55) {
+        try { film.currentTime = want; } catch (e2) {}
+      }
+    }
+    if (audio.paused) {
+      if (!film.paused) {
+        try { film.pause(); } catch (e3) {}
+      }
+    } else if (film.paused) {
+      var p = film.play();
+      if (p && p.catch) p.catch(function () {});
+    }
+  }
+
+  function paintNowVisual(art) {
+    var film = doc.getElementById("musicNowFilm");
+    var wrap = doc.getElementById("musicNowArtwrap");
+    if (!film || !wrap || !current) return;
+    var video = current.video || current.video_url || "";
+    var poster = current.poster || current.poster_url || art || "";
+    if (poster) film.poster = poster;
+
+    var hasVideo = !!video && !prefersReducedMotion;
+    wrap.classList.toggle("has-video", hasVideo);
+
+    if (!hasVideo) {
+      try { film.pause(); } catch (e) {}
+      if (film.getAttribute("src")) {
+        film.removeAttribute("src");
+        try { film.load(); } catch (e2) {}
+      }
+      return;
+    }
+
+    var changed = film.getAttribute("src") !== video;
+    if (changed) {
+      film.src = video;
+      film.muted = true;
+      film.loop = true;
+      film.playsInline = true;
+      film.load();
+    }
+    syncNowFilm(changed);
   }
 
   function sameItem(a, b) {
@@ -214,6 +280,7 @@
     if (now) {
       doc.getElementById("musicNowBackdrop").src = art;
       doc.getElementById("musicNowArt").src = art;
+      paintNowVisual(art);
       doc.getElementById("musicNowTitle").textContent = current.title;
       doc.getElementById("musicNowArtist").textContent = artist;
       doc.getElementById("musicNowAlbum").textContent = album || (current.creatorTrackId ? "Community release" : "");
@@ -365,6 +432,8 @@
       albumName: t.release_name || "Community",
       artist: t.artist || t.artist_name || "Independent creator",
       art: t.poster_url || t.avatar_url || "assets/img/m-mark.png",
+      poster: t.poster_url || t.avatar_url || "assets/img/m-mark.png",
+      video: t.video_url || t.video || "",
       title: t.title || "Untitled"
     });
     var item = CREATOR_TRACKS[String(t.id)];
@@ -488,9 +557,9 @@
     });
   }
 
-  audio.addEventListener("play", paint);
-  audio.addEventListener("pause", paint);
-  audio.addEventListener("loadedmetadata", paint);
+  audio.addEventListener("play", function () { paint(); syncNowFilm(false); });
+  audio.addEventListener("pause", function () { paint(); syncNowFilm(false); });
+  audio.addEventListener("loadedmetadata", function () { paint(); syncNowFilm(true); });
   audio.addEventListener("timeupdate", function () {
     if (previewLimit && audio.currentTime >= previewLimit) {
       audio.pause();
@@ -498,6 +567,7 @@
       trackEvent("music_preview_complete", { preview_seconds: previewLimit });
     }
     paint();
+    syncNowFilm(false);
   });
   audio.addEventListener("ended", function () {
     trackEvent("music_complete", { listened_seconds: Math.round((Date.now() - startedAt) / 1000) });
