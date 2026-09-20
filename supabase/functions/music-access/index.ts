@@ -55,6 +55,14 @@ async function uploadGrant(bucket: string, path: string) {
   if (error || !data?.token) throw new Error(error?.message || "could_not_create_upload_url");
   return { bucket, path: data.path || path, token: data.token, signed_url: data.signedUrl || null };
 }
+async function hasMusicEntitlement(trackId: string, userId: string, email: string) {
+  const { count: byUser } = await admin.from("music_entitlements").select("id", { count: "exact", head: true })
+    .eq("track_id", trackId).eq("user_id", userId).is("revoked_at", null);
+  if (Number(byUser || 0) > 0) return true;
+  const { count: byEmail } = await admin.from("music_entitlements").select("id", { count: "exact", head: true })
+    .eq("track_id", trackId).eq("customer_email", email.toLowerCase()).is("revoked_at", null);
+  return Number(byEmail || 0) > 0;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
@@ -108,12 +116,7 @@ Deno.serve(async (req) => {
 
       let entitled = owner || track.access_mode === "public" || track.access_mode === "account";
       if (!entitled && track.access_mode === "purchase") {
-        const { data: offers } = await admin.from("music_license_offers").select("l3_product_id").eq("track_id", track.id).eq("active", true).not("l3_product_id", "is", null);
-        const productIds = (offers || []).map((x) => x.l3_product_id).filter(Boolean);
-        if (productIds.length && who.user.email) {
-          const { count } = await admin.from("l3_entitlements").select("id", { count: "exact", head: true }).in("product_id", productIds).eq("customer_email", who.user.email.toLowerCase()).is("revoked_at", null);
-          entitled = Number(count || 0) > 0;
-        }
+        entitled = await hasMusicEntitlement(track.id, who.user.id, who.user.email || "");
       }
       if (!entitled) return json({ error: "purchase required", purchase_required: true }, 402);
       const url = await signDownload(track.master_bucket, track.master_path);
@@ -124,13 +127,14 @@ Deno.serve(async (req) => {
       const trackId = clean(body.track_id, 80);
       const offerId = clean(body.offer_id, 80);
       if (!trackId || !offerId) return json({ error: "track_id and offer_id required" }, 400);
-      const { data: offer } = await admin.from("music_license_offers").select("id,track_id,l3_product_id,active,title").eq("id", offerId).eq("track_id", trackId).eq("active", true).limit(1).maybeSingle();
-      if (!offer?.l3_product_id || !who.user.email) return json({ error: "download entitlement unavailable" }, 403);
-      const { count } = await admin.from("l3_entitlements").select("id", { count: "exact", head: true }).eq("product_id", offer.l3_product_id).eq("customer_email", who.user.email.toLowerCase()).is("revoked_at", null);
-      if (!count) return json({ error: "purchase required", purchase_required: true }, 402);
+      const { data: entitlement } = await admin.from("music_entitlements").select("id,offer_id").eq("track_id", trackId)
+        .or(`user_id.eq.${who.user.id},customer_email.eq.${(who.user.email || "").toLowerCase()}`)
+        .is("revoked_at", null).limit(1).maybeSingle();
+      if (!entitlement || entitlement.offer_id !== offerId) return json({ error: "purchase required", purchase_required: true }, 402);
       const { data: track } = await admin.from("creator_tracks").select("master_bucket,master_path,title").eq("id", trackId).limit(1).maybeSingle();
       if (!track?.master_path) return json({ error: "master unavailable" }, 409);
       const url = await signDownload(track.master_bucket, track.master_path, `${track.title || "track"}.mp3`);
+      await admin.from("music_entitlements").update({ download_count: 1, last_download_at: new Date().toISOString() }).eq("id", entitlement.id);
       return json({ ok: true, url, expires_in: 3600 });
     }
 
