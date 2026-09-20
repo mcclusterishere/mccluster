@@ -10,8 +10,15 @@
     nextBefore: null,
     loadingFeed: false,
     threadPost: null,
-    currentView: "feed"
+    currentView: "feed",
+    mediaAssets: [],
+    mediaCache: {},
+    conversations: [],
+    currentConversation: null,
+    pollTimer: null
   };
+  var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+  var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
 
   function $(id) { return document.getElementById(id); }
   function esc(value) {
@@ -224,26 +231,44 @@
     var av = avatar
       ? '<img src="' + esc(avatar) + '" alt="">'
       : esc(initials(name));
-    return '<div class="mn__author-avatar">' + av + '</div>' +
+    var inner = '<div class="mn__author-avatar">' + av + '</div>' +
       '<div class="mn__author-meta"><span class="mn__author-name">' + esc(name) + '</span>' +
       '<div class="mn__author-sub">' + esc(handle) + '</div></div>';
+    return actor.mccluster_id
+      ? '<button class="mn__author-link" type="button" data-person="' + esc(actor.mccluster_id) + '">' + inner + '</button>'
+      : inner;
+  }
+
+  function postMediaHtml(post) {
+    var media = Array.isArray(post.media) ? post.media : [];
+    if (!media.length) return "";
+    return '<div class="mn__post-media' + (media.length > 1 ? ' is-grid' : '') + '">' +
+      media.map(function (m) {
+        var id = m && (m.asset_id || m.id);
+        if (!id) return "";
+        return '<div class="mn__post-media-item" data-mnet-media="' + esc(id) + '" data-media-type="' + esc(m.type || m.media_type || "file") + '">' +
+          '<div class="mn__post-media-loading">Loading media…</div></div>';
+      }).join("") + '</div>';
   }
 
   function postCard(item, opts) {
     opts = opts || {};
     var post = item.post || item, actor = item.actor || post.actor || {};
     var likes = Number(post.reaction_count || 0), replies = Number(post.reply_count || 0);
-    var liked = !!post.liked_by_me;
-    var id = post.id || item.post_id;
+    var liked = !!post.liked_by_me, saved = !!post.bookmarked_by_me;
+    var id = post.id || item.post_id, mine = !!(identity().m_uid && post.author_m_uid === identity().m_uid);
     return '<article class="mn__post-card" data-post-id="' + esc(id || "") + '">' +
       '<div class="mn__post-head">' + authorHtml(actor) +
         '<span class="mn__author-sub">' + esc(timeAgo(post.created_at || item.occurred_at)) + '</span></div>' +
-      '<p class="mn__post-body">' + esc(post.body || "") + '</p>' +
+      (post.body ? '<p class="mn__post-body">' + esc(post.body) + '</p>' : '') +
+      postMediaHtml(post) +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
           '<button class="mn__action' + (liked ? ' is-active' : '') + '" type="button" data-action="like" data-post="' + esc(id) + '">' +
             (liked ? "Liked" : "Like") + (likes ? " · " + likes : "") + '</button>' +
           '<button class="mn__action" type="button" data-action="comments" data-post="' + esc(id) + '">Comment' + (replies ? " · " + replies : "") + '</button>' +
+          '<button class="mn__action' + (saved ? ' is-active' : '') + '" type="button" data-action="save" data-post="' + esc(id) + '">' + (saved ? "Saved" : "Save") + '</button>' +
+          (mine ? '<button class="mn__action mn__danger" type="button" data-action="delete" data-post="' + esc(id) + '">Delete</button>' : '') +
         '</div>') +
     '</article>';
   }
@@ -255,6 +280,16 @@
     root.querySelectorAll("[data-action=comments]").forEach(function (b) {
       b.onclick = function () { openThread(b.dataset.post); };
     });
+    root.querySelectorAll("[data-action=save]").forEach(function (b) {
+      b.onclick = function () { toggleBookmark(b.dataset.post, b); };
+    });
+    root.querySelectorAll("[data-action=delete]").forEach(function (b) {
+      b.onclick = function () { deletePost(b.dataset.post, b); };
+    });
+    root.querySelectorAll("[data-person]").forEach(function (b) {
+      b.onclick = function (e) { e.preventDefault(); e.stopPropagation(); openPerson(b.dataset.person); };
+    });
+    resolvePostMedia(root);
   }
 
   function renderFeed(append) {
@@ -298,15 +333,16 @@
 
   function createPost() {
     var body = $("mnPostBody").value.trim();
-    if (!body) { setStatus($("mnPostStatus"), "Write something first.", "error"); return; }
+    if (!body && !state.mediaAssets.length) { setStatus($("mnPostStatus"), "Write something or attach media first.", "error"); return; }
     var button = $("mnPost");
     button.disabled = true;
     setStatus($("mnPostStatus"), "Posting…");
     api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
       method:"POST",
-      body:{ body:body, visibility:$("mnVisibility").value }
+      body:{ body:body, visibility:$("mnVisibility").value, media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }) }
     }).then(function () {
       $("mnPostBody").value = "";
+      clearMediaQueue();
       setStatus($("mnPostStatus"), "Posted.", "ok");
       return loadFeed(true);
     }).catch(function (e) {
@@ -413,17 +449,218 @@
     }).catch(function () {});
   }
 
+  function sessionToken() {
+    try { var s = MCC.session && MCC.session(); return s && s.access_token || ""; } catch (e) { return ""; }
+  }
+  function storagePath(path) {
+    return String(path || "").split("/").map(encodeURIComponent).join("/");
+  }
+  function clearMediaQueue() {
+    state.mediaAssets.forEach(function (x) { if (x.preview) try { URL.revokeObjectURL(x.preview); } catch (e) {} });
+    state.mediaAssets = [];
+    if ($("mnMediaQueue")) { $("mnMediaQueue").innerHTML = ""; $("mnMediaQueue").hidden = true; }
+    if ($("mnMediaInput")) $("mnMediaInput").value = "";
+    setStatus($("mnMediaStatus"), "");
+  }
+  function renderMediaQueue() {
+    var host = $("mnMediaQueue");
+    if (!host) return;
+    host.hidden = !state.mediaAssets.length;
+    host.innerHTML = state.mediaAssets.map(function (x, i) {
+      var visual = x.media_type === "image" && x.preview ? '<img src="' + esc(x.preview) + '" alt="">' :
+        x.media_type === "video" && x.preview ? '<video src="' + esc(x.preview) + '" muted playsinline></video>' :
+        '<span>' + esc(x.name || x.media_type) + '</span>';
+      return '<div class="mn__media-chip">' + visual + '<button type="button" data-remove-media="' + i + '" aria-label="Remove attachment">×</button></div>';
+    }).join("");
+    host.querySelectorAll("[data-remove-media]").forEach(function (b) {
+      b.onclick = function () {
+        var i = Number(b.dataset.removeMedia), item = state.mediaAssets[i];
+        if (item && item.preview) try { URL.revokeObjectURL(item.preview); } catch (e) {}
+        state.mediaAssets.splice(i,1); renderMediaQueue();
+      };
+    });
+  }
+  function uploadMediaFiles(files) {
+    files = Array.prototype.slice.call(files || []).slice(0, Math.max(0, 4 - state.mediaAssets.length));
+    if (!files.length) return Promise.resolve();
+    var token = sessionToken();
+    if (!token) return Promise.reject(new Error("Sign in before uploading media."));
+    setStatus($("mnMediaStatus"), "Uploading " + files.length + (files.length === 1 ? " file…" : " files…"));
+    var chain = Promise.resolve();
+    files.forEach(function (file) {
+      chain = chain.then(function () {
+        return api("/v1/mnet/media/upload-url", { method:"POST", body:{ file_name:file.name, mime_type:file.type || "application/octet-stream", byte_size:file.size } })
+          .then(function (grant) {
+            var path = grant && grant.upload && grant.upload.path;
+            var asset = grant && grant.asset;
+            if (!path || !asset) throw new Error("The upload slot was not created.");
+            return fetch(SB_URL + "/storage/v1/object/mnet-media/" + storagePath(path), {
+              method:"POST",
+              headers:{ apikey:SB_KEY, authorization:"Bearer " + token, "content-type":file.type || "application/octet-stream", "x-upsert":"false" },
+              body:file
+            }).then(function (res) {
+              if (!res.ok) return res.text().then(function (t) { throw new Error(t || "Media upload failed."); });
+              return api("/v1/mnet/media/finalize", { method:"POST", body:{ asset_id:asset.id } });
+            }).then(function (fin) {
+              var ready = fin && fin.asset || asset;
+              state.mediaAssets.push({ id:ready.id, media_type:ready.media_type || asset.media_type, name:file.name, preview:URL.createObjectURL(file) });
+              renderMediaQueue();
+            });
+          });
+      });
+    });
+    return chain.then(function () { setStatus($("mnMediaStatus"), state.mediaAssets.length + " attachment" + (state.mediaAssets.length === 1 ? "" : "s") + " ready.", "ok"); })
+      .catch(function (e) { setStatus($("mnMediaStatus"), e.message || "Upload failed.", "error"); throw e; });
+  }
+  function resolvePostMedia(root) {
+    if (!root) return;
+    root.querySelectorAll("[data-mnet-media]").forEach(function (node) {
+      var id = node.dataset.mnetMedia;
+      if (!id || node.dataset.loaded === "1") return;
+      node.dataset.loaded = "1";
+      var cached = state.mediaCache[id];
+      var load = cached ? Promise.resolve(cached) : api("/v1/mnet/media/" + encodeURIComponent(id) + "/url").then(function (x) { state.mediaCache[id] = x; return x; });
+      load.then(function (data) {
+        var type = data.media_type || node.dataset.mediaType || "file", url = safeHttpUrl(data.url);
+        if (!url) throw new Error("Media URL unavailable");
+        if (type === "image") node.innerHTML = '<img src="' + esc(url) + '" alt="' + esc(data.alt_text || "") + '" loading="lazy">';
+        else if (type === "video") node.innerHTML = '<video src="' + esc(url) + '" controls playsinline preload="metadata"></video>';
+        else if (type === "audio") node.innerHTML = '<audio src="' + esc(url) + '" controls preload="metadata"></audio>';
+        else node.innerHTML = '<a class="mn__profile-link" href="' + esc(url) + '" target="_blank" rel="noopener">Open attachment</a>';
+      }).catch(function () { node.innerHTML = '<div class="mn__post-media-loading">Media unavailable.</div>'; });
+    });
+  }
+  function toggleBookmark(postId, button) {
+    var item=findPost(postId), post=item&&item.post, saved=!!(post&&post.bookmarked_by_me);
+    button.disabled=true;
+    api("/v1/mnet/posts/" + encodeURIComponent(postId) + "/bookmark", {method:saved?"DELETE":"POST",body:{}})
+      .then(function () { if(post)post.bookmarked_by_me=!saved; renderFeed(false); })
+      .catch(function (e) { setStatus($("mnFeedStatus"),e.message||"Could not save that post.","error"); })
+      .finally(function () { button.disabled=false; });
+  }
+  function deletePost(postId, button) {
+    if (!confirm("Delete this post?")) return;
+    button.disabled=true;
+    api("/v1/mnet/posts/" + encodeURIComponent(postId), {method:"DELETE",body:{}})
+      .then(function () { state.feed=state.feed.filter(function (x) { return (x.post&&x.post.id)!==postId&&x.post_id!==postId; }); renderFeed(false); })
+      .catch(function (e) { setStatus($("mnFeedStatus"),e.message||"Could not delete that post.","error"); })
+      .finally(function () { button.disabled=false; });
+  }
+
+  function personRow(p) {
+    var name=p.display_name||p.mccluster_id||"Mnet member", handle=p.mccluster_id?"@"+p.mccluster_id:"";
+    var av=safeHttpUrl(p.avatar_url),avatar=av?'<img src="'+esc(av)+'" alt="">':esc(initials(name));
+    return '<article class="mn__person-row"><button type="button" data-person="'+esc(p.mccluster_id||"")+'" class="mn__author-avatar">'+avatar+'</button>' +
+      '<button type="button" data-person="'+esc(p.mccluster_id||"")+'" class="mn__person-copy"><span class="mn__person-name">'+esc(name)+'</span><span class="mn__person-sub">'+esc(handle+(p.headline?" · "+p.headline:""))+'</span></button>' +
+      '<button type="button" class="mn__follow'+(p.following?' is-active':'')+'" data-follow-person="'+esc(p.mccluster_id||"")+'" data-following="'+(p.following?"1":"0")+'">'+(p.following?"Following":"Follow")+'</button></article>';
+  }
+  function bindPeople(root) {
+    root.querySelectorAll("[data-person]").forEach(function (b) { b.onclick=function () { if(b.dataset.person)openPerson(b.dataset.person); }; });
+    root.querySelectorAll("[data-follow-person]").forEach(function (b) {
+      b.onclick=function () {
+        var following=b.dataset.following==="1"; b.disabled=true;
+        api("/v1/mnet/people/"+encodeURIComponent(b.dataset.followPerson)+"/follow",{method:following?"DELETE":"POST",body:{}})
+          .then(function () { b.dataset.following=following?"0":"1"; b.textContent=following?"Follow":"Following"; b.classList.toggle("is-active",!following); })
+          .catch(function (e) { setStatus($("mnDiscoverStatus"),e.message||"Could not update follow.","error"); })
+          .finally(function () { b.disabled=false; });
+      };
+    });
+  }
+  function loadDiscover() {
+    var q=$("mnDiscoverQuery").value.trim(); setStatus($("mnDiscoverStatus"),"Searching…");
+    return api("/v1/mnet/discover?q="+encodeURIComponent(q)+"&limit=50").then(function (data) {
+      var rows=data.people||[]; $("mnDiscoverResults").innerHTML=rows.length?rows.map(personRow).join(""):'<div class="mn__empty">No people found.</div>';
+      bindPeople($("mnDiscoverResults")); setStatus($("mnDiscoverStatus"),rows.length?rows.length+" people":"");
+    }).catch(function (e) { $("mnDiscoverResults").innerHTML=""; setStatus($("mnDiscoverStatus"),e.message||"Could not search Mnet.","error"); });
+  }
+  function openPerson(handle) {
+    if(!handle)return;
+    var dlg=$("mnPersonDialog"); $("mnPersonBody").innerHTML='<div class="mn__empty">Loading profile…</div>'; dlg.showModal();
+    Promise.all([
+      api("/v1/mnet/people/"+encodeURIComponent(handle)),
+      api("/v1/mnet/people/"+encodeURIComponent(handle)+"/posts?limit=20")
+    ]).then(function (all) {
+      var data=all[0], posts=all[1].posts||[], p=data.profile||{}, id=data.identity||{}, name=p.display_name||id.display_name||id.mccluster_id||"Mnet member";
+      var avatar=safeHttpUrl(p.avatar_url),banner=safeHttpUrl(p.banner_url),avatarHtml=avatar?'style="background-image:url('+JSON.stringify(avatar)+')"':"";
+      $("mnPersonBody").innerHTML='<div class="mn__person-sheet"><div class="mn__person-hero"'+(banner?' style="background-image:url('+JSON.stringify(banner)+')"':'')+'></div>' +
+        '<div class="mn__person-main"><div class="mn__profile-avatar" '+avatarHtml+'>'+(avatar?"":esc(initials(name)))+'</div><h2>'+esc(name)+'</h2><p class="mn__handle">@'+esc(id.mccluster_id||"")+'</p>' +
+        (p.headline?'<p class="mn__profile-headline">'+esc(p.headline)+'</p>':'')+(p.bio?'<p class="mn__profile-bio">'+esc(p.bio)+'</p>':'')+
+        '<div class="mn__profile-counts"><span><strong>'+Number(data.counts&&data.counts.followers||0)+'</strong> followers</span><span><strong>'+Number(data.counts&&data.counts.following||0)+'</strong> following</span><span><strong>'+Number(data.counts&&data.counts.posts||0)+'</strong> posts</span></div>'+
+        '<div class="mn__person-actions"><button class="is-primary" type="button" id="mnPersonFollow">'+(data.following?"Following":"Follow")+'</button><button type="button" id="mnPersonMessage">Message</button><button type="button" id="mnPersonMute">'+(data.muted?"Unmute":"Mute")+'</button><button type="button" class="mn__danger" id="mnPersonBlock">Block</button><button type="button" id="mnPersonReport">Report</button></div>'+
+        '<div class="mn__person-posts" id="mnPersonPosts">'+(posts.length?posts.map(function(x){return postCard(x);}).join(""):'<div class="mn__empty">No posts yet.</div>')+'</div></div></div>';
+      bindFeedActions($("mnPersonPosts"));
+      $("mnPersonFollow").onclick=function(){var was=data.following;api("/v1/mnet/people/"+encodeURIComponent(handle)+"/follow",{method:was?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
+      $("mnPersonMessage").onclick=function(){startConversation({mccluster_id:handle});};
+      $("mnPersonMute").onclick=function(){api("/v1/mnet/people/"+encodeURIComponent(handle)+"/mute",{method:data.muted?"DELETE":"POST",body:{}}).then(function(){openPerson(handle);});};
+      $("mnPersonBlock").onclick=function(){if(confirm("Block @"+handle+"? You will stop seeing each other on Mnet."))api("/v1/mnet/people/"+encodeURIComponent(handle)+"/block",{method:"POST",body:{}}).then(function(){dlg.close();loadFeed(true);});};
+      $("mnPersonReport").onclick=function(){var details=prompt("What should the Mnet moderation queue know?","");if(details===null)return;api("/v1/mnet/reports",{method:"POST",body:{target_type:"profile",target_id:data.profile&&data.profile.m_uid||id.mccluster_id,reason:"other",details:details}}).then(function(){alert("Report submitted.");});};
+    }).catch(function (e) { $("mnPersonBody").innerHTML='<div class="mn__empty">'+esc(e.message||"Could not load profile.")+'</div>'; });
+  }
+
+  function loadConversations() {
+    setStatus($("mnMessageStatus"),"Loading…");
+    return api("/v1/mnet/conversations").then(function (data) {
+      state.conversations=data.conversations||[];
+      var requests=state.conversations.filter(function (x) { return x.my&&x.my.member_state==="requested"; }).length;
+      $("mnMessageBadge").hidden=!requests; $("mnMessageBadge").textContent=requests||"";
+      $("mnConversations").innerHTML=state.conversations.length?state.conversations.map(function (x) {
+        var other=(x.members||[]).find(function(m){return m.m_uid!==identity().m_uid;})||{},p=other.profile||{},name=p.display_name||p.mccluster_id||"Conversation",last=x.last_message;
+        return '<article class="mn__conversation-row"><div class="mn__author-avatar">'+esc(initials(name))+'</div><button type="button" class="mn__conversation-copy" data-conversation="'+esc(x.conversation.id)+'"><span class="mn__conversation-name">'+esc(name)+'</span><span class="mn__conversation-sub">'+esc(x.my&&x.my.member_state==="requested"?"Message request":last&&last.body||"Start the conversation")+'</span></button><span class="mn__author-sub">'+esc(last?timeAgo(last.created_at):"")+'</span></article>';
+      }).join(""):'<div class="mn__empty">No conversations yet. Open a person from Discover and tap Message.</div>';
+      $("mnConversations").querySelectorAll("[data-conversation]").forEach(function(b){b.onclick=function(){openConversation(b.dataset.conversation);};});
+      setStatus($("mnMessageStatus"),"");
+      return state.conversations;
+    }).catch(function (e) { setStatus($("mnMessageStatus"),e.message||"Could not load messages.","error"); return []; });
+  }
+  function startConversation(target) {
+    return api("/v1/mnet/conversations",{method:"POST",body:target||{}}).then(function (x) {
+      if($("mnPersonDialog").open)$("mnPersonDialog").close();
+      setView("messages"); return loadConversations().then(function(){return openConversation(x.conversation_id);});
+    }).catch(function (e) { setStatus($("mnMessageStatus"),e.message||"Could not start a conversation.","error"); });
+  }
+  function renderMessages(rows) {
+    $("mnConversationMessages").innerHTML=rows.length?rows.map(function(m){
+      var mine=m.sender_m_uid===identity().m_uid;
+      return '<article class="mn__message'+(mine?' is-mine':'')+'"><p>'+esc(m.body||"")+'</p><small>'+esc(mine?"You":m.sender&&m.sender.display_name||m.sender&&m.sender.mccluster_id||"Mnet")+' · '+esc(timeAgo(m.created_at))+'</small></article>';
+    }).join(""):'<div class="mn__empty">No messages yet.</div>';
+    $("mnConversationMessages").scrollTop=$("mnConversationMessages").scrollHeight;
+  }
+  function loadConversationMessages(id) {
+    return api("/v1/mnet/conversations/"+encodeURIComponent(id)+"/messages?limit=100").then(function(data){renderMessages(data.messages||[]);return data.messages||[];});
+  }
+  function openConversation(id) {
+    state.currentConversation=id;var dlg=$("mnConversationDialog");$("mnConversationMessages").innerHTML='<div class="mn__empty">Loading messages…</div>';dlg.showModal();
+    return api("/v1/mnet/conversations/"+encodeURIComponent(id)).then(function(data){
+      var other=(data.members||[]).find(function(m){return m.m_uid!==identity().m_uid;})||{},p=other.profile||{};
+      $("mnConversationTitle").textContent=p.display_name||p.mccluster_id||"Messages";
+      $("mnAcceptConversation").hidden=!(data.my&&data.my.member_state==="requested");
+      $("mnMessageForm").hidden=!!(data.my&&data.my.member_state==="requested");
+      setStatus($("mnConversationStatus"),data.my&&data.my.member_state==="requested"?"Accept this request to reply.":"");
+      return loadConversationMessages(id);
+    }).catch(function(e){setStatus($("mnConversationStatus"),e.message||"Could not open messages.","error");});
+  }
+  function sendMessage(event) {
+    event.preventDefault();if(!state.currentConversation)return;var body=$("mnMessageBody").value.trim();if(!body)return;
+    var b=$("mnMessageForm").querySelector("button");b.disabled=true;
+    api("/v1/mnet/conversations/"+encodeURIComponent(state.currentConversation)+"/messages",{method:"POST",body:{body:body}})
+      .then(function(){ $("mnMessageBody").value=""; return loadConversationMessages(state.currentConversation).then(loadConversations); })
+      .catch(function(e){setStatus($("mnConversationStatus"),e.message||"Could not send message.","error");})
+      .finally(function(){b.disabled=false;});
+  }
+
   function setView(name) {
     state.currentView = name;
-    ["feed","notifications","profile"].forEach(function (view) {
-      var panel = $(view === "feed" ? "mnFeedView" : view === "notifications" ? "mnNotificationsView" : "mnProfileView");
-      panel.hidden = view !== name;
-      var tab = document.querySelector('[data-mn-view="' + view + '"]');
-      if (tab) tab.classList.toggle("is-active", view === name);
+    ["feed","discover","messages","notifications","profile"].forEach(function (view) {
+      var ids={feed:"mnFeedView",discover:"mnDiscoverView",messages:"mnMessagesView",notifications:"mnNotificationsView",profile:"mnProfileView"};
+      var panel=$(ids[view]); if(panel)panel.hidden=view!==name;
+      var tab=document.querySelector('[data-mn-view="' + view + '"]');
+      if(tab)tab.classList.toggle("is-active",view===name);
     });
-    if (name === "notifications") loadNotificationsSilently().then(markNotificationsRead);
-    if (name === "profile") paintSelf();
-    window.scrollTo({ top:0, behavior:"smooth" });
+    if(name==="discover")loadDiscover();
+    if(name==="messages")loadConversations();
+    if(name==="notifications")loadNotificationsSilently().then(markNotificationsRead);
+    if(name==="profile")paintSelf();
+    window.scrollTo({top:0,behavior:"smooth"});
   }
 
   function editProfile() {
@@ -455,6 +692,12 @@
       if (!user) throw new Error("Your session did not open.");
       if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
       return MCC.autoTouch().catch(function () {}).then(function () {
+        if (!state.pollTimer) state.pollTimer = setInterval(function () {
+          if (document.visibilityState !== "visible" || !state.user) return;
+          loadNotificationsSilently();
+          if (state.currentView === "messages") loadConversations();
+          if (state.currentConversation && $("mnConversationDialog").open) loadConversationMessages(state.currentConversation);
+        }, 15000);
         return bootstrap().catch(function (error) {
           showSignedInLoadError(error);
           return null;
@@ -535,6 +778,19 @@
     $("mnProfileForm").addEventListener("submit", saveProfile);
     $("mnProfileBack").onclick = function () { showGate("app"); setView("profile"); };
     $("mnPost").onclick = createPost;
+    $("mnMediaInput").onchange = function () { uploadMediaFiles(this.files).catch(function () {}); };
+    $("mnDiscoverGo").onclick = loadDiscover;
+    $("mnDiscoverQuery").addEventListener("keydown", function (e) { if (e.key === "Enter") loadDiscover(); });
+    $("mnRefreshMessages").onclick = loadConversations;
+    $("mnPersonClose").onclick = function () { $("mnPersonDialog").close(); };
+    $("mnConversationClose").onclick = function () { $("mnConversationDialog").close(); state.currentConversation=null; };
+    $("mnMessageForm").addEventListener("submit", sendMessage);
+    $("mnAcceptConversation").onclick = function () {
+      if (!state.currentConversation) return;
+      api("/v1/mnet/conversations/" + encodeURIComponent(state.currentConversation) + "/accept", {method:"POST",body:{}})
+        .then(function () { $("mnAcceptConversation").hidden=true; $("mnMessageForm").hidden=false; setStatus($("mnConversationStatus"),"Accepted.","ok"); return loadConversations(); })
+        .catch(function (e) { setStatus($("mnConversationStatus"),e.message||"Could not accept request.","error"); });
+    };
     $("mnMore").onclick = function () { loadFeed(false); };
     $("mnRefreshNotifications").onclick = loadNotificationsSilently;
     $("mnMe").onclick = function () { showGate("app"); setView("profile"); };
