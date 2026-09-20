@@ -566,6 +566,31 @@
       };
     });
   }
+  function blockedPersonRow(item) {
+    var p=item.profile||{}, handle=p.mccluster_id||"", name=p.display_name||handle||"Mnet member";
+    var av=safeHttpUrl(p.avatar_url),avatar=av?'<img src="'+esc(av)+'" alt="">':esc(initials(name));
+    return '<article class="mn__person-row"><div class="mn__author-avatar">'+avatar+'</div>' +
+      '<div class="mn__person-copy"><span class="mn__person-name">'+esc(name)+'</span><span class="mn__person-sub">'+esc(handle?"@"+handle:"Blocked member")+'</span></div>' +
+      '<button type="button" class="mn__follow is-active" data-unblock-person="'+esc(handle)+'">Unblock</button></article>';
+  }
+  function loadBlocked() {
+    setStatus($("mnDiscoverStatus"),"Loading blocked people…");
+    return api("/v1/mnet/blocks").then(function (data) {
+      var rows=data.blocks||[];
+      $("mnDiscoverResults").innerHTML=rows.length?rows.map(blockedPersonRow).join(""):'<div class="mn__empty">You have not blocked anyone.</div>';
+      $("mnDiscoverResults").querySelectorAll("[data-unblock-person]").forEach(function (b) {
+        b.onclick=function () {
+          if(!b.dataset.unblockPerson)return;
+          b.disabled=true;
+          api("/v1/mnet/people/"+encodeURIComponent(b.dataset.unblockPerson)+"/block",{method:"DELETE",body:{}})
+            .then(loadBlocked)
+            .catch(function (e) { setStatus($("mnDiscoverStatus"),e.message||"Could not unblock that person.","error"); b.disabled=false; });
+        };
+      });
+      setStatus($("mnDiscoverStatus"),rows.length?rows.length+" blocked":"");
+    }).catch(function (e) { $("mnDiscoverResults").innerHTML=""; setStatus($("mnDiscoverStatus"),e.message||"Could not load blocked people.","error"); });
+  }
+
   function loadDiscover() {
     var q=$("mnDiscoverQuery").value.trim(); setStatus($("mnDiscoverStatus"),"Searching…");
     return api("/v1/mnet/discover?q="+encodeURIComponent(q)+"&limit=50").then(function (data) {
@@ -780,6 +805,7 @@
     $("mnPost").onclick = createPost;
     $("mnMediaInput").onchange = function () { uploadMediaFiles(this.files).catch(function () {}); };
     $("mnDiscoverGo").onclick = loadDiscover;
+    $("mnShowBlocked").onclick = loadBlocked;
     $("mnDiscoverQuery").addEventListener("keydown", function (e) { if (e.key === "Enter") loadDiscover(); });
     $("mnRefreshMessages").onclick = loadConversations;
     $("mnPersonClose").onclick = function () { $("mnPersonDialog").close(); };
