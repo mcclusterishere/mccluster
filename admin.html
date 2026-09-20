@@ -127,8 +127,6 @@
         <button class="btn-go" id="boIn" type="button">Open the office &#8594;</button>
         <p class="note" id="boNote"></p>
         <div class="alt">
-          <p class="note">No password set? Get a one-time link by email instead.</p>
-          <button class="btn-flat" id="boLink" type="button">Email me a sign-in link</button>
         </div>
       </div>
     </section>
@@ -235,17 +233,6 @@
     });
     $("boPass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("boIn").click(); });
 
-    $("boLink").addEventListener("click", function () {
-      var em = $("boEmail").value.trim();
-      if (!em) { fail("Put the owner email in first."); return; }
-      var b = $("boLink"); b.disabled = true; b.textContent = "Sending…";
-      window.MCC_AUTH.signIn(em).then(function () {
-        b.textContent = "Link sent";
-        say("Check " + em + ". The link opens this page signed in.");
-      }).catch(function (e) {
-        b.disabled = false; b.textContent = "Email me a sign-in link";
-        fail(String(e.message || e));
-      });
     });
 
     $("boOut").addEventListener("click", function () {
