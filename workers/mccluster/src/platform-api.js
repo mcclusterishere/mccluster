@@ -59,9 +59,11 @@ async function resolveMnetPerson(env,id){
 }
 async function canReadNetworkProfile(env,muid,resolved){
   if(!resolved?.profile)return false;
-  if(resolved.profile.visibility==='public'||resolved.m_uid===muid)return true;
-  if(!muid||resolved.profile.visibility==='private')return false;
+  if(resolved.m_uid===muid)return true;
+  if(!muid)return resolved.profile.visibility==='public';
   if(await networkBlocked(env,muid,resolved.m_uid))return false;
+  if(resolved.profile.visibility==='public')return true;
+  if(resolved.profile.visibility==='private')return false;
   if(resolved.profile.visibility==='network'){
     const rows=await service(env,`network_follows?follower_m_uid=eq.${muid}&followed_m_uid=eq.${resolved.m_uid}&status=eq.following&select=follower_m_uid&limit=1`);
     return !!rows?.length;
