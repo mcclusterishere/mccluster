@@ -17,7 +17,7 @@ Client social is a McCluster service. If you were about to create a new backend:
 The artwork the owner supplies is the only source of truth for any mark,
 forever. Do not trace, approximate, reconstruct, recolour, or composite one —
 not as a placeholder, not "until the real one arrives", not at a size where
-you think it will not matter. Cropping a supplied file is fine; adding a
+you think it will not matter. Do not crop supplied artwork. Scale the complete supplied artwork proportionally only. adding a
 shape it does not contain is drawing. If the variant you need does not
 exist, ask for it.
 
