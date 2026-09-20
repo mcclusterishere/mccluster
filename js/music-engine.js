@@ -15,6 +15,7 @@
   var loading = null;
   var current = null;
   var currentAccess = "";
+  var queue = [];
   var audio = new Audio();
   audio.preload = "metadata";
   audio.setAttribute("playsinline", "");
@@ -52,6 +53,7 @@
   function ensureUI() {
     var existing = doc.getElementById("musicMini");
     if (existing) return existing;
+
     var p = doc.createElement("aside");
     p.id = "musicMini";
     p.className = "music-mini";
@@ -60,11 +62,13 @@
     p.innerHTML =
       '<div class="music-mini__seek" id="musicMiniSeek"><i><b id="musicMiniFill"></b></i></div>' +
       '<div class="music-mini__row">' +
-        '<img id="musicMiniArt" class="music-mini__art" alt="">' +
-        '<div class="music-mini__meta">' +
-          '<b id="musicMiniTitle">Nothing playing</b>' +
-          '<span><span id="musicMiniAlbum"></span><em id="musicMiniAccess"></em></span>' +
-        '</div>' +
+        '<button type="button" class="music-mini__open" id="musicMiniOpen" aria-label="Open Now Playing">' +
+          '<img id="musicMiniArt" class="music-mini__art" alt="">' +
+          '<span class="music-mini__meta">' +
+            '<b id="musicMiniTitle">Nothing playing</b>' +
+            '<span><span id="musicMiniAlbum"></span><em id="musicMiniAccess"></em></span>' +
+          '</span>' +
+        '</button>' +
         '<span class="music-mini__time" id="musicMiniTime">0:00</span>' +
         '<button type="button" class="music-mini__play" id="musicMiniPlay" aria-label="Play">' +
           '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>' +
@@ -72,45 +76,178 @@
       '</div>';
     doc.body.appendChild(p);
 
+    var now = doc.createElement("section");
+    now.id = "musicNow";
+    now.className = "music-now";
+    now.setAttribute("aria-hidden", "true");
+    now.setAttribute("aria-label", "Now playing");
+    now.innerHTML =
+      '<div class="music-now__ambient"><img id="musicNowBackdrop" alt=""></div>' +
+      '<div class="music-now__sheet">' +
+        '<header class="music-now__head">' +
+          '<button type="button" class="music-now__close" id="musicNowClose" aria-label="Close Now Playing">' +
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg>' +
+          '</button>' +
+          '<span>Now Playing</span>' +
+          '<a class="music-now__detail" id="musicNowDetail" href="listen.html">Details</a>' +
+        '</header>' +
+        '<div class="music-now__stage">' +
+          '<div class="music-now__artwrap"><img id="musicNowArt" class="music-now__art" alt=""></div>' +
+          '<div class="music-now__meta">' +
+            '<div><h2 id="musicNowTitle">Nothing playing</h2><p id="musicNowArtist"></p></div>' +
+            '<em id="musicNowAccess" class="music-now__access"></em>' +
+          '</div>' +
+          '<button type="button" class="music-now__seek" id="musicNowSeek" aria-label="Seek">' +
+            '<i><b id="musicNowFill"></b></i>' +
+          '</button>' +
+          '<div class="music-now__times"><span id="musicNowT0">0:00</span><span id="musicNowT1">-:--</span></div>' +
+          '<div class="music-now__controls">' +
+            '<button type="button" id="musicNowPrev" aria-label="Previous track"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM19 5v14l-10-7z"/></svg></button>' +
+            '<button type="button" class="music-now__play" id="musicNowPlay" aria-label="Play"><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></button>' +
+            '<button type="button" id="musicNowNext" aria-label="Next track"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM5 5v14l10-7z"/></svg></button>' +
+          '</div>' +
+          '<div class="music-now__context">' +
+            '<span id="musicNowAlbum"></span>' +
+            '<span id="musicNowMode"></span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    doc.body.appendChild(now);
+
+    function seekFrom(el, e) {
+      if (!audio.duration || !isFinite(audio.duration)) return;
+      var r = el.getBoundingClientRect();
+      var at = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * audio.duration;
+      if (previewLimit) at = Math.min(at, previewLimit);
+      audio.currentTime = at;
+      trackEvent("music_seek", { position_seconds: Math.round(at) });
+    }
     doc.getElementById("musicMiniPlay").addEventListener("click", function () {
       if (!current) return;
       if (audio.paused) audio.play().catch(function () {});
       else audio.pause();
     });
-    doc.getElementById("musicMiniSeek").addEventListener("click", function (e) {
-      if (!audio.duration || !isFinite(audio.duration)) return;
-      var r = this.getBoundingClientRect();
-      var at = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * audio.duration;
-      if (previewLimit) at = Math.min(at, previewLimit);
-      audio.currentTime = at;
-      trackEvent("music_seek", { position_seconds: Math.round(at) });
+    doc.getElementById("musicMiniOpen").addEventListener("click", openNow);
+    doc.getElementById("musicMiniSeek").addEventListener("click", function (e) { seekFrom(this, e); });
+    doc.getElementById("musicNowSeek").addEventListener("click", function (e) { seekFrom(this, e); });
+    doc.getElementById("musicNowClose").addEventListener("click", closeNow);
+    doc.getElementById("musicNowPlay").addEventListener("click", function () {
+      if (!current) return;
+      if (audio.paused) audio.play().catch(function () {});
+      else audio.pause();
+    });
+    doc.getElementById("musicNowPrev").addEventListener("click", function () { playAdjacent(-1); });
+    doc.getElementById("musicNowNext").addEventListener("click", function () { playAdjacent(1); });
+    now.addEventListener("click", function (e) {
+      if (e.target === now) closeNow();
+    });
+    doc.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && now.classList.contains("is-open")) closeNow();
     });
     return p;
+  }
+
+  function openNow() {
+    if (!current) return;
+    var now = doc.getElementById("musicNow");
+    if (!now) { ensureUI(); now = doc.getElementById("musicNow"); }
+    now.classList.add("is-open");
+    now.setAttribute("aria-hidden", "false");
+    doc.body.classList.add("music-now-open");
+    trackEvent("music_now_open", {});
+    paint();
+  }
+
+  function closeNow() {
+    var now = doc.getElementById("musicNow");
+    if (!now) return;
+    now.classList.remove("is-open");
+    now.setAttribute("aria-hidden", "true");
+    doc.body.classList.remove("music-now-open");
+  }
+
+  function sameItem(a, b) {
+    if (!a || !b) return false;
+    if (a.creatorTrackId || b.creatorTrackId) return String(a.creatorTrackId || "") === String(b.creatorTrackId || "");
+    return key(a.albumSlug, a.title) === key(b.albumSlug, b.title);
+  }
+
+  function playAdjacent(delta) {
+    if (!current || !queue.length) return Promise.resolve(null);
+    var at = queue.findIndex(function (item) { return sameItem(item, current); });
+    if (at < 0) at = 0;
+    var next = queue[(at + delta + queue.length) % queue.length];
+    if (!next) return Promise.resolve(null);
+    if (next.creatorTrackId) return openCreatorTrack(next.creatorTrackId, true);
+    return openTrack(next.albumSlug, next.title, true);
   }
 
   function paint() {
     var p = ensureUI();
     if (!current) { p.hidden = true; return; }
     p.hidden = false;
-    doc.getElementById("musicMiniArt").src = current.art || "assets/img/m-mark.png";
+
+    var art = current.art || "assets/img/m-mark.png";
+    var artist = current.artist || "Matthew McCluster";
+    var album = current.albumName || "";
+    var accessLabel = currentAccess === "full" ? "Full track" :
+      currentAccess === "preview" ? "Preview" : currentAccess === "loading" ? "Opening…" :
+      currentAccess === "unavailable" ? "Unavailable" : "";
+    var duration = audio.duration && isFinite(audio.duration) ? audio.duration : 0;
+    var pct = duration ? Math.min(100, audio.currentTime / duration * 100) : 0;
+
+    doc.getElementById("musicMiniArt").src = art;
     doc.getElementById("musicMiniTitle").textContent = current.title;
-    doc.getElementById("musicMiniAlbum").textContent = current.albumName || "";
+    doc.getElementById("musicMiniAlbum").textContent = artist || album;
     var access = doc.getElementById("musicMiniAccess");
-    access.textContent = currentAccess === "full" ? "Full track" :
-      currentAccess === "preview" ? "Preview" : currentAccess === "loading" ? "Opening…" : "";
+    access.textContent = accessLabel;
     access.className = "music-mini__access is-" + (currentAccess || "idle");
     doc.getElementById("musicMiniTime").textContent =
-      fmt(audio.currentTime) + " / " + (audio.duration && isFinite(audio.duration) ? fmt(audio.duration) : "--:--");
-    var pct = audio.duration && isFinite(audio.duration) ? Math.min(100, audio.currentTime / audio.duration * 100) : 0;
+      fmt(audio.currentTime) + " / " + (duration ? fmt(duration) : "--:--");
     doc.getElementById("musicMiniFill").style.width = pct + "%";
     doc.getElementById("musicMiniPlay").innerHTML = audio.paused
       ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>'
       : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
     doc.getElementById("musicMiniPlay").setAttribute("aria-label", audio.paused ? "Play" : "Pause");
 
+    var now = doc.getElementById("musicNow");
+    if (now) {
+      doc.getElementById("musicNowBackdrop").src = art;
+      doc.getElementById("musicNowArt").src = art;
+      doc.getElementById("musicNowTitle").textContent = current.title;
+      doc.getElementById("musicNowArtist").textContent = artist;
+      doc.getElementById("musicNowAlbum").textContent = album || (current.creatorTrackId ? "Community release" : "");
+      doc.getElementById("musicNowMode").textContent =
+        currentAccess === "preview" ? "Preview access" :
+        currentAccess === "full" ? "Full playback" : accessLabel;
+      var nAccess = doc.getElementById("musicNowAccess");
+      nAccess.textContent = accessLabel;
+      nAccess.className = "music-now__access is-" + (currentAccess || "idle");
+      doc.getElementById("musicNowFill").style.width = pct + "%";
+      doc.getElementById("musicNowT0").textContent = fmt(audio.currentTime);
+      doc.getElementById("musicNowT1").textContent = duration ? "-" + fmt(Math.max(0, duration - audio.currentTime)) : "-:--";
+      doc.getElementById("musicNowPlay").innerHTML = audio.paused
+        ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>'
+        : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
+      doc.getElementById("musicNowPlay").setAttribute("aria-label", audio.paused ? "Play" : "Pause");
+      var detail = doc.getElementById("musicNowDetail");
+      if (current.creatorTrackId && current.handle) {
+        detail.href = "music-creator.html?handle=" + encodeURIComponent(current.handle);
+        detail.textContent = "Creator";
+      } else if (current.albumSlug) {
+        detail.href = "album.html?album=" + encodeURIComponent(current.albumSlug) + "&t=" + encodeURIComponent(current.title);
+        detail.textContent = "Album";
+      } else {
+        detail.href = "listen.html";
+        detail.textContent = "Music";
+      }
+    }
+
     doc.querySelectorAll("[data-music-play]").forEach(function (b) {
-      var same = current && key(b.getAttribute("data-album"), b.getAttribute("data-track")) ===
-        key(current.albumSlug, current.title);
+      var creatorId = b.getAttribute("data-creator-track");
+      var same = creatorId
+        ? current && String(current.creatorTrackId || "") === String(creatorId)
+        : current && key(b.getAttribute("data-album"), b.getAttribute("data-track")) === key(current.albumSlug, current.title);
       b.classList.toggle("is-playing", same && !audio.paused);
       b.setAttribute("aria-pressed", same && !audio.paused ? "true" : "false");
     });
@@ -123,17 +260,21 @@
       .then(function (r) { if (!r.ok) throw new Error("catalogue " + r.status); return r.json(); })
       .then(function (data) {
         var by = {};
+        var ordered = [];
         (data.albums || []).forEach(function (a) {
           (a.tracks || []).forEach(function (t) {
-            by[key(a.slug, t.title)] = Object.assign({}, t, {
+            var item = Object.assign({}, t, {
               albumSlug: a.slug,
               albumName: a.name,
               artist: a.artist || a.by || "Matthew McCluster",
               art: a.art
             });
+            by[key(a.slug, t.title)] = item;
+            ordered.push(item);
           });
         });
         library = by;
+        queue = ordered.concat(queue.filter(function (item) { return item.creatorTrackId; }));
         return by;
       });
     return loading;
@@ -226,6 +367,8 @@
       art: t.poster_url || t.avatar_url || "assets/img/m-mark.png",
       title: t.title || "Untitled"
     });
+    var item = CREATOR_TRACKS[String(t.id)];
+    if (!queue.some(function (q) { return sameItem(q, item); })) queue.push(item);
   }
 
   function openCreatorTrack(id, force) {
@@ -272,6 +415,8 @@
       });
       navigator.mediaSession.setActionHandler("play", function () { audio.play(); });
       navigator.mediaSession.setActionHandler("pause", function () { audio.pause(); });
+      navigator.mediaSession.setActionHandler("previoustrack", function () { playAdjacent(-1); });
+      navigator.mediaSession.setActionHandler("nexttrack", function () { playAdjacent(1); });
       navigator.mediaSession.setActionHandler("seekto", function (d) {
         if (typeof d.seekTime === "number") audio.currentTime = previewLimit ? Math.min(d.seekTime, previewLimit) : d.seekTime;
       });
@@ -357,6 +502,7 @@
   audio.addEventListener("ended", function () {
     trackEvent("music_complete", { listened_seconds: Math.round((Date.now() - startedAt) / 1000) });
     paint();
+    if (!previewLimit && queue.length > 1) playAdjacent(1);
   });
   audio.addEventListener("error", function () {
     currentAccess = "unavailable";
@@ -393,6 +539,10 @@
     playCreator: openCreatorTrack,
     registerCreatorTrack: registerCreatorTrack,
     pause: function () { audio.pause(); },
+    next: function () { return playAdjacent(1); },
+    previous: function () { return playAdjacent(-1); },
+    openNow: openNow,
+    closeNow: closeNow,
     audio: audio,
     current: function () { return current; },
     access: function () { return currentAccess; },
