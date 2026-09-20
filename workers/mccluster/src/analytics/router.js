@@ -160,6 +160,9 @@ export async function businessSnapshot(env, windowSpec = null) {
   const unconfirmed = users.filter((u) => !u?.email_confirmed_at && !u?.confirmed_at);
   const confirmedCreated = createdUsers.filter((u) => Boolean(u?.email_confirmed_at || u?.confirmed_at));
   const unconfirmedCreated = createdUsers.filter((u) => !u?.email_confirmed_at && !u?.confirmed_at);
+  const activeUsers = windowSpec
+    ? users.filter((u) => Number.isFinite(sinceMs) && Date.parse(u?.last_sign_in_at || '') >= sinceMs)
+    : [];
 
   const timeZone = env.MCCLUSTER_TIMEZONE || 'America/New_York';
   const byDayMap = new Map();
@@ -238,6 +241,7 @@ export async function businessSnapshot(env, windowSpec = null) {
       unconfirmed_total: unconfirmed.length,
       confirmed_in_window: windowSpec ? confirmedCreated.length : null,
       unconfirmed_in_window: windowSpec ? unconfirmedCreated.length : null,
+      active_in_window: windowSpec ? activeUsers.length : null,
       percent_created_in_window: windowSpec && users.length
         ? Math.round((createdUsers.length / users.length) * 1000) / 10
         : null,
@@ -259,7 +263,11 @@ export async function businessSnapshot(env, windowSpec = null) {
     },
     music: {
       legacy_album_plays: { total: legacyPlaysTotal, in_window: legacyPlaysWindow },
-      plays: { total: musicPlaysTotal, in_window: musicPlaysWindow },
+      inline_plays: { total: musicPlaysTotal, in_window: musicPlaysWindow },
+      plays: {
+        total: Number(legacyPlaysTotal || 0) + Number(musicPlaysTotal || 0),
+        in_window: windowSpec ? Number(legacyPlaysWindow || 0) + Number(musicPlaysWindow || 0) : null
+      },
       preview_plays: { total: previewPlaysTotal, in_window: previewPlaysWindow },
       full_plays: { total: fullPlaysTotal, in_window: fullPlaysWindow },
       completions: { total: completesTotal, in_window: completesWindow },
