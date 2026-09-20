@@ -2332,9 +2332,8 @@
 
   function boot() { $("cpGate").hidden = true; $("crApp").hidden = false; readHash(); setHash(true); render(); load(); }
   function bindAuth() {
-    $("cpIn").addEventListener("click", function () { var em = $("cpEmail").value.trim(), pw = $("cpPass").value; if (!em) { note("Email first.", true); return; } if (!pw) { note("No password? Use the sign-in link below.", true); return; } var b = $("cpIn"); b.disabled = true; b.textContent = "Opening…"; window.MCC_AUTH.signInPassword(em, pw).then(boot).catch(function (e) { b.disabled = false; b.textContent = "Open Control Room"; note(String(e && e.message || e), true); }); });
+    $("cpIn").addEventListener("click", function () { var em = $("cpEmail").value.trim(), pw = $("cpPass").value; if (!em) { note("Email first.", true); return; } if (!pw) { note("Password required.", true); return; } var b = $("cpIn"); b.disabled = true; b.textContent = "Opening…"; window.MCC_AUTH.signInPassword(em, pw).then(boot).catch(function (e) { b.disabled = false; b.textContent = "Open Control Room"; note(String(e && e.message || e), true); }); });
     $("cpPass").addEventListener("keydown", function (e) { if (e.key === "Enter") $("cpIn").click(); });
-    $("cpLink").addEventListener("click", function () { var em = $("cpEmail").value.trim(); if (!em) { note("Email first.", true); return; } var b = $("cpLink"); b.disabled = true; b.textContent = "Sending…"; window.MCC_AUTH.signIn(em).then(function () { b.textContent = "Link sent"; note("Check " + em + ". The link opens this page signed in."); }).catch(function (e) { b.disabled = false; b.textContent = "Email me a sign-in link"; note(String(e && e.message || e), true); }); });
   }
   function bindShell() {
     document.querySelectorAll("[data-surface]").forEach(function (el) { el.addEventListener("click", function () { setSurface(el.getAttribute("data-surface")); }); });

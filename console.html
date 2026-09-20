@@ -70,7 +70,6 @@
       <input type="email" id="cxEmail" placeholder="Email" autocomplete="email" inputmode="email" maxlength="120">
       <input type="password" id="cxPass" placeholder="Password" autocomplete="current-password" maxlength="80">
       <button class="cx__btn" id="cxGo">Sign in</button>
-      <button class="cx__flip" id="cxSend" type="button">No password? Email me a sign-in link</button>
       <a class="cx__flip" href="account.html" style="margin-left:0.9rem;display:inline-block">New here? Make your profile</a>
       <p class="cx__note" id="cxMsg"></p>
     </div>
@@ -298,17 +297,6 @@
       window.MCC_AUTH.signInPassword(em, pw).then(paint).catch(function (e) {
         btn.disabled = false; btn.textContent = "Sign in";
         msg.textContent = e.message || "That didn't turn the lock. Check both fields.";
-      });
-    });
-    el("cxSend").addEventListener("click", function () {
-      var em = (el("cxEmail").value || "").trim();
-      if (!/^\S+@\S+\.\S+$/.test(em)) { msg.textContent = "Type the whole email address first."; return; }
-      var btn = this; btn.disabled = true;
-      window.MCC_AUTH.signIn(em).then(function () {
-        msg.textContent = "Sent. Open the link on this device and you land back here, signed in.";
-      }).catch(function () {
-        btn.disabled = false;
-        msg.textContent = "That didn't send. Try again in a minute.";
       });
     });
     el("cxOut").addEventListener("click", function () {

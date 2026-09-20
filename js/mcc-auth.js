@@ -7,8 +7,9 @@
    provider emails can be explicitly linked without pretending a shared
    device proves two people are the same person.
 
-   Google, Apple, Facebook, X, password and magic-link auth are doors into
-   the M layer. A random first-party installation id is only a continuity
+   Google, Apple, Facebook, X, and email/password auth are doors into the
+   M layer. Passwordless magic-link sign-in is deliberately not offered by
+   the product UI. A random first-party installation id is only a continuity
    signal. It is never browser/hardware fingerprinting and never authenticates
    or automatically merges a user.
 
@@ -215,16 +216,47 @@
       });
     },
 
-    signInWithEmail: function (email, redirectTo) {
-      return authApi('otp', {
+    signInWithPassword: function (email, password) {
+      email = String(email || '').trim().toLowerCase();
+      password = String(password || '');
+      if (!email || !password) return Promise.reject(new Error('Email and password are required.'));
+      return authApi('token?grant_type=password', {
         method: 'POST',
-        body: {
-          email: email,
-          create_user: true,
-          options: { email_redirect_to: redirectTo || root.location.origin + '/auth/' }
-        }
+        body: { email: email, password: password }
+      }).then(function (session) {
+        if (!session || !session.access_token) throw new Error('Sign-in failed.');
+        writeSession(session);
+        root.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: true } }));
+        return session.user || MCC.user();
       });
     },
+
+    signUpWithPassword: function (email, password, data) {
+      email = String(email || '').trim().toLowerCase();
+      password = String(password || '');
+      if (!email || !password) return Promise.reject(new Error('Email and password are required.'));
+      if (password.length < 8) return Promise.reject(new Error('Use at least 8 characters for your password.'));
+      return authApi('signup', {
+        method: 'POST',
+        body: { email: email, password: password, data: data || {} }
+      }).then(function (session) {
+        if (session && session.access_token) {
+          writeSession(session);
+          root.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: true } }));
+          return { session: true, user: session.user || null, confirm: false };
+        }
+        return { session: false, user: session && session.user || null, confirm: true };
+      });
+    },
+
+    /* Passwordless email login was removed from the product UI after real
+       users were stranded by one-time links. Keep this method as an explicit
+       hard stop so an old page cannot silently revive that flow. */
+    signInWithEmail: function () {
+      return Promise.reject(new Error('Passwordless email sign-in is disabled. Use your email and password.'));
+    },
+    signInPassword: function (email, password) { return MCC.signInWithPassword(email, password); },
+    signUpPassword: function (email, password, data) { return MCC.signUpWithPassword(email, password, data); },
 
     complete: function () {
       var params = new URLSearchParams(root.location.search);
@@ -279,6 +311,7 @@
     signOut: function () {
       var s = readSession();
       writeSession(null);
+      root.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: false } }));
       if (!s || !s.access_token) return Promise.resolve();
       return authApi('logout', { method: 'POST', token: s.access_token }).catch(function () { /* local sign-out already done */ });
     },

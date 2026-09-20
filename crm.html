@@ -78,7 +78,8 @@
     <div id="gate">
       <p class="fd__sub">Sign in and the leads are on the desk: newest first, sources marked, one tap to reply.</p>
       <input id="email" type="email" placeholder="matthew@mccluster.org" autocomplete="email">
-      <button class="go" id="signin" type="button">Send the sign-in link &#8594;</button>
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+      <button class="go" id="signin" type="button">Sign in &#8594;</button>
       <p class="fd__note" id="gateNote"></p>
     </div>
 
@@ -161,11 +162,12 @@
     }
 
     el("signin").addEventListener("click", function () {
-      var em = el("email").value.trim() || OWNER;
-      MCC_AUTH.signIn(em).then(function () {
-        el("gateNote").textContent = "The link is in your email. Open it on this device and the desk unlocks.";
-      }).catch(function () {
-        el("gateNote").textContent = "The link didn't send. Try again in a minute.";
+      var em = el("email").value.trim() || OWNER, pw = el("password").value;
+      if (!pw) { el("gateNote").textContent = "Password required."; return; }
+      MCC_AUTH.signInPassword(em, pw).then(function () {
+        location.reload();
+      }).catch(function (e) {
+        el("gateNote").textContent = e.message || "Could not sign in.";
       });
     });
 
