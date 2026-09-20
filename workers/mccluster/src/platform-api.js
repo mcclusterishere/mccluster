@@ -197,6 +197,10 @@ async function handleMnet(req,env,path,url){
     if(req.method==='POST'){await service(env,'network_follows',{method:'POST',headers:{prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({follower_m_uid:muid,followed_m_uid:target,status:'following'})});return reply(req,env,{following:true});}
     await service(env,`network_follows?follower_m_uid=eq.${muid}&followed_m_uid=eq.${target}`,{method:'DELETE',headers:{prefer:'return=minimal'}}); return reply(req,env,{following:false});
   }
+  if(path==='/v1/mnet/notifications/read'&&req.method==='POST'){
+    if(external)return fail(req,env,'Notifications require a McCluster user session',403); const muid=await currentMuid(env,user.id); if(!muid)return fail(req,env,'McCluster identity unavailable',409);
+    const readAt=new Date().toISOString(); await service(env,`network_notifications?recipient_m_uid=eq.${muid}&read_at=is.null`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({read_at:readAt})}); return reply(req,env,{ok:true,read_at:readAt});
+  }
   if(path==='/v1/mnet/notifications'&&req.method==='GET'){
     if(external)return fail(req,env,'Notifications require a McCluster user session',403); const muid=await currentMuid(env,user.id); const rows=await service(env,`network_notifications?recipient_m_uid=eq.${muid}&order=created_at.desc&limit=100&select=*`); return reply(req,env,{notifications:rows||[]});
   }
