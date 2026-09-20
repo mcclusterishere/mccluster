@@ -29,15 +29,30 @@
       <h1>People, posts, and everything happening across McCluster.</h1>
       <p class="mn__lede">Sign in with the same M Account you use everywhere else. Your identity, follows, posts and profile stay with you across the ecosystem.</p>
       <div class="mn__panel">
+        <div class="mn__auth-tabs" role="tablist" aria-label="Mnet account">
+          <button class="mn__auth-tab is-active" id="mnSignInTab" type="button" role="tab" aria-selected="true">Sign in</button>
+          <button class="mn__auth-tab" id="mnCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
+        </div>
+        <div id="mnCreateNameWrap" hidden>
+          <label class="mn__label" for="mnCreateName">Display name</label>
+          <input class="mn__input" id="mnCreateName" type="text" autocomplete="name" placeholder="Your name">
+        </div>
         <label class="mn__label" for="mnEmail">Email</label>
         <input class="mn__input" id="mnEmail" type="email" autocomplete="email" placeholder="you@example.com">
-        <button class="mn__primary" id="mnEmailGo" type="button">Email me a sign-in link</button>
+        <label class="mn__label" for="mnPassword">Password</label>
+        <input class="mn__input" id="mnPassword" type="password" autocomplete="current-password" minlength="8" placeholder="Your password">
+        <div id="mnConfirmWrap" hidden>
+          <label class="mn__label" for="mnPassword2">Confirm password</label>
+          <input class="mn__input" id="mnPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Type it again">
+        </div>
+        <button class="mn__primary" id="mnAuthGo" type="button">Sign in</button>
+        <p class="mn__hint" id="mnPasswordHint">Use the password on your M Account. One-time login links are no longer used.</p>
         <p class="mn__status" id="mnAuthStatus" role="status"></p>
         <div id="mnProviders" hidden>
           <div class="mn__or"><span>or</span></div>
           <div id="mnProviderButtons"></div>
         </div>
-        <a class="mn__text-link" href="account.html?stay=1">Use a password or manage your M Account</a>
+        <a class="mn__text-link" href="account.html?stay=1">Manage your M Account</a>
       </div>
     </section>
 
