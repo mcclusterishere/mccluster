@@ -73,6 +73,7 @@ Current endpoints:
 - `POST /v1/mnet/people/:mcclusterId/follow` — follow.
 - `DELETE /v1/mnet/people/:mcclusterId/follow` — unfollow.
 - `GET /v1/mnet/notifications` — current person's notifications.
+- `POST /v1/mnet/notifications/read` — mark the current person's unread notifications read.
 
 Signed-in first-party feed responses hydrate post items with the public author-card fields needed by the client plus reaction/reply counts and the current user's like state. Reply posts remain addressable through the replies endpoint instead of being duplicated as top-level feed cards.
 
