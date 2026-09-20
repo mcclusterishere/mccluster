@@ -161,6 +161,32 @@ drop policy if exists "mnet media owner read" on storage.objects;
 create policy "mnet media owner read" on storage.objects for select to authenticated
 using (bucket_id='mnet-media' and (storage.foldername(name))[1]=auth.uid()::text);
 
+create table if not exists public.network_blocks (
+  blocker_m_uid uuid not null references public.m_people(id) on delete cascade,
+  blocked_m_uid uuid not null references public.m_people(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (blocker_m_uid, blocked_m_uid),
+  check (blocker_m_uid <> blocked_m_uid)
+);
+
+create table if not exists public.network_mutes (
+  muter_m_uid uuid not null references public.m_people(id) on delete cascade,
+  muted_m_uid uuid not null references public.m_people(id) on delete cascade,
+  expires_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (muter_m_uid, muted_m_uid),
+  check (muter_m_uid <> muted_m_uid)
+);
+create index if not exists network_mutes_expiry_idx
+  on public.network_mutes(muter_m_uid, expires_at)
+  where expires_at is not null;
+
+alter table public.network_blocks enable row level security;
+alter table public.network_mutes enable row level security;
+revoke all on public.network_blocks, public.network_mutes from public, anon, authenticated;
+grant all on public.network_blocks, public.network_mutes to service_role;
+
 create or replace function public.mnet_is_blocked_pair(p_a uuid,p_b uuid)
 returns boolean language sql stable security definer set search_path=pg_catalog,public as $$
   select exists(
