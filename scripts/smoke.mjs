@@ -156,8 +156,10 @@ try {
         await p.locator("#mnNotificationsView").count() === 1);
       check("mnet: signed-out door is password auth", await p.locator("#mnPassword").count() === 1 &&
         await p.locator("#mnAuthGo").count() === 1 && await p.locator("#mnCreateTab").count() === 1);
-      check("mnet: passwordless login copy is gone", await p.evaluate(() =>
-        !/email me a sign-in link|send sign-in link/i.test(document.body.innerText)));
+      check("mnet: forgot-password recovery is present", await p.locator("#mnForgot").count() === 1 &&
+        /Forgot password\?/.test(await p.locator("#mnForgot").innerText()));
+      check("mnet: obsolete login language is gone", await p.evaluate(() =>
+        !/email me a sign-in link|send sign-in link|one-time login link/i.test(document.body.innerText)));
       check("mnet: signed-out person tab is Sign in", await p.evaluate(() => {
         const tab = document.querySelector('[data-appnav="profile"]');
         return !!tab && /account\.html$/.test(new URL(tab.href).pathname) &&
@@ -172,12 +174,24 @@ try {
     ["account.html", async (p) => {
       check("account: create-account mode exists", await p.locator("#acCreateTab").count() === 1 &&
         await p.locator("#acCreatePass").count() === 1 && await p.locator("#acCreatePass2").count() === 1);
-      check("account: magic-link login is absent", await p.evaluate(() =>
-        !/email me a sign-in link|send sign-in link/i.test(document.body.innerText)));
+      check("account: normal recovery language exists", await p.locator("#acForgot").count() === 1 &&
+        /Forgot password\?/.test(await p.locator("#acForgot").innerText()));
+      check("account: verification resend exists", await p.locator("#acResend").count() === 1);
+      check("account: obsolete login language is absent", await p.evaluate(() =>
+        !/email me a sign-in link|send sign-in link|one-time login link/i.test(document.body.innerText)));
       check("account: person tab is sign-in while signed out", await p.evaluate(() => {
         const tab = document.querySelector('[data-appnav="profile"]');
         return !!tab && /account\.html$/.test(new URL(tab.href).pathname) && /Sign in/.test(tab.textContent || "");
       }));
+    }],
+
+    ["reset-password.html", async (p) => {
+      check("reset password: new-password fields exist", await p.locator("#rpPass").count() === 1 &&
+        await p.locator("#rpPass2").count() === 1);
+      check("reset password: update action exists", await p.locator("#rpGo").count() === 1 &&
+        /Update password/.test(await p.locator("#rpGo").innerText()));
+      check("reset password: invalid direct visit is safe", await p.evaluate(() =>
+        /invalid|expired/i.test(document.querySelector("#rpNote")?.textContent || "")));
     }],
 
     ["merch.html", async (p) => {

@@ -243,9 +243,64 @@
         if (session && session.access_token) {
           writeSession(session);
           root.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: true } }));
-          return { session: true, user: session.user || null, confirm: false };
+          return { session: true, user: session.user || null, confirm: false, existing: false };
         }
-        return { session: false, user: session && session.user || null, confirm: true };
+        var identities = session && session.user && session.user.identities;
+        var existing = Array.isArray(identities) && identities.length === 0;
+        return { session: false, user: session && session.user || null, confirm: !existing, existing: existing };
+      });
+    },
+
+    requestPasswordReset: function (email, redirectTo) {
+      email = String(email || '').trim().toLowerCase();
+      if (!email) return Promise.reject(new Error('Enter your email address.'));
+      return authApi('recover', {
+        method: 'POST',
+        body: {
+          email: email,
+          redirect_to: redirectTo || (root.location.origin + '/reset-password.html')
+        }
+      });
+    },
+
+    resendSignupVerification: function (email) {
+      email = String(email || '').trim().toLowerCase();
+      if (!email) return Promise.reject(new Error('Enter your email address.'));
+      return authApi('resend', {
+        method: 'POST',
+        body: { type: 'signup', email: email }
+      });
+    },
+
+    acceptRecoveryFromUrl: function () {
+      var raw = String(root.location.hash || '').replace(/^#/, '');
+      if (!raw) return Promise.resolve(null);
+      var params = new URLSearchParams(raw);
+      var type = params.get('type') || '';
+      var access = params.get('access_token') || '';
+      if (type !== 'recovery' || !access) return Promise.resolve(null);
+      var session = {
+        access_token: access,
+        refresh_token: params.get('refresh_token') || '',
+        expires_in: Number(params.get('expires_in') || 3600),
+        token_type: params.get('token_type') || 'bearer'
+      };
+      writeSession(session);
+      root.history.replaceState({}, '', root.location.pathname + root.location.search);
+      root.dispatchEvent(new CustomEvent('mcc:auth-changed', { detail: { signed_in: true } }));
+      return Promise.resolve(session);
+    },
+
+    updatePassword: function (password) {
+      password = String(password || '');
+      if (password.length < 8) return Promise.reject(new Error('Use at least 8 characters for your password.'));
+      return MCC.refreshIfNeeded().then(function (session) {
+        if (!session || !session.access_token) throw new Error('Open the password-reset email again and try once more.');
+        return authApi('user', {
+          method: 'PUT',
+          token: session.access_token,
+          body: { password: password }
+        });
       });
     },
 

@@ -106,19 +106,20 @@
         <input type="email" id="acInEmail" placeholder="Email" autocomplete="email">
         <input type="password" id="acInPass" placeholder="Password" autocomplete="current-password">
         <button class="ac__btn" id="acGo" type="button">Sign in</button>
-        <p class="ac__passnote">No one-time login links. Your M Account uses the password you created.</p>
+        <button class="ac__flip" id="acForgot" type="button">Forgot password?</button>
         <p class="ac__note" id="acMsg"></p>
       </div>
 
       <div id="acCreatePane" hidden>
         <p class="ac__lab">Create your M Account</p>
-        <input type="text" id="acCreateName" placeholder="Display name" autocomplete="name">
+        <input type="text" id="acCreateName" placeholder="Display name (optional)" autocomplete="name">
         <input type="email" id="acCreateEmail" placeholder="Email" autocomplete="email">
         <input type="password" id="acCreatePass" placeholder="Create password" autocomplete="new-password" minlength="8">
         <input type="password" id="acCreatePass2" placeholder="Confirm password" autocomplete="new-password" minlength="8">
         <button class="ac__btn" id="acCreateGo" type="button">Create account</button>
-        <p class="ac__passnote">Use at least 8 characters. This password signs you into McCluster and Mnet on any device.</p>
+        <p class="ac__passnote">Use at least 8 characters.</p>
         <p class="ac__note" id="acCreateMsg"></p>
+        <button class="ac__flip" id="acResend" type="button" hidden>Resend verification email</button>
       </div>
 
       <!-- SOCIAL SIGN-IN. Painted only for providers Supabase actually has
@@ -246,6 +247,9 @@
       el("acCreateTab").classList.toggle("is-on", create);
       el("acSignInTab").setAttribute("aria-selected", create ? "false" : "true");
       el("acCreateTab").setAttribute("aria-selected", create ? "true" : "false");
+      el("acResend").hidden = true;
+      el("acMsg").textContent = "";
+      el("acCreateMsg").textContent = "";
       setTimeout(function () {
         var target = create ? el("acCreateName") : el("acInEmail");
         if (target) target.focus();
@@ -259,7 +263,7 @@
       var em = el("acInEmail").value.trim(), pw = el("acInPass").value, btn = el("acGo");
       if (!em || !pw) { el("acMsg").textContent = "Enter your email and password."; return; }
       btn.disabled = true; btn.textContent = "Signing in…"; el("acMsg").textContent = "";
-      MCC_AUTH.signInPassword(em, pw).then(function () {
+      MCC.signInWithPassword(em, pw).then(function () {
         if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
         paint();
       }).catch(function (e) {
@@ -268,20 +272,53 @@
     };
     el("acInPass").addEventListener("keydown", function (e) { if (e.key === "Enter") el("acGo").click(); });
 
+    el("acForgot").onclick = function () {
+      var em = el("acInEmail").value.trim(), btn = el("acForgot");
+      if (!em) { el("acMsg").textContent = "Enter your email first."; el("acInEmail").focus(); return; }
+      btn.disabled = true; btn.textContent = "Sending…"; el("acMsg").textContent = "";
+      MCC.requestPasswordReset(em, location.origin + "/reset-password.html").then(function () {
+        el("acMsg").textContent = "Check your email for a password reset link.";
+      }).catch(function (e) {
+        el("acMsg").textContent = e.message || "Could not send the reset email.";
+      }).finally(function () { btn.disabled = false; btn.textContent = "Forgot password?"; });
+    };
+
+    el("acResend").onclick = function () {
+      var em = pendingVerificationEmail || el("acCreateEmail").value.trim(), btn = el("acResend");
+      if (!em) return;
+      btn.disabled = true; btn.textContent = "Sending…";
+      MCC.resendSignupVerification(em).then(function () {
+        el("acCreateMsg").textContent = "Verification email sent. Check your inbox and spam folder.";
+      }).catch(function (e) {
+        el("acCreateMsg").textContent = e.message || "Could not resend verification.";
+      }).finally(function () { btn.disabled = false; btn.textContent = "Resend verification email"; });
+    };
+
+    var pendingVerificationEmail = "";
+
     el("acCreateGo").onclick = function () {
       var name = el("acCreateName").value.trim(), em = el("acCreateEmail").value.trim();
       var pw = el("acCreatePass").value, pw2 = el("acCreatePass2").value, btn = el("acCreateGo");
-      if (!name || !em || !pw) { el("acCreateMsg").textContent = "Name, email, and password are required."; return; }
+      if (!em || !pw) { el("acCreateMsg").textContent = "Email and password are required."; return; }
       if (pw.length < 8) { el("acCreateMsg").textContent = "Use at least 8 characters."; return; }
       if (pw !== pw2) { el("acCreateMsg").textContent = "Those passwords do not match."; return; }
-      btn.disabled = true; btn.textContent = "Creating…"; el("acCreateMsg").textContent = "";
-      MCC_AUTH.signUpPassword(em, pw, { name: name, full_name: name }).then(function (result) {
+      btn.disabled = true; btn.textContent = "Creating…"; el("acCreateMsg").textContent = ""; el("acResend").hidden = true;
+      var display = name || em.split("@")[0];
+      MCC.signUpWithPassword(em, pw, { name: display, full_name: display }).then(function (result) {
         if (result && result.session) {
           if (window.MCC_BAR && MCC_BAR.refreshAuth) MCC_BAR.refreshAuth();
           paint();
           return;
         }
-        el("acCreateMsg").textContent = "Account created. Check your email once to confirm the address, then come back and sign in with the password you just made.";
+        if (result && result.existing) {
+          el("acInEmail").value = em;
+          setAuthMode("signin");
+          el("acMsg").textContent = "An account already exists for that email. Sign in, or use Forgot password.";
+          return;
+        }
+        pendingVerificationEmail = em;
+        el("acCreateMsg").textContent = "Check your email to verify your address. After verification, sign in with the password you just created.";
+        el("acResend").hidden = false;
       }).catch(function (e) {
         el("acCreateMsg").textContent = e.message || "Could not create that account.";
       }).finally(function () { btn.disabled = false; btn.textContent = "Create account"; });
