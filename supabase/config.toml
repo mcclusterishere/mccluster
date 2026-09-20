@@ -173,3 +173,13 @@ verify_jwt = false
 
 [functions.mnet-activity]
 verify_jwt = true
+
+
+# McCluster Music account-gated playback, creator uploads, review and entitlements.
+[functions.music-access]
+verify_jwt = true
+
+# First-party music licensing checkout. A valid M Account is required before
+# an order can be created and the function repeats authorization in-process.
+[functions.music-checkout]
+verify_jwt = true
