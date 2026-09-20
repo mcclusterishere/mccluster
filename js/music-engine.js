@@ -185,6 +185,9 @@
     var preview = t.previewUrl || publicObject(t.preview_bucket, t.preview_path) || t.audio_url || "";
     var token = sessionToken();
     if (!token) {
+      if (t.access_mode === "public" && preview) {
+        return Promise.resolve({ state: "full", url: preview });
+      }
       return Promise.resolve(preview
         ? { state: "preview", url: preview, reason: "account" }
         : { state: "unavailable", reason: "preview-missing" });
@@ -220,7 +223,7 @@
       albumSlug: "creator:" + String(t.id),
       albumName: t.release_name || "Community",
       artist: t.artist || t.artist_name || "Independent creator",
-      art: t.art_url || t.avatar_url || "assets/img/m-mark.png",
+      art: t.poster_url || t.avatar_url || "assets/img/m-mark.png",
       title: t.title || "Untitled"
     });
   }
@@ -236,7 +239,7 @@
     }
     current = t;
     currentAccess = "loading";
-    previewLimit = Number(t.preview_seconds || 30);
+    previewLimit = t.preview_seconds == null ? 30 : Number(t.preview_seconds);
     paint();
     return creatorSourceFor(t).then(function (out) {
       if (out.state !== "full" && out.state !== "preview") {
@@ -245,7 +248,7 @@
         throw new Error(out.reason || "Track unavailable");
       }
       currentAccess = out.state;
-      previewLimit = out.state === "preview" ? Number(t.preview_seconds || 30) : 0;
+      previewLimit = out.state === "preview" ? (t.preview_seconds == null ? 30 : Number(t.preview_seconds)) : 0;
       audio.src = out.url;
       audio.currentTime = 0;
       startedAt = Date.now();
