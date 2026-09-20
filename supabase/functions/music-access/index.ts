@@ -127,14 +127,25 @@ Deno.serve(async (req) => {
       const trackId = clean(body.track_id, 80);
       const offerId = clean(body.offer_id, 80);
       if (!trackId || !offerId) return json({ error: "track_id and offer_id required" }, 400);
-      const { data: entitlement } = await admin.from("music_entitlements").select("id,offer_id").eq("track_id", trackId)
-        .or(`user_id.eq.${who.user.id},customer_email.eq.${(who.user.email || "").toLowerCase()}`)
-        .is("revoked_at", null).limit(1).maybeSingle();
+      let entitlement = null;
+      const { data: byUser } = await admin.from("music_entitlements")
+        .select("id,offer_id,download_count").eq("track_id", trackId)
+        .eq("user_id", who.user.id).is("revoked_at", null).limit(1).maybeSingle();
+      entitlement = byUser || null;
+      if (!entitlement && who.user.email) {
+        const { data: byEmail } = await admin.from("music_entitlements")
+          .select("id,offer_id,download_count").eq("track_id", trackId)
+          .eq("customer_email", who.user.email.toLowerCase()).is("revoked_at", null).limit(1).maybeSingle();
+        entitlement = byEmail || null;
+      }
       if (!entitlement || entitlement.offer_id !== offerId) return json({ error: "purchase required", purchase_required: true }, 402);
       const { data: track } = await admin.from("creator_tracks").select("master_bucket,master_path,title").eq("id", trackId).limit(1).maybeSingle();
       if (!track?.master_path) return json({ error: "master unavailable" }, 409);
       const url = await signDownload(track.master_bucket, track.master_path, `${track.title || "track"}.mp3`);
-      await admin.from("music_entitlements").update({ download_count: 1, last_download_at: new Date().toISOString() }).eq("id", entitlement.id);
+      await admin.from("music_entitlements").update({
+        download_count: Number(entitlement.download_count || 0) + 1,
+        last_download_at: new Date().toISOString()
+      }).eq("id", entitlement.id);
       return json({ ok: true, url, expires_in: 3600 });
     }
 
