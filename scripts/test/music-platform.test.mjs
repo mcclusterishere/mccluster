@@ -145,9 +145,9 @@ test('Listen V2 makes discovery and Creator Studio part of one product', async()
 
 test('Music V2 design contract documents the external interaction references', async()=>{
   const design=await read('docs/music/DESIGN-SYSTEM-V2.md');
-  assert.match(design,/Apple Music Listen Now hierarchy/);
+  assert.match(design,/Apple Music mobile Home \/ Listen Now hierarchy/);
   assert.match(design,/Apple Music Now Playing/);
-  assert.match(design,/Spotify artist profile hierarchy/);
+  assert.match(design,/Apple Music mobile artist-profile hierarchy/);
   assert.match(design,/No second auth system, second music backend, or second player engine/);
 });
 
