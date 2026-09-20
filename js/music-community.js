@@ -26,7 +26,7 @@
   }
 
   Promise.all([
-    api("creator_tracks?status=eq.published&select=id,m_uid,title,artist,art_url,audio_url,preview_bucket,preview_path,access_mode,genre,published_at&order=published_at.desc&limit=30"),
+    api("creator_tracks?status=eq.published&select=id,m_uid,title,artist,poster_url,audio_url,preview_bucket,preview_path,access_mode,genre,published_at&order=published_at.desc&limit=30"),
     api("music_creator_profiles?status=eq.active&select=m_uid,handle,artist_name,avatar_url,verification_state")
   ]).then(function (all) {
     var tracks = all[0] || [], profiles = {};
@@ -49,12 +49,12 @@
     doc.getElementById("creatorRail").innerHTML = tracks.map(function (t) {
       var p = profiles[t.m_uid] || {};
       var artist = p.artist_name || t.artist || "Independent creator";
-      var art = t.art_url || p.avatar_url || "assets/img/m-mark.png";
+      var art = t.poster_url || p.avatar_url || "assets/img/m-mark.png";
       root.MCC_MUSIC.registerCreatorTrack(Object.assign({}, t, {
         artist_name: artist,
         avatar_url: p.avatar_url || "",
         handle: p.handle || "",
-        preview_seconds: 30
+        preview_seconds: t.access_mode === "public" ? 0 : 30
       }));
       return '<a class="feat__card creator-card" href="music-creator.html?handle=' + encodeURIComponent(p.handle || "") + '">' +
         '<img class="feat__bg" src="' + attr(art) + '" alt="" loading="lazy">' +
