@@ -172,13 +172,13 @@ export async function businessSnapshot(env, windowSpec = null) {
   const [
     postsTotal, followsTotal, reactionsTotal, profilesTotal,
     postsWindow, followsWindow, reactionsWindow, profilesWindow,
-    eventsTotal, eventsWindow, pageViewsTotal, pageViewsWindow, clicksTotal, clicksWindow,
-    acquiredTotal, acquiredWindow, albumPlaysTotal, albumPlaysWindow,
-    musicPlaysTotal, musicPlaysWindow, previewPlaysTotal, previewPlaysWindow,
-    fullPlaysTotal, fullPlaysWindow, completesTotal, completesWindow,
-    creatorProfilesTotal, creatorProfilesWindow, creatorTracksTotal, creatorTracksWindow,
-    publishedTracksTotal, activeOffersTotal, paidOrdersTotal, paidOrdersWindow,
-    entitlementsTotal, entitlementsWindow, paidOrderRows
+    eventsTotal, eventsWindow, pageViewsTotal, pageViewsWindow,
+    clicksTotal, clicksWindow, acquiredTotal, acquiredWindow,
+    legacyPlaysTotal, legacyPlaysWindow, musicPlaysTotal, musicPlaysWindow,
+    previewPlaysTotal, previewPlaysWindow, fullPlaysTotal, fullPlaysWindow,
+    completesTotal, completesWindow, creatorProfilesTotal, creatorProfilesWindow,
+    creatorTracksTotal, creatorTracksWindow, publishedTracksTotal, activeOffersTotal,
+    paidOrdersTotal, paidOrdersWindow, entitlementsTotal, entitlementsWindow, paidOrderRows
   ] = await Promise.all([
     sbCount(env, 'network_posts'),
     sbCount(env, 'network_follows', 'follower_m_uid'),
@@ -197,9 +197,9 @@ export async function businessSnapshot(env, windowSpec = null) {
     since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.click' }, since, 'at') : Promise.resolve(null),
     sbCountFiltered(env, 'events', 'id', { name: 'eq.acquired' }, null, 'at'),
     since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.acquired' }, since, 'at') : Promise.resolve(null),
+
     sbCountFiltered(env, 'events', 'id', { name: 'eq.album_play' }, null, 'at'),
     since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.album_play' }, since, 'at') : Promise.resolve(null),
-
     sbCountFiltered(env, 'events', 'id', { name: 'eq.music_play' }, null, 'at'),
     since ? sbCountFiltered(env, 'events', 'id', { name: 'eq.music_play' }, since, 'at') : Promise.resolve(null),
     sbCountFiltered(env, 'events', 'id', { name: 'eq.music_preview_play' }, null, 'at'),
@@ -258,7 +258,7 @@ export async function businessSnapshot(env, windowSpec = null) {
       reactions: { total: reactionsTotal, created_in_window: reactionsWindow }
     },
     music: {
-      legacy_album_plays: { total: albumPlaysTotal, in_window: albumPlaysWindow },
+      legacy_album_plays: { total: legacyPlaysTotal, in_window: legacyPlaysWindow },
       plays: { total: musicPlaysTotal, in_window: musicPlaysWindow },
       preview_plays: { total: previewPlaysTotal, in_window: previewPlaysWindow },
       full_plays: { total: fullPlaysTotal, in_window: fullPlaysWindow },
@@ -280,7 +280,6 @@ export async function businessSnapshot(env, windowSpec = null) {
     }
   };
 }
-
 function metricLabel(subject) {
   if (subject === 'posts') return 'Mnet posts';
   if (subject === 'follows') return 'Mnet follows';
@@ -299,9 +298,6 @@ export function answerBusinessQuestion(question, snapshot) {
   const windowed = Boolean(snapshot.window);
   const temporalIntent = /\b(joined|new|created|signed\s*up|recent|today|yesterday|week|month|day|hour)\b/.test(lower);
 
-  // Never convert a time-scoped question into an all-time answer merely
-  // because the time phrase was outside the bounded parser's vocabulary.
-  // Ambiguity is safer than a confident lie in an operator console.
   if (temporalIntent && !windowed) {
     return {
       understood: false,
@@ -312,384 +308,64 @@ export function answerBusinessQuestion(question, snapshot) {
 
   if (/\b(music|songs?|tracks?|streams?|plays?|previews?|creators?|licenses?|licensing|revenue|sales?|orders?|entitlements?)\b/.test(lower)) {
     const w = windowed ? 'in_window' : 'total';
-    let metric, value, label;
-    if (/\brevenue\b|\bgross\b/.test(lower)) {
-      metric = windowed ? 'music.revenue.gross_cents_in_window' : 'music.revenue.gross_cents';
-      value = windowed ? snapshot.music.revenue.gross_cents_in_window : snapshot.music.revenue.gross_cents;
-      label = '
-    let metric = 'users.total';
-    let value = snapshot.users.total;
+    let metric;
+    let value;
+    let label;
 
-    if (/\bunconfirmed\b|\bunverified\b|not confirmed/.test(lower)) {
-      metric = windowed ? 'users.unconfirmed_in_window' : 'users.unconfirmed_total';
-      value = windowed ? snapshot.users.unconfirmed_in_window : snapshot.users.unconfirmed_total;
-    } else if (/\bconfirmed\b|\bverified\b/.test(lower)) {
-      metric = windowed ? 'users.confirmed_in_window' : 'users.confirmed_total';
-      value = windowed ? snapshot.users.confirmed_in_window : snapshot.users.confirmed_total;
-    } else if (windowed) {
-      metric = 'users.created_in_window';
-      value = snapshot.users.created_in_window;
-    }
-
-    if (wantsDaily && windowed) {
-      return {
-        understood: true,
-        metric: 'users.created_by_day',
-        value: snapshot.users.created_by_day,
-        answer: `${snapshot.users.created_in_window} users joined in the ${snapshot.window.label}.`,
-        context: { total_users: snapshot.users.total, window: snapshot.window }
-      };
-    }
-
-    const percent = windowed ? snapshot.users.percent_created_in_window : null;
-    let answer = metric === 'users.total'
-      ? `There are ${value} total users.`
-      : `${value} users match that question for the ${snapshot.window.label}.`;
-    if (windowed && (wantsPercent || metric === 'users.created_in_window')) {
-      answer += ` That is ${percent}% of ${snapshot.users.total} total users.`;
-    }
-    return { understood: true, metric, value, answer, context: { total_users: snapshot.users.total, percent, window: snapshot.window } };
-  }
-
-  const subject = /\bposts?\b/.test(lower) ? 'posts'
-    : /\bfollows?|followers?\b/.test(lower) ? 'follows'
-      : /\breactions?|likes?\b/.test(lower) ? 'reactions'
-        : /\bprofiles?\b/.test(lower) ? 'profiles'
-          : null;
-
-  if (subject) {
-    const bucket = snapshot.mnet[subject];
-    const value = windowed ? bucket.created_in_window : bucket.total;
-    const metric = `mnet.${subject}.${windowed ? 'created_in_window' : 'total'}`;
-    return {
-      understood: true,
-      metric,
-      value,
-      answer: windowed
-        ? `${value} ${metricLabel(subject)} were created in the ${snapshot.window.label}.`
-        : `There are ${value} total ${metricLabel(subject)}.`,
-      context: { total: bucket.total, window: snapshot.window }
-    };
-  }
-
-  return {
-    understood: false,
-    answer: 'I can answer platform growth, Mnet, music, creator, licensing, and first-party traffic questions without guessing.',
-    supported_examples: [
-      'How many users do we have?',
-      'How many users joined in the last 5 days?',
-      'What percentage of users joined in the last 7 days?',
-      'Show new users by day for the last 2 weeks.',
-      'How many Mnet posts were created in the last 30 days?',
-      'How many follows do we have?',
-      'How many music plays were there in the last 7 days?',
-      'How many creator profiles do we have?',
-      'How much music revenue did we make in the last 30 days?',
-      'How many page views were there in the last 24 hours?'
-    ]
-  };
-}
-
-async function handleBusinessSnapshot(request, env, user, url) {
-  await requireHouseOps(env, user);
-  if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
-  const rawWindow = url.searchParams.get('window') || '';
-  const windowSpec = rawWindow ? parseBusinessWindow(rawWindow) : null;
-  if (rawWindow && !windowSpec) return json({ ok: false, error: 'Invalid window. Use values like 24h, 5d, or 2w.' }, 400);
-  return json({ ok: true, snapshot: await businessSnapshot(env, windowSpec) });
-}
-
-async function handleBusinessQuestion(request, env, user) {
-  await requireHouseOps(env, user);
-  if (request.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405);
-  let body;
-  try { body = await request.json(); }
-  catch { return json({ ok: false, error: 'Invalid JSON' }, 400); }
-
-  const question = String(body?.question || '').trim();
-  if (!question) return json({ ok: false, error: 'question is required' }, 400);
-  const explicitWindow = String(body?.window || '').trim();
-  const windowSpec = explicitWindow
-    ? parseBusinessWindow(explicitWindow)
-    : parseBusinessWindow(question);
-  if (explicitWindow && !windowSpec) return json({ ok: false, error: 'Invalid window. Use values like 24h, 5d, or 2w.' }, 400);
-
-  const snapshot = await businessSnapshot(env, windowSpec);
-  const result = answerBusinessQuestion(question, snapshot);
-  return json({ ok: true, question, ...result, generated_at: snapshot.generated_at });
-}
-
-export async function handleAnalyticsRequest(request, env, user) {
-  const url = new URL(request.url);
-  const path = url.pathname.replace(/\/+$/, '');
-
-  if (path === '/v1/analytics/business') {
-    return handleBusinessSnapshot(request, env, user, url);
-  }
-  if (path === '/v1/analytics/ask') {
-    return handleBusinessQuestion(request, env, user);
-  }
-
-  const match = path.match(/^\/v1\/analytics\/domains\/([0-9a-f-]{36})\/verify$/i);
-  if (!match) return null;
-  if (request.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405);
-  if (!user?.id) return json({ ok: false, error: 'Authentication required' }, 401);
-
-  const domainId = match[1];
-  const domainRes = await sb(env,
-    `analytics_site_domains?id=eq.${encodeURIComponent(domainId)}&select=id,site_id,hostname,verification_token,verified_at,verification_method&limit=1`
-  );
-  if (!domainRes.ok) return json({ ok: false, error: 'Domain lookup failed' }, 502);
-  const domains = await domainRes.json();
-  const domain = domains[0];
-  if (!domain) return json({ ok: false, error: 'Domain not found' }, 404);
-
-  const siteRes = await sb(env,
-    `analytics_sites?id=eq.${encodeURIComponent(domain.site_id)}&select=id,owner_user_id,status&limit=1`
-  );
-  if (!siteRes.ok) return json({ ok: false, error: 'Site lookup failed' }, 502);
-  const sites = await siteRes.json();
-  const site = sites[0];
-  if (!site || site.owner_user_id !== user.id) return json({ ok: false, error: 'Forbidden' }, 403);
-  if (site.status !== 'active') return json({ ok: false, error: 'Site is not active' }, 409);
-
-  if (domain.verified_at) {
-    return json({ ok: true, verified: true, hostname: domain.hostname, method: domain.verification_method });
-  }
-
-  const qname = `_mccluster-analytics.${domain.hostname}`;
-  let dns;
-  try {
-    const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(qname)}&type=TXT`, {
-      headers: { accept: 'application/dns-json' }
-    });
-    if (!r.ok) throw new Error(`dns ${r.status}`);
-    dns = await r.json();
-  } catch {
-    return json({ ok: false, error: 'DNS verification unavailable' }, 502);
-  }
-
-  const answers = Array.isArray(dns?.Answer) ? dns.Answer : [];
-  const found = answers.some((answer) => cleanTxt(answer?.data) === domain.verification_token);
-  if (!found) {
-    return json({
-      ok: true,
-      verified: false,
-      hostname: domain.hostname,
-      record: { type: 'TXT', name: qname, value: domain.verification_token }
-    });
-  }
-
-  const verifiedAt = new Date().toISOString();
-  const patch = await sb(env, `analytics_site_domains?id=eq.${encodeURIComponent(domain.id)}`, {
-    method: 'PATCH',
-    headers: { prefer: 'return=minimal' },
-    body: JSON.stringify({ verified_at: verifiedAt, verification_method: 'dns', updated_at: verifiedAt })
-  });
-  if (!patch.ok) return json({ ok: false, error: 'Could not save verification' }, 502);
-
-  return json({ ok: true, verified: true, hostname: domain.hostname, method: 'dns', verified_at: verifiedAt });
-}
- + (Number(value || 0) / 100).toFixed(2) + ' gross music revenue';
-    } else if (/\bplatform fee|platform revenue\b/.test(lower)) {
+    if (/\bplatform fee|platform revenue\b/.test(lower)) {
       metric = windowed ? 'music.revenue.platform_fee_cents_in_window' : 'music.revenue.platform_fee_cents';
       value = windowed ? snapshot.music.revenue.platform_fee_cents_in_window : snapshot.music.revenue.platform_fee_cents;
-      label = '
-    let metric = 'users.total';
-    let value = snapshot.users.total;
-
-    if (/\bunconfirmed\b|\bunverified\b|not confirmed/.test(lower)) {
-      metric = windowed ? 'users.unconfirmed_in_window' : 'users.unconfirmed_total';
-      value = windowed ? snapshot.users.unconfirmed_in_window : snapshot.users.unconfirmed_total;
-    } else if (/\bconfirmed\b|\bverified\b/.test(lower)) {
-      metric = windowed ? 'users.confirmed_in_window' : 'users.confirmed_total';
-      value = windowed ? snapshot.users.confirmed_in_window : snapshot.users.confirmed_total;
-    } else if (windowed) {
-      metric = 'users.created_in_window';
-      value = snapshot.users.created_in_window;
+      label = '$' + (Number(value || 0) / 100).toFixed(2) + ' platform music revenue';
+    } else if (/\brevenue\b|\bgross\b/.test(lower)) {
+      metric = windowed ? 'music.revenue.gross_cents_in_window' : 'music.revenue.gross_cents';
+      value = windowed ? snapshot.music.revenue.gross_cents_in_window : snapshot.music.revenue.gross_cents;
+      label = '$' + (Number(value || 0) / 100).toFixed(2) + ' gross music revenue';
+    } else if (/\bpreview/.test(lower)) {
+      metric = 'music.preview_plays.' + w;
+      value = snapshot.music.preview_plays[w];
+      label = value + ' preview plays';
+    } else if (/\bfull\b/.test(lower) && /\b(play|stream)/.test(lower)) {
+      metric = 'music.full_plays.' + w;
+      value = snapshot.music.full_plays[w];
+      label = value + ' full-track plays';
+    } else if (/\bcomplete|completion/.test(lower)) {
+      metric = 'music.completions.' + w;
+      value = snapshot.music.completions[w];
+      label = value + ' completed plays';
+    } else if (/\bcreator/.test(lower) && /\b(track|song|release)/.test(lower)) {
+      const k = windowed ? 'created_in_window' : 'total';
+      metric = 'music.creator_tracks.' + k;
+      value = snapshot.music.creator_tracks[k];
+      label = value + ' creator tracks';
+    } else if (/\bcreator/.test(lower)) {
+      const k = windowed ? 'created_in_window' : 'total';
+      metric = 'music.creators.' + k;
+      value = snapshot.music.creators[k];
+      label = value + ' creator profiles';
+    } else if (/\bpublished\b/.test(lower) && /\b(track|song|release)/.test(lower)) {
+      metric = 'music.published_tracks';
+      value = snapshot.music.published_tracks;
+      label = value + ' published creator tracks';
+    } else if (/\b(license|licensing|sale|order)/.test(lower)) {
+      metric = 'music.paid_orders.' + w;
+      value = snapshot.music.paid_orders[w];
+      label = value + ' paid music-license orders';
+    } else if (/\b(entitlement|download)/.test(lower)) {
+      const k = windowed ? 'created_in_window' : 'total';
+      metric = 'music.entitlements.' + k;
+      value = snapshot.music.entitlements[k];
+      label = value + ' active music entitlements';
+    } else {
+      metric = 'music.plays.' + w;
+      value = snapshot.music.plays[w];
+      label = value + ' music plays';
     }
 
-    if (wantsDaily && windowed) {
-      return {
-        understood: true,
-        metric: 'users.created_by_day',
-        value: snapshot.users.created_by_day,
-        answer: `${snapshot.users.created_in_window} users joined in the ${snapshot.window.label}.`,
-        context: { total_users: snapshot.users.total, window: snapshot.window }
-      };
-    }
-
-    const percent = windowed ? snapshot.users.percent_created_in_window : null;
-    let answer = metric === 'users.total'
-      ? `There are ${value} total users.`
-      : `${value} users match that question for the ${snapshot.window.label}.`;
-    if (windowed && (wantsPercent || metric === 'users.created_in_window')) {
-      answer += ` That is ${percent}% of ${snapshot.users.total} total users.`;
-    }
-    return { understood: true, metric, value, answer, context: { total_users: snapshot.users.total, percent, window: snapshot.window } };
-  }
-
-  const subject = /\bposts?\b/.test(lower) ? 'posts'
-    : /\bfollows?|followers?\b/.test(lower) ? 'follows'
-      : /\breactions?|likes?\b/.test(lower) ? 'reactions'
-        : /\bprofiles?\b/.test(lower) ? 'profiles'
-          : null;
-
-  if (subject) {
-    const bucket = snapshot.mnet[subject];
-    const value = windowed ? bucket.created_in_window : bucket.total;
-    const metric = `mnet.${subject}.${windowed ? 'created_in_window' : 'total'}`;
     return {
       understood: true,
       metric,
       value,
-      answer: windowed
-        ? `${value} ${metricLabel(subject)} were created in the ${snapshot.window.label}.`
-        : `There are ${value} total ${metricLabel(subject)}.`,
-      context: { total: bucket.total, window: snapshot.window }
-    };
-  }
-
-  return {
-    understood: false,
-    answer: 'I can currently answer platform-user and Mnet growth/count questions without guessing.',
-    supported_examples: [
-      'How many users do we have?',
-      'How many users joined in the last 5 days?',
-      'What percentage of users joined in the last 7 days?',
-      'Show new users by day for the last 2 weeks.',
-      'How many Mnet posts were created in the last 30 days?',
-      'How many follows do we have?'
-    ]
-  };
-}
-
-async function handleBusinessSnapshot(request, env, user, url) {
-  await requireHouseOps(env, user);
-  if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
-  const rawWindow = url.searchParams.get('window') || '';
-  const windowSpec = rawWindow ? parseBusinessWindow(rawWindow) : null;
-  if (rawWindow && !windowSpec) return json({ ok: false, error: 'Invalid window. Use values like 24h, 5d, or 2w.' }, 400);
-  return json({ ok: true, snapshot: await businessSnapshot(env, windowSpec) });
-}
-
-async function handleBusinessQuestion(request, env, user) {
-  await requireHouseOps(env, user);
-  if (request.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405);
-  let body;
-  try { body = await request.json(); }
-  catch { return json({ ok: false, error: 'Invalid JSON' }, 400); }
-
-  const question = String(body?.question || '').trim();
-  if (!question) return json({ ok: false, error: 'question is required' }, 400);
-  const explicitWindow = String(body?.window || '').trim();
-  const windowSpec = explicitWindow
-    ? parseBusinessWindow(explicitWindow)
-    : parseBusinessWindow(question);
-  if (explicitWindow && !windowSpec) return json({ ok: false, error: 'Invalid window. Use values like 24h, 5d, or 2w.' }, 400);
-
-  const snapshot = await businessSnapshot(env, windowSpec);
-  const result = answerBusinessQuestion(question, snapshot);
-  return json({ ok: true, question, ...result, generated_at: snapshot.generated_at });
-}
-
-export async function handleAnalyticsRequest(request, env, user) {
-  const url = new URL(request.url);
-  const path = url.pathname.replace(/\/+$/, '');
-
-  if (path === '/v1/analytics/business') {
-    return handleBusinessSnapshot(request, env, user, url);
-  }
-  if (path === '/v1/analytics/ask') {
-    return handleBusinessQuestion(request, env, user);
-  }
-
-  const match = path.match(/^\/v1\/analytics\/domains\/([0-9a-f-]{36})\/verify$/i);
-  if (!match) return null;
-  if (request.method !== 'POST') return json({ ok: false, error: 'POST only' }, 405);
-  if (!user?.id) return json({ ok: false, error: 'Authentication required' }, 401);
-
-  const domainId = match[1];
-  const domainRes = await sb(env,
-    `analytics_site_domains?id=eq.${encodeURIComponent(domainId)}&select=id,site_id,hostname,verification_token,verified_at,verification_method&limit=1`
-  );
-  if (!domainRes.ok) return json({ ok: false, error: 'Domain lookup failed' }, 502);
-  const domains = await domainRes.json();
-  const domain = domains[0];
-  if (!domain) return json({ ok: false, error: 'Domain not found' }, 404);
-
-  const siteRes = await sb(env,
-    `analytics_sites?id=eq.${encodeURIComponent(domain.site_id)}&select=id,owner_user_id,status&limit=1`
-  );
-  if (!siteRes.ok) return json({ ok: false, error: 'Site lookup failed' }, 502);
-  const sites = await siteRes.json();
-  const site = sites[0];
-  if (!site || site.owner_user_id !== user.id) return json({ ok: false, error: 'Forbidden' }, 403);
-  if (site.status !== 'active') return json({ ok: false, error: 'Site is not active' }, 409);
-
-  if (domain.verified_at) {
-    return json({ ok: true, verified: true, hostname: domain.hostname, method: domain.verification_method });
-  }
-
-  const qname = `_mccluster-analytics.${domain.hostname}`;
-  let dns;
-  try {
-    const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(qname)}&type=TXT`, {
-      headers: { accept: 'application/dns-json' }
-    });
-    if (!r.ok) throw new Error(`dns ${r.status}`);
-    dns = await r.json();
-  } catch {
-    return json({ ok: false, error: 'DNS verification unavailable' }, 502);
-  }
-
-  const answers = Array.isArray(dns?.Answer) ? dns.Answer : [];
-  const found = answers.some((answer) => cleanTxt(answer?.data) === domain.verification_token);
-  if (!found) {
-    return json({
-      ok: true,
-      verified: false,
-      hostname: domain.hostname,
-      record: { type: 'TXT', name: qname, value: domain.verification_token }
-    });
-  }
-
-  const verifiedAt = new Date().toISOString();
-  const patch = await sb(env, `analytics_site_domains?id=eq.${encodeURIComponent(domain.id)}`, {
-    method: 'PATCH',
-    headers: { prefer: 'return=minimal' },
-    body: JSON.stringify({ verified_at: verifiedAt, verification_method: 'dns', updated_at: verifiedAt })
-  });
-  if (!patch.ok) return json({ ok: false, error: 'Could not save verification' }, 502);
-
-  return json({ ok: true, verified: true, hostname: domain.hostname, method: 'dns', verified_at: verifiedAt });
-}
- + (Number(value || 0) / 100).toFixed(2) + ' platform music revenue';
-    } else if (/\bpreview/.test(lower)) {
-      metric = `music.preview_plays.${w}`; value = snapshot.music.preview_plays[w]; label = value + ' preview plays';
-    } else if (/\bfull\b/.test(lower) && /\bplay|stream/.test(lower)) {
-      metric = `music.full_plays.${w}`; value = snapshot.music.full_plays[w]; label = value + ' full-track plays';
-    } else if (/\bcomplete|completion/.test(lower)) {
-      metric = `music.completions.${w}`; value = snapshot.music.completions[w]; label = value + ' completed plays';
-    } else if (/\bcreator/.test(lower) && /\btrack|song|release/.test(lower)) {
-      const k = windowed ? 'created_in_window' : 'total';
-      metric = `music.creator_tracks.${k}`; value = snapshot.music.creator_tracks[k]; label = value + ' creator tracks';
-    } else if (/\bcreator/.test(lower)) {
-      const k = windowed ? 'created_in_window' : 'total';
-      metric = `music.creators.${k}`; value = snapshot.music.creators[k]; label = value + ' creator profiles';
-    } else if (/\bpublished\b/.test(lower) && /\btrack|song|release/.test(lower)) {
-      metric = 'music.published_tracks'; value = snapshot.music.published_tracks; label = value + ' published creator tracks';
-    } else if (/\blicense|sale|order/.test(lower)) {
-      metric = `music.paid_orders.${w}`; value = snapshot.music.paid_orders[w]; label = value + ' paid music-license orders';
-    } else if (/\bentitlement|download/.test(lower)) {
-      const k = windowed ? 'created_in_window' : 'total';
-      metric = `music.entitlements.${k}`; value = snapshot.music.entitlements[k]; label = value + ' active music entitlements';
-    } else {
-      metric = `music.plays.${w}`; value = snapshot.music.plays[w]; label = value + ' music plays';
-    }
-    return {
-      understood: true, metric, value,
-      answer: windowed ? `${label} in the ${snapshot.window.label}.` : `There are ${label}.`,
+      answer: windowed ? label + ' in the ' + snapshot.window.label + '.' : 'There are ' + label + '.',
       context: { window: snapshot.window, music: snapshot.music }
     };
   }
@@ -703,10 +379,11 @@ export async function handleAnalyticsRequest(request, env, user) {
     const value = snapshot.platform[bucket][w];
     return {
       understood: true,
-      metric: `platform.${bucket}.${w}`,
+      metric: 'platform.' + bucket + '.' + w,
       value,
-      answer: windowed ? `${value} platform ${bucket.replace(/_/g, ' ')} in the ${snapshot.window.label}.`
-        : `There are ${value} total platform ${bucket.replace(/_/g, ' ')}.`,
+      answer: windowed
+        ? value + ' platform ' + bucket.replace(/_/g, ' ') + ' in the ' + snapshot.window.label + '.'
+        : 'There are ' + value + ' total platform ' + bucket.replace(/_/g, ' ') + '.',
       context: { window: snapshot.window }
     };
   }
@@ -731,19 +408,19 @@ export async function handleAnalyticsRequest(request, env, user) {
         understood: true,
         metric: 'users.created_by_day',
         value: snapshot.users.created_by_day,
-        answer: `${snapshot.users.created_in_window} users joined in the ${snapshot.window.label}.`,
+        answer: snapshot.users.created_in_window + ' users joined in the ' + snapshot.window.label + '.',
         context: { total_users: snapshot.users.total, window: snapshot.window }
       };
     }
 
     const percent = windowed ? snapshot.users.percent_created_in_window : null;
-    let answer = metric === 'users.total'
-      ? `There are ${value} total users.`
-      : `${value} users match that question for the ${snapshot.window.label}.`;
+    let response = metric === 'users.total'
+      ? 'There are ' + value + ' total users.'
+      : value + ' users match that question for the ' + snapshot.window.label + '.';
     if (windowed && (wantsPercent || metric === 'users.created_in_window')) {
-      answer += ` That is ${percent}% of ${snapshot.users.total} total users.`;
+      response += ' That is ' + percent + '% of ' + snapshot.users.total + ' total users.';
     }
-    return { understood: true, metric, value, answer, context: { total_users: snapshot.users.total, percent, window: snapshot.window } };
+    return { understood: true, metric, value, answer: response, context: { total_users: snapshot.users.total, percent, window: snapshot.window } };
   }
 
   const subject = /\bposts?\b/.test(lower) ? 'posts'
@@ -755,32 +432,32 @@ export async function handleAnalyticsRequest(request, env, user) {
   if (subject) {
     const bucket = snapshot.mnet[subject];
     const value = windowed ? bucket.created_in_window : bucket.total;
-    const metric = `mnet.${subject}.${windowed ? 'created_in_window' : 'total'}`;
+    const metric = 'mnet.' + subject + '.' + (windowed ? 'created_in_window' : 'total');
     return {
       understood: true,
       metric,
       value,
       answer: windowed
-        ? `${value} ${metricLabel(subject)} were created in the ${snapshot.window.label}.`
-        : `There are ${value} total ${metricLabel(subject)}.`,
+        ? value + ' ' + metricLabel(subject) + ' were created in the ' + snapshot.window.label + '.'
+        : 'There are ' + value + ' total ' + metricLabel(subject) + '.',
       context: { total: bucket.total, window: snapshot.window }
     };
   }
 
   return {
     understood: false,
-    answer: 'I can currently answer platform-user and Mnet growth/count questions without guessing.',
+    answer: 'I can answer platform growth, Mnet, music, creator, licensing, and first-party traffic questions without guessing.',
     supported_examples: [
       'How many users do we have?',
       'How many users joined in the last 5 days?',
-      'What percentage of users joined in the last 7 days?',
-      'Show new users by day for the last 2 weeks.',
       'How many Mnet posts were created in the last 30 days?',
-      'How many follows do we have?'
+      'How many music plays were there in the last 7 days?',
+      'How many creator profiles do we have?',
+      'How much music revenue did we make in the last 30 days?',
+      'How many page views were there in the last 24 hours?'
     ]
   };
 }
-
 async function handleBusinessSnapshot(request, env, user, url) {
   await requireHouseOps(env, user);
   if (request.method !== 'GET') return json({ ok: false, error: 'GET only' }, 405);
