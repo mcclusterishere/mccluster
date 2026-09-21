@@ -151,7 +151,7 @@ B1 is a deliberate **support/training level**, not an additional E-Q-U-I-T-Y dev
 
 B1 program authority:
 
-- `BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
 - `production/basement-b1-program.json`
 
 Primary conceptual functions:
