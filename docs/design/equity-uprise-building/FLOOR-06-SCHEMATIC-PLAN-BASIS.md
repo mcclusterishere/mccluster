@@ -103,6 +103,21 @@ Maintain clear circulation around the table.
 
 ---
 
+## 4A. Halo Globe / Spatial Intelligence
+
+Floor 6 includes one suspended spatial-intelligence instrument governed by `HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`.
+
+Conceptual coordination envelope:
+- plan center: **(24.5, 34.5)**;
+- radius: **2.25 ft**;
+- diameter: **4.5 ft**;
+- center height: **8.25 ft AFF**;
+- visible bottom: **6.0 ft AFF**;
+- visible top: **10.5 ft AFF**;
+- route key: `halo_spatial_intelligence`.
+
+The plan circle is an overhead coordination envelope, not occupied floor furniture. It may not move the command table, obstruct the 360 camera datum, reduce the clear elevator approach, block circulation, or intrude into any shared Core V2 vertical system.
+
 ## 5. Institutional Salon / Join Lounge
 
 Planning zone:
@@ -295,6 +310,7 @@ Within X 2–18 / Y 18–38:
 ## 15. Technology/service logic
 
 - command wall services from Desk Operations / Systems;
+- Halo Globe receives power/data through a concealed architectural pathway; its public projection never receives provider secrets or owner tokens;
 - command table via floor box;
 - salon Join/Partner surface via wall/floor pathway;
 - Strategy/Briefing rooms via secure data pathways;
@@ -360,6 +376,8 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] no exterior public door
 - [ ] no balcony/terrace
 - [ ] 16' × 5' command table
+- [ ] one suspended Halo Globe at (24.5,34.5), radius 2.25 ft, center 8.25 ft AFF
+- [ ] Halo Globe coordination envelope clears fixed core and circulation
 - [ ] NOW / PAST WORK / JOIN wall
 - [ ] Institutional Salon west
 - [ ] Strategy Review south
