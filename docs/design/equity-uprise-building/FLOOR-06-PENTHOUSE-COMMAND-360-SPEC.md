@@ -378,11 +378,11 @@ The north support band is replanned around the Core V2 West Service Core.
 - **X26–34 / Y60–70**
 - conceptual 8' × 10'
 
-### Command Support / Secure Records
+### Control / Audit Records
 - **X34–42 / Y60–72**
 - conceptual 8' × 12'
 
-### Operations / Systems Support
+### Desk Operations / Systems
 - **X42–50 / Y60–72**
 - conceptual 8' × 12'
 
@@ -564,7 +564,7 @@ Provide plausible services for:
 - Strategy Review Room;
 - Partner / Executive Briefing Room;
 - Roof Access / Mobility Transition terminal;
-- Operations / Systems Support.
+- Desk Operations / Systems.
 
 Public/guest-facing displays show summaries only.
 
@@ -625,7 +625,7 @@ No additional large furniture is canonical.
 ### Required cardinal views
 
 **0° / north:**  
-Command table + PENTHOUSE COMMAND wall with NOW / PAST WORK / JOIN.
+Command table + Institutional Command Wall with NOW / PAST WORK / JOIN.
 
 **+90° / east:**  
 Fixed elevator/core + Roof Access / Mobility Transition terminal + upward Level 7 wayfinding.
@@ -705,7 +705,7 @@ The architecture itself does not endorse a political side.
 - [ ] no balcony/terrace
 - [ ] 360 camera approximately (36,28)
 - [ ] command table north/forward
-- [ ] NOW / PAST WORK / JOIN wall
+- [ ] Institutional Command Wall — NOW / PAST WORK / JOIN
 - [ ] elevator + roof-transition terminal east/right
 - [ ] Strategy + Partner rooms south
 - [ ] Institutional Salon west
@@ -723,3 +723,45 @@ The architecture itself does not endorse a political side.
 - [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
 - [ ] shared slab openings remain unobstructed
 - [ ] no floor-local decorative stair is treated as vertical-continuity authority
+
+## Repo capability binding — 2026-09-21 reconciliation audit
+
+This floor is bound to the repo-wide program map:
+`production/equity-uprise-capability-map-v2.json`.
+
+### Primary capabilities
+- **Institutional Desk / finished public record** (`institutional-desk`, built) — Penthouse Command public/institutional mode: NOW, PAST WORK, JOIN, current initiative portfolio and proof links.
+- **Partner / sponsor pathways** (`partnership-sponsorship`, built_public_pathway) — Partner / Executive Briefing room and Institutional Salon.
+- **Living policy initiative portfolio** (`initiative-portfolio`, built) — Penthouse Command portfolio direction; individual research/evidence work occurs on Floor 5.
+- **Moderation/listings/conversations/topics/roles/audit Desk** (`admin-desk`, built) — Penthouse Command private Desk mode and Desk Operations / Systems support.
+- **Capabilities, approval requests and decisions** (`control-approvals`, built) — Penthouse Command approval/control layer; never a public tactical checkpoint.
+- **Integration registry and OAuth connection state** (`integrations-oauth`, built) — Desk Operations / Systems support.
+- **Event-driven workflows, jobs and approvals** (`workflows-jobs`, built) — Penthouse Command operations state; does not create a separate public room.
+- **Integration/job/monitor/queue health** (`status-health`, built) — Institutional Command Wall authenticated operations state.
+- **Google Workspace/Gmail relationship bridge** (`google-workspace`, built_disabled_until_configured) — Desk Operations / Systems; relevant communications project into stakeholder relationship state.
+- **Consent-aware outbound stakeholder outreach bridge** (`outreach`, built_not_armed_by_default) — Access-controlled stakeholder pipeline; never a public blast console.
+- **Immutable normalized Equity Uprise event ledger** (`event-ledger`, built) — Control / Audit Records support and cross-floor institutional memory.
+
+### Secondary / cross-floor capabilities
+- **Public perspectives with consent + moderation** (`perspectives`, built) — Public Forum record surfaces; moderation remains private Desk work on Floor 6.
+- **Neutral listening/conversation agent** (`conversation-agent`, built) — Listening Lounge; human handoff routes to the Desk without making the agent an ideological authority.
+- **Private member contact/consent record** (`private-contact`, built) — Never shown publicly; represented only as protected relationship records/back-office state.
+- **Host-submitted fellowship listings with moderation** (`host-listings`, built) — Opportunity Exchange submission path; moderation on Floor 6 Desk.
+- **Interview requests, availability and calendar scheduling** (`interviews-calendar`, built_guarded) — Member / Meeting Check-In and two Interview / Stakeholder Meeting rooms; no private calendar data shown publicly.
+- **Stakeholder and organization intake** (`stakeholder-intake`, built) — Reception/intake on Floor 1; relationship graph on Floors 3 and 6.
+- **Stakeholder people/organizations and initiative relationship graph** (`stakeholder-graph`, built) — People + Network layer and access-controlled relationship views; not a public contact database.
+- **Meetings, participants and commitments** (`meetings-commitments`, built) — Interview / Stakeholder Meeting rooms plus institutional follow-through in Penthouse Command.
+- **Credentials, citations, proclamations and proof documents** (`credentials-proof`, built) — Evidence + Proof Archive and institutional record.
+- **Canonical publications and versions of record** (`publications`, built_guarded) — Publication / Submission Review and Policy / Publication / Impact Wall.
+- **Approved publication distribution/syndication** (`publication-distribution`, built_disabled_until_configured) — Access-controlled distribution state on Floor 5; approval authority on Floor 6.
+- **Government targets/dockets and recurring docket intelligence** (`government-dockets`, built_guarded) — Policy Lab and monitor/filing surfaces.
+- **Government filing/submission workflow** (`government-submissions`, built_guarded) — Publication / Submission Review; final external authorization is a Floor 6 control function.
+- **Research/source/government/stakeholder/citation monitors** (`monitoring`, built) — Policy / Publication / Impact Wall for findings; operations health on Floor 6.
+- **Citation snapshots and impact events** (`citations-impact`, built) — Policy / Publication / Impact Wall and institutional proof.
+- **Equity Uprise/McCluster release preparation** (`music-release`, built_guarded) — Media / Release Control; high-risk delivery approval belongs to Floor 6.
+- **DDEX ERN delivery** (`ddex`, built_disabled_until_configured) — Media release pipeline, not a public room.
+
+### Boundary rule
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
