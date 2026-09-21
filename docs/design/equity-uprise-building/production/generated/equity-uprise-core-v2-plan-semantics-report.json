@@ -1,0 +1,1561 @@
+{
+  "schema_version": "1.0.0",
+  "not_for_construction": true,
+  "scope": "Core V2 generated plan semantic/artifact validation",
+  "checks_total": 310,
+  "checks_passed": 310,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "L1 .svg exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L1 .dxf exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L1 .png exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L1 SVG label ARRIVAL / IDENTITY WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label ARRIVAL / IDENTITY WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label ARRIVAL / ROUTING DIRECTORY",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label ARRIVAL / ROUTING DIRECTORY",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label ENTRY VESTIBULE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label ENTRY VESTIBULE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label INTAKE / VERIFICATION CONSULTATION",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label INTAKE / VERIFICATION CONSULTATION",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label IT / ELECTRICAL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label IT / ELECTRICAL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label RECEPTION DESK",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label RECEPTION DESK",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label RECEPTION SUPPORT / STORAGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label RECEPTION SUPPORT / STORAGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label VISITOR LOUNGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label VISITOR LOUNGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 PNG signature",
+      "passed": true,
+      "detail": "bytes=76134"
+    },
+    {
+      "name": "L1 PNG nontrivial size",
+      "passed": true,
+      "detail": "bytes=76134"
+    },
+    {
+      "name": "L1 active plan triplet only",
+      "passed": true,
+      "detail": "[\"equity-uprise-floor-01-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-01-core-v2-schematic-v1.png\", \"equity-uprise-floor-01-core-v2-schematic-v1.svg\"]"
+    },
+    {
+      "name": "L2 .svg exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L2 .dxf exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L2 .png exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L2 SVG label AV / IT",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label AV / IT",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label FORUM STORAGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label FORUM STORAGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label LISTENING LOUNGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label LISTENING LOUNGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label MEMBER CHECK-IN",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label MEMBER CHECK-IN",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label PUBLIC FORUM ZONE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label PUBLIC FORUM ZONE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG label TOPICS / PERSPECTIVES / CONVERSATIONS WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF label TOPICS / PERSPECTIVES / CONVERSATIONS WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 SVG has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 DXF has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L2 PNG signature",
+      "passed": true,
+      "detail": "bytes=70222"
+    },
+    {
+      "name": "L2 PNG nontrivial size",
+      "passed": true,
+      "detail": "bytes=70222"
+    },
+    {
+      "name": "L2 active plan triplet only",
+      "passed": true,
+      "detail": "[\"equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png\", \"equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg\"]"
+    },
+    {
+      "name": "L3 .svg exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L3 .dxf exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L3 .png exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L3 SVG label 16 X 4 OPPORTUNITY TABLE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label 16 X 4 OPPORTUNITY TABLE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label FELLOWSHIP / RELATIONSHIP RECORDS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label FELLOWSHIP / RELATIONSHIP RECORDS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label INTERVIEW / STAKEHOLDER MEETING A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label INTERVIEW / STAKEHOLDER MEETING A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label INTERVIEW / STAKEHOLDER MEETING B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label INTERVIEW / STAKEHOLDER MEETING B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label MEMBER / MEETING CHECK-IN",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label MEMBER / MEETING CHECK-IN",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label NETWORK / IT",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label NETWORK / IT",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label OPPORTUNITY / NETWORK WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label OPPORTUNITY / NETWORK WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label OPPORTUNITY EXCHANGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label OPPORTUNITY EXCHANGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label PEOPLE + NETWORK LOUNGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label PEOPLE + NETWORK LOUNGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 SVG has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 DXF has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L3 PNG signature",
+      "passed": true,
+      "detail": "bytes=76978"
+    },
+    {
+      "name": "L3 PNG nontrivial size",
+      "passed": true,
+      "detail": "bytes=76978"
+    },
+    {
+      "name": "L3 active plan triplet only",
+      "passed": true,
+      "detail": "[\"equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png\", \"equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg\"]"
+    },
+    {
+      "name": "L4 .svg exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L4 .dxf exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L4 .png exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L4 SVG label CREATOR RECORDING ROOM",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label CREATOR RECORDING ROOM",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label CULTURE ARCHIVE / RALLY GALLERY",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label CULTURE ARCHIVE / RALLY GALLERY",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label EDIT / REVIEW SUITE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label EDIT / REVIEW SUITE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label LISTENING SEATING",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label LISTENING SEATING",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label MEDIA / LISTENING ZONE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label MEDIA / LISTENING ZONE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label MEDIA / MUSIC OPERATIONS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label MEDIA / MUSIC OPERATIONS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label MEDIA / RELEASE CONTROL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label MEDIA / RELEASE CONTROL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label MEDIA / RELEASE WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label MEDIA / RELEASE WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label MEDIA EQUIPMENT / STORAGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label MEDIA EQUIPMENT / STORAGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 SVG has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 DXF has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L4 PNG signature",
+      "passed": true,
+      "detail": "bytes=75302"
+    },
+    {
+      "name": "L4 PNG nontrivial size",
+      "passed": true,
+      "detail": "bytes=75302"
+    },
+    {
+      "name": "L4 active plan triplet only",
+      "passed": true,
+      "detail": "[\"equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png\", \"equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg\"]"
+    },
+    {
+      "name": "L5 .svg exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L5 .dxf exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L5 .png exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L5 SVG label 16 X 5 POLICY TABLE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label 16 X 5 POLICY TABLE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label EVIDENCE + PROOF ARCHIVE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label EVIDENCE + PROOF ARCHIVE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label POLICY / PUBLICATION / IMPACT WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label POLICY / PUBLICATION / IMPACT WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label POLICY LAB",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label POLICY LAB",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label PUBLICATION / SUBMISSION REVIEW",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label PUBLICATION / SUBMISSION REVIEW",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label RESEARCH / PUBLICATION NAVIGATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label RESEARCH / PUBLICATION NAVIGATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label RESEARCH / PUBLICATION SYSTEMS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label RESEARCH / PUBLICATION SYSTEMS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label SECURE EVIDENCE STORAGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label SECURE EVIDENCE STORAGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label SOURCE REVIEW ROOM",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label SOURCE REVIEW ROOM",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 SVG has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 DXF has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L5 PNG signature",
+      "passed": true,
+      "detail": "bytes=77987"
+    },
+    {
+      "name": "L5 PNG nontrivial size",
+      "passed": true,
+      "detail": "bytes=77987"
+    },
+    {
+      "name": "L5 active plan triplet only",
+      "passed": true,
+      "detail": "[\"equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png\", \"equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg\"]"
+    },
+    {
+      "name": "L6 .svg exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L6 .dxf exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L6 .png exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L6 SVG label 16 X 5 COMMAND TABLE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label 16 X 5 COMMAND TABLE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label CONTROL / AUDIT RECORDS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label CONTROL / AUDIT RECORDS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label DESK OPERATIONS / SYSTEMS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label DESK OPERATIONS / SYSTEMS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label INSTITUTIONAL COMMAND WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label INSTITUTIONAL COMMAND WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label INSTITUTIONAL SALON",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label INSTITUTIONAL SALON",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label JANITOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label PARTNER / EXECUTIVE BRIEFING",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label PARTNER / EXECUTIVE BRIEFING",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label PENTHOUSE COMMAND",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label PENTHOUSE COMMAND",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label PUBLIC / SUPPORT CORRIDOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label RESTROOM A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label RESTROOM B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label ROOF / MOBILITY TRANSITION",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label ROOF / MOBILITY TRANSITION",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG label STRATEGY REVIEW ROOM",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label STRATEGY REVIEW ROOM",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 SVG has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 PNG signature",
+      "passed": true,
+      "detail": "bytes=77373"
+    },
+    {
+      "name": "L6 PNG nontrivial size",
+      "passed": true,
+      "detail": "bytes=77373"
+    },
+    {
+      "name": "L6 active plan triplet only",
+      "passed": true,
+      "detail": "[\"equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png\", \"equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg\"]"
+    },
+    {
+      "name": "L7 .svg exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L7 .dxf exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L7 .png exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L7 SVG label CANDIDATE MOBILITY ZONE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF label CANDIDATE MOBILITY ZONE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 SVG label CITY OVERLOOK",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF label CITY OVERLOOK",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 SVG label ECOSYSTEM ROUTING INTERFACE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF label ECOSYSTEM ROUTING INTERFACE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 SVG label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF label FREIGHT / SERVICE ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 SVG label MEP / ROOF SERVICES",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF label MEP / ROOF SERVICES",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 SVG label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF label PASSENGER ELEVATOR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 SVG label ROOF ACCESS / CORE ENVELOPE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF label ROOF ACCESS / CORE ENVELOPE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 SVG label SERVICE / EQUIPMENT BAND",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF label SERVICE / EQUIPMENT BAND",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 SVG label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF label STAIR A",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 SVG label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF label STAIR B",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 SVG has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 DXF has no stale labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L7 PNG signature",
+      "passed": true,
+      "detail": "bytes=65789"
+    },
+    {
+      "name": "L7 PNG nontrivial size",
+      "passed": true,
+      "detail": "bytes=65789"
+    },
+    {
+      "name": "L7 active plan triplet only",
+      "passed": true,
+      "detail": "[\"equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf\", \"equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png\", \"equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg\"]"
+    },
+    {
+      "name": "generation manifest exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "generation manifest covers levels 1-7",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6, 7]"
+    },
+    {
+      "name": "L1 manifest DXF points at Core V2",
+      "passed": true,
+      "detail": "references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L1 manifest SVG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L1 manifest PNG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L2 manifest DXF points at Core V2",
+      "passed": true,
+      "detail": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L2 manifest SVG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L2 manifest PNG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L3 manifest DXF points at Core V2",
+      "passed": true,
+      "detail": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L3 manifest SVG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L3 manifest PNG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L4 manifest DXF points at Core V2",
+      "passed": true,
+      "detail": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L4 manifest SVG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L4 manifest PNG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L5 manifest DXF points at Core V2",
+      "passed": true,
+      "detail": "references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L5 manifest SVG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L5 manifest PNG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L6 manifest DXF points at Core V2",
+      "passed": true,
+      "detail": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L6 manifest SVG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L6 manifest PNG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L7 manifest DXF points at Core V2",
+      "passed": true,
+      "detail": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "L7 manifest SVG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "L7 manifest PNG points at Core V2",
+      "passed": true,
+      "detail": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "contact sheet exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "contact sheet PNG signature",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "contact sheet nontrivial size",
+      "passed": true,
+      "detail": "bytes=111632"
+    }
+  ]
+}
