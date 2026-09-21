@@ -69,7 +69,7 @@ scene.background=new THREE.Color(0x121314);
 scene.fog=new THREE.Fog(0x121314,ft(45),ft(120));
 
 const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.03,ft(180));
-camera.position.set(ft(36),ft(8),ft(21));
+camera.position.set(ft(36),ft(8),ft(-21));
 
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -83,7 +83,7 @@ app.appendChild(renderer.domElement);
 
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true;
-controls.target.set(ft(36),ft(4.5),ft(34));
+controls.target.set(ft(36),ft(4.5),ft(-34));
 controls.maxDistance=ft(100);
 controls.minDistance=ft(4);
 controls.maxPolarAngle=Math.PI/2-.015;
@@ -95,14 +95,19 @@ const loungeLight=new THREE.PointLight(0xffddb5,40,ft(25),2);loungeLight.positio
 const passportLight=new THREE.PointLight(0xffe7c8,30,ft(24),2);passportLight.position.set(ft(36),ft(8),ft(38));scene.add(passportLight);
 
 const grid=new THREE.GridHelper(ft(72),36,0x4c4c4c,0x2c2c2c);
-grid.position.set(ft(36),.005,ft(36));scene.add(grid);
+grid.position.set(ft(36),.005,ft(-36));scene.add(grid);
 
 let model=null,ceilingNodes=[],wire=false,ceilingOn=true;
 const originalMaterials=new Map();
 
 const loader=new GLTFLoader();
 loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{
-  model=g.scene;scene.add(model);
+  model=g.scene;
+  // Trimesh authoring coordinates are Z-up (X/Y floor plane, Z height).
+  // Three.js renders Y-up, so rotate the imported GLB onto the floor.
+  model.rotation.x=-Math.PI/2;
+  model.updateMatrixWorld(true);
+  scene.add(model);
   let count=0;
   model.traverse(o=>{
     if(o.isMesh){
@@ -121,6 +126,7 @@ loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP
 },undefined,e=>{console.error(e);boot.style.display='block';boot.textContent='3D model failed to load'});
 
 const views={
+  // V1 camera language preserved. Plan north (+Y in authoring) is -Z in Three.js after Z-up -> Y-up rotation.
   lobby:{p:[36,6.2,21],t:[36,4.5,43]},
   reception:{p:[36,5.6,31],t:[36,4.2,48]},
   elevator:{p:[46,5.8,31],t:[56,4.5,39]},
@@ -129,8 +135,8 @@ const views={
 };
 function gotoView(key){
   const v=views[key];if(!v)return;
-  camera.position.set(ft(v.p[0]),ft(v.p[1]),ft(v.p[2]));
-  controls.target.set(ft(v.t[0]),ft(v.t[1]),ft(v.t[2]));
+  camera.position.set(ft(v.p[0]),ft(v.p[1]),ft(-v.p[2]));
+  controls.target.set(ft(v.t[0]),ft(v.t[1]),ft(-v.t[2]));
   controls.update();
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>gotoView(b.dataset.view));
