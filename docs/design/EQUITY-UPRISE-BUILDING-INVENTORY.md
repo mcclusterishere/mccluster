@@ -1,6 +1,6 @@
 # Equity Uprise Building UI — Repo Inventory & Image Plan
 
-> Status: **SIX-FLOOR BUILDING SCHEME LOCKED. FLOORS 1–5 SPECS + SCHEMATIC GEOMETRY LOCKED. FLOOR 6 REQUIRES ITS ONE-BY-ONE QUALITY-CONTROL SPEC BEFORE NEW PRODUCTION ART.**
+> Status: **SIX ENCLOSED FLOORS + LEVEL 7 ROOF/MOBILITY PORTAL LOCKED. FLOORS 1–5 SPECS + SCHEMATIC GEOMETRY LOCKED. FLOOR 6 REQUIRES ITS QC SPEC; LEVEL 7 ROOF PROGRAM IS OWNER-LOCKED BUT HELIPAD GEOMETRY REMAINS PENDING FEASIBILITY.**
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
 > Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 > Canonical Floor 1 spec: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
@@ -18,6 +18,7 @@
 > Canonical Floor 5 spec: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
 > Canonical Floor 5 plan basis: `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
 > Canonical Floor 5 plan assets: `docs/design/equity-uprise-building/references/floor-05/`
+> **Level 7 roof pre-program:** `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`
 
 ## 1. What exists today
 
@@ -210,20 +211,21 @@ The building UI can link to or contain an entry point to this world later, but t
 
 ---
 
-## 2. Locked six-floor building information architecture
+## 2. Locked building information architecture — six enclosed floors + roof level
 
-The building is intentionally compact: **six levels total**. Wider, more useful floors are preferred over a tall decorative tower.
+The building is intentionally compact: **six enclosed occupied floors plus a seventh navigable roof level**. Wider, more useful floors are preferred over a tall decorative tower.
 
-| Floor | Locked identity | Real Equity Uprise functions compressed into the floor | Builder-spec status |
+| Level | Locked identity | Real Equity Uprise functions compressed into the level | Builder-spec status |
 |---|---|---|---|
-| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy | pending |
+| 7 | Roof / Mobility Portal | Rooftop overlook, vertical arrival, cross-site navigation/departure, candidate helipad/VTOL mobility zone pending feasibility | **PROGRAM LOCKED / GEOMETRY PENDING** |
+| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy, transition/access to roof | pending |
 | 5 | Policy + Proof | Working paper, policy archive, Docket 516R, evidence, credentials, research/proof | **LOCKED** |
 | 4 | Media + Culture | Broadcast/event media, music, artists, civic anthems, cultural storytelling | **LOCKED** |
 | 3 | Fellowship + Network | Policy Fellowship, fellowship directory, profiles, people, opportunities/matching | **LOCKED** |
 | 2 | Public Forum | Topics, perspectives, conversations, member discussion/activity | **LOCKED** |
 | 1 | Lobby + Intake | Arrival, reception, visitor orientation, stakeholder/organization intake, routing | **LOCKED** |
 
-Do not add extra floors merely because a separate web page exists.
+Do not add extra enclosed floors merely because a separate web page exists. Level 7 is the intentionally approved roof level.
 
 ### Floor 1 canonical file
 
@@ -247,25 +249,28 @@ Each remaining floor must be completed one at a time:
 
 The vertical narrative is:
 
-**arrival → public conversation → people/opportunity → culture/media → policy/proof → institutional direction**
+**arrival → public conversation → people/opportunity → culture/media → policy/proof → institutional direction → rooftop mobility / departure**
 
 ### Fixed vertical core
 
 The elevator is a single real shaft.
 
 - It remains in the exact same plan location on Floors 1–6.
+- Floor 6 must preserve a viable continuation of vertical access to Level 7. Final elevator service to the roof is subject to professional/code/engineering design; stair-based roof access must remain possible.
 - In canonical 360 panoramas it occupies the **+90° / right quadrant** relative to the fixed camera.
 - Stairs/service risers remain vertically aligned as well.
 - A floor's furniture program may never displace or relocate the core.
 
 ### Exterior-access rule
 
-- **Floor 1 is the only public level with an exterior entrance.**
+- **Floor 1 is the only ground-level public entrance.**
 - Floors 2–6 have no exterior doors in their 360 environments.
 - Floors 2–6 have no balconies or terraces.
 - Upper-floor perimeter glazing is sealed building glazing unless a later architectural revision explicitly changes the shell.
+- **Level 7 is the open-air roof destination** and is reached from the interior vertical core; it is not a second building entrance.
+- The roof may contain a **candidate mobility pad / helipad zone**, but exact aviation geometry remains unlocked until site/aircraft/regulatory/structural feasibility is established.
 
-### Canonical 360 orientation
+### Canonical interior 360 orientation
 
 - **0° / image center:** primary identity/function wall for that floor.
 - **+90° / right quadrant:** fixed elevator/core.
@@ -449,15 +454,19 @@ The HM logo/reference is a **material-direction reference only**, not the Equity
 
 The following are no longer open questions:
 
-- number of floors: **6**;
+- enclosed occupied floors: **6**;
+- navigable roof level: **Level 7 — Roof / Mobility Portal**;
 - Floor 1: **Lobby + Intake**;
 - Floor 2: **Public Forum**;
 - Floor 3: **Fellowship + Network**;
 - Floor 4: **Media + Culture**;
 - Floor 5: **Policy + Proof**;
 - Floor 6: **Penthouse Command**;
-- only Floor 1 has a public exterior entrance;
+- Level 7: **Roof / Mobility Portal**;
+- only Floor 1 has a ground-level public exterior entrance;
 - Floors 2–6 have no exterior doors/balconies/terraces;
+- Level 7 is intentionally open-air and reached from the internal core;
+- Floor 6 must preserve roof-access/core continuity;
 - elevator/core location is fixed vertically;
 - 360 camera orientation is fixed relative to the core;
 - HM graphics are not Equity Uprise building branding;
@@ -477,7 +486,9 @@ Canonical files:
 - `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
 - `docs/design/equity-uprise-building/references/floor-02/`
 
-**Floors 5–6 — NOT YET LOCKED AS BUILDER/360 SPECS**
+**Floor 6 — NOT YET LOCKED AS BUILDER/360 SPEC**
+
+**Level 7 — PROGRAM LOCKED; ROOF/HELIPAD GEOMETRY NOT YET LOCKED**
 
 Do not treat prior generated floor images as architectural authority. They are concept iterations only.
 
