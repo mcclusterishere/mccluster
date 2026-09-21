@@ -510,6 +510,8 @@ The default conceptual return is Level 7.
 This floor is bound to the repo-wide program map:
 `production/equity-uprise-capability-map-v2.json`.
 
+The current repo-wide audit classifies **241 Equity Uprise semantic sources** and **55 canonical capabilities**. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+
 ### Primary capabilities
 - **Cross-site ecosystem routing/departure/arrival layer** (`ecosystem-routing`, built_as_building_contract) — Ecosystem Routing Interface.
 - **Candidate rooftop mobility reservation** (`roof-mobility`, schematic_future_feasibility) — Candidate Mobility Zone only; no operational aviation claim.
@@ -519,6 +521,8 @@ This floor is bound to the repo-wide program map:
 - None.
 
 ### Boundary rule
-The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, financial/accounting details, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
 
 This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
