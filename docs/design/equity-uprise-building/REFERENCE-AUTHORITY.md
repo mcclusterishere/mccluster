@@ -185,7 +185,7 @@ Authority:
 
 For a floor marked `pre-iterative-program-rewrite`, its legacy long-form room program is a working reference, not final authority.
 
-Generated plan labels for a provisional floor describe the **current legacy program snapshot only**. They are not evidence that the later-floor program has been finalized. Only Floor 1 is currently program-reconciled and basic-render-ready for the present iterative pass.
+Generated plan labels for a provisional floor describe the **current legacy program snapshot only**. They are not evidence that the later-floor program has been finalized. Floors 1 and 2 are currently program-reconciled for the present iterative pass. Floor 1 has an active hybrid 3D implementation; Floor 2 is inventory-ready and awaiting its real-3D build. Floors 3–7 remain pre-iterative.
 
 Do not invent a room, department, floor function or public-facing feature merely because it looks cinematic.
 
