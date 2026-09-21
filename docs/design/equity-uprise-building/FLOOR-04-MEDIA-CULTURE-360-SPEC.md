@@ -731,6 +731,8 @@ The floor may be atmospheric; the content must remain factual.
 This floor is bound to the repo-wide program map:
 `production/equity-uprise-capability-map-v2.json`.
 
+The current repo-wide audit classifies **241 Equity Uprise semantic sources** and **55 canonical capabilities**. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+
 ### Primary capabilities
 - **Equity Uprise music/catalogue listening surface** (`music-catalogue`, built_shared_platform) — Media / Listening Zone.
 - **Artist/creator participation and studio workflow** (`artist-creator`, built_shared_platform) — Creator Recording Room and Edit / Review Suite.
@@ -739,12 +741,15 @@ This floor is bound to the repo-wide program map:
 - **DDEX ERN delivery** (`ddex`, built_disabled_until_configured) — Media release pipeline, not a public room.
 - **Equity Uprise Rally/event media archive** (`rally-media`, built) — Culture Archive / Rally Gallery.
 - **Press release, executive summary and social-prep derivatives** (`communication-derivatives`, built) — Edit / Review Suite; lineage remains tied to Floor 5 source artifacts.
+- **Creator licensing / commerce** (`creator-licensing-commerce`, built_shared_platform) — Creator Studio / Media + Culture workflow. Rights-cleared releases may expose licensing offers and authenticated checkout through the shared McCluster Music stack; this does not resurrect the retired marketplace.
 
 ### Secondary / cross-floor capabilities
 - **Docket 516/516R evidence room and public-record archive** (`evidence-room`, built) — Evidence + Proof Archive; media context may also appear on Floor 4.
 - **Canonical artifact graph and derivative lineage** (`artifacts`, built) — Publication/Proof systems; communication derivatives route to Floor 4.
 
 ### Boundary rule
-The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, financial/accounting details, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
 
 This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
