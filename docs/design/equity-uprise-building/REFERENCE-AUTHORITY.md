@@ -187,8 +187,9 @@ Floor 4 has **no exterior public entrance, balcony, or terrace**.
 Canonical Floor 4 assets:
 - `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.png`
 
-Any raster preview is derivative and cannot override the DXF/SVG/written geometry.
+The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
 ## Locked six-floor program
 
