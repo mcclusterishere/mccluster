@@ -2,7 +2,6 @@
   "schema_version": "2.1.0",
   "audit_date": "2026-09-21",
   "repo": "mcclusterishere/mccluster",
-  "branch": "architecture/equity-uprise-core-v2",
   "audited_head": "live-branch-reconciliation-2026-09-21-floor-01-b1-complete",
   "purpose": "Exhaustive classification of Equity Uprise-specific and explicitly bound shared-platform product/support sources for the current Core V2 branch. Every discovered source must map to at least one canonical building capability or be explicitly support-only.",
   "discovery_rules": {
@@ -2012,5 +2011,6 @@
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     }
   ],
-  "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only."
+  "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only.",
+  "authority_scope": "repository-current"
 }
