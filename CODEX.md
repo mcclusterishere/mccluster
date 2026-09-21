@@ -55,17 +55,19 @@ Do not confuse the six-floor Equity Uprise building with the separate `docs/upri
 
 ## Equity Uprise spatial / geometry authority
 
-**Mandatory:** before generating, editing, describing, implementing, or reasoning about any Equity Uprise building geometry, architecture, floor plan, 360 environment, 3D environment, room image, building cutaway, exterior, transition animation, spatial lore, or location continuity, read:
+**Mandatory:** before generating, editing, describing, implementing, or reasoning about any Equity Uprise building geometry, architecture, floor plan, 360 environment, 3D environment, room image, building cutaway, exterior, transition animation, spatial lore, or location continuity, read and obey:
 
-1. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
-2. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
-3. `docs/design/equity-uprise-building/reference/README.md`
-4. the relevant floor's canonical spec and schematic-plan basis.
+1. `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
+2. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
+3. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
+4. the relevant floor's canonical written spec and schematic-plan basis;
+5. the relevant canonical assets under `docs/design/equity-uprise-building/references/`.
 
-For Floor 1 specifically, also read:
+For Floor 1 specifically, the canonical asset set is:
 - `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
 - `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/reference/FLOOR-01-VIABLE-SCHEMATIC-v3.dxf`
-- `docs/design/equity-uprise-building/reference/FLOOR-01-VIABLE-SCHEMATIC-v3.svg`
+- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-viable-schematic-v3.dxf`
+- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-viable-schematic-v3.svg`
+- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-viable-schematic-v3.png`
 
 These files are geometry authority. **Generative images are not geometry authority.** Never move the elevator, stairs, risers, structural grid, building footprint, entrances, floor program, or 360 datum merely to improve a render. Never invent spatial lore that conflicts with the canonical geometry.
