@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Core V2 generated plan semantic/artifact validation",
-  "checks_total": 353,
-  "checks_passed": 353,
+  "checks_total": 357,
+  "checks_passed": 357,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -153,6 +153,26 @@
       "detail": ""
     },
     {
+      "name": "L0 SVG label TUNNEL OPERATIONS CONCOURSE / SECURITY GATE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L0 DXF label TUNNEL OPERATIONS CONCOURSE / SECURITY GATE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L0 SVG label TUNNEL PORTAL / TRANSFER LOCK",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L0 DXF label TUNNEL PORTAL / TRANSFER LOCK",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "L0 SVG has no stale labels",
       "passed": true,
       "detail": ""
@@ -165,12 +185,12 @@
     {
       "name": "L0 PNG signature",
       "passed": true,
-      "detail": "bytes=73574"
+      "detail": "bytes=79831"
     },
     {
       "name": "L0 PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=73574"
+      "detail": "bytes=79831"
     },
     {
       "name": "L0 active plan triplet only",
@@ -1770,7 +1790,7 @@
     {
       "name": "contact sheet nontrivial size",
       "passed": true,
-      "detail": "bytes=131190"
+      "detail": "bytes=134576"
     }
   ]
 }

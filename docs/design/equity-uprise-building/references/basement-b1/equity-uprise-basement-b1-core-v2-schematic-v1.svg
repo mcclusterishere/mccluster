@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1060" viewBox="0 0 1000 1060">
 <style>.t{font-family:Arial,sans-serif;fill:#111}.small{font-size:9px}.med{font-size:11px}.title{font-size:18px;font-weight:700}.room{stroke:#444;stroke-width:1.5}.grid{stroke:#ddd;stroke-width:1}.shell{fill:none;stroke:#111;stroke-width:3}.open{fill:none;stroke:#8a1f23;stroke-width:1.5;stroke-dasharray:5 4}</style>
-<text x="55" y="35" class="t title">EQUITY UPRISE — BASEMENT B1 — TECHNICAL / SERVICE BASEMENT</text>
+<text x="55" y="35" class="t title">EQUITY UPRISE — BASEMENT B1 — UNDERGROUND OPERATIONS / TECHNICAL SERVICE BASEMENT</text>
 <text x="55" y="55" class="t med">CORE V2 SCHEMATIC PLAN · FFE -13.5 FT · NOT FOR CONSTRUCTION</text>
 <line x1="90.0" y1="918.0" x2="90.0" y2="90.0" class="grid"/>
 <line x1="90.0" y1="918.0" x2="918.0" y2="918.0" class="grid"/>
@@ -29,6 +29,10 @@
 <text x="492.5" y="400.5" text-anchor="middle" dominant-baseline="middle" class="t small">BUILDING SYSTEMS LAB / OBSERVATION</text>
 <rect x="90.0" y="228.0" width="92.0" height="69.0" fill="#f1f1ed" class="room"/>
 <text x="136.0" y="262.5" text-anchor="middle" dominant-baseline="middle" class="t small">SERVICE RECEIVING / STAGING</text>
+<rect x="320.0" y="182.0" width="322.0" height="115.0" fill="#f1f1ed" class="room"/>
+<text x="481.0" y="239.5" text-anchor="middle" dominant-baseline="middle" class="t small">TUNNEL OPERATIONS CONCOURSE / SECURITY GATE</text>
+<rect x="366.0" y="90.0" width="230.0" height="92.0" fill="#e4e5e5" class="room"/>
+<text x="481.0" y="136.0" text-anchor="middle" dominant-baseline="middle" class="t small">TUNNEL PORTAL / TRANSFER LOCK</text>
 <rect x="665.0" y="90.0" width="115.0" height="69.0" fill="#deded9" class="room"/>
 <text x="722.5" y="124.5" text-anchor="middle" dominant-baseline="middle" class="t small">MEP / RISERS</text>
 <rect x="90.0" y="90.0" width="92.0" height="138.0" fill="#b9bdc2" class="room"/>
