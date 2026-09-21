@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.2.0",
   "core_ref": "building-core-v2.json",
   "not_for_construction": true,
   "common_support": {
@@ -135,7 +135,9 @@
         "fellowship-applications",
         "interviews-calendar",
         "verification",
-        "stakeholder-intake"
+        "stakeholder-intake",
+        "program-support-funding",
+        "enterprise-development"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
@@ -246,7 +248,7 @@
             "x2": 50,
             "y2": 54
           },
-          "route_key": "opportunities"
+          "route_key": "fellowship_record"
         },
         {
           "label": "People + Network Lounge",
@@ -300,7 +302,8 @@
             "y1": 39,
             "x2": 44,
             "y2": 43
-          }
+          },
+          "route_key": "enterprise_program"
         }
       ],
       "feature_ids": [
@@ -319,7 +322,9 @@
         "partnership-sponsorship",
         "artist-creator",
         "google-workspace",
-        "outreach"
+        "outreach",
+        "fellowship-cohort",
+        "enterprise-development"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
@@ -569,7 +574,7 @@
           "route_key": "institutional_command"
         },
         {
-          "label": "Institutional Salon",
+          "label": "Institutional Salon / Support",
           "kind": "zone",
           "bounds_ft": {
             "x1": 2,
@@ -577,7 +582,7 @@
             "x2": 18,
             "y2": 38
           },
-          "route_key": "institutional_overview"
+          "route_key": "program_support"
         },
         {
           "label": "Strategy Review Room",
@@ -652,7 +657,9 @@
         "google-workspace",
         "outreach",
         "event-ledger",
-        "program-support-funding"
+        "program-support-funding",
+        "fellowship-cohort",
+        "enterprise-development"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
