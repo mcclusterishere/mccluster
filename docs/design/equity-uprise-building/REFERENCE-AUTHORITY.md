@@ -35,14 +35,17 @@ Read in this order:
 3. The floor-specific written specification.
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
    - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
+   - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
 
 4. The floor-specific schematic-plan basis.
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
    - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
+   - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
 
 5. The canonical floor-plan assets.
    - Floor 1: `docs/design/equity-uprise-building/references/floor-01/`
    - Floor 2: `docs/design/equity-uprise-building/references/floor-02/`
+   - Floor 3: `docs/design/equity-uprise-building/references/floor-03/`
 
 For geometry, prefer DXF → SVG → raster preview → later renders.
 
@@ -125,6 +128,33 @@ Canonical Floor 2 assets:
 - `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.svg`
 - `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.png`
+
+## Floor 3 locked geometry
+
+Floor 3 preserves the same building datum:
+
+- floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
+- grid: **18' × 18' coordination module**;
+- elevator hoistway: **X 54–62 / Y 34–44**;
+- Stair A: **X 60–72 / Y 54–72**;
+- Stair B: **X 0–12 / Y 54–72**;
+- MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
+- Opportunity Exchange table: **16' × 4'**, centered near **(36,41)**;
+- People + Network lounge: **X 2–18 / Y 18–34**;
+- Interview Room A: **X 2–14 / Y 4–16**;
+- Interview Room B: **X 16–28 / Y 4–16**;
+- member/interview check-in: approximately **X 49–51 / Y 24–29**;
+- 360 camera datum: approximately **(36,28), 5'-4" AFF**;
+- 0° north: Opportunity Exchange / Fellowship + Network wall;
+- +90° east: elevator + member/interview check-in;
+- 180° south: interview rooms + sealed upper-floor glazing;
+- -90° west: People + Network lounge.
+
+Floor 3 has **no exterior public entrance, balcony, or terrace**.
+
+Canonical Floor 3 assets:
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.svg`
 
 ## Locked six-floor program
 
