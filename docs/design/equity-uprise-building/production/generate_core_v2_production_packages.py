@@ -62,12 +62,12 @@ MATERIALS=[
 ]
 
 ROUTES={
- 1:{"primary":"institutional_overview","secondary":"institutional_join"},
+ 1:{"primary":"institutional_overview","secondary":"verification"},
  2:{"primary":"current_issues","secondary":"conversation"},
  3:{"primary":"opportunities","secondary":"people_network"},
- 4:{"primary":"media_archive","secondary":"creator_tools"},
+ 4:{"primary":"media_catalogue","secondary":"rally_archive"},
  5:{"primary":"policy_workspace","secondary":"evidence_archive"},
- 6:{"primary":"institutional_command","secondary":"roof_transition"},
+ 6:{"primary":"institutional_command","secondary":"initiative_portfolio"},
  7:{"primary":"ecosystem_routes","secondary":"building_return"}
 }
 
@@ -91,33 +91,82 @@ def common_support(level):
     ]
 
 def route_config(n):
+    scene_id="equity-uprise-level-07" if n==7 else f"equity-uprise-floor-{n:02d}"
+
+    # Generic building navigation may reach every level because the two
+    # protected stairs are continuous through Level 7.
     floor_selector={
       "type":"floor_selector",
       "levels":[
         {"level":i,"scene_id":("equity-uprise-level-07" if i==7 else f"equity-uprise-floor-{i:02d}"),"enabled":True}
         for i in range(1,8)
       ],
-      "note":"Core V2 guarantees stair continuity through Level 7. Passenger-elevator service to Level 7 is not assumed."
+      "note":"Building-level selector. Level 7 is reachable through protected stairs; this selector is not an elevator-service claim."
     }
+
+    # Passenger elevator is intentionally restricted to Floors 1–6 until
+    # professional design resolves an actual roof stop.
+    passenger_elevator_selector={
+      "type":"floor_selector",
+      "vertical_system_id":"passenger-elevator-a",
+      "levels":[
+        {"level":i,"scene_id":f"equity-uprise-floor-{i:02d}","enabled":True}
+        for i in range(1,7)
+      ],
+      "note":"Passenger-elevator destinations only. Direct Level 7 service is not assumed."
+    }
+
     routes={
       "floor_selector":floor_selector,
+      "passenger_elevator_selector":passenger_elevator_selector,
       "building_return":{"type":"scene","scene_id":"equity-uprise-building-core-v2"},
-      "institutional_overview":{"type":"url","url":"/equity-uprise.html"},
-      "institutional_join":{"type":"url","url":"/equity-uprise.html","state_hint":"join"},
-      "current_issues":{"type":"url","url":"/topics.html"},
-      "conversation":{"type":"conversation","endpoint_hint":"eu-converse"},
-      "opportunities":{"type":"url","url":"/fellowships.html"},
-      "people_network":{"type":"url","url":"/profile.html"},
-      "media_archive":{"type":"url","url":"/equity-uprise.html","state_hint":"media"},
-      "creator_tools":{"type":"ui_state","target":"creator_tools"},
-      "policy_workspace":{"type":"url","url":"/policy.html"},
-      "evidence_archive":{"type":"url","url":"/docket-516.html"},
-      "institutional_command":{"type":"url","url":"/equity-uprise.html","state_hint":"institutional"},
-      "roof_transition":{"type":"scene","scene_id":"equity-uprise-level-07"},
-      "ecosystem_routes":{"type":"ui_state","target":"ecosystem_routes"}
+
+      # Public / member program routes.
+      "institutional_overview":{"type":"url","url":"/equity-uprise.html","access":"public"},
+      "institutional_join":{"type":"url","url":"/equity-uprise.html","state_hint":"join","access":"public"},
+      "verification":{"type":"url","url":"/verify.html","access":"public","completion":"human-reviewed"},
+      "current_issues":{"type":"url","url":"/topics.html","access":"public"},
+      "conversation":{"type":"conversation","endpoint_hint":"eu-converse","access":"public-with-thread-ownership"},
+      "member_dashboard":{"type":"url","url":"/dashboard.html","access":"authenticated-member"},
+      "opportunities":{"type":"url","url":"/fellowships.html","access":"public"},
+      "people_network":{"type":"url","url":"/profile.html","access":"public-self-controlled"},
+      "meeting_workspace":{"type":"ui_state","target":"meeting_workspace","endpoint_hints":["eu-calendar"],"access":"authenticated-member-or-staff"},
+
+      # Media + culture.
+      "media_catalogue":{"type":"url","url":"/album.html?album=equity-uprise","access":"public"},
+      "rally_archive":{"type":"url","url":"/walls/eu-rally.html","access":"public"},
+      "creator_studio":{"type":"url","url":"/creator.html","access":"authenticated-for-write"},
+      "media_derivatives":{"type":"ui_state","target":"media_derivatives","endpoint_hints":["eu-derivatives"],"access":"authorized-editor-or-admin"},
+      "media_release_ops":{"type":"ui_state","target":"media_release_ops","endpoint_hints":["eu-music","eu-ddex-worker"],"access":"authorized-admin","approval_gated":True},
+
+      # Policy + proof.
+      "policy_workspace":{"type":"url","url":"/policy.html","access":"public-record-with-private-workspace"},
+      "evidence_archive":{"type":"url","url":"/docket-516.html","access":"public"},
+      "publication_submission":{"type":"ui_state","target":"publication_submission","endpoint_hints":["eu-publish","eu-government"],"access":"authorized-researcher-editor-admin","approval_gated":True},
+      "research_publication":{"type":"ui_state","target":"research_publication","endpoint_hints":["eu-workspace","eu-publish","eu-monitor"],"access":"authorized-researcher-editor-admin"},
+
+      # Institutional command / private Desk.
+      "institutional_command":{"type":"url","url":"/equity-uprise.html","state_hint":"institutional","access":"public-summary-with-authenticated-operations"},
+      "initiative_portfolio":{"type":"ui_state","target":"initiative_portfolio","access":"authorized-staff"},
+      "partner_briefing":{"type":"url","url":"/equity-uprise.html","state_hint":"join","access":"public-contact-private-follow-through"},
+      "admin_desk":{"type":"url","url":"/uprise-admin.html","access":"editor-or-admin"},
+      "control_plane":{"type":"ui_state","target":"control_plane","endpoint_hints":["eu-control","eu-status"],"access":"authorized-admin","approval_gated":True},
+
+      # Roof / ecosystem.
+      "roof_transition":{"type":"scene","scene_id":"equity-uprise-level-07","access":"via-protected-stairs-unless-later-elevator-design"},
+      "ecosystem_routes":{"type":"ui_state","target":"ecosystem_routes","access":"public"}
     }
-    return {"schema_version":"2.0.0","scene_id":("equity-uprise-level-07" if n==7 else f"equity-uprise-floor-{n:02d}"),"routes":routes,
-            "security":{"allowlisted_url_prefixes":["/"],"allow_arbitrary_external_redirects":False}}
+    return {
+      "schema_version":"2.1.0",
+      "scene_id":scene_id,
+      "capability_map_ref":"../equity-uprise-capability-map-v2.json",
+      "routes":routes,
+      "security":{
+        "allowlisted_url_prefixes":["/"],
+        "allow_arbitrary_external_redirects":False,
+        "private_routes_require_declared_access":True
+      }
+    }
 
 for level in programs["levels"]:
     n=level["level"]
@@ -127,7 +176,9 @@ for level in programs["levels"]:
     elev=level["elevation_ft"]
     zones=[]
     for i,z in enumerate(level.get("zones",[]),1):
-        zones.append({"id":f"zone_{i:02d}","label":z["label"],"type":z["kind"],"bounds_ft":bounds(z["bounds_ft"])})
+        item={"id":f"zone_{i:02d}","label":z["label"],"type":z["kind"],"bounds_ft":bounds(z["bounds_ft"])}
+        if z.get("route_key"): item["route_key"]=z["route_key"]
+        zones.append(item)
     zones += common_support(level)
 
     refs=f"../../references/floor-{n:02d}/{ASSET_NAMES[n]}"
@@ -139,6 +190,8 @@ for level in programs["levels"]:
       "not_for_construction":True,
       "shared_core_ref":"../building-core-v2.json",
       "floor_program_ref":"../core-v2-floor-programs.json",
+      "capability_map_ref":"../equity-uprise-capability-map-v2.json",
+      "feature_ids":level.get("feature_ids",[]),
       "authority":{
         "building_core":["../../BUILDING-CORE-V2-SPEC.md","../building-core-v2.json"],
         "spatial_authority":[f"../../{SPEC_NAMES[n]}",f"../../{BASIS_NAMES[n]}","../../REFERENCE-AUTHORITY.md"],
@@ -191,20 +244,46 @@ for level in programs["levels"]:
     }
 
     hotspots=[]
-    for i,z in enumerate(zones[:min(6,len(zones))],1):
+    # Floor program zones become routed interactions when the program source
+    # declares a route_key; otherwise they remain camera/focus targets.
+    for i,z in enumerate(zones[:min(7,len(zones))],1):
         p=center(z["bounds_ft"])
-        hotspots.append({"id":f"hs_zone_{i:02d}","label":z["label"],
-                         "position_ft_local":{"x":p["x"],"y":p["y"],"z":4.2},
-                         "position_ft_world":{"x":p["x"],"y":p["y"],"z":elev+4.2},
-                         "action":"focus_zone","zone_id":z["id"]})
+        h={"id":f"hs_zone_{i:02d}","label":z["label"],
+           "position_ft_local":{"x":p["x"],"y":p["y"],"z":4.2},
+           "position_ft_world":{"x":p["x"],"y":p["y"],"z":elev+4.2},
+           "zone_id":z["id"]}
+        if z.get("route_key"):
+            h.update({"action":"open_route","route_key":z["route_key"]})
+        else:
+            h.update({"action":"focus_zone"})
+        hotspots.append(h)
+
+    # Passenger elevator is public on Floors 1–6 only and uses a selector
+    # that deliberately excludes Level 7. The roof has no passenger-elevator
+    # hotspot until direct roof service is professionally resolved.
+    if n <= 6:
+        hotspots.append({
+          "id":"hs_passenger_elevator","label":"Passenger Elevator",
+          "position_ft_world":{"x":53.5,"y":39,"z":elev+4.5},
+          "action":"open_route","route_key":"passenger_elevator_selector"
+        })
+
     hotspots += [
-      {"id":"hs_passenger_elevator","label":"Passenger Elevator","position_ft_world":{"x":53.5,"y":39,"z":elev+4.5},"action":"open_route","route_key":"floor_selector"},
       {"id":"hs_stair_a","label":"Stair A","position_ft_world":{"x":63,"y":56,"z":elev+4.5},"action":"vertical_transition","vertical_system_id":"stair-a-east"},
       {"id":"hs_stair_b","label":"Stair B","position_ft_world":{"x":15.5,"y":56,"z":elev+4.5},"action":"vertical_transition","vertical_system_id":"stair-b-west"}
     ]
-    hotspot_file={"schema_version":"2.0.0","scene_id":scene_id,"hotspots":hotspots,
-                  "rules":["Hotspots do not redefine geometry.","Service/freight elevator is not exposed as a normal public hotspot."]}
-
+    hotspot_file={
+      "schema_version":"2.1.0",
+      "scene_id":scene_id,
+      "capability_map_ref":"../equity-uprise-capability-map-v2.json",
+      "hotspots":hotspots,
+      "rules":[
+        "Hotspots do not redefine geometry.",
+        "Service/freight elevator is not exposed as a normal public hotspot.",
+        "Level 7 does not expose passenger-elevator service unless later professional design resolves an actual roof stop.",
+        "Private routes preserve the source product's access-control boundary."
+      ]
+    }
     states={"schema_version":"2.0.0","scene_id":scene_id,"default_state":"idle",
       "states":[
         {"id":"idle","label":"Idle"},
@@ -217,6 +296,7 @@ for level in programs["levels"]:
 
 Shared source of truth:
 - `../building-core-v2.json`
+- `../equity-uprise-capability-map-v2.json`
 - `../../BUILDING-CORE-V2-SPEC.md`
 
 Finished-floor elevation: **+{elev:g} ft**.
@@ -239,8 +319,9 @@ Both stairs are modeled as continuous full-rise systems in the combined building
 
 Status: **CORE V2 MIGRATION / NOT FOR CONSTRUCTION**
 
-This package inherits the shared building core from:
+This package inherits the shared building/program authority from:
 - `../building-core-v2.json`
+- `../equity-uprise-capability-map-v2.json`
 - `../../BUILDING-CORE-V2-SPEC.md`
 
 Canonical branch geometry:
