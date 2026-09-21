@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.1.0",
+  "schema_version": "2.2.0",
   "audit_date": "2026-09-21",
   "branch": "architecture/equity-uprise-core-v2",
   "repo": "mcclusterishere/mccluster",
@@ -190,7 +190,8 @@
         "google-workspace",
         "outreach",
         "event-ledger",
-        "program-support-funding"
+        "program-support-funding",
+        "halo-spatial-intelligence"
       ],
       "secondary_feature_ids": [
         "perspectives",
@@ -215,7 +216,8 @@
       ],
       "public_surfaces": [
         "Institutional Salon / Support",
-        "Public institutional mode of Command Wall"
+        "Public institutional mode of Command Wall",
+        "Halo Globe / Spatial Intelligence (sanitized public mode)"
       ],
       "private_surfaces": [
         "Penthouse Command authenticated mode",
@@ -223,9 +225,10 @@
         "Partner / Executive Briefing",
         "Control / Audit Records",
         "Desk Operations / Systems",
-        "Program funding governance / records"
+        "Program funding governance / records",
+        "Halo owner/admin operational mode"
       ],
-      "rule": "Private control/admin/outreach/funding functions remain access-controlled. Public support/funding surfaces may not reveal quiet fund accounting, custody, approval or operational records."
+      "rule": "Private control/admin/outreach/funding functions remain access-controlled. The Halo Globe is visible to all, but public/member/staff layers are read-only and entitlement-scoped; only protected owner/admin mode may enter operational Halo controls."
     },
     {
       "level": 7,
@@ -1061,6 +1064,24 @@
         "native/app/(tabs)/uprise.tsx"
       ],
       "expression": "Opportunity Exchange includes a business/workforce/digital-capacity program lane. Program fit, measurable connected revenue and signed agreements are reviewed in meeting/briefing spaces; the building does not hardcode prices or imply automatic approval."
+    },
+    {
+      "id": "halo-spatial-intelligence",
+      "name": "Hitman's Halo / Seek First spatial-intelligence viewport",
+      "status": "built_shared_platform",
+      "primary_floor": 6,
+      "secondary_floors": [],
+      "visibility": "public-sanitized-read-only-role-scoped-owner-admin",
+      "sources": [
+        "docs/control-plane/SPATIAL-INTELLIGENCE.md",
+        "docs/control-plane/MCCLUSTER-CORE.md",
+        "workers/mccluster/src/seek-first/entitlements.js",
+        "workers/mccluster/src/seek-first/access.js"
+      ],
+      "external_refs": [
+        "mcclusterishere/hitmans-halo"
+      ],
+      "expression": "Suspended Halo Globe in Penthouse Command. Everyone may see a sanitized read-only globe; authenticated roles unlock additional read layers; protected house-owner/admin mode may hand off to the real Halo/Seek First operational surface. Entitlement and action authority remain separate."
     }
   ],
   "rules": [
@@ -1073,6 +1094,7 @@
     "Generated plans, 3D and hotspots must derive from this map plus Core V2 floor programs.",
     "Enterprise Development is represented as a program lane, not a pricing billboard; changing commercial terms never changes building geometry.",
     "The detailed Equity Uprise Mission Fund remains visually quiet until its governance/custody/accounting/reporting state is publishable.",
-    "The Equity Uprise cohort is distinct from the external fellowship directory and must remain visible as its own program record."
+    "The Equity Uprise cohort is distinct from the external fellowship directory and must remain visible as its own program record.",
+    "Hitman's Halo remains a shared McCluster spatial-intelligence system; Equity Uprise consumes a permissioned projection and never becomes the spatial source of truth."
   ]
 }
