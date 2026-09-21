@@ -94,7 +94,7 @@ Roof access occurs through vertical circulation/core, not perimeter doors.
 
 Maintain clear circulation around the table.
 
-### Penthouse Command wall
+### Institutional Command Wall
 - approximately **X 22–50 / Y 50–54**
 - dynamic zones:
   - NOW
@@ -196,11 +196,11 @@ The north band is replanned around the Core V2 west service core.
 - **X 26–34 / Y 60–70**
 - conceptual 8' × 10'
 
-### Command Support / Secure Records
+### Control / Audit Records
 - **X 34–42 / Y 60–72**
 - conceptual 8' × 12'
 
-### Operations / Systems Support
+### Desk Operations / Systems
 - **X 42–50 / Y 60–72**
 - conceptual 8' × 12'
 
@@ -294,7 +294,7 @@ Within X 2–18 / Y 18–38:
 
 ## 15. Technology/service logic
 
-- command wall services from Operations / Systems Support;
+- command wall services from Desk Operations / Systems;
 - command table via floor box;
 - salon Join/Partner surface via wall/floor pathway;
 - Strategy/Briefing rooms via secure data pathways;
@@ -378,3 +378,13 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] full 13'-6" stair rise represented in combined geometry
 - [ ] shared slab openings remain clear
 - [ ] floor elevation matches building-core-v2.json
+
+## Repo capability authority
+
+Program semantics for this floor are controlled by:
+- `production/equity-uprise-capability-map-v2.json`
+- `production/core-v2-floor-programs.json`
+- the companion long-form floor spec.
+
+This schematic basis controls plan geometry; it may not silently rename or delete a repo-backed capability represented by the floor program. Public/private and approval boundaries remain those of the source Equity Uprise system.
+
