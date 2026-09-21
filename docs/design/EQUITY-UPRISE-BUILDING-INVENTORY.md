@@ -1,6 +1,6 @@
 # Equity Uprise Building UI — Repo Inventory & Image Plan
 
-> Status: **CORE V2 RECONCILED ON `reconcile/equity-uprise-core-v2-20260921`; B1 + SIX EQUITY FLOORS + LEVEL 7 ROOF; CURRENT PROGRAM AUTHORITY BINDS TO THE 2026-09-21 CAPABILITY AND DEVELOPMENT ARCHITECTURE.**
+> Status: **CORE V2 CURRENT AUTHORITY; B1 + SIX EQUITY FLOORS + LEVEL 7 ROOF; CURRENT PROGRAM AUTHORITY BINDS TO THE 2026-09-21 CAPABILITY AND DEVELOPMENT ARCHITECTURE.**
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
 > Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 > Canonical Floor 1 semantic identity: **Arrival / Orientation / Intake**  
@@ -31,7 +31,6 @@ Legacy-compatible filename; semantic identity is **Arrival / Orientation / Intak
 
 ## Core V2 vertical-circulation authority
 
-> Branch authority: `reconcile/equity-uprise-core-v2-20260921`
 >
 > Shared source: `equity-uprise-building/BUILDING-CORE-V2-SPEC.md` + `equity-uprise-building/production/building-core-v2.json`.
 
