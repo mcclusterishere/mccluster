@@ -213,7 +213,7 @@
       "level_of_exit_discharge": true,
       "tunnel_network_ref": "underground-tunnel-network.json",
       "design_maturity": "reconciled-current-iterative-pass",
-      "render_readiness": "basic-render-ready-after-derived-artifact-regeneration",
+      "render_readiness": "basic-render-ready-current-pass",
       "primary_competency_ids": [
         "CORE-01",
         "CORE-05",
@@ -237,7 +237,9 @@
         "../../equity-uprise-development/DEVELOPMENT-JOURNEY.md",
         "../../equity-uprise-development/COMPETENCY-ARCHITECTURE.md",
         "../../equity-uprise-development/stage-competency-map.json"
-      ]
+      ],
+      "derived_artifact_status": "regenerated-and-validated-current-pass",
+      "derived_artifact_epoch": "2026-09-21-floor1-b1-current"
     },
     {
       "level": 2,
