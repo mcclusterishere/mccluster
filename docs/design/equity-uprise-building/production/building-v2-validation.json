@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "status": "active-core-v2-validation-contract",
   "core_id": "equity-uprise-core-v2",
   "not_for_construction": true,
@@ -228,6 +228,31 @@
     "No slab may cover the shared shaft or stair slab-opening polygons.",
     "Per-floor viewers are derived views; combined B1-to-roof geometry is vertical-continuity authority."
   ],
-  "generation_epoch": "2026-09-21-floor1-b1-reconciled",
-  "generation_policy": "Derived plans, scene packages, reports, and GLB must be regenerated after authority changes and are never hand-edited."
+  "generation_epoch": "2026-09-21-floor1-b1-site-life-safety-complete",
+  "generation_policy": "Derived interior plans, Floor 1 site/life-safety plans, scene packages, reports, and GLB must be regenerated after authority changes and are never hand-edited.",
+  "required_human_authorities": [
+    "FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md",
+    "FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
+    "FLOOR-01-SITE-EGRESS-SIMULATION.md",
+    "BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md",
+    "UNDERGROUND-TUNNEL-NETWORK-SPEC.md",
+    "REFERENCE-AUTHORITY.md"
+  ],
+  "render_policy": {
+    "current_program_render_levels": [
+      1
+    ],
+    "restricted_support_render_levels": [
+      0
+    ],
+    "provisional_chassis_only_levels": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "rule": "Program zones on provisional levels may be inspected only in explicit design-debug mode and must not be presented as finalized architecture."
+  }
 }
