@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.5.0",
+  "schema_version": "2.6.0",
   "core_ref": "building-core-v2.json",
   "not_for_construction": true,
   "common_support": {
@@ -191,18 +191,27 @@
           "id": "building_systems_lab",
           "label": "Building Systems Lab",
           "route_key": "building_systems_lab",
-          "access": "authorized-learner-or-instructor"
+          "access": "authorized-learner-or-instructor-sandbox-only",
+          "live_b1_access": false
         },
         {
           "id": "emergency_exercise",
           "label": "Emergency Exercise",
           "route_key": "emergency_exercise",
           "access": "authorized-participant-or-instructor"
+        },
+        {
+          "id": "underground_operations_access",
+          "label": "Underground Operations Access",
+          "route_key": "underground_operations",
+          "access": "mccluster-house-owner-or-underground-operations-admin",
+          "hidden_from_normal_navigation": true
         }
       ],
       "site_egress_ref": "floor-01/floor-01-site-egress.json",
       "basement_context_ref": "basement-b1-program.json",
-      "level_of_exit_discharge": true
+      "level_of_exit_discharge": true,
+      "tunnel_network_ref": "underground-tunnel-network.json"
     },
     {
       "level": 2,
