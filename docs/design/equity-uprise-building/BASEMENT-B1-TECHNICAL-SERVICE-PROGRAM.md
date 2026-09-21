@@ -29,7 +29,7 @@ Normal public users do not browse B1 as another floor of content. Authorized lea
 - Sump / Flood Management — X54–70 / Y22–32
 - Facilities Workshop / Storage — X2–16 / Y30–52
 - Building Systems Lab / Observation — X18–52 / Y36–54
-- Service Receiving / Staging — X2–18 / Y54–60
+- Service Receiving / Staging — X0–8 / Y54–60
 
 Shared vertical-core geometry remains authoritative.
 
