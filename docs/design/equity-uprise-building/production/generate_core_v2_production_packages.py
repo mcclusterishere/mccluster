@@ -260,6 +260,11 @@ for level in programs["levels"]:
       "floor_program_ref":"../core-v2-floor-programs.json",
       "capability_map_ref":"../equity-uprise-capability-map-v2.json",
       "feature_ids":level.get("feature_ids",[]),
+      "design_maturity":level.get("design_maturity"),
+      "render_readiness":level.get("render_readiness"),
+      "working_development_stage":level.get("working_development_stage"),
+      "primary_competency_ids":level.get("primary_competency_ids",[]),
+      "secondary_competency_ids":level.get("secondary_competency_ids",[]),
       "authority":{
         "building_core":["../../BUILDING-CORE-V2-SPEC.md","../building-core-v2.json"],
         "spatial_authority":[f"../../{SPEC_NAMES[n]}",f"../../{BASIS_NAMES[n]}","../../REFERENCE-AUTHORITY.md"],
