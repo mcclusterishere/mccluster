@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-02",
+  "default_state": "idle",
+  "states": [
+    {
+      "id": "idle",
+      "label": "Idle"
+    },
+    {
+      "id": "forum_active",
+      "label": "Forum Active",
+      "focus_object": "forum_table",
+      "camera_id": "forum_focus"
+    },
+    {
+      "id": "topics_active",
+      "label": "Topics Active",
+      "focus_object": "public_forum_feature_wall"
+    },
+    {
+      "id": "member_active",
+      "label": "Member Check-In Active",
+      "focus_object": "member_checkin",
+      "camera_id": "elevator_focus"
+    },
+    {
+      "id": "after_hours",
+      "label": "After Hours",
+      "lighting_multiplier": 0.45
+    }
+  ]
+}
