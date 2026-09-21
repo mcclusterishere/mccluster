@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-01",
+  "hotspots": [
+    {
+      "id": "hs_reception",
+      "label": "Reception / Intake",
+      "position_ft": {
+        "x": 36,
+        "y": 45.5,
+        "z": 4.5
+      },
+      "action": "open_route",
+      "route_key": "institutional_join",
+      "radius_ft": 2.5
+    },
+    {
+      "id": "hs_intake_room",
+      "label": "Private Intake",
+      "position_ft": {
+        "x": 9,
+        "y": 38,
+        "z": 4.5
+      },
+      "action": "focus_zone",
+      "zone_id": "intake_room",
+      "radius_ft": 2.5
+    },
+    {
+      "id": "hs_directory",
+      "label": "Building Directory",
+      "position_ft": {
+        "x": 50,
+        "y": 26.5,
+        "z": 4.5
+      },
+      "action": "open_route",
+      "route_key": "building_directory",
+      "radius_ft": 2
+    },
+    {
+      "id": "hs_elevator",
+      "label": "Elevator",
+      "position_ft": {
+        "x": 53.5,
+        "y": 39,
+        "z": 4.5
+      },
+      "action": "open_route",
+      "route_key": "floor_selector",
+      "radius_ft": 3
+    },
+    {
+      "id": "hs_lounge",
+      "label": "Orientation Lounge",
+      "position_ft": {
+        "x": 10,
+        "y": 20,
+        "z": 4.2
+      },
+      "action": "open_route",
+      "route_key": "institutional_overview",
+      "radius_ft": 3
+    },
+    {
+      "id": "hs_entry",
+      "label": "Exterior / Street",
+      "position_ft": {
+        "x": 36,
+        "y": 4.5,
+        "z": 4.5
+      },
+      "action": "open_route",
+      "route_key": "exterior_entry",
+      "radius_ft": 3
+    }
+  ],
+  "rules": [
+    "Hotspots are interaction anchors, not architectural objects.",
+    "Hotspots may move visually within their zone for UI readability but may not imply changed room geometry."
+  ]
+}
