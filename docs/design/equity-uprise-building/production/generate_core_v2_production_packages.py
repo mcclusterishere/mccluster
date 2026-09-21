@@ -301,6 +301,10 @@ for level in programs["levels"]:
         manifest["digital_twin_program_ref"]=f"floor-{n:02d}-digital-twin-program.json"
     if level.get("digital_twin_spec_ref"):
         manifest["authority"]["activity_simulation_authority"]=[f"../../FLOOR-{n:02d}-DIGITAL-TWIN-PROGRAM.md" if n==1 else level["digital_twin_spec_ref"],f"floor-{n:02d}-digital-twin-program.json"]
+    if n==4:
+        manifest["object_inventory_ref"]="floor-04-object-inventory.json"
+        manifest["preservation_map_ref"]="../../FLOOR-04-V1-V2-PRESERVATION-MAP.md"
+        manifest["program_reconciliation_ref"]="../../FLOOR-04-PROGRAM-RECONCILIATION.md"
     if n==3:
         manifest["object_inventory_ref"]="floor-03-object-inventory.json"
         manifest["preservation_map_ref"]="../../FLOOR-03-V1-V2-PRESERVATION-MAP.md"
