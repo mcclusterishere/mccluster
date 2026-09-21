@@ -30,6 +30,27 @@ Use it to understand:
 
 **Do not copy its obsolete west-core/Stair B geometry.**
 
+## Reference A2 — V1 Floor 2 Public Forum
+
+Interactive deterministic viewer:
+- commit `7c7726289781f270da25eef70789b704b63b30bd`.
+
+Preserve from it:
+- centered forum orbit/navigation;
+- Forum / Feature Wall / Elevator / Listening Lounge / South Glazing views;
+- Wireframe / Solid;
+- ceiling toggle;
+- one-table / eight-seat composition;
+- feature wall + three surfaces;
+- west listening lounge;
+- member check-in beside elevator;
+- sealed south glazing;
+- dark/gunmetal/wood/charcoal material family.
+
+Do **not** preserve its obsolete west Stair B/service-core geometry.
+
+See `FLOOR-02-V1-V2-PRESERVATION-MAP.md`.
+
 ## Reference B — fully assembled Core V2 building
 
 ### Combined generator
