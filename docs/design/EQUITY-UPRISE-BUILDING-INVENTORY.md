@@ -643,27 +643,36 @@ The following chassis decisions are no longer open questions; floor-program sema
 
 ### Current quality-control status
 
-**Floor 1 — LOCKED**
+**B1 — RECONCILED CURRENT PASS**
 
-Canonical file:
-`docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
+Canonical authority:
+- `docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
+- `docs/design/equity-uprise-building/production/basement-b1-program.json`
+- `docs/design/equity-uprise-building/production/underground-tunnel-network.json`
 
-**Floor 2 — LOCKED**
+B1 live operations remain restricted; learner/instructor work uses a sandboxed clone.
 
-Canonical files:
-- `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
-- `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/references/floor-02/`
+**Floor 1 — CURRENT-PASS PROGRAM COMPLETE / SCHEMATIC RENDER-READY**
 
-**Floor 6 — LOCKED**
+Canonical authority:
+- `docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md`
+- `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md` *(legacy-compatible filename only)*
+- `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
+- `docs/design/equity-uprise-building/FLOOR-01-SITE-EGRESS-SIMULATION.md`
+- `docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json`
+- `docs/design/equity-uprise-building/production/floor-01/floor-01-site-egress.json`
 
-Canonical files:
-- `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
-- `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/references/floor-06/`
+"Complete" here means the current activity/space program, B1 relationship, access model, life-safety/site simulation, and shared-core integration are reconciled. It does **not** mean final art direction, final architectural engineering, or production-quality 3D is finished.
 
-**Level 7 — CANONICAL ROOF GEOMETRY + ECOSYSTEM SEMANTICS LOCKED; OPERATIONAL HELIPAD/VERTIPORT FEASIBILITY PENDING**
+**Floors 2–6 — PRE-ITERATIVE PROGRAM REWRITE**
 
-Do not treat prior generated floor images as architectural authority. They are concept iterations only.
+Their Core V2 chassis coordinates remain usable, but their room/program semantics are working placeholders until each floor receives the same activity/space reconciliation completed for Floor 1.
+
+**Level 7 — PRE-ITERATIVE PROGRAM REWRITE / ROOF FEASIBILITY CONSTRAINTS RETAINED**
+
+The roof/core geometry and ecosystem-routing constraints remain useful. The developmental/launch program and any operational mobility use remain unresolved until the Level 7 iterative pass.
+
+Generated plans, production packages, contact sheets and GLB/reports are **derived-only** and must be regenerated from current authority. A derived artifact that differs after deterministic regeneration is stale even if an older validation report said it passed.
 
 Proceed one floor at a time.
