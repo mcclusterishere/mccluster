@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "status": "canonical-floor-01-activity-and-simulation-authority",
   "scene_id": "equity-uprise-floor-01",
   "title": "Floor 01 — Arrival, Orientation & Intake Digital Twin Program",
@@ -20,7 +20,7 @@
     "target": "simulation-grade hypothetical physical headquarters",
     "rule": "Model real-world architectural, life-safety, accessibility, MEP, IT, security and operational concepts as faithfully as practical for education and simulation.",
     "compliance_claim": false,
-    "code_profile_status": "not_selected",
+    "code_profile_status": "research-reference-profile-defined-not-compliance-profile",
     "note": "A later explicit simulation profile may bind a jurisdiction, code editions, occupancy assumptions and engineering assumptions. Until then, no file may claim real-world code compliance."
   },
   "primary_human_question": "Where am I, what am I trying to accomplish, how does this place work, and what should I do next?",
@@ -320,28 +320,12 @@
       "label": "Freight / Service Elevator",
       "role": "delivery/equipment/service circulation",
       "interactive_training": true
-    }
-  ],
-  "unresolved_geometry_requirements": [
-    {
-      "id": "f1-stair-a-exit-discharge",
-      "requirement": "Provide believable protected Stair A ground-level exit discharge to exterior without converting it into a normal public entrance.",
-      "status": "requires-explicit-site-edge-design"
     },
     {
-      "id": "f1-stair-b-exit-discharge",
-      "requirement": "Provide believable protected Stair B ground-level exit discharge to exterior without converting it into a normal public entrance.",
-      "status": "requires-explicit-site-edge-design"
-    },
-    {
-      "id": "f1-secure-service-entrance",
-      "requirement": "Provide a secure service/delivery approach connected to the west service core/freight path.",
-      "status": "requires-explicit-site-edge-design"
-    },
-    {
-      "id": "f1-exterior-assembly-area",
-      "requirement": "Create a minimal exterior/site simulation layer with public approach, accessible approach, exit discharge routes and emergency assembly/muster point.",
-      "status": "requires-site-layer-design"
+      "id": "f1-b1-interface",
+      "label": "B1 Technical / Service Interface",
+      "role": "authorized access to below-grade building systems lab and service infrastructure",
+      "interactive_training": true
     }
   ],
   "operating_modes": [
@@ -578,5 +562,46 @@
     "rule": "Any external training or credential concept represented on Floor 1 must bind to the actual physical/systems concepts it teaches where spatial simulation is meaningful.",
     "credential_is_not_competency": true,
     "evidence_policy_ref": "../../equity-uprise-development/EVIDENCE-ASSESSMENT-ARCHITECTURE.md"
-  }
+  },
+  "code_reference_profile_ref": "../../SIMULATION-CODE-REFERENCE-PROFILE.md",
+  "site_egress_ref": "floor-01-site-egress.json",
+  "basement_ref": "../basement-b1-program.json",
+  "basement_relationship": {
+    "exists": true,
+    "display_level": "B1",
+    "normal_public_access": false,
+    "floor1_is_level_of_exit_discharge": true,
+    "role": "technical/service + building-systems training substrate",
+    "developmental_stage": null
+  },
+  "resolved_geometry_requirements": [
+    {
+      "id": "f1-stair-a-exit-discharge",
+      "status": "modeled",
+      "authority_ref": "floor-01-site-egress.json",
+      "object_id": "F1-DOOR-STAIR-A-DISCHARGE"
+    },
+    {
+      "id": "f1-stair-b-exit-discharge",
+      "status": "modeled",
+      "authority_ref": "floor-01-site-egress.json",
+      "object_id": "F1-DOOR-STAIR-B-DISCHARGE"
+    },
+    {
+      "id": "f1-secure-service-entrance",
+      "status": "modeled",
+      "authority_ref": "floor-01-site-egress.json",
+      "object_id": "F1-DOOR-SERVICE-WEST"
+    },
+    {
+      "id": "f1-exterior-assembly-area",
+      "status": "modeled-primary-and-alternate",
+      "authority_ref": "floor-01-site-egress.json"
+    },
+    {
+      "id": "f1-basement-discharge-direction-controls",
+      "status": "modeled",
+      "authority_ref": "floor-01-site-egress.json"
+    }
+  ]
 }
