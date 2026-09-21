@@ -8,6 +8,7 @@ on:
       - 'docs/design/equity-uprise-building/production/building-core-v2.json'
       - 'docs/design/equity-uprise-building/production/core-v2-floor-programs.json'
       - 'docs/design/equity-uprise-building/production/basement-b1-program.json'
+      - 'docs/design/equity-uprise-building/production/underground-tunnel-network.json'
       - 'docs/design/equity-uprise-building/production/floor-01/floor-01-site-egress.json'
       - 'docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json'
       - 'docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py'
