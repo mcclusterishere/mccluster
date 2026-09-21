@@ -281,11 +281,14 @@ For any Floor 1 3D reconstruction, GLB/glTF export, Three.js/browser scene, hots
 
 When working on branch `architecture/equity-uprise-core-v2` or on artifacts explicitly labeled Core V2, read these **before any floor-specific production file**:
 
-1. `docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md`
-2. `docs/design/equity-uprise-building/production/building-core-v2.json`
-3. `docs/design/equity-uprise-building/production/building-v2-validation.json`
-4. `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
-5. the floor-specific spec, schematic basis, Core V2 DXF/SVG, and production package.
+1. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
+2. `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
+3. `docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md`
+4. `docs/design/equity-uprise-building/production/building-core-v2.json`
+5. `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
+6. `docs/design/equity-uprise-building/production/building-v2-validation.json`
+7. `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
+8. the floor-specific spec, schematic basis, Core V2 DXF/SVG, and production package.
 
 Core V2 shared geometry is not floor-local:
 
@@ -299,6 +302,8 @@ Core V2 shared geometry is not floor-local:
 Rules:
 
 - Floor-specific files may add program but may not redefine shared vertical systems.
+- Every Equity Uprise capability must remain mapped through `equity-uprise-capability-map-v2.json`; do not silently add, remove, relocate, or publicize a capability in spatial work.
+- Preserve each capability's declared implementation status and public/private/approval boundary.
 - Both stairs must span the full 13'-6" between finished floors in combined geometry.
 - Do not use the old X0–12/Y54–72 Stair B assumption for new Core V2 work.
 - Do not treat the service/freight elevator as a substitute for a required exit.
