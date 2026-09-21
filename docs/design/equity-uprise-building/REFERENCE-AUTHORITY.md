@@ -17,6 +17,16 @@
 >
 > Main remains Core V1 until the migration is fully regenerated, validated and promoted.
 
+## Core V1 archive rule
+
+The superseded Core V1 DXF/SVG/PNG plan sets have been removed from the active per-floor reference folders and preserved only under:
+
+`docs/design/equity-uprise-building/references/archive/core-v1/`
+
+Those archived files are **historical / non-canonical / traceability only**.
+
+No agent, renderer, generator, CAD workflow, 3D scene, hotspot workflow or plan revision may use an archived Core V1 asset as current geometry. Active plan references are the versioned `core-v2` files in each `references/floor-0X/` folder.
+
 ## Trigger conditions
 
 This authority applies whenever a task involves any of the following in connection with Equity Uprise:
