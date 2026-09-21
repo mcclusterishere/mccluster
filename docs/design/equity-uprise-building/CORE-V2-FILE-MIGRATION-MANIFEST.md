@@ -63,6 +63,22 @@
 
 ---
 
+## Plan-reference cleanup completion
+
+> Completed on the Core V2 migration branch after generation and review of the seven Core V2 plan sets.
+
+- **21 Core V1 plan assets archived** under `references/archive/core-v1/`.
+- **21 Core V1 plan assets removed from active per-floor reference folders**.
+- Active reference folders now contain exactly:
+  - one README;
+  - one Core V2 DXF;
+  - one Core V2 SVG;
+  - one Core V2 PNG.
+- All seven active reference READMEs designate the versioned Core V2 plan set as branch-canonical.
+- Global `REFERENCE-AUTHORITY.md` and all seven production scene manifests were checked and contain no active Core V1 plan filename references.
+- The old plan filenames remain in this migration manifest only as migration/history identifiers and in the explicit Core V1 archive.
+- Do not restore archived V1 assets to active floor reference folders.
+
 # A. Building-wide source of truth
 
 ## NEW
