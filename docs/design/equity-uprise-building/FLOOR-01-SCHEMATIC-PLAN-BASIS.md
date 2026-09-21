@@ -36,11 +36,14 @@ Floor 1 inherits the shared Core V2 geometry from `BUILDING-CORE-V2-SPEC.md` and
 
 Finished-floor elevation:
 - **0'-0"**
+- Floor 1 is the modeled **level of exit discharge**.
+- B1 Technical / Service Basement is directly below at **-13'-6"**.
 
 ### Passenger elevator
 - shaft: **X 54–62 / Y 34–44**
 - west-facing door
 - primary public vertical circulation
+- continues down to B1 for authorized/accessible building operation and training
 - floor-specific program may not intrude into the shaft or elevator approach
 
 ### West Service Core
@@ -56,13 +59,13 @@ It contains the freight/service elevator and revised Stair B.
 
 ### Stair B — west protected stair
 - enclosure: **X 8–18 / Y 54–72**
-- continuous through Floors 1–6 and Level 7
+- continuous from B1 through Floors 1–6 and Level 7
 - full **13'-6"** floor-to-floor rise in combined deterministic geometry
 - shared slab opening approximately **X 8.75–17.25 / Y 58.25–71.25**
 
 ### Stair A — east protected stair
 - enclosure: **X 60–72 / Y 54–72**
-- continuous through Floors 1–6 and Level 7
+- continuous from B1 through Floors 1–6 and Level 7
 - full **13'-6"** floor-to-floor rise in combined deterministic geometry
 - shared slab opening approximately **X 60.75–71.25 / Y 58.25–71.25**
 
@@ -234,14 +237,21 @@ Future floor panoramas should retain this camera relationship to the vertical co
 
 ## 10. Egress / life-safety concept
 
-The schematic intentionally includes:
+The schematic and companion site layer intentionally include:
 - one main public entrance;
 - Stair A;
 - remote Stair B;
-- direct exterior discharge concepts for the protected stairs;
-- clear public circulation.
+- Stair A east exit-only discharge;
+- Stair B north/rear exit-only discharge;
+- secure west service/delivery entrance;
+- public-way connection;
+- primary and alternate assembly areas;
+- clear public circulation;
+- Floor 1 discharge-direction barriers/wayfinding because the stairs continue down to B1.
 
-Exact Stair A/Stair B exterior discharge doors, paths and the secure service entrance remain **required but unresolved site-edge geometry** for the next simulation/site design pass.
+Exterior authority:
+- `FLOOR-01-SITE-EGRESS-SIMULATION.md`
+- `production/floor-01/floor-01-site-egress.json`
 
 It does **not** establish:
 - occupancy classification;
