@@ -91,6 +91,14 @@ for level in PLAN_LEVELS:
         readme_text=readme.read_text(errors="ignore")
         check(f"L{n} README authoritative title",level["title"] in readme_text,level["title"])
         check(f"L{n} README generated-only warning","generated-only" in readme_text.lower(),readme_text[:160])
+        if level.get("basement"):
+            check(f"L{n} README restricted support status","RESTRICTED CORE V2 PLAN REFERENCE" in readme_text,readme_text[:220])
+        elif level.get("design_maturity")=="reconciled-current-iterative-pass":
+            check(f"L{n} README active current-pass status","ACTIVE CORE V2 PLAN REFERENCE" in readme_text,readme_text[:220])
+        else:
+            check(f"L{n} README provisional program status","PROVISIONAL CORE V2 CHASSIS PLAN" in readme_text,readme_text[:220])
+        expected_maturity=level.get("design_maturity","support-level" if level.get("basement") else "unspecified")
+        check(f"L{n} README design maturity",expected_maturity in readme_text,expected_maturity)
 
     for p in (svg, dxf, png):
         check(f"L{n} {p.suffix} exists", p.exists(), str(p))
@@ -160,6 +168,17 @@ if manifest_path.exists():
             f"L{n} manifest title matches authority",
             row.get("title") == expected_level["title"],
             f"{row.get('title')} != {expected_level['title']}",
+        )
+        expected_maturity=expected_level.get("design_maturity","support-level" if expected_level.get("basement") else None)
+        check(
+            f"L{n} manifest maturity matches authority",
+            row.get("design_maturity") == expected_maturity,
+            f"{row.get('design_maturity')} != {expected_maturity}",
+        )
+        check(
+            f"L{n} manifest render readiness matches authority",
+            row.get("render_readiness") == expected_level.get("render_readiness"),
+            f"{row.get('render_readiness')} != {expected_level.get('render_readiness')}",
         )
         files = row.get("files", {})
         check(
