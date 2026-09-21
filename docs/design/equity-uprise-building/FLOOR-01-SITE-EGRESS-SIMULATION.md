@@ -1,6 +1,6 @@
 # Equity Uprise Floor 1 — Site / Exit-Discharge Simulation Layer
 
-> Status: **CANONICAL FLOOR 1 EXTERIOR / EGRESS SIMULATION AUTHORITY v0.1**
+> Status: **CANONICAL FLOOR 1 EXTERIOR / EGRESS SIMULATION AUTHORITY v0.2**
 
 Floor 1 is the level of exit discharge.
 
@@ -64,6 +64,16 @@ The scenario engine may choose the safe location based on:
 A secure west service/delivery entrance connects the exterior service apron to the west service approach and freight/service core.
 
 It is not a public entrance and not counted as a substitute for a required exit.
+
+## Generated reference plan
+
+The deterministic plan generator must produce:
+
+- `references/floor-01/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf`
+- `references/floor-01/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg`
+- `references/floor-01/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png`
+
+The generated site plan must visibly represent the public way/approach, both protected-stair discharges, secure service entrance/apron, both assembly areas, responder keep-clear concept, and emergency-equipment markers. It is derived-only and never overrides the JSON authority below.
 
 ## Machine-readable authority
 
