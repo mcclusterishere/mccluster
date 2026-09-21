@@ -1,8 +1,8 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "building_id": "equity-uprise-building",
   "core_id": "equity-uprise-core-v2",
-  "status": "locked-for-core-v2-migration",
+  "status": "core-v2-with-b1-technical-service-level",
   "not_for_construction": true,
   "authority_note": "This file is the shared machine-readable vertical-core authority for the Core V2 migration branch. Floor-specific files may add program but may not move or redefine these vertical systems.",
   "units": "feet",
@@ -26,6 +26,14 @@
     ]
   },
   "levels": [
+    {
+      "level": 0,
+      "id": "basement-b1",
+      "name": "Technical / Service Basement",
+      "finished_floor_elevation_ft": -13.5,
+      "below_grade": true,
+      "open_air": false
+    },
     {
       "level": 1,
       "id": "floor-01",
@@ -90,6 +98,7 @@
         "clear_width_ft": 4
       },
       "serves_levels": [
+        0,
         1,
         2,
         3,
@@ -99,7 +108,7 @@
       ],
       "level_7_service": "not_assumed",
       "shaft_continuity": "continuous_through_served_stack",
-      "note": "Level 7 direct passenger-elevator service remains unassumed unless later professionally resolved."
+      "note": "Serves B1 and Floors 1–6. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile."
     },
     "service_freight_elevator": {
       "id": "service-freight-elevator-a",
@@ -120,6 +129,7 @@
         "clear_width_ft": 5
       },
       "serves_levels": [
+        0,
         1,
         2,
         3,
@@ -130,7 +140,7 @@
       "level_7_service": "reserved_for_future_resolution",
       "shaft_continuity": "continuous_reservation_to_roof",
       "pit_overhead_machine_strategy": "unresolved",
-      "note": "Car capacity, pit, overhead, MRL/machine-room strategy, loading, ratings, and Level 7 stop require elevator/structural/code design."
+      "note": "Serves B1 and Floors 1–6; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts."
     },
     "stair_a": {
       "id": "stair-a-east",
@@ -144,6 +154,7 @@
       "enclosure_width_ft": 12,
       "enclosure_depth_ft": 18,
       "serves_levels": [
+        0,
         1,
         2,
         3,
@@ -175,7 +186,8 @@
         "x2": 71.25,
         "y2": 71.25
       },
-      "geometry_status": "schematic_continuity_geometry_not_code_design"
+      "geometry_status": "schematic_continuity_geometry_not_code_design",
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade."
     },
     "stair_b": {
       "id": "stair-b-west",
@@ -189,6 +201,7 @@
       "enclosure_width_ft": 10,
       "enclosure_depth_ft": 18,
       "serves_levels": [
+        0,
         1,
         2,
         3,
@@ -220,7 +233,8 @@
         "x2": 17.25,
         "y2": 71.25
       },
-      "geometry_status": "schematic_continuity_geometry_not_code_design"
+      "geometry_status": "schematic_continuity_geometry_not_code_design",
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade."
     },
     "mep_riser": {
       "id": "mep-riser-east",
@@ -232,6 +246,7 @@
         "y2": 72
       },
       "serves_levels": [
+        0,
         1,
         2,
         3,
@@ -290,6 +305,11 @@
   "floor_interface_rules": {
     "interfaces": [
       {
+        "from_level": 0,
+        "to_level": 1,
+        "rise_ft": 13.5
+      },
+      {
         "from_level": 1,
         "to_level": 2,
         "rise_ft": 13.5
@@ -326,9 +346,23 @@
     "independent_floor_z_zero_models_not_authoritative_for_vertical_continuity": true
   },
   "egress_and_code_limitations": [
-    "Two protected stair reservations are retained conceptually.",
+    "Floor 1 is the modeled level of exit discharge.",
+    "Two protected stair reservations are retained conceptually from B1 through Level 7.",
+    "Because the protected stairs continue below Floor 1, the simulation must include approved-concept discharge-direction barriers/wayfinding at the level of exit discharge.",
     "The service/freight elevator is not counted as a substitute for a required exit.",
+    "B1 accessible-egress concepts may include the passenger elevator landing, two-way communication and assisted-evacuation logic, but scenario behavior depends on the selected reference profile and authorization.",
     "Riser/tread/landing dimensions are schematic continuity geometry only.",
-    "Final occupant load, exit count, exit separation, stair width, ratings, accessibility, smoke control, elevator recall, fire-service access, structural loading, pit/overhead, and other code requirements require licensed professional review."
-  ]
+    "Final occupant load, exit count, exit separation, stair width, ratings, accessibility, smoke control, elevator recall, fire-service access, structural loading, pit/overhead, and other code requirements require licensed professional review for a real building."
+  ],
+  "level_of_exit_discharge": 1,
+  "basement_policy": {
+    "enabled": true,
+    "level_id": "basement-b1",
+    "display_level": "B1",
+    "finished_floor_elevation_ft": -13.5,
+    "developmental_floor": false,
+    "normal_public_access": false,
+    "program_ref": "basement-b1-program.json",
+    "note": "B1 supports building systems, service operations and training. It does not alter the six-letter EQUITY progression."
+  }
 }
