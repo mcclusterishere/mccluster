@@ -500,7 +500,7 @@ The reconciliation is backed by four separate deterministic checks:
 
 | Layer | Result | What it proves |
 |---|---:|---|
-| Repo-source classification | **256 sources classified** | Current source ledger contains 102 capability sources and 154 explicitly support/development-authority sources. The exact discovered-set gate remains enforced by `verify_equity_uprise_repo_sources.py`. |
+| Repo-source classification | **262 sources classified** | Current source ledger contains 102 capability sources and 160 explicitly support/development-authority sources. The exact discovered-set gate remains enforced by `verify_equity_uprise_repo_sources.py`. |
 | Capability / floor / routing coverage | **429 / 429 passed** | All 56 canonical capabilities are assigned to their primary and declared secondary floors; interaction-mode and zone routes resolve; private/high-risk routes remain non-public; Halo public mode is read-only with owner-authenticated operational handoff; Level 7 does not imply passenger-elevator service. |
 | Generated plan semantics | **312 / 312 passed** | Active Core V2 SVG/DXF/PNG sets exist for all seven levels; generated vector/CAD labels include the Halo Globe and match the canonical floor program; stale semantic labels are absent; only the Core V2 triplets remain active. |
 | Combined stacked geometry | **32 / 32 passed** | Seven shared elevations, all 12 stair transitions and the single suspended Floor 6 Halo Globe remain valid in the combined GLB; the Halo envelope clears the fixed core and circulation height constraints. |
@@ -537,3 +537,22 @@ Against the Equity Uprise functionality currently implemented or explicitly repr
 - no extra decorative department/floor is required.
 
 Future Equity Uprise features must update the capability map and pass program-coverage validation before architectural work treats the building as complete.
+
+
+### B1 / Floor 1 digital-twin completion
+
+The current Core V2 branch now includes a non-developmental B1 technical/service basement and a Floor 1 exterior/site/exit-discharge simulation layer.
+
+B1 does not add an Equity Uprise product capability ID and does not consume an E-Q-U-I-T-Y developmental stage.
+
+Floor 1 remains the modeled level of exit discharge.
+
+The building validators now check:
+- B1 vertical-system continuity;
+- B1 program/core overlap;
+- protected-stair discharge doors;
+- basement-direction discharge controls at Floor 1;
+- public-way/site egress concepts;
+- two assembly areas;
+- emergency-action-plan components;
+- Floor 1 linkage to the canonical B1/site authorities.
