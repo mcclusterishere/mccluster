@@ -1133,12 +1133,12 @@
       "detail": ""
     },
     {
-      "name": "L6 SVG label INSTITUTIONAL SALON",
+      "name": "L6 SVG label INSTITUTIONAL SALON / SUPPORT",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "L6 DXF label INSTITUTIONAL SALON",
+      "name": "L6 DXF label INSTITUTIONAL SALON / SUPPORT",
       "passed": true,
       "detail": ""
     },
@@ -1275,12 +1275,12 @@
     {
       "name": "L6 PNG signature",
       "passed": true,
-      "detail": "bytes=77373"
+      "detail": "bytes=77797"
     },
     {
       "name": "L6 PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=77373"
+      "detail": "bytes=77797"
     },
     {
       "name": "L6 active plan triplet only",
@@ -1555,7 +1555,7 @@
     {
       "name": "contact sheet nontrivial size",
       "passed": true,
-      "detail": "bytes=111632"
+      "detail": "bytes=111789"
     }
   ]
 }
