@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Equity Uprise — Floor 1 Deterministic 3D</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:Inter,system-ui,sans-serif}
+#app{position:fixed;inset:0}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:fixed;left:16px;top:16px;z-index:5;background:rgba(10,10,10,.78);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:14px;max-width:min(430px,calc(100vw - 32px));box-shadow:0 16px 50px rgba(0,0,0,.35)}
+#hud h1{font-size:15px;margin:0 0 5px;font-weight:800;letter-spacing:.04em}
+#hud p{font-size:12px;line-height:1.45;margin:0 0 10px;color:#c8c8c8}
+.controls{display:flex;flex-wrap:wrap;gap:7px}
+button{appearance:none;border:1px solid #555;background:#222;color:#fff;border-radius:999px;padding:8px 11px;font-weight:700;font-size:11px;cursor:pointer}
+button:hover,button:focus{background:#8b1e1e;border-color:#b52c31;outline:none}
+#status{position:fixed;right:16px;bottom:16px;z-index:5;background:rgba(10,10,10,.75);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:9px 11px;font-size:11px;color:#ddd}
+#north{color:#ff575d;font-weight:800}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="hud">
+<h1>EQUITY UPRISE · FLOOR 1 · DETERMINISTIC 3D</h1>
+<p>Actual locked plan geometry. Drag to orbit, pinch/scroll to zoom. <b>North/rear contains both stairs.</b> This is a web/visualization scene, not a construction model.</p>
+<div class="controls">
+<button data-view="lobby">Lobby</button>
+<button data-view="reception">Reception</button>
+<button data-view="elevator">Elevator</button>
+<button data-view="lounge">Lounge</button>
+<button data-view="intake">Intake</button>
+<button id="ceiling">Hide ceiling</button>
+<button id="wire">Wireframe</button>
+</div>
+</div>
+<div id="status"><span id="north">NORTH ↑</span> · 72' × 72' · camera datum (36,28)</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js';
+
+const FT=.3048;
+const ft=v=>v*FT;
+const app=document.getElementById('app');
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x121314);
+scene.fog=new THREE.Fog(0x121314,ft(45),ft(120));
+
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.03,ft(180));
+camera.position.set(ft(36),ft(8),ft(21)); // x east, y up, z north
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.shadowMap.enabled=true;
+app.appendChild(renderer.domElement);
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+controls.target.set(ft(36),ft(4.5),ft(34));
+controls.maxDistance=ft(100);
+controls.minDistance=ft(4);
+controls.maxPolarAngle=Math.PI/2-.015;
+
+const M={
+ floor:new THREE.MeshStandardMaterial({color:0x56595b,roughness:.68}),
+ wall:new THREE.MeshStandardMaterial({color:0x2b2a29,roughness:.86}),
+ core:new THREE.MeshStandardMaterial({color:0x303338,metalness:.85,roughness:.4}),
+ stone:new THREE.MeshStandardMaterial({color:0x343536,roughness:.58}),
+ glass:new THREE.MeshPhysicalMaterial({color:0xdce5e7,roughness:.08,transmission:.82,transparent:true,opacity:.35,side:THREE.DoubleSide}),
+ wood:new THREE.MeshStandardMaterial({color:0x6c523c,roughness:.62}),
+ seat:new THREE.MeshStandardMaterial({color:0x474544,roughness:.9}),
+ service:new THREE.MeshStandardMaterial({color:0x494a4a,roughness:.8}),
+ red:new THREE.MeshStandardMaterial({color:0x851a1d,emissive:0x5a0f11,emissiveIntensity:.45,roughness:.55})
+};
+const allMaterials=[...Object.values(M)];
+const objects={};
+
+function box(name,x1,y1,x2,y2,h,mat,z0=0){
+  // canonical plan x/y -> Three x/z; vertical -> Three y
+  const g=new THREE.BoxGeometry(ft(x2-x1),ft(h),ft(y2-y1));
+  const mesh=new THREE.Mesh(g,mat);
+  mesh.position.set(ft((x1+x2)/2),ft(z0+h/2),ft((y1+y2)/2));
+  mesh.name=name; mesh.castShadow=true; mesh.receiveShadow=true;
+  scene.add(mesh); objects[name]=mesh; return mesh;
+}
+function cyl(name,x,y,r,h,mat,z0=0){
+  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(ft(r),ft(r),ft(h),32),mat);
+  mesh.position.set(ft(x),ft(z0+h/2),ft(y)); mesh.name=name;
+  mesh.castShadow=true; mesh.receiveShadow=true; scene.add(mesh); objects[name]=mesh; return mesh;
+}
+function wallH(name,x1,x2,y,t,h,gaps=[],mat=M.wall){
+  let cur=x1,i=0;
+  [...gaps,[x2,x2]].sort((a,b)=>a[0]-b[0]).forEach(([a,b])=>{
+    if(a>cur)box(name+'_'+(++i),cur,y-t/2,a,y+t/2,h,mat);
+    cur=Math.max(cur,b);
+  });
+}
+function wallV(name,x,y1,y2,t,h,gaps=[],mat=M.wall){
+  let cur=y1,i=0;
+  [...gaps,[y2,y2]].sort((a,b)=>a[0]-b[0]).forEach(([a,b])=>{
+    if(a>cur)box(name+'_'+(++i),x-t/2,cur,x+t/2,a,h,mat);
+    cur=Math.max(cur,b);
+  });
+}
+
+const H=11, EXT=.75, INT=.5, CORE=.75;
+
+// slab + removable ceiling
+box('floor',0,0,72,72,.5,M.floor,-.5);
+const ceiling=box('ceiling',0,0,72,72,.35,M.wall,H);
+
+// exterior shell stays inside exact 72x72
+box('south_wall_left',0,0,29,EXT,H,M.wall);
+box('south_wall_right',43,0,72,EXT,H,M.wall);
+box('north_wall',0,72-EXT,72,72,H,M.wall);
+box('west_wall',0,0,EXT,72,H,M.wall);
+box('east_wall',72-EXT,0,72,72,H,M.wall);
+
+// vestibule / public entrance
+wallV('vestibule_west',29,0,9,.25,H,[],M.glass);
+wallV('vestibule_east',43,0,9,.25,H,[],M.glass);
+wallH('vestibule_inner',29,43,9,.25,H,[[32,40]],M.glass);
+wallH('entry_left',29,32,.35,.2,H,[],M.glass);
+wallH('entry_right',40,43,.35,.2,H,[],M.glass);
+[29,32,40,43].forEach(x=>box('entry_frame_'+x,x-.08,0,x+.08,9,H,M.core));
+
+// intake
+wallH('intake_south',2,16,32,INT,H,[],M.wall);
+wallH('intake_north',2,16,44,INT,H,[],M.wall);
+wallV('intake_east_glass',16,32,44,.25,H,[[33.5,37]],M.glass);
+
+// reception
+wallH('reception_feature',28,44,52.5,.75,12,[],M.stone);
+box('reception_desk',30,44,42,47,3.5,M.stone);
+box('reception_accessible',30,44,33,47,2.85,M.stone);
+box('red_reveal',30,43.92,42,44.08,.22,M.red,.12);
+
+// north support band
+wallH('support_south',12,60,60,INT,H,[[14.5,17.5],[22.5,25.5],[31,34],[43,46],[51,53.5]],M.wall);
+[
+ [11.75,54,72,'stair_b_east'],[20,60,70,'restroom_divider_1'],[28,60,72,'restroom_divider_2'],
+ [40,60,72,'support_divider'],[50,60,72,'it_divider'],[54,60,66,'janitor_east'],[60.25,54,72,'stair_a_west']
+].forEach(([x,y1,y2,n])=>wallV(n,x,y1,y2,INT,H,[],M.wall));
+
+wallH('stair_b_south',0,12,54+CORE/2,CORE,H,[[7.5,10.5]],M.core);
+wallH('stair_a_south',60,72,54+CORE/2,CORE,H,[[61.5,64.5]],M.core);
+
+// elevator fixed X54-62 / Y34-44
+wallH('elevator_south',54,62,34,CORE,H,[],M.core);
+wallH('elevator_north',54,62,44,CORE,H,[],M.core);
+wallV('elevator_east',62,34,44,CORE,H,[],M.core);
+wallV('elevator_west',54,34,44,CORE,H,[[37,41]],M.core);
+box('elevator_door_1',53.88,37,54.02,39,8,M.core);
+box('elevator_door_2',53.88,39,54.02,41,8,M.core);
+box('mep',50,66,60,72,H,M.service);
+
+// simplified stairs locked in rear/north envelopes
+function stairs(prefix,x1,y1,x2,y2){
+ const count=9, run=(y2-y1-3)/count, rise=10.5;
+ for(let i=0;i<count;i++){const ya=y1+1.5+i*run;box(prefix+'_'+(i+1),x1+1.3,ya,x2-1.3,ya+run*.82,.45,M.service,i*(rise/count));}
+}
+stairs('stair_b',0,54,12,72);
+stairs('stair_a',60,54,72,72);
+
+// directory / lounge / intake furniture
+box('directory',49,24,51,29,6,M.core);
+box('lounge_sofa',3,14,10,17,2.8,M.seat);
+box('lounge_chair_1',12,14,15,17,2.8,M.seat);
+box('lounge_chair_2',12,22,15,25,2.8,M.seat);
+cyl('lounge_table',9.5,20,2,1.4,M.wood);
+box('intake_table',6,36.5,12,39.5,2.5,M.wood);
+[[5,38],[13,38],[8,35],[10,41]].forEach((p,i)=>cyl('intake_chair_'+(i+1),p[0],p[1],.9,2.7,M.seat));
+box('lounge_rug',3,12.5,16.5,27,.06,M.seat,.01);
+
+// lighting
+scene.add(new THREE.HemisphereLight(0xf4ede2,0x1a1b1d,1.6));
+const sun=new THREE.DirectionalLight(0xfff3df,2.4); sun.position.set(ft(15),ft(28),ft(-10)); sun.castShadow=true; scene.add(sun);
+const receptionLight=new THREE.PointLight(0xffd7a6,75,ft(35),2); receptionLight.position.set(ft(36),ft(9.5),ft(46)); scene.add(receptionLight);
+const loungeLight=new THREE.PointLight(0xffddb5,40,ft(25),2); loungeLight.position.set(ft(10),ft(8),ft(20)); scene.add(loungeLight);
+
+// guide grid / cardinal direction
+const grid=new THREE.GridHelper(ft(72),36,0x4c4c4c,0x2c2c2c); grid.position.set(ft(36),.005,ft(36)); scene.add(grid);
+
+// Views
+const views={
+ lobby:{p:[36,6.2,21],t:[36,4.5,43]},
+ reception:{p:[36,5.6,31],t:[36,4.2,48]},
+ elevator:{p:[46,5.8,31],t:[56,4.5,39]},
+ lounge:{p:[25,5.8,24],t:[10,3.8,20]},
+ intake:{p:[22,5.8,34],t:[9,3.8,38]}
+};
+function gotoView(key){
+ const v=views[key]; if(!v)return;
+ camera.position.set(ft(v.p[0]),ft(v.p[1]),ft(v.p[2]));
+ controls.target.set(ft(v.t[0]),ft(v.t[1]),ft(v.t[2]));
+ controls.update();
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>gotoView(b.dataset.view));
+let ceilingOn=true;
+document.getElementById('ceiling').onclick=e=>{ceilingOn=!ceilingOn;ceiling.visible=ceilingOn;e.currentTarget.textContent=ceilingOn?'Hide ceiling':'Show ceiling'};
+let wire=false;
+document.getElementById('wire').onclick=e=>{wire=!wire;allMaterials.forEach(m=>{if('wireframe'in m)m.wireframe=wire});e.currentTarget.textContent=wire?'Solid':'Wireframe'};
+
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+gotoView('lobby');
+renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera)});
+</script>
+</body>
+</html>
