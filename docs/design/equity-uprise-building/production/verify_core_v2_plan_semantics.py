@@ -90,6 +90,11 @@ for level in PLAN_LEVELS:
     svg_text = svg.read_text(errors="ignore")
     dxf_text = dxf.read_text(errors="ignore")
 
+    title_prefix = "BASEMENT B1" if level.get("basement") else f"LEVEL {n:02d}"
+    expected_title = f"EQUITY UPRISE — {title_prefix} — {level['title'].upper()}"
+    check(f"L{n} SVG authoritative title", expected_title in svg_text, expected_title)
+    check(f"L{n} DXF authoritative title", level["title"].upper() in dxf_text, level["title"].upper())
+
     expected = [z["label"].upper() for z in level.get("zones", [])]
     expected += [s["label"].upper() for s in level.get("spheres", [])]
     expected += support_labels(level)
@@ -139,6 +144,12 @@ if manifest_path.exists():
     for row in manifest:
         n = int(row["level"])
         expected_base = OUT_NAMES[n]
+        expected_level = next(x for x in PLAN_LEVELS if int(x["level"]) == n)
+        check(
+            f"L{n} manifest title matches authority",
+            row.get("title") == expected_level["title"],
+            f"{row.get('title')} != {expected_level['title']}",
+        )
         files = row.get("files", {})
         check(
             f"L{n} manifest DXF points at Core V2",
