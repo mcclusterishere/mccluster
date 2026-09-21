@@ -672,6 +672,17 @@ Suggested Floor 4 hotspots:
 
 ---
 
+## 26A. Semantic interaction modes
+
+The existing Media + Culture spaces carry the post-creation pipeline explicitly:
+
+- **Rights / Clearance** — private rights/catalog/release state inside Media / Music Operations and Release Control.
+- **Licensing / Commerce** — public terms and rights-cleared offers, with authenticated checkout where supported.
+- **Release / Delivery** — approval-gated release preparation and delivery operations.
+- **DDEX Status** — private delivery/configuration state; never presented as connected when provider/partner configuration is absent.
+
+These modes use the Creator Recording Room, Edit / Review Suite, Media / Release Control and supporting displays. They do not justify additional rooms.
+
 ## 27. Content-authenticity rule
 
 All public music, artist, rally, event and archive content shown on Floor 4 must come from actual repo/live records.
@@ -731,7 +742,7 @@ The floor may be atmospheric; the content must remain factual.
 This floor is bound to the repo-wide program map:
 `production/equity-uprise-capability-map-v2.json`.
 
-The current repo-wide audit classifies **241 Equity Uprise semantic sources** and **55 canonical capabilities**. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+The current capability authority contains **56 canonical capabilities**. Repo-source counts are governed by the generated source-coverage report. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
 
 ### Primary capabilities
 - **Equity Uprise music/catalogue listening surface** (`music-catalogue`, built_shared_platform) — Media / Listening Zone.
