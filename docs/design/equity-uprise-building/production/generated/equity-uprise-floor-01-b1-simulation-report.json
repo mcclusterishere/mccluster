@@ -215,12 +215,12 @@
     {
       "name": "Stair A down barrier exists",
       "passed": true,
-      "detail": "{'F1-BARRIER-STAIR-A-DOWN', 'F1-BARRIER-STAIR-B-DOWN'}"
+      "detail": "['F1-BARRIER-STAIR-A-DOWN', 'F1-BARRIER-STAIR-B-DOWN']"
     },
     {
       "name": "Stair B down barrier exists",
       "passed": true,
-      "detail": "{'F1-BARRIER-STAIR-A-DOWN', 'F1-BARRIER-STAIR-B-DOWN'}"
+      "detail": "['F1-BARRIER-STAIR-A-DOWN', 'F1-BARRIER-STAIR-B-DOWN']"
     },
     {
       "name": "public way modeled",
