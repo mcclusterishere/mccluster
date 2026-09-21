@@ -227,5 +227,7 @@
     "Learner/instructor B1 work uses a sandboxed clone; live B1/tunnel authority remains separate.",
     "No slab may cover the shared shaft or stair slab-opening polygons.",
     "Per-floor viewers are derived views; combined B1-to-roof geometry is vertical-continuity authority."
-  ]
+  ],
+  "generation_epoch": "2026-09-21-floor1-b1-reconciled",
+  "generation_policy": "Derived plans, scene packages, reports, and GLB must be regenerated after authority changes and are never hand-edited."
 }
