@@ -1,6 +1,6 @@
 # Equity Uprise — Building Core V2
 
-> Status: **LOCKED FOR CORE V2 MIGRATION ON `architecture/equity-uprise-core-v2`**
+> Status: **CORE V2 + B1 TECHNICAL/SERVICE STACK ON `architecture/equity-uprise-core-v2`**
 >
 > This document controls the vertical-circulation and stacking redesign authorized after review of the original floor-local 3D scenes.
 >
@@ -34,7 +34,8 @@ Plan datum remains:
 Floor-to-floor datum remains **13'-6"**.
 
 Finished-floor elevations:
-- Floor 1 — 0'-0"
+- B1 Technical / Service Basement — **-13'-6"**
+- Floor 1 — 0'-0" (**modeled level of exit discharge**)
 - Floor 2 — +13'-6"
 - Floor 3 — +27'-0"
 - Floor 4 — +40'-6"
@@ -48,7 +49,7 @@ Retain the original passenger-elevator stack:
 - shaft X 54–62 / Y 34–44;
 - west-facing doors;
 - primary public vertical circulation;
-- Floors 1–6 served.
+- B1 and Floors 1–6 served.
 
 Direct passenger-elevator service to Level 7 is **not assumed** by Core V2. Roof access remains guaranteed through the protected stair system unless later professional design resolves direct elevator service.
 
@@ -86,13 +87,15 @@ New enclosure:
 
 Stair B remains a protected remote egress reservation. It is **not deleted** to make room for the freight lift.
 
+Stair B continues to B1. At Floor 1, discharge-direction control must prevent evacuees from unintentionally continuing below the modeled level of exit discharge.
+
 ## 5. Stair A
 
 East Stair A remains:
 - X 60–72 / Y 54–72;
 - 12' × 18';
 - south access;
-- continuous Floors 1–6 and Level 7.
+- continuous B1 through Floors 1–6 and Level 7.
 
 ## 6. Stair continuity geometry
 
@@ -131,11 +134,41 @@ Floor-specific geometry must yield to these openings.
 The east MEP/riser reservation remains approximately:
 - X50–60 / Y66–72.
 
+It now continues conceptually from B1 through Level 7.
+
 Floor-specific service rooms may be rebalanced but may not intrude into the shared vertical systems.
+
+## 8A. B1 Technical / Service Basement
+
+B1 is a deliberate **support/training level**, not an additional E-Q-U-I-T-Y developmental floor.
+
+- FFE: **-13'-6"**
+- same 72' × 72' coordination footprint;
+- no normal public browsing;
+- authorized staff/learner/instructor access;
+- passenger elevator, freight/service elevator, Stair A, Stair B and MEP continue to B1.
+
+B1 program authority:
+
+- `BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `production/basement-b1-program.json`
+
+Primary conceptual functions:
+
+- mechanical plant;
+- electrical/emergency power;
+- fire protection/water;
+- network/telecom core;
+- sump/flood management;
+- facilities workshop/storage;
+- building-systems lab;
+- service receiving/staging.
+
+The basement exists because it materially improves building-systems, emergency, infrastructure, cybersecurity and operations simulation. It is not described as a code requirement.
 
 ## 9. Floor-plan consequence
 
-Every Floor 1–6 plan and the Level 7 roof plan must be regenerated.
+The B1 plan, every Floor 1–6 plan and the Level 7 roof plan must be regenerated.
 
 The west/north support band changes because:
 - the freight shaft now occupies X0–8 / Y60–72;
@@ -147,7 +180,8 @@ The primary identity/program of each floor should remain stable where possible; 
 ## 10. Combined-model requirement
 
 Core V2 is not considered spatially validated until a combined building model proves:
-- correct floor elevations;
+- B1 through roof finished-floor elevations;
+- Floor 1 site/exit-discharge geometry;
 - continuous shafts;
 - continuous stairs;
 - coordinated slab openings;
@@ -157,7 +191,9 @@ Per-floor viewers remain useful, but they become **derived isolated views** of t
 
 ## 11. Egress limitation
 
-Core V2 deliberately retains two stair reservations.
+Core V2 deliberately retains two stair reservations from B1 through Level 7.
+
+Floor 1 is the modeled level of exit discharge. Because the stairs continue below it, the simulation requires explicit discharge-direction barriers/wayfinding at Floor 1 and exterior discharge paths to grade/open space/public way.
 
 The new service/freight elevator must never be described as replacing a required stair or exit without a licensed code analysis establishing a compliant design.
 
@@ -178,3 +214,30 @@ Until Core V2 is merged to main:
 - old artifacts must not be silently overwritten without versioning or clear legacy status.
 
 After migration validation and owner approval, REFERENCE-AUTHORITY will designate Core V2 as canonical.
+
+
+## 14. Floor 1 site / discharge layer
+
+Canonical exterior/egress simulation authority:
+
+- `FLOOR-01-SITE-EGRESS-SIMULATION.md`
+- `production/floor-01/floor-01-site-egress.json`
+
+The layer defines:
+- public/accessible south approach;
+- Stair A east discharge;
+- Stair B north/rear discharge;
+- secure west service entrance/apron;
+- public-way connection;
+- primary and alternate assembly areas;
+- emergency equipment / accountability concepts.
+
+These are simulation-grade planning assumptions, not a permit/site-plan claim.
+
+## 15. Code/safety research reference
+
+Read:
+
+`SIMULATION-CODE-REFERENCE-PROFILE.md`
+
+before changing egress, basement, accessibility, emergency-action-plan or exit-discharge semantics.
