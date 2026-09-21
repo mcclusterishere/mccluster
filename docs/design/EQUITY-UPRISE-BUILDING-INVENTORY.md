@@ -353,7 +353,7 @@ Do not add extra enclosed floors merely because a separate web page exists. Leve
 
 B1 sits beneath the developmental building at **-13'-6"**.
 
-It is **not** part of the six-letter E-Q-U-I-T-Y progression and is not a normal public program floor.
+It is **not** part of the six-letter E-Q-U-I-T-Y progression and is not a normal public program floor. It is the restricted **Underground Operations / Technical Service** layer and the canonical gateway to the future inter-building tunnel backbone.
 
 Its job is to make the virtual headquarters behave like a serious physical/digital twin by housing:
 - mechanical plant;
@@ -363,7 +363,11 @@ Its job is to make the virtual headquarters behave like a serious physical/digit
 - sump/flood management;
 - facilities workshop/storage;
 - building-systems lab;
-- service receiving/staging.
+- service receiving/staging;
+- Tunnel Operations Concourse / Security Gate;
+- Tunnel Portal / Transfer Lock.
+
+Live B1/tunnel access is limited to McCluster house-owner or explicitly delegated underground-operations-admin authority. Ordinary Equity Uprise admin/staff roles do not inherit it. Learner/instructor work occurs in a sandboxed clone.
 
 B1 also creates a persistent training substrate for building systems, emergency response, infrastructure, cybersecurity, continuity and operational decision-support exercises.
 
@@ -372,6 +376,8 @@ Floor 1 remains the modeled level of exit discharge.
 Authority:
 - `equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
 - `equity-uprise-building/production/basement-b1-program.json`
+- `equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
+- `equity-uprise-building/production/underground-tunnel-network.json`
 
 ## Floor 1 canonical file
 
