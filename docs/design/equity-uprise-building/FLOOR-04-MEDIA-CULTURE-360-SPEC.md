@@ -6,6 +6,11 @@
 > This file is the source of truth for Floor 4 floor-plan work, 360 panorama generation, hotspot placement, 3D reconstruction, and implementation.  
 > Do not generate a Floor 4 environment that conflicts with this document.
 
+
+> **Core V2 migration authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Combined-model finished-floor elevation: **+40'-6"**.
+> Shared vertical systems override any stale Core V1 coordinate language on this branch.
+
 ## 1. Repo-derived purpose
 
 Floor 4 spatializes the existing Equity Uprise media/culture functions documented in the repo.
@@ -102,25 +107,26 @@ It is **not**:
 
 ## 3. Locked building shell
 
-Floor 4 inherits the exact building datum from Floors 1–3.
+This level inherits the Core V2 building datum exactly.
 
 - Exterior footprint: **72'-0" × 72'-0"**
 - Gross conceptual area: **5,184 sq ft**
 - Structural coordination grid: **18' × 18'**
-- Floor-to-floor target: **13'-6"**
+- Floor-to-floor: **13'-6"**
+- Finished-floor elevation in combined model: **+40'-6"**
 - North is up.
 
-The following vertical systems are fixed:
+Shared vertical systems:
+- passenger elevator: **X54–62 / Y34–44**
+- West Service Core: **X0–18 / Y54–72**
+- service/freight elevator shaft: **X0–8 / Y60–72**
+- revised Stair B: **X8–18 / Y54–72**
+- Stair A: **X60–72 / Y54–72**
+- MEP/riser reservation: approximately **X50–60 / Y66–72**
 
-- Elevator hoistway: **X 54–62 / Y 34–44**
-- Stair A: **X 60–72 / Y 54–72**
-- Stair B: **X 0–12 / Y 54–72**
-- MEP/riser reservation: approximately **X 50–60 / Y 66–72**
-- Canonical 360 camera datum: approximately **(36,28)**
+Both stairs must physically rise the full **13'-6"** between finished floors in combined deterministic geometry. Floor slabs must preserve the shared elevator/stair openings from `building-core-v2.json`.
 
-No media/culture program may move these systems.
-
----
+The service/freight elevator is a service system and is **not** counted as a substitute for a required exit.
 
 ## 4. Exterior-access rule
 
@@ -329,49 +335,70 @@ Where studio acoustics require opaque wall construction, the exterior may remain
 
 ## 12. North support band
 
-### Corridor
-- **Y 54–60**
-- approximately 6 ft clear target
+The north support band is replanned around the Core V2 West Service Core.
+
+### West service approach
+- **X0–18 / Y54–60**
+- conceptual approach to the freight/service elevator and Stair B
+- no public furniture or floor-specific program may block it
+
+### Public/support corridor
+- **X18–60 / Y54–60**
+- target approximately **6 ft clear**
 
 ### Accessible restroom A
-- **X 12–20 / Y 60–70**
+- **X18–26 / Y60–70**
+- conceptual 8' × 10'
 
 ### Accessible restroom B
-- **X 20–28 / Y 60–70**
+- **X26–34 / Y60–70**
+- conceptual 8' × 10'
 
 ### Media equipment / storage
-- **X 28–40 / Y 60–72**
-- secure storage for cameras, small lighting kits, stands, cables, archive handling materials and media supplies
+- **X34–42 / Y60–72**
+- conceptual 8' × 12'
 
 ### Media / music IT
-- **X 40–50 / Y 60–72**
-- network/AV support;
-- playback/distribution support;
-- secure systems;
-- not a public control room
+- **X42–50 / Y60–72**
+- conceptual 8' × 12'
 
 ### Janitor
-- **X 50–54 / Y 60–66**
+- **X50–54 / Y60–66**
 
 ### MEP / risers
-- approximately **X 50–60 / Y 66–72**
+- **X50–60 / Y66–72**
+- vertically stacked Core V2 reservation
 
----
+The service/freight shaft, both stair enclosures and all shared slab openings are do-not-block geometry.
 
 ## 13. Stairs / vertical circulation
 
-### Elevator
-Same exact hoistway and orientation as Floors 1–3.
+### Passenger elevator
+- shaft **X54–62 / Y34–44**
+- west-facing public door
+- primary public vertical circulation
+
+### Service / freight elevator
+- shaft **X0–8 / Y60–72**
+- south-facing service access into the north service band
+- floor program may not intrude into the shaft
+- not treated as a required exit
 
 ### Stair A
-- **X 60–72 / Y 54–72**
+- enclosure **X60–72 / Y54–72**
+- protected vertical continuity through the building stack
+- full **13'-6"** rise per level in combined geometry
+- schematic dogleg/U-shaped stair with intermediate landing
+- shared slab opening approximately **X60.75–71.25 / Y58.25–71.25**
 
 ### Stair B
-- **X 0–12 / Y 54–72**
+- enclosure **X8–18 / Y54–72**
+- protected remote vertical continuity through the building stack
+- full **13'-6"** rise per level in combined geometry
+- schematic dogleg/U-shaped stair with intermediate landing
+- shared slab opening approximately **X8.75–17.25 / Y58.25–71.25**
 
-Both remain protected internal stair enclosures on Floor 4.
-
----
+The old short decorative stair placeholders are retired on the Core V2 branch. Exact code geometry remains a licensed professional-design task.
 
 ## 14. Circulation
 
@@ -673,7 +700,7 @@ The floor may be atmospheric; the content must remain factual.
 - [ ] 18' grid preserved
 - [ ] elevator at X 54–62 / Y 34–44
 - [ ] Stair A at X 60–72 / Y 54–72
-- [ ] Stair B at X 0–12 / Y 54–72
+- [ ] Stair B at X 8–18 / Y 54–72
 - [ ] MEP/riser stack preserved
 - [ ] no exterior public door
 - [ ] no balcony/terrace
@@ -688,3 +715,13 @@ The floor may be atmospheric; the content must remain factual.
 - [ ] no invented music/events/photos
 - [ ] room remains modest/simple
 - [ ] generated imagery remains subordinate to written/CAD geometry
+
+
+### Core V2 migration QC
+- [ ] finished-floor elevation matches `building-core-v2.json`
+- [ ] service/freight elevator shaft X0–8 / Y60–72 is preserved
+- [ ] revised Stair B X8–18 / Y54–72 is preserved
+- [ ] Stair A X60–72 / Y54–72 is preserved
+- [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
+- [ ] shared slab openings remain unobstructed
+- [ ] no floor-local decorative stair is treated as vertical-continuity authority
