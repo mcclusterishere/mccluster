@@ -398,8 +398,15 @@ Exterior/site authority:
 - `FLOOR-01-SITE-EGRESS-SIMULATION.md`
 - `production/floor-01/floor-01-site-egress.json`
 
+Generated site/life-safety references:
+- `references/floor-01/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf`
+- `references/floor-01/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg`
+- `references/floor-01/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png`
+
+Those three files are generated-only and visualize the site/egress authority; they do not override it.
+
 B1 authority:
-- `BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
 - `production/basement-b1-program.json`
 
 Because protected stairs continue below Floor 1, the level-of-discharge landing must include modeled barriers/wayfinding that prevent occupants from unintentionally continuing to B1 during evacuation.
