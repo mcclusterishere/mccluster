@@ -129,13 +129,23 @@ def route_config(n):
       "conversation":{"type":"conversation","endpoint_hint":"eu-converse","access":"public-with-thread-ownership"},
       "member_dashboard":{"type":"url","url":"/dashboard.html","access":"authenticated-member"},
       "opportunities":{"type":"url","url":"/fellowships.html","access":"public"},
+      "fellowship_record":{"type":"url","url":"/equity-uprise-fellowship.html","access":"public-record-with-consent"},
       "people_network":{"type":"url","url":"/profile.html","access":"public-self-controlled"},
       "meeting_workspace":{"type":"ui_state","target":"meeting_workspace","endpoint_hints":["eu-calendar"],"access":"authenticated-member-or-staff"},
+      "enterprise_program":{
+        "type":"url","url":"/sites-details.html#equity",
+        "access":"public-program-information",
+        "fit_review":"required-before-participation",
+        "agreement":"required",
+        "approval_gated":True,
+        "note":"Program information only. Pricing is not architectural authority and participation is never implied by entering this route."
+      },
 
       # Media + culture.
       "media_catalogue":{"type":"url","url":"/album.html?album=equity-uprise","access":"public"},
       "rally_archive":{"type":"url","url":"/walls/eu-rally.html","access":"public"},
       "creator_studio":{"type":"url","url":"/creator.html","access":"authenticated-for-write"},
+      "creator_licensing":{"type":"url","url":"/music-creator-terms.html","access":"public-terms-authenticated-checkout"},
       "media_derivatives":{"type":"ui_state","target":"media_derivatives","endpoint_hints":["eu-derivatives"],"access":"authorized-editor-or-admin"},
       "media_release_ops":{"type":"ui_state","target":"media_release_ops","endpoint_hints":["eu-music","eu-ddex-worker"],"access":"authorized-admin","approval_gated":True},
 
@@ -149,6 +159,12 @@ def route_config(n):
       "institutional_command":{"type":"url","url":"/equity-uprise.html","state_hint":"institutional","access":"public-summary-with-authenticated-operations"},
       "initiative_portfolio":{"type":"ui_state","target":"initiative_portfolio","access":"authorized-staff"},
       "partner_briefing":{"type":"url","url":"/equity-uprise.html","state_hint":"join","access":"public-contact-private-follow-through"},
+      "program_support":{
+        "type":"url","url":"/give.html",
+        "access":"public-support-pathway",
+        "detail_state":"quiet-until-governance",
+        "note":"Detailed per-program fund meters, reserve/custody/accounting state and internal finance remain non-public until governance is publishable."
+      },
       "admin_desk":{"type":"url","url":"/uprise-admin.html","access":"editor-or-admin"},
       "control_plane":{"type":"ui_state","target":"control_plane","endpoint_hints":["eu-control","eu-status"],"access":"authorized-admin","approval_gated":True},
 
