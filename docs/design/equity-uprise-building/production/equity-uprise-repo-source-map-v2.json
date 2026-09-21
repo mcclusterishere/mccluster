@@ -16,9 +16,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 77,
-  "capability_source_count": 50,
-  "support_only_count": 27,
+  "candidate_count": 243,
+  "capability_source_count": 101,
+  "support_only_count": 142,
   "entries": [
     {
       "path": "_unfinished/README.md",
@@ -511,10 +511,12 @@
     },
     {
       "path": "docs/control-plane/SPATIAL-INTELLIGENCE.md",
-      "classification": "documentation_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+      "classification": "capability_source",
+      "capability_ids": [
+        "halo-spatial-intelligence"
+      ],
+      "support_only": false,
+      "rationale": "Defines the canonical Seek First / Hitman's Halo control-plane boundary and the sanitized Equity Uprise Floor 6 projection."
     },
     {
       "path": "docs/design/HERE-BRAND-LIBRARY.md",
@@ -1920,11 +1922,29 @@
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     },
     {
+      "path": "workers/mccluster/src/index.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "halo-spatial-intelligence"
+      ],
+      "support_only": false,
+      "rationale": "Routes the sanitized Equity Uprise Halo Globe projection while preserving the owner-only Seek First surface."
+    },
+    {
       "path": "workers/mccluster/src/seek-first/catalogs.js",
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
+      "path": "workers/mccluster/src/seek-first/equity-uprise-halo.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "halo-spatial-intelligence"
+      ],
+      "support_only": false,
+      "rationale": "Implements the read-only, entitlement-filtered Halo Globe projection contract."
     },
     {
       "path": "workers/mccluster/test/seek-first-catalogs.test.mjs",
