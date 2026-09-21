@@ -1,6 +1,6 @@
 # Equity Uprise Building UI — Repo Inventory & Image Plan
 
-> Status: **SIX ENCLOSED FLOORS + LEVEL 7 ROOF/MOBILITY PORTAL LOCKED. FLOORS 1–5 SPECS + SCHEMATIC GEOMETRY LOCKED. FLOOR 6 REQUIRES ITS QC SPEC; LEVEL 7 ROOF PROGRAM IS OWNER-LOCKED BUT HELIPAD GEOMETRY REMAINS PENDING FEASIBILITY.**
+> Status: **SIX ENCLOSED FLOORS + LEVEL 7 ROOF/MOBILITY PORTAL LOCKED. FLOORS 1–6 SPECS + SCHEMATIC GEOMETRY LOCKED. LEVEL 7 ROOF PROGRAM IS OWNER-LOCKED; ROOF/HELIPAD GEOMETRY REMAINS PENDING FEASIBILITY.**
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
 > Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 > Canonical Floor 1 spec: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
@@ -18,6 +18,9 @@
 > Canonical Floor 5 spec: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
 > Canonical Floor 5 plan basis: `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
 > Canonical Floor 5 plan assets: `docs/design/equity-uprise-building/references/floor-05/`
+> Canonical Floor 6 spec: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
+> Canonical Floor 6 plan basis: `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
+> Canonical Floor 6 plan assets: `docs/design/equity-uprise-building/references/floor-06/`
 > **Level 7 roof pre-program:** `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`
 
 ## 1. What exists today
@@ -218,7 +221,7 @@ The building is intentionally compact: **six enclosed occupied floors plus a sev
 | Level | Locked identity | Real Equity Uprise functions compressed into the level | Builder-spec status |
 |---|---|---|---|
 | 7 | Roof / Mobility Portal | Rooftop overlook, vertical arrival, cross-site navigation/departure, candidate helipad/VTOL mobility zone pending feasibility | **PROGRAM LOCKED / GEOMETRY PENDING** |
-| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy, transition/access to roof | pending |
+| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy, transition/access to roof | **LOCKED** |
 | 5 | Policy + Proof | Working paper, policy archive, Docket 516R, evidence, credentials, research/proof | **LOCKED** |
 | 4 | Media + Culture | Broadcast/event media, music, artists, civic anthems, cultural storytelling | **LOCKED** |
 | 3 | Fellowship + Network | Policy Fellowship, fellowship directory, profiles, people, opportunities/matching | **LOCKED** |
@@ -486,7 +489,12 @@ Canonical files:
 - `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
 - `docs/design/equity-uprise-building/references/floor-02/`
 
-**Floor 6 — NOT YET LOCKED AS BUILDER/360 SPEC**
+**Floor 6 — LOCKED**
+
+Canonical files:
+- `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
+- `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
+- `docs/design/equity-uprise-building/references/floor-06/`
 
 **Level 7 — PROGRAM LOCKED; ROOF/HELIPAD GEOMETRY NOT YET LOCKED**
 
