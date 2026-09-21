@@ -89,7 +89,9 @@ def zones(level):
     return out
 
 def circles(level):
-    return [(x["label"].upper(),(x["center_ft"]["x"],x["center_ft"]["y"]),x["radius_ft"],x["kind"]) for x in level.get("circles",[])]
+    out=[(x["label"].upper(),(x["center_ft"]["x"],x["center_ft"]["y"]),x["radius_ft"],x["kind"]) for x in level.get("circles",[])]
+    out += [(x["label"].upper(),(x["center_ft"]["x"],x["center_ft"]["y"]),x["radius_ft"],x.get("kind","instrument")) for x in level.get("spheres",[])]
+    return out
 
 def font(size,bold=False):
     p="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
