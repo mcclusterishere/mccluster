@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.7.0",
+  "schema_version": "2.8.0",
   "core_ref": "building-core-v2.json",
   "not_for_construction": true,
   "common_support": {
@@ -1053,5 +1053,21 @@
     }
   ],
   "capability_map_ref": "equity-uprise-capability-map-v2.json",
-  "development_program_ref": "../../equity-uprise-development/stage-competency-map.json"
+  "development_program_ref": "../../equity-uprise-development/stage-competency-map.json",
+  "render_policy": {
+    "default": "chassis-only-unless-floor-render-readiness-explicitly-allows-program-render",
+    "program_render_ready_levels": [
+      1
+    ],
+    "provisional_program_levels": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "rule": "Renderers may show shell/core/vertical systems on provisional levels, but must not present provisional room/program zones as final architecture unless an explicit design-debug mode is requested.",
+    "b1": "renderable-as-restricted-support-level-under-basement-b1-program-authority"
+  }
 }
