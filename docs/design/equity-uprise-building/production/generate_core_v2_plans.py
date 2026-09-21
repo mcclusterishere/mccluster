@@ -292,6 +292,129 @@ def dxf(level,path):
     m.add_text("NOT FOR CONSTRUCTION",dxfattribs={"layer":"TEXT","height":0.65}).set_placement((2,-3))
     doc.saveas(path)
 
+
+def site_plan_png(path):
+    W,H=1700,1700; m=150
+    sb=site["site_bounds_ft"]; sx=sb["x2"]-sb["x1"]; sy=sb["y2"]-sb["y1"]; s=min((W-2*m)/sx,(H-2*m)/sy)
+    X=lambda x:m+(x-sb["x1"])*s
+    Y=lambda y:H-m-(y-sb["y1"])*s
+    im=Image.new("RGB",(W,H),"white"); d=ImageDraw.Draw(im)
+    d.text((85,38),"EQUITY UPRISE — FLOOR 01 SITE / LIFE-SAFETY SCHEMATIC",font=font(30,True),fill="black")
+    d.text((85,82),"LEVEL OF EXIT DISCHARGE · GENERATED FROM floor-01-site-egress.json · NOT FOR CONSTRUCTION",font=font(17),fill=(55,55,55))
+    def rr(b,fillc,outline=(70,70,70),width=2):
+        d.rectangle((X(b["x1"]),Y(b["y2"]),X(b["x2"]),Y(b["y1"])),fill=fillc,outline=outline,width=width)
+    kind_fill={"public_way":(205,205,205),"walk":(225,225,218),"egress_walk":(220,230,225),"service":(210,200,188),"assembly":(218,228,210)}
+    for item in site.get("site_elements",[]):
+        if "bounds_ft" in item:
+            rr(item["bounds_ft"],kind_fill.get(item.get("kind"),(235,235,232)))
+            b=item["bounds_ft"]; d.text(((X(b["x1"])+X(b["x2"]))/2,(Y(b["y1"])+Y(b["y2"]))/2),item["label"].upper(),font=font(10,True),fill=(35,35,35),anchor="mm")
+        elif "polyline_ft" in item:
+            pts=[(X(x),Y(y)) for x,y in item["polyline_ft"]]
+            d.line(pts,fill=(80,115,95),width=max(4,int(6*s)),joint="curve")
+            mx=sum(p[0] for p in pts)/len(pts); my=sum(p[1] for p in pts)/len(pts)
+            d.text((mx,my),item["label"].upper(),font=font(10,True),fill=(35,75,55),anchor="mm")
+        elif item.get("kind")=="keep_clear":
+            off=float(item.get("offset_from_building_ft",12))
+            dashed_rect(d,(X(-off),Y(72+off),X(72+off),Y(-off)),fillc=(133,26,29),width=2)
+            d.text((X(72+off)+5,Y(72+off)+5),item["label"].upper(),font=font(9),fill=(115,25,29))
+    # Building footprint.
+    d.rectangle((X(0),Y(72),X(72),Y(0)),outline="black",width=6)
+    d.text((X(36),Y(36)),"EQUITY UPRISE BUILDING",font=font(16,True),fill=(20,20,20),anchor="mm")
+    # Exterior openings.
+    for obj in site.get("exterior_openings",[]):
+        loc=obj["location"]; facade=loc.get("facade"); seg=None
+        if facade=="east": seg=((72,loc["y1"]),(72,loc["y2"]))
+        elif facade=="west": seg=((0,loc["y1"]),(0,loc["y2"]))
+        elif facade=="north": seg=((loc["x1"],72),(loc["x2"],72))
+        elif facade=="south" and "x1" in loc:
+            y=loc.get("y",0); seg=((loc["x1"],y),(loc["x2"],y))
+        if seg:
+            a,b=seg; d.line((X(a[0]),Y(a[1]),X(b[0]),Y(b[1])),fill=(133,26,29),width=8)
+            d.text(((X(a[0])+X(b[0]))/2+5,(Y(a[1])+Y(b[1]))/2-12),obj["label"].upper(),font=font(9,True),fill=(115,25,29))
+    # Emergency equipment markers.
+    for eq in site.get("emergency_equipment",[]):
+        loc=eq.get("location_ft")
+        if not loc: continue
+        x,y=loc["x"],loc["y"]; d.ellipse((X(x)-6,Y(y)-6,X(x)+6,Y(y)+6),fill=(255,255,255),outline=(133,26,29),width=2)
+        d.text((X(x)+9,Y(y)-7),eq["label"].upper(),font=font(8),fill=(80,20,22))
+    d.text((85,1610),"Site/life-safety simulation reference only — not a permit, fire-protection, civil, or emergency-services plan.",font=font(13),fill=(55,55,55))
+    im.save(path)
+
+def site_plan_svg(path):
+    W,H=1200,1200; m=105
+    sb=site["site_bounds_ft"]; sx=sb["x2"]-sb["x1"]; sy=sb["y2"]-sb["y1"]; s=min((W-2*m)/sx,(H-2*m)/sy)
+    X=lambda x:m+(x-sb["x1"])*s
+    Y=lambda y:H-m-(y-sb["y1"])*s
+    out=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',
+         '<style>.t{font-family:Arial,sans-serif;fill:#111}.small{font-size:8px}.med{font-size:11px}.title{font-size:18px;font-weight:700}.site{stroke:#555;stroke-width:1.2}.egress{stroke:#851A1D;stroke-width:4}.keep{fill:none;stroke:#851A1D;stroke-width:1.5;stroke-dasharray:6 5}.building{fill:none;stroke:#111;stroke-width:4}</style>',
+         '<text x="55" y="32" class="t title">EQUITY UPRISE — FLOOR 01 SITE / LIFE-SAFETY SCHEMATIC</text>',
+         '<text x="55" y="52" class="t med">LEVEL OF EXIT DISCHARGE · GENERATED FROM floor-01-site-egress.json · NOT FOR CONSTRUCTION</text>']
+    colors={"public_way":"#CDCDCD","walk":"#E1E1DA","egress_walk":"#DCE6DF","service":"#D2C8BC","assembly":"#DAE4D2"}
+    for item in site.get("site_elements",[]):
+        if "bounds_ft" in item:
+            b=item["bounds_ft"]; out.append(f'<rect x="{X(b["x1"])}" y="{Y(b["y2"])}" width="{(b["x2"]-b["x1"])*s}" height="{(b["y2"]-b["y1"])*s}" fill="{colors.get(item.get("kind"),"#ECECE8")}" class="site"/>')
+            out.append(f'<text x="{(X(b["x1"])+X(b["x2"]))/2}" y="{(Y(b["y1"])+Y(b["y2"]))/2}" text-anchor="middle" dominant-baseline="middle" class="t small">{esc(item["label"].upper())}</text>')
+        elif "polyline_ft" in item:
+            pts=" ".join(f'{X(x)},{Y(y)}' for x,y in item["polyline_ft"])
+            out.append(f'<polyline points="{pts}" fill="none" stroke="#50735F" stroke-width="{max(3,6*s)}"/>')
+            pts0=item["polyline_ft"]; mx=sum(x for x,_ in pts0)/len(pts0); my=sum(y for _,y in pts0)/len(pts0)
+            out.append(f'<text x="{X(mx)}" y="{Y(my)}" text-anchor="middle" class="t small">{esc(item["label"].upper())}</text>')
+        elif item.get("kind")=="keep_clear":
+            off=float(item.get("offset_from_building_ft",12))
+            out.append(f'<rect x="{X(-off)}" y="{Y(72+off)}" width="{(72+2*off)*s}" height="{(72+2*off)*s}" class="keep"/>')
+    out.append(f'<rect x="{X(0)}" y="{Y(72)}" width="{72*s}" height="{72*s}" class="building"/>')
+    out.append(f'<text x="{X(36)}" y="{Y(36)}" text-anchor="middle" class="t med">EQUITY UPRISE BUILDING</text>')
+    for obj in site.get("exterior_openings",[]):
+        loc=obj["location"]; facade=loc.get("facade"); seg=None
+        if facade=="east": seg=((72,loc["y1"]),(72,loc["y2"]))
+        elif facade=="west": seg=((0,loc["y1"]),(0,loc["y2"]))
+        elif facade=="north": seg=((loc["x1"],72),(loc["x2"],72))
+        elif facade=="south" and "x1" in loc:
+            y=loc.get("y",0); seg=((loc["x1"],y),(loc["x2"],y))
+        if seg:
+            a,b=seg; out.append(f'<line x1="{X(a[0])}" y1="{Y(a[1])}" x2="{X(b[0])}" y2="{Y(b[1])}" class="egress"/>')
+            out.append(f'<text x="{(X(a[0])+X(b[0]))/2+4}" y="{(Y(a[1])+Y(b[1]))/2-6}" class="t small">{esc(obj["label"].upper())}</text>')
+    for eq in site.get("emergency_equipment",[]):
+        loc=eq.get("location_ft")
+        if not loc: continue
+        out.append(f'<circle cx="{X(loc["x"])}" cy="{Y(loc["y"])}" r="4" fill="#fff" stroke="#851A1D"/>')
+        out.append(f'<text x="{X(loc["x"])+6}" y="{Y(loc["y"])-4}" class="t small">{esc(eq["label"].upper())}</text>')
+    out.append('<text x="55" y="1165" class="t med">Simulation reference only — not a permit, civil, fire-protection, or emergency-services plan.</text>')
+    out.append('</svg>'); path.write_text("\n".join(out),encoding="utf-8")
+
+def site_plan_dxf(path):
+    doc=ezdxf.new("R2010",setup=True); msp=doc.modelspace()
+    for name,color in [("SITE",8),("BUILDING",7),("EGRESS",1),("ASSEMBLY",3),("EQUIPMENT",1),("TEXT",7)]:
+        if name not in doc.layers: doc.layers.add(name,color=color)
+    def rect2(b,layer):
+        msp.add_lwpolyline([(b["x1"],b["y1"]),(b["x2"],b["y1"]),(b["x2"],b["y2"]),(b["x1"],b["y2"]),(b["x1"],b["y1"])],dxfattribs={"layer":layer})
+    for item in site.get("site_elements",[]):
+        if "bounds_ft" in item:
+            rect2(item["bounds_ft"],"ASSEMBLY" if item.get("kind")=="assembly" else "SITE")
+            b=item["bounds_ft"]; msp.add_text(item["label"].upper(),dxfattribs={"layer":"TEXT","height":0.6}).set_placement(((b["x1"]+b["x2"])/2,(b["y1"]+b["y2"])/2))
+        elif "polyline_ft" in item:
+            msp.add_lwpolyline(item["polyline_ft"],dxfattribs={"layer":"EGRESS"})
+        elif item.get("kind")=="keep_clear":
+            off=float(item.get("offset_from_building_ft",12)); rect2({"x1":-off,"y1":-off,"x2":72+off,"y2":72+off},"EGRESS")
+    rect2({"x1":0,"y1":0,"x2":72,"y2":72},"BUILDING")
+    for obj in site.get("exterior_openings",[]):
+        loc=obj["location"]; facade=loc.get("facade"); seg=None
+        if facade=="east": seg=((72,loc["y1"]),(72,loc["y2"]))
+        elif facade=="west": seg=((0,loc["y1"]),(0,loc["y2"]))
+        elif facade=="north": seg=((loc["x1"],72),(loc["x2"],72))
+        elif facade=="south" and "x1" in loc:
+            y=loc.get("y",0); seg=((loc["x1"],y),(loc["x2"],y))
+        if seg:
+            a,b=seg; msp.add_line(a,b,dxfattribs={"layer":"EGRESS"}); msp.add_text(obj["label"].upper(),dxfattribs={"layer":"TEXT","height":0.5}).set_placement(((a[0]+b[0])/2,(a[1]+b[1])/2))
+    for eq in site.get("emergency_equipment",[]):
+        loc=eq.get("location_ft")
+        if not loc: continue
+        msp.add_circle((loc["x"],loc["y"]),0.45,dxfattribs={"layer":"EQUIPMENT"})
+        msp.add_text(eq["label"].upper(),dxfattribs={"layer":"TEXT","height":0.45}).set_placement((loc["x"]+0.7,loc["y"]))
+    msp.add_text("FLOOR 01 SITE / LIFE-SAFETY SCHEMATIC - NOT FOR CONSTRUCTION",dxfattribs={"layer":"TEXT","height":0.9}).set_placement((-30,104))
+    doc.saveas(path)
+
+
 manifest=[]
 for level in plan_levels:
     n=level["level"];d=ref_dir(level);d.mkdir(parents=True,exist_ok=True);base=OUT_NAMES[n]
