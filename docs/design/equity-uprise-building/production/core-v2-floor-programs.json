@@ -475,8 +475,12 @@
           "read_only": true
         }
       ],
-      "design_maturity": "pre-iterative-program-rewrite",
-      "render_readiness": "chassis-only-not-final-program"
+      "design_maturity": "reconciled-current-iterative-pass",
+      "render_readiness": "inventory-ready-hybrid-3d-next",
+      "working_development_stage": "connect-advance",
+      "program_reconciliation_ref": "../FLOOR-03-PROGRAM-RECONCILIATION.md",
+      "object_inventory_ref": "floor-03/floor-03-object-inventory.json",
+      "preservation_map_ref": "../FLOOR-03-V1-V2-PRESERVATION-MAP.md"
     },
     {
       "level": 4,
