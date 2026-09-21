@@ -72,7 +72,14 @@ Read program and geometry authority in this order:
    - Floor 1 additional activity/simulation authority:
      - `docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md`
      - `docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json`
-   - These Floor 1 files define institutional activity, simulation systems, operating modes and training scenarios. They do not override the shared Core V2 vertical chassis.
+     - `docs/design/equity-uprise-building/FLOOR-01-SITE-EGRESS-SIMULATION.md`
+     - `docs/design/equity-uprise-building/production/floor-01/floor-01-site-egress.json`
+   - B1 support-level authority:
+     - `docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+     - `docs/design/equity-uprise-building/production/basement-b1-program.json`
+   - Code/safety research profile:
+     - `docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md`
+   - These files define institutional activity, simulation systems, site/egress behavior, the non-developmental technical basement and training scenarios. They do not override the shared Core V2 vertical chassis.
 
 6. Floor-specific long-form specification:
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
@@ -191,11 +198,15 @@ Use the written floor spec and building inventory. Visual interpretation may add
 - camera datum;
 - floor-to-floor continuity.
 
-## Floor 1 locked geometry
+## B1 + Floor 1 coordinated geometry
 
-Floor 1 currently establishes the building datum:
+The Core V2 stack now includes a non-developmental **B1 Technical / Service Basement** at FFE **-13'-6"**. B1 is support/training infrastructure and does not consume an E-Q-U-I-T-Y letter.
 
-- floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
+Floor 1 remains the principal building datum and the modeled **level of exit discharge**:
+
+- B1 and Floor 1 coordination plate: **72'-0" × 72'-0"**;
+- B1 FFE: **-13'-6"**;
+- Floor 1 FFE: **0'-0"**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
 - service/freight elevator shaft: **X 0–8 / Y 60–72**;
@@ -203,6 +214,8 @@ Floor 1 currently establishes the building datum:
 - Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - 360 camera datum: approximately **(36, 28), 5'-4" AFF**;
+- protected stairs and both elevator shafts continue to B1;
+- Floor 1 stair landings require discharge-direction control to prevent accidental descent to B1 during evacuation;
 - 0° north: Reception / Concierge / Security + Journey Wall;
 - +90° east: elevator/core;
 - 180° south: entrance/vestibule on Floor 1 only;
