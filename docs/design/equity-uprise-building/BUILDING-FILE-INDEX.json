@@ -21,7 +21,7 @@
       ".github/copilot-instructions.md"
     ]
   },
-  "tracked_count": 226,
+  "tracked_count": 230,
   "categories": {
     "agent_entrypoints": [
       ".cursorrules",
@@ -68,7 +68,9 @@
       "docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md",
       "docs/design/equity-uprise-building/FLOOR-03-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md",
+      "docs/design/equity-uprise-building/FLOOR-04-PROGRAM-RECONCILIATION.md",
       "docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md",
+      "docs/design/equity-uprise-building/FLOOR-04-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md",
       "docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md",
@@ -137,11 +139,13 @@
       "docs/design/equity-uprise-building/production/floor-03/floor-03-scene-manifest.json",
       "docs/design/equity-uprise-building/production/floor-03/floor-03-states.json",
       "docs/design/equity-uprise-building/production/floor-04/README.md",
+      "docs/design/equity-uprise-building/production/floor-04/build_equity_uprise_floor_04_v2.py",
       "docs/design/equity-uprise-building/production/floor-04/floor-04-camera.json",
       "docs/design/equity-uprise-building/production/floor-04/floor-04-geometry-notes.md",
       "docs/design/equity-uprise-building/production/floor-04/floor-04-hotspots.json",
       "docs/design/equity-uprise-building/production/floor-04/floor-04-lighting.json",
       "docs/design/equity-uprise-building/production/floor-04/floor-04-materials.json",
+      "docs/design/equity-uprise-building/production/floor-04/floor-04-object-inventory.json",
       "docs/design/equity-uprise-building/production/floor-04/floor-04-routing.json",
       "docs/design/equity-uprise-building/production/floor-04/floor-04-scene-manifest.json",
       "docs/design/equity-uprise-building/production/floor-04/floor-04-states.json",
@@ -302,6 +306,14 @@
     {
       "sha": "7ea458406cc862656b5952a350fe87bcdc16110b",
       "role": "Historical fully stacked whole-building interactive viewer"
+    },
+    {
+      "sha": "07cc968e80f7c703cdea739ac38554331cad5a7c",
+      "role": "Historical Floor 4 Media + Culture canonical program/spec"
+    },
+    {
+      "sha": "8f3847d171864dcd721fe98ff8c1b2a469c41906",
+      "role": "Historical Floor 4 Media + Culture locked schematic geometry"
     }
   ]
 }
