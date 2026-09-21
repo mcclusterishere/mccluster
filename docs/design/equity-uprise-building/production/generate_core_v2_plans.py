@@ -420,15 +420,21 @@ for level in plan_levels:
     n=level["level"];d=ref_dir(level);d.mkdir(parents=True,exist_ok=True);base=OUT_NAMES[n]
     paths={"png":d/f"{base}.png","svg":d/f"{base}.svg","dxf":d/f"{base}.dxf"}
     png(level,paths["png"]);svg(level,paths["svg"]);dxf(level,paths["dxf"])
-    (d/"README.md").write_text(plan_readme(level,base))
-    manifest.append({
+    row={
         "level":n,
         "title":level["title"],
         "elevation_ft":level["elevation_ft"],
         "design_maturity":level.get("design_maturity","support-level" if level.get("basement") else None),
         "render_readiness":level.get("render_readiness"),
         "files":{k:str(v.relative_to(BUILDING)) for k,v in paths.items()}
-    })
+    }
+    if n==1:
+        site_paths={"png":d/f"{SITE_OUT_NAME}.png","svg":d/f"{SITE_OUT_NAME}.svg","dxf":d/f"{SITE_OUT_NAME}.dxf"}
+        site_plan_png(site_paths["png"]);site_plan_svg(site_paths["svg"]);site_plan_dxf(site_paths["dxf"])
+        row["site_plan_files"]={k:str(v.relative_to(BUILDING)) for k,v in site_paths.items()}
+        row["site_plan_authority"]="production/floor-01/floor-01-site-egress.json"
+    (d/"README.md").write_text(plan_readme(level,base))
+    manifest.append(row)
 
 # contact sheet
 ims=[Image.open(ref_dir(x)/f"{OUT_NAMES[x['level']]}.png").resize((400,420)) for x in plan_levels]
