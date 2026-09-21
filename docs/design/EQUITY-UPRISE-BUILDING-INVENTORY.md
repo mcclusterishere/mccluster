@@ -127,7 +127,7 @@ As of the 2026-09-21 repo-wide reconciliation:
 
 - **244** Equity Uprise source/support files are currently classified in the source ledger;
 - **102** are directly tied to one or more building capabilities;
-- **160** are support/development-authority sources (presentation, migration wrappers, runtime plumbing, tests/build support, Lifetime Development authority, and digital-twin program authority) and intentionally do not create additional rooms/floors;
+- **152** are support/development-authority sources (presentation, migration wrappers, runtime plumbing, tests/build support, Lifetime Development authority, and digital-twin program authority) and intentionally do not create additional rooms/floors;
 - **56** canonical Equity Uprise capabilities are represented in the building;
 - repo-source exact-set classification is enforced by `production/verify_equity_uprise_repo_sources.py`;
 - capability/floor/routing audit: **429 / 429 passed**;
