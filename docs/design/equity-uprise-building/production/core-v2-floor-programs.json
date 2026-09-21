@@ -1,0 +1,586 @@
+{
+  "schema_version": "1.0.0",
+  "core_ref": "building-core-v2.json",
+  "not_for_construction": true,
+  "common_support": {
+    "corridor": {
+      "bounds_ft": {
+        "x1": 18,
+        "y1": 54,
+        "x2": 60,
+        "y2": 60
+      }
+    },
+    "restroom_a": {
+      "bounds_ft": {
+        "x1": 18,
+        "y1": 60,
+        "x2": 26,
+        "y2": 70
+      }
+    },
+    "restroom_b": {
+      "bounds_ft": {
+        "x1": 26,
+        "y1": 60,
+        "x2": 34,
+        "y2": 70
+      }
+    },
+    "support_a": {
+      "bounds_ft": {
+        "x1": 34,
+        "y1": 60,
+        "x2": 42,
+        "y2": 72
+      }
+    },
+    "support_b": {
+      "bounds_ft": {
+        "x1": 42,
+        "y1": 60,
+        "x2": 50,
+        "y2": 72
+      }
+    },
+    "janitor": {
+      "bounds_ft": {
+        "x1": 50,
+        "y1": 60,
+        "x2": 54,
+        "y2": 66
+      }
+    }
+  },
+  "levels": [
+    {
+      "level": 1,
+      "id": "floor-01",
+      "title": "Lobby + Intake",
+      "elevation_ft": 0,
+      "south_condition": "ground-level public entrance",
+      "support_names": [
+        "Reception Support / Storage",
+        "IT / Electrical"
+      ],
+      "zones": [
+        {
+          "label": "Entry Vestibule",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 29,
+            "y1": 0,
+            "x2": 43,
+            "y2": 9
+          }
+        },
+        {
+          "label": "Visitor Lounge",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 12,
+            "x2": 18,
+            "y2": 28
+          }
+        },
+        {
+          "label": "Intake / Consultation",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 32,
+            "x2": 16,
+            "y2": 44
+          }
+        },
+        {
+          "label": "Reception Feature",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 28,
+            "y1": 50,
+            "x2": 44,
+            "y2": 54
+          }
+        },
+        {
+          "label": "Reception Desk",
+          "kind": "furniture",
+          "bounds_ft": {
+            "x1": 30,
+            "y1": 44,
+            "x2": 42,
+            "y2": 47
+          }
+        },
+        {
+          "label": "Directory",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          }
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "id": "floor-02",
+      "title": "Public Forum",
+      "elevation_ft": 13.5,
+      "south_condition": "sealed upper-floor glazing",
+      "support_names": [
+        "Forum Storage",
+        "AV / IT"
+      ],
+      "zones": [
+        {
+          "label": "Public Forum Zone",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 24,
+            "y1": 28,
+            "x2": 48,
+            "y2": 50
+          }
+        },
+        {
+          "label": "Public Forum Feature Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 24,
+            "y1": 50,
+            "x2": 48,
+            "y2": 54
+          }
+        },
+        {
+          "label": "Listening Lounge",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 14,
+            "x2": 18,
+            "y2": 30
+          }
+        },
+        {
+          "label": "Member Check-In",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          }
+        }
+      ],
+      "circles": [
+        {
+          "label": "12 ft Forum Table",
+          "kind": "furniture",
+          "center_ft": {
+            "x": 36,
+            "y": 39
+          },
+          "radius_ft": 6
+        }
+      ]
+    },
+    {
+      "level": 3,
+      "id": "floor-03",
+      "title": "Fellowship + Network",
+      "elevation_ft": 27,
+      "south_condition": "sealed upper-floor glazing",
+      "support_names": [
+        "Fellowship Support / Records",
+        "Network / IT"
+      ],
+      "zones": [
+        {
+          "label": "Opportunity Exchange",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 30,
+            "x2": 50,
+            "y2": 50
+          }
+        },
+        {
+          "label": "Identity / Opportunity Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 50,
+            "x2": 50,
+            "y2": 54
+          }
+        },
+        {
+          "label": "People + Network Lounge",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 18,
+            "x2": 18,
+            "y2": 34
+          }
+        },
+        {
+          "label": "Interview Room A",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 4,
+            "x2": 14,
+            "y2": 16
+          }
+        },
+        {
+          "label": "Interview Room B",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 16,
+            "y1": 4,
+            "x2": 28,
+            "y2": 16
+          }
+        },
+        {
+          "label": "Member / Interview Check-In",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          }
+        },
+        {
+          "label": "16 x 4 Opportunity Table",
+          "kind": "furniture",
+          "bounds_ft": {
+            "x1": 28,
+            "y1": 39,
+            "x2": 44,
+            "y2": 43
+          }
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "id": "floor-04",
+      "title": "Media + Culture",
+      "elevation_ft": 40.5,
+      "south_condition": "sealed upper-floor glazing",
+      "support_names": [
+        "Media Equipment / Storage",
+        "Media / Music IT"
+      ],
+      "zones": [
+        {
+          "label": "Media / Listening Zone",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 24,
+            "y1": 28,
+            "x2": 48,
+            "y2": 50
+          }
+        },
+        {
+          "label": "Media / Identity Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 50,
+            "x2": 50,
+            "y2": 54
+          }
+        },
+        {
+          "label": "Culture Archive / Rally Gallery",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 18,
+            "x2": 18,
+            "y2": 38
+          }
+        },
+        {
+          "label": "Creator Recording Room",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 4,
+            "x2": 15,
+            "y2": 16
+          }
+        },
+        {
+          "label": "Edit / Review Suite",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 17,
+            "y1": 4,
+            "x2": 31,
+            "y2": 16
+          }
+        },
+        {
+          "label": "Media Control",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          }
+        },
+        {
+          "label": "Listening Seating",
+          "kind": "furniture",
+          "bounds_ft": {
+            "x1": 29,
+            "y1": 34,
+            "x2": 43,
+            "y2": 43
+          }
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "id": "floor-05",
+      "title": "Policy + Proof",
+      "elevation_ft": 54,
+      "south_condition": "sealed upper-floor glazing",
+      "support_names": [
+        "Secure Evidence Storage",
+        "Research / Policy IT"
+      ],
+      "zones": [
+        {
+          "label": "Policy Lab",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 28,
+            "x2": 50,
+            "y2": 50
+          }
+        },
+        {
+          "label": "Policy + Proof Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 50,
+            "x2": 50,
+            "y2": 54
+          }
+        },
+        {
+          "label": "Evidence + Proof Archive",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 18,
+            "x2": 18,
+            "y2": 40
+          }
+        },
+        {
+          "label": "Source Review Room",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 4,
+            "x2": 15,
+            "y2": 16
+          }
+        },
+        {
+          "label": "Publication / Submission Review",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 17,
+            "y1": 4,
+            "x2": 32,
+            "y2": 16
+          }
+        },
+        {
+          "label": "Research Navigation",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          }
+        },
+        {
+          "label": "16 x 5 Policy Table",
+          "kind": "furniture",
+          "bounds_ft": {
+            "x1": 28,
+            "y1": 38.5,
+            "x2": 44,
+            "y2": 43.5
+          }
+        }
+      ]
+    },
+    {
+      "level": 6,
+      "id": "floor-06",
+      "title": "Penthouse Command",
+      "elevation_ft": 67.5,
+      "south_condition": "sealed upper-floor glazing",
+      "support_names": [
+        "Command Support / Secure Records",
+        "Operations / Systems Support"
+      ],
+      "zones": [
+        {
+          "label": "Penthouse Command",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 28,
+            "x2": 50,
+            "y2": 50
+          }
+        },
+        {
+          "label": "NOW / PAST WORK / JOIN Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 50,
+            "x2": 50,
+            "y2": 54
+          }
+        },
+        {
+          "label": "Institutional Salon",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 18,
+            "x2": 18,
+            "y2": 38
+          }
+        },
+        {
+          "label": "Strategy Review Room",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 4,
+            "x2": 15,
+            "y2": 16
+          }
+        },
+        {
+          "label": "Partner / Executive Briefing",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 17,
+            "y1": 4,
+            "x2": 32,
+            "y2": 16
+          }
+        },
+        {
+          "label": "Roof / Mobility Transition",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          }
+        },
+        {
+          "label": "16 x 5 Command Table",
+          "kind": "furniture",
+          "bounds_ft": {
+            "x1": 28,
+            "y1": 38.5,
+            "x2": 44,
+            "y2": 43.5
+          }
+        }
+      ]
+    },
+    {
+      "level": 7,
+      "id": "level-07",
+      "title": "Roof / Mobility Portal",
+      "elevation_ft": 81,
+      "south_condition": "open-air roof / guarded edge",
+      "roof": true,
+      "zones": [
+        {
+          "label": "Roof Access / Core Envelope",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 50,
+            "y1": 30,
+            "x2": 64,
+            "y2": 48
+          }
+        },
+        {
+          "label": "Ecosystem Routing Interface",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 46,
+            "y1": 24,
+            "x2": 50,
+            "y2": 30
+          }
+        },
+        {
+          "label": "Candidate Mobility Zone",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 10,
+            "y1": 8,
+            "x2": 48,
+            "y2": 46
+          }
+        },
+        {
+          "label": "City Overlook",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 12,
+            "y1": 0,
+            "x2": 46,
+            "y2": 6
+          }
+        },
+        {
+          "label": "Service / Equipment Band",
+          "kind": "service",
+          "bounds_ft": {
+            "x1": 34,
+            "y1": 60,
+            "x2": 60,
+            "y2": 72
+          }
+        }
+      ]
+    }
+  ]
+}
