@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "status": "canonical-floor-01-site-egress-simulation-layer",
   "scene_id": "equity-uprise-site-egress",
   "coordinate_system": "building southwest exterior corner remains (0,0); +X east; +Y north; z=0 at Floor 1 FFE",
@@ -236,7 +236,10 @@
         "evacuation_barrier_active",
         "failed"
       ],
-      "scenario_controllable": true
+      "scenario_controllable": true,
+      "normal_access_policy": "downward-to-b1-restricted-to-house-owner-or-underground-operations-admin",
+      "b1_to_floor1_egress": "preserved",
+      "training_behavior": "sandbox-only-no-live-unlock"
     },
     {
       "object_id": "F1-BARRIER-STAIR-B-DOWN",
@@ -248,7 +251,10 @@
         "evacuation_barrier_active",
         "failed"
       ],
-      "scenario_controllable": true
+      "scenario_controllable": true,
+      "normal_access_policy": "downward-to-b1-restricted-to-house-owner-or-underground-operations-admin",
+      "b1_to_floor1_egress": "preserved",
+      "training_behavior": "sandbox-only-no-live-unlock"
     }
   ],
   "emergency_equipment": [
@@ -402,5 +408,13 @@
         "OPS-05"
       ]
     }
-  ]
+  ],
+  "underground_access_controls": {
+    "passenger_elevator_b1_stop": "hidden-unless-house-owner-or-underground-operations-admin",
+    "stair_a_down": "access-controlled",
+    "stair_b_down": "access-controlled",
+    "service_freight_b1": "restricted-operational",
+    "egress_from_b1_upward": "preserved",
+    "public_directory_visibility": false
+  }
 }
