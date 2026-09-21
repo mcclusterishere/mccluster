@@ -4,6 +4,9 @@ These files are the canonical visual/CAD representation of the locked Floor 3 **
 
 ## Files
 
+- `equity-uprise-floor-03-fellowship-network-schematic-v1.png`
+  - raster preview for quick visual inspection; derived from the vector plan and never higher authority than SVG/DXF/written dimensions.
+
 - `equity-uprise-floor-03-fellowship-network-schematic-v1.svg`
   - vector plan for inspection, browser viewing, derivative graphics, and image/3D reference.
 
