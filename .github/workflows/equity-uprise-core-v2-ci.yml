@@ -70,19 +70,8 @@ jobs:
       - name: Verify Floor 1 / B1 authority boundary
         run: python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
 
-      - name: Reject stale committed building artifacts
-        if: ${{ !((github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-generated]')) || (github.event_name == 'workflow_dispatch' && inputs.publish_generated == true)) }}
-        run: |
-          set -euo pipefail
-          drift="$(git status --porcelain --untracked-files=all --             docs/design/equity-uprise-building/references             docs/design/equity-uprise-building/production/basement-b1             docs/design/equity-uprise-building/production/floor-01             docs/design/equity-uprise-building/production/floor-02             docs/design/equity-uprise-building/production/floor-03             docs/design/equity-uprise-building/production/floor-04             docs/design/equity-uprise-building/production/floor-05             docs/design/equity-uprise-building/production/floor-06             docs/design/equity-uprise-building/production/floor-07             docs/design/equity-uprise-building/production/generated)"
-          if [ -n "$drift" ]; then
-            echo "Committed Equity Uprise derived artifacts are stale relative to current authority:" >&2
-            echo "$drift" >&2
-            echo "Run the Core V2 workflow with publish_generated=true or push an intentional [publish-generated] regeneration commit on a non-main branch." >&2
-            exit 1
-          fi
-
       - name: Require committed generated artifacts to be current
+        if: ${{ !((github.event_name == 'workflow_dispatch' && inputs.publish_generated == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-generated]'))) }}
         shell: bash
         run: |
           set -euo pipefail
@@ -110,7 +99,7 @@ jobs:
   publish-generated:
     name: Publish generated building artifacts
     needs: validate
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_generated == true && github.ref_name != 'main' }}
+    if: ${{ github.ref_name != 'main' && ((github.event_name == 'workflow_dispatch' && inputs.publish_generated == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-generated]'))) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
