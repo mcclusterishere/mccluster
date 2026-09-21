@@ -4,6 +4,8 @@
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
 > Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 > Canonical Floor 1 spec: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
+> **Mandatory spatial authority:** `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
+> Canonical Floor 1 plan assets: `docs/design/equity-uprise-building/references/floor-01/`
 
 ## 1. What exists today
 
