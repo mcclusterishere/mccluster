@@ -455,6 +455,19 @@ Render readiness: **{level.get('render_readiness','unspecified')}**.
         readme += """
 Floor 1 is the public Arrival / Orientation / Intake layer and the modeled level of exit discharge.
 
+Additional generated site/life-safety plan:
+- `../../references/floor-01/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf`
+- `../../references/floor-01/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg`
+- `../../references/floor-01/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png`
+
+Site/egress authority:
+- `floor-01-site-egress.json`
+- `../../FLOOR-01-SITE-EGRESS-SIMULATION.md`
+
+Underground authority:
+- `../underground-tunnel-network.json`
+- `../../UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
+
 Live B1 / tunnel access is not part of ordinary Floor 1 navigation. Learner/instructor building-systems work launches a sandboxed clone; live underground access remains restricted to McCluster house-owner or explicitly delegated underground-operations-admin authority.
 """
 
