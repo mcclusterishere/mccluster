@@ -145,7 +145,8 @@ B1 is a deliberate **support/training level**, not an additional E-Q-U-I-T-Y dev
 - FFE: **-13'-6"**
 - same 72' × 72' coordination footprint;
 - no normal public browsing;
-- authorized staff/learner/instructor access;
+- live access limited to McCluster house owner or explicitly delegated underground-operations admin;
+- learner/instructor access occurs only in a sandboxed clone of B1/tunnel geometry;
 - passenger elevator, freight/service elevator, Stair A, Stair B and MEP continue to B1.
 
 B1 program authority:
@@ -165,6 +166,23 @@ Primary conceptual functions:
 - service receiving/staging.
 
 The basement exists because it materially improves building-systems, emergency, infrastructure, cybersecurity and operations simulation. It is not described as a code requirement.
+
+## 8B. Underground tunnel network
+
+B1 is the live operational gateway to a future inter-building underground backbone.
+
+Canonical authority:
+
+- `UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
+- `production/underground-tunnel-network.json`
+
+The live B1/tunnel network is hidden from normal participant navigation.
+
+Ordinary Equity Uprise admin/staff roles do not grant underground access.
+
+Future tunnel branches remain reserved/unlabeled until a destination building has its own canonical authority.
+
+Training uses a sandboxed clone; competency does not grant live operational authority.
 
 ## 9. Floor-plan consequence
 
