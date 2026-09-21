@@ -68,8 +68,8 @@ doors={x.get("object_id"):x for x in SITE.get("exterior_openings",[])}
 for oid in ("F1-DOOR-STAIR-A-DISCHARGE","F1-DOOR-STAIR-B-DISCHARGE","F1-DOOR-SERVICE-WEST"):
     check(f"site opening exists: {oid}",oid in doors,str(sorted(doors)))
 controls={x.get("object_id") for x in SITE.get("floor1_discharge_controls",[])}
-check("Stair A down barrier exists","F1-BARRIER-STAIR-A-DOWN" in controls,str(controls))
-check("Stair B down barrier exists","F1-BARRIER-STAIR-B-DOWN" in controls,str(controls))
+check("Stair A down barrier exists","F1-BARRIER-STAIR-A-DOWN" in controls,str(sorted(controls)))
+check("Stair B down barrier exists","F1-BARRIER-STAIR-B-DOWN" in controls,str(sorted(controls)))
 site_kinds=[x.get("kind") for x in SITE.get("site_elements",[])]
 check("public way modeled","public_way" in site_kinds,str(site_kinds))
 check("public accessible approach modeled","walk" in site_kinds,str(site_kinds))
