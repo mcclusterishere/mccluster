@@ -9,6 +9,7 @@ GEN=HERE/"generated"
 GLB=GEN/"equity-uprise-building-core-v2.glb"
 REPORT=GEN/"equity-uprise-building-core-v2-report.json"
 CORE=json.loads((HERE/"building-core-v2.json").read_text())
+PROGRAMS=json.loads((HERE/"core-v2-floor-programs.json").read_text())
 
 errors=[]
 if not GLB.exists(): errors.append("missing combined GLB")
@@ -39,6 +40,17 @@ for base in expected[:-1]:
 # Shaft proof.
 for node in ["passenger_elevator_shaft_north","freight_elevator_shaft_north","stair_a_enclosure_north","stair_b_enclosure_north"]:
     if node not in names: errors.append(f"missing vertical system node {node}")
+
+# Floor 6 Halo Globe proof.
+halo=[(lvl,s) for lvl in PROGRAMS["levels"] for s in lvl.get("spheres",[]) if s.get("route_key")=="halo_spatial_intelligence"]
+if len(halo)!=1:
+    errors.append(f"expected exactly one Halo Globe program object, found {len(halo)}")
+else:
+    lvl,s=halo[0]
+    if lvl["level"]!=6: errors.append("Halo Globe is not assigned to Floor 6")
+    if "L6_sphere_01_halo_globe" not in names: errors.append("generated GLB is missing L6_sphere_01_halo_globe")
+    if s["center_z_local_ft"]-s["radius_ft"]<6.0: errors.append("Halo Globe drops into circulation clearance")
+    if s["center_z_local_ft"]+s["radius_ft"]>11.0: errors.append("Halo Globe exceeds the intended ceiling zone")
 
 if errors:
     print("Core V2 verification FAILED")
