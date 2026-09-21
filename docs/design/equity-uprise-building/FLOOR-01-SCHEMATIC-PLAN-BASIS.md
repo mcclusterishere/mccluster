@@ -1,7 +1,7 @@
 # Equity Uprise Building — Floor 01 Schematic Plan Basis
 
 > Status: **CORE V2 SCHEMATIC CHASSIS + FLOOR 1 PROGRAM COORDINATION**  
-> Companions: `FLOOR-01-LOBBY-INTAKE-360-SPEC.md` + `FLOOR-01-DIGITAL-TWIN-PROGRAM.md`  
+> Companions: `FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md` + `FLOOR-01-DIGITAL-TWIN-PROGRAM.md`  
 > This file fixes the conceptual plan geometry so future renderers do not redesign the floor.  
 > **Not for construction.** Final permit/construction documents require a licensed architect/engineer and site/jurisdiction-specific code, structural, MEP, accessibility, fire/life-safety and zoning review.
 > Mandatory authority: `REFERENCE-AUTHORITY.md`
