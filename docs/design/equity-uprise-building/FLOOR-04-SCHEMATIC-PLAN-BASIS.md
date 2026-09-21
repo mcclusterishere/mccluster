@@ -1,7 +1,7 @@
 # Equity Uprise Building — Floor 04 Schematic Plan Basis
 
-> Status: **CORE V2 CHASSIS / COORDINATION REFERENCE — FLOOR 4 PROGRAM PRE-ITERATIVE**  
-> Geometry note: preserve the shared shell, vertical systems, elevations and coordination constraints. Floor-specific room/program geometry remains subject to the future iterative rewrite.  
+> Status: **CORE V2 FLOOR 4 COORDINATION BASIS — PROGRAM RECONCILED / REAL 3D ACTIVE**  
+> Geometry note: preserve the shared shell, vertical systems, elevations and coordination constraints. Floor 4 program geometry is reconciled for the present iterative pass; visual detailing remains iterative.  
 > Companion to: `FLOOR-04-MEDIA-CULTURE-360-SPEC.md`  
 > Floor 4 stacks on the shared Core V2 building datum; lower-floor program semantics are not implied to be final.  
 > **Not for construction.**
