@@ -93,7 +93,7 @@ Canonical flexible seating footprint:
 
 Do not use fixed theater rows.
 
-### Media / identity wall
+### Media / Release Wall
 - approximately **X 22–50 / Y 50–54**
 - dynamic zones:
   - Listen
@@ -147,7 +147,7 @@ No exterior door.
 
 ---
 
-## 8. Elevator-side floor-control terminal
+## 8. Media / Release Control
 
 - approximate footprint **X 49–51 / Y 24–29**
 - adjacent to elevator lobby
@@ -193,7 +193,7 @@ The north band is replanned around the Core V2 west service core.
 - **X 34–42 / Y 60–72**
 - conceptual 8' × 12'
 
-### Media / Music IT
+### Media / Music Operations
 - **X 42–50 / Y 60–72**
 - conceptual 8' × 12'
 
@@ -235,7 +235,7 @@ Media room → recording/edit rooms:
 
 Orientation:
 - **0° north:** Media / Listening Room + identity wall
-- **+90° east:** elevator + floor-control terminal
+- **+90° east:** elevator + Media / Release Control terminal
 - **180° south:** Creator Recording Room + Edit / Review Suite + sealed glazing
 - **-90° west:** Culture Archive / Rally Gallery
 
@@ -265,7 +265,7 @@ Within X 2–18 / Y 18–38:
 - two work positions
 - two review seats
 
-### Floor-control terminal
+### Media / Release Control terminal
 - X 49–51 / Y 24–29
 
 ---
@@ -278,7 +278,7 @@ Within X 2–18 / Y 18–38:
 - recording room gets dedicated audio/data/power pathways;
 - edit suite gets dedicated workstation/data circuits;
 - media equipment storage includes secure charging/power zones;
-- floor-control terminal routes through core-side service.
+- Media / Release Control terminal routes through core-side service.
 
 Private masters, rights data and approval controls remain secure.
 
@@ -354,7 +354,7 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] Culture Archive / Rally Gallery west
 - [ ] Creator Recording Room south
 - [ ] Edit / Review Suite south
-- [ ] floor-control terminal by elevator
+- [ ] Media / Release Control terminal by elevator
 - [ ] stacked restroom/support rooms north
 - [ ] circulation targets
 - [ ] acoustic logic
@@ -369,3 +369,13 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] full 13'-6" stair rise represented in combined geometry
 - [ ] shared slab openings remain clear
 - [ ] floor elevation matches building-core-v2.json
+
+## Repo capability authority
+
+Program semantics for this floor are controlled by:
+- `production/equity-uprise-capability-map-v2.json`
+- `production/core-v2-floor-programs.json`
+- the companion long-form floor spec.
+
+This schematic basis controls plan geometry; it may not silently rename or delete a repo-backed capability represented by the floor program. Public/private and approval boundaries remain those of the source Equity Uprise system.
+
