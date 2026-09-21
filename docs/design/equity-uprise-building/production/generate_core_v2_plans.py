@@ -231,6 +231,16 @@ def plan_readme(level,base):
     else:
         status="PROVISIONAL CORE V2 CHASSIS PLAN — PROGRAM PRE-ITERATIVE"
     authority="basement-b1-program.json" if level.get("basement") else "core-v2-floor-programs.json"
+    site_files=""
+    site_authority=""
+    if level.get("level")==1:
+        site_files=f"""
+Additional generated Floor 1 site/life-safety references:
+- `{SITE_OUT_NAME}.dxf`
+- `{SITE_OUT_NAME}.svg`
+- `{SITE_OUT_NAME}.png`
+"""
+        site_authority="- `production/floor-01/floor-01-site-egress.json`\n"
     return f"""# {label} — {level['title']} — Core V2 Plan References
 
 > Status: **{status} / NOT FOR CONSTRUCTION**
@@ -238,13 +248,13 @@ def plan_readme(level,base):
 Generated from:
 - `production/building-core-v2.json`
 - `production/{authority}`
-- `production/generate_core_v2_plans.py`
+{site_authority}- `production/generate_core_v2_plans.py`
 
-Files:
+Primary plan files:
 - `{base}.dxf`
 - `{base}.svg`
 - `{base}.png`
-
+{site_files}
 Finished-floor elevation: **{elev_label(level['elevation_ft'])}**.
 
 These files are **generated-only**. Do not hand-edit them or treat this README as geometry authority.
