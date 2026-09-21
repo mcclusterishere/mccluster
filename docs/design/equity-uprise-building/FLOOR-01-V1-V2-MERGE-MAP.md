@@ -4,6 +4,17 @@
 >
 > Product rule: **the deliverable is a real 3D environment.** Plans, JSON, authority documents, inventories, and validation reports are inputs to the environment; they are not the finished experience.
 
+## Implementation artifacts
+
+The conceptual merge directive is now backed by two concrete implementation inputs:
+
+- `FLOOR-01-V1-V2-PRESERVATION-MAP.md` — exact preserve / replace / add decisions;
+- `production/floor-01/floor-01-object-inventory.json` — stable furniture/equipment/object IDs and placement/function metadata.
+
+The hybrid 3D builder should consume these rather than inventing a new design from scratch.
+
+---
+
 ## 1. Merge strategy
 
 The target is **V1 design language + Core V2 technical truth + current Equity Uprise program research**.

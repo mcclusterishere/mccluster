@@ -65,8 +65,14 @@ Accepted visual direction:
 - preserve its dark premium interior language, glass, lighting, reception composition, lounge, furniture feel, warm wood, rugs/greenery, and human-scale camera experience;
 - apply current V2 geometry/program research to that design rather than replacing it.
 
-Required reference:
+Required references:
 - `FLOOR-01-V1-V2-MERGE-MAP.md`
+- `FLOOR-01-V1-V2-PRESERVATION-MAP.md`
+- `production/floor-01/floor-01-object-inventory.json`
+
+Inventory / preservation checkpoint:
+- **COMPLETE** — formal Floor 1 object inventory now exists with stable IDs, placement/function/style metadata and V1/V2 heritage decisions.
+- **COMPLETE** — detailed V1→V2 preservation map records what survives, what is corrected, and what is newly added.
 
 ## Floors 2–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
 
@@ -89,12 +95,12 @@ Use these to recover design quality, not obsolete stair/core geometry.
 
 ## NEXT APPROVED WORK
 
-1. Build a formal Floor 1 furniture/equipment/object inventory with stable IDs.
-2. Compare the liked V1 interior against the current V2 Floor 1 and list every design element to preserve/upgrade.
-3. Rebuild Floor 1 as the hybrid: **V1 feel + V2 truth + current Equity Uprise program**.
+1. **DONE:** formal Floor 1 furniture/equipment/object inventory with stable IDs.
+2. **DONE:** detailed V1→V2 preservation map.
+3. Rebuild Floor 1 as the hybrid: **V1 feel + V2 truth + current Equity Uprise program**, consuming the new inventory.
 4. Review Floor 1 visually in the real 3D viewer.
-5. Once approved, use the same authority → inventory → 3D → verify → stack workflow for Floor 2.
-6. Continuously insert approved floor environments into the whole-building assembly; do not wait until the end to test stacking.
+5. Insert the approved hybrid Floor 1 into the whole-building assembly and verify stacking.
+6. Once approved, use the same authority → inventory → 3D → verify → stack workflow for Floor 2.
 
 ## Do not waste time on
 

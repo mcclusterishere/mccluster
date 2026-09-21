@@ -1,0 +1,1533 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-production-input-hybrid-floor-01",
+  "scene_id": "equity-uprise-floor-01",
+  "floor_identity": "Arrival / Orientation / Intake",
+  "not_for_construction": true,
+  "purpose": "Single machine-readable furniture/equipment/object inventory for the Floor 1 hybrid rebuild. Intentional scene objects must be represented here or explicitly treated as generated architectural geometry.",
+  "design_formula": "V1 interior quality + assembled-building stacking behavior + current Core V2 truth",
+  "authority_refs": [
+    "../../FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md",
+    "../../FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
+    "../../FLOOR-01-V1-V2-MERGE-MAP.md",
+    "../../FLOOR-01-V1-V2-PRESERVATION-MAP.md",
+    "../core-v2-floor-programs.json",
+    "floor-01-scene-manifest.json",
+    "floor-01-simulation-objects.json"
+  ],
+  "coordinate_system": {
+    "origin": "southwest_exterior_corner_floor_01",
+    "units": "feet",
+    "x_positive": "east",
+    "y_positive": "north",
+    "z_positive": "up"
+  },
+  "inventory_rules": [
+    "Stable IDs survive future mesh/detail upgrades.",
+    "Shared-core geometry remains authority over object placement.",
+    "Exact supplied Equity Uprise artwork must be used for any branded mark; do not redraw logos.",
+    "Items with placement_rule instead of exact coordinates require resolution during the hybrid modeling pass without breaking circulation or shared-core geometry.",
+    "Life-safety objects inherit state/access semantics from floor-01-simulation-objects.json.",
+    "Furniture/object inventory is a production input to the real 3D environment, not a substitute for the environment."
+  ],
+  "summary": {
+    "object_records": 67,
+    "by_category": {
+      "architectural_access": 2,
+      "architectural_feature": 3,
+      "decorative_functional": 3,
+      "equipment": 14,
+      "fixture": 4,
+      "furniture": 20,
+      "interactive_terminal": 4,
+      "life_safety": 10,
+      "lighting": 26,
+      "signage_wayfinding": 2,
+      "vertical_circulation_interface": 2
+    },
+    "by_heritage_decision": {
+      "new_v2": 43,
+      "preserve_v1_correct_geometry": 1,
+      "preserve_v1_upgrade_detail": 22,
+      "replace_v1_geometry_with_v2": 1
+    }
+  },
+  "objects": [
+    {
+      "id": "F1-ENTRY-DOOR-OUTER",
+      "label": "Public Entrance Outer Doors",
+      "category": "architectural_access",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "facade": "south",
+        "x1": 31,
+        "x2": 41
+      },
+      "style": "clear architectural glass + gunmetal frame",
+      "purpose": "Public arrival threshold",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/floor-01-simulation-objects.json"
+      ],
+      "stateful_ref": "F1-DOOR-PUBLIC-OUTER"
+    },
+    {
+      "id": "F1-ENTRY-DOOR-INNER",
+      "label": "Public Entrance Inner Doors",
+      "category": "architectural_access",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "facade": "south",
+        "x1": 31,
+        "x2": 41,
+        "y": 9
+      },
+      "style": "clear architectural glass + gunmetal frame",
+      "purpose": "Vestibule-to-atrium threshold",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/floor-01-simulation-objects.json"
+      ],
+      "stateful_ref": "F1-DOOR-PUBLIC-INNER"
+    },
+    {
+      "id": "F1-ENTRY-MAT-01",
+      "label": "Equity Uprise Entry Mat",
+      "category": "decorative_functional",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 32,
+          "y1": 1.2,
+          "x2": 40,
+          "y2": 4.8
+        }
+      },
+      "style": "dark textile; use exact supplied mark only if branded",
+      "purpose": "Entry dirt control + arrival identity",
+      "authority_status": "production_default",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "FLOOR-01-V1-V2-MERGE-MAP.md"
+      ]
+    },
+    {
+      "id": "F1-ENTRY-SIGN-01",
+      "label": "Building Identification / Arrival Sign",
+      "category": "signage_wayfinding",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "visible from south public approach; final mount resolves with hybrid facade"
+      },
+      "style": "gunmetal / exact Equity Uprise artwork only",
+      "purpose": "Identify building and arrival point",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json",
+        "FLOOR-01-V1-V2-MERGE-MAP.md"
+      ]
+    },
+    {
+      "id": "F1-ARRIVAL-INSET-01",
+      "label": "Arrival Atrium Floor Inset",
+      "category": "architectural_feature",
+      "zone_id": "zone_02",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 20,
+          "y1": 10,
+          "x2": 52,
+          "y2": 30
+        }
+      },
+      "style": "subtle polished/honed gray contrast",
+      "purpose": "Define arrival field without plan-diagram appearance",
+      "authority_status": "production_default",
+      "implementation_status": "modeled_current_scaffold",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-ARRIVAL-NAV-01",
+      "label": "Arrival Red Navigation Reveal",
+      "category": "signage_wayfinding",
+      "zone_id": "zone_02",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 34.8,
+          "y1": 9.05,
+          "x2": 37.2,
+          "y2": 9.2
+        }
+      },
+      "style": "restrained Equity Uprise red",
+      "purpose": "Pull visitors into orientation sequence",
+      "authority_status": "production_default",
+      "implementation_status": "modeled_current_scaffold",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-SOFA-01",
+      "label": "Orientation Lounge Sofa",
+      "category": "furniture",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 3,
+          "y1": 14,
+          "x2": 10,
+          "y2": 17
+        },
+        "facing": "north/east conversational composition"
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Waiting, orientation, casual conversation",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-CHAIR-01",
+      "label": "Orientation Lounge Chair A",
+      "category": "furniture",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 13.1,
+          "y": 15.5
+        },
+        "orientation_deg": 270
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Conversation seating",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-CHAIR-02",
+      "label": "Orientation Lounge Chair B",
+      "category": "furniture",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 13.1,
+          "y": 23
+        },
+        "orientation_deg": 270
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Conversation seating",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-TABLE-01",
+      "label": "Orientation Lounge Round Table",
+      "category": "furniture",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 9.6,
+          "y": 20.2
+        },
+        "diameter_ft": 4.2,
+        "height_ft": 1.35
+      },
+      "style": "warm muted wood",
+      "purpose": "Shared low table",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-RUG-01",
+      "label": "Orientation Lounge Rug",
+      "category": "decorative_functional",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 2.5,
+          "y1": 12.5,
+          "x2": 17.2,
+          "y2": 27.4
+        }
+      },
+      "style": "dark charcoal textile",
+      "purpose": "Ground seating composition acoustically/visually",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-PLANT-01",
+      "label": "Orientation Lounge Planter",
+      "category": "decorative_functional",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 4,
+          "y": 25.2
+        },
+        "diameter_ft": 2.1
+      },
+      "style": "live/realistic greenery in restrained planter",
+      "purpose": "Restore V1 warmth and human-scale softness",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "FLOOR-01-V1-V2-MERGE-MAP.md",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-DISPLAY-01",
+      "label": "Orientation Lounge AV / Orientation Display",
+      "category": "equipment",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "wall-mounted within Orientation Lounge; exact wall/height resolves in hybrid pass"
+      },
+      "style": "dark screen surface + gunmetal trim",
+      "purpose": "Orientation content / mentor-greeter support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-INTAKE-TABLE-01",
+      "label": "Intake Consultation Table",
+      "category": "furniture",
+      "zone_id": "zone_04",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 6,
+          "y1": 36.5,
+          "x2": 12,
+          "y2": 39.5
+        }
+      },
+      "style": "warm muted wood",
+      "purpose": "Private verification/intake meeting",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-INTAKE-CHAIR-01",
+      "label": "Intake Chair 1",
+      "category": "furniture",
+      "zone_id": "zone_04",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 5,
+          "y": 38
+        },
+        "orientation_deg": 90
+      },
+      "style": "charcoal upholstered meeting chair",
+      "purpose": "Consultation seating",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-INTAKE-CHAIR-02",
+      "label": "Intake Chair 2",
+      "category": "furniture",
+      "zone_id": "zone_04",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 13,
+          "y": 38
+        },
+        "orientation_deg": 270
+      },
+      "style": "charcoal upholstered meeting chair",
+      "purpose": "Consultation seating",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-INTAKE-CHAIR-03",
+      "label": "Intake Chair 3",
+      "category": "furniture",
+      "zone_id": "zone_04",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 8,
+          "y": 35
+        },
+        "orientation_deg": 0
+      },
+      "style": "charcoal upholstered meeting chair",
+      "purpose": "Consultation seating",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-INTAKE-CHAIR-04",
+      "label": "Intake Chair 4",
+      "category": "furniture",
+      "zone_id": "zone_04",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 10,
+          "y": 41
+        },
+        "orientation_deg": 180
+      },
+      "style": "charcoal upholstered meeting chair",
+      "purpose": "Consultation seating",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-INTAKE-CREDENZA-01",
+      "label": "Secure Intake Credenza / Document Surface",
+      "category": "furniture",
+      "zone_id": "zone_04",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "against opaque wall; preserve accessible clearance"
+      },
+      "style": "warm wood + dark lockable casework",
+      "purpose": "Secure document handling / temporary materials",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-INTAKE-DISPLAY-01",
+      "label": "Intake Private Display",
+      "category": "equipment",
+      "zone_id": "zone_04",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "privacy-oriented wall display; not visible from public atrium"
+      },
+      "style": "privacy-aware dark display",
+      "purpose": "Verification/intake AV without exposing private data",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-TABLE-01",
+      "label": "Development Passport Worktable A",
+      "category": "furniture",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 22,
+          "y1": 34,
+          "x2": 31.5,
+          "y2": 37.2
+        }
+      },
+      "style": "warm muted wood",
+      "purpose": "Collaborative passport/goal-setting work",
+      "authority_status": "canonical_program",
+      "implementation_status": "modeled_current_scaffold",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-TABLE-02",
+      "label": "Development Passport Worktable B",
+      "category": "furniture",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 35,
+          "y1": 39.2,
+          "x2": 44.5,
+          "y2": 42.4
+        }
+      },
+      "style": "warm muted wood",
+      "purpose": "Collaborative passport/goal-setting work",
+      "authority_status": "canonical_program",
+      "implementation_status": "modeled_current_scaffold",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-01",
+      "label": "Passport Studio Task Chair 1",
+      "category": "furniture",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 23,
+          "y": 32.8
+        },
+        "orientation_deg": 0
+      },
+      "style": "charcoal task chair",
+      "purpose": "Passport Studio work seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-02",
+      "label": "Passport Studio Task Chair 2",
+      "category": "furniture",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 27,
+          "y": 38.4
+        },
+        "orientation_deg": 180
+      },
+      "style": "charcoal task chair",
+      "purpose": "Passport Studio work seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-03",
+      "label": "Passport Studio Task Chair 3",
+      "category": "furniture",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 31,
+          "y": 32.8
+        },
+        "orientation_deg": 0
+      },
+      "style": "charcoal task chair",
+      "purpose": "Passport Studio work seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-04",
+      "label": "Passport Studio Task Chair 4",
+      "category": "furniture",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 36,
+          "y": 38
+        },
+        "orientation_deg": 0
+      },
+      "style": "charcoal task chair",
+      "purpose": "Passport Studio work seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-05",
+      "label": "Passport Studio Task Chair 5",
+      "category": "furniture",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 40,
+          "y": 43.5
+        },
+        "orientation_deg": 180
+      },
+      "style": "charcoal task chair",
+      "purpose": "Passport Studio work seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-CHAIR-06",
+      "label": "Passport Studio Task Chair 6",
+      "category": "furniture",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 44,
+          "y": 38
+        },
+        "orientation_deg": 0
+      },
+      "style": "charcoal task chair",
+      "purpose": "Passport Studio work seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-KIOSK-01",
+      "label": "Development Passport Kiosk 1",
+      "category": "interactive_terminal",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 24,
+          "y1": 32.2,
+          "x2": 25.4,
+          "y2": 33
+        }
+      },
+      "style": "gunmetal body + privacy-aware screen",
+      "purpose": "Credential import, pathway selection, next action",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-KIOSK-02",
+      "label": "Development Passport Kiosk 2",
+      "category": "interactive_terminal",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 34.5,
+          "y1": 32.2,
+          "x2": 35.9,
+          "y2": 33
+        }
+      },
+      "style": "gunmetal body + privacy-aware screen",
+      "purpose": "Credential import, pathway selection, next action",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-KIOSK-03",
+      "label": "Development Passport Kiosk 3",
+      "category": "interactive_terminal",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 45,
+          "y1": 32.2,
+          "x2": 46.4,
+          "y2": 33
+        }
+      },
+      "style": "gunmetal body + privacy-aware screen",
+      "purpose": "Credential import, pathway selection, next action",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-PASSPORT-DOC-01",
+      "label": "Passport Document / Verification Station",
+      "category": "equipment",
+      "zone_id": "zone_05",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "edge of studio near staff assistance; exact dimensions resolve in hybrid pass"
+      },
+      "style": "warm wood + dark equipment finish",
+      "purpose": "Document handling/printing/scanning support",
+      "authority_status": "production_default",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-JOURNEY-WALL-01",
+      "label": "Journey Wall Architectural Feature",
+      "category": "architectural_feature",
+      "zone_id": "zone_06",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 28,
+          "y1": 50,
+          "x2": 44,
+          "y2": 54
+        }
+      },
+      "style": "dark stone/mineral feature surface",
+      "purpose": "Physical anchor for progression/orientation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-JOURNEY-DISPLAY-01",
+      "label": "Journey Wall Display 1",
+      "category": "equipment",
+      "zone_id": "zone_06",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 30,
+          "y1": 52.1,
+          "x2": 32.7,
+          "y2": 52.22
+        }
+      },
+      "style": "integrated dark display surface",
+      "purpose": "Show journey progression / emergency override state",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-JOURNEY-DISPLAY-02",
+      "label": "Journey Wall Display 2",
+      "category": "equipment",
+      "zone_id": "zone_06",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 34.2,
+          "y1": 52.1,
+          "x2": 36.900000000000006,
+          "y2": 52.22
+        }
+      },
+      "style": "integrated dark display surface",
+      "purpose": "Show journey progression / emergency override state",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-JOURNEY-DISPLAY-03",
+      "label": "Journey Wall Display 3",
+      "category": "equipment",
+      "zone_id": "zone_06",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 38.4,
+          "y1": 52.1,
+          "x2": 41.1,
+          "y2": 52.22
+        }
+      },
+      "style": "integrated dark display surface",
+      "purpose": "Show journey progression / emergency override state",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-JOURNEY-DISPLAY-04",
+      "label": "Journey Wall Display 4",
+      "category": "equipment",
+      "zone_id": "zone_06",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 42,
+          "y1": 52.1,
+          "x2": 44.7,
+          "y2": 52.22
+        }
+      },
+      "style": "integrated dark display surface",
+      "purpose": "Show journey progression / emergency override state",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-JOURNEY-RED-REVEAL-01",
+      "label": "Journey Wall Red Reveal",
+      "category": "architectural_feature",
+      "zone_id": "zone_06",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 29,
+          "y1": 52.08,
+          "x2": 43,
+          "y2": 52.2
+        }
+      },
+      "style": "restrained red emissive reveal",
+      "purpose": "Carry V1 accent language into richer Journey Wall",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-RECEPTION-DESK-01",
+      "label": "Reception / Concierge / Security Desk",
+      "category": "furniture",
+      "zone_id": "zone_07",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 30,
+          "y1": 44,
+          "x2": 42,
+          "y2": 47
+        },
+        "facing": "south"
+      },
+      "style": "dark stone",
+      "purpose": "Primary arrival anchor / concierge / security",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-RECEPTION-ACCESS-01",
+      "label": "Accessible Reception Counter",
+      "category": "furniture",
+      "zone_id": "zone_07",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 30,
+          "y1": 44,
+          "x2": 33,
+          "y2": 47
+        },
+        "height_ft": 2.85
+      },
+      "style": "dark stone",
+      "purpose": "Accessible service position",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-RECEPTION-MONITOR-01",
+      "label": "Reception Workstation Monitor",
+      "category": "equipment",
+      "zone_id": "zone_07",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 35.2,
+          "y1": 44,
+          "x2": 37,
+          "y2": 44.35
+        }
+      },
+      "style": "dark screen surface",
+      "purpose": "Staff private operational view",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-RECEPTION-SECURITY-01",
+      "label": "Concierge / Security Interface",
+      "category": "equipment",
+      "zone_id": "zone_07",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "behind reception desk, staff-private view"
+      },
+      "style": "integrated dark console",
+      "purpose": "Visitor credentialing, intercom, incident communication, building status",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-DIRECTORY-01",
+      "label": "Next Action / Building Directory",
+      "category": "interactive_terminal",
+      "zone_id": "zone_08",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 49,
+          "y1": 24,
+          "x2": 51,
+          "y2": 29
+        },
+        "facing": "west"
+      },
+      "style": "gunmetal plinth + dark display",
+      "purpose": "Personal routing, building map, accessible route, meeting lookup",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-EGRESS-MAP-01",
+      "label": "You Are Here / Egress Map — Arrival",
+      "category": "life_safety",
+      "zone_id": "zone_08",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 48,
+          "y": 27
+        }
+      },
+      "style": "marked wall/signage system",
+      "purpose": "Public egress orientation",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-simulation-objects.json"
+      ]
+    },
+    {
+      "id": "F1-EGRESS-MAP-02",
+      "label": "You Are Here / Egress Map — North",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 39,
+          "y": 57
+        }
+      },
+      "style": "marked wall/signage system",
+      "purpose": "North support-band egress orientation",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-simulation-objects.json"
+      ]
+    },
+    {
+      "id": "F1-PASS-ELEV-DOOR-01",
+      "label": "Passenger Elevator Door Pair",
+      "category": "vertical_circulation_interface",
+      "zone_id": "zone_08",
+      "quantity": 1,
+      "placement": {
+        "facade_x": 54,
+        "y1": 37,
+        "y2": 41
+      },
+      "style": "gunmetal / dark core",
+      "purpose": "Public vertical circulation",
+      "authority_status": "shared_core_interface",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_correct_geometry",
+      "source_refs": [
+        "git:59af7f6386ee69edc023927971ea5918fffa6acc:docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-PASS-ELEV-CALL-01",
+      "label": "Passenger Elevator Call Station",
+      "category": "equipment",
+      "zone_id": "zone_08",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "west face of passenger core beside door"
+      },
+      "style": "dark metal + illuminated controls",
+      "purpose": "Call/accessible elevator interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-FREIGHT-DOOR-01",
+      "label": "Service / Freight Elevator Door",
+      "category": "vertical_circulation_interface",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "facade_y": 60,
+        "x1": 1.5,
+        "x2": 6.5
+      },
+      "style": "service gunmetal",
+      "purpose": "Restricted delivery/service circulation",
+      "authority_status": "shared_core_interface",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "replace_v1_geometry_with_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-FREIGHT-CONTROL-01",
+      "label": "Service / Freight Control Station",
+      "category": "equipment",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "south face of freight core; authorized service side"
+      },
+      "style": "industrial dark control panel",
+      "purpose": "Restricted freight/service operation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-STAIR-A-BARRIER-DOWN",
+      "label": "Stair A B1 Direction / Access Control",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "Stair A Floor 1 landing"
+      },
+      "style": "restrained red/metal barrier or gate treatment",
+      "purpose": "Prevent accidental downward travel to B1 while preserving upward egress",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-simulation-objects.json"
+      ],
+      "stateful_ref": "F1-BARRIER-STAIR-A-DOWN"
+    },
+    {
+      "id": "F1-STAIR-B-BARRIER-DOWN",
+      "label": "Stair B B1 Direction / Access Control",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "Stair B Floor 1 landing"
+      },
+      "style": "restrained red/metal barrier or gate treatment",
+      "purpose": "Prevent accidental downward travel to B1 while preserving upward egress",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-simulation-objects.json"
+      ],
+      "stateful_ref": "F1-BARRIER-STAIR-B-DOWN"
+    },
+    {
+      "id": "F1-TWOWAY-01",
+      "label": "Emergency Two-Way Communication Concept",
+      "category": "life_safety",
+      "zone_id": "zone_08",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 53,
+          "y": 39
+        }
+      },
+      "style": "marked accessible communication station",
+      "purpose": "Emergency communication concept",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-simulation-objects.json"
+      ]
+    },
+    {
+      "id": "F1-AED-01",
+      "label": "AED",
+      "category": "life_safety",
+      "zone_id": "zone_07",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 44,
+          "y": 46
+        }
+      },
+      "style": "marked cabinet",
+      "purpose": "Medical emergency response",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-simulation-objects.json"
+      ]
+    },
+    {
+      "id": "F1-FIRST-AID-01",
+      "label": "First Aid Kit",
+      "category": "life_safety",
+      "zone_id": "zone_07",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 43,
+          "y": 46
+        }
+      },
+      "style": "marked cabinet",
+      "purpose": "First-aid response",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-simulation-objects.json"
+      ]
+    },
+    {
+      "id": "F1-FE-01",
+      "label": "Fire Extinguisher Cabinet — Lobby",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 53,
+          "y": 55
+        }
+      },
+      "style": "marked recessed/surface cabinet",
+      "purpose": "Fire-response equipment",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-simulation-objects.json"
+      ]
+    },
+    {
+      "id": "F1-FE-02",
+      "label": "Fire Extinguisher Cabinet — West Service",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 18,
+          "y": 57
+        }
+      },
+      "style": "marked recessed/surface cabinet",
+      "purpose": "Fire-response equipment",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-simulation-objects.json"
+      ]
+    },
+    {
+      "id": "F1-SPILL-01",
+      "label": "Spill Kit",
+      "category": "life_safety",
+      "zone_id": "support_a",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 36,
+          "y": 65
+        }
+      },
+      "style": "service cabinet",
+      "purpose": "Service-area spill response",
+      "authority_status": "simulation_authority",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-simulation-objects.json"
+      ]
+    },
+    {
+      "id": "F1-RR-A-VANITY-01",
+      "label": "Restroom A Vanity",
+      "category": "fixture",
+      "zone_id": "restroom_a",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 19.6,
+          "y1": 61.2,
+          "x2": 22.4,
+          "y2": 62.2
+        }
+      },
+      "style": "dark stone / durable fixture finish",
+      "purpose": "Restroom realism/accessibility simulation",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-RR-A-FIXTURE-01",
+      "label": "Restroom A Water Closet",
+      "category": "fixture",
+      "zone_id": "restroom_a",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 20.2,
+          "y1": 67.2,
+          "x2": 21.8,
+          "y2": 69
+        }
+      },
+      "style": "light ceramic",
+      "purpose": "Restroom realism/accessibility simulation",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-RR-B-VANITY-01",
+      "label": "Restroom B Vanity",
+      "category": "fixture",
+      "zone_id": "restroom_b",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 27.6,
+          "y1": 61.2,
+          "x2": 30.4,
+          "y2": 62.2
+        }
+      },
+      "style": "dark stone / durable fixture finish",
+      "purpose": "Restroom realism/accessibility simulation",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-RR-B-FIXTURE-01",
+      "label": "Restroom B Water Closet",
+      "category": "fixture",
+      "zone_id": "restroom_b",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 28.2,
+          "y1": 67.2,
+          "x2": 29.8,
+          "y2": 69
+        }
+      },
+      "style": "light ceramic",
+      "purpose": "Restroom realism/accessibility simulation",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/build_equity_uprise_floor_01_v2.py",
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-OPS-PANEL-01",
+      "label": "Building Operations / Life-Safety Status Panel",
+      "category": "equipment",
+      "zone_id": "support_a",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "secure wall within Building Operations / Life Safety"
+      },
+      "style": "industrial dark panel",
+      "purpose": "Fire alarm/building status/access/power/elevator simulation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-IT-RACK-01",
+      "label": "IT / Network Equipment Rack",
+      "category": "equipment",
+      "zone_id": "support_b",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "secure IT/Electrical room; exact rack dimensions resolve during hybrid detail pass"
+      },
+      "style": "dark equipment rack",
+      "purpose": "Network/power/access-control/UPS/metering simulation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-JANITOR-STORAGE-01",
+      "label": "Janitor / Service Storage",
+      "category": "equipment",
+      "zone_id": "janitor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "inside Janitor room against service wall"
+      },
+      "style": "durable service casework",
+      "purpose": "Maintenance/service/hazard-awareness simulation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "new_v2",
+      "source_refs": [
+        "production/floor-01/floor-01-digital-twin-program.json"
+      ]
+    },
+    {
+      "id": "F1-LIGHT-GRID-01",
+      "label": "General Warm Ceiling Light Grid",
+      "category": "lighting",
+      "zone_id": "floor-wide",
+      "quantity": 24,
+      "placement": {
+        "placement_rule": "distributed warm-white ceiling grid; avoid core conflicts"
+      },
+      "style": "3000K architectural linear/area fixtures",
+      "purpose": "General warm practical illumination",
+      "authority_status": "production_default",
+      "implementation_status": "required_hybrid_upgrade",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:752c70444e12f44abdeacdd19697f7db88937d44:equity-uprise-floor-01-3d.html",
+        "production/floor-01/floor-01-lighting.json",
+        "production/floor-01/build_equity_uprise_floor_01_v2.py"
+      ]
+    },
+    {
+      "id": "F1-RECEPTION-LIGHT-01",
+      "label": "Reception Focus Lighting",
+      "category": "lighting",
+      "zone_id": "zone_07",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "focused warm pool over reception / Journey Wall"
+      },
+      "style": "warm 3000K architectural task/accent lighting",
+      "purpose": "Restore V1 focal hierarchy",
+      "authority_status": "production_default",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:752c70444e12f44abdeacdd19697f7db88937d44:equity-uprise-floor-01-3d.html",
+        "production/floor-01/floor-01-lighting.json"
+      ]
+    },
+    {
+      "id": "F1-LOUNGE-LIGHT-01",
+      "label": "Orientation Lounge Soft Lighting",
+      "category": "lighting",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "soft warm pool over lounge seating group"
+      },
+      "style": "warm 3000K low-glare ambient lighting",
+      "purpose": "Restore V1 lounge warmth",
+      "authority_status": "production_default",
+      "implementation_status": "required_new_model",
+      "heritage_decision": "preserve_v1_upgrade_detail",
+      "source_refs": [
+        "git:752c70444e12f44abdeacdd19697f7db88937d44:equity-uprise-floor-01-3d.html",
+        "production/floor-01/floor-01-lighting.json"
+      ]
+    }
+  ]
+}
