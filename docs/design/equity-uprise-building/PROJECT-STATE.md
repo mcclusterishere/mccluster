@@ -80,9 +80,27 @@ Hybrid builder implementation checkpoint:
 - Development Passport Studio, life-safety/support equipment, freight core and corrected Stair B are integrated into the same environment;
 - shared Core V2 geometry remains unchanged.
 
-## Floors 2–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
+## Floor 2 — PROGRAM RECONCILED / V1 AUDITED / INVENTORY READY
 
-Current `core-v2-floor-programs.json` still treats Floors 2–7 as pre-iterative program/interior work relative to Floor 1.
+Canonical identity: **Public Forum**.
+
+Preparation complete:
+- program reconciliation locked;
+- historical V1 deterministic viewer audited at commit `7c7726289781f270da25eef70789b704b63b30bd`;
+- V1→V2 preservation map created;
+- machine inventory created with **48 stable records / 72 total object instances**;
+- current Core V2 west service/freight + Stair B corrections retained.
+
+Floor 2 is **not yet a finished real 3D environment**. No Floor 2 builder/modeling work is included in this checkpoint.
+
+Required references:
+- `FLOOR-02-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-02-V1-V2-PRESERVATION-MAP.md`;
+- `production/floor-02/floor-02-object-inventory.json`.
+
+## Floors 3–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
+
+Current `core-v2-floor-programs.json` still treats Floors 3–7 as pre-iterative program/interior work.
 
 Do not interpret generated plan/program plates as finished 3D floors.
 
