@@ -43,7 +43,7 @@ button.active{background:#8b1e1e;border-color:#b52c31}
 <button data-view="reception">Reception</button>
 <button data-view="elevator">Elevator</button>
 <button data-view="lounge">Lounge</button>
-<button data-view="intake">Intake</button>
+<button data-view="intake">Intake</button><button id="frame">Full Floor</button>
 <button id="ceiling">Hide ceiling</button>
 <button id="wire">Wireframe</button>
 </div>
@@ -100,6 +100,14 @@ grid.position.set(ft(36),.005,ft(-36));scene.add(grid);
 let model=null,ceilingNodes=[],wire=false,ceilingOn=true;
 const originalMaterials=new Map();
 
+function frameLoadedModel(){
+  model.updateMatrixWorld(true);
+  const box=new THREE.Box3().setFromObject(model),size=new THREE.Vector3(),center=new THREE.Vector3();
+  box.getSize(size);box.getCenter(center);
+  const span=Math.max(size.x,size.z);
+  camera.position.set(center.x,Math.max(center.y+size.y*.8,ft(18)),center.z+span*.72);
+  controls.target.copy(center);camera.near=.02;camera.far=Math.max(ft(240),span*8);camera.updateProjectionMatrix();controls.update();
+}
 const loader=new GLTFLoader();
 loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{
   model=g.scene;
@@ -112,8 +120,10 @@ loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP
   model.traverse(o=>{
     if(o.isMesh){
       count++;
-      o.castShadow=true;o.receiveShadow=true;
+      o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;
       if(o.material){
+        const sideMats=Array.isArray(o.material)?o.material:[o.material];
+        sideMats.forEach(m=>{m.side=THREE.DoubleSide;m.needsUpdate=true});
         const mats=Array.isArray(o.material)?o.material:[o.material];
         originalMaterials.set(o,mats.map(m=>m.clone()));
       }
@@ -122,7 +132,7 @@ loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP
   });
   meshCount.textContent=count+' meshes';
   boot.style.display='none';
-  gotoView('lobby');
+  frameLoadedModel();
 },undefined,e=>{console.error(e);boot.style.display='block';boot.textContent='3D model failed to load'});
 
 const views={
@@ -140,6 +150,7 @@ function gotoView(key){
   controls.update();
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>gotoView(b.dataset.view));
+document.getElementById('frame').onclick=()=>{if(model)frameLoadedModel()};
 
 document.getElementById('ceiling').onclick=e=>{
   ceilingOn=!ceilingOn;
