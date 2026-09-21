@@ -95,6 +95,7 @@ jobs:
             echo "Committed Equity Uprise derived artifacts are stale after deterministic regeneration:" >&2
             echo "$dirty" >&2
             git diff --stat -- "${paths[@]}" >&2 || true
+            git diff --no-ext-diff -- "${paths[@]}" >&2 || true
             exit 1
           fi
           echo "Committed Equity Uprise derived artifacts match deterministic regeneration."
