@@ -34,6 +34,7 @@ SKIP_EXACT = {
     "docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md",
     "docs/design/EQUITY-UPRISE-REPO-AUDIT.md",
     "equity-uprise-building-core-v2-3d.html",
+    ".github/workflows/deploy-pages.yml",
 }
 CONTENT_PATTERNS = [
     re.compile(r"equity[ _-]+uprise", re.I),
