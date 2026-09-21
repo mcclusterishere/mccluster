@@ -15,7 +15,7 @@ NOT FOR CONSTRUCTION.
 """
 
 from pathlib import Path
-import json, math, textwrap
+import json, math, textwrap, uuid
 from PIL import Image, ImageDraw, ImageFont
 import ezdxf
 
@@ -211,6 +211,24 @@ The machine-readable source files above control title, level identity, program z
 Design maturity: **{level.get('design_maturity','support-level' if level.get('basement') else 'unspecified')}**.
 """
 
+def normalize_dxf_metadata(path, level):
+    """Normalize ezdxf run-specific header fields so generated DXF bytes are reproducible."""
+    seed=f"equity-uprise-core-v2-level-{level['level']}"
+    replacements={
+      "$TDCREATE":"2451544.5",
+      "$TDUPDATE":"2451544.5",
+      "$TDUCREATE":"2451544.5",
+      "$TDUUPDATE":"2451544.5",
+      "$FINGERPRINTGUID":"{"+str(uuid.uuid5(uuid.NAMESPACE_URL,seed+"-fingerprint")).upper()+"}",
+      "$VERSIONGUID":"{"+str(uuid.uuid5(uuid.NAMESPACE_URL,seed+"-version")).upper()+"}",
+    }
+    lines=path.read_text(encoding="utf-8",errors="strict").splitlines()
+    for i,line in enumerate(lines):
+        key=line.strip()
+        if key in replacements and i+2 < len(lines):
+            lines[i+2]=replacements[key]
+    path.write_text("\n".join(lines)+"\n",encoding="utf-8",newline="\n")
+
 def dxf(level,path):
     doc=ezdxf.new("R2010",setup=True);m=doc.modelspace()
     for name,color in [("SHELL",7),("GRID",8),("CORE",1),("PROGRAM",3),("SUPPORT",4),("OPENINGS",1),("TEXT",7)]:
@@ -230,6 +248,7 @@ def dxf(level,path):
     m.add_text(f"CORE V2 {level_label(level)} {level['title'].upper()} FFE {elev_label(level['elevation_ft'])}",dxfattribs={"layer":"TEXT","height":0.8}).set_placement((2,75))
     m.add_text("NOT FOR CONSTRUCTION",dxfattribs={"layer":"TEXT","height":0.65}).set_placement((2,-3))
     doc.saveas(path)
+    normalize_dxf_metadata(path,level)
 
 manifest=[]
 for level in plan_levels:
