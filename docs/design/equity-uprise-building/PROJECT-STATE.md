@@ -130,7 +130,7 @@ Required references:
 - `production/floor-03/floor-03-object-inventory.json`;
 - `production/floor-03/build_equity_uprise_floor_03_v2.py`.
 
-Visual approval remains iterative.
+Floor 4 is **visually reviewable, not user-approved complete**. Final approval depends on direct visual review in the isolated viewer.
 
 ## Floor 4 — RECONCILED / REAL 3D ACTIVE / STACKED
 
@@ -144,6 +144,9 @@ Current state:
 - inventory-driven GLB builder active;
 - reliable standalone viewer active;
 - inserted into the working building at **FFE +40.5 ft**;
+- building-level Floor 4 control now **truly isolates Floor 4** rather than only moving the camera;
+- visual-completeness pass adds room enclosure detail, support-room doors, restroom fixtures, equipped media storage/IT, and completed ceiling fields;
+- builder now requires both inventory coverage and a dedicated visual-completeness gate;
 - public media surfaces are constrained to real/approved public Equity Uprise content; private masters, rights, DDEX, payment and approval state remain non-public.
 
 Required references:
