@@ -48,7 +48,8 @@ known=set(cap_ids)
 for n,level in levels.items():
     expected_cap_status="reconciled-current-iterative-pass" if level.get("design_maturity")=="reconciled-current-iterative-pass" else "working-pre-iterative-program"
     check(f"floor {n} capability-map program status matches maturity",cap_floors[n].get("program_status")==expected_cap_status,str(cap_floors[n].get("program_status")))
-    check(f"floor {n} capability-map render readiness matches program",cap_floors[n].get("render_readiness")==("basic-render-ready" if n==1 else "chassis-only-not-final-program"),str(cap_floors[n].get("render_readiness")))
+    expected_cap_render="basic-render-ready" if level.get("design_maturity")=="reconciled-current-iterative-pass" else "chassis-only-not-final-program"
+    check(f"floor {n} capability-map render readiness matches program",cap_floors[n].get("render_readiness")==expected_cap_render,str(cap_floors[n].get("render_readiness")))
     unknown=[x for x in level.get("feature_ids",[]) if x not in known]
     check(f"floor {n} has no unknown capability ids",not unknown,", ".join(unknown))
 
