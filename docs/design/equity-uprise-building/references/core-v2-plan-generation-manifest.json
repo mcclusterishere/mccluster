@@ -1,5 +1,15 @@
 [
   {
+    "level": 0,
+    "title": "Technical / Service Basement",
+    "elevation_ft": -13.5,
+    "files": {
+      "png": "references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.png",
+      "svg": "references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.svg",
+      "dxf": "references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
     "level": 1,
     "title": "Lobby + Intake",
     "elevation_ft": 0,
