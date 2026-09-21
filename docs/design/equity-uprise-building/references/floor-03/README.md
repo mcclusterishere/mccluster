@@ -1,41 +1,61 @@
-# Floor 03 — Canonical Plan References
+# Floor 03 — Fellowship + Network — Core V2 Plan References
 
-These files are the canonical visual/CAD representation of the locked Floor 3 **Fellowship + Network** schematic geometry.
+> Branch: `architecture/equity-uprise-core-v2`
+>
+> Status: **CORE V2 BRANCH-CANONICAL SCHEMATIC GEOMETRY / NOT FOR CONSTRUCTION**
 
-## Files
+## Core V2 files
 
-- `equity-uprise-floor-03-fellowship-network-schematic-v1.png`
-  - raster preview for quick visual inspection; derived from the vector plan and never higher authority than SVG/DXF/written dimensions.
+- `equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf`
+  - CAD exchange geometry;
+  - preferred derived geometric reference after the written Core V2 authority.
+- `equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg`
+  - browser/vector inspection reference.
+- `equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png`
+  - raster preview only; never overrides DXF/SVG/written geometry.
 
-- `equity-uprise-floor-03-fellowship-network-schematic-v1.svg`
-  - vector plan for inspection, browser viewing, derivative graphics, and image/3D reference.
+## Shared authority
+
+Read before using these files:
+
+1. `../../BUILDING-CORE-V2-SPEC.md`
+2. `../../production/building-core-v2.json`
+3. the floor-specific written 360/spec document
+4. the floor-specific schematic-plan basis
+5. Core V2 DXF
+6. Core V2 SVG
+7. Core V2 PNG
+
+Shared vertical systems on this branch:
+- passenger elevator: X54–62 / Y34–44
+- service/freight elevator: X0–8 / Y60–72
+- revised Stair B: X8–18 / Y54–72
+- Stair A: X60–72 / Y54–72
+- MEP/riser: approximately X50–60 / Y66–72
+
+Both stairs must connect the full 13'-6" floor-to-floor datum in the combined building model.
+
+## Legacy Core V1 files
+
+The following files are retained for traceability only and are **not branch-canonical**:
 
 - `equity-uprise-floor-03-fellowship-network-schematic-v1.dxf`
-  - CAD-style geometry handoff for downstream architectural/3D development.
+- `equity-uprise-floor-03-fellowship-network-schematic-v1.svg`
+- `equity-uprise-floor-03-fellowship-network-schematic-v1.png`
 
-- Raster previews are **derived** from the SVG and do not outrank the SVG/DXF or written dimensions.
+Do not use the legacy files for new Core V2 3D, rendering, floor planning, hotspot placement, or vertical-circulation work.
 
-## Mandatory companion documents
+## Regeneration
 
-- `../../FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
-- `../../FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
-- `../../REFERENCE-AUTHORITY.md`
-- `../../../EQUITY-UPRISE-BUILDING-INVENTORY.md`
-- `../../../EQUITY-UPRISE-REPO-AUDIT.md`
+The Core V2 set is generated from:
 
-## Locked continuity
+- `../../production/building-core-v2.json`
+- `../../production/core-v2-floor-programs.json`
+- `../../production/generate_core_v2_plans.py`
 
-- 72' × 72' shell
-- 18' coordination grid
-- elevator X 54–62 / Y 34–44
-- Stair A X 60–72 / Y 54–72
-- Stair B X 0–12 / Y 54–72
-- MEP/riser stack X 50–60 / Y 66–72
-- 360 camera approximately (36,28), 5'-4" AFF
-- no exterior public door, balcony, or terrace on Floor 3
+The generation workflow is:
+`.github/workflows/equity-uprise-core-v2-plans.yml`
 
-## Status
+## Limitations
 
-**SCHEMATIC DESIGN / NOT FOR CONSTRUCTION.**
-
-These files establish continuity for 360 generation, 3D reconstruction, floor stacking, and future architectural development.
+These are schematic coordination drawings only. Final architecture, structure, MEP, fire/life-safety, accessibility, elevator and code design require licensed professional review.
