@@ -1,0 +1,582 @@
+{
+  "schema_version": "0.1.0",
+  "status": "canonical-floor-01-activity-and-simulation-authority",
+  "scene_id": "equity-uprise-floor-01",
+  "title": "Floor 01 — Arrival, Orientation & Intake Digital Twin Program",
+  "working_development_stage": "enter",
+  "acronym_word_status": "not_locked",
+  "development_authority_refs": [
+    "../../equity-uprise-development/DEVELOPMENT-JOURNEY.md",
+    "../../equity-uprise-development/COMPETENCY-ARCHITECTURE.md",
+    "../../equity-uprise-development/EVIDENCE-ASSESSMENT-ARCHITECTURE.md"
+  ],
+  "geometry_authority_refs": [
+    "../../equity-uprise-building/BUILDING-CORE-V2-SPEC.md",
+    "../building-core-v2.json",
+    "../core-v2-floor-programs.json",
+    "../../equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md"
+  ],
+  "fidelity": {
+    "target": "simulation-grade hypothetical physical headquarters",
+    "rule": "Model real-world architectural, life-safety, accessibility, MEP, IT, security and operational concepts as faithfully as practical for education and simulation.",
+    "compliance_claim": false,
+    "code_profile_status": "not_selected",
+    "note": "A later explicit simulation profile may bind a jurisdiction, code editions, occupancy assumptions and engineering assumptions. Until then, no file may claim real-world code compliance."
+  },
+  "primary_human_question": "Where am I, what am I trying to accomplish, how does this place work, and what should I do next?",
+  "primary_physical_question": "Can I safely and correctly enter, navigate, understand, and respond to this building?",
+  "primary_competencies": [
+    "CORE-01",
+    "CORE-05",
+    "CORE-06",
+    "CORE-07",
+    "CORE-08"
+  ],
+  "secondary_competencies": [
+    "CORE-02",
+    "CORE-03",
+    "SHR-02",
+    "SHR-06",
+    "PSC-02",
+    "PSC-04",
+    "OPS-01",
+    "OPS-02",
+    "OPS-04",
+    "OPS-06"
+  ],
+  "spaces": [
+    {
+      "id": "f1-entry-vestibule",
+      "label": "Entry Vestibule",
+      "bounds_ft": {
+        "x1": 29,
+        "y1": 0,
+        "x2": 43,
+        "y2": 9
+      },
+      "normal_use": [
+        "public arrival",
+        "spawn threshold",
+        "weather transition",
+        "building identification"
+      ],
+      "interactions": [
+        "orientation_experience"
+      ],
+      "physical_systems": [
+        "entry doors",
+        "access control",
+        "emergency lighting",
+        "wayfinding",
+        "fire-alarm notification"
+      ],
+      "privacy": "public",
+      "multiplayer": "shared"
+    },
+    {
+      "id": "f1-arrival-atrium",
+      "label": "Arrival Atrium",
+      "bounds_ft": {
+        "x1": 20,
+        "y1": 10,
+        "x2": 52,
+        "y2": 30
+      },
+      "normal_use": [
+        "arrival orientation",
+        "return-to-work routing",
+        "avatar presence",
+        "wayfinding"
+      ],
+      "interactions": [
+        "next_action",
+        "building_directory"
+      ],
+      "physical_systems": [
+        "wayfinding",
+        "emergency map",
+        "alarm notification",
+        "lighting"
+      ],
+      "privacy": "public",
+      "multiplayer": "shared"
+    },
+    {
+      "id": "f1-orientation-lounge",
+      "label": "Orientation Lounge",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 12,
+        "x2": 18,
+        "y2": 28
+      },
+      "normal_use": [
+        "new-member orientation",
+        "waiting",
+        "mentor greeter",
+        "casual conversation"
+      ],
+      "interactions": [
+        "orientation_experience",
+        "human_help"
+      ],
+      "physical_systems": [
+        "seating",
+        "accessible circulation",
+        "AV display",
+        "alarm notification"
+      ],
+      "privacy": "public",
+      "multiplayer": "shared"
+    },
+    {
+      "id": "f1-intake-room",
+      "label": "Intake / Verification Consultation",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 32,
+        "x2": 16,
+        "y2": 44
+      },
+      "normal_use": [
+        "identity verification",
+        "sensitive onboarding",
+        "consent/privacy setup",
+        "service intake",
+        "private support"
+      ],
+      "interactions": [
+        "verification",
+        "service_intake"
+      ],
+      "room_states": [
+        "open",
+        "reserved",
+        "private",
+        "service_intake",
+        "assessment",
+        "simulation"
+      ],
+      "physical_systems": [
+        "acoustic/privacy boundary",
+        "access control",
+        "AV",
+        "secure document handling"
+      ],
+      "privacy": "private-session-capable",
+      "multiplayer": "instanced-or-access-controlled"
+    },
+    {
+      "id": "f1-passport-studio",
+      "label": "Development Passport Studio",
+      "bounds_ft": {
+        "x1": 20,
+        "y1": 32,
+        "x2": 52,
+        "y2": 44
+      },
+      "normal_use": [
+        "goal setting",
+        "pathway selection",
+        "competency review",
+        "credential import",
+        "project state",
+        "next action"
+      ],
+      "interactions": [
+        "development_passport"
+      ],
+      "physical_systems": [
+        "workstations",
+        "privacy-aware displays",
+        "power/data"
+      ],
+      "privacy": "private-data-in-shared-space",
+      "multiplayer": "shared-presence-private-interface"
+    },
+    {
+      "id": "f1-journey-wall",
+      "label": "Journey Wall",
+      "bounds_ft": {
+        "x1": 28,
+        "y1": 50,
+        "x2": 44,
+        "y2": 54
+      },
+      "normal_use": [
+        "seven-stage journey",
+        "institutional orientation",
+        "emergency information mode"
+      ],
+      "interactions": [
+        "journey_progression"
+      ],
+      "physical_systems": [
+        "large display",
+        "emergency override",
+        "power/data"
+      ],
+      "privacy": "public-with-private-personalization",
+      "multiplayer": "shared"
+    },
+    {
+      "id": "f1-concierge-desk",
+      "label": "Reception / Concierge / Security Desk",
+      "bounds_ft": {
+        "x1": 30,
+        "y1": 44,
+        "x2": 42,
+        "y2": 47
+      },
+      "normal_use": [
+        "visitor check-in",
+        "directions",
+        "member help",
+        "access assistance",
+        "incident communication"
+      ],
+      "interactions": [
+        "concierge",
+        "next_action",
+        "life_safety_status"
+      ],
+      "physical_systems": [
+        "intercom",
+        "visitor credentialing",
+        "duress/emergency communication",
+        "building-status interface"
+      ],
+      "privacy": "public-counter-with-staff-private-view",
+      "multiplayer": "shared"
+    },
+    {
+      "id": "f1-next-action-terminal",
+      "label": "Next Action / Building Directory",
+      "bounds_ft": {
+        "x1": 49,
+        "y1": 24,
+        "x2": 51,
+        "y2": 29
+      },
+      "normal_use": [
+        "personal routing",
+        "building map",
+        "accessible route",
+        "meeting lookup",
+        "emergency route guidance"
+      ],
+      "interactions": [
+        "next_action",
+        "building_directory"
+      ],
+      "physical_systems": [
+        "display",
+        "power/data",
+        "wayfinding"
+      ],
+      "privacy": "public-with-authenticated-personalization",
+      "multiplayer": "shared"
+    }
+  ],
+  "support_spaces": [
+    {
+      "id": "f1-restroom-a",
+      "label": "Restroom A",
+      "role": "realism/accessibility/plumbing simulation",
+      "interactive_training": false
+    },
+    {
+      "id": "f1-restroom-b",
+      "label": "Restroom B",
+      "role": "realism/accessibility/plumbing simulation",
+      "interactive_training": false
+    },
+    {
+      "id": "f1-building-ops",
+      "label": "Building Operations / Life Safety",
+      "role": "fire-alarm/building-status/access/power/elevator simulation",
+      "interactive_training": true
+    },
+    {
+      "id": "f1-it-electrical",
+      "label": "IT / Electrical",
+      "role": "network/power/access-control/UPS/metering simulation",
+      "interactive_training": true
+    },
+    {
+      "id": "f1-janitor-service",
+      "label": "Janitor / Service",
+      "role": "maintenance/service/hazard-awareness simulation",
+      "interactive_training": true
+    },
+    {
+      "id": "f1-mep-riser",
+      "label": "MEP / Risers",
+      "role": "vertical systems continuity and building-systems training",
+      "interactive_training": true
+    },
+    {
+      "id": "f1-freight-service",
+      "label": "Freight / Service Elevator",
+      "role": "delivery/equipment/service circulation",
+      "interactive_training": true
+    }
+  ],
+  "unresolved_geometry_requirements": [
+    {
+      "id": "f1-stair-a-exit-discharge",
+      "requirement": "Provide believable protected Stair A ground-level exit discharge to exterior without converting it into a normal public entrance.",
+      "status": "requires-explicit-site-edge-design"
+    },
+    {
+      "id": "f1-stair-b-exit-discharge",
+      "requirement": "Provide believable protected Stair B ground-level exit discharge to exterior without converting it into a normal public entrance.",
+      "status": "requires-explicit-site-edge-design"
+    },
+    {
+      "id": "f1-secure-service-entrance",
+      "requirement": "Provide a secure service/delivery approach connected to the west service core/freight path.",
+      "status": "requires-explicit-site-edge-design"
+    },
+    {
+      "id": "f1-exterior-assembly-area",
+      "requirement": "Create a minimal exterior/site simulation layer with public approach, accessible approach, exit discharge routes and emergency assembly/muster point.",
+      "status": "requires-site-layer-design"
+    }
+  ],
+  "operating_modes": [
+    {
+      "id": "normal_hq",
+      "label": "Normal HQ",
+      "route_key": "next_action",
+      "access": "public-with-authenticated-personalization"
+    },
+    {
+      "id": "new_member_orientation",
+      "label": "New Member Orientation",
+      "route_key": "orientation_experience",
+      "access": "public"
+    },
+    {
+      "id": "public_service_clinic",
+      "label": "Public Service Clinic",
+      "route_key": "service_intake",
+      "access": "public-intake-private-session"
+    },
+    {
+      "id": "building_systems_lab",
+      "label": "Building Systems Lab",
+      "route_key": "building_systems_lab",
+      "access": "authorized-learner-or-instructor"
+    },
+    {
+      "id": "emergency_exercise",
+      "label": "Emergency Exercise",
+      "route_key": "emergency_exercise",
+      "access": "authorized-participant-or-instructor"
+    },
+    {
+      "id": "after_hours",
+      "label": "After Hours",
+      "route_key": "life_safety_status",
+      "access": "authorized-staff-or-simulation"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "basic_evacuation",
+      "label": "Basic Evacuation",
+      "state_changes": [
+        "alarm active",
+        "normal egress guidance active",
+        "muster accountability active"
+      ],
+      "competencies": [
+        "CORE-08",
+        "CORE-03"
+      ],
+      "evidence": [
+        "route choice",
+        "evacuation completion",
+        "accountability record"
+      ]
+    },
+    {
+      "id": "blocked_stair_a",
+      "label": "Blocked Stair A",
+      "state_changes": [
+        "stair_a unavailable",
+        "alternate route required"
+      ],
+      "competencies": [
+        "CORE-08",
+        "CORE-05",
+        "PSC-05"
+      ],
+      "evidence": [
+        "route interpretation",
+        "decision log"
+      ]
+    },
+    {
+      "id": "passenger_elevator_outage",
+      "label": "Passenger Elevator Outage",
+      "state_changes": [
+        "passenger elevator unavailable",
+        "accessibility response required"
+      ],
+      "competencies": [
+        "CORE-08",
+        "SHR-06"
+      ],
+      "evidence": [
+        "route adaptation",
+        "accessibility response"
+      ]
+    },
+    {
+      "id": "power_interruption",
+      "label": "Power Interruption",
+      "state_changes": [
+        "normal power degraded",
+        "emergency systems remain",
+        "selected interfaces offline"
+      ],
+      "competencies": [
+        "CORE-05",
+        "CORE-08",
+        "OPS-01",
+        "OPS-04"
+      ],
+      "evidence": [
+        "system-state interpretation",
+        "continuity response"
+      ]
+    },
+    {
+      "id": "medical_incident_lobby",
+      "label": "Medical Incident in Lobby",
+      "state_changes": [
+        "incident initiated",
+        "communication/escalation required"
+      ],
+      "competencies": [
+        "CORE-08",
+        "CORE-02",
+        "CORE-07"
+      ],
+      "evidence": [
+        "communication sequence",
+        "escalation record"
+      ]
+    },
+    {
+      "id": "privacy_error_intake",
+      "label": "Privacy Error at Intake",
+      "state_changes": [
+        "sensitive data exposed in improper context"
+      ],
+      "competencies": [
+        "SHR-02",
+        "CORE-07"
+      ],
+      "evidence": [
+        "error recognition",
+        "containment",
+        "corrective action"
+      ]
+    },
+    {
+      "id": "public_service_surge",
+      "label": "Public-Service Surge",
+      "state_changes": [
+        "arrival queue elevated",
+        "intake capacity constrained"
+      ],
+      "competencies": [
+        "CORE-02",
+        "CORE-03",
+        "PSC-04"
+      ],
+      "evidence": [
+        "queue handling",
+        "service communication",
+        "team coordination"
+      ]
+    },
+    {
+      "id": "network_checkin_outage",
+      "label": "Network / Check-In Outage",
+      "state_changes": [
+        "directory/check-in unavailable",
+        "fallback workflow required"
+      ],
+      "competencies": [
+        "CORE-05",
+        "CORE-07",
+        "OPS-06"
+      ],
+      "evidence": [
+        "fallback execution",
+        "documentation"
+      ]
+    },
+    {
+      "id": "service_area_incident",
+      "label": "Service-Area Incident",
+      "state_changes": [
+        "restricted service hazard",
+        "route boundary changes"
+      ],
+      "competencies": [
+        "CORE-08",
+        "OPS-01"
+      ],
+      "evidence": [
+        "hazard recognition",
+        "boundary compliance"
+      ]
+    }
+  ],
+  "simulation_object_contract": {
+    "required_fields": [
+      "object_id",
+      "system",
+      "normal_state",
+      "access_class",
+      "connected_spaces",
+      "scenario_controllable",
+      "states"
+    ],
+    "optional_fields": [
+      "fire_state",
+      "accessible",
+      "power_dependency",
+      "sensors",
+      "competency_uses",
+      "training_refs",
+      "privacy_class",
+      "failure_modes"
+    ],
+    "rule": "Important architectural and systems objects must become stateful simulation entities rather than decorative meshes."
+  },
+  "multiplayer": {
+    "default": "single-user-capable, multiplayer-enhanced",
+    "public_spaces": "shared presence",
+    "private_rooms": "access-controlled or instanced sessions",
+    "private_interfaces": "other avatars may see occupancy/activity status but not private screen contents",
+    "presence_states": [
+      "available",
+      "busy",
+      "quiet",
+      "available_to_collaborate",
+      "available_to_mentor",
+      "focus"
+    ]
+  },
+  "training_binding_policy": {
+    "rule": "Any external training or credential concept represented on Floor 1 must bind to the actual physical/systems concepts it teaches where spatial simulation is meaningful.",
+    "credential_is_not_competency": true,
+    "evidence_policy_ref": "../../equity-uprise-development/EVIDENCE-ASSESSMENT-ARCHITECTURE.md"
+  }
+}
