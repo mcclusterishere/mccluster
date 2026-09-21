@@ -155,6 +155,7 @@ Floor 3 has **no exterior public entrance, balcony, or terrace**.
 Canonical Floor 3 assets:
 - `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.png`
 
 ## Locked six-floor program
 
