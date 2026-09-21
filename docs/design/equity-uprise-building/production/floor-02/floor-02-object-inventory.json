@@ -1,0 +1,890 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-production-input-floor-02",
+  "scene_id": "equity-uprise-floor-02",
+  "floor_identity": "Public Forum",
+  "not_for_construction": true,
+  "purpose": "Floor 2 inventory after program reconciliation + V1 audit.",
+  "design_formula": "V1 Public Forum composition + Core V2 stack truth + current Equity Uprise public-participation program",
+  "authority_refs": [
+    "../../FLOOR-02-PUBLIC-FORUM-360-SPEC.md",
+    "../../FLOOR-02-PROGRAM-RECONCILIATION.md",
+    "../../FLOOR-02-V1-V2-PRESERVATION-MAP.md",
+    "../core-v2-floor-programs.json"
+  ],
+  "coordinate_system": {
+    "origin": "southwest_exterior_corner_floor_01",
+    "units": "feet",
+    "x_positive": "east",
+    "y_positive": "north",
+    "z_positive": "up",
+    "finished_floor_elevation_ft": 13.5
+  },
+  "inventory_rules": [
+    "Keep Floor 2 intentionally under-furnished.",
+    "Dynamic issue/perspective content is not permanent architecture.",
+    "Shared Core V2 geometry overrides V1 geometry.",
+    "No exterior entrance/balcony/terrace.",
+    "No staffed Floor 2 reception desk.",
+    "Full fellowship/network directory remains Floor 3.",
+    "Stable IDs should drive the future real-3D builder."
+  ],
+  "summary": {
+    "object_records": 48,
+    "total_instances": 72
+  },
+  "objects": [
+    {
+      "id": "F2-SOUTH-GLAZING-01",
+      "label": "Sealed South Glazing System",
+      "category": "architectural_feature",
+      "zone_id": "south_perimeter",
+      "quantity": 8,
+      "placement": {
+        "band_ft": {
+          "x1": 0,
+          "y1": 0,
+          "x2": 72,
+          "y2": 0.7
+        },
+        "bay_spacing_ft": 9
+      },
+      "style": "clear glass + gunmetal mullions",
+      "purpose": "Upper-floor enclosure; no exterior door",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_correct_core"
+    },
+    {
+      "id": "F2-FORUM-TABLE-01",
+      "label": "Public Forum Discussion Table",
+      "category": "furniture",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 36,
+          "y": 39
+        },
+        "diameter_ft": 12,
+        "height_ft": 2.6
+      },
+      "style": "warm muted wood / matte commercial finish",
+      "purpose": "Primary small-group discussion surface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-FORUM-CHAIR-01",
+      "label": "Forum Chair 1",
+      "category": "furniture",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 36,
+          "y": 30.4
+        },
+        "orientation_rule": "face forum table center"
+      },
+      "style": "charcoal upholstered commercial chair",
+      "purpose": "Forum seating; preserve accessible position",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-FORUM-CHAIR-02",
+      "label": "Forum Chair 2",
+      "category": "furniture",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 42.081,
+          "y": 32.919
+        },
+        "orientation_rule": "face forum table center"
+      },
+      "style": "charcoal upholstered commercial chair",
+      "purpose": "Forum seating; preserve accessible position",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-FORUM-CHAIR-03",
+      "label": "Forum Chair 3",
+      "category": "furniture",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 44.6,
+          "y": 39
+        },
+        "orientation_rule": "face forum table center"
+      },
+      "style": "charcoal upholstered commercial chair",
+      "purpose": "Forum seating; preserve accessible position",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-FORUM-CHAIR-04",
+      "label": "Forum Chair 4",
+      "category": "furniture",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 42.081,
+          "y": 45.081
+        },
+        "orientation_rule": "face forum table center"
+      },
+      "style": "charcoal upholstered commercial chair",
+      "purpose": "Forum seating; preserve accessible position",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-FORUM-CHAIR-05",
+      "label": "Forum Chair 5",
+      "category": "furniture",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 36,
+          "y": 47.6
+        },
+        "orientation_rule": "face forum table center"
+      },
+      "style": "charcoal upholstered commercial chair",
+      "purpose": "Forum seating; preserve accessible position",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-FORUM-CHAIR-06",
+      "label": "Forum Chair 6",
+      "category": "furniture",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 29.919,
+          "y": 45.081
+        },
+        "orientation_rule": "face forum table center"
+      },
+      "style": "charcoal upholstered commercial chair",
+      "purpose": "Forum seating; preserve accessible position",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-FORUM-CHAIR-07",
+      "label": "Forum Chair 7",
+      "category": "furniture",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 27.4,
+          "y": 39
+        },
+        "orientation_rule": "face forum table center"
+      },
+      "style": "charcoal upholstered commercial chair",
+      "purpose": "Forum seating; preserve accessible position",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-FORUM-CHAIR-08",
+      "label": "Forum Chair 8",
+      "category": "furniture",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 29.919,
+          "y": 32.919
+        },
+        "orientation_rule": "face forum table center"
+      },
+      "style": "charcoal upholstered commercial chair",
+      "purpose": "Forum seating; preserve accessible position",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-FORUM-POWER-01",
+      "label": "Forum Table Power / Data Feed",
+      "category": "equipment",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "integrated only after plausible floor/table routing is modeled"
+      },
+      "style": "flush dark module",
+      "purpose": "Power/data support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-FEATURE-WALL-01",
+      "label": "Public Forum Feature Wall",
+      "category": "architectural_feature",
+      "zone_id": "zone_02",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 24,
+          "y1": 50,
+          "x2": 48,
+          "y2": 54
+        }
+      },
+      "style": "dark stone/mineral + restrained wood/acoustic integration",
+      "purpose": "Primary floor identity surface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-DISPLAY-CURRENT-ISSUES",
+      "label": "Current Issues Surface",
+      "category": "equipment",
+      "zone_id": "zone_02",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 25,
+          "y1": 52,
+          "x2": 31.5,
+          "y2": 52.18
+        }
+      },
+      "style": "flush low-brightness architectural display",
+      "purpose": "Dynamic content surface; no permanent political content",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-DISPLAY-PERSPECTIVES",
+      "label": "Perspectives Surface",
+      "category": "equipment",
+      "zone_id": "zone_02",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 32.75,
+          "y1": 52,
+          "x2": 39.25,
+          "y2": 52.18
+        }
+      },
+      "style": "flush low-brightness architectural display",
+      "purpose": "Dynamic content surface; no permanent political content",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-DISPLAY-OPPORTUNITIES",
+      "label": "Opportunities / Next Steps Surface",
+      "category": "equipment",
+      "zone_id": "zone_02",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 40.5,
+          "y1": 52,
+          "x2": 47,
+          "y2": 52.18
+        }
+      },
+      "style": "flush low-brightness architectural display",
+      "purpose": "Dynamic content surface; no permanent political content",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-IDENTITY-SIGN-01",
+      "label": "PUBLIC FORUM Identity / Equity Uprise Mark",
+      "category": "signage_wayfinding",
+      "zone_id": "zone_02",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "integrated with feature wall using exact approved artwork"
+      },
+      "style": "restrained identity treatment",
+      "purpose": "Floor identity",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-LOUNGE-SOFA-01",
+      "label": "Listening Lounge Sofa / Bench",
+      "category": "furniture",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 3,
+          "y1": 17,
+          "x2": 10,
+          "y2": 20
+        }
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Listening lounge seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-LOUNGE-CHAIR-01",
+      "label": "Listening Lounge Chair A",
+      "category": "furniture",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 12,
+          "y1": 16,
+          "x2": 15,
+          "y2": 19
+        }
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Listening lounge seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-LOUNGE-CHAIR-02",
+      "label": "Listening Lounge Chair B",
+      "category": "furniture",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 12,
+          "y1": 24,
+          "x2": 15,
+          "y2": 27
+        }
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Listening lounge seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-LOUNGE-TABLE-01",
+      "label": "Listening Lounge Table",
+      "category": "furniture",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 9.5,
+          "y": 23
+        },
+        "diameter_ft": 4,
+        "height_ft": 1.35
+      },
+      "style": "warm muted wood",
+      "purpose": "Shared lounge table",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-LOUNGE-RUG-01",
+      "label": "Listening Lounge Acoustic Rug",
+      "category": "decorative_functional",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 2.5,
+          "y1": 14.5,
+          "x2": 17.2,
+          "y2": 29
+        }
+      },
+      "style": "dark acoustic textile",
+      "purpose": "Ground lounge and reduce reverberation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-LOUNGE-PLANT-01",
+      "label": "Listening Lounge Plant A",
+      "category": "decorative_functional",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 4.2,
+          "y": 27.3
+        }
+      },
+      "style": "restrained planter + greenery",
+      "purpose": "Human-scale softness",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-LOUNGE-PLANT-02",
+      "label": "Listening Lounge Plant B",
+      "category": "decorative_functional",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 16,
+          "y": 15.5
+        }
+      },
+      "style": "restrained planter + greenery",
+      "purpose": "Human-scale softness",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-TALK-INTERFACE-01",
+      "label": "Talk It Through / Listening Interface",
+      "category": "interactive_terminal",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 0.78,
+          "y1": 21,
+          "x2": 1.02,
+          "y2": 26
+        }
+      },
+      "style": "slim dark wall interface",
+      "purpose": "Neutral conversation/listening workflow",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-MEMBER-CHECKIN-01",
+      "label": "Member Check-In Terminal",
+      "category": "interactive_terminal",
+      "zone_id": "zone_04",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 49,
+          "y1": 24,
+          "x2": 51,
+          "y2": 29
+        }
+      },
+      "style": "gunmetal body + privacy-aware display",
+      "purpose": "Member sign-in/dashboard/floor routing",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F2-PASS-ELEV-DOOR-01",
+      "label": "Passenger Elevator Door Pair",
+      "category": "vertical_circulation_interface",
+      "zone_id": "elevator_lobby",
+      "quantity": 1,
+      "placement": {
+        "facade_x": 54,
+        "y1": 37,
+        "y2": 41
+      },
+      "style": "dark/gunmetal coordinated building finish",
+      "purpose": "Vertical/service/egress interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "preserve_v1_correct_core"
+    },
+    {
+      "id": "F2-PASS-ELEV-CALL-01",
+      "label": "Passenger Elevator Call Station",
+      "category": "equipment",
+      "zone_id": "elevator_lobby",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "west face of passenger core beside door"
+      },
+      "style": "dark/gunmetal coordinated building finish",
+      "purpose": "Vertical/service/egress interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-FLOOR-ID-01",
+      "label": "Floor 2 Identifier",
+      "category": "signage_wayfinding",
+      "zone_id": "elevator_lobby",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "adjacent to passenger elevator without blocking check-in"
+      },
+      "style": "dark/gunmetal coordinated building finish",
+      "purpose": "Vertical/service/egress interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-FREIGHT-DOOR-01",
+      "label": "Service / Freight Elevator Door",
+      "category": "vertical_circulation_interface",
+      "zone_id": "north_service",
+      "quantity": 1,
+      "placement": {
+        "facade_y": 60,
+        "x1": 1.5,
+        "x2": 6.5
+      },
+      "style": "dark/gunmetal coordinated building finish",
+      "purpose": "Vertical/service/egress interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "replace_v1_geometry_with_v2"
+    },
+    {
+      "id": "F2-FREIGHT-CONTROL-01",
+      "label": "Service / Freight Control Station",
+      "category": "equipment",
+      "zone_id": "north_service",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "south face of freight core"
+      },
+      "style": "dark/gunmetal coordinated building finish",
+      "purpose": "Vertical/service/egress interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-STAIR-A-DOOR-01",
+      "label": "Stair A Protected Door / Exit Marker",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "south face of Stair A enclosure"
+      },
+      "style": "dark/gunmetal coordinated building finish",
+      "purpose": "Vertical/service/egress interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "replace_v1_geometry_with_v2"
+    },
+    {
+      "id": "F2-STAIR-B-DOOR-01",
+      "label": "Stair B Protected Door / Exit Marker",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "south face of Stair B enclosure"
+      },
+      "style": "dark/gunmetal coordinated building finish",
+      "purpose": "Vertical/service/egress interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "replace_v1_geometry_with_v2"
+    },
+    {
+      "id": "F2-RR-A-VANITY-01",
+      "label": "Restroom A Vanity",
+      "category": "fixture",
+      "zone_id": "restroom_a",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 19.6,
+          "y1": 61.2,
+          "x2": 22.4,
+          "y2": 62.2
+        }
+      },
+      "style": "durable commercial fixture finish",
+      "purpose": "Restroom support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-RR-A-WC-01",
+      "label": "Restroom A Water Closet",
+      "category": "fixture",
+      "zone_id": "restroom_a",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 20.2,
+          "y1": 67.2,
+          "x2": 21.8,
+          "y2": 69
+        }
+      },
+      "style": "durable commercial fixture finish",
+      "purpose": "Restroom support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-RR-B-VANITY-01",
+      "label": "Restroom B Vanity",
+      "category": "fixture",
+      "zone_id": "restroom_b",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 27.6,
+          "y1": 61.2,
+          "x2": 30.4,
+          "y2": 62.2
+        }
+      },
+      "style": "durable commercial fixture finish",
+      "purpose": "Restroom support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-RR-B-WC-01",
+      "label": "Restroom B Water Closet",
+      "category": "fixture",
+      "zone_id": "restroom_b",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 28.2,
+          "y1": 67.2,
+          "x2": 29.8,
+          "y2": 69
+        }
+      },
+      "style": "durable commercial fixture finish",
+      "purpose": "Restroom support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-STORAGE-SHELVING-01",
+      "label": "Forum Storage Shelving / Casework",
+      "category": "equipment",
+      "zone_id": "forum_storage",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "inside X34–42 / Y60–72, clear of door"
+      },
+      "style": "dark durable service equipment",
+      "purpose": "Operational support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-AVIT-RACK-01",
+      "label": "AV / IT Equipment Rack",
+      "category": "equipment",
+      "zone_id": "av_it",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "inside X42–50 / Y60–72 secure room"
+      },
+      "style": "dark durable service equipment",
+      "purpose": "Operational support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-JANITOR-STORAGE-01",
+      "label": "Janitor / Service Storage",
+      "category": "equipment",
+      "zone_id": "janitor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "inside X50–54 / Y60–66"
+      },
+      "style": "dark durable service equipment",
+      "purpose": "Operational support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-FORUM-LIGHT-01",
+      "label": "Forum Table Architectural Light",
+      "category": "lighting",
+      "zone_id": "zone_01",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 36,
+          "y": 39
+        },
+        "placement_rule": "restrained circular/soft geometric fixture above table"
+      },
+      "style": "warm 2700–3000K",
+      "purpose": "Define forum table without theatricalizing it",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-GENERAL-LIGHT-01",
+      "label": "General Warm Ceiling Light Grid",
+      "category": "lighting",
+      "zone_id": "floor_wide",
+      "quantity": 16,
+      "placement": {
+        "placement_rule": "distributed, low-glare, core-aware"
+      },
+      "style": "warm 2700–3000K",
+      "purpose": "General illumination",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-LOUNGE-LIGHT-01",
+      "label": "Listening Lounge Soft Lighting",
+      "category": "lighting",
+      "zone_id": "zone_03",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "soft warm pool over lounge"
+      },
+      "style": "warm low-glare",
+      "purpose": "Listening atmosphere",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-ACOUSTIC-CEILING-01",
+      "label": "Acoustic Ceiling Field",
+      "category": "acoustic_treatment",
+      "zone_id": "floor_wide",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "coordinated ceiling plane around MEP/lighting/life safety"
+      },
+      "style": "neutral absorptive system",
+      "purpose": "Control reverberation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-ACOUSTIC-WALL-01",
+      "label": "Forum Acoustic Wall Treatment",
+      "category": "acoustic_treatment",
+      "zone_id": "zone_02",
+      "quantity": 3,
+      "placement": {
+        "placement_rule": "integrated feature/lateral wall panels"
+      },
+      "style": "dark absorptive/slatted treatment",
+      "purpose": "Speech intelligibility",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-EGRESS-MAP-01",
+      "label": "You Are Here / Egress Map",
+      "category": "life_safety",
+      "zone_id": "elevator_lobby",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "coordinate with egress/circulation; exact device placement later"
+      },
+      "style": "discreet marked life-safety equipment",
+      "purpose": "Life-safety concept",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-FE-WEST-01",
+      "label": "Fire Extinguisher Cabinet — West",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "coordinate with egress/circulation; exact device placement later"
+      },
+      "style": "discreet marked life-safety equipment",
+      "purpose": "Life-safety concept",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-FE-EAST-01",
+      "label": "Fire Extinguisher Cabinet — East",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "coordinate with egress/circulation; exact device placement later"
+      },
+      "style": "discreet marked life-safety equipment",
+      "purpose": "Life-safety concept",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F2-EMERGENCY-LIGHT-01",
+      "label": "Emergency Lighting / Notification Set",
+      "category": "life_safety",
+      "zone_id": "floor_wide",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "coordinate with egress/circulation; exact device placement later"
+      },
+      "style": "discreet marked life-safety equipment",
+      "purpose": "Life-safety concept",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor2_3d",
+      "heritage_decision": "new_v2"
+    }
+  ]
+}
