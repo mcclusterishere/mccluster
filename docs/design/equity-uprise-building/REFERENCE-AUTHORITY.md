@@ -30,7 +30,11 @@ Read in this order:
    - Prevents invented generic rooms that do not correspond to the program.
 
 2. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
-   - Defines the locked six-floor program, vertical narrative, continuity rules and one-floor-at-a-time design process.
+   - Defines the locked six occupied-floor program plus Level 7 roof, vertical narrative, continuity rules and one-level-at-a-time design process.
+
+2A. `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`
+   - Mandatory before Floor 6, roof, exterior-master, rooftop 3D, or cross-site mobility work.
+   - Locks the roof as Level 7 / Mobility Portal while deliberately leaving final helipad geometry pending feasibility.
 
 3. The floor-specific written specification.
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
@@ -106,7 +110,7 @@ Floor 1 currently establishes the building datum:
 - 180° south: entrance/vestibule on Floor 1 only;
 - -90° west: lounge/intake.
 
-Floors 2–6 must stack on this shell/core logic unless the owner explicitly approves a formal building-wide revision.
+Floors 2–6 and Level 7 roof access must stack on this shell/core logic unless the owner explicitly approves a formal building-wide revision.
 
 ## Floor 2 locked geometry
 
@@ -225,7 +229,9 @@ Canonical Floor 5 assets:
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
-## Locked six-floor program
+## Locked building program
+
+The building contains **six enclosed occupied floors plus one navigable roof level**:
 
 - Floor 1 — Lobby + Intake
 - Floor 2 — Public Forum
@@ -233,14 +239,19 @@ The raster preview is derivative and cannot override the DXF/SVG/written geometr
 - Floor 4 — Media + Culture
 - Floor 5 — Policy + Proof
 - Floor 6 — Penthouse Command
+- Level 7 — **Roof / Mobility Portal**
 
-Do not add floors or rename/reassign them without explicit owner approval.
+Level 7 is the roof, not a normal enclosed floor. It is the canonical cross-site departure/arrival layer and may contain a **candidate rooftop mobility pad / helipad zone** subject to later real-world feasibility.
+
+Do not add further levels or rename/reassign them without explicit owner approval.
 
 ## Building-wide continuity rules
 
-- Floor 1 is the only public floor with an exterior entrance.
+- Floor 1 is the only **ground-level public entrance** to the building.
 - Floors 2–6 do not get exterior doors merely because a generated image wants one.
 - Floors 2–6 have no balconies/terraces unless the shell is formally revised.
+- Level 7 is intentionally an **open-air roof destination**, reached from the building's vertical circulation. It is not a second ground entrance.
+- Floor 6 must preserve vertical access/core/service continuity to Level 7.
 - Elevator, stairs, structural coordination grid and service risers are vertical systems; they do not move from floor to floor.
 - Upper floors must be designed as levels of the same building, not unrelated rooms.
 - Empty space is valid. Do not fill the building with props to make an image look impressive.
@@ -258,7 +269,7 @@ Before generating an Equity Uprise building image:
 5. preserve all locked geometry;
 6. generate only after those checks pass.
 
-If a requested floor does not yet have a canonical written builder/360 spec, **stop the image-generation workflow and write/review the floor description first**.
+If a requested floor/level does not yet have a canonical written builder/360 spec, **stop the image-generation workflow and write/review the description first**. For Floor 6 or Level 7 work, also read `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`.
 
 ## Lore / worldbuilding rule
 
@@ -272,7 +283,7 @@ Allowed:
 
 Not allowed without owner approval:
 - inventing new departments;
-- inventing extra floors;
+- inventing extra floors/levels beyond the six occupied floors + Level 7 roof;
 - moving functions to different floors;
 - inventing a second public entrance;
 - inventing secret rooms as canonical;
@@ -286,9 +297,9 @@ Do not merge its Living Sketch geometry, protagonist rules, Proof Room visual ex
 
 Likewise, the six-floor building does not supersede Uprise World.
 
-## Future-floor rule
+## Future-level rule
 
-Each floor must receive, in order:
+Each floor/roof level must receive, in order:
 
 1. written builder/program spec;
 2. owner review;
