@@ -250,11 +250,15 @@ for level in programs["levels"]:
         spheres.append(item)
 
     refs=f"../../references/floor-{n:02d}/{ASSET_NAMES[n]}"
+    reconciled = level.get("design_maturity") == "reconciled-current-iterative-pass"
+    package_status = "core-v2-active" if reconciled else "core-v2-provisional-program"
+    package_status_label = "ACTIVE CORE V2 DERIVED PACKAGE" if reconciled else "PROVISIONAL CORE V2 DERIVED PACKAGE — PROGRAM PRE-ITERATIVE"
+
     manifest={
-      "schema_version":"2.0.0",
+      "schema_version":"2.1.0",
       "scene_id":scene_id,
       "scene_name":f"Equity Uprise Level {n:02d} — {level['title']}",
-      "status":"core-v2-active",
+      "status":package_status,
       "not_for_construction":True,
       "shared_core_ref":"../building-core-v2.json",
       "floor_program_ref":"../core-v2-floor-programs.json",
@@ -424,7 +428,7 @@ Both stairs are modeled as continuous full-rise systems in the combined building
 
     readme=f"""# Level {n:02d} — {level['title']} — Core V2 Production Package
 
-Status: **ACTIVE CORE V2 DERIVED PACKAGE / NOT FOR CONSTRUCTION**
+Status: **{package_status_label} / NOT FOR CONSTRUCTION**
 
 This package inherits the shared building/program authority from:
 - `../building-core-v2.json`
@@ -441,6 +445,9 @@ Finished-floor elevation: **+{elev:g} ft**.
 This package may operationalize floor program, cameras, hotspots, lighting, routing and states. It may **not** redefine passenger elevator, freight/service elevator, Stair A, Stair B, MEP or slab-opening geometry.
 
 Per-floor scenes are derived views. The combined stacked building is the vertical-continuity authority.
+
+Design maturity: **{level.get('design_maturity','unspecified')}**.  
+Render readiness: **{level.get('render_readiness','unspecified')}**.
 """
     if n==1:
         readme += """
