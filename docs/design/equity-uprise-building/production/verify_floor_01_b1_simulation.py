@@ -10,6 +10,8 @@ SITE=json.loads((HERE/"floor-01"/"floor-01-site-egress.json").read_text())
 F1=json.loads((HERE/"floor-01"/"floor-01-digital-twin-program.json").read_text())
 TUNNEL=json.loads((HERE/"underground-tunnel-network.json").read_text())
 PROGRAMS=json.loads((HERE/"core-v2-floor-programs.json").read_text())
+CAPABILITY_MAP=json.loads((HERE/"equity-uprise-capability-map-v2.json").read_text())
+SOURCE_MAP=json.loads((HERE/"equity-uprise-repo-source-map-v2.json").read_text())
 DEV_DIR=HERE.parent.parent/"equity-uprise-development"
 STAGE_MAP=json.loads((DEV_DIR/"stage-competency-map.json").read_text())
 COMPETENCY_CATALOG=json.loads((DEV_DIR/"competency-catalog.json").read_text())
@@ -28,6 +30,8 @@ check("B1 elevation -13.5",levels.get(0,{}).get("finished_floor_elevation_ft")==
 check("Floor 1 is level of exit discharge",CORE.get("level_of_exit_discharge")==1,str(CORE.get("level_of_exit_discharge")))
 check("B1 is not developmental",B1.get("developmental_stage") is None,str(B1.get("developmental_stage")))
 check("B1 normal public access false",B1.get("normal_public_access") is False,str(B1.get("normal_public_access")))
+check("B1 title matches shared core",levels.get(0,{}).get("name")==B1.get("title"),f"{levels.get(0,{}).get('name')} != {B1.get('title')}")
+check("canonical maps are branch-agnostic","branch" not in CAPABILITY_MAP and "branch" not in SOURCE_MAP,str({"capability_branch":CAPABILITY_MAP.get("branch"),"source_branch":SOURCE_MAP.get("branch")}))
 check("B1 live access is restricted",B1.get("access")=="mccluster-house-owner-or-underground-operations-admin",str(B1.get("access")))
 check("B1 training is sandbox only",B1.get("training_access",{}).get("mode")=="sandboxed_clone_only",str(B1.get("training_access")))
 check("ordinary EU admin cannot unlock live B1",B1.get("live_access",{}).get("ordinary_equity_uprise_admin_sufficient") is False,str(B1.get("live_access")))
@@ -81,9 +85,20 @@ for key in ("report_emergency","evacuation","critical_operations","accountabilit
 
 # Floor 1 development-program binding.
 f1_program=next(x for x in PROGRAMS["levels"] if x["level"]==1)
+f1_capability=next(x for x in CAPABILITY_MAP["floors"] if x["level"]==1)
 stage1=next(x for x in STAGE_MAP["stages"] if x["stage"]==1)
 catalog_ids={x["id"] for x in COMPETENCY_CATALOG["competencies"]}
+EXPECTED_F1_TITLE="Arrival / Orientation / Intake"
 check("Floor 1 working stage is enter",f1_program.get("working_development_stage")=="enter",str(f1_program.get("working_development_stage")))
+check("Floor 1 shared core title current",levels.get(1,{}).get("name")==EXPECTED_F1_TITLE,str(levels.get(1,{}).get("name")))
+check("Floor 1 program title current",f1_program.get("title")==EXPECTED_F1_TITLE,str(f1_program.get("title")))
+check("Floor 1 program identity current",f1_program.get("program_identity")==EXPECTED_F1_TITLE,str(f1_program.get("program_identity")))
+check("Floor 1 capability-map title current",f1_capability.get("title")==EXPECTED_F1_TITLE,str(f1_capability.get("title")))
+expected_surfaces={"Entry Vestibule","Arrival Atrium","Orientation Lounge","Intake / Verification Consultation","Development Passport Studio","Journey Wall","Reception / Concierge / Security Desk","Next Action / Building Directory"}
+check("Floor 1 capability-map public surfaces current",expected_surfaces.issubset(set(f1_capability.get("public_surfaces",[]))),str(f1_capability.get("public_surfaces")))
+old_f1_terms=("Lobby + Intake","Arrival / Identity Wall","Arrival / Routing Directory","Visitor Lounge")
+capability_text=json.dumps(f1_capability)
+check("Floor 1 capability-map has no stale identity terms",not any(x in capability_text for x in old_f1_terms),capability_text)
 check("Floor 1 primary competencies match canonical stage 1",f1_program.get("primary_competency_ids")==stage1.get("primary_competencies"),str(f1_program.get("primary_competency_ids")))
 check("Floor 1 all primary competencies exist",all(x in catalog_ids for x in f1_program.get("primary_competency_ids",[])),str(f1_program.get("primary_competency_ids")))
 check("Floor 1 all secondary competencies exist",all(x in catalog_ids for x in f1_program.get("secondary_competency_ids",[])),str(f1_program.get("secondary_competency_ids")))
@@ -109,6 +124,8 @@ check("Floor 1 building systems route sandbox only",lab.get("live_b1_access") is
 check("Floor 1 underground route hidden live access",underground.get("hidden_from_normal_navigation") is True and underground.get("live_b1_access") is True,str(underground))
 state_ids={x.get("id") for x in F1_STATES.get("states",[])}
 check("Floor 1 states include underground access","underground_operations_access" in state_ids,str(sorted(state_ids)))
+floor_focus=next((x for x in F1_STATES.get("states",[]) if x.get("id")=="floor_focus"),{})
+check("Floor 1 state label current",floor_focus.get("label")==EXPECTED_F1_TITLE,str(floor_focus))
 
 # Restricted B1 derived package is required for future render/admin operation.
 b1_required=[
