@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-01",
+  "color_temperature_default_k": 3000,
+  "environment": {
+    "daylight_state": "neutral_urban_day",
+    "exterior_exposure_ev": 0,
+    "interior_exposure_compensation_ev": 0.3
+  },
+  "fixtures": [
+    {
+      "id": "general_lobby_fill",
+      "type": "ceiling_area_grid",
+      "zone": "central_public_lobby",
+      "temperature_k": 3000,
+      "intensity_relative": 0.72,
+      "height_ft": 10.8
+    },
+    {
+      "id": "reception_task",
+      "type": "linear",
+      "zone": "reception",
+      "temperature_k": 3000,
+      "intensity_relative": 0.82,
+      "position_ft": {
+        "x": 36,
+        "y": 46,
+        "z": 10.8
+      }
+    },
+    {
+      "id": "reception_logo_wash",
+      "type": "wall_wash",
+      "zone": "reception",
+      "temperature_k": 3000,
+      "intensity_relative": 0.55,
+      "target_object": "reception_feature_wall"
+    },
+    {
+      "id": "lounge_ambient",
+      "type": "soft_area",
+      "zone": "visitor_lounge",
+      "temperature_k": 2850,
+      "intensity_relative": 0.48,
+      "position_ft": {
+        "x": 10,
+        "y": 20,
+        "z": 9.5
+      }
+    },
+    {
+      "id": "intake_task",
+      "type": "soft_area",
+      "zone": "intake_room",
+      "temperature_k": 3000,
+      "intensity_relative": 0.68,
+      "position_ft": {
+        "x": 9,
+        "y": 38,
+        "z": 10
+      }
+    },
+    {
+      "id": "entry_fill",
+      "type": "linear",
+      "zone": "entry_vestibule",
+      "temperature_k": 3000,
+      "intensity_relative": 0.62,
+      "position_ft": {
+        "x": 36,
+        "y": 4.5,
+        "z": 9.5
+      }
+    },
+    {
+      "id": "red_navigation_reveal",
+      "type": "emissive_strip",
+      "zone": "reception",
+      "temperature_k": null,
+      "intensity_relative": 0.18,
+      "material_id": "accent_red_navigation"
+    }
+  ],
+  "rules": [
+    "Warm-white practical lighting is primary.",
+    "Red is an accent/state cue only.",
+    "Lighting must preserve natural skin tones and readable signage."
+  ]
+}
