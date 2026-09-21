@@ -1,40 +1,61 @@
-# Floor 02 — Canonical Public Forum Plan References
+# Floor 02 — Public Forum — Core V2 Plan References
 
-These files represent the locked Floor 2 Public Forum schematic geometry and stack directly on Floor 1.
+> Branch: `architecture/equity-uprise-core-v2`
+>
+> Status: **CORE V2 BRANCH-CANONICAL SCHEMATIC GEOMETRY / NOT FOR CONSTRUCTION**
 
-## Files
+## Core V2 files
 
-- `equity-uprise-floor-02-public-forum-schematic-v1.png`
-  - raster preview for fast visual inspection;
-  - never overrides the written dimensions, DXF, or SVG.
-- `equity-uprise-floor-02-public-forum-schematic-v1.svg`
-  - canonical vector plan / browser-readable geometry reference.
+- `equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf`
+  - CAD exchange geometry;
+  - preferred derived geometric reference after the written Core V2 authority.
+- `equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg`
+  - browser/vector inspection reference.
+- `equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png`
+  - raster preview only; never overrides DXF/SVG/written geometry.
+
+## Shared authority
+
+Read before using these files:
+
+1. `../../BUILDING-CORE-V2-SPEC.md`
+2. `../../production/building-core-v2.json`
+3. the floor-specific written 360/spec document
+4. the floor-specific schematic-plan basis
+5. Core V2 DXF
+6. Core V2 SVG
+7. Core V2 PNG
+
+Shared vertical systems on this branch:
+- passenger elevator: X54–62 / Y34–44
+- service/freight elevator: X0–8 / Y60–72
+- revised Stair B: X8–18 / Y54–72
+- Stair A: X60–72 / Y54–72
+- MEP/riser: approximately X50–60 / Y66–72
+
+Both stairs must connect the full 13'-6" floor-to-floor datum in the combined building model.
+
+## Legacy Core V1 files
+
+The following files are retained for traceability only and are **not branch-canonical**:
+
 - `equity-uprise-floor-02-public-forum-schematic-v1.dxf`
-  - CAD exchange geometry for downstream 3D/CAD/BIM development.
+- `equity-uprise-floor-02-public-forum-schematic-v1.svg`
+- `equity-uprise-floor-02-public-forum-schematic-v1.png`
 
-Geometry authority remains: written basis → DXF → SVG → PNG → later renders.
+Do not use the legacy files for new Core V2 3D, rendering, floor planning, hotspot placement, or vertical-circulation work.
 
-## Mandatory companion documents
+## Regeneration
 
-- `../../FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
-- `../../FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
-- `../../REFERENCE-AUTHORITY.md`
-- `../../../EQUITY-UPRISE-BUILDING-INVENTORY.md`
-- `../../../EQUITY-UPRISE-REPO-AUDIT.md`
+The Core V2 set is generated from:
 
-## Locked continuity
+- `../../production/building-core-v2.json`
+- `../../production/core-v2-floor-programs.json`
+- `../../production/generate_core_v2_plans.py`
 
-- 72' × 72' shell.
-- Same 18' grid as Floor 1.
-- Elevator: X 54–62 / Y 34–44.
-- Stair A: X 60–72 / Y 54–72.
-- Stair B: X 0–12 / Y 54–72.
-- MEP/riser stack: X 50–60 / Y 66–72.
-- 360 camera: approx. (36,28), 5'-4" AFF.
-- **No exterior public door, balcony, or terrace on Floor 2.**
+The generation workflow is:
+`.github/workflows/equity-uprise-core-v2-plans.yml`
 
-## Status
+## Limitations
 
-**SCHEMATIC DESIGN / NOT FOR CONSTRUCTION.**
-
-Final architecture/structure/MEP/fire/accessibility/code must be resolved by licensed professionals for the actual site.
+These are schematic coordination drawings only. Final architecture, structure, MEP, fire/life-safety, accessibility, elevator and code design require licensed professional review.
