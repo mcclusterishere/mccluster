@@ -5,9 +5,12 @@ Generate Equity Uprise Core V2 canonical schematic plan references.
 Inputs:
   - production/building-core-v2.json
   - production/core-v2-floor-programs.json
+  - production/basement-b1-program.json
+  - production/floor-01/floor-01-site-egress.json
 
 Outputs:
-  - versioned DXF/SVG/PNG plan files under references/floor-01 ... floor-07
+  - B1 + Floor 1–7 interior/chassis DXF/SVG/PNG references
+  - Floor 1 site/life-safety DXF/SVG/PNG references
   - combined contact sheet
   - generation manifest
 
