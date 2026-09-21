@@ -179,6 +179,31 @@ def svg(level,path):
             '<text x="55" y="995" class="t med">Schematic only — final licensed design/code review required.</text>','</svg>']
     path.write_text("\n".join(out),encoding="utf-8")
 
+def plan_readme(level,base):
+    label="Basement B1" if level.get("basement") else f"Floor {level['level']:02d}"
+    status="RESTRICTED CORE V2 PLAN REFERENCE" if level.get("basement") else "ACTIVE CORE V2 PLAN REFERENCE"
+    authority="basement-b1-program.json" if level.get("basement") else "core-v2-floor-programs.json"
+    return f"""# {label} — {level['title']} — Core V2 Plan References
+
+> Status: **{status} / NOT FOR CONSTRUCTION**
+
+Generated from:
+- `production/building-core-v2.json`
+- `production/{authority}`
+- `production/generate_core_v2_plans.py`
+
+Files:
+- `{base}.dxf`
+- `{base}.svg`
+- `{base}.png`
+
+Finished-floor elevation: **{elev_label(level['elevation_ft'])}**.
+
+These files are **generated-only**. Do not hand-edit them or treat this README as geometry authority.
+
+The machine-readable source files above control title, level identity, program zones, shared vertical systems, and regeneration.
+"""
+
 def dxf(level,path):
     doc=ezdxf.new("R2010",setup=True);m=doc.modelspace()
     for name,color in [("SHELL",7),("GRID",8),("CORE",1),("PROGRAM",3),("SUPPORT",4),("OPENINGS",1),("TEXT",7)]:
@@ -204,6 +229,7 @@ for level in plan_levels:
     n=level["level"];d=ref_dir(level);d.mkdir(parents=True,exist_ok=True);base=OUT_NAMES[n]
     paths={"png":d/f"{base}.png","svg":d/f"{base}.svg","dxf":d/f"{base}.dxf"}
     png(level,paths["png"]);svg(level,paths["svg"]);dxf(level,paths["dxf"])
+    (d/"README.md").write_text(plan_readme(level,base))
     manifest.append({"level":n,"title":level["title"],"elevation_ft":level["elevation_ft"],"files":{k:str(v.relative_to(BUILDING)) for k,v in paths.items()}})
 
 # contact sheet
