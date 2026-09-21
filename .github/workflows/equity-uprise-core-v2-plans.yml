@@ -15,7 +15,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: equity-uprise-core-v2-plans
+  group: equity-uprise-core-v2-generated-artifacts
   cancel-in-progress: false
 
 jobs:
