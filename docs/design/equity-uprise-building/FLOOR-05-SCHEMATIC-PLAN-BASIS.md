@@ -93,7 +93,7 @@ Review rooms are internal rooms inside the south facade line.
 
 Maintain clear circulation around the table.
 
-### Policy + Proof wall
+### Policy / Publication / Impact Wall
 - approximately **X 22–50 / Y 50–54**
 - dynamic zones:
   - Research
@@ -148,7 +148,7 @@ No exterior door.
 
 ---
 
-## 8. Research-navigation terminal
+## 8. Research / Publication Navigator
 
 - approximate footprint **X 49–51 / Y 24–29**
 - adjacent to elevator lobby
@@ -194,7 +194,7 @@ The north band is replanned around the Core V2 west service core.
 - **X 34–42 / Y 60–72**
 - conceptual 8' × 12'
 
-### Research / Policy IT
+### Research / Publication Systems
 - **X 42–50 / Y 60–72**
 - conceptual 8' × 12'
 
@@ -235,8 +235,8 @@ Policy Lab → review rooms:
 - eye height approximately **5'-4" AFF**
 
 Orientation:
-- **0° north:** Policy Lab + Policy + Proof wall
-- **+90° east:** elevator + research-navigation terminal
+- **0° north:** Policy Lab + Policy / Publication / Impact Wall
+- **+90° east:** elevator + Research / Publication Navigator
 - **180° south:** Source Review + Publication/Submission Review + sealed glazing
 - **-90° west:** Evidence + Proof Archive
 
@@ -269,7 +269,7 @@ Orientation:
 
 ## 14. Technology/service logic
 
-- Policy + Proof wall services from Research/Policy IT;
+- Policy / Publication / Impact Wall services from Research/Policy IT;
 - archive/search surface routes through wall/floor pathway;
 - Policy Lab table power/data via floor box;
 - review rooms receive secure wall/data pathways;
@@ -342,7 +342,7 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] no exterior public door
 - [ ] no balcony/terrace
 - [ ] 16' × 5' Policy Lab table
-- [ ] Policy + Proof wall
+- [ ] Policy / Publication / Impact Wall
 - [ ] Evidence + Proof Archive west
 - [ ] Source Review Room south
 - [ ] Publication/Submission Review Room south
@@ -361,3 +361,13 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] full 13'-6" stair rise represented in combined geometry
 - [ ] shared slab openings remain clear
 - [ ] floor elevation matches building-core-v2.json
+
+## Repo capability authority
+
+Program semantics for this floor are controlled by:
+- `production/equity-uprise-capability-map-v2.json`
+- `production/core-v2-floor-programs.json`
+- the companion long-form floor spec.
+
+This schematic basis controls plan geometry; it may not silently rename or delete a repo-backed capability represented by the floor program. Public/private and approval boundaries remain those of the source Equity Uprise system.
+
