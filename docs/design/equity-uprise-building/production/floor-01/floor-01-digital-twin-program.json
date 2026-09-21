@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "status": "canonical-floor-01-activity-and-simulation-authority",
   "scene_id": "equity-uprise-floor-01",
   "title": "Floor 01 — Arrival, Orientation & Intake Digital Twin Program",
@@ -323,9 +323,11 @@
     },
     {
       "id": "f1-b1-interface",
-      "label": "B1 Technical / Service Interface",
-      "role": "authorized access to below-grade building systems lab and service infrastructure",
-      "interactive_training": true
+      "label": "B1 / Underground Interface",
+      "role": "Hidden operational B1 access for house-owner/underground-operations admin; learners launch sandboxed B1/tunnel simulations without entering live B1.",
+      "interactive_training": true,
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_access": "sandboxed-clone-only"
     }
   ],
   "operating_modes": [
@@ -351,7 +353,8 @@
       "id": "building_systems_lab",
       "label": "Building Systems Lab",
       "route_key": "building_systems_lab",
-      "access": "authorized-learner-or-instructor"
+      "access": "authorized-learner-or-instructor-sandbox-only",
+      "live_b1_access": false
     },
     {
       "id": "emergency_exercise",
@@ -364,6 +367,13 @@
       "label": "After Hours",
       "route_key": "life_safety_status",
       "access": "authorized-staff-or-simulation"
+    },
+    {
+      "id": "underground_operations_access",
+      "label": "Underground Operations Access",
+      "route_key": "underground_operations",
+      "access": "mccluster-house-owner-or-underground-operations-admin",
+      "hidden_from_normal_navigation": true
     }
   ],
   "scenarios": [
@@ -571,8 +581,11 @@
     "display_level": "B1",
     "normal_public_access": false,
     "floor1_is_level_of_exit_discharge": true,
-    "role": "technical/service + building-systems training substrate",
-    "developmental_stage": null
+    "role": "restricted underground operations + technical/service backbone; training uses sandboxed clone",
+    "developmental_stage": null,
+    "live_access": "mccluster-house-owner-or-underground-operations-admin",
+    "training_access": "sandboxed-clone-only",
+    "normal_navigation_visibility": false
   },
   "resolved_geometry_requirements": [
     {
@@ -603,5 +616,43 @@
       "status": "modeled",
       "authority_ref": "floor-01-site-egress.json"
     }
-  ]
+  ],
+  "tunnel_network_ref": "../underground-tunnel-network.json",
+  "underground_access_model": {
+    "normal_floor_selector": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "↑"
+    ],
+    "b1_selector_visibility": "mccluster-house-owner-or-underground-operations-admin-only",
+    "ordinary_equity_uprise_admin_can_see_b1": false,
+    "journey_wall_shows_b1": false,
+    "public_directory_shows_b1": false,
+    "passenger_elevator": {
+      "physical_b1_stop": true,
+      "b1_control_hidden_by_default": true,
+      "authorized_reveal": [
+        "mccluster_house_owner",
+        "underground_operations_admin"
+      ]
+    },
+    "stairs": {
+      "physical_b1_connection": true,
+      "floor1_downward_access": "access-controlled-restricted",
+      "b1_to_floor1_egress": "preserved"
+    },
+    "freight_elevator": {
+      "physical_b1_stop": true,
+      "access": "restricted-operational"
+    },
+    "training": {
+      "entry": "Building Systems Lab simulation launcher",
+      "destination": "sandboxed B1/tunnel clone",
+      "live_systems": false
+    }
+  }
 }
