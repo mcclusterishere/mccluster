@@ -431,7 +431,7 @@ This package inherits the shared building/program authority from:
 - `../equity-uprise-capability-map-v2.json`
 - `../../BUILDING-CORE-V2-SPEC.md`
 
-Canonical branch geometry:
+Canonical plan geometry:
 - `{refs}.dxf`
 - `{refs}.svg`
 - `{refs}.png`
