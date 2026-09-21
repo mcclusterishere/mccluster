@@ -1,25 +1,25 @@
 {
   "schema_version": "1.0.0",
   "not_for_construction": true,
-  "capability_count": 55,
+  "capability_count": 56,
   "floor_feature_counts": {
     "1": 7,
     "2": 5,
     "3": 18,
     "4": 10,
     "5": 18,
-    "6": 31,
+    "6": 32,
     "7": 3
   },
-  "checks_total": 330,
-  "checks_passed": 330,
+  "checks_total": 335,
+  "checks_passed": 335,
   "checks_failed": 0,
   "passed": true,
   "checks": [
     {
       "name": "capability ids unique",
       "passed": true,
-      "detail": "55 capabilities"
+      "detail": "56 capabilities"
     },
     {
       "name": "capability source exists: institutional-desk -> equity-uprise.html",
@@ -822,6 +822,26 @@
       "detail": "/home/runner/work/mccluster/mccluster/native/app/(tabs)/uprise.tsx"
     },
     {
+      "name": "capability source exists: halo-spatial-intelligence -> docs/control-plane/SPATIAL-INTELLIGENCE.md",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/control-plane/SPATIAL-INTELLIGENCE.md"
+    },
+    {
+      "name": "capability source exists: halo-spatial-intelligence -> docs/control-plane/MCCLUSTER-CORE.md",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/control-plane/MCCLUSTER-CORE.md"
+    },
+    {
+      "name": "capability source exists: halo-spatial-intelligence -> workers/mccluster/src/seek-first/entitlements.js",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/workers/mccluster/src/seek-first/entitlements.js"
+    },
+    {
+      "name": "capability source exists: halo-spatial-intelligence -> workers/mccluster/src/seek-first/access.js",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/workers/mccluster/src/seek-first/access.js"
+    },
+    {
       "name": "levels 1-7 present",
       "passed": true,
       "detail": "[1, 2, 3, 4, 5, 6, 7]"
@@ -1287,6 +1307,11 @@
       "detail": ""
     },
     {
+      "name": "halo-spatial-intelligence primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "floor 1 has no unknown capability ids",
       "passed": true,
       "detail": ""
@@ -1527,14 +1552,14 @@
       "detail": "[1, 2, 3, 4, 5, 6]"
     },
     {
+      "name": "floor 1 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
       "name": "floor 1 publication_submission is not public",
       "passed": true,
       "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 1 admin_desk is not public",
-      "passed": true,
-      "detail": "editor-or-admin"
     },
     {
       "name": "floor 1 media_release_ops is not public",
@@ -1542,7 +1567,12 @@
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 1 control_plane is not public",
+      "name": "floor 1 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 2 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1552,17 +1582,17 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 2 admin_desk is not public",
-      "passed": true,
-      "detail": "editor-or-admin"
-    },
-    {
       "name": "floor 2 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 2 control_plane is not public",
+      "name": "floor 2 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 3 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1572,17 +1602,17 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 3 admin_desk is not public",
-      "passed": true,
-      "detail": "editor-or-admin"
-    },
-    {
       "name": "floor 3 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 3 control_plane is not public",
+      "name": "floor 3 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 4 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1592,17 +1622,17 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 4 admin_desk is not public",
-      "passed": true,
-      "detail": "editor-or-admin"
-    },
-    {
       "name": "floor 4 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 4 control_plane is not public",
+      "name": "floor 4 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 5 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1612,17 +1642,17 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 5 admin_desk is not public",
-      "passed": true,
-      "detail": "editor-or-admin"
-    },
-    {
       "name": "floor 5 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 5 control_plane is not public",
+      "name": "floor 5 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 6 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1632,17 +1662,17 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 6 admin_desk is not public",
-      "passed": true,
-      "detail": "editor-or-admin"
-    },
-    {
       "name": "floor 6 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 6 control_plane is not public",
+      "name": "floor 6 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 7 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1652,19 +1682,14 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 7 admin_desk is not public",
-      "passed": true,
-      "detail": "editor-or-admin"
-    },
-    {
       "name": "floor 7 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 7 control_plane is not public",
+      "name": "floor 7 admin_desk is not public",
       "passed": true,
-      "detail": "authorized-admin"
+      "detail": "editor-or-admin"
     }
   ]
 }
