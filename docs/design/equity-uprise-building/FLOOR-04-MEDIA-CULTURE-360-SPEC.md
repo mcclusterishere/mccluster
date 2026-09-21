@@ -1,7 +1,7 @@
 # Equity Uprise Building — Floor 04: Media + Culture
 
-> Status: **WORKING PRE-ITERATIVE FLOOR 4 PROGRAM REFERENCE — CORE V2 CHASSIS RETAINED**  
-> Program note: this floor has **not** yet received the activity/space reconciliation completed for Floor 1. Preserve useful repo-derived requirements, but do not treat the current room program or working identity as final.  
+> Status: **CANONICAL FLOOR 4 PROGRAM — CORE V2 — PROGRAM RECONCILED / REAL 3D ACTIVE**  
+> Program note: Floor 4 activity/space reconciliation is complete for the present iterative pass. The real 3D builder/viewer is active; visual approval remains iterative.  
 > Building: compact six-floor Equity Uprise headquarters / civic institute  
 > Floor identity: **Media + Culture**  
 > This file is the source of truth for Floor 4 floor-plan work, 360 panorama generation, hotspot placement, 3D reconstruction, and implementation.  
@@ -765,3 +765,18 @@ The building metaphor must preserve the source product's public/private and appr
 Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
 
 This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
+
+
+---
+
+## Floor 4 reconciliation lock — 2026-09-21
+
+Floor 4 is program-reconciled for the present iterative pass.
+
+Required implementation references:
+- `FLOOR-04-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-04-V1-V2-PRESERVATION-MAP.md`;
+- `production/floor-04/floor-04-object-inventory.json`;
+- `production/floor-04/build_equity_uprise_floor_04_v2.py`.
+
+The real 3D environment is an iterative visualization/simulation artifact and remains **NOT FOR CONSTRUCTION**.
