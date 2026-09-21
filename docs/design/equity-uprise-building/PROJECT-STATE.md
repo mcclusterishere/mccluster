@@ -104,7 +104,9 @@ The working viewer now treats the building as one continuous object from B1 thro
 - validated combined Core V2 chassis remains the structural/vertical-continuity layer;
 - detailed Floor 1 is inserted at FFE 0;
 - detailed Floor 2 is inserted at FFE +13.5 ft;
-- Floors 3–7 remain visible as chassis placeholders at their real elevations;
+- detailed Floor 3 is inserted at FFE +27 ft;
+- detailed Floor 4 is inserted at FFE +40.5 ft;
+- Floors 5–7 remain visible as chassis placeholders at their real elevations;
 - each future floor pass replaces/improves its level **inside this stack**, not as an isolated experiment.
 
 Public working-stack viewer: `equity-uprise-building-core-v2-3d.html`.
@@ -130,9 +132,31 @@ Required references:
 
 Visual approval remains iterative.
 
-## Floors 4–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
+## Floor 4 — RECONCILED / REAL 3D ACTIVE / STACKED
 
-Current `core-v2-floor-programs.json` still treats Floors 4–7 as pre-iterative program/interior work.
+Canonical identity: **Media + Culture**.
+
+Current state:
+- program reconciliation complete;
+- historical locked Floor 4 spec/schematic audited;
+- preservation map complete;
+- machine inventory: **68 stable records / 96 total instances**;
+- inventory-driven GLB builder active;
+- reliable standalone viewer active;
+- inserted into the working building at **FFE +40.5 ft**;
+- public media surfaces are constrained to real/approved public Equity Uprise content; private masters, rights, DDEX, payment and approval state remain non-public.
+
+Required references:
+- `FLOOR-04-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-04-V1-V2-PRESERVATION-MAP.md`;
+- `production/floor-04/floor-04-object-inventory.json`;
+- `production/floor-04/build_equity_uprise_floor_04_v2.py`.
+
+Visual approval remains iterative.
+
+## Floors 5–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
+
+Current `core-v2-floor-programs.json` still treats Floors 5–7 as pre-iterative program/interior work.
 
 Do not interpret generated plan/program plates as finished 3D floors.
 
@@ -158,7 +182,8 @@ Use these to recover design quality, not obsolete stair/core geometry.
 5. Insert the approved hybrid Floor 1 into the whole-building assembly and verify stacking.
 6. **DONE:** Floor 2 real 3D + working-stack integration.
 7. **DONE:** Floor 3 reconciliation → inventory → real 3D → working-stack integration.
-8. **NEXT:** Floor 4 — Media + Culture — reconciliation, preservation map, inventory, real 3D, then stack at +40.5 ft.
+8. **DONE:** Floor 4 — Media + Culture — reconciliation → inventory → real 3D → working-stack integration.
+9. **NEXT:** Floor 5 — Policy + Proof — reconciliation, preservation map, inventory, real 3D, then stack at +54 ft.
 
 ## Do not waste time on
 
