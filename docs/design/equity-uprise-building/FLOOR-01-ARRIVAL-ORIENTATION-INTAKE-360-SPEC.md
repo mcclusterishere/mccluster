@@ -789,7 +789,7 @@ The committed completion evidence is:
 - active Floor 1 Core V2 DXF/SVG/PNG under `references/floor-01/`;
 - active Floor 1 site/egress Core V2 DXF/SVG/PNG under `references/floor-01-site/`.
 
-The older `FLOOR-01-LOBBY-INTAKE-360-SPEC.md` path is compatibility-only and must never regain authority. Archived Core V1 plans remain historical only.
+The legacy Floor 1 compatibility stub is non-authoritative and must never regain authority. Archived Core V1 plans remain historical only.
 
 The unchecked render/QC checklists in this document are **repeatable acceptance criteria for future derived images, scenes and revisions**, not an indication that the current canonical Floor 1 program is unfinished.
 
