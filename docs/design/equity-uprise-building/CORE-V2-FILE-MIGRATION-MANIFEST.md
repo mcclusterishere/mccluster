@@ -41,6 +41,8 @@
 ### Remaining before promotion to main
 - [x] audit public Equity Uprise pages for old 3D/viewer links — no old viewer links found
 - [x] audit active text files for stale Core V1 geometry outside intentionally retained legacy/history files — clean; historical replacement language retained intentionally
+- [x] repo-audit physical-language audit — existing generic vertical-alignment language remains valid; no rewrite required
+- [x] GitHub Pages publish-strip audit — root Core V2 viewer survives normal root-site deployment; no deployment-rule change required
 - [ ] visually review the combined Core V2 browser scene with owner
 - [ ] visually review the seven Core V2 plan images with owner
 - [ ] resolve any owner-requested layout changes
