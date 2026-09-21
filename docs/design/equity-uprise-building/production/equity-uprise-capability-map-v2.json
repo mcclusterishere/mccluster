@@ -1076,7 +1076,10 @@
         "docs/control-plane/SPATIAL-INTELLIGENCE.md",
         "docs/control-plane/MCCLUSTER-CORE.md",
         "workers/mccluster/src/seek-first/entitlements.js",
-        "workers/mccluster/src/seek-first/access.js"
+        "workers/mccluster/src/seek-first/access.js",
+        "workers/mccluster/src/index.js",
+        "workers/mccluster/src/seek-first/equity-uprise-halo.js",
+        "workers/mccluster/src/ai/envelope.js"
       ],
       "external_refs": [
         "mcclusterishere/hitmans-halo"
