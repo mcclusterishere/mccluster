@@ -74,7 +74,7 @@ Read program and geometry authority in this order:
      - `docs/design/equity-uprise-building/FLOOR-01-SITE-EGRESS-SIMULATION.md`
      - `docs/design/equity-uprise-building/production/floor-01/floor-01-site-egress.json`
    - B1 support-level authority:
-     - `docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+     - `docs/design/equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
      - `docs/design/equity-uprise-building/production/basement-b1-program.json`
    - Underground-network authority:
      - `docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
@@ -84,7 +84,7 @@ Read program and geometry authority in this order:
    - These files define institutional activity, simulation systems, site/egress behavior, the non-developmental technical basement and training scenarios. They do not override the shared Core V2 vertical chassis.
 
 6. Floor-specific program / spatial reference:
-   - **Floor 1 — current program authority:** semantic identity **Arrival / Orientation / Intake**; long-form file retained under legacy-compatible filename `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`.
+   - **Floor 1 — current program authority:** semantic identity **Arrival / Orientation / Intake**; long-form file retained under legacy-compatible filename `docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md`.
    - **Floors 2–6 — provisional program references only:** the existing long-form specs remain useful spatial/history inputs, but their room/activity programs are **not final authority** until each floor receives the same iterative development-program reconciliation completed for Floor 1.
      - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
      - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
