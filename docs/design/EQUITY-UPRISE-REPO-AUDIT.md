@@ -575,3 +575,8 @@ The building validators now check:
 - two assembly areas;
 - emergency-action-plan components;
 - Floor 1 linkage to the canonical B1/site authorities.
+
+
+## Derived-artifact regeneration gate
+
+After the 2026-09-21 Floor 1/B1 authority reconciliation, committed derived artifacts must be regenerated from the current machine authorities before the building is treated as render-current. This includes Floor 1/B1 production JSON, active DXF/SVG/PNG plans, plan-generation manifest, generated validation reports, and the combined B1-to-roof GLB. A green source validator without a post-authority publish is not sufficient evidence that committed render artifacts are current.
