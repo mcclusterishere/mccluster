@@ -1,0 +1,1276 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-production-input-floor-04",
+  "scene_id": "equity-uprise-floor-04",
+  "floor_identity": "Media + Culture",
+  "not_for_construction": true,
+  "purpose": "Floor 4 machine-readable inventory after program reconciliation and historical architecture audit.",
+  "design_formula": "Historical Media + Culture composition + Core V2 stack truth + current Equity Uprise media/creator program",
+  "authority_refs": [
+    "../../FLOOR-04-MEDIA-CULTURE-360-SPEC.md",
+    "../../FLOOR-04-PROGRAM-RECONCILIATION.md",
+    "../../FLOOR-04-V1-V2-PRESERVATION-MAP.md",
+    "../core-v2-floor-programs.json"
+  ],
+  "historical_refs": [
+    "git:07cc968e80f7c703cdea739ac38554331cad5a7c:Floor 4 canonical spec",
+    "git:8f3847d171864dcd721fe98ff8c1b2a469c41906:Floor 4 schematic geometry"
+  ],
+  "coordinate_system": {
+    "origin": "southwest_exterior_corner_floor_01",
+    "units": "feet",
+    "x_positive": "east",
+    "y_positive": "north",
+    "z_positive": "up",
+    "finished_floor_elevation_ft": 40.5
+  },
+  "inventory_rules": [
+    "Public screens use only real/public Equity Uprise media and archive data.",
+    "Never expose private masters, rights splits, DDEX credentials, payment data or approval queues.",
+    "No exterior entrance/balcony/terrace.",
+    "No nightclub/concert-stage/newsroom treatment.",
+    "Shared Core V2 geometry overrides historical west-core coordinates.",
+    "Stable IDs drive the real Floor 4 builder."
+  ],
+  "summary": {
+    "object_records": 68,
+    "total_instances": 96
+  },
+  "objects": [
+    {
+      "id": "F4-SOUTH-GLAZING-01",
+      "label": "Sealed South Glazing System",
+      "category": "architectural_feature",
+      "zone_id": "south_perimeter",
+      "quantity": 8,
+      "placement": {
+        "band_ft": {
+          "x1": 0,
+          "y1": 0,
+          "x2": 72,
+          "y2": 0.7
+        },
+        "bay_spacing_ft": 9
+      },
+      "style": "clear glass + gunmetal mullions",
+      "purpose": "Upper-floor enclosure; no exterior entrance",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_correct_core"
+    },
+    {
+      "id": "F4-MEDIA-WALL-01",
+      "label": "Media + Culture Identity / Playback Wall",
+      "category": "architectural_feature",
+      "zone_id": "media_wall",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 22,
+          "y1": 50,
+          "x2": 50,
+          "y2": 54
+        }
+      },
+      "style": "dark mineral/stone + restrained wood/acoustic integration",
+      "purpose": "Primary Floor 4 playback and identity wall",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-DISPLAY-LISTEN",
+      "label": "LISTEN Surface",
+      "category": "equipment",
+      "zone_id": "media_wall",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 23,
+          "y1": 52,
+          "x2": 31,
+          "y2": 52.18
+        }
+      },
+      "style": "flush low-brightness architectural display",
+      "purpose": "Dynamic public playback/navigation surface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-DISPLAY-WATCH",
+      "label": "WATCH Surface",
+      "category": "equipment",
+      "zone_id": "media_wall",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 32,
+          "y1": 52,
+          "x2": 40,
+          "y2": 52.18
+        }
+      },
+      "style": "flush low-brightness architectural display",
+      "purpose": "Dynamic public playback/navigation surface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-DISPLAY-ARCHIVE",
+      "label": "ARCHIVE Surface",
+      "category": "equipment",
+      "zone_id": "media_wall",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 41,
+          "y1": 52,
+          "x2": 49,
+          "y2": 52.18
+        }
+      },
+      "style": "flush low-brightness architectural display",
+      "purpose": "Dynamic public playback/navigation surface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-IDENTITY-SIGN-01",
+      "label": "MEDIA + CULTURE / Equity Uprise Mark",
+      "category": "signage_wayfinding",
+      "zone_id": "media_wall",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "integrated above media wall using exact approved Equity Uprise artwork"
+      },
+      "style": "restrained dimensional identity treatment",
+      "purpose": "Floor identity",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-LISTENING-SECTIONAL-01",
+      "label": "Central Listening Sectional / Bench",
+      "category": "furniture",
+      "zone_id": "media_listening",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 31,
+          "y1": 36,
+          "x2": 41,
+          "y2": 40
+        }
+      },
+      "style": "charcoal upholstered low sectional",
+      "purpose": "Flexible central listening/screening seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-LISTENING-CHAIR-01",
+      "label": "Listening Lounge Chair A",
+      "category": "furniture",
+      "zone_id": "media_listening",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 28,
+          "y1": 34,
+          "x2": 31,
+          "y2": 37
+        }
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Movable listening seat",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-LISTENING-CHAIR-02",
+      "label": "Listening Lounge Chair B",
+      "category": "furniture",
+      "zone_id": "media_listening",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 41,
+          "y1": 34,
+          "x2": 44,
+          "y2": 37
+        }
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Movable listening seat",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-LISTENING-TABLE-01",
+      "label": "Listening Low Table",
+      "category": "furniture",
+      "zone_id": "media_listening",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 36,
+          "y": 43
+        },
+        "diameter_ft": 4,
+        "height_ft": 1.3
+      },
+      "style": "warm muted wood",
+      "purpose": "Shared low table",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-LISTENING-RUG-01",
+      "label": "Listening Acoustic Rug",
+      "category": "decorative_functional",
+      "zone_id": "media_listening",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 28,
+          "y1": 33,
+          "x2": 44,
+          "y2": 46
+        }
+      },
+      "style": "dark acoustic textile",
+      "purpose": "Ground listening area and reduce reverberation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-LISTENING-POWER-01",
+      "label": "Listening Floor Power / Data",
+      "category": "equipment",
+      "zone_id": "media_listening",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "flush floor box near sectional without obstructing circulation"
+      },
+      "style": "dark flush module",
+      "purpose": "Device and playback support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-GALLERY-WALL-01",
+      "label": "Culture Archive / Rally Gallery Wall",
+      "category": "architectural_feature",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 1,
+          "y1": 18,
+          "x2": 1.3,
+          "y2": 38
+        }
+      },
+      "style": "dark mineral gallery wall",
+      "purpose": "Public archive display spine",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-GALLERY-FRAME-01",
+      "label": "Archive Frame / Screen 1",
+      "category": "equipment",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 1.25,
+          "y1": 19,
+          "x2": 1.42,
+          "y2": 21.3
+        }
+      },
+      "style": "thin black/gunmetal frame",
+      "purpose": "Real Equity Uprise archive image/video only",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-GALLERY-FRAME-02",
+      "label": "Archive Frame / Screen 2",
+      "category": "equipment",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 1.25,
+          "y1": 22,
+          "x2": 1.42,
+          "y2": 24.3
+        }
+      },
+      "style": "thin black/gunmetal frame",
+      "purpose": "Real Equity Uprise archive image/video only",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-GALLERY-FRAME-03",
+      "label": "Archive Frame / Screen 3",
+      "category": "equipment",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 1.25,
+          "y1": 25,
+          "x2": 1.42,
+          "y2": 27.3
+        }
+      },
+      "style": "thin black/gunmetal frame",
+      "purpose": "Real Equity Uprise archive image/video only",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-GALLERY-FRAME-04",
+      "label": "Archive Frame / Screen 4",
+      "category": "equipment",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 1.25,
+          "y1": 28,
+          "x2": 1.42,
+          "y2": 30.3
+        }
+      },
+      "style": "thin black/gunmetal frame",
+      "purpose": "Real Equity Uprise archive image/video only",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-GALLERY-FRAME-05",
+      "label": "Archive Frame / Screen 5",
+      "category": "equipment",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 1.25,
+          "y1": 31,
+          "x2": 1.42,
+          "y2": 33.3
+        }
+      },
+      "style": "thin black/gunmetal frame",
+      "purpose": "Real Equity Uprise archive image/video only",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-GALLERY-FRAME-06",
+      "label": "Archive Frame / Screen 6",
+      "category": "equipment",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 1.25,
+          "y1": 34,
+          "x2": 1.42,
+          "y2": 36.3
+        }
+      },
+      "style": "thin black/gunmetal frame",
+      "purpose": "Real Equity Uprise archive image/video only",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-GALLERY-SOFA-01",
+      "label": "Gallery Viewing Bench / Sofa",
+      "category": "furniture",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 5,
+          "y1": 24,
+          "x2": 12,
+          "y2": 27
+        }
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Informal archive viewing",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-GALLERY-CHAIR-01",
+      "label": "Gallery Chair A",
+      "category": "furniture",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 12.5,
+          "y1": 20,
+          "x2": 15.5,
+          "y2": 23
+        }
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Gallery seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-GALLERY-CHAIR-02",
+      "label": "Gallery Chair B",
+      "category": "furniture",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 12.5,
+          "y1": 30,
+          "x2": 15.5,
+          "y2": 33
+        }
+      },
+      "style": "charcoal upholstery",
+      "purpose": "Gallery seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-GALLERY-TABLE-01",
+      "label": "Gallery Small Table",
+      "category": "furniture",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 9.5,
+          "y": 30
+        },
+        "diameter_ft": 3.4,
+        "height_ft": 1.3
+      },
+      "style": "warm muted wood",
+      "purpose": "Informal viewing table",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-GALLERY-RUG-01",
+      "label": "Gallery Acoustic Rug",
+      "category": "decorative_functional",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 4,
+          "y1": 19,
+          "x2": 17,
+          "y2": 36
+        }
+      },
+      "style": "dark acoustic textile",
+      "purpose": "Reduce gallery reverberation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-GALLERY-PLANT-01",
+      "label": "Gallery Plant",
+      "category": "decorative_functional",
+      "zone_id": "culture_gallery",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 16,
+          "y": 36
+        }
+      },
+      "style": "restrained planter + greenery",
+      "purpose": "Human-scale softness",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-RECORDING-GLAZING-01",
+      "label": "Creator Recording Room Interior Glazing",
+      "category": "architectural_feature",
+      "zone_id": "creator_recording",
+      "quantity": 1,
+      "placement": {
+        "room_bounds_ft": {
+          "x1": 2,
+          "y1": 4,
+          "x2": 15,
+          "y2": 16
+        },
+        "placement_rule": "framed interior glazing on north face with acoustic/privacy treatment"
+      },
+      "style": "acoustic framed glass",
+      "purpose": "Visual connection with acoustic separation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-RECORDING-DOOR-01",
+      "label": "Creator Recording Room Acoustic Door",
+      "category": "architectural_feature",
+      "zone_id": "creator_recording",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 10.5,
+          "y1": 15.82,
+          "x2": 13.5,
+          "y2": 16.08
+        }
+      },
+      "style": "dark acoustic door",
+      "purpose": "Creator room access",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-RECORDING-WORKSURFACE-01",
+      "label": "Creator Recording Work Surface",
+      "category": "furniture",
+      "zone_id": "creator_recording",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 4,
+          "y1": 6,
+          "x2": 9,
+          "y2": 8
+        },
+        "height_ft": 2.5
+      },
+      "style": "warm wood / dark steel",
+      "purpose": "Small creator workstation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-RECORDING-CHAIR-01",
+      "label": "Recording Room Chair A",
+      "category": "furniture",
+      "zone_id": "creator_recording",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 5.5,
+          "y": 10.5
+        },
+        "orientation_rule": "face work surface"
+      },
+      "style": "charcoal upholstered chair",
+      "purpose": "Artist/visitor seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-RECORDING-CHAIR-02",
+      "label": "Recording Room Chair B",
+      "category": "furniture",
+      "zone_id": "creator_recording",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 8,
+          "y": 10.5
+        },
+        "orientation_rule": "face work surface"
+      },
+      "style": "charcoal upholstered chair",
+      "purpose": "Artist/visitor seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-MIC-STAND-01",
+      "label": "Recording Microphone / Stand Position",
+      "category": "equipment",
+      "zone_id": "creator_recording",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 12,
+          "y": 8.5
+        },
+        "height_ft": 5.1
+      },
+      "style": "black mic stand + compact microphone",
+      "purpose": "Voice/demo/spoken-word capture position",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-RECORDING-MONITOR-01",
+      "label": "Recording Room Work Display",
+      "category": "equipment",
+      "zone_id": "creator_recording",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 5,
+          "y1": 7.78,
+          "x2": 8,
+          "y2": 7.98
+        }
+      },
+      "style": "small low-brightness display",
+      "purpose": "Session/review context; no private rights/admin data",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-RECORDING-ACOUSTIC-01",
+      "label": "Recording Room Acoustic Treatment",
+      "category": "acoustic_treatment",
+      "zone_id": "creator_recording",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "ceiling + wall absorption / isolation concept"
+      },
+      "style": "dark absorptive panels / wood slats",
+      "purpose": "Control reflections and speech/music capture",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-EDIT-GLAZING-01",
+      "label": "Edit / Review Suite Interior Glazing",
+      "category": "architectural_feature",
+      "zone_id": "edit_suite",
+      "quantity": 1,
+      "placement": {
+        "room_bounds_ft": {
+          "x1": 17,
+          "y1": 4,
+          "x2": 31,
+          "y2": 16
+        },
+        "placement_rule": "framed interior glazing on north face with privacy treatment"
+      },
+      "style": "framed acoustic glass",
+      "purpose": "Visual connection with controlled acoustic separation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-EDIT-DOOR-01",
+      "label": "Edit / Review Suite Acoustic Door",
+      "category": "architectural_feature",
+      "zone_id": "edit_suite",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 26.5,
+          "y1": 15.82,
+          "x2": 29.5,
+          "y2": 16.08
+        }
+      },
+      "style": "dark acoustic door",
+      "purpose": "Edit suite access",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-EDIT-DESK-01",
+      "label": "Two-Person Editing Desk",
+      "category": "furniture",
+      "zone_id": "edit_suite",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 19,
+          "y1": 7,
+          "x2": 27,
+          "y2": 10
+        },
+        "height_ft": 2.5
+      },
+      "style": "warm wood / dark steel",
+      "purpose": "Two-person editing and review workstation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-EDIT-CHAIR-01",
+      "label": "Edit Work Chair A",
+      "category": "furniture",
+      "zone_id": "edit_suite",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 21.5,
+          "y": 11.5
+        },
+        "orientation_rule": "face edit desk"
+      },
+      "style": "charcoal task chair",
+      "purpose": "Editor seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-EDIT-CHAIR-02",
+      "label": "Edit Work Chair B",
+      "category": "furniture",
+      "zone_id": "edit_suite",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 24.5,
+          "y": 11.5
+        },
+        "orientation_rule": "face edit desk"
+      },
+      "style": "charcoal task chair",
+      "purpose": "Editor seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-EDIT-VISITOR-CHAIR-01",
+      "label": "Edit Review Visitor Chair A",
+      "category": "furniture",
+      "zone_id": "edit_suite",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 20.5,
+          "y": 5.5
+        },
+        "orientation_rule": "face edit desk"
+      },
+      "style": "charcoal upholstered chair",
+      "purpose": "Client/creator review seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-EDIT-VISITOR-CHAIR-02",
+      "label": "Edit Review Visitor Chair B",
+      "category": "furniture",
+      "zone_id": "edit_suite",
+      "quantity": 1,
+      "placement": {
+        "center_ft": {
+          "x": 25.5,
+          "y": 5.5
+        },
+        "orientation_rule": "face edit desk"
+      },
+      "style": "charcoal upholstered chair",
+      "purpose": "Client/creator review seating",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-EDIT-DISPLAY-01",
+      "label": "Edit / Review Calibrated Display",
+      "category": "equipment",
+      "zone_id": "edit_suite",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 20,
+          "y1": 9.78,
+          "x2": 26,
+          "y2": 9.98
+        }
+      },
+      "style": "dark calibrated display",
+      "purpose": "Review media without exposing rights/admin state",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-EDIT-SPEAKER-01",
+      "label": "Edit Nearfield Speaker Pair",
+      "category": "equipment",
+      "zone_id": "edit_suite",
+      "quantity": 2,
+      "placement": {
+        "placement_rule": "paired nearfield monitors at edit desk"
+      },
+      "style": "compact black monitor speaker",
+      "purpose": "Audio review reference",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-EDIT-ACOUSTIC-01",
+      "label": "Edit Suite Acoustic Treatment",
+      "category": "acoustic_treatment",
+      "zone_id": "edit_suite",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "ceiling + sidewall/reflection treatment"
+      },
+      "style": "dark absorptive treatment",
+      "purpose": "Controlled listening reflections",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-FLOOR-CONTROL-01",
+      "label": "Media / Listening Floor Control",
+      "category": "interactive_terminal",
+      "zone_id": "elevator_lobby",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 49,
+          "y1": 24,
+          "x2": 51,
+          "y2": 29
+        }
+      },
+      "style": "gunmetal body + privacy-aware display",
+      "purpose": "Listening/navigation/creator participation terminal",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_upgrade_detail"
+    },
+    {
+      "id": "F4-PASS-ELEV-DOOR-01",
+      "label": "Passenger Elevator Door Pair",
+      "category": "vertical_circulation_interface",
+      "zone_id": "elevator_lobby",
+      "quantity": 1,
+      "placement": {
+        "facade_x": 54,
+        "y1": 37,
+        "y2": 41
+      },
+      "style": "gunmetal / dark core",
+      "purpose": "Primary public vertical circulation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "preserve_v1_correct_core"
+    },
+    {
+      "id": "F4-PASS-ELEV-CALL-01",
+      "label": "Passenger Elevator Call Station",
+      "category": "equipment",
+      "zone_id": "elevator_lobby",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "west face beside passenger door"
+      },
+      "style": "dark metal illuminated panel",
+      "purpose": "Accessible elevator call interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-FLOOR-ID-01",
+      "label": "Floor 4 Identifier",
+      "category": "signage_wayfinding",
+      "zone_id": "elevator_lobby",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "adjacent to passenger elevator"
+      },
+      "style": "small restrained floor sign",
+      "purpose": "Identify Media + Culture on arrival",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-FREIGHT-DOOR-01",
+      "label": "Service / Freight Elevator Door",
+      "category": "vertical_circulation_interface",
+      "zone_id": "north_service",
+      "quantity": 1,
+      "placement": {
+        "facade_y": 60,
+        "x1": 1.5,
+        "x2": 6.5
+      },
+      "style": "industrial gunmetal",
+      "purpose": "Restricted service circulation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "replace_v1_geometry_with_v2"
+    },
+    {
+      "id": "F4-FREIGHT-CONTROL-01",
+      "label": "Service / Freight Control",
+      "category": "equipment",
+      "zone_id": "north_service",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "south face of freight core"
+      },
+      "style": "industrial control panel",
+      "purpose": "Restricted service operation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-STAIR-A-DOOR-01",
+      "label": "Stair A Protected Door / Exit Marker",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "south face of Stair A"
+      },
+      "style": "rated-door concept + exit marker",
+      "purpose": "Protected vertical egress interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "replace_v1_geometry_with_v2"
+    },
+    {
+      "id": "F4-STAIR-B-DOOR-01",
+      "label": "Stair B Protected Door / Exit Marker",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "south face of Stair B"
+      },
+      "style": "rated-door concept + exit marker",
+      "purpose": "Protected remote vertical egress interface",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "replace_v1_geometry_with_v2"
+    },
+    {
+      "id": "F4-RR-A-VANITY-01",
+      "label": "Restroom A Vanity",
+      "category": "fixture",
+      "zone_id": "restroom_a",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 19.6,
+          "y1": 61.2,
+          "x2": 22.4,
+          "y2": 62.2
+        }
+      },
+      "style": "durable commercial fixture finish",
+      "purpose": "Restroom support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-RR-A-WC-01",
+      "label": "Restroom A Water Closet",
+      "category": "fixture",
+      "zone_id": "restroom_a",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 20.2,
+          "y1": 67.2,
+          "x2": 21.8,
+          "y2": 69
+        }
+      },
+      "style": "durable commercial fixture finish",
+      "purpose": "Restroom support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-RR-B-VANITY-01",
+      "label": "Restroom B Vanity",
+      "category": "fixture",
+      "zone_id": "restroom_b",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 27.6,
+          "y1": 61.2,
+          "x2": 30.4,
+          "y2": 62.2
+        }
+      },
+      "style": "durable commercial fixture finish",
+      "purpose": "Restroom support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-RR-B-WC-01",
+      "label": "Restroom B Water Closet",
+      "category": "fixture",
+      "zone_id": "restroom_b",
+      "quantity": 1,
+      "placement": {
+        "bounds_ft": {
+          "x1": 28.2,
+          "y1": 67.2,
+          "x2": 29.8,
+          "y2": 69
+        }
+      },
+      "style": "durable commercial fixture finish",
+      "purpose": "Restroom support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-MEDIA-STORAGE-01",
+      "label": "Media Equipment / Charging Storage",
+      "category": "equipment",
+      "zone_id": "support_a",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "inside X34–42 / Y60–72; secure charging/storage"
+      },
+      "style": "secure dark casework",
+      "purpose": "Cameras, stands, cables, lighting kits and charging",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-MEDIA-IT-RACK-01",
+      "label": "Media / Music IT Rack",
+      "category": "equipment",
+      "zone_id": "support_b",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "inside X42–50 / Y60–72"
+      },
+      "style": "dark AV/network rack",
+      "purpose": "Playback/distribution and secure media systems",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-JANITOR-STORAGE-01",
+      "label": "Janitor / Service Storage",
+      "category": "equipment",
+      "zone_id": "janitor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "inside X50–54 / Y60–66"
+      },
+      "style": "durable service casework",
+      "purpose": "Maintenance support",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-ACOUSTIC-CEILING-01",
+      "label": "Media Floor Acoustic Ceiling Field",
+      "category": "acoustic_treatment",
+      "zone_id": "floor_wide",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "coordinated acoustic ceiling around lighting/HVAC/life safety"
+      },
+      "style": "dark/neutral absorptive ceiling",
+      "purpose": "Control reverberation across media floor",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-MEDIA-LIGHT-01",
+      "label": "Central Media Linear Lighting",
+      "category": "lighting",
+      "zone_id": "media_listening",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "restrained linear/perimeter architectural light above listening zone"
+      },
+      "style": "warm 2700–3000K",
+      "purpose": "Define listening area without nightclub effect",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-GALLERY-LIGHT-01",
+      "label": "Gallery Wall-Wash Lighting",
+      "category": "lighting",
+      "zone_id": "culture_gallery",
+      "quantity": 6,
+      "placement": {
+        "placement_rule": "controlled wall-wash aligned to archive frames"
+      },
+      "style": "warm high-CRI accent light",
+      "purpose": "Illuminate archive surfaces",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-RECORDING-LIGHT-01",
+      "label": "Recording Room Practical Light",
+      "category": "lighting",
+      "zone_id": "creator_recording",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "dimmable practical low-glare room lighting"
+      },
+      "style": "warm neutral task/ambient",
+      "purpose": "Recording room working light",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-EDIT-LIGHT-01",
+      "label": "Edit Suite Practical Light",
+      "category": "lighting",
+      "zone_id": "edit_suite",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "dimmable bias/task lighting"
+      },
+      "style": "warm neutral low-glare",
+      "purpose": "Edit/review working light",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-GENERAL-LIGHT-01",
+      "label": "General Warm Ceiling Light Grid",
+      "category": "lighting",
+      "zone_id": "floor_wide",
+      "quantity": 16,
+      "placement": {
+        "placement_rule": "distributed warm low-glare grid"
+      },
+      "style": "warm 2700–3000K",
+      "purpose": "General illumination",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-EGRESS-MAP-01",
+      "label": "You Are Here / Egress Map",
+      "category": "life_safety",
+      "zone_id": "elevator_lobby",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "visible from passenger arrival"
+      },
+      "style": "restrained egress graphic",
+      "purpose": "Public orientation",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-FE-WEST-01",
+      "label": "Fire Extinguisher Cabinet — West",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "north corridor west"
+      },
+      "style": "marked cabinet",
+      "purpose": "Fire-response equipment",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-FE-EAST-01",
+      "label": "Fire Extinguisher Cabinet — East",
+      "category": "life_safety",
+      "zone_id": "north_corridor",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "north corridor east"
+      },
+      "style": "marked cabinet",
+      "purpose": "Fire-response equipment",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    },
+    {
+      "id": "F4-EMERGENCY-LIGHT-01",
+      "label": "Emergency Lighting / Notification Set",
+      "category": "life_safety",
+      "zone_id": "floor_wide",
+      "quantity": 1,
+      "placement": {
+        "placement_rule": "egress/circulation coverage; exact placement later"
+      },
+      "style": "discreet notification/emergency fixtures",
+      "purpose": "Life-safety concept",
+      "authority_status": "canonical_program",
+      "implementation_status": "required_floor4_3d",
+      "heritage_decision": "new_v2"
+    }
+  ]
+}
