@@ -51,6 +51,28 @@ Do **not** preserve its obsolete west Stair B/service-core geometry.
 
 See `FLOOR-02-V1-V2-PRESERVATION-MAP.md`.
 
+## Reference A3 — historical Floor 3 Fellowship + Network
+
+Historical architecture references:
+- canonical Floor 3 program/spec commit `9207174f179ea419396a9827d2d26cb025b859a1`;
+- locked Floor 3 schematic geometry commit `54f8579b8ef5bb804fe8a3967199953e910e8d95`.
+
+Preserve:
+- Opportunity Exchange;
+- 16' × 4' / six-seat shared table;
+- Fellowship + Network wall;
+- MATCH / PEOPLE / APPLICATIONS hierarchy;
+- west People + Network lounge;
+- two south interview rooms;
+- elevator-side member/interview check-in;
+- dark/gunmetal/warm-wood material family.
+
+There was no comparable standalone historical Floor 3 3D viewer in repo history. Do not invent one as precedent.
+
+Do **not** preserve obsolete west Stair B/service-core coordinates.
+
+See `FLOOR-03-V1-V2-PRESERVATION-MAP.md`.
+
 ## Reference B — fully assembled Core V2 building
 
 ### Combined generator
