@@ -219,18 +219,18 @@ The north band is replanned around the Core V2 west service core.
 
 ## 11. Level 7 vertical-continuity reservation
 
-Floor 6 must reserve the following as **do-not-block** conditions:
+Floor 6 must preserve all Core V2 vertical systems into the roof interface:
 
-- Stair A vertical continuation above Y 54 within the east/north core;
-- Stair B vertical continuity;
-- elevator shaft overrun/service volume above X 54–62 / Y 34–44 as ultimately engineered;
-- MEP/roof-service continuation above X 50–60 / Y 66–72;
-- structural pathways for roof-access enclosure/support;
-- no furniture/program encroachment into these vertical systems.
+- Stair A enclosure **X60–72 / Y54–72** and its shared slab opening;
+- revised Stair B enclosure **X8–18 / Y54–72** and its shared slab opening;
+- passenger-elevator shaft **X54–62 / Y34–44** including required overrun/service volume;
+- service/freight-elevator shaft **X0–8 / Y60–72** as a continuous roof-service reservation;
+- MEP / roof-service continuation **X50–60 / Y66–72**;
+- structural pathways for roof-access/headhouse/service conditions.
 
-Exact roof-access doors/landings are deferred to the Level 7 schematic after feasibility/code review.
+Core V2 guarantees stair continuity to Level 7. Direct passenger-elevator service to Level 7 remains unassumed. A freight/service stop at Level 7 remains reserved for later technical resolution.
 
----
+No Floor 6 furniture, command program or support room may obstruct these vertical systems.
 
 ## 12. Circulation targets
 
