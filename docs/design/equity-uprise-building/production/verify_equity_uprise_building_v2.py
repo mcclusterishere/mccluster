@@ -12,6 +12,7 @@ CORE=json.loads((HERE/"building-core-v2.json").read_text())
 PROGRAMS=json.loads((HERE/"core-v2-floor-programs.json").read_text())
 B1=json.loads((HERE/"basement-b1-program.json").read_text())
 SITE=json.loads((HERE/"floor-01"/"floor-01-site-egress.json").read_text())
+CONTRACT=json.loads((HERE/"building-v2-validation.json").read_text())
 
 errors=[]
 if not GLB.exists(): errors.append("missing combined GLB")
@@ -28,9 +29,18 @@ if len(scene.geometry)<100: errors.append(f"unexpectedly low mesh count: {len(sc
 sha=hashlib.sha256(GLB.read_bytes()).hexdigest()
 if sha!=r.get("sha256"): errors.append("GLB SHA-256 does not match report")
 
-expected=[-13.5,0,13.5,27,40.5,54,67.5,81]
+expected=[x["finished_floor_elevation_ft"] for x in CONTRACT["expected_levels"]]
 actual=[x["finished_floor_elevation_ft"] for x in CORE["levels"]]
 if actual!=expected: errors.append(f"core elevations mismatch {actual}")
+if CONTRACT.get("status")!="active-core-v2-validation-contract":
+    errors.append("building-v2-validation.json is not active Core V2 contract")
+if CORE.get("level_of_exit_discharge")!=CONTRACT.get("level_of_exit_discharge"):
+    errors.append("level-of-exit-discharge disagrees with validation contract")
+if len(expected)!=8:
+    errors.append(f"validation contract expected {len(expected)} levels instead of 8")
+for ref in CONTRACT.get("required_refs",[]):
+    if not (HERE/ref).exists():
+        errors.append(f"validation contract required ref missing: {ref}")
 
 # Node-name proof of both stairs at every interface.
 names=set(scene.graph.nodes_geometry)
