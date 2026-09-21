@@ -90,7 +90,16 @@
       ],
       "level_7_service": "not_assumed",
       "shaft_continuity": "continuous_through_served_stack",
-      "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile."
+      "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
+      "b1_access_policy": {
+        "physical_stop": true,
+        "visible_in_normal_floor_selector": false,
+        "authorized_roles": [
+          "mccluster_house_owner",
+          "underground_operations_admin"
+        ],
+        "ordinary_equity_uprise_admin_sufficient": false
+      }
     },
     "service_freight_elevator": {
       "id": "service-freight-elevator-a",
@@ -122,7 +131,11 @@
       "level_7_service": "reserved_for_future_resolution",
       "shaft_continuity": "continuous_reservation_to_roof",
       "pit_overhead_machine_strategy": "unresolved",
-      "note": "Serves B1 and Floors 1\u20136; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts."
+      "note": "Serves B1 and Floors 1\u20136; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts.",
+      "b1_access_policy": {
+        "physical_stop": true,
+        "access": "restricted-operational"
+      }
     },
     "stair_a": {
       "id": "stair-a-east",
@@ -169,7 +182,12 @@
         "y2": 71.25
       },
       "geometry_status": "schematic_continuity_geometry_not_code_design",
-      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade."
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
+      "b1_access_policy": {
+        "physical_connection": true,
+        "floor1_downward_entry": "access-controlled-restricted",
+        "b1_to_floor1_egress": "preserved"
+      }
     },
     "stair_b": {
       "id": "stair-b-west",
@@ -216,7 +234,12 @@
         "y2": 71.25
       },
       "geometry_status": "schematic_continuity_geometry_not_code_design",
-      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade."
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
+      "b1_access_policy": {
+        "physical_connection": true,
+        "floor1_downward_entry": "access-controlled-restricted",
+        "b1_to_floor1_egress": "preserved"
+      }
     },
     "mep_riser": {
       "id": "mep-riser-east",
