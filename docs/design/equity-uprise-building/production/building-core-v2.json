@@ -1,0 +1,334 @@
+{
+  "schema_version": "2.0.0",
+  "building_id": "equity-uprise-building",
+  "core_id": "equity-uprise-core-v2",
+  "status": "locked-for-core-v2-migration",
+  "not_for_construction": true,
+  "authority_note": "This file is the shared machine-readable vertical-core authority for the Core V2 migration branch. Floor-specific files may add program but may not move or redefine these vertical systems.",
+  "units": "feet",
+  "coordinate_system": {
+    "origin": "southwest_exterior_corner_floor_01",
+    "x_positive": "east",
+    "y_positive": "north",
+    "z_positive": "up",
+    "north": "positive_y"
+  },
+  "shell": {
+    "width_ft": 72,
+    "depth_ft": 72,
+    "floor_to_floor_ft": 13.5,
+    "structural_grid_ft": [
+      0,
+      18,
+      36,
+      54,
+      72
+    ]
+  },
+  "levels": [
+    {
+      "level": 1,
+      "id": "floor-01",
+      "name": "Lobby + Intake",
+      "finished_floor_elevation_ft": 0
+    },
+    {
+      "level": 2,
+      "id": "floor-02",
+      "name": "Public Forum",
+      "finished_floor_elevation_ft": 13.5
+    },
+    {
+      "level": 3,
+      "id": "floor-03",
+      "name": "Fellowship + Network",
+      "finished_floor_elevation_ft": 27
+    },
+    {
+      "level": 4,
+      "id": "floor-04",
+      "name": "Media + Culture",
+      "finished_floor_elevation_ft": 40.5
+    },
+    {
+      "level": 5,
+      "id": "floor-05",
+      "name": "Policy + Proof",
+      "finished_floor_elevation_ft": 54
+    },
+    {
+      "level": 6,
+      "id": "floor-06",
+      "name": "Penthouse Command",
+      "finished_floor_elevation_ft": 67.5
+    },
+    {
+      "level": 7,
+      "id": "level-07",
+      "name": "Roof / Mobility Portal",
+      "finished_floor_elevation_ft": 81,
+      "open_air": true
+    }
+  ],
+  "vertical_systems": {
+    "passenger_elevator": {
+      "id": "passenger-elevator-a",
+      "type": "passenger_elevator",
+      "shaft_bounds_ft": {
+        "x1": 54,
+        "y1": 34,
+        "x2": 62,
+        "y2": 44
+      },
+      "shaft_width_ft": 8,
+      "shaft_depth_ft": 10,
+      "door_facing": "west",
+      "door_opening_concept_ft": {
+        "facade_x": 54,
+        "y1": 37,
+        "y2": 41,
+        "clear_width_ft": 4
+      },
+      "serves_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "level_7_service": "not_assumed",
+      "shaft_continuity": "continuous_through_served_stack",
+      "note": "Level 7 direct passenger-elevator service remains unassumed unless later professionally resolved."
+    },
+    "service_freight_elevator": {
+      "id": "service-freight-elevator-a",
+      "type": "service_freight_elevator",
+      "shaft_bounds_ft": {
+        "x1": 0,
+        "y1": 60,
+        "x2": 8,
+        "y2": 72
+      },
+      "shaft_width_ft": 8,
+      "shaft_depth_ft": 12,
+      "door_facing": "south",
+      "door_opening_concept_ft": {
+        "facade_y": 60,
+        "x1": 1.5,
+        "x2": 6.5,
+        "clear_width_ft": 5
+      },
+      "serves_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "level_7_service": "reserved_for_future_resolution",
+      "shaft_continuity": "continuous_reservation_to_roof",
+      "pit_overhead_machine_strategy": "unresolved",
+      "note": "Car capacity, pit, overhead, MRL/machine-room strategy, loading, ratings, and Level 7 stop require elevator/structural/code design."
+    },
+    "stair_a": {
+      "id": "stair-a-east",
+      "type": "protected_stair",
+      "enclosure_bounds_ft": {
+        "x1": 60,
+        "y1": 54,
+        "x2": 72,
+        "y2": 72
+      },
+      "enclosure_width_ft": 12,
+      "enclosure_depth_ft": 18,
+      "serves_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "access_side": "south",
+      "access_opening_concept_ft": {
+        "facade_y": 54,
+        "x1": 61.5,
+        "x2": 64.5,
+        "clear_width_ft": 3
+      },
+      "configuration": "dogleg_u_shaped_concept",
+      "rise_per_level_ft": 13.5,
+      "riser_count_per_level_concept": 22,
+      "riser_height_ft_concept": 0.6136363636,
+      "tread_depth_ft_concept": 0.9166666667,
+      "risers_per_flight_concept": 11,
+      "treads_per_flight_concept": 10,
+      "flight_width_ft_concept": 5,
+      "central_gap_ft_concept": 0.5,
+      "north_intermediate_landing_depth_ft_concept": 3.75,
+      "slab_opening_bounds_ft": {
+        "x1": 60.75,
+        "y1": 58.25,
+        "x2": 71.25,
+        "y2": 71.25
+      },
+      "geometry_status": "schematic_continuity_geometry_not_code_design"
+    },
+    "stair_b": {
+      "id": "stair-b-west",
+      "type": "protected_stair",
+      "enclosure_bounds_ft": {
+        "x1": 8,
+        "y1": 54,
+        "x2": 18,
+        "y2": 72
+      },
+      "enclosure_width_ft": 10,
+      "enclosure_depth_ft": 18,
+      "serves_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "access_side": "south",
+      "access_opening_concept_ft": {
+        "facade_y": 54,
+        "x1": 14,
+        "x2": 17,
+        "clear_width_ft": 3
+      },
+      "configuration": "dogleg_u_shaped_concept",
+      "rise_per_level_ft": 13.5,
+      "riser_count_per_level_concept": 22,
+      "riser_height_ft_concept": 0.6136363636,
+      "tread_depth_ft_concept": 0.9166666667,
+      "risers_per_flight_concept": 11,
+      "treads_per_flight_concept": 10,
+      "flight_width_ft_concept": 4,
+      "central_gap_ft_concept": 0.5,
+      "north_intermediate_landing_depth_ft_concept": 3.75,
+      "slab_opening_bounds_ft": {
+        "x1": 8.75,
+        "y1": 58.25,
+        "x2": 17.25,
+        "y2": 71.25
+      },
+      "geometry_status": "schematic_continuity_geometry_not_code_design"
+    },
+    "mep_riser": {
+      "id": "mep-riser-east",
+      "type": "mep_riser_reservation",
+      "bounds_ft": {
+        "x1": 50,
+        "y1": 66,
+        "x2": 60,
+        "y2": 72
+      },
+      "serves_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    }
+  },
+  "west_service_core": {
+    "bounds_ft": {
+      "x1": 0,
+      "y1": 54,
+      "x2": 18,
+      "y2": 72
+    },
+    "components": [
+      "service-freight-elevator-a",
+      "stair-b-west"
+    ],
+    "service_approach_band_ft": {
+      "x1": 0,
+      "y1": 54,
+      "x2": 18,
+      "y2": 60
+    },
+    "rule": "Floor-specific support rooms may abut but may not intrude into the freight shaft, Stair B enclosure, required access openings, or slab openings."
+  },
+  "slab_openings": {
+    "passenger_elevator": {
+      "x1": 54,
+      "y1": 34,
+      "x2": 62,
+      "y2": 44
+    },
+    "service_freight_elevator": {
+      "x1": 0,
+      "y1": 60,
+      "x2": 8,
+      "y2": 72
+    },
+    "stair_a": {
+      "x1": 60.75,
+      "y1": 58.25,
+      "x2": 71.25,
+      "y2": 71.25
+    },
+    "stair_b": {
+      "x1": 8.75,
+      "y1": 58.25,
+      "x2": 17.25,
+      "y2": 71.25
+    }
+  },
+  "floor_interface_rules": {
+    "interfaces": [
+      {
+        "from_level": 1,
+        "to_level": 2,
+        "rise_ft": 13.5
+      },
+      {
+        "from_level": 2,
+        "to_level": 3,
+        "rise_ft": 13.5
+      },
+      {
+        "from_level": 3,
+        "to_level": 4,
+        "rise_ft": 13.5
+      },
+      {
+        "from_level": 4,
+        "to_level": 5,
+        "rise_ft": 13.5
+      },
+      {
+        "from_level": 5,
+        "to_level": 6,
+        "rise_ft": 13.5
+      },
+      {
+        "from_level": 6,
+        "to_level": 7,
+        "rise_ft": 13.5
+      }
+    ],
+    "stairs_must_physically_reach_next_finished_floor": true,
+    "slabs_must_be_open_at_vertical_circulation": true,
+    "floor_local_stair_placeholders_prohibited": true,
+    "independent_floor_z_zero_models_not_authoritative_for_vertical_continuity": true
+  },
+  "egress_and_code_limitations": [
+    "Two protected stair reservations are retained conceptually.",
+    "The service/freight elevator is not counted as a substitute for a required exit.",
+    "Riser/tread/landing dimensions are schematic continuity geometry only.",
+    "Final occupant load, exit count, exit separation, stair width, ratings, accessibility, smoke control, elevator recall, fire-service access, structural loading, pit/overhead, and other code requirements require licensed professional review."
+  ]
+}
