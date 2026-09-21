@@ -213,7 +213,9 @@ B1 now exists at **-13'-6"**.
 
 It is not an E-Q-U-I-T-Y developmental floor and is not exposed in the normal public floor selector.
 
-Authorized users may enter B1 through Building Systems Lab / service modes to work with simulated:
+Live B1 does **not** open to learners through Building Systems Lab. The live basement is available only to the McCluster house owner or explicitly delegated underground-operations admin.
+
+Learners/instructors launch a sandboxed clone of B1/tunnel geometry to work with simulated:
 
 - mechanical plant;
 - electrical/emergency power;
@@ -224,6 +226,25 @@ Authorized users may enter B1 through Building Systems Lab / service modes to wo
 - building automation / systems observation.
 
 Floor 1 remains the modeled level of exit discharge.
+
+### Floor 1 underground-access behavior
+
+No new public room is added to Floor 1.
+
+Instead:
+
+- normal elevator selector shows only **1 · 2 · 3 · 4 · 5 · 6 · ↑**;
+- B1 is hidden from the Journey Wall and public building directory;
+- the passenger-elevator B1 stop is physically modeled but only revealed to house-owner / underground-operations-admin authority;
+- stair travel downward from Floor 1 is access-controlled in normal operation;
+- egress from B1 upward to Floor 1/exterior remains preserved;
+- freight/service movement to B1 remains restricted operational infrastructure;
+- Building Systems Lab launches the sandboxed training environment rather than unlocking live B1.
+
+Tunnel authority:
+
+- `UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
+- `production/underground-tunnel-network.json`
 
 B1 authority:
 
