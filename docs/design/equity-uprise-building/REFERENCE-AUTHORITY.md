@@ -12,6 +12,8 @@
 > 1. `BUILDING-CORE-V2-SPEC.md`
 > 2. `production/building-core-v2.json`
 > 3. `production/building-v2-validation.json`
+> 4. `production/equity-uprise-capability-map-v2.json`
+> 5. `production/core-v2-floor-programs.json`
 >
 > These shared files control vertical systems before any floor-specific spec, plan basis, DXF/SVG, production manifest, GLB or browser scene.
 >
@@ -46,23 +48,29 @@ If the task is only about Equity Uprise policy/data/application behavior and has
 
 ## Mandatory authority order
 
-Read in this order:
+Read program and geometry authority in this order:
 
 1. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
-   - Defines what Equity Uprise actually contains.
-   - Prevents invented generic rooms that do not correspond to the program.
+   - Current repo-to-building reconciliation.
+   - Defines what Equity Uprise actually contains and the status/boundaries of those capabilities.
 
-2. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
-   - Defines the locked six occupied-floor program plus Level 7 roof, vertical narrative, continuity rules and one-level-at-a-time design process.
+2. `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
+   - Machine-readable capability inventory.
+   - Assigns every audited capability a primary floor, optional secondary floors, implementation status, visibility boundary and physical expression.
 
-2A. Level 7 roof / ecosystem authority:
-   - `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
-   - `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
-   - `docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
-   - `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md` is retained as origin/context only.
-   - Mandatory before Floor 6 roof-interface, roof, exterior-master, rooftop 3D, cross-site mobility, destination-building, helicopter/VTOL transition, or ecosystem-navigation work.
+3. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
+   - Defines the six enclosed-floor + Level 7 compression, vertical narrative and architectural interaction model.
 
-3. The floor-specific written specification.
+4. Core V2 shared geometry:
+   - `docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md`
+   - `docs/design/equity-uprise-building/production/building-core-v2.json`
+   - `docs/design/equity-uprise-building/production/building-v2-validation.json`
+
+5. Shared floor-program authority:
+   - `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
+   - Floor program may name/route capabilities but may not redefine shared vertical geometry.
+
+6. Floor-specific long-form specification:
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
    - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
    - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
@@ -70,29 +78,22 @@ Read in this order:
    - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
    - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
    - Level 7: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
-   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
 
-4. The floor-specific schematic-plan basis.
-   - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
-   - Level 7: `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
+7. Floor-specific schematic-plan basis.
 
-5. The canonical floor-plan assets.
-   - Floor 1: `docs/design/equity-uprise-building/references/floor-01/`
-   - Floor 2: `docs/design/equity-uprise-building/references/floor-02/`
-   - Floor 3: `docs/design/equity-uprise-building/references/floor-03/`
-   - Floor 4: `docs/design/equity-uprise-building/references/floor-04/`
-   - Floor 5: `docs/design/equity-uprise-building/references/floor-05/`
-   - Floor 6: `docs/design/equity-uprise-building/references/floor-06/`
-   - Level 7: `docs/design/equity-uprise-building/references/floor-07/`
-   - Floor 6: `docs/design/equity-uprise-building/references/floor-06/`
+8. Active Core V2 DXF → SVG → PNG plan references in `references/floor-0X/`.
 
-For Core V2 geometry on this branch, prefer shared Core V2 spec/JSON → floor written basis → DXF → SVG → raster preview → deterministic production package → generated 3D/render/web output.
+9. Floor deterministic production package.
+
+10. Generated GLB / browser viewer / render / 360 output.
+
+### Level 7 additional authority
+
+Before Floor 6 roof-interface, rooftop, exterior-master, cross-site mobility, destination-building or ecosystem-navigation work also read:
+- `FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
+- `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md` as origin/context only.
+
+Program authority and geometry authority are complementary: the capability map controls **what the building represents**; Core V2 controls **where the shared building systems physically are**.
 
 ## Deterministic production packages
 
@@ -134,14 +135,24 @@ Core V2 branch authority order is:
 
 The production package operationalizes the architecture; it may never override canonical dimensions, core placement, circulation, access, or room program.
 
+## Repo-to-building coverage gate
+
+Before declaring the building program complete, run:
+
+`docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py`
+
+It must verify that every capability in the canonical map is represented on its primary and declared secondary floors, that floor route keys resolve, that private/high-risk routes are not marked public, and that passenger-elevator semantics do not imply Level 7 service.
+
 ## Which source controls what
 
 ### Program / lore / room identity
 
 Authority:
-1. repo audit;
-2. building inventory;
-3. floor written spec.
+1. repo reconciliation audit;
+2. capability map;
+3. building inventory;
+4. shared floor-program JSON;
+5. floor written spec.
 
 Do not invent a room, department, floor function or public-facing feature merely because it looks cinematic.
 
@@ -181,7 +192,7 @@ Floor 1 currently establishes the building datum:
 - Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - 360 camera datum: approximately **(36, 28), 5'-4" AFF**;
-- 0° north: reception / feature wall;
+- 0° north: reception / Arrival / Identity Wall;
 - +90° east: elevator/core;
 - 180° south: entrance/vestibule on Floor 1 only;
 - -90° west: lounge/intake.
@@ -204,7 +215,7 @@ Floor 2 preserves the Floor 1 building datum:
 - conversation/lounge zone: **X 2–18 / Y 14–30**;
 - feature wall: approximately **X 24–48 / Y 50–54**;
 - 360 camera datum: approximately **(36,28), 5'-4" AFF**;
-- 0° north: forum table / feature wall;
+- 0° north: forum table / Topics / Perspectives / Conversations Wall;
 - +90° east: elevator + member check-in;
 - 180° south: sealed upper-floor glazing — **no exterior door**;
 - -90° west: conversation/listening lounge.
@@ -229,13 +240,13 @@ Floor 3 preserves the same building datum:
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - Opportunity Exchange table: **16' × 4'**, centered near **(36,41)**;
 - People + Network lounge: **X 2–18 / Y 18–34**;
-- Interview Room A: **X 2–14 / Y 4–16**;
-- Interview Room B: **X 16–28 / Y 4–16**;
-- member/interview check-in: approximately **X 49–51 / Y 24–29**;
+- Interview / Stakeholder Meeting A: **X 2–14 / Y 4–16**;
+- Interview / Stakeholder Meeting B: **X 16–28 / Y 4–16**;
+- member/meeting check-in: approximately **X 49–51 / Y 24–29**;
 - 360 camera datum: approximately **(36,28), 5'-4" AFF**;
 - 0° north: Opportunity Exchange / Fellowship + Network wall;
 - +90° east: elevator + member/interview check-in;
-- 180° south: interview rooms + sealed upper-floor glazing;
+- 180° south: interview / stakeholder meeting rooms + sealed upper-floor glazing;
 - -90° west: People + Network lounge.
 
 Floor 3 has **no exterior public entrance, balcony, or terrace**.
@@ -260,11 +271,11 @@ Floor 4 preserves the same building datum:
 - Culture Archive / Rally Gallery: approximately **X 2–18 / Y 18–38**;
 - Creator Recording Room: **X 2–15 / Y 4–16**;
 - Edit / Review Suite: **X 17–31 / Y 4–16**;
-- media-control terminal: approximately **X 49–51 / Y 24–29**;
-- media/identity wall: approximately **X 22–50 / Y 50–54**;
+- Media / Release Control: approximately **X 49–51 / Y 24–29**;
+- Media / Release Wall: approximately **X 22–50 / Y 50–54**;
 - 360 camera datum: approximately **(36,28), 5'-4" AFF**;
-- 0° north: Media + Culture wall / listening-screening room;
-- +90° east: elevator + media control;
+- 0° north: Media / Release Wall + listening-screening room;
+- +90° east: elevator + Media / Release Control;
 - 180° south: recording/edit rooms + sealed upper-floor glazing;
 - -90° west: Culture Archive / Rally Gallery.
 
@@ -292,11 +303,11 @@ Floor 5 preserves the same building datum:
 - Evidence + Proof Archive: **X 2–18 / Y 18–40**;
 - Source Review Room: **X 2–15 / Y 4–16**;
 - Publication / Submission Review Room: **X 17–32 / Y 4–16**;
-- research-navigation terminal: approximately **X 49–51 / Y 24–29**;
-- Policy + Proof wall: approximately **X 22–50 / Y 50–54**;
+- Research / Publication Navigator: approximately **X 49–51 / Y 24–29**;
+- Policy / Publication / Impact Wall: approximately **X 22–50 / Y 50–54**;
 - 360 camera datum: approximately **(36,28), 5'-4" AFF**;
-- 0° north: Policy Lab / Policy + Proof wall;
-- +90° east: elevator + research navigation;
+- 0° north: Policy Lab / Policy / Publication / Impact Wall;
+- +90° east: elevator + Research / Publication Navigator;
 - 180° south: review rooms + sealed upper-floor glazing;
 - -90° west: Evidence + Proof Archive.
 
@@ -325,9 +336,9 @@ Floor 6 preserves the building datum and the Level 7 roof interface:
 - Strategy Review Room: **X 2–15 / Y 4–16**;
 - Partner / Executive Briefing Room: **X 17–32 / Y 4–16**;
 - Roof Access / Mobility Transition terminal: **X 49–51 / Y 24–29**;
-- Penthouse Command wall: **X 22–50 / Y 50–54**, with **NOW / PAST WORK / JOIN**;
+- Institutional Command Wall: **X 22–50 / Y 50–54**, with **NOW / PAST WORK / JOIN**;
 - 360 camera datum: approximately **(36,28), 5'-4" AFF**;
-- 0° north: Penthouse Command / NOW-PAST WORK-JOIN;
+- 0° north: Institutional Command Wall / NOW-PAST WORK-JOIN;
 - +90° east: elevator + Level 7 roof transition;
 - 180° south: Strategy/Partner rooms + sealed glazing;
 - -90° west: Institutional Salon.
@@ -356,7 +367,7 @@ Locked schematic conditions:
 - ecosystem routing beacon: **X 46–50 / Y 24–30**;
 - candidate mobility-zone reservation: **X 10–48 / Y 8–46**;
 - city-overlook band: **X 12–46 / Y 0–6**;
-- rooftop service/equipment band: **X 28–60 / Y 60–72**;
+- rooftop service/equipment band: approximately **X 34–60 / Y 60–72**, excluding shared core/MEP zones;
 - roof camera datum: approximately **(36,28), 5'-4" above roof walking surface**.
 
 Canonical Level 7 assets:
