@@ -1,13 +1,14 @@
 # Equity Uprise Building — Level 07 Roof / Mobility Portal Schematic Plan Basis
 
-> Status: **LOCKED SCHEMATIC ROOF GEOMETRY / ECOSYSTEM-PLANE COORDINATION**  
+> Status: **CORE V2 ROOF CHASSIS / ECOSYSTEM-ROUTING COORDINATION REFERENCE**
+> Program note: roof/core geometry constraints remain current; final developmental activity/space programming is pre-iterative.  
 > Companion to: `FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`  
 > Ecosystem semantics: `FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`  
 > Origin/pre-program: `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`  
 > **Not for construction or aviation approval.**
 
 
-> Core V2 branch authority: `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Core V2 chassis authority: `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
 > Finished-floor elevation in combined model: **+81'-0"**.
 > Floor-specific program may not move the shared passenger elevator, freight/service shaft, Stair A, Stair B, MEP reservation or shared slab openings.
 
