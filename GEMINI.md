@@ -93,4 +93,6 @@ For Floor 5, also read:
 - `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.svg`
 - `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.png`
 
+Before any Floor 6, roof, exterior-master, rooftop 3D, cross-site-flight, helicopter/VTOL, or building-crown work, also read `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`. The building has six enclosed occupied floors plus **Level 7 — Roof / Mobility Portal**. Floor 6 must preserve vertical access/core/service continuity to the roof. The rooftop helipad/mobility zone is conceptual until site/aircraft/regulatory/structural feasibility is established.
+
 These files are geometry authority. **Generative images are not geometry authority.** Never move the elevator, stairs, risers, structural grid, building footprint, entrances, floor program, or 360 datum merely to improve a render. Never invent spatial lore that conflicts with the canonical geometry.
