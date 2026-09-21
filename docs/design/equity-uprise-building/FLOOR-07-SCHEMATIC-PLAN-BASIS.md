@@ -280,3 +280,13 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] Stair A at X 60–72 / Y 54–72
 - [ ] both stairs physically reach +81'-0" roof datum
 - [ ] roof slab openings remain coordinated
+
+## Repo capability authority
+
+Program semantics for this floor are controlled by:
+- `production/equity-uprise-capability-map-v2.json`
+- `production/core-v2-floor-programs.json`
+- the companion long-form floor spec.
+
+This schematic basis controls plan geometry; it may not silently rename or delete a repo-backed capability represented by the floor program. Public/private and approval boundaries remain those of the source Equity Uprise system.
+
