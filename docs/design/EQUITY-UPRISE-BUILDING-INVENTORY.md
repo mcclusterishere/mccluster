@@ -133,8 +133,9 @@ As of the 2026-09-21 repo-wide reconciliation:
 - **149** are support/development-authority sources (presentation, runtime plumbing, tests/build support, Lifetime Development authority, digital-twin program authority, and the unified build-validation workflow) and intentionally do not create additional rooms/floors;
 - **56** canonical Equity Uprise capabilities are represented in the building;
 - repo-source exact-set classification is enforced by `production/verify_equity_uprise_repo_sources.py`;
-- capability/floor/routing audit: **435 / 435 passed**;
-- generated plan semantic/artifact audit: **357 / 357 passed**;
+- repo-source exact-set audit: **904 / 904 passed**;
+- capability/floor/routing audit: **464 / 464 passed**;
+- generated plan semantic/artifact audit: **437 / 437 passed**;
 - combined B1-to-roof geometry audit: **41 / 41 passed** with **784 meshes**.
 
 The source classification ledger is:
