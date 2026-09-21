@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Floor 1 + B1 digital-twin simulation authority",
-  "checks_total": 58,
-  "checks_passed": 58,
+  "checks_total": 67,
+  "checks_passed": 67,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -31,6 +31,36 @@
       "name": "B1 normal public access false",
       "passed": true,
       "detail": "False"
+    },
+    {
+      "name": "B1 live access is restricted",
+      "passed": true,
+      "detail": "mccluster-house-owner-or-underground-operations-admin"
+    },
+    {
+      "name": "B1 training is sandbox only",
+      "passed": true,
+      "detail": "{'mode': 'sandboxed_clone_only', 'live_b1_access': False, 'live_tunnel_access': False, 'live_controls_available': False, 'live_occupancy_visible': False, 'competency_evidence_allowed': True}"
+    },
+    {
+      "name": "ordinary EU admin cannot unlock live B1",
+      "passed": true,
+      "detail": "{'allowed': ['mccluster_house_owner', 'underground_operations_admin'], 'delegated_by': 'mccluster_house_owner', 'ordinary_equity_uprise_admin_sufficient': False, 'competency_sufficient': False, 'audit_required': True}"
+    },
+    {
+      "name": "tunnel is not publicly visible",
+      "passed": true,
+      "detail": "False"
+    },
+    {
+      "name": "tunnel training clone has no live access",
+      "passed": true,
+      "detail": "{'mode': 'sandboxed_clone_only', 'live_b1_access': False, 'live_tunnel_access': False, 'live_occupancy_visible': False, 'live_controls_available': False, 'competency_evidence_allowed': True}"
+    },
+    {
+      "name": "tunnel has future reserved branches only",
+      "passed": true,
+      "detail": "[{'id': 'future-connection-01', 'label': 'FUTURE CONNECTION RESERVED', 'destination': None, 'status': 'reserved-no-destination-authority'}, {'id': 'future-connection-02', 'label': 'FUTURE CONNECTION RESERVED', 'destination': None, 'status': 'reserved-no-destination-authority'}, {'id': 'future-connection-03', 'label': 'FUTURE CONNECTION RESERVED', 'destination': None, 'status': 'reserved-no-destination-authority'}]"
     },
     {
       "name": "passenger_elevator serves B1",
@@ -175,12 +205,12 @@
     {
       "name": "Stair A down barrier exists",
       "passed": true,
-      "detail": "{'F1-BARRIER-STAIR-B-DOWN', 'F1-BARRIER-STAIR-A-DOWN'}"
+      "detail": "{'F1-BARRIER-STAIR-A-DOWN', 'F1-BARRIER-STAIR-B-DOWN'}"
     },
     {
       "name": "Stair B down barrier exists",
       "passed": true,
-      "detail": "{'F1-BARRIER-STAIR-B-DOWN', 'F1-BARRIER-STAIR-A-DOWN'}"
+      "detail": "{'F1-BARRIER-STAIR-A-DOWN', 'F1-BARRIER-STAIR-B-DOWN'}"
     },
     {
       "name": "public way modeled",
@@ -271,6 +301,21 @@
       "name": "no unresolved geometry requirements",
       "passed": true,
       "detail": "None"
+    },
+    {
+      "name": "Floor 1 hides B1 from normal navigation",
+      "passed": true,
+      "detail": "{'normal_floor_selector': ['1', '2', '3', '4', '5', '6', '\u2191'], 'b1_selector_visibility': 'mccluster-house-owner-or-underground-operations-admin-only', 'ordinary_equity_uprise_admin_can_see_b1': False, 'journey_wall_shows_b1': False, 'public_directory_shows_b1': False, 'passenger_elevator': {'physical_b1_stop': True, 'b1_control_hidden_by_default': True, 'authorized_reveal': ['mccluster_house_owner', 'underground_operations_admin']}, 'stairs': {'physical_b1_connection': True, 'floor1_downward_access': 'access-controlled-restricted', 'b1_to_floor1_egress': 'preserved'}, 'freight_elevator': {'physical_b1_stop': True, 'access': 'restricted-operational'}, 'training': {'entry': 'Building Systems Lab simulation launcher', 'destination': 'sandboxed B1/tunnel clone', 'live_systems': False}}"
+    },
+    {
+      "name": "Floor 1 ordinary EU admin cannot see B1",
+      "passed": true,
+      "detail": "{'normal_floor_selector': ['1', '2', '3', '4', '5', '6', '\u2191'], 'b1_selector_visibility': 'mccluster-house-owner-or-underground-operations-admin-only', 'ordinary_equity_uprise_admin_can_see_b1': False, 'journey_wall_shows_b1': False, 'public_directory_shows_b1': False, 'passenger_elevator': {'physical_b1_stop': True, 'b1_control_hidden_by_default': True, 'authorized_reveal': ['mccluster_house_owner', 'underground_operations_admin']}, 'stairs': {'physical_b1_connection': True, 'floor1_downward_access': 'access-controlled-restricted', 'b1_to_floor1_egress': 'preserved'}, 'freight_elevator': {'physical_b1_stop': True, 'access': 'restricted-operational'}, 'training': {'entry': 'Building Systems Lab simulation launcher', 'destination': 'sandboxed B1/tunnel clone', 'live_systems': False}}"
+    },
+    {
+      "name": "Floor 1 training goes to sandbox clone",
+      "passed": true,
+      "detail": "{'entry': 'Building Systems Lab simulation launcher', 'destination': 'sandboxed B1/tunnel clone', 'live_systems': False}"
     },
     {
       "name": "resolved geometry: f1-stair-a-exit-discharge",
