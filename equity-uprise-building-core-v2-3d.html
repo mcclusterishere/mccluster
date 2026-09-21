@@ -14,7 +14,8 @@ function frameStack(){
  const box=new THREE.Box3().setFromObject(scene),size=new THREE.Vector3(),center=new THREE.Vector3();box.getSize(size);box.getCenter(center);
  const span=Math.max(size.x,size.z,size.y);cam.position.set(center.x+span*.7,center.y+span*.48,center.z+span*.85);ctl.target.copy(center);cam.far=Math.max(ft(420),span*8);cam.updateProjectionMatrix();ctl.update();
 }
-function done(){loaded++;if(loaded===5){status.textContent='Working stack loaded · detailed F1 + F2 + F3 + F4 · chassis F5–F7';frameStack()}}
+const requestedFloor=new URLSearchParams(location.search).get('floor');
+function done(){loaded++;if(loaded===5){status.textContent='Working stack loaded · detailed F1 + F2 + F3 + F4 · chassis F5–F7';if(requestedFloor&&/^[0-7]$/.test(requestedFloor))focus(requestedFloor);else frameStack()}}
 loader.load('/equity-uprise-preview/equity-uprise-building-core-v2.glb?v=__STAMP__',g=>{base=g.scene;base.rotation.x=-Math.PI/2;base.updateMatrixWorld(true);scene.add(base);makeReliable(base);base.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^L[1234]_(program|circle|support|slab|north_wall|south_|west_wall|east_wall)/.test(n))o.visible=false});done()});
 loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{f1=g.scene;f1.rotation.x=-Math.PI/2;f1.updateMatrixWorld(true);scene.add(f1);makeReliable(f1);f1.traverse(o=>{if(o.isMesh&&/^(stair_|passenger_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
 loader.load('/equity-uprise-preview/equity-uprise-floor-02-core-v2.glb?v=__STAMP__',g=>{f2=g.scene;f2.rotation.x=-Math.PI/2;f2.position.y=ft(13.5);f2.updateMatrixWorld(true);scene.add(f2);makeReliable(f2);f2.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
@@ -71,7 +72,6 @@ function focus(k){
   frameObject(base);
 }
 document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>focus(b.dataset.f));
-const requested=new URLSearchParams(location.search).get('floor');
-if(requested&&/^[0-7]$/.test(requested))setTimeout(()=>focus(requested),250);document.getElementById('wire').onclick=e=>{wire=!wire;scene.traverse(o=>{if(o.isMesh){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}})}});e.target.textContent=wire?'Solid':'Wireframe'};
+document.getElementById('wire').onclick=e=>{wire=!wire;scene.traverse(o=>{if(o.isMesh){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}})}});e.target.textContent=wire?'Solid':'Wireframe'};
 addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});ren.setAnimationLoop(()=>{ctl.update();ren.render(scene,cam)});
 </script></body></html>
