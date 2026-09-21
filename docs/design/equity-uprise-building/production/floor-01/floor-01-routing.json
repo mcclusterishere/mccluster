@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-01",
+  "routes": {
+    "institutional_overview": {
+      "type": "url",
+      "url": "/equity-uprise.html",
+      "state_hint": "now"
+    },
+    "institutional_join": {
+      "type": "url",
+      "url": "/equity-uprise.html",
+      "state_hint": "join"
+    },
+    "building_directory": {
+      "type": "ui_state",
+      "target": "building_directory"
+    },
+    "floor_selector": {
+      "type": "floor_selector",
+      "levels": [
+        {
+          "level": 1,
+          "scene_id": "equity-uprise-floor-01",
+          "enabled": true
+        },
+        {
+          "level": 2,
+          "scene_id": "equity-uprise-floor-02",
+          "enabled": true
+        },
+        {
+          "level": 3,
+          "scene_id": "equity-uprise-floor-03",
+          "enabled": true
+        },
+        {
+          "level": 4,
+          "scene_id": "equity-uprise-floor-04",
+          "enabled": true
+        },
+        {
+          "level": 5,
+          "scene_id": "equity-uprise-floor-05",
+          "enabled": true
+        },
+        {
+          "level": 6,
+          "scene_id": "equity-uprise-floor-06",
+          "enabled": true
+        },
+        {
+          "level": 7,
+          "scene_id": "equity-uprise-level-07",
+          "enabled": false,
+          "reason": "Direct passenger-elevator roof service is not yet canonically resolved; Level 7 remains reachable through the approved future roof-access flow."
+        }
+      ]
+    },
+    "exterior_entry": {
+      "type": "scene",
+      "scene_id": "equity-uprise-exterior-entry",
+      "enabled": false,
+      "reason": "Exterior master scene not built yet."
+    }
+  },
+  "security": {
+    "allowlisted_url_prefixes": [
+      "/"
+    ],
+    "allow_arbitrary_external_redirects": false
+  }
+}
