@@ -210,7 +210,7 @@ A seated visitor should still be able to see:
 
 ---
 
-## 7. Intake / consultation room
+## 7. Intake / verification consultation room
 
 Adjacent to the lounge, preferably behind a framed glass partition.
 
@@ -690,3 +690,22 @@ Before approving any new Floor 1 panorama, answer yes to every item:
 - [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
 - [ ] shared slab openings remain unobstructed
 - [ ] no floor-local decorative stair is treated as vertical-continuity authority
+
+## Repo capability binding — 2026-09-21 reconciliation audit
+
+This floor is bound to the repo-wide program map:
+`production/equity-uprise-capability-map-v2.json`.
+
+### Primary capabilities
+- **M-Verified organization/profile intake** (`verification`, built_manual) — Intake / Verification Consultation on Floor 1; verified identity becomes part of Floor 3 network context.
+- **Stakeholder and organization intake** (`stakeholder-intake`, built) — Reception/intake on Floor 1; relationship graph on Floors 3 and 6.
+
+### Secondary / cross-floor capabilities
+- **Neutral listening/conversation agent** (`conversation-agent`, built) — Listening Lounge; human handoff routes to the Desk without making the agent an ideological authority.
+- **Policy Fellowship/application workflow** (`fellowship-applications`, built) — Fellowship application path, application tracking, and interview/meeting rooms.
+- **Interview requests, availability and calendar scheduling** (`interviews-calendar`, built_guarded) — Member / Meeting Check-In and two Interview / Stakeholder Meeting rooms; no private calendar data shown publicly.
+
+### Boundary rule
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
