@@ -71,6 +71,20 @@ Read in this order:
 
 For geometry, prefer DXF → SVG → raster preview → later renders.
 
+## Deterministic production packages
+
+After architectural geometry is locked, implementation may use floor-specific deterministic production packages.
+
+Floor 1 production package:
+- `docs/design/equity-uprise-building/production/floor-01/README.md`
+- `docs/design/equity-uprise-building/production/floor-01/floor-01-scene-manifest.json`
+- companion material, lighting, camera, hotspot, routing and state JSON files in the same folder.
+
+Authority order remains:
+**written spec → schematic basis → DXF → SVG → deterministic production package → generated 3D/render/web output**.
+
+The production package operationalizes the architecture; it may never override canonical dimensions, core placement, circulation, access, or room program.
+
 ## Which source controls what
 
 ### Program / lore / room identity
