@@ -83,15 +83,16 @@ Read program and geometry authority in this order:
      - `docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md`
    - These files define institutional activity, simulation systems, site/egress behavior, the non-developmental technical basement and training scenarios. They do not override the shared Core V2 vertical chassis.
 
-6. Floor-specific long-form specification:
-   - Floor 1 (semantic identity: **Arrival / Orientation / Intake**; legacy-compatible filename): `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
-   - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
-   - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
-   - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
-   - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
-   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
-   - Floor 6 Halo instrument: `docs/design/equity-uprise-building/HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`
-   - Level 7: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
+6. Floor-specific program / spatial reference:
+   - **Floor 1 — current program authority:** semantic identity **Arrival / Orientation / Intake**; long-form file retained under legacy-compatible filename `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`.
+   - **Floors 2–6 — provisional program references only:** the existing long-form specs remain useful spatial/history inputs, but their room/activity programs are **not final authority** until each floor receives the same iterative development-program reconciliation completed for Floor 1.
+     - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
+     - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
+     - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
+     - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
+     - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
+   - Floor 6 Halo instrument remains separately authoritative for the Halo boundary: `docs/design/equity-uprise-building/HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`.
+   - **Level 7 — provisional program reference only:** `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`; roof chassis/vertical-access constraints remain active while launch/culmination programming awaits iterative rewrite.
 
 7. Floor-specific schematic-plan basis.
 
@@ -183,6 +184,8 @@ Authority:
 7. floor written spec **only to the maturity level declared by the shared floor-program JSON**.
 
 For a floor marked `pre-iterative-program-rewrite`, its legacy long-form room program is a working reference, not final authority.
+
+Generated plan labels for a provisional floor describe the **current legacy program snapshot only**. They are not evidence that the later-floor program has been finalized. Only Floor 1 is currently program-reconciled and basic-render-ready for the present iterative pass.
 
 Do not invent a room, department, floor function or public-facing feature merely because it looks cinematic.
 
