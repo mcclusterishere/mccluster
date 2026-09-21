@@ -57,9 +57,19 @@ async function authUser(req, env) {
 async function equityUpriseRole(req, env) {
   const user = await authUser(req, env);
   if (!user) return { user: null, role: 'visitor' };
-  if (String(user.email || '').toLowerCase() === 'matthew@mccluster.org') {
-    return { user, role: 'admin' };
+
+  // Owner/admin Halo authority follows the canonical McCluster house-owner
+  // membership, never an email string or an Equity Uprise profile role.
+  const orgs = await sb(env, 'orgs?slug=eq.mccluster&select=id&limit=1');
+  const houseId = orgs?.[0]?.id;
+  if (houseId) {
+    const memberships = await sb(
+      env,
+      `org_members?org_id=eq.${encodeURIComponent(houseId)}&profile_id=eq.${encodeURIComponent(user.id)}&role=eq.owner&select=org_id&limit=1`
+    );
+    if (memberships?.length) return { user, role: 'owner' };
   }
+
   const rows = await sb(env, `eu_profiles?id=eq.${encodeURIComponent(user.id)}&select=role&limit=1`);
   const role = ['member', 'host', 'editor', 'client', 'admin'].includes(rows?.[0]?.role)
     ? rows[0].role
