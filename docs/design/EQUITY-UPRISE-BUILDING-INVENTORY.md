@@ -77,7 +77,7 @@ The building program is now explicitly bound to:
 - `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
 - `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
 
-The capability map currently tracks **51 repo-grounded capabilities** and distinguishes implemented, approval-gated, manual, externally configurable, shared-platform, intentionally unarmed, schematic-future and experimental-separate states.
+The capability map currently tracks **56 repo-grounded capabilities** and distinguishes implemented, approval-gated, manual, externally configurable, shared-platform, intentionally unarmed, schematic-future and experimental-separate states.
 
 ### Floor roles after reconciliation
 
@@ -88,7 +88,7 @@ The capability map currently tracks **51 repo-grounded capabilities** and distin
 | 3 | Fellowship + Network | people / opportunities / relationships / meetings | Opportunity Exchange; Opportunity / Network Wall; People + Network Lounge; Interview / Stakeholder Meeting A/B; Member / Meeting Check-In |
 | 4 | Media + Culture | listen / create / edit / archive / release | Media / Listening Zone; Media / Release Wall; Rally Gallery; Creator Recording; Edit / Review; Media / Release Control |
 | 5 | Policy + Proof | research / evidence / publication / filings / impact | Policy Lab; Policy / Publication / Impact Wall; Evidence + Proof Archive; Source Review; Publication / Submission Review; Research / Publication Navigator |
-| 6 | Penthouse Command | institutional direction / Desk / approvals / operations | Institutional Command Wall; Institutional Salon; Strategy Review; Partner / Executive Briefing; Control / Audit Records; Desk Operations / Systems |
+| 6 | Penthouse Command | institutional direction / Desk / approvals / operations / spatial intelligence | Institutional Command Wall; Halo Globe / Spatial Intelligence; Institutional Salon; Strategy Review; Partner / Executive Briefing; Control / Audit Records; Desk Operations / Systems |
 | 7 | Roof / Mobility Portal | ecosystem navigation / departure / arrival | Ecosystem Routing Interface; City Overlook; Candidate Mobility Zone |
 
 ### What this means
@@ -99,9 +99,13 @@ A physical zone may represent a coherent family of related capabilities:
 - Floor 3 compresses fellowships, profiles, stakeholders, meetings, commitments and relationship workflows;
 - Floor 4 compresses catalogue/listening, artists, recording/editing, approved derivatives, rights/release state and DDEX operations;
 - Floor 5 compresses initiatives, research workspace, sources/claims/evidence, manuscripts, publications, government submissions, monitors, citations and impact;
-- Floor 6 compresses the public institutional Desk plus access-controlled moderation, approvals, integrations, automation, outreach, status and audit state.
+- Floor 6 compresses the public institutional Desk plus access-controlled moderation, approvals, integrations, automation, outreach, status and audit state, with one shared-platform Halo Globe / Spatial Intelligence viewport. The globe is public-visible but sanitized/read-only outside protected owner/admin operation.
 
 Private software remains private in the building metaphor. A room representing an internal system does not make its data publicly visible.
+
+### Halo Globe / spatial-intelligence rule
+
+Floor 6 contains exactly one suspended **Halo Globe / Spatial Intelligence** instrument. It is a permissioned viewport into the shared McCluster Seek First / Hitman's Halo plane, not a separate Equity Uprise backend. Public and ordinary authenticated states are read-only and entitlement-scoped; protected owner/admin operation hands off to the real Halo surface. The globe does not justify a new room, floor, tactical surveillance wall or military-command aesthetic.
 
 ### Interaction correction
 
@@ -121,14 +125,14 @@ Any future feature that materially changes Equity Uprise must:
 
 As of the 2026-09-21 repo-wide reconciliation:
 
-- **77** Equity Uprise-specific source/support files are explicitly classified;
-- **50** are directly tied to one or more building capabilities;
-- **27** are support-only (presentation, migration wrappers, runtime plumbing, tests/build support) and intentionally do not create additional rooms/floors;
-- **51** canonical Equity Uprise capabilities are represented in the building;
-- repo-source audit: **260 / 260 passed**;
-- capability/floor/routing audit: **162 / 162 passed**;
-- generated plan semantic/artifact audit: **310 / 310 passed**;
-- combined stacked geometry audit: **27 / 27 passed**.
+- **244** Equity Uprise source/support files are currently classified in the source ledger;
+- **102** are directly tied to one or more building capabilities;
+- **142** are support-only (presentation, migration wrappers, runtime plumbing, tests/build support) and intentionally do not create additional rooms/floors;
+- **56** canonical Equity Uprise capabilities are represented in the building;
+- repo-source exact-set classification is enforced by `production/verify_equity_uprise_repo_sources.py`;
+- capability/floor/routing audit: **429 / 429 passed**;
+- generated plan semantic/artifact audit: **312 / 312 passed**;
+- combined stacked geometry audit: **32 / 32 passed** with **668 meshes**.
 
 The source classification ledger is:
 `docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json`.
@@ -336,7 +340,7 @@ The building is intentionally compact: **six enclosed occupied floors plus a sev
 | Level | Locked identity | Real Equity Uprise functions compressed into the level | Builder-spec status |
 |---|---|---|---|
 | 7 | Roof / Mobility Portal | Rooftop overlook, vertical arrival, **ecosystem-plane cross-site navigation/departure/arrival**, candidate mobility zone pending operational feasibility | **CANONICAL SPEC + SCHEMATIC GEOMETRY LOCKED** |
-| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy, transition/access to roof | **LOCKED** |
+| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy, permissioned Halo spatial-intelligence viewport, transition/access to roof | **LOCKED** |
 | 5 | Policy + Proof | initiatives, research workspace, sources/claims/evidence, Docket 516R, manuscripts, publications, filings, monitors, citations/impact | **LOCKED** |
 | 4 | Media + Culture | event media, music/catalogue, artists, civic anthems, recording/editing, release/rights/DDEX, cultural storytelling | **LOCKED** |
 | 3 | Fellowship + Network | Policy Fellowship, directory/matching, profiles, stakeholders, relationships, meetings/commitments, partner network | **LOCKED** |
