@@ -1,6 +1,6 @@
 # Equity Uprise Building — Level 07 Roof / Mobility Portal — Pre-Program
 
-> Status: **OWNER-DIRECTED BUILDING-WIDE REQUIREMENT — LOCKED AS PROGRAM, NOT YET LOCKED AS HELIPAD GEOMETRY**  
+> Status: **ORIGIN / PRE-PROGRAM — SUPERSEDED FOR CURRENT LEVEL 7 GEOMETRY BY THE CANONICAL SPEC + SCHEMATIC BASIS**  
 > Purpose: preserve the roof as an intentional seventh navigable level and ensure Floor 6 is designed to support it.  
 > This document must be read before designing Floor 6, the roof, the exterior building master, any rooftop 3D scene, or any cross-site navigation sequence.
 
@@ -148,7 +148,7 @@ The roof inherits the same plan datum:
 - Stair A/B stack: inherited from Floors 1–6
 - risers/services: inherited and terminated/coordinated at roof level
 
-Exact roof-access enclosure and mobility-pad geometry are **not yet locked**.
+Current schematic roof-access and mobility-reservation geometry is now locked in `FLOOR-07-SCHEMATIC-PLAN-BASIS.md`. Exact operational helipad/vertiport geometry remains intentionally unlocked pending real-world feasibility.
 
 ## 9. Floor 6 design gate
 
@@ -161,9 +161,9 @@ Before Floor 6 is approved, verify:
 - [ ] Level 7 transition is part of Floor 6's navigation logic
 - [ ] exterior/window/crown decisions remain compatible with the future roof scene
 
-## 10. Future Level 7 deliverables
+## 10. Level 7 production status / remaining deliverables
 
-Level 7 eventually needs the same discipline as other levels:
+Level 7 now has its canonical written spec, schematic basis, ecosystem-routing contract, and DXF/SVG/PNG references. Remaining future work includes:
 
 1. site/aircraft/helipad feasibility decision;
 2. roof program spec;
