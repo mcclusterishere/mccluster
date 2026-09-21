@@ -4,12 +4,15 @@ These files represent the locked Floor 2 Public Forum schematic geometry and sta
 
 ## Files
 
+- `equity-uprise-floor-02-public-forum-schematic-v1.png`
+  - raster preview for fast visual inspection;
+  - never overrides the written dimensions, DXF, or SVG.
 - `equity-uprise-floor-02-public-forum-schematic-v1.svg`
   - canonical vector plan / browser-readable geometry reference.
 - `equity-uprise-floor-02-public-forum-schematic-v1.dxf`
   - CAD exchange geometry for downstream 3D/CAD/BIM development.
 
-A PNG preview may be derived from the SVG. The PNG is never geometry authority.
+Geometry authority remains: written basis → DXF → SVG → PNG → later renders.
 
 ## Mandatory companion documents
 
