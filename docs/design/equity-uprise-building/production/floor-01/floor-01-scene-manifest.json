@@ -1,7 +1,7 @@
 {
   "schema_version": "2.1.0",
   "scene_id": "equity-uprise-floor-01",
-  "scene_name": "Equity Uprise Level 01 — Arrival / Orientation / Intake",
+  "scene_name": "Equity Uprise Level 01 \u2014 Arrival / Orientation / Intake",
   "status": "core-v2-active",
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
@@ -113,7 +113,7 @@
       ],
       "level_7_service": "not_assumed",
       "shaft_continuity": "continuous_through_served_stack",
-      "note": "Serves B1 and Floors 1–6. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
+      "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
       "b1_access_policy": {
         "physical_stop": true,
         "visible_in_normal_floor_selector": false,
@@ -154,7 +154,7 @@
       "level_7_service": "reserved_for_future_resolution",
       "shaft_continuity": "continuous_reservation_to_roof",
       "pit_overhead_machine_strategy": "unresolved",
-      "note": "Serves B1 and Floors 1–6; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts.",
+      "note": "Serves B1 and Floors 1\u20136; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts.",
       "b1_access_policy": {
         "physical_stop": true,
         "access": "restricted-operational"

@@ -27,8 +27,8 @@
     "level": 2,
     "title": "Public Forum",
     "elevation_ft": 13.5,
-    "design_maturity": "pre-iterative-program-rewrite",
-    "render_readiness": "chassis-only-not-final-program",
+    "design_maturity": "reconciled-current-iterative-pass",
+    "render_readiness": "inventory-ready-hybrid-3d-next",
     "files": {
       "png": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png",
       "svg": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg",
@@ -39,8 +39,8 @@
     "level": 3,
     "title": "Fellowship + Network",
     "elevation_ft": 27,
-    "design_maturity": "pre-iterative-program-rewrite",
-    "render_readiness": "chassis-only-not-final-program",
+    "design_maturity": "reconciled-current-iterative-pass",
+    "render_readiness": "inventory-ready-hybrid-3d-next",
     "files": {
       "png": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png",
       "svg": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg",

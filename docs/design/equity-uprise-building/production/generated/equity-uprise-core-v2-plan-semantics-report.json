@@ -510,17 +510,17 @@
     {
       "name": "L2 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 02 \u2014 Public Forum \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated fr"
+      "detail": "# Floor 02 \u2014 Public Forum \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-"
     },
     {
-      "name": "L2 README provisional program status",
+      "name": "L2 README active current-pass status",
       "passed": true,
-      "detail": "# Floor 02 \u2014 Public Forum \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/core-"
+      "detail": "# Floor 02 \u2014 Public Forum \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/core-v2-floor-programs.json`\n- `"
     },
     {
       "name": "L2 README design maturity",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass"
     },
     {
       "name": "L2 .svg exists",
@@ -735,17 +735,17 @@
     {
       "name": "L3 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 03 \u2014 Fellowship + Network \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGene"
+      "detail": "# Floor 03 \u2014 Fellowship + Network \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/b"
     },
     {
-      "name": "L3 README provisional program status",
+      "name": "L3 README active current-pass status",
       "passed": true,
-      "detail": "# Floor 03 \u2014 Fellowship + Network \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `producti"
+      "detail": "# Floor 03 \u2014 Fellowship + Network \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/core-v2-floor-programs.j"
     },
     {
       "name": "L3 README design maturity",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass"
     },
     {
       "name": "L3 .svg exists",
@@ -2005,12 +2005,12 @@
     {
       "name": "L2 manifest maturity matches authority",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass != reconciled-current-iterative-pass"
     },
     {
       "name": "L2 manifest render readiness matches authority",
       "passed": true,
-      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
+      "detail": "inventory-ready-hybrid-3d-next != inventory-ready-hybrid-3d-next"
     },
     {
       "name": "L2 manifest DXF points at Core V2",
@@ -2035,12 +2035,12 @@
     {
       "name": "L3 manifest maturity matches authority",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass != reconciled-current-iterative-pass"
     },
     {
       "name": "L3 manifest render readiness matches authority",
       "passed": true,
-      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
+      "detail": "inventory-ready-hybrid-3d-next != inventory-ready-hybrid-3d-next"
     },
     {
       "name": "L3 manifest DXF points at Core V2",
