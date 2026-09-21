@@ -5,6 +5,9 @@
 > Floor identity: **Lobby + Intake**  
 > This file is the source of truth for future Floor 1 floor-plan work, 360 panorama generation, hotspot placement, and implementation.  
 > Do not generate a new Floor 1 environment that conflicts with this document.
+> Geometry companion: `FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
+> Mandatory authority: `REFERENCE-AUTHORITY.md`
+> Canonical plan references: `references/floor-01/`
 
 ## 1. Architectural intent
 
