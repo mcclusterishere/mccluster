@@ -137,11 +137,17 @@ The production package operationalizes the architecture; it may never override c
 
 ## Repo-to-building coverage gate
 
-Before declaring the building program complete, run:
+Before declaring the building program complete, run both repo/program gates:
 
-`docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py`
+- `docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py`
+- `docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py`
+- when plan references are regenerated: `docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py`
 
-It must verify that every capability in the canonical map is represented on its primary and declared secondary floors, that floor route keys resolve, that private/high-risk routes are not marked public, and that passenger-elevator semantics do not imply Level 7 service.
+The exhaustive source-classification ledger is:
+
+`docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json`
+
+The repo-source gate must prove that every discovered Equity Uprise-specific product/support source is either mapped to one or more canonical capabilities or explicitly classified as support-only. The program gate must verify that every capability in the canonical map is represented on its primary and declared secondary floors, that floor route keys resolve, that private/high-risk routes are not marked public, and that passenger-elevator semantics do not imply Level 7 service. The plan-semantic gate must prove that active Core V2 DXF/SVG/PNG outputs carry the canonical program labels and do not retain stale semantic labels.
 
 ## Which source controls what
 
