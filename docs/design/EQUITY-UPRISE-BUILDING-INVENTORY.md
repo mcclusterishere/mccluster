@@ -127,7 +127,7 @@ As of the 2026-09-21 repo-wide reconciliation:
 
 - **244** Equity Uprise source/support files are currently classified in the source ledger;
 - **102** are directly tied to one or more building capabilities;
-- **154** are support/development-authority sources (presentation, migration wrappers, runtime plumbing, tests/build support, Lifetime Development authority, and digital-twin program authority) and intentionally do not create additional rooms/floors;
+- **160** are support/development-authority sources (presentation, migration wrappers, runtime plumbing, tests/build support, Lifetime Development authority, and digital-twin program authority) and intentionally do not create additional rooms/floors;
 - **56** canonical Equity Uprise capabilities are represented in the building;
 - repo-source exact-set classification is enforced by `production/verify_equity_uprise_repo_sources.py`;
 - capability/floor/routing audit: **429 / 429 passed**;
@@ -349,7 +349,31 @@ The building is intentionally compact: **six enclosed occupied floors plus a sev
 
 Do not add extra enclosed floors merely because a separate web page exists. Level 7 is the intentionally approved roof level.
 
-### Floor 1 canonical file
+### B1 Technical / Service Basement
+
+B1 sits beneath the developmental building at **-13'-6"**.
+
+It is **not** part of the six-letter E-Q-U-I-T-Y progression and is not a normal public program floor.
+
+Its job is to make the virtual headquarters behave like a serious physical/digital twin by housing:
+- mechanical plant;
+- electrical/emergency power;
+- fire protection/water;
+- network/telecom core;
+- sump/flood management;
+- facilities workshop/storage;
+- building-systems lab;
+- service receiving/staging.
+
+B1 also creates a persistent training substrate for building systems, emergency response, infrastructure, cybersecurity, continuity and operational decision-support exercises.
+
+Floor 1 remains the modeled level of exit discharge.
+
+Authority:
+- `equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `equity-uprise-building/production/basement-b1-program.json`
+
+## Floor 1 canonical file
 
 `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
 
