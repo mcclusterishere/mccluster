@@ -35,12 +35,12 @@ SITE_OUT_NAME="equity-uprise-floor-01-site-egress-core-v2-schematic-v1"
 OUT_NAMES={
   0:"equity-uprise-basement-b1-core-v2-schematic-v1",
   1:"equity-uprise-floor-01-core-v2-schematic-v1",
-  2:"equity-uprise-floor-02-public-forum-core-v2-schematic-v1",
-  3:"equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1",
-  4:"equity-uprise-floor-04-media-culture-core-v2-schematic-v1",
-  5:"equity-uprise-floor-05-policy-proof-core-v2-schematic-v1",
-  6:"equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1",
-  7:"equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1",
+  2:"equity-uprise-floor-02-core-v2-chassis-v1",
+  3:"equity-uprise-floor-03-core-v2-chassis-v1",
+  4:"equity-uprise-floor-04-core-v2-chassis-v1",
+  5:"equity-uprise-floor-05-core-v2-chassis-v1",
+  6:"equity-uprise-floor-06-core-v2-chassis-v1",
+  7:"equity-uprise-level-07-core-v2-chassis-v1",
 }
 
 def b4(d):
@@ -60,7 +60,7 @@ common=programs["common_support"]
 
 def support_zones(level):
     if level.get("roof"): return []
-    if level.get("basement"):
+    if level.get("basement") or level.get("design_maturity")!="reconciled-current-iterative-pass":
         return [("MEP / RISERS",CORE["mep"],"service")]
     a,b=level["support_names"]
     return [
@@ -90,8 +90,10 @@ def esc(s):
 
 def zones(level):
     out=[]
-    for z in level.get("zones",[]):
-        out.append((z["label"].upper(),b4(z["bounds_ft"]),z["kind"]))
+    render_program = level.get("basement") or level.get("design_maturity")=="reconciled-current-iterative-pass"
+    if render_program:
+        for z in level.get("zones",[]):
+            out.append((z["label"].upper(),b4(z["bounds_ft"]),z["kind"]))
     out+=support_zones(level)
     out+=core_zones()
     if level.get("roof"):
@@ -99,8 +101,13 @@ def zones(level):
     return out
 
 def circles(level):
-    out=[(x["label"].upper(),(x["center_ft"]["x"],x["center_ft"]["y"]),x["radius_ft"],x["kind"]) for x in level.get("circles",[])]
-    out += [(x["label"].upper(),(x["center_ft"]["x"],x["center_ft"]["y"]),x["radius_ft"],x.get("kind","instrument")) for x in level.get("spheres",[])]
+    out=[]
+    render_program = level.get("basement") or level.get("design_maturity")=="reconciled-current-iterative-pass"
+    if render_program:
+        out += [(x["label"].upper(),(x["center_ft"]["x"],x["center_ft"]["y"]),x["radius_ft"],x["kind"]) for x in level.get("circles",[])]
+    # Halo is a separately authoritative fixed coordination instrument even
+    # while the broader Floor 6 activity/space program remains provisional.
+    out += [(x["label"].upper(),(x["center_ft"]["x"],x["center_ft"]["y"]),x["radius_ft"],x.get("kind","instrument")) for x in level.get("spheres",[]) if render_program or x.get("route_key")=="halo_spatial_intelligence"]
     return out
 
 def level_label(level):
@@ -396,7 +403,10 @@ def site_plan_dxf(path):
             rect2(item["bounds_ft"],"ASSEMBLY" if item.get("kind")=="assembly" else "SITE")
             b=item["bounds_ft"]; msp.add_text(item["label"].upper(),dxfattribs={"layer":"TEXT","height":0.6}).set_placement(((b["x1"]+b["x2"])/2,(b["y1"]+b["y2"])/2))
         elif "polyline_ft" in item:
-            msp.add_lwpolyline(item["polyline_ft"],dxfattribs={"layer":"EGRESS"})
+            pts=item["polyline_ft"]
+            msp.add_lwpolyline(pts,dxfattribs={"layer":"EGRESS"})
+            mx=sum(x for x,_ in pts)/len(pts); my=sum(y for _,y in pts)/len(pts)
+            msp.add_text(item["label"].upper(),dxfattribs={"layer":"TEXT","height":0.5}).set_placement((mx,my))
         elif item.get("kind")=="keep_clear":
             off=float(item.get("offset_from_building_ft",12)); rect2({"x1":-off,"y1":-off,"x2":72+off,"y2":72+off},"EGRESS")
     rect2({"x1":0,"y1":0,"x2":72,"y2":72},"BUILDING")
@@ -421,6 +431,9 @@ def site_plan_dxf(path):
 manifest=[]
 for level in plan_levels:
     n=level["level"];d=ref_dir(level);d.mkdir(parents=True,exist_ok=True);base=OUT_NAMES[n]
+    for stale in d.iterdir():
+        if stale.is_file() and stale.suffix.lower() in {".dxf",".svg",".png"}:
+            stale.unlink()
     paths={"png":d/f"{base}.png","svg":d/f"{base}.svg","dxf":d/f"{base}.dxf"}
     png(level,paths["png"]);svg(level,paths["svg"]);dxf(level,paths["dxf"])
     row={
