@@ -72,7 +72,8 @@
             "y1": 0,
             "x2": 43,
             "y2": 9
-          }
+          },
+          "route_key": "institutional_overview"
         },
         {
           "label": "Visitor Lounge",
@@ -82,7 +83,8 @@
             "y1": 12,
             "x2": 18,
             "y2": 28
-          }
+          },
+          "route_key": "institutional_join"
         },
         {
           "label": "Intake / Verification Consultation",
@@ -103,7 +105,8 @@
             "y1": 50,
             "x2": 44,
             "y2": 54
-          }
+          },
+          "route_key": "institutional_overview"
         },
         {
           "label": "Reception Desk",
@@ -113,7 +116,8 @@
             "y1": 44,
             "x2": 42,
             "y2": 47
-          }
+          },
+          "route_key": "institutional_join"
         },
         {
           "label": "Arrival / Routing Directory",
@@ -155,7 +159,8 @@
             "y1": 28,
             "x2": 48,
             "y2": 50
-          }
+          },
+          "route_key": "current_issues"
         },
         {
           "label": "Topics / Perspectives / Conversations Wall",
@@ -230,7 +235,8 @@
             "y1": 30,
             "x2": 50,
             "y2": 50
-          }
+          },
+          "route_key": "opportunities"
         },
         {
           "label": "Opportunity / Network Wall",
@@ -337,7 +343,8 @@
             "y1": 28,
             "x2": 48,
             "y2": 50
-          }
+          },
+          "route_key": "media_catalogue"
         },
         {
           "label": "Media / Release Wall",
@@ -437,7 +444,8 @@
             "y1": 28,
             "x2": 50,
             "y2": 50
-          }
+          },
+          "route_key": "research_publication"
         },
         {
           "label": "Policy / Publication / Impact Wall",
@@ -469,7 +477,8 @@
             "y1": 4,
             "x2": 15,
             "y2": 16
-          }
+          },
+          "route_key": "research_publication"
         },
         {
           "label": "Publication / Submission Review",
@@ -545,7 +554,8 @@
             "y1": 28,
             "x2": 50,
             "y2": 50
-          }
+          },
+          "route_key": "institutional_command"
         },
         {
           "label": "Institutional Command Wall",
@@ -661,7 +671,8 @@
             "y1": 30,
             "x2": 64,
             "y2": 48
-          }
+          },
+          "route_key": "building_return"
         },
         {
           "label": "Ecosystem Routing Interface",
@@ -682,7 +693,8 @@
             "y1": 8,
             "x2": 48,
             "y2": 46
-          }
+          },
+          "route_key": "ecosystem_routes"
         },
         {
           "label": "City Overlook",
@@ -692,7 +704,8 @@
             "y1": 0,
             "x2": 46,
             "y2": 6
-          }
+          },
+          "route_key": "ecosystem_routes"
         },
         {
           "label": "Service / Equipment Band",
