@@ -16,8 +16,8 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 243,
-  "capability_source_count": 101,
+  "candidate_count": 244,
+  "capability_source_count": 102,
   "support_only_count": 142,
   "entries": [
     {
@@ -1913,6 +1913,15 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "workers/mccluster/src/ai/envelope.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "halo-spatial-intelligence"
+      ],
+      "support_only": false,
+      "rationale": "Advertises the sanitized Equity Uprise Halo Globe projection in the canonical Worker API catalog."
     },
     {
       "path": "workers/mccluster/src/entry.js",
