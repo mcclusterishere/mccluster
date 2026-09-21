@@ -18,7 +18,7 @@ button.active,button:active{background:#851a1d;border-color:#b32a2f}
 #info{position:fixed;z-index:10;right:max(10px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));padding:8px 10px;border-radius:10px;background:rgba(10,10,10,.82);border:1px solid rgba(255,255,255,.14);font-size:10px;color:#ddd;max-width:70vw}
 #legend{position:fixed;z-index:9;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));padding:8px 10px;border-radius:10px;background:rgba(10,10,10,.75);font-size:9px;color:#bbb;line-height:1.5}
 .sw{display:inline-block;width:9px;height:9px;margin-right:4px;border-radius:2px;vertical-align:-1px}
-#boot{position:fixed;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);padding:13px 16px;border-radius:12px;background:#111;border:1px solid #555;font-size:12px;text-align:center}
+#programSummary{margin-top:9px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12);font-size:10px;line-height:1.4;color:#d7d7d7}#programSummary b{color:#fff}#programSummary .privacy{color:#aaa}#boot{position:fixed;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);padding:13px 16px;border-radius:12px;background:#111;border:1px solid #555;font-size:12px;text-align:center}
 </style>
 </head>
 <body>
@@ -34,6 +34,7 @@ button.active,button:active{background:#851a1d;border-color:#b32a2f}
 <button data-floor="4">F4</button><button data-floor="5">F5</button><button data-floor="6">F6</button><button data-floor="7">Roof</button>
 <button id="wireBtn">Wireframe</button><button id="resetBtn">Reset view</button>
 </div>
+<div id="programSummary"></div>
 </div>
 <div id="legend">
 <span class="sw" style="background:#585b5e"></span>slabs/walls ·
@@ -53,6 +54,24 @@ const O=[], C={slab:"#585b5e",wall:"#2c2b2a",core:"#4a4f55",freight:"#655548",st
 function box(name,x1,y1,x2,y2,z0,z1,color,tags={}){O.push({name,x1,y1,x2,y2,z0,z1,color,...tags});}
 const levels=[0,13.5,27,40.5,54,67.5,81];
 const names=["Lobby + Intake","Public Forum","Fellowship + Network","Media + Culture","Policy + Proof","Penthouse Command","Roof / Mobility Portal"];
+const programSummaries=[
+ {role:"arrival / trust / verification / intake / routing",anchors:"Arrival / Identity Wall · Intake / Verification Consultation · Arrival / Routing Directory",privacy:"Verification is human-reviewed; private intake state is not public."},
+ {role:"listen / discuss / record / member context",anchors:"Public Forum · Topics / Perspectives / Conversations · Listening Lounge · Member Check-In",privacy:"Issue framing remains neutral; member dashboard state requires authentication."},
+ {role:"people / opportunities / relationships / meetings",anchors:"Opportunity Exchange · People + Network · Stakeholder Meetings · Member / Meeting Check-In",privacy:"Private contact and internal relationship notes are not public directory data."},
+ {role:"listen / create / edit / archive / release",anchors:"Media / Listening · Rally Gallery · Creator Studio · Edit / Review · Media / Release Control",privacy:"Rights, DDEX and delivery controls remain authorized operations."},
+ {role:"research / evidence / publication / filings / impact",anchors:"Policy Lab · Evidence Archive · Source Review · Publication / Submission Review · Research / Publication Navigator",privacy:"External publication and government submission remain approval-gated."},
+ {role:"institutional direction / Desk / approvals / operations",anchors:"Institutional Command Wall · Initiative Portfolio · Strategy Review · Partner Briefing · Desk Operations / Audit",privacy:"Moderation, outreach, OAuth, approvals, jobs and health are authenticated private operations."},
+ {role:"ecosystem navigation / departure / arrival",anchors:"Ecosystem Routing Interface · City Overlook · Candidate Mobility Zone",privacy:"Passenger-elevator roof service is not assumed; mobility remains schematic pending feasibility."}
+];
+const programSummary=document.getElementById("programSummary");
+function updateProgramSummary(){
+ if(floorFilter){
+   const i=floorFilter-1,s=programSummaries[i];
+   programSummary.innerHTML="<b>F"+floorFilter+" · "+names[i]+"</b> — "+s.role+"<br>"+s.anchors+'<br><span class="privacy">'+s.privacy+"</span>";
+ }else{
+   programSummary.innerHTML="<b>Building program</b> — arrival → public participation → people/opportunities → media/culture → policy/proof → institutional direction → ecosystem routing.<br><span class=\"privacy\">51 repo-grounded capabilities are mapped across these seven levels; private/approval-gated systems remain access-controlled.</span>";
+ }
+}
 const openings=[[54,34,62,44],[0,60,8,72],[60.75,58.25,71.25,71.25],[8.75,58.25,17.25,71.25]];
 function inside(x,y,b){return x>=b[0]&&x<=b[2]&&y>=b[1]&&y<=b[3]}
 function slab(level,z){
@@ -147,10 +166,10 @@ function setQuery(){
  else{u.searchParams.delete("floor");u.searchParams.delete("mode");}
  history.replaceState(null,"",u.pathname+u.search+u.hash);
 }
-document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;floorFilter=null;setActive(b);setQuery();render()});
-document.querySelectorAll("[data-floor]").forEach(b=>b.onclick=()=>{floorFilter=+b.dataset.floor;mode="floor";target={x:36,y:38,z:levels[floorFilter-1]+4};dist=60;pitch=.43;setActive(b);setQuery();render()});
+document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;floorFilter=null;setActive(b);setQuery();updateProgramSummary();render()});
+document.querySelectorAll("[data-floor]").forEach(b=>b.onclick=()=>{floorFilter=+b.dataset.floor;mode="floor";target={x:36,y:38,z:levels[floorFilter-1]+4};dist=60;pitch=.43;setActive(b);setQuery();updateProgramSummary();render()});
 document.getElementById("wireBtn").onclick=e=>{wire=!wire;e.target.classList.toggle("active",wire);render()};
-document.getElementById("resetBtn").onclick=()=>{mode="all";floorFilter=null;yaw=-.68;pitch=.31;dist=155;target={x:36,y:38,z:39};setActive(document.querySelector('[data-mode="all"]'));setQuery();render()};
+document.getElementById("resetBtn").onclick=()=>{mode="all";floorFilter=null;yaw=-.68;pitch=.31;dist=155;target={x:36,y:38,z:39};setActive(document.querySelector('[data-mode="all"]'));setQuery();updateProgramSummary();render()};
 
 function sub(a,b){return{x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}}function dot(a,b){return a.x*b.x+a.y*b.y+a.z*b.z}function cross(a,b){return{x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x}}function norm(a){const n=Math.hypot(a.x,a.y,a.z)||1;return{x:a.x/n,y:a.y/n,z:a.z/n}}
 function cam(){const cp=Math.cos(pitch),sp=Math.sin(pitch),cy=Math.cos(yaw),sy=Math.sin(yaw),pos={x:target.x+dist*cp*sy,y:target.y-dist*cp*cy,z:target.z+dist*sp};const f=norm(sub(target,pos));let r=norm(cross(f,{x:0,y:0,z:1}));if(Math.hypot(r.x,r.y,r.z)<.1)r={x:1,y:0,z:0};return{pos,f,r,u:norm(cross(r,f))}}
@@ -182,6 +201,7 @@ if(Number.isInteger(qFloor)&&qFloor>=1&&qFloor<=7){
 }else if(["all","cutaway","core"].includes(qMode)){
  mode=qMode;floorFilter=null;const b=document.querySelector('[data-mode="'+qMode+'"]');if(b)setActive(b);
 }
+updateProgramSummary();
 resize();
 })();
 </script>
