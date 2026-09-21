@@ -5,6 +5,11 @@
 > Floor 4 stacks directly on the locked Floors 1–3 building datum.  
 > **Not for construction.**
 
+
+> Core V2 branch authority: `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Finished-floor elevation in combined model: **+40'-6"**.
+> Floor-specific program may not move the shared passenger elevator, freight/service shaft, Stair A, Stair B, MEP reservation or shared slab openings.
+
 ## 1. Building coordinate datum
 
 - Exterior footprint: **72'-0" × 72'-0"**
@@ -22,23 +27,45 @@ Coordination grid:
 
 ## 2. Mandatory vertical stack
 
-### Elevator
-- **X 54–62 / Y 34–44**
-- conceptual 8' × 10'
-- door faces west
+Floor 4 inherits the shared Core V2 geometry from `BUILDING-CORE-V2-SPEC.md` and `production/building-core-v2.json`.
 
-### Stair A
-- **X 60–72 / Y 54–72**
+Finished-floor elevation:
+- **+40'-6"**
 
-### Stair B
-- **X 0–12 / Y 54–72**
+### Passenger elevator
+- shaft: **X 54–62 / Y 34–44**
+- west-facing door
+- primary public vertical circulation
+- floor-specific program may not intrude into the shaft or elevator approach
+
+### West Service Core
+Overall reservation:
+- **X 0–18 / Y 54–72**
+
+It contains the freight/service elevator and revised Stair B.
+
+### Service / freight elevator
+- shaft: **X 0–8 / Y 60–72**
+- conceptual south-facing service door into the Y54–60 service/circulation band
+- not counted as a substitute for a required exit
+
+### Stair B — west protected stair
+- enclosure: **X 8–18 / Y 54–72**
+- continuous through Floors 1–6 and Level 7
+- full **13'-6"** floor-to-floor rise in combined deterministic geometry
+- shared slab opening approximately **X 8.75–17.25 / Y 58.25–71.25**
+
+### Stair A — east protected stair
+- enclosure: **X 60–72 / Y 54–72**
+- continuous through Floors 1–6 and Level 7
+- full **13'-6"** floor-to-floor rise in combined deterministic geometry
+- shared slab opening approximately **X 60.75–71.25 / Y 58.25–71.25**
 
 ### MEP / risers
 - approximately **X 50–60 / Y 66–72**
+- vertically continuous reservation
 
-These coordinates may not move.
-
----
+No local floor model may replace these with shortened decorative stairs or cover the shared slab openings.
 
 ## 3. Exterior perimeter
 
@@ -143,29 +170,45 @@ Maintain approximately 6 ft clear in front of elevator.
 
 ## 10. North support band
 
-### Corridor
-- **Y 54–60**
-- target approximately 6 ft clear
+The north band is replanned around the Core V2 west service core.
+
+### West service approach
+- **X 0–18 / Y 54–60**
+- provides conceptual service approach to the freight lift and Stair B access
+- must remain clear of floor-specific furniture/program
+
+### Public/support corridor
+- **X 18–60 / Y 54–60**
+- target approximately **6 ft clear**
 
 ### Accessible restroom A
-- **X 12–20 / Y 60–70**
+- **X 18–26 / Y 60–70**
+- conceptual 8' × 10'
 
 ### Accessible restroom B
-- **X 20–28 / Y 60–70**
+- **X 26–34 / Y 60–70**
+- conceptual 8' × 10'
 
 ### Media Equipment / Storage
-- **X 28–40 / Y 60–72**
+- **X 34–42 / Y 60–72**
+- conceptual 8' × 12'
 
 ### Media / Music IT
-- **X 40–50 / Y 60–72**
+- **X 42–50 / Y 60–72**
+- conceptual 8' × 12'
 
 ### Janitor
 - **X 50–54 / Y 60–66**
 
 ### MEP / risers
 - **X 50–60 / Y 66–72**
+- shared Core V2 vertical reservation
 
----
+### Stair / lift protection
+- freight/service shaft **X0–8 / Y60–72** remains unobstructed;
+- Stair B **X8–18 / Y54–72** remains unobstructed;
+- Stair A **X60–72 / Y54–72** remains unobstructed;
+- floor-specific support rooms may not intrude into shared slab openings.
 
 ## 11. Circulation targets
 
@@ -282,16 +325,19 @@ Licensed professional review is required.
 
 ## 17. Drawing authority
 
-1. `FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
-2. **this schematic-plan basis**
-3. canonical DXF
-4. canonical SVG
-5. canonical PNG preview
-6. later 3D/render/360 outputs
+For this Core V2 migration branch:
 
-Generative imagery may not alter canonical geometry.
+1. `BUILDING-CORE-V2-SPEC.md`
+2. `production/building-core-v2.json`
+3. floor-specific written 360/spec document
+4. this schematic-plan basis
+5. regenerated Core V2 DXF
+6. regenerated Core V2 SVG
+7. regenerated Core V2 PNG preview
+8. deterministic production package
+9. later 3D/render/360 output
 
----
+The shared Core V2 files control all vertical systems. Generated imagery is never geometry authority.
 
 ## 18. QC requirements
 
@@ -314,3 +360,12 @@ Generative imagery may not alter canonical geometry.
 - [ ] acoustic logic
 - [ ] 360 camera datum
 - [ ] NOT FOR CONSTRUCTION note
+
+
+### Core V2 migration QC addendum
+- [ ] service/freight elevator shaft at X 0–8 / Y 60–72
+- [ ] revised Stair B at X 8–18 / Y 54–72
+- [ ] Stair A at X 60–72 / Y 54–72
+- [ ] full 13'-6" stair rise represented in combined geometry
+- [ ] shared slab openings remain clear
+- [ ] floor elevation matches building-core-v2.json
