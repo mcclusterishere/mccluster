@@ -58,7 +58,8 @@ MATERIALS=[
  {"id":"upholstery_charcoal","base_color":"#474544","metalness":0,"roughness":0.90},
  {"id":"service_core","base_color":"#45484B","metalness":0.35,"roughness":0.60},
  {"id":"screen_surface","base_color":"#1E2328","metalness":0.05,"roughness":0.32},
- {"id":"accent_red_navigation","base_color":"#851A1D","metalness":0.10,"roughness":0.55,"emissive":"#5A0F11","emissive_strength":0.35}
+ {"id":"accent_red_navigation","base_color":"#851A1D","metalness":0.10,"roughness":0.55,"emissive":"#5A0F11","emissive_strength":0.35},
+ {"id":"halo_globe_translucent","base_color":"#18343F","metalness":0.18,"roughness":0.28,"transmission":0.35,"emissive":"#123D4A","emissive_strength":0.22}
 ]
 
 ROUTES={
@@ -167,6 +168,16 @@ def route_config(n):
       },
       "admin_desk":{"type":"url","url":"/uprise-admin.html","access":"editor-or-admin"},
       "control_plane":{"type":"ui_state","target":"control_plane","endpoint_hints":["eu-control","eu-status"],"access":"authorized-admin","approval_gated":True},
+      "halo_spatial_intelligence":{
+        "type":"ui_state",
+        "target":"halo_spatial_intelligence",
+        "public_projection_endpoint":"https://api.mccluster.org/v1/equity-uprise/halo-globe",
+        "owner_surface":"https://api.mccluster.org/internal/seek-first",
+        "access":"public-sanitized-read-only-role-scoped-owner-admin",
+        "public_read_only":True,
+        "owner_auth_required":True,
+        "note":"The Equity Uprise globe is a permissioned viewport into the shared Hitman's Halo / Seek First spatial plane. It is not a second spatial backend."
+      },
 
       # Roof / ecosystem.
       "roof_transition":{"type":"scene","scene_id":"equity-uprise-level-07","access":"via-protected-stairs-unless-later-elevator-design"},
@@ -196,6 +207,20 @@ for level in programs["levels"]:
         if z.get("route_key"): item["route_key"]=z["route_key"]
         zones.append(item)
     zones += common_support(level)
+    spheres=[]
+    for i,s in enumerate(level.get("spheres",[]),1):
+        item={
+          "id":f"sphere_{i:02d}",
+          "label":s["label"],
+          "type":s.get("kind","instrument"),
+          "center_ft":{"x":s["center_ft"]["x"],"y":s["center_ft"]["y"]},
+          "radius_ft":s["radius_ft"],
+          "center_z_local_ft":s["center_z_local_ft"]
+        }
+        if s.get("route_key"): item["route_key"]=s["route_key"]
+        if s.get("access"): item["access"]=s["access"]
+        if s.get("note"): item["note"]=s["note"]
+        spheres.append(item)
 
     refs=f"../../references/floor-{n:02d}/{ASSET_NAMES[n]}"
     manifest={
@@ -226,6 +251,7 @@ for level in programs["levels"]:
       },
       "shared_slab_openings":core["slab_openings"],
       "zones":zones,
+      "spheres":spheres,
       "south_condition":level["south_condition"],
       "camera_ref":f"floor-{n:02d}-camera.json",
       "materials_ref":f"floor-{n:02d}-materials.json",
@@ -251,12 +277,15 @@ for level in programs["levels"]:
       ]
     }
 
+    fixtures=[
+      {"id":"general_fill","type":"ceiling_area_grid","temperature_k":3000,"intensity_relative":0.72,"height_ft_local":10.8},
+      {"id":"program_focus","type":"soft_area","temperature_k":3000,"intensity_relative":0.62,"position_ft_local":{"x":36,"y":40,"z":10.5}}
+    ]
+    if n==6:
+        fixtures.append({"id":"halo_globe_soft_emission","type":"object_emission","temperature_k":5200,"intensity_relative":0.18,"position_ft_local":{"x":24.5,"y":34.5,"z":8.25},"rule":"Subtle only; must not turn Penthouse Command into a tactical command center."})
     lighting={"schema_version":"2.0.0","scene_id":scene_id,"color_temperature_default_k":3000,
-      "fixtures":[
-        {"id":"general_fill","type":"ceiling_area_grid","temperature_k":3000,"intensity_relative":0.72,"height_ft_local":10.8},
-        {"id":"program_focus","type":"soft_area","temperature_k":3000,"intensity_relative":0.62,"position_ft_local":{"x":36,"y":40,"z":10.5}}
-      ],
-      "rules":["Warm-white practical light is primary.","Red remains a restrained state/wayfinding accent."]
+      "fixtures":fixtures,
+      "rules":["Warm-white practical light is primary.","Red remains a restrained state/wayfinding accent.","Halo emission on Floor 6 remains subordinate to architectural lighting."]
     }
 
     hotspots=[]
@@ -273,6 +302,18 @@ for level in programs["levels"]:
         else:
             h.update({"action":"focus_zone"})
         hotspots.append(h)
+
+    for s in spheres:
+        p=s["center_ft"]
+        hotspots.append({
+          "id":f"hs_{s['id']}",
+          "label":s["label"],
+          "position_ft_local":{"x":p["x"],"y":p["y"],"z":s["center_z_local_ft"]},
+          "position_ft_world":{"x":p["x"],"y":p["y"],"z":elev+s["center_z_local_ft"]},
+          "sphere_id":s["id"],
+          "action":"open_route" if s.get("route_key") else "focus_zone",
+          **({"route_key":s["route_key"]} if s.get("route_key") else {})
+        })
 
     # Passenger elevator is public on Floors 1–6 only and uses a selector
     # that deliberately excludes Level 7. The roof has no passenger-elevator
@@ -300,13 +341,24 @@ for level in programs["levels"]:
         "Private routes preserve the source product's access-control boundary."
       ]
     }
-    states={"schema_version":"2.0.0","scene_id":scene_id,"default_state":"idle",
-      "states":[
-        {"id":"idle","label":"Idle"},
-        {"id":"floor_focus","label":level["title"],"camera_id":"floor_overview"},
-        {"id":"after_hours","label":"After Hours","lighting_multiplier":0.45}
-      ]
-    }
+    state_list=[
+      {"id":"idle","label":"Idle"},
+      {"id":"floor_focus","label":level["title"],"camera_id":"floor_overview"},
+      {"id":"after_hours","label":"After Hours","lighting_multiplier":0.45}
+    ]
+    if n==6:
+        state_list += [
+          {"id":"halo_ambient","label":"Halo Ambient","route_key":"halo_spatial_intelligence","access":"public","read_only":True},
+          {"id":"halo_public","label":"Halo Public","route_key":"halo_spatial_intelligence","access":"public-sanitized","read_only":True},
+          {"id":"halo_member","label":"Halo Member","route_key":"halo_spatial_intelligence","access":"authenticated-role-scoped","read_only":True},
+          {"id":"halo_staff","label":"Halo Staff","route_key":"halo_spatial_intelligence","access":"authorized-staff","read_only":True},
+          {"id":"halo_owner","label":"Halo Owner / Admin","route_key":"halo_spatial_intelligence","access":"house-owner","read_only":False,"owner_handoff_required":True},
+          {"id":"approvals","label":"Approvals","route_key":"control_plane","access":"authorized-admin"},
+          {"id":"jobs","label":"Jobs / Workflow Queue","route_key":"control_plane","access":"authorized-admin"},
+          {"id":"integrations","label":"Connections / Integrations","route_key":"control_plane","access":"authorized-admin"},
+          {"id":"outreach","label":"Outreach / Consent / Contact State","route_key":"control_plane","access":"authorized-admin"}
+        ]
+    states={"schema_version":"2.1.0","scene_id":scene_id,"default_state":"idle","states":state_list}
 
     notes=f"""# Level {n:02d} — Core V2 Deterministic Geometry Notes
 
@@ -325,6 +377,8 @@ Inherited vertical systems:
 - MEP X50–60 / Y66–72
 
 The floor may define program zones but may not move these systems or cover shared slab openings.
+
+Floor 6 additionally reserves one suspended Halo Globe / Spatial Intelligence sphere at (24.5,34.5), radius 2.25 ft, center 8.25 ft AFF. Its footprint is coordination-only and may not obstruct circulation or the fixed core.
 
 Both stairs are modeled as continuous full-rise systems in the combined building generator. A per-floor isolated viewer is never vertical-continuity authority.
 
