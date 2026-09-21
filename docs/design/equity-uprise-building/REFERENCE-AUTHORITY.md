@@ -98,7 +98,7 @@ Read program and geometry authority in this order:
 
 8. Active Core V2 DXF → SVG → PNG plan references in `references/floor-0X/`.
 
-9. Floor deterministic production package.
+9. B1 / floor deterministic production package (generated-only).
 
 10. Generated GLB / browser viewer / render / 360 output.
 
@@ -112,7 +112,13 @@ Program authority and geometry authority are complementary: the capability map c
 
 ## Deterministic production packages
 
-After architectural geometry is locked, implementation may use floor-specific deterministic production packages.
+Derived scene packages are generated from the active machine authorities. They are **generated-only** implementation artifacts and may not override the source JSON/specs above.
+
+B1 restricted production package:
+- `docs/design/equity-uprise-building/production/basement-b1/README.md`
+- `docs/design/equity-uprise-building/production/basement-b1/basement-b1-scene-manifest.json`
+- companion material, lighting, camera, hotspot, routing and state JSON files in the same folder.
+- live access remains restricted; learner/instructor use is sandbox-only.
 
 Floor 1 production package:
 - `docs/design/equity-uprise-building/production/floor-01/README.md`
