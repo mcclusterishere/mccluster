@@ -101,7 +101,7 @@ All eight issues are now represented in the Core V2 program/capability authority
 
 | Level | Identity | Functional role | Primary capability count | Total represented capability count |
 |---|---|---|---:|---:|
-| 1 | Lobby + Intake | arrival / trust / verification / intake / routing | 2 | 7 |
+| 1 | Arrival / Orientation / Intake | enter / orient / verify / establish Passport / route next action / foundational safety | 2 | 7 |
 | 2 | Public Forum | listen / discuss / record / member context | 4 | 5 |
 | 3 | Fellowship + Network | people / opportunities / relationships / meetings | 11 | 18 |
 | 4 | Media + Culture | listen / create / edit / archive / release | 8 | 10 |
@@ -112,9 +112,9 @@ All eight issues are now represented in the Core V2 program/capability authority
 A capability may appear on more than one floor only when the secondary location expresses a real part of the same workflow. Example: a government submission is prepared/reviewed on Floor 5, while irreversible authorization belongs to Floor 6.
 
 
-## Floor 1 — Lobby + Intake
+## Floor 1 — Arrival / Orientation / Intake
 
-**Role:** arrival / trust / verification / intake / routing.
+**Role:** arrival / orientation / verification / Development Passport / next-action routing / foundational safety.
 
 ### Primary repo capabilities
 
@@ -125,19 +125,38 @@ A capability may appear on more than one floor only when the secondary location 
 
 ### Cross-floor capabilities represented here
 
-- **Neutral listening/conversation agent** (`conversation-agent`) — Listening Lounge; human handoff routes to the Desk without making the agent an ideological authority.
-- **Policy Fellowship/application workflow** (`fellowship-applications`) — Fellowship application path, application tracking, and interview/meeting rooms.
-- **Interview requests, availability and calendar scheduling** (`interviews-calendar`) — Member / Meeting Check-In and two Interview / Stakeholder Meeting rooms; no private calendar data shown publicly.
+Floor 1 may route into broader Equity Uprise services without pretending those services physically live in dedicated Floor 1 rooms.
+
+- **Neutral conversation/help** (`conversation-agent`) — concierge/orientation support with human handoff.
+- **Fellowship applications** (`fellowship-applications`) — routed from Next Action / Building Directory when a participant is ready.
+- **Interview/calendar scheduling** (`interviews-calendar`) — appointment routing without exposing private calendar state.
+- **Program support / enterprise-development pathways** — available as next-step routes, not permanent lobby furniture.
+
+### Development-program binding
+
+Working stage: **ENTER**
+
+Primary competencies:
+- `CORE-01` Self-Direction
+- `CORE-05` Digital Fluency
+- `CORE-06` Civic & Institutional Literacy
+- `CORE-07` Professional Practice
+- `CORE-08` Safety & Resilience
 
 ### Architectural reading
 
-- public/member-facing: **Reception**
-- public/member-facing: **Intake / Verification Consultation**
-- public/member-facing: **Arrival / Routing Directory**
-- controlled/back-office: **Reception Support / Storage**
+- public: **Entry Vestibule**
+- public: **Arrival Atrium**
+- public/social: **Orientation Lounge**
+- private-session-capable: **Intake / Verification Consultation**
+- shared-space/private-data: **Development Passport Studio**
+- public-with-private-personalization: **Journey Wall**
+- public-counter/staff-private: **Reception / Concierge / Security Desk**
+- public/authenticated-personalization: **Next Action / Building Directory**
+- controlled/back-office: **Building Operations / Life Safety**
 - controlled/back-office: **IT / Electrical**
 
-**Boundary:** This floor receives people and routes them; it does not expose privileged workflow state.
+**Boundary:** Floor 1 receives, orients, verifies and routes people. It does not expose privileged workflow state, live B1/tunnel operations, or another participant's Passport data.
 
 ## Floor 2 — Public Forum
 
@@ -502,7 +521,7 @@ The reconciliation is backed by four separate deterministic checks:
 |---|---:|---|
 | Repo-source classification | **251 sources classified** | Current source ledger contains 102 capability sources and 149 explicitly support/development-authority sources. The exact discovered-set gate remains enforced by `verify_equity_uprise_repo_sources.py`. |
 | Capability / floor / routing coverage | **435 / 435 passed** | All 56 canonical capabilities are assigned to their primary and declared secondary floors; interaction-mode and zone routes resolve; private/high-risk routes remain non-public; Halo public mode is read-only with owner-authenticated operational handoff; Level 7 does not imply passenger-elevator service. |
-| Generated plan semantics | **357 / 357 passed** | Active Core V2 SVG/DXF/PNG sets exist for all seven levels; generated vector/CAD labels include the Halo Globe and match the canonical floor program; stale semantic labels are absent; only the Core V2 triplets remain active. |
+| Generated plan semantics | **357 / 357 passed** | Active Core V2 SVG/DXF/PNG sets exist for B1 and Floors 1–7; generated vector/CAD labels include the Halo Globe and match the canonical floor program; stale semantic labels are absent; only the Core V2 triplets remain active. |
 | Combined stacked geometry | **41 / 41 passed** | Eight physical elevations from B1 through roof, all 14 protected-stair level transitions and the single suspended Floor 6 Halo Globe remain valid in the combined GLB; the Halo envelope clears the fixed core and circulation height constraints. |
 
 Canonical audit support files:
