@@ -89,7 +89,7 @@ Any stair doors on Floor 2 enter stair enclosures, not outdoors.
 
 ---
 
-## 4. Public Forum feature wall
+## 4. Topics / Perspectives / Conversations Wall
 
 Approximate band:
 - **X 24–48 / Y 50–54**
@@ -338,7 +338,7 @@ The plan must show:
 - [ ] no balcony/terrace
 - [ ] sealed south glazing
 - [ ] 12' diameter / 8-seat forum table
-- [ ] Public Forum feature wall
+- [ ] Topics / Perspectives / Conversations Wall
 - [ ] lounge zone west
 - [ ] member check-in adjacent to elevator
 - [ ] stacked accessible-restroom concepts
@@ -357,3 +357,13 @@ The plan must show:
 - [ ] full 13'-6" stair rise represented in combined geometry
 - [ ] shared slab openings remain clear
 - [ ] floor elevation matches building-core-v2.json
+
+## Repo capability authority
+
+Program semantics for this floor are controlled by:
+- `production/equity-uprise-capability-map-v2.json`
+- `production/core-v2-floor-programs.json`
+- the companion long-form floor spec.
+
+This schematic basis controls plan geometry; it may not silently rename or delete a repo-backed capability represented by the floor program. Public/private and approval boundaries remain those of the source Equity Uprise system.
+
