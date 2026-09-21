@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate Core V2 deterministic production packages for Equity Uprise levels 1–7.
+Generate Core V2 deterministic production packages for Equity Uprise Floors 1–7.
 
 Inputs:
   building-core-v2.json
@@ -254,7 +254,7 @@ for level in programs["levels"]:
       "schema_version":"2.0.0",
       "scene_id":scene_id,
       "scene_name":f"Equity Uprise Level {n:02d} — {level['title']}",
-      "status":"core-v2-migration",
+      "status":"core-v2-active",
       "not_for_construction":True,
       "shared_core_ref":"../building-core-v2.json",
       "floor_program_ref":"../core-v2-floor-programs.json",
@@ -288,9 +288,9 @@ for level in programs["levels"]:
       "states_ref":f"floor-{n:02d}-states.json"
     }
     if level.get("digital_twin_program_ref"):
-        manifest["digital_twin_program_ref"]=level["digital_twin_program_ref"]
+        manifest["digital_twin_program_ref"]=f"floor-{n:02d}-digital-twin-program.json"
     if level.get("digital_twin_spec_ref"):
-        manifest["authority"]["activity_simulation_authority"]=[level["digital_twin_spec_ref"],level["digital_twin_program_ref"]]
+        manifest["authority"]["activity_simulation_authority"]=[f"../../FLOOR-{n:02d}-DIGITAL-TWIN-PROGRAM.md" if n==1 else level["digital_twin_spec_ref"],f"floor-{n:02d}-digital-twin-program.json"]
     if n==1:
         manifest["site_egress_ref"]="floor-01-site-egress.json"
         manifest["basement_program_ref"]="../basement-b1-program.json"
@@ -419,7 +419,7 @@ Both stairs are modeled as continuous full-rise systems in the combined building
 
     readme=f"""# Level {n:02d} — {level['title']} — Core V2 Production Package
 
-Status: **CORE V2 MIGRATION / NOT FOR CONSTRUCTION**
+Status: **ACTIVE CORE V2 DERIVED PACKAGE / NOT FOR CONSTRUCTION**
 
 This package inherits the shared building/program authority from:
 - `../building-core-v2.json`
@@ -437,6 +437,12 @@ This package may operationalize floor program, cameras, hotspots, lighting, rout
 
 Per-floor scenes are derived views. The combined stacked building is the vertical-continuity authority.
 """
+    if n==1:
+        readme += """
+Floor 1 is the public Arrival / Orientation / Intake layer and the modeled level of exit discharge.
+
+Live B1 / tunnel access is not part of ordinary Floor 1 navigation. Learner/instructor building-systems work launches a sandboxed clone; live underground access remains restricted to McCluster house-owner or explicitly delegated underground-operations-admin authority.
+"""
 
     files={
       "README.md":readme,
@@ -452,4 +458,4 @@ Per-floor scenes are derived views. The combined stacked building is the vertica
     for name,data in files.items():
         (floor_dir/name).write_text(data)
 
-print("Generated Core V2 production packages for levels 1–7")
+print("Generated active Core V2 production packages for Floors 1–7")
