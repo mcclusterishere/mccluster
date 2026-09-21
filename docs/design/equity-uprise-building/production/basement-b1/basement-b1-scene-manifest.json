@@ -1,87 +1,33 @@
 {
-  "schema_version": "2.0.0",
-  "scene_id": "equity-uprise-floor-01",
-  "scene_name": "Equity Uprise Level 01 \u2014 Arrival / Orientation / Intake",
-  "status": "core-v2-active",
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-basement-b1",
+  "scene_name": "Equity Uprise B1 \u2014 Underground Operations / Technical Service Basement",
+  "status": "core-v2-active-restricted",
   "not_for_construction": true,
+  "public_navigation": false,
   "shared_core_ref": "../building-core-v2.json",
-  "floor_program_ref": "../core-v2-floor-programs.json",
-  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
-  "feature_ids": [
-    "conversation-agent",
-    "fellowship-applications",
-    "interviews-calendar",
-    "verification",
-    "stakeholder-intake",
-    "program-support-funding",
-    "enterprise-development"
-  ],
-  "design_maturity": "reconciled-current-iterative-pass",
-  "render_readiness": "basic-render-ready-after-derived-artifact-regeneration",
-  "working_development_stage": "enter",
-  "primary_competency_ids": [
-    "CORE-01",
-    "CORE-05",
-    "CORE-06",
-    "CORE-07",
-    "CORE-08"
-  ],
-  "secondary_competency_ids": [
-    "CORE-02",
-    "CORE-03",
-    "SHR-02",
-    "SHR-06",
-    "PSC-02",
-    "PSC-04",
-    "OPS-01",
-    "OPS-02",
-    "OPS-04",
-    "OPS-06"
-  ],
+  "basement_program_ref": "../basement-b1-program.json",
+  "tunnel_network_ref": "../underground-tunnel-network.json",
   "authority": {
     "building_core": [
       "../../BUILDING-CORE-V2-SPEC.md",
       "../building-core-v2.json"
     ],
-    "spatial_authority": [
-      "../../FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
-      "../../FLOOR-01-SCHEMATIC-PLAN-BASIS.md",
-      "../../REFERENCE-AUTHORITY.md"
-    ],
-    "geometry_authority": [
-      "../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf",
-      "../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg",
-      "../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png"
-    ],
-    "rule": "Shared Core V2 vertical systems override floor-local geometry.",
-    "activity_simulation_authority": [
-      "../../FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
-      "floor-01-digital-twin-program.json"
-    ],
-    "site_egress_authority": [
-      "../../FLOOR-01-SITE-EGRESS-SIMULATION.md",
-      "floor-01-site-egress.json"
-    ],
-    "basement_support_authority": [
+    "basement": [
       "../../BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "../basement-b1-program.json"
-    ]
+    ],
+    "tunnel": [
+      "../../UNDERGROUND-TUNNEL-NETWORK-SPEC.md",
+      "../underground-tunnel-network.json"
+    ],
+    "code_reference": "../../SIMULATION-CODE-REFERENCE-PROFILE.md"
   },
-  "units": {
-    "authoring": "feet",
-    "gltf_conversion_meters_per_foot": 0.3048
-  },
-  "coordinate_system": {
-    "origin": "southwest_exterior_corner_floor_01",
-    "x_positive": "east",
-    "y_positive": "north",
-    "z_positive": "up"
-  },
+  "finished_floor_elevation_ft": -13.5,
   "building_shell": {
     "width_ft": 72,
     "depth_ft": 72,
-    "floor_to_floor_ft": 13.5,
-    "finished_floor_elevation_ft": 0
+    "floor_to_floor_ft": 13.5
   },
   "inherited_vertical_systems": {
     "passenger_elevator": {
@@ -285,205 +231,223 @@
       ]
     }
   },
-  "shared_slab_openings": {
-    "passenger_elevator": {
-      "x1": 54,
-      "y1": 34,
-      "x2": 62,
-      "y2": 44
-    },
-    "service_freight_elevator": {
-      "x1": 0,
-      "y1": 60,
-      "x2": 8,
-      "y2": 72
-    },
-    "stair_a": {
-      "x1": 60.75,
-      "y1": 58.25,
-      "x2": 71.25,
-      "y2": 71.25
-    },
-    "stair_b": {
-      "x1": 8.75,
-      "y1": 58.25,
-      "x2": 17.25,
-      "y2": 71.25
-    }
-  },
   "zones": [
     {
-      "id": "zone_01",
-      "label": "Entry Vestibule",
-      "type": "zone",
-      "bounds_ft": {
-        "x1": 29,
-        "y1": 0,
-        "x2": 43,
-        "y2": 9
-      },
-      "route_key": "orientation_experience"
-    },
-    {
-      "id": "zone_02",
-      "label": "Arrival Atrium",
-      "type": "zone",
-      "bounds_ft": {
-        "x1": 20,
-        "y1": 10,
-        "x2": 52,
-        "y2": 30
-      },
-      "route_key": "next_action"
-    },
-    {
-      "id": "zone_03",
-      "label": "Orientation Lounge",
-      "type": "zone",
-      "bounds_ft": {
-        "x1": 2,
-        "y1": 12,
-        "x2": 18,
-        "y2": 28
-      },
-      "route_key": "orientation_experience"
-    },
-    {
-      "id": "zone_04",
-      "label": "Intake / Verification Consultation",
+      "id": "b1-mechanical-plant",
+      "label": "Mechanical Plant",
       "type": "room",
       "bounds_ft": {
         "x1": 2,
-        "y1": 32,
-        "x2": 16,
-        "y2": 44
+        "y1": 4,
+        "x2": 30,
+        "y2": 26
       },
-      "route_key": "service_intake"
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "HVAC plant",
+        "pumps/fans",
+        "building automation sensors"
+      ],
+      "hazard_class": "controlled-technical"
     },
     {
-      "id": "zone_05",
-      "label": "Development Passport Studio",
+      "id": "b1-electrical-emergency",
+      "label": "Electrical / Emergency Power",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 32,
+        "y1": 4,
+        "x2": 52,
+        "y2": 20
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "main electrical distribution",
+        "UPS/emergency distribution",
+        "metering"
+      ],
+      "hazard_class": "restricted-electrical"
+    },
+    {
+      "id": "b1-fire-water",
+      "label": "Fire Protection / Water",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 54,
+        "y1": 4,
+        "x2": 70,
+        "y2": 20
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "fire pump concept",
+        "sprinkler riser concept",
+        "water service/backflow concept"
+      ],
+      "hazard_class": "controlled-technical"
+    },
+    {
+      "id": "b1-telecom-core",
+      "label": "Network / Telecom Core",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 32,
+        "y1": 22,
+        "x2": 52,
+        "y2": 34
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "telecom demarc",
+        "core network",
+        "access-control backbone",
+        "building systems network"
+      ],
+      "hazard_class": "restricted-digital"
+    },
+    {
+      "id": "b1-water-flood",
+      "label": "Sump / Flood Management",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 54,
+        "y1": 22,
+        "x2": 70,
+        "y2": 32
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "sump pumps",
+        "water sensors",
+        "drainage/flood monitoring"
+      ],
+      "hazard_class": "controlled-technical"
+    },
+    {
+      "id": "b1-facilities-workshop",
+      "label": "Facilities Workshop / Storage",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 30,
+        "x2": 16,
+        "y2": 52
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "maintenance tools",
+        "parts storage",
+        "PPE/spill response storage"
+      ],
+      "hazard_class": "service"
+    },
+    {
+      "id": "b1-systems-lab",
+      "label": "Building Systems Lab / Observation",
+      "type": "zone",
+      "bounds_ft": {
+        "x1": 18,
+        "y1": 36,
+        "x2": 52,
+        "y2": 54
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "digital twin dashboard",
+        "BAS simulation",
+        "power/network/fire/MEP observation"
+      ],
+      "hazard_class": "instructional"
+    },
+    {
+      "id": "b1-service-staging",
+      "label": "Service Receiving / Staging",
+      "type": "zone",
+      "bounds_ft": {
+        "x1": 0,
+        "y1": 54,
+        "x2": 8,
+        "y2": 60
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "freight staging",
+        "maintenance receiving"
+      ],
+      "hazard_class": "service"
+    },
+    {
+      "id": "b1-tunnel-ops-concourse",
+      "label": "Tunnel Operations Concourse / Security Gate",
       "type": "zone",
       "bounds_ft": {
         "x1": 20,
-        "y1": 32,
-        "x2": 52,
-        "y2": 44
-      },
-      "route_key": "development_passport"
-    },
-    {
-      "id": "zone_06",
-      "label": "Journey Wall",
-      "type": "feature",
-      "bounds_ft": {
-        "x1": 28,
-        "y1": 50,
-        "x2": 44,
-        "y2": 54
-      },
-      "route_key": "journey_progression"
-    },
-    {
-      "id": "zone_07",
-      "label": "Reception / Concierge / Security Desk",
-      "type": "furniture",
-      "bounds_ft": {
-        "x1": 30,
-        "y1": 44,
-        "x2": 42,
-        "y2": 47
-      },
-      "route_key": "concierge"
-    },
-    {
-      "id": "zone_08",
-      "label": "Next Action / Building Directory",
-      "type": "terminal",
-      "bounds_ft": {
-        "x1": 49,
-        "y1": 24,
-        "x2": 51,
-        "y2": 29
-      },
-      "route_key": "next_action"
-    },
-    {
-      "id": "north_corridor",
-      "label": "Public / Support Corridor",
-      "type": "circulation",
-      "bounds_ft": {
-        "x1": 18,
         "y1": 54,
-        "x2": 60,
-        "y2": 60
-      }
+        "x2": 48,
+        "y2": 64
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "identity/access",
+        "underground occupancy accountability",
+        "transport dispatch",
+        "route authorization",
+        "incident/status board"
+      ],
+      "hazard_class": "restricted-underground-operations"
     },
     {
-      "id": "restroom_a",
-      "label": "Restroom A",
-      "type": "support",
+      "id": "b1-tunnel-transfer-lock",
+      "label": "Tunnel Portal / Transfer Lock",
+      "type": "room",
       "bounds_ft": {
-        "x1": 18,
-        "y1": 60,
-        "x2": 26,
-        "y2": 70
-      }
-    },
-    {
-      "id": "restroom_b",
-      "label": "Restroom B",
-      "type": "support",
-      "bounds_ft": {
-        "x1": 26,
-        "y1": 60,
-        "x2": 34,
-        "y2": 70
-      }
-    },
-    {
-      "id": "support_a",
-      "label": "Building Operations / Life Safety",
-      "type": "secure_support",
-      "bounds_ft": {
-        "x1": 34,
-        "y1": 60,
-        "x2": 42,
+        "x1": 24,
+        "y1": 64,
+        "x2": 44,
         "y2": 72
-      }
-    },
-    {
-      "id": "support_b",
-      "label": "IT / Electrical",
-      "type": "secure_support",
-      "bounds_ft": {
-        "x1": 42,
-        "y1": 60,
-        "x2": 50,
-        "y2": 72
-      }
-    },
-    {
-      "id": "janitor",
-      "label": "Janitor",
-      "type": "service",
-      "bounds_ft": {
-        "x1": 50,
-        "y1": 60,
-        "x2": 54,
-        "y2": 66
-      }
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "security interlock",
+        "environmental/fire separation",
+        "vehicle/personnel transfer",
+        "emergency closure"
+      ],
+      "hazard_class": "restricted-underground-transfer"
     }
   ],
-  "spheres": [],
-  "south_condition": "ground-level public entrance",
-  "camera_ref": "floor-01-camera.json",
-  "materials_ref": "floor-01-materials.json",
-  "lighting_ref": "floor-01-lighting.json",
-  "hotspots_ref": "floor-01-hotspots.json",
-  "routing_ref": "floor-01-routing.json",
-  "states_ref": "floor-01-states.json",
-  "digital_twin_program_ref": "floor-01-digital-twin-program.json",
-  "site_egress_ref": "floor-01-site-egress.json",
-  "basement_program_ref": "../basement-b1-program.json"
+  "live_access": {
+    "allowed": [
+      "mccluster_house_owner",
+      "underground_operations_admin"
+    ],
+    "delegated_by": "mccluster_house_owner",
+    "ordinary_equity_uprise_admin_sufficient": false,
+    "competency_sufficient": false,
+    "audit_required": true
+  },
+  "training_access": {
+    "mode": "sandboxed_clone_only",
+    "live_b1_access": false,
+    "live_tunnel_access": false,
+    "live_controls_available": false,
+    "live_occupancy_visible": false,
+    "competency_evidence_allowed": true
+  },
+  "camera_ref": "basement-b1-camera.json",
+  "materials_ref": "basement-b1-materials.json",
+  "lighting_ref": "basement-b1-lighting.json",
+  "hotspots_ref": "basement-b1-hotspots.json",
+  "routing_ref": "basement-b1-routing.json",
+  "states_ref": "basement-b1-states.json"
 }

@@ -2,11 +2,26 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Core V2 generated plan semantic/artifact validation",
-  "checks_total": 357,
-  "checks_passed": 357,
+  "checks_total": 405,
+  "checks_passed": 405,
   "checks_failed": 0,
   "passed": true,
   "checks": [
+    {
+      "name": "L0 README exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/basement-b1/README.md"
+    },
+    {
+      "name": "L0 README authoritative title",
+      "passed": true,
+      "detail": "Underground Operations / Technical Service Basement"
+    },
+    {
+      "name": "L0 README generated-only warning",
+      "passed": true,
+      "detail": "# Basement B1 \u2014 Underground Operations / Technical Service Basement \u2014 Core V2 Plan References\n\n> Status: **RESTRICTED CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCT"
+    },
     {
       "name": "L0 .svg exists",
       "passed": true,
@@ -21,6 +36,16 @@
       "name": "L0 .png exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L0 SVG authoritative title",
+      "passed": true,
+      "detail": "EQUITY UPRISE \u2014 BASEMENT B1 \u2014 UNDERGROUND OPERATIONS / TECHNICAL SERVICE BASEMENT"
+    },
+    {
+      "name": "L0 DXF authoritative title",
+      "passed": true,
+      "detail": "UNDERGROUND OPERATIONS / TECHNICAL SERVICE BASEMENT"
     },
     {
       "name": "L0 SVG label BUILDING SYSTEMS LAB / OBSERVATION",
@@ -198,6 +223,21 @@
       "detail": "[\"equity-uprise-basement-b1-core-v2-schematic-v1.dxf\", \"equity-uprise-basement-b1-core-v2-schematic-v1.png\", \"equity-uprise-basement-b1-core-v2-schematic-v1.svg\"]"
     },
     {
+      "name": "L1 README exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/README.md"
+    },
+    {
+      "name": "L1 README authoritative title",
+      "passed": true,
+      "detail": "Arrival / Orientation / Intake"
+    },
+    {
+      "name": "L1 README generated-only warning",
+      "passed": true,
+      "detail": "# Floor 01 \u2014 Arrival / Orientation / Intake \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `pr"
+    },
+    {
       "name": "L1 .svg exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg"
@@ -211,6 +251,16 @@
       "name": "L1 .png exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L1 SVG authoritative title",
+      "passed": true,
+      "detail": "EQUITY UPRISE \u2014 LEVEL 01 \u2014 ARRIVAL / ORIENTATION / INTAKE"
+    },
+    {
+      "name": "L1 DXF authoritative title",
+      "passed": true,
+      "detail": "ARRIVAL / ORIENTATION / INTAKE"
     },
     {
       "name": "L1 SVG label ARRIVAL ATRIUM",
@@ -415,17 +465,32 @@
     {
       "name": "L1 PNG signature",
       "passed": true,
-      "detail": "bytes=79714"
+      "detail": "bytes=80375"
     },
     {
       "name": "L1 PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=79714"
+      "detail": "bytes=80375"
     },
     {
       "name": "L1 active plan triplet only",
       "passed": true,
       "detail": "[\"equity-uprise-floor-01-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-01-core-v2-schematic-v1.png\", \"equity-uprise-floor-01-core-v2-schematic-v1.svg\"]"
+    },
+    {
+      "name": "L2 README exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-02/README.md"
+    },
+    {
+      "name": "L2 README authoritative title",
+      "passed": true,
+      "detail": "Public Forum"
+    },
+    {
+      "name": "L2 README generated-only warning",
+      "passed": true,
+      "detail": "# Floor 02 \u2014 Public Forum \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-"
     },
     {
       "name": "L2 .svg exists",
@@ -441,6 +506,16 @@
       "name": "L2 .png exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L2 SVG authoritative title",
+      "passed": true,
+      "detail": "EQUITY UPRISE \u2014 LEVEL 02 \u2014 PUBLIC FORUM"
+    },
+    {
+      "name": "L2 DXF authoritative title",
+      "passed": true,
+      "detail": "PUBLIC FORUM"
     },
     {
       "name": "L2 SVG label AV / IT",
@@ -618,6 +693,21 @@
       "detail": "[\"equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png\", \"equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg\"]"
     },
     {
+      "name": "L3 README exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-03/README.md"
+    },
+    {
+      "name": "L3 README authoritative title",
+      "passed": true,
+      "detail": "Fellowship + Network"
+    },
+    {
+      "name": "L3 README generated-only warning",
+      "passed": true,
+      "detail": "# Floor 03 \u2014 Fellowship + Network \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/b"
+    },
+    {
       "name": "L3 .svg exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg"
@@ -631,6 +721,16 @@
       "name": "L3 .png exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L3 SVG authoritative title",
+      "passed": true,
+      "detail": "EQUITY UPRISE \u2014 LEVEL 03 \u2014 FELLOWSHIP + NETWORK"
+    },
+    {
+      "name": "L3 DXF authoritative title",
+      "passed": true,
+      "detail": "FELLOWSHIP + NETWORK"
     },
     {
       "name": "L3 SVG label 16 X 4 OPPORTUNITY TABLE",
@@ -838,6 +938,21 @@
       "detail": "[\"equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png\", \"equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg\"]"
     },
     {
+      "name": "L4 README exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-04/README.md"
+    },
+    {
+      "name": "L4 README authoritative title",
+      "passed": true,
+      "detail": "Media + Culture"
+    },
+    {
+      "name": "L4 README generated-only warning",
+      "passed": true,
+      "detail": "# Floor 04 \u2014 Media + Culture \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/buildi"
+    },
+    {
       "name": "L4 .svg exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg"
@@ -851,6 +966,16 @@
       "name": "L4 .png exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L4 SVG authoritative title",
+      "passed": true,
+      "detail": "EQUITY UPRISE \u2014 LEVEL 04 \u2014 MEDIA + CULTURE"
+    },
+    {
+      "name": "L4 DXF authoritative title",
+      "passed": true,
+      "detail": "MEDIA + CULTURE"
     },
     {
       "name": "L4 SVG label CREATOR RECORDING ROOM",
@@ -1058,6 +1183,21 @@
       "detail": "[\"equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png\", \"equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg\"]"
     },
     {
+      "name": "L5 README exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-05/README.md"
+    },
+    {
+      "name": "L5 README authoritative title",
+      "passed": true,
+      "detail": "Policy + Proof"
+    },
+    {
+      "name": "L5 README generated-only warning",
+      "passed": true,
+      "detail": "# Floor 05 \u2014 Policy + Proof \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/buildin"
+    },
+    {
       "name": "L5 .svg exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg"
@@ -1071,6 +1211,16 @@
       "name": "L5 .png exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L5 SVG authoritative title",
+      "passed": true,
+      "detail": "EQUITY UPRISE \u2014 LEVEL 05 \u2014 POLICY + PROOF"
+    },
+    {
+      "name": "L5 DXF authoritative title",
+      "passed": true,
+      "detail": "POLICY + PROOF"
     },
     {
       "name": "L5 SVG label 16 X 5 POLICY TABLE",
@@ -1278,6 +1428,21 @@
       "detail": "[\"equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png\", \"equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg\"]"
     },
     {
+      "name": "L6 README exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-06/README.md"
+    },
+    {
+      "name": "L6 README authoritative title",
+      "passed": true,
+      "detail": "Penthouse Command"
+    },
+    {
+      "name": "L6 README generated-only warning",
+      "passed": true,
+      "detail": "# Floor 06 \u2014 Penthouse Command \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/buil"
+    },
+    {
       "name": "L6 .svg exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg"
@@ -1291,6 +1456,16 @@
       "name": "L6 .png exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L6 SVG authoritative title",
+      "passed": true,
+      "detail": "EQUITY UPRISE \u2014 LEVEL 06 \u2014 PENTHOUSE COMMAND"
+    },
+    {
+      "name": "L6 DXF authoritative title",
+      "passed": true,
+      "detail": "PENTHOUSE COMMAND"
     },
     {
       "name": "L6 SVG label 16 X 5 COMMAND TABLE",
@@ -1508,6 +1683,21 @@
       "detail": "[\"equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png\", \"equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg\"]"
     },
     {
+      "name": "L7 README exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-07/README.md"
+    },
+    {
+      "name": "L7 README authoritative title",
+      "passed": true,
+      "detail": "Roof / Mobility Portal"
+    },
+    {
+      "name": "L7 README generated-only warning",
+      "passed": true,
+      "detail": "# Floor 07 \u2014 Roof / Mobility Portal \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production"
+    },
+    {
       "name": "L7 .svg exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg"
@@ -1521,6 +1711,16 @@
       "name": "L7 .png exists",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L7 SVG authoritative title",
+      "passed": true,
+      "detail": "EQUITY UPRISE \u2014 LEVEL 07 \u2014 ROOF / MOBILITY PORTAL"
+    },
+    {
+      "name": "L7 DXF authoritative title",
+      "passed": true,
+      "detail": "ROOF / MOBILITY PORTAL"
     },
     {
       "name": "L7 SVG label CANDIDATE MOBILITY ZONE",
@@ -1658,6 +1858,11 @@
       "detail": "[0, 1, 2, 3, 4, 5, 6, 7]"
     },
     {
+      "name": "L0 manifest title matches authority",
+      "passed": true,
+      "detail": "Underground Operations / Technical Service Basement != Underground Operations / Technical Service Basement"
+    },
+    {
       "name": "L0 manifest DXF points at Core V2",
       "passed": true,
       "detail": "references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.dxf"
@@ -1671,6 +1876,11 @@
       "name": "L0 manifest PNG points at Core V2",
       "passed": true,
       "detail": "references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L1 manifest title matches authority",
+      "passed": true,
+      "detail": "Arrival / Orientation / Intake != Arrival / Orientation / Intake"
     },
     {
       "name": "L1 manifest DXF points at Core V2",
@@ -1688,6 +1898,11 @@
       "detail": "references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png"
     },
     {
+      "name": "L2 manifest title matches authority",
+      "passed": true,
+      "detail": "Public Forum != Public Forum"
+    },
+    {
       "name": "L2 manifest DXF points at Core V2",
       "passed": true,
       "detail": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf"
@@ -1701,6 +1916,11 @@
       "name": "L2 manifest PNG points at Core V2",
       "passed": true,
       "detail": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L3 manifest title matches authority",
+      "passed": true,
+      "detail": "Fellowship + Network != Fellowship + Network"
     },
     {
       "name": "L3 manifest DXF points at Core V2",
@@ -1718,6 +1938,11 @@
       "detail": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png"
     },
     {
+      "name": "L4 manifest title matches authority",
+      "passed": true,
+      "detail": "Media + Culture != Media + Culture"
+    },
+    {
       "name": "L4 manifest DXF points at Core V2",
       "passed": true,
       "detail": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf"
@@ -1731,6 +1956,11 @@
       "name": "L4 manifest PNG points at Core V2",
       "passed": true,
       "detail": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L5 manifest title matches authority",
+      "passed": true,
+      "detail": "Policy + Proof != Policy + Proof"
     },
     {
       "name": "L5 manifest DXF points at Core V2",
@@ -1748,6 +1978,11 @@
       "detail": "references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png"
     },
     {
+      "name": "L6 manifest title matches authority",
+      "passed": true,
+      "detail": "Penthouse Command != Penthouse Command"
+    },
+    {
       "name": "L6 manifest DXF points at Core V2",
       "passed": true,
       "detail": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf"
@@ -1761,6 +1996,11 @@
       "name": "L6 manifest PNG points at Core V2",
       "passed": true,
       "detail": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "L7 manifest title matches authority",
+      "passed": true,
+      "detail": "Roof / Mobility Portal != Roof / Mobility Portal"
     },
     {
       "name": "L7 manifest DXF points at Core V2",
@@ -1790,7 +2030,7 @@
     {
       "name": "contact sheet nontrivial size",
       "passed": true,
-      "detail": "bytes=134576"
+      "detail": "bytes=135338"
     }
   ]
 }

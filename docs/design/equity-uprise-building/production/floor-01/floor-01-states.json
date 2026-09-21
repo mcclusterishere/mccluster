@@ -9,7 +9,7 @@
     },
     {
       "id": "floor_focus",
-      "label": "Lobby + Intake",
+      "label": "Arrival / Orientation / Intake",
       "camera_id": "floor_overview"
     },
     {

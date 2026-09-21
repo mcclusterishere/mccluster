@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-basement-b1",
+  "cameras": [
+    {
+      "id": "b1_overview",
+      "type": "perspective",
+      "position_ft_world": {
+        "x": 36,
+        "y": 12,
+        "z": 1.5
+      },
+      "look_at_ft_world": {
+        "x": 36,
+        "y": 40,
+        "z": -9.5
+      },
+      "fov_deg": 62
+    },
+    {
+      "id": "b1_ops_focus",
+      "type": "perspective",
+      "position_ft_world": {
+        "x": 34,
+        "y": 48,
+        "z": -6.5
+      },
+      "look_at_ft_world": {
+        "x": 34,
+        "y": 60,
+        "z": -9.5
+      },
+      "fov_deg": 58
+    }
+  ]
+}

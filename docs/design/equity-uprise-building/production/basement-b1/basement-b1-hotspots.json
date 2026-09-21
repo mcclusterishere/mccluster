@@ -1,0 +1,160 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-basement-b1",
+  "hotspots": [
+    {
+      "id": "hs_b1-mechanical-plant",
+      "label": "Mechanical Plant",
+      "position_ft_world": {
+        "x": 16.0,
+        "y": 15.0,
+        "z": -9.3
+      },
+      "zone_id": "b1-mechanical-plant",
+      "action": "focus_zone"
+    },
+    {
+      "id": "hs_b1-electrical-emergency",
+      "label": "Electrical / Emergency Power",
+      "position_ft_world": {
+        "x": 42.0,
+        "y": 12.0,
+        "z": -9.3
+      },
+      "zone_id": "b1-electrical-emergency",
+      "action": "focus_zone"
+    },
+    {
+      "id": "hs_b1-fire-water",
+      "label": "Fire Protection / Water",
+      "position_ft_world": {
+        "x": 62.0,
+        "y": 12.0,
+        "z": -9.3
+      },
+      "zone_id": "b1-fire-water",
+      "action": "focus_zone"
+    },
+    {
+      "id": "hs_b1-telecom-core",
+      "label": "Network / Telecom Core",
+      "position_ft_world": {
+        "x": 42.0,
+        "y": 28.0,
+        "z": -9.3
+      },
+      "zone_id": "b1-telecom-core",
+      "action": "focus_zone"
+    },
+    {
+      "id": "hs_b1-water-flood",
+      "label": "Sump / Flood Management",
+      "position_ft_world": {
+        "x": 62.0,
+        "y": 27.0,
+        "z": -9.3
+      },
+      "zone_id": "b1-water-flood",
+      "action": "focus_zone"
+    },
+    {
+      "id": "hs_b1-facilities-workshop",
+      "label": "Facilities Workshop / Storage",
+      "position_ft_world": {
+        "x": 9.0,
+        "y": 41.0,
+        "z": -9.3
+      },
+      "zone_id": "b1-facilities-workshop",
+      "action": "focus_zone"
+    },
+    {
+      "id": "hs_b1-systems-lab",
+      "label": "Building Systems Lab / Observation",
+      "position_ft_world": {
+        "x": 35.0,
+        "y": 45.0,
+        "z": -9.3
+      },
+      "zone_id": "b1-systems-lab",
+      "action": "open_route",
+      "route_key": "building_systems_training_sandbox"
+    },
+    {
+      "id": "hs_b1-service-staging",
+      "label": "Service Receiving / Staging",
+      "position_ft_world": {
+        "x": 4.0,
+        "y": 57.0,
+        "z": -9.3
+      },
+      "zone_id": "b1-service-staging",
+      "action": "focus_zone"
+    },
+    {
+      "id": "hs_b1-tunnel-ops-concourse",
+      "label": "Tunnel Operations Concourse / Security Gate",
+      "position_ft_world": {
+        "x": 34.0,
+        "y": 59.0,
+        "z": -9.3
+      },
+      "zone_id": "b1-tunnel-ops-concourse",
+      "action": "open_route",
+      "route_key": "underground_operations"
+    },
+    {
+      "id": "hs_b1-tunnel-transfer-lock",
+      "label": "Tunnel Portal / Transfer Lock",
+      "position_ft_world": {
+        "x": 34.0,
+        "y": 68.0,
+        "z": -9.3
+      },
+      "zone_id": "b1-tunnel-transfer-lock",
+      "action": "open_route",
+      "route_key": "tunnel_network"
+    },
+    {
+      "id": "hs_b1_passenger_elevator",
+      "label": "Passenger Elevator \u2014 Restricted B1 Stop",
+      "position_ft_world": {
+        "x": 53.5,
+        "y": 39,
+        "z": -9.0
+      },
+      "action": "open_route",
+      "route_key": "authorized_floor1_return"
+    },
+    {
+      "id": "hs_b1_stair_a",
+      "label": "Stair A \u2014 Egress Up",
+      "position_ft_world": {
+        "x": 63,
+        "y": 56,
+        "z": -9.0
+      },
+      "action": "vertical_transition",
+      "vertical_system_id": "stair-a-east",
+      "target_level": 1
+    },
+    {
+      "id": "hs_b1_stair_b",
+      "label": "Stair B \u2014 Egress Up",
+      "position_ft_world": {
+        "x": 15.5,
+        "y": 56,
+        "z": -9.0
+      },
+      "action": "vertical_transition",
+      "vertical_system_id": "stair-b-west",
+      "target_level": 1
+    }
+  ],
+  "rules": [
+    "B1 is omitted from ordinary participant navigation.",
+    "Live operational hotspots require house-owner or underground-operations-admin authority.",
+    "Learner/instructor work uses sandbox routes and never unlocks live B1/tunnel controls.",
+    "B1-to-Floor-1 egress remains available according to scenario rules."
+  ]
+}

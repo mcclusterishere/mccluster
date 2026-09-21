@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-basement-b1",
+  "materials": [
+    {
+      "id": "b1_concrete",
+      "base_color": "#4C5054",
+      "metalness": 0.05,
+      "roughness": 0.9
+    },
+    {
+      "id": "b1_service_metal",
+      "base_color": "#333940",
+      "metalness": 0.78,
+      "roughness": 0.48
+    },
+    {
+      "id": "b1_safety_marking",
+      "base_color": "#A57B2A",
+      "metalness": 0.05,
+      "roughness": 0.58
+    },
+    {
+      "id": "b1_screen",
+      "base_color": "#172229",
+      "metalness": 0.08,
+      "roughness": 0.3
+    },
+    {
+      "id": "b1_restricted_accent",
+      "base_color": "#851A1D",
+      "metalness": 0.1,
+      "roughness": 0.55
+    }
+  ],
+  "rules": [
+    "Industrial/technical rather than theatrical bunker styling.",
+    "Restricted access is conveyed by systems and state, not fantasy weaponization."
+  ]
+}

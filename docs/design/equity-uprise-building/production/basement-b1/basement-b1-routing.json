@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-basement-b1",
+  "routes": {
+    "building_return": {
+      "type": "scene",
+      "scene_id": "equity-uprise-building-core-v2",
+      "access": "authorized"
+    },
+    "authorized_floor1_return": {
+      "type": "scene",
+      "scene_id": "equity-uprise-floor-01",
+      "access": "mccluster-house-owner-or-underground-operations-admin"
+    },
+    "underground_operations": {
+      "type": "ui_state",
+      "target": "underground_operations",
+      "access": "mccluster-house-owner-or-underground-operations-admin",
+      "live_b1_access": true
+    },
+    "tunnel_network": {
+      "type": "ui_state",
+      "target": "underground_tunnel_network",
+      "access": "mccluster-house-owner-or-underground-operations-admin",
+      "live_tunnel_access": true
+    },
+    "building_systems_training_sandbox": {
+      "type": "ui_state",
+      "target": "b1_tunnel_training_clone",
+      "access": "authorized-learner-or-instructor",
+      "simulation": true,
+      "live_b1_access": false,
+      "live_tunnel_access": false
+    }
+  },
+  "normal_floor_selector_visible": false,
+  "security": {
+    "ordinary_equity_uprise_admin_sufficient": false,
+    "competency_sufficient": false,
+    "live_access_authorities": [
+      "mccluster_house_owner",
+      "underground_operations_admin"
+    ]
+  }
+}

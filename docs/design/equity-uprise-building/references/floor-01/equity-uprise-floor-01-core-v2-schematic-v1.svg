@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1060" viewBox="0 0 1000 1060">
 <style>.t{font-family:Arial,sans-serif;fill:#111}.small{font-size:9px}.med{font-size:11px}.title{font-size:18px;font-weight:700}.room{stroke:#444;stroke-width:1.5}.grid{stroke:#ddd;stroke-width:1}.shell{fill:none;stroke:#111;stroke-width:3}.open{fill:none;stroke:#8a1f23;stroke-width:1.5;stroke-dasharray:5 4}</style>
-<text x="55" y="35" class="t title">EQUITY UPRISE — LEVEL 01 — LOBBY + INTAKE</text>
+<text x="55" y="35" class="t title">EQUITY UPRISE — LEVEL 01 — ARRIVAL / ORIENTATION / INTAKE</text>
 <text x="55" y="55" class="t med">CORE V2 SCHEMATIC PLAN · FFE +0 FT · NOT FOR CONSTRUCTION</text>
 <line x1="90.0" y1="918.0" x2="90.0" y2="90.0" class="grid"/>
 <line x1="90.0" y1="918.0" x2="918.0" y2="918.0" class="grid"/>

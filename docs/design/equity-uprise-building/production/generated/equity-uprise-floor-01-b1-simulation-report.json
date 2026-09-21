@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Floor 1 + B1 digital-twin simulation authority",
-  "checks_total": 67,
-  "checks_passed": 67,
+  "checks_total": 105,
+  "checks_passed": 105,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -15,7 +15,7 @@
     {
       "name": "B1 elevation -13.5",
       "passed": true,
-      "detail": "{'level': 0, 'id': 'basement-b1', 'name': 'Technical / Service Basement', 'finished_floor_elevation_ft': -13.5, 'below_grade': True, 'open_air': False}"
+      "detail": "{'level': 0, 'id': 'basement-b1', 'name': 'Underground Operations / Technical Service Basement', 'finished_floor_elevation_ft': -13.5, 'below_grade': True, 'open_air': False}"
     },
     {
       "name": "Floor 1 is level of exit discharge",
@@ -31,6 +31,16 @@
       "name": "B1 normal public access false",
       "passed": true,
       "detail": "False"
+    },
+    {
+      "name": "B1 title matches shared core",
+      "passed": true,
+      "detail": "Underground Operations / Technical Service Basement != Underground Operations / Technical Service Basement"
+    },
+    {
+      "name": "canonical maps are branch-agnostic",
+      "passed": true,
+      "detail": "{'capability_branch': None, 'source_branch': None}"
     },
     {
       "name": "B1 live access is restricted",
@@ -288,6 +298,66 @@
       "detail": "['scenario incident lead', 'building operations contact', 'program authority contact']"
     },
     {
+      "name": "Floor 1 working stage is enter",
+      "passed": true,
+      "detail": "enter"
+    },
+    {
+      "name": "Floor 1 shared core title current",
+      "passed": true,
+      "detail": "Arrival / Orientation / Intake"
+    },
+    {
+      "name": "Floor 1 program title current",
+      "passed": true,
+      "detail": "Arrival / Orientation / Intake"
+    },
+    {
+      "name": "Floor 1 program identity current",
+      "passed": true,
+      "detail": "Arrival / Orientation / Intake"
+    },
+    {
+      "name": "Floor 1 capability-map title current",
+      "passed": true,
+      "detail": "Arrival / Orientation / Intake"
+    },
+    {
+      "name": "Floor 1 capability-map public surfaces current",
+      "passed": true,
+      "detail": "['Entry Vestibule', 'Arrival Atrium', 'Orientation Lounge', 'Intake / Verification Consultation', 'Development Passport Studio', 'Journey Wall', 'Reception / Concierge / Security Desk', 'Next Action / Building Directory']"
+    },
+    {
+      "name": "Floor 1 capability-map has no stale identity terms",
+      "passed": true,
+      "detail": "{\"level\": 1, \"title\": \"Arrival / Orientation / Intake\", \"role\": \"arrival / orientation / trust / verification / Development Passport / next-action routing\", \"feature_ids\": [\"verification\", \"stakeholder-intake\"], \"secondary_feature_ids\": [\"conversation-agent\", \"fellowship-applications\", \"interviews-calendar\", \"program-support-funding\", \"enterprise-development\"], \"public_surfaces\": [\"Entry Vestibule\", \"Arrival Atrium\", \"Orientation Lounge\", \"Intake / Verification Consultation\", \"Development Passport Studio\", \"Journey Wall\", \"Reception / Concierge / Security Desk\", \"Next Action / Building Directory\"], \"private_surfaces\": [\"Building Operations / Life Safety\", \"IT / Electrical\", \"Live B1 / Underground Operations interface (hidden from ordinary navigation)\"], \"rule\": \"This floor receives and orients people, establishes/continues Development Passport state, performs intake/verification, and routes participants to the next appropriate action. It does not expose privileged workflow, financial, relationship, live B1, or underground operational state.\"}"
+    },
+    {
+      "name": "Floor 1 primary competencies match canonical stage 1",
+      "passed": true,
+      "detail": "['CORE-01', 'CORE-05', 'CORE-06', 'CORE-07', 'CORE-08']"
+    },
+    {
+      "name": "Floor 1 all primary competencies exist",
+      "passed": true,
+      "detail": "['CORE-01', 'CORE-05', 'CORE-06', 'CORE-07', 'CORE-08']"
+    },
+    {
+      "name": "Floor 1 all secondary competencies exist",
+      "passed": true,
+      "detail": "['CORE-02', 'CORE-03', 'SHR-02', 'SHR-06', 'PSC-02', 'PSC-04', 'OPS-01', 'OPS-02', 'OPS-04', 'OPS-06']"
+    },
+    {
+      "name": "Floor 1 maturity reconciled",
+      "passed": true,
+      "detail": "reconciled-current-iterative-pass"
+    },
+    {
+      "name": "Floors 2-7 remain explicitly provisional",
+      "passed": true,
+      "detail": "[(2, 'pre-iterative-program-rewrite'), (3, 'pre-iterative-program-rewrite'), (4, 'pre-iterative-program-rewrite'), (5, 'pre-iterative-program-rewrite'), (6, 'pre-iterative-program-rewrite'), (7, 'pre-iterative-program-rewrite')]"
+    },
+    {
       "name": "Floor 1 site ref",
       "passed": true,
       "detail": "floor-01-site-egress.json"
@@ -316,6 +386,126 @@
       "name": "Floor 1 training goes to sandbox clone",
       "passed": true,
       "detail": "{'entry': 'Building Systems Lab simulation launcher', 'destination': 'sandboxed B1/tunnel clone', 'live_systems': False}"
+    },
+    {
+      "name": "Floor 1 manifest active",
+      "passed": true,
+      "detail": "core-v2-active"
+    },
+    {
+      "name": "Floor 1 manifest current name",
+      "passed": true,
+      "detail": "Equity Uprise Level 01 \u2014 Arrival / Orientation / Intake"
+    },
+    {
+      "name": "Floor 1 manifest digital-twin ref",
+      "passed": true,
+      "detail": "floor-01-digital-twin-program.json"
+    },
+    {
+      "name": "Floor 1 manifest activity refs resolve",
+      "passed": true,
+      "detail": "['../../FLOOR-01-DIGITAL-TWIN-PROGRAM.md', 'floor-01-digital-twin-program.json']"
+    },
+    {
+      "name": "Floor 1 building systems route sandbox only",
+      "passed": true,
+      "detail": "{'type': 'ui_state', 'target': 'building_systems_lab', 'access': 'authorized-learner-or-instructor-sandbox-only', 'simulation': True, 'live_b1_access': False}"
+    },
+    {
+      "name": "Floor 1 underground route hidden live access",
+      "passed": true,
+      "detail": "{'type': 'ui_state', 'target': 'underground_operations', 'access': 'mccluster-house-owner-or-underground-operations-admin', 'hidden_from_normal_navigation': True, 'live_b1_access': True}"
+    },
+    {
+      "name": "Floor 1 states include underground access",
+      "passed": true,
+      "detail": "['after_hours', 'building_systems_lab', 'emergency_exercise', 'floor_focus', 'idle', 'new_member_orientation', 'passport_mode', 'public_service_clinic', 'underground_operations_access']"
+    },
+    {
+      "name": "Floor 1 state label current",
+      "passed": true,
+      "detail": "{'id': 'floor_focus', 'label': 'Arrival / Orientation / Intake', 'camera_id': 'floor_overview'}"
+    },
+    {
+      "name": "B1 package file exists: README.md",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/README.md"
+    },
+    {
+      "name": "B1 package file exists: basement-b1-scene-manifest.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-scene-manifest.json"
+    },
+    {
+      "name": "B1 package file exists: basement-b1-materials.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-materials.json"
+    },
+    {
+      "name": "B1 package file exists: basement-b1-lighting.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-lighting.json"
+    },
+    {
+      "name": "B1 package file exists: basement-b1-camera.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-camera.json"
+    },
+    {
+      "name": "B1 package file exists: basement-b1-hotspots.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-hotspots.json"
+    },
+    {
+      "name": "B1 package file exists: basement-b1-routing.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-routing.json"
+    },
+    {
+      "name": "B1 package file exists: basement-b1-states.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-states.json"
+    },
+    {
+      "name": "B1 package file exists: basement-b1-geometry-notes.md",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-geometry-notes.md"
+    },
+    {
+      "name": "B1 scene manifest active restricted",
+      "passed": true,
+      "detail": "core-v2-active-restricted"
+    },
+    {
+      "name": "B1 scene title current",
+      "passed": true,
+      "detail": "Equity Uprise B1 \u2014 Underground Operations / Technical Service Basement"
+    },
+    {
+      "name": "B1 scene hidden from public navigation",
+      "passed": true,
+      "detail": "False"
+    },
+    {
+      "name": "B1 scene tunnel authority ref",
+      "passed": true,
+      "detail": "../underground-tunnel-network.json"
+    },
+    {
+      "name": "B1 sandbox cannot reach live B1",
+      "passed": true,
+      "detail": "{'type': 'ui_state', 'target': 'b1_tunnel_training_clone', 'access': 'authorized-learner-or-instructor', 'simulation': True, 'live_b1_access': False, 'live_tunnel_access': False}"
+    },
+    {
+      "name": "B1 sandbox cannot reach live tunnel",
+      "passed": true,
+      "detail": "{'type': 'ui_state', 'target': 'b1_tunnel_training_clone', 'access': 'authorized-learner-or-instructor', 'simulation': True, 'live_b1_access': False, 'live_tunnel_access': False}"
+    },
+    {
+      "name": "B1 ordinary EU admin insufficient",
+      "passed": true,
+      "detail": "{'ordinary_equity_uprise_admin_sufficient': False, 'competency_sufficient': False, 'live_access_authorities': ['mccluster_house_owner', 'underground_operations_admin']}"
     },
     {
       "name": "resolved geometry: f1-stair-a-exit-discharge",

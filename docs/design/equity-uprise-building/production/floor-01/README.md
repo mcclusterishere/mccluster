@@ -2,27 +2,22 @@
 
 Status: **ACTIVE CORE V2 DERIVED PACKAGE / NOT FOR CONSTRUCTION**
 
-Semantic identity is controlled by:
-- `floor-01-digital-twin-program.json`
-- `../core-v2-floor-programs.json`
-- `../../FLOOR-01-DIGITAL-TWIN-PROGRAM.md`
-
-Shared geometry is controlled by:
+This package inherits the shared building/program authority from:
 - `../building-core-v2.json`
+- `../equity-uprise-capability-map-v2.json`
 - `../../BUILDING-CORE-V2-SPEC.md`
-- `../../FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
 
-Canonical plan references:
+Canonical plan geometry:
 - `../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf`
 - `../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg`
 - `../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png`
 
 Finished-floor elevation: **+0 ft**.
 
-Floor 1 is the public arrival/orientation/intake layer and the modeled level of exit discharge. It includes the Entry Vestibule, Arrival Atrium, Orientation Lounge, Intake / Verification Consultation, Development Passport Studio, Journey Wall, Reception / Concierge / Security Desk, and Next Action / Building Directory.
+This package may operationalize floor program, cameras, hotspots, lighting, routing and states. It may **not** redefine passenger elevator, freight/service elevator, Stair A, Stair B, MEP or slab-opening geometry.
 
-Live B1 / tunnel access is **not** part of ordinary Floor 1 navigation. Learner/instructor building-systems work launches a sandboxed clone; live underground access remains restricted to McCluster house-owner or explicitly delegated underground-operations-admin authority.
+Per-floor scenes are derived views. The combined stacked building is the vertical-continuity authority.
 
-This package may operationalize cameras, hotspots, lighting, routing and states. It may **not** redefine the passenger elevator, freight/service elevator, Stair A, Stair B, MEP reservation, slab openings, B1 authority boundary, or tunnel authority.
+Floor 1 is the public Arrival / Orientation / Intake layer and the modeled level of exit discharge.
 
-Per-floor scenes are derived views. The combined B1-to-roof model is the vertical-continuity authority.
+Live B1 / tunnel access is not part of ordinary Floor 1 navigation. Learner/instructor building-systems work launches a sandboxed clone; live underground access remains restricted to McCluster house-owner or explicitly delegated underground-operations-admin authority.

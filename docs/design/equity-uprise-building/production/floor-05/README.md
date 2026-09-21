@@ -1,13 +1,13 @@
 # Level 05 — Policy + Proof — Core V2 Production Package
 
-Status: **CORE V2 MIGRATION / NOT FOR CONSTRUCTION**
+Status: **ACTIVE CORE V2 DERIVED PACKAGE / NOT FOR CONSTRUCTION**
 
 This package inherits the shared building/program authority from:
 - `../building-core-v2.json`
 - `../equity-uprise-capability-map-v2.json`
 - `../../BUILDING-CORE-V2-SPEC.md`
 
-Canonical branch geometry:
+Canonical plan geometry:
 - `../../references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf`
 - `../../references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg`
 - `../../references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png`

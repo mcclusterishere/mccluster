@@ -2,7 +2,7 @@
   "schema_version": "2.0.0",
   "scene_id": "equity-uprise-floor-04",
   "scene_name": "Equity Uprise Level 04 \u2014 Media + Culture",
-  "status": "core-v2-migration",
+  "status": "core-v2-active",
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
   "floor_program_ref": "../core-v2-floor-programs.json",
@@ -19,6 +19,11 @@
     "communication-derivatives",
     "creator-licensing-commerce"
   ],
+  "design_maturity": "pre-iterative-program-rewrite",
+  "render_readiness": "chassis-only-not-final-program",
+  "working_development_stage": null,
+  "primary_competency_ids": [],
+  "secondary_competency_ids": [],
   "authority": {
     "building_core": [
       "../../BUILDING-CORE-V2-SPEC.md",
