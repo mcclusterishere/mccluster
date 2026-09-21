@@ -520,8 +520,9 @@ The reconciliation is backed by four separate deterministic checks:
 | Layer | Result | What it proves |
 |---|---:|---|
 | Repo-source classification | **251 sources classified** | Current source ledger contains 102 capability sources and 149 explicitly support/development-authority sources. The exact discovered-set gate remains enforced by `verify_equity_uprise_repo_sources.py`. |
-| Capability / floor / routing coverage | **435 / 435 passed** | All 56 canonical capabilities are assigned to their primary and declared secondary floors; interaction-mode and zone routes resolve; private/high-risk routes remain non-public; Halo public mode is read-only with owner-authenticated operational handoff; Level 7 does not imply passenger-elevator service. |
-| Generated plan semantics | **357 / 357 passed** | Active Core V2 SVG/DXF/PNG sets exist for B1 and Floors 1–7; generated vector/CAD labels include the Halo Globe and match the canonical floor program; stale semantic labels are absent; only the Core V2 triplets remain active. |
+| Repo-source validator | **904 / 904 passed** | The discovered source set, classifications and support/capability accounting all match the current repository state. |
+| Capability / floor / routing coverage | **464 / 464 passed** | All 56 canonical capabilities are assigned to their primary and declared secondary floors; interaction-mode and zone routes resolve; private/high-risk routes remain non-public; Halo public mode is read-only with owner-authenticated operational handoff; Level 7 does not imply passenger-elevator service. |
+| Generated plan semantics | **437 / 437 passed** | Active Core V2 SVG/DXF/PNG sets exist for B1 and Floors 1–7; generated vector/CAD labels include the Halo Globe and match the canonical floor program; stale semantic labels are absent; only the Core V2 triplets remain active. |
 | Combined stacked geometry | **41 / 41 passed** | Eight physical elevations from B1 through roof, all 14 protected-stair level transitions and the single suspended Floor 6 Halo Globe remain valid in the combined GLB; the Halo envelope clears the fixed core and circulation height constraints. |
 
 Canonical audit support files:
@@ -584,4 +585,4 @@ After the 2026-09-21 Floor 1/B1 authority reconciliation, committed derived arti
 
 ### Current-pass publication checkpoint
 
-Final current-pass derived-artifact publish is required after the Floor 1 render-readiness status and later-floor authority demotion changes.
+Final current-pass derived-artifact publish completed after the Floor 1 render-readiness status and later-floor authority demotion changes. The committed generated snapshot now matches the current authority and is guarded by CI drift detection.
