@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.2.0",
+  "schema_version": "2.3.0",
   "core_ref": "building-core-v2.json",
   "not_for_construction": true,
   "common_support": {
@@ -326,7 +326,49 @@
         "fellowship-cohort",
         "enterprise-development"
       ],
-      "capability_map_ref": "equity-uprise-capability-map-v2.json"
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "interaction_modes": [
+        {
+          "id": "our_fellows",
+          "label": "Our Fellows",
+          "route_key": "fellowship_cohort",
+          "access": "public-record-with-consent",
+          "read_only": true
+        },
+        {
+          "id": "external_opportunities",
+          "label": "External Opportunities",
+          "route_key": "opportunities",
+          "access": "public",
+          "read_only": true
+        },
+        {
+          "id": "host_programs",
+          "label": "Submit / Host Programs",
+          "route_key": "host_opportunity_submit",
+          "access": "authenticated-member-or-host"
+        },
+        {
+          "id": "applications",
+          "label": "Apply / Application Status",
+          "route_key": "fellowship_application",
+          "access": "public-intake-private-state"
+        },
+        {
+          "id": "relationships",
+          "label": "Relationship Graph",
+          "route_key": "relationship_graph",
+          "access": "authorized-staff",
+          "read_only": true
+        },
+        {
+          "id": "enterprise",
+          "label": "Enterprise Development",
+          "route_key": "enterprise_program",
+          "access": "public-program-information",
+          "read_only": true
+        }
+      ]
     },
     {
       "level": 4,
@@ -428,7 +470,36 @@
         "communication-derivatives",
         "creator-licensing-commerce"
       ],
-      "capability_map_ref": "equity-uprise-capability-map-v2.json"
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "interaction_modes": [
+        {
+          "id": "rights_clearance",
+          "label": "Rights / Clearance",
+          "route_key": "media_rights",
+          "access": "authorized-creator-editor-admin",
+          "read_only": true
+        },
+        {
+          "id": "licensing_commerce",
+          "label": "Licensing / Commerce",
+          "route_key": "creator_licensing",
+          "access": "public-terms-authenticated-checkout"
+        },
+        {
+          "id": "release_delivery",
+          "label": "Release / Delivery",
+          "route_key": "media_release_ops",
+          "access": "authorized-admin",
+          "approval_gated": true
+        },
+        {
+          "id": "ddex_status",
+          "label": "DDEX Status",
+          "route_key": "media_release_ops",
+          "access": "authorized-admin",
+          "read_only": true
+        }
+      ]
     },
     {
       "level": 5,
@@ -538,7 +609,58 @@
         "communication-derivatives",
         "event-ledger"
       ],
-      "capability_map_ref": "equity-uprise-capability-map-v2.json"
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "interaction_modes": [
+        {
+          "id": "claims_evidence",
+          "label": "Claims ↔ Evidence",
+          "route_key": "claims_evidence",
+          "access": "authorized-researcher-editor-admin",
+          "read_only": true
+        },
+        {
+          "id": "provenance_lineage",
+          "label": "Artifact Provenance / Lineage",
+          "route_key": "artifact_lineage",
+          "access": "published-public-private-workflow",
+          "read_only": true
+        },
+        {
+          "id": "distribution",
+          "label": "Distribution / Syndication",
+          "route_key": "publication_distribution",
+          "access": "authorized-admin",
+          "approval_gated": true
+        },
+        {
+          "id": "contributor_identity",
+          "label": "Contributor Identity / ORCID",
+          "route_key": "publication_identity",
+          "access": "authorized-researcher-editor-admin",
+          "read_only": true
+        },
+        {
+          "id": "doi_deposit",
+          "label": "DOI / Crossref",
+          "route_key": "publication_identity",
+          "access": "authorized-researcher-editor-admin",
+          "read_only": true
+        },
+        {
+          "id": "docket_watch",
+          "label": "Dockets / Regulatory Watch",
+          "route_key": "docket_watch",
+          "access": "authorized-researcher-editor-admin",
+          "read_only": true
+        },
+        {
+          "id": "monitoring",
+          "label": "Monitor / Watchlist",
+          "route_key": "monitoring_impact",
+          "access": "authorized-researcher-editor-admin",
+          "read_only": true
+        }
+      ]
     },
     {
       "level": 6,
@@ -676,6 +798,75 @@
           "route_key": "halo_spatial_intelligence",
           "access": "public-sanitized-read-only-role-scoped-owner-admin",
           "note": "Suspended coordination envelope; does not consume floor circulation. Public and role-scoped modes are read-only. Owner/admin operations hand off to the protected Halo/Seek First plane."
+        }
+      ],
+      "interaction_modes": [
+        {
+          "id": "halo_ambient",
+          "label": "Halo Ambient",
+          "route_key": "halo_spatial_intelligence",
+          "access": "public",
+          "read_only": true
+        },
+        {
+          "id": "halo_public",
+          "label": "Halo Public",
+          "route_key": "halo_spatial_intelligence",
+          "access": "public-sanitized",
+          "read_only": true
+        },
+        {
+          "id": "halo_member",
+          "label": "Halo Member",
+          "route_key": "halo_spatial_intelligence",
+          "access": "authenticated-role-scoped",
+          "read_only": true
+        },
+        {
+          "id": "halo_staff",
+          "label": "Halo Staff",
+          "route_key": "halo_spatial_intelligence",
+          "access": "authorized-staff",
+          "read_only": true
+        },
+        {
+          "id": "halo_owner",
+          "label": "Halo Owner / Admin",
+          "route_key": "halo_spatial_intelligence",
+          "access": "house-owner",
+          "read_only": false,
+          "owner_handoff_required": true
+        },
+        {
+          "id": "approvals",
+          "label": "Approvals",
+          "route_key": "approvals",
+          "access": "authorized-admin"
+        },
+        {
+          "id": "jobs",
+          "label": "Jobs / Workflow Queue",
+          "route_key": "jobs",
+          "access": "authorized-admin"
+        },
+        {
+          "id": "integrations",
+          "label": "Connections / Integrations",
+          "route_key": "integrations",
+          "access": "authorized-admin"
+        },
+        {
+          "id": "relationship_comms",
+          "label": "Relationship Communications",
+          "route_key": "relationship_comms",
+          "access": "authorized-admin",
+          "read_only": true
+        },
+        {
+          "id": "outreach",
+          "label": "Outreach / Consent / Contact State",
+          "route_key": "outreach_ops",
+          "access": "authorized-admin"
         }
       ]
     },
