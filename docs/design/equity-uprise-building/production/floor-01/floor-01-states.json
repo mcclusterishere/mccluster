@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-01",
+  "default_state": "idle",
+  "states": [
+    {
+      "id": "idle",
+      "label": "Idle",
+      "hotspots_enabled": [
+        "hs_reception",
+        "hs_intake_room",
+        "hs_directory",
+        "hs_elevator",
+        "hs_lounge",
+        "hs_entry"
+      ],
+      "lighting_profile": "default"
+    },
+    {
+      "id": "reception_active",
+      "label": "Reception Active",
+      "focus_object": "reception_desk",
+      "camera_id": "reception_focus",
+      "accent_material": "accent_red_navigation"
+    },
+    {
+      "id": "intake_active",
+      "label": "Intake Active",
+      "focus_zone": "intake_room",
+      "privacy_mode": "visual_frosting_emphasis"
+    },
+    {
+      "id": "directory_active",
+      "label": "Directory Active",
+      "focus_object": "directory",
+      "ui_overlay": "building_directory"
+    },
+    {
+      "id": "elevator_active",
+      "label": "Elevator Active",
+      "camera_id": "elevator_focus",
+      "ui_overlay": "floor_selector"
+    },
+    {
+      "id": "after_hours",
+      "label": "After Hours",
+      "lighting_multiplier": 0.45,
+      "hotspots_enabled": [
+        "hs_directory",
+        "hs_entry"
+      ],
+      "upper_floor_access": "restricted"
+    }
+  ]
+}
