@@ -117,6 +117,27 @@ Any future feature that materially changes Equity Uprise must:
 5. pass `production/verify_equity_uprise_program_coverage.py`;
 6. only then be treated as represented by the building.
 
+### Reconciliation proof status
+
+As of the 2026-09-21 repo-wide reconciliation:
+
+- **77** Equity Uprise-specific source/support files are explicitly classified;
+- **50** are directly tied to one or more building capabilities;
+- **27** are support-only (presentation, migration wrappers, runtime plumbing, tests/build support) and intentionally do not create additional rooms/floors;
+- **51** canonical Equity Uprise capabilities are represented in the building;
+- repo-source audit: **260 / 260 passed**;
+- capability/floor/routing audit: **162 / 162 passed**;
+- generated plan semantic/artifact audit: **310 / 310 passed**;
+- combined stacked geometry audit: **27 / 27 passed**.
+
+The source classification ledger is:
+`docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json`.
+
+The capability authority is:
+`docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`.
+
+A new Equity Uprise-specific source file must be classified and, when it introduces a real program capability, mapped into the building before the architecture may be called current.
+
 ## 1. What exists today
 
 ### A. Institutional Desk — `equity-uprise.html`
