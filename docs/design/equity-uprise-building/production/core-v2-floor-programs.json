@@ -659,9 +659,25 @@
         "event-ledger",
         "program-support-funding",
         "fellowship-cohort",
-        "enterprise-development"
+        "enterprise-development",
+        "halo-spatial-intelligence"
       ],
-      "capability_map_ref": "equity-uprise-capability-map-v2.json"
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "spheres": [
+        {
+          "label": "Halo Globe / Spatial Intelligence",
+          "kind": "instrument",
+          "center_ft": {
+            "x": 24.5,
+            "y": 34.5
+          },
+          "radius_ft": 2.25,
+          "center_z_local_ft": 8.25,
+          "route_key": "halo_spatial_intelligence",
+          "access": "public-sanitized-read-only-role-scoped-owner-admin",
+          "note": "Suspended coordination envelope; does not consume floor circulation. Public and role-scoped modes are read-only. Owner/admin operations hand off to the protected Halo/Seek First plane."
+        }
+      ]
     },
     {
       "level": 7,
