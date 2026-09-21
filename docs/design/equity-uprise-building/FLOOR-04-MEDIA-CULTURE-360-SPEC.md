@@ -303,7 +303,7 @@ on public-facing screens.
 
 ---
 
-## 10. Elevator-side floor control
+## 10. Media / Release Control
 
 Use one slim terminal adjacent to elevator:
 - approximate footprint **X 49–51 / Y 24–29**
@@ -358,7 +358,7 @@ The north support band is replanned around the Core V2 West Service Core.
 - **X34–42 / Y60–72**
 - conceptual 8' × 12'
 
-### Media / music IT
+### Media / Music Operations
 - **X42–50 / Y60–72**
 - conceptual 8' × 12'
 
@@ -429,7 +429,7 @@ At concept level provide:
 - accessible seating position in media/listening room;
 - accessible archive/gallery route;
 - accessible recording/edit-room approach;
-- accessible floor-control terminal;
+- accessible Media / Release Control terminal;
 - accessible restroom concepts;
 - visual/audible life-safety notification.
 
@@ -546,7 +546,7 @@ Final acoustic assemblies require specialist design.
 
 Provide plausible service routes for:
 - central media wall;
-- floor-control terminal;
+- Media / Release Control terminal;
 - gallery displays;
 - recording room;
 - edit suite;
@@ -609,7 +609,7 @@ Canonical visible furniture:
 - two recording-room seats maximum;
 - one two-person editing workstation;
 - two edit/review visitor seats;
-- one elevator-side floor-control terminal.
+- one elevator-side Media / Release Control terminal.
 
 No additional large furniture is canonical.
 
@@ -630,7 +630,7 @@ No additional large furniture is canonical.
 Central listening/screening room + MEDIA + CULTURE wall with Listen / Watch / Archive surfaces.
 
 **+90° / east:**  
-Fixed elevator/core + slim floor-control terminal.
+Fixed elevator/core + slim Media / Release Control terminal.
 
 **180° / south:**  
 Creator Recording Room + Edit / Review Suite + sealed upper-floor glazing. No exterior door.
@@ -667,7 +667,7 @@ Suggested Floor 4 hotspots:
 4. **Culture Archive wall** → full rally/gallery view.
 5. **Creator Recording Room** → civic-anthem/creator participation.
 6. **Edit / Review Suite** → creator/review workflow context.
-7. **Floor-control terminal** → listening/navigation state.
+7. **Media / Release Control terminal** → listening/navigation state.
 8. **Elevator** → floor selector.
 
 ---
@@ -706,7 +706,7 @@ The floor may be atmospheric; the content must remain factual.
 - [ ] no balcony/terrace
 - [ ] 360 camera approximately (36,28)
 - [ ] central media/listening room north
-- [ ] elevator + floor-control terminal east
+- [ ] elevator + Media / Release Control terminal east
 - [ ] production rooms south
 - [ ] archive/gallery west
 - [ ] services/restrooms stack vertically
@@ -725,3 +725,26 @@ The floor may be atmospheric; the content must remain factual.
 - [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
 - [ ] shared slab openings remain unobstructed
 - [ ] no floor-local decorative stair is treated as vertical-continuity authority
+
+## Repo capability binding — 2026-09-21 reconciliation audit
+
+This floor is bound to the repo-wide program map:
+`production/equity-uprise-capability-map-v2.json`.
+
+### Primary capabilities
+- **Equity Uprise music/catalogue listening surface** (`music-catalogue`, built_shared_platform) — Media / Listening Zone.
+- **Artist/creator participation and studio workflow** (`artist-creator`, built_shared_platform) — Creator Recording Room and Edit / Review Suite.
+- **Music rights/catalog/release graph** (`music-rights`, built) — Media / Music Operations support and Media / Release Control.
+- **Equity Uprise/McCluster release preparation** (`music-release`, built_guarded) — Media / Release Control; high-risk delivery approval belongs to Floor 6.
+- **DDEX ERN delivery** (`ddex`, built_disabled_until_configured) — Media release pipeline, not a public room.
+- **Equity Uprise Rally/event media archive** (`rally-media`, built) — Culture Archive / Rally Gallery.
+- **Press release, executive summary and social-prep derivatives** (`communication-derivatives`, built) — Edit / Review Suite; lineage remains tied to Floor 5 source artifacts.
+
+### Secondary / cross-floor capabilities
+- **Docket 516/516R evidence room and public-record archive** (`evidence-room`, built) — Evidence + Proof Archive; media context may also appear on Floor 4.
+- **Canonical artifact graph and derivative lineage** (`artifacts`, built) — Publication/Proof systems; communication derivatives route to Floor 4.
+
+### Boundary rule
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
