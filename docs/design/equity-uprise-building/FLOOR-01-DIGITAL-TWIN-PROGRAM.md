@@ -248,7 +248,7 @@ Tunnel authority:
 
 B1 authority:
 
-- `BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
 - `production/basement-b1-program.json`
 
 ## 13. Multiplayer / avatar behavior

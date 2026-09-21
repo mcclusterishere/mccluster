@@ -33,18 +33,20 @@ For **any Equity Uprise task involving geometry, architecture, floors, rooms, bu
 
 before designing, generating, rendering, coding, or describing the environment.
 
-That authority file points to the required repo audit, locked six-floor building inventory, floor-specific builder/360 specs, schematic-plan basis, and canonical PNG/SVG/DXF plan references.
+That authority file points to the required repo audit, current B1 + six enclosed EQUITY floors + Level 7 building inventory, floor-specific builder/360 specs, schematic-plan basis, and canonical PNG/SVG/DXF plan references.
 
 Non-negotiable:
+- only Floor 1 is currently program-reconciled; Floors 2–6 and Level 7 remain provisional until their floor-by-floor redesign passes;
+- B1 is restricted live infrastructure; learner/instructor work uses a sandboxed clone and ordinary Equity Uprise admin does not inherit underground access;
 - generated images are never geometry authority;
 - floor/core geometry may not drift between renders;
 - Floor 1 establishes the fixed 72' × 72' shell/core datum currently used for building coordination;
 - elevator, stairs, risers and structural coordination remain vertically aligned;
-- Floor 1 is the only public exterior entrance under the current locked scheme;
+- Floor 1 is the only normal public entrance; protected-stair discharge doors and the secure west service entrance are not public entrances;
 - do not invent rooms/floors/departments as canonical lore when they are not supported by the audited Equity Uprise program;
 - if a floor does not yet have a reviewed floor-specific builder/360 spec, write/review that spec before generating its production imagery.
 
-Do not confuse the six-floor Equity Uprise building with the separate `docs/uprise-world/` Living Sketch / Uprise World project. Each retains its own authority unless the owner explicitly requests a crossover.
+Do not confuse the B1-supported six enclosed EQUITY floors + Level 7 building with the separate `docs/uprise-world/` Living Sketch / Uprise World project. Each retains its own authority unless the owner explicitly requests a crossover.
 
 ## Equity Uprise spatial / geometry authority
 
@@ -57,7 +59,7 @@ Do not confuse the six-floor Equity Uprise building with the separate `docs/upri
 5. the relevant canonical assets under `docs/design/equity-uprise-building/references/`.
 
 For Floor 1 specifically, the canonical asset set is:
-- `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
+- `docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md`
 - `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
 - `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg`
@@ -101,7 +103,7 @@ For Floor 6 specifically, also read and obey:
 - `docs/design/equity-uprise-building/references/floor-06/README.md`
 - the canonical Floor 6 DXF/SVG/PNG under `docs/design/equity-uprise-building/references/floor-06/`.
 
-Floor 6 is the last enclosed level; its core/roof-service continuity to Level 7 is non-negotiable. The building has six enclosed occupied floors plus **Level 7 — Roof / Mobility Portal**. Floor 6 must preserve vertical access/core/service continuity to the roof. The rooftop helipad/mobility zone is conceptual until site/aircraft/regulatory/structural feasibility is established.
+Floor 6 is the last enclosed level; its core/roof-service continuity to Level 7 is non-negotiable. The developmental building has six enclosed EQUITY floors plus **Level 7**, supported below by the restricted non-developmental **B1 Underground Operations / Technical Service** level. Floor 6 must preserve vertical access/core/service continuity to the roof. The rooftop helipad/mobility zone is conceptual until site/aircraft/regulatory/structural feasibility is established.
 
 These files are geometry authority. **Generative images are not geometry authority.** Never move the elevator, stairs, risers, structural grid, building footprint, entrances, floor program, or 360 datum merely to improve a render. Never invent spatial lore that conflicts with the canonical geometry.
 
@@ -110,9 +112,9 @@ Before any Floor 6 roof-interface, Level 7 roof, exterior-master, rooftop 3D, cr
 ### Equity Uprise deterministic Floor 1 implementation
 For any Floor 1 3D reconstruction, GLB/glTF export, Three.js/browser scene, hotspot implementation, lighting/material setup, or scene-state work, read `docs/design/equity-uprise-building/production/floor-01/floor-01-scene-manifest.json` and its companion files **after** the canonical Floor 1 written spec, schematic basis, and DXF/SVG. The production package cannot override architectural authority.
 
-## Equity Uprise Core V2 migration authority
+## Equity Uprise Core V2 authority
 
-When working on branch `architecture/equity-uprise-core-v2` or on artifacts explicitly labeled Core V2, read these **before any floor-specific production file**:
+For any current Equity Uprise Core V2 spatial work, read these **before any floor-specific production file**:
 
 1. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 2. `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
