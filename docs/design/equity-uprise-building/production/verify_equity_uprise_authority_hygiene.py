@@ -14,7 +14,7 @@ intentional_compatibility_checkers={
     HERE/"verify_floor_01_b1_simulation.py",
 }
 for p in BUILDING.rglob("*"):
-    if not p.is_file() or p.suffix.lower() not in {".md",".json",".py"} or "references/archive" in p.as_posix() or p in {stub_f1,stub_b1} or p in intentional_compatibility_checkers: continue
+    if not p.is_file() or p.suffix.lower() not in {".md",".json",".py"} or "references/archive" in p.as_posix() or GENERATED in p.parents or p in {stub_f1,stub_b1} or p in intentional_compatibility_checkers: continue
     txt=p.read_text(errors="ignore")
     for old in ("FLOOR-01-LOBBY-INTAKE-360-SPEC.md","BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"): check(f"no deprecated authority ref: {p.relative_to(ROOT)} :: {old}",old not in txt,old)
 programs=json.loads((HERE/"core-v2-floor-programs.json").read_text());f1=next(x for x in programs["levels"] if x["level"]==1)
