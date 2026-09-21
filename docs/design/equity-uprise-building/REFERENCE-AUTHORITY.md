@@ -77,6 +77,9 @@ Read program and geometry authority in this order:
    - B1 support-level authority:
      - `docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
      - `docs/design/equity-uprise-building/production/basement-b1-program.json`
+   - Underground-network authority:
+     - `docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
+     - `docs/design/equity-uprise-building/production/underground-tunnel-network.json`
    - Code/safety research profile:
      - `docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md`
    - These files define institutional activity, simulation systems, site/egress behavior, the non-developmental technical basement and training scenarios. They do not override the shared Core V2 vertical chassis.
@@ -410,8 +413,9 @@ The candidate mobility zone is **not** an approved helipad/vertiport. Final oper
 
 ## Locked building program
 
-The building contains **six enclosed occupied floors plus one navigable roof level**:
+The developmental building contains **six enclosed occupied floors plus one navigable roof level**, supported by one restricted non-developmental B1 infrastructure level:
 
+- B1 — **Underground Operations / Technical Service** (restricted support level; no E-Q-U-I-T-Y letter)
 - Floor 1 — Lobby + Intake
 - Floor 2 — Public Forum
 - Floor 3 — Fellowship + Network
@@ -422,7 +426,7 @@ The building contains **six enclosed occupied floors plus one navigable roof lev
 
 Level 7 is the roof, not a normal enclosed floor. It is the canonical cross-site departure/arrival layer and may contain a **candidate rooftop mobility pad / helipad zone** subject to later real-world feasibility.
 
-Do not add further levels or rename/reassign them without explicit owner approval.
+Do not add further developmental levels or rename/reassign them without explicit owner approval. B1 is an approved restricted support level. Future tunnel-connected buildings are separate canonical facilities, not additional Equity Uprise developmental floors.
 
 ## Core V2 shared vertical systems
 
@@ -432,7 +436,7 @@ Do not add further levels or rename/reassign them without explicit owner approva
 - revised Stair B: **X 8–18 / Y 54–72**;
 - Stair A: **X 60–72 / Y 54–72**;
 - east MEP/riser: approximately **X 50–60 / Y 66–72**;
-- finished-floor elevations: **0, 13.5, 27, 40.5, 54, 67.5, 81 ft**;
+- finished-floor elevations: **B1 -13.5, Floor 1 0, Floor 2 13.5, Floor 3 27, Floor 4 40.5, Floor 5 54, Floor 6 67.5, Level 7 81 ft**;
 - per-floor stair placeholders may not redefine or shorten shared vertical geometry;
 - the combined stacked building model is the required proof of vertical continuity.
 
@@ -474,10 +478,10 @@ Allowed:
 
 Not allowed without owner approval:
 - inventing new departments;
-- inventing extra floors/levels beyond the six occupied floors + Level 7 roof;
+- inventing extra developmental floors/levels beyond the six EQUITY floors + Level 7 roof; B1 is the explicitly approved non-developmental support level;
 - moving functions to different floors;
 - inventing a second public entrance;
-- inventing secret rooms as canonical;
+- inventing additional restricted underground rooms, tunnel branches, or destination buildings without canonical authority;
 - altering core geometry for narrative convenience.
 
 ## Relationship to Uprise World
