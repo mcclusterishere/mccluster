@@ -724,6 +724,20 @@ Suggested Floor 5 hotspots:
 
 ---
 
+## 26A. Semantic interaction modes
+
+Floor 5's existing lab, archive, review rooms and wall expose the full research-to-record lifecycle as distinct modes:
+
+- **Claims ↔ Evidence** — explicit claim/evidence relationships and source verification.
+- **Artifact Provenance / Lineage** — source → canonical artifact → derivative lineage.
+- **Distribution / Syndication** — approval-gated publication distribution state.
+- **Contributor Identity / ORCID** — contributor identity/configuration status inside publication workflow.
+- **DOI / Crossref** — DOI deposit/verification state; configuration-dependent where external credentials are required.
+- **Dockets / Regulatory Watch** — government targets/dockets and recurring intelligence.
+- **Monitor / Watchlist** — source, literature, government, stakeholder and citation monitoring with impact findings.
+
+These are screen/wall/workspace states inside the existing Policy Lab, Source Review, Publication / Submission Review, Evidence Archive and Research / Publication Navigator. They do not add rooms or move evidence/control authority.
+
 ## 27. Political-neutrality / evidence rule
 
 Floor 5 may contain policy work, but the architecture itself does not endorse a political side.
@@ -784,7 +798,7 @@ Do not convert draft or contested material into permanent architectural fact.
 This floor is bound to the repo-wide program map:
 `production/equity-uprise-capability-map-v2.json`.
 
-The current repo-wide audit classifies **241 Equity Uprise semantic sources** and **55 canonical capabilities**. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+The current capability authority contains **56 canonical capabilities**. Repo-source counts are governed by the generated source-coverage report. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
 
 ### Primary capabilities
 - **Research projects and memberships** (`research-projects`, built) — Policy Lab.
