@@ -9,6 +9,10 @@ B1=json.loads((HERE/"basement-b1-program.json").read_text())
 SITE=json.loads((HERE/"floor-01"/"floor-01-site-egress.json").read_text())
 F1=json.loads((HERE/"floor-01"/"floor-01-digital-twin-program.json").read_text())
 TUNNEL=json.loads((HERE/"underground-tunnel-network.json").read_text())
+PROGRAMS=json.loads((HERE/"core-v2-floor-programs.json").read_text())
+DEV_DIR=HERE.parent.parent/"equity-uprise-development"
+STAGE_MAP=json.loads((DEV_DIR/"stage-competency-map.json").read_text())
+COMPETENCY_CATALOG=json.loads((DEV_DIR/"competency-catalog.json").read_text())
 F1_MANIFEST=json.loads((HERE/"floor-01"/"floor-01-scene-manifest.json").read_text())
 F1_ROUTING=json.loads((HERE/"floor-01"/"floor-01-routing.json").read_text())
 F1_STATES=json.loads((HERE/"floor-01"/"floor-01-states.json").read_text())
@@ -74,6 +78,17 @@ for required in ("AED","First Aid Kit","Fire Extinguisher Cabinet — Lobby","Yo
 eap=SITE.get("emergency_action_plan_model",{})
 for key in ("report_emergency","evacuation","critical_operations","accountability","rescue_medical","contacts"):
     check(f"EAP component: {key}",bool(eap.get(key)),str(eap.get(key)))
+
+# Floor 1 development-program binding.
+f1_program=next(x for x in PROGRAMS["levels"] if x["level"]==1)
+stage1=next(x for x in STAGE_MAP["stages"] if x["stage"]==1)
+catalog_ids={x["id"] for x in COMPETENCY_CATALOG["competencies"]}
+check("Floor 1 working stage is enter",f1_program.get("working_development_stage")=="enter",str(f1_program.get("working_development_stage")))
+check("Floor 1 primary competencies match canonical stage 1",f1_program.get("primary_competency_ids")==stage1.get("primary_competencies"),str(f1_program.get("primary_competency_ids")))
+check("Floor 1 all primary competencies exist",all(x in catalog_ids for x in f1_program.get("primary_competency_ids",[])),str(f1_program.get("primary_competency_ids")))
+check("Floor 1 all secondary competencies exist",all(x in catalog_ids for x in f1_program.get("secondary_competency_ids",[])),str(f1_program.get("secondary_competency_ids")))
+check("Floor 1 maturity reconciled",f1_program.get("design_maturity")=="reconciled-current-iterative-pass",str(f1_program.get("design_maturity")))
+check("Floors 2-7 remain explicitly provisional",all(x.get("design_maturity")=="pre-iterative-program-rewrite" for x in PROGRAMS["levels"] if x["level"]>=2),str([(x["level"],x.get("design_maturity")) for x in PROGRAMS["levels"] if x["level"]>=2]))
 
 # Floor 1 authority must point at the resolved site/B1 layers.
 check("Floor 1 site ref",F1.get("site_egress_ref")=="floor-01-site-egress.json",str(F1.get("site_egress_ref")))
