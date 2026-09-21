@@ -18,129 +18,157 @@
 }
 </script>
 <style>
-:root{color-scheme:dark;--panel:rgba(9,10,12,.82);--edge:rgba(255,255,255,.15);--text:#f4f2ef;--dim:#b8b8b8;--red:#8b2025}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101214;color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-#app{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none}
-.hud{position:fixed;z-index:5;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));width:min(620px,calc(100vw - 24px));padding:12px 13px;border:1px solid var(--edge);border-radius:15px;background:var(--panel);backdrop-filter:blur(12px);box-shadow:0 14px 45px rgba(0,0,0,.25)}
-h1{font-size:14px;letter-spacing:.055em;margin:0 0 5px}p{font-size:11px;line-height:1.42;color:#d0d0d0;margin:0 0 9px}.badges{display:flex;gap:6px;flex-wrap:wrap}.badge{font-size:9px;border:1px solid var(--edge);border-radius:999px;padding:3px 7px;color:#ddd}
-.controls{position:fixed;z-index:6;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 24px)}
-button{appearance:none;border:1px solid #585b5e;border-radius:999px;background:rgba(24,26,29,.92);color:#fff;font:700 10px system-ui;padding:8px 11px}button:active,button.active{background:var(--red);border-color:#b84549}
-.status{position:fixed;z-index:5;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));padding:7px 10px;border:1px solid var(--edge);border-radius:999px;background:var(--panel);font-size:9px;color:var(--dim)}
-@media(max-width:720px){.hud{width:calc(100vw - 24px)}.status{bottom:102px}.controls{left:12px;right:12px;justify-content:center}}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:Inter,system-ui,sans-serif}
+#app{position:fixed;inset:0}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:fixed;left:16px;top:16px;z-index:5;background:rgba(10,10,10,.78);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:14px;max-width:min(440px,calc(100vw - 32px));box-shadow:0 16px 50px rgba(0,0,0,.35)}
+#hud h1{font-size:15px;margin:0 0 5px;font-weight:800;letter-spacing:.04em}
+#hud p{font-size:12px;line-height:1.45;margin:0 0 10px;color:#c8c8c8}
+.controls{display:flex;flex-wrap:wrap;gap:7px}
+button{appearance:none;border:1px solid #555;background:#222;color:#fff;border-radius:999px;padding:8px 11px;font-weight:700;font-size:11px;cursor:pointer}
+button:hover,button:focus{background:#8b1e1e;border-color:#b52c31;outline:none}
+button.active{background:#8b1e1e;border-color:#b52c31}
+#status{position:fixed;right:16px;bottom:16px;z-index:5;background:rgba(10,10,10,.75);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:9px 11px;font-size:11px;color:#ddd}
+#north{color:#ff575d;font-weight:800}
+#boot{position:fixed;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);padding:13px 16px;border-radius:12px;background:#111;border:1px solid #555;font-size:12px;text-align:center;max-width:calc(100vw - 30px)}
 </style>
 </head>
 <body>
 <div id="app"></div>
-<div class="hud">
- <h1>EQUITY UPRISE · FLOOR 1 · HYBRID REAL 3D</h1>
- <p><b>V1 interior feel + Core V2 geometry + current Equity Uprise program.</b> Drag to orbit, pinch/scroll to zoom. Human views restore the original dark/warm interior experience; Cutaway exposes the full V2 plan and cores.</p>
- <div class="badges"><span class="badge">Arrival / Orientation / Intake</span><span class="badge">67 inventory records</span><span class="badge" id="meshBadge">loading meshes…</span><span class="badge">NOT FOR CONSTRUCTION</span></div>
-</div>
+<div id="hud">
+<h1>EQUITY UPRISE · FLOOR 1 · HYBRID 3D</h1>
+<p>Original V1 navigation and camera feel restored over the corrected Core V2 building. Drag to orbit, pinch/scroll to zoom.</p>
 <div class="controls">
- <button data-view="lobby">Lobby</button>
- <button data-view="reception">Reception</button>
- <button data-view="lounge">Lounge</button>
- <button data-view="intake">Intake</button>
- <button data-view="passport">Passport</button>
- <button data-view="elevator">Elevator</button>
- <button data-view="journey">Journey Wall</button>
- <button data-view="iso">Cutaway</button>
- <button id="ceiling">Hide ceiling</button>
- <button id="spin">Auto Rotate</button>
+<button data-view="lobby">Lobby</button>
+<button data-view="reception">Reception</button>
+<button data-view="elevator">Elevator</button>
+<button data-view="lounge">Lounge</button>
+<button data-view="intake">Intake</button>
+<button id="ceiling">Hide ceiling</button>
+<button id="wire">Wireframe</button>
 </div>
-<div class="status" id="status">Loading hybrid GLB…</div>
+</div>
+<div id="status"><span id="north">NORTH ↑</span> · 72' × 72' · camera datum (36,28) · <span id="meshCount">loading…</span></div>
+<div id="boot">Loading Floor 1 3D…</div>
 
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-window.addEventListener('error',e=>{
-  const s=document.getElementById('status');
-  if(s) s.textContent='Viewer error: '+(e.message||'unknown error');
-});
-window.addEventListener('unhandledrejection',e=>{
-  const s=document.getElementById('status');
-  if(s) s.textContent='Viewer error: '+((e.reason&&e.reason.message)||e.reason||'module failure');
-});
-
 const FT=.3048,ft=v=>v*FT;
-const app=document.getElementById('app'),status=document.getElementById('status'),meshBadge=document.getElementById('meshBadge');
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x111315);
-scene.fog=new THREE.Fog(0x111315,ft(42),ft(125));
+const app=document.getElementById('app');
+const boot=document.getElementById('boot');
+const meshCount=document.getElementById('meshCount');
 
-const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.03,ft(190));
+window.addEventListener('error',e=>{boot.style.display='block';boot.textContent='Viewer error: '+(e.message||'unknown error')});
+window.addEventListener('unhandledrejection',e=>{boot.style.display='block';boot.textContent='Viewer error: '+((e.reason&&e.reason.message)||e.reason||'module failure')});
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x121314);
+scene.fog=new THREE.Fog(0x121314,ft(45),ft(120));
+
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.03,ft(180));
+camera.position.set(ft(36),ft(8),ft(21));
+
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.setSize(innerWidth,innerHeight);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.1;
+renderer.toneMappingExposure=1.05;
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 app.appendChild(renderer.domElement);
 
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true;
-controls.dampingFactor=.06;
+controls.target.set(ft(36),ft(4.5),ft(34));
+controls.maxDistance=ft(100);
 controls.minDistance=ft(4);
-controls.maxDistance=ft(110);
-controls.maxPolarAngle=Math.PI/2-.01;
+controls.maxPolarAngle=Math.PI/2-.015;
 
-scene.add(new THREE.HemisphereLight(0xf4ede2,0x141619,1.85));
-const sun=new THREE.DirectionalLight(0xfff1dc,2.4);
-sun.position.set(ft(12),ft(28),ft(-10));sun.castShadow=true;scene.add(sun);
-const lobbyGlow=new THREE.PointLight(0xffd7a6,68,ft(42),2);lobbyGlow.position.set(ft(36),ft(8.8),ft(47));scene.add(lobbyGlow);
-const loungeGlow=new THREE.PointLight(0xffddb5,42,ft(28),2);loungeGlow.position.set(ft(10),ft(7.5),ft(20));scene.add(loungeGlow);
-const passportGlow=new THREE.PointLight(0xffe7c8,38,ft(28),2);passportGlow.position.set(ft(35),ft(8),ft(38));scene.add(passportGlow);
-const entranceGlow=new THREE.PointLight(0xe7f0f2,24,ft(22),2);entranceGlow.position.set(ft(36),ft(8),ft(7));scene.add(entranceGlow);
+scene.add(new THREE.HemisphereLight(0xf4ede2,0x1a1b1d,1.6));
+const sun=new THREE.DirectionalLight(0xfff3df,2.4);sun.position.set(ft(15),ft(28),ft(-10));sun.castShadow=true;scene.add(sun);
+const receptionLight=new THREE.PointLight(0xffd7a6,75,ft(35),2);receptionLight.position.set(ft(36),ft(9.5),ft(46));scene.add(receptionLight);
+const loungeLight=new THREE.PointLight(0xffddb5,40,ft(25),2);loungeLight.position.set(ft(10),ft(8),ft(20));scene.add(loungeLight);
+const passportLight=new THREE.PointLight(0xffe7c8,30,ft(24),2);passportLight.position.set(ft(36),ft(8),ft(38));scene.add(passportLight);
 
-let model=null,ceilings=[],ceilingVisible=true,meshCount=0;
+const grid=new THREE.GridHelper(ft(72),36,0x4c4c4c,0x2c2c2c);
+grid.position.set(ft(36),.005,ft(36));scene.add(grid);
+
+let model=null,ceilingNodes=[],wire=false,ceilingOn=true;
+const originalMaterials=new Map();
+
 const loader=new GLTFLoader();
 loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{
- model=g.scene;scene.add(model);
- model.traverse(o=>{
-   if(o.isMesh){
-     meshCount++;o.castShadow=true;o.receiveShadow=true;
-     if(o.material){o.material.needsUpdate=true;}
-   }
-   if((o.name||'').startsWith('ceiling_'))ceilings.push(o);
- });
- meshBadge.textContent=meshCount+' meshes';
- status.textContent='Hybrid Floor 1 loaded · build __STAMP__';
- gotoView('lobby');
-},undefined,e=>{console.error(e);status.textContent='Hybrid GLB failed to load';});
+  model=g.scene;scene.add(model);
+  let count=0;
+  model.traverse(o=>{
+    if(o.isMesh){
+      count++;
+      o.castShadow=true;o.receiveShadow=true;
+      if(o.material){
+        const mats=Array.isArray(o.material)?o.material:[o.material];
+        originalMaterials.set(o,mats.map(m=>m.clone()));
+      }
+    }
+    if((o.name||'').startsWith('ceiling_'))ceilingNodes.push(o);
+  });
+  meshCount.textContent=count+' meshes';
+  boot.style.display='none';
+  gotoView('lobby');
+},undefined,e=>{console.error(e);boot.style.display='block';boot.textContent='3D model failed to load'});
 
 const views={
- lobby:{p:[36,6.0,18],t:[36,4.2,45],ceiling:true},
- reception:{p:[36,5.6,31],t:[36,4.0,48],ceiling:true},
- lounge:{p:[24,5.5,23],t:[10,3.6,20],ceiling:true},
- intake:{p:[22,5.5,35],t:[9,3.6,38],ceiling:true},
- passport:{p:[36,5.8,28],t:[36,3.8,38],ceiling:true},
- elevator:{p:[45,5.8,30],t:[55,4.3,39],ceiling:true},
- journey:{p:[36,5.6,39],t:[36,4.8,52],ceiling:true},
- iso:{p:[90,58,-20],t:[36,2.0,36],ceiling:false}
+  lobby:{p:[36,6.2,21],t:[36,4.5,43]},
+  reception:{p:[36,5.6,31],t:[36,4.2,48]},
+  elevator:{p:[46,5.8,31],t:[56,4.5,39]},
+  lounge:{p:[25,5.8,24],t:[10,3.8,20]},
+  intake:{p:[22,5.8,34],t:[9,3.8,38]}
 };
-function setCeiling(show){
- ceilingVisible=show;ceilings.forEach(o=>o.visible=show);
- document.getElementById('ceiling').textContent=show?'Hide ceiling':'Show ceiling';
-}
 function gotoView(key){
- const v=views[key];if(!v)return;
- if(v.ceiling!==undefined)setCeiling(v.ceiling);
- camera.position.set(ft(v.p[0]),ft(v.p[1]),ft(v.p[2]));
- controls.target.set(ft(v.t[0]),ft(v.t[1]),ft(v.t[2]));
- controls.update();
+  const v=views[key];if(!v)return;
+  camera.position.set(ft(v.p[0]),ft(v.p[1]),ft(v.p[2]));
+  controls.target.set(ft(v.t[0]),ft(v.t[1]),ft(v.t[2]));
+  controls.update();
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>gotoView(b.dataset.view));
-document.getElementById('ceiling').onclick=()=>setCeiling(!ceilingVisible);
-document.getElementById('spin').onclick=e=>{
- controls.autoRotate=!controls.autoRotate;
- controls.autoRotateSpeed=.7;
- e.currentTarget.classList.toggle('active',controls.autoRotate);
- e.currentTarget.textContent=controls.autoRotate?'Stop Rotate':'Auto Rotate';
+
+document.getElementById('ceiling').onclick=e=>{
+  ceilingOn=!ceilingOn;
+  ceilingNodes.forEach(o=>o.visible=ceilingOn);
+  e.currentTarget.textContent=ceilingOn?'Hide ceiling':'Show ceiling';
 };
+
+document.getElementById('wire').onclick=e=>{
+  wire=!wire;
+  if(model){
+    model.traverse(o=>{
+      if(!o.isMesh||!o.material)return;
+      const mats=Array.isArray(o.material)?o.material:[o.material];
+      mats.forEach(m=>{
+        if('wireframe' in m)m.wireframe=wire;
+        if(wire){
+          m.transparent=false;
+          m.opacity=1;
+        }else{
+          const originals=originalMaterials.get(o)||[];
+          originals.forEach((src,i)=>{
+            const dst=mats[i]||mats[0];
+            dst.transparent=src.transparent;
+            dst.opacity=src.opacity;
+          });
+        }
+        m.needsUpdate=true;
+      });
+    });
+  }
+  grid.visible=wire;
+  e.currentTarget.textContent=wire?'Solid':'Wireframe';
+  e.currentTarget.classList.toggle('active',wire);
+};
+grid.visible=false;
 
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera)});
