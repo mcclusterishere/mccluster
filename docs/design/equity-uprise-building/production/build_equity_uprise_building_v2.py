@@ -29,7 +29,7 @@ COL={
  "slab":[92,94,96,255],"wall":[44,43,42,255],"core":[55,59,64,255],
  "freight":[75,79,84,255],"stair":[104,104,100,255],"program":[105,99,92,255],
  "zone":[120,118,112,255],"glass":[185,205,212,90],"roof":[112,112,108,255],
- "accent":[133,26,29,255]
+ "accent":[133,26,29,255],"halo":[39,103,122,185]
 }
 scene=trimesh.Scene()
 records=[]
@@ -49,6 +49,13 @@ def add_cyl(name,cx,cy,z0,r,h,color,sections=24):
     mesh.visual.face_colors=color
     scene.add_geometry(mesh,node_name=name,geom_name=name)
     records.append({"name":name,"center_ft":[cx,cy],"radius_ft":r,"z0_ft":z0,"height_ft":h})
+
+def add_sphere(name,cx,cy,cz,r,color):
+    mesh=trimesh.creation.icosphere(subdivisions=3,radius=r*FT)
+    mesh.apply_translation((cx*FT,cy*FT,cz*FT))
+    mesh.visual.face_colors=color
+    scene.add_geometry(mesh,node_name=name,geom_name=name)
+    records.append({"name":name,"kind":"sphere","center_ft":[cx,cy,cz],"radius_ft":r})
 
 def b4(d): return (d["x1"],d["y1"],d["x2"],d["y2"])
 vs=CORE["vertical_systems"]
@@ -174,6 +181,9 @@ for level in PROGRAMS["levels"]:
         add_box(f"L{n}_program_{i:02d}_{kind}",b,zz,h,COL["program"] if kind!="zone" else COL["zone"])
     for i,circ in enumerate(level.get("circles",[]),1):
         cc=circ["center_ft"];add_cyl(f"L{n}_circle_{i:02d}",cc["x"],cc["y"],z+.02,circ["radius_ft"],2.6,COL["program"])
+    for i,sph in enumerate(level.get("spheres",[]),1):
+        cc=sph["center_ft"];cz=z+sph["center_z_local_ft"]
+        add_sphere(f"L{n}_sphere_{i:02d}_halo_globe",cc["x"],cc["y"],cz,sph["radius_ft"],COL["halo"])
     if not level.get("roof"):
         for key in ["corridor","restroom_a","restroom_b","support_a","support_b","janitor"]:
             bb=b4(common[key]["bounds_ft"]);add_box(f"L{n}_support_{key}",bb,z+.01,.08,COL["zone"])
@@ -199,6 +209,22 @@ check("seven levels",len(levels)==7,len(levels),7)
 check("floor elevations",[x["finished_floor_elevation_ft"] for x in levels]==[0,13.5,27,40.5,54,67.5,81],
       [x["finished_floor_elevation_ft"] for x in levels],[0,13.5,27,40.5,54,67.5,81])
 check("twelve stair transitions",len(stair_reports)==12,len(stair_reports),12)
+
+halo_items=[(lvl,s) for lvl in PROGRAMS["levels"] for s in lvl.get("spheres",[]) if s.get("route_key")=="halo_spatial_intelligence"]
+check("exactly one Halo Globe instrument",len(halo_items)==1,len(halo_items),1)
+if halo_items:
+    lvl,s=halo_items[0]
+    cx=s["center_ft"]["x"];cy=s["center_ft"]["y"];r=s["radius_ft"];cz=s["center_z_local_ft"]
+    check("Halo Globe lives on Floor 6",lvl["level"]==6,lvl["level"],6)
+    check("Halo Globe bottom clears circulation",cz-r>=6.0,cz-r,">=6.0")
+    check("Halo Globe top stays below ceiling zone",cz+r<=11.0,cz+r,"<=11.0")
+    def circle_hits_rect(cx,cy,r,b):
+        qx=min(max(cx,b[0]),b[2]);qy=min(max(cy,b[1]),b[3])
+        return (cx-qx)**2+(cy-qy)**2 < r**2
+    fixed={"passenger":passenger,"freight":freight,"stairA":stairA,"stairB":stairB,"mep":mep}
+    hits=[name for name,b in fixed.items() if circle_hits_rect(cx,cy,r,b)]
+    check("Halo Globe plan envelope avoids fixed core",not hits,hits,[])
+
 for sr in stair_reports:
     check(f"{sr['system']} {sr['base_ft']:.1f}->{sr['top_ft']:.1f} full rise",
           abs((sr["top_ft"]-sr["base_ft"])-13.5)<1e-9,sr["top_ft"]-sr["base_ft"],13.5)
