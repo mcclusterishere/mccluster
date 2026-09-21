@@ -28,6 +28,18 @@ Those archived files are **historical / non-canonical / traceability only**.
 
 No agent, renderer, generator, CAD workflow, 3D scene, hotspot workflow or plan revision may use an archived Core V1 asset as current geometry. Active plan references are the versioned `core-v2` files in each `references/floor-0X/` folder.
 
+## Compatibility filename rule
+
+Two historical filenames remain as compatibility stubs only:
+
+- `FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
+- `BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+
+They are **non-canonical** and may not be cited by new renderers, generators, manifests or design work. Their only purpose is to redirect old links to:
+
+- `FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md`
+- `BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
+
 ## Trigger conditions
 
 This authority applies whenever a task involves any of the following in connection with Equity Uprise:
@@ -96,7 +108,7 @@ Read program and geometry authority in this order:
 
 7. Floor-specific schematic-plan basis.
 
-8. Active Core V2 DXF → SVG → PNG plan references in `references/floor-0X/`.
+8. Active Core V2 generated plan references. Floor 1 requires both the interior Core V2 triplet and the separate site/life-safety triplet; B1 requires its restricted plan triplet. Floors 2–7 are chassis/provisional plan references only until their iterative rewrites.
 
 9. B1 / floor deterministic production package (generated-only).
 
@@ -109,6 +121,15 @@ Before Floor 6 roof-interface, rooftop, exterior-master, cross-site mobility, de
 - `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md` as origin/context only.
 
 Program authority and geometry authority are complementary: the capability map controls **what the building represents**; Core V2 controls **where the shared building systems physically are**.
+
+### Render-readiness rule
+
+- **B1:** restricted support/operations program is current enough for a basic restricted render.
+- **Floor 1:** program is reconciled and basic-render-ready for the current iterative pass.
+- **Floors 2–7:** shell/core/vertical-system geometry is current, but room/activity programs remain pre-iterative and must render as **chassis only by default**.
+- A design-debug viewer may expose provisional zones only when explicitly requested and must label them provisional.
+
+The machine-readable render rule lives in `production/core-v2-floor-programs.json` and `production/building-v2-validation.json`.
 
 ## Deterministic production packages
 
