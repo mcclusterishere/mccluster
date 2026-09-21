@@ -145,8 +145,8 @@
         "Media / Music Operations"
       ],
       "rule": "Rights, DDEX and delivery state stay operational/private; the public floor expresses the catalogue, culture and approved work.",
-      "program_status": "working-pre-iterative-program",
-      "render_readiness": "chassis-only-not-final-program"
+      "program_status": "reconciled-current-iterative-pass",
+      "render_readiness": "basic-render-ready"
     },
     {
       "level": 5,
