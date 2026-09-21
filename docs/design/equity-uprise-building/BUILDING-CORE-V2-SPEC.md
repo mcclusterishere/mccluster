@@ -1,6 +1,6 @@
 # Equity Uprise — Building Core V2
 
-> Status: **CORE V2 + B1 TECHNICAL/SERVICE STACK ON `architecture/equity-uprise-core-v2`**
+> Status: **ACTIVE CORE V2 + B1 UNDERGROUND-OPERATIONS STACK ON `reconcile/equity-uprise-core-v2-20260921`**
 >
 > This document controls the vertical-circulation and stacking redesign authorized after review of the original floor-local 3D scenes.
 >
@@ -34,7 +34,7 @@ Plan datum remains:
 Floor-to-floor datum remains **13'-6"**.
 
 Finished-floor elevations:
-- B1 Technical / Service Basement — **-13'-6"**
+- B1 Underground Operations / Technical Service Basement — **-13'-6"**
 - Floor 1 — 0'-0" (**modeled level of exit discharge**)
 - Floor 2 — +13'-6"
 - Floor 3 — +27'-0"
@@ -138,7 +138,7 @@ It now continues conceptually from B1 through Level 7.
 
 Floor-specific service rooms may be rebalanced but may not intrude into the shared vertical systems.
 
-## 8A. B1 Technical / Service Basement
+## 8A. B1 Underground Operations / Technical Service Basement
 
 B1 is a deliberate **support/training level**, not an additional E-Q-U-I-T-Y developmental floor.
 
