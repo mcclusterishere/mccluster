@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "scene_id": "equity-uprise-floor-01",
   "scene_name": "Equity Uprise Level 01 \u2014 Arrival / Orientation / Intake",
   "status": "core-v2-active",
@@ -17,7 +17,7 @@
     "enterprise-development"
   ],
   "design_maturity": "reconciled-current-iterative-pass",
-  "render_readiness": "basic-render-ready-after-derived-artifact-regeneration",
+  "render_readiness": "basic-render-ready-current-pass",
   "working_development_stage": "enter",
   "primary_competency_ids": [
     "CORE-01",

@@ -215,12 +215,12 @@
     {
       "name": "Stair A down barrier exists",
       "passed": true,
-      "detail": "{'F1-BARRIER-STAIR-A-DOWN', 'F1-BARRIER-STAIR-B-DOWN'}"
+      "detail": "{'F1-BARRIER-STAIR-B-DOWN', 'F1-BARRIER-STAIR-A-DOWN'}"
     },
     {
       "name": "Stair B down barrier exists",
       "passed": true,
-      "detail": "{'F1-BARRIER-STAIR-A-DOWN', 'F1-BARRIER-STAIR-B-DOWN'}"
+      "detail": "{'F1-BARRIER-STAIR-B-DOWN', 'F1-BARRIER-STAIR-A-DOWN'}"
     },
     {
       "name": "public way modeled",
@@ -330,7 +330,7 @@
     {
       "name": "Floor 1 capability-map has no stale identity terms",
       "passed": true,
-      "detail": "{\"level\": 1, \"title\": \"Arrival / Orientation / Intake\", \"role\": \"arrival / orientation / trust / verification / Development Passport / next-action routing\", \"feature_ids\": [\"verification\", \"stakeholder-intake\"], \"secondary_feature_ids\": [\"conversation-agent\", \"fellowship-applications\", \"interviews-calendar\", \"program-support-funding\", \"enterprise-development\"], \"public_surfaces\": [\"Entry Vestibule\", \"Arrival Atrium\", \"Orientation Lounge\", \"Intake / Verification Consultation\", \"Development Passport Studio\", \"Journey Wall\", \"Reception / Concierge / Security Desk\", \"Next Action / Building Directory\"], \"private_surfaces\": [\"Building Operations / Life Safety\", \"IT / Electrical\", \"Live B1 / Underground Operations interface (hidden from ordinary navigation)\"], \"rule\": \"This floor receives and orients people, establishes/continues Development Passport state, performs intake/verification, and routes participants to the next appropriate action. It does not expose privileged workflow, financial, relationship, live B1, or underground operational state.\"}"
+      "detail": "{\"level\": 1, \"title\": \"Arrival / Orientation / Intake\", \"role\": \"arrival / orientation / trust / verification / Development Passport / next-action routing\", \"feature_ids\": [\"verification\", \"stakeholder-intake\"], \"secondary_feature_ids\": [\"conversation-agent\", \"fellowship-applications\", \"interviews-calendar\", \"program-support-funding\", \"enterprise-development\"], \"public_surfaces\": [\"Entry Vestibule\", \"Arrival Atrium\", \"Orientation Lounge\", \"Intake / Verification Consultation\", \"Development Passport Studio\", \"Journey Wall\", \"Reception / Concierge / Security Desk\", \"Next Action / Building Directory\"], \"private_surfaces\": [\"Building Operations / Life Safety\", \"IT / Electrical\", \"Live B1 / Underground Operations interface (hidden from ordinary navigation)\"], \"rule\": \"This floor receives and orients people, establishes/continues Development Passport state, performs intake/verification, and routes participants to the next appropriate action. It does not expose privileged workflow, financial, relationship, live B1, or underground operational state.\", \"program_status\": \"reconciled-current-iterative-pass\", \"render_readiness\": \"basic-render-ready\"}"
     },
     {
       "name": "Floor 1 primary competencies match canonical stage 1",

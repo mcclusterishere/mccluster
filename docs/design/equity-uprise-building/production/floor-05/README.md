@@ -1,6 +1,6 @@
 # Level 05 — Policy + Proof — Core V2 Production Package
 
-Status: **ACTIVE CORE V2 DERIVED PACKAGE / NOT FOR CONSTRUCTION**
+Status: **PROVISIONAL CORE V2 DERIVED PACKAGE — PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**
 
 This package inherits the shared building/program authority from:
 - `../building-core-v2.json`
@@ -17,3 +17,6 @@ Finished-floor elevation: **+54 ft**.
 This package may operationalize floor program, cameras, hotspots, lighting, routing and states. It may **not** redefine passenger elevator, freight/service elevator, Stair A, Stair B, MEP or slab-opening geometry.
 
 Per-floor scenes are derived views. The combined stacked building is the vertical-continuity authority.
+
+Design maturity: **pre-iterative-program-rewrite**.  
+Render readiness: **chassis-only-not-final-program**.

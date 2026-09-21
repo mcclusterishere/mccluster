@@ -1,8 +1,8 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "scene_id": "equity-uprise-floor-03",
   "scene_name": "Equity Uprise Level 03 \u2014 Fellowship + Network",
-  "status": "core-v2-active",
+  "status": "core-v2-provisional-program",
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
   "floor_program_ref": "../core-v2-floor-programs.json",

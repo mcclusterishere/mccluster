@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Core V2 generated plan semantic/artifact validation",
-  "checks_total": 405,
-  "checks_passed": 405,
+  "checks_total": 437,
+  "checks_passed": 437,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -21,6 +21,16 @@
       "name": "L0 README generated-only warning",
       "passed": true,
       "detail": "# Basement B1 \u2014 Underground Operations / Technical Service Basement \u2014 Core V2 Plan References\n\n> Status: **RESTRICTED CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCT"
+    },
+    {
+      "name": "L0 README restricted support status",
+      "passed": true,
+      "detail": "# Basement B1 \u2014 Underground Operations / Technical Service Basement \u2014 Core V2 Plan References\n\n> Status: **RESTRICTED CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n"
+    },
+    {
+      "name": "L0 README design maturity",
+      "passed": true,
+      "detail": "support-level"
     },
     {
       "name": "L0 .svg exists",
@@ -236,6 +246,16 @@
       "name": "L1 README generated-only warning",
       "passed": true,
       "detail": "# Floor 01 \u2014 Arrival / Orientation / Intake \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `pr"
+    },
+    {
+      "name": "L1 README active current-pass status",
+      "passed": true,
+      "detail": "# Floor 01 \u2014 Arrival / Orientation / Intake \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/core-v2-floor-"
+    },
+    {
+      "name": "L1 README design maturity",
+      "passed": true,
+      "detail": "reconciled-current-iterative-pass"
     },
     {
       "name": "L1 .svg exists",
@@ -490,7 +510,17 @@
     {
       "name": "L2 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 02 \u2014 Public Forum \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-"
+      "detail": "# Floor 02 \u2014 Public Forum \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated fr"
+    },
+    {
+      "name": "L2 README provisional program status",
+      "passed": true,
+      "detail": "# Floor 02 \u2014 Public Forum \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/core-"
+    },
+    {
+      "name": "L2 README design maturity",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite"
     },
     {
       "name": "L2 .svg exists",
@@ -705,7 +735,17 @@
     {
       "name": "L3 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 03 \u2014 Fellowship + Network \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/b"
+      "detail": "# Floor 03 \u2014 Fellowship + Network \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGene"
+    },
+    {
+      "name": "L3 README provisional program status",
+      "passed": true,
+      "detail": "# Floor 03 \u2014 Fellowship + Network \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `producti"
+    },
+    {
+      "name": "L3 README design maturity",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite"
     },
     {
       "name": "L3 .svg exists",
@@ -950,7 +990,17 @@
     {
       "name": "L4 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 04 \u2014 Media + Culture \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/buildi"
+      "detail": "# Floor 04 \u2014 Media + Culture \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated"
+    },
+    {
+      "name": "L4 README provisional program status",
+      "passed": true,
+      "detail": "# Floor 04 \u2014 Media + Culture \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/co"
+    },
+    {
+      "name": "L4 README design maturity",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite"
     },
     {
       "name": "L4 .svg exists",
@@ -1195,7 +1245,17 @@
     {
       "name": "L5 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 05 \u2014 Policy + Proof \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/buildin"
+      "detail": "# Floor 05 \u2014 Policy + Proof \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated "
+    },
+    {
+      "name": "L5 README provisional program status",
+      "passed": true,
+      "detail": "# Floor 05 \u2014 Policy + Proof \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/cor"
+    },
+    {
+      "name": "L5 README design maturity",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite"
     },
     {
       "name": "L5 .svg exists",
@@ -1440,7 +1500,17 @@
     {
       "name": "L6 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 06 \u2014 Penthouse Command \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/buil"
+      "detail": "# Floor 06 \u2014 Penthouse Command \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerat"
+    },
+    {
+      "name": "L6 README provisional program status",
+      "passed": true,
+      "detail": "# Floor 06 \u2014 Penthouse Command \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/"
+    },
+    {
+      "name": "L6 README design maturity",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite"
     },
     {
       "name": "L6 .svg exists",
@@ -1695,7 +1765,17 @@
     {
       "name": "L7 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 07 \u2014 Roof / Mobility Portal \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production"
+      "detail": "# Floor 07 \u2014 Roof / Mobility Portal \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGe"
+    },
+    {
+      "name": "L7 README provisional program status",
+      "passed": true,
+      "detail": "# Floor 07 \u2014 Roof / Mobility Portal \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `produc"
+    },
+    {
+      "name": "L7 README design maturity",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite"
     },
     {
       "name": "L7 .svg exists",
@@ -1863,6 +1943,16 @@
       "detail": "Underground Operations / Technical Service Basement != Underground Operations / Technical Service Basement"
     },
     {
+      "name": "L0 manifest maturity matches authority",
+      "passed": true,
+      "detail": "support-level != support-level"
+    },
+    {
+      "name": "L0 manifest render readiness matches authority",
+      "passed": true,
+      "detail": "None != None"
+    },
+    {
       "name": "L0 manifest DXF points at Core V2",
       "passed": true,
       "detail": "references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.dxf"
@@ -1881,6 +1971,16 @@
       "name": "L1 manifest title matches authority",
       "passed": true,
       "detail": "Arrival / Orientation / Intake != Arrival / Orientation / Intake"
+    },
+    {
+      "name": "L1 manifest maturity matches authority",
+      "passed": true,
+      "detail": "reconciled-current-iterative-pass != reconciled-current-iterative-pass"
+    },
+    {
+      "name": "L1 manifest render readiness matches authority",
+      "passed": true,
+      "detail": "basic-render-ready-current-pass != basic-render-ready-current-pass"
     },
     {
       "name": "L1 manifest DXF points at Core V2",
@@ -1903,6 +2003,16 @@
       "detail": "Public Forum != Public Forum"
     },
     {
+      "name": "L2 manifest maturity matches authority",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+    },
+    {
+      "name": "L2 manifest render readiness matches authority",
+      "passed": true,
+      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
+    },
+    {
       "name": "L2 manifest DXF points at Core V2",
       "passed": true,
       "detail": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf"
@@ -1921,6 +2031,16 @@
       "name": "L3 manifest title matches authority",
       "passed": true,
       "detail": "Fellowship + Network != Fellowship + Network"
+    },
+    {
+      "name": "L3 manifest maturity matches authority",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+    },
+    {
+      "name": "L3 manifest render readiness matches authority",
+      "passed": true,
+      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
     },
     {
       "name": "L3 manifest DXF points at Core V2",
@@ -1943,6 +2063,16 @@
       "detail": "Media + Culture != Media + Culture"
     },
     {
+      "name": "L4 manifest maturity matches authority",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+    },
+    {
+      "name": "L4 manifest render readiness matches authority",
+      "passed": true,
+      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
+    },
+    {
       "name": "L4 manifest DXF points at Core V2",
       "passed": true,
       "detail": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf"
@@ -1961,6 +2091,16 @@
       "name": "L5 manifest title matches authority",
       "passed": true,
       "detail": "Policy + Proof != Policy + Proof"
+    },
+    {
+      "name": "L5 manifest maturity matches authority",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+    },
+    {
+      "name": "L5 manifest render readiness matches authority",
+      "passed": true,
+      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
     },
     {
       "name": "L5 manifest DXF points at Core V2",
@@ -1983,6 +2123,16 @@
       "detail": "Penthouse Command != Penthouse Command"
     },
     {
+      "name": "L6 manifest maturity matches authority",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+    },
+    {
+      "name": "L6 manifest render readiness matches authority",
+      "passed": true,
+      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
+    },
+    {
       "name": "L6 manifest DXF points at Core V2",
       "passed": true,
       "detail": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf"
@@ -2001,6 +2151,16 @@
       "name": "L7 manifest title matches authority",
       "passed": true,
       "detail": "Roof / Mobility Portal != Roof / Mobility Portal"
+    },
+    {
+      "name": "L7 manifest maturity matches authority",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+    },
+    {
+      "name": "L7 manifest render readiness matches authority",
+      "passed": true,
+      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
     },
     {
       "name": "L7 manifest DXF points at Core V2",

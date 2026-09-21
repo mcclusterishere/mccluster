@@ -18,6 +18,9 @@ This package may operationalize floor program, cameras, hotspots, lighting, rout
 
 Per-floor scenes are derived views. The combined stacked building is the vertical-continuity authority.
 
+Design maturity: **reconciled-current-iterative-pass**.  
+Render readiness: **basic-render-ready-current-pass**.
+
 Floor 1 is the public Arrival / Orientation / Intake layer and the modeled level of exit discharge.
 
 Live B1 / tunnel access is not part of ordinary Floor 1 navigation. Learner/instructor building-systems work launches a sandboxed clone; live underground access remains restricted to McCluster house-owner or explicitly delegated underground-operations-admin authority.

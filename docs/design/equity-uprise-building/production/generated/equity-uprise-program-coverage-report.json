@@ -11,8 +11,8 @@
     "6": 32,
     "7": 3
   },
-  "checks_total": 435,
-  "checks_passed": 435,
+  "checks_total": 464,
+  "checks_passed": 464,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -862,6 +862,11 @@
       "detail": "[1, 2, 3, 4, 5, 6, 7]"
     },
     {
+      "name": "capability map levels 1-7 present",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6, 7]"
+    },
+    {
       "name": "institutional-desk primary floor 6",
       "passed": true,
       "detail": ""
@@ -1327,9 +1332,29 @@
       "detail": ""
     },
     {
+      "name": "floor 1 capability-map program status matches maturity",
+      "passed": true,
+      "detail": "reconciled-current-iterative-pass"
+    },
+    {
+      "name": "floor 1 capability-map render readiness matches program",
+      "passed": true,
+      "detail": "basic-render-ready"
+    },
+    {
       "name": "floor 1 has no unknown capability ids",
       "passed": true,
       "detail": ""
+    },
+    {
+      "name": "floor 2 capability-map program status matches maturity",
+      "passed": true,
+      "detail": "working-pre-iterative-program"
+    },
+    {
+      "name": "floor 2 capability-map render readiness matches program",
+      "passed": true,
+      "detail": "chassis-only-not-final-program"
     },
     {
       "name": "floor 2 has no unknown capability ids",
@@ -1337,9 +1362,29 @@
       "detail": ""
     },
     {
+      "name": "floor 3 capability-map program status matches maturity",
+      "passed": true,
+      "detail": "working-pre-iterative-program"
+    },
+    {
+      "name": "floor 3 capability-map render readiness matches program",
+      "passed": true,
+      "detail": "chassis-only-not-final-program"
+    },
+    {
       "name": "floor 3 has no unknown capability ids",
       "passed": true,
       "detail": ""
+    },
+    {
+      "name": "floor 4 capability-map program status matches maturity",
+      "passed": true,
+      "detail": "working-pre-iterative-program"
+    },
+    {
+      "name": "floor 4 capability-map render readiness matches program",
+      "passed": true,
+      "detail": "chassis-only-not-final-program"
     },
     {
       "name": "floor 4 has no unknown capability ids",
@@ -1347,9 +1392,29 @@
       "detail": ""
     },
     {
+      "name": "floor 5 capability-map program status matches maturity",
+      "passed": true,
+      "detail": "working-pre-iterative-program"
+    },
+    {
+      "name": "floor 5 capability-map render readiness matches program",
+      "passed": true,
+      "detail": "chassis-only-not-final-program"
+    },
+    {
       "name": "floor 5 has no unknown capability ids",
       "passed": true,
       "detail": ""
+    },
+    {
+      "name": "floor 6 capability-map program status matches maturity",
+      "passed": true,
+      "detail": "working-pre-iterative-program"
+    },
+    {
+      "name": "floor 6 capability-map render readiness matches program",
+      "passed": true,
+      "detail": "chassis-only-not-final-program"
     },
     {
       "name": "floor 6 has no unknown capability ids",
@@ -1357,9 +1422,29 @@
       "detail": ""
     },
     {
+      "name": "floor 7 capability-map program status matches maturity",
+      "passed": true,
+      "detail": "working-pre-iterative-program"
+    },
+    {
+      "name": "floor 7 capability-map render readiness matches program",
+      "passed": true,
+      "detail": "chassis-only-not-final-program"
+    },
+    {
       "name": "floor 7 has no unknown capability ids",
       "passed": true,
       "detail": ""
+    },
+    {
+      "name": "floor 1 scene status matches maturity",
+      "passed": true,
+      "detail": "core-v2-active != core-v2-active"
+    },
+    {
+      "name": "floor 1 scene design maturity matches program",
+      "passed": true,
+      "detail": "reconciled-current-iterative-pass != reconciled-current-iterative-pass"
     },
     {
       "name": "floor 1 zone routes resolve",
@@ -1377,6 +1462,16 @@
       "detail": ""
     },
     {
+      "name": "floor 2 scene status matches maturity",
+      "passed": true,
+      "detail": "core-v2-provisional-program != core-v2-provisional-program"
+    },
+    {
+      "name": "floor 2 scene design maturity matches program",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+    },
+    {
       "name": "floor 2 zone routes resolve",
       "passed": true,
       "detail": ""
@@ -1390,6 +1485,16 @@
       "name": "floor 2 freight elevator has no public hotspot",
       "passed": true,
       "detail": ""
+    },
+    {
+      "name": "floor 3 scene status matches maturity",
+      "passed": true,
+      "detail": "core-v2-provisional-program != core-v2-provisional-program"
+    },
+    {
+      "name": "floor 3 scene design maturity matches program",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
     },
     {
       "name": "floor 3 zone routes resolve",
@@ -1407,6 +1512,16 @@
       "detail": ""
     },
     {
+      "name": "floor 4 scene status matches maturity",
+      "passed": true,
+      "detail": "core-v2-provisional-program != core-v2-provisional-program"
+    },
+    {
+      "name": "floor 4 scene design maturity matches program",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+    },
+    {
       "name": "floor 4 zone routes resolve",
       "passed": true,
       "detail": ""
@@ -1420,6 +1535,16 @@
       "name": "floor 4 freight elevator has no public hotspot",
       "passed": true,
       "detail": ""
+    },
+    {
+      "name": "floor 5 scene status matches maturity",
+      "passed": true,
+      "detail": "core-v2-provisional-program != core-v2-provisional-program"
+    },
+    {
+      "name": "floor 5 scene design maturity matches program",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
     },
     {
       "name": "floor 5 zone routes resolve",
@@ -1437,6 +1562,16 @@
       "detail": ""
     },
     {
+      "name": "floor 6 scene status matches maturity",
+      "passed": true,
+      "detail": "core-v2-provisional-program != core-v2-provisional-program"
+    },
+    {
+      "name": "floor 6 scene design maturity matches program",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+    },
+    {
       "name": "floor 6 zone routes resolve",
       "passed": true,
       "detail": ""
@@ -1450,6 +1585,16 @@
       "name": "floor 6 freight elevator has no public hotspot",
       "passed": true,
       "detail": ""
+    },
+    {
+      "name": "floor 7 scene status matches maturity",
+      "passed": true,
+      "detail": "core-v2-provisional-program != core-v2-provisional-program"
+    },
+    {
+      "name": "floor 7 scene design maturity matches program",
+      "passed": true,
+      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
     },
     {
       "name": "floor 7 zone routes resolve",
@@ -1807,7 +1952,47 @@
       "detail": ""
     },
     {
+      "name": "floor 1 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 1 approvals is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 integrations is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 jobs is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
       "name": "floor 1 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 1 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 1 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1822,47 +2007,47 @@
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 1 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 1 jobs is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 1 relationship_comms is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 1 admin_desk is not public",
+      "name": "floor 2 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 1 relationship_graph is not public",
-      "passed": true,
-      "detail": "authorized-staff"
-    },
-    {
-      "name": "floor 1 control_plane is not public",
+      "name": "floor 2 approvals is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 1 approvals is not public",
+      "name": "floor 2 integrations is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 1 integrations is not public",
+      "name": "floor 2 jobs is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
       "name": "floor 2 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 2 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 2 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1877,47 +2062,47 @@
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 2 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 2 jobs is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 2 relationship_comms is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 2 admin_desk is not public",
+      "name": "floor 3 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 2 relationship_graph is not public",
-      "passed": true,
-      "detail": "authorized-staff"
-    },
-    {
-      "name": "floor 2 control_plane is not public",
+      "name": "floor 3 approvals is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 2 approvals is not public",
+      "name": "floor 3 integrations is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 2 integrations is not public",
+      "name": "floor 3 jobs is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
       "name": "floor 3 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 3 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 3 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1932,47 +2117,47 @@
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 3 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 3 jobs is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 3 relationship_comms is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 3 admin_desk is not public",
+      "name": "floor 4 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 3 relationship_graph is not public",
-      "passed": true,
-      "detail": "authorized-staff"
-    },
-    {
-      "name": "floor 3 control_plane is not public",
+      "name": "floor 4 approvals is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 3 approvals is not public",
+      "name": "floor 4 integrations is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 3 integrations is not public",
+      "name": "floor 4 jobs is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
       "name": "floor 4 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 4 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 4 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1987,47 +2172,47 @@
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 4 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 4 jobs is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 4 relationship_comms is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 4 admin_desk is not public",
+      "name": "floor 5 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 4 relationship_graph is not public",
-      "passed": true,
-      "detail": "authorized-staff"
-    },
-    {
-      "name": "floor 4 control_plane is not public",
+      "name": "floor 5 approvals is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 4 approvals is not public",
+      "name": "floor 5 integrations is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 4 integrations is not public",
+      "name": "floor 5 jobs is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
       "name": "floor 5 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 5 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 5 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -2042,47 +2227,47 @@
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 5 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 5 jobs is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 5 relationship_comms is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 5 admin_desk is not public",
+      "name": "floor 6 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 5 relationship_graph is not public",
-      "passed": true,
-      "detail": "authorized-staff"
-    },
-    {
-      "name": "floor 5 control_plane is not public",
+      "name": "floor 6 approvals is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 5 approvals is not public",
+      "name": "floor 6 integrations is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 5 integrations is not public",
+      "name": "floor 6 jobs is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
       "name": "floor 6 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 6 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 6 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -2097,47 +2282,47 @@
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 6 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 6 jobs is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 6 relationship_comms is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 6 admin_desk is not public",
+      "name": "floor 7 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 6 relationship_graph is not public",
-      "passed": true,
-      "detail": "authorized-staff"
-    },
-    {
-      "name": "floor 6 control_plane is not public",
+      "name": "floor 7 approvals is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 6 approvals is not public",
+      "name": "floor 7 integrations is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 6 integrations is not public",
+      "name": "floor 7 jobs is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
       "name": "floor 7 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 7 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 7 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -2148,46 +2333,6 @@
     },
     {
       "name": "floor 7 media_release_ops is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 7 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 7 jobs is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 7 relationship_comms is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 7 admin_desk is not public",
-      "passed": true,
-      "detail": "editor-or-admin"
-    },
-    {
-      "name": "floor 7 relationship_graph is not public",
-      "passed": true,
-      "detail": "authorized-staff"
-    },
-    {
-      "name": "floor 7 control_plane is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 7 approvals is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 7 integrations is not public",
       "passed": true,
       "detail": "authorized-admin"
     }

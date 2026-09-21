@@ -17,3 +17,5 @@ Finished-floor elevation: **+0 FT**.
 These files are **generated-only**. Do not hand-edit them or treat this README as geometry authority.
 
 The machine-readable source files above control title, level identity, program zones, shared vertical systems, and regeneration.
+
+Design maturity: **reconciled-current-iterative-pass**.
