@@ -16,9 +16,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 244,
+  "candidate_count": 245,
   "capability_source_count": 102,
-  "support_only_count": 142,
+  "support_only_count": 143,
   "entries": [
     {
       "path": "_unfinished/README.md",
@@ -1954,6 +1954,13 @@
       ],
       "support_only": false,
       "rationale": "Implements the read-only, entitlement-filtered Halo Globe projection contract."
+    },
+    {
+      "path": "workers/mccluster/test/halo-projection.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Pins the Halo projection role boundary so an Equity Uprise admin cannot become a McCluster house owner."
     },
     {
       "path": "workers/mccluster/test/seek-first-catalogs.test.mjs",
