@@ -7,6 +7,11 @@
 > Mandatory authority: `REFERENCE-AUTHORITY.md`
 > Canonical plan files: `references/floor-01/equity-uprise-floor-01-viable-schematic-v3.{png,svg,dxf}`
 
+
+> Core V2 branch authority: `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Finished-floor elevation in combined model: **0'-0"**.
+> Floor-specific program may not move the shared passenger elevator, freight/service shaft, Stair A, Stair B, MEP reservation or shared slab openings.
+
 ## 1. Coordinate datum
 
 Use a fixed rectangular conceptual floor plate:
@@ -27,30 +32,45 @@ The structural grid is a coordination datum only. Final columns, beams, slabs, f
 
 ## 2. Fixed vertical-core geometry
 
-These locations are mandatory and stack through Floors 1–6.
+Floor 1 inherits the shared Core V2 geometry from `BUILDING-CORE-V2-SPEC.md` and `production/building-core-v2.json`.
 
-### Elevator
+Finished-floor elevation:
+- **0'-0"**
 
-- Conceptual hoistway: **8' × 10'**
-- Coordinates: **X 54–62, Y 34–44**
-- Door faces west into the elevator lobby.
-- This is the canonical **+90° / east-right** feature from the 360 camera.
+### Passenger elevator
+- shaft: **X 54–62 / Y 34–44**
+- west-facing door
+- primary public vertical circulation
+- floor-specific program may not intrude into the shaft or elevator approach
 
-### Stair A — east / main core
+### West Service Core
+Overall reservation:
+- **X 0–18 / Y 54–72**
 
-- Protected stair enclosure: **12' × 18'**
-- Coordinates: **X 60–72, Y 54–72**
-- Continues vertically through Floors 1–6.
-- Ground-floor discharge to exterior is conceptually through the east/north perimeter as resolved by the architect/code consultant.
-- Rated construction and final stair width/landing geometry are not established by this schematic.
+It contains the freight/service elevator and revised Stair B.
 
-### Stair B — west / remote egress
+### Service / freight elevator
+- shaft: **X 0–8 / Y 60–72**
+- conceptual south-facing service door into the Y54–60 service/circulation band
+- not counted as a substitute for a required exit
 
-- Protected remote stair enclosure: **12' × 18'**
-- Coordinates: **X 0–12, Y 54–72**
-- Continues vertically through Floors 1–6.
-- Ground-floor discharge to exterior is conceptual.
-- Must remain remote from Stair A in future floor layouts.
+### Stair B — west protected stair
+- enclosure: **X 8–18 / Y 54–72**
+- continuous through Floors 1–6 and Level 7
+- full **13'-6"** floor-to-floor rise in combined deterministic geometry
+- shared slab opening approximately **X 8.75–17.25 / Y 58.25–71.25**
+
+### Stair A — east protected stair
+- enclosure: **X 60–72 / Y 54–72**
+- continuous through Floors 1–6 and Level 7
+- full **13'-6"** floor-to-floor rise in combined deterministic geometry
+- shared slab opening approximately **X 60.75–71.25 / Y 58.25–71.25**
+
+### MEP / risers
+- approximately **X 50–60 / Y 66–72**
+- vertically continuous reservation
+
+No local floor model may replace these with shortened decorative stairs or cover the shared slab openings.
 
 ## 3. South public entrance / vestibule
 
@@ -104,51 +124,45 @@ The lounge/intake side is the canonical **-90° / west-left** side of the 360 en
 
 ## 6. North support band
 
-The north service band supports a real building without dominating the public lobby.
+The north band is replanned around the Core V2 west service core.
 
-### Public-support corridor
+### West service approach
+- **X 0–18 / Y 54–60**
+- provides conceptual service approach to the freight lift and Stair B access
+- must remain clear of floor-specific furniture/program
 
-- Main north corridor band: **Y 54–60**
-- Approximate clear width target: **6 ft**
-- Public restroom access occurs in the west/central part of this band.
-- Secure staff/service access is separated from public circulation.
+### Public/support corridor
+- **X 18–60 / Y 54–60**
+- target approximately **6 ft clear**
 
 ### Accessible restroom A
-
-- Coordinates: **X 12–20, Y 60–70**
-- Conceptual room: **8' × 10'**
-- Final fixture count, turning space, grab bars and door clearances require code/architect review.
+- **X 18–26 / Y 60–70**
+- conceptual 8' × 10'
 
 ### Accessible restroom B
-
-- Coordinates: **X 20–28, Y 60–70**
-- Conceptual room: **8' × 10'**
-- Same final-code caveat as Restroom A.
+- **X 26–34 / Y 60–70**
+- conceptual 8' × 10'
 
 ### Reception support / storage
-
-- Coordinates: **X 28–40, Y 60–72**
-- Conceptual area: **12' × 12'**
-- Secure from public access.
-- Supports reception supplies, package hold, coat/storage and staff needs.
+- **X 34–42 / Y 60–72**
+- conceptual 8' × 12'
 
 ### IT / electrical
+- **X 42–50 / Y 60–72**
+- conceptual 8' × 12'
 
-- Coordinates: **X 40–50, Y 60–72**
-- Conceptual area: **10' × 12'**
-- Final separation/clearance requirements depend on actual electrical/data equipment.
+### Janitor
+- **X 50–54 / Y 60–66**
 
-### Janitor closet
+### MEP / risers
+- **X 50–60 / Y 66–72**
+- shared Core V2 vertical reservation
 
-- Coordinates: **X 50–54, Y 60–66**
-- Conceptual area: **4' × 6'**
-- Mop sink / service equipment to be resolved by plumbing design.
-
-### MEP / riser zone
-
-- Coordinates: approximately **X 50–60, Y 66–72**
-- Reserved for vertical utilities / shafts / mechanical coordination.
-- Must stack with upper floors.
+### Stair / lift protection
+- freight/service shaft **X0–8 / Y60–72** remains unobstructed;
+- Stair B **X8–18 / Y54–72** remains unobstructed;
+- Stair A **X60–72 / Y54–72** remains unobstructed;
+- floor-specific support rooms may not intrude into shared slab openings.
 
 ## 7. Elevator lobby / directory
 
@@ -229,14 +243,19 @@ Those are final-design/code tasks.
 
 ## 11. Drawing authority
 
-For future work, geometry authority is:
+For this Core V2 migration branch:
 
-1. `FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
-2. **this schematic-plan basis**
-3. dimensioned vector/CAD-style plan generated from these coordinates
-4. architectural render / 360 imagery
+1. `BUILDING-CORE-V2-SPEC.md`
+2. `production/building-core-v2.json`
+3. floor-specific written 360/spec document
+4. this schematic-plan basis
+5. regenerated Core V2 DXF
+6. regenerated Core V2 SVG
+7. regenerated Core V2 PNG preview
+8. deterministic production package
+9. later 3D/render/360 output
 
-A generative image may **never** alter dimensions, move the elevator, remove a stair, add an exterior door, or invent new program.
+The shared Core V2 files control all vertical systems. Generated imagery is never geometry authority.
 
 ## 12. QC requirements for the next floor-plan drawing
 
@@ -259,3 +278,12 @@ The drawing must show:
 - [ ] 360 camera datum
 - [ ] north arrow and coordinate/grid labels
 - [ ] explicit NOT FOR CONSTRUCTION note
+
+
+### Core V2 migration QC addendum
+- [ ] service/freight elevator shaft at X 0–8 / Y 60–72
+- [ ] revised Stair B at X 8–18 / Y 54–72
+- [ ] Stair A at X 60–72 / Y 54–72
+- [ ] full 13'-6" stair rise represented in combined geometry
+- [ ] shared slab openings remain clear
+- [ ] floor elevation matches building-core-v2.json
