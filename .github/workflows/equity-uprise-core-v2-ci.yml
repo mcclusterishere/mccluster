@@ -49,6 +49,9 @@ jobs:
       - name: Generate production packages in workspace
         run: python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
 
+      - name: Generate restricted B1 production package in workspace
+        run: python docs/design/equity-uprise-building/production/generate_b1_production_package.py
+
       - name: Verify repo-to-building program coverage
         run: python docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py
 
@@ -70,7 +73,7 @@ jobs:
   publish-generated:
     name: Publish generated building artifacts
     needs: validate
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_generated == true && github.ref_name != 'main' }}
+    if: ${{ github.ref_name != 'main' && ((github.event_name == 'workflow_dispatch' && inputs.publish_generated == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-generated]'))) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -91,6 +94,7 @@ jobs:
         run: |
           python docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
           python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
+          python docs/design/equity-uprise-building/production/generate_b1_production_package.py
           python docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py
           python docs/design/equity-uprise-building/production/generate_core_v2_plans.py
           python docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py
@@ -103,6 +107,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/design/equity-uprise-building/references
+          git add docs/design/equity-uprise-building/production/basement-b1
           git add docs/design/equity-uprise-building/production/floor-01
           git add docs/design/equity-uprise-building/production/floor-02
           git add docs/design/equity-uprise-building/production/floor-03
