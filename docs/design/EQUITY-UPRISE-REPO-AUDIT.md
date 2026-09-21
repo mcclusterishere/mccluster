@@ -1,7 +1,7 @@
 # Equity Uprise — Repository-to-Building Reconciliation Audit
 
 > Audit date: **2026-09-21**  
-> Branch audited: `reconcile/equity-uprise-core-v2-20260921`  
+> Audit scope: current repository tree  
 > Repository: `mcclusterishere/mccluster`  
 > Scope: Equity Uprise public surfaces, platform rooms, data model, Policy OS, research/publication stack, media/music stack, outreach/integration/control systems, building authority, floor programs, routing/hotspots and Core V2 generated architecture.  
 > **Not for construction.** This audit validates program fidelity and deterministic building semantics, not building-code compliance or real-world architectural/engineering feasibility.
