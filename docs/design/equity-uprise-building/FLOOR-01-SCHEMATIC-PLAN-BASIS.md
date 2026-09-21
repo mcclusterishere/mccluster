@@ -1,7 +1,7 @@
 # Equity Uprise Building — Floor 01 Schematic Plan Basis
 
-> Status: **LOCKED SCHEMATIC GEOMETRY FOR FLOOR-PLAN / 360 COORDINATION**  
-> Companion to: `FLOOR-01-LOBBY-INTAKE-360-SPEC.md`  
+> Status: **CORE V2 SCHEMATIC CHASSIS + FLOOR 1 PROGRAM COORDINATION**  
+> Companions: `FLOOR-01-LOBBY-INTAKE-360-SPEC.md` + `FLOOR-01-DIGITAL-TWIN-PROGRAM.md`  
 > This file fixes the conceptual plan geometry so future renderers do not redesign the floor.  
 > **Not for construction.** Final permit/construction documents require a licensed architect/engineer and site/jurisdiction-specific code, structural, MEP, accessibility, fire/life-safety and zoning review.
 > Mandatory authority: `REFERENCE-AUTHORITY.md`
@@ -84,9 +84,16 @@ No local floor model may replace these with shortened decorative stairs or cover
 
 The entrance is the canonical **180°** direction from the 360 camera.
 
+### Arrival Atrium
+
+- Planning zone: **X 20–52, Y 10–30**
+- Open arrival/orientation field; not an enclosed room.
+- Supports avatar spawn/return, wayfinding, emergency map and next-action routing.
+- Must preserve the entrance → reception → elevator circulation path.
+
 ## 4. Reception
 
-### Arrival / Identity Wall
+### Journey Wall
 
 - Coordinates/band: approximately **X 28–44, Y 50–54**
 - Contains the exact approved Equity Uprise logo in built work.
@@ -102,9 +109,16 @@ The entrance is the canonical **180°** direction from the 360 camera.
 
 Reception is the canonical **0° / north-forward** visual anchor.
 
+### Development Passport Studio
+
+- Planning zone: **X 20–52, Y 32–44**
+- Shared work area with privacy-aware individual interfaces.
+- Supports goal/pathway setup, Passport review, current project, credential/competency state and next-action work.
+- May not obstruct the elevator approach or reception sightline.
+
 ## 5. West public zone
 
-### Visitor lounge
+### Orientation lounge
 
 - Planning zone: **X 2–18, Y 12–28**
 - Approximate zone: **16' × 16'**
@@ -143,9 +157,10 @@ The north band is replanned around the Core V2 west service core.
 - **X 26–34 / Y 60–70**
 - conceptual 8' × 10'
 
-### Reception support / storage
+### Building Operations / Life Safety
 - **X 34–42 / Y 60–72**
 - conceptual 8' × 12'
+- simulation role: alarm/building status/access/power/elevator monitoring concepts
 
 ### IT / electrical
 - **X 42–50 / Y 60–72**
@@ -170,7 +185,7 @@ The north band is replanned around the Core V2 west service core.
 
 Keep approximately **6 ft or more** of clear approach in front of the elevator door.
 
-### Arrival / Routing Directory
+### Next Action / Building Directory
 
 - One slim directory/check-in point only.
 - Approximate placement: **X 49–51, Y 24–29**
@@ -210,10 +225,10 @@ Canonical virtual camera:
 - Level horizon
 
 Cardinal directions:
-- **0° / north:** reception + feature wall
+- **0° / north:** Reception / Concierge / Security + Journey Wall
 - **+90° / east:** elevator/core
 - **180° / south:** entrance / vestibule
-- **-90° / west:** lounge + intake
+- **-90° / west:** Orientation Lounge + intake
 
 Future floor panoramas should retain this camera relationship to the vertical core.
 
@@ -225,6 +240,8 @@ The schematic intentionally includes:
 - remote Stair B;
 - direct exterior discharge concepts for the protected stairs;
 - clear public circulation.
+
+Exact Stair A/Stair B exterior discharge doors, paths and the secure service entrance remain **required but unresolved site-edge geometry** for the next simulation/site design pass.
 
 It does **not** establish:
 - occupancy classification;
@@ -247,13 +264,14 @@ For this Core V2 migration branch:
 
 1. `BUILDING-CORE-V2-SPEC.md`
 2. `production/building-core-v2.json`
-3. floor-specific written 360/spec document
-4. this schematic-plan basis
-5. regenerated Core V2 DXF
-6. regenerated Core V2 SVG
-7. regenerated Core V2 PNG preview
-8. deterministic production package
-9. later 3D/render/360 output
+3. `FLOOR-01-DIGITAL-TWIN-PROGRAM.md` + `production/floor-01/floor-01-digital-twin-program.json` for activity/simulation requirements
+4. floor-specific written 360/spec document
+5. this schematic-plan basis
+6. regenerated Core V2 DXF
+7. regenerated Core V2 SVG
+8. regenerated Core V2 PNG preview
+9. deterministic production package
+10. later 3D/render/360 output
 
 The shared Core V2 files control all vertical systems. Generated imagery is never geometry authority.
 
@@ -265,14 +283,16 @@ The drawing must show:
 - [ ] both protected stair enclosures
 - [ ] fixed elevator hoistway at X 54–62 / Y 34–44
 - [ ] entrance vestibule centered south
-- [ ] reception + feature wall north of lobby
-- [ ] lounge and intake west
+- [ ] Reception / Concierge / Security + Journey Wall north of lobby
+- [ ] Arrival Atrium
+- [ ] Development Passport Studio
+- [ ] Orientation Lounge and intake west
 - [ ] two accessible restroom rooms in the north band
-- [ ] reception support/storage
+- [ ] Building Operations / Life Safety
 - [ ] IT/electrical
 - [ ] janitor closet
 - [ ] MEP/riser reservation
-- [ ] one directory
+- [ ] one Next Action / Building Directory terminal
 - [ ] public vs secure/service circulation distinction
 - [ ] primary 6' and secondary 4' circulation targets
 - [ ] 360 camera datum
