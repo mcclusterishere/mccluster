@@ -165,7 +165,7 @@ Do not add rows of audience chairs or a second large table.
 
 ---
 
-## 7. Public Forum feature / issue wall
+## 7. Topics / Perspectives / Conversations Wall
 
 The north-facing feature wall is the Floor 2 identity surface.
 
@@ -490,7 +490,7 @@ Public perspectives are a digital/content workflow. Do not display private conta
 Use the exact approved Equity Uprise logo.
 
 Primary application:
-- north Public Forum feature wall.
+- north Topics / Perspectives / Conversations Wall.
 
 Secondary:
 - small floor identifier near elevator.
@@ -625,3 +625,22 @@ Before approving any Floor 2 plan/render/360:
 - [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
 - [ ] shared slab openings remain unobstructed
 - [ ] no floor-local decorative stair is treated as vertical-continuity authority
+
+## Repo capability binding — 2026-09-21 reconciliation audit
+
+This floor is bound to the repo-wide program map:
+`production/equity-uprise-capability-map-v2.json`.
+
+### Primary capabilities
+- **Public issue/topic hubs** (`public-issues`, built) — Public Forum feature wall and forum table.
+- **Public perspectives with consent + moderation** (`perspectives`, built) — Public Forum record surfaces; moderation remains private Desk work on Floor 6.
+- **Neutral listening/conversation agent** (`conversation-agent`, built) — Listening Lounge; human handoff routes to the Desk without making the agent an ideological authority.
+- **Member dashboard / private personal desk** (`member-dashboard`, built) — Member Check-In opens private matches, applications, saves, perspectives and conversation threads.
+
+### Secondary / cross-floor capabilities
+- **Profile/topic-based opportunity matching** (`fellowship-matching`, built) — Opportunity table and member check-in.
+
+### Boundary rule
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
