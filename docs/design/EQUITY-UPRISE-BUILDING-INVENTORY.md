@@ -8,26 +8,28 @@
 Legacy-compatible filename; semantic identity is **Arrival / Orientation / Intake**.
 > **Mandatory spatial authority:** `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
 > Canonical Floor 1 plan assets: `docs/design/equity-uprise-building/references/floor-01/`
-> Canonical Floor 2 spec: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
-> Canonical Floor 2 plan basis: `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
-> Canonical Floor 2 plan assets: `docs/design/equity-uprise-building/references/floor-02/`
-> Canonical Floor 3 spec: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
-> Canonical Floor 3 plan basis: `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
-> Canonical Floor 3 plan assets: `docs/design/equity-uprise-building/references/floor-03/`
-> Canonical Floor 4 spec: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
-> Canonical Floor 4 plan basis: `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
-> Canonical Floor 4 plan assets: `docs/design/equity-uprise-building/references/floor-04/`
-> Canonical Floor 5 spec: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
-> Canonical Floor 5 plan basis: `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
-> Canonical Floor 5 plan assets: `docs/design/equity-uprise-building/references/floor-05/`
-> Canonical Floor 6 spec: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
-> Canonical Floor 6 plan basis: `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
-> Canonical Floor 6 plan assets: `docs/design/equity-uprise-building/references/floor-06/`
-> Canonical Level 7 spec: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
-> Canonical Level 7 plan basis: `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
-> Canonical Level 7 ecosystem contract: `docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
-> Canonical Level 7 plan assets: `docs/design/equity-uprise-building/references/floor-07/`
+> Provisional Floor 2 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
+> Floor 2 Core V2 chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
+> Floor 2 generated chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-02/`
+> Provisional Floor 3 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
+> Floor 3 Core V2 chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
+> Floor 3 generated chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-03/`
+> Provisional Floor 4 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
+> Floor 4 Core V2 chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
+> Floor 4 generated chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-04/`
+> Provisional Floor 5 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
+> Floor 5 Core V2 chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
+> Floor 5 generated chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-05/`
+> Provisional Floor 6 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
+> Floor 6 Core V2 chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
+> Floor 6 generated chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-06/`
+> Provisional Level 7 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
+> Level 7 Core V2 roof-chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
+> Level 7 ecosystem-routing contract (active routing boundary): `docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
+> Level 7 generated roof-chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-07/`
 > Level 7 origin/pre-program: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`
+
+> **Program maturity boundary:** Only Floor 1 is program-reconciled for the current iterative pass. Floors 2–6 and Level 7 retain valid shared Core V2 chassis geometry, but their detailed room/activity programs and generated labels remain provisional snapshots pending floor-by-floor redesign.
 
 ## Core V2 vertical-circulation authority
 
