@@ -16,7 +16,7 @@
 <rect x="343.0" y="343.0" width="322.0" height="253.0" fill="#f1f1ed" class="room"/>
 <text x="504.0" y="469.5" text-anchor="middle" dominant-baseline="middle" class="t small">PENTHOUSE COMMAND</text>
 <rect x="343.0" y="297.0" width="322.0" height="46.0" fill="#d5d6d4" class="room"/>
-<text x="504.0" y="320.0" text-anchor="middle" dominant-baseline="middle" class="t small">NOW / PAST WORK / JOIN WALL</text>
+<text x="504.0" y="320.0" text-anchor="middle" dominant-baseline="middle" class="t small">INSTITUTIONAL COMMAND WALL</text>
 <rect x="113.0" y="481.0" width="184.0" height="230.0" fill="#f1f1ed" class="room"/>
 <text x="205.0" y="596.0" text-anchor="middle" dominant-baseline="middle" class="t small">INSTITUTIONAL SALON</text>
 <rect x="113.0" y="734.0" width="149.5" height="138.0" fill="#e4e5e5" class="room"/>
@@ -34,9 +34,9 @@
 <rect x="389.0" y="113.0" width="92.0" height="115.0" fill="#e4e5e5" class="room"/>
 <text x="435.0" y="170.5" text-anchor="middle" dominant-baseline="middle" class="t small">RESTROOM B</text>
 <rect x="481.0" y="90.0" width="92.0" height="138.0" fill="#deded9" class="room"/>
-<text x="527.0" y="159.0" text-anchor="middle" dominant-baseline="middle" class="t small">COMMAND SUPPORT / SECURE RECORDS</text>
+<text x="527.0" y="159.0" text-anchor="middle" dominant-baseline="middle" class="t small">CONTROL / AUDIT RECORDS</text>
 <rect x="573.0" y="90.0" width="92.0" height="138.0" fill="#deded9" class="room"/>
-<text x="619.0" y="159.0" text-anchor="middle" dominant-baseline="middle" class="t small">OPERATIONS / SYSTEMS SUPPORT</text>
+<text x="619.0" y="159.0" text-anchor="middle" dominant-baseline="middle" class="t small">DESK OPERATIONS / SYSTEMS</text>
 <rect x="665.0" y="159.0" width="46.0" height="69.0" fill="#deded9" class="room"/>
 <text x="688.0" y="193.5" text-anchor="middle" dominant-baseline="middle" class="t small">JANITOR</text>
 <rect x="665.0" y="90.0" width="115.0" height="69.0" fill="#deded9" class="room"/>
