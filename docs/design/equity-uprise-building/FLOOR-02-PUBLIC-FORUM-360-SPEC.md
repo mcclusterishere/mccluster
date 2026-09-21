@@ -631,7 +631,7 @@ Before approving any Floor 2 plan/render/360:
 This floor is bound to the repo-wide program map:
 `production/equity-uprise-capability-map-v2.json`.
 
-The current repo-wide audit classifies **241 Equity Uprise semantic sources** and **55 canonical capabilities**. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+The current capability authority contains **56 canonical building capabilities**; repo-source counts are governed by the generated source-coverage report. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
 
 ### Primary capabilities
 - **Public issue/topic hubs** (`public-issues`, built) — Public Forum feature wall and forum table.
