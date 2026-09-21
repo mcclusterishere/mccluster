@@ -1,10 +1,10 @@
 # Equity Uprise Building — Floor 02: Public Forum
 
-> Status: **WORKING PRE-ITERATIVE FLOOR 2 PROGRAM REFERENCE — CORE V2 CHASSIS RETAINED**  
-> Program note: this floor has **not** yet received the activity/space reconciliation completed for Floor 1. Preserve useful repo-derived requirements, but do not treat the current room program or working identity as final.  
+> Status: **CANONICAL FLOOR 2 PROGRAM — CORE V2 — PROGRAM RECONCILED / INVENTORY READY**  
+> Program note: the Floor 2 activity/space reconciliation is complete for the present iterative pass.  
 > Building: compact six-floor Equity Uprise headquarters / civic institute  
 > Floor identity: **Public Forum**  
-> This file is a **working pre-iterative program reference**. Shared Core V2 geometry remains authoritative; final room/activity semantics must be rewritten during this floor's iterative pass.
+> This file is the active Floor 2 program authority beneath shared Core V2 geometry. Real 3D modeling and visual approval remain future steps.
 
 
 > **Core V2 chassis authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
@@ -648,3 +648,28 @@ The building metaphor must preserve the source product's public/private and appr
 Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
 
 This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
+
+
+---
+
+## Floor 2 Core V2 program reconciliation lock — 2026-09-21
+
+Floor 2 is program-reconciled for the present iterative pass.
+
+Locked:
+- Public Forum identity;
+- central 12 ft / 8-seat forum composition;
+- dynamic Current Issues / Perspectives / Opportunities wall;
+- west Listening Lounge;
+- member check-in at the passenger elevator;
+- sealed south glazing with no exterior entrance;
+- current Core V2 passenger/freight/stair/MEP geometry;
+- north support-band functions;
+- low-density civic-discussion character.
+
+Implementation references:
+- `FLOOR-02-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-02-V1-V2-PRESERVATION-MAP.md`;
+- `production/floor-02/floor-02-object-inventory.json`.
+
+This lock does **not** mean the real 3D Floor 2 environment is complete.
