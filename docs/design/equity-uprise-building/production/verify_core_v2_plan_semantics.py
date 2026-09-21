@@ -12,8 +12,11 @@ HERE = Path(__file__).resolve().parent
 BUILDING = HERE.parent
 REFS = BUILDING / "references"
 PROGRAM = json.loads((HERE / "core-v2-floor-programs.json").read_text())
+B1 = json.loads((HERE / "basement-b1-program.json").read_text())
+PLAN_LEVELS = [B1] + PROGRAM["levels"]
 
 OUT_NAMES = {
+    0: "equity-uprise-basement-b1-core-v2-schematic-v1",
     1: "equity-uprise-floor-01-core-v2-schematic-v1",
     2: "equity-uprise-floor-02-public-forum-core-v2-schematic-v1",
     3: "equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1",
@@ -50,6 +53,8 @@ common = PROGRAM["common_support"]
 def support_labels(level):
     if level.get("roof"):
         return ["MEP / ROOF SERVICES"]
+    if level.get("basement"):
+        return ["MEP / RISERS"]
     a, b = level["support_names"]
     return [
         "PUBLIC / SUPPORT CORRIDOR",
@@ -68,9 +73,9 @@ core_labels = [
     "STAIR A",
 ]
 
-for level in PROGRAM["levels"]:
+for level in PLAN_LEVELS:
     n = int(level["level"])
-    floor_dir = REFS / f"floor-{n:02d}"
+    floor_dir = (REFS / "basement-b1") if level.get("basement") else (REFS / f"floor-{n:02d}")
     base = OUT_NAMES[n]
     svg = floor_dir / f"{base}.svg"
     dxf = floor_dir / f"{base}.dxf"
@@ -130,7 +135,7 @@ check("generation manifest exists", manifest_path.exists())
 if manifest_path.exists():
     manifest = json.loads(manifest_path.read_text())
     levels = [int(x["level"]) for x in manifest]
-    check("generation manifest covers levels 1-7", levels == list(range(1, 8)), str(levels))
+    check("generation manifest covers B1 and levels 1-7", levels == list(range(0, 8)), str(levels))
     for row in manifest:
         n = int(row["level"])
         expected_base = OUT_NAMES[n]
