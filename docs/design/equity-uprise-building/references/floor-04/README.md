@@ -35,15 +35,17 @@ Shared vertical systems on this branch:
 
 Both stairs must connect the full 13'-6" floor-to-floor datum in the combined building model.
 
-## Legacy Core V1 files
+## Legacy Core V1 archive
 
-The following files are retained for traceability only and are **not branch-canonical**:
+The former Core V1 plan set has been removed from this active reference folder.
 
-- `equity-uprise-floor-04-media-culture-schematic-v1.dxf`
-- `equity-uprise-floor-04-media-culture-schematic-v1.svg`
-- `equity-uprise-floor-04-media-culture-schematic-v1.png`
+Historical copies now live at:
 
-Do not use the legacy files for new Core V2 3D, rendering, floor planning, hotspot placement, or vertical-circulation work.
+- `../archive/core-v1/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.dxf`
+- `../archive/core-v1/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.svg`
+- `../archive/core-v1/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.png`
+
+Those files are **legacy / non-canonical / traceability only**. Do not use them for new Core V2 work.
 
 ## Regeneration
 
