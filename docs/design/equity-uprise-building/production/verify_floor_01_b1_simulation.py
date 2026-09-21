@@ -9,6 +9,10 @@ B1=json.loads((HERE/"basement-b1-program.json").read_text())
 SITE=json.loads((HERE/"floor-01"/"floor-01-site-egress.json").read_text())
 F1=json.loads((HERE/"floor-01"/"floor-01-digital-twin-program.json").read_text())
 TUNNEL=json.loads((HERE/"underground-tunnel-network.json").read_text())
+F1_MANIFEST=json.loads((HERE/"floor-01"/"floor-01-scene-manifest.json").read_text())
+F1_ROUTING=json.loads((HERE/"floor-01"/"floor-01-routing.json").read_text())
+F1_STATES=json.loads((HERE/"floor-01"/"floor-01-states.json").read_text())
+B1_DIR=HERE/"basement-b1"
 
 checks=[]
 def check(name, passed, detail=""):
@@ -78,6 +82,40 @@ check("no unresolved geometry requirements","unresolved_geometry_requirements" n
 check("Floor 1 hides B1 from normal navigation",F1.get("underground_access_model",{}).get("public_directory_shows_b1") is False,str(F1.get("underground_access_model")))
 check("Floor 1 ordinary EU admin cannot see B1",F1.get("underground_access_model",{}).get("ordinary_equity_uprise_admin_can_see_b1") is False,str(F1.get("underground_access_model")))
 check("Floor 1 training goes to sandbox clone",F1.get("underground_access_model",{}).get("training",{}).get("destination")=="sandboxed B1/tunnel clone",str(F1.get("underground_access_model",{}).get("training")))
+# Derived Floor 1 package must match current authority, not stale migration metadata.
+check("Floor 1 manifest active",F1_MANIFEST.get("status")=="core-v2-active",str(F1_MANIFEST.get("status")))
+check("Floor 1 manifest current name",F1_MANIFEST.get("scene_name")=="Equity Uprise Level 01 — Arrival / Orientation / Intake",str(F1_MANIFEST.get("scene_name")))
+check("Floor 1 manifest digital-twin ref",F1_MANIFEST.get("digital_twin_program_ref")=="floor-01-digital-twin-program.json",str(F1_MANIFEST.get("digital_twin_program_ref")))
+activity_refs=F1_MANIFEST.get("authority",{}).get("activity_simulation_authority",[])
+check("Floor 1 manifest activity refs resolve",activity_refs==["../../FLOOR-01-DIGITAL-TWIN-PROGRAM.md","floor-01-digital-twin-program.json"],str(activity_refs))
+lab=F1_ROUTING.get("routes",{}).get("building_systems_lab",{})
+underground=F1_ROUTING.get("routes",{}).get("underground_operations",{})
+check("Floor 1 building systems route sandbox only",lab.get("live_b1_access") is False,str(lab))
+check("Floor 1 underground route hidden live access",underground.get("hidden_from_normal_navigation") is True and underground.get("live_b1_access") is True,str(underground))
+state_ids={x.get("id") for x in F1_STATES.get("states",[])}
+check("Floor 1 states include underground access","underground_operations_access" in state_ids,str(sorted(state_ids)))
+
+# Restricted B1 derived package is required for future render/admin operation.
+b1_required=[
+ "README.md","basement-b1-scene-manifest.json","basement-b1-materials.json",
+ "basement-b1-lighting.json","basement-b1-camera.json","basement-b1-hotspots.json",
+ "basement-b1-routing.json","basement-b1-states.json","basement-b1-geometry-notes.md"
+]
+for name in b1_required:
+    check(f"B1 package file exists: {name}",(B1_DIR/name).exists(),str(B1_DIR/name))
+if (B1_DIR/"basement-b1-scene-manifest.json").exists():
+    b1m=json.loads((B1_DIR/"basement-b1-scene-manifest.json").read_text())
+    check("B1 scene manifest active restricted",b1m.get("status")=="core-v2-active-restricted",str(b1m.get("status")))
+    check("B1 scene title current",b1m.get("scene_name")==f"Equity Uprise B1 — {B1['title']}",str(b1m.get("scene_name")))
+    check("B1 scene hidden from public navigation",b1m.get("public_navigation") is False,str(b1m.get("public_navigation")))
+    check("B1 scene tunnel authority ref",b1m.get("tunnel_network_ref")=="../underground-tunnel-network.json",str(b1m.get("tunnel_network_ref")))
+if (B1_DIR/"basement-b1-routing.json").exists():
+    b1r=json.loads((B1_DIR/"basement-b1-routing.json").read_text())
+    routes=b1r.get("routes",{})
+    check("B1 sandbox cannot reach live B1",routes.get("building_systems_training_sandbox",{}).get("live_b1_access") is False,str(routes.get("building_systems_training_sandbox")))
+    check("B1 sandbox cannot reach live tunnel",routes.get("building_systems_training_sandbox",{}).get("live_tunnel_access") is False,str(routes.get("building_systems_training_sandbox")))
+    check("B1 ordinary EU admin insufficient",b1r.get("security",{}).get("ordinary_equity_uprise_admin_sufficient") is False,str(b1r.get("security")))
+
 resolved={x["id"]:x.get("status") for x in F1.get("resolved_geometry_requirements",[])}
 for rid in ("f1-stair-a-exit-discharge","f1-stair-b-exit-discharge","f1-secure-service-entrance","f1-exterior-assembly-area","f1-basement-discharge-direction-controls"):
     check(f"resolved geometry: {rid}",rid in resolved,str(resolved.get(rid)))
