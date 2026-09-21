@@ -1,13 +1,14 @@
 # Equity Uprise Building — Floor 06 Schematic Plan Basis
 
-> Status: **LOCKED SCHEMATIC GEOMETRY FOR FLOOR 6 / 360 / ROOF-ACCESS COORDINATION**  
+> Status: **CORE V2 CHASSIS / COORDINATION REFERENCE — FLOOR 6 PROGRAM PRE-ITERATIVE**  
+> Geometry note: preserve the shared shell, vertical systems, elevations and coordination constraints. Floor-specific room/program geometry remains subject to the future iterative rewrite.  
 > Companion to: `FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`  
 > Also mandatory: `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`  
 > Floor 6 stacks directly on Floors 1–5 and must preserve upward access/service continuity to Level 7.  
 > **Not for construction.**
 
 
-> Core V2 branch authority: `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Core V2 chassis authority: `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
 > Finished-floor elevation in combined model: **+67'-6"**.
 > Floor-specific program may not move the shared passenger elevator, freight/service shaft, Stair A, Stair B, MEP reservation or shared slab openings.
 
