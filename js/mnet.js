@@ -317,16 +317,37 @@
       }).join("") + '</div>';
   }
 
+  /* A SHARED TRACK IS PLAYABLE WHERE IT IS READ. The card links straight
+     into the album room at that exact track (album.html?album=&t=), which is
+     the deep link the listening room already uses, so a post is a door into
+     the catalogue rather than a mention of it. */
+  function trackCardHtml(item, post) {
+    var t = (item && item.payload && item.payload.track) ||
+            (post && post.metadata && post.metadata.track) || null;
+    if (!t || !t.title) return "";
+    var href = "album.html?album=" + encodeURIComponent(t.albumSlug || "here") +
+               "&t=" + encodeURIComponent(t.title);
+    return '<a class="mn__track" href="' + esc(href) + '">' +
+      (t.art ? '<img class="mn__track-art" src="' + esc(t.art) + '" alt="" loading="lazy">' : '<span class="mn__track-art"></span>') +
+      '<span class="mn__track-meta"><b>' + esc(t.title) + '</b>' +
+        (t.album ? '<small>' + esc(t.album) + '</small>' : '') + '</span>' +
+      '<span class="mn__track-play" aria-hidden="true">&#9654;</span>' +
+      '<span class="sr-only">Play ' + esc(t.title) + '</span></a>';
+  }
+
   function postCard(item, opts) {
     opts = opts || {};
     var post = item.post || item, actor = item.actor || post.actor || {};
     var likes = Number(post.reaction_count || 0), replies = Number(post.reply_count || 0);
     var liked = !!post.liked_by_me, saved = !!post.bookmarked_by_me;
     var id = post.id || item.post_id, mine = !!(identity().m_uid && post.author_m_uid === identity().m_uid);
-    return '<article class="mn__post-card" data-post-id="' + esc(id || "") + '">' +
+    var pinned = !!(item && item.payload && item.payload.pinned);
+    return '<article class="mn__post-card' + (pinned ? ' is-pinned' : '') + '" data-post-id="' + esc(id || "") + '">' +
+      (pinned ? '<span class="mn__pin">Pinned</span>' : '') +
       '<div class="mn__post-head">' + authorHtml(actor) +
         '<span class="mn__author-sub">' + esc(timeAgo(post.created_at || item.occurred_at)) + '</span></div>' +
       (post.body ? '<p class="mn__post-body">' + esc(post.body) + '</p>' : '') +
+      trackCardHtml(item, post) +
       postMediaHtml(post) +
       (opts.actions === false ? '' :
         '<div class="mn__post-actions">' +
@@ -397,17 +418,59 @@
     }).finally(function () { state.loadingFeed = false; });
   }
 
+  /* THE CATALOGUE, LOADED ONCE. data/albums.json is the same file the
+     listening room and the corner player read, so a track shared here is by
+     construction a track that exists and plays. */
+  function loadCatalogue() {
+    if (state.catalogue) return Promise.resolve(state.catalogue);
+    return fetch("data/albums.json", { cache: "force-cache" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var out = [];
+        ((d && d.albums) || []).forEach(function (a) {
+          (a.tracks || []).forEach(function (t) {
+            out.push({ title: t.title, album: a.name, albumSlug: a.slug, art: a.art });
+          });
+        });
+        state.catalogue = out;
+        return out;
+      }).catch(function () { state.catalogue = []; return []; });
+  }
+
+  function wireTrackPicker() {
+    var sel = $("mnTrackPick");
+    if (!sel) return;
+    loadCatalogue().then(function (tracks) {
+      if (!tracks.length) { sel.hidden = true; return; }
+      tracks.forEach(function (t, i) {
+        var o = document.createElement("option");
+        o.value = String(i);
+        o.textContent = t.title + " — " + t.album;
+        sel.appendChild(o);
+      });
+    });
+  }
+
+  function pickedTrack() {
+    var sel = $("mnTrackPick");
+    if (!sel || !sel.value || !state.catalogue) return null;
+    return state.catalogue[Number(sel.value)] || null;
+  }
+
   function createPost() {
     var body = $("mnPostBody").value.trim();
-    if (!body && !state.mediaAssets.length) { setStatus($("mnPostStatus"), "Write something or attach media first.", "error"); return; }
+    var track = pickedTrack();
+    if (!body && !state.mediaAssets.length && !track) { setStatus($("mnPostStatus"), "Write something, attach media, or pick a track first.", "error"); return; }
     var button = $("mnPost");
     button.disabled = true;
     setStatus($("mnPostStatus"), "Posting…");
     api("/v1/mnet/posts?app_key=" + encodeURIComponent(APP), {
       method:"POST",
-      body:{ body:body, visibility:$("mnVisibility").value, media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }) }
+      body:{ body:body, visibility:$("mnVisibility").value, track:track,
+             media_asset_ids:state.mediaAssets.map(function (x) { return x.id; }) }
     }).then(function () {
       $("mnPostBody").value = "";
+      if ($("mnTrackPick")) $("mnTrackPick").value = "";
       clearMediaQueue();
       setStatus($("mnPostStatus"), "Posted.", "ok");
       return loadFeed(true);
@@ -868,6 +931,7 @@
     $("mnPassword2").addEventListener("keydown", function (e) { if (e.key === "Enter") submitPasswordAuth(); });
     $("mnProfileForm").addEventListener("submit", saveProfile);
     wireAvatarPicker();
+    wireTrackPicker();
     $("mnProfileBack").onclick = function () { showGate("app"); setView("profile"); };
     $("mnPost").onclick = createPost;
     $("mnMediaInput").onchange = function () { uploadMediaFiles(this.files).catch(function () {}); };

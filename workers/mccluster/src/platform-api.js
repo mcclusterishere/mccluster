@@ -122,6 +122,34 @@ function bytes(n=32){const a=new Uint8Array(n);crypto.getRandomValues(a);return 
 async function sha256(s){const d=await crypto.subtle.digest('SHA-256',encoder.encode(s));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')}
 async function json(req){try{return await req.json()}catch{return {}}}
 
+/* A POST MAY CARRY A TRACK. This is the seam between the catalogue and the
+   network: the people who sign up here arrived because of a song, and until
+   now a post had no way to name one. The track is shaped here rather than
+   trusted, because metadata is free-form jsonb that goes straight to the
+   database and then out to every reader — an unbounded object from a client
+   is a stored-XSS surface and a storage bill. The catalogue itself lives in
+   data/albums.json, not a table, so the post keeps the few fields needed to
+   find and play the record again and the client resolves the rest. */
+function postTrack(t){
+  if(!t||typeof t!=='object')return null;
+  const s=(v,n)=>typeof v==='string'&&v.trim()?v.trim().slice(0,n):null;
+  const title=s(t.title,160); if(!title)return null;
+  const out={title};
+  const album=s(t.album,160), slug=s(t.albumSlug,120), art=s(t.art,400);
+  if(album)out.album=album;
+  if(slug&&/^[a-z0-9-]+$/i.test(slug))out.albumSlug=slug;
+  /* a relative path inside this site, never an absolute URL somebody else controls */
+  if(art&&!/^[a-z]+:/i.test(art)&&!art.startsWith('//'))out.art=art;
+  return out;
+}
+function postMetadata(b){
+  const meta=(b.metadata&&typeof b.metadata==='object'&&!Array.isArray(b.metadata))?{...b.metadata}:{};
+  delete meta.track;
+  const track=postTrack(b.track||(b.metadata&&b.metadata.track));
+  if(track)meta.track=track;
+  return meta;
+}
+
 const CATALOG={
   name:'McCluster Platform API',version:'v1',base_url:'https://api.mccluster.org',
   auth:{users:'McCluster bearer session',developers:'Bearer mcc_live_* API key'},
@@ -243,7 +271,7 @@ async function handleMnet(req,env,path,url){
     if(replyTo){if(!uuidLike(replyTo))return fail(req,env,'Invalid parent post',400);const p=await service(env,`network_posts?id=eq.${replyTo}&deleted_at=is.null&select=*&limit=1`);parent=p?.[0];if(!parent||!(await canReadNetworkPost(env,muid,parent)))return fail(req,env,'Parent post not found',404);visibility=parent.visibility}
     const apps=await service(env,`platform_apps?app_key=eq.${encodeURIComponent(appKey)}&select=id&limit=1`),postType=['post','update','share','announcement'].includes(b.post_type)?b.post_type:'post';
     const media=(assets||[]).map(a=>({asset_id:a.id,type:a.media_type,mime_type:a.mime_type,width:a.width||null,height:a.height||null,duration_ms:a.duration_ms||null,alt_text:a.alt_text||''}));
-    const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body,post_type:postType,visibility,media,metadata:b.metadata&&typeof b.metadata==='object'?b.metadata:{},reply_to_id:replyTo,source_app_id:apps?.[0]?.id||null})});
+    const rows=await service(env,'network_posts',{method:'POST',headers:{prefer:'return=representation'},body:JSON.stringify({author_m_uid:muid,body,post_type:postType,visibility,media,metadata:postMetadata(b),reply_to_id:replyTo,source_app_id:apps?.[0]?.id||null})});
     const created=rows?.[0];
     if(created&&mediaIds.length)await service(env,`network_media_assets?id=in.(${mediaIds.join(',')})&owner_m_uid=eq.${muid}`,{method:'PATCH',headers:{prefer:'return=minimal'},body:JSON.stringify({post_id:created.id,status:'attached',updated_at:new Date().toISOString()})});
     const hydrated=await hydratePostRows(env,rows||[],muid); return reply(req,env,{post:hydrated?.[0]?.post||created,actor:hydrated?.[0]?.actor||null},201);

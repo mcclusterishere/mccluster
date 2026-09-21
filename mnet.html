@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme-lock="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -118,6 +118,16 @@
           <div class="mn__composer-actions">
             <label class="mn__attach" for="mnMediaInput">Photo / video
               <input id="mnMediaInput" type="file" accept="image/*,video/*,audio/*" multiple hidden>
+            </label>
+            <!-- THE SEAM. Everyone here arrived because of a song; until now a
+                 post had no way to name one. The list is the catalogue
+                 itself (data/albums.json), so it cannot drift from what the
+                 listening room plays. -->
+            <label>
+              <span class="sr-only">Attach a track</span>
+              <select id="mnTrackPick" class="mn__track-pick">
+                <option value="">Attach a track&hellip;</option>
+              </select>
             </label>
             <label>
               <span class="sr-only">Post visibility</span>
