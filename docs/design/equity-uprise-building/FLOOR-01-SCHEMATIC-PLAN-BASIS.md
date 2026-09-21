@@ -4,6 +4,8 @@
 > Companion to: `FLOOR-01-LOBBY-INTAKE-360-SPEC.md`  
 > This file fixes the conceptual plan geometry so future renderers do not redesign the floor.  
 > **Not for construction.** Final permit/construction documents require a licensed architect/engineer and site/jurisdiction-specific code, structural, MEP, accessibility, fire/life-safety and zoning review.
+> Mandatory authority: `REFERENCE-AUTHORITY.md`
+> Canonical plan files: `references/floor-01/equity-uprise-floor-01-viable-schematic-v3.{png,svg,dxf}`
 
 ## 1. Coordinate datum
 
