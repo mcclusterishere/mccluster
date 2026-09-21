@@ -7,6 +7,7 @@ on:
     branches:
       - main
       - 'reconcile/equity-uprise-core-v2-*'
+      - 'audit/equity-uprise-*'
   workflow_dispatch:
     inputs:
       publish_generated:
