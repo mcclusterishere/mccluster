@@ -612,8 +612,12 @@
           "read_only": true
         }
       ],
-      "design_maturity": "pre-iterative-program-rewrite",
-      "render_readiness": "chassis-only-not-final-program"
+      "design_maturity": "reconciled-current-iterative-pass",
+      "render_readiness": "inventory-ready-hybrid-3d-next",
+      "working_development_stage": "create-express-preserve",
+      "program_reconciliation_ref": "../FLOOR-04-PROGRAM-RECONCILIATION.md",
+      "object_inventory_ref": "floor-04/floor-04-object-inventory.json",
+      "preservation_map_ref": "../FLOOR-04-V1-V2-PRESERVATION-MAP.md"
     },
     {
       "level": 5,
