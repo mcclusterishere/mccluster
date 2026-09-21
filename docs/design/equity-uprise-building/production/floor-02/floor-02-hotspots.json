@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-02",
+  "hotspots": [
+    {
+      "id": "hs_forum_table",
+      "label": "Public Forum",
+      "position_ft": {
+        "x": 36,
+        "y": 39,
+        "z": 3.8
+      },
+      "action": "open_route",
+      "route_key": "current_issue"
+    },
+    {
+      "id": "hs_current_issues",
+      "label": "Current Issues",
+      "position_ft": {
+        "x": 29,
+        "y": 51.5,
+        "z": 5.5
+      },
+      "action": "open_route",
+      "route_key": "current_issues"
+    },
+    {
+      "id": "hs_perspectives",
+      "label": "Perspectives",
+      "position_ft": {
+        "x": 36,
+        "y": 51.5,
+        "z": 5.5
+      },
+      "action": "open_route",
+      "route_key": "perspectives"
+    },
+    {
+      "id": "hs_opportunities",
+      "label": "Opportunities",
+      "position_ft": {
+        "x": 43,
+        "y": 51.5,
+        "z": 5.5
+      },
+      "action": "open_route",
+      "route_key": "opportunities"
+    },
+    {
+      "id": "hs_listening",
+      "label": "Talk It Through",
+      "position_ft": {
+        "x": 10,
+        "y": 22,
+        "z": 4.2
+      },
+      "action": "open_route",
+      "route_key": "conversation"
+    },
+    {
+      "id": "hs_member_checkin",
+      "label": "Member Check-In",
+      "position_ft": {
+        "x": 50,
+        "y": 26.5,
+        "z": 4.5
+      },
+      "action": "open_route",
+      "route_key": "member_dashboard"
+    },
+    {
+      "id": "hs_elevator",
+      "label": "Elevator",
+      "position_ft": {
+        "x": 53.5,
+        "y": 39,
+        "z": 4.5
+      },
+      "action": "open_route",
+      "route_key": "floor_selector"
+    }
+  ]
+}
