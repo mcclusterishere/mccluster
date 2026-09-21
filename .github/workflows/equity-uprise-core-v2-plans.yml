@@ -15,9 +15,7 @@ permissions:
   contents: write
 
 concurrency:
-  # All Core V2 workflows write generated artifacts back to the same branch.
-  # Serialize writers so plan/package/GLB commits cannot race one another.
-  group: equity-uprise-core-v2-writers
+  group: equity-uprise-core-v2-plans
   cancel-in-progress: false
 
 jobs:
