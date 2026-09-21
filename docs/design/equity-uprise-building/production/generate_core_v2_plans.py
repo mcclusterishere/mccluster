@@ -226,10 +226,14 @@ def normalize_dxf_metadata(path, level):
       "$VERSIONGUID":"{"+str(uuid.uuid5(uuid.NAMESPACE_URL,seed+"-version")).upper()+"}",
     }
     lines=path.read_text(encoding="utf-8",errors="strict").splitlines()
+    stamp_prefix=f"{ezdxf.__version__} @ "
     for i,line in enumerate(lines):
         key=line.strip()
         if key in replacements and i+2 < len(lines):
             lines[i+2]=replacements[key]
+        elif key.startswith(stamp_prefix):
+            indent=line[:len(line)-len(line.lstrip())]
+            lines[i]=indent+stamp_prefix+"2000-01-01T00:00:00+00:00"
     path.write_text("\n".join(lines)+"\n",encoding="utf-8",newline="\n")
 
 def dxf(level,path):
