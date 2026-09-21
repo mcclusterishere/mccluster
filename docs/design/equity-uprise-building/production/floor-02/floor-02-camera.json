@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-02",
+  "convention": {
+    "yaw_zero": "north",
+    "yaw_positive": "clockwise_toward_east",
+    "pitch_zero": "level",
+    "units": "degrees"
+  },
+  "cameras": [
+    {
+      "id": "canonical_360",
+      "type": "equirectangular",
+      "position_ft": {
+        "x": 36,
+        "y": 28,
+        "z": 5.333
+      },
+      "rotation_deg": {
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0
+      },
+      "authority": "canonical"
+    },
+    {
+      "id": "forum_focus",
+      "type": "perspective",
+      "position_ft": {
+        "x": 36,
+        "y": 27,
+        "z": 5.333
+      },
+      "look_at_ft": {
+        "x": 36,
+        "y": 39,
+        "z": 3
+      },
+      "fov_deg": 58,
+      "authority": "production_default"
+    },
+    {
+      "id": "elevator_focus",
+      "type": "perspective",
+      "position_ft": {
+        "x": 44,
+        "y": 31,
+        "z": 5.333
+      },
+      "look_at_ft": {
+        "x": 56,
+        "y": 39,
+        "z": 4.5
+      },
+      "fov_deg": 55,
+      "authority": "production_default"
+    },
+    {
+      "id": "lounge_focus",
+      "type": "perspective",
+      "position_ft": {
+        "x": 27,
+        "y": 26,
+        "z": 5.333
+      },
+      "look_at_ft": {
+        "x": 10,
+        "y": 22,
+        "z": 3.5
+      },
+      "fov_deg": 55,
+      "authority": "production_default"
+    }
+  ]
+}
