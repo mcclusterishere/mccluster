@@ -126,6 +126,16 @@ def route_config(n):
       "institutional_overview":{"type":"url","url":"/equity-uprise.html","access":"public"},
       "institutional_join":{"type":"url","url":"/equity-uprise.html","state_hint":"join","access":"public"},
       "verification":{"type":"url","url":"/verify.html","access":"public","completion":"human-reviewed"},
+      "orientation_experience":{"type":"ui_state","target":"orientation_experience","access":"public"},
+      "next_action":{"type":"ui_state","target":"next_action","access":"public-with-authenticated-personalization","private_personalization":True},
+      "building_directory":{"type":"ui_state","target":"building_directory","access":"public-with-authenticated-personalization"},
+      "development_passport":{"type":"ui_state","target":"development_passport","access":"authenticated-member","private_by_default":True},
+      "journey_progression":{"type":"ui_state","target":"journey_progression","access":"public-with-private-personalization","read_only":True},
+      "concierge":{"type":"ui_state","target":"concierge","access":"public-summary-staff-private-view"},
+      "service_intake":{"type":"ui_state","target":"service_intake","access":"public-intake-private-session"},
+      "building_systems_lab":{"type":"ui_state","target":"building_systems_lab","access":"authorized-learner-or-instructor","simulation":True},
+      "emergency_exercise":{"type":"ui_state","target":"emergency_exercise","access":"authorized-participant-or-instructor","simulation":True},
+      "life_safety_status":{"type":"ui_state","target":"life_safety_status","access":"public-sanitized-authorized-detailed","read_only":True},
       "current_issues":{"type":"url","url":"/topics.html","access":"public"},
       "conversation":{"type":"conversation","endpoint_hint":"eu-converse","access":"public-with-thread-ownership"},
       "member_dashboard":{"type":"url","url":"/dashboard.html","access":"authenticated-member"},
@@ -276,6 +286,10 @@ for level in programs["levels"]:
       "routing_ref":f"floor-{n:02d}-routing.json",
       "states_ref":f"floor-{n:02d}-states.json"
     }
+    if level.get("digital_twin_program_ref"):
+        manifest["digital_twin_program_ref"]=level["digital_twin_program_ref"]
+    if level.get("digital_twin_spec_ref"):
+        manifest["authority"]["activity_simulation_authority"]=[level["digital_twin_spec_ref"],level["digital_twin_program_ref"]]
 
     mats={"schema_version":"2.0.0","scene_id":scene_id,"pbr_convention":"metallic-roughness","materials":MATERIALS,
           "rules":["Exact Equity Uprise logo artwork must be used where specified.","Materials may not imply geometry changes."]}
@@ -307,7 +321,8 @@ for level in programs["levels"]:
     hotspots=[]
     # Floor program zones become routed interactions when the program source
     # declares a route_key; otherwise they remain camera/focus targets.
-    for i,z in enumerate(zones[:min(7,len(zones))],1):
+    program_zone_count=len(level.get("zones",[]))
+    for i,z in enumerate(zones[:program_zone_count],1):
         p=center(z["bounds_ft"])
         h={"id":f"hs_zone_{i:02d}","label":z["label"],
            "position_ft_local":{"x":p["x"],"y":p["y"],"z":4.2},
@@ -367,7 +382,7 @@ for level in programs["levels"]:
         for key in ("read_only","approval_gated","owner_handoff_required"):
             if key in mode: state[key]=mode[key]
         state_list.append(state)
-    states={"schema_version":"2.2.0","scene_id":scene_id,"default_state":"idle","states":state_list}
+    states={"schema_version":"2.3.0","scene_id":scene_id,"default_state":"idle","states":state_list}
 
     notes=f"""# Level {n:02d} — Core V2 Deterministic Geometry Notes
 
