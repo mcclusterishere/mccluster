@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-01",
+  "convention": {
+    "yaw_zero": "north",
+    "yaw_positive": "clockwise_toward_east",
+    "pitch_zero": "level",
+    "units": "degrees"
+  },
+  "cameras": [
+    {
+      "id": "canonical_360",
+      "type": "equirectangular",
+      "position_ft": {
+        "x": 36,
+        "y": 28,
+        "z": 5.333
+      },
+      "rotation_deg": {
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0
+      },
+      "output_aspect_ratio": "2:1",
+      "authority": "canonical"
+    },
+    {
+      "id": "entrance_transition",
+      "type": "perspective",
+      "position_ft": {
+        "x": 36,
+        "y": 7,
+        "z": 5.333
+      },
+      "look_at_ft": {
+        "x": 36,
+        "y": 46,
+        "z": 5
+      },
+      "fov_deg": 60,
+      "authority": "production_default"
+    },
+    {
+      "id": "reception_focus",
+      "type": "perspective",
+      "position_ft": {
+        "x": 36,
+        "y": 30,
+        "z": 5.333
+      },
+      "look_at_ft": {
+        "x": 36,
+        "y": 46,
+        "z": 5
+      },
+      "fov_deg": 55,
+      "authority": "production_default"
+    },
+    {
+      "id": "elevator_focus",
+      "type": "perspective",
+      "position_ft": {
+        "x": 44,
+        "y": 32,
+        "z": 5.333
+      },
+      "look_at_ft": {
+        "x": 54,
+        "y": 39,
+        "z": 5
+      },
+      "fov_deg": 55,
+      "authority": "production_default"
+    },
+    {
+      "id": "lounge_focus",
+      "type": "perspective",
+      "position_ft": {
+        "x": 28,
+        "y": 28,
+        "z": 5.333
+      },
+      "look_at_ft": {
+        "x": 10,
+        "y": 20,
+        "z": 4.5
+      },
+      "fov_deg": 55,
+      "authority": "production_default"
+    }
+  ]
+}
