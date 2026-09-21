@@ -1,55 +1,57 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.3.0",
   "scene_id": "equity-uprise-floor-01",
   "default_state": "idle",
   "states": [
     {
       "id": "idle",
-      "label": "Idle",
-      "hotspots_enabled": [
-        "hs_reception",
-        "hs_intake_room",
-        "hs_directory",
-        "hs_elevator",
-        "hs_lounge",
-        "hs_entry"
-      ],
-      "lighting_profile": "default"
+      "label": "Idle"
     },
     {
-      "id": "reception_active",
-      "label": "Reception Active",
-      "focus_object": "reception_desk",
-      "camera_id": "reception_focus",
-      "accent_material": "accent_red_navigation"
-    },
-    {
-      "id": "intake_active",
-      "label": "Intake Active",
-      "focus_zone": "intake_room",
-      "privacy_mode": "visual_frosting_emphasis"
-    },
-    {
-      "id": "directory_active",
-      "label": "Directory Active",
-      "focus_object": "directory",
-      "ui_overlay": "building_directory"
-    },
-    {
-      "id": "elevator_active",
-      "label": "Elevator Active",
-      "camera_id": "elevator_focus",
-      "ui_overlay": "floor_selector"
+      "id": "floor_focus",
+      "label": "Arrival / Orientation / Intake",
+      "camera_id": "floor_overview"
     },
     {
       "id": "after_hours",
       "label": "After Hours",
-      "lighting_multiplier": 0.45,
-      "hotspots_enabled": [
-        "hs_directory",
-        "hs_entry"
-      ],
-      "upper_floor_access": "restricted"
+      "lighting_multiplier": 0.45
+    },
+    {
+      "id": "new_member_orientation",
+      "label": "New Member Orientation",
+      "route_key": "orientation_experience",
+      "access": "public"
+    },
+    {
+      "id": "passport_mode",
+      "label": "Development Passport",
+      "route_key": "development_passport",
+      "access": "authenticated-member"
+    },
+    {
+      "id": "public_service_clinic",
+      "label": "Public Service Clinic",
+      "route_key": "service_intake",
+      "access": "public-intake-private-session"
+    },
+    {
+      "id": "building_systems_lab",
+      "label": "Building Systems Lab",
+      "route_key": "building_systems_lab",
+      "access": "authorized-learner-or-instructor-sandbox-only"
+    },
+    {
+      "id": "emergency_exercise",
+      "label": "Emergency Exercise",
+      "route_key": "emergency_exercise",
+      "access": "authorized-participant-or-instructor"
+    },
+    {
+      "id": "underground_operations_access",
+      "label": "Underground Operations Access",
+      "route_key": "underground_operations",
+      "access": "mccluster-house-owner-or-underground-operations-admin"
     }
   ]
 }

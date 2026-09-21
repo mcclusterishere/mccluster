@@ -1,0 +1,98 @@
+[
+  {
+    "level": 0,
+    "title": "Underground Operations / Technical Service Basement",
+    "elevation_ft": -13.5,
+    "design_maturity": "support-level",
+    "render_readiness": null,
+    "files": {
+      "png": "references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.png",
+      "svg": "references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.svg",
+      "dxf": "references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 1,
+    "title": "Arrival / Orientation / Intake",
+    "elevation_ft": 0,
+    "design_maturity": "reconciled-current-iterative-pass",
+    "render_readiness": "basic-render-ready-current-pass",
+    "files": {
+      "png": "references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png",
+      "svg": "references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 2,
+    "title": "Public Forum",
+    "elevation_ft": 13.5,
+    "design_maturity": "pre-iterative-program-rewrite",
+    "render_readiness": "chassis-only-not-final-program",
+    "files": {
+      "png": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png",
+      "svg": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 3,
+    "title": "Fellowship + Network",
+    "elevation_ft": 27,
+    "design_maturity": "pre-iterative-program-rewrite",
+    "render_readiness": "chassis-only-not-final-program",
+    "files": {
+      "png": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png",
+      "svg": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 4,
+    "title": "Media + Culture",
+    "elevation_ft": 40.5,
+    "design_maturity": "pre-iterative-program-rewrite",
+    "render_readiness": "chassis-only-not-final-program",
+    "files": {
+      "png": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png",
+      "svg": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 5,
+    "title": "Policy + Proof",
+    "elevation_ft": 54,
+    "design_maturity": "pre-iterative-program-rewrite",
+    "render_readiness": "chassis-only-not-final-program",
+    "files": {
+      "png": "references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png",
+      "svg": "references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 6,
+    "title": "Penthouse Command",
+    "elevation_ft": 67.5,
+    "design_maturity": "pre-iterative-program-rewrite",
+    "render_readiness": "chassis-only-not-final-program",
+    "files": {
+      "png": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png",
+      "svg": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 7,
+    "title": "Roof / Mobility Portal",
+    "elevation_ft": 81,
+    "design_maturity": "pre-iterative-program-rewrite",
+    "render_readiness": "chassis-only-not-final-program",
+    "files": {
+      "png": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png",
+      "svg": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf"
+    }
+  }
+]

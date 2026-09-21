@@ -1,45 +1,26 @@
-# Floor 01 — Deterministic Production Scene Package
+# Level 01 — Arrival / Orientation / Intake — Core V2 Production Package
 
-This folder is the machine-readable implementation layer for **Equity Uprise Floor 1 — Lobby + Intake**.
+Status: **ACTIVE CORE V2 DERIVED PACKAGE / NOT FOR CONSTRUCTION**
 
-It exists so Blender, Three.js, future AI/3D systems, and website code can reconstruct the same room from the same data instead of improvising geometry or interaction.
+This package inherits the shared building/program authority from:
+- `../building-core-v2.json`
+- `../equity-uprise-capability-map-v2.json`
+- `../../BUILDING-CORE-V2-SPEC.md`
 
-## Authority order
+Canonical plan geometry:
+- `../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf`
+- `../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg`
+- `../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png`
 
-1. `../../FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
-2. `../../FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
-3. `../../references/floor-01/equity-uprise-floor-01-viable-schematic-v3.dxf`
-4. `../../references/floor-01/equity-uprise-floor-01-viable-schematic-v3.svg`
-5. this production package
-6. rendered/interactive outputs
+Finished-floor elevation: **+0 ft**.
 
-The production package **cannot override canonical architecture**.
+This package may operationalize floor program, cameras, hotspots, lighting, routing and states. It may **not** redefine passenger elevator, freight/service elevator, Stair A, Stair B, MEP or slab-opening geometry.
 
-## Files
+Per-floor scenes are derived views. The combined stacked building is the vertical-continuity authority.
 
-- `floor-01-scene-manifest.json` — master scene graph, coordinates, zones, fixed core, canonical objects and production furniture defaults
-- `floor-01-materials.json` — reusable PBR-style material definitions
-- `floor-01-lighting.json` — deterministic lighting intent
-- `floor-01-camera.json` — canonical 360 camera plus authored transition cameras
-- `floor-01-hotspots.json` — interaction anchors
-- `floor-01-routing.json` — semantic website/scene navigation
-- `floor-01-states.json` — idle/selected/after-hours scene states
-- `floor-01-geometry-notes.md` — modeling rules and known unresolved architectural dimensions
+Design maturity: **reconciled-current-iterative-pass**.  
+Render readiness: **basic-render-ready-current-pass**.
 
-## Coordinate system
+Floor 1 is the public Arrival / Orientation / Intake layer and the modeled level of exit discharge.
 
-- origin: southwest exterior corner
-- +X: east
-- +Y: north
-- +Z: up
-- authoring unit: feet
-- glTF conversion: 1 ft = 0.3048 m
-- canonical camera: approximately (36, 28, 5.333)
-
-## Critical rule
-
-If this package conflicts with the written floor spec, schematic basis, DXF, or SVG, **the canonical architectural source wins**.
-
-## Status
-
-**CANONICAL PRODUCTION V1 / NOT FOR CONSTRUCTION.**
+Live B1 / tunnel access is not part of ordinary Floor 1 navigation. Learner/instructor building-systems work launches a sandboxed clone; live underground access remains restricted to McCluster house-owner or explicitly delegated underground-operations-admin authority.

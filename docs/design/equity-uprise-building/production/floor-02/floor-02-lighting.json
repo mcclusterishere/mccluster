@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "scene_id": "equity-uprise-floor-02",
   "color_temperature_default_k": 3000,
   "fixtures": [
@@ -8,44 +8,23 @@
       "type": "ceiling_area_grid",
       "temperature_k": 3000,
       "intensity_relative": 0.72,
-      "height_ft": 10.8
+      "height_ft_local": 10.8
     },
     {
-      "id": "forum_fixture",
-      "type": "soft_round",
-      "zone": "forum_zone",
-      "temperature_k": 3000,
-      "intensity_relative": 0.8,
-      "position_ft": {
-        "x": 36,
-        "y": 39,
-        "z": 10.5
-      }
-    },
-    {
-      "id": "feature_wall_wash",
-      "type": "wall_wash",
-      "zone": "forum_zone",
-      "temperature_k": 3000,
-      "intensity_relative": 0.5,
-      "target_object": "public_forum_feature_wall"
-    },
-    {
-      "id": "lounge_ambient",
+      "id": "program_focus",
       "type": "soft_area",
-      "zone": "conversation_lounge",
-      "temperature_k": 2850,
-      "intensity_relative": 0.46,
-      "position_ft": {
-        "x": 10,
-        "y": 22,
-        "z": 9.2
+      "temperature_k": 3000,
+      "intensity_relative": 0.62,
+      "position_ft_local": {
+        "x": 36,
+        "y": 40,
+        "z": 10.5
       }
     }
   ],
   "rules": [
-    "Warm-white practical lighting is primary.",
-    "No political position receives architectural emphasis.",
-    "No red nightclub wash."
+    "Warm-white practical light is primary.",
+    "Red remains a restrained state/wayfinding accent.",
+    "Halo emission on Floor 6 remains subordinate to architectural lighting."
   ]
 }

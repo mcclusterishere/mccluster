@@ -1,0 +1,453 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-basement-b1",
+  "scene_name": "Equity Uprise B1 \u2014 Underground Operations / Technical Service Basement",
+  "status": "core-v2-active-restricted",
+  "not_for_construction": true,
+  "public_navigation": false,
+  "shared_core_ref": "../building-core-v2.json",
+  "basement_program_ref": "../basement-b1-program.json",
+  "tunnel_network_ref": "../underground-tunnel-network.json",
+  "authority": {
+    "building_core": [
+      "../../BUILDING-CORE-V2-SPEC.md",
+      "../building-core-v2.json"
+    ],
+    "basement": [
+      "../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md",
+      "../basement-b1-program.json"
+    ],
+    "tunnel": [
+      "../../UNDERGROUND-TUNNEL-NETWORK-SPEC.md",
+      "../underground-tunnel-network.json"
+    ],
+    "code_reference": "../../SIMULATION-CODE-REFERENCE-PROFILE.md"
+  },
+  "finished_floor_elevation_ft": -13.5,
+  "building_shell": {
+    "width_ft": 72,
+    "depth_ft": 72,
+    "floor_to_floor_ft": 13.5
+  },
+  "inherited_vertical_systems": {
+    "passenger_elevator": {
+      "id": "passenger-elevator-a",
+      "type": "passenger_elevator",
+      "shaft_bounds_ft": {
+        "x1": 54,
+        "y1": 34,
+        "x2": 62,
+        "y2": 44
+      },
+      "shaft_width_ft": 8,
+      "shaft_depth_ft": 10,
+      "door_facing": "west",
+      "door_opening_concept_ft": {
+        "facade_x": 54,
+        "y1": 37,
+        "y2": 41,
+        "clear_width_ft": 4
+      },
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "level_7_service": "not_assumed",
+      "shaft_continuity": "continuous_through_served_stack",
+      "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
+      "b1_access_policy": {
+        "physical_stop": true,
+        "visible_in_normal_floor_selector": false,
+        "authorized_roles": [
+          "mccluster_house_owner",
+          "underground_operations_admin"
+        ],
+        "ordinary_equity_uprise_admin_sufficient": false
+      }
+    },
+    "service_freight_elevator": {
+      "id": "service-freight-elevator-a",
+      "type": "service_freight_elevator",
+      "shaft_bounds_ft": {
+        "x1": 0,
+        "y1": 60,
+        "x2": 8,
+        "y2": 72
+      },
+      "shaft_width_ft": 8,
+      "shaft_depth_ft": 12,
+      "door_facing": "south",
+      "door_opening_concept_ft": {
+        "facade_y": 60,
+        "x1": 1.5,
+        "x2": 6.5,
+        "clear_width_ft": 5
+      },
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "level_7_service": "reserved_for_future_resolution",
+      "shaft_continuity": "continuous_reservation_to_roof",
+      "pit_overhead_machine_strategy": "unresolved",
+      "note": "Serves B1 and Floors 1\u20136; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts.",
+      "b1_access_policy": {
+        "physical_stop": true,
+        "access": "restricted-operational"
+      }
+    },
+    "stair_a": {
+      "id": "stair-a-east",
+      "type": "protected_stair",
+      "enclosure_bounds_ft": {
+        "x1": 60,
+        "y1": 54,
+        "x2": 72,
+        "y2": 72
+      },
+      "enclosure_width_ft": 12,
+      "enclosure_depth_ft": 18,
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "access_side": "south",
+      "access_opening_concept_ft": {
+        "facade_y": 54,
+        "x1": 61.5,
+        "x2": 64.5,
+        "clear_width_ft": 3
+      },
+      "configuration": "dogleg_u_shaped_concept",
+      "rise_per_level_ft": 13.5,
+      "riser_count_per_level_concept": 22,
+      "riser_height_ft_concept": 0.6136363636,
+      "tread_depth_ft_concept": 0.9166666667,
+      "risers_per_flight_concept": 11,
+      "treads_per_flight_concept": 10,
+      "flight_width_ft_concept": 5,
+      "central_gap_ft_concept": 0.5,
+      "north_intermediate_landing_depth_ft_concept": 3.75,
+      "slab_opening_bounds_ft": {
+        "x1": 60.75,
+        "y1": 58.25,
+        "x2": 71.25,
+        "y2": 71.25
+      },
+      "geometry_status": "schematic_continuity_geometry_not_code_design",
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
+      "b1_access_policy": {
+        "physical_connection": true,
+        "floor1_downward_entry": "access-controlled-restricted",
+        "b1_to_floor1_egress": "preserved"
+      }
+    },
+    "stair_b": {
+      "id": "stair-b-west",
+      "type": "protected_stair",
+      "enclosure_bounds_ft": {
+        "x1": 8,
+        "y1": 54,
+        "x2": 18,
+        "y2": 72
+      },
+      "enclosure_width_ft": 10,
+      "enclosure_depth_ft": 18,
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "access_side": "south",
+      "access_opening_concept_ft": {
+        "facade_y": 54,
+        "x1": 14,
+        "x2": 17,
+        "clear_width_ft": 3
+      },
+      "configuration": "dogleg_u_shaped_concept",
+      "rise_per_level_ft": 13.5,
+      "riser_count_per_level_concept": 22,
+      "riser_height_ft_concept": 0.6136363636,
+      "tread_depth_ft_concept": 0.9166666667,
+      "risers_per_flight_concept": 11,
+      "treads_per_flight_concept": 10,
+      "flight_width_ft_concept": 4,
+      "central_gap_ft_concept": 0.5,
+      "north_intermediate_landing_depth_ft_concept": 3.75,
+      "slab_opening_bounds_ft": {
+        "x1": 8.75,
+        "y1": 58.25,
+        "x2": 17.25,
+        "y2": 71.25
+      },
+      "geometry_status": "schematic_continuity_geometry_not_code_design",
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
+      "b1_access_policy": {
+        "physical_connection": true,
+        "floor1_downward_entry": "access-controlled-restricted",
+        "b1_to_floor1_egress": "preserved"
+      }
+    },
+    "mep_riser": {
+      "id": "mep-riser-east",
+      "type": "mep_riser_reservation",
+      "bounds_ft": {
+        "x1": 50,
+        "y1": 66,
+        "x2": 60,
+        "y2": 72
+      },
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    }
+  },
+  "zones": [
+    {
+      "id": "b1-mechanical-plant",
+      "label": "Mechanical Plant",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 4,
+        "x2": 30,
+        "y2": 26
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "HVAC plant",
+        "pumps/fans",
+        "building automation sensors"
+      ],
+      "hazard_class": "controlled-technical"
+    },
+    {
+      "id": "b1-electrical-emergency",
+      "label": "Electrical / Emergency Power",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 32,
+        "y1": 4,
+        "x2": 52,
+        "y2": 20
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "main electrical distribution",
+        "UPS/emergency distribution",
+        "metering"
+      ],
+      "hazard_class": "restricted-electrical"
+    },
+    {
+      "id": "b1-fire-water",
+      "label": "Fire Protection / Water",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 54,
+        "y1": 4,
+        "x2": 70,
+        "y2": 20
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "fire pump concept",
+        "sprinkler riser concept",
+        "water service/backflow concept"
+      ],
+      "hazard_class": "controlled-technical"
+    },
+    {
+      "id": "b1-telecom-core",
+      "label": "Network / Telecom Core",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 32,
+        "y1": 22,
+        "x2": 52,
+        "y2": 34
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "telecom demarc",
+        "core network",
+        "access-control backbone",
+        "building systems network"
+      ],
+      "hazard_class": "restricted-digital"
+    },
+    {
+      "id": "b1-water-flood",
+      "label": "Sump / Flood Management",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 54,
+        "y1": 22,
+        "x2": 70,
+        "y2": 32
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "sump pumps",
+        "water sensors",
+        "drainage/flood monitoring"
+      ],
+      "hazard_class": "controlled-technical"
+    },
+    {
+      "id": "b1-facilities-workshop",
+      "label": "Facilities Workshop / Storage",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 30,
+        "x2": 16,
+        "y2": 52
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "maintenance tools",
+        "parts storage",
+        "PPE/spill response storage"
+      ],
+      "hazard_class": "service"
+    },
+    {
+      "id": "b1-systems-lab",
+      "label": "Building Systems Lab / Observation",
+      "type": "zone",
+      "bounds_ft": {
+        "x1": 18,
+        "y1": 36,
+        "x2": 52,
+        "y2": 54
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "digital twin dashboard",
+        "BAS simulation",
+        "power/network/fire/MEP observation"
+      ],
+      "hazard_class": "instructional"
+    },
+    {
+      "id": "b1-service-staging",
+      "label": "Service Receiving / Staging",
+      "type": "zone",
+      "bounds_ft": {
+        "x1": 0,
+        "y1": 54,
+        "x2": 8,
+        "y2": 60
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "freight staging",
+        "maintenance receiving"
+      ],
+      "hazard_class": "service"
+    },
+    {
+      "id": "b1-tunnel-ops-concourse",
+      "label": "Tunnel Operations Concourse / Security Gate",
+      "type": "zone",
+      "bounds_ft": {
+        "x1": 20,
+        "y1": 54,
+        "x2": 48,
+        "y2": 64
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "identity/access",
+        "underground occupancy accountability",
+        "transport dispatch",
+        "route authorization",
+        "incident/status board"
+      ],
+      "hazard_class": "restricted-underground-operations"
+    },
+    {
+      "id": "b1-tunnel-transfer-lock",
+      "label": "Tunnel Portal / Transfer Lock",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 24,
+        "y1": 64,
+        "x2": 44,
+        "y2": 72
+      },
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only",
+      "systems": [
+        "security interlock",
+        "environmental/fire separation",
+        "vehicle/personnel transfer",
+        "emergency closure"
+      ],
+      "hazard_class": "restricted-underground-transfer"
+    }
+  ],
+  "live_access": {
+    "allowed": [
+      "mccluster_house_owner",
+      "underground_operations_admin"
+    ],
+    "delegated_by": "mccluster_house_owner",
+    "ordinary_equity_uprise_admin_sufficient": false,
+    "competency_sufficient": false,
+    "audit_required": true
+  },
+  "training_access": {
+    "mode": "sandboxed_clone_only",
+    "live_b1_access": false,
+    "live_tunnel_access": false,
+    "live_controls_available": false,
+    "live_occupancy_visible": false,
+    "competency_evidence_allowed": true
+  },
+  "camera_ref": "basement-b1-camera.json",
+  "materials_ref": "basement-b1-materials.json",
+  "lighting_ref": "basement-b1-lighting.json",
+  "hotspots_ref": "basement-b1-hotspots.json",
+  "routing_ref": "basement-b1-routing.json",
+  "states_ref": "basement-b1-states.json"
+}

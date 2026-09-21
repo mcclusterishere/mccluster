@@ -1,0 +1,254 @@
+{
+  "schema_version": "0.1.0",
+  "status": "canonical-underground-backbone-authority",
+  "id": "equity-uprise-underground-network",
+  "public_visibility": false,
+  "developmental_stage": null,
+  "acronym_role": "private-backbone-not-developmental-floor",
+  "architectural_metaphor": {
+    "roof": "outward/public ecosystem gateway",
+    "developmental_floors": "E-Q-U-I-T-Y participant journey",
+    "basement": "restricted infrastructure/operations hub",
+    "tunnels": "private inter-building infrastructure/logistics/transport backbone"
+  },
+  "live_access": {
+    "required_authorities": [
+      "mccluster_house_owner",
+      "underground_operations_admin"
+    ],
+    "explicitly_not_sufficient": [
+      "equity_uprise_member",
+      "equity_uprise_host",
+      "equity_uprise_editor",
+      "equity_uprise_client",
+      "equity_uprise_staff",
+      "equity_uprise_admin",
+      "competency_level"
+    ],
+    "delegated_by": "mccluster_house_owner",
+    "audit_required": true
+  },
+  "training_access": {
+    "mode": "sandboxed_clone_only",
+    "live_b1_access": false,
+    "live_tunnel_access": false,
+    "live_occupancy_visible": false,
+    "live_controls_available": false,
+    "competency_evidence_allowed": true
+  },
+  "b1_interfaces": [
+    {
+      "id": "b1-tunnel-ops-concourse",
+      "label": "Tunnel Operations Concourse / Security Gate",
+      "bounds_ft": {
+        "x1": 20,
+        "y1": 54,
+        "x2": 48,
+        "y2": 64
+      },
+      "access": "underground_operations_admin",
+      "systems": [
+        "identity/access",
+        "occupancy accountability",
+        "transport dispatch",
+        "route authorization",
+        "incident/status board"
+      ]
+    },
+    {
+      "id": "b1-tunnel-transfer-lock",
+      "label": "Tunnel Portal / Transfer Lock",
+      "bounds_ft": {
+        "x1": 24,
+        "y1": 64,
+        "x2": 44,
+        "y2": 72
+      },
+      "access": "underground_operations_admin",
+      "systems": [
+        "security interlock",
+        "environmental/fire separation",
+        "vehicle/personnel transfer",
+        "emergency closure"
+      ]
+    }
+  ],
+  "backbone": {
+    "origin": "equity-uprise-b1-north-transfer-lock",
+    "first_node": {
+      "id": "underground-central-exchange",
+      "label": "Central Underground Exchange",
+      "geometry_status": "future-campus-masterplan"
+    },
+    "transport": {
+      "type": "low-speed-autonomous-electric-shuttle-and-utility-vehicle",
+      "personnel_lane": true,
+      "freight_logistics": true,
+      "protected_walkway": true,
+      "high_speed_transport": false
+    },
+    "subsystems": [
+      "personnel_route",
+      "automated_electric_transport",
+      "freight_logistics",
+      "utility_spine",
+      "ventilation",
+      "drainage_flood_management",
+      "fire_life_safety",
+      "emergency_communications",
+      "access_control",
+      "lighting",
+      "cyber_physical_controls",
+      "inspection_maintenance"
+    ],
+    "utility_spine": [
+      "electrical_power",
+      "fiber_data",
+      "controls_telemetry",
+      "emergency_communications",
+      "future_water_thermal_services"
+    ],
+    "future_connections": [
+      {
+        "id": "future-connection-01",
+        "label": "FUTURE CONNECTION RESERVED",
+        "destination": null,
+        "status": "reserved-no-destination-authority"
+      },
+      {
+        "id": "future-connection-02",
+        "label": "FUTURE CONNECTION RESERVED",
+        "destination": null,
+        "status": "reserved-no-destination-authority"
+      },
+      {
+        "id": "future-connection-03",
+        "label": "FUTURE CONNECTION RESERVED",
+        "destination": null,
+        "status": "reserved-no-destination-authority"
+      }
+    ]
+  },
+  "live_state_model": [
+    "authorized_people_underground",
+    "vehicle_occupancy",
+    "vehicle_positions",
+    "sector_availability",
+    "destination_availability",
+    "access_control_state",
+    "ventilation_state",
+    "fire_life_safety_state",
+    "drainage_flood_state",
+    "electrical_state",
+    "communications_state",
+    "emergency_closures",
+    "incident_status",
+    "maintenance_restrictions"
+  ],
+  "accountability_rule": "The live system must be able to determine who is underground, their last/active authorized sector, and available safe routes during an incident.",
+  "scenarios": [
+    {
+      "id": "tunnel-unaccounted-person",
+      "competencies": [
+        "CORE-08",
+        "PSC-05",
+        "OPS-03",
+        "OPS-05"
+      ]
+    },
+    {
+      "id": "tunnel-disabled-shuttle",
+      "competencies": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-05"
+      ]
+    },
+    {
+      "id": "tunnel-fire-smoke",
+      "competencies": [
+        "CORE-08",
+        "PSC-05",
+        "OPS-01",
+        "OPS-04",
+        "OPS-05"
+      ]
+    },
+    {
+      "id": "tunnel-ventilation-failure",
+      "competencies": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-04",
+        "OPS-05"
+      ]
+    },
+    {
+      "id": "tunnel-flood",
+      "competencies": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-04",
+        "OPS-05"
+      ]
+    },
+    {
+      "id": "tunnel-power-loss",
+      "competencies": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-04",
+        "OPS-05"
+      ]
+    },
+    {
+      "id": "tunnel-network-control-outage",
+      "competencies": [
+        "CORE-05",
+        "OPS-02",
+        "OPS-06"
+      ]
+    },
+    {
+      "id": "tunnel-cyber-physical-compromise",
+      "competencies": [
+        "OPS-01",
+        "OPS-02",
+        "OPS-05",
+        "OPS-06"
+      ]
+    },
+    {
+      "id": "tunnel-access-control-failure",
+      "competencies": [
+        "CORE-08",
+        "OPS-02",
+        "OPS-05"
+      ]
+    },
+    {
+      "id": "tunnel-service-spill",
+      "competencies": [
+        "CORE-07",
+        "CORE-08",
+        "OPS-01"
+      ]
+    },
+    {
+      "id": "tunnel-connected-building-isolation",
+      "competencies": [
+        "PSC-05",
+        "OPS-01",
+        "OPS-03",
+        "OPS-05"
+      ]
+    }
+  ],
+  "authority_rules": [
+    "B1 and tunnels are omitted from normal participant navigation.",
+    "Ordinary Equity Uprise admin does not imply underground operations authority.",
+    "Training uses a sandboxed clone and never unlocks the live underground network.",
+    "Future tunnel branches may not name or connect to a destination until that building has canonical authority.",
+    "Competency and operational authorization remain separate."
+  ]
+}

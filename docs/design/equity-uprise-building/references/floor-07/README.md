@@ -1,23 +1,21 @@
-# Level 07 — Roof / Mobility Portal canonical references
+# Floor 07 — Roof / Mobility Portal — Core V2 Plan References
 
-This folder contains the locked schematic geometry for the Equity Uprise roof / ecosystem plane.
+> Status: **PROVISIONAL CORE V2 CHASSIS PLAN — PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**
 
-Authority order:
+Generated from:
+- `production/building-core-v2.json`
+- `production/core-v2-floor-programs.json`
+- `production/generate_core_v2_plans.py`
 
-1. `../../FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
-2. `../../FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
-3. `../../FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
-4. DXF
-5. SVG
-6. raster preview / later renders
+Files:
+- `equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf`
+- `equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg`
+- `equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png`
 
-Key rule: **the roof is portal infrastructure; ecosystem destinations are dynamic routing data, not permanent architecture.**
+Finished-floor elevation: **+81 FT**.
 
-The candidate mobility zone is a schematic reservation only. It is not an approved helipad/vertiport and does not establish aircraft, FATO/TLOF, approach/departure, structural, fire, zoning, or aviation requirements.
+These files are **generated-only**. Do not hand-edit them or treat this README as geometry authority.
 
-Canonical files:
-- `equity-uprise-level-07-roof-mobility-portal-schematic-v1.dxf`
-- `equity-uprise-level-07-roof-mobility-portal-schematic-v1.svg`
-- `equity-uprise-level-07-roof-mobility-portal-schematic-v1.png`
+The machine-readable source files above control title, level identity, program zones, shared vertical systems, and regeneration.
 
-The PNG is a derivative preview and cannot override the DXF/SVG/written authority.
+Design maturity: **pre-iterative-program-rewrite**.

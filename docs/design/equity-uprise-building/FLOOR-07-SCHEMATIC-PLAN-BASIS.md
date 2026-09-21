@@ -1,10 +1,16 @@
 # Equity Uprise Building — Level 07 Roof / Mobility Portal Schematic Plan Basis
 
-> Status: **LOCKED SCHEMATIC ROOF GEOMETRY / ECOSYSTEM-PLANE COORDINATION**  
+> Status: **CORE V2 ROOF CHASSIS / ECOSYSTEM-ROUTING COORDINATION REFERENCE**
+> Program note: roof/core geometry constraints remain current; final developmental activity/space programming is pre-iterative.  
 > Companion to: `FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`  
 > Ecosystem semantics: `FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`  
 > Origin/pre-program: `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`  
 > **Not for construction or aviation approval.**
+
+
+> Core V2 chassis authority: `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Finished-floor elevation in combined model: **+81'-0"**.
+> Floor-specific program may not move the shared passenger elevator, freight/service shaft, Stair A, Stair B, MEP reservation or shared slab openings.
 
 ## 1. Coordinate datum
 
@@ -20,27 +26,37 @@ Coordination grid:
 
 ---
 
-## 2. Inherited vertical systems
+## 2. Inherited Core V2 vertical systems
 
-### Elevator shaft
-- **X 54–62 / Y 34–44**
-- exact inherited stack
-- roof overrun/landing treatment to be professionally resolved
+Level 7 roof walking datum is **+81'-0"** above Floor 1 finished floor.
 
-### Stair A
-- **X 60–72 / Y 54–72**
-- inherited protected core
+### Passenger elevator shaft
+- inherited shaft **X54–62 / Y34–44**
+- direct passenger-elevator roof stop remains unassumed
+- overrun/headhouse/service treatment requires professional resolution
+
+### West Service Core
+- overall inherited reservation **X0–18 / Y54–72**
+
+### Service / freight elevator
+- inherited shaft reservation **X0–8 / Y60–72**
+- continuous roof-service reservation
+- an actual Level 7 stop is reserved for future technical resolution, not assumed operational
 
 ### Stair B
-- **X 0–12 / Y 54–72**
-- inherited protected core
+- revised inherited enclosure **X8–18 / Y54–72**
+- protected stair continuity reaches the roof level
+- shared opening approximately **X8.75–17.25 / Y58.25–71.25**
+
+### Stair A
+- inherited enclosure **X60–72 / Y54–72**
+- protected stair continuity reaches the roof level
+- shared opening approximately **X60.75–71.25 / Y58.25–71.25**
 
 ### MEP / roof services
-- approximately **X 50–60 / Y 66–72**
+- inherited reservation approximately **X50–60 / Y66–72**
 
-No roof feature may relocate these systems.
-
----
+No roof feature may relocate or cover these systems.
 
 ## 3. Roof-access / core enclosure
 
@@ -107,22 +123,24 @@ Maintain conceptual separation from the mobility reservation.
 
 ## 7. North service / equipment band
 
-Reserve approximately:
-- **X 28–60 / Y 60–72**
+The roof service band is coordinated around Core V2.
 
-Program:
+Primary service/equipment reservation:
+- approximately **X34–60 / Y60–72**, excluding the MEP/riser and Stair A zones.
+
+West Service Core:
+- **X0–18 / Y54–72**
+- contains revised Stair B and the freight/service shaft reservation.
+
+The north roof area may contain:
 - rooftop mechanical/service equipment;
 - MEP terminations;
-- communications;
-- service access;
-- screening.
-
-Do not block:
-- Stair A;
-- Stair B;
+- weather-protected service access/headhouse elements as required;
+- Stair A and Stair B roof arrival conditions;
+- freight/service-elevator roof-service reservation;
 - required egress/service paths.
 
----
+No service equipment may block either stair, either stair opening, the passenger-elevator overrun/service envelope, freight shaft, or MEP routes.
 
 ## 8. Primary circulation
 
@@ -223,17 +241,19 @@ Professional/site-specific review is required.
 
 ## 14. Drawing authority
 
-1. `FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
-2. **this schematic-plan basis**
-3. `FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md` for cross-site semantics
-4. canonical DXF
-5. canonical SVG
-6. canonical PNG preview
-7. later exterior/3D/360 imagery
+For this Core V2 migration branch:
 
-The older pre-program records design intent but does not override this locked geometry.
+1. `BUILDING-CORE-V2-SPEC.md`
+2. `production/building-core-v2.json`
+3. floor-specific written 360/spec document
+4. this schematic-plan basis
+5. regenerated Core V2 DXF
+6. regenerated Core V2 SVG
+7. regenerated Core V2 PNG preview
+8. deterministic production package
+9. later 3D/render/360 output
 
----
+The shared Core V2 files control all vertical systems. Generated imagery is never geometry authority.
 
 ## 15. QC requirements
 
@@ -253,3 +273,21 @@ The older pre-program records design intent but does not override this locked ge
 - [ ] destination websites absent from geometry
 - [ ] 360 datum shown
 - [ ] NOT FOR CONSTRUCTION / NOT FOR AVIATION APPROVAL note
+
+
+### Core V2 migration QC addendum
+- [ ] service/freight elevator shaft at X 0–8 / Y 60–72
+- [ ] revised Stair B at X 8–18 / Y 54–72
+- [ ] Stair A at X 60–72 / Y 54–72
+- [ ] both stairs physically reach +81'-0" roof datum
+- [ ] roof slab openings remain coordinated
+
+## Repo capability authority
+
+Program semantics for this floor are controlled by:
+- `production/equity-uprise-capability-map-v2.json`
+- `production/core-v2-floor-programs.json`
+- the companion long-form floor spec.
+
+This schematic basis controls plan geometry; it may not silently rename or delete a repo-backed capability represented by the floor program. Public/private and approval boundaries remain those of the source Equity Uprise system.
+

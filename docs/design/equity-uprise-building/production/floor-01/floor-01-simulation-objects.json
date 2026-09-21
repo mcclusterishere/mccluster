@@ -1,0 +1,369 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-01",
+  "source_ref": "floor-01-site-egress.json",
+  "objects": [
+    {
+      "object_id": "site-public-way-south",
+      "system": "site_egress",
+      "type": "public_way",
+      "label": "South Public Way / Street Edge",
+      "geometry": {
+        "bounds_ft": {
+          "x1": -18,
+          "y1": -36,
+          "x2": 90,
+          "y2": -24
+        }
+      },
+      "scenario_controllable": false
+    },
+    {
+      "object_id": "site-public-approach",
+      "system": "site_egress",
+      "type": "walk",
+      "label": "Public / Accessible Approach",
+      "geometry": {
+        "bounds_ft": {
+          "x1": 30,
+          "y1": -24,
+          "x2": 42,
+          "y2": 0
+        }
+      },
+      "scenario_controllable": false
+    },
+    {
+      "object_id": "site-east-egress-walk",
+      "system": "site_egress",
+      "type": "egress_walk",
+      "label": "East Exit Discharge Walk",
+      "geometry": {
+        "bounds_ft": {
+          "x1": 72,
+          "y1": -24,
+          "x2": 84,
+          "y2": 62
+        }
+      },
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "site-north-egress-walk",
+      "system": "site_egress",
+      "type": "egress_walk",
+      "label": "North / Rear Exit Discharge Walk",
+      "geometry": {
+        "polyline_ft": [
+          [
+            13.5,
+            72
+          ],
+          [
+            13.5,
+            90
+          ],
+          [
+            84,
+            90
+          ],
+          [
+            84,
+            -24
+          ]
+        ]
+      },
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "site-service-apron-west",
+      "system": "site_egress",
+      "type": "service",
+      "label": "Secure Service / Delivery Apron",
+      "geometry": {
+        "bounds_ft": {
+          "x1": -24,
+          "y1": 48,
+          "x2": 0,
+          "y2": 68
+        }
+      },
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "site-primary-assembly",
+      "system": "site_egress",
+      "type": "assembly",
+      "label": "Assembly Area A",
+      "geometry": {
+        "bounds_ft": {
+          "x1": 88,
+          "y1": -8,
+          "x2": 108,
+          "y2": 16
+        }
+      },
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "site-alternate-assembly",
+      "system": "site_egress",
+      "type": "assembly",
+      "label": "Assembly Area B",
+      "geometry": {
+        "bounds_ft": {
+          "x1": 88,
+          "y1": 78,
+          "x2": 108,
+          "y2": 102
+        }
+      },
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "site-responder-keep-clear",
+      "system": "site_egress",
+      "type": "keep_clear",
+      "label": "Responder Keep-Clear Perimeter",
+      "geometry": {
+        "offset_from_building_ft": 12
+      },
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "F1-DOOR-PUBLIC-OUTER",
+      "system": "architectural_access_life_safety",
+      "type": "exterior_opening",
+      "label": "Public Entrance Outer Doors",
+      "location": {
+        "facade": "south",
+        "x1": 31,
+        "x2": 41
+      },
+      "access_class": "public",
+      "normal_state": "unlocked",
+      "states": [
+        "open",
+        "closed",
+        "locked",
+        "failed"
+      ],
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "F1-DOOR-PUBLIC-INNER",
+      "system": "architectural_access_life_safety",
+      "type": "exterior_opening",
+      "label": "Public Entrance Inner Doors",
+      "location": {
+        "facade": "south",
+        "x1": 31,
+        "x2": 41,
+        "y": 9
+      },
+      "access_class": "public",
+      "normal_state": "unlocked",
+      "states": [
+        "open",
+        "closed",
+        "locked",
+        "failed"
+      ],
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "F1-DOOR-STAIR-A-DISCHARGE",
+      "system": "architectural_access_life_safety",
+      "type": "exterior_opening",
+      "label": "Stair A Exit Discharge",
+      "location": {
+        "facade": "east",
+        "x": 72,
+        "y1": 56,
+        "y2": 60
+      },
+      "access_class": "exit-only-from-interior",
+      "normal_state": "secured-from-exterior",
+      "states": [
+        "closed",
+        "open",
+        "blocked",
+        "failed"
+      ],
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "F1-DOOR-STAIR-B-DISCHARGE",
+      "system": "architectural_access_life_safety",
+      "type": "exterior_opening",
+      "label": "Stair B Exit Discharge",
+      "location": {
+        "facade": "north",
+        "y": 72,
+        "x1": 12,
+        "x2": 15
+      },
+      "access_class": "exit-only-from-interior",
+      "normal_state": "secured-from-exterior",
+      "states": [
+        "closed",
+        "open",
+        "blocked",
+        "failed"
+      ],
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "F1-DOOR-SERVICE-WEST",
+      "system": "architectural_access_life_safety",
+      "type": "exterior_opening",
+      "label": "Secure Service / Delivery Entrance",
+      "location": {
+        "facade": "west",
+        "x": 0,
+        "y1": 56,
+        "y2": 59
+      },
+      "access_class": "authorized-service",
+      "normal_state": "locked",
+      "states": [
+        "closed",
+        "open",
+        "locked",
+        "failed"
+      ],
+      "scenario_controllable": true
+    },
+    {
+      "object_id": "F1-BARRIER-STAIR-A-DOWN",
+      "system": "life_safety",
+      "type": "discharge_direction_control",
+      "label": "F1-BARRIER-STAIR-A-DOWN",
+      "location": "Stair A Floor 1 landing",
+      "states": [
+        "normal",
+        "evacuation_barrier_active",
+        "failed"
+      ],
+      "scenario_controllable": true,
+      "normal_access_policy": "downward-to-b1-restricted-to-house-owner-or-underground-operations-admin",
+      "b1_to_floor1_egress": "preserved"
+    },
+    {
+      "object_id": "F1-BARRIER-STAIR-B-DOWN",
+      "system": "life_safety",
+      "type": "discharge_direction_control",
+      "label": "F1-BARRIER-STAIR-B-DOWN",
+      "location": "Stair B Floor 1 landing",
+      "states": [
+        "normal",
+        "evacuation_barrier_active",
+        "failed"
+      ],
+      "scenario_controllable": true,
+      "normal_access_policy": "downward-to-b1-restricted-to-house-owner-or-underground-operations-admin",
+      "b1_to_floor1_egress": "preserved"
+    },
+    {
+      "object_id": "F1-AED-01",
+      "system": "life_safety",
+      "type": "emergency_equipment",
+      "label": "AED",
+      "location_ft": {
+        "x": 44,
+        "y": 46
+      },
+      "visibility": "public",
+      "scenario_controllable": false
+    },
+    {
+      "object_id": "F1-FIRST-AID-01",
+      "system": "life_safety",
+      "type": "emergency_equipment",
+      "label": "First Aid Kit",
+      "location_ft": {
+        "x": 43,
+        "y": 46
+      },
+      "visibility": "staff-and-marked-public",
+      "scenario_controllable": false
+    },
+    {
+      "object_id": "F1-FE-01",
+      "system": "life_safety",
+      "type": "emergency_equipment",
+      "label": "Fire Extinguisher Cabinet \u2014 Lobby",
+      "location_ft": {
+        "x": 53,
+        "y": 55
+      },
+      "visibility": "marked",
+      "scenario_controllable": false
+    },
+    {
+      "object_id": "F1-FE-02",
+      "system": "life_safety",
+      "type": "emergency_equipment",
+      "label": "Fire Extinguisher Cabinet \u2014 West Service",
+      "location_ft": {
+        "x": 18,
+        "y": 57
+      },
+      "visibility": "marked",
+      "scenario_controllable": false
+    },
+    {
+      "object_id": "F1-SPILL-01",
+      "system": "life_safety",
+      "type": "emergency_equipment",
+      "label": "Spill Kit",
+      "location_ft": {
+        "x": 36,
+        "y": 65
+      },
+      "visibility": "authorized-service",
+      "scenario_controllable": false
+    },
+    {
+      "object_id": "F1-EGRESS-MAP-01",
+      "system": "life_safety",
+      "type": "emergency_equipment",
+      "label": "You Are Here / Egress Map",
+      "location_ft": {
+        "x": 48,
+        "y": 27
+      },
+      "visibility": "public",
+      "scenario_controllable": false
+    },
+    {
+      "object_id": "F1-EGRESS-MAP-02",
+      "system": "life_safety",
+      "type": "emergency_equipment",
+      "label": "You Are Here / Egress Map \u2014 North",
+      "location_ft": {
+        "x": 39,
+        "y": 57
+      },
+      "visibility": "public",
+      "scenario_controllable": false
+    },
+    {
+      "object_id": "F1-TWOWAY-01",
+      "system": "life_safety",
+      "type": "emergency_equipment",
+      "label": "Emergency Two-Way Communication Concept",
+      "location_ft": {
+        "x": 53,
+        "y": 39
+      },
+      "visibility": "public-accessible",
+      "scenario_controllable": false
+    }
+  ],
+  "rules": [
+    "Simulation objects are derived from canonical site/egress authority.",
+    "Presence in this file does not grant operational authorization.",
+    "Geometry remains schematic and not for construction."
+  ]
+}

@@ -1,29 +1,21 @@
-# Floor 01 — Canonical Plan References
+# Floor 01 — Arrival / Orientation / Intake — Core V2 Plan References
 
-These files are the visual/CAD representation of the locked Floor 1 Lobby + Intake schematic geometry.
+> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**
 
-## Files
+Generated from:
+- `production/building-core-v2.json`
+- `production/core-v2-floor-programs.json`
+- `production/generate_core_v2_plans.py`
 
-- `equity-uprise-floor-01-viable-schematic-v3.png`
-  - raster preview for quick visual inspection;
-  - not the geometry authority when it conflicts with vector/CAD or written dimensions.
+Files:
+- `equity-uprise-floor-01-core-v2-schematic-v1.dxf`
+- `equity-uprise-floor-01-core-v2-schematic-v1.svg`
+- `equity-uprise-floor-01-core-v2-schematic-v1.png`
 
-- `equity-uprise-floor-01-viable-schematic-v3.svg`
-  - vector plan for inspection, browser viewing and derivative graphics.
+Finished-floor elevation: **+0 FT**.
 
-- `equity-uprise-floor-01-viable-schematic-v3.dxf`
-  - CAD handoff for downstream architectural development.
+These files are **generated-only**. Do not hand-edit them or treat this README as geometry authority.
 
-## Mandatory companion documents
+The machine-readable source files above control title, level identity, program zones, shared vertical systems, and regeneration.
 
-- `../../FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
-- `../../FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
-- `../../REFERENCE-AUTHORITY.md`
-- `../../../EQUITY-UPRISE-BUILDING-INVENTORY.md`
-- `../../../EQUITY-UPRISE-REPO-AUDIT.md`
-
-## Status
-
-**SCHEMATIC DESIGN / NOT FOR CONSTRUCTION.**
-
-These files establish continuity for future Equity Uprise floor planning and 360 imagery. They are not stamped permit drawings and do not replace licensed architectural, structural, MEP, fire-protection, accessibility or code review.
+Design maturity: **reconciled-current-iterative-pass**.

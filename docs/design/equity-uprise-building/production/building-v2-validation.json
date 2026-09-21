@@ -1,0 +1,233 @@
+{
+  "schema_version": "2.0.0",
+  "status": "active-core-v2-validation-contract",
+  "core_id": "equity-uprise-core-v2",
+  "not_for_construction": true,
+  "level_of_exit_discharge": 1,
+  "tolerances": {
+    "plan_ft": 0.01,
+    "elevation_ft": 0.01
+  },
+  "expected_levels": [
+    {
+      "level": 0,
+      "id": "basement-b1",
+      "name": "Underground Operations / Technical Service Basement",
+      "finished_floor_elevation_ft": -13.5,
+      "developmental": false
+    },
+    {
+      "level": 1,
+      "id": "floor-01",
+      "name": "Arrival / Orientation / Intake",
+      "finished_floor_elevation_ft": 0,
+      "developmental": true
+    },
+    {
+      "level": 2,
+      "id": "floor-02",
+      "finished_floor_elevation_ft": 13.5,
+      "developmental": true
+    },
+    {
+      "level": 3,
+      "id": "floor-03",
+      "finished_floor_elevation_ft": 27,
+      "developmental": true
+    },
+    {
+      "level": 4,
+      "id": "floor-04",
+      "finished_floor_elevation_ft": 40.5,
+      "developmental": true
+    },
+    {
+      "level": 5,
+      "id": "floor-05",
+      "finished_floor_elevation_ft": 54,
+      "developmental": true
+    },
+    {
+      "level": 6,
+      "id": "floor-06",
+      "finished_floor_elevation_ft": 67.5,
+      "developmental": true
+    },
+    {
+      "level": 7,
+      "id": "level-07",
+      "finished_floor_elevation_ft": 81,
+      "developmental": false
+    }
+  ],
+  "expected_vertical_systems": {
+    "passenger_elevator": {
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "b1_hidden_from_normal_selector": true
+    },
+    "service_freight_elevator": {
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    "stair_a": {
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "stair_b": {
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "mep_riser": {
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    }
+  },
+  "expected_transition_count_per_stair": 7,
+  "expected_total_stair_transitions": 14,
+  "required_refs": [
+    "basement-b1-program.json",
+    "underground-tunnel-network.json",
+    "floor-01/floor-01-digital-twin-program.json",
+    "floor-01/floor-01-site-egress.json"
+  ],
+  "assertions": [
+    {
+      "id": "shell_width",
+      "type": "equals",
+      "path": "shell.width_ft",
+      "expected": 72
+    },
+    {
+      "id": "shell_depth",
+      "type": "equals",
+      "path": "shell.depth_ft",
+      "expected": 72
+    },
+    {
+      "id": "floor_to_floor",
+      "type": "equals",
+      "path": "shell.floor_to_floor_ft",
+      "expected": 13.5
+    },
+    {
+      "id": "level_elevations",
+      "type": "sequence_equals",
+      "path": "levels[*].finished_floor_elevation_ft",
+      "expected": [
+        -13.5,
+        0,
+        13.5,
+        27,
+        40.5,
+        54,
+        67.5,
+        81
+      ]
+    },
+    {
+      "id": "level_of_exit_discharge",
+      "type": "equals",
+      "path": "level_of_exit_discharge",
+      "expected": 1
+    },
+    {
+      "id": "passenger_shaft",
+      "type": "bounds_equals",
+      "path": "vertical_systems.passenger_elevator.shaft_bounds_ft",
+      "expected": {
+        "x1": 54,
+        "y1": 34,
+        "x2": 62,
+        "y2": 44
+      }
+    },
+    {
+      "id": "freight_shaft",
+      "type": "bounds_equals",
+      "path": "vertical_systems.service_freight_elevator.shaft_bounds_ft",
+      "expected": {
+        "x1": 0,
+        "y1": 60,
+        "x2": 8,
+        "y2": 72
+      }
+    },
+    {
+      "id": "stair_a_enclosure",
+      "type": "bounds_equals",
+      "path": "vertical_systems.stair_a.enclosure_bounds_ft",
+      "expected": {
+        "x1": 60,
+        "y1": 54,
+        "x2": 72,
+        "y2": 72
+      }
+    },
+    {
+      "id": "stair_b_enclosure",
+      "type": "bounds_equals",
+      "path": "vertical_systems.stair_b.enclosure_bounds_ft",
+      "expected": {
+        "x1": 8,
+        "y1": 54,
+        "x2": 18,
+        "y2": 72
+      }
+    },
+    {
+      "id": "freight_not_egress_substitute",
+      "type": "text_contains",
+      "path": "egress_and_code_limitations",
+      "expected": "not counted as a substitute for a required exit"
+    }
+  ],
+  "cross_floor_rules": [
+    "Every physical level must inherit shared passenger-elevator, freight/service-shaft, Stair A, Stair B, and MEP coordinates from building-core-v2.json.",
+    "Floor 1 is the modeled level of exit discharge.",
+    "B1 is a restricted non-developmental support/operations level and is hidden from normal participant navigation.",
+    "Learner/instructor B1 work uses a sandboxed clone; live B1/tunnel authority remains separate.",
+    "No slab may cover the shared shaft or stair slab-opening polygons.",
+    "Per-floor viewers are derived views; combined B1-to-roof geometry is vertical-continuity authority."
+  ],
+  "generation_epoch": "2026-09-21-floor1-b1-reconciled",
+  "generation_policy": "Derived plans, scene packages, reports, and GLB must be regenerated after authority changes and are never hand-edited."
+}

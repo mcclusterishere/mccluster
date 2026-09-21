@@ -70,6 +70,7 @@ export const CATALOG = {
     { path: '/v1', method: 'GET', auth: 'none' },
     { path: '/v1/me', method: 'GET', auth: 'user' },
     { path: '/v1/status', method: 'GET', auth: 'house-owner' },
+    { path: '/v1/equity-uprise/halo-globe', method: 'GET', auth: 'none-read-only-projection' },
     { path: '/v1/apps', method: 'GET', auth: 'none' },
     { path: '/v1/fees/quote', method: 'GET', auth: 'none' },
     { path: '/v1/ai/ingest', method: 'POST', auth: 'house-owner' },

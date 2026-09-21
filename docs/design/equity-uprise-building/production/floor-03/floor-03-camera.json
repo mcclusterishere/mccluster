@@ -1,0 +1,42 @@
+{
+  "schema_version": "2.0.0",
+  "scene_id": "equity-uprise-floor-03",
+  "cameras": [
+    {
+      "id": "canonical_360",
+      "type": "equirectangular",
+      "position_ft_local": {
+        "x": 36,
+        "y": 28,
+        "z": 5.333
+      },
+      "position_ft_world": {
+        "x": 36,
+        "y": 28,
+        "z": 32.333
+      },
+      "rotation_deg": {
+        "yaw": 0,
+        "pitch": 0,
+        "roll": 0
+      },
+      "authority": "canonical"
+    },
+    {
+      "id": "floor_overview",
+      "type": "perspective",
+      "position_ft_world": {
+        "x": 36,
+        "y": 15,
+        "z": 45
+      },
+      "look_at_ft_world": {
+        "x": 36,
+        "y": 38,
+        "z": 31
+      },
+      "fov_deg": 60,
+      "authority": "production_default"
+    }
+  ]
+}

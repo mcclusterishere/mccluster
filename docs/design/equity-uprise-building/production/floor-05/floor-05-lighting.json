@@ -1,0 +1,30 @@
+{
+  "schema_version": "2.0.0",
+  "scene_id": "equity-uprise-floor-05",
+  "color_temperature_default_k": 3000,
+  "fixtures": [
+    {
+      "id": "general_fill",
+      "type": "ceiling_area_grid",
+      "temperature_k": 3000,
+      "intensity_relative": 0.72,
+      "height_ft_local": 10.8
+    },
+    {
+      "id": "program_focus",
+      "type": "soft_area",
+      "temperature_k": 3000,
+      "intensity_relative": 0.62,
+      "position_ft_local": {
+        "x": 36,
+        "y": 40,
+        "z": 10.5
+      }
+    }
+  ],
+  "rules": [
+    "Warm-white practical light is primary.",
+    "Red remains a restrained state/wayfinding accent.",
+    "Halo emission on Floor 6 remains subordinate to architectural lighting."
+  ]
+}

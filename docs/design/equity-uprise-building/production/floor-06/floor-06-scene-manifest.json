@@ -1,0 +1,484 @@
+{
+  "schema_version": "2.1.0",
+  "scene_id": "equity-uprise-floor-06",
+  "scene_name": "Equity Uprise Level 06 \u2014 Penthouse Command",
+  "status": "core-v2-provisional-program",
+  "not_for_construction": true,
+  "shared_core_ref": "../building-core-v2.json",
+  "floor_program_ref": "../core-v2-floor-programs.json",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
+  "feature_ids": [
+    "institutional-desk",
+    "perspectives",
+    "conversation-agent",
+    "private-contact",
+    "host-listings",
+    "interviews-calendar",
+    "stakeholder-intake",
+    "stakeholder-graph",
+    "meetings-commitments",
+    "partnership-sponsorship",
+    "initiative-portfolio",
+    "credentials-proof",
+    "publications",
+    "publication-distribution",
+    "government-dockets",
+    "government-submissions",
+    "monitoring",
+    "citations-impact",
+    "music-release",
+    "ddex",
+    "admin-desk",
+    "control-approvals",
+    "integrations-oauth",
+    "workflows-jobs",
+    "status-health",
+    "google-workspace",
+    "outreach",
+    "event-ledger",
+    "program-support-funding",
+    "fellowship-cohort",
+    "enterprise-development",
+    "halo-spatial-intelligence"
+  ],
+  "design_maturity": "pre-iterative-program-rewrite",
+  "render_readiness": "chassis-only-not-final-program",
+  "working_development_stage": null,
+  "primary_competency_ids": [],
+  "secondary_competency_ids": [],
+  "authority": {
+    "building_core": [
+      "../../BUILDING-CORE-V2-SPEC.md",
+      "../building-core-v2.json"
+    ],
+    "spatial_authority": [
+      "../../FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md",
+      "../../FLOOR-06-SCHEMATIC-PLAN-BASIS.md",
+      "../../REFERENCE-AUTHORITY.md"
+    ],
+    "geometry_authority": [
+      "../../references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf",
+      "../../references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg",
+      "../../references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png"
+    ],
+    "rule": "Shared Core V2 vertical systems override floor-local geometry."
+  },
+  "units": {
+    "authoring": "feet",
+    "gltf_conversion_meters_per_foot": 0.3048
+  },
+  "coordinate_system": {
+    "origin": "southwest_exterior_corner_floor_01",
+    "x_positive": "east",
+    "y_positive": "north",
+    "z_positive": "up"
+  },
+  "building_shell": {
+    "width_ft": 72,
+    "depth_ft": 72,
+    "floor_to_floor_ft": 13.5,
+    "finished_floor_elevation_ft": 67.5
+  },
+  "inherited_vertical_systems": {
+    "passenger_elevator": {
+      "id": "passenger-elevator-a",
+      "type": "passenger_elevator",
+      "shaft_bounds_ft": {
+        "x1": 54,
+        "y1": 34,
+        "x2": 62,
+        "y2": 44
+      },
+      "shaft_width_ft": 8,
+      "shaft_depth_ft": 10,
+      "door_facing": "west",
+      "door_opening_concept_ft": {
+        "facade_x": 54,
+        "y1": 37,
+        "y2": 41,
+        "clear_width_ft": 4
+      },
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "level_7_service": "not_assumed",
+      "shaft_continuity": "continuous_through_served_stack",
+      "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
+      "b1_access_policy": {
+        "physical_stop": true,
+        "visible_in_normal_floor_selector": false,
+        "authorized_roles": [
+          "mccluster_house_owner",
+          "underground_operations_admin"
+        ],
+        "ordinary_equity_uprise_admin_sufficient": false
+      }
+    },
+    "service_freight_elevator": {
+      "id": "service-freight-elevator-a",
+      "type": "service_freight_elevator",
+      "shaft_bounds_ft": {
+        "x1": 0,
+        "y1": 60,
+        "x2": 8,
+        "y2": 72
+      },
+      "shaft_width_ft": 8,
+      "shaft_depth_ft": 12,
+      "door_facing": "south",
+      "door_opening_concept_ft": {
+        "facade_y": 60,
+        "x1": 1.5,
+        "x2": 6.5,
+        "clear_width_ft": 5
+      },
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "level_7_service": "reserved_for_future_resolution",
+      "shaft_continuity": "continuous_reservation_to_roof",
+      "pit_overhead_machine_strategy": "unresolved",
+      "note": "Serves B1 and Floors 1\u20136; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts.",
+      "b1_access_policy": {
+        "physical_stop": true,
+        "access": "restricted-operational"
+      }
+    },
+    "stair_a": {
+      "id": "stair-a-east",
+      "type": "protected_stair",
+      "enclosure_bounds_ft": {
+        "x1": 60,
+        "y1": 54,
+        "x2": 72,
+        "y2": 72
+      },
+      "enclosure_width_ft": 12,
+      "enclosure_depth_ft": 18,
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "access_side": "south",
+      "access_opening_concept_ft": {
+        "facade_y": 54,
+        "x1": 61.5,
+        "x2": 64.5,
+        "clear_width_ft": 3
+      },
+      "configuration": "dogleg_u_shaped_concept",
+      "rise_per_level_ft": 13.5,
+      "riser_count_per_level_concept": 22,
+      "riser_height_ft_concept": 0.6136363636,
+      "tread_depth_ft_concept": 0.9166666667,
+      "risers_per_flight_concept": 11,
+      "treads_per_flight_concept": 10,
+      "flight_width_ft_concept": 5,
+      "central_gap_ft_concept": 0.5,
+      "north_intermediate_landing_depth_ft_concept": 3.75,
+      "slab_opening_bounds_ft": {
+        "x1": 60.75,
+        "y1": 58.25,
+        "x2": 71.25,
+        "y2": 71.25
+      },
+      "geometry_status": "schematic_continuity_geometry_not_code_design",
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
+      "b1_access_policy": {
+        "physical_connection": true,
+        "floor1_downward_entry": "access-controlled-restricted",
+        "b1_to_floor1_egress": "preserved"
+      }
+    },
+    "stair_b": {
+      "id": "stair-b-west",
+      "type": "protected_stair",
+      "enclosure_bounds_ft": {
+        "x1": 8,
+        "y1": 54,
+        "x2": 18,
+        "y2": 72
+      },
+      "enclosure_width_ft": 10,
+      "enclosure_depth_ft": 18,
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "access_side": "south",
+      "access_opening_concept_ft": {
+        "facade_y": 54,
+        "x1": 14,
+        "x2": 17,
+        "clear_width_ft": 3
+      },
+      "configuration": "dogleg_u_shaped_concept",
+      "rise_per_level_ft": 13.5,
+      "riser_count_per_level_concept": 22,
+      "riser_height_ft_concept": 0.6136363636,
+      "tread_depth_ft_concept": 0.9166666667,
+      "risers_per_flight_concept": 11,
+      "treads_per_flight_concept": 10,
+      "flight_width_ft_concept": 4,
+      "central_gap_ft_concept": 0.5,
+      "north_intermediate_landing_depth_ft_concept": 3.75,
+      "slab_opening_bounds_ft": {
+        "x1": 8.75,
+        "y1": 58.25,
+        "x2": 17.25,
+        "y2": 71.25
+      },
+      "geometry_status": "schematic_continuity_geometry_not_code_design",
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
+      "b1_access_policy": {
+        "physical_connection": true,
+        "floor1_downward_entry": "access-controlled-restricted",
+        "b1_to_floor1_egress": "preserved"
+      }
+    },
+    "mep_riser": {
+      "id": "mep-riser-east",
+      "type": "mep_riser_reservation",
+      "bounds_ft": {
+        "x1": 50,
+        "y1": 66,
+        "x2": 60,
+        "y2": 72
+      },
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    }
+  },
+  "shared_slab_openings": {
+    "passenger_elevator": {
+      "x1": 54,
+      "y1": 34,
+      "x2": 62,
+      "y2": 44
+    },
+    "service_freight_elevator": {
+      "x1": 0,
+      "y1": 60,
+      "x2": 8,
+      "y2": 72
+    },
+    "stair_a": {
+      "x1": 60.75,
+      "y1": 58.25,
+      "x2": 71.25,
+      "y2": 71.25
+    },
+    "stair_b": {
+      "x1": 8.75,
+      "y1": 58.25,
+      "x2": 17.25,
+      "y2": 71.25
+    }
+  },
+  "zones": [
+    {
+      "id": "zone_01",
+      "label": "Penthouse Command",
+      "type": "zone",
+      "bounds_ft": {
+        "x1": 22,
+        "y1": 28,
+        "x2": 50,
+        "y2": 50
+      },
+      "route_key": "institutional_command"
+    },
+    {
+      "id": "zone_02",
+      "label": "Institutional Command Wall",
+      "type": "feature",
+      "bounds_ft": {
+        "x1": 22,
+        "y1": 50,
+        "x2": 50,
+        "y2": 54
+      },
+      "route_key": "institutional_command"
+    },
+    {
+      "id": "zone_03",
+      "label": "Institutional Salon / Support",
+      "type": "zone",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 18,
+        "x2": 18,
+        "y2": 38
+      },
+      "route_key": "program_support"
+    },
+    {
+      "id": "zone_04",
+      "label": "Strategy Review Room",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 4,
+        "x2": 15,
+        "y2": 16
+      },
+      "route_key": "initiative_portfolio"
+    },
+    {
+      "id": "zone_05",
+      "label": "Partner / Executive Briefing",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 17,
+        "y1": 4,
+        "x2": 32,
+        "y2": 16
+      },
+      "route_key": "partner_briefing"
+    },
+    {
+      "id": "zone_06",
+      "label": "Roof / Mobility Transition",
+      "type": "terminal",
+      "bounds_ft": {
+        "x1": 49,
+        "y1": 24,
+        "x2": 51,
+        "y2": 29
+      },
+      "route_key": "roof_transition"
+    },
+    {
+      "id": "zone_07",
+      "label": "16 x 5 Command Table",
+      "type": "furniture",
+      "bounds_ft": {
+        "x1": 28,
+        "y1": 38.5,
+        "x2": 44,
+        "y2": 43.5
+      }
+    },
+    {
+      "id": "north_corridor",
+      "label": "Public / Support Corridor",
+      "type": "circulation",
+      "bounds_ft": {
+        "x1": 18,
+        "y1": 54,
+        "x2": 60,
+        "y2": 60
+      }
+    },
+    {
+      "id": "restroom_a",
+      "label": "Restroom A",
+      "type": "support",
+      "bounds_ft": {
+        "x1": 18,
+        "y1": 60,
+        "x2": 26,
+        "y2": 70
+      }
+    },
+    {
+      "id": "restroom_b",
+      "label": "Restroom B",
+      "type": "support",
+      "bounds_ft": {
+        "x1": 26,
+        "y1": 60,
+        "x2": 34,
+        "y2": 70
+      }
+    },
+    {
+      "id": "support_a",
+      "label": "Control / Audit Records",
+      "type": "secure_support",
+      "bounds_ft": {
+        "x1": 34,
+        "y1": 60,
+        "x2": 42,
+        "y2": 72
+      }
+    },
+    {
+      "id": "support_b",
+      "label": "Desk Operations / Systems",
+      "type": "secure_support",
+      "bounds_ft": {
+        "x1": 42,
+        "y1": 60,
+        "x2": 50,
+        "y2": 72
+      }
+    },
+    {
+      "id": "janitor",
+      "label": "Janitor",
+      "type": "service",
+      "bounds_ft": {
+        "x1": 50,
+        "y1": 60,
+        "x2": 54,
+        "y2": 66
+      }
+    }
+  ],
+  "spheres": [
+    {
+      "id": "sphere_01",
+      "label": "Halo Globe / Spatial Intelligence",
+      "type": "instrument",
+      "center_ft": {
+        "x": 24.5,
+        "y": 34.5
+      },
+      "radius_ft": 2.25,
+      "center_z_local_ft": 8.25,
+      "route_key": "halo_spatial_intelligence",
+      "access": "public-sanitized-read-only-role-scoped-owner-admin",
+      "note": "Suspended coordination envelope; does not consume floor circulation. Public and role-scoped modes are read-only. Owner/admin operations hand off to the protected Halo/Seek First plane."
+    }
+  ],
+  "south_condition": "sealed upper-floor glazing",
+  "camera_ref": "floor-06-camera.json",
+  "materials_ref": "floor-06-materials.json",
+  "lighting_ref": "floor-06-lighting.json",
+  "hotspots_ref": "floor-06-hotspots.json",
+  "routing_ref": "floor-06-routing.json",
+  "states_ref": "floor-06-states.json"
+}

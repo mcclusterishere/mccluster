@@ -1,0 +1,595 @@
+{
+  "building_id": "equity-uprise-building",
+  "core_id": "equity-uprise-core-v2",
+  "not_for_construction": true,
+  "glb_bytes": 494048,
+  "sha256": "ee783cdbed55ba5bbcb04ecdc315418ec34b69d54e42b290b2b709d63180fd13",
+  "mesh_count": 792,
+  "bounds_m": [
+    [
+      -7.315200000000001,
+      -10.9728,
+      -4.2672
+    ],
+    [
+      32.9184,
+      31.089600000000004,
+      27.127200000000002
+    ]
+  ],
+  "checks_total": 41,
+  "checks_passed": 41,
+  "checks_failed": 0,
+  "passed": true,
+  "stair_transitions": [
+    {
+      "system": "stair-a-east",
+      "base_ft": -13.5,
+      "top_ft": 0,
+      "mid_ft": -6.75,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 5.0,
+      "lower_landing": [
+        60.75,
+        54.75,
+        65.75,
+        58.25
+      ],
+      "upper_landing": [
+        66.25,
+        54.75,
+        71.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-b-west",
+      "base_ft": -13.5,
+      "top_ft": 0,
+      "mid_ft": -6.75,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 4.0,
+      "lower_landing": [
+        8.75,
+        54.75,
+        12.75,
+        58.25
+      ],
+      "upper_landing": [
+        13.25,
+        54.75,
+        17.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-a-east",
+      "base_ft": 0,
+      "top_ft": 13.5,
+      "mid_ft": 6.75,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 5.0,
+      "lower_landing": [
+        60.75,
+        54.75,
+        65.75,
+        58.25
+      ],
+      "upper_landing": [
+        66.25,
+        54.75,
+        71.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-b-west",
+      "base_ft": 0,
+      "top_ft": 13.5,
+      "mid_ft": 6.75,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 4.0,
+      "lower_landing": [
+        8.75,
+        54.75,
+        12.75,
+        58.25
+      ],
+      "upper_landing": [
+        13.25,
+        54.75,
+        17.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-a-east",
+      "base_ft": 13.5,
+      "top_ft": 27,
+      "mid_ft": 20.25,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 5.0,
+      "lower_landing": [
+        60.75,
+        54.75,
+        65.75,
+        58.25
+      ],
+      "upper_landing": [
+        66.25,
+        54.75,
+        71.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-b-west",
+      "base_ft": 13.5,
+      "top_ft": 27,
+      "mid_ft": 20.25,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 4.0,
+      "lower_landing": [
+        8.75,
+        54.75,
+        12.75,
+        58.25
+      ],
+      "upper_landing": [
+        13.25,
+        54.75,
+        17.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-a-east",
+      "base_ft": 27,
+      "top_ft": 40.5,
+      "mid_ft": 33.75,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 5.0,
+      "lower_landing": [
+        60.75,
+        54.75,
+        65.75,
+        58.25
+      ],
+      "upper_landing": [
+        66.25,
+        54.75,
+        71.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-b-west",
+      "base_ft": 27,
+      "top_ft": 40.5,
+      "mid_ft": 33.75,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 4.0,
+      "lower_landing": [
+        8.75,
+        54.75,
+        12.75,
+        58.25
+      ],
+      "upper_landing": [
+        13.25,
+        54.75,
+        17.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-a-east",
+      "base_ft": 40.5,
+      "top_ft": 54,
+      "mid_ft": 47.25,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 5.0,
+      "lower_landing": [
+        60.75,
+        54.75,
+        65.75,
+        58.25
+      ],
+      "upper_landing": [
+        66.25,
+        54.75,
+        71.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-b-west",
+      "base_ft": 40.5,
+      "top_ft": 54,
+      "mid_ft": 47.25,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 4.0,
+      "lower_landing": [
+        8.75,
+        54.75,
+        12.75,
+        58.25
+      ],
+      "upper_landing": [
+        13.25,
+        54.75,
+        17.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-a-east",
+      "base_ft": 54,
+      "top_ft": 67.5,
+      "mid_ft": 60.75,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 5.0,
+      "lower_landing": [
+        60.75,
+        54.75,
+        65.75,
+        58.25
+      ],
+      "upper_landing": [
+        66.25,
+        54.75,
+        71.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-b-west",
+      "base_ft": 54,
+      "top_ft": 67.5,
+      "mid_ft": 60.75,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 4.0,
+      "lower_landing": [
+        8.75,
+        54.75,
+        12.75,
+        58.25
+      ],
+      "upper_landing": [
+        13.25,
+        54.75,
+        17.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-a-east",
+      "base_ft": 67.5,
+      "top_ft": 81,
+      "mid_ft": 74.25,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 5.0,
+      "lower_landing": [
+        60.75,
+        54.75,
+        65.75,
+        58.25
+      ],
+      "upper_landing": [
+        66.25,
+        54.75,
+        71.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-b-west",
+      "base_ft": 67.5,
+      "top_ft": 81,
+      "mid_ft": 74.25,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 4.0,
+      "lower_landing": [
+        8.75,
+        54.75,
+        12.75,
+        58.25
+      ],
+      "upper_landing": [
+        13.25,
+        54.75,
+        17.25,
+        58.25
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "eight levels including B1",
+      "passed": true,
+      "actual": 8,
+      "expected": 8
+    },
+    {
+      "name": "floor elevations",
+      "passed": true,
+      "actual": [
+        -13.5,
+        0,
+        13.5,
+        27,
+        40.5,
+        54,
+        67.5,
+        81
+      ],
+      "expected": [
+        -13.5,
+        0,
+        13.5,
+        27,
+        40.5,
+        54,
+        67.5,
+        81
+      ]
+    },
+    {
+      "name": "fourteen stair transitions",
+      "passed": true,
+      "actual": 14,
+      "expected": 14
+    },
+    {
+      "name": "B1 is support level",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Floor 1 is level of exit discharge",
+      "passed": true,
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "site defines two assembly areas",
+      "passed": true,
+      "actual": 2,
+      "expected": 2
+    },
+    {
+      "name": "site defines both protected-stair discharge doors",
+      "passed": true,
+      "actual": [
+        "F1-DOOR-PUBLIC-OUTER",
+        "F1-DOOR-PUBLIC-INNER",
+        "F1-DOOR-STAIR-A-DISCHARGE",
+        "F1-DOOR-STAIR-B-DISCHARGE",
+        "F1-DOOR-SERVICE-WEST"
+      ],
+      "expected": [
+        "F1-DOOR-STAIR-A-DISCHARGE",
+        "F1-DOOR-STAIR-B-DISCHARGE"
+      ]
+    },
+    {
+      "name": "Floor 1 defines two basement-direction discharge controls",
+      "passed": true,
+      "actual": 2,
+      "expected": 2
+    },
+    {
+      "name": "exactly one Halo Globe instrument",
+      "passed": true,
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "Halo Globe lives on Floor 6",
+      "passed": true,
+      "actual": 6,
+      "expected": 6
+    },
+    {
+      "name": "Halo Globe bottom clears circulation",
+      "passed": true,
+      "actual": 6.0,
+      "expected": ">=6.0"
+    },
+    {
+      "name": "Halo Globe top stays below ceiling zone",
+      "passed": true,
+      "actual": 10.5,
+      "expected": "<=11.0"
+    },
+    {
+      "name": "Halo Globe plan envelope avoids fixed core",
+      "passed": true,
+      "actual": [],
+      "expected": []
+    },
+    {
+      "name": "stair-a-east -13.5->0.0 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-a-east upper landing reaches next FFE",
+      "passed": true,
+      "actual": 0,
+      "expected": 0.0
+    },
+    {
+      "name": "stair-b-west -13.5->0.0 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-b-west upper landing reaches next FFE",
+      "passed": true,
+      "actual": 0,
+      "expected": 0.0
+    },
+    {
+      "name": "stair-a-east 0.0->13.5 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-a-east upper landing reaches next FFE",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-b-west 0.0->13.5 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-b-west upper landing reaches next FFE",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-a-east 13.5->27.0 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-a-east upper landing reaches next FFE",
+      "passed": true,
+      "actual": 27,
+      "expected": 27.0
+    },
+    {
+      "name": "stair-b-west 13.5->27.0 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-b-west upper landing reaches next FFE",
+      "passed": true,
+      "actual": 27,
+      "expected": 27.0
+    },
+    {
+      "name": "stair-a-east 27.0->40.5 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-a-east upper landing reaches next FFE",
+      "passed": true,
+      "actual": 40.5,
+      "expected": 40.5
+    },
+    {
+      "name": "stair-b-west 27.0->40.5 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-b-west upper landing reaches next FFE",
+      "passed": true,
+      "actual": 40.5,
+      "expected": 40.5
+    },
+    {
+      "name": "stair-a-east 40.5->54.0 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-a-east upper landing reaches next FFE",
+      "passed": true,
+      "actual": 54,
+      "expected": 54.0
+    },
+    {
+      "name": "stair-b-west 40.5->54.0 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-b-west upper landing reaches next FFE",
+      "passed": true,
+      "actual": 54,
+      "expected": 54.0
+    },
+    {
+      "name": "stair-a-east 54.0->67.5 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-a-east upper landing reaches next FFE",
+      "passed": true,
+      "actual": 67.5,
+      "expected": 67.5
+    },
+    {
+      "name": "stair-b-west 54.0->67.5 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-b-west upper landing reaches next FFE",
+      "passed": true,
+      "actual": 67.5,
+      "expected": 67.5
+    },
+    {
+      "name": "stair-a-east 67.5->81.0 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-a-east upper landing reaches next FFE",
+      "passed": true,
+      "actual": 81,
+      "expected": 81.0
+    },
+    {
+      "name": "stair-b-west 67.5->81.0 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-b-west upper landing reaches next FFE",
+      "passed": true,
+      "actual": 81,
+      "expected": 81.0
+    }
+  ]
+}

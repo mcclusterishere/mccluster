@@ -1,0 +1,156 @@
+name: Equity Uprise Core V2 CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - main
+      - 'reconcile/equity-uprise-core-v2-*'
+  workflow_dispatch:
+    inputs:
+      publish_generated:
+        description: 'Commit regenerated plans, production packages, reports, and GLB back to the selected non-main branch'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: equity-uprise-core-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate authority, program, plans, and building
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Install deterministic building dependencies
+        run: python -m pip install --disable-pip-version-check numpy scipy trimesh pillow ezdxf
+
+      - name: Verify Halo projection owner boundary
+        run: node --test workers/mccluster/test/halo-projection.test.mjs
+
+      - name: Verify repo-source classification
+        run: python docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
+
+      - name: Generate production packages in workspace
+        run: python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
+
+      - name: Generate restricted B1 production package in workspace
+        run: python docs/design/equity-uprise-building/production/generate_b1_production_package.py
+
+      - name: Verify active Equity Uprise authority hygiene
+        run: python docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py
+
+      - name: Verify repo-to-building program coverage
+        run: python docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py
+
+      - name: Generate plans in workspace
+        run: python docs/design/equity-uprise-building/production/generate_core_v2_plans.py
+
+      - name: Verify plan semantics
+        run: python docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py
+
+      - name: Build combined B1-to-roof model in workspace
+        run: python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
+
+      - name: Verify combined model
+        run: python docs/design/equity-uprise-building/production/verify_equity_uprise_building_v2.py
+
+      - name: Verify Floor 1 / B1 authority boundary
+        run: python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
+
+      - name: Require committed generated artifacts to be current
+        if: ${{ github.event_name == 'push' && github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, '[publish-generated]') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            docs/design/equity-uprise-building/references
+            docs/design/equity-uprise-building/production/basement-b1
+            docs/design/equity-uprise-building/production/floor-01
+            docs/design/equity-uprise-building/production/floor-02
+            docs/design/equity-uprise-building/production/floor-03
+            docs/design/equity-uprise-building/production/floor-04
+            docs/design/equity-uprise-building/production/floor-05
+            docs/design/equity-uprise-building/production/floor-06
+            docs/design/equity-uprise-building/production/floor-07
+            docs/design/equity-uprise-building/production/generated
+          )
+          dirty="$(git status --short -- "${paths[@]}")"
+          if [ -n "$dirty" ]; then
+            echo "Committed Equity Uprise derived artifacts are stale after deterministic regeneration:" >&2
+            echo "$dirty" >&2
+            git diff --stat -- "${paths[@]}" >&2 || true
+            git diff --no-ext-diff -- "${paths[@]}" >&2 || true
+            exit 1
+          fi
+          echo "Committed Equity Uprise derived artifacts match deterministic regeneration."
+
+  publish-generated:
+    name: Publish generated building artifacts
+    needs: validate
+    if: ${{ github.ref_name != 'main' && ((github.event_name == 'workflow_dispatch' && inputs.publish_generated == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-generated]'))) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Install deterministic building dependencies
+        run: python -m pip install --disable-pip-version-check numpy scipy trimesh pillow ezdxf
+
+      - name: Regenerate all derived building outputs
+        run: |
+          python docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
+          python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
+          python docs/design/equity-uprise-building/production/generate_b1_production_package.py
+          python docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py
+          python docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py
+          python docs/design/equity-uprise-building/production/generate_core_v2_plans.py
+          python docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py
+          python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
+          python docs/design/equity-uprise-building/production/verify_equity_uprise_building_v2.py
+          python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
+
+      - name: Commit one deterministic generated-output snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/design/equity-uprise-building/references
+          git add docs/design/equity-uprise-building/production/basement-b1
+          git add docs/design/equity-uprise-building/production/floor-01
+          git add docs/design/equity-uprise-building/production/floor-02
+          git add docs/design/equity-uprise-building/production/floor-03
+          git add docs/design/equity-uprise-building/production/floor-04
+          git add docs/design/equity-uprise-building/production/floor-05
+          git add docs/design/equity-uprise-building/production/floor-06
+          git add docs/design/equity-uprise-building/production/floor-07
+          git add -f docs/design/equity-uprise-building/production/generated
+          if git diff --cached --quiet; then
+            echo "Generated building artifacts already current."
+            exit 0
+          fi
+          git commit -m "Regenerate Equity Uprise Core V2 derived artifacts"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
