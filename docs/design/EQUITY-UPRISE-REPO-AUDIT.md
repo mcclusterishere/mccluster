@@ -125,7 +125,7 @@ A capability may appear on more than one floor only when the secondary location 
 
 ### Cross-floor capabilities represented here
 
-Floor 1 may route into broader Equity Uprise services without pretending those services physically live in dedicated Floor 1 rooms.
+Floor 1 may route into broader Equity Uprise services without pretending those services physically live in dedicated Floor 1 rooms. Development Passport, Journey Wall and next-action routing are now part of the current Floor 1 program authority even where the underlying product capability is shared rather than a standalone building-capability ID.
 
 - **Neutral conversation/help** (`conversation-agent`) — concierge/orientation support with human handoff.
 - **Fellowship applications** (`fellowship-applications`) — routed from Next Action / Building Directory when a participant is ready.
