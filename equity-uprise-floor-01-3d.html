@@ -164,7 +164,7 @@ function project(p,c){
  const f=0.5*Math.min(innerWidth,innerHeight)/Math.tan(58*Math.PI/360);
  return{x:innerWidth/2+zx*f/zz,y:innerHeight/2-zy*f/zz,z:zz};
 }
-const faces=[[0,1,2,3],[4,7,6,5],[0,4,5,1],[1,5,6,2],[2,6,7,3],[3,7,4,0]];
+const faces=[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]];
 function verts(o){
  return[
   {x:o.x1,y:o.y1,z:o.z0},{x:o.x2,y:o.y1,z:o.z0},{x:o.x2,y:o.y2,z:o.z0},{x:o.x1,y:o.y2,z:o.z0},
