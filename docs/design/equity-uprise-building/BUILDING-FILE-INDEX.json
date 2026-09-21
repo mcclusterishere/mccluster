@@ -21,7 +21,7 @@
       ".github/copilot-instructions.md"
     ]
   },
-  "tracked_count": 222,
+  "tracked_count": 226,
   "categories": {
     "agent_entrypoints": [
       ".cursorrules",
@@ -64,7 +64,9 @@
       "docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md",
       "docs/design/equity-uprise-building/FLOOR-02-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md",
+      "docs/design/equity-uprise-building/FLOOR-03-PROGRAM-RECONCILIATION.md",
       "docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md",
+      "docs/design/equity-uprise-building/FLOOR-03-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md",
       "docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md",
@@ -124,11 +126,13 @@
       "docs/design/equity-uprise-building/production/floor-02/floor-02-scene-manifest.json",
       "docs/design/equity-uprise-building/production/floor-02/floor-02-states.json",
       "docs/design/equity-uprise-building/production/floor-03/README.md",
+      "docs/design/equity-uprise-building/production/floor-03/build_equity_uprise_floor_03_v2.py",
       "docs/design/equity-uprise-building/production/floor-03/floor-03-camera.json",
       "docs/design/equity-uprise-building/production/floor-03/floor-03-geometry-notes.md",
       "docs/design/equity-uprise-building/production/floor-03/floor-03-hotspots.json",
       "docs/design/equity-uprise-building/production/floor-03/floor-03-lighting.json",
       "docs/design/equity-uprise-building/production/floor-03/floor-03-materials.json",
+      "docs/design/equity-uprise-building/production/floor-03/floor-03-object-inventory.json",
       "docs/design/equity-uprise-building/production/floor-03/floor-03-routing.json",
       "docs/design/equity-uprise-building/production/floor-03/floor-03-scene-manifest.json",
       "docs/design/equity-uprise-building/production/floor-03/floor-03-states.json",
@@ -278,6 +282,14 @@
     {
       "sha": "7c7726289781f270da25eef70789b704b63b30bd",
       "role": "V1 Floor 2 Public Forum deterministic interactive viewer"
+    },
+    {
+      "sha": "54f8579b8ef5bb804fe8a3967199953e910e8d95",
+      "role": "Historical Floor 3 Fellowship + Network locked schematic geometry"
+    },
+    {
+      "sha": "9207174f179ea419396a9827d2d26cb025b859a1",
+      "role": "Historical Floor 3 Fellowship + Network canonical program/spec"
     },
     {
       "sha": "c674e07daf772ea739d93cc515657deb028e8b75",
