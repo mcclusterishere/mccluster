@@ -39,8 +39,8 @@
 - deterministic checks: **27 passed / 0 failed**
 
 ### Remaining before promotion to main
-- [ ] audit public Equity Uprise pages for old 3D/viewer links
-- [ ] audit active text files for stale Core V1 geometry outside intentionally retained legacy/history files
+- [x] audit public Equity Uprise pages for old 3D/viewer links — no old viewer links found
+- [x] audit active text files for stale Core V1 geometry outside intentionally retained legacy/history files — clean; historical replacement language retained intentionally
 - [ ] visually review the combined Core V2 browser scene with owner
 - [ ] visually review the seven Core V2 plan images with owner
 - [ ] resolve any owner-requested layout changes
