@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.1.0",
+  "schema_version": "2.2.0",
   "scene_id": "equity-uprise-floor-02",
   "default_state": "idle",
   "states": [

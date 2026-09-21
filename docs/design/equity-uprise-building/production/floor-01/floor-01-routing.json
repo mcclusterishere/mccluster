@@ -140,6 +140,29 @@
       ],
       "access": "authenticated-member-or-staff"
     },
+    "host_opportunity_submit": {
+      "type": "url",
+      "url": "/fellowships.html",
+      "state_hint": "host-submit",
+      "access": "authenticated-member-or-host"
+    },
+    "fellowship_application": {
+      "type": "url",
+      "url": "/fellowship.html",
+      "access": "public-intake-private-state"
+    },
+    "relationship_graph": {
+      "type": "ui_state",
+      "target": "relationship_graph",
+      "access": "authorized-staff",
+      "read_only": true
+    },
+    "fellowship_cohort": {
+      "type": "url",
+      "url": "/equity-uprise-fellowship.html",
+      "state_hint": "our-fellows",
+      "access": "public-record-with-consent"
+    },
     "enterprise_program": {
       "type": "url",
       "url": "/sites-details.html#equity",
@@ -163,6 +186,12 @@
       "type": "url",
       "url": "/creator.html",
       "access": "authenticated-for-write"
+    },
+    "media_rights": {
+      "type": "ui_state",
+      "target": "media_rights",
+      "access": "authorized-creator-editor-admin",
+      "read_only": true
     },
     "creator_licensing": {
       "type": "url",
@@ -217,6 +246,63 @@
       ],
       "access": "authorized-researcher-editor-admin"
     },
+    "claims_evidence": {
+      "type": "ui_state",
+      "target": "claims_evidence",
+      "endpoint_hints": [
+        "eu-workspace"
+      ],
+      "access": "authorized-researcher-editor-admin",
+      "read_only": true
+    },
+    "artifact_lineage": {
+      "type": "ui_state",
+      "target": "artifact_lineage",
+      "endpoint_hints": [
+        "eu-publish",
+        "eu-derivatives"
+      ],
+      "access": "published-public-private-workflow",
+      "read_only": true
+    },
+    "publication_distribution": {
+      "type": "ui_state",
+      "target": "publication_distribution",
+      "endpoint_hints": [
+        "eu-publish"
+      ],
+      "access": "authorized-admin",
+      "approval_gated": true
+    },
+    "publication_identity": {
+      "type": "ui_state",
+      "target": "publication_identity",
+      "endpoint_hints": [
+        "eu-orcid-oauth",
+        "eu-crossref-callback"
+      ],
+      "access": "authorized-researcher-editor-admin",
+      "read_only": true
+    },
+    "docket_watch": {
+      "type": "ui_state",
+      "target": "docket_watch",
+      "endpoint_hints": [
+        "eu-monitor",
+        "eu-government"
+      ],
+      "access": "authorized-researcher-editor-admin",
+      "read_only": true
+    },
+    "monitoring_impact": {
+      "type": "ui_state",
+      "target": "monitoring_impact",
+      "endpoint_hints": [
+        "eu-monitor"
+      ],
+      "access": "authorized-researcher-editor-admin",
+      "read_only": true
+    },
     "institutional_command": {
       "type": "url",
       "url": "/equity-uprise.html",
@@ -255,6 +341,49 @@
       ],
       "access": "authorized-admin",
       "approval_gated": true
+    },
+    "approvals": {
+      "type": "ui_state",
+      "target": "approvals",
+      "endpoint_hints": [
+        "eu-control"
+      ],
+      "access": "authorized-admin",
+      "approval_gated": true
+    },
+    "jobs": {
+      "type": "ui_state",
+      "target": "jobs",
+      "endpoint_hints": [
+        "eu-worker",
+        "eu-status"
+      ],
+      "access": "authorized-admin"
+    },
+    "integrations": {
+      "type": "ui_state",
+      "target": "integrations",
+      "endpoint_hints": [
+        "eu-status",
+        "eu-google-workspace"
+      ],
+      "access": "authorized-admin"
+    },
+    "relationship_comms": {
+      "type": "ui_state",
+      "target": "relationship_comms",
+      "endpoint_hints": [
+        "eu-google-workspace"
+      ],
+      "access": "authorized-admin",
+      "read_only": true
+    },
+    "outreach_ops": {
+      "type": "ui_state",
+      "target": "outreach_ops",
+      "access": "authorized-admin",
+      "approval_gated": true,
+      "note": "Consent-aware outbound workflow; never a public blast console."
     },
     "halo_spatial_intelligence": {
       "type": "ui_state",

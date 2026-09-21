@@ -11,8 +11,8 @@
     "6": 32,
     "7": 3
   },
-  "checks_total": 343,
-  "checks_passed": 343,
+  "checks_total": 426,
+  "checks_passed": 426,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -1452,6 +1452,176 @@
       "detail": ""
     },
     {
+      "name": "floor 1 interaction mode ids unique",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "floor 2 interaction mode ids unique",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "floor 3 interaction mode ids unique",
+      "passed": true,
+      "detail": "['our_fellows', 'external_opportunities', 'host_programs', 'applications', 'relationships', 'enterprise']"
+    },
+    {
+      "name": "floor 3 mode our_fellows declares access",
+      "passed": true,
+      "detail": "public-record-with-consent"
+    },
+    {
+      "name": "floor 3 mode external_opportunities declares access",
+      "passed": true,
+      "detail": "public"
+    },
+    {
+      "name": "floor 3 mode host_programs declares access",
+      "passed": true,
+      "detail": "authenticated-member-or-host"
+    },
+    {
+      "name": "floor 3 mode applications declares access",
+      "passed": true,
+      "detail": "public-intake-private-state"
+    },
+    {
+      "name": "floor 3 mode relationships declares access",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 3 mode enterprise declares access",
+      "passed": true,
+      "detail": "public-program-information"
+    },
+    {
+      "name": "floor 4 interaction mode ids unique",
+      "passed": true,
+      "detail": "['rights_clearance', 'licensing_commerce', 'release_delivery', 'ddex_status']"
+    },
+    {
+      "name": "floor 4 mode rights_clearance declares access",
+      "passed": true,
+      "detail": "authorized-creator-editor-admin"
+    },
+    {
+      "name": "floor 4 mode licensing_commerce declares access",
+      "passed": true,
+      "detail": "public-terms-authenticated-checkout"
+    },
+    {
+      "name": "floor 4 mode release_delivery declares access",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 mode ddex_status declares access",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 interaction mode ids unique",
+      "passed": true,
+      "detail": "['claims_evidence', 'provenance_lineage', 'distribution', 'contributor_identity', 'doi_deposit', 'docket_watch', 'monitoring']"
+    },
+    {
+      "name": "floor 5 mode claims_evidence declares access",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 5 mode provenance_lineage declares access",
+      "passed": true,
+      "detail": "published-public-private-workflow"
+    },
+    {
+      "name": "floor 5 mode distribution declares access",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 mode contributor_identity declares access",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 5 mode doi_deposit declares access",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 5 mode docket_watch declares access",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 5 mode monitoring declares access",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 6 interaction mode ids unique",
+      "passed": true,
+      "detail": "['halo_ambient', 'halo_public', 'halo_member', 'halo_staff', 'halo_owner', 'approvals', 'jobs', 'integrations', 'relationship_comms', 'outreach']"
+    },
+    {
+      "name": "floor 6 mode halo_ambient declares access",
+      "passed": true,
+      "detail": "public"
+    },
+    {
+      "name": "floor 6 mode halo_public declares access",
+      "passed": true,
+      "detail": "public-sanitized"
+    },
+    {
+      "name": "floor 6 mode halo_member declares access",
+      "passed": true,
+      "detail": "authenticated-role-scoped"
+    },
+    {
+      "name": "floor 6 mode halo_staff declares access",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 6 mode halo_owner declares access",
+      "passed": true,
+      "detail": "house-owner"
+    },
+    {
+      "name": "floor 6 mode approvals declares access",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 mode jobs declares access",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 mode integrations declares access",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 mode relationship_comms declares access",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 mode outreach declares access",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 interaction mode ids unique",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
       "name": "floor 1 passenger elevator hotspot exists",
       "passed": true,
       "detail": ""
@@ -1592,14 +1762,34 @@
       "detail": ""
     },
     {
-      "name": "floor 1 admin_desk is not public",
-      "passed": true,
-      "detail": "editor-or-admin"
-    },
-    {
       "name": "floor 1 publication_submission is not public",
       "passed": true,
       "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 1 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 outreach_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 1 approvals is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 integrations is not public",
+      "passed": true,
+      "detail": "authorized-admin"
     },
     {
       "name": "floor 1 media_release_ops is not public",
@@ -1607,7 +1797,57 @@
       "detail": "authorized-admin"
     },
     {
+      "name": "floor 1 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
       "name": "floor 1 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 jobs is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 2 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 outreach_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 2 approvals is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 integrations is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1617,17 +1857,52 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 2 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 2 media_release_ops is not public",
+      "name": "floor 2 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 2 control_plane is not public",
+      "name": "floor 2 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 jobs is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 3 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 outreach_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 3 approvals is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 integrations is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1637,17 +1912,52 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 3 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 3 media_release_ops is not public",
+      "name": "floor 3 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 3 control_plane is not public",
+      "name": "floor 3 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 jobs is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 4 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 outreach_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 4 approvals is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 integrations is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1657,17 +1967,52 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 4 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 4 media_release_ops is not public",
+      "name": "floor 4 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 4 control_plane is not public",
+      "name": "floor 4 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 jobs is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 5 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 outreach_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 5 approvals is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 integrations is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1677,17 +2022,52 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 5 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 5 media_release_ops is not public",
+      "name": "floor 5 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 5 control_plane is not public",
+      "name": "floor 5 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 jobs is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 6 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 outreach_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 6 approvals is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 integrations is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1697,17 +2077,52 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 6 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 6 media_release_ops is not public",
+      "name": "floor 6 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 6 control_plane is not public",
+      "name": "floor 6 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 jobs is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 7 relationship_comms is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 outreach_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 relationship_graph is not public",
+      "passed": true,
+      "detail": "authorized-staff"
+    },
+    {
+      "name": "floor 7 approvals is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 integrations is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1717,17 +2132,17 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 7 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 7 media_release_ops is not public",
+      "name": "floor 7 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 7 control_plane is not public",
+      "name": "floor 7 publication_distribution is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 jobs is not public",
       "passed": true,
       "detail": "authorized-admin"
     }

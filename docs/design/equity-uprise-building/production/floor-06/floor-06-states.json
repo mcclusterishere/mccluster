@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.1.0",
+  "schema_version": "2.2.0",
   "scene_id": "equity-uprise-floor-06",
   "default_state": "idle",
   "states": [
@@ -56,25 +56,32 @@
     {
       "id": "approvals",
       "label": "Approvals",
-      "route_key": "control_plane",
+      "route_key": "approvals",
       "access": "authorized-admin"
     },
     {
       "id": "jobs",
       "label": "Jobs / Workflow Queue",
-      "route_key": "control_plane",
+      "route_key": "jobs",
       "access": "authorized-admin"
     },
     {
       "id": "integrations",
       "label": "Connections / Integrations",
-      "route_key": "control_plane",
+      "route_key": "integrations",
       "access": "authorized-admin"
+    },
+    {
+      "id": "relationship_comms",
+      "label": "Relationship Communications",
+      "route_key": "relationship_comms",
+      "access": "authorized-admin",
+      "read_only": true
     },
     {
       "id": "outreach",
       "label": "Outreach / Consent / Contact State",
-      "route_key": "control_plane",
+      "route_key": "outreach_ops",
       "access": "authorized-admin"
     }
   ]

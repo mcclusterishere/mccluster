@@ -14,7 +14,9 @@ Inherited vertical systems:
 - Stair A X60–72 / Y54–72
 - MEP X50–60 / Y66–72
 
-The floor may define program zones but may not move these systems or cover shared slab openings.
+The floor may define program zones and interaction modes but may not move these systems or cover shared slab openings.
+
+Declared interaction modes are semantic/UI states on existing rooms, walls, terminals and instruments; they do not create additional rooms or floor area.
 
 Floor 6 additionally reserves one suspended Halo Globe / Spatial Intelligence sphere at (24.5,34.5), radius 2.25 ft, center 8.25 ft AFF. Its footprint is coordination-only and may not obstruct circulation or the fixed core.
 
