@@ -72,6 +72,7 @@
         "clear_width_ft": 4
       },
       "serves_levels": [
+        0,
         1,
         2,
         3,
@@ -81,7 +82,7 @@
       ],
       "level_7_service": "not_assumed",
       "shaft_continuity": "continuous_through_served_stack",
-      "note": "Level 7 direct passenger-elevator service remains unassumed unless later professionally resolved."
+      "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile."
     },
     "service_freight_elevator": {
       "id": "service-freight-elevator-a",
@@ -102,6 +103,7 @@
         "clear_width_ft": 5
       },
       "serves_levels": [
+        0,
         1,
         2,
         3,
@@ -112,7 +114,7 @@
       "level_7_service": "reserved_for_future_resolution",
       "shaft_continuity": "continuous_reservation_to_roof",
       "pit_overhead_machine_strategy": "unresolved",
-      "note": "Car capacity, pit, overhead, MRL/machine-room strategy, loading, ratings, and Level 7 stop require elevator/structural/code design."
+      "note": "Serves B1 and Floors 1\u20136; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts."
     },
     "stair_a": {
       "id": "stair-a-east",
@@ -126,6 +128,7 @@
       "enclosure_width_ft": 12,
       "enclosure_depth_ft": 18,
       "serves_levels": [
+        0,
         1,
         2,
         3,
@@ -157,7 +160,8 @@
         "x2": 71.25,
         "y2": 71.25
       },
-      "geometry_status": "schematic_continuity_geometry_not_code_design"
+      "geometry_status": "schematic_continuity_geometry_not_code_design",
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade."
     },
     "stair_b": {
       "id": "stair-b-west",
@@ -171,6 +175,7 @@
       "enclosure_width_ft": 10,
       "enclosure_depth_ft": 18,
       "serves_levels": [
+        0,
         1,
         2,
         3,
@@ -202,7 +207,8 @@
         "x2": 17.25,
         "y2": 71.25
       },
-      "geometry_status": "schematic_continuity_geometry_not_code_design"
+      "geometry_status": "schematic_continuity_geometry_not_code_design",
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade."
     },
     "mep_riser": {
       "id": "mep-riser-east",
@@ -214,6 +220,7 @@
         "y2": 72
       },
       "serves_levels": [
+        0,
         1,
         2,
         3,
