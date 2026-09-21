@@ -1,6 +1,6 @@
 # Equity Uprise — Building Core V2
 
-> Status: **ACTIVE CORE V2 + B1 UNDERGROUND-OPERATIONS STACK ON `reconcile/equity-uprise-core-v2-20260921`**
+> Status: **ACTIVE CORE V2 + B1 UNDERGROUND-OPERATIONS AUTHORITY**
 >
 > This document controls the vertical-circulation and stacking redesign authorized after review of the original floor-local 3D scenes.
 >
@@ -223,15 +223,15 @@ The controlling shared implementation file is:
 
 All floor-specific production packages must reference and inherit it rather than redefining shared core coordinates locally.
 
-## 13. Migration rule
+## 13. Promotion / legacy rule
 
-Until Core V2 is merged to main:
-- main remains Core V1 canonical;
-- this branch is the approved migration workspace;
-- downstream V2 files must identify themselves as Core V2;
-- old artifacts must not be silently overwritten without versioning or clear legacy status.
+Core V2 is the active building authority within any repository tree that contains this authority set.
 
-After migration validation and owner approval, REFERENCE-AUTHORITY will designate Core V2 as canonical.
+- downstream files must identify themselves as Core V2-derived;
+- archived Core V1 artifacts remain historical only and may never override current Core V2 source files;
+- generated artifacts must be reproducible from the current machine-readable authorities;
+- a merge/promotion changes repository placement, not the meaning of the geometry authority;
+- branch names are intentionally not part of canonical building semantics.
 
 
 ## 14. Floor 1 site / discharge layer
