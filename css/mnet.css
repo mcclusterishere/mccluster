@@ -161,3 +161,17 @@ html, body { background: var(--ink); }
   .mn__tabs button { font-size:.62rem; }
   .mn__media-queue { margin-left:0; }
 }
+
+/* THE PROFILE PICTURE PICKER.
+   The avatar field shipped as a URL box alone, so a member could only have a
+   face if they already hosted one. The picker sits above the box and fills it
+   in; the box stays for anyone who does have a URL. */
+.mn__avatar-pick { display: flex; align-items: center; gap: .7rem; margin-top: .5rem; }
+.mn__ghost { -webkit-appearance: none; appearance: none; border: 0; cursor: pointer;
+  border-radius: 100px; padding: .6rem 1rem; font-weight: 800; font-size: .8rem;
+  color: var(--cream);
+  background: linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.045));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13); }
+.mn__ghost:hover { background: rgba(255,255,255,.14); }
+#mnAvatarPreview { width: 2.9rem; height: 2.9rem; border-radius: 50%; object-fit: cover;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }

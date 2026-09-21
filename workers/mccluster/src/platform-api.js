@@ -428,6 +428,21 @@ async function handleMnet(req,env,path,url){
 
   if(path==='/v1/mnet/media/upload-url'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'upload-url',file_name:b.file_name,mime_type:b.mime_type,byte_size:b.byte_size,alt_text:b.alt_text}));}
   if(path==='/v1/mnet/media/finalize'&&req.method==='POST'){if(external)return fail(req,env,'Media upload requires a McCluster user session',403);const b=await json(req);return reply(req,env,await callMnetMedia(req,env,{action:'finalize',asset_id:b.asset_id,width:b.width,height:b.height,duration_ms:b.duration_ms}));}
+  /* THE OWNER'S TWO LEVERS. Both check mnet_is_admin() inside the function
+     rather than here, so the rule lives beside the data and a future caller
+     cannot route around it. */
+  const pin=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/pin$/i);
+  if(pin&&['POST','DELETE'].includes(req.method)){
+    if(external)return fail(req,env,'Moderation requires a McCluster user session',403);
+    return reply(req,env,await userRpc(req,env,'mnet_admin_set_pinned',{p_post_id:pin[1],p_pinned:req.method==='POST'}));
+  }
+  const removal=path.match(/^\/v1\/mnet\/posts\/([0-9a-f-]{36})\/removal$/i);
+  if(removal&&req.method==='POST'){
+    if(external)return fail(req,env,'Moderation requires a McCluster user session',403);
+    const b=await json(req);
+    return reply(req,env,await userRpc(req,env,'mnet_admin_remove_post',{p_post_id:removal[1],p_reason:String(b.reason||'').slice(0,400)}));
+  }
+
   const mediaUrl=path.match(/^\/v1\/mnet\/media\/([0-9a-f-]{36})\/url$/i);
   if(mediaUrl&&req.method==='GET'){if(external)return fail(req,env,'Media access requires a McCluster user session',403);return reply(req,env,await callMnetMedia(req,env,{action:'view-url',asset_id:mediaUrl[1]}));}
 

@@ -194,6 +194,72 @@
     try { console.warn("[mnet] signed-in bootstrap failed", error); } catch (e) {}
   }
 
+  /* THE PROFILE PICTURE.
+     ------------------------------------------------------------------
+     Post attachments already have an upload pipeline, and an avatar
+     deliberately does not use it. That one stores into the PRIVATE
+     mnet-media bucket and hands back a signed view URL, which expires —
+     fine for a picture inside a post the reader is looking at now, useless
+     for network_profiles.avatar_url, which is a plain address painted as a
+     background-image on every row this person appears in, forever. So the
+     avatar goes to mnet-avatars, which is public read and owner-write, and
+     the address it returns keeps working.
+
+     The first path segment is the uploader's own auth id because the
+     storage policy checks exactly that: `(storage.foldername(name))[1] =
+     auth.uid()::text`. Getting this wrong is a 403, not a silent
+     mis-file. */
+  var AVATAR_BUCKET = "mnet-avatars";
+  var AVATAR_MAX = 5 * 1024 * 1024;
+
+  function uploadAvatar(file) {
+    var token = sessionToken();
+    var uid = state.user && state.user.id;
+    if (!token || !uid) return Promise.reject(new Error("Sign in before uploading a photo."));
+    if (file.size > AVATAR_MAX) return Promise.reject(new Error("That image is over 5 MB. Try a smaller one."));
+    if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type || "")) {
+      return Promise.reject(new Error("Use a PNG, JPEG, WebP or GIF."));
+    }
+    /* A fresh name every time: same-name overwrites are what make a new
+       photo show the old one until the cache gives up. */
+    var ext = (file.type.split("/")[1] || "png").replace("jpeg", "jpg");
+    var path = uid + "/avatar-" + Date.now() + "." + ext;
+    setStatus($("mnAvatarStatus"), "Uploading…");
+    return fetch(SB_URL + "/storage/v1/object/" + AVATAR_BUCKET + "/" + path, {
+      method: "POST",
+      headers: {
+        apikey: SB_KEY,
+        authorization: "Bearer " + token,
+        "content-type": file.type,
+        "x-upsert": "true"
+      },
+      body: file
+    }).then(function (res) {
+      if (!res.ok) return res.text().then(function (t) { throw new Error(t || "Upload failed."); });
+      var url = SB_URL + "/storage/v1/object/public/" + AVATAR_BUCKET + "/" + path;
+      $("mnAvatarUrl").value = url;
+      var prev = $("mnAvatarPreview");
+      if (prev) { prev.src = url; prev.hidden = false; }
+      setStatus($("mnAvatarStatus"), "Photo ready. Save the profile to keep it.", "ok");
+      return url;
+    }).catch(function (e) {
+      setStatus($("mnAvatarStatus"), e.message || "Upload failed.", "error");
+      throw e;
+    });
+  }
+
+  function wireAvatarPicker() {
+    var pick = $("mnAvatarPick"), input = $("mnAvatarFile");
+    if (!pick || !input) return;
+    pick.addEventListener("click", function () { input.click(); });
+    input.addEventListener("change", function () {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      uploadAvatar(file).catch(function () {});
+      input.value = "";
+    });
+  }
+
   function saveProfile(event) {
     event.preventDefault();
     var button = $("mnProfileSave");
@@ -801,6 +867,7 @@
     });
     $("mnPassword2").addEventListener("keydown", function (e) { if (e.key === "Enter") submitPasswordAuth(); });
     $("mnProfileForm").addEventListener("submit", saveProfile);
+    wireAvatarPicker();
     $("mnProfileBack").onclick = function () { showGate("app"); setView("profile"); };
     $("mnPost").onclick = createPost;
     $("mnMediaInput").onchange = function () { uploadMediaFiles(this.files).catch(function () {}); };

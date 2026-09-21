@@ -77,8 +77,19 @@
         <label class="mn__label" for="mnBio">Bio</label>
         <textarea class="mn__input mn__textarea" id="mnBio" maxlength="1200" rows="5" placeholder="Tell the network about yourself."></textarea>
 
-        <label class="mn__label" for="mnAvatarUrl">Avatar URL <span>optional</span></label>
-        <input class="mn__input" id="mnAvatarUrl" type="url" inputmode="url" placeholder="https://…">
+        <label class="mn__label" for="mnAvatarUrl">Profile picture <span>optional</span></label>
+        <!-- THE FIELD WAS A URL BOX AND NOTHING ELSE, which meant a member
+             could only have a face if they already hosted one somewhere.
+             The file picker uploads to the public mnet-avatars bucket and
+             writes the resulting address into the box below it, so the URL
+             remains valid for anyone who already has one. -->
+        <div class="mn__avatar-pick">
+          <button class="mn__ghost" id="mnAvatarPick" type="button">Upload a photo</button>
+          <input id="mnAvatarFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+          <img id="mnAvatarPreview" alt="" hidden>
+        </div>
+        <p class="mn__status" id="mnAvatarStatus" role="status"></p>
+        <input class="mn__input" id="mnAvatarUrl" type="url" inputmode="url" placeholder="https://… or upload above">
 
         <label class="mn__label" for="mnWebsite">Website <span>optional</span></label>
         <input class="mn__input" id="mnWebsite" type="url" inputmode="url" placeholder="https://…">
