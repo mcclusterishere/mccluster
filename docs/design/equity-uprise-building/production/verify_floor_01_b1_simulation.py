@@ -4,6 +4,7 @@ from pathlib import Path
 import json, sys
 
 HERE=Path(__file__).resolve().parent
+BUILDING=HERE.parent
 CORE=json.loads((HERE/"building-core-v2.json").read_text())
 B1=json.loads((HERE/"basement-b1-program.json").read_text())
 SITE=json.loads((HERE/"floor-01"/"floor-01-site-egress.json").read_text())
@@ -38,6 +39,20 @@ check("ordinary EU admin cannot unlock live B1",B1.get("live_access",{}).get("or
 check("tunnel is not publicly visible",TUNNEL.get("public_visibility") is False,str(TUNNEL.get("public_visibility")))
 check("tunnel training clone has no live access",TUNNEL.get("training_access",{}).get("live_tunnel_access") is False,str(TUNNEL.get("training_access")))
 check("tunnel has future reserved branches only",all(x.get("destination") is None for x in TUNNEL.get("backbone",{}).get("future_connections",[])),str(TUNNEL.get("backbone",{}).get("future_connections")))
+
+# Canonical human-readable authorities must use current semantic filenames.
+F1_SPEC=BUILDING/"FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md"
+F1_LEGACY=BUILDING/"FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+B1_SPEC=BUILDING/"BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md"
+B1_LEGACY=BUILDING/"BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+check("current Floor 1 canonical spec exists",F1_SPEC.exists(),str(F1_SPEC))
+check("current B1 canonical spec exists",B1_SPEC.exists(),str(B1_SPEC))
+if F1_LEGACY.exists():
+    t=F1_LEGACY.read_text(errors="ignore")
+    check("legacy Floor 1 filename is compatibility-only","NON-CANONICAL" in t and "FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md" in t,t[:240])
+if B1_LEGACY.exists():
+    t=B1_LEGACY.read_text(errors="ignore")
+    check("legacy B1 filename is compatibility-only","NON-CANONICAL" in t and "BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md" in t,t[:240])
 
 for key in ("passenger_elevator","service_freight_elevator","stair_a","stair_b","mep_riser"):
     serves=CORE["vertical_systems"][key]["serves_levels"]
@@ -116,6 +131,12 @@ check("Floor 1 training goes to sandbox clone",F1.get("underground_access_model"
 check("Floor 1 manifest active",F1_MANIFEST.get("status")=="core-v2-active",str(F1_MANIFEST.get("status")))
 check("Floor 1 manifest current name",F1_MANIFEST.get("scene_name")=="Equity Uprise Level 01 — Arrival / Orientation / Intake",str(F1_MANIFEST.get("scene_name")))
 check("Floor 1 manifest digital-twin ref",F1_MANIFEST.get("digital_twin_program_ref")=="floor-01-digital-twin-program.json",str(F1_MANIFEST.get("digital_twin_program_ref")))
+check("Floor 1 manifest tunnel ref",F1_MANIFEST.get("tunnel_network_ref")=="../underground-tunnel-network.json",str(F1_MANIFEST.get("tunnel_network_ref")))
+tunnel_refs=F1_MANIFEST.get("authority",{}).get("underground_network_authority",[])
+check("Floor 1 manifest tunnel authority refs",tunnel_refs==["../../UNDERGROUND-TUNNEL-NETWORK-SPEC.md","../underground-tunnel-network.json"],str(tunnel_refs))
+spatial_refs=F1_MANIFEST.get("authority",{}).get("spatial_authority",[])
+check("Floor 1 manifest uses current canonical long-form spec","../../FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md" in spatial_refs,str(spatial_refs))
+check("Floor 1 manifest excludes legacy long-form filename",not any("FLOOR-01-LOBBY-INTAKE-360-SPEC.md" in x for x in spatial_refs),str(spatial_refs))
 activity_refs=F1_MANIFEST.get("authority",{}).get("activity_simulation_authority",[])
 check("Floor 1 manifest activity refs resolve",activity_refs==["../../FLOOR-01-DIGITAL-TWIN-PROGRAM.md","floor-01-digital-twin-program.json"],str(activity_refs))
 lab=F1_ROUTING.get("routes",{}).get("building_systems_lab",{})
@@ -141,6 +162,9 @@ if (B1_DIR/"basement-b1-scene-manifest.json").exists():
     check("B1 scene title current",b1m.get("scene_name")==f"Equity Uprise B1 — {B1['title']}",str(b1m.get("scene_name")))
     check("B1 scene hidden from public navigation",b1m.get("public_navigation") is False,str(b1m.get("public_navigation")))
     check("B1 scene tunnel authority ref",b1m.get("tunnel_network_ref")=="../underground-tunnel-network.json",str(b1m.get("tunnel_network_ref")))
+    basement_refs=b1m.get("authority",{}).get("basement",[])
+    check("B1 scene uses current canonical program spec","../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md" in basement_refs,str(basement_refs))
+    check("B1 scene excludes legacy program filename",not any("BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md" in x for x in basement_refs),str(basement_refs))
 if (B1_DIR/"basement-b1-routing.json").exists():
     b1r=json.loads((B1_DIR/"basement-b1-routing.json").read_text())
     routes=b1r.get("routes",{})
