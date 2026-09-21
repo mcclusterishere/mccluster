@@ -186,20 +186,49 @@ A Stage 1 participant may learn to evacuate correctly.
 
 A Stage 6 participant may later analyze why the building systems behaved as they did.
 
-## 12. Exterior/site requirements
+## 12. Exterior / site / exit-discharge layer
 
-The current interior Core V2 model is not sufficient for complete evacuation/service simulation.
+The exterior layer is now defined by:
 
-Before Floor 1 geometry is considered simulation-complete, design:
+- `FLOOR-01-SITE-EGRESS-SIMULATION.md`
+- `production/floor-01/floor-01-site-egress.json`
 
-- believable Stair A exit discharge;
-- believable Stair B exit discharge;
-- secure service/delivery entrance tied to the west service core;
-- minimal exterior public/accessible approach;
-- exit discharge paths;
-- emergency assembly/muster area.
+It provides:
 
-Exact geometry is intentionally unresolved in this program document rather than invented without a site-edge design pass.
+- Stair A east exit-only discharge;
+- Stair B north/rear exit-only discharge;
+- south public/accessible approach;
+- connection to a modeled south public way;
+- secure west service/delivery entrance and apron;
+- primary and alternate assembly areas;
+- responder keep-clear planning zone;
+- emergency equipment locations;
+- visitor/member accountability logic.
+
+Because Stair A and Stair B continue down to B1, Floor 1 also includes explicit discharge-direction barriers/wayfinding so evacuation does not unintentionally continue below grade.
+
+## 12A. B1 Technical / Service Basement
+
+B1 now exists at **-13'-6"**.
+
+It is not an E-Q-U-I-T-Y developmental floor and is not exposed in the normal public floor selector.
+
+Authorized users may enter B1 through Building Systems Lab / service modes to work with simulated:
+
+- mechanical plant;
+- electrical/emergency power;
+- fire protection/water;
+- network/telecom;
+- flood/sump systems;
+- facilities/service operations;
+- building automation / systems observation.
+
+Floor 1 remains the modeled level of exit discharge.
+
+B1 authority:
+
+- `BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `production/basement-b1-program.json`
 
 ## 13. Multiplayer / avatar behavior
 
@@ -274,6 +303,8 @@ External credentials remain evidence toward competency. They are not automatical
 
 See:
 
-`production/floor-01/floor-01-digital-twin-program.json`
+- `production/floor-01/floor-01-digital-twin-program.json`
+- `production/floor-01/floor-01-site-egress.json`
+- `production/basement-b1-program.json`
 
-That file is the machine-readable activity/simulation companion to this document.
+These files are the machine-readable Floor 1/B1 activity, site, egress and simulation companions to this document.
