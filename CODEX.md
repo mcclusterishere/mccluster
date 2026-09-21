@@ -152,3 +152,17 @@ Rules:
 - Generated images/renders never override the written/shared geometry.
 - All architecture remains schematic and NOT FOR CONSTRUCTION pending licensed professional review.
 
+### Equity Uprise repo-to-building program authority
+
+For any Equity Uprise building, floor, room, 3D, 360, hotspot, navigation or spatial-program task on the Core V2 branch, read these before floor-local artifacts:
+
+1. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
+2. `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
+3. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
+4. `docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md`
+5. `docs/design/equity-uprise-building/production/building-core-v2.json`
+6. `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
+
+The capability map controls **what the building represents**. The Core V2 spec/JSON control **shared geometry and vertical continuity**. Floor-local files may refine their level but may not silently remove/rename repo-backed capabilities, expose private or approval-gated systems publicly, restore archived Core V1 plans, or imply passenger-elevator service to Level 7.
+
+Run `production/verify_equity_uprise_program_coverage.py` after program/routing changes.
