@@ -990,17 +990,17 @@
     {
       "name": "L4 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 04 \u2014 Media + Culture \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated"
+      "detail": "# Floor 04 \u2014 Media + Culture \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/buildi"
     },
     {
-      "name": "L4 README provisional program status",
+      "name": "L4 README active current-pass status",
       "passed": true,
-      "detail": "# Floor 04 \u2014 Media + Culture \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/co"
+      "detail": "# Floor 04 \u2014 Media + Culture \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/core-v2-floor-programs.json`\n"
     },
     {
       "name": "L4 README design maturity",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass"
     },
     {
       "name": "L4 .svg exists",
@@ -2065,12 +2065,12 @@
     {
       "name": "L4 manifest maturity matches authority",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass != reconciled-current-iterative-pass"
     },
     {
       "name": "L4 manifest render readiness matches authority",
       "passed": true,
-      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
+      "detail": "inventory-ready-hybrid-3d-next != inventory-ready-hybrid-3d-next"
     },
     {
       "name": "L4 manifest DXF points at Core V2",

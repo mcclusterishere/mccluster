@@ -1,6 +1,6 @@
 # Level 04 — Media + Culture — Core V2 Production Package
 
-Status: **PROVISIONAL CORE V2 DERIVED PACKAGE — PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**
+Status: **ACTIVE CORE V2 DERIVED PACKAGE / NOT FOR CONSTRUCTION**
 
 This package inherits the shared building/program authority from:
 - `../building-core-v2.json`
@@ -18,5 +18,5 @@ This package may operationalize floor program, cameras, hotspots, lighting, rout
 
 Per-floor scenes are derived views. The combined stacked building is the vertical-continuity authority.
 
-Design maturity: **pre-iterative-program-rewrite**.  
-Render readiness: **chassis-only-not-final-program**.
+Design maturity: **reconciled-current-iterative-pass**.  
+Render readiness: **inventory-ready-hybrid-3d-next**.

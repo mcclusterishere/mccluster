@@ -1379,12 +1379,12 @@
     {
       "name": "floor 4 capability-map program status matches maturity",
       "passed": true,
-      "detail": "working-pre-iterative-program"
+      "detail": "reconciled-current-iterative-pass"
     },
     {
       "name": "floor 4 capability-map render readiness matches program",
       "passed": true,
-      "detail": "chassis-only-not-final-program"
+      "detail": "basic-render-ready"
     },
     {
       "name": "floor 4 has no unknown capability ids",
@@ -1514,12 +1514,12 @@
     {
       "name": "floor 4 scene status matches maturity",
       "passed": true,
-      "detail": "core-v2-provisional-program != core-v2-provisional-program"
+      "detail": "core-v2-active != core-v2-active"
     },
     {
       "name": "floor 4 scene design maturity matches program",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass != reconciled-current-iterative-pass"
     },
     {
       "name": "floor 4 zone routes resolve",

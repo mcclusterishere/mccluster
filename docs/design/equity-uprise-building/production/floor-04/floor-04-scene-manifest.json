@@ -2,7 +2,7 @@
   "schema_version": "2.1.0",
   "scene_id": "equity-uprise-floor-04",
   "scene_name": "Equity Uprise Level 04 \u2014 Media + Culture",
-  "status": "core-v2-provisional-program",
+  "status": "core-v2-active",
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
   "floor_program_ref": "../core-v2-floor-programs.json",
@@ -19,9 +19,9 @@
     "communication-derivatives",
     "creator-licensing-commerce"
   ],
-  "design_maturity": "pre-iterative-program-rewrite",
-  "render_readiness": "chassis-only-not-final-program",
-  "working_development_stage": null,
+  "design_maturity": "reconciled-current-iterative-pass",
+  "render_readiness": "inventory-ready-hybrid-3d-next",
+  "working_development_stage": "create-express-preserve",
   "primary_competency_ids": [],
   "secondary_competency_ids": [],
   "authority": {
@@ -443,5 +443,8 @@
   "lighting_ref": "floor-04-lighting.json",
   "hotspots_ref": "floor-04-hotspots.json",
   "routing_ref": "floor-04-routing.json",
-  "states_ref": "floor-04-states.json"
+  "states_ref": "floor-04-states.json",
+  "object_inventory_ref": "floor-04-object-inventory.json",
+  "preservation_map_ref": "../../FLOOR-04-V1-V2-PRESERVATION-MAP.md",
+  "program_reconciliation_ref": "../../FLOOR-04-PROGRAM-RECONCILIATION.md"
 }
