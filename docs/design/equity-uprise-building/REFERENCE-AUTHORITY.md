@@ -6,9 +6,8 @@
 
 ## Core V2 authority
 
-> **BRANCH-SCOPED AUTHORITY — `reconcile/equity-uprise-core-v2-20260921`**
 >
-> On this reconciliation branch, the old floor-local core coordinates are superseded by:
+> The old floor-local core coordinates are superseded by:
 > 1. `BUILDING-CORE-V2-SPEC.md`
 > 2. `production/building-core-v2.json`
 > 3. `production/building-v2-validation.json`
