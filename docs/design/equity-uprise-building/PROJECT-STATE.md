@@ -109,9 +109,30 @@ The working viewer now treats the building as one continuous object from B1 thro
 
 Public working-stack viewer: `equity-uprise-building-core-v2-3d.html`.
 
-## Floors 3–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
+## Floor 3 — RECONCILED / REAL 3D ACTIVE / STACKED
 
-Current `core-v2-floor-programs.json` still treats Floors 3–7 as pre-iterative program/interior work.
+Canonical identity: **Fellowship + Network**.
+
+Current state:
+- program reconciliation complete;
+- historical locked Floor 3 architecture audited;
+- preservation map complete;
+- machine inventory: **63 stable records / 85 total instances**;
+- inventory-driven GLB builder active;
+- reliable standalone viewer active;
+- inserted into the working building at **FFE +27 ft**.
+
+Required references:
+- `FLOOR-03-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-03-V1-V2-PRESERVATION-MAP.md`;
+- `production/floor-03/floor-03-object-inventory.json`;
+- `production/floor-03/build_equity_uprise_floor_03_v2.py`.
+
+Visual approval remains iterative.
+
+## Floors 4–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
+
+Current `core-v2-floor-programs.json` still treats Floors 4–7 as pre-iterative program/interior work.
 
 Do not interpret generated plan/program plates as finished 3D floors.
 
@@ -135,8 +156,9 @@ Use these to recover design quality, not obsolete stair/core geometry.
 3. **IN PROGRESS:** hybrid Floor 1 builder now consumes the canonical inventory and is being upgraded from the technical scaffold into the V1-feel / V2-truth environment.
 4. Review Floor 1 visually in the real 3D viewer.
 5. Insert the approved hybrid Floor 1 into the whole-building assembly and verify stacking.
-6. **ACTIVE:** Floor 2 real 3D + working-stack integration.
-7. Continue Floor 3 → Floor 7 using the same authority → inventory → 3D → verify → stack workflow while keeping all levels assembled.
+6. **DONE:** Floor 2 real 3D + working-stack integration.
+7. **DONE:** Floor 3 reconciliation → inventory → real 3D → working-stack integration.
+8. **NEXT:** Floor 4 — Media + Culture — reconciliation, preservation map, inventory, real 3D, then stack at +40.5 ft.
 
 ## Do not waste time on
 
