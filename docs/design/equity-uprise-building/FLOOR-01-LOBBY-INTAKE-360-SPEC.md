@@ -62,7 +62,7 @@ The floor should be visually calm. Empty space is intentional.
 
 Floor 1 remains the only normal ground-level public entrance. Exit-only protected-stair discharge doors and the secure service/delivery entrance are not public entrances.
 
-A non-developmental B1 Technical / Service Basement exists at -13'-6". Stair A, Stair B, the passenger elevator, freight/service elevator and MEP systems continue to B1. Floor 1 remains the modeled level of exit discharge.
+A non-developmental B1 Underground Operations / Technical Service Basement exists at -13'-6". Stair A, Stair B, the passenger elevator, freight/service elevator and MEP systems continue to B1. Floor 1 remains the modeled level of exit discharge.
 
 ### Floor 1 public-facing area
 The approved Floor 1 program now centers the Entry Vestibule, Arrival Atrium, Orientation Lounge, Intake / Verification Consultation, Development Passport Studio, Journey Wall, Reception / Concierge / Security Desk and Next Action / Building Directory. Core V2 preserves the north/west service and vertical chassis while the digital-twin program deepens the floor's institutional and simulation functions.
@@ -592,7 +592,7 @@ Do not:
 ### Secondary signage
 
 Only what is needed:
-- Lobby + Intake;
+- Arrival / Orientation / Intake;
 - Elevators / Floors 2–6;
 - Intake;
 - Restrooms/Exit where required;
