@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Core V2 generated plan semantic/artifact validation",
-  "checks_total": 310,
-  "checks_passed": 310,
+  "checks_total": 312,
+  "checks_passed": 312,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -1123,6 +1123,16 @@
       "detail": ""
     },
     {
+      "name": "L6 SVG label HALO GLOBE / SPATIAL INTELLIGENCE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L6 DXF label HALO GLOBE / SPATIAL INTELLIGENCE",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "L6 SVG label INSTITUTIONAL COMMAND WALL",
       "passed": true,
       "detail": ""
@@ -1275,12 +1285,12 @@
     {
       "name": "L6 PNG signature",
       "passed": true,
-      "detail": "bytes=77797"
+      "detail": "bytes=80572"
     },
     {
       "name": "L6 PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=77797"
+      "detail": "bytes=80572"
     },
     {
       "name": "L6 active plan triplet only",
@@ -1555,7 +1565,7 @@
     {
       "name": "contact sheet nontrivial size",
       "passed": true,
-      "detail": "bytes=111789"
+      "detail": "bytes=113148"
     }
   ]
 }
