@@ -1,0 +1,249 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-02",
+  "scene_name": "Equity Uprise Floor 2 — Public Forum",
+  "status": "canonical-production-v1",
+  "not_for_construction": true,
+  "authority": {
+    "spatial_authority": [
+      "../../FLOOR-02-PUBLIC-FORUM-360-SPEC.md",
+      "../../FLOOR-02-SCHEMATIC-PLAN-BASIS.md",
+      "../../REFERENCE-AUTHORITY.md"
+    ],
+    "geometry_authority": [
+      "../../references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.dxf",
+      "../../references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.svg",
+      "../../references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.png"
+    ],
+    "logo_asset": "../../../../assets/img/equity-uprise-logo.webp",
+    "rule": "Production files may operationalize canonical geometry but may not override it."
+  },
+  "units": {
+    "authoring": "feet",
+    "gltf_conversion_meters_per_foot": 0.3048
+  },
+  "coordinate_system": {
+    "origin": "southwest_exterior_corner",
+    "origin_ft": [
+      0,
+      0,
+      13.5
+    ],
+    "x_positive": "east",
+    "y_positive": "north",
+    "z_positive": "up",
+    "yaw_zero": "north",
+    "yaw_positive": "clockwise_toward_east"
+  },
+  "building_shell": {
+    "width_ft": 72,
+    "depth_ft": 72,
+    "floor_to_floor_ft": 13.5,
+    "floor_elevation_ft": 13.5,
+    "structural_grid_ft": [
+      0,
+      18,
+      36,
+      54,
+      72
+    ],
+    "exterior_access": "sealed_upper_floor_only"
+  },
+  "production_modeling_defaults": {
+    "authority": "visualization-and-interaction-only",
+    "interior_partition_thickness_ft": 0.5,
+    "exterior_wall_thickness_ft": 0.75,
+    "core_wall_thickness_ft": 0.75,
+    "default_finished_ceiling_height_ft": 11,
+    "feature_wall_height_ft": 12,
+    "default_door_height_ft": 8,
+    "note": "Visualization defaults only; later architectural authority overrides them."
+  },
+  "fixed_core": {
+    "elevator": {
+      "bounds_ft": {
+        "x1": 54,
+        "y1": 34,
+        "x2": 62,
+        "y2": 44
+      },
+      "door_facing": "west"
+    },
+    "stair_a": {
+      "bounds_ft": {
+        "x1": 60,
+        "y1": 54,
+        "x2": 72,
+        "y2": 72
+      }
+    },
+    "stair_b": {
+      "bounds_ft": {
+        "x1": 0,
+        "y1": 54,
+        "x2": 12,
+        "y2": 72
+      }
+    },
+    "mep_riser": {
+      "bounds_ft": {
+        "x1": 50,
+        "y1": 66,
+        "x2": 60,
+        "y2": 72
+      }
+    }
+  },
+  "zones": [
+    {
+      "id": "forum_zone",
+      "label": "Public Forum",
+      "type": "public_discussion",
+      "bounds_ft": {
+        "x1": 24,
+        "y1": 28,
+        "x2": 48,
+        "y2": 50
+      }
+    },
+    {
+      "id": "conversation_lounge",
+      "label": "Conversation / Listening Lounge",
+      "type": "listening",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 14,
+        "x2": 18,
+        "y2": 30
+      }
+    },
+    {
+      "id": "elevator_lobby",
+      "label": "Elevator Lobby",
+      "type": "circulation",
+      "bounds_ft": {
+        "x1": 48,
+        "y1": 28,
+        "x2": 64,
+        "y2": 48
+      }
+    },
+    {
+      "id": "north_corridor",
+      "label": "North Support Corridor",
+      "type": "circulation",
+      "bounds_ft": {
+        "x1": 12,
+        "y1": 54,
+        "x2": 60,
+        "y2": 60
+      }
+    },
+    {
+      "id": "restroom_a",
+      "label": "Restroom A",
+      "type": "support",
+      "bounds_ft": {
+        "x1": 12,
+        "y1": 60,
+        "x2": 20,
+        "y2": 70
+      }
+    },
+    {
+      "id": "restroom_b",
+      "label": "Restroom B",
+      "type": "support",
+      "bounds_ft": {
+        "x1": 20,
+        "y1": 60,
+        "x2": 28,
+        "y2": 70
+      }
+    },
+    {
+      "id": "forum_storage",
+      "label": "Forum Storage",
+      "type": "secure_support",
+      "bounds_ft": {
+        "x1": 28,
+        "y1": 60,
+        "x2": 40,
+        "y2": 72
+      }
+    },
+    {
+      "id": "av_it",
+      "label": "AV / IT",
+      "type": "secure_support",
+      "bounds_ft": {
+        "x1": 40,
+        "y1": 60,
+        "x2": 50,
+        "y2": 72
+      }
+    },
+    {
+      "id": "janitor",
+      "label": "Janitor",
+      "type": "service",
+      "bounds_ft": {
+        "x1": 50,
+        "y1": 60,
+        "x2": 54,
+        "y2": 66
+      }
+    }
+  ],
+  "canonical_objects": [
+    {
+      "id": "public_forum_feature_wall",
+      "type": "wall_feature",
+      "bounds_ft": {
+        "x1": 24,
+        "y1": 50,
+        "x2": 48,
+        "y2": 54
+      },
+      "identity": "PUBLIC FORUM",
+      "dynamic_surfaces": [
+        "CURRENT ISSUES",
+        "PERSPECTIVES",
+        "OPPORTUNITIES"
+      ]
+    },
+    {
+      "id": "forum_table",
+      "type": "round_table",
+      "center_ft": {
+        "x": 36,
+        "y": 39
+      },
+      "diameter_ft": 12,
+      "seats_max": 8
+    },
+    {
+      "id": "member_checkin",
+      "type": "interactive_terminal",
+      "bounds_ft": {
+        "x1": 49,
+        "y1": 24,
+        "x2": 51,
+        "y2": 29
+      },
+      "facing": "west"
+    }
+  ],
+  "south_perimeter": {
+    "type": "sealed_glazing",
+    "exterior_door": false,
+    "balcony": false,
+    "terrace": false
+  },
+  "camera_ref": "floor-02-camera.json",
+  "materials_ref": "floor-02-materials.json",
+  "lighting_ref": "floor-02-lighting.json",
+  "hotspots_ref": "floor-02-hotspots.json",
+  "routing_ref": "floor-02-routing.json",
+  "states_ref": "floor-02-states.json"
+}
