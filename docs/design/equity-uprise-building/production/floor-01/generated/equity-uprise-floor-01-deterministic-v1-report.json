@@ -1,32 +1,81 @@
 {
   "scene_id": "equity-uprise-floor-01",
   "version": "deterministic-v1",
+  "verification_version": "1.1.0",
   "mesh_count": 86,
   "glb_bytes": 76368,
-  "bounds_m": [
-    [
-      0,
-      0,
-      -0.1524
+  "sha256": "06c8c45491866f504fb35857a1959db5cb8cf6d54b8e16cbe35d60e6ed5da78f",
+  "passed": true,
+  "checks_total": 21,
+  "checks_passed": 21,
+  "checks_failed": 0,
+  "canonical_results": {
+    "plan_footprint_ft": [
+      72,
+      72
     ],
-    [
-      21.945600000000002,
-      21.945600000000002,
-      3.6576000000000004
+    "stair_b_envelope_ft": {
+      "x": [
+        0,
+        12
+      ],
+      "y": [
+        54,
+        72
+      ]
+    },
+    "stair_a_envelope_ft": {
+      "x": [
+        60,
+        72
+      ],
+      "y": [
+        54,
+        72
+      ]
+    },
+    "elevator_envelope_ft": {
+      "x": [
+        54,
+        62
+      ],
+      "y": [
+        34,
+        44
+      ]
+    },
+    "reception_desk_ft": {
+      "x": [
+        30,
+        42
+      ],
+      "y": [
+        44,
+        47
+      ]
+    },
+    "directory_ft": {
+      "x": [
+        49,
+        51
+      ],
+      "y": [
+        24,
+        29
+      ]
+    },
+    "camera_ft": [
+      36,
+      28,
+      5.333
+    ],
+    "public_entrance_jambs_x_ft": [
+      29,
+      43
     ]
-  ],
-  "extents_m": [
-    21.945600000000002,
-    21.945600000000002,
-    3.8100000000000005
-  ],
-  "not_for_construction": true,
-  "validated": true,
-  "validated_plan_extents_ft": [
-    72.0000016720589,
-    72.0000016720589
-  ],
-  "footprint_matches_canonical_72x72": true,
-  "validated_vertical_extent_ft": 12.49999976338051,
-  "generated_in_chat": true
+  },
+  "generated_in_chat": true,
+  "binary_committed_to_repository": false,
+  "binary_delivery": "The GLB is generated deterministically by build_equity_uprise_floor_01.py and uploaded as a GitHub Actions artifact by .github/workflows/equity-uprise-floor-01-3d.yml.",
+  "scope_note": "Verifies deterministic geometry against canonical production constraints; does not establish construction/code compliance."
 }
