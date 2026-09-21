@@ -27,6 +27,48 @@
 > Canonical Level 7 plan assets: `docs/design/equity-uprise-building/references/floor-07/`
 > Level 7 origin/pre-program: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`
 
+## Core V2 vertical-circulation migration
+
+> Branch authority: `architecture/equity-uprise-core-v2`
+>
+> Shared source: `equity-uprise-building/BUILDING-CORE-V2-SPEC.md` + `equity-uprise-building/production/building-core-v2.json`.
+
+The building remains six enclosed occupied floors plus Level 7 roof, but its vertical-circulation model is revised so the floors exist as one physically stacked 3D building rather than independent floor-local scenes.
+
+### Shared finished-floor elevations
+- Floor 1: **0'-0"**
+- Floor 2: **+13'-6"**
+- Floor 3: **+27'-0"**
+- Floor 4: **+40'-6"**
+- Floor 5: **+54'-0"**
+- Floor 6: **+67'-6"**
+- Level 7 roof: **+81'-0"**
+
+### Shared Core V2 systems
+- passenger elevator: **X54–62 / Y34–44**
+- West Service Core: **X0–18 / Y54–72**
+- service/freight elevator: **X0–8 / Y60–72**
+- revised Stair B: **X8–18 / Y54–72**
+- Stair A: **X60–72 / Y54–72**
+- MEP/riser: approximately **X50–60 / Y66–72**
+
+Both protected stairs are required to physically traverse the full **13'-6"** between level datums in the combined deterministic model. Shared slab openings are coordinated in `building-core-v2.json`.
+
+The freight/service elevator is additional service circulation. It is not treated as a replacement for a required stair/exit.
+
+### North support-band consequence on Floors 1–6
+Common replanned geometry:
+- west service approach: **X0–18 / Y54–60**
+- public/support corridor: **X18–60 / Y54–60**
+- Restroom A: **X18–26 / Y60–70**
+- Restroom B: **X26–34 / Y60–70**
+- floor-specific support A: **X34–42 / Y60–72**
+- floor-specific support B: **X42–50 / Y60–72**
+- janitor: **X50–54 / Y60–66**
+- MEP/riser: **X50–60 / Y66–72**
+
+Public-facing floor identities remain stable where practical; support/service geometry yields to the shared vertical core.
+
 ## 1. What exists today
 
 ### A. Institutional Desk — `equity-uprise.html`
