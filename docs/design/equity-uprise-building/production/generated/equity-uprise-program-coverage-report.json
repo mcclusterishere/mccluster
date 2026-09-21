@@ -1552,9 +1552,9 @@
       "detail": "[1, 2, 3, 4, 5, 6]"
     },
     {
-      "name": "floor 1 control_plane is not public",
+      "name": "floor 1 admin_desk is not public",
       "passed": true,
-      "detail": "authorized-admin"
+      "detail": "editor-or-admin"
     },
     {
       "name": "floor 1 publication_submission is not public",
@@ -1562,27 +1562,12 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
+      "name": "floor 1 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
       "name": "floor 1 media_release_ops is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 1 admin_desk is not public",
-      "passed": true,
-      "detail": "editor-or-admin"
-    },
-    {
-      "name": "floor 2 control_plane is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 2 publication_submission is not public",
-      "passed": true,
-      "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 2 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1592,17 +1577,17 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 3 control_plane is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 3 publication_submission is not public",
+      "name": "floor 2 publication_submission is not public",
       "passed": true,
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 3 media_release_ops is not public",
+      "name": "floor 2 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1612,17 +1597,17 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 4 control_plane is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 4 publication_submission is not public",
+      "name": "floor 3 publication_submission is not public",
       "passed": true,
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 4 media_release_ops is not public",
+      "name": "floor 3 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1632,17 +1617,17 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 5 control_plane is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 5 publication_submission is not public",
+      "name": "floor 4 publication_submission is not public",
       "passed": true,
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 5 media_release_ops is not public",
+      "name": "floor 4 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1652,17 +1637,17 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 6 control_plane is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 6 publication_submission is not public",
+      "name": "floor 5 publication_submission is not public",
       "passed": true,
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 6 media_release_ops is not public",
+      "name": "floor 5 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1672,17 +1657,17 @@
       "detail": "editor-or-admin"
     },
     {
-      "name": "floor 7 control_plane is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
-      "name": "floor 7 publication_submission is not public",
+      "name": "floor 6 publication_submission is not public",
       "passed": true,
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 7 media_release_ops is not public",
+      "name": "floor 6 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1690,6 +1675,21 @@
       "name": "floor 7 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 7 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 7 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
     }
   ]
 }
