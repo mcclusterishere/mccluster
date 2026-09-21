@@ -1,7 +1,7 @@
 # Equity Uprise Building — Floor 02 Schematic Plan Basis
 
-> Status: **CORE V2 CHASSIS / COORDINATION REFERENCE — FLOOR 2 PROGRAM PRE-ITERATIVE**  
-> Geometry note: preserve the shared shell, vertical systems, elevations and coordination constraints. Floor-specific room/program geometry remains subject to the future iterative rewrite.  
+> Status: **CORE V2 FLOOR 2 COORDINATION BASIS — PROGRAM RECONCILED / INVENTORY READY**  
+> Geometry note: preserve the shared shell, vertical systems, elevations and coordination constraints. Floor 2 room/program semantics are reconciled for the present iterative pass; real 3D modeling remains pending.  
 > Companion to: `FLOOR-02-PUBLIC-FORUM-360-SPEC.md`  
 > Floor 2 must stack on the Floor 1 building datum.  
 > **Not for construction.** Final permit/construction documents require licensed professional design and site/jurisdiction-specific review.
