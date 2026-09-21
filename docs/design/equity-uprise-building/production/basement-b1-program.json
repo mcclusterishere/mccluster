@@ -301,5 +301,7 @@
     "Protected stairs and the passenger elevator physically connect B1 to Floor 1 in the combined model.",
     "Freight/service elevator physically serves B1.",
     "The model must preserve a clear distinction between training simulation and real-world professional engineering authority."
-  ]
+  ],
+  "basement": true,
+  "south_condition": "below-grade perimeter wall"
 }
