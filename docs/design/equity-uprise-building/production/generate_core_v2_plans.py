@@ -25,7 +25,9 @@ REFS=BUILDING/"references"
 core=json.loads((HERE/"building-core-v2.json").read_text())
 programs=json.loads((HERE/"core-v2-floor-programs.json").read_text())
 b1=json.loads((HERE/"basement-b1-program.json").read_text())
+site=json.loads((HERE/"floor-01"/"floor-01-site-egress.json").read_text())
 plan_levels=[b1]+programs["levels"]
+SITE_OUT_NAME="equity-uprise-floor-01-site-egress-core-v2-schematic-v1"
 
 OUT_NAMES={
   0:"equity-uprise-basement-b1-core-v2-schematic-v1",
@@ -107,6 +109,30 @@ def elev_label(v):
 def ref_dir(level):
     return REFS/"basement-b1" if level.get("basement") else REFS/f"floor-{level['level']:02d}"
 
+def program_status(level):
+    if level.get("basement"):
+        return "RESTRICTED SUPPORT / UNDERGROUND OPERATIONS"
+    if level.get("design_maturity")=="reconciled-current-iterative-pass":
+        return "PROGRAM RECONCILED — BASIC RENDER READY"
+    return "PROGRAM PROVISIONAL — CHASSIS ONLY"
+
+def floor1_opening_segments():
+    out=[]
+    for obj in site.get("exterior_openings",[]):
+        if obj.get("object_id") not in {"F1-DOOR-STAIR-A-DISCHARGE","F1-DOOR-STAIR-B-DISCHARGE","F1-DOOR-SERVICE-WEST"}:
+            continue
+        loc=obj["location"]; facade=loc.get("facade")
+        if facade=="east":
+            a=(72,loc["y1"]); b=(72,loc["y2"])
+        elif facade=="west":
+            a=(0,loc["y1"]); b=(0,loc["y2"])
+        elif facade=="north":
+            a=(loc["x1"],72); b=(loc["x2"],72)
+        else:
+            continue
+        out.append((obj["label"].upper(),a,b))
+    return out
+
 def font(size,bold=False):
     p="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     try:return ImageFont.truetype(p,size)
@@ -129,6 +155,7 @@ def png(level,path):
     d.text((90,45),f"EQUITY UPRISE — {level_label(level)} — {level['title'].upper()}",font=font(30,True),fill="black")
     ffe=level["elevation_ft"]
     d.text((90,90),f"CORE V2 SCHEMATIC PLAN · FFE {elev_label(ffe)} · NOT FOR CONSTRUCTION",font=font(18),fill=(55,55,55))
+    d.text((90,125),program_status(level),font=font(16,True),fill=(115,25,29) if "PROVISIONAL" in program_status(level) else (55,55,55))
     for g in [0,18,36,54,72]:
         d.line((X(g),Y(0),X(g),Y(72)),fill=(215,215,215));d.line((X(0),Y(g),X(72),Y(g)),fill=(215,215,215))
     d.rectangle((X(0),Y(72),X(72),Y(0)),outline="black",width=5)
@@ -143,6 +170,14 @@ def png(level,path):
         d.text((X(cx),Y(cy)),label,font=font(12),fill=(20,20,20),anchor="mm")
     for b in (CORE["stair_b_open"],CORE["stair_a_open"]):
         x1,y1,x2,y2=b;dashed_rect(d,(X(x1),Y(y2),X(x2),Y(y1)))
+    if level.get("level")==1:
+        for label,a,b in floor1_opening_segments():
+            d.line((X(a[0]),Y(a[1]),X(b[0]),Y(b[1])),fill=(133,26,29),width=7)
+            mx=(X(a[0])+X(b[0]))/2; my=(Y(a[1])+Y(b[1]))/2
+            d.text((mx+6,my-14),label,font=font(10,True),fill=(115,25,29))
+    if level.get("basement"):
+        d.line((X(34),Y(72),X(34),Y(76)),fill=(39,103,122),width=5)
+        d.text((X(35),Y(75)-12),"TO FUTURE UNDERGROUND NETWORK — GEOMETRY RESERVED",font=font(10,True),fill=(39,103,122))
     d.ellipse((X(36)-8,Y(28)-8,X(36)+8,Y(28)+8),fill="white",outline="black",width=2);d.text((X(36)+12,Y(28)-8),"360",font=font(11),fill="black")
     d.text((X(36),Y(0)+18),level["south_condition"].upper(),font=font(13),fill=(60,60,60),anchor="ma")
     notes=[
@@ -160,7 +195,8 @@ def svg(level,path):
     out=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',
          '<style>.t{font-family:Arial,sans-serif;fill:#111}.small{font-size:9px}.med{font-size:11px}.title{font-size:18px;font-weight:700}.room{stroke:#444;stroke-width:1.5}.grid{stroke:#ddd;stroke-width:1}.shell{fill:none;stroke:#111;stroke-width:3}.open{fill:none;stroke:#8a1f23;stroke-width:1.5;stroke-dasharray:5 4}</style>',
          f'<text x="55" y="35" class="t title">EQUITY UPRISE — {esc(level_label(level))} — {esc(level["title"].upper())}</text>',
-         f'<text x="55" y="55" class="t med">CORE V2 SCHEMATIC PLAN · FFE {esc(elev_label(level["elevation_ft"]))} · NOT FOR CONSTRUCTION</text>']
+         f'<text x="55" y="55" class="t med">CORE V2 SCHEMATIC PLAN · FFE {esc(elev_label(level["elevation_ft"]))} · NOT FOR CONSTRUCTION</text>',
+         f'<text x="55" y="75" class="t med">{esc(program_status(level))}</text>']
     for g in [0,18,36,54,72]:
         out += [f'<line x1="{X(g)}" y1="{Y(0)}" x2="{X(g)}" y2="{Y(72)}" class="grid"/>',f'<line x1="{X(0)}" y1="{Y(g)}" x2="{X(72)}" y2="{Y(g)}" class="grid"/>']
     out.append(f'<rect x="{X(0)}" y="{Y(72)}" width="{72*s}" height="{72*s}" class="shell"/>')
@@ -171,6 +207,13 @@ def svg(level,path):
         out += [f'<circle cx="{X(cx)}" cy="{Y(cy)}" r="{r*s}" fill="{fill(kind)}" class="room"/>',f'<text x="{X(cx)}" y="{Y(cy)}" text-anchor="middle" dominant-baseline="middle" class="t small">{esc(label)}</text>']
     for b in (CORE["stair_b_open"],CORE["stair_a_open"]):
         x1,y1,x2,y2=b;out.append(f'<rect x="{X(x1)}" y="{Y(y2)}" width="{(x2-x1)*s}" height="{(y2-y1)*s}" class="open"/>')
+    if level.get("level")==1:
+        for label,a,b in floor1_opening_segments():
+            out.append(f'<line x1="{X(a[0])}" y1="{Y(a[1])}" x2="{X(b[0])}" y2="{Y(b[1])}" stroke="#851A1D" stroke-width="5"/>')
+            out.append(f'<text x="{(X(a[0])+X(b[0]))/2+5}" y="{(Y(a[1])+Y(b[1]))/2-7}" class="t small">{esc(label)}</text>')
+    if level.get("basement"):
+        out.append(f'<line x1="{X(34)}" y1="{Y(72)}" x2="{X(34)}" y2="{Y(76)}" stroke="#27677A" stroke-width="4"/>')
+        out.append(f'<text x="{X(35)}" y="{Y(75)-7}" class="t small">TO FUTURE UNDERGROUND NETWORK — GEOMETRY RESERVED</text>')
     out += [f'<circle cx="{X(36)}" cy="{Y(28)}" r="4" fill="#fff" stroke="#111"/>',
             f'<text x="{X(36)+8}" y="{Y(28)-3}" class="t small">360</text>',
             f'<text x="{X(36)}" y="{Y(0)+22}" text-anchor="middle" class="t med">{esc(level["south_condition"].upper())}</text>',
@@ -213,7 +256,7 @@ Design maturity: **{level.get('design_maturity','support-level' if level.get('ba
 
 def dxf(level,path):
     doc=ezdxf.new("R2010",setup=True);m=doc.modelspace()
-    for name,color in [("SHELL",7),("GRID",8),("CORE",1),("PROGRAM",3),("SUPPORT",4),("OPENINGS",1),("TEXT",7)]:
+    for name,color in [("SHELL",7),("GRID",8),("CORE",1),("PROGRAM",3),("SUPPORT",4),("OPENINGS",1),("EGRESS",1),("TEXT",7)]:
         if name not in doc.layers:doc.layers.add(name,color=color)
     def rect(b,layer):
         x1,y1,x2,y2=b;m.add_lwpolyline([(x1,y1),(x2,y1),(x2,y2),(x1,y2),(x1,y1)],dxfattribs={"layer":layer})
@@ -226,8 +269,16 @@ def dxf(level,path):
     for label,(cx,cy),r,kind in circles(level):
         m.add_circle((cx,cy),r,dxfattribs={"layer":"PROGRAM"});m.add_text(label,dxfattribs={"layer":"TEXT","height":0.55}).set_placement((cx,cy))
     for b in (CORE["stair_b_open"],CORE["stair_a_open"]):rect(b,"OPENINGS")
+    if level.get("level")==1:
+        for label,a,b in floor1_opening_segments():
+            m.add_line(a,b,dxfattribs={"layer":"EGRESS"})
+            m.add_text(label,dxfattribs={"layer":"TEXT","height":0.45}).set_placement(((a[0]+b[0])/2+0.5,(a[1]+b[1])/2))
+    if level.get("basement"):
+        m.add_line((34,72),(34,78),dxfattribs={"layer":"EGRESS"})
+        m.add_text("TO FUTURE UNDERGROUND NETWORK - GEOMETRY RESERVED",dxfattribs={"layer":"TEXT","height":0.45}).set_placement((35,76))
     m.add_circle((36,28),0.45,dxfattribs={"layer":"TEXT"});m.add_text("360 CAMERA",dxfattribs={"layer":"TEXT","height":0.5}).set_placement((36.7,28))
     m.add_text(f"CORE V2 {level_label(level)} {level['title'].upper()} FFE {elev_label(level['elevation_ft'])}",dxfattribs={"layer":"TEXT","height":0.8}).set_placement((2,75))
+    m.add_text(program_status(level),dxfattribs={"layer":"TEXT","height":0.55}).set_placement((2,73.5))
     m.add_text("NOT FOR CONSTRUCTION",dxfattribs={"layer":"TEXT","height":0.65}).set_placement((2,-3))
     doc.saveas(path)
 
