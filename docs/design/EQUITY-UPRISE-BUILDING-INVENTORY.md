@@ -1,6 +1,6 @@
 # Equity Uprise Building UI — Repo Inventory & Image Plan
 
-> Status: **ALL SIX ENCLOSED FLOORS + LEVEL 7 ROOF/MOBILITY PORTAL HAVE CANONICAL SPECS + SCHEMATIC GEOMETRY. LEVEL 7 IS THE LOCKED ECOSYSTEM PLANE; OPERATIONAL HELIPAD/VERTIPORT GEOMETRY REMAINS PENDING REAL-WORLD FEASIBILITY.**
+> Status: **CORE V2 GEOMETRY + REPO CAPABILITY RECONCILIATION ACTIVE ON `architecture/equity-uprise-core-v2`; SIX ENCLOSED FLOORS + LEVEL 7 ROOF RETAINED; PROGRAM AUTHORITY NOW BINDS TO THE 2026-09-21 CAPABILITY MAP.**
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
 > Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 > Canonical Floor 1 spec: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
@@ -68,6 +68,54 @@ Common replanned geometry:
 - MEP/riser: **X50–60 / Y66–72**
 
 Public-facing floor identities remain stable where practical; support/service geometry yields to the shared vertical core.
+
+## 2026-09-21 repo capability reconciliation
+
+The building program is now explicitly bound to:
+
+- `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
+- `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
+- `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
+
+The capability map currently tracks **51 repo-grounded capabilities** and distinguishes implemented, approval-gated, manual, externally configurable, shared-platform, intentionally unarmed, schematic-future and experimental-separate states.
+
+### Floor roles after reconciliation
+
+| Level | Identity | Repo-faithful role | Canonical semantic anchors |
+|---|---|---|---|
+| 1 | Lobby + Intake | arrival / trust / verification / intake / routing | Arrival / Identity Wall; Intake / Verification Consultation; Arrival / Routing Directory |
+| 2 | Public Forum | listen / discuss / record / member context | Public Forum; Topics / Perspectives / Conversations Wall; Listening Lounge; Member Check-In |
+| 3 | Fellowship + Network | people / opportunities / relationships / meetings | Opportunity Exchange; Opportunity / Network Wall; People + Network Lounge; Interview / Stakeholder Meeting A/B; Member / Meeting Check-In |
+| 4 | Media + Culture | listen / create / edit / archive / release | Media / Listening Zone; Media / Release Wall; Rally Gallery; Creator Recording; Edit / Review; Media / Release Control |
+| 5 | Policy + Proof | research / evidence / publication / filings / impact | Policy Lab; Policy / Publication / Impact Wall; Evidence + Proof Archive; Source Review; Publication / Submission Review; Research / Publication Navigator |
+| 6 | Penthouse Command | institutional direction / Desk / approvals / operations | Institutional Command Wall; Institutional Salon; Strategy Review; Partner / Executive Briefing; Control / Audit Records; Desk Operations / Systems |
+| 7 | Roof / Mobility Portal | ecosystem navigation / departure / arrival | Ecosystem Routing Interface; City Overlook; Candidate Mobility Zone |
+
+### What this means
+
+The building is **not** one room per webpage, API or database table.
+
+A physical zone may represent a coherent family of related capabilities:
+- Floor 3 compresses fellowships, profiles, stakeholders, meetings, commitments and relationship workflows;
+- Floor 4 compresses catalogue/listening, artists, recording/editing, approved derivatives, rights/release state and DDEX operations;
+- Floor 5 compresses initiatives, research workspace, sources/claims/evidence, manuscripts, publications, government submissions, monitors, citations and impact;
+- Floor 6 compresses the public institutional Desk plus access-controlled moderation, approvals, integrations, automation, outreach, status and audit state.
+
+Private software remains private in the building metaphor. A room representing an internal system does not make its data publicly visible.
+
+### Interaction correction
+
+Passenger-elevator service is canonical only for Floors **1–6**. Level 7 remains reachable by the protected stairs unless a later professional design establishes a real passenger-elevator roof stop. The production routing generator and program validator enforce this distinction.
+
+### Ongoing completeness gate
+
+Any future feature that materially changes Equity Uprise must:
+1. be added to the capability map;
+2. receive a primary floor or explicit exclusion;
+3. receive secondary-floor mappings where the workflow crosses levels;
+4. preserve its real access/approval boundary;
+5. pass `production/verify_equity_uprise_program_coverage.py`;
+6. only then be treated as represented by the building.
 
 ## 1. What exists today
 
@@ -268,11 +316,11 @@ The building is intentionally compact: **six enclosed occupied floors plus a sev
 |---|---|---|---|
 | 7 | Roof / Mobility Portal | Rooftop overlook, vertical arrival, **ecosystem-plane cross-site navigation/departure/arrival**, candidate mobility zone pending operational feasibility | **CANONICAL SPEC + SCHEMATIC GEOMETRY LOCKED** |
 | 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy, transition/access to roof | **LOCKED** |
-| 5 | Policy + Proof | Working paper, policy archive, Docket 516R, evidence, credentials, research/proof | **LOCKED** |
-| 4 | Media + Culture | Broadcast/event media, music, artists, civic anthems, cultural storytelling | **LOCKED** |
-| 3 | Fellowship + Network | Policy Fellowship, fellowship directory, profiles, people, opportunities/matching | **LOCKED** |
-| 2 | Public Forum | Topics, perspectives, conversations, member discussion/activity | **LOCKED** |
-| 1 | Lobby + Intake | Arrival, reception, visitor orientation, stakeholder/organization intake, routing | **LOCKED** |
+| 5 | Policy + Proof | initiatives, research workspace, sources/claims/evidence, Docket 516R, manuscripts, publications, filings, monitors, citations/impact | **LOCKED** |
+| 4 | Media + Culture | event media, music/catalogue, artists, civic anthems, recording/editing, release/rights/DDEX, cultural storytelling | **LOCKED** |
+| 3 | Fellowship + Network | Policy Fellowship, directory/matching, profiles, stakeholders, relationships, meetings/commitments, partner network | **LOCKED** |
+| 2 | Public Forum | topics, perspectives, neutral listening/conversations, member dashboard context, discussion/activity | **LOCKED** |
+| 1 | Lobby + Intake | arrival, reception, verification, stakeholder/organization intake, visitor orientation, routing | **LOCKED** |
 
 Do not add extra enclosed floors merely because a separate web page exists. Level 7 is the intentionally approved roof level.
 
