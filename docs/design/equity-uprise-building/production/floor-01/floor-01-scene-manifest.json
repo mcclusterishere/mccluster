@@ -35,6 +35,14 @@
     "activity_simulation_authority": [
       "../FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
       "floor-01/floor-01-digital-twin-program.json"
+    ],
+    "site_egress_authority": [
+      "../../FLOOR-01-SITE-EGRESS-SIMULATION.md",
+      "floor-01-site-egress.json"
+    ],
+    "basement_support_authority": [
+      "../../BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "../basement-b1-program.json"
     ]
   },
   "units": {
@@ -430,5 +438,7 @@
   "hotspots_ref": "floor-01-hotspots.json",
   "routing_ref": "floor-01-routing.json",
   "states_ref": "floor-01-states.json",
-  "digital_twin_program_ref": "floor-01/floor-01-digital-twin-program.json"
+  "digital_twin_program_ref": "floor-01/floor-01-digital-twin-program.json",
+  "site_egress_ref": "floor-01-site-egress.json",
+  "basement_program_ref": "../basement-b1-program.json"
 }
