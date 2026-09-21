@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "audit_date": "2026-09-21",
   "branch": "architecture/equity-uprise-core-v2",
   "repo": "mcclusterishere/mccluster",
@@ -14,7 +14,8 @@
     "built_shared_platform": "Implemented in shared McCluster platform and used by Equity Uprise rather than duplicated.",
     "built_public_pathway": "Public path exists; relationship/fulfillment work is handled institutionally.",
     "schematic_future_feasibility": "Architectural/digital reservation only, subject to real-world feasibility.",
-    "experimental_separate": "Separate experimental system; optional route, not building authority."
+    "experimental_separate": "Separate experimental system; optional route, not building authority.",
+    "built_quiet_until_governance": "Underlying program/fund record exists, but detailed public presentation is intentionally withheld until governance, custody, accounting and reporting are publishable."
   },
   "floors": [
     {
@@ -28,7 +29,9 @@
       "secondary_feature_ids": [
         "conversation-agent",
         "fellowship-applications",
-        "interviews-calendar"
+        "interviews-calendar",
+        "enterprise-development",
+        "program-funding"
       ],
       "public_surfaces": [
         "Reception",
@@ -39,7 +42,7 @@
         "Reception Support / Storage",
         "IT / Electrical"
       ],
-      "rule": "This floor receives people and routes them; it does not expose privileged workflow state."
+      "rule": "This floor receives people and routes them into fellowship, enterprise, verification and support pathways; it does not expose privileged workflow, financial or relationship state."
     },
     {
       "level": 2,
@@ -76,7 +79,9 @@
         "fellowship-applications",
         "interviews-calendar",
         "stakeholder-graph",
-        "meetings-commitments"
+        "meetings-commitments",
+        "fellowship-cohort",
+        "enterprise-development"
       ],
       "secondary_feature_ids": [
         "member-dashboard",
@@ -91,6 +96,7 @@
         "Opportunity Exchange",
         "Opportunity / Network Wall",
         "People + Network Lounge",
+        "Enterprise Development Lane",
         "Member / Meeting Check-In"
       ],
       "private_surfaces": [
@@ -98,7 +104,7 @@
         "Interview / Stakeholder Meeting B",
         "Fellowship / Relationship Records"
       ],
-      "rule": "Public people/opportunity surfaces never expose private contact fields or internal stakeholder notes."
+      "rule": "Public people/opportunity surfaces include the Equity Uprise cohort, external fellowships and enterprise-development information while keeping private contact, fit-review, revenue/accounting and relationship notes non-public."
     },
     {
       "level": 4,
@@ -111,7 +117,8 @@
         "music-release",
         "ddex",
         "rally-media",
-        "communication-derivatives"
+        "communication-derivatives",
+        "creator-licensing-commerce"
       ],
       "secondary_feature_ids": [
         "evidence-room",
@@ -183,7 +190,9 @@
         "status-health",
         "google-workspace",
         "outreach",
-        "event-ledger"
+        "event-ledger",
+        "program-support-funding",
+        "program-funding"
       ],
       "secondary_feature_ids": [
         "perspectives",
@@ -202,10 +211,12 @@
         "monitoring",
         "citations-impact",
         "music-release",
-        "ddex"
+        "ddex",
+        "fellowship-cohort",
+        "enterprise-development"
       ],
       "public_surfaces": [
-        "Institutional Salon",
+        "Institutional Salon / Support",
         "Public institutional mode of Command Wall"
       ],
       "private_surfaces": [
@@ -213,9 +224,10 @@
         "Strategy Review",
         "Partner / Executive Briefing",
         "Control / Audit Records",
-        "Desk Operations / Systems"
+        "Desk Operations / Systems",
+        "Program funding governance / records"
       ],
-      "rule": "Private control/admin/outreach functions must be access-controlled and must not turn the public building into a surveillance or tactical control room."
+      "rule": "Private control/admin/outreach/funding functions remain access-controlled. Public support/funding surfaces may not reveal quiet fund accounting, custody, approval or operational records."
     },
     {
       "level": 7,
@@ -247,7 +259,11 @@
       "visibility": "public",
       "sources": [
         "equity-uprise.html",
-        "js/equity-uprise-institutional.js"
+        "js/equity-uprise-institutional.js",
+        "data/dossier.json",
+        "data/archive.json",
+        "data/brands.json",
+        "ecosystem.html"
       ],
       "expression": "Penthouse Command public/institutional mode: NOW, PAST WORK, JOIN, current initiative portfolio and proof links."
     },
@@ -345,7 +361,9 @@
       "visibility": "public",
       "sources": [
         "fellowships.html",
-        "data/eu-fellowships.json"
+        "data/eu-fellowships.json",
+        "docs/agent-web.md",
+        "llms.txt"
       ],
       "expression": "Opportunity Exchange."
     },
@@ -361,7 +379,9 @@
       "sources": [
         "fellowships.html",
         "dashboard.html",
-        "docs/equity-uprise-platform.md"
+        "docs/equity-uprise-platform.md",
+        "docs/agent-web.md",
+        "llms.txt"
       ],
       "expression": "Opportunity table and member check-in."
     },
@@ -452,7 +472,8 @@
       ],
       "visibility": "private-operations",
       "sources": [
-        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
+        "supabase/replay_migrations/0065_outreach_engine_core.sql"
       ],
       "expression": "People + Network layer and access-controlled relationship views; not a public contact database."
     },
@@ -561,7 +582,8 @@
       "sources": [
         "docket-516.html",
         "data/docket-516-files.json",
-        "assets/landmarks/shiloh-docket-516/"
+        "assets/landmarks/shiloh-docket-516/",
+        "data/archive.json"
       ],
       "expression": "Evidence + Proof Archive; media context may also appear on Floor 4."
     },
@@ -577,7 +599,8 @@
       "sources": [
         "assets/credentials/",
         "equity-uprise.html",
-        "equity-uprise-fellowship.html"
+        "equity-uprise-fellowship.html",
+        "data/dossier.json"
       ],
       "expression": "Evidence + Proof Archive and institutional record."
     },
@@ -717,7 +740,12 @@
       "sources": [
         "album.html",
         "docs/music-platform.md",
-        "equity-uprise.html"
+        "equity-uprise.html",
+        "data/albums.json",
+        "data/catalogue.json",
+        "data/playlists.json",
+        "catalogue.html",
+        "listen.html"
       ],
       "expression": "Media / Listening Zone."
     },
@@ -745,7 +773,9 @@
       "visibility": "private-operations-with-public-catalogue",
       "sources": [
         "supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql",
-        "docs/music-platform.md"
+        "docs/music-platform.md",
+        "data/catalogue.json",
+        "data/ddex/identifiers.json"
       ],
       "expression": "Media / Music Operations support and Media / Release Control."
     },
@@ -774,7 +804,8 @@
       "visibility": "private-high-risk",
       "sources": [
         "supabase/functions/eu-ddex-worker/index.ts",
-        "supabase/replay_migrations/20260908214400_equity_uprise_ddex_worker.sql"
+        "supabase/replay_migrations/20260908214400_equity_uprise_ddex_worker.sql",
+        "data/ddex/identifiers.json"
       ],
       "expression": "Media release pipeline, not a public room."
     },
@@ -786,7 +817,9 @@
       "visibility": "public",
       "sources": [
         "walls/eu-rally.html",
-        "assets/img/rally/"
+        "assets/img/rally/",
+        "data/gallery.json",
+        "data/portfolio.json"
       ],
       "expression": "Culture Archive / Rally Gallery."
     },
@@ -823,7 +856,8 @@
       "visibility": "private-authorized",
       "sources": [
         "supabase/functions/eu-control/index.ts",
-        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
+        "supabase/replay_migrations/0066_control_authority_v2.sql"
       ],
       "expression": "Penthouse Command approval/control layer; never a public tactical checkpoint."
     },
@@ -848,7 +882,8 @@
       "sources": [
         "supabase/replay_migrations/20260908213100_equity_uprise_automation.sql",
         "supabase/replay_migrations/20260908213900_equity_uprise_event_dispatch.sql",
-        "supabase/functions/eu-worker/index.ts"
+        "supabase/functions/eu-worker/index.ts",
+        "supabase/replay_migrations/0066_control_authority_v2.sql"
       ],
       "expression": "Penthouse Command operations state; does not create a separate public room."
     },
@@ -889,7 +924,8 @@
       "sources": [
         "docs/equity-uprise-platform.md",
         "supabase/replay_migrations/20260908213600_equity_uprise_outreach_bridge.sql",
-        "supabase/replay_migrations/20260908214300_equity_uprise_outbound_communications.sql"
+        "supabase/replay_migrations/20260908214300_equity_uprise_outbound_communications.sql",
+        "supabase/replay_migrations/0065_outreach_engine_core.sql"
       ],
       "expression": "Access-controlled stakeholder pipeline; never a public blast console."
     },
@@ -914,7 +950,9 @@
       "primary_floor": 7,
       "visibility": "public-navigation",
       "sources": [
-        "docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md"
+        "docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md",
+        "data/brands.json",
+        "ecosystem.html"
       ],
       "expression": "Ecosystem Routing Interface."
     },
@@ -936,7 +974,12 @@
       "primary_floor": 7,
       "visibility": "optional-route-only",
       "sources": [
-        "docs/design/EQUITY-UPRISE-REPO-AUDIT.md"
+        "docs/design/EQUITY-UPRISE-REPO-AUDIT.md",
+        "_unfinished/uprise-world/uprise-world.html",
+        "_unfinished/uprise-world/uprise-world.js",
+        "_unfinished/uprise-world/uprise-world.json",
+        "_unfinished/uprise-world/uprise-npc.js",
+        "docs/uprise-world/AUDIT-REPORT.md"
       ],
       "expression": "May be a Level 7 destination route later; must not dictate building geometry or branding."
     },
@@ -966,6 +1009,70 @@
         "js/music-creator-profile.js"
       ],
       "expression": "Creator Studio / Media + Culture workflow. Rights-cleared releases may expose licensing offers and authenticated checkout through the shared McCluster Music stack; this does not resurrect the retired marketplace."
+    },
+    {
+      "id": "fellowship-cohort",
+      "name": "Equity Uprise fellowship cohort / fellow record",
+      "status": "built",
+      "primary_floor": 3,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "public-record-with-consent",
+      "sources": [
+        "equity-uprise-fellowship.html",
+        "data/fellows.json"
+      ],
+      "expression": "People + Network Lounge / Opportunity Wall carries the actual Equity Uprise cohort and fellow record, distinct from the external fellowship directory."
+    },
+    {
+      "id": "enterprise-development",
+      "name": "Equity Uprise enterprise development program lane",
+      "status": "built_guarded",
+      "primary_floor": 3,
+      "secondary_floors": [
+        1,
+        6
+      ],
+      "visibility": "public-program-information-private-fit-review-and-agreement",
+      "sources": [
+        "data/offers.json",
+        "data/sites.json",
+        "hire.html",
+        "sites.html",
+        "sites-details.html",
+        "js/hire-offers.js",
+        "js/crm.js",
+        "js/offers.js",
+        "js/onboard.js",
+        "platform/sql/001_init.sql",
+        "platform/src/server.mjs",
+        "supabase/replay_migrations/0009_offer_configurations.sql",
+        "supabase/replay_migrations/0012_management_upgrade_offerings.sql",
+        "supabase/replay_migrations/0033_knowledge_base.sql",
+        "scripts/kb-build.mjs",
+        "native/app/(tabs)/uprise.tsx"
+      ],
+      "expression": "Opportunity Exchange includes a business/workforce/digital-capacity program lane. Program fit, measurable connected revenue and signed agreements are reviewed in meeting/briefing spaces; the building does not hardcode prices or imply automatic approval."
+    },
+    {
+      "id": "program-funding",
+      "name": "Equity Uprise program funding / Mission Fund",
+      "status": "built_quiet_until_governance",
+      "primary_floor": 6,
+      "secondary_floors": [
+        1
+      ],
+      "visibility": "public-support-door-private-detailed-fund-governance",
+      "sources": [
+        "data/cause.json",
+        "give.html",
+        "docs/the-mission-fund.md",
+        "supabase/replay_migrations/0007_offerings.sql",
+        "supabase/functions/pay-now/index.ts",
+        "docs/pay-now.md"
+      ],
+      "expression": "Institutional Salon / Support represents donations, sponsorship and program-support routing. Detailed Equity Uprise fund meters/splits remain quiet until governance, custody, accounting and reporting are publishable."
     }
   ],
   "rules": [
@@ -975,6 +1082,9 @@
     "High-risk actions remain approval-gated and are never exposed as anonymous/public hotspots.",
     "Shared McCluster systems used by Equity Uprise are represented where they matter to the program, but the building does not pretend Equity Uprise owns a duplicate stack.",
     "Political/public-issue surfaces represent neutral discussion, evidence and participation; the building does not encode a partisan position.",
-    "Generated plans, 3D and hotspots must derive from this map plus Core V2 floor programs."
+    "Generated plans, 3D and hotspots must derive from this map plus Core V2 floor programs.",
+    "Enterprise Development is represented as a program lane, not a pricing billboard; changing commercial terms never changes building geometry.",
+    "The detailed Equity Uprise Mission Fund remains visually quiet until its governance/custody/accounting/reporting state is publishable.",
+    "The Equity Uprise cohort is distinct from the external fellowship directory and must remain visible as its own program record."
   ]
 }
