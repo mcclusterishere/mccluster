@@ -9,6 +9,11 @@
 > Mandatory authority: `REFERENCE-AUTHORITY.md`
 > Canonical plan references: `references/floor-01/`
 
+
+> **Core V2 migration authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Combined-model finished-floor elevation: **0'-0"**.
+> Shared vertical systems override any stale Core V1 coordinate language on this branch.
+
 ## 1. Architectural intent
 
 Floor 1 is the public threshold of Equity Uprise.
@@ -30,35 +35,25 @@ The floor should be visually calm. Empty space is intentional.
 
 ## 2. Conceptual building size and Floor 1 planning basis
 
-This is a concept design basis for visual continuity, not stamped construction documents.
-
-Use a compact urban-institute scale rather than a tower-lobby scale.
-
 ### Overall building planning module
+- exterior footprint: **72'-0" × 72'-0"**
+- conceptual gross floor area: **5,184 sq ft**
+- structural coordination grid: **18' × 18'**
+- Floor 1 finished-floor elevation: **0'-0"**
+- floor-to-floor: **13'-6"**
 
-- Approximate gross floor plate: **4,800–5,500 sq ft per level**.
-- Approximate occupied six-floor building gross area: **29,000–33,000 sq ft**.
-- Floor-to-floor height: approximately **13 ft 6 in**.
-- Typical clear finished ceiling: approximately **10 ft 6 in to 11 ft 6 in**.
-- Feature ceiling over the central lobby may rise locally to approximately **12 ft**.
-- Structural grid should feel regular and buildable, not sculptural for its own sake.
+### Core V2 vertical systems
+- passenger elevator: **X54–62 / Y34–44**
+- West Service Core: **X0–18 / Y54–72**
+- service/freight elevator: **X0–8 / Y60–72**
+- revised Stair B: **X8–18 / Y54–72**
+- Stair A: **X60–72 / Y54–72**
+- MEP/riser: approximately **X50–60 / Y66–72**
+
+Floor 1 remains the only ground-level public entrance. The freight/service elevator is back-of-house/service circulation, not a second public entrance.
 
 ### Floor 1 public-facing area
-
-Target approximately **2,000–2,300 net sq ft** for the visible lobby/intake environment.
-
-The remaining floor area can contain:
-- protected stairs;
-- accessible restrooms;
-- electrical/IT;
-- janitor/service;
-- small staff work/storage;
-- building mechanical/service spaces;
-- secure back-of-house circulation.
-
-Those support spaces need not dominate the 360 visual.
-
----
+The existing lobby, reception, visitor lounge, intake room, directory and public entrance remain the primary Floor 1 identity. Core V2 changes the north/west service geometry, not the basic arrival narrative.
 
 ## 3. Canonical 360 coordinate system
 
@@ -254,48 +249,35 @@ Do not cover the glass in marketing copy.
 
 ## 8. Fixed elevator / vertical core
 
-The elevator is the most important continuity object in the whole building.
+### Passenger elevator
+- shaft **X54–62 / Y34–44**
+- west-facing door into the elevator lobby
+- primary public vertical circulation
 
-### Position
+### West Service Core
+- overall reservation **X0–18 / Y54–72**
 
-It is permanently fixed in the **+90° / right quadrant** relative to the canonical camera.
+### Service / freight elevator
+- shaft **X0–8 / Y60–72**
+- conceptual south-facing service access
+- staff/service use; not a replacement for a required exit
 
-Every future floor must put the elevator doors in this same plan location.
+### Stair B
+- revised enclosure **X8–18 / Y54–72**
+- protected stair
+- full **13'-6"** rise to Floor 2 in combined geometry
+- shared slab opening approximately **X8.75–17.25 / Y58.25–71.25**
 
-Do not move the elevator because another floor has different furniture.
-
-### Floor 1 presentation
-
-Use:
-- one passenger elevator bank sufficient for the compact building;
-- clear call station;
-- modest floor directory;
-- simple **FLOORS 2–6** wayfinding.
-
-If the final building requires more than one cab, they remain inside this same fixed core footprint.
+### Stair A
+- enclosure **X60–72 / Y54–72**
+- protected stair
+- full **13'-6"** rise to Floor 2 in combined geometry
+- shared slab opening approximately **X60.75–71.25 / Y58.25–71.25**
 
 ### Access control
+Public elevator access and service/freight access may use different control rules. Final access-control, fire-service and egress behavior require professional design.
 
-Public visitors may enter Floor 1 freely during open hours.
-
-Upper-floor access can be:
-- reception-authorized;
-- credential-controlled;
-- appointment-controlled.
-
-Keep security visually quiet.
-
-### Stairs
-
-A real six-floor building requires protected egress stairs.
-
-Conceptually provide:
-- one enclosed stair associated with the main core;
-- a second remote protected egress stair at the opposite side/back-of-house as required by final code analysis.
-
-The 360 lobby image does not need to theatrically display either stair.
-
----
+The browser/3D model may no longer use shortened decorative stair flights as vertical-continuity proof.
 
 ## 9. Public wayfinding / digital interaction
 
@@ -320,22 +302,20 @@ A visitor can be routed to those functions through the single directory or the s
 
 ## 10. Back-of-house requirements
 
-Not all functions should appear in the panorama.
+Core V2 replans the north support band around the West Service Core.
 
-Behind the public walls/core, plan for:
-- secure staff door;
-- small reception support/storage;
-- network/IT closet;
-- electrical closet;
-- janitor closet;
-- package/storage niche;
-- accessible restrooms;
-- mechanical access;
-- protected egress.
+- west service approach: **X0–18 / Y54–60**
+- public/support corridor: **X18–60 / Y54–60**
+- accessible restroom A: **X18–26 / Y60–70**
+- accessible restroom B: **X26–34 / Y60–70**
+- reception support / storage: **X34–42 / Y60–72**
+- IT / electrical: **X42–50 / Y60–72**
+- janitor: **X50–54 / Y60–66**
+- MEP / riser: **X50–60 / Y66–72**
 
-These spaces make the floor believable but should remain visually secondary.
+The freight shaft **X0–8 / Y60–72**, revised Stair B **X8–18 / Y54–72**, Stair A **X60–72 / Y54–72**, and their slab openings are protected shared geometry.
 
----
+Support functions may shrink/rebalance as shown, but reception/intake/public circulation may not invade the vertical core.
 
 ## 11. Circulation
 
@@ -700,3 +680,13 @@ Before approving any new Floor 1 panorama, answer yes to every item:
 - [ ] Does the equirectangular seam make spatial sense?
 - [ ] Can this floor stack logically under Floor 2?
 - [ ] Could a builder plausibly construct what is shown?
+
+
+### Core V2 migration QC
+- [ ] finished-floor elevation matches `building-core-v2.json`
+- [ ] service/freight elevator shaft X0–8 / Y60–72 is preserved
+- [ ] revised Stair B X8–18 / Y54–72 is preserved
+- [ ] Stair A X60–72 / Y54–72 is preserved
+- [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
+- [ ] shared slab openings remain unobstructed
+- [ ] no floor-local decorative stair is treated as vertical-continuity authority
