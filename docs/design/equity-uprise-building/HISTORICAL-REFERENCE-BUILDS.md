@@ -73,6 +73,27 @@ Do **not** preserve obsolete west Stair B/service-core coordinates.
 
 See `FLOOR-03-V1-V2-PRESERVATION-MAP.md`.
 
+## Reference A4 — historical Floor 4 Media + Culture
+
+Historical architecture references:
+- canonical Floor 4 program/spec commit `07cc968e80f7c703cdea739ac38554331cad5a7c`;
+- locked Floor 4 schematic geometry commit `8f3847d171864dcd721fe98ff8c1b2a469c41906`.
+
+Preserve:
+- central listening/screening room;
+- MEDIA + CULTURE wall with LISTEN / WATCH / ARCHIVE;
+- west Culture Archive / Rally Gallery;
+- compact Creator Recording Room;
+- Edit / Review Suite;
+- elevator-side media control;
+- dark/gunmetal/warm-wood/charcoal material family.
+
+There was no comparable standalone historical Floor 4 3D viewer in repo history. Do not invent one as precedent.
+
+Do **not** preserve obsolete west Stair B/service-core coordinates.
+
+See `FLOOR-04-V1-V2-PRESERVATION-MAP.md`.
+
 ## Reference B — fully assembled Core V2 building
 
 ### Combined generator
