@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.6.0",
+  "schema_version": "2.7.0",
   "core_ref": "building-core-v2.json",
   "not_for_construction": true,
   "common_support": {
@@ -211,7 +211,33 @@
       "site_egress_ref": "floor-01/floor-01-site-egress.json",
       "basement_context_ref": "basement-b1-program.json",
       "level_of_exit_discharge": true,
-      "tunnel_network_ref": "underground-tunnel-network.json"
+      "tunnel_network_ref": "underground-tunnel-network.json",
+      "design_maturity": "reconciled-current-iterative-pass",
+      "render_readiness": "basic-render-ready-after-derived-artifact-regeneration",
+      "primary_competency_ids": [
+        "CORE-01",
+        "CORE-05",
+        "CORE-06",
+        "CORE-07",
+        "CORE-08"
+      ],
+      "secondary_competency_ids": [
+        "CORE-02",
+        "CORE-03",
+        "SHR-02",
+        "SHR-06",
+        "PSC-02",
+        "PSC-04",
+        "OPS-01",
+        "OPS-02",
+        "OPS-04",
+        "OPS-06"
+      ],
+      "development_program_refs": [
+        "../../equity-uprise-development/DEVELOPMENT-JOURNEY.md",
+        "../../equity-uprise-development/COMPETENCY-ARCHITECTURE.md",
+        "../../equity-uprise-development/stage-competency-map.json"
+      ]
     },
     {
       "level": 2,
@@ -287,7 +313,9 @@
         "member-dashboard",
         "fellowship-matching"
       ],
-      "capability_map_ref": "equity-uprise-capability-map-v2.json"
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "design_maturity": "pre-iterative-program-rewrite",
+      "render_readiness": "chassis-only-not-final-program"
     },
     {
       "level": 3,
@@ -440,7 +468,9 @@
           "access": "public-program-information",
           "read_only": true
         }
-      ]
+      ],
+      "design_maturity": "pre-iterative-program-rewrite",
+      "render_readiness": "chassis-only-not-final-program"
     },
     {
       "level": 4,
@@ -571,7 +601,9 @@
           "access": "authorized-admin",
           "read_only": true
         }
-      ]
+      ],
+      "design_maturity": "pre-iterative-program-rewrite",
+      "render_readiness": "chassis-only-not-final-program"
     },
     {
       "level": 5,
@@ -732,7 +764,9 @@
           "access": "authorized-researcher-editor-admin",
           "read_only": true
         }
-      ]
+      ],
+      "design_maturity": "pre-iterative-program-rewrite",
+      "render_readiness": "chassis-only-not-final-program"
     },
     {
       "level": 6,
@@ -940,7 +974,9 @@
           "route_key": "outreach_ops",
           "access": "authorized-admin"
         }
-      ]
+      ],
+      "design_maturity": "pre-iterative-program-rewrite",
+      "render_readiness": "chassis-only-not-final-program"
     },
     {
       "level": 7,
@@ -1009,8 +1045,11 @@
         "roof-mobility",
         "uprise-world"
       ],
-      "capability_map_ref": "equity-uprise-capability-map-v2.json"
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "design_maturity": "pre-iterative-program-rewrite",
+      "render_readiness": "chassis-only-not-final-program"
     }
   ],
-  "capability_map_ref": "equity-uprise-capability-map-v2.json"
+  "capability_map_ref": "equity-uprise-capability-map-v2.json",
+  "development_program_ref": "../../equity-uprise-development/stage-competency-map.json"
 }
