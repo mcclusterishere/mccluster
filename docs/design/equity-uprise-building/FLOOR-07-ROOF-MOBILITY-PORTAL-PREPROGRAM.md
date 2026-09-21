@@ -3,6 +3,8 @@
 > Status: **ORIGIN / PRE-PROGRAM — SUPERSEDED FOR CURRENT LEVEL 7 GEOMETRY BY THE CANONICAL SPEC + SCHEMATIC BASIS**  
 > Purpose: preserve the roof as an intentional seventh navigable level and ensure Floor 6 is designed to support it.  
 > This document must be read before designing Floor 6, the roof, the exterior building master, any rooftop 3D scene, or any cross-site navigation sequence.
+>
+> **Core V2 migration note:** this file is historical/origin context only for physical geometry. On `architecture/equity-uprise-core-v2`, `BUILDING-CORE-V2-SPEC.md`, `production/building-core-v2.json`, the Level 7 canonical spec, and the Level 7 schematic basis control physical coordinates.
 
 ## 1. Owner intent
 
@@ -141,14 +143,19 @@ If future eVTOL/VTOL operations become part of the project, they require their o
 
 ## 8. Roof continuity coordinates
 
-The roof inherits the same plan datum:
+Core V2 roof datum:
 - footprint: **72' × 72'**
 - grid: **18' × 18'**
-- elevator/core stack: inherited from Floors 1–6
-- Stair A/B stack: inherited from Floors 1–6
-- risers/services: inherited and terminated/coordinated at roof level
+- roof walking elevation: **+81'-0"**
+- passenger elevator: **X54–62 / Y34–44**
+- service/freight shaft reservation: **X0–8 / Y60–72**
+- revised Stair B: **X8–18 / Y54–72**
+- Stair A: **X60–72 / Y54–72**
+- MEP/roof services: approximately **X50–60 / Y66–72**
 
-Current schematic roof-access and mobility-reservation geometry is now locked in `FLOOR-07-SCHEMATIC-PLAN-BASIS.md`. Exact operational helipad/vertiport geometry remains intentionally unlocked pending real-world feasibility.
+Both protected stairs physically reach the roof in the Core V2 combined model. Direct passenger-elevator roof service remains unassumed. Freight/service roof stopping remains reserved for future technical resolution.
+
+Current schematic roof-access and mobility-reservation geometry is controlled by `BUILDING-CORE-V2-SPEC.md`, `production/building-core-v2.json`, and `FLOOR-07-SCHEMATIC-PLAN-BASIS.md`. Exact operational helipad/vertiport geometry remains intentionally unlocked pending real-world feasibility.
 
 ## 9. Floor 6 design gate
 

@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0.0",
+  "core_id": "equity-uprise-core-v2",
+  "not_for_construction": true,
+  "tolerances": {
+    "plan_ft": 0.01,
+    "elevation_ft": 0.01
+  },
+  "assertions": [
+    {
+      "id": "shell_width",
+      "type": "equals",
+      "path": "shell.width_ft",
+      "expected": 72
+    },
+    {
+      "id": "shell_depth",
+      "type": "equals",
+      "path": "shell.depth_ft",
+      "expected": 72
+    },
+    {
+      "id": "floor_to_floor",
+      "type": "equals",
+      "path": "shell.floor_to_floor_ft",
+      "expected": 13.5
+    },
+    {
+      "id": "level_elevations",
+      "type": "sequence_equals",
+      "path": "levels[*].finished_floor_elevation_ft",
+      "expected": [
+        0,
+        13.5,
+        27,
+        40.5,
+        54,
+        67.5,
+        81
+      ]
+    },
+    {
+      "id": "passenger_shaft",
+      "type": "bounds_equals",
+      "path": "vertical_systems.passenger_elevator.shaft_bounds_ft",
+      "expected": {
+        "x1": 54,
+        "y1": 34,
+        "x2": 62,
+        "y2": 44
+      }
+    },
+    {
+      "id": "freight_shaft",
+      "type": "bounds_equals",
+      "path": "vertical_systems.service_freight_elevator.shaft_bounds_ft",
+      "expected": {
+        "x1": 0,
+        "y1": 60,
+        "x2": 8,
+        "y2": 72
+      }
+    },
+    {
+      "id": "stair_a_enclosure",
+      "type": "bounds_equals",
+      "path": "vertical_systems.stair_a.enclosure_bounds_ft",
+      "expected": {
+        "x1": 60,
+        "y1": 54,
+        "x2": 72,
+        "y2": 72
+      }
+    },
+    {
+      "id": "stair_b_enclosure",
+      "type": "bounds_equals",
+      "path": "vertical_systems.stair_b.enclosure_bounds_ft",
+      "expected": {
+        "x1": 8,
+        "y1": 54,
+        "x2": 18,
+        "y2": 72
+      }
+    },
+    {
+      "id": "stair_a_full_rise",
+      "type": "equals",
+      "path": "vertical_systems.stair_a.rise_per_level_ft",
+      "expected": 13.5
+    },
+    {
+      "id": "stair_b_full_rise",
+      "type": "equals",
+      "path": "vertical_systems.stair_b.rise_per_level_ft",
+      "expected": 13.5
+    },
+    {
+      "id": "two_stairs_retained",
+      "type": "contains_all",
+      "path": "west_service_core.components",
+      "expected": [
+        "stair-b-west",
+        "service-freight-elevator-a"
+      ]
+    },
+    {
+      "id": "freight_not_egress_substitute",
+      "type": "text_contains",
+      "path": "egress_and_code_limitations",
+      "expected": "not counted as a substitute for a required exit"
+    }
+  ],
+  "cross_floor_rules": [
+    "Every occupied floor must inherit passenger-elevator, freight/service-shaft, Stair A, Stair B, and MEP coordinates from building-core-v2.json.",
+    "Every floor above Floor 1 must place its finished floor at the shared global elevation, not local z=0 in authoritative combined geometry.",
+    "No floor slab may cover the shared shaft or stair slab-opening polygons.",
+    "Per-floor viewers may be isolated views, but their geometry must derive from the same shared core.",
+    "The combined building model is the required vertical-continuity proof."
+  ]
+}

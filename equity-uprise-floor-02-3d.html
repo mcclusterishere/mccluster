@@ -2,161 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Equity Uprise — Floor 2 Public Forum 3D</title>
-<style>
-:root{color-scheme:dark}*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-#view{position:fixed;inset:0;width:100%;height:100%;display:block;background:#161719;touch-action:none}
-#hud{position:fixed;z-index:10;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));max-width:min(490px,calc(100vw - 24px));padding:13px;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(10,10,10,.82);backdrop-filter:blur(10px)}
-h1{font-size:14px;letter-spacing:.04em;margin:0 0 5px}p{font-size:11px;line-height:1.4;color:#ccc;margin:0 0 10px}
-.controls{display:flex;gap:6px;flex-wrap:wrap}button{border:1px solid #555;border-radius:999px;padding:7px 10px;background:#252525;color:#fff;font-size:11px;font-weight:700}button:active{background:#851a1d}
-#info{position:fixed;z-index:10;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));padding:8px 10px;border-radius:10px;background:rgba(10,10,10,.8);border:1px solid rgba(255,255,255,.14);font-size:10px;color:#ddd}
-#boot{position:fixed;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);padding:13px 16px;border-radius:12px;background:#111;border:1px solid #555;font-size:12px;text-align:center;max-width:calc(100vw - 30px)}
-</style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Equity Uprise — Floor 2 — Public Forum — Core V2</title>
+<meta name="robots" content="noindex">
+<style>html,body{height:100%;margin:0;background:#111;color:#fff;font-family:system-ui,sans-serif;display:grid;place-items:center}a{color:#fff}main{max-width:540px;padding:24px;text-align:center}</style>
 </head>
 <body>
-<canvas id="view"></canvas>
-<div id="hud">
-<h1>EQUITY UPRISE · FLOOR 2 · PUBLIC FORUM</h1>
-<p>Deterministic upper-floor scene. Drag to orbit, pinch to zoom. South is sealed glazing — <b>no exterior door</b>. Both stairs remain in the rear/north core.</p>
-<div class="controls">
-<button data-view="forum">Forum</button>
-<button data-view="wall">Feature Wall</button>
-<button data-view="elevator">Elevator</button>
-<button data-view="lounge">Listening Lounge</button>
-<button data-view="south">South Glazing</button>
-<button id="ceilBtn">Hide ceiling</button>
-<button id="wireBtn">Wireframe</button>
-</div>
-</div>
-<div id="info">FLOOR 2 · NORTH ↑ · exact 72' × 72' plan · no exterior entrance</div>
-<div id="boot">Starting Floor 2 deterministic viewer…</div>
-<script>
-(()=>{
-"use strict";
-const canvas=document.getElementById("view"),ctx=canvas.getContext("2d",{alpha:false}),boot=document.getElementById("boot");
-if(!ctx){boot.textContent="This browser did not provide a canvas.";return;}
-const objects=[],labels=[];
-const C={floor:"#56595b",wall:"#2b2a29",core:"#303338",stone:"#353638",glass:"rgba(155,200,215,.33)",wood:"#6c523c",seat:"#474544",service:"#494a4a",red:"#851a1d",screen:"#1e2328",ceiling:"#242424"};
-function box(name,x1,y1,x2,y2,h,color,z0=0){objects.push({kind:"box",name,x1,y1,x2,y2,z0,z1:z0+h,color});}
-function cyl(name,x,y,r,h,color,z0=0,sides=18){objects.push({kind:"cyl",name,x,y,r,z0,z1:z0+h,color,sides});}
-function wallH(name,x1,x2,y,t,h,gaps=[],color=C.wall){let cur=x1,i=0;const gs=gaps.slice().sort((a,b)=>a[0]-b[0]);gs.push([x2,x2]);for(const g of gs){if(g[0]>cur)box(name+"_"+(++i),cur,y-t/2,g[0],y+t/2,h,color);cur=Math.max(cur,g[1]);}}
-function wallV(name,x,y1,y2,t,h,gaps=[],color=C.wall){let cur=y1,i=0;const gs=gaps.slice().sort((a,b)=>a[0]-b[0]);gs.push([y2,y2]);for(const g of gs){if(g[0]>cur)box(name+"_"+(++i),x-t/2,cur,x+t/2,g[0],h,color);cur=Math.max(cur,g[1]);}}
-const H=11,EXT=.75,INT=.5,CORE=.75;
-
-// shell
-box("floor",0,0,72,72,.5,C.floor,-.5);box("ceiling",0,0,72,72,.35,C.ceiling,H);
-box("north_wall",0,72-EXT,72,72,H,C.wall);box("west_wall",0,0,EXT,72,H,C.wall);box("east_wall",72-EXT,0,72,72,H,C.wall);
-
-// sealed south upper-floor glazing: no opening, no vestibule, no door
-wallH("south_glazing",0,72,.35,.25,H,[],C.glass);
-for(let x=0;x<=72;x+=9)box("south_mullion_"+x,Math.max(0,x-.08),0,Math.min(72,x+.08),.7,H,C.core);
-
-// Public Forum feature wall / three dynamic display surfaces
-wallH("feature_wall",24,48,52.5,.75,12,[],C.stone);
-box("current_issues_panel",25,52.0,31.5,52.18,4.8,C.screen,3.2);
-box("perspectives_panel",32.75,52.0,39.25,52.18,4.8,C.screen,3.2);
-box("opportunities_panel",40.5,52.0,47,52.18,4.8,C.screen,3.2);
-labels.push(["PUBLIC FORUM",36,52.0,9.4],["CURRENT ISSUES",28.25,51.8,5.6],["PERSPECTIVES",36,51.8,5.6],["OPPORTUNITIES",43.75,51.8,5.6]);
-
-// central 12 ft forum table + 8 seats
-cyl("forum_table",36,39,6,2.6,C.wood,0,24);
-for(let i=0;i<8;i++){
- const a=-Math.PI/2+i*Math.PI/4,rr=8.6,x=36+Math.cos(a)*rr,y=39+Math.sin(a)*rr;
- cyl("forum_chair_"+(i+1),x,y,1.05,2.5,C.seat,0,12);
-}
-
-// west listening lounge X2-18 / Y14-30
-box("lounge_sofa",3,17,10,20,2.8,C.seat);
-box("lounge_chair_1",12,16,15,19,2.8,C.seat);
-box("lounge_chair_2",12,24,15,27,2.8,C.seat);
-cyl("lounge_table",9.5,23,2,1.35,C.wood,0,18);
-box("listening_interface",.78,21,1.02,26,5.4,C.screen,2.3);
-labels.push(["TALK IT THROUGH",2.0,23.5,5.3]);
-
-// member check-in X49-51 / Y24-29
-box("member_checkin",49,24,51,29,6,C.core);
-box("member_screen",48.88,25,49.02,28,3.4,C.screen,2.0);
-labels.push(["MEMBER CHECK-IN",50,26.5,6.6]);
-
-// north support band
-wallH("support_south",12,60,60,INT,H,[[14.5,17.5],[22.5,25.5],[31,34],[43,46],[51,53.5]],C.wall);
-[
- [11.75,54,72,"stair_b_east"],[20,60,70,"restroom_1"],[28,60,72,"restroom_2"],
- [40,60,72,"forum_storage"],[50,60,72,"av_it"],[54,60,66,"janitor"],[60.25,54,72,"stair_a_west"]
-].forEach(v=>wallV(v[3],v[0],v[1],v[2],INT,H,[],C.wall));
-
-// stairs rear/north
-wallH("stair_b_south",0,12,54+CORE/2,CORE,H,[[7.5,10.5]],C.core);
-wallH("stair_a_south",60,72,54+CORE/2,CORE,H,[[61.5,64.5]],C.core);
-function stairs(prefix,x1,y1,x2,y2){const count=9,run=(y2-y1-3)/count,rise=10.5;for(let i=0;i<count;i++){const ya=y1+1.5+i*run;box(prefix+"_"+i,x1+1.3,ya,x2-1.3,ya+run*.82,.45,C.service,i*(rise/count));}}
-stairs("stair_b",0,54,12,72);stairs("stair_a",60,54,72,72);
-
-// elevator exact stack X54-62 / Y34-44
-wallH("elev_s",54,62,34,CORE,H,[],C.core);wallH("elev_n",54,62,44,CORE,H,[],C.core);wallV("elev_e",62,34,44,CORE,H,[],C.core);wallV("elev_w",54,34,44,CORE,H,[[37,41]],C.core);
-box("elev_door_1",53.88,37,54.02,39,8,C.core);box("elev_door_2",53.88,39,54.02,41,8,C.core);box("mep",50,66,60,72,H,C.service);
-
-let showCeiling=true,wire=false,yaw=-.72,pitch=.42,dist=45,target={x:36,y:39,z:4.1};
-const views={
- forum:{yaw:-.72,pitch:.42,dist:45,t:[36,39,4.1]},
- wall:{yaw:0,pitch:.2,dist:25,t:[36,52,5]},
- elevator:{yaw:-1.05,pitch:.28,dist:23,t:[57,39,4.3]},
- lounge:{yaw:.9,pitch:.33,dist:24,t:[10,22,3.7]},
- south:{yaw:Math.PI,pitch:.2,dist:30,t:[36,1,5]}
-};
-function go(k){const v=views[k];yaw=v.yaw;pitch=v.pitch;dist=v.dist;target={x:v.t[0],y:v.t[1],z:v.t[2]};render();}
-document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>go(b.dataset.view));
-document.getElementById("ceilBtn").onclick=e=>{showCeiling=!showCeiling;e.target.textContent=showCeiling?"Hide ceiling":"Show ceiling";render();};
-document.getElementById("wireBtn").onclick=e=>{wire=!wire;e.target.textContent=wire?"Solid":"Wireframe";render();};
-
-function resize(){const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);canvas.style.width=innerWidth+"px";canvas.style.height=innerHeight+"px";ctx.setTransform(dpr,0,0,dpr,0,0);render();}
-function sub(a,b){return{x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}}function dot(a,b){return a.x*b.x+a.y*b.y+a.z*b.z}function cross(a,b){return{x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x}}function norm(a){const n=Math.hypot(a.x,a.y,a.z)||1;return{x:a.x/n,y:a.y/n,z:a.z/n}}
-function cam(){const cp=Math.cos(pitch),sp=Math.sin(pitch),cy=Math.cos(yaw),sy=Math.sin(yaw);const pos={x:target.x+dist*cp*sy,y:target.y-dist*cp*cy,z:target.z+dist*sp};const f=norm(sub(target,pos));let r=norm(cross(f,{x:0,y:0,z:1}));if(Math.hypot(r.x,r.y,r.z)<.1)r={x:1,y:0,z:0};const u=norm(cross(r,f));return{pos,f,r,u};}
-function project(p,c){const q=sub(p,c.pos),xx=dot(q,c.r),yy=dot(q,c.u),zz=dot(q,c.f);if(zz<=.2)return null;const f=.5*Math.min(innerWidth,innerHeight)/Math.tan(58*Math.PI/360);return{x:innerWidth/2+xx*f/zz,y:innerHeight/2-yy*f/zz,z:zz};}
-const boxFaces=[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]];
-function mesh(o){
- if(o.kind==="box"){
-  const v=[{x:o.x1,y:o.y1,z:o.z0},{x:o.x2,y:o.y1,z:o.z0},{x:o.x2,y:o.y2,z:o.z0},{x:o.x1,y:o.y2,z:o.z0},{x:o.x1,y:o.y1,z:o.z1},{x:o.x2,y:o.y1,z:o.z1},{x:o.x2,y:o.y2,z:o.z1},{x:o.x1,y:o.y2,z:o.z1}];
-  return{v,f:boxFaces};
- }
- const v=[],f=[],n=o.sides;
- for(let i=0;i<n;i++){const a=i*2*Math.PI/n;v.push({x:o.x+Math.cos(a)*o.r,y:o.y+Math.sin(a)*o.r,z:o.z0});}
- for(let i=0;i<n;i++){const a=i*2*Math.PI/n;v.push({x:o.x+Math.cos(a)*o.r,y:o.y+Math.sin(a)*o.r,z:o.z1});}
- f.push([...Array(n).keys()].reverse());f.push([...Array(n).keys()].map(i=>i+n));
- for(let i=0;i<n;i++){const j=(i+1)%n;f.push([i,j,j+n,i+n]);}
- return{v,f};
-}
-function shade(color,factor){if(color.startsWith("rgba"))return color;const n=parseInt(color.slice(1),16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;return"rgb("+Math.round(r*factor)+","+Math.round(g*factor)+","+Math.round(b*factor)+")";}
-function render(){
- ctx.fillStyle="#17191c";ctx.fillRect(0,0,innerWidth,innerHeight);const c=cam(),polys=[];
- for(const o of objects){
-  if(o.name==="ceiling"&&!showCeiling)continue;
-  const m=mesh(o),pv=m.v.map(p=>project(p,c));
-  for(const fi of m.f){
-   const pts=fi.map(i=>pv[i]);if(pts.some(p=>!p))continue;
-   const a=m.v[fi[0]],b=m.v[fi[1]],d=m.v[fi[2]],n=norm(cross(sub(b,a),sub(d,a))),center={x:(a.x+b.x+d.x)/3,y:(a.y+b.y+d.y)/3,z:(a.z+b.z+d.z)/3};
-   if(dot(n,sub(c.pos,center))<=0)continue;
-   const depth=pts.reduce((s,p)=>s+p.z,0)/pts.length,light=.5+.43*Math.max(0,dot(n,norm({x:-.4,y:-.6,z:.7})));
-   polys.push({pts,depth,color:shade(o.color,light)});
-  }
- }
- polys.sort((a,b)=>b.depth-a.depth);
- for(const p of polys){ctx.beginPath();ctx.moveTo(p.pts[0].x,p.pts[0].y);for(let i=1;i<p.pts.length;i++)ctx.lineTo(p.pts[i].x,p.pts[i].y);ctx.closePath();if(!wire){ctx.fillStyle=p.color;ctx.fill();}ctx.strokeStyle=wire?"rgba(255,255,255,.72)":"rgba(0,0,0,.27)";ctx.lineWidth=wire?1:.6;ctx.stroke();}
- // labels after geometry
- ctx.textAlign="center";ctx.textBaseline="middle";
- for(const L of labels){const p=project({x:L[1],y:L[2],z:L[3]},c);if(!p||p.z>65)continue;const sz=Math.max(8,Math.min(14,240/p.z));ctx.font="700 "+sz+"px system-ui";ctx.fillStyle="rgba(245,245,245,.88)";ctx.fillText(L[0],p.x,p.y);}
- const p1=project({x:36,y:65,z:.1},c),p2=project({x:36,y:70,z:.1},c);if(p1&&p2){ctx.strokeStyle="#ff5158";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();ctx.fillStyle="#ff7378";ctx.font="bold 12px system-ui";ctx.fillText("N",p2.x+8,p2.y);}
- boot.style.display="none";
-}
-let active=new Map(),lastPinch=null;
-canvas.addEventListener("pointerdown",e=>{canvas.setPointerCapture(e.pointerId);active.set(e.pointerId,{x:e.clientX,y:e.clientY});});
-canvas.addEventListener("pointermove",e=>{if(!active.has(e.pointerId))return;const old=active.get(e.pointerId);active.set(e.pointerId,{x:e.clientX,y:e.clientY});const pts=[...active.values()];if(pts.length===1){yaw-=(e.clientX-old.x)*.008;pitch=Math.max(-.05,Math.min(1.35,pitch+(e.clientY-old.y)*.006));}else if(pts.length>=2){const q=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);if(lastPinch!==null)dist*=lastPinch/q;lastPinch=q;dist=Math.max(6,Math.min(95,dist));}render();});
-function up(e){active.delete(e.pointerId);lastPinch=null}canvas.addEventListener("pointerup",up);canvas.addEventListener("pointercancel",up);
-canvas.addEventListener("wheel",e=>{e.preventDefault();dist*=Math.exp(e.deltaY*.001);dist=Math.max(6,Math.min(95,dist));render();},{passive:false});
-window.addEventListener("resize",resize);window.addEventListener("error",e=>{boot.style.display="block";boot.textContent="Viewer error: "+(e.message||"unknown");});
-resize();go("forum");
-})();
-</script>
+<main>
+<p>Opening Floor 2 — Public Forum as a derived view of the shared Core V2 stacked building…</p>
+<p><a href="/equity-uprise-building-core-v2-3d.html?floor=2">Open Floor 2 — Public Forum</a></p>
+<p><small>Schematic migration preview · not for construction.</small></p>
+</main>
+<script>location.replace("/equity-uprise-building-core-v2-3d.html?floor=2");</script>
 </body>
 </html>

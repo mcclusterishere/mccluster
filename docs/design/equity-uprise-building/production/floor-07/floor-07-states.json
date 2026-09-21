@@ -1,0 +1,21 @@
+{
+  "schema_version": "2.3.0",
+  "scene_id": "equity-uprise-level-07",
+  "default_state": "idle",
+  "states": [
+    {
+      "id": "idle",
+      "label": "Idle"
+    },
+    {
+      "id": "floor_focus",
+      "label": "Roof / Mobility Portal",
+      "camera_id": "floor_overview"
+    },
+    {
+      "id": "after_hours",
+      "label": "After Hours",
+      "lighting_multiplier": 0.45
+    }
+  ]
+}

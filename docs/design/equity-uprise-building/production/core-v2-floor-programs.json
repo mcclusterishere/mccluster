@@ -1,0 +1,1016 @@
+{
+  "schema_version": "2.6.0",
+  "core_ref": "building-core-v2.json",
+  "not_for_construction": true,
+  "common_support": {
+    "corridor": {
+      "bounds_ft": {
+        "x1": 18,
+        "y1": 54,
+        "x2": 60,
+        "y2": 60
+      }
+    },
+    "restroom_a": {
+      "bounds_ft": {
+        "x1": 18,
+        "y1": 60,
+        "x2": 26,
+        "y2": 70
+      }
+    },
+    "restroom_b": {
+      "bounds_ft": {
+        "x1": 26,
+        "y1": 60,
+        "x2": 34,
+        "y2": 70
+      }
+    },
+    "support_a": {
+      "bounds_ft": {
+        "x1": 34,
+        "y1": 60,
+        "x2": 42,
+        "y2": 72
+      }
+    },
+    "support_b": {
+      "bounds_ft": {
+        "x1": 42,
+        "y1": 60,
+        "x2": 50,
+        "y2": 72
+      }
+    },
+    "janitor": {
+      "bounds_ft": {
+        "x1": 50,
+        "y1": 60,
+        "x2": 54,
+        "y2": 66
+      }
+    }
+  },
+  "levels": [
+    {
+      "level": 1,
+      "id": "floor-01",
+      "title": "Arrival / Orientation / Intake",
+      "elevation_ft": 0,
+      "south_condition": "ground-level public entrance",
+      "support_names": [
+        "Building Operations / Life Safety",
+        "IT / Electrical"
+      ],
+      "zones": [
+        {
+          "label": "Entry Vestibule",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 29,
+            "y1": 0,
+            "x2": 43,
+            "y2": 9
+          },
+          "route_key": "orientation_experience"
+        },
+        {
+          "label": "Arrival Atrium",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 20,
+            "y1": 10,
+            "x2": 52,
+            "y2": 30
+          },
+          "route_key": "next_action"
+        },
+        {
+          "label": "Orientation Lounge",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 12,
+            "x2": 18,
+            "y2": 28
+          },
+          "route_key": "orientation_experience"
+        },
+        {
+          "label": "Intake / Verification Consultation",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 32,
+            "x2": 16,
+            "y2": 44
+          },
+          "route_key": "service_intake"
+        },
+        {
+          "label": "Development Passport Studio",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 20,
+            "y1": 32,
+            "x2": 52,
+            "y2": 44
+          },
+          "route_key": "development_passport"
+        },
+        {
+          "label": "Journey Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 28,
+            "y1": 50,
+            "x2": 44,
+            "y2": 54
+          },
+          "route_key": "journey_progression"
+        },
+        {
+          "label": "Reception / Concierge / Security Desk",
+          "kind": "furniture",
+          "bounds_ft": {
+            "x1": 30,
+            "y1": 44,
+            "x2": 42,
+            "y2": 47
+          },
+          "route_key": "concierge"
+        },
+        {
+          "label": "Next Action / Building Directory",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          },
+          "route_key": "next_action"
+        }
+      ],
+      "feature_ids": [
+        "conversation-agent",
+        "fellowship-applications",
+        "interviews-calendar",
+        "verification",
+        "stakeholder-intake",
+        "program-support-funding",
+        "enterprise-development"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "program_identity": "Arrival / Orientation / Intake",
+      "working_development_stage": "enter",
+      "acronym_word_status": "not_locked",
+      "digital_twin_program_ref": "floor-01/floor-01-digital-twin-program.json",
+      "digital_twin_spec_ref": "../FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
+      "interaction_modes": [
+        {
+          "id": "new_member_orientation",
+          "label": "New Member Orientation",
+          "route_key": "orientation_experience",
+          "access": "public"
+        },
+        {
+          "id": "passport_mode",
+          "label": "Development Passport",
+          "route_key": "development_passport",
+          "access": "authenticated-member"
+        },
+        {
+          "id": "public_service_clinic",
+          "label": "Public Service Clinic",
+          "route_key": "service_intake",
+          "access": "public-intake-private-session"
+        },
+        {
+          "id": "building_systems_lab",
+          "label": "Building Systems Lab",
+          "route_key": "building_systems_lab",
+          "access": "authorized-learner-or-instructor-sandbox-only",
+          "live_b1_access": false
+        },
+        {
+          "id": "emergency_exercise",
+          "label": "Emergency Exercise",
+          "route_key": "emergency_exercise",
+          "access": "authorized-participant-or-instructor"
+        },
+        {
+          "id": "underground_operations_access",
+          "label": "Underground Operations Access",
+          "route_key": "underground_operations",
+          "access": "mccluster-house-owner-or-underground-operations-admin",
+          "hidden_from_normal_navigation": true
+        }
+      ],
+      "site_egress_ref": "floor-01/floor-01-site-egress.json",
+      "basement_context_ref": "basement-b1-program.json",
+      "level_of_exit_discharge": true,
+      "tunnel_network_ref": "underground-tunnel-network.json"
+    },
+    {
+      "level": 2,
+      "id": "floor-02",
+      "title": "Public Forum",
+      "elevation_ft": 13.5,
+      "south_condition": "sealed upper-floor glazing",
+      "support_names": [
+        "Forum Storage",
+        "AV / IT"
+      ],
+      "zones": [
+        {
+          "label": "Public Forum Zone",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 24,
+            "y1": 28,
+            "x2": 48,
+            "y2": 50
+          },
+          "route_key": "current_issues"
+        },
+        {
+          "label": "Topics / Perspectives / Conversations Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 24,
+            "y1": 50,
+            "x2": 48,
+            "y2": 54
+          },
+          "route_key": "current_issues"
+        },
+        {
+          "label": "Listening Lounge",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 14,
+            "x2": 18,
+            "y2": 30
+          },
+          "route_key": "conversation"
+        },
+        {
+          "label": "Member Check-In",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          },
+          "route_key": "member_dashboard"
+        }
+      ],
+      "circles": [
+        {
+          "label": "12 ft Forum Table",
+          "kind": "furniture",
+          "center_ft": {
+            "x": 36,
+            "y": 39
+          },
+          "radius_ft": 6
+        }
+      ],
+      "feature_ids": [
+        "public-issues",
+        "perspectives",
+        "conversation-agent",
+        "member-dashboard",
+        "fellowship-matching"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json"
+    },
+    {
+      "level": 3,
+      "id": "floor-03",
+      "title": "Fellowship + Network",
+      "elevation_ft": 27,
+      "south_condition": "sealed upper-floor glazing",
+      "support_names": [
+        "Fellowship / Relationship Records",
+        "Network / IT"
+      ],
+      "zones": [
+        {
+          "label": "Opportunity Exchange",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 30,
+            "x2": 50,
+            "y2": 50
+          },
+          "route_key": "opportunities"
+        },
+        {
+          "label": "Opportunity / Network Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 50,
+            "x2": 50,
+            "y2": 54
+          },
+          "route_key": "fellowship_record"
+        },
+        {
+          "label": "People + Network Lounge",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 18,
+            "x2": 18,
+            "y2": 34
+          },
+          "route_key": "people_network"
+        },
+        {
+          "label": "Interview / Stakeholder Meeting A",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 4,
+            "x2": 14,
+            "y2": 16
+          },
+          "route_key": "meeting_workspace"
+        },
+        {
+          "label": "Interview / Stakeholder Meeting B",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 16,
+            "y1": 4,
+            "x2": 28,
+            "y2": 16
+          },
+          "route_key": "meeting_workspace"
+        },
+        {
+          "label": "Member / Meeting Check-In",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          },
+          "route_key": "member_dashboard"
+        },
+        {
+          "label": "16 x 4 Opportunity Table",
+          "kind": "furniture",
+          "bounds_ft": {
+            "x1": 28,
+            "y1": 39,
+            "x2": 44,
+            "y2": 43
+          },
+          "route_key": "enterprise_program"
+        }
+      ],
+      "feature_ids": [
+        "member-dashboard",
+        "profiles",
+        "private-contact",
+        "fellowship-directory",
+        "fellowship-matching",
+        "host-listings",
+        "fellowship-applications",
+        "interviews-calendar",
+        "verification",
+        "stakeholder-intake",
+        "stakeholder-graph",
+        "meetings-commitments",
+        "partnership-sponsorship",
+        "artist-creator",
+        "google-workspace",
+        "outreach",
+        "fellowship-cohort",
+        "enterprise-development"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "interaction_modes": [
+        {
+          "id": "our_fellows",
+          "label": "Our Fellows",
+          "route_key": "fellowship_cohort",
+          "access": "public-record-with-consent",
+          "read_only": true
+        },
+        {
+          "id": "external_opportunities",
+          "label": "External Opportunities",
+          "route_key": "opportunities",
+          "access": "public",
+          "read_only": true
+        },
+        {
+          "id": "host_programs",
+          "label": "Submit / Host Programs",
+          "route_key": "host_opportunity_submit",
+          "access": "authenticated-member-or-host"
+        },
+        {
+          "id": "applications",
+          "label": "Apply / Application Status",
+          "route_key": "fellowship_application",
+          "access": "public-intake-private-state"
+        },
+        {
+          "id": "relationships",
+          "label": "Relationship Graph",
+          "route_key": "relationship_graph",
+          "access": "authorized-staff",
+          "read_only": true
+        },
+        {
+          "id": "enterprise",
+          "label": "Enterprise Development",
+          "route_key": "enterprise_program",
+          "access": "public-program-information",
+          "read_only": true
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "id": "floor-04",
+      "title": "Media + Culture",
+      "elevation_ft": 40.5,
+      "south_condition": "sealed upper-floor glazing",
+      "support_names": [
+        "Media Equipment / Storage",
+        "Media / Music Operations"
+      ],
+      "zones": [
+        {
+          "label": "Media / Listening Zone",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 24,
+            "y1": 28,
+            "x2": 48,
+            "y2": 50
+          },
+          "route_key": "media_catalogue"
+        },
+        {
+          "label": "Media / Release Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 50,
+            "x2": 50,
+            "y2": 54
+          },
+          "route_key": "media_catalogue"
+        },
+        {
+          "label": "Culture Archive / Rally Gallery",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 18,
+            "x2": 18,
+            "y2": 38
+          },
+          "route_key": "rally_archive"
+        },
+        {
+          "label": "Creator Recording Room",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 4,
+            "x2": 15,
+            "y2": 16
+          },
+          "route_key": "creator_studio"
+        },
+        {
+          "label": "Edit / Review Suite",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 17,
+            "y1": 4,
+            "x2": 31,
+            "y2": 16
+          },
+          "route_key": "media_derivatives"
+        },
+        {
+          "label": "Media / Release Control",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          },
+          "route_key": "media_release_ops"
+        },
+        {
+          "label": "Listening Seating",
+          "kind": "furniture",
+          "bounds_ft": {
+            "x1": 29,
+            "y1": 34,
+            "x2": 43,
+            "y2": 43
+          }
+        }
+      ],
+      "feature_ids": [
+        "evidence-room",
+        "artifacts",
+        "music-catalogue",
+        "artist-creator",
+        "music-rights",
+        "music-release",
+        "ddex",
+        "rally-media",
+        "communication-derivatives",
+        "creator-licensing-commerce"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "interaction_modes": [
+        {
+          "id": "rights_clearance",
+          "label": "Rights / Clearance",
+          "route_key": "media_rights",
+          "access": "authorized-creator-editor-admin",
+          "read_only": true
+        },
+        {
+          "id": "licensing_commerce",
+          "label": "Licensing / Commerce",
+          "route_key": "creator_licensing",
+          "access": "public-terms-authenticated-checkout"
+        },
+        {
+          "id": "release_delivery",
+          "label": "Release / Delivery",
+          "route_key": "media_release_ops",
+          "access": "authorized-admin",
+          "approval_gated": true
+        },
+        {
+          "id": "ddex_status",
+          "label": "DDEX Status",
+          "route_key": "media_release_ops",
+          "access": "authorized-admin",
+          "read_only": true
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "id": "floor-05",
+      "title": "Policy + Proof",
+      "elevation_ft": 54,
+      "south_condition": "sealed upper-floor glazing",
+      "support_names": [
+        "Secure Evidence Storage",
+        "Research / Publication Systems"
+      ],
+      "zones": [
+        {
+          "label": "Policy Lab",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 28,
+            "x2": 50,
+            "y2": 50
+          },
+          "route_key": "research_publication"
+        },
+        {
+          "label": "Policy / Publication / Impact Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 50,
+            "x2": 50,
+            "y2": 54
+          },
+          "route_key": "policy_workspace"
+        },
+        {
+          "label": "Evidence + Proof Archive",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 18,
+            "x2": 18,
+            "y2": 40
+          },
+          "route_key": "evidence_archive"
+        },
+        {
+          "label": "Source Review Room",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 4,
+            "x2": 15,
+            "y2": 16
+          },
+          "route_key": "research_publication"
+        },
+        {
+          "label": "Publication / Submission Review",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 17,
+            "y1": 4,
+            "x2": 32,
+            "y2": 16
+          },
+          "route_key": "publication_submission"
+        },
+        {
+          "label": "Research / Publication Navigator",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          },
+          "route_key": "research_publication"
+        },
+        {
+          "label": "16 x 5 Policy Table",
+          "kind": "furniture",
+          "bounds_ft": {
+            "x1": 28,
+            "y1": 38.5,
+            "x2": 44,
+            "y2": 43.5
+          }
+        }
+      ],
+      "feature_ids": [
+        "initiative-portfolio",
+        "research-projects",
+        "source-graph",
+        "claim-evidence",
+        "manuscript-review",
+        "evidence-room",
+        "credentials-proof",
+        "artifacts",
+        "publications",
+        "publication-distribution",
+        "orcid",
+        "crossref",
+        "government-dockets",
+        "government-submissions",
+        "monitoring",
+        "citations-impact",
+        "communication-derivatives",
+        "event-ledger"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "interaction_modes": [
+        {
+          "id": "claims_evidence",
+          "label": "Claims ↔ Evidence",
+          "route_key": "claims_evidence",
+          "access": "authorized-researcher-editor-admin",
+          "read_only": true
+        },
+        {
+          "id": "provenance_lineage",
+          "label": "Artifact Provenance / Lineage",
+          "route_key": "artifact_lineage",
+          "access": "published-public-private-workflow",
+          "read_only": true
+        },
+        {
+          "id": "distribution",
+          "label": "Distribution / Syndication",
+          "route_key": "publication_distribution",
+          "access": "authorized-admin",
+          "approval_gated": true
+        },
+        {
+          "id": "contributor_identity",
+          "label": "Contributor Identity / ORCID",
+          "route_key": "publication_identity",
+          "access": "authorized-researcher-editor-admin",
+          "read_only": true
+        },
+        {
+          "id": "doi_deposit",
+          "label": "DOI / Crossref",
+          "route_key": "publication_identity",
+          "access": "authorized-researcher-editor-admin",
+          "read_only": true
+        },
+        {
+          "id": "docket_watch",
+          "label": "Dockets / Regulatory Watch",
+          "route_key": "docket_watch",
+          "access": "authorized-researcher-editor-admin",
+          "read_only": true
+        },
+        {
+          "id": "monitoring",
+          "label": "Monitor / Watchlist",
+          "route_key": "monitoring_impact",
+          "access": "authorized-researcher-editor-admin",
+          "read_only": true
+        }
+      ]
+    },
+    {
+      "level": 6,
+      "id": "floor-06",
+      "title": "Penthouse Command",
+      "elevation_ft": 67.5,
+      "south_condition": "sealed upper-floor glazing",
+      "support_names": [
+        "Control / Audit Records",
+        "Desk Operations / Systems"
+      ],
+      "zones": [
+        {
+          "label": "Penthouse Command",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 28,
+            "x2": 50,
+            "y2": 50
+          },
+          "route_key": "institutional_command"
+        },
+        {
+          "label": "Institutional Command Wall",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 22,
+            "y1": 50,
+            "x2": 50,
+            "y2": 54
+          },
+          "route_key": "institutional_command"
+        },
+        {
+          "label": "Institutional Salon / Support",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 18,
+            "x2": 18,
+            "y2": 38
+          },
+          "route_key": "program_support"
+        },
+        {
+          "label": "Strategy Review Room",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 2,
+            "y1": 4,
+            "x2": 15,
+            "y2": 16
+          },
+          "route_key": "initiative_portfolio"
+        },
+        {
+          "label": "Partner / Executive Briefing",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 17,
+            "y1": 4,
+            "x2": 32,
+            "y2": 16
+          },
+          "route_key": "partner_briefing"
+        },
+        {
+          "label": "Roof / Mobility Transition",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 49,
+            "y1": 24,
+            "x2": 51,
+            "y2": 29
+          },
+          "route_key": "roof_transition"
+        },
+        {
+          "label": "16 x 5 Command Table",
+          "kind": "furniture",
+          "bounds_ft": {
+            "x1": 28,
+            "y1": 38.5,
+            "x2": 44,
+            "y2": 43.5
+          }
+        }
+      ],
+      "feature_ids": [
+        "institutional-desk",
+        "perspectives",
+        "conversation-agent",
+        "private-contact",
+        "host-listings",
+        "interviews-calendar",
+        "stakeholder-intake",
+        "stakeholder-graph",
+        "meetings-commitments",
+        "partnership-sponsorship",
+        "initiative-portfolio",
+        "credentials-proof",
+        "publications",
+        "publication-distribution",
+        "government-dockets",
+        "government-submissions",
+        "monitoring",
+        "citations-impact",
+        "music-release",
+        "ddex",
+        "admin-desk",
+        "control-approvals",
+        "integrations-oauth",
+        "workflows-jobs",
+        "status-health",
+        "google-workspace",
+        "outreach",
+        "event-ledger",
+        "program-support-funding",
+        "fellowship-cohort",
+        "enterprise-development",
+        "halo-spatial-intelligence"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "spheres": [
+        {
+          "label": "Halo Globe / Spatial Intelligence",
+          "kind": "instrument",
+          "center_ft": {
+            "x": 24.5,
+            "y": 34.5
+          },
+          "radius_ft": 2.25,
+          "center_z_local_ft": 8.25,
+          "route_key": "halo_spatial_intelligence",
+          "access": "public-sanitized-read-only-role-scoped-owner-admin",
+          "note": "Suspended coordination envelope; does not consume floor circulation. Public and role-scoped modes are read-only. Owner/admin operations hand off to the protected Halo/Seek First plane."
+        }
+      ],
+      "interaction_modes": [
+        {
+          "id": "halo_ambient",
+          "label": "Halo Ambient",
+          "route_key": "halo_spatial_intelligence",
+          "access": "public",
+          "read_only": true
+        },
+        {
+          "id": "halo_public",
+          "label": "Halo Public",
+          "route_key": "halo_spatial_intelligence",
+          "access": "public-sanitized",
+          "read_only": true
+        },
+        {
+          "id": "halo_member",
+          "label": "Halo Member",
+          "route_key": "halo_spatial_intelligence",
+          "access": "authenticated-role-scoped",
+          "read_only": true
+        },
+        {
+          "id": "halo_staff",
+          "label": "Halo Staff",
+          "route_key": "halo_spatial_intelligence",
+          "access": "authorized-staff",
+          "read_only": true
+        },
+        {
+          "id": "halo_owner",
+          "label": "Halo Owner / Admin",
+          "route_key": "halo_spatial_intelligence",
+          "access": "house-owner",
+          "read_only": false,
+          "owner_handoff_required": true
+        },
+        {
+          "id": "approvals",
+          "label": "Approvals",
+          "route_key": "approvals",
+          "access": "authorized-admin"
+        },
+        {
+          "id": "jobs",
+          "label": "Jobs / Workflow Queue",
+          "route_key": "jobs",
+          "access": "authorized-admin"
+        },
+        {
+          "id": "integrations",
+          "label": "Connections / Integrations",
+          "route_key": "integrations",
+          "access": "authorized-admin"
+        },
+        {
+          "id": "relationship_comms",
+          "label": "Relationship Communications",
+          "route_key": "relationship_comms",
+          "access": "authorized-admin",
+          "read_only": true
+        },
+        {
+          "id": "outreach",
+          "label": "Outreach / Consent / Contact State",
+          "route_key": "outreach_ops",
+          "access": "authorized-admin"
+        }
+      ]
+    },
+    {
+      "level": 7,
+      "id": "level-07",
+      "title": "Roof / Mobility Portal",
+      "elevation_ft": 81,
+      "south_condition": "open-air roof / guarded edge",
+      "roof": true,
+      "zones": [
+        {
+          "label": "Roof Access / Core Envelope",
+          "kind": "room",
+          "bounds_ft": {
+            "x1": 50,
+            "y1": 30,
+            "x2": 64,
+            "y2": 48
+          },
+          "route_key": "building_return"
+        },
+        {
+          "label": "Ecosystem Routing Interface",
+          "kind": "terminal",
+          "bounds_ft": {
+            "x1": 46,
+            "y1": 24,
+            "x2": 50,
+            "y2": 30
+          },
+          "route_key": "ecosystem_routes"
+        },
+        {
+          "label": "Candidate Mobility Zone",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 10,
+            "y1": 8,
+            "x2": 48,
+            "y2": 46
+          },
+          "route_key": "ecosystem_routes"
+        },
+        {
+          "label": "City Overlook",
+          "kind": "feature",
+          "bounds_ft": {
+            "x1": 12,
+            "y1": 0,
+            "x2": 46,
+            "y2": 6
+          }
+        },
+        {
+          "label": "Service / Equipment Band",
+          "kind": "service",
+          "bounds_ft": {
+            "x1": 34,
+            "y1": 60,
+            "x2": 60,
+            "y2": 72
+          }
+        }
+      ],
+      "feature_ids": [
+        "ecosystem-routing",
+        "roof-mobility",
+        "uprise-world"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json"
+    }
+  ],
+  "capability_map_ref": "equity-uprise-capability-map-v2.json"
+}

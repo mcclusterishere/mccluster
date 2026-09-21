@@ -2,6 +2,7 @@ import { allowedOrigins, applyCors, corsHeaders, fail, logEvent, reply } from '.
 import whip from './whip/identity-gateway.js';
 import prim3 from './prim3/index.js';
 import seekFirst from './seek-first/index.js';
+import { buildEquityUpriseHaloProjection } from './seek-first/equity-uprise-halo.js';
 import { AccessError, verifyAccess } from './seek-first/access.js';
 import SEEK_FIRST_CONSOLE_HTML from './seek-first/console.html';
 import { CATALOG } from './ai/envelope.js';
@@ -51,6 +52,29 @@ async function authUser(req, env) {
   });
   if (!res.ok) return null;
   return res.json();
+}
+
+async function equityUpriseRole(req, env) {
+  const user = await authUser(req, env);
+  if (!user) return { user: null, role: 'visitor' };
+
+  // Owner/admin Halo authority follows the canonical McCluster house-owner
+  // membership, never an email string or an Equity Uprise profile role.
+  const orgs = await sb(env, 'orgs?slug=eq.mccluster&select=id&limit=1');
+  const houseId = orgs?.[0]?.id;
+  if (houseId) {
+    const memberships = await sb(
+      env,
+      `org_members?org_id=eq.${encodeURIComponent(houseId)}&profile_id=eq.${encodeURIComponent(user.id)}&role=eq.owner&select=org_id&limit=1`
+    );
+    if (memberships?.length) return { user, role: 'owner' };
+  }
+
+  const rows = await sb(env, `eu_profiles?id=eq.${encodeURIComponent(user.id)}&select=role&limit=1`);
+  const role = ['member', 'host', 'editor', 'client', 'admin'].includes(rows?.[0]?.role)
+    ? rows[0].role
+    : 'visitor';
+  return { user, role };
 }
 
 async function requireHouseOwner(req, env) {
@@ -107,6 +131,12 @@ export default {
 
       if (path === '/v1/prim3' || path.startsWith('/v1/prim3/')) {
         return prim3.fetch(request, env);
+      }
+
+      if (path === '/v1/equity-uprise/halo-globe' && request.method === 'GET') {
+        const viewer = await equityUpriseRole(request, env);
+        const projection = await buildEquityUpriseHaloProjection(env, { role: viewer.role });
+        return reply(request, env, { ok: true, ...projection });
       }
 
       if (path === '/v1/seek-first' || path.startsWith('/v1/seek-first/')) {

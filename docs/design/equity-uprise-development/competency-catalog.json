@@ -1,0 +1,554 @@
+{
+  "schema_version": "0.1.0",
+  "status": "canonical-development-program-authority",
+  "title": "Equity Uprise Competency Catalog",
+  "competency_count": 42,
+  "maturity_states": [
+    {
+      "id": "aware",
+      "order": 1,
+      "definition": "Understands what the competency is and why it matters."
+    },
+    {
+      "id": "trained",
+      "order": 2,
+      "definition": "Has completed structured learning relevant to the competency."
+    },
+    {
+      "id": "practicing",
+      "order": 3,
+      "definition": "Has used the skill in a controlled or supervised exercise."
+    },
+    {
+      "id": "demonstrated",
+      "order": 4,
+      "definition": "Has produced observable work or performance using the competency."
+    },
+    {
+      "id": "verified",
+      "order": 5,
+      "definition": "A qualified reviewer has confirmed independent performance meets the standard."
+    },
+    {
+      "id": "applied",
+      "order": 6,
+      "definition": "Has used the competency successfully in an authentic setting."
+    },
+    {
+      "id": "mentor",
+      "order": 7,
+      "definition": "Can consistently perform the competency and successfully guide or review others."
+    }
+  ],
+  "pathways": [
+    {
+      "id": "public_service_community",
+      "name": "Public Service & Community"
+    },
+    {
+      "id": "research_policy",
+      "name": "Research & Policy"
+    },
+    {
+      "id": "enterprise_workforce",
+      "name": "Enterprise & Workforce"
+    },
+    {
+      "id": "media_communications",
+      "name": "Media & Communications"
+    },
+    {
+      "id": "infrastructure_technology_operations",
+      "name": "Infrastructure / Technology / Operations"
+    }
+  ],
+  "competencies": [
+    {
+      "id": "CORE-01",
+      "name": "Self-Direction",
+      "category": "universal_core",
+      "pathway": null,
+      "definition": "Sets goals, identifies next steps, manages commitments, reflects on progress, and asks for help appropriately.",
+      "prerequisites": [],
+      "home_stage": 1
+    },
+    {
+      "id": "CORE-02",
+      "name": "Communication",
+      "category": "universal_core",
+      "pathway": null,
+      "definition": "Communicates clearly through speaking, writing, listening, and presentation for the intended audience.",
+      "prerequisites": [],
+      "home_stage": 2
+    },
+    {
+      "id": "CORE-03",
+      "name": "Collaboration",
+      "category": "universal_core",
+      "pathway": null,
+      "definition": "Works reliably with others, manages disagreement, shares responsibility, and documents commitments.",
+      "prerequisites": [],
+      "home_stage": 2
+    },
+    {
+      "id": "CORE-04",
+      "name": "Research Literacy",
+      "category": "universal_core",
+      "pathway": null,
+      "definition": "Finds information, distinguishes claims from evidence, and recognizes source quality and limitations.",
+      "prerequisites": [],
+      "home_stage": 5
+    },
+    {
+      "id": "CORE-05",
+      "name": "Digital Fluency",
+      "category": "universal_core",
+      "pathway": null,
+      "definition": "Uses accounts, files, collaboration systems, AI, and common professional tools responsibly and efficiently.",
+      "prerequisites": [],
+      "home_stage": 1
+    },
+    {
+      "id": "CORE-06",
+      "name": "Civic & Institutional Literacy",
+      "category": "universal_core",
+      "pathway": null,
+      "definition": "Understands how government, nonprofit, educational, and commercial institutions operate and interact.",
+      "prerequisites": [],
+      "home_stage": 1
+    },
+    {
+      "id": "CORE-07",
+      "name": "Professional Practice",
+      "category": "universal_core",
+      "pathway": null,
+      "definition": "Demonstrates reliability, confidentiality, meeting discipline, documentation, deadlines, and appropriate workplace conduct.",
+      "prerequisites": [],
+      "home_stage": 1
+    },
+    {
+      "id": "CORE-08",
+      "name": "Safety & Resilience",
+      "category": "universal_core",
+      "pathway": null,
+      "definition": "Recognizes hazards, escalation paths, emergency roles, and basic continuity responsibilities.",
+      "prerequisites": [],
+      "home_stage": 1
+    },
+    {
+      "id": "SHR-01",
+      "name": "Project Management",
+      "category": "shared_professional",
+      "pathway": null,
+      "definition": "Converts an objective into scope, tasks, owners, milestones, risks, and deliverables.",
+      "prerequisites": [
+        "CORE-01",
+        "CORE-03"
+      ],
+      "home_stage": 4
+    },
+    {
+      "id": "SHR-02",
+      "name": "Ethics, Consent & Privacy",
+      "category": "shared_professional",
+      "pathway": null,
+      "definition": "Identifies ethical and privacy implications and obtains appropriate consent before collecting, using, or sharing information.",
+      "prerequisites": [
+        "CORE-07"
+      ],
+      "home_stage": 3
+    },
+    {
+      "id": "SHR-03",
+      "name": "Data Literacy",
+      "category": "shared_professional",
+      "pathway": null,
+      "definition": "Reads, organizes, analyzes, and communicates quantitative or structured information without overstating conclusions.",
+      "prerequisites": [
+        "CORE-04",
+        "CORE-05"
+      ],
+      "home_stage": 5
+    },
+    {
+      "id": "SHR-04",
+      "name": "Documentation & Provenance",
+      "category": "shared_professional",
+      "pathway": null,
+      "definition": "Maintains traceable records showing where information, decisions, and artifacts came from.",
+      "prerequisites": [
+        "CORE-04"
+      ],
+      "home_stage": 5
+    },
+    {
+      "id": "SHR-05",
+      "name": "Facilitation & Meetings",
+      "category": "shared_professional",
+      "pathway": null,
+      "definition": "Plans and leads productive meetings, captures decisions, and turns conversation into accountable follow-up.",
+      "prerequisites": [
+        "CORE-02",
+        "CORE-03"
+      ],
+      "home_stage": 2
+    },
+    {
+      "id": "SHR-06",
+      "name": "Accessible & Inclusive Practice",
+      "category": "shared_professional",
+      "pathway": null,
+      "definition": "Produces experiences and materials usable by diverse people and recognizes accessibility barriers.",
+      "prerequisites": [
+        "CORE-02",
+        "CORE-07"
+      ],
+      "home_stage": 2
+    },
+    {
+      "id": "PSC-01",
+      "name": "Community Engagement",
+      "category": "pathway",
+      "pathway": "public_service_community",
+      "definition": "Builds respectful two-way relationships with residents and community stakeholders instead of treating engagement as broadcast outreach.",
+      "prerequisites": [
+        "CORE-02",
+        "CORE-03"
+      ],
+      "home_stage": 2
+    },
+    {
+      "id": "PSC-02",
+      "name": "Service Navigation",
+      "category": "pathway",
+      "pathway": "public_service_community",
+      "definition": "Finds and explains public, nonprofit, and community resources and helps people navigate them accurately.",
+      "prerequisites": [
+        "CORE-06",
+        "CORE-04"
+      ],
+      "home_stage": 3
+    },
+    {
+      "id": "PSC-03",
+      "name": "Stakeholder Coordination",
+      "category": "pathway",
+      "pathway": "public_service_community",
+      "definition": "Maps organizations, responsibilities, relationships, and commitments around a shared issue or project.",
+      "prerequisites": [
+        "SHR-05",
+        "CORE-06"
+      ],
+      "home_stage": 3
+    },
+    {
+      "id": "PSC-04",
+      "name": "Public Program Delivery",
+      "category": "pathway",
+      "pathway": "public_service_community",
+      "definition": "Helps operate a community-facing service using defined procedures, privacy rules, documentation, and quality controls.",
+      "prerequisites": [
+        "CORE-07",
+        "SHR-01",
+        "SHR-02"
+      ],
+      "home_stage": 3
+    },
+    {
+      "id": "PSC-05",
+      "name": "Emergency & Incident Coordination",
+      "category": "pathway",
+      "pathway": "public_service_community",
+      "definition": "Understands incident roles, chain of command, resource coordination, and communication during organized emergency response.",
+      "prerequisites": [
+        "CORE-08",
+        "CORE-03"
+      ],
+      "home_stage": 6
+    },
+    {
+      "id": "RSP-01",
+      "name": "Research Design",
+      "category": "pathway",
+      "pathway": "research_policy",
+      "definition": "Turns a question into a defensible research plan with methods, scope, limitations, and evidence requirements.",
+      "prerequisites": [
+        "CORE-04",
+        "SHR-01"
+      ],
+      "home_stage": 5
+    },
+    {
+      "id": "RSP-02",
+      "name": "Source Evaluation",
+      "category": "pathway",
+      "pathway": "research_policy",
+      "definition": "Evaluates authority, methodology, recency, provenance, conflicts, and limitations of sources.",
+      "prerequisites": [
+        "CORE-04",
+        "SHR-04"
+      ],
+      "home_stage": 5
+    },
+    {
+      "id": "RSP-03",
+      "name": "Human Research Methods",
+      "category": "pathway",
+      "pathway": "research_policy",
+      "definition": "Conducts interviews, surveys, or other human-participant research with appropriate consent and ethical safeguards.",
+      "prerequisites": [
+        "SHR-02",
+        "RSP-01"
+      ],
+      "home_stage": 5
+    },
+    {
+      "id": "RSP-04",
+      "name": "Evidence Synthesis",
+      "category": "pathway",
+      "pathway": "research_policy",
+      "definition": "Connects multiple sources to claims while preserving disagreements, uncertainty, and evidentiary strength.",
+      "prerequisites": [
+        "RSP-02",
+        "SHR-03",
+        "SHR-04"
+      ],
+      "home_stage": 5
+    },
+    {
+      "id": "RSP-05",
+      "name": "Policy Analysis",
+      "category": "pathway",
+      "pathway": "research_policy",
+      "definition": "Describes policy alternatives, implementation mechanisms, affected populations, costs, tradeoffs, and evidence without substituting advocacy for analysis.",
+      "prerequisites": [
+        "CORE-06",
+        "RSP-04"
+      ],
+      "home_stage": 5
+    },
+    {
+      "id": "RSP-06",
+      "name": "Publication & Citation",
+      "category": "pathway",
+      "pathway": "research_policy",
+      "definition": "Produces reviewable, attributable work with citations, revisions, version control, and publication-ready provenance.",
+      "prerequisites": [
+        "RSP-04",
+        "CORE-02",
+        "SHR-04"
+      ],
+      "home_stage": 5
+    },
+    {
+      "id": "ENT-01",
+      "name": "Opportunity Discovery",
+      "category": "pathway",
+      "pathway": "enterprise_workforce",
+      "definition": "Identifies real workforce, business, or organizational problems worth solving and distinguishes them from imagined demand.",
+      "prerequisites": [
+        "CORE-04",
+        "CORE-06"
+      ],
+      "home_stage": 3
+    },
+    {
+      "id": "ENT-02",
+      "name": "User / Customer Discovery",
+      "category": "pathway",
+      "pathway": "enterprise_workforce",
+      "definition": "Conducts structured discovery to understand needs, constraints, and decision criteria without leading the participant.",
+      "prerequisites": [
+        "CORE-02",
+        "SHR-02"
+      ],
+      "home_stage": 3
+    },
+    {
+      "id": "ENT-03",
+      "name": "Offer & Scope Design",
+      "category": "pathway",
+      "pathway": "enterprise_workforce",
+      "definition": "Converts a validated need into a clearly defined product, service, project scope, or role with deliverables and boundaries.",
+      "prerequisites": [
+        "ENT-01",
+        "ENT-02",
+        "SHR-01"
+      ],
+      "home_stage": 4
+    },
+    {
+      "id": "ENT-04",
+      "name": "Financial & Operational Basics",
+      "category": "pathway",
+      "pathway": "enterprise_workforce",
+      "definition": "Understands basic budgeting, pricing and cost concepts, resource requirements, operational constraints, and simple business metrics.",
+      "prerequisites": [
+        "SHR-03"
+      ],
+      "home_stage": 6
+    },
+    {
+      "id": "ENT-05",
+      "name": "Client / Project Delivery",
+      "category": "pathway",
+      "pathway": "enterprise_workforce",
+      "definition": "Manages expectations, communicates status, controls scope, and delivers accepted work.",
+      "prerequisites": [
+        "ENT-03",
+        "CORE-07",
+        "SHR-01"
+      ],
+      "home_stage": 4
+    },
+    {
+      "id": "ENT-06",
+      "name": "Workforce & Career Navigation",
+      "category": "pathway",
+      "pathway": "enterprise_workforce",
+      "definition": "Builds a credible professional record and navigates applications, interviews, apprenticeships, employers, and advancement pathways.",
+      "prerequisites": [
+        "CORE-01",
+        "CORE-02",
+        "CORE-07"
+      ],
+      "home_stage": 3
+    },
+    {
+      "id": "MED-01",
+      "name": "Story & Message Development",
+      "category": "pathway",
+      "pathway": "media_communications",
+      "definition": "Defines audience, purpose, narrative structure, facts, and communication objective before production begins.",
+      "prerequisites": [
+        "CORE-02",
+        "CORE-04"
+      ],
+      "home_stage": 4
+    },
+    {
+      "id": "MED-02",
+      "name": "Capture & Production",
+      "category": "pathway",
+      "pathway": "media_communications",
+      "definition": "Produces usable audio, photo, video, or other media with appropriate planning and technical execution.",
+      "prerequisites": [
+        "CORE-05",
+        "MED-01"
+      ],
+      "home_stage": 4
+    },
+    {
+      "id": "MED-03",
+      "name": "Editing & Post-Production",
+      "category": "pathway",
+      "pathway": "media_communications",
+      "definition": "Transforms raw materials into coherent finished media while maintaining factual and technical integrity.",
+      "prerequisites": [
+        "MED-02"
+      ],
+      "home_stage": 4
+    },
+    {
+      "id": "MED-04",
+      "name": "Verification, Rights & Licensing",
+      "category": "pathway",
+      "pathway": "media_communications",
+      "definition": "Verifies claims and media origins and handles releases, permissions, copyright, and licensing appropriately.",
+      "prerequisites": [
+        "SHR-02",
+        "SHR-04",
+        "CORE-04"
+      ],
+      "home_stage": 5
+    },
+    {
+      "id": "MED-05",
+      "name": "Publication, Distribution & Audience",
+      "category": "pathway",
+      "pathway": "media_communications",
+      "definition": "Publishes through appropriate channels, preserves lineage, and evaluates reach or response without confusing attention with impact.",
+      "prerequisites": [
+        "MED-03",
+        "MED-04",
+        "SHR-03"
+      ],
+      "home_stage": 5
+    },
+    {
+      "id": "OPS-01",
+      "name": "Systems Thinking",
+      "category": "pathway",
+      "pathway": "infrastructure_technology_operations",
+      "definition": "Understands how technical, human, institutional, and physical components interact and how changes propagate through a system.",
+      "prerequisites": [
+        "CORE-04",
+        "SHR-03"
+      ],
+      "home_stage": 6
+    },
+    {
+      "id": "OPS-02",
+      "name": "Cybersecurity Fundamentals",
+      "category": "pathway",
+      "pathway": "infrastructure_technology_operations",
+      "definition": "Practices identity, access, data protection, threat awareness, and secure operational behavior.",
+      "prerequisites": [
+        "CORE-05",
+        "CORE-07"
+      ],
+      "home_stage": 6
+    },
+    {
+      "id": "OPS-03",
+      "name": "Spatial Intelligence",
+      "category": "pathway",
+      "pathway": "infrastructure_technology_operations",
+      "definition": "Interprets geographic, temporal, and infrastructure data and uses spatial tools appropriately while respecting provenance and access restrictions.",
+      "prerequisites": [
+        "SHR-03",
+        "SHR-04",
+        "OPS-01"
+      ],
+      "home_stage": 6
+    },
+    {
+      "id": "OPS-04",
+      "name": "Infrastructure & Energy Literacy",
+      "category": "pathway",
+      "pathway": "infrastructure_technology_operations",
+      "definition": "Understands the basic operation and interdependence of energy, transportation, communications, water, buildings, and related infrastructure.",
+      "prerequisites": [
+        "OPS-01",
+        "CORE-06"
+      ],
+      "home_stage": 6
+    },
+    {
+      "id": "OPS-05",
+      "name": "Operational Decision Support",
+      "category": "pathway",
+      "pathway": "infrastructure_technology_operations",
+      "definition": "Converts evidence and live operational context into bounded options, risks, priorities, and actionable information for decision-makers.",
+      "prerequisites": [
+        "OPS-01",
+        "SHR-03",
+        "CORE-02"
+      ],
+      "home_stage": 6
+    },
+    {
+      "id": "OPS-06",
+      "name": "Automation & Tooling",
+      "category": "pathway",
+      "pathway": "infrastructure_technology_operations",
+      "definition": "Uses automation, APIs, AI, or other technical tools to improve workflows while preserving security, reviewability, and human authority.",
+      "prerequisites": [
+        "CORE-05",
+        "OPS-01",
+        "OPS-02"
+      ],
+      "home_stage": 4
+    }
+  ]
+}

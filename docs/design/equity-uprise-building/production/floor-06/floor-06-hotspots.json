@@ -1,0 +1,181 @@
+{
+  "schema_version": "2.1.0",
+  "scene_id": "equity-uprise-floor-06",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
+  "hotspots": [
+    {
+      "id": "hs_zone_01",
+      "label": "Penthouse Command",
+      "position_ft_local": {
+        "x": 36.0,
+        "y": 39.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 36.0,
+        "y": 39.0,
+        "z": 71.7
+      },
+      "zone_id": "zone_01",
+      "action": "open_route",
+      "route_key": "institutional_command"
+    },
+    {
+      "id": "hs_zone_02",
+      "label": "Institutional Command Wall",
+      "position_ft_local": {
+        "x": 36.0,
+        "y": 52.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 36.0,
+        "y": 52.0,
+        "z": 71.7
+      },
+      "zone_id": "zone_02",
+      "action": "open_route",
+      "route_key": "institutional_command"
+    },
+    {
+      "id": "hs_zone_03",
+      "label": "Institutional Salon / Support",
+      "position_ft_local": {
+        "x": 10.0,
+        "y": 28.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 10.0,
+        "y": 28.0,
+        "z": 71.7
+      },
+      "zone_id": "zone_03",
+      "action": "open_route",
+      "route_key": "program_support"
+    },
+    {
+      "id": "hs_zone_04",
+      "label": "Strategy Review Room",
+      "position_ft_local": {
+        "x": 8.5,
+        "y": 10.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 8.5,
+        "y": 10.0,
+        "z": 71.7
+      },
+      "zone_id": "zone_04",
+      "action": "open_route",
+      "route_key": "initiative_portfolio"
+    },
+    {
+      "id": "hs_zone_05",
+      "label": "Partner / Executive Briefing",
+      "position_ft_local": {
+        "x": 24.5,
+        "y": 10.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 24.5,
+        "y": 10.0,
+        "z": 71.7
+      },
+      "zone_id": "zone_05",
+      "action": "open_route",
+      "route_key": "partner_briefing"
+    },
+    {
+      "id": "hs_zone_06",
+      "label": "Roof / Mobility Transition",
+      "position_ft_local": {
+        "x": 50.0,
+        "y": 26.5,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 50.0,
+        "y": 26.5,
+        "z": 71.7
+      },
+      "zone_id": "zone_06",
+      "action": "open_route",
+      "route_key": "roof_transition"
+    },
+    {
+      "id": "hs_zone_07",
+      "label": "16 x 5 Command Table",
+      "position_ft_local": {
+        "x": 36.0,
+        "y": 41.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 36.0,
+        "y": 41.0,
+        "z": 71.7
+      },
+      "zone_id": "zone_07",
+      "action": "focus_zone"
+    },
+    {
+      "id": "hs_sphere_01",
+      "label": "Halo Globe / Spatial Intelligence",
+      "position_ft_local": {
+        "x": 24.5,
+        "y": 34.5,
+        "z": 8.25
+      },
+      "position_ft_world": {
+        "x": 24.5,
+        "y": 34.5,
+        "z": 75.75
+      },
+      "sphere_id": "sphere_01",
+      "action": "open_route",
+      "route_key": "halo_spatial_intelligence"
+    },
+    {
+      "id": "hs_passenger_elevator",
+      "label": "Passenger Elevator",
+      "position_ft_world": {
+        "x": 53.5,
+        "y": 39,
+        "z": 72.0
+      },
+      "action": "open_route",
+      "route_key": "passenger_elevator_selector"
+    },
+    {
+      "id": "hs_stair_a",
+      "label": "Stair A",
+      "position_ft_world": {
+        "x": 63,
+        "y": 56,
+        "z": 72.0
+      },
+      "action": "vertical_transition",
+      "vertical_system_id": "stair-a-east"
+    },
+    {
+      "id": "hs_stair_b",
+      "label": "Stair B",
+      "position_ft_world": {
+        "x": 15.5,
+        "y": 56,
+        "z": 72.0
+      },
+      "action": "vertical_transition",
+      "vertical_system_id": "stair-b-west"
+    }
+  ],
+  "rules": [
+    "Hotspots do not redefine geometry.",
+    "Service/freight elevator is not exposed as a normal public hotspot.",
+    "Level 7 does not expose passenger-elevator service unless later professional design resolves an actual roof stop.",
+    "Private routes preserve the source product's access-control boundary."
+  ]
+}

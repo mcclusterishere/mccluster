@@ -1,0 +1,70 @@
+{
+  "schema_version": "2.3.0",
+  "scene_id": "equity-uprise-floor-05",
+  "default_state": "idle",
+  "states": [
+    {
+      "id": "idle",
+      "label": "Idle"
+    },
+    {
+      "id": "floor_focus",
+      "label": "Policy + Proof",
+      "camera_id": "floor_overview"
+    },
+    {
+      "id": "after_hours",
+      "label": "After Hours",
+      "lighting_multiplier": 0.45
+    },
+    {
+      "id": "claims_evidence",
+      "label": "Claims \u2194 Evidence",
+      "route_key": "claims_evidence",
+      "access": "authorized-researcher-editor-admin",
+      "read_only": true
+    },
+    {
+      "id": "provenance_lineage",
+      "label": "Artifact Provenance / Lineage",
+      "route_key": "artifact_lineage",
+      "access": "published-public-private-workflow",
+      "read_only": true
+    },
+    {
+      "id": "distribution",
+      "label": "Distribution / Syndication",
+      "route_key": "publication_distribution",
+      "access": "authorized-admin",
+      "approval_gated": true
+    },
+    {
+      "id": "contributor_identity",
+      "label": "Contributor Identity / ORCID",
+      "route_key": "publication_identity",
+      "access": "authorized-researcher-editor-admin",
+      "read_only": true
+    },
+    {
+      "id": "doi_deposit",
+      "label": "DOI / Crossref",
+      "route_key": "publication_identity",
+      "access": "authorized-researcher-editor-admin",
+      "read_only": true
+    },
+    {
+      "id": "docket_watch",
+      "label": "Dockets / Regulatory Watch",
+      "route_key": "docket_watch",
+      "access": "authorized-researcher-editor-admin",
+      "read_only": true
+    },
+    {
+      "id": "monitoring",
+      "label": "Monitor / Watchlist",
+      "route_key": "monitoring_impact",
+      "access": "authorized-researcher-editor-admin",
+      "read_only": true
+    }
+  ]
+}

@@ -1,0 +1,443 @@
+{
+  "schema_version": "0.2.0",
+  "status": "canonical-b1-underground-operations-and-technical-service-program",
+  "id": "basement-b1",
+  "level": 0,
+  "display_level": "B1",
+  "title": "Underground Operations / Technical Service Basement",
+  "elevation_ft": -13.5,
+  "developmental_stage": null,
+  "acronym_role": "none-supporting-infrastructure-only",
+  "normal_public_access": false,
+  "access": "mccluster-house-owner-or-underground-operations-admin",
+  "purpose": "House the virtual headquarters technical backbone and serve as the restricted operational gateway to the future inter-building underground network, while exposing only sandboxed clones for learner/instructor training.",
+  "code_model": {
+    "level_of_exit_discharge": 1,
+    "below_grade": true,
+    "compliance_claim": false,
+    "egress_note": "B1 egress is modeled through protected Stairs A/B to Floor 1. Floor 1 requires discharge-direction barriers/wayfinding so evacuees do not unintentionally continue below grade.",
+    "accessible_egress_note": "Passenger-elevator landing and emergency communication concepts are modeled for accessibility/egress training; operational use in an emergency depends on the selected simulation code profile and scenario authority."
+  },
+  "vertical_systems": [
+    "passenger-elevator-a",
+    "service-freight-elevator-a",
+    "stair-a-east",
+    "stair-b-west",
+    "mep-riser-east"
+  ],
+  "zones": [
+    {
+      "id": "b1-mechanical-plant",
+      "label": "Mechanical Plant",
+      "kind": "room",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 4,
+        "x2": 30,
+        "y2": 26
+      },
+      "systems": [
+        "HVAC plant",
+        "pumps/fans",
+        "building automation sensors"
+      ],
+      "training": [
+        "OPS-01",
+        "OPS-04"
+      ],
+      "hazard_class": "controlled-technical",
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only"
+    },
+    {
+      "id": "b1-electrical-emergency",
+      "label": "Electrical / Emergency Power",
+      "kind": "room",
+      "bounds_ft": {
+        "x1": 32,
+        "y1": 4,
+        "x2": 52,
+        "y2": 20
+      },
+      "systems": [
+        "main electrical distribution",
+        "UPS/emergency distribution",
+        "metering"
+      ],
+      "training": [
+        "CORE-05",
+        "OPS-01",
+        "OPS-02",
+        "OPS-04"
+      ],
+      "hazard_class": "restricted-electrical",
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only"
+    },
+    {
+      "id": "b1-fire-water",
+      "label": "Fire Protection / Water",
+      "kind": "room",
+      "bounds_ft": {
+        "x1": 54,
+        "y1": 4,
+        "x2": 70,
+        "y2": 20
+      },
+      "systems": [
+        "fire pump concept",
+        "sprinkler riser concept",
+        "water service/backflow concept"
+      ],
+      "training": [
+        "CORE-08",
+        "PSC-05",
+        "OPS-04"
+      ],
+      "hazard_class": "controlled-technical",
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only"
+    },
+    {
+      "id": "b1-telecom-core",
+      "label": "Network / Telecom Core",
+      "kind": "room",
+      "bounds_ft": {
+        "x1": 32,
+        "y1": 22,
+        "x2": 52,
+        "y2": 34
+      },
+      "systems": [
+        "telecom demarc",
+        "core network",
+        "access-control backbone",
+        "building systems network"
+      ],
+      "training": [
+        "CORE-05",
+        "OPS-02",
+        "OPS-06"
+      ],
+      "hazard_class": "restricted-digital",
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only"
+    },
+    {
+      "id": "b1-water-flood",
+      "label": "Sump / Flood Management",
+      "kind": "room",
+      "bounds_ft": {
+        "x1": 54,
+        "y1": 22,
+        "x2": 70,
+        "y2": 32
+      },
+      "systems": [
+        "sump pumps",
+        "water sensors",
+        "drainage/flood monitoring"
+      ],
+      "training": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-04"
+      ],
+      "hazard_class": "controlled-technical",
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only"
+    },
+    {
+      "id": "b1-facilities-workshop",
+      "label": "Facilities Workshop / Storage",
+      "kind": "room",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 30,
+        "x2": 16,
+        "y2": 52
+      },
+      "systems": [
+        "maintenance tools",
+        "parts storage",
+        "PPE/spill response storage"
+      ],
+      "training": [
+        "CORE-07",
+        "CORE-08"
+      ],
+      "hazard_class": "service",
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only"
+    },
+    {
+      "id": "b1-systems-lab",
+      "label": "Building Systems Lab / Observation",
+      "kind": "zone",
+      "bounds_ft": {
+        "x1": 18,
+        "y1": 36,
+        "x2": 52,
+        "y2": 54
+      },
+      "systems": [
+        "digital twin dashboard",
+        "BAS simulation",
+        "power/network/fire/MEP observation"
+      ],
+      "training": [
+        "CORE-05",
+        "CORE-08",
+        "OPS-01",
+        "OPS-02",
+        "OPS-04",
+        "OPS-05",
+        "OPS-06"
+      ],
+      "hazard_class": "instructional",
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only"
+    },
+    {
+      "id": "b1-service-staging",
+      "label": "Service Receiving / Staging",
+      "kind": "zone",
+      "bounds_ft": {
+        "x1": 0,
+        "y1": 54,
+        "x2": 8,
+        "y2": 60
+      },
+      "systems": [
+        "freight staging",
+        "maintenance receiving"
+      ],
+      "training": [
+        "CORE-07",
+        "CORE-08"
+      ],
+      "hazard_class": "service",
+      "live_access": "mccluster-house-owner-or-underground-operations-admin",
+      "training_mode": "sandboxed_clone_only"
+    },
+    {
+      "id": "b1-tunnel-ops-concourse",
+      "label": "Tunnel Operations Concourse / Security Gate",
+      "kind": "zone",
+      "bounds_ft": {
+        "x1": 20,
+        "y1": 54,
+        "x2": 48,
+        "y2": 64
+      },
+      "systems": [
+        "identity/access",
+        "underground occupancy accountability",
+        "transport dispatch",
+        "route authorization",
+        "incident/status board"
+      ],
+      "training": [
+        "CORE-08",
+        "PSC-05",
+        "OPS-01",
+        "OPS-03",
+        "OPS-05"
+      ],
+      "training_mode": "sandboxed_clone_only",
+      "hazard_class": "restricted-underground-operations",
+      "live_access": "mccluster-house-owner-or-underground-operations-admin"
+    },
+    {
+      "id": "b1-tunnel-transfer-lock",
+      "label": "Tunnel Portal / Transfer Lock",
+      "kind": "room",
+      "bounds_ft": {
+        "x1": 24,
+        "y1": 64,
+        "x2": 44,
+        "y2": 72
+      },
+      "systems": [
+        "security interlock",
+        "environmental/fire separation",
+        "vehicle/personnel transfer",
+        "emergency closure"
+      ],
+      "training": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-05"
+      ],
+      "training_mode": "sandboxed_clone_only",
+      "hazard_class": "restricted-underground-transfer",
+      "live_access": "mccluster-house-owner-or-underground-operations-admin"
+    }
+  ],
+  "scenario_catalog": [
+    {
+      "id": "b1-flood-intrusion",
+      "label": "Basement Flood Intrusion",
+      "competencies": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-04",
+        "OPS-05"
+      ],
+      "systems": [
+        "sump/flood sensors",
+        "electrical isolation",
+        "route restrictions"
+      ]
+    },
+    {
+      "id": "b1-normal-power-loss",
+      "label": "Normal Power Loss / Emergency Transfer",
+      "competencies": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-04",
+        "OPS-05"
+      ],
+      "systems": [
+        "electrical distribution",
+        "UPS/emergency circuits",
+        "lighting states"
+      ]
+    },
+    {
+      "id": "b1-network-core-failure",
+      "label": "Network Core Failure",
+      "competencies": [
+        "CORE-05",
+        "OPS-02",
+        "OPS-06"
+      ],
+      "systems": [
+        "core network",
+        "fallback workflows",
+        "building systems segmentation"
+      ]
+    },
+    {
+      "id": "b1-mechanical-failure",
+      "label": "Mechanical Ventilation Failure",
+      "competencies": [
+        "OPS-01",
+        "OPS-04",
+        "OPS-05"
+      ],
+      "systems": [
+        "HVAC plant",
+        "building automation",
+        "occupancy response"
+      ]
+    },
+    {
+      "id": "b1-fire-pump-status",
+      "label": "Fire Protection System Status",
+      "competencies": [
+        "CORE-08",
+        "PSC-05",
+        "OPS-04"
+      ],
+      "systems": [
+        "fire pump concept",
+        "sprinkler status",
+        "alarm/annunciation"
+      ]
+    },
+    {
+      "id": "b1-service-spill",
+      "label": "Service / Maintenance Spill",
+      "competencies": [
+        "CORE-08",
+        "CORE-07",
+        "OPS-01"
+      ],
+      "systems": [
+        "PPE",
+        "spill kit",
+        "access boundaries",
+        "ventilation"
+      ]
+    },
+    {
+      "id": "b1-tunnel-occupancy-accountability",
+      "label": "Underground Occupancy Accountability",
+      "competencies": [
+        "CORE-08",
+        "PSC-05",
+        "OPS-03",
+        "OPS-05"
+      ],
+      "systems": [
+        "underground occupancy ledger",
+        "route authorization",
+        "incident status"
+      ]
+    },
+    {
+      "id": "b1-tunnel-transport-failure",
+      "label": "Tunnel Transport Failure",
+      "competencies": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-05"
+      ],
+      "systems": [
+        "electric shuttle/utility vehicle",
+        "dispatch",
+        "alternate movement route"
+      ]
+    },
+    {
+      "id": "b1-tunnel-cyber-physical-event",
+      "label": "Tunnel Cyber-Physical Event",
+      "competencies": [
+        "OPS-01",
+        "OPS-02",
+        "OPS-05",
+        "OPS-06"
+      ],
+      "systems": [
+        "access control",
+        "ventilation",
+        "vehicle controls",
+        "network segmentation"
+      ]
+    }
+  ],
+  "simulation_rules": [
+    "B1 is not a seventh/eighth developmental curriculum floor.",
+    "B1 is omitted from the normal public/member floor selector, Journey Wall navigation and ordinary building directory.",
+    "Live B1 access requires McCluster house-owner or explicitly delegated underground_operations_admin authority.",
+    "Ordinary Equity Uprise admin/staff roles and competency status do not grant live B1 or tunnel access.",
+    "Learners and instructors use a sandboxed training clone of B1/tunnel geometry; training cannot operate or reveal the live underground network.",
+    "Protected stairs and the passenger elevator physically connect B1 to Floor 1 in the combined model for authorized operation and safe egress.",
+    "Freight/service elevator physically serves B1 but remains restricted operational infrastructure.",
+    "Future tunnel branches remain unlabeled reserved connections until a destination building has canonical authority.",
+    "The model must preserve a clear distinction between training simulation, live operations and real-world professional engineering authority."
+  ],
+  "basement": true,
+  "south_condition": "below-grade perimeter wall",
+  "tunnel_network_ref": "underground-tunnel-network.json",
+  "live_access": {
+    "allowed": [
+      "mccluster_house_owner",
+      "underground_operations_admin"
+    ],
+    "delegated_by": "mccluster_house_owner",
+    "ordinary_equity_uprise_admin_sufficient": false,
+    "competency_sufficient": false,
+    "audit_required": true
+  },
+  "training_access": {
+    "mode": "sandboxed_clone_only",
+    "live_b1_access": false,
+    "live_tunnel_access": false,
+    "live_controls_available": false,
+    "live_occupancy_visible": false,
+    "competency_evidence_allowed": true
+  }
+}

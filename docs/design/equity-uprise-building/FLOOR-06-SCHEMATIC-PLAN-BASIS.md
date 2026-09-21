@@ -6,6 +6,11 @@
 > Floor 6 stacks directly on Floors 1–5 and must preserve upward access/service continuity to Level 7.  
 > **Not for construction.**
 
+
+> Core V2 branch authority: `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Finished-floor elevation in combined model: **+67'-6"**.
+> Floor-specific program may not move the shared passenger elevator, freight/service shaft, Stair A, Stair B, MEP reservation or shared slab openings.
+
 ## 1. Building coordinate datum
 
 - Exterior footprint: **72'-0" × 72'-0"**
@@ -23,27 +28,45 @@ Coordination grid:
 
 ## 2. Mandatory vertical stack
 
-### Elevator
-- **X 54–62 / Y 34–44**
-- conceptual 8' × 10'
-- door faces west
-- reserve continuation/roof-service possibility
+Floor 6 inherits the shared Core V2 geometry from `BUILDING-CORE-V2-SPEC.md` and `production/building-core-v2.json`.
 
-### Stair A
-- **X 60–72 / Y 54–72**
-- preserve upward Level 7 continuation
+Finished-floor elevation:
+- **+67'-6"**
 
-### Stair B
-- **X 0–12 / Y 54–72**
-- preserve vertical continuity
+### Passenger elevator
+- shaft: **X 54–62 / Y 34–44**
+- west-facing door
+- primary public vertical circulation
+- floor-specific program may not intrude into the shaft or elevator approach
 
-### MEP / roof services
+### West Service Core
+Overall reservation:
+- **X 0–18 / Y 54–72**
+
+It contains the freight/service elevator and revised Stair B.
+
+### Service / freight elevator
+- shaft: **X 0–8 / Y 60–72**
+- conceptual south-facing service door into the Y54–60 service/circulation band
+- not counted as a substitute for a required exit
+
+### Stair B — west protected stair
+- enclosure: **X 8–18 / Y 54–72**
+- continuous through Floors 1–6 and Level 7
+- full **13'-6"** floor-to-floor rise in combined deterministic geometry
+- shared slab opening approximately **X 8.75–17.25 / Y 58.25–71.25**
+
+### Stair A — east protected stair
+- enclosure: **X 60–72 / Y 54–72**
+- continuous through Floors 1–6 and Level 7
+- full **13'-6"** floor-to-floor rise in combined deterministic geometry
+- shared slab opening approximately **X 60.75–71.25 / Y 58.25–71.25**
+
+### MEP / risers
 - approximately **X 50–60 / Y 66–72**
-- coordinate termination/continuation at roof
+- vertically continuous reservation
 
-These coordinates may not move.
-
----
+No local floor model may replace these with shortened decorative stairs or cover the shared slab openings.
 
 ## 3. Exterior perimeter
 
@@ -71,7 +94,7 @@ Roof access occurs through vertical circulation/core, not perimeter doors.
 
 Maintain clear circulation around the table.
 
-### Penthouse Command wall
+### Institutional Command Wall
 - approximately **X 22–50 / Y 50–54**
 - dynamic zones:
   - NOW
@@ -79,6 +102,21 @@ Maintain clear circulation around the table.
   - JOIN
 
 ---
+
+## 4A. Halo Globe / Spatial Intelligence
+
+Floor 6 includes one suspended spatial-intelligence instrument governed by `HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`.
+
+Conceptual coordination envelope:
+- plan center: **(24.5, 34.5)**;
+- radius: **2.25 ft**;
+- diameter: **4.5 ft**;
+- center height: **8.25 ft AFF**;
+- visible bottom: **6.0 ft AFF**;
+- visible top: **10.5 ft AFF**;
+- route key: `halo_spatial_intelligence`.
+
+The plan circle is an overhead coordination envelope, not occupied floor furniture. It may not move the command table, obstruct the 360 camera datum, reduce the clear elevator approach, block circulation, or intrude into any shared Core V2 vertical system.
 
 ## 5. Institutional Salon / Join Lounge
 
@@ -154,44 +192,60 @@ Preserve a legible upward-transition route from the core toward Level 7 access.
 
 ## 10. North support band
 
-### Corridor
-- **Y 54–60**
-- target approximately 6 ft clear
+The north band is replanned around the Core V2 west service core.
+
+### West service approach
+- **X 0–18 / Y 54–60**
+- provides conceptual service approach to the freight lift and Stair B access
+- must remain clear of floor-specific furniture/program
+
+### Public/support corridor
+- **X 18–60 / Y 54–60**
+- target approximately **6 ft clear**
 
 ### Accessible restroom A
-- **X 12–20 / Y 60–70**
+- **X 18–26 / Y 60–70**
+- conceptual 8' × 10'
 
 ### Accessible restroom B
-- **X 20–28 / Y 60–70**
+- **X 26–34 / Y 60–70**
+- conceptual 8' × 10'
 
-### Command Support / Secure Records
-- **X 28–40 / Y 60–72**
+### Control / Audit Records
+- **X 34–42 / Y 60–72**
+- conceptual 8' × 12'
 
-### Operations / Systems Support
-- **X 40–50 / Y 60–72**
+### Desk Operations / Systems
+- **X 42–50 / Y 60–72**
+- conceptual 8' × 12'
 
 ### Janitor
 - **X 50–54 / Y 60–66**
 
-### MEP / Roof Services
+### MEP / risers
 - **X 50–60 / Y 66–72**
+- shared Core V2 vertical reservation
 
----
+### Stair / lift protection
+- freight/service shaft **X0–8 / Y60–72** remains unobstructed;
+- Stair B **X8–18 / Y54–72** remains unobstructed;
+- Stair A **X60–72 / Y54–72** remains unobstructed;
+- floor-specific support rooms may not intrude into shared slab openings.
 
 ## 11. Level 7 vertical-continuity reservation
 
-Floor 6 must reserve the following as **do-not-block** conditions:
+Floor 6 must preserve all Core V2 vertical systems into the roof interface:
 
-- Stair A vertical continuation above Y 54 within the east/north core;
-- Stair B vertical continuity;
-- elevator shaft overrun/service volume above X 54–62 / Y 34–44 as ultimately engineered;
-- MEP/roof-service continuation above X 50–60 / Y 66–72;
-- structural pathways for roof-access enclosure/support;
-- no furniture/program encroachment into these vertical systems.
+- Stair A enclosure **X60–72 / Y54–72** and its shared slab opening;
+- revised Stair B enclosure **X8–18 / Y54–72** and its shared slab opening;
+- passenger-elevator shaft **X54–62 / Y34–44** including required overrun/service volume;
+- service/freight-elevator shaft **X0–8 / Y60–72** as a continuous roof-service reservation;
+- MEP / roof-service continuation **X50–60 / Y66–72**;
+- structural pathways for roof-access/headhouse/service conditions.
 
-Exact roof-access doors/landings are deferred to the Level 7 schematic after feasibility/code review.
+Core V2 guarantees stair continuity to Level 7. Direct passenger-elevator service to Level 7 remains unassumed. A freight/service stop at Level 7 remains reserved for later technical resolution.
 
----
+No Floor 6 furniture, command program or support room may obstruct these vertical systems.
 
 ## 12. Circulation targets
 
@@ -255,7 +309,8 @@ Within X 2–18 / Y 18–38:
 
 ## 15. Technology/service logic
 
-- command wall services from Operations / Systems Support;
+- command wall services from Desk Operations / Systems;
+- Halo Globe receives power/data through a concealed architectural pathway; its public projection never receives provider secrets or owner tokens;
 - command table via floor box;
 - salon Join/Partner surface via wall/floor pathway;
 - Strategy/Briefing rooms via secure data pathways;
@@ -295,17 +350,19 @@ Licensed professional review is required.
 
 ## 17. Drawing authority
 
-1. `FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
-2. **this schematic-plan basis**
-3. `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md` for roof-interface constraints
-4. canonical DXF
-5. canonical SVG
-6. canonical PNG preview
-7. later 3D/render/360 outputs
+For this Core V2 migration branch:
 
-Generative imagery may not alter canonical geometry.
+1. `BUILDING-CORE-V2-SPEC.md`
+2. `production/building-core-v2.json`
+3. floor-specific written 360/spec document
+4. this schematic-plan basis
+5. regenerated Core V2 DXF
+6. regenerated Core V2 SVG
+7. regenerated Core V2 PNG preview
+8. deterministic production package
+9. later 3D/render/360 output
 
----
+The shared Core V2 files control all vertical systems. Generated imagery is never geometry authority.
 
 ## 18. QC requirements
 
@@ -319,6 +376,8 @@ Generative imagery may not alter canonical geometry.
 - [ ] no exterior public door
 - [ ] no balcony/terrace
 - [ ] 16' × 5' command table
+- [ ] one suspended Halo Globe at (24.5,34.5), radius 2.25 ft, center 8.25 ft AFF
+- [ ] Halo Globe coordination envelope clears fixed core and circulation
 - [ ] NOW / PAST WORK / JOIN wall
 - [ ] Institutional Salon west
 - [ ] Strategy Review south
@@ -328,3 +387,22 @@ Generative imagery may not alter canonical geometry.
 - [ ] circulation targets
 - [ ] 360 camera datum
 - [ ] NOT FOR CONSTRUCTION note
+
+
+### Core V2 migration QC addendum
+- [ ] service/freight elevator shaft at X 0–8 / Y 60–72
+- [ ] revised Stair B at X 8–18 / Y 54–72
+- [ ] Stair A at X 60–72 / Y 54–72
+- [ ] full 13'-6" stair rise represented in combined geometry
+- [ ] shared slab openings remain clear
+- [ ] floor elevation matches building-core-v2.json
+
+## Repo capability authority
+
+Program semantics for this floor are controlled by:
+- `production/equity-uprise-capability-map-v2.json`
+- `production/core-v2-floor-programs.json`
+- the companion long-form floor spec.
+
+This schematic basis controls plan geometry; it may not silently rename or delete a repo-backed capability represented by the floor program. Public/private and approval boundaries remain those of the source Equity Uprise system.
+

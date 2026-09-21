@@ -6,6 +6,11 @@
 > This file is the source of truth for Floor 4 floor-plan work, 360 panorama generation, hotspot placement, 3D reconstruction, and implementation.  
 > Do not generate a Floor 4 environment that conflicts with this document.
 
+
+> **Core V2 migration authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Combined-model finished-floor elevation: **+40'-6"**.
+> Shared vertical systems override any stale Core V1 coordinate language on this branch.
+
 ## 1. Repo-derived purpose
 
 Floor 4 spatializes the existing Equity Uprise media/culture functions documented in the repo.
@@ -102,25 +107,26 @@ It is **not**:
 
 ## 3. Locked building shell
 
-Floor 4 inherits the exact building datum from Floors 1–3.
+This level inherits the Core V2 building datum exactly.
 
 - Exterior footprint: **72'-0" × 72'-0"**
 - Gross conceptual area: **5,184 sq ft**
 - Structural coordination grid: **18' × 18'**
-- Floor-to-floor target: **13'-6"**
+- Floor-to-floor: **13'-6"**
+- Finished-floor elevation in combined model: **+40'-6"**
 - North is up.
 
-The following vertical systems are fixed:
+Shared vertical systems:
+- passenger elevator: **X54–62 / Y34–44**
+- West Service Core: **X0–18 / Y54–72**
+- service/freight elevator shaft: **X0–8 / Y60–72**
+- revised Stair B: **X8–18 / Y54–72**
+- Stair A: **X60–72 / Y54–72**
+- MEP/riser reservation: approximately **X50–60 / Y66–72**
 
-- Elevator hoistway: **X 54–62 / Y 34–44**
-- Stair A: **X 60–72 / Y 54–72**
-- Stair B: **X 0–12 / Y 54–72**
-- MEP/riser reservation: approximately **X 50–60 / Y 66–72**
-- Canonical 360 camera datum: approximately **(36,28)**
+Both stairs must physically rise the full **13'-6"** between finished floors in combined deterministic geometry. Floor slabs must preserve the shared elevator/stair openings from `building-core-v2.json`.
 
-No media/culture program may move these systems.
-
----
+The service/freight elevator is a service system and is **not** counted as a substitute for a required exit.
 
 ## 4. Exterior-access rule
 
@@ -297,7 +303,7 @@ on public-facing screens.
 
 ---
 
-## 10. Elevator-side floor control
+## 10. Media / Release Control
 
 Use one slim terminal adjacent to elevator:
 - approximate footprint **X 49–51 / Y 24–29**
@@ -329,49 +335,70 @@ Where studio acoustics require opaque wall construction, the exterior may remain
 
 ## 12. North support band
 
-### Corridor
-- **Y 54–60**
-- approximately 6 ft clear target
+The north support band is replanned around the Core V2 West Service Core.
+
+### West service approach
+- **X0–18 / Y54–60**
+- conceptual approach to the freight/service elevator and Stair B
+- no public furniture or floor-specific program may block it
+
+### Public/support corridor
+- **X18–60 / Y54–60**
+- target approximately **6 ft clear**
 
 ### Accessible restroom A
-- **X 12–20 / Y 60–70**
+- **X18–26 / Y60–70**
+- conceptual 8' × 10'
 
 ### Accessible restroom B
-- **X 20–28 / Y 60–70**
+- **X26–34 / Y60–70**
+- conceptual 8' × 10'
 
 ### Media equipment / storage
-- **X 28–40 / Y 60–72**
-- secure storage for cameras, small lighting kits, stands, cables, archive handling materials and media supplies
+- **X34–42 / Y60–72**
+- conceptual 8' × 12'
 
-### Media / music IT
-- **X 40–50 / Y 60–72**
-- network/AV support;
-- playback/distribution support;
-- secure systems;
-- not a public control room
+### Media / Music Operations
+- **X42–50 / Y60–72**
+- conceptual 8' × 12'
 
 ### Janitor
-- **X 50–54 / Y 60–66**
+- **X50–54 / Y60–66**
 
 ### MEP / risers
-- approximately **X 50–60 / Y 66–72**
+- **X50–60 / Y66–72**
+- vertically stacked Core V2 reservation
 
----
+The service/freight shaft, both stair enclosures and all shared slab openings are do-not-block geometry.
 
 ## 13. Stairs / vertical circulation
 
-### Elevator
-Same exact hoistway and orientation as Floors 1–3.
+### Passenger elevator
+- shaft **X54–62 / Y34–44**
+- west-facing public door
+- primary public vertical circulation
+
+### Service / freight elevator
+- shaft **X0–8 / Y60–72**
+- south-facing service access into the north service band
+- floor program may not intrude into the shaft
+- not treated as a required exit
 
 ### Stair A
-- **X 60–72 / Y 54–72**
+- enclosure **X60–72 / Y54–72**
+- protected vertical continuity through the building stack
+- full **13'-6"** rise per level in combined geometry
+- schematic dogleg/U-shaped stair with intermediate landing
+- shared slab opening approximately **X60.75–71.25 / Y58.25–71.25**
 
 ### Stair B
-- **X 0–12 / Y 54–72**
+- enclosure **X8–18 / Y54–72**
+- protected remote vertical continuity through the building stack
+- full **13'-6"** rise per level in combined geometry
+- schematic dogleg/U-shaped stair with intermediate landing
+- shared slab opening approximately **X8.75–17.25 / Y58.25–71.25**
 
-Both remain protected internal stair enclosures on Floor 4.
-
----
+The old short decorative stair placeholders are retired on the Core V2 branch. Exact code geometry remains a licensed professional-design task.
 
 ## 14. Circulation
 
@@ -402,7 +429,7 @@ At concept level provide:
 - accessible seating position in media/listening room;
 - accessible archive/gallery route;
 - accessible recording/edit-room approach;
-- accessible floor-control terminal;
+- accessible Media / Release Control terminal;
 - accessible restroom concepts;
 - visual/audible life-safety notification.
 
@@ -519,7 +546,7 @@ Final acoustic assemblies require specialist design.
 
 Provide plausible service routes for:
 - central media wall;
-- floor-control terminal;
+- Media / Release Control terminal;
 - gallery displays;
 - recording room;
 - edit suite;
@@ -582,7 +609,7 @@ Canonical visible furniture:
 - two recording-room seats maximum;
 - one two-person editing workstation;
 - two edit/review visitor seats;
-- one elevator-side floor-control terminal.
+- one elevator-side Media / Release Control terminal.
 
 No additional large furniture is canonical.
 
@@ -603,7 +630,7 @@ No additional large furniture is canonical.
 Central listening/screening room + MEDIA + CULTURE wall with Listen / Watch / Archive surfaces.
 
 **+90° / east:**  
-Fixed elevator/core + slim floor-control terminal.
+Fixed elevator/core + slim Media / Release Control terminal.
 
 **180° / south:**  
 Creator Recording Room + Edit / Review Suite + sealed upper-floor glazing. No exterior door.
@@ -640,10 +667,21 @@ Suggested Floor 4 hotspots:
 4. **Culture Archive wall** → full rally/gallery view.
 5. **Creator Recording Room** → civic-anthem/creator participation.
 6. **Edit / Review Suite** → creator/review workflow context.
-7. **Floor-control terminal** → listening/navigation state.
+7. **Media / Release Control terminal** → listening/navigation state.
 8. **Elevator** → floor selector.
 
 ---
+
+## 26A. Semantic interaction modes
+
+The existing Media + Culture spaces carry the post-creation pipeline explicitly:
+
+- **Rights / Clearance** — private rights/catalog/release state inside Media / Music Operations and Release Control.
+- **Licensing / Commerce** — public terms and rights-cleared offers, with authenticated checkout where supported.
+- **Release / Delivery** — approval-gated release preparation and delivery operations.
+- **DDEX Status** — private delivery/configuration state; never presented as connected when provider/partner configuration is absent.
+
+These modes use the Creator Recording Room, Edit / Review Suite, Media / Release Control and supporting displays. They do not justify additional rooms.
 
 ## 27. Content-authenticity rule
 
@@ -673,13 +711,13 @@ The floor may be atmospheric; the content must remain factual.
 - [ ] 18' grid preserved
 - [ ] elevator at X 54–62 / Y 34–44
 - [ ] Stair A at X 60–72 / Y 54–72
-- [ ] Stair B at X 0–12 / Y 54–72
+- [ ] Stair B at X 8–18 / Y 54–72
 - [ ] MEP/riser stack preserved
 - [ ] no exterior public door
 - [ ] no balcony/terrace
 - [ ] 360 camera approximately (36,28)
 - [ ] central media/listening room north
-- [ ] elevator + floor-control terminal east
+- [ ] elevator + Media / Release Control terminal east
 - [ ] production rooms south
 - [ ] archive/gallery west
 - [ ] services/restrooms stack vertically
@@ -688,3 +726,41 @@ The floor may be atmospheric; the content must remain factual.
 - [ ] no invented music/events/photos
 - [ ] room remains modest/simple
 - [ ] generated imagery remains subordinate to written/CAD geometry
+
+
+### Core V2 migration QC
+- [ ] finished-floor elevation matches `building-core-v2.json`
+- [ ] service/freight elevator shaft X0–8 / Y60–72 is preserved
+- [ ] revised Stair B X8–18 / Y54–72 is preserved
+- [ ] Stair A X60–72 / Y54–72 is preserved
+- [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
+- [ ] shared slab openings remain unobstructed
+- [ ] no floor-local decorative stair is treated as vertical-continuity authority
+
+## Repo capability binding — 2026-09-21 reconciliation audit
+
+This floor is bound to the repo-wide program map:
+`production/equity-uprise-capability-map-v2.json`.
+
+The current capability authority contains **56 canonical capabilities**. Repo-source counts are governed by the generated source-coverage report. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+
+### Primary capabilities
+- **Equity Uprise music/catalogue listening surface** (`music-catalogue`, built_shared_platform) — Media / Listening Zone.
+- **Artist/creator participation and studio workflow** (`artist-creator`, built_shared_platform) — Creator Recording Room and Edit / Review Suite.
+- **Music rights/catalog/release graph** (`music-rights`, built) — Media / Music Operations support and Media / Release Control.
+- **Equity Uprise/McCluster release preparation** (`music-release`, built_guarded) — Media / Release Control; high-risk delivery approval belongs to Floor 6.
+- **DDEX ERN delivery** (`ddex`, built_disabled_until_configured) — Media release pipeline, not a public room.
+- **Equity Uprise Rally/event media archive** (`rally-media`, built) — Culture Archive / Rally Gallery.
+- **Press release, executive summary and social-prep derivatives** (`communication-derivatives`, built) — Edit / Review Suite; lineage remains tied to Floor 5 source artifacts.
+- **Creator licensing / commerce** (`creator-licensing-commerce`, built_shared_platform) — Creator Studio / Media + Culture workflow. Rights-cleared releases may expose licensing offers and authenticated checkout through the shared McCluster Music stack; this does not resurrect the retired marketplace.
+
+### Secondary / cross-floor capabilities
+- **Docket 516/516R evidence room and public-record archive** (`evidence-room`, built) — Evidence + Proof Archive; media context may also appear on Floor 4.
+- **Canonical artifact graph and derivative lineage** (`artifacts`, built) — Publication/Proof systems; communication derivatives route to Floor 4.
+
+### Boundary rule
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, financial/accounting details, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
+
+This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.

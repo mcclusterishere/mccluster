@@ -4,6 +4,31 @@
 >
 > Any agent, model, designer, renderer, developer, image generator, 3D tool, CAD workflow, or lore/worldbuilding task that touches Equity Uprise architecture, rooms, floors, geometry, 360 environments, building imagery, spatial navigation, physical-world continuity, or architectural narrative **must read and obey this file and the references below before producing work**.
 
+## Core V2 authority
+
+> **BRANCH-SCOPED AUTHORITY — `reconcile/equity-uprise-core-v2-20260921`**
+>
+> On this reconciliation branch, the old floor-local core coordinates are superseded by:
+> 1. `BUILDING-CORE-V2-SPEC.md`
+> 2. `production/building-core-v2.json`
+> 3. `production/building-v2-validation.json`
+> 4. `production/equity-uprise-capability-map-v2.json`
+> 5. `production/core-v2-floor-programs.json`
+>
+> These shared files control vertical systems before any floor-specific spec, plan basis, DXF/SVG, production manifest, GLB or browser scene.
+>
+> `main` remains unchanged until this reconciled Core V2 snapshot is validated and explicitly merged.
+
+## Core V1 archive rule
+
+The superseded Core V1 DXF/SVG/PNG plan sets have been removed from the active per-floor reference folders and preserved only under:
+
+`docs/design/equity-uprise-building/references/archive/core-v1/`
+
+Those archived files are **historical / non-canonical / traceability only**.
+
+No agent, renderer, generator, CAD workflow, 3D scene, hotspot workflow or plan revision may use an archived Core V1 asset as current geometry. Active plan references are the versioned `core-v2` files in each `references/floor-0X/` folder.
+
 ## Trigger conditions
 
 This authority applies whenever a task involves any of the following in connection with Equity Uprise:
@@ -23,53 +48,67 @@ If the task is only about Equity Uprise policy/data/application behavior and has
 
 ## Mandatory authority order
 
-Read in this order:
+Read program and geometry authority in this order:
 
 1. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
-   - Defines what Equity Uprise actually contains.
-   - Prevents invented generic rooms that do not correspond to the program.
+   - Current repo-to-building reconciliation.
+   - Defines what Equity Uprise actually contains and the status/boundaries of those capabilities.
 
-2. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
-   - Defines the locked six occupied-floor program plus Level 7 roof, vertical narrative, continuity rules and one-level-at-a-time design process.
+2. `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
+   - Machine-readable capability inventory.
+   - Assigns every audited capability a primary floor, optional secondary floors, implementation status, visibility boundary and physical expression.
 
-2A. Level 7 roof / ecosystem authority:
-   - `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
-   - `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
-   - `docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
-   - `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md` is retained as origin/context only.
-   - Mandatory before Floor 6 roof-interface, roof, exterior-master, rooftop 3D, cross-site mobility, destination-building, helicopter/VTOL transition, or ecosystem-navigation work.
+3. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
+   - Defines the six enclosed-floor + Level 7 compression, vertical narrative and architectural interaction model.
 
-3. The floor-specific written specification.
-   - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
+4. Core V2 shared geometry:
+   - `docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md`
+   - `docs/design/equity-uprise-building/production/building-core-v2.json`
+   - `docs/design/equity-uprise-building/production/building-v2-validation.json`
+
+5. Shared floor-program authority:
+   - `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
+   - Floor program may name/route capabilities but may not redefine shared vertical geometry.
+   - Floor 1 additional activity/simulation authority:
+     - `docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md`
+     - `docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json`
+     - `docs/design/equity-uprise-building/FLOOR-01-SITE-EGRESS-SIMULATION.md`
+     - `docs/design/equity-uprise-building/production/floor-01/floor-01-site-egress.json`
+   - B1 support-level authority:
+     - `docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+     - `docs/design/equity-uprise-building/production/basement-b1-program.json`
+   - Underground-network authority:
+     - `docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
+     - `docs/design/equity-uprise-building/production/underground-tunnel-network.json`
+   - Code/safety research profile:
+     - `docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md`
+   - These files define institutional activity, simulation systems, site/egress behavior, the non-developmental technical basement and training scenarios. They do not override the shared Core V2 vertical chassis.
+
+6. Floor-specific long-form specification:
+   - Floor 1 (semantic identity: **Arrival / Orientation / Intake**; legacy-compatible filename): `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
    - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
    - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
    - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
    - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
    - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
+   - Floor 6 Halo instrument: `docs/design/equity-uprise-building/HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`
    - Level 7: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
-   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
 
-4. The floor-specific schematic-plan basis.
-   - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
-   - Level 7: `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
-   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
+7. Floor-specific schematic-plan basis.
 
-5. The canonical floor-plan assets.
-   - Floor 1: `docs/design/equity-uprise-building/references/floor-01/`
-   - Floor 2: `docs/design/equity-uprise-building/references/floor-02/`
-   - Floor 3: `docs/design/equity-uprise-building/references/floor-03/`
-   - Floor 4: `docs/design/equity-uprise-building/references/floor-04/`
-   - Floor 5: `docs/design/equity-uprise-building/references/floor-05/`
-   - Floor 6: `docs/design/equity-uprise-building/references/floor-06/`
-   - Level 7: `docs/design/equity-uprise-building/references/floor-07/`
-   - Floor 6: `docs/design/equity-uprise-building/references/floor-06/`
+8. Active Core V2 DXF → SVG → PNG plan references in `references/floor-0X/`.
 
-For geometry, prefer DXF → SVG → raster preview → later renders.
+9. Floor deterministic production package.
+
+10. Generated GLB / browser viewer / render / 360 output.
+
+### Level 7 additional authority
+
+Before Floor 6 roof-interface, rooftop, exterior-master, cross-site mobility, destination-building or ecosystem-navigation work also read:
+- `FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
+- `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md` as origin/context only.
+
+Program authority and geometry authority are complementary: the capability map controls **what the building represents**; Core V2 controls **where the shared building systems physically are**.
 
 ## Deterministic production packages
 
@@ -85,19 +124,56 @@ Floor 2 production package:
 - `docs/design/equity-uprise-building/production/floor-02/floor-02-scene-manifest.json`
 - companion material, lighting, camera, hotspot, routing and state JSON files in the same folder.
 
-Authority order remains:
-**written spec → schematic basis → DXF → SVG → deterministic production package → generated 3D/render/web output**.
+
+Floor 3 Core V2 production package:
+- `docs/design/equity-uprise-building/production/floor-03/README.md`
+- `docs/design/equity-uprise-building/production/floor-03/floor-03-scene-manifest.json`
+
+Floor 4 Core V2 production package:
+- `docs/design/equity-uprise-building/production/floor-04/README.md`
+- `docs/design/equity-uprise-building/production/floor-04/floor-04-scene-manifest.json`
+
+Floor 5 Core V2 production package:
+- `docs/design/equity-uprise-building/production/floor-05/README.md`
+- `docs/design/equity-uprise-building/production/floor-05/floor-05-scene-manifest.json`
+
+Floor 6 Core V2 production package:
+- `docs/design/equity-uprise-building/production/floor-06/README.md`
+- `docs/design/equity-uprise-building/production/floor-06/floor-06-scene-manifest.json`
+
+Floor 7 Core V2 production package:
+- `docs/design/equity-uprise-building/production/floor-07/README.md`
+- `docs/design/equity-uprise-building/production/floor-07/floor-07-scene-manifest.json`
+
+Core V2 authority order is:
+**BUILDING-CORE-V2-SPEC.md → building-core-v2.json → floor written spec → floor schematic basis → DXF → SVG → floor deterministic production package → generated 3D/render/web output**.
 
 The production package operationalizes the architecture; it may never override canonical dimensions, core placement, circulation, access, or room program.
+
+## Repo-to-building coverage gate
+
+Before declaring the building program complete, run both repo/program gates:
+
+- `docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py`
+- `docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py`
+- when plan references are regenerated: `docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py`
+
+The exhaustive source-classification ledger is:
+
+`docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json`
+
+The repo-source gate must prove that every discovered Equity Uprise-specific product/support source is either mapped to one or more canonical capabilities or explicitly classified as support-only. The program gate must verify that every capability in the canonical map is represented on its primary and declared secondary floors, that floor route keys resolve, that private/high-risk routes are not marked public, that the Floor 6 Halo Globe resolves to a sanitized read-only projection with owner-only operational handoff, and that passenger-elevator semantics do not imply Level 7 service. The plan-semantic gate must prove that active Core V2 DXF/SVG/PNG outputs carry the canonical program labels and do not retain stale semantic labels.
 
 ## Which source controls what
 
 ### Program / lore / room identity
 
 Authority:
-1. repo audit;
-2. building inventory;
-3. floor written spec.
+1. repo reconciliation audit;
+2. capability map;
+3. building inventory;
+4. shared floor-program JSON;
+5. floor written spec.
 
 Do not invent a room, department, floor function or public-facing feature merely because it looks cinematic.
 
@@ -125,21 +201,28 @@ Use the written floor spec and building inventory. Visual interpretation may add
 - camera datum;
 - floor-to-floor continuity.
 
-## Floor 1 locked geometry
+## B1 + Floor 1 coordinated geometry
 
-Floor 1 currently establishes the building datum:
+The Core V2 stack now includes a non-developmental **B1 Underground Operations / Technical Service Basement** at FFE **-13'-6"**. B1 is support/training infrastructure and does not consume an E-Q-U-I-T-Y letter.
 
-- floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
+Floor 1 remains the principal building datum and the modeled **level of exit discharge**:
+
+- B1 and Floor 1 coordination plate: **72'-0" × 72'-0"**;
+- B1 FFE: **-13'-6"**;
+- Floor 1 FFE: **0'-0"**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - 360 camera datum: approximately **(36, 28), 5'-4" AFF**;
-- 0° north: reception / feature wall;
+- protected stairs and both elevator shafts continue to B1;
+- Floor 1 stair landings require discharge-direction control to prevent accidental descent to B1 during evacuation;
+- 0° north: Reception / Concierge / Security + Journey Wall;
 - +90° east: elevator/core;
 - 180° south: entrance/vestibule on Floor 1 only;
-- -90° west: lounge/intake.
+- -90° west: Orientation Lounge / intake.
 
 Floors 2–6 and Level 7 roof access must stack on this shell/core logic unless the owner explicitly approves a formal building-wide revision.
 
@@ -150,15 +233,16 @@ Floor 2 preserves the Floor 1 building datum:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - forum table: approximately **12 ft diameter**, centered near **(36,39)**;
 - member check-in: adjacent to elevator, approximately **X 49–51 / Y 24–29**;
 - conversation/lounge zone: **X 2–18 / Y 14–30**;
 - feature wall: approximately **X 24–48 / Y 50–54**;
 - 360 camera datum: approximately **(36,28), 5'-4" AFF**;
-- 0° north: forum table / feature wall;
+- 0° north: forum table / Topics / Perspectives / Conversations Wall;
 - +90° east: elevator + member check-in;
 - 180° south: sealed upper-floor glazing — **no exterior door**;
 - -90° west: conversation/listening lounge.
@@ -166,9 +250,9 @@ Floor 2 preserves the Floor 1 building datum:
 Floor 2 has **no exterior public entrance, balcony, or terrace**.
 
 Canonical Floor 2 assets:
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png`
 
 ## Floor 3 locked geometry
 
@@ -177,26 +261,27 @@ Floor 3 preserves the same building datum:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - Opportunity Exchange table: **16' × 4'**, centered near **(36,41)**;
 - People + Network lounge: **X 2–18 / Y 18–34**;
-- Interview Room A: **X 2–14 / Y 4–16**;
-- Interview Room B: **X 16–28 / Y 4–16**;
-- member/interview check-in: approximately **X 49–51 / Y 24–29**;
+- Interview / Stakeholder Meeting A: **X 2–14 / Y 4–16**;
+- Interview / Stakeholder Meeting B: **X 16–28 / Y 4–16**;
+- member/meeting check-in: approximately **X 49–51 / Y 24–29**;
 - 360 camera datum: approximately **(36,28), 5'-4" AFF**;
 - 0° north: Opportunity Exchange / Fellowship + Network wall;
 - +90° east: elevator + member/interview check-in;
-- 180° south: interview rooms + sealed upper-floor glazing;
+- 180° south: interview / stakeholder meeting rooms + sealed upper-floor glazing;
 - -90° west: People + Network lounge.
 
 Floor 3 has **no exterior public entrance, balcony, or terrace**.
 
 Canonical Floor 3 assets:
-- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png`
 
 ## Floor 4 locked geometry
 
@@ -205,27 +290,28 @@ Floor 4 preserves the same building datum:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - Media / Listening planning zone: approximately **X 24–48 / Y 28–50**;
 - Culture Archive / Rally Gallery: approximately **X 2–18 / Y 18–38**;
 - Creator Recording Room: **X 2–15 / Y 4–16**;
 - Edit / Review Suite: **X 17–31 / Y 4–16**;
-- media-control terminal: approximately **X 49–51 / Y 24–29**;
-- media/identity wall: approximately **X 22–50 / Y 50–54**;
+- Media / Release Control: approximately **X 49–51 / Y 24–29**;
+- Media / Release Wall: approximately **X 22–50 / Y 50–54**;
 - 360 camera datum: approximately **(36,28), 5'-4" AFF**;
-- 0° north: Media + Culture wall / listening-screening room;
-- +90° east: elevator + media control;
+- 0° north: Media / Release Wall + listening-screening room;
+- +90° east: elevator + Media / Release Control;
 - 180° south: recording/edit rooms + sealed upper-floor glazing;
 - -90° west: Culture Archive / Rally Gallery.
 
 Floor 4 has **no exterior public entrance, balcony, or terrace**.
 
 Canonical Floor 4 assets:
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png`
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
@@ -236,27 +322,28 @@ Floor 5 preserves the same building datum:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - Policy Lab table: **16' × 5'**, centered near **(36,41)**;
 - Evidence + Proof Archive: **X 2–18 / Y 18–40**;
 - Source Review Room: **X 2–15 / Y 4–16**;
 - Publication / Submission Review Room: **X 17–32 / Y 4–16**;
-- research-navigation terminal: approximately **X 49–51 / Y 24–29**;
-- Policy + Proof wall: approximately **X 22–50 / Y 50–54**;
+- Research / Publication Navigator: approximately **X 49–51 / Y 24–29**;
+- Policy / Publication / Impact Wall: approximately **X 22–50 / Y 50–54**;
 - 360 camera datum: approximately **(36,28), 5'-4" AFF**;
-- 0° north: Policy Lab / Policy + Proof wall;
-- +90° east: elevator + research navigation;
+- 0° north: Policy Lab / Policy / Publication / Impact Wall;
+- +90° east: elevator + Research / Publication Navigator;
 - 180° south: review rooms + sealed upper-floor glazing;
 - -90° west: Evidence + Proof Archive.
 
 Floor 5 has **no exterior public entrance, balcony, or terrace**.
 
 Canonical Floor 5 assets:
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png`
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
@@ -267,17 +354,19 @@ Floor 6 preserves the building datum and the Level 7 roof interface:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**, with upward continuity reserved;
-- Stair B: **X 0–12 / Y 54–72**, with vertical continuity reserved;
+- Stair B: **X 8–18 / Y 54–72**, with vertical continuity reserved;
 - MEP / roof-service reservation: **X 50–60 / Y 66–72**;
 - Penthouse Command table: **16' × 5'**, centered near **(36,41)**, six seats maximum;
+- Halo Globe / Spatial Intelligence: suspended sphere centered approximately **(24.5,34.5)**, radius **2.25 ft**, center **8.25 ft AFF**;
 - Institutional Salon / Join Lounge: **X 2–18 / Y 18–38**;
 - Strategy Review Room: **X 2–15 / Y 4–16**;
 - Partner / Executive Briefing Room: **X 17–32 / Y 4–16**;
 - Roof Access / Mobility Transition terminal: **X 49–51 / Y 24–29**;
-- Penthouse Command wall: **X 22–50 / Y 50–54**, with **NOW / PAST WORK / JOIN**;
+- Institutional Command Wall: **X 22–50 / Y 50–54**, with **NOW / PAST WORK / JOIN**;
 - 360 camera datum: approximately **(36,28), 5'-4" AFF**;
-- 0° north: Penthouse Command / NOW-PAST WORK-JOIN;
+- 0° north: Institutional Command Wall / NOW-PAST WORK-JOIN;
 - +90° east: elevator + Level 7 roof transition;
 - 180° south: Strategy/Partner rooms + sealed glazing;
 - -90° west: Institutional Salon.
@@ -285,11 +374,15 @@ Floor 6 preserves the building datum and the Level 7 roof interface:
 Floor 6 has **no exterior public entrance, balcony, or terrace**. It is the last enclosed level and must preserve vertical/core/service continuity to **Level 7 — Roof / Mobility Portal**.
 
 Canonical Floor 6 assets:
-- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png`
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
+
+### Floor 6 Halo Globe rule
+
+Floor 6 may contain exactly one canonical **Halo Globe / Spatial Intelligence** instrument under `HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`. It is a permissioned viewport into the shared McCluster Seek First / Hitman's Halo plane, not a new backend, room, floor, or tactical-surveillance authority. Public and non-owner modes are read-only. Owner/admin interaction must hand off to the protected spatial console and preserve source entitlements, provider terms, approvals, provenance and audit boundaries.
 
 ## Level 7 locked geometry and ecosystem semantics
 
@@ -300,19 +393,19 @@ Locked schematic conditions:
 - grid: **18' × 18'**;
 - elevator shaft: **X 54–62 / Y 34–44**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/roof services: approximately **X 50–60 / Y 66–72**;
 - conceptual roof-access/core envelope: **X 50–64 / Y 30–48**;
 - ecosystem routing beacon: **X 46–50 / Y 24–30**;
 - candidate mobility-zone reservation: **X 10–48 / Y 8–46**;
 - city-overlook band: **X 12–46 / Y 0–6**;
-- rooftop service/equipment band: **X 28–60 / Y 60–72**;
+- rooftop service/equipment band: approximately **X 34–60 / Y 60–72**, excluding shared core/MEP zones;
 - roof camera datum: approximately **(36,28), 5'-4" above roof walking surface**.
 
 Canonical Level 7 assets:
-- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png`
 
 The roof is **portal infrastructure**. Ecosystem destinations are dynamic routing data. Do not bake the website ecosystem into the roof geometry.
 
@@ -320,8 +413,9 @@ The candidate mobility zone is **not** an approved helipad/vertiport. Final oper
 
 ## Locked building program
 
-The building contains **six enclosed occupied floors plus one navigable roof level**:
+The developmental building contains **six enclosed occupied floors plus one navigable roof level**, supported by one restricted non-developmental B1 infrastructure level:
 
+- B1 — **Underground Operations / Technical Service** (restricted support level; no E-Q-U-I-T-Y letter)
 - Floor 1 — Lobby + Intake
 - Floor 2 — Public Forum
 - Floor 3 — Fellowship + Network
@@ -332,7 +426,19 @@ The building contains **six enclosed occupied floors plus one navigable roof lev
 
 Level 7 is the roof, not a normal enclosed floor. It is the canonical cross-site departure/arrival layer and may contain a **candidate rooftop mobility pad / helipad zone** subject to later real-world feasibility.
 
-Do not add further levels or rename/reassign them without explicit owner approval.
+Do not add further developmental levels or rename/reassign them without explicit owner approval. B1 is an approved restricted support level. Future tunnel-connected buildings are separate canonical facilities, not additional Equity Uprise developmental floors.
+
+## Core V2 shared vertical systems
+
+- passenger elevator: **X 54–62 / Y 34–44**;
+- west service core: **X 0–18 / Y 54–72**;
+- service/freight elevator: **X 0–8 / Y 60–72**;
+- revised Stair B: **X 8–18 / Y 54–72**;
+- Stair A: **X 60–72 / Y 54–72**;
+- east MEP/riser: approximately **X 50–60 / Y 66–72**;
+- finished-floor elevations: **B1 -13.5, Floor 1 0, Floor 2 13.5, Floor 3 27, Floor 4 40.5, Floor 5 54, Floor 6 67.5, Level 7 81 ft**;
+- per-floor stair placeholders may not redefine or shorten shared vertical geometry;
+- the combined stacked building model is the required proof of vertical continuity.
 
 ## Building-wide continuity rules
 
@@ -372,10 +478,10 @@ Allowed:
 
 Not allowed without owner approval:
 - inventing new departments;
-- inventing extra floors/levels beyond the six occupied floors + Level 7 roof;
+- inventing extra developmental floors/levels beyond the six EQUITY floors + Level 7 roof; B1 is the explicitly approved non-developmental support level;
 - moving functions to different floors;
 - inventing a second public entrance;
-- inventing secret rooms as canonical;
+- inventing additional restricted underground rooms, tunnel branches, or destination buildings without canonical authority;
 - altering core geometry for narrative convenience.
 
 ## Relationship to Uprise World

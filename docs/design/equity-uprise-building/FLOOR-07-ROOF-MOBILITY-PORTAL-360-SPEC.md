@@ -8,6 +8,11 @@
 > This file is the source of truth for Level 7 roof scenes, rooftop 360 work, exterior-master coordination, cross-site departure/arrival logic, and future 3D reconstruction.  
 > **Not for construction.**
 
+
+> **Core V2 migration authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Combined-model finished-floor elevation: **+81'-0"**.
+> Shared vertical systems override any stale Core V1 coordinate language on this branch.
+
 ## 1. Owner intent
 
 Level 7 is the rooftop layer that connects the Equity Uprise website to the wider website ecosystem.
@@ -67,52 +72,44 @@ It is **not**:
 
 ## 3. Locked building datum
 
-Level 7 inherits the building geometry established below.
+Level 7 inherits the Core V2 building stack.
 
-- roof footprint datum: **72'-0" × 72'-0"**
-- coordination grid: **18' × 18'**
-- north is up
-- six occupied floors remain below
-- Floor 6 is the final enclosed occupied level
+- roof footprint: **72' × 72'**
+- roof walking datum: **+81'-0"**
+- structural grid: **18' × 18'**
+- passenger-elevator shaft: **X54–62 / Y34–44**
+- West Service Core: **X0–18 / Y54–72**
+- service/freight elevator shaft reservation: **X0–8 / Y60–72**
+- revised Stair B: **X8–18 / Y54–72**
+- Stair A: **X60–72 / Y54–72**
+- MEP/roof services: approximately **X50–60 / Y66–72**
 
-Vertical systems inherited from Floors 1–6:
-- elevator shaft: **X 54–62 / Y 34–44**
-- Stair A stack: **X 60–72 / Y 54–72**
-- Stair B stack: **X 0–12 / Y 54–72**
-- MEP/service stack: approximately **X 50–60 / Y 66–72**
-
-These stacks remain geometric authority.
-
----
+Both stairs physically reach the roof datum in the combined deterministic model. Direct passenger-elevator service to the roof remains unassumed. Freight/service roof stopping remains a future technical-resolution item.
 
 ## 4. Roof access / arrival
 
-The roof must contain a plausible protected arrival from the building core.
+Level 7 is reached through the shared Core V2 vertical systems, not through an invented exterior entrance.
 
 ### East roof-access/core zone
-Reserve approximately:
-- **X 50–64 / Y 30–48**
-
-This zone may contain:
-- elevator overrun / direct roof landing if professionally feasible;
-- protected roof-access enclosure;
-- vestibule or weather-protected arrival;
-- roof access control;
-- Level 7 wayfinding;
-- emergency/operational signage;
-- interface to the ecosystem routing system.
-
-The exact final elevator machine-room/overrun and roof-access construction are not determined by this schematic.
+The east roof-access condition remains coordinated around Stair A and the passenger-elevator overrun/service envelope.
 
 ### Stair A
-The Stair A stack at **X 60–72 / Y 54–72** continues to the roof as required by final professional design.
+- inherited enclosure **X60–72 / Y54–72**
+- protected stair physically reaches +81'-0"
+
+### West Service Core
+- overall reservation **X0–18 / Y54–72**
 
 ### Stair B
-The Stair B stack at **X 0–12 / Y 54–72** remains vertically continuous and may provide roof access/egress as required by final professional design.
+- revised enclosure **X8–18 / Y54–72**
+- protected stair physically reaches +81'-0"
 
-Do not remove either stair stack for rooftop aesthetics.
+### Service / freight elevator
+- shaft reservation **X0–8 / Y60–72**
+- roof-service continuity is preserved
+- actual Level 7 service stop/headhouse design remains unresolved
 
----
+The roof arrival experience must preserve safe separation between public roof circulation, protected egress and service movement.
 
 ## 5. Ecosystem Beacon / Routing Interface
 
@@ -202,28 +199,17 @@ Do not turn the overlook into an entertainment deck.
 
 ## 8. North roof-service band
 
-The north portion of the roof remains primarily service/core territory.
+The north roof-service zone is re-coordinated around Core V2.
 
 ### Rooftop service / screened equipment zone
-Reserve approximately:
-- **X 28–60 / Y 60–72**
+Primary equipment/service reservation is approximately:
+- **X34–60 / Y60–72**, excluding Stair A and the east MEP reservation.
 
-Coordinate:
-- MEP terminations;
-- rooftop units;
-- exhaust/ventilation;
-- communications equipment;
-- drainage;
-- roof access/service paths;
-- screening.
+The west side is reserved for the West Service Core:
+- freight/service shaft **X0–8 / Y60–72**
+- Stair B **X8–18 / Y54–72**
 
-This zone may overlap the inherited MEP reservation but may not block Stair A or Stair B.
-
-Equipment should be visually screened from the principal public roof scene where practical.
-
-Do not hide required equipment by pretending it does not exist.
-
----
+The north service condition may contain screened mechanical equipment, MEP terminations, weather-protected headhouse/service elements and maintenance access, but it may not obstruct either protected stair, either stair opening, the passenger-elevator service/overrun envelope, the freight shaft or MEP continuity.
 
 ## 9. Open circulation
 
@@ -508,3 +494,35 @@ The default conceptual return is Level 7.
 - [ ] other websites are not permanently mapped into roof geometry
 - [ ] exterior-master continuity is preserved
 - [ ] Level 7 remains the canonical ecosystem departure/arrival plane
+
+
+### Core V2 migration QC
+- [ ] finished-floor elevation matches `building-core-v2.json`
+- [ ] service/freight elevator shaft X0–8 / Y60–72 is preserved
+- [ ] revised Stair B X8–18 / Y54–72 is preserved
+- [ ] Stair A X60–72 / Y54–72 is preserved
+- [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
+- [ ] shared slab openings remain unobstructed
+- [ ] no floor-local decorative stair is treated as vertical-continuity authority
+
+## Repo capability binding — 2026-09-21 reconciliation audit
+
+This floor is bound to the repo-wide program map:
+`production/equity-uprise-capability-map-v2.json`.
+
+The current capability authority contains **56 canonical building capabilities**; repo-source counts are governed by the generated source-coverage report. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+
+### Primary capabilities
+- **Cross-site ecosystem routing/departure/arrival layer** (`ecosystem-routing`, built_as_building_contract) — Ecosystem Routing Interface.
+- **Candidate rooftop mobility reservation** (`roof-mobility`, schematic_future_feasibility) — Candidate Mobility Zone only; no operational aviation claim.
+- **Uprise World experimental visual system** (`uprise-world`, experimental_separate) — May be a Level 7 destination route later; must not dictate building geometry or branding.
+
+### Secondary / cross-floor capabilities
+- None.
+
+### Boundary rule
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, financial/accounting details, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
+
+This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.

@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "scene_id": "equity-uprise-floor-02",
   "pbr_convention": "metallic-roughness",
   "materials": [
@@ -28,7 +28,7 @@
       "roughness": 0.42
     },
     {
-      "id": "glass_sealed_arch",
+      "id": "glass_arch",
       "base_color": "#DCE5E7",
       "metalness": 0,
       "roughness": 0.08,
@@ -48,6 +48,12 @@
       "roughness": 0.9
     },
     {
+      "id": "service_core",
+      "base_color": "#45484B",
+      "metalness": 0.35,
+      "roughness": 0.6
+    },
+    {
       "id": "screen_surface",
       "base_color": "#1E2328",
       "metalness": 0.05,
@@ -60,6 +66,19 @@
       "roughness": 0.55,
       "emissive": "#5A0F11",
       "emissive_strength": 0.35
+    },
+    {
+      "id": "halo_globe_translucent",
+      "base_color": "#18343F",
+      "metalness": 0.18,
+      "roughness": 0.28,
+      "transmission": 0.35,
+      "emissive": "#123D4A",
+      "emissive_strength": 0.22
     }
+  ],
+  "rules": [
+    "Exact Equity Uprise logo artwork must be used where specified.",
+    "Materials may not imply geometry changes."
   ]
 }

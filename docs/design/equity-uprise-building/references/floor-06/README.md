@@ -1,45 +1,63 @@
-# Floor 06 — Penthouse Command — Canonical References
+# Floor 06 — Penthouse Command — Core V2 Plan References
 
-> **MANDATORY FLOOR 6 GEOMETRY PACKAGE**
+> Branch: `architecture/equity-uprise-core-v2`
+>
+> Status: **CORE V2 BRANCH-CANONICAL SCHEMATIC GEOMETRY / NOT FOR CONSTRUCTION**
 
-Any Equity Uprise Floor 6, roof-interface, building-crown, exterior-master, 360, 3D, image-generation, animation, or spatial-lore work must read these sources before producing geometry or imagery.
+## Core V2 files
 
-## Authority order
+- `equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf`
+  - CAD exchange geometry;
+  - preferred derived geometric reference after the written Core V2 authority.
+- `equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg`
+  - browser/vector inspection reference.
+- `equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png`
+  - raster preview only; never overrides DXF/SVG/written geometry.
 
-1. `../../FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
-2. `../../FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
-3. `../../FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md` for all roof-interface constraints
-4. `equity-uprise-floor-06-penthouse-command-schematic-v1.dxf`
-5. `equity-uprise-floor-06-penthouse-command-schematic-v1.svg`
-6. `equity-uprise-floor-06-penthouse-command-schematic-v1.png`
-7. later 3D / render / 360 outputs
+## Shared authority
 
-For geometry, DXF and SVG outrank the raster preview and all generative imagery.
+Read before using these files:
 
-## Locked Floor 6 facts
+1. `../../BUILDING-CORE-V2-SPEC.md`
+2. `../../production/building-core-v2.json`
+3. the floor-specific written 360/spec document
+4. the floor-specific schematic-plan basis
+5. Core V2 DXF
+6. Core V2 SVG
+7. Core V2 PNG
 
-- floor plate: **72' × 72' = 5,184 GSF**
-- grid: **18' × 18'**
-- elevator: **X 54–62 / Y 34–44**
-- Stair A: **X 60–72 / Y 54–72**
-- Stair B: **X 0–12 / Y 54–72**
-- MEP / roof services: **X 50–60 / Y 66–72**
-- command table: **16' × 5'**, centered near **(36,41)**, six seats maximum
-- Institutional Salon: **X 2–18 / Y 18–38**
-- Strategy Review: **X 2–15 / Y 4–16**
-- Partner / Executive Briefing: **X 17–32 / Y 4–16**
-- Level 7 transition terminal: **X 49–51 / Y 24–29**
-- command wall: **X 22–50 / Y 50–54**, with **NOW / PAST WORK / JOIN**
-- 360 camera: approximately **(36,28), 5'-4" AFF**
+Shared vertical systems on this branch:
+- passenger elevator: X54–62 / Y34–44
+- service/freight elevator: X0–8 / Y60–72
+- revised Stair B: X8–18 / Y54–72
+- Stair A: X60–72 / Y54–72
+- MEP/riser: approximately X50–60 / Y66–72
 
-## Level 7 continuity
+Both stairs must connect the full 13'-6" floor-to-floor datum in the combined building model.
 
-Floor 6 must preserve:
-- Stair A/B upward continuity;
-- elevator overrun / roof-service possibility;
-- MEP / roof-service continuation;
-- a clear internal handoff to Level 7.
+## Legacy Core V1 archive
 
-Floor 6 does **not** contain the helipad, helicopter, terrace, or rooftop environment. Level 7 remains a separate roof design package.
+The former Core V1 plan set has been removed from this active reference folder.
 
-**NOT FOR CONSTRUCTION.**
+Historical copies now live at:
+
+- `../archive/core-v1/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.dxf`
+- `../archive/core-v1/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.svg`
+- `../archive/core-v1/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.png`
+
+Those files are **legacy / non-canonical / traceability only**. Do not use them for new Core V2 work.
+
+## Regeneration
+
+The Core V2 set is generated from:
+
+- `../../production/building-core-v2.json`
+- `../../production/core-v2-floor-programs.json`
+- `../../production/generate_core_v2_plans.py`
+
+The generation workflow is:
+`.github/workflows/equity-uprise-core-v2-plans.yml`
+
+## Limitations
+
+These are schematic coordination drawings only. Final architecture, structure, MEP, fire/life-safety, accessibility, elevator and code design require licensed professional review.

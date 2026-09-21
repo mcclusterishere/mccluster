@@ -6,6 +6,11 @@
 > This file is the source of truth for Floor 3 floor-plan work, 360 panorama generation, hotspot placement, 3D reconstruction, and implementation.  
 > Do not generate a Floor 3 environment that conflicts with this document.
 
+
+> **Core V2 migration authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> Combined-model finished-floor elevation: **+27'-0"**.
+> Shared vertical systems override any stale Core V1 coordinate language on this branch.
+
 ## 1. Repo-derived purpose
 
 Floor 3 spatializes the existing Equity Uprise fellowship, opportunity-matching, profile/network, and interview workflows.
@@ -72,7 +77,7 @@ Existing functions relevant here:
 Existing workflow includes real fellowship interview requests and confirmed meetings.
 
 Physical implication:
-- Floor 3 needs modest, private interview rooms;
+- Floor 3 needs modest, private interview / stakeholder meeting rooms;
 - it does not need a large conference suite.
 
 ### Boundary with other floors
@@ -112,25 +117,26 @@ It is **not**:
 
 ## 3. Locked building shell
 
-Floor 3 inherits the exact building datum from Floors 1 and 2.
+This level inherits the Core V2 building datum exactly.
 
 - Exterior footprint: **72'-0" × 72'-0"**
 - Gross conceptual area: **5,184 sq ft**
 - Structural coordination grid: **18' × 18'**
-- Floor-to-floor target: **13'-6"**
+- Floor-to-floor: **13'-6"**
+- Finished-floor elevation in combined model: **+27'-0"**
 - North is up.
 
-The following vertical systems are fixed:
+Shared vertical systems:
+- passenger elevator: **X54–62 / Y34–44**
+- West Service Core: **X0–18 / Y54–72**
+- service/freight elevator shaft: **X0–8 / Y60–72**
+- revised Stair B: **X8–18 / Y54–72**
+- Stair A: **X60–72 / Y54–72**
+- MEP/riser reservation: approximately **X50–60 / Y66–72**
 
-- Elevator hoistway: **X 54–62 / Y 34–44**
-- Stair A: **X 60–72 / Y 54–72**
-- Stair B: **X 0–12 / Y 54–72**
-- MEP/riser reservation: approximately **X 50–60 / Y 66–72**
-- Canonical 360 camera datum: approximately **(36, 28)**
+Both stairs must physically rise the full **13'-6"** between finished floors in combined deterministic geometry. Floor slabs must preserve the shared elevator/stair openings from `building-core-v2.json`.
 
-No Floor 3 program may move these systems.
-
----
+The service/freight elevator is a service system and is **not** counted as a substitute for a required exit.
 
 ## 4. Exterior-access rule
 
@@ -160,7 +166,7 @@ The **Opportunity Exchange**: one shared opportunity table with the **FELLOWSHIP
 The **fixed elevator/core** with one slim member/interview check-in terminal adjacent to the elevator lobby.
 
 ### 180° / south-behind
-Two modest, glazed fellowship interview rooms along the southwest/south-central portion of the floor, with sealed upper-floor glazing continuing along the south perimeter.
+Two modest, glazed fellowship interview / stakeholder meeting rooms along the southwest/south-central portion of the floor, with sealed upper-floor glazing continuing along the south perimeter.
 
 There is **no exterior door**.
 
@@ -191,7 +197,7 @@ Use one rectangular shared table:
 
 This is not a giant interactive command table.
 
-### Identity / opportunity wall
+### Opportunity / Network Wall
 Approximate wall band:
 - **X 22–50 / Y 50–54**
 
@@ -244,16 +250,16 @@ Never show:
 
 ---
 
-## 8. Fellowship interview rooms
+## 8. Interview / stakeholder meeting rooms
 
-Floor 3 includes **two** small interview rooms because the repo has an actual interview scheduling workflow.
+Floor 3 includes **two** small interview / stakeholder meeting rooms because the repo has an actual interview scheduling workflow.
 
-### Interview Room A
+### Interview / Stakeholder Meeting A
 Approximate coordinates:
 - **X 2–14 / Y 4–16**
 - approximate inside size: **12' × 12'**
 
-### Interview Room B
+### Interview / Stakeholder Meeting B
 Approximate coordinates:
 - **X 16–28 / Y 4–16**
 - approximate inside size: **12' × 12'**
@@ -278,7 +284,7 @@ They are not private offices assigned to specific people.
 
 ---
 
-## 9. Member / interview check-in
+## 9. Member / Meeting Check-In
 
 Use one slim terminal beside the elevator lobby:
 - approximate footprint **X 49–51 / Y 24–29**.
@@ -300,7 +306,7 @@ The south facade remains an upper-floor facade.
 Use:
 - sealed glazing/windows;
 - column rhythm aligned with the building grid;
-- the two interview rooms positioned inside the glazing line;
+- the two interview / stakeholder meeting rooms positioned inside the glazing line;
 - no exterior door;
 - no terrace/balcony access.
 
@@ -310,58 +316,70 @@ Do not treat the south facade as a lobby entrance.
 
 ## 11. North support band
 
-Stack services vertically for a buildable building.
+The north support band is replanned around the Core V2 West Service Core.
 
-### Corridor
-- **Y 54–60**
-- approximately **6 ft clear** target
+### West service approach
+- **X0–18 / Y54–60**
+- conceptual approach to the freight/service elevator and Stair B
+- no public furniture or floor-specific program may block it
+
+### Public/support corridor
+- **X18–60 / Y54–60**
+- target approximately **6 ft clear**
 
 ### Accessible restroom A
-- **X 12–20 / Y 60–70**
+- **X18–26 / Y60–70**
 - conceptual 8' × 10'
 
 ### Accessible restroom B
-- **X 20–28 / Y 60–70**
+- **X26–34 / Y60–70**
 - conceptual 8' × 10'
 
-### Fellowship support / records
-- **X 28–40 / Y 60–72**
-- conceptual 12' × 12'
-- secure, back-of-house
-- supports interview/application materials, supplies and secure record handling
-- not a public display room
+### Fellowship / Relationship Records
+- **X34–42 / Y60–72**
+- conceptual 8' × 12'
 
 ### Network / IT
-- **X 40–50 / Y 60–72**
-- conceptual 10' × 12'
-- supports opportunity/people displays and floor technology
+- **X42–50 / Y60–72**
+- conceptual 8' × 12'
 
 ### Janitor
-- **X 50–54 / Y 60–66**
-- conceptual 4' × 6'
+- **X50–54 / Y60–66**
 
 ### MEP / risers
-- approximately **X 50–60 / Y 66–72**
-- vertically stacked with lower floors
+- **X50–60 / Y66–72**
+- vertically stacked Core V2 reservation
 
----
+The service/freight shaft, both stair enclosures and all shared slab openings are do-not-block geometry.
 
 ## 12. Stairs / vertical circulation
 
-### Elevator
-Same hoistway and door orientation as Floors 1–2.
+### Passenger elevator
+- shaft **X54–62 / Y34–44**
+- west-facing public door
+- primary public vertical circulation
+
+### Service / freight elevator
+- shaft **X0–8 / Y60–72**
+- south-facing service access into the north service band
+- floor program may not intrude into the shaft
+- not treated as a required exit
 
 ### Stair A
-Same enclosure:
-- **X 60–72 / Y 54–72**
+- enclosure **X60–72 / Y54–72**
+- protected vertical continuity through the building stack
+- full **13'-6"** rise per level in combined geometry
+- schematic dogleg/U-shaped stair with intermediate landing
+- shared slab opening approximately **X60.75–71.25 / Y58.25–71.25**
 
 ### Stair B
-Same enclosure:
-- **X 0–12 / Y 54–72**
+- enclosure **X8–18 / Y54–72**
+- protected remote vertical continuity through the building stack
+- full **13'-6"** rise per level in combined geometry
+- schematic dogleg/U-shaped stair with intermediate landing
+- shared slab opening approximately **X8.75–17.25 / Y58.25–71.25**
 
-Both are protected internal stairs at Floor 3. Neither is an exterior public entrance.
-
----
+The old short decorative stair placeholders are retired on the Core V2 branch. Exact code geometry remains a licensed professional-design task.
 
 ## 13. Circulation
 
@@ -374,7 +392,7 @@ Opportunity Exchange → People Lounge:
 - at least approximately **4 ft clear** at schematic level.
 
 ### Interview route
-Elevator/Opportunity Exchange → interview rooms:
+Elevator/Opportunity Exchange → interview / stakeholder meeting rooms:
 - direct;
 - unobstructed;
 - does not cut through lounge furniture.
@@ -439,7 +457,7 @@ Continue the same building family:
 - warm dark-gray mineral finish;
 - blackened/gunmetal steel;
 - restrained warm wood at shared table/wall details;
-- framed glass at interview rooms.
+- framed glass at interview / stakeholder meeting rooms.
 
 ### Red accent
 Use sparingly:
@@ -456,7 +474,7 @@ No nightclub red wash.
 ### Opportunity Exchange
 Use a simple linear or rectangular architectural pendant/ceiling element aligned with the shared table.
 
-### Interview rooms
+### Interview / stakeholder meeting rooms
 Warm, flattering, low-glare task/ambient lighting.
 
 ### Lounge
@@ -573,7 +591,7 @@ Opportunity table + FELLOWSHIP + NETWORK wall with Match / People / Applications
 Fixed elevator/core + member/interview check-in.
 
 **180° / south:**  
-Two modest glazed interview rooms with sealed upper-floor glazing beyond/around them. No exterior door.
+Two modest glazed interview / stakeholder meeting rooms with sealed upper-floor glazing beyond/around them. No exterior door.
 
 **-90° / west:**  
 People + Network lounge and public people/network surface.
@@ -605,12 +623,25 @@ Suggested Floor 3 hotspots:
 2. **People** → public profile/network directory.
 3. **Applications** → signed-in application tracker/dashboard.
 4. **Opportunity table** → directory/browse experience.
-5. **Interview Room A/B** → scheduled interview/meeting context.
+5. **Interview / Stakeholder Meeting A/B** → scheduled interview/meeting context.
 6. **Member check-in** → personal dashboard/interview arrival.
 7. **Elevator** → floor selector.
 8. **People + Network lounge** → profile/network experience.
 
 ---
+
+## 25A. Semantic interaction modes
+
+The existing Floor 3 rooms and surfaces support distinct digital modes without adding rooms or changing geometry:
+
+- **Our Fellows** — the Equity Uprise cohort / fellow record, distinct from external opportunities.
+- **External Opportunities** — the fellowship/opportunity directory.
+- **Submit / Host Programs** — authenticated host/member submission path; moderation remains private.
+- **Apply / Application Status** — fellowship application intake and private status tracking.
+- **Relationship Graph** — authorized staff view of people, organizations, initiatives and relationship stage; never a public contact database.
+- **Enterprise Development** — public program information with private fit review/agreement state.
+
+These modes primarily live on the Opportunity / Network Wall, Opportunity Exchange, Member / Meeting Check-In and meeting-room displays. They are **states of existing architecture**, not separate departments.
 
 ## 26. Content neutrality / authenticity rule
 
@@ -634,14 +665,14 @@ The physical architecture should not favor a political position or political org
 - [ ] 18' grid preserved
 - [ ] elevator at X 54–62 / Y 34–44
 - [ ] Stair A at X 60–72 / Y 54–72
-- [ ] Stair B at X 0–12 / Y 54–72
+- [ ] Stair B at X 8–18 / Y 54–72
 - [ ] MEP/riser stack preserved
 - [ ] no exterior public door
 - [ ] no balcony/terrace
 - [ ] 360 camera approximately (36,28)
 - [ ] opportunity table north/forward
 - [ ] elevator + check-in east/right
-- [ ] two interview rooms south
+- [ ] two interview / stakeholder meeting rooms south
 - [ ] people/network lounge west
 - [ ] no staffed reception desk
 - [ ] services/restrooms stack vertically
@@ -649,3 +680,49 @@ The physical architecture should not favor a political position or political org
 - [ ] no invented fellowship/program content
 - [ ] room remains modest/simple
 - [ ] generated imagery remains subordinate to written/CAD geometry
+
+
+### Core V2 migration QC
+- [ ] finished-floor elevation matches `building-core-v2.json`
+- [ ] service/freight elevator shaft X0–8 / Y60–72 is preserved
+- [ ] revised Stair B X8–18 / Y54–72 is preserved
+- [ ] Stair A X60–72 / Y54–72 is preserved
+- [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
+- [ ] shared slab openings remain unobstructed
+- [ ] no floor-local decorative stair is treated as vertical-continuity authority
+
+## Repo capability binding — 2026-09-21 reconciliation audit
+
+This floor is bound to the repo-wide program map:
+`production/equity-uprise-capability-map-v2.json`.
+
+The current capability authority contains **56 canonical capabilities**. Repo-source counts are governed by the generated source-coverage report. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+
+### Primary capabilities
+- **Public profiles / people directory** (`profiles`, built) — People + Network Lounge and Opportunity / Network Wall.
+- **Private member contact/consent record** (`private-contact`, built) — Never shown publicly; represented only as protected relationship records/back-office state.
+- **Fellowship/opportunity directory** (`fellowship-directory`, built) — Opportunity Exchange.
+- **Profile/topic-based opportunity matching** (`fellowship-matching`, built) — Opportunity table and member check-in.
+- **Host-submitted fellowship listings with moderation** (`host-listings`, built) — Opportunity Exchange submission path; moderation on Floor 6 Desk.
+- **Policy Fellowship/application workflow** (`fellowship-applications`, built) — Fellowship application path, application tracking, and interview/meeting rooms.
+- **Interview requests, availability and calendar scheduling** (`interviews-calendar`, built_guarded) — Member / Meeting Check-In and two Interview / Stakeholder Meeting rooms; no private calendar data shown publicly.
+- **Stakeholder people/organizations and initiative relationship graph** (`stakeholder-graph`, built) — People + Network layer and access-controlled relationship views; not a public contact database.
+- **Meetings, participants and commitments** (`meetings-commitments`, built) — Interview / Stakeholder Meeting rooms plus institutional follow-through in Penthouse Command.
+- **Equity Uprise fellowship cohort / fellow record** (`fellowship-cohort`, built) — People + Network Lounge / Opportunity Wall carries the actual Equity Uprise cohort and fellow record, distinct from the external fellowship directory.
+- **Equity Uprise enterprise development program lane** (`enterprise-development`, built_guarded) — Opportunity Exchange includes a business/workforce/digital-capacity program lane. Program fit, measurable connected revenue and signed agreements are reviewed in meeting/briefing spaces; the building does not hardcode prices or imply automatic approval.
+
+### Secondary / cross-floor capabilities
+- **Member dashboard / private personal desk** (`member-dashboard`, built) — Member Check-In opens private matches, applications, saves, perspectives and conversation threads.
+- **M-Verified organization/profile intake** (`verification`, built_manual) — Intake / Verification Consultation on Floor 1; verified identity becomes part of Floor 3 network context.
+- **Stakeholder and organization intake** (`stakeholder-intake`, built) — Reception/intake on Floor 1; relationship graph on Floors 3 and 6.
+- **Partner / sponsor pathways** (`partnership-sponsorship`, built_public_pathway) — Partner / Executive Briefing room and Institutional Salon.
+- **Artist/creator participation and studio workflow** (`artist-creator`, built_shared_platform) — Creator Recording Room and Edit / Review Suite.
+- **Google Workspace/Gmail relationship bridge** (`google-workspace`, built_disabled_until_configured) — Desk Operations / Systems; relevant communications project into stakeholder relationship state.
+- **Consent-aware outbound stakeholder outreach bridge** (`outreach`, built_not_armed_by_default) — Access-controlled stakeholder pipeline; never a public blast console.
+
+### Boundary rule
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, financial/accounting details, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
+
+This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.

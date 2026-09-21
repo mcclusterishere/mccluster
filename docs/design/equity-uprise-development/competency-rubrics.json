@@ -1,0 +1,1758 @@
+{
+  "schema_version": "0.1.0",
+  "status": "canonical-development-program-authority",
+  "title": "Equity Uprise Instantiated Competency Rubrics",
+  "rubric_count": 42,
+  "shared_dimensions": [
+    "knowledge_and_judgment",
+    "execution",
+    "evidence_quality",
+    "independence",
+    "professional_practice",
+    "reflection_and_transfer"
+  ],
+  "performance_scale": [
+    {
+      "score": 0,
+      "id": "not_yet_demonstrated",
+      "definition": "Evidence is absent, materially incorrect, unsafe, or insufficient."
+    },
+    {
+      "score": 1,
+      "id": "developing",
+      "definition": "Partial performance; substantial guidance or correction is required."
+    },
+    {
+      "score": 2,
+      "id": "meets_with_support",
+      "definition": "Meets standard with reasonable guidance, templates, prompts, or intervention."
+    },
+    {
+      "score": 3,
+      "id": "meets_independently",
+      "definition": "Meets standard reliably without substantive intervention."
+    },
+    {
+      "score": 4,
+      "id": "advanced_can_guide",
+      "definition": "Performs independently across complexity and can effectively guide or review others."
+    }
+  ],
+  "default_assessment_policy": {
+    "verified": {
+      "required_assistance": [
+        "independent",
+        "leading"
+      ],
+      "critical_criteria_minimum_score": 3,
+      "no_criterion_score_zero": true,
+      "majority_criteria_minimum_score": 3,
+      "authorized_reviewer_required": true,
+      "provenance_required": true,
+      "note": "Reviewer judgment is bounded by the rubric; Verified is not a simple arithmetic average."
+    },
+    "applied": {
+      "verified_quality_required": true,
+      "authentic_context_required": true
+    },
+    "mentor": {
+      "repeated_applied_evidence_required": true,
+      "multiple_meaningful_contexts_preferred": true,
+      "advanced_quality_required": true,
+      "successful_mentoring_evidence_required": true
+    }
+  },
+  "rubrics": [
+    {
+      "rubric_id": "RUBRIC-CORE-01",
+      "competency_id": "CORE-01",
+      "name": "Self-Direction",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Goal clarity",
+          "critical": false
+        },
+        {
+          "name": "Realistic planning",
+          "critical": false
+        },
+        {
+          "name": "Prioritization",
+          "critical": false
+        },
+        {
+          "name": "Commitment follow-through",
+          "critical": true
+        },
+        {
+          "name": "Progress monitoring",
+          "critical": false
+        },
+        {
+          "name": "Reflection / help-seeking",
+          "critical": false
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "development plan",
+        "milestone history",
+        "completed project",
+        "reflection",
+        "mentor observation"
+      ],
+      "verified_minimum": "Independently manages a multi-step goal over time.",
+      "applied_standard": "Manages a real project or work objective with normal accountability.",
+      "mentor_standard": "Helps another participant plan, adapt, and recover from setbacks without taking over."
+    },
+    {
+      "rubric_id": "RUBRIC-CORE-02",
+      "competency_id": "CORE-02",
+      "name": "Communication",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Audience awareness",
+          "critical": false
+        },
+        {
+          "name": "Clarity",
+          "critical": false
+        },
+        {
+          "name": "Active listening",
+          "critical": false
+        },
+        {
+          "name": "Structure",
+          "critical": false
+        },
+        {
+          "name": "Accuracy / integrity",
+          "critical": true
+        },
+        {
+          "name": "Response to questions",
+          "critical": false
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "memo",
+        "presentation",
+        "interview",
+        "briefing",
+        "recorded communication"
+      ],
+      "verified_minimum": "Independently communicates effectively in at least two formats.",
+      "applied_standard": "Communication is used successfully with a real stakeholder or audience.",
+      "mentor_standard": "Reviews and improves another person's communication effectively and accurately."
+    },
+    {
+      "rubric_id": "RUBRIC-CORE-03",
+      "competency_id": "CORE-03",
+      "name": "Collaboration",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Role clarity",
+          "critical": false
+        },
+        {
+          "name": "Contribution",
+          "critical": false
+        },
+        {
+          "name": "Coordination",
+          "critical": false
+        },
+        {
+          "name": "Conflict handling",
+          "critical": false
+        },
+        {
+          "name": "Reliability",
+          "critical": true
+        },
+        {
+          "name": "Shared decision documentation",
+          "critical": false
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "team artifact",
+        "peer feedback",
+        "meeting record",
+        "project history"
+      ],
+      "verified_minimum": "Independently contributes to a team project with reliable follow-through.",
+      "applied_standard": "Works effectively on a real multidisciplinary or cross-role team.",
+      "mentor_standard": "Improves team function and coaches others without taking over their responsibilities."
+    },
+    {
+      "rubric_id": "RUBRIC-CORE-04",
+      "competency_id": "CORE-04",
+      "name": "Research Literacy",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Question framing",
+          "critical": false
+        },
+        {
+          "name": "Source discovery",
+          "critical": false
+        },
+        {
+          "name": "Claim / evidence distinction",
+          "critical": false
+        },
+        {
+          "name": "Credibility judgment",
+          "critical": true
+        },
+        {
+          "name": "Uncertainty recognition",
+          "critical": false
+        },
+        {
+          "name": "Citation basics",
+          "critical": false
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "source exercise",
+        "annotated bibliography",
+        "evidence brief"
+      ],
+      "verified_minimum": "Independently evaluates and uses sources appropriately.",
+      "applied_standard": "Research literacy informs a real project decision or deliverable.",
+      "mentor_standard": "Detects weak reasoning in others' research and explains corrections accurately."
+    },
+    {
+      "rubric_id": "RUBRIC-CORE-05",
+      "competency_id": "CORE-05",
+      "name": "Digital Fluency",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Account and file management",
+          "critical": false
+        },
+        {
+          "name": "Collaboration tools",
+          "critical": false
+        },
+        {
+          "name": "Data hygiene",
+          "critical": false
+        },
+        {
+          "name": "AI-tool judgment",
+          "critical": false
+        },
+        {
+          "name": "Troubleshooting",
+          "critical": false
+        },
+        {
+          "name": "Security basics",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "tool-based project",
+        "organized project workspace",
+        "completed professional digital workflow"
+      ],
+      "verified_minimum": "Independently completes a professional digital workflow without unsafe practices.",
+      "applied_standard": "Uses digital tools reliably in real project operations.",
+      "mentor_standard": "Helps others solve workflows without creating security, privacy, or data-management problems."
+    },
+    {
+      "rubric_id": "RUBRIC-CORE-06",
+      "competency_id": "CORE-06",
+      "name": "Civic & Institutional Literacy",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Institution-type recognition",
+          "critical": false
+        },
+        {
+          "name": "Authority / responsibility mapping",
+          "critical": false
+        },
+        {
+          "name": "Process navigation",
+          "critical": false
+        },
+        {
+          "name": "Stakeholder roles",
+          "critical": false
+        },
+        {
+          "name": "Jurisdiction awareness",
+          "critical": false
+        },
+        {
+          "name": "Public / private authority distinction",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "agency/process map",
+        "organizational analysis",
+        "service-navigation exercise"
+      ],
+      "verified_minimum": "Correctly maps how a real issue moves through relevant institutions.",
+      "applied_standard": "Navigates a real institutional process appropriately.",
+      "mentor_standard": "Helps others choose the correct institution/process without overstating authority."
+    },
+    {
+      "rubric_id": "RUBRIC-CORE-07",
+      "competency_id": "CORE-07",
+      "name": "Professional Practice",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Reliability",
+          "critical": false
+        },
+        {
+          "name": "Meeting discipline",
+          "critical": false
+        },
+        {
+          "name": "Documentation",
+          "critical": false
+        },
+        {
+          "name": "Confidentiality",
+          "critical": false
+        },
+        {
+          "name": "Deadline management",
+          "critical": false
+        },
+        {
+          "name": "Ethical conduct",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "supervisor review",
+        "project records",
+        "meeting notes",
+        "delivery history"
+      ],
+      "verified_minimum": "Shows sustained independent professional behavior across a meaningful project period.",
+      "applied_standard": "Performs reliably in authentic service or work.",
+      "mentor_standard": "Models professional standards and gives actionable feedback to others."
+    },
+    {
+      "rubric_id": "RUBRIC-CORE-08",
+      "competency_id": "CORE-08",
+      "name": "Safety & Resilience",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Hazard recognition",
+          "critical": false
+        },
+        {
+          "name": "Escalation",
+          "critical": false
+        },
+        {
+          "name": "Incident-role awareness",
+          "critical": false
+        },
+        {
+          "name": "Continuity thinking",
+          "critical": false
+        },
+        {
+          "name": "Communication under stress",
+          "critical": false
+        },
+        {
+          "name": "Does not exceed authority",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "federal safety/emergency training",
+        "safety exercise",
+        "incident simulation",
+        "continuity plan"
+      ],
+      "verified_minimum": "Independently follows safe procedures in a realistic exercise.",
+      "applied_standard": "Responds appropriately in a real operational setting within assigned authority.",
+      "mentor_standard": "Guides others through exercises or readiness work without improvising beyond authorization."
+    },
+    {
+      "rubric_id": "RUBRIC-SHR-01",
+      "competency_id": "SHR-01",
+      "name": "Project Management",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Objective definition",
+          "critical": false
+        },
+        {
+          "name": "Scope",
+          "critical": false
+        },
+        {
+          "name": "Task / owner assignment",
+          "critical": false
+        },
+        {
+          "name": "Schedule",
+          "critical": false
+        },
+        {
+          "name": "Risk management",
+          "critical": false
+        },
+        {
+          "name": "Change control",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "project plan",
+        "timeline",
+        "risk register",
+        "completed deliverable"
+      ],
+      "verified_minimum": "Independently manages a bounded project from plan through closeout.",
+      "applied_standard": "Delivers a real project with normal accountability.",
+      "mentor_standard": "Guides another project manager and identifies material risks early."
+    },
+    {
+      "rubric_id": "RUBRIC-SHR-02",
+      "competency_id": "SHR-02",
+      "name": "Ethics, Consent & Privacy",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Sensitive-information recognition",
+          "critical": false
+        },
+        {
+          "name": "Appropriate consent",
+          "critical": false
+        },
+        {
+          "name": "Data minimization",
+          "critical": false
+        },
+        {
+          "name": "Purpose limitation",
+          "critical": false
+        },
+        {
+          "name": "Retention / sharing judgment",
+          "critical": false
+        },
+        {
+          "name": "Participant / privacy protection",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "consent protocol",
+        "privacy plan",
+        "reviewed workflow",
+        "scenario assessment"
+      ],
+      "verified_minimum": "Independently makes correct judgments on realistic ethical/privacy scenarios.",
+      "applied_standard": "Operates a real workflow involving sensitive information without material violations.",
+      "mentor_standard": "Reviews others' protocols accurately and identifies privacy/consent failures."
+    },
+    {
+      "rubric_id": "RUBRIC-SHR-03",
+      "competency_id": "SHR-03",
+      "name": "Data Literacy",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Data-structure understanding",
+          "critical": false
+        },
+        {
+          "name": "Cleaning / organization",
+          "critical": false
+        },
+        {
+          "name": "Descriptive analysis",
+          "critical": false
+        },
+        {
+          "name": "Visualization",
+          "critical": false
+        },
+        {
+          "name": "Limitations",
+          "critical": false
+        },
+        {
+          "name": "Does not overclaim",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "spreadsheet or database analysis",
+        "chart",
+        "data memo"
+      ],
+      "verified_minimum": "Independently analyzes a dataset and communicates justified conclusions.",
+      "applied_standard": "Analysis informs an authentic decision or project.",
+      "mentor_standard": "Catches interpretation errors and teaches better analysis to others."
+    },
+    {
+      "rubric_id": "RUBRIC-SHR-04",
+      "competency_id": "SHR-04",
+      "name": "Documentation & Provenance",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Source capture",
+          "critical": false
+        },
+        {
+          "name": "Timestamps / versions",
+          "critical": false
+        },
+        {
+          "name": "Lineage",
+          "critical": false
+        },
+        {
+          "name": "Decision logs",
+          "critical": false
+        },
+        {
+          "name": "Reproducibility",
+          "critical": false
+        },
+        {
+          "name": "Traceability",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "evidence ledger",
+        "version history",
+        "provenance graph",
+        "research log"
+      ],
+      "verified_minimum": "Another reviewer can reconstruct the work from the documentation.",
+      "applied_standard": "Maintains audit-ready records during authentic work.",
+      "mentor_standard": "Designs or improves provenance practices for a team."
+    },
+    {
+      "rubric_id": "RUBRIC-SHR-05",
+      "competency_id": "SHR-05",
+      "name": "Facilitation & Meetings",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Purpose / agenda",
+          "critical": false
+        },
+        {
+          "name": "Participation",
+          "critical": false
+        },
+        {
+          "name": "Time / focus",
+          "critical": false
+        },
+        {
+          "name": "Conflict navigation",
+          "critical": false
+        },
+        {
+          "name": "Decision capture",
+          "critical": false
+        },
+        {
+          "name": "Clear follow-through",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "recorded meeting",
+        "agenda",
+        "decision log",
+        "participant feedback"
+      ],
+      "verified_minimum": "Independently facilitates a real or realistic meeting to usable outcomes.",
+      "applied_standard": "Leads an authentic stakeholder or team meeting.",
+      "mentor_standard": "Handles difficult dynamics and coaches other facilitators."
+    },
+    {
+      "rubric_id": "RUBRIC-SHR-06",
+      "competency_id": "SHR-06",
+      "name": "Accessible & Inclusive Practice",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Audience / access needs",
+          "critical": false
+        },
+        {
+          "name": "Readable language",
+          "critical": false
+        },
+        {
+          "name": "Document / media accessibility",
+          "critical": false
+        },
+        {
+          "name": "Inclusive participation",
+          "critical": false
+        },
+        {
+          "name": "Barrier identification",
+          "critical": false
+        },
+        {
+          "name": "Reasonable-accommodation awareness",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "accessible document or video",
+        "event plan",
+        "interface review"
+      ],
+      "verified_minimum": "Independently identifies and remedies common accessibility barriers.",
+      "applied_standard": "Ships an accessible real product, event, or communication.",
+      "mentor_standard": "Audits and improves others' work for accessibility and inclusion."
+    },
+    {
+      "rubric_id": "RUBRIC-PSC-01",
+      "competency_id": "PSC-01",
+      "name": "Community Engagement",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Listening before proposing",
+          "critical": false
+        },
+        {
+          "name": "Stakeholder inclusion",
+          "critical": false
+        },
+        {
+          "name": "Trust-building",
+          "critical": false
+        },
+        {
+          "name": "Expectation setting",
+          "critical": false
+        },
+        {
+          "name": "Follow-up",
+          "critical": false
+        },
+        {
+          "name": "Non-extractive engagement",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "engagement plan",
+        "listening session",
+        "stakeholder feedback"
+      ],
+      "verified_minimum": "Independently conducts respectful two-way engagement.",
+      "applied_standard": "Maintains or contributes to a sustained real community relationship.",
+      "mentor_standard": "Guides engagement strategy and prevents extractive practices."
+    },
+    {
+      "rubric_id": "RUBRIC-PSC-02",
+      "competency_id": "PSC-02",
+      "name": "Service Navigation",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Need identification",
+          "critical": false
+        },
+        {
+          "name": "Resource research",
+          "critical": false
+        },
+        {
+          "name": "Eligibility awareness",
+          "critical": false
+        },
+        {
+          "name": "Clear explanation",
+          "critical": false
+        },
+        {
+          "name": "Warm referral",
+          "critical": false
+        },
+        {
+          "name": "No false guarantees",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "resource guide",
+        "navigation simulation",
+        "real referral record"
+      ],
+      "verified_minimum": "Independently routes a realistic case accurately.",
+      "applied_standard": "Helps a real participant navigate services appropriately.",
+      "mentor_standard": "Supervises navigators and maintains resource accuracy."
+    },
+    {
+      "rubric_id": "RUBRIC-PSC-03",
+      "competency_id": "PSC-03",
+      "name": "Stakeholder Coordination",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Stakeholder mapping",
+          "critical": false
+        },
+        {
+          "name": "Interests / roles",
+          "critical": false
+        },
+        {
+          "name": "Relationship stage",
+          "critical": false
+        },
+        {
+          "name": "Communication plan",
+          "critical": false
+        },
+        {
+          "name": "Commitment tracking",
+          "critical": false
+        },
+        {
+          "name": "Privacy / consent boundaries",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "stakeholder map",
+        "relationship record",
+        "meeting log",
+        "commitment log"
+      ],
+      "verified_minimum": "Independently coordinates multiple parties around a shared objective.",
+      "applied_standard": "Coordinates authentic multi-organization work.",
+      "mentor_standard": "Manages complex relationship networks and coaches others."
+    },
+    {
+      "rubric_id": "RUBRIC-PSC-04",
+      "competency_id": "PSC-04",
+      "name": "Public Program Delivery",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Procedure adherence",
+          "critical": false
+        },
+        {
+          "name": "Participant service",
+          "critical": false
+        },
+        {
+          "name": "Records",
+          "critical": false
+        },
+        {
+          "name": "Quality control",
+          "critical": false
+        },
+        {
+          "name": "Issue escalation",
+          "critical": false
+        },
+        {
+          "name": "Privacy / safety compliance",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "VITA or comparable supervised service",
+        "event/program operation",
+        "service record"
+      ],
+      "verified_minimum": "Independently performs assigned program duties to standard.",
+      "applied_standard": "Delivers an actual public-facing service within the program's rules.",
+      "mentor_standard": "Supervises delivery and resolves routine quality problems appropriately."
+    },
+    {
+      "rubric_id": "RUBRIC-PSC-05",
+      "competency_id": "PSC-05",
+      "name": "Emergency & Incident Coordination",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "ICS / incident roles",
+          "critical": false
+        },
+        {
+          "name": "Chain of command",
+          "critical": false
+        },
+        {
+          "name": "Situational communication",
+          "critical": false
+        },
+        {
+          "name": "Resource requests",
+          "critical": false
+        },
+        {
+          "name": "Documentation",
+          "critical": false
+        },
+        {
+          "name": "Role / authority discipline",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "FEMA or related training",
+        "tabletop exercise",
+        "full simulation"
+      ],
+      "verified_minimum": "Independently performs an assigned role in a realistic incident exercise.",
+      "applied_standard": "Performs an authentic emergency/continuity role where available and appropriate.",
+      "mentor_standard": "Designs or runs exercises or coaches roles while preserving authorization boundaries."
+    },
+    {
+      "rubric_id": "RUBRIC-RSP-01",
+      "competency_id": "RSP-01",
+      "name": "Research Design",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Research question",
+          "critical": false
+        },
+        {
+          "name": "Scope",
+          "critical": false
+        },
+        {
+          "name": "Method choice",
+          "critical": false
+        },
+        {
+          "name": "Sampling / data plan",
+          "critical": false
+        },
+        {
+          "name": "Limitations",
+          "critical": false
+        },
+        {
+          "name": "Ethical feasibility",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "research protocol",
+        "research proposal"
+      ],
+      "verified_minimum": "Independently designs a defensible study appropriate to the question.",
+      "applied_standard": "Protocol is used in a real research project.",
+      "mentor_standard": "Reviews and improves others' research designs accurately."
+    },
+    {
+      "rubric_id": "RUBRIC-RSP-02",
+      "competency_id": "RSP-02",
+      "name": "Source Evaluation",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Authority",
+          "critical": false
+        },
+        {
+          "name": "Methodology",
+          "critical": false
+        },
+        {
+          "name": "Evidence quality",
+          "critical": false
+        },
+        {
+          "name": "Incentives / conflicts",
+          "critical": false
+        },
+        {
+          "name": "Comparison",
+          "critical": false
+        },
+        {
+          "name": "Limitations / provenance",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "source matrix",
+        "evidence defense"
+      ],
+      "verified_minimum": "Independently evaluates conflicting sources and explains relative evidentiary strength.",
+      "applied_standard": "Source judgments materially shape an authentic research product.",
+      "mentor_standard": "Reviews source selections across complex projects and challenges weak evidence appropriately."
+    },
+    {
+      "rubric_id": "RUBRIC-RSP-03",
+      "competency_id": "RSP-03",
+      "name": "Human Research Methods",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Instrument design",
+          "critical": false
+        },
+        {
+          "name": "Participant selection",
+          "critical": false
+        },
+        {
+          "name": "Interview / survey technique",
+          "critical": false
+        },
+        {
+          "name": "Data handling",
+          "critical": false
+        },
+        {
+          "name": "Bias awareness",
+          "critical": false
+        },
+        {
+          "name": "Consent / participant protection",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "human-research training",
+        "protocol",
+        "supervised interviews or surveys"
+      ],
+      "verified_minimum": "Independently performs competently after ethics prerequisites, with participant protection meeting the independent standard.",
+      "applied_standard": "Conducts authentic approved human-participant research.",
+      "mentor_standard": "Supervises data collection and reviews protocols within appropriate authority."
+    },
+    {
+      "rubric_id": "RUBRIC-RSP-04",
+      "competency_id": "RSP-04",
+      "name": "Evidence Synthesis",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Claim construction",
+          "critical": false
+        },
+        {
+          "name": "Evidence linking",
+          "critical": false
+        },
+        {
+          "name": "Conflicting evidence",
+          "critical": false
+        },
+        {
+          "name": "Uncertainty",
+          "critical": false
+        },
+        {
+          "name": "Inference discipline",
+          "critical": false
+        },
+        {
+          "name": "No unsupported conclusion",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "evidence matrix",
+        "research memo",
+        "oral evidence defense"
+      ],
+      "verified_minimum": "Independently builds defensible conclusions from multiple sources.",
+      "applied_standard": "Synthesis is used in an authentic report or decision process.",
+      "mentor_standard": "Reviews complex evidence chains and identifies weak inference."
+    },
+    {
+      "rubric_id": "RUBRIC-RSP-05",
+      "competency_id": "RSP-05",
+      "name": "Policy Analysis",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Problem definition",
+          "critical": false
+        },
+        {
+          "name": "Affected populations",
+          "critical": false
+        },
+        {
+          "name": "Alternatives",
+          "critical": false
+        },
+        {
+          "name": "Implementation",
+          "critical": false
+        },
+        {
+          "name": "Costs / tradeoffs",
+          "critical": false
+        },
+        {
+          "name": "Distinguishes analysis from advocacy",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "policy memo",
+        "options analysis",
+        "briefing"
+      ],
+      "verified_minimum": "Independently compares alternatives using explicit evidence and assumptions.",
+      "applied_standard": "Analysis is delivered to a real stakeholder or institution.",
+      "mentor_standard": "Supervises policy analysis and detects framing bias or unsupported inference."
+    },
+    {
+      "rubric_id": "RUBRIC-RSP-06",
+      "competency_id": "RSP-06",
+      "name": "Publication & Citation",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Citation completeness",
+          "critical": false
+        },
+        {
+          "name": "Version control",
+          "critical": false
+        },
+        {
+          "name": "Editorial quality",
+          "critical": false
+        },
+        {
+          "name": "Publication workflow",
+          "critical": false
+        },
+        {
+          "name": "Corrections",
+          "critical": false
+        },
+        {
+          "name": "Source integrity",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "publication package",
+        "DOI/deposit workflow",
+        "manuscript"
+      ],
+      "verified_minimum": "Independently prepares auditable work for publication or formal release.",
+      "applied_standard": "Completes an authentic publication or formal submission.",
+      "mentor_standard": "Performs editorial/reviewer functions and manages corrections responsibly."
+    },
+    {
+      "rubric_id": "RUBRIC-ENT-01",
+      "competency_id": "ENT-01",
+      "name": "Opportunity Discovery",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Problem observation",
+          "critical": false
+        },
+        {
+          "name": "Evidence of need",
+          "critical": false
+        },
+        {
+          "name": "Market / workforce context",
+          "critical": false
+        },
+        {
+          "name": "Stakeholder identification",
+          "critical": false
+        },
+        {
+          "name": "Feasibility",
+          "critical": false
+        },
+        {
+          "name": "Distinguishes demand from assumption",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "opportunity brief",
+        "labor/market research",
+        "field interviews"
+      ],
+      "verified_minimum": "Independently identifies and validates a genuine opportunity.",
+      "applied_standard": "Opportunity becomes a real project, application, service, or business path.",
+      "mentor_standard": "Critiques opportunity quality and evidence for others."
+    },
+    {
+      "rubric_id": "RUBRIC-ENT-02",
+      "competency_id": "ENT-02",
+      "name": "User / Customer Discovery",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Neutral questions",
+          "critical": false
+        },
+        {
+          "name": "Participant selection",
+          "critical": false
+        },
+        {
+          "name": "Listening",
+          "critical": false
+        },
+        {
+          "name": "Pattern synthesis",
+          "critical": false
+        },
+        {
+          "name": "Bias control",
+          "critical": false
+        },
+        {
+          "name": "Consent / non-leading practice",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "interview guide",
+        "interviews",
+        "discovery synthesis"
+      ],
+      "verified_minimum": "Independently conducts discovery and extracts defensible needs.",
+      "applied_standard": "Findings shape a real service, product, or project.",
+      "mentor_standard": "Reviews discovery research and coaches others."
+    },
+    {
+      "rubric_id": "RUBRIC-ENT-03",
+      "competency_id": "ENT-03",
+      "name": "Offer & Scope Design",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Outcome definition",
+          "critical": false
+        },
+        {
+          "name": "Deliverables",
+          "critical": false
+        },
+        {
+          "name": "Exclusions",
+          "critical": false
+        },
+        {
+          "name": "Timeline",
+          "critical": false
+        },
+        {
+          "name": "Assumptions",
+          "critical": false
+        },
+        {
+          "name": "Acceptance criteria",
+          "critical": false
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "proposal",
+        "statement of work",
+        "service design"
+      ],
+      "verified_minimum": "Independently produces a clear deliverable scope with manageable boundaries.",
+      "applied_standard": "Scope is accepted and used on real work.",
+      "mentor_standard": "Reviews scope, protects against ambiguity, and coaches scope control."
+    },
+    {
+      "rubric_id": "RUBRIC-ENT-04",
+      "competency_id": "ENT-04",
+      "name": "Financial & Operational Basics",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Cost identification",
+          "critical": false
+        },
+        {
+          "name": "Budget",
+          "critical": false
+        },
+        {
+          "name": "Pricing / unit-economics basics",
+          "critical": false
+        },
+        {
+          "name": "Resource planning",
+          "critical": false
+        },
+        {
+          "name": "Operational constraints",
+          "critical": false
+        },
+        {
+          "name": "Financial accuracy / transparency",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "budget",
+        "simple financial model",
+        "operating plan"
+      ],
+      "verified_minimum": "Independently builds and explains a realistic basic operating budget or model.",
+      "applied_standard": "Model is used in authentic project/program operations.",
+      "mentor_standard": "Reviews models and identifies material omissions or unsupported assumptions."
+    },
+    {
+      "rubric_id": "RUBRIC-ENT-05",
+      "competency_id": "ENT-05",
+      "name": "Client / Project Delivery",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Expectation setting",
+          "critical": false
+        },
+        {
+          "name": "Communication",
+          "critical": false
+        },
+        {
+          "name": "Scope management",
+          "critical": false
+        },
+        {
+          "name": "Execution",
+          "critical": false
+        },
+        {
+          "name": "Issue handling",
+          "critical": false
+        },
+        {
+          "name": "Acceptance / closure",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "client project",
+        "delivery record",
+        "acceptance evidence"
+      ],
+      "verified_minimum": "Independently delivers bounded work that meets agreed acceptance criteria.",
+      "applied_standard": "Completes real client or partner delivery.",
+      "mentor_standard": "Supervises delivery teams and handles escalations appropriately."
+    },
+    {
+      "rubric_id": "RUBRIC-ENT-06",
+      "competency_id": "ENT-06",
+      "name": "Workforce & Career Navigation",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Skills translation",
+          "critical": false
+        },
+        {
+          "name": "Resume / portfolio",
+          "critical": false
+        },
+        {
+          "name": "Opportunity targeting",
+          "critical": false
+        },
+        {
+          "name": "Applications",
+          "critical": false
+        },
+        {
+          "name": "Interviewing",
+          "critical": false
+        },
+        {
+          "name": "Follow-up",
+          "critical": false
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "portfolio",
+        "resume",
+        "mock or real interview",
+        "applications"
+      ],
+      "verified_minimum": "Independently presents capability credibly and navigates an application process.",
+      "applied_standard": "Participates in an authentic apprenticeship, job, fellowship, or comparable opportunity process.",
+      "mentor_standard": "Coaches others using evidence-based guidance rather than generic advice."
+    },
+    {
+      "rubric_id": "RUBRIC-MED-01",
+      "competency_id": "MED-01",
+      "name": "Story & Message Development",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Audience",
+          "critical": false
+        },
+        {
+          "name": "Objective",
+          "critical": false
+        },
+        {
+          "name": "Factual foundation",
+          "critical": false
+        },
+        {
+          "name": "Narrative structure",
+          "critical": false
+        },
+        {
+          "name": "Tone",
+          "critical": false
+        },
+        {
+          "name": "No misleading framing",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "treatment",
+        "script",
+        "storyboard",
+        "campaign brief"
+      ],
+      "verified_minimum": "Independently develops a coherent factual message for a defined audience.",
+      "applied_standard": "Message is used in a real publication, event, or campaign.",
+      "mentor_standard": "Edits others' story strategy without sacrificing factual integrity."
+    },
+    {
+      "rubric_id": "RUBRIC-MED-02",
+      "competency_id": "MED-02",
+      "name": "Capture & Production",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Preparation",
+          "critical": false
+        },
+        {
+          "name": "Technical setup",
+          "critical": false
+        },
+        {
+          "name": "Framing / audio / light",
+          "critical": false
+        },
+        {
+          "name": "Coverage",
+          "critical": false
+        },
+        {
+          "name": "File handling",
+          "critical": false
+        },
+        {
+          "name": "Consent / safety",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "original photo/video/audio production"
+      ],
+      "verified_minimum": "Independently captures usable professional-quality source material.",
+      "applied_standard": "Completes authentic event, client, editorial, or project production.",
+      "mentor_standard": "Directs production and troubleshoots under real constraints."
+    },
+    {
+      "rubric_id": "RUBRIC-MED-03",
+      "competency_id": "MED-03",
+      "name": "Editing & Post-Production",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Selection",
+          "critical": false
+        },
+        {
+          "name": "Structure / pacing",
+          "critical": false
+        },
+        {
+          "name": "Technical quality",
+          "critical": false
+        },
+        {
+          "name": "Continuity",
+          "critical": false
+        },
+        {
+          "name": "Accessibility",
+          "critical": false
+        },
+        {
+          "name": "Factual integrity",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "finished edit",
+        "project files"
+      ],
+      "verified_minimum": "Independently produces publication-ready media from raw material.",
+      "applied_standard": "Releases or delivers an authentic media product.",
+      "mentor_standard": "Supervises post-production and provides precise editorial guidance."
+    },
+    {
+      "rubric_id": "RUBRIC-MED-04",
+      "competency_id": "MED-04",
+      "name": "Verification, Rights & Licensing",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Origin verification",
+          "critical": false
+        },
+        {
+          "name": "Releases",
+          "critical": false
+        },
+        {
+          "name": "Copyright / licensing",
+          "critical": false
+        },
+        {
+          "name": "Attribution",
+          "critical": false
+        },
+        {
+          "name": "Rights records",
+          "critical": false
+        },
+        {
+          "name": "Publishing authority",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "rights log",
+        "release forms",
+        "verification worksheet"
+      ],
+      "verified_minimum": "Independently clears content correctly before publication.",
+      "applied_standard": "Manages rights for actual licensed or released work.",
+      "mentor_standard": "Reviews complex rights issues and prevents unauthorized publication."
+    },
+    {
+      "rubric_id": "RUBRIC-MED-05",
+      "competency_id": "MED-05",
+      "name": "Publication, Distribution & Audience",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Channel selection",
+          "critical": false
+        },
+        {
+          "name": "Packaging",
+          "critical": false
+        },
+        {
+          "name": "Accessibility",
+          "critical": false
+        },
+        {
+          "name": "Distribution",
+          "critical": false
+        },
+        {
+          "name": "Metrics interpretation",
+          "critical": false
+        },
+        {
+          "name": "Does not equate reach with impact",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "release plan",
+        "published asset",
+        "analytics review"
+      ],
+      "verified_minimum": "Independently distributes content and interprets response appropriately.",
+      "applied_standard": "Manages authentic release/distribution.",
+      "mentor_standard": "Develops strategy and teaches responsible performance analysis."
+    },
+    {
+      "rubric_id": "RUBRIC-OPS-01",
+      "competency_id": "OPS-01",
+      "name": "Systems Thinking",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "System boundaries",
+          "critical": false
+        },
+        {
+          "name": "Components",
+          "critical": false
+        },
+        {
+          "name": "Dependencies",
+          "critical": false
+        },
+        {
+          "name": "Feedback loops",
+          "critical": false
+        },
+        {
+          "name": "Failure modes",
+          "critical": false
+        },
+        {
+          "name": "Second-order effects",
+          "critical": false
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "system map",
+        "causal model",
+        "architecture review"
+      ],
+      "verified_minimum": "Independently analyzes a complex system and identifies material dependencies and risks.",
+      "applied_standard": "Analysis influences authentic system or project design.",
+      "mentor_standard": "Reviews architectures and teaches systemic reasoning."
+    },
+    {
+      "rubric_id": "RUBRIC-OPS-02",
+      "competency_id": "OPS-02",
+      "name": "Cybersecurity Fundamentals",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Identity / access",
+          "critical": false
+        },
+        {
+          "name": "Secrets",
+          "critical": false
+        },
+        {
+          "name": "Data protection",
+          "critical": false
+        },
+        {
+          "name": "Threat recognition",
+          "critical": false
+        },
+        {
+          "name": "Secure configuration habits",
+          "critical": false
+        },
+        {
+          "name": "Least privilege / no credential exposure",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "CISA or comparable federal training",
+        "security scenario",
+        "secure workflow demonstration"
+      ],
+      "verified_minimum": "Independently handles realistic scenarios safely, with all security-critical criteria meeting the independent standard.",
+      "applied_standard": "Participates responsibly in authentic protected systems.",
+      "mentor_standard": "Reviews operational security hygiene and teaches secure practice without exceeding role."
+    },
+    {
+      "rubric_id": "RUBRIC-OPS-03",
+      "competency_id": "OPS-03",
+      "name": "Spatial Intelligence",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Coordinate / geographic reasoning",
+          "critical": false
+        },
+        {
+          "name": "Layer selection",
+          "critical": false
+        },
+        {
+          "name": "Temporal context",
+          "critical": false
+        },
+        {
+          "name": "Source / provenance",
+          "critical": false
+        },
+        {
+          "name": "Uncertainty",
+          "critical": false
+        },
+        {
+          "name": "Entitlement / privacy boundaries",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "GIS or Halo project",
+        "NOAA/NASA or comparable training",
+        "spatial analysis"
+      ],
+      "verified_minimum": "Independently produces a defensible spatial interpretation from authorized data.",
+      "applied_standard": "Spatial intelligence supports authentic research or operations.",
+      "mentor_standard": "Reviews spatial analyses and identifies misleading layers, uncertainty, or unsupported inference."
+    },
+    {
+      "rubric_id": "RUBRIC-OPS-04",
+      "competency_id": "OPS-04",
+      "name": "Infrastructure & Energy Literacy",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Major systems",
+          "critical": false
+        },
+        {
+          "name": "Interdependencies",
+          "critical": false
+        },
+        {
+          "name": "Capacity / constraints",
+          "critical": false
+        },
+        {
+          "name": "Reliability",
+          "critical": false
+        },
+        {
+          "name": "Environmental / community impacts",
+          "critical": false
+        },
+        {
+          "name": "Distinguishes observation from engineering conclusion",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "DOE/EPA or comparable work",
+        "infrastructure map",
+        "systems brief"
+      ],
+      "verified_minimum": "Independently explains an infrastructure system and its major constraints and tradeoffs.",
+      "applied_standard": "Contributes meaningfully to authentic infrastructure analysis.",
+      "mentor_standard": "Guides interdisciplinary analysis while respecting professional-design boundaries."
+    },
+    {
+      "rubric_id": "RUBRIC-OPS-05",
+      "competency_id": "OPS-05",
+      "name": "Operational Decision Support",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Situation framing",
+          "critical": false
+        },
+        {
+          "name": "Relevant evidence",
+          "critical": false
+        },
+        {
+          "name": "Options",
+          "critical": false
+        },
+        {
+          "name": "Risks",
+          "critical": false
+        },
+        {
+          "name": "Priorities / uncertainty",
+          "critical": false
+        },
+        {
+          "name": "Decision-maker authority preserved",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "decision brief",
+        "operational simulation",
+        "Halo briefing"
+      ],
+      "verified_minimum": "Independently turns complex information into bounded, actionable decision support.",
+      "applied_standard": "Decision support is used by an authentic responsible decision-maker.",
+      "mentor_standard": "Reviews decision-support products and prevents unsupported certainty or authority substitution."
+    },
+    {
+      "rubric_id": "RUBRIC-OPS-06",
+      "competency_id": "OPS-06",
+      "name": "Automation & Tooling",
+      "version": "0.1.0",
+      "criteria": [
+        {
+          "name": "Workflow decomposition",
+          "critical": false
+        },
+        {
+          "name": "Tool / API selection",
+          "critical": false
+        },
+        {
+          "name": "Implementation",
+          "critical": false
+        },
+        {
+          "name": "Monitoring / error handling",
+          "critical": false
+        },
+        {
+          "name": "Documentation",
+          "critical": false
+        },
+        {
+          "name": "Security / human-control boundary",
+          "critical": true
+        }
+      ],
+      "strong_qualifying_evidence": [
+        "automation",
+        "API integration",
+        "AI workflow",
+        "logs",
+        "technical documentation"
+      ],
+      "verified_minimum": "Independently builds a bounded reliable automation with reviewability and safeguards.",
+      "applied_standard": "Automation operates in an authentic workflow with monitored outcomes.",
+      "mentor_standard": "Architects or reviews automations and guides others without removing required human authority."
+    }
+  ]
+}

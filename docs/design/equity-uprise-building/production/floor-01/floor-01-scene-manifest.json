@@ -1,160 +1,397 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "scene_id": "equity-uprise-floor-01",
-  "scene_name": "Equity Uprise Floor 1 — Lobby + Intake",
-  "status": "canonical-production-v1",
+  "scene_name": "Equity Uprise Level 01 \u2014 Lobby + Intake",
+  "status": "core-v2-migration",
   "not_for_construction": true,
+  "shared_core_ref": "../building-core-v2.json",
+  "floor_program_ref": "../core-v2-floor-programs.json",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
+  "feature_ids": [
+    "conversation-agent",
+    "fellowship-applications",
+    "interviews-calendar",
+    "verification",
+    "stakeholder-intake",
+    "program-support-funding",
+    "enterprise-development"
+  ],
   "authority": {
+    "building_core": [
+      "../../BUILDING-CORE-V2-SPEC.md",
+      "../building-core-v2.json"
+    ],
     "spatial_authority": [
       "../../FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
       "../../FLOOR-01-SCHEMATIC-PLAN-BASIS.md",
       "../../REFERENCE-AUTHORITY.md"
     ],
     "geometry_authority": [
-      "../../references/floor-01/equity-uprise-floor-01-viable-schematic-v3.dxf",
-      "../../references/floor-01/equity-uprise-floor-01-viable-schematic-v3.svg",
-      "../../references/floor-01/equity-uprise-floor-01-viable-schematic-v3.png"
+      "../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf",
+      "../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg",
+      "../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png"
     ],
-    "logo_asset": "../../../../assets/img/equity-uprise-logo.webp",
-    "rule": "Production files may operationalize canonical geometry but may not override it."
+    "rule": "Shared Core V2 vertical systems override floor-local geometry.",
+    "activity_simulation_authority": [
+      "../FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
+      "floor-01/floor-01-digital-twin-program.json"
+    ],
+    "site_egress_authority": [
+      "../../FLOOR-01-SITE-EGRESS-SIMULATION.md",
+      "floor-01-site-egress.json"
+    ],
+    "basement_support_authority": [
+      "../../BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "../basement-b1-program.json"
+    ]
   },
   "units": {
     "authoring": "feet",
     "gltf_conversion_meters_per_foot": 0.3048
   },
   "coordinate_system": {
-    "origin": "southwest_exterior_corner",
-    "origin_ft": [
-      0,
-      0,
-      0
-    ],
+    "origin": "southwest_exterior_corner_floor_01",
     "x_positive": "east",
     "y_positive": "north",
-    "z_positive": "up",
-    "yaw_zero": "north",
-    "yaw_positive": "clockwise_toward_east"
+    "z_positive": "up"
   },
   "building_shell": {
     "width_ft": 72,
     "depth_ft": 72,
     "floor_to_floor_ft": 13.5,
-    "floor_elevation_ft": 0,
-    "structural_grid_ft": [
-      0,
-      18,
-      36,
-      54,
-      72
-    ]
+    "finished_floor_elevation_ft": 0
   },
-  "production_modeling_defaults": {
-    "authority": "visualization-and-interaction-only",
-    "interior_partition_thickness_ft": 0.5,
-    "exterior_wall_thickness_ft": 0.75,
-    "core_wall_thickness_ft": 0.75,
-    "default_finished_ceiling_height_ft": 11,
-    "reception_feature_ceiling_height_ft": 12,
-    "default_door_height_ft": 8,
-    "note": "These defaults create deterministic web/3D output. They are not permit dimensions and must yield to later architectural documents."
-  },
-  "fixed_core": {
-    "elevator": {
-      "bounds_ft": {
+  "inherited_vertical_systems": {
+    "passenger_elevator": {
+      "id": "passenger-elevator-a",
+      "type": "passenger_elevator",
+      "shaft_bounds_ft": {
         "x1": 54,
         "y1": 34,
         "x2": 62,
         "y2": 44
       },
-      "door_facing": "west"
+      "shaft_width_ft": 8,
+      "shaft_depth_ft": 10,
+      "door_facing": "west",
+      "door_opening_concept_ft": {
+        "facade_x": 54,
+        "y1": 37,
+        "y2": 41,
+        "clear_width_ft": 4
+      },
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "level_7_service": "not_assumed",
+      "shaft_continuity": "continuous_through_served_stack",
+      "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
+      "b1_access_policy": {
+        "physical_stop": true,
+        "visible_in_normal_floor_selector": false,
+        "authorized_roles": [
+          "mccluster_house_owner",
+          "underground_operations_admin"
+        ],
+        "ordinary_equity_uprise_admin_sufficient": false
+      }
+    },
+    "service_freight_elevator": {
+      "id": "service-freight-elevator-a",
+      "type": "service_freight_elevator",
+      "shaft_bounds_ft": {
+        "x1": 0,
+        "y1": 60,
+        "x2": 8,
+        "y2": 72
+      },
+      "shaft_width_ft": 8,
+      "shaft_depth_ft": 12,
+      "door_facing": "south",
+      "door_opening_concept_ft": {
+        "facade_y": 60,
+        "x1": 1.5,
+        "x2": 6.5,
+        "clear_width_ft": 5
+      },
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "level_7_service": "reserved_for_future_resolution",
+      "shaft_continuity": "continuous_reservation_to_roof",
+      "pit_overhead_machine_strategy": "unresolved",
+      "note": "Serves B1 and Floors 1\u20136; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts.",
+      "b1_access_policy": {
+        "physical_stop": true,
+        "access": "restricted-operational"
+      }
     },
     "stair_a": {
-      "bounds_ft": {
+      "id": "stair-a-east",
+      "type": "protected_stair",
+      "enclosure_bounds_ft": {
         "x1": 60,
         "y1": 54,
         "x2": 72,
         "y2": 72
+      },
+      "enclosure_width_ft": 12,
+      "enclosure_depth_ft": 18,
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "access_side": "south",
+      "access_opening_concept_ft": {
+        "facade_y": 54,
+        "x1": 61.5,
+        "x2": 64.5,
+        "clear_width_ft": 3
+      },
+      "configuration": "dogleg_u_shaped_concept",
+      "rise_per_level_ft": 13.5,
+      "riser_count_per_level_concept": 22,
+      "riser_height_ft_concept": 0.6136363636,
+      "tread_depth_ft_concept": 0.9166666667,
+      "risers_per_flight_concept": 11,
+      "treads_per_flight_concept": 10,
+      "flight_width_ft_concept": 5,
+      "central_gap_ft_concept": 0.5,
+      "north_intermediate_landing_depth_ft_concept": 3.75,
+      "slab_opening_bounds_ft": {
+        "x1": 60.75,
+        "y1": 58.25,
+        "x2": 71.25,
+        "y2": 71.25
+      },
+      "geometry_status": "schematic_continuity_geometry_not_code_design",
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
+      "b1_access_policy": {
+        "physical_connection": true,
+        "floor1_downward_entry": "access-controlled-restricted",
+        "b1_to_floor1_egress": "preserved"
       }
     },
     "stair_b": {
-      "bounds_ft": {
-        "x1": 0,
+      "id": "stair-b-west",
+      "type": "protected_stair",
+      "enclosure_bounds_ft": {
+        "x1": 8,
         "y1": 54,
-        "x2": 12,
+        "x2": 18,
         "y2": 72
+      },
+      "enclosure_width_ft": 10,
+      "enclosure_depth_ft": 18,
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "access_side": "south",
+      "access_opening_concept_ft": {
+        "facade_y": 54,
+        "x1": 14,
+        "x2": 17,
+        "clear_width_ft": 3
+      },
+      "configuration": "dogleg_u_shaped_concept",
+      "rise_per_level_ft": 13.5,
+      "riser_count_per_level_concept": 22,
+      "riser_height_ft_concept": 0.6136363636,
+      "tread_depth_ft_concept": 0.9166666667,
+      "risers_per_flight_concept": 11,
+      "treads_per_flight_concept": 10,
+      "flight_width_ft_concept": 4,
+      "central_gap_ft_concept": 0.5,
+      "north_intermediate_landing_depth_ft_concept": 3.75,
+      "slab_opening_bounds_ft": {
+        "x1": 8.75,
+        "y1": 58.25,
+        "x2": 17.25,
+        "y2": 71.25
+      },
+      "geometry_status": "schematic_continuity_geometry_not_code_design",
+      "note": "Continuous B1 through Level 7. Floor 1 is the level of exit discharge and requires discharge-direction control so occupants do not unintentionally continue below grade.",
+      "b1_access_policy": {
+        "physical_connection": true,
+        "floor1_downward_entry": "access-controlled-restricted",
+        "b1_to_floor1_egress": "preserved"
       }
     },
     "mep_riser": {
+      "id": "mep-riser-east",
+      "type": "mep_riser_reservation",
       "bounds_ft": {
         "x1": 50,
         "y1": 66,
         "x2": 60,
         "y2": 72
-      }
+      },
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    }
+  },
+  "shared_slab_openings": {
+    "passenger_elevator": {
+      "x1": 54,
+      "y1": 34,
+      "x2": 62,
+      "y2": 44
+    },
+    "service_freight_elevator": {
+      "x1": 0,
+      "y1": 60,
+      "x2": 8,
+      "y2": 72
+    },
+    "stair_a": {
+      "x1": 60.75,
+      "y1": 58.25,
+      "x2": 71.25,
+      "y2": 71.25
+    },
+    "stair_b": {
+      "x1": 8.75,
+      "y1": 58.25,
+      "x2": 17.25,
+      "y2": 71.25
     }
   },
   "zones": [
     {
-      "id": "entry_vestibule",
+      "id": "zone_01",
       "label": "Entry Vestibule",
-      "type": "arrival",
+      "type": "zone",
       "bounds_ft": {
         "x1": 29,
         "y1": 0,
         "x2": 43,
         "y2": 9
-      }
+      },
+      "route_key": "orientation_experience"
     },
     {
-      "id": "reception",
-      "label": "Reception",
-      "type": "public_service",
+      "id": "zone_02",
+      "label": "Arrival Atrium",
+      "type": "zone",
       "bounds_ft": {
-        "x1": 28,
-        "y1": 42,
-        "x2": 44,
-        "y2": 54
-      }
+        "x1": 20,
+        "y1": 10,
+        "x2": 52,
+        "y2": 30
+      },
+      "route_key": "next_action"
     },
     {
-      "id": "visitor_lounge",
-      "label": "Visitor Lounge",
-      "type": "waiting",
+      "id": "zone_03",
+      "label": "Orientation Lounge",
+      "type": "zone",
       "bounds_ft": {
         "x1": 2,
         "y1": 12,
         "x2": 18,
         "y2": 28
-      }
+      },
+      "route_key": "orientation_experience"
     },
     {
-      "id": "intake_room",
-      "label": "Intake / Consultation",
-      "type": "private_meeting",
+      "id": "zone_04",
+      "label": "Intake / Verification Consultation",
+      "type": "room",
       "bounds_ft": {
         "x1": 2,
         "y1": 32,
         "x2": 16,
         "y2": 44
-      }
+      },
+      "route_key": "service_intake"
     },
     {
-      "id": "elevator_lobby",
-      "label": "Elevator Lobby",
-      "type": "circulation",
+      "id": "zone_05",
+      "label": "Development Passport Studio",
+      "type": "zone",
       "bounds_ft": {
-        "x1": 48,
-        "y1": 28,
-        "x2": 64,
-        "y2": 48
-      }
+        "x1": 20,
+        "y1": 32,
+        "x2": 52,
+        "y2": 44
+      },
+      "route_key": "development_passport"
+    },
+    {
+      "id": "zone_06",
+      "label": "Journey Wall",
+      "type": "feature",
+      "bounds_ft": {
+        "x1": 28,
+        "y1": 50,
+        "x2": 44,
+        "y2": 54
+      },
+      "route_key": "journey_progression"
+    },
+    {
+      "id": "zone_07",
+      "label": "Reception / Concierge / Security Desk",
+      "type": "furniture",
+      "bounds_ft": {
+        "x1": 30,
+        "y1": 44,
+        "x2": 42,
+        "y2": 47
+      },
+      "route_key": "concierge"
+    },
+    {
+      "id": "zone_08",
+      "label": "Next Action / Building Directory",
+      "type": "terminal",
+      "bounds_ft": {
+        "x1": 49,
+        "y1": 24,
+        "x2": 51,
+        "y2": 29
+      },
+      "route_key": "next_action"
     },
     {
       "id": "north_corridor",
-      "label": "North Support Corridor",
+      "label": "Public / Support Corridor",
       "type": "circulation",
       "bounds_ft": {
-        "x1": 12,
+        "x1": 18,
         "y1": 54,
         "x2": 60,
         "y2": 60
@@ -165,9 +402,9 @@
       "label": "Restroom A",
       "type": "support",
       "bounds_ft": {
-        "x1": 12,
+        "x1": 18,
         "y1": 60,
-        "x2": 20,
+        "x2": 26,
         "y2": 70
       }
     },
@@ -176,29 +413,29 @@
       "label": "Restroom B",
       "type": "support",
       "bounds_ft": {
-        "x1": 20,
+        "x1": 26,
         "y1": 60,
-        "x2": 28,
+        "x2": 34,
         "y2": 70
       }
     },
     {
-      "id": "reception_support",
-      "label": "Reception Support / Storage",
+      "id": "support_a",
+      "label": "Building Operations / Life Safety",
       "type": "secure_support",
       "bounds_ft": {
-        "x1": 28,
+        "x1": 34,
         "y1": 60,
-        "x2": 40,
+        "x2": 42,
         "y2": 72
       }
     },
     {
-      "id": "it_electrical",
+      "id": "support_b",
       "label": "IT / Electrical",
       "type": "secure_support",
       "bounds_ft": {
-        "x1": 40,
+        "x1": 42,
         "y1": 60,
         "x2": 50,
         "y2": 72
@@ -216,151 +453,15 @@
       }
     }
   ],
-  "openings": [
-    {
-      "id": "south_public_entrance",
-      "type": "double_glazed_entry_sequence",
-      "zone": "entry_vestibule",
-      "facade": "south",
-      "center_ft": {
-        "x": 36,
-        "y": 0
-      },
-      "exact_leaf_dimensions_locked": false
-    }
-  ],
-  "canonical_objects": [
-    {
-      "id": "reception_feature_wall",
-      "type": "wall_feature",
-      "bounds_ft": {
-        "x1": 28,
-        "y1": 50,
-        "x2": 44,
-        "y2": 54
-      },
-      "logo_asset": "../../../../assets/img/equity-uprise-logo.webp"
-    },
-    {
-      "id": "reception_desk",
-      "type": "furniture",
-      "bounds_ft": {
-        "x1": 30,
-        "y1": 44,
-        "x2": 42,
-        "y2": 47
-      },
-      "facing": "south",
-      "material_id": "reception_stone_dark"
-    },
-    {
-      "id": "directory",
-      "type": "interactive_terminal",
-      "bounds_ft": {
-        "x1": 49,
-        "y1": 24,
-        "x2": 51,
-        "y2": 29
-      },
-      "facing": "west"
-    }
-  ],
-  "production_default_furniture": [
-    {
-      "id": "lounge_sofa",
-      "zone": "visitor_lounge",
-      "type": "sofa",
-      "bounds_ft": {
-        "x1": 3,
-        "y1": 14,
-        "x2": 10,
-        "y2": 17
-      }
-    },
-    {
-      "id": "lounge_chair_1",
-      "zone": "visitor_lounge",
-      "type": "lounge_chair",
-      "bounds_ft": {
-        "x1": 12,
-        "y1": 14,
-        "x2": 15,
-        "y2": 17
-      }
-    },
-    {
-      "id": "lounge_chair_2",
-      "zone": "visitor_lounge",
-      "type": "lounge_chair",
-      "bounds_ft": {
-        "x1": 12,
-        "y1": 22,
-        "x2": 15,
-        "y2": 25
-      }
-    },
-    {
-      "id": "lounge_table",
-      "zone": "visitor_lounge",
-      "type": "low_table",
-      "center_ft": {
-        "x": 9.5,
-        "y": 20
-      },
-      "diameter_ft": 4
-    },
-    {
-      "id": "intake_table",
-      "zone": "intake_room",
-      "type": "meeting_table",
-      "bounds_ft": {
-        "x1": 6,
-        "y1": 36.5,
-        "x2": 12,
-        "y2": 39.5
-      }
-    },
-    {
-      "id": "intake_chair_1",
-      "zone": "intake_room",
-      "type": "meeting_chair",
-      "center_ft": {
-        "x": 5,
-        "y": 38
-      }
-    },
-    {
-      "id": "intake_chair_2",
-      "zone": "intake_room",
-      "type": "meeting_chair",
-      "center_ft": {
-        "x": 13,
-        "y": 38
-      }
-    },
-    {
-      "id": "intake_chair_3",
-      "zone": "intake_room",
-      "type": "meeting_chair",
-      "center_ft": {
-        "x": 8,
-        "y": 35
-      }
-    },
-    {
-      "id": "intake_chair_4",
-      "zone": "intake_room",
-      "type": "meeting_chair",
-      "center_ft": {
-        "x": 10,
-        "y": 41
-      }
-    }
-  ],
+  "spheres": [],
+  "south_condition": "ground-level public entrance",
   "camera_ref": "floor-01-camera.json",
   "materials_ref": "floor-01-materials.json",
   "lighting_ref": "floor-01-lighting.json",
   "hotspots_ref": "floor-01-hotspots.json",
   "routing_ref": "floor-01-routing.json",
-  "states_ref": "floor-01-states.json"
+  "states_ref": "floor-01-states.json",
+  "digital_twin_program_ref": "floor-01/floor-01-digital-twin-program.json",
+  "site_egress_ref": "floor-01-site-egress.json",
+  "basement_program_ref": "../basement-b1-program.json"
 }

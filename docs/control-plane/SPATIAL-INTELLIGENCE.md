@@ -83,6 +83,17 @@ terrain are added afterwards when their keys exist, each timed out and each
 falling back to the open stack. Every boot step is bounded and reported; a
 fatal error shows a diagnostic with Retry and Continue rather than a spinner.
 
+
+## Equity Uprise Floor 6 projection
+
+Equity Uprise consumes Seek First / Hitman's Halo as a shared spatial-intelligence instrument; it does not receive a second spatial backend.
+
+`GET /v1/equity-uprise/halo-globe` is the sanitized Floor 6 projection contract. It may be called without a session, but it is intentionally **read-only** and returns only display-safe layer metadata whose effective house-org entitlement both allows `PUBLIC_OPEN` consumption and sets `public_display=true`. It returns no stored entity rows, provider responses, credential binding names, owner health, ingestion controls, audit state, or write tools.
+
+If a valid Equity Uprise session is present, the response may identify the caller's UI tier (`member`, `staff`, or `owner-admin`). This does not widen the public data projection by itself. The house owner receives a handoff to the protected `/internal/seek-first` console; the owner surface remains behind the existing house-owner and Cloudflare Access boundaries.
+
+This separation is deliberate: **visibility of the globe is not authority to operate the spatial plane**.
+
 ## The entitlement firewall
 
 `workers/mccluster/src/seek-first/entitlements.js`.

@@ -59,39 +59,39 @@ Do not confuse the six-floor Equity Uprise building with the separate `docs/upri
 For Floor 1 specifically, the canonical asset set is:
 - `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
 - `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-viable-schematic-v3.dxf`
-- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-viable-schematic-v3.svg`
-- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-viable-schematic-v3.png`
+- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png`
 
 For Floor 2 specifically, the canonical asset set is:
 - `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
 - `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png`
 
 For Floor 3, also read:
 - `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
 - `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
 - `docs/design/equity-uprise-building/references/floor-03/README.md`
-- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg`
 
 For Floor 4, also read:
 - `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
 - `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
 - `docs/design/equity-uprise-building/references/floor-04/README.md`
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png`
 
 For Floor 5, also read:
 - `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
 - `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
 - `docs/design/equity-uprise-building/references/floor-05/README.md`
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png`
 
 Before any Floor 6, roof, exterior-master, rooftop 3D, cross-site-flight, helicopter/VTOL, or building-crown work, also read `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`.
 
@@ -109,3 +109,53 @@ Before any Floor 6 roof-interface, Level 7 roof, exterior-master, rooftop 3D, cr
 
 ### Equity Uprise deterministic Floor 1 implementation
 For any Floor 1 3D reconstruction, GLB/glTF export, Three.js/browser scene, hotspot implementation, lighting/material setup, or scene-state work, read `docs/design/equity-uprise-building/production/floor-01/floor-01-scene-manifest.json` and its companion files **after** the canonical Floor 1 written spec, schematic basis, and DXF/SVG. The production package cannot override architectural authority.
+
+## Equity Uprise Core V2 migration authority
+
+When working on branch `architecture/equity-uprise-core-v2` or on artifacts explicitly labeled Core V2, read these **before any floor-specific production file**:
+
+1. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
+2. `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
+3. `docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md`
+4. `docs/design/equity-uprise-building/production/building-core-v2.json`
+5. `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
+6. `docs/design/equity-uprise-building/production/building-v2-validation.json`
+7. `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
+8. the floor-specific spec, schematic basis, Core V2 DXF/SVG, and production package.
+
+Core V2 shared geometry is not floor-local:
+
+- passenger elevator: X54–62 / Y34–44;
+- service/freight elevator: X0–8 / Y60–72;
+- revised Stair B: X8–18 / Y54–72;
+- Stair A: X60–72 / Y54–72;
+- MEP/riser: approximately X50–60 / Y66–72;
+- floor elevations: 0 / 13.5 / 27 / 40.5 / 54 / 67.5 / 81 ft.
+
+Rules:
+
+- Floor-specific files may add program but may not redefine shared vertical systems.
+- Every Equity Uprise capability must remain mapped through `equity-uprise-capability-map-v2.json`; do not silently add, remove, relocate, or publicize a capability in spatial work.
+- Preserve each capability's declared implementation status and public/private/approval boundary.
+- Both stairs must span the full 13'-6" between finished floors in combined geometry.
+- Do not use the old X0–12/Y54–72 Stair B assumption for new Core V2 work.
+- Do not treat the service/freight elevator as a substitute for a required exit.
+- Do not use Core V1 DXF/SVG/PNG files for new Core V2 modeling.
+- Per-floor viewers are derived isolated views; the combined stacked building is the vertical-continuity authority.
+- Generated images/renders never override the written/shared geometry.
+- All architecture remains schematic and NOT FOR CONSTRUCTION pending licensed professional review.
+
+### Equity Uprise repo-to-building program authority
+
+For any Equity Uprise building, floor, room, 3D, 360, hotspot, navigation or spatial-program task on the Core V2 branch, read these before floor-local artifacts:
+
+1. `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
+2. `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
+3. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
+4. `docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md`
+5. `docs/design/equity-uprise-building/production/building-core-v2.json`
+6. `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
+
+The capability map controls **what the building represents**. The Core V2 spec/JSON control **shared geometry and vertical continuity**. Floor-local files may refine their level but may not silently remove/rename repo-backed capabilities, expose private or approval-gated systems publicly, restore archived Core V1 plans, or imply passenger-elevator service to Level 7.
+
+Run `production/verify_equity_uprise_program_coverage.py` after program/routing changes.
