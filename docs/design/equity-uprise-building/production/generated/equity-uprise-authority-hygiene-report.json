@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
   "scope": "Equity Uprise active authority hygiene",
-  "checks_total": 268,
-  "checks_passed": 268,
+  "checks_total": 286,
+  "checks_passed": 286,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -107,6 +107,16 @@
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
     {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/HISTORICAL-REFERENCE-BUILDS.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/HISTORICAL-REFERENCE-BUILDS.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
       "passed": true,
       "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
@@ -127,6 +137,16 @@
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
     {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/MASTER-INDEX.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/MASTER-INDEX.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
       "passed": true,
       "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
@@ -143,6 +163,16 @@
     },
     {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/BUILD-PIPELINE.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/BUILD-PIPELINE.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "passed": true,
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
@@ -203,6 +233,16 @@
     },
     {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/FLOOR-01-V1-V2-MERGE-MAP.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/FLOOR-01-V1-V2-MERGE-MAP.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "passed": true,
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
@@ -287,12 +327,32 @@
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
     {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/README.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/README.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
       "passed": true,
       "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
     },
     {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/PROJECT-STATE.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/PROJECT-STATE.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "passed": true,
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
@@ -313,6 +373,16 @@
     },
     {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/AGENTS.md :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/AGENTS.md :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "passed": true,
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
@@ -373,6 +443,16 @@
     },
     {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/audit_building_context.py :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/audit_building_context.py :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "passed": true,
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
@@ -1073,6 +1153,16 @@
     },
     {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/floor-01/floor-01-hotspots.json :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01_v2.py :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01_v2.py :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "passed": true,
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
