@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Core V2 generated plan semantic/artifact validation",
-  "checks_total": 312,
-  "checks_passed": 312,
+  "checks_total": 316,
+  "checks_passed": 316,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -23,22 +23,32 @@
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png"
     },
     {
-      "name": "L1 SVG label ARRIVAL / IDENTITY WALL",
+      "name": "L1 SVG label ARRIVAL ATRIUM",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "L1 DXF label ARRIVAL / IDENTITY WALL",
+      "name": "L1 DXF label ARRIVAL ATRIUM",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "L1 SVG label ARRIVAL / ROUTING DIRECTORY",
+      "name": "L1 SVG label BUILDING OPERATIONS / LIFE SAFETY",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "L1 DXF label ARRIVAL / ROUTING DIRECTORY",
+      "name": "L1 DXF label BUILDING OPERATIONS / LIFE SAFETY",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label DEVELOPMENT PASSPORT STUDIO",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label DEVELOPMENT PASSPORT STUDIO",
       "passed": true,
       "detail": ""
     },
@@ -93,12 +103,42 @@
       "detail": ""
     },
     {
+      "name": "L1 SVG label JOURNEY WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label JOURNEY WALL",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "L1 SVG label MEP / RISERS",
       "passed": true,
       "detail": ""
     },
     {
       "name": "L1 DXF label MEP / RISERS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label NEXT ACTION / BUILDING DIRECTORY",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label NEXT ACTION / BUILDING DIRECTORY",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 SVG label ORIENTATION LOUNGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "L1 DXF label ORIENTATION LOUNGE",
       "passed": true,
       "detail": ""
     },
@@ -123,22 +163,12 @@
       "detail": ""
     },
     {
-      "name": "L1 SVG label RECEPTION DESK",
+      "name": "L1 SVG label RECEPTION / CONCIERGE / SECURITY DESK",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "L1 DXF label RECEPTION DESK",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "L1 SVG label RECEPTION SUPPORT / STORAGE",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "L1 DXF label RECEPTION SUPPORT / STORAGE",
+      "name": "L1 DXF label RECEPTION / CONCIERGE / SECURITY DESK",
       "passed": true,
       "detail": ""
     },
@@ -183,16 +213,6 @@
       "detail": ""
     },
     {
-      "name": "L1 SVG label VISITOR LOUNGE",
-      "passed": true,
-      "detail": ""
-    },
-    {
-      "name": "L1 DXF label VISITOR LOUNGE",
-      "passed": true,
-      "detail": ""
-    },
-    {
       "name": "L1 SVG has no stale labels",
       "passed": true,
       "detail": ""
@@ -205,12 +225,12 @@
     {
       "name": "L1 PNG signature",
       "passed": true,
-      "detail": "bytes=76134"
+      "detail": "bytes=79714"
     },
     {
       "name": "L1 PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=76134"
+      "detail": "bytes=79714"
     },
     {
       "name": "L1 active plan triplet only",
@@ -1565,7 +1585,7 @@
     {
       "name": "contact sheet nontrivial size",
       "passed": true,
-      "detail": "bytes=113148"
+      "detail": "bytes=115618"
     }
   ]
 }
