@@ -26,6 +26,7 @@ HERE=Path(__file__).resolve().parent
 BUILDING=HERE.parent
 core=json.loads((HERE/"building-core-v2.json").read_text())
 programs=json.loads((HERE/"core-v2-floor-programs.json").read_text())
+site=json.loads((HERE/"floor-01"/"floor-01-site-egress.json").read_text())
 
 ASSET_NAMES={
  1:"equity-uprise-floor-01-core-v2-schematic-v1",
@@ -37,7 +38,7 @@ ASSET_NAMES={
  7:"equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1",
 }
 SPEC_NAMES={
- 1:"FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+ 1:"FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md",
  2:"FLOOR-02-PUBLIC-FORUM-360-SPEC.md",
  3:"FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md",
  4:"FLOOR-04-MEDIA-CULTURE-360-SPEC.md",
@@ -304,7 +305,9 @@ for level in programs["levels"]:
         manifest["site_egress_ref"]="floor-01-site-egress.json"
         manifest["basement_program_ref"]="../basement-b1-program.json"
         manifest["authority"]["site_egress_authority"]=["../../FLOOR-01-SITE-EGRESS-SIMULATION.md","floor-01-site-egress.json"]
-        manifest["authority"]["basement_support_authority"]=["../../BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md","../basement-b1-program.json"]
+        manifest["authority"]["basement_support_authority"]=["../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md","../basement-b1-program.json"]
+        manifest["simulation_objects_ref"]="floor-01-simulation-objects.json"
+        manifest["site_plan_geometry_authority"]=["../../references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf","../../references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg","../../references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png"]
 
     mats={"schema_version":"2.0.0","scene_id":scene_id,"pbr_convention":"metallic-roughness","materials":MATERIALS,
           "rules":["Exact Equity Uprise logo artwork must be used where specified.","Materials may not imply geometry changes."]}
@@ -456,6 +459,19 @@ Floor 1 is the public Arrival / Orientation / Intake layer and the modeled level
 Live B1 / tunnel access is not part of ordinary Floor 1 navigation. Learner/instructor building-systems work launches a sandboxed clone; live underground access remains restricted to McCluster house-owner or explicitly delegated underground-operations-admin authority.
 """
 
+    simulation_objects=None
+    if n==1:
+        objects=[]
+        for item in site.get("site_elements",[]):
+            objects.append({"object_id":item["id"],"system":"site_egress","type":item.get("kind","site"),"label":item["label"],"geometry":{k:item[k] for k in ("bounds_ft","polyline_ft","offset_from_building_ft") if k in item},"scenario_controllable":item.get("kind") in ("egress_walk","assembly","service","keep_clear")})
+        for obj in site.get("exterior_openings",[]):
+            objects.append({"object_id":obj["object_id"],"system":"architectural_access_life_safety","type":"exterior_opening","label":obj["label"],"location":obj["location"],"access_class":obj["access_class"],"normal_state":obj["normal_state"],"states":obj["states"],"scenario_controllable":obj.get("scenario_controllable",False)})
+        for obj in site.get("floor1_discharge_controls",[]):
+            objects.append({"object_id":obj["object_id"],"system":obj["system"],"type":"discharge_direction_control","label":obj["object_id"],"location":obj["location"],"states":obj["states"],"scenario_controllable":obj.get("scenario_controllable",False),"normal_access_policy":obj.get("normal_access_policy"),"b1_to_floor1_egress":obj.get("b1_to_floor1_egress")})
+        for obj in site.get("emergency_equipment",[]):
+            objects.append({"object_id":obj["object_id"],"system":"life_safety","type":"emergency_equipment","label":obj["label"],"location_ft":obj["location_ft"],"visibility":obj["visibility"],"scenario_controllable":False})
+        simulation_objects={"schema_version":"1.0.0","scene_id":scene_id,"source_ref":"floor-01-site-egress.json","objects":objects,"rules":["Simulation objects are derived from canonical site/egress authority.","Presence in this file does not grant operational authorization.","Geometry remains schematic and not for construction."]}
+
     files={
       "README.md":readme,
       f"floor-{n:02d}-scene-manifest.json":json.dumps(manifest,indent=2)+"\n",
@@ -467,6 +483,8 @@ Live B1 / tunnel access is not part of ordinary Floor 1 navigation. Learner/inst
       f"floor-{n:02d}-states.json":json.dumps(states,indent=2)+"\n",
       f"floor-{n:02d}-geometry-notes.md":notes,
     }
+    if n==1:
+        files["floor-01-simulation-objects.json"]=json.dumps(simulation_objects,indent=2)+"\n"
     for name,data in files.items():
         (floor_dir/name).write_text(data)
 

@@ -45,7 +45,7 @@ manifest={
     "tunnel_network_ref":"../underground-tunnel-network.json",
     "authority":{
         "building_core":["../../BUILDING-CORE-V2-SPEC.md","../building-core-v2.json"],
-        "basement":["../../BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md","../basement-b1-program.json"],
+        "basement":["../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md","../basement-b1-program.json"],
         "tunnel":["../../UNDERGROUND-TUNNEL-NETWORK-SPEC.md","../underground-tunnel-network.json"],
         "code_reference":"../../SIMULATION-CODE-REFERENCE-PROFILE.md"
     },
@@ -174,7 +174,7 @@ Authority:
 - `../building-core-v2.json`
 - `../basement-b1-program.json`
 - `../underground-tunnel-network.json`
-- `../../BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
 - `../../UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
 
 Canonical plan:

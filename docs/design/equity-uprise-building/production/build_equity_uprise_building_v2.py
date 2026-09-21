@@ -244,6 +244,10 @@ for i,obj in enumerate(SITE.get("floor1_discharge_controls",[]),1):
     else:
         add_box(f"SITE_discharge_barrier_{i:02d}",(8.5,54.4,17.5,55.0),.05,3.0,COL["site_marker"])
 
+for i,obj in enumerate(SITE.get("emergency_equipment",[]),1):
+    p=obj["location_ft"]
+    add_cyl(f"SITE_equipment_{i:02d}",p["x"],p["y"],.05,.22,4.0,COL["site_marker"])
+
 scene.metadata.update({
  "building_id":"equity-uprise-building",
  "core_id":"equity-uprise-core-v2",

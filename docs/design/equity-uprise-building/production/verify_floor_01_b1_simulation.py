@@ -18,6 +18,7 @@ COMPETENCY_CATALOG=json.loads((DEV_DIR/"competency-catalog.json").read_text())
 F1_MANIFEST=json.loads((HERE/"floor-01"/"floor-01-scene-manifest.json").read_text())
 F1_ROUTING=json.loads((HERE/"floor-01"/"floor-01-routing.json").read_text())
 F1_STATES=json.loads((HERE/"floor-01"/"floor-01-states.json").read_text())
+SIM_OBJECTS=json.loads((HERE/"floor-01"/"floor-01-simulation-objects.json").read_text())
 B1_DIR=HERE/"basement-b1"
 
 checks=[]
@@ -126,6 +127,14 @@ state_ids={x.get("id") for x in F1_STATES.get("states",[])}
 check("Floor 1 states include underground access","underground_operations_access" in state_ids,str(sorted(state_ids)))
 floor_focus=next((x for x in F1_STATES.get("states",[]) if x.get("id")=="floor_focus"),{})
 check("Floor 1 state label current",floor_focus.get("label")==EXPECTED_F1_TITLE,str(floor_focus))
+sim_ids={x.get("object_id") for x in SIM_OBJECTS.get("objects",[])}
+required_sim_ids={x["object_id"] for x in SITE.get("exterior_openings",[])} | {x["object_id"] for x in SITE.get("floor1_discharge_controls",[])} | {x["object_id"] for x in SITE.get("emergency_equipment",[])} | {x["id"] for x in SITE.get("site_elements",[])}
+check("Floor 1 simulation-object set covers site authority",required_sim_ids.issubset(sim_ids),str(sorted(required_sim_ids-sim_ids)))
+check("canonical Floor 1 long-form authority exists",(HERE.parent/"FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md").exists(),str(HERE.parent/"FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md"))
+check("canonical B1 long-form authority exists",(HERE.parent/"BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md").exists(),str(HERE.parent/"BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md"))
+old_f1=(HERE.parent/"FLOOR-01-LOBBY-INTAKE-360-SPEC.md");old_b1=(HERE.parent/"BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md")
+check("old Floor 1 authority is compatibility stub",old_f1.exists() and "DEPRECATED COMPATIBILITY PATH" in old_f1.read_text(),str(old_f1))
+check("old B1 authority is compatibility stub",old_b1.exists() and "DEPRECATED COMPATIBILITY PATH" in old_b1.read_text(),str(old_b1))
 
 # Restricted B1 derived package is required for future render/admin operation.
 b1_required=[

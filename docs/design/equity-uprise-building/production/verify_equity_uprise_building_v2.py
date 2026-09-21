@@ -70,6 +70,9 @@ for oid in ["F1-DOOR-STAIR-A-DISCHARGE","F1-DOOR-STAIR-B-DISCHARGE","F1-DOOR-SER
         errors.append(f"missing exterior opening {oid}")
 if len(SITE.get("floor1_discharge_controls",[])) != 2:
     errors.append("Floor 1 does not define both basement-direction discharge controls")
+equipment_nodes=[n for n in names if n.startswith("SITE_equipment_")]
+if len(equipment_nodes)!=len(SITE.get("emergency_equipment",[])):
+    errors.append(f"generated GLB emergency equipment marker count {len(equipment_nodes)} != {len(SITE.get('emergency_equipment',[]))}")
 
 # Floor 6 Halo Globe proof.
 halo=[(lvl,s) for lvl in PROGRAMS["levels"] for s in lvl.get("spheres",[]) if s.get("route_key")=="halo_spatial_intelligence"]

@@ -13,6 +13,7 @@ BUILDING = HERE.parent
 REFS = BUILDING / "references"
 PROGRAM = json.loads((HERE / "core-v2-floor-programs.json").read_text())
 B1 = json.loads((HERE / "basement-b1-program.json").read_text())
+SITE = json.loads((HERE / "floor-01" / "floor-01-site-egress.json").read_text())
 PLAN_LEVELS = [B1] + PROGRAM["levels"]
 
 OUT_NAMES = {
@@ -196,6 +197,22 @@ if manifest_path.exists():
             files.get("png", "").endswith(expected_base + ".png"),
             files.get("png", ""),
         )
+
+site_dir=REFS/"floor-01-site"
+site_base="equity-uprise-floor-01-site-egress-core-v2-schematic-v1"
+site_readme=site_dir/"README.md";site_svg=site_dir/f"{site_base}.svg";site_dxf=site_dir/f"{site_base}.dxf";site_png=site_dir/f"{site_base}.png";site_manifest=site_dir/"floor-01-site-plan-generation-manifest.json"
+check("Floor 1 site plan README exists",site_readme.exists(),str(site_readme))
+for p in (site_svg,site_dxf,site_png,site_manifest): check(f"Floor 1 site artifact exists: {p.name}",p.exists(),str(p))
+if site_readme.exists(): check("Floor 1 site README generated-only","generated-only" in site_readme.read_text(errors="ignore").lower(),str(site_readme))
+if site_svg.exists() and site_dxf.exists():
+    st=site_svg.read_text(errors="ignore");dt=site_dxf.read_text(errors="ignore")
+    required=[x["label"].upper() for x in SITE.get("site_elements",[])] + [x["label"].upper() for x in SITE.get("exterior_openings",[])] + [x["label"].upper() for x in SITE.get("emergency_equipment",[])]
+    for label in sorted(set(required)):
+        check(f"Floor 1 site SVG label {label}",label in st,label);check(f"Floor 1 site DXF label {label}",label in dt,label)
+if site_png.exists():
+    raw=site_png.read_bytes();check("Floor 1 site PNG signature",raw[:8]==b"\x89PNG\r\n\x1a\n",f"bytes={len(raw)}");check("Floor 1 site PNG nontrivial size",len(raw)>10000,f"bytes={len(raw)}")
+active_site=sorted(p.name for p in site_dir.iterdir() if p.is_file() and p.suffix.lower() in {".dxf",".svg",".png"}) if site_dir.exists() else []
+check("Floor 1 site active plan triplet only",active_site==sorted([f"{site_base}.dxf",f"{site_base}.svg",f"{site_base}.png"]),json.dumps(active_site))
 
 sheet = REFS / "equity-uprise-core-v2-plan-contact-sheet.png"
 check("contact sheet exists", sheet.exists())

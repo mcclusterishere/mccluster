@@ -46,6 +46,9 @@ jobs:
       - name: Verify repo-source classification
         run: python docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
 
+      - name: Verify active Equity Uprise authority hygiene
+        run: python docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py
+
       - name: Generate production packages in workspace
         run: python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
 
@@ -119,6 +122,7 @@ jobs:
       - name: Regenerate all derived building outputs
         run: |
           python docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
+          python docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py
           python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
           python docs/design/equity-uprise-building/production/generate_b1_production_package.py
           python docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py
