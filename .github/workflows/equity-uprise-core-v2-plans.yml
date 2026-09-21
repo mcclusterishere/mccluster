@@ -15,8 +15,10 @@ permissions:
   contents: write
 
 concurrency:
-  group: equity-uprise-core-v2-plans
-  cancel-in-progress: true
+  # All Core V2 workflows write generated artifacts back to the same branch.
+  # Serialize writers so plan/package/GLB commits cannot race one another.
+  group: equity-uprise-core-v2-writers
+  cancel-in-progress: false
 
 jobs:
   generate:
@@ -48,4 +50,5 @@ jobs:
             exit 0
           fi
           git commit -m "Generate Equity Uprise Core V2 plan references"
+          git pull --rebase origin architecture/equity-uprise-core-v2
           git push origin HEAD:architecture/equity-uprise-core-v2
