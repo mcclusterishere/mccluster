@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.3.0",
+  "schema_version": "2.4.0",
   "core_ref": "building-core-v2.json",
   "not_for_construction": true,
   "common_support": {
@@ -60,7 +60,7 @@
       "elevation_ft": 0,
       "south_condition": "ground-level public entrance",
       "support_names": [
-        "Reception Support / Storage",
+        "Building Operations / Life Safety",
         "IT / Electrical"
       ],
       "zones": [
@@ -73,17 +73,29 @@
             "x2": 43,
             "y2": 9
           },
-          "route_key": "institutional_overview"
+          "route_key": "orientation_experience"
         },
         {
-          "label": "Visitor Lounge",
+          "label": "Arrival Atrium",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 20,
+            "y1": 10,
+            "x2": 52,
+            "y2": 30
+          },
+          "route_key": "next_action"
+        },
+        {
+          "label": "Orientation Lounge",
           "kind": "zone",
           "bounds_ft": {
             "x1": 2,
             "y1": 12,
             "x2": 18,
             "y2": 28
-          }
+          },
+          "route_key": "orientation_experience"
         },
         {
           "label": "Intake / Verification Consultation",
@@ -94,10 +106,21 @@
             "x2": 16,
             "y2": 44
           },
-          "route_key": "verification"
+          "route_key": "service_intake"
         },
         {
-          "label": "Arrival / Identity Wall",
+          "label": "Development Passport Studio",
+          "kind": "zone",
+          "bounds_ft": {
+            "x1": 20,
+            "y1": 32,
+            "x2": 52,
+            "y2": 44
+          },
+          "route_key": "development_passport"
+        },
+        {
+          "label": "Journey Wall",
           "kind": "feature",
           "bounds_ft": {
             "x1": 28,
@@ -105,10 +128,10 @@
             "x2": 44,
             "y2": 54
           },
-          "route_key": "institutional_overview"
+          "route_key": "journey_progression"
         },
         {
-          "label": "Reception Desk",
+          "label": "Reception / Concierge / Security Desk",
           "kind": "furniture",
           "bounds_ft": {
             "x1": 30,
@@ -116,10 +139,10 @@
             "x2": 42,
             "y2": 47
           },
-          "route_key": "institutional_join"
+          "route_key": "concierge"
         },
         {
-          "label": "Arrival / Routing Directory",
+          "label": "Next Action / Building Directory",
           "kind": "terminal",
           "bounds_ft": {
             "x1": 49,
@@ -127,7 +150,7 @@
             "x2": 51,
             "y2": 29
           },
-          "route_key": "floor_selector"
+          "route_key": "next_action"
         }
       ],
       "feature_ids": [
@@ -139,7 +162,44 @@
         "program-support-funding",
         "enterprise-development"
       ],
-      "capability_map_ref": "equity-uprise-capability-map-v2.json"
+      "capability_map_ref": "equity-uprise-capability-map-v2.json",
+      "program_identity": "Arrival / Orientation / Intake",
+      "working_development_stage": "enter",
+      "acronym_word_status": "not_locked",
+      "digital_twin_program_ref": "floor-01/floor-01-digital-twin-program.json",
+      "digital_twin_spec_ref": "../FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
+      "interaction_modes": [
+        {
+          "id": "new_member_orientation",
+          "label": "New Member Orientation",
+          "route_key": "orientation_experience",
+          "access": "public"
+        },
+        {
+          "id": "passport_mode",
+          "label": "Development Passport",
+          "route_key": "development_passport",
+          "access": "authenticated-member"
+        },
+        {
+          "id": "public_service_clinic",
+          "label": "Public Service Clinic",
+          "route_key": "service_intake",
+          "access": "public-intake-private-session"
+        },
+        {
+          "id": "building_systems_lab",
+          "label": "Building Systems Lab",
+          "route_key": "building_systems_lab",
+          "access": "authorized-learner-or-instructor"
+        },
+        {
+          "id": "emergency_exercise",
+          "label": "Emergency Exercise",
+          "route_key": "emergency_exercise",
+          "access": "authorized-participant-or-instructor"
+        }
+      ]
     },
     {
       "level": 2,
