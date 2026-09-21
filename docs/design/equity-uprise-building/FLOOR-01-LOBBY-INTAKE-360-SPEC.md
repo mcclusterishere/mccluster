@@ -696,6 +696,8 @@ Before approving any new Floor 1 panorama, answer yes to every item:
 This floor is bound to the repo-wide program map:
 `production/equity-uprise-capability-map-v2.json`.
 
+The current repo-wide audit classifies **241 Equity Uprise semantic sources** and **55 canonical capabilities**. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+
 ### Primary capabilities
 - **M-Verified organization/profile intake** (`verification`, built_manual) — Intake / Verification Consultation on Floor 1; verified identity becomes part of Floor 3 network context.
 - **Stakeholder and organization intake** (`stakeholder-intake`, built) — Reception/intake on Floor 1; relationship graph on Floors 3 and 6.
@@ -704,8 +706,12 @@ This floor is bound to the repo-wide program map:
 - **Neutral listening/conversation agent** (`conversation-agent`, built) — Listening Lounge; human handoff routes to the Desk without making the agent an ideological authority.
 - **Policy Fellowship/application workflow** (`fellowship-applications`, built) — Fellowship application path, application tracking, and interview/meeting rooms.
 - **Interview requests, availability and calendar scheduling** (`interviews-calendar`, built_guarded) — Member / Meeting Check-In and two Interview / Stakeholder Meeting rooms; no private calendar data shown publicly.
+- **Program funding / support pathway** (`program-support-funding`, built_public_pathway) — Institutional Salon / Support represents donations, sponsorship and program-support routing. The detailed Equity Uprise Mission Fund record exists but its per-program meters/splits remain quiet until governance, custody, accounting and reporting are publishable.
+- **Equity Uprise enterprise development program lane** (`enterprise-development`, built_guarded) — Opportunity Exchange includes a business/workforce/digital-capacity program lane. Program fit, measurable connected revenue and signed agreements are reviewed in meeting/briefing spaces; the building does not hardcode prices or imply automatic approval.
 
 ### Boundary rule
-The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, financial/accounting details, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
 
 This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
