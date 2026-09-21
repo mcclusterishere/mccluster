@@ -155,18 +155,21 @@ wall_h(
     COLORS["wall"]
 )
 for x,y1,y2,label in [
-    (12,54,72,"stair_b_east"),
+    (12-int_t/2,54,72,"stair_b_east"),
     (20,60,70,"restroom_divider_1"),
     (28,60,72,"restroom_divider_2"),
     (40,60,72,"support_divider"),
     (50,60,72,"it_service_divider"),
     (54,60,66,"janitor_east"),
-    (60,54,72,"stair_a_west")
+    (60+int_t/2,54,72,"stair_a_west")
 ]:
-    wall_v(label, x,y1,y2,int_t,H,color=COLORS["wall"])
+    # Keep stair-enclosure partition thickness inside the locked plan envelopes.
+# Stair B is X0–12/Y54–72; Stair A is X60–72/Y54–72.
+# Boundary-centered walls would protrude outside those canonical envelopes.
+wall_v(label, x,y1,y2,int_t,H,color=COLORS["wall"])
 
-wall_h("stair_b_south", 0,12,54,core_t,H,[(7.5,10.5)],COLORS["core"])
-wall_h("stair_a_south", 60,72,54,core_t,H,[(61.5,64.5)],COLORS["core"])
+wall_h("stair_b_south", 0,12,54 + core_t/2,core_t,H,[(7.5,10.5)],COLORS["core"])
+wall_h("stair_a_south", 60,72,54 + core_t/2,core_t,H,[(61.5,64.5)],COLORS["core"])
 
 # Elevator.
 e = MANIFEST["fixed_core"]["elevator"]["bounds_ft"]
