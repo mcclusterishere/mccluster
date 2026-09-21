@@ -36,16 +36,19 @@ Read in this order:
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
    - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
    - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
+   - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
 
 4. The floor-specific schematic-plan basis.
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
    - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
    - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
+   - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
 
 5. The canonical floor-plan assets.
    - Floor 1: `docs/design/equity-uprise-building/references/floor-01/`
    - Floor 2: `docs/design/equity-uprise-building/references/floor-02/`
    - Floor 3: `docs/design/equity-uprise-building/references/floor-03/`
+   - Floor 4: `docs/design/equity-uprise-building/references/floor-04/`
 
 For geometry, prefer DXF → SVG → raster preview → later renders.
 
@@ -156,6 +159,36 @@ Canonical Floor 3 assets:
 - `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.svg`
 - `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.png`
+
+## Floor 4 locked geometry
+
+Floor 4 preserves the same building datum:
+
+- floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
+- grid: **18' × 18' coordination module**;
+- elevator hoistway: **X 54–62 / Y 34–44**;
+- Stair A: **X 60–72 / Y 54–72**;
+- Stair B: **X 0–12 / Y 54–72**;
+- MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
+- Media / Listening planning zone: approximately **X 24–48 / Y 28–50**;
+- Culture Archive / Rally Gallery: approximately **X 2–18 / Y 18–38**;
+- Creator Recording Room: **X 2–15 / Y 4–16**;
+- Edit / Review Suite: **X 17–31 / Y 4–16**;
+- media-control terminal: approximately **X 49–51 / Y 24–29**;
+- media/identity wall: approximately **X 22–50 / Y 50–54**;
+- 360 camera datum: approximately **(36,28), 5'-4" AFF**;
+- 0° north: Media + Culture wall / listening-screening room;
+- +90° east: elevator + media control;
+- 180° south: recording/edit rooms + sealed upper-floor glazing;
+- -90° west: Culture Archive / Rally Gallery.
+
+Floor 4 has **no exterior public entrance, balcony, or terrace**.
+
+Canonical Floor 4 assets:
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.svg`
+
+Any raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
 ## Locked six-floor program
 
