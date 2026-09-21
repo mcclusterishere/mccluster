@@ -24,7 +24,8 @@ const ROLE_TIERS = Object.freeze({
   host: 'member',
   client: 'member',
   editor: 'staff',
-  admin: 'owner-admin'
+  admin: 'staff',
+  owner: 'owner-admin'
 });
 
 export function haloAccessTier(role) {
