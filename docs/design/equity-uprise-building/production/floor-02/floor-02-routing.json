@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-floor-02",
+  "routes": {
+    "current_issue": {
+      "type": "url",
+      "url": "/topics.html"
+    },
+    "current_issues": {
+      "type": "url",
+      "url": "/topics.html"
+    },
+    "perspectives": {
+      "type": "url",
+      "url": "/topics.html",
+      "state_hint": "perspectives"
+    },
+    "opportunities": {
+      "type": "scene",
+      "scene_id": "equity-uprise-floor-03",
+      "enabled": true
+    },
+    "conversation": {
+      "type": "conversation",
+      "endpoint_hint": "eu-converse"
+    },
+    "member_dashboard": {
+      "type": "url",
+      "url": "/dashboard.html"
+    },
+    "floor_selector": {
+      "type": "floor_selector",
+      "levels": [
+        {
+          "level": 1,
+          "scene_id": "equity-uprise-floor-01",
+          "enabled": true
+        },
+        {
+          "level": 2,
+          "scene_id": "equity-uprise-floor-02",
+          "enabled": true
+        },
+        {
+          "level": 3,
+          "scene_id": "equity-uprise-floor-03",
+          "enabled": true
+        },
+        {
+          "level": 4,
+          "scene_id": "equity-uprise-floor-04",
+          "enabled": true
+        },
+        {
+          "level": 5,
+          "scene_id": "equity-uprise-floor-05",
+          "enabled": true
+        },
+        {
+          "level": 6,
+          "scene_id": "equity-uprise-floor-06",
+          "enabled": true
+        },
+        {
+          "level": 7,
+          "scene_id": "equity-uprise-level-07",
+          "enabled": false
+        }
+      ]
+    }
+  },
+  "security": {
+    "allowlisted_url_prefixes": [
+      "/"
+    ],
+    "allow_arbitrary_external_redirects": false
+  }
+}
