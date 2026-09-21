@@ -86,7 +86,7 @@ The entrance is the canonical **180°** direction from the 360 camera.
 
 ## 4. Reception
 
-### Feature wall
+### Arrival / Identity Wall
 
 - Coordinates/band: approximately **X 28–44, Y 50–54**
 - Contains the exact approved Equity Uprise logo in built work.
@@ -111,7 +111,7 @@ Reception is the canonical **0° / north-forward** visual anchor.
 - 6–8 seats maximum.
 - Keep a clear sightline to reception and elevator.
 
-### Intake / consultation room
+### Intake / verification consultation room
 
 - Planning zone: **X 2–16, Y 32–44**
 - Approximate inside size: **14' × 12'**
@@ -164,13 +164,13 @@ The north band is replanned around the Core V2 west service core.
 - Stair A **X60–72 / Y54–72** remains unobstructed;
 - floor-specific support rooms may not intrude into shared slab openings.
 
-## 7. Elevator lobby / directory
+## 7. Elevator lobby / arrival-routing directory
 
 ### Elevator lobby
 
 Keep approximately **6 ft or more** of clear approach in front of the elevator door.
 
-### Directory
+### Arrival / Routing Directory
 
 - One slim directory/check-in point only.
 - Approximate placement: **X 49–51, Y 24–29**
@@ -287,3 +287,13 @@ The drawing must show:
 - [ ] full 13'-6" stair rise represented in combined geometry
 - [ ] shared slab openings remain clear
 - [ ] floor elevation matches building-core-v2.json
+
+## Repo capability authority
+
+Program semantics for this floor are controlled by:
+- `production/equity-uprise-capability-map-v2.json`
+- `production/core-v2-floor-programs.json`
+- the companion long-form floor spec.
+
+This schematic basis controls plan geometry; it may not silently rename or delete a repo-backed capability represented by the floor program. Public/private and approval boundaries remain those of the source Equity Uprise system.
+
