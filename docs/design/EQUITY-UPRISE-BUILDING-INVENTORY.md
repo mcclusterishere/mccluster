@@ -4,7 +4,7 @@
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
 > Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 > Canonical Floor 1 semantic identity: **Arrival / Orientation / Intake**  
-> Canonical Floor 1 long-form spec (legacy-compatible filename): `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`  
+> Canonical Floor 1 long-form spec (legacy-compatible filename): `docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md`  
 Legacy-compatible filename; semantic identity is **Arrival / Orientation / Intake**.
 > **Mandatory spatial authority:** `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
 > Canonical Floor 1 plan assets: `docs/design/equity-uprise-building/references/floor-01/`
@@ -377,7 +377,7 @@ B1 also creates a persistent training substrate for building systems, emergency 
 Floor 1 remains the modeled level of exit discharge.
 
 Authority:
-- `equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
 - `equity-uprise-building/production/basement-b1-program.json`
 - `equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
 - `equity-uprise-building/production/underground-tunnel-network.json`
@@ -388,7 +388,7 @@ Derived restricted scene package:
 
 ## Floor 1 canonical long-form file
 
-`docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
+`docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md`
 
 ### Builder-spec workflow
 
@@ -647,7 +647,7 @@ The following chassis decisions are no longer open questions; floor-program sema
 **B1 — RECONCILED CURRENT PASS**
 
 Canonical authority:
-- `docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `docs/design/equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
 - `docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
 - `docs/design/equity-uprise-building/production/basement-b1-program.json`
 - `docs/design/equity-uprise-building/production/underground-tunnel-network.json`
@@ -658,7 +658,7 @@ B1 live operations remain restricted; learner/instructor work uses a sandboxed c
 
 Canonical authority:
 - `docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md`
-- `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md` *(legacy-compatible filename only)*
+- `docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md` *(legacy-compatible filename only)*
 - `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
 - `docs/design/equity-uprise-building/FLOOR-01-SITE-EGRESS-SIMULATION.md`
 - `docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json`
