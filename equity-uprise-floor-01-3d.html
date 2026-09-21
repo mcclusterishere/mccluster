@@ -2,17 +2,78 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Equity Uprise — Floor 1 — Arrival / Orientation / Intake — Core V2</title>
-<meta name="robots" content="noindex">\n<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">\n<meta http-equiv="Pragma" content="no-cache">\n<meta http-equiv="Expires" content="0">
-<style>html,body{height:100%;margin:0;background:#111;color:#fff;font-family:system-ui,sans-serif;display:grid;place-items:center}a{color:#fff}main{max-width:540px;padding:24px;text-align:center}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="equity-uprise-build" content="__STAMP__">
+<title>Equity Uprise — Floor 1 — Volumetric Core V2</title>
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+<style>
+:root{color-scheme:dark;--panel:rgba(9,10,12,.86);--edge:rgba(255,255,255,.15);--text:#f4f2ef;--dim:#b3b3b3;--red:#8b2025}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+model-viewer{width:100%;height:100%;background:radial-gradient(circle at 50% 38%,#34383c 0,#181b1e 43%,#0d0f11 100%);--poster-color:transparent}
+.hud{position:fixed;z-index:5;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));width:min(620px,calc(100vw - 24px));padding:12px 13px;border:1px solid var(--edge);border-radius:15px;background:var(--panel);backdrop-filter:blur(12px)}
+h1{font-size:14px;letter-spacing:.055em;margin:0 0 5px}p{font-size:11px;line-height:1.42;color:#ccc;margin:0 0 9px}.badges{display:flex;gap:6px;flex-wrap:wrap}.badge{font-size:9px;border:1px solid var(--edge);border-radius:999px;padding:3px 7px;color:#ddd}
+.controls{position:fixed;z-index:6;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 24px)}
+button{appearance:none;border:1px solid #585b5e;border-radius:999px;background:rgba(24,26,29,.92);color:#fff;font:700 10px system-ui;padding:8px 11px}button:active{background:var(--red)}
+.status{position:fixed;z-index:5;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));padding:7px 10px;border:1px solid var(--edge);border-radius:999px;background:var(--panel);font-size:9px;color:var(--dim)}
+@media(max-width:720px){.hud{width:calc(100vw - 24px)}.status{bottom:64px}.controls{left:12px;right:12px;justify-content:center}}
+</style>
 </head>
 <body>
-<main>
-<p>Opening Floor 1 — Arrival / Orientation / Intake as a derived view of the shared Core V2 stacked building…</p>
-<p><a href="/equity-uprise-building-core-v2-3d.html?floor=1&v=__STAMP__">Open Floor 1 — Arrival / Orientation / Intake</a></p>
-<p><small>Authority-driven Core V2 diagnostic preview · not for construction.</small></p>
-</main>
-<script>location.replace("/equity-uprise-building-core-v2-3d.html?floor=1&v=__STAMP__");</script>
+<model-viewer id="building"
+ src="/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__"
+ alt="Equity Uprise Floor 1 volumetric Core V2 architectural model"
+ camera-controls
+ touch-action="pan-y"
+ shadow-intensity="1.15"
+ shadow-softness=".8"
+ exposure="1.05"
+ environment-image="neutral"
+ interaction-prompt="auto"
+ min-camera-orbit="auto 20deg 12m"
+ max-camera-orbit="auto 88deg 70m"
+ camera-orbit="42deg 58deg 34m"
+ field-of-view="38deg"
+ ar
+ ar-modes="webxr scene-viewer quick-look">
+</model-viewer>
+
+<div class="hud">
+ <h1>EQUITY UPRISE · FLOOR 1 · REAL 3D · CORE V2</h1>
+ <p>This is the volumetric Floor 1 build: walls, glass entry, reception/Journey Wall, lounge, intake room, Passport Studio, passenger + service/freight elevators, and both protected stairs. Drag to orbit. Pinch to zoom.</p>
+ <div class="badges"><span class="badge">Arrival / Orientation / Intake</span><span class="badge">72′ × 72′</span><span class="badge">189 meshes</span><span class="badge">NOT FOR CONSTRUCTION</span></div>
+</div>
+
+<div class="controls">
+ <button data-view="iso">Isometric</button>
+ <button data-view="entry">Entry</button>
+ <button data-view="lounge">Lounge</button>
+ <button data-view="reception">Reception</button>
+ <button data-view="top">Top Cutaway</button>
+ <button id="spin">Auto Rotate</button>
+</div>
+<div class="status" id="status">Loading volumetric GLB…</div>
+
+<script>
+const mv=document.getElementById("building"),status=document.getElementById("status");
+const views={
+ iso:{orbit:"42deg 58deg 34m",target:"0m 0m 1.4m"},
+ entry:{orbit:"180deg 73deg 25m",target:"0m -4.5m 1.4m"},
+ lounge:{orbit:"125deg 68deg 18m",target:"-7m -3m 1.2m"},
+ reception:{orbit:"12deg 70deg 20m",target:"0m 4m 1.3m"},
+ top:{orbit:"0deg 24deg 39m",target:"0m 0m 0m"}
+};
+document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{
+ const v=views[b.dataset.view];mv.cameraOrbit=v.orbit;mv.cameraTarget=v.target;mv.jumpCameraToGoal();
+}));
+document.getElementById("spin").addEventListener("click",e=>{
+ mv.autoRotate=!mv.autoRotate;e.target.textContent=mv.autoRotate?"Stop Rotate":"Auto Rotate";
+});
+mv.addEventListener("load",()=>{status.textContent="Volumetric Floor 1 loaded · build __STAMP__";});
+mv.addEventListener("error",e=>{status.textContent="3D model failed to load";console.error(e);});
+</script>
 </body>
 </html>
