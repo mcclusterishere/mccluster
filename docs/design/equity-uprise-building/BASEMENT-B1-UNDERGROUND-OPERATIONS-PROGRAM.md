@@ -1,6 +1,6 @@
 # Equity Uprise — B1 Underground Operations / Technical Service Basement
 
-> Status: **CANONICAL SUPPORT + UNDERGROUND-OPERATIONS PROGRAM v0.2**
+> Status: **CANONICAL SUPPORT + UNDERGROUND-OPERATIONS PROGRAM v0.3**
 >
 > B1 is **not** part of the E-Q-U-I-T-Y developmental floor sequence.
 
@@ -69,6 +69,8 @@ The training environment may reproduce rooms, tunnel sectors, vehicles, utility 
 - **Tunnel Portal / Transfer Lock — X24–44 / Y64–72**
 
 Shared vertical-core geometry remains authoritative.
+
+The generated B1 plan must show a **reserved tunnel-continuation marker** at the north transfer lock. The marker communicates connection intent only; it may not invent route geometry or destination buildings before the future campus masterplan is authorized.
 
 ## Tunnel Operations Concourse / Security Gate
 
