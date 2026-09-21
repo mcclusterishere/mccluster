@@ -80,6 +80,13 @@ for level in PLAN_LEVELS:
     svg = floor_dir / f"{base}.svg"
     dxf = floor_dir / f"{base}.dxf"
     png = floor_dir / f"{base}.png"
+    readme = floor_dir / "README.md"
+
+    check(f"L{n} README exists",readme.exists(),str(readme))
+    if readme.exists():
+        readme_text=readme.read_text(errors="ignore")
+        check(f"L{n} README authoritative title",level["title"] in readme_text,level["title"])
+        check(f"L{n} README generated-only warning","generated-only" in readme_text.lower(),readme_text[:160])
 
     for p in (svg, dxf, png):
         check(f"L{n} {p.suffix} exists", p.exists(), str(p))
