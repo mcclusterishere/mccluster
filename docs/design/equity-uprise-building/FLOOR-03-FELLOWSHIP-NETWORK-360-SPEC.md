@@ -1,13 +1,14 @@
 # Equity Uprise Building — Floor 03: Fellowship + Network
 
-> Status: **CANONICAL FLOOR 3 SPEC — LOCKED FOR QUALITY CONTROL**  
+> Status: **WORKING PRE-ITERATIVE FLOOR 3 PROGRAM REFERENCE — CORE V2 CHASSIS RETAINED**  
+> Program note: this floor has **not** yet received the activity/space reconciliation completed for Floor 1. Preserve useful repo-derived requirements, but do not treat the current room program or working identity as final.  
 > Building: compact six-floor Equity Uprise headquarters / civic institute  
 > Floor identity: **Fellowship + Network**  
 > This file is the source of truth for Floor 3 floor-plan work, 360 panorama generation, hotspot placement, 3D reconstruction, and implementation.  
 > Do not generate a Floor 3 environment that conflicts with this document.
 
 
-> **Core V2 migration authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> **Core V2 chassis authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
 > Combined-model finished-floor elevation: **+27'-0"**.
 > Shared vertical systems override any stale Core V1 coordinate language on this branch.
 
