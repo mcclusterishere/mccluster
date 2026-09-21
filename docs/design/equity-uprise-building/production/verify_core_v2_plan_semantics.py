@@ -86,6 +86,7 @@ for level in PROGRAM["levels"]:
     dxf_text = dxf.read_text(errors="ignore")
 
     expected = [z["label"].upper() for z in level.get("zones", [])]
+    expected += [s["label"].upper() for s in level.get("spheres", [])]
     expected += support_labels(level)
     expected += core_labels
 
