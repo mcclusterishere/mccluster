@@ -1,102 +1,86 @@
 {
   "schema_version": "2.0.0",
-  "scene_id": "equity-uprise-floor-01",
+  "scene_id": "equity-uprise-level-07",
   "hotspots": [
     {
       "id": "hs_zone_01",
-      "label": "Entry Vestibule",
+      "label": "Roof Access / Core Envelope",
       "position_ft_local": {
-        "x": 36.0,
-        "y": 4.5,
+        "x": 57.0,
+        "y": 39.0,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 36.0,
-        "y": 4.5,
-        "z": 4.2
+        "x": 57.0,
+        "y": 39.0,
+        "z": 85.2
       },
       "action": "focus_zone",
       "zone_id": "zone_01"
     },
     {
       "id": "hs_zone_02",
-      "label": "Visitor Lounge",
+      "label": "Ecosystem Routing Interface",
       "position_ft_local": {
-        "x": 10.0,
-        "y": 20.0,
+        "x": 48.0,
+        "y": 27.0,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 10.0,
-        "y": 20.0,
-        "z": 4.2
+        "x": 48.0,
+        "y": 27.0,
+        "z": 85.2
       },
       "action": "focus_zone",
       "zone_id": "zone_02"
     },
     {
       "id": "hs_zone_03",
-      "label": "Intake / Consultation",
+      "label": "Candidate Mobility Zone",
       "position_ft_local": {
-        "x": 9.0,
-        "y": 38.0,
+        "x": 29.0,
+        "y": 27.0,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 9.0,
-        "y": 38.0,
-        "z": 4.2
+        "x": 29.0,
+        "y": 27.0,
+        "z": 85.2
       },
       "action": "focus_zone",
       "zone_id": "zone_03"
     },
     {
       "id": "hs_zone_04",
-      "label": "Reception Feature",
+      "label": "City Overlook",
       "position_ft_local": {
-        "x": 36.0,
-        "y": 52.0,
+        "x": 29.0,
+        "y": 3.0,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 36.0,
-        "y": 52.0,
-        "z": 4.2
+        "x": 29.0,
+        "y": 3.0,
+        "z": 85.2
       },
       "action": "focus_zone",
       "zone_id": "zone_04"
     },
     {
       "id": "hs_zone_05",
-      "label": "Reception Desk",
+      "label": "Service / Equipment Band",
       "position_ft_local": {
-        "x": 36.0,
-        "y": 45.5,
+        "x": 47.0,
+        "y": 66.0,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 36.0,
-        "y": 45.5,
-        "z": 4.2
+        "x": 47.0,
+        "y": 66.0,
+        "z": 85.2
       },
       "action": "focus_zone",
       "zone_id": "zone_05"
-    },
-    {
-      "id": "hs_zone_06",
-      "label": "Directory",
-      "position_ft_local": {
-        "x": 50.0,
-        "y": 26.5,
-        "z": 4.2
-      },
-      "position_ft_world": {
-        "x": 50.0,
-        "y": 26.5,
-        "z": 4.2
-      },
-      "action": "focus_zone",
-      "zone_id": "zone_06"
     },
     {
       "id": "hs_passenger_elevator",
@@ -104,7 +88,7 @@
       "position_ft_world": {
         "x": 53.5,
         "y": 39,
-        "z": 4.5
+        "z": 85.5
       },
       "action": "open_route",
       "route_key": "floor_selector"
@@ -115,7 +99,7 @@
       "position_ft_world": {
         "x": 63,
         "y": 56,
-        "z": 4.5
+        "z": 85.5
       },
       "action": "vertical_transition",
       "vertical_system_id": "stair-a-east"
@@ -126,7 +110,7 @@
       "position_ft_world": {
         "x": 15.5,
         "y": 56,
-        "z": 4.5
+        "z": 85.5
       },
       "action": "vertical_transition",
       "vertical_system_id": "stair-b-west"

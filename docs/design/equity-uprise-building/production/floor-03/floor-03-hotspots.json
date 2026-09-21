@@ -1,90 +1,90 @@
 {
   "schema_version": "2.0.0",
-  "scene_id": "equity-uprise-floor-01",
+  "scene_id": "equity-uprise-floor-03",
   "hotspots": [
     {
       "id": "hs_zone_01",
-      "label": "Entry Vestibule",
+      "label": "Opportunity Exchange",
       "position_ft_local": {
         "x": 36.0,
-        "y": 4.5,
+        "y": 40.0,
         "z": 4.2
       },
       "position_ft_world": {
         "x": 36.0,
-        "y": 4.5,
-        "z": 4.2
+        "y": 40.0,
+        "z": 31.2
       },
       "action": "focus_zone",
       "zone_id": "zone_01"
     },
     {
       "id": "hs_zone_02",
-      "label": "Visitor Lounge",
+      "label": "Identity / Opportunity Wall",
       "position_ft_local": {
-        "x": 10.0,
-        "y": 20.0,
+        "x": 36.0,
+        "y": 52.0,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 10.0,
-        "y": 20.0,
-        "z": 4.2
+        "x": 36.0,
+        "y": 52.0,
+        "z": 31.2
       },
       "action": "focus_zone",
       "zone_id": "zone_02"
     },
     {
       "id": "hs_zone_03",
-      "label": "Intake / Consultation",
+      "label": "People + Network Lounge",
       "position_ft_local": {
-        "x": 9.0,
-        "y": 38.0,
+        "x": 10.0,
+        "y": 26.0,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 9.0,
-        "y": 38.0,
-        "z": 4.2
+        "x": 10.0,
+        "y": 26.0,
+        "z": 31.2
       },
       "action": "focus_zone",
       "zone_id": "zone_03"
     },
     {
       "id": "hs_zone_04",
-      "label": "Reception Feature",
+      "label": "Interview Room A",
       "position_ft_local": {
-        "x": 36.0,
-        "y": 52.0,
+        "x": 8.0,
+        "y": 10.0,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 36.0,
-        "y": 52.0,
-        "z": 4.2
+        "x": 8.0,
+        "y": 10.0,
+        "z": 31.2
       },
       "action": "focus_zone",
       "zone_id": "zone_04"
     },
     {
       "id": "hs_zone_05",
-      "label": "Reception Desk",
+      "label": "Interview Room B",
       "position_ft_local": {
-        "x": 36.0,
-        "y": 45.5,
+        "x": 22.0,
+        "y": 10.0,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 36.0,
-        "y": 45.5,
-        "z": 4.2
+        "x": 22.0,
+        "y": 10.0,
+        "z": 31.2
       },
       "action": "focus_zone",
       "zone_id": "zone_05"
     },
     {
       "id": "hs_zone_06",
-      "label": "Directory",
+      "label": "Member / Interview Check-In",
       "position_ft_local": {
         "x": 50.0,
         "y": 26.5,
@@ -93,7 +93,7 @@
       "position_ft_world": {
         "x": 50.0,
         "y": 26.5,
-        "z": 4.2
+        "z": 31.2
       },
       "action": "focus_zone",
       "zone_id": "zone_06"
@@ -104,7 +104,7 @@
       "position_ft_world": {
         "x": 53.5,
         "y": 39,
-        "z": 4.5
+        "z": 31.5
       },
       "action": "open_route",
       "route_key": "floor_selector"
@@ -115,7 +115,7 @@
       "position_ft_world": {
         "x": 63,
         "y": 56,
-        "z": 4.5
+        "z": 31.5
       },
       "action": "vertical_transition",
       "vertical_system_id": "stair-a-east"
@@ -126,7 +126,7 @@
       "position_ft_world": {
         "x": 15.5,
         "y": 56,
-        "z": 4.5
+        "z": 31.5
       },
       "action": "vertical_transition",
       "vertical_system_id": "stair-b-west"

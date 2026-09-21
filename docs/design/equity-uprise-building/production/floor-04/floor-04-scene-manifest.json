@@ -1,7 +1,7 @@
 {
   "schema_version": "2.0.0",
-  "scene_id": "equity-uprise-floor-02",
-  "scene_name": "Equity Uprise Level 02 \u2014 Public Forum",
+  "scene_id": "equity-uprise-floor-04",
+  "scene_name": "Equity Uprise Level 04 \u2014 Media + Culture",
   "status": "core-v2-migration",
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
@@ -12,14 +12,14 @@
       "../building-core-v2.json"
     ],
     "spatial_authority": [
-      "../../FLOOR-02-PUBLIC-FORUM-360-SPEC.md",
-      "../../FLOOR-02-SCHEMATIC-PLAN-BASIS.md",
+      "../../FLOOR-04-MEDIA-CULTURE-360-SPEC.md",
+      "../../FLOOR-04-SCHEMATIC-PLAN-BASIS.md",
       "../../REFERENCE-AUTHORITY.md"
     ],
     "geometry_authority": [
-      "../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf",
-      "../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg",
-      "../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png"
+      "../../references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf",
+      "../../references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg",
+      "../../references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png"
     ],
     "rule": "Shared Core V2 vertical systems override floor-local geometry."
   },
@@ -37,7 +37,7 @@
     "width_ft": 72,
     "depth_ft": 72,
     "floor_to_floor_ft": 13.5,
-    "finished_floor_elevation_ft": 13.5
+    "finished_floor_elevation_ft": 40.5
   },
   "inherited_vertical_systems": {
     "passenger_elevator": {
@@ -240,7 +240,7 @@
   "zones": [
     {
       "id": "zone_01",
-      "label": "Public Forum Zone",
+      "label": "Media / Listening Zone",
       "type": "zone",
       "bounds_ft": {
         "x1": 24,
@@ -251,35 +251,68 @@
     },
     {
       "id": "zone_02",
-      "label": "Public Forum Feature Wall",
+      "label": "Media / Identity Wall",
       "type": "feature",
       "bounds_ft": {
-        "x1": 24,
+        "x1": 22,
         "y1": 50,
-        "x2": 48,
+        "x2": 50,
         "y2": 54
       }
     },
     {
       "id": "zone_03",
-      "label": "Listening Lounge",
+      "label": "Culture Archive / Rally Gallery",
       "type": "zone",
       "bounds_ft": {
         "x1": 2,
-        "y1": 14,
+        "y1": 18,
         "x2": 18,
-        "y2": 30
+        "y2": 38
       }
     },
     {
       "id": "zone_04",
-      "label": "Member Check-In",
+      "label": "Creator Recording Room",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 4,
+        "x2": 15,
+        "y2": 16
+      }
+    },
+    {
+      "id": "zone_05",
+      "label": "Edit / Review Suite",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 17,
+        "y1": 4,
+        "x2": 31,
+        "y2": 16
+      }
+    },
+    {
+      "id": "zone_06",
+      "label": "Media Control",
       "type": "terminal",
       "bounds_ft": {
         "x1": 49,
         "y1": 24,
         "x2": 51,
         "y2": 29
+      }
+    },
+    {
+      "id": "zone_07",
+      "label": "Listening Seating",
+      "type": "furniture",
+      "bounds_ft": {
+        "x1": 29,
+        "y1": 34,
+        "x2": 43,
+        "y2": 43
       }
     },
     {
@@ -317,7 +350,7 @@
     },
     {
       "id": "support_a",
-      "label": "Forum Storage",
+      "label": "Media Equipment / Storage",
       "type": "secure_support",
       "bounds_ft": {
         "x1": 34,
@@ -328,7 +361,7 @@
     },
     {
       "id": "support_b",
-      "label": "AV / IT",
+      "label": "Media / Music IT",
       "type": "secure_support",
       "bounds_ft": {
         "x1": 42,
@@ -350,10 +383,10 @@
     }
   ],
   "south_condition": "sealed upper-floor glazing",
-  "camera_ref": "floor-02-camera.json",
-  "materials_ref": "floor-02-materials.json",
-  "lighting_ref": "floor-02-lighting.json",
-  "hotspots_ref": "floor-02-hotspots.json",
-  "routing_ref": "floor-02-routing.json",
-  "states_ref": "floor-02-states.json"
+  "camera_ref": "floor-04-camera.json",
+  "materials_ref": "floor-04-materials.json",
+  "lighting_ref": "floor-04-lighting.json",
+  "hotspots_ref": "floor-04-hotspots.json",
+  "routing_ref": "floor-04-routing.json",
+  "states_ref": "floor-04-states.json"
 }

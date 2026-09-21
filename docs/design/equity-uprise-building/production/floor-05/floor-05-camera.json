@@ -1,6 +1,6 @@
 {
   "schema_version": "2.0.0",
-  "scene_id": "equity-uprise-floor-01",
+  "scene_id": "equity-uprise-floor-05",
   "cameras": [
     {
       "id": "canonical_360",
@@ -13,7 +13,7 @@
       "position_ft_world": {
         "x": 36,
         "y": 28,
-        "z": 5.333
+        "z": 59.333
       },
       "rotation_deg": {
         "yaw": 0,
@@ -28,12 +28,12 @@
       "position_ft_world": {
         "x": 36,
         "y": 15,
-        "z": 18
+        "z": 72
       },
       "look_at_ft_world": {
         "x": 36,
         "y": 38,
-        "z": 4
+        "z": 58
       },
       "fov_deg": 60,
       "authority": "production_default"

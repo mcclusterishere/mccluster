@@ -1,83 +1,139 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "scene_id": "equity-uprise-floor-02",
   "hotspots": [
     {
-      "id": "hs_forum_table",
-      "label": "Public Forum",
-      "position_ft": {
-        "x": 36,
-        "y": 39,
-        "z": 3.8
-      },
-      "action": "open_route",
-      "route_key": "current_issue"
-    },
-    {
-      "id": "hs_current_issues",
-      "label": "Current Issues",
-      "position_ft": {
-        "x": 29,
-        "y": 51.5,
-        "z": 5.5
-      },
-      "action": "open_route",
-      "route_key": "current_issues"
-    },
-    {
-      "id": "hs_perspectives",
-      "label": "Perspectives",
-      "position_ft": {
-        "x": 36,
-        "y": 51.5,
-        "z": 5.5
-      },
-      "action": "open_route",
-      "route_key": "perspectives"
-    },
-    {
-      "id": "hs_opportunities",
-      "label": "Opportunities",
-      "position_ft": {
-        "x": 43,
-        "y": 51.5,
-        "z": 5.5
-      },
-      "action": "open_route",
-      "route_key": "opportunities"
-    },
-    {
-      "id": "hs_listening",
-      "label": "Talk It Through",
-      "position_ft": {
-        "x": 10,
-        "y": 22,
+      "id": "hs_zone_01",
+      "label": "Public Forum Zone",
+      "position_ft_local": {
+        "x": 36.0,
+        "y": 39.0,
         "z": 4.2
       },
-      "action": "open_route",
-      "route_key": "conversation"
-    },
-    {
-      "id": "hs_member_checkin",
-      "label": "Member Check-In",
-      "position_ft": {
-        "x": 50,
-        "y": 26.5,
-        "z": 4.5
+      "position_ft_world": {
+        "x": 36.0,
+        "y": 39.0,
+        "z": 17.7
       },
-      "action": "open_route",
-      "route_key": "member_dashboard"
+      "action": "focus_zone",
+      "zone_id": "zone_01"
     },
     {
-      "id": "hs_elevator",
-      "label": "Elevator",
-      "position_ft": {
+      "id": "hs_zone_02",
+      "label": "Public Forum Feature Wall",
+      "position_ft_local": {
+        "x": 36.0,
+        "y": 52.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 36.0,
+        "y": 52.0,
+        "z": 17.7
+      },
+      "action": "focus_zone",
+      "zone_id": "zone_02"
+    },
+    {
+      "id": "hs_zone_03",
+      "label": "Listening Lounge",
+      "position_ft_local": {
+        "x": 10.0,
+        "y": 22.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 10.0,
+        "y": 22.0,
+        "z": 17.7
+      },
+      "action": "focus_zone",
+      "zone_id": "zone_03"
+    },
+    {
+      "id": "hs_zone_04",
+      "label": "Member Check-In",
+      "position_ft_local": {
+        "x": 50.0,
+        "y": 26.5,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 50.0,
+        "y": 26.5,
+        "z": 17.7
+      },
+      "action": "focus_zone",
+      "zone_id": "zone_04"
+    },
+    {
+      "id": "hs_zone_05",
+      "label": "Public / Support Corridor",
+      "position_ft_local": {
+        "x": 39.0,
+        "y": 57.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 39.0,
+        "y": 57.0,
+        "z": 17.7
+      },
+      "action": "focus_zone",
+      "zone_id": "north_corridor"
+    },
+    {
+      "id": "hs_zone_06",
+      "label": "Restroom A",
+      "position_ft_local": {
+        "x": 22.0,
+        "y": 65.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 22.0,
+        "y": 65.0,
+        "z": 17.7
+      },
+      "action": "focus_zone",
+      "zone_id": "restroom_a"
+    },
+    {
+      "id": "hs_passenger_elevator",
+      "label": "Passenger Elevator",
+      "position_ft_world": {
         "x": 53.5,
         "y": 39,
-        "z": 4.5
+        "z": 18.0
       },
       "action": "open_route",
       "route_key": "floor_selector"
+    },
+    {
+      "id": "hs_stair_a",
+      "label": "Stair A",
+      "position_ft_world": {
+        "x": 63,
+        "y": 56,
+        "z": 18.0
+      },
+      "action": "vertical_transition",
+      "vertical_system_id": "stair-a-east"
+    },
+    {
+      "id": "hs_stair_b",
+      "label": "Stair B",
+      "position_ft_world": {
+        "x": 15.5,
+        "y": 56,
+        "z": 18.0
+      },
+      "action": "vertical_transition",
+      "vertical_system_id": "stair-b-west"
     }
+  ],
+  "rules": [
+    "Hotspots do not redefine geometry.",
+    "Service/freight elevator is not exposed as a normal public hotspot."
   ]
 }

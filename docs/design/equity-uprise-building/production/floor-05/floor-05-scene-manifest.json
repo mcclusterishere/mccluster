@@ -1,7 +1,7 @@
 {
   "schema_version": "2.0.0",
-  "scene_id": "equity-uprise-floor-02",
-  "scene_name": "Equity Uprise Level 02 \u2014 Public Forum",
+  "scene_id": "equity-uprise-floor-05",
+  "scene_name": "Equity Uprise Level 05 \u2014 Policy + Proof",
   "status": "core-v2-migration",
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
@@ -12,14 +12,14 @@
       "../building-core-v2.json"
     ],
     "spatial_authority": [
-      "../../FLOOR-02-PUBLIC-FORUM-360-SPEC.md",
-      "../../FLOOR-02-SCHEMATIC-PLAN-BASIS.md",
+      "../../FLOOR-05-POLICY-PROOF-360-SPEC.md",
+      "../../FLOOR-05-SCHEMATIC-PLAN-BASIS.md",
       "../../REFERENCE-AUTHORITY.md"
     ],
     "geometry_authority": [
-      "../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf",
-      "../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg",
-      "../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png"
+      "../../references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf",
+      "../../references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg",
+      "../../references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png"
     ],
     "rule": "Shared Core V2 vertical systems override floor-local geometry."
   },
@@ -37,7 +37,7 @@
     "width_ft": 72,
     "depth_ft": 72,
     "floor_to_floor_ft": 13.5,
-    "finished_floor_elevation_ft": 13.5
+    "finished_floor_elevation_ft": 54
   },
   "inherited_vertical_systems": {
     "passenger_elevator": {
@@ -240,46 +240,79 @@
   "zones": [
     {
       "id": "zone_01",
-      "label": "Public Forum Zone",
+      "label": "Policy Lab",
       "type": "zone",
       "bounds_ft": {
-        "x1": 24,
+        "x1": 22,
         "y1": 28,
-        "x2": 48,
+        "x2": 50,
         "y2": 50
       }
     },
     {
       "id": "zone_02",
-      "label": "Public Forum Feature Wall",
+      "label": "Policy + Proof Wall",
       "type": "feature",
       "bounds_ft": {
-        "x1": 24,
+        "x1": 22,
         "y1": 50,
-        "x2": 48,
+        "x2": 50,
         "y2": 54
       }
     },
     {
       "id": "zone_03",
-      "label": "Listening Lounge",
+      "label": "Evidence + Proof Archive",
       "type": "zone",
       "bounds_ft": {
         "x1": 2,
-        "y1": 14,
+        "y1": 18,
         "x2": 18,
-        "y2": 30
+        "y2": 40
       }
     },
     {
       "id": "zone_04",
-      "label": "Member Check-In",
+      "label": "Source Review Room",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 2,
+        "y1": 4,
+        "x2": 15,
+        "y2": 16
+      }
+    },
+    {
+      "id": "zone_05",
+      "label": "Publication / Submission Review",
+      "type": "room",
+      "bounds_ft": {
+        "x1": 17,
+        "y1": 4,
+        "x2": 32,
+        "y2": 16
+      }
+    },
+    {
+      "id": "zone_06",
+      "label": "Research Navigation",
       "type": "terminal",
       "bounds_ft": {
         "x1": 49,
         "y1": 24,
         "x2": 51,
         "y2": 29
+      }
+    },
+    {
+      "id": "zone_07",
+      "label": "16 x 5 Policy Table",
+      "type": "furniture",
+      "bounds_ft": {
+        "x1": 28,
+        "y1": 38.5,
+        "x2": 44,
+        "y2": 43.5
       }
     },
     {
@@ -317,7 +350,7 @@
     },
     {
       "id": "support_a",
-      "label": "Forum Storage",
+      "label": "Secure Evidence Storage",
       "type": "secure_support",
       "bounds_ft": {
         "x1": 34,
@@ -328,7 +361,7 @@
     },
     {
       "id": "support_b",
-      "label": "AV / IT",
+      "label": "Research / Policy IT",
       "type": "secure_support",
       "bounds_ft": {
         "x1": 42,
@@ -350,10 +383,10 @@
     }
   ],
   "south_condition": "sealed upper-floor glazing",
-  "camera_ref": "floor-02-camera.json",
-  "materials_ref": "floor-02-materials.json",
-  "lighting_ref": "floor-02-lighting.json",
-  "hotspots_ref": "floor-02-hotspots.json",
-  "routing_ref": "floor-02-routing.json",
-  "states_ref": "floor-02-states.json"
+  "camera_ref": "floor-05-camera.json",
+  "materials_ref": "floor-05-materials.json",
+  "lighting_ref": "floor-05-lighting.json",
+  "hotspots_ref": "floor-05-hotspots.json",
+  "routing_ref": "floor-05-routing.json",
+  "states_ref": "floor-05-states.json"
 }

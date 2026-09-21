@@ -1,7 +1,7 @@
 {
   "schema_version": "2.0.0",
-  "scene_id": "equity-uprise-floor-02",
-  "scene_name": "Equity Uprise Level 02 \u2014 Public Forum",
+  "scene_id": "equity-uprise-level-07",
+  "scene_name": "Equity Uprise Level 07 \u2014 Roof / Mobility Portal",
   "status": "core-v2-migration",
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
@@ -12,14 +12,14 @@
       "../building-core-v2.json"
     ],
     "spatial_authority": [
-      "../../FLOOR-02-PUBLIC-FORUM-360-SPEC.md",
-      "../../FLOOR-02-SCHEMATIC-PLAN-BASIS.md",
+      "../../FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md",
+      "../../FLOOR-07-SCHEMATIC-PLAN-BASIS.md",
       "../../REFERENCE-AUTHORITY.md"
     ],
     "geometry_authority": [
-      "../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf",
-      "../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg",
-      "../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png"
+      "../../references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf",
+      "../../references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg",
+      "../../references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png"
     ],
     "rule": "Shared Core V2 vertical systems override floor-local geometry."
   },
@@ -37,7 +37,7 @@
     "width_ft": 72,
     "depth_ft": 72,
     "floor_to_floor_ft": 13.5,
-    "finished_floor_elevation_ft": 13.5
+    "finished_floor_elevation_ft": 81
   },
   "inherited_vertical_systems": {
     "passenger_elevator": {
@@ -240,120 +240,65 @@
   "zones": [
     {
       "id": "zone_01",
-      "label": "Public Forum Zone",
-      "type": "zone",
+      "label": "Roof Access / Core Envelope",
+      "type": "room",
       "bounds_ft": {
-        "x1": 24,
-        "y1": 28,
-        "x2": 48,
-        "y2": 50
+        "x1": 50,
+        "y1": 30,
+        "x2": 64,
+        "y2": 48
       }
     },
     {
       "id": "zone_02",
-      "label": "Public Forum Feature Wall",
-      "type": "feature",
+      "label": "Ecosystem Routing Interface",
+      "type": "terminal",
       "bounds_ft": {
-        "x1": 24,
-        "y1": 50,
-        "x2": 48,
-        "y2": 54
-      }
-    },
-    {
-      "id": "zone_03",
-      "label": "Listening Lounge",
-      "type": "zone",
-      "bounds_ft": {
-        "x1": 2,
-        "y1": 14,
-        "x2": 18,
+        "x1": 46,
+        "y1": 24,
+        "x2": 50,
         "y2": 30
       }
     },
     {
+      "id": "zone_03",
+      "label": "Candidate Mobility Zone",
+      "type": "zone",
+      "bounds_ft": {
+        "x1": 10,
+        "y1": 8,
+        "x2": 48,
+        "y2": 46
+      }
+    },
+    {
       "id": "zone_04",
-      "label": "Member Check-In",
-      "type": "terminal",
+      "label": "City Overlook",
+      "type": "feature",
       "bounds_ft": {
-        "x1": 49,
-        "y1": 24,
-        "x2": 51,
-        "y2": 29
+        "x1": 12,
+        "y1": 0,
+        "x2": 46,
+        "y2": 6
       }
     },
     {
-      "id": "north_corridor",
-      "label": "Public / Support Corridor",
-      "type": "circulation",
-      "bounds_ft": {
-        "x1": 18,
-        "y1": 54,
-        "x2": 60,
-        "y2": 60
-      }
-    },
-    {
-      "id": "restroom_a",
-      "label": "Restroom A",
-      "type": "support",
-      "bounds_ft": {
-        "x1": 18,
-        "y1": 60,
-        "x2": 26,
-        "y2": 70
-      }
-    },
-    {
-      "id": "restroom_b",
-      "label": "Restroom B",
-      "type": "support",
-      "bounds_ft": {
-        "x1": 26,
-        "y1": 60,
-        "x2": 34,
-        "y2": 70
-      }
-    },
-    {
-      "id": "support_a",
-      "label": "Forum Storage",
-      "type": "secure_support",
+      "id": "zone_05",
+      "label": "Service / Equipment Band",
+      "type": "service",
       "bounds_ft": {
         "x1": 34,
         "y1": 60,
-        "x2": 42,
+        "x2": 60,
         "y2": 72
-      }
-    },
-    {
-      "id": "support_b",
-      "label": "AV / IT",
-      "type": "secure_support",
-      "bounds_ft": {
-        "x1": 42,
-        "y1": 60,
-        "x2": 50,
-        "y2": 72
-      }
-    },
-    {
-      "id": "janitor",
-      "label": "Janitor",
-      "type": "service",
-      "bounds_ft": {
-        "x1": 50,
-        "y1": 60,
-        "x2": 54,
-        "y2": 66
       }
     }
   ],
-  "south_condition": "sealed upper-floor glazing",
-  "camera_ref": "floor-02-camera.json",
-  "materials_ref": "floor-02-materials.json",
-  "lighting_ref": "floor-02-lighting.json",
-  "hotspots_ref": "floor-02-hotspots.json",
-  "routing_ref": "floor-02-routing.json",
-  "states_ref": "floor-02-states.json"
+  "south_condition": "open-air roof / guarded edge",
+  "camera_ref": "floor-07-camera.json",
+  "materials_ref": "floor-07-materials.json",
+  "lighting_ref": "floor-07-lighting.json",
+  "hotspots_ref": "floor-07-hotspots.json",
+  "routing_ref": "floor-07-routing.json",
+  "states_ref": "floor-07-states.json"
 }

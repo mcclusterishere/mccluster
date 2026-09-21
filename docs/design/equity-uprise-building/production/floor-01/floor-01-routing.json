@@ -1,21 +1,7 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "scene_id": "equity-uprise-floor-01",
   "routes": {
-    "institutional_overview": {
-      "type": "url",
-      "url": "/equity-uprise.html",
-      "state_hint": "now"
-    },
-    "institutional_join": {
-      "type": "url",
-      "url": "/equity-uprise.html",
-      "state_hint": "join"
-    },
-    "building_directory": {
-      "type": "ui_state",
-      "target": "building_directory"
-    },
     "floor_selector": {
       "type": "floor_selector",
       "levels": [
@@ -52,16 +38,69 @@
         {
           "level": 7,
           "scene_id": "equity-uprise-level-07",
-          "enabled": false,
-          "reason": "Direct passenger-elevator roof service is not yet canonically resolved; Level 7 remains reachable through the approved future roof-access flow."
+          "enabled": true
         }
-      ]
+      ],
+      "note": "Core V2 guarantees stair continuity through Level 7. Passenger-elevator service to Level 7 is not assumed."
     },
-    "exterior_entry": {
+    "building_return": {
       "type": "scene",
-      "scene_id": "equity-uprise-exterior-entry",
-      "enabled": false,
-      "reason": "Exterior master scene not built yet."
+      "scene_id": "equity-uprise-building-core-v2"
+    },
+    "institutional_overview": {
+      "type": "url",
+      "url": "/equity-uprise.html"
+    },
+    "institutional_join": {
+      "type": "url",
+      "url": "/equity-uprise.html",
+      "state_hint": "join"
+    },
+    "current_issues": {
+      "type": "url",
+      "url": "/topics.html"
+    },
+    "conversation": {
+      "type": "conversation",
+      "endpoint_hint": "eu-converse"
+    },
+    "opportunities": {
+      "type": "url",
+      "url": "/fellowships.html"
+    },
+    "people_network": {
+      "type": "url",
+      "url": "/profile.html"
+    },
+    "media_archive": {
+      "type": "url",
+      "url": "/equity-uprise.html",
+      "state_hint": "media"
+    },
+    "creator_tools": {
+      "type": "ui_state",
+      "target": "creator_tools"
+    },
+    "policy_workspace": {
+      "type": "url",
+      "url": "/policy.html"
+    },
+    "evidence_archive": {
+      "type": "url",
+      "url": "/docket-516.html"
+    },
+    "institutional_command": {
+      "type": "url",
+      "url": "/equity-uprise.html",
+      "state_hint": "institutional"
+    },
+    "roof_transition": {
+      "type": "scene",
+      "scene_id": "equity-uprise-level-07"
+    },
+    "ecosystem_routes": {
+      "type": "ui_state",
+      "target": "ecosystem_routes"
     }
   },
   "security": {

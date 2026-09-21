@@ -1,24 +1,18 @@
-# Floor 02 — Deterministic Production Scene Package
+# Level 02 — Public Forum — Core V2 Production Package
 
-Machine-readable implementation layer for **Equity Uprise Floor 2 — Public Forum**.
+Status: **CORE V2 MIGRATION / NOT FOR CONSTRUCTION**
 
-Authority:
-1. `../../FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
-2. `../../FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
-3. canonical Floor 2 DXF/SVG
-4. this production package
-5. generated 3D/render/web output
+This package inherits the shared building core from:
+- `../building-core-v2.json`
+- `../../BUILDING-CORE-V2-SPEC.md`
 
-Locked conditions include:
-- 72' × 72' shell;
-- elevator X54–62 / Y34–44;
-- Stair A X60–72 / Y54–72;
-- Stair B X0–12 / Y54–72;
-- forum table centered near (36,39), 12' nominal diameter;
-- feature wall X24–48 / Y50–54;
-- lounge X2–18 / Y14–30;
-- member check-in X49–51 / Y24–29;
-- **no exterior door, balcony, or terrace**;
-- south perimeter is sealed upper-floor glazing.
+Canonical branch geometry:
+- `../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf`
+- `../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg`
+- `../../references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png`
 
-**CANONICAL PRODUCTION V1 / NOT FOR CONSTRUCTION.**
+Finished-floor elevation: **+13.5 ft**.
+
+This package may operationalize floor program, cameras, hotspots, lighting, routing and states. It may **not** redefine passenger elevator, freight/service elevator, Stair A, Stair B, MEP or slab-opening geometry.
+
+Per-floor scenes are derived views. The combined stacked building is the vertical-continuity authority.

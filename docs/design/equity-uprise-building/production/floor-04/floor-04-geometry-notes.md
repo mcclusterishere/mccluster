@@ -1,10 +1,10 @@
-# Level 02 — Core V2 Deterministic Geometry Notes
+# Level 04 — Core V2 Deterministic Geometry Notes
 
 Shared source of truth:
 - `../building-core-v2.json`
 - `../../BUILDING-CORE-V2-SPEC.md`
 
-Finished-floor elevation: **+13.5 ft**.
+Finished-floor elevation: **+40.5 ft**.
 
 Inherited vertical systems:
 - passenger elevator X54–62 / Y34–44

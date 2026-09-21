@@ -1,73 +1,75 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "scene_id": "equity-uprise-floor-01",
   "pbr_convention": "metallic-roughness",
   "materials": [
     {
       "id": "floor_honed_gray",
-      "use": "main_floor",
       "base_color": "#56595B",
       "metalness": 0,
       "roughness": 0.68
     },
     {
       "id": "wall_charcoal_mineral",
-      "use": "general_wall",
       "base_color": "#2B2A29",
       "metalness": 0,
       "roughness": 0.86
     },
     {
-      "id": "reception_stone_dark",
-      "use": "reception_desk_and_feature",
-      "base_color": "#343536",
+      "id": "feature_wall_dark",
+      "base_color": "#353638",
       "metalness": 0,
-      "roughness": 0.58
+      "roughness": 0.62
     },
     {
       "id": "metal_gunmetal_brushed",
-      "use": "frames_trim_core",
       "base_color": "#303338",
       "metalness": 0.88,
       "roughness": 0.42
     },
     {
-      "id": "glass_clear_arch",
-      "use": "entrance_and_intake_glass",
+      "id": "glass_arch",
       "base_color": "#DCE5E7",
       "metalness": 0,
       "roughness": 0.08,
-      "transmission": 0.92,
+      "transmission": 0.88,
       "ior": 1.5
     },
     {
       "id": "wood_warm_muted",
-      "use": "limited_accent",
       "base_color": "#6C523C",
       "metalness": 0,
       "roughness": 0.62
     },
     {
       "id": "upholstery_charcoal",
-      "use": "lounge_seating",
       "base_color": "#474544",
       "metalness": 0,
       "roughness": 0.9
     },
     {
+      "id": "service_core",
+      "base_color": "#45484B",
+      "metalness": 0.35,
+      "roughness": 0.6
+    },
+    {
+      "id": "screen_surface",
+      "base_color": "#1E2328",
+      "metalness": 0.05,
+      "roughness": 0.32
+    },
+    {
       "id": "accent_red_navigation",
-      "use": "restrained_wayfinding_and_state",
       "base_color": "#851A1D",
       "metalness": 0.1,
       "roughness": 0.55,
       "emissive": "#5A0F11",
-      "emissive_strength": 0.45
+      "emissive_strength": 0.35
     }
   ],
   "rules": [
-    "No mirror-black marble.",
-    "No full-room red wash.",
-    "Gunmetal is slightly lived-in, not rusty.",
-    "Exact Equity Uprise logo artwork must be used; do not redraw it."
+    "Exact Equity Uprise logo artwork must be used where specified.",
+    "Materials may not imply geometry changes."
   ]
 }
