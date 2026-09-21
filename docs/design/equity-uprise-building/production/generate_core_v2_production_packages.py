@@ -290,6 +290,11 @@ for level in programs["levels"]:
         manifest["digital_twin_program_ref"]=level["digital_twin_program_ref"]
     if level.get("digital_twin_spec_ref"):
         manifest["authority"]["activity_simulation_authority"]=[level["digital_twin_spec_ref"],level["digital_twin_program_ref"]]
+    if n==1:
+        manifest["site_egress_ref"]="floor-01-site-egress.json"
+        manifest["basement_program_ref"]="../basement-b1-program.json"
+        manifest["authority"]["site_egress_authority"]=["../../FLOOR-01-SITE-EGRESS-SIMULATION.md","floor-01-site-egress.json"]
+        manifest["authority"]["basement_support_authority"]=["../../BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md","../basement-b1-program.json"]
 
     mats={"schema_version":"2.0.0","scene_id":scene_id,"pbr_convention":"metallic-roughness","materials":MATERIALS,
           "rules":["Exact Equity Uprise logo artwork must be used where specified.","Materials may not imply geometry changes."]}
