@@ -37,7 +37,7 @@ ASSET_NAMES={
  7:"equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1",
 }
 SPEC_NAMES={
- 1:"FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+ 1:"FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md",
  2:"FLOOR-02-PUBLIC-FORUM-360-SPEC.md",
  3:"FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md",
  4:"FLOOR-04-MEDIA-CULTURE-360-SPEC.md",
@@ -304,7 +304,7 @@ for level in programs["levels"]:
         manifest["site_egress_ref"]="floor-01-site-egress.json"
         manifest["basement_program_ref"]="../basement-b1-program.json"
         manifest["authority"]["site_egress_authority"]=["../../FLOOR-01-SITE-EGRESS-SIMULATION.md","floor-01-site-egress.json"]
-        manifest["authority"]["basement_support_authority"]=["../../BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md","../basement-b1-program.json"]
+        manifest["authority"]["basement_support_authority"]=["../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md","../basement-b1-program.json"]
 
     mats={"schema_version":"2.0.0","scene_id":scene_id,"pbr_convention":"metallic-roughness","materials":MATERIALS,
           "rules":["Exact Equity Uprise logo artwork must be used where specified.","Materials may not imply geometry changes."]}
