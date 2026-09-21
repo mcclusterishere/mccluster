@@ -1,0 +1,953 @@
+{
+  "schema_version": "2.0.0",
+  "audit_date": "2026-09-21",
+  "branch": "architecture/equity-uprise-core-v2",
+  "repo": "mcclusterishere/mccluster",
+  "not_for_construction": true,
+  "scope": "Repo-grounded capability-to-building map. Describes features implemented, manually operated, shared-platform, disabled-until-configured, or schematic-future according to repository sources. It does not independently verify public factual claims inside program content.",
+  "status_vocabulary": {
+    "built": "Implemented in repo.",
+    "built_guarded": "Implemented with explicit access/approval controls.",
+    "built_manual": "Public flow exists but completion is human/manual.",
+    "built_disabled_until_configured": "Implementation exists but external credentials/provider/agreements/configuration are required.",
+    "built_not_armed_by_default": "Underlying system exists but outbound operation is intentionally not enabled by default.",
+    "built_shared_platform": "Implemented in shared McCluster platform and used by Equity Uprise rather than duplicated.",
+    "built_public_pathway": "Public path exists; relationship/fulfillment work is handled institutionally.",
+    "schematic_future_feasibility": "Architectural/digital reservation only, subject to real-world feasibility.",
+    "experimental_separate": "Separate experimental system; optional route, not building authority."
+  },
+  "floors": [
+    {
+      "level": 1,
+      "title": "Lobby + Intake",
+      "role": "arrival / trust / human routing",
+      "feature_ids": [
+        "verification",
+        "stakeholder-intake"
+      ],
+      "secondary_feature_ids": [
+        "conversation-agent",
+        "fellowship-applications",
+        "interviews-calendar"
+      ],
+      "public_surfaces": [
+        "Reception",
+        "Intake / Verification Consultation",
+        "Arrival / Routing Directory"
+      ],
+      "private_surfaces": [
+        "Reception Support / Storage",
+        "IT / Electrical"
+      ],
+      "rule": "This floor receives people and routes them; it does not expose privileged workflow state."
+    },
+    {
+      "level": 2,
+      "title": "Public Forum",
+      "role": "listen / discuss / record / member context",
+      "feature_ids": [
+        "public-issues",
+        "perspectives",
+        "conversation-agent",
+        "member-dashboard"
+      ],
+      "secondary_feature_ids": [
+        "fellowship-matching"
+      ],
+      "public_surfaces": [
+        "Public Forum",
+        "Topics / Perspectives / Conversations wall",
+        "Listening Lounge",
+        "Member Check-In"
+      ],
+      "private_surfaces": [],
+      "rule": "Public issue framing remains neutral; private dashboard content is visible only after member authentication."
+    },
+    {
+      "level": 3,
+      "title": "Fellowship + Network",
+      "role": "people / opportunities / relationships / meetings",
+      "feature_ids": [
+        "profiles",
+        "private-contact",
+        "fellowship-directory",
+        "fellowship-matching",
+        "host-listings",
+        "fellowship-applications",
+        "interviews-calendar",
+        "stakeholder-graph",
+        "meetings-commitments"
+      ],
+      "secondary_feature_ids": [
+        "member-dashboard",
+        "verification",
+        "stakeholder-intake",
+        "partnership-sponsorship",
+        "artist-creator",
+        "google-workspace",
+        "outreach"
+      ],
+      "public_surfaces": [
+        "Opportunity Exchange",
+        "Opportunity / Network Wall",
+        "People + Network Lounge",
+        "Member / Meeting Check-In"
+      ],
+      "private_surfaces": [
+        "Interview / Stakeholder Meeting A",
+        "Interview / Stakeholder Meeting B",
+        "Fellowship / Relationship Records"
+      ],
+      "rule": "Public people/opportunity surfaces never expose private contact fields or internal stakeholder notes."
+    },
+    {
+      "level": 4,
+      "title": "Media + Culture",
+      "role": "listen / create / edit / archive / release",
+      "feature_ids": [
+        "music-catalogue",
+        "artist-creator",
+        "music-rights",
+        "music-release",
+        "ddex",
+        "rally-media",
+        "communication-derivatives"
+      ],
+      "secondary_feature_ids": [
+        "evidence-room",
+        "artifacts"
+      ],
+      "public_surfaces": [
+        "Media / Listening Zone",
+        "Culture Archive / Rally Gallery"
+      ],
+      "private_surfaces": [
+        "Creator Recording Room",
+        "Edit / Review Suite",
+        "Media / Release Control",
+        "Media / Music Operations"
+      ],
+      "rule": "Rights, DDEX and delivery state stay operational/private; the public floor expresses the catalogue, culture and approved work."
+    },
+    {
+      "level": 5,
+      "title": "Policy + Proof",
+      "role": "research / evidence / publication / filings / impact",
+      "feature_ids": [
+        "research-projects",
+        "source-graph",
+        "claim-evidence",
+        "manuscript-review",
+        "evidence-room",
+        "credentials-proof",
+        "artifacts",
+        "publications",
+        "publication-distribution",
+        "orcid",
+        "crossref",
+        "government-dockets",
+        "government-submissions",
+        "monitoring",
+        "citations-impact"
+      ],
+      "secondary_feature_ids": [
+        "initiative-portfolio",
+        "communication-derivatives",
+        "event-ledger"
+      ],
+      "public_surfaces": [
+        "Evidence + Proof Archive",
+        "Published proof/publications"
+      ],
+      "private_surfaces": [
+        "Policy Lab",
+        "Source Review Room",
+        "Publication / Submission Review",
+        "Research / Publication Navigator",
+        "Research / Publication Systems"
+      ],
+      "rule": "This floor is the canonical research-to-record engine; approval authority for irreversible external acts remains on Floor 6."
+    },
+    {
+      "level": 6,
+      "title": "Penthouse Command",
+      "role": "institutional direction / Desk / approvals / operations",
+      "feature_ids": [
+        "institutional-desk",
+        "partnership-sponsorship",
+        "initiative-portfolio",
+        "admin-desk",
+        "control-approvals",
+        "integrations-oauth",
+        "workflows-jobs",
+        "status-health",
+        "google-workspace",
+        "outreach",
+        "event-ledger"
+      ],
+      "secondary_feature_ids": [
+        "perspectives",
+        "conversation-agent",
+        "private-contact",
+        "host-listings",
+        "interviews-calendar",
+        "stakeholder-intake",
+        "stakeholder-graph",
+        "meetings-commitments",
+        "credentials-proof",
+        "publications",
+        "publication-distribution",
+        "government-dockets",
+        "government-submissions",
+        "monitoring",
+        "citations-impact",
+        "music-release",
+        "ddex"
+      ],
+      "public_surfaces": [
+        "Institutional Salon",
+        "Public institutional mode of Command Wall"
+      ],
+      "private_surfaces": [
+        "Penthouse Command authenticated mode",
+        "Strategy Review",
+        "Partner / Executive Briefing",
+        "Control / Audit Records",
+        "Desk Operations / Systems"
+      ],
+      "rule": "Private control/admin/outreach functions must be access-controlled and must not turn the public building into a surveillance or tactical control room."
+    },
+    {
+      "level": 7,
+      "title": "Roof / Mobility Portal",
+      "role": "ecosystem navigation / departure / arrival",
+      "feature_ids": [
+        "ecosystem-routing",
+        "roof-mobility",
+        "uprise-world"
+      ],
+      "secondary_feature_ids": [],
+      "public_surfaces": [
+        "Ecosystem Routing Interface",
+        "City Overlook",
+        "Candidate Mobility Zone"
+      ],
+      "private_surfaces": [
+        "Service / Equipment Band"
+      ],
+      "rule": "Passenger-elevator roof service is not assumed. Mobility remains a candidate reservation pending real-world feasibility."
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "institutional-desk",
+      "name": "Institutional Desk / finished public record",
+      "status": "built",
+      "primary_floor": 6,
+      "visibility": "public",
+      "sources": [
+        "equity-uprise.html",
+        "js/equity-uprise-institutional.js"
+      ],
+      "expression": "Penthouse Command public/institutional mode: NOW, PAST WORK, JOIN, current initiative portfolio and proof links."
+    },
+    {
+      "id": "public-issues",
+      "name": "Public issue/topic hubs",
+      "status": "built",
+      "primary_floor": 2,
+      "visibility": "public",
+      "sources": [
+        "topics.html",
+        "data/eu-topics.json"
+      ],
+      "expression": "Public Forum feature wall and forum table."
+    },
+    {
+      "id": "perspectives",
+      "name": "Public perspectives with consent + moderation",
+      "status": "built",
+      "primary_floor": 2,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "public-plus-moderated-private",
+      "sources": [
+        "docs/equity-uprise-platform.md",
+        "uprise-admin.html",
+        "supabase/replay_migrations/0017_equity_uprise_platform.sql"
+      ],
+      "expression": "Public Forum record surfaces; moderation remains private Desk work on Floor 6."
+    },
+    {
+      "id": "conversation-agent",
+      "name": "Neutral listening/conversation agent",
+      "status": "built",
+      "primary_floor": 2,
+      "secondary_floors": [
+        1,
+        6
+      ],
+      "visibility": "public-with-human-escalation",
+      "sources": [
+        "supabase/functions/eu-converse/index.ts",
+        "topics.html",
+        "dashboard.html"
+      ],
+      "expression": "Listening Lounge; human handoff routes to the Desk without making the agent an ideological authority."
+    },
+    {
+      "id": "member-dashboard",
+      "name": "Member dashboard / private personal desk",
+      "status": "built",
+      "primary_floor": 2,
+      "secondary_floors": [
+        3
+      ],
+      "visibility": "private-member",
+      "sources": [
+        "dashboard.html"
+      ],
+      "expression": "Member Check-In opens private matches, applications, saves, perspectives and conversation threads."
+    },
+    {
+      "id": "profiles",
+      "name": "Public profiles / people directory",
+      "status": "built",
+      "primary_floor": 3,
+      "visibility": "public-self-controlled",
+      "sources": [
+        "profile.html",
+        "docs/equity-uprise-platform.md"
+      ],
+      "expression": "People + Network Lounge and Opportunity / Network Wall."
+    },
+    {
+      "id": "private-contact",
+      "name": "Private member contact/consent record",
+      "status": "built",
+      "primary_floor": 3,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "owner-self-only",
+      "sources": [
+        "profile.html",
+        "docs/equity-uprise-platform.md"
+      ],
+      "expression": "Never shown publicly; represented only as protected relationship records/back-office state."
+    },
+    {
+      "id": "fellowship-directory",
+      "name": "Fellowship/opportunity directory",
+      "status": "built",
+      "primary_floor": 3,
+      "visibility": "public",
+      "sources": [
+        "fellowships.html",
+        "data/eu-fellowships.json"
+      ],
+      "expression": "Opportunity Exchange."
+    },
+    {
+      "id": "fellowship-matching",
+      "name": "Profile/topic-based opportunity matching",
+      "status": "built",
+      "primary_floor": 3,
+      "secondary_floors": [
+        2
+      ],
+      "visibility": "member-public-directory",
+      "sources": [
+        "fellowships.html",
+        "dashboard.html",
+        "docs/equity-uprise-platform.md"
+      ],
+      "expression": "Opportunity table and member check-in."
+    },
+    {
+      "id": "host-listings",
+      "name": "Host-submitted fellowship listings with moderation",
+      "status": "built",
+      "primary_floor": 3,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "public-submission-private-moderation",
+      "sources": [
+        "fellowships.html",
+        "uprise-admin.html"
+      ],
+      "expression": "Opportunity Exchange submission path; moderation on Floor 6 Desk."
+    },
+    {
+      "id": "fellowship-applications",
+      "name": "Policy Fellowship/application workflow",
+      "status": "built",
+      "primary_floor": 3,
+      "secondary_floors": [
+        1
+      ],
+      "visibility": "public-intake-private-state",
+      "sources": [
+        "fellowship.html",
+        "js/equity-uprise-fellowship-live.js",
+        "supabase/functions/eu-intake/index.ts"
+      ],
+      "expression": "Fellowship application path, application tracking, and interview/meeting rooms."
+    },
+    {
+      "id": "interviews-calendar",
+      "name": "Interview requests, availability and calendar scheduling",
+      "status": "built_guarded",
+      "primary_floor": 3,
+      "secondary_floors": [
+        1,
+        6
+      ],
+      "visibility": "public-derived-slots-private-calendar",
+      "sources": [
+        "supabase/functions/eu-calendar/index.ts",
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
+      ],
+      "expression": "Member / Meeting Check-In and two Interview / Stakeholder Meeting rooms; no private calendar data shown publicly."
+    },
+    {
+      "id": "verification",
+      "name": "M-Verified organization/profile intake",
+      "status": "built_manual",
+      "primary_floor": 1,
+      "secondary_floors": [
+        3
+      ],
+      "visibility": "public-intake-human-reviewed",
+      "sources": [
+        "verify.html"
+      ],
+      "expression": "Intake / Verification Consultation on Floor 1; verified identity becomes part of Floor 3 network context."
+    },
+    {
+      "id": "stakeholder-intake",
+      "name": "Stakeholder and organization intake",
+      "status": "built",
+      "primary_floor": 1,
+      "secondary_floors": [
+        3,
+        6
+      ],
+      "visibility": "public-intake-private-relationship-state",
+      "sources": [
+        "supabase/functions/eu-intake/index.ts",
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
+      ],
+      "expression": "Reception/intake on Floor 1; relationship graph on Floors 3 and 6."
+    },
+    {
+      "id": "stakeholder-graph",
+      "name": "Stakeholder people/organizations and initiative relationship graph",
+      "status": "built",
+      "primary_floor": 3,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "private-operations",
+      "sources": [
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
+      ],
+      "expression": "People + Network layer and access-controlled relationship views; not a public contact database."
+    },
+    {
+      "id": "meetings-commitments",
+      "name": "Meetings, participants and commitments",
+      "status": "built",
+      "primary_floor": 3,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "private-operations",
+      "sources": [
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
+      ],
+      "expression": "Interview / Stakeholder Meeting rooms plus institutional follow-through in Penthouse Command."
+    },
+    {
+      "id": "partnership-sponsorship",
+      "name": "Partner / sponsor pathways",
+      "status": "built_public_pathway",
+      "primary_floor": 6,
+      "secondary_floors": [
+        3
+      ],
+      "visibility": "public-contact-private-relationship-state",
+      "sources": [
+        "equity-uprise-fellowship.html",
+        "equity-uprise.html"
+      ],
+      "expression": "Partner / Executive Briefing room and Institutional Salon."
+    },
+    {
+      "id": "initiative-portfolio",
+      "name": "Living policy initiative portfolio",
+      "status": "built",
+      "primary_floor": 6,
+      "secondary_floors": [
+        5
+      ],
+      "visibility": "public-summary-private-operations",
+      "sources": [
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
+        "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql",
+        "equity-uprise.html"
+      ],
+      "expression": "Penthouse Command portfolio direction; individual research/evidence work occurs on Floor 5."
+    },
+    {
+      "id": "research-projects",
+      "name": "Research projects and memberships",
+      "status": "built",
+      "primary_floor": 5,
+      "visibility": "mixed-public-internal",
+      "sources": [
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
+        "supabase/functions/eu-workspace/index.ts"
+      ],
+      "expression": "Policy Lab."
+    },
+    {
+      "id": "source-graph",
+      "name": "Sources, verification, supersession and citations",
+      "status": "built",
+      "primary_floor": 5,
+      "visibility": "internal-with-published-output",
+      "sources": [
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
+        "supabase/functions/eu-workspace/index.ts"
+      ],
+      "expression": "Source Review Room and Evidence + Proof Archive."
+    },
+    {
+      "id": "claim-evidence",
+      "name": "Claims linked to evidence",
+      "status": "built",
+      "primary_floor": 5,
+      "visibility": "internal-with-published-output",
+      "sources": [
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
+        "supabase/functions/eu-workspace/index.ts"
+      ],
+      "expression": "Evidence graph on Policy / Publication / Impact Wall."
+    },
+    {
+      "id": "manuscript-review",
+      "name": "Manuscripts, sections, revisions and review comments",
+      "status": "built",
+      "primary_floor": 5,
+      "visibility": "internal",
+      "sources": [
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
+        "supabase/functions/eu-workspace/index.ts"
+      ],
+      "expression": "Policy Lab and Publication / Submission Review room."
+    },
+    {
+      "id": "evidence-room",
+      "name": "Docket 516/516R evidence room and public-record archive",
+      "status": "built",
+      "primary_floor": 5,
+      "secondary_floors": [
+        4
+      ],
+      "visibility": "public",
+      "sources": [
+        "docket-516.html",
+        "data/docket-516-files.json",
+        "assets/landmarks/shiloh-docket-516/"
+      ],
+      "expression": "Evidence + Proof Archive; media context may also appear on Floor 4."
+    },
+    {
+      "id": "credentials-proof",
+      "name": "Credentials, citations, proclamations and proof documents",
+      "status": "built",
+      "primary_floor": 5,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "public-record",
+      "sources": [
+        "assets/credentials/",
+        "equity-uprise.html",
+        "equity-uprise-fellowship.html"
+      ],
+      "expression": "Evidence + Proof Archive and institutional record."
+    },
+    {
+      "id": "artifacts",
+      "name": "Canonical artifact graph and derivative lineage",
+      "status": "built",
+      "primary_floor": 5,
+      "secondary_floors": [
+        4
+      ],
+      "visibility": "mixed",
+      "sources": [
+        "supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql"
+      ],
+      "expression": "Publication/Proof systems; communication derivatives route to Floor 4."
+    },
+    {
+      "id": "publications",
+      "name": "Canonical publications and versions of record",
+      "status": "built_guarded",
+      "primary_floor": 5,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "published-public-workflow-private",
+      "sources": [
+        "supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql",
+        "supabase/functions/eu-publish/index.ts"
+      ],
+      "expression": "Publication / Submission Review and Policy / Publication / Impact Wall."
+    },
+    {
+      "id": "publication-distribution",
+      "name": "Approved publication distribution/syndication",
+      "status": "built_disabled_until_configured",
+      "primary_floor": 5,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "private-approval-gated",
+      "sources": [
+        "supabase/functions/eu-publish/index.ts",
+        "supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql"
+      ],
+      "expression": "Access-controlled distribution state on Floor 5; approval authority on Floor 6."
+    },
+    {
+      "id": "orcid",
+      "name": "ORCID contributor identity",
+      "status": "built_disabled_until_configured",
+      "primary_floor": 5,
+      "visibility": "private-contributor-integration",
+      "sources": [
+        "supabase/functions/eu-orcid-oauth/index.ts",
+        "supabase/replay_migrations/20260908213800_equity_uprise_oauth_runtime.sql"
+      ],
+      "expression": "Publication contributor identity; no separate room."
+    },
+    {
+      "id": "crossref",
+      "name": "Crossref DOI deposit/verification",
+      "status": "built_disabled_until_configured",
+      "primary_floor": 5,
+      "visibility": "private-publication-integration",
+      "sources": [
+        "supabase/functions/eu-crossref-callback/index.ts",
+        "supabase/functions/eu-worker/index.ts"
+      ],
+      "expression": "Publication/version-of-record system; no separate room."
+    },
+    {
+      "id": "government-dockets",
+      "name": "Government targets/dockets and recurring docket intelligence",
+      "status": "built_guarded",
+      "primary_floor": 5,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "private-research-with-public-output",
+      "sources": [
+        "supabase/replay_migrations/20260908213100_equity_uprise_automation.sql",
+        "supabase/functions/eu-monitor/index.ts"
+      ],
+      "expression": "Policy Lab and monitor/filing surfaces."
+    },
+    {
+      "id": "government-submissions",
+      "name": "Government filing/submission workflow",
+      "status": "built_guarded",
+      "primary_floor": 5,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "private-high-risk",
+      "sources": [
+        "supabase/functions/eu-government/index.ts",
+        "supabase/replay_migrations/20260908214100_equity_uprise_government_metadata.sql"
+      ],
+      "expression": "Publication / Submission Review; final external authorization is a Floor 6 control function."
+    },
+    {
+      "id": "monitoring",
+      "name": "Research/source/government/stakeholder/citation monitors",
+      "status": "built",
+      "primary_floor": 5,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "private-operations",
+      "sources": [
+        "supabase/functions/eu-monitor/index.ts",
+        "supabase/replay_migrations/20260908214000_equity_uprise_monitor_runtime.sql"
+      ],
+      "expression": "Policy / Publication / Impact Wall for findings; operations health on Floor 6."
+    },
+    {
+      "id": "citations-impact",
+      "name": "Citation snapshots and impact events",
+      "status": "built",
+      "primary_floor": 5,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "mixed",
+      "sources": [
+        "supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql"
+      ],
+      "expression": "Policy / Publication / Impact Wall and institutional proof."
+    },
+    {
+      "id": "music-catalogue",
+      "name": "Equity Uprise music/catalogue listening surface",
+      "status": "built_shared_platform",
+      "primary_floor": 4,
+      "visibility": "public",
+      "sources": [
+        "album.html",
+        "docs/music-platform.md",
+        "equity-uprise.html"
+      ],
+      "expression": "Media / Listening Zone."
+    },
+    {
+      "id": "artist-creator",
+      "name": "Artist/creator participation and studio workflow",
+      "status": "built_shared_platform",
+      "primary_floor": 4,
+      "secondary_floors": [
+        3
+      ],
+      "visibility": "public-account-based",
+      "sources": [
+        "equity-uprise-fellowship.html",
+        "creator.html",
+        "docs/music-platform.md"
+      ],
+      "expression": "Creator Recording Room and Edit / Review Suite."
+    },
+    {
+      "id": "music-rights",
+      "name": "Music rights/catalog/release graph",
+      "status": "built",
+      "primary_floor": 4,
+      "visibility": "private-operations-with-public-catalogue",
+      "sources": [
+        "supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql",
+        "docs/music-platform.md"
+      ],
+      "expression": "Media / Music Operations support and Media / Release Control."
+    },
+    {
+      "id": "music-release",
+      "name": "Equity Uprise/McCluster release preparation",
+      "status": "built_guarded",
+      "primary_floor": 4,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "private-approval-gated",
+      "sources": [
+        "supabase/functions/eu-music/index.ts"
+      ],
+      "expression": "Media / Release Control; high-risk delivery approval belongs to Floor 6."
+    },
+    {
+      "id": "ddex",
+      "name": "DDEX ERN delivery",
+      "status": "built_disabled_until_configured",
+      "primary_floor": 4,
+      "secondary_floors": [
+        6
+      ],
+      "visibility": "private-high-risk",
+      "sources": [
+        "supabase/functions/eu-ddex-worker/index.ts",
+        "supabase/replay_migrations/20260908214400_equity_uprise_ddex_worker.sql"
+      ],
+      "expression": "Media release pipeline, not a public room."
+    },
+    {
+      "id": "rally-media",
+      "name": "Equity Uprise Rally/event media archive",
+      "status": "built",
+      "primary_floor": 4,
+      "visibility": "public",
+      "sources": [
+        "walls/eu-rally.html",
+        "assets/img/rally/"
+      ],
+      "expression": "Culture Archive / Rally Gallery."
+    },
+    {
+      "id": "communication-derivatives",
+      "name": "Press release, executive summary and social-prep derivatives",
+      "status": "built",
+      "primary_floor": 4,
+      "secondary_floors": [
+        5
+      ],
+      "visibility": "private-preparation",
+      "sources": [
+        "supabase/functions/eu-derivatives/index.ts"
+      ],
+      "expression": "Edit / Review Suite; lineage remains tied to Floor 5 source artifacts."
+    },
+    {
+      "id": "admin-desk",
+      "name": "Moderation/listings/conversations/topics/roles/audit Desk",
+      "status": "built",
+      "primary_floor": 6,
+      "visibility": "private-editor-owner",
+      "sources": [
+        "uprise-admin.html"
+      ],
+      "expression": "Penthouse Command private Desk mode and Desk Operations / Systems support."
+    },
+    {
+      "id": "control-approvals",
+      "name": "Capabilities, approval requests and decisions",
+      "status": "built",
+      "primary_floor": 6,
+      "visibility": "private-authorized",
+      "sources": [
+        "supabase/functions/eu-control/index.ts",
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
+      ],
+      "expression": "Penthouse Command approval/control layer; never a public tactical checkpoint."
+    },
+    {
+      "id": "integrations-oauth",
+      "name": "Integration registry and OAuth connection state",
+      "status": "built",
+      "primary_floor": 6,
+      "visibility": "private-owner",
+      "sources": [
+        "supabase/replay_migrations/20260908213100_equity_uprise_automation.sql",
+        "supabase/replay_migrations/20260908213800_equity_uprise_oauth_runtime.sql"
+      ],
+      "expression": "Desk Operations / Systems support."
+    },
+    {
+      "id": "workflows-jobs",
+      "name": "Event-driven workflows, jobs and approvals",
+      "status": "built",
+      "primary_floor": 6,
+      "visibility": "private-operations",
+      "sources": [
+        "supabase/replay_migrations/20260908213100_equity_uprise_automation.sql",
+        "supabase/replay_migrations/20260908213900_equity_uprise_event_dispatch.sql",
+        "supabase/functions/eu-worker/index.ts"
+      ],
+      "expression": "Penthouse Command operations state; does not create a separate public room."
+    },
+    {
+      "id": "status-health",
+      "name": "Integration/job/monitor/queue health",
+      "status": "built",
+      "primary_floor": 6,
+      "visibility": "private-operations",
+      "sources": [
+        "supabase/functions/eu-status/index.ts"
+      ],
+      "expression": "Institutional Command Wall authenticated operations state."
+    },
+    {
+      "id": "google-workspace",
+      "name": "Google Workspace/Gmail relationship bridge",
+      "status": "built_disabled_until_configured",
+      "primary_floor": 6,
+      "secondary_floors": [
+        3
+      ],
+      "visibility": "private",
+      "sources": [
+        "supabase/functions/eu-google-workspace/index.ts"
+      ],
+      "expression": "Desk Operations / Systems; relevant communications project into stakeholder relationship state."
+    },
+    {
+      "id": "outreach",
+      "name": "Consent-aware outbound stakeholder outreach bridge",
+      "status": "built_not_armed_by_default",
+      "primary_floor": 6,
+      "secondary_floors": [
+        3
+      ],
+      "visibility": "private-high-risk",
+      "sources": [
+        "docs/equity-uprise-platform.md",
+        "supabase/replay_migrations/20260908213600_equity_uprise_outreach_bridge.sql",
+        "supabase/replay_migrations/20260908214300_equity_uprise_outbound_communications.sql"
+      ],
+      "expression": "Access-controlled stakeholder pipeline; never a public blast console."
+    },
+    {
+      "id": "event-ledger",
+      "name": "Immutable normalized Equity Uprise event ledger",
+      "status": "built",
+      "primary_floor": 6,
+      "secondary_floors": [
+        5
+      ],
+      "visibility": "private-audit",
+      "sources": [
+        "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
+      ],
+      "expression": "Control / Audit Records support and cross-floor institutional memory."
+    },
+    {
+      "id": "ecosystem-routing",
+      "name": "Cross-site ecosystem routing/departure/arrival layer",
+      "status": "built_as_building_contract",
+      "primary_floor": 7,
+      "visibility": "public-navigation",
+      "sources": [
+        "docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md"
+      ],
+      "expression": "Ecosystem Routing Interface."
+    },
+    {
+      "id": "roof-mobility",
+      "name": "Candidate rooftop mobility reservation",
+      "status": "schematic_future_feasibility",
+      "primary_floor": 7,
+      "visibility": "conceptual",
+      "sources": [
+        "docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md"
+      ],
+      "expression": "Candidate Mobility Zone only; no operational aviation claim."
+    },
+    {
+      "id": "uprise-world",
+      "name": "Uprise World experimental visual system",
+      "status": "experimental_separate",
+      "primary_floor": 7,
+      "visibility": "optional-route-only",
+      "sources": [
+        "docs/design/EQUITY-UPRISE-REPO-AUDIT.md"
+      ],
+      "expression": "May be a Level 7 destination route later; must not dictate building geometry or branding."
+    }
+  ],
+  "rules": [
+    "Do not create a separate physical room for every backend table or API.",
+    "Every capability must have a primary floor or be explicitly excluded from physical representation.",
+    "Public/private boundaries in the source product must survive the building metaphor.",
+    "High-risk actions remain approval-gated and are never exposed as anonymous/public hotspots.",
+    "Shared McCluster systems used by Equity Uprise are represented where they matter to the program, but the building does not pretend Equity Uprise owns a duplicate stack.",
+    "Political/public-issue surfaces represent neutral discussion, evidence and participation; the building does not encode a partisan position.",
+    "Generated plans, 3D and hotspots must derive from this map plus Core V2 floor programs."
+  ]
+}
