@@ -42,6 +42,7 @@ Read in this order:
    - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
    - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
    - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
+   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
 
 4. The floor-specific schematic-plan basis.
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
@@ -49,6 +50,7 @@ Read in this order:
    - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
    - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
    - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
+   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
 
 5. The canonical floor-plan assets.
    - Floor 1: `docs/design/equity-uprise-building/references/floor-01/`
@@ -56,6 +58,7 @@ Read in this order:
    - Floor 3: `docs/design/equity-uprise-building/references/floor-03/`
    - Floor 4: `docs/design/equity-uprise-building/references/floor-04/`
    - Floor 5: `docs/design/equity-uprise-building/references/floor-05/`
+   - Floor 6: `docs/design/equity-uprise-building/references/floor-06/`
 
 For geometry, prefer DXF → SVG → raster preview → later renders.
 
@@ -226,6 +229,37 @@ Canonical Floor 5 assets:
 - `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.svg`
 - `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.png`
+
+The raster preview is derivative and cannot override the DXF/SVG/written geometry.
+
+## Floor 6 locked geometry
+
+Floor 6 preserves the building datum and the Level 7 roof interface:
+
+- floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
+- grid: **18' × 18' coordination module**;
+- elevator hoistway: **X 54–62 / Y 34–44**;
+- Stair A: **X 60–72 / Y 54–72**, with upward continuity reserved;
+- Stair B: **X 0–12 / Y 54–72**, with vertical continuity reserved;
+- MEP / roof-service reservation: **X 50–60 / Y 66–72**;
+- Penthouse Command table: **16' × 5'**, centered near **(36,41)**, six seats maximum;
+- Institutional Salon / Join Lounge: **X 2–18 / Y 18–38**;
+- Strategy Review Room: **X 2–15 / Y 4–16**;
+- Partner / Executive Briefing Room: **X 17–32 / Y 4–16**;
+- Roof Access / Mobility Transition terminal: **X 49–51 / Y 24–29**;
+- Penthouse Command wall: **X 22–50 / Y 50–54**, with **NOW / PAST WORK / JOIN**;
+- 360 camera datum: approximately **(36,28), 5'-4" AFF**;
+- 0° north: Penthouse Command / NOW-PAST WORK-JOIN;
+- +90° east: elevator + Level 7 roof transition;
+- 180° south: Strategy/Partner rooms + sealed glazing;
+- -90° west: Institutional Salon.
+
+Floor 6 has **no exterior public entrance, balcony, or terrace**. It is the last enclosed level and must preserve vertical/core/service continuity to **Level 7 — Roof / Mobility Portal**.
+
+Canonical Floor 6 assets:
+- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.png`
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
