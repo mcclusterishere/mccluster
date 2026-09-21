@@ -1,0 +1,32 @@
+{
+  "scene_id": "equity-uprise-floor-01",
+  "version": "deterministic-v1",
+  "mesh_count": 86,
+  "glb_bytes": 76368,
+  "bounds_m": [
+    [
+      0,
+      0,
+      -0.1524
+    ],
+    [
+      21.945600000000002,
+      21.945600000000002,
+      3.6576000000000004
+    ]
+  ],
+  "extents_m": [
+    21.945600000000002,
+    21.945600000000002,
+    3.8100000000000005
+  ],
+  "not_for_construction": true,
+  "validated": true,
+  "validated_plan_extents_ft": [
+    72.0000016720589,
+    72.0000016720589
+  ],
+  "footprint_matches_canonical_72x72": true,
+  "validated_vertical_extent_ft": 12.49999976338051,
+  "generated_in_chat": true
+}
