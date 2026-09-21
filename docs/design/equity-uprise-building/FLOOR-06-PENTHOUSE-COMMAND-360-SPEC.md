@@ -242,6 +242,34 @@ The wall must not expose raw admin/control data or private information.
 
 ---
 
+## 8A. Halo Globe / Spatial Intelligence
+
+Penthouse Command includes one restrained **Halo Globe / Spatial Intelligence** instrument governed by `HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`.
+
+Architectural role:
+- Command Wall = what Equity Uprise is doing;
+- Command Table = what the institution is deciding;
+- Halo Globe = what is happening in the world around those decisions.
+
+Canonical coordination envelope:
+- plan center approximately **(24.5,34.5)**;
+- radius **2.25 ft**;
+- center **8.25 ft AFF**;
+- bottom **6.0 ft AFF**;
+- top **10.5 ft AFF**.
+
+The globe is suspended/overhead and must read as an instrument, not giant furniture. It rotates slowly in ambient mode.
+
+Access model:
+- guests: sanitized public-display-approved layers, read-only;
+- member/host/client: role-aware read-only UI tier;
+- editor/staff: staff read-only UI tier;
+- admin/house owner: protected handoff to the real Halo / Seek First operational surface.
+
+The public building scene never receives provider credentials, owner tokens, raw private stakeholder data, internal audit state, or write controls. Layer entitlement and action authority are separate.
+
+This one globe does **not** authorize a tactical surveillance wall, giant command center, military operations aesthetic, or additional intelligence room.
+
 ## 9. Institutional Salon / Support
 
 Planning zone:
@@ -609,7 +637,7 @@ Do not:
 - one Roof Access / Mobility terminal;
 - one or two plants.
 
-No additional large furniture is canonical.
+No additional large furniture is canonical. The suspended Halo Globe is a canonical instrument, not furniture, and its floor-plan circle is only a coordination envelope.
 
 ---
 
@@ -645,6 +673,7 @@ Institutional Salon / Support.
 - runway;
 - giant command center;
 - tactical surveillance wall;
+- multiple Halo globes or a room-scale military intelligence display;
 - newsroom;
 - giant boardroom;
 - duplicated policy archive;
@@ -666,7 +695,8 @@ Suggested Floor 6 hotspots:
 5. **Strategy Review Room** → strategic-review context.
 6. **Partner / Executive Briefing Room** → partner/organization context.
 7. **Roof Access / Mobility terminal** → Level 7 transition.
-8. **Elevator** → lower-floor selector.
+8. **Halo Globe / Spatial Intelligence** → sanitized read-only globe state; owner/admin may hand off to the protected Halo console.
+9. **Elevator** → lower-floor selector.
 
 ---
 
@@ -705,6 +735,9 @@ The architecture itself does not endorse a political side.
 - [ ] no balcony/terrace
 - [ ] 360 camera approximately (36,28)
 - [ ] command table north/forward
+- [ ] Halo Globe suspended at canonical coordination envelope
+- [ ] public Halo mode is read-only and sanitized
+- [ ] owner/admin Halo interaction hands off to protected spatial console
 - [ ] Institutional Command Wall — NOW / PAST WORK / JOIN
 - [ ] elevator + roof-transition terminal east/right
 - [ ] Strategy + Partner rooms south
@@ -729,7 +762,7 @@ The architecture itself does not endorse a political side.
 This floor is bound to the repo-wide program map:
 `production/equity-uprise-capability-map-v2.json`.
 
-The current repo-wide audit classifies **241 Equity Uprise semantic sources** and **55 canonical capabilities**. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+The current capability authority contains **56 canonical capabilities**, including the shared-platform `halo-spatial-intelligence` instrument. Repo-source counts are governed by the generated audit report rather than this narrative paragraph. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
 
 ### Primary capabilities
 - **Institutional Desk / finished public record** (`institutional-desk`, built) — Penthouse Command public/institutional mode: NOW, PAST WORK, JOIN, current initiative portfolio and proof links.
@@ -744,6 +777,8 @@ The current repo-wide audit classifies **241 Equity Uprise semantic sources** an
 - **Consent-aware outbound stakeholder outreach bridge** (`outreach`, built_not_armed_by_default) — Access-controlled stakeholder pipeline; never a public blast console.
 - **Immutable normalized Equity Uprise event ledger** (`event-ledger`, built) — Control / Audit Records support and cross-floor institutional memory.
 - **Program funding / support pathway** (`program-support-funding`, built_public_pathway) — Institutional Salon / Support represents donations, sponsorship and program-support routing. The detailed Equity Uprise Mission Fund record exists but its per-program meters/splits remain quiet until governance, custody, accounting and reporting are publishable.
+
+- **Hitman's Halo / Seek First spatial-intelligence viewport** (`halo-spatial-intelligence`, built_shared_platform) — suspended Halo Globe visible to all through a sanitized read-only projection; owner/admin operations remain in the protected Halo/Seek First plane.
 
 ### Secondary / cross-floor capabilities
 - **Public perspectives with consent + moderation** (`perspectives`, built) — Public Forum record surfaces; moderation remains private Desk work on Floor 6.
