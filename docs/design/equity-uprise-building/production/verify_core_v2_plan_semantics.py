@@ -116,6 +116,15 @@ for level in PLAN_LEVELS:
     check(f"L{n} SVG authoritative title", expected_title in svg_text, expected_title)
     check(f"L{n} DXF authoritative title", level["title"].upper() in dxf_text, level["title"].upper())
 
+    if level.get("basement"):
+        expected_status="RESTRICTED SUPPORT / UNDERGROUND OPERATIONS"
+    elif level.get("design_maturity")=="reconciled-current-iterative-pass":
+        expected_status="PROGRAM RECONCILED — BASIC RENDER READY"
+    else:
+        expected_status="PROGRAM PROVISIONAL — CHASSIS ONLY"
+    check(f"L{n} SVG program-status watermark",expected_status in svg_text,expected_status)
+    check(f"L{n} DXF program-status watermark",expected_status in dxf_text,expected_status)
+
     expected = [z["label"].upper() for z in level.get("zones", [])]
     expected += [s["label"].upper() for s in level.get("spheres", [])]
     expected += support_labels(level)
