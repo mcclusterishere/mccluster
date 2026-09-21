@@ -316,8 +316,12 @@
         "fellowship-matching"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json",
-      "design_maturity": "pre-iterative-program-rewrite",
-      "render_readiness": "chassis-only-not-final-program"
+      "design_maturity": "reconciled-current-iterative-pass",
+      "render_readiness": "inventory-ready-hybrid-3d-next",
+      "working_development_stage": "participate",
+      "program_reconciliation_ref": "../FLOOR-02-PROGRAM-RECONCILIATION.md",
+      "object_inventory_ref": "floor-02/floor-02-object-inventory.json",
+      "preservation_map_ref": "../FLOOR-02-V1-V2-PRESERVATION-MAP.md"
     },
     {
       "level": 3,
