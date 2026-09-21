@@ -46,7 +46,9 @@
         "IT / Electrical",
         "Live B1 / Underground Operations interface (hidden from ordinary navigation)"
       ],
-      "rule": "This floor receives and orients people, establishes/continues Development Passport state, performs intake/verification, and routes participants to the next appropriate action. It does not expose privileged workflow, financial, relationship, live B1, or underground operational state."
+      "rule": "This floor receives and orients people, establishes/continues Development Passport state, performs intake/verification, and routes participants to the next appropriate action. It does not expose privileged workflow, financial, relationship, live B1, or underground operational state.",
+      "program_status": "reconciled-current-iterative-pass",
+      "render_readiness": "basic-render-ready"
     },
     {
       "level": 2,
@@ -68,7 +70,9 @@
         "Member Check-In"
       ],
       "private_surfaces": [],
-      "rule": "Public issue framing remains neutral; private dashboard content is visible only after member authentication."
+      "rule": "Public issue framing remains neutral; private dashboard content is visible only after member authentication.",
+      "program_status": "working-pre-iterative-program",
+      "render_readiness": "chassis-only-not-final-program"
     },
     {
       "level": 3,
@@ -108,7 +112,9 @@
         "Interview / Stakeholder Meeting B",
         "Fellowship / Relationship Records"
       ],
-      "rule": "Public people/opportunity surfaces include the Equity Uprise cohort, external fellowships and enterprise-development information while keeping private contact, fit-review, revenue/accounting and relationship notes non-public."
+      "rule": "Public people/opportunity surfaces include the Equity Uprise cohort, external fellowships and enterprise-development information while keeping private contact, fit-review, revenue/accounting and relationship notes non-public.",
+      "program_status": "working-pre-iterative-program",
+      "render_readiness": "chassis-only-not-final-program"
     },
     {
       "level": 4,
@@ -138,7 +144,9 @@
         "Media / Release Control",
         "Media / Music Operations"
       ],
-      "rule": "Rights, DDEX and delivery state stay operational/private; the public floor expresses the catalogue, culture and approved work."
+      "rule": "Rights, DDEX and delivery state stay operational/private; the public floor expresses the catalogue, culture and approved work.",
+      "program_status": "working-pre-iterative-program",
+      "render_readiness": "chassis-only-not-final-program"
     },
     {
       "level": 5,
@@ -177,7 +185,9 @@
         "Research / Publication Navigator",
         "Research / Publication Systems"
       ],
-      "rule": "This floor is the canonical research-to-record engine; approval authority for irreversible external acts remains on Floor 6."
+      "rule": "This floor is the canonical research-to-record engine; approval authority for irreversible external acts remains on Floor 6.",
+      "program_status": "working-pre-iterative-program",
+      "render_readiness": "chassis-only-not-final-program"
     },
     {
       "level": 6,
@@ -233,7 +243,9 @@
         "Program funding governance / records",
         "Halo owner/admin operational mode"
       ],
-      "rule": "Private control/admin/outreach/funding functions remain access-controlled. The Halo Globe is visible to all, but public/member/staff layers are read-only and entitlement-scoped; only protected owner/admin mode may enter operational Halo controls."
+      "rule": "Private control/admin/outreach/funding functions remain access-controlled. The Halo Globe is visible to all, but public/member/staff layers are read-only and entitlement-scoped; only protected owner/admin mode may enter operational Halo controls.",
+      "program_status": "working-pre-iterative-program",
+      "render_readiness": "chassis-only-not-final-program"
     },
     {
       "level": 7,
@@ -253,7 +265,9 @@
       "private_surfaces": [
         "Service / Equipment Band"
       ],
-      "rule": "Passenger-elevator roof service is not assumed. Mobility remains a candidate reservation pending real-world feasibility."
+      "rule": "Passenger-elevator roof service is not assumed. Mobility remains a candidate reservation pending real-world feasibility.",
+      "program_status": "working-pre-iterative-program",
+      "render_readiness": "chassis-only-not-final-program"
     }
   ],
   "capabilities": [
