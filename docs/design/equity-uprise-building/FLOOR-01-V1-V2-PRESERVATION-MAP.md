@@ -85,6 +85,25 @@ The next builder pass should:
 - visually distinguish public, private, staff/service and restricted B1 interfaces;
 - remain deterministic and stack-ready.
 
+## Viewer / navigation preservation rule
+
+The original V1 viewer interaction model is now a **preservation target**, not an optional presentation layer.
+
+Preserve:
+- orbit pivot around the middle of the floor rather than an exterior/showroom camera;
+- original Lobby / Reception / Elevator / Lounge / Intake named views;
+- original human-scale camera framing;
+- `Hide ceiling / Show ceiling`;
+- `Wireframe / Solid` mesh-line inspection;
+- north orientation cue;
+- uncluttered primary navigation.
+
+New program spaces such as Passport Studio and Journey Wall must exist in the environment, but they must not make the primary navigation worse. Additional views can be secondary/optional.
+
+Do not replace this interaction model with a generic model-viewer UI or a control bar that obscures the original spatial experience.
+
+---
+
 ## Viewer target
 
 The viewer must support:
