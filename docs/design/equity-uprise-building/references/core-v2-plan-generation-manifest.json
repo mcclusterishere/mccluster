@@ -1,0 +1,72 @@
+[
+  {
+    "level": 1,
+    "title": "Lobby + Intake",
+    "elevation_ft": 0,
+    "files": {
+      "png": "references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png",
+      "svg": "references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 2,
+    "title": "Public Forum",
+    "elevation_ft": 13.5,
+    "files": {
+      "png": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png",
+      "svg": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 3,
+    "title": "Fellowship + Network",
+    "elevation_ft": 27,
+    "files": {
+      "png": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png",
+      "svg": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 4,
+    "title": "Media + Culture",
+    "elevation_ft": 40.5,
+    "files": {
+      "png": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png",
+      "svg": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 5,
+    "title": "Policy + Proof",
+    "elevation_ft": 54,
+    "files": {
+      "png": "references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png",
+      "svg": "references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 6,
+    "title": "Penthouse Command",
+    "elevation_ft": 67.5,
+    "files": {
+      "png": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png",
+      "svg": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf"
+    }
+  },
+  {
+    "level": 7,
+    "title": "Roof / Mobility Portal",
+    "elevation_ft": 81,
+    "files": {
+      "png": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png",
+      "svg": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg",
+      "dxf": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf"
+    }
+  }
+]
