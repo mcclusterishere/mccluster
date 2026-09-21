@@ -5,7 +5,7 @@
 > This file fixes the conceptual plan geometry so future renderers do not redesign the floor.  
 > **Not for construction.** Final permit/construction documents require a licensed architect/engineer and site/jurisdiction-specific code, structural, MEP, accessibility, fire/life-safety and zoning review.
 > Mandatory authority: `REFERENCE-AUTHORITY.md`
-> Canonical plan files: `references/floor-01/equity-uprise-floor-01-viable-schematic-v3.{png,svg,dxf}`
+> Canonical plan files: `references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.{png,svg,dxf}`
 
 
 > Core V2 branch authority: `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
