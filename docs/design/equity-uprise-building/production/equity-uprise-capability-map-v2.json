@@ -71,8 +71,8 @@
       ],
       "private_surfaces": [],
       "rule": "Public issue framing remains neutral; private dashboard content is visible only after member authentication.",
-      "program_status": "working-pre-iterative-program",
-      "render_readiness": "chassis-only-not-final-program"
+      "program_status": "reconciled-current-iterative-pass",
+      "render_readiness": "basic-render-ready"
     },
     {
       "level": 3,
@@ -113,8 +113,8 @@
         "Fellowship / Relationship Records"
       ],
       "rule": "Public people/opportunity surfaces include the Equity Uprise cohort, external fellowships and enterprise-development information while keeping private contact, fit-review, revenue/accounting and relationship notes non-public.",
-      "program_status": "working-pre-iterative-program",
-      "render_readiness": "chassis-only-not-final-program"
+      "program_status": "reconciled-current-iterative-pass",
+      "render_readiness": "basic-render-ready"
     },
     {
       "level": 4,
