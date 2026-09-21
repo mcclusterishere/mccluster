@@ -423,6 +423,22 @@
       }
     }
   ],
+  "spheres": [
+    {
+      "id": "sphere_01",
+      "label": "Halo Globe / Spatial Intelligence",
+      "type": "instrument",
+      "center_ft": {
+        "x": 24.5,
+        "y": 34.5
+      },
+      "radius_ft": 2.25,
+      "center_z_local_ft": 8.25,
+      "route_key": "halo_spatial_intelligence",
+      "access": "public-sanitized-read-only-role-scoped-owner-admin",
+      "note": "Suspended coordination envelope; does not consume floor circulation. Public and role-scoped modes are read-only. Owner/admin operations hand off to the protected Halo/Seek First plane."
+    }
+  ],
   "south_condition": "sealed upper-floor glazing",
   "camera_ref": "floor-06-camera.json",
   "materials_ref": "floor-06-materials.json",

@@ -16,6 +16,8 @@ Inherited vertical systems:
 
 The floor may define program zones but may not move these systems or cover shared slab openings.
 
+Floor 6 additionally reserves one suspended Halo Globe / Spatial Intelligence sphere at (24.5,34.5), radius 2.25 ft, center 8.25 ft AFF. Its footprint is coordination-only and may not obstruct circulation or the fixed core.
+
 Both stairs are modeled as continuous full-rise systems in the combined building generator. A per-floor isolated viewer is never vertical-continuity authority.
 
 **NOT FOR CONSTRUCTION.**

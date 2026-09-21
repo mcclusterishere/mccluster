@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "scene_id": "equity-uprise-floor-06",
   "default_state": "idle",
   "states": [
@@ -16,6 +16,66 @@
       "id": "after_hours",
       "label": "After Hours",
       "lighting_multiplier": 0.45
+    },
+    {
+      "id": "halo_ambient",
+      "label": "Halo Ambient",
+      "route_key": "halo_spatial_intelligence",
+      "access": "public",
+      "read_only": true
+    },
+    {
+      "id": "halo_public",
+      "label": "Halo Public",
+      "route_key": "halo_spatial_intelligence",
+      "access": "public-sanitized",
+      "read_only": true
+    },
+    {
+      "id": "halo_member",
+      "label": "Halo Member",
+      "route_key": "halo_spatial_intelligence",
+      "access": "authenticated-role-scoped",
+      "read_only": true
+    },
+    {
+      "id": "halo_staff",
+      "label": "Halo Staff",
+      "route_key": "halo_spatial_intelligence",
+      "access": "authorized-staff",
+      "read_only": true
+    },
+    {
+      "id": "halo_owner",
+      "label": "Halo Owner / Admin",
+      "route_key": "halo_spatial_intelligence",
+      "access": "house-owner",
+      "read_only": false,
+      "owner_handoff_required": true
+    },
+    {
+      "id": "approvals",
+      "label": "Approvals",
+      "route_key": "control_plane",
+      "access": "authorized-admin"
+    },
+    {
+      "id": "jobs",
+      "label": "Jobs / Workflow Queue",
+      "route_key": "control_plane",
+      "access": "authorized-admin"
+    },
+    {
+      "id": "integrations",
+      "label": "Connections / Integrations",
+      "route_key": "control_plane",
+      "access": "authorized-admin"
+    },
+    {
+      "id": "outreach",
+      "label": "Outreach / Consent / Contact State",
+      "route_key": "control_plane",
+      "access": "authorized-admin"
     }
   ]
 }

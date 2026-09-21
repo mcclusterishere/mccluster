@@ -256,6 +256,16 @@
       "access": "authorized-admin",
       "approval_gated": true
     },
+    "halo_spatial_intelligence": {
+      "type": "ui_state",
+      "target": "halo_spatial_intelligence",
+      "public_projection_endpoint": "https://api.mccluster.org/v1/equity-uprise/halo-globe",
+      "owner_surface": "https://api.mccluster.org/internal/seek-first",
+      "access": "public-sanitized-read-only-role-scoped-owner-admin",
+      "public_read_only": true,
+      "owner_auth_required": true,
+      "note": "The Equity Uprise globe is a permissioned viewport into the shared Hitman's Halo / Seek First spatial plane. It is not a second spatial backend."
+    },
     "roof_transition": {
       "type": "scene",
       "scene_id": "equity-uprise-level-07",

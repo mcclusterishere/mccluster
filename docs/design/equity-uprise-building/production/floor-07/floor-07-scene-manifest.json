@@ -303,6 +303,7 @@
       }
     }
   ],
+  "spheres": [],
   "south_condition": "open-air roof / guarded edge",
   "camera_ref": "floor-07-camera.json",
   "materials_ref": "floor-07-materials.json",

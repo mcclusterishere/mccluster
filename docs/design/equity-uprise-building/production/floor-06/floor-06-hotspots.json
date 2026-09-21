@@ -122,6 +122,23 @@
       "action": "focus_zone"
     },
     {
+      "id": "hs_sphere_01",
+      "label": "Halo Globe / Spatial Intelligence",
+      "position_ft_local": {
+        "x": 24.5,
+        "y": 34.5,
+        "z": 8.25
+      },
+      "position_ft_world": {
+        "x": 24.5,
+        "y": 34.5,
+        "z": 75.75
+      },
+      "sphere_id": "sphere_01",
+      "action": "open_route",
+      "route_key": "halo_spatial_intelligence"
+    },
+    {
       "id": "hs_passenger_elevator",
       "label": "Passenger Elevator",
       "position_ft_world": {

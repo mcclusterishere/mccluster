@@ -410,6 +410,7 @@
       }
     }
   ],
+  "spheres": [],
   "south_condition": "sealed upper-floor glazing",
   "camera_ref": "floor-03-camera.json",
   "materials_ref": "floor-03-materials.json",

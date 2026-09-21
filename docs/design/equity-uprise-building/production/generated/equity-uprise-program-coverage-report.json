@@ -11,8 +11,8 @@
     "6": 32,
     "7": 3
   },
-  "checks_total": 335,
-  "checks_passed": 335,
+  "checks_total": 343,
+  "checks_passed": 343,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -1552,6 +1552,51 @@
       "detail": "[1, 2, 3, 4, 5, 6]"
     },
     {
+      "name": "Halo spatial capability exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Floor 6 has exactly one Halo Globe",
+      "passed": true,
+      "detail": "1 globe(s)"
+    },
+    {
+      "name": "Halo Globe stays suspended above circulation",
+      "passed": true,
+      "detail": "bottom=6 ft AFF"
+    },
+    {
+      "name": "Halo Globe stays below Floor 6 ceiling zone",
+      "passed": true,
+      "detail": "top=10.5 ft AFF"
+    },
+    {
+      "name": "Halo route resolves as UI state",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Halo public projection is read-only",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Halo owner mode requires owner authentication",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Halo route has separate public projection endpoint",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 1 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
       "name": "floor 1 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
@@ -1562,12 +1607,12 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 1 control_plane is not public",
+      "name": "floor 1 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 1 media_release_ops is not public",
+      "name": "floor 2 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1582,12 +1627,12 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 2 control_plane is not public",
+      "name": "floor 2 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 2 media_release_ops is not public",
+      "name": "floor 3 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1602,12 +1647,12 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 3 control_plane is not public",
+      "name": "floor 3 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 3 media_release_ops is not public",
+      "name": "floor 4 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1622,12 +1667,12 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 4 control_plane is not public",
+      "name": "floor 4 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 4 media_release_ops is not public",
+      "name": "floor 5 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1642,12 +1687,12 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 5 control_plane is not public",
+      "name": "floor 5 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 5 media_release_ops is not public",
+      "name": "floor 6 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1662,12 +1707,12 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 6 control_plane is not public",
+      "name": "floor 6 media_release_ops is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
     {
-      "name": "floor 6 media_release_ops is not public",
+      "name": "floor 7 control_plane is not public",
       "passed": true,
       "detail": "authorized-admin"
     },
@@ -1680,11 +1725,6 @@
       "name": "floor 7 publication_submission is not public",
       "passed": true,
       "detail": "authorized-researcher-editor-admin"
-    },
-    {
-      "name": "floor 7 control_plane is not public",
-      "passed": true,
-      "detail": "authorized-admin"
     },
     {
       "name": "floor 7 media_release_ops is not public",

@@ -386,6 +386,7 @@
       }
     }
   ],
+  "spheres": [],
   "south_condition": "ground-level public entrance",
   "camera_ref": "floor-01-camera.json",
   "materials_ref": "floor-01-materials.json",
