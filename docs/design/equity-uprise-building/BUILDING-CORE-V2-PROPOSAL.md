@@ -1,8 +1,8 @@
 # Equity Uprise — Building Core V2 Proposal
 
-> Status: **PROPOSED / NON-CANONICAL**
+> Status: **APPROVED MIGRATION RATIONALE / SUPERSEDED BY `BUILDING-CORE-V2-SPEC.md`**
 >
-> This document exists on a revision branch so the existing canonical building is not disturbed until the owner approves the new vertical-circulation/core strategy.
+> This document records the rationale that led to Core V2. The owner approved proceeding with this migration in-chat on September 21, 2026. The controlling branch authority is now `BUILDING-CORE-V2-SPEC.md` plus `production/building-core-v2.json`. Main remains unchanged until migration validation and later promotion.
 >
 > **Not for construction.** Final egress, stair, elevator, structural, accessibility, fire/life-safety, MEP and code design require licensed professional review.
 
@@ -167,9 +167,9 @@ Individual floor viewers can remain available, but they become derived views of 
 
 ## Approval status
 
-This proposal does **not** change canonical main-branch architecture.
+The Core V2 migration is approved on the protected branch. This rationale does **not** itself change canonical main-branch architecture.
 
-Owner approval is required before:
+Migration validation is required before:
 - updating REFERENCE-AUTHORITY.md;
 - revising floor specs/bases;
 - replacing DXF/SVG/PNG plan references;
