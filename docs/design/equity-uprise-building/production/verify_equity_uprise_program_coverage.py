@@ -59,6 +59,7 @@ for n,level in levels.items():
     routes=routing.get("routes",{})
 
     required={z["route_key"] for z in level.get("zones",[]) if z.get("route_key")}
+    required.update({s["route_key"] for s in level.get("spheres",[]) if s.get("route_key")})
     missing=sorted(required-set(routes))
     check(f"floor {n} zone routes resolve",not missing,", ".join(missing))
 
@@ -89,6 +90,23 @@ for n in range(1,8):
 
 # High-risk/private surfaces must never be declared public.
 high_risk={"media_release_ops","publication_submission","admin_desk","control_plane"}
+
+# Floor 6 Halo Globe is visible to all but never grants public write/control.
+halo_cap=next((x for x in caps if x.get("id")=="halo-spatial-intelligence"),None)
+check("Halo spatial capability exists",halo_cap is not None)
+l6=levels[6]
+halo_spheres=[s for s in l6.get("spheres",[]) if s.get("route_key")=="halo_spatial_intelligence"]
+check("Floor 6 has exactly one Halo Globe",len(halo_spheres)==1,f"{len(halo_spheres)} globe(s)")
+if halo_spheres:
+    s=halo_spheres[0]
+    check("Halo Globe stays suspended above circulation",s.get("center_z_local_ft",0)-s.get("radius_ft",0)>=6.0,f"bottom={s.get('center_z_local_ft',0)-s.get('radius_ft',0):g} ft AFF")
+    check("Halo Globe stays below Floor 6 ceiling zone",s.get("center_z_local_ft",99)+s.get("radius_ft",99)<=11.0,f"top={s.get('center_z_local_ft',0)+s.get('radius_ft',0):g} ft AFF")
+r6=json.loads((HERE/"floor-06"/"floor-06-routing.json").read_text())["routes"]
+halo_route=r6.get("halo_spatial_intelligence",{})
+check("Halo route resolves as UI state",halo_route.get("type")=="ui_state")
+check("Halo public projection is read-only",halo_route.get("public_read_only") is True)
+check("Halo owner mode requires owner authentication",halo_route.get("owner_auth_required") is True)
+check("Halo route has separate public projection endpoint",str(halo_route.get("public_projection_endpoint","")).endswith("/v1/equity-uprise/halo-globe"))
 for n in range(1,8):
     routing=json.loads((HERE/f"floor-{n:02d}"/f"floor-{n:02d}-routing.json").read_text())
     routes=routing.get("routes",{})
