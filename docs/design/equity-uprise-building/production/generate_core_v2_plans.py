@@ -309,13 +309,14 @@ def site_svg(path):
         kind=item.get("kind","site")
         if "bounds_ft" in item:
             b=item["bounds_ft"];out.append(f'<rect x="{X(b["x1"])}" y="{Y(b["y2"])}" width="{(b["x2"]-b["x1"])*s}" height="{(b["y2"]-b["y1"])*s}" fill="{colors.get(kind,"#eeeeea")}" class="site"/>')
-            out.append(f'<text x="{(X(b["x1"])+X(b["x2"]))/2}" y="{(Y(b["y1"])+Y(b["y2"]))/2}" text-anchor="middle" dominant-baseline="middle" class="t small">{esc(item["label"])}</text>')
+            out.append(f'<text x="{(X(b["x1"])+X(b["x2"]))/2}" y="{(Y(b["y1"])+Y(b["y2"]))/2}" text-anchor="middle" dominant-baseline="middle" class="t small">{esc(item["label"].upper())}</text>')
         elif "polyline_ft" in item:
             pts=" ".join(f'{X(p[0])},{Y(p[1])}' for p in item["polyline_ft"]);out.append(f'<polyline points="{pts}" fill="none" stroke="#666" stroke-width="6"/>')
-            p=item["polyline_ft"][len(item["polyline_ft"])//2];out.append(f'<text x="{X(p[0])}" y="{Y(p[1])}" text-anchor="middle" class="t small">{esc(item["label"])}</text>')
+            p=item["polyline_ft"][len(item["polyline_ft"])//2];out.append(f'<text x="{X(p[0])}" y="{Y(p[1])}" text-anchor="middle" class="t small">{esc(item["label"].upper())}</text>')
         elif kind=="keep_clear":
             b=site["building_bounds_ft"];off=item.get("offset_from_building_ft",0)
             out.append(f'<rect x="{X(b["x1"]-off)}" y="{Y(b["y2"]+off)}" width="{(b["x2"]-b["x1"]+2*off)*s}" height="{(b["y2"]-b["y1"]+2*off)*s}" fill="none" stroke="#8a1f23" stroke-width="2" stroke-dasharray="6 5"/>')
+            out.append(f'<text x="{X(b["x2"]+off)-4}" y="{Y(b["y2"]+off)+12}" text-anchor="end" class="t small">{esc(item["label"].upper())}</text>')
     b=site["building_bounds_ft"];out.append(f'<rect x="{X(b["x1"])}" y="{Y(b["y2"])}" width="{(b["x2"]-b["x1"])*s}" height="{(b["y2"]-b["y1"])*s}" class="bldg"/>')
     out.append(f'<text x="{X(36)}" y="{Y(36)}" text-anchor="middle" class="t med">EQUITY UPRISE FLOOR 1 FOOTPRINT</text>')
     for obj in site.get("exterior_openings",[]):
@@ -324,9 +325,9 @@ def site_svg(path):
             yy=72 if fac=="north" else loc.get("y",0);x1d,x2d=X(loc["x1"]),X(loc["x2"]);y=Y(yy);out.append(f'<line x1="{x1d}" y1="{y}" x2="{x2d}" y2="{y}" class="door"/>');tx=(x1d+x2d)/2;ty=y-7
         else:
             xx=72 if fac=="east" else 0;y1d,y2d=Y(loc["y1"]),Y(loc["y2"]);x=X(xx);out.append(f'<line x1="{x}" y1="{y1d}" x2="{x}" y2="{y2d}" class="door"/>');tx=x+7;ty=(y1d+y2d)/2
-        out.append(f'<text x="{tx}" y="{ty}" class="t small">{esc(obj["label"])}</text>')
+        out.append(f'<text x="{tx}" y="{ty}" class="t small">{esc(obj["label"].upper())}</text>')
     for eq in site.get("emergency_equipment",[]):
-        p=eq["location_ft"];out.append(f'<circle cx="{X(p["x"])}" cy="{Y(p["y"])}" r="4" class="equip"/>');out.append(f'<text x="{X(p["x"])+7}" y="{Y(p["y"])+3}" class="t small">{esc(eq["label"])}</text>')
+        p=eq["location_ft"];out.append(f'<circle cx="{X(p["x"])}" cy="{Y(p["y"])}" r="4" class="equip"/>');out.append(f'<text x="{X(p["x"])+7}" y="{Y(p["y"])+3}" class="t small">{esc(eq["label"].upper())}</text>')
     out += ['<text x="45" y="1070" class="t med">Generated-only site / egress simulation authority · not a permit/site-plan.</text>','</svg>']
     path.write_text("\n".join(out),encoding="utf-8")
 
@@ -342,6 +343,11 @@ def site_dxf(path):
             b=item["bounds_ft"];msp.add_text(item["label"].upper(),dxfattribs={"layer":"TEXT","height":0.8}).set_placement(((b["x1"]+b["x2"])/2,(b["y1"]+b["y2"])/2))
         elif "polyline_ft" in item:
             msp.add_lwpolyline(item["polyline_ft"],dxfattribs={"layer":"EGRESS"});p=item["polyline_ft"][len(item["polyline_ft"])//2];msp.add_text(item["label"].upper(),dxfattribs={"layer":"TEXT","height":0.8}).set_placement(tuple(p))
+        elif item.get("kind")=="keep_clear":
+            b=site["building_bounds_ft"];off=item.get("offset_from_building_ft",0)
+            kb={"x1":b["x1"]-off,"y1":b["y1"]-off,"x2":b["x2"]+off,"y2":b["y2"]+off}
+            rect2(kb,"EGRESS")
+            msp.add_text(item["label"].upper(),dxfattribs={"layer":"TEXT","height":0.8}).set_placement((kb["x2"]-18,kb["y2"]-2))
     rect2(site["building_bounds_ft"],"BUILDING")
     for obj in site.get("exterior_openings",[]):
         loc=obj["location"];fac=loc.get("facade")
