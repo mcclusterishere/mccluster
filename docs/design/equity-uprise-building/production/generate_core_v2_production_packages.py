@@ -308,6 +308,8 @@ for level in programs["levels"]:
         manifest["authority"]["basement_support_authority"]=["../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md","../basement-b1-program.json"]
         manifest["simulation_objects_ref"]="floor-01-simulation-objects.json"
         manifest["site_plan_geometry_authority"]=["../../references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf","../../references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg","../../references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png"]
+        manifest["object_inventory_ref"]="floor-01-object-inventory.json"
+        manifest["preservation_map_ref"]="../../FLOOR-01-V1-V2-PRESERVATION-MAP.md"
 
     mats={"schema_version":"2.0.0","scene_id":scene_id,"pbr_convention":"metallic-roughness","materials":MATERIALS,
           "rules":["Exact Equity Uprise logo artwork must be used where specified.","Materials may not imply geometry changes."]}
