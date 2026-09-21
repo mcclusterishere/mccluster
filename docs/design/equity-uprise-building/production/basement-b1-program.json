@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.2.0",
+  "schema_version": "0.3.0",
   "status": "canonical-b1-underground-operations-and-technical-service-program",
   "id": "basement-b1",
   "level": 0,
@@ -439,5 +439,7 @@
     "live_controls_available": false,
     "live_occupancy_visible": false,
     "competency_evidence_allowed": true
-  }
+  },
+  "design_maturity": "reconciled-current-iterative-pass",
+  "render_readiness": "basic-render-ready-restricted"
 }
