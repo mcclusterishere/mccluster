@@ -21,7 +21,7 @@
       ".github/copilot-instructions.md"
     ]
   },
-  "tracked_count": 218,
+  "tracked_count": 221,
   "categories": {
     "agent_entrypoints": [
       ".cursorrules",
@@ -59,8 +59,10 @@
       "docs/design/equity-uprise-building/FLOOR-01-SITE-EGRESS-SIMULATION.md",
       "docs/design/equity-uprise-building/FLOOR-01-V1-V2-MERGE-MAP.md",
       "docs/design/equity-uprise-building/FLOOR-01-V1-V2-PRESERVATION-MAP.md",
+      "docs/design/equity-uprise-building/FLOOR-02-PROGRAM-RECONCILIATION.md",
       "docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md",
+      "docs/design/equity-uprise-building/FLOOR-02-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md",
       "docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md",
@@ -116,6 +118,7 @@
       "docs/design/equity-uprise-building/production/floor-02/floor-02-hotspots.json",
       "docs/design/equity-uprise-building/production/floor-02/floor-02-lighting.json",
       "docs/design/equity-uprise-building/production/floor-02/floor-02-materials.json",
+      "docs/design/equity-uprise-building/production/floor-02/floor-02-object-inventory.json",
       "docs/design/equity-uprise-building/production/floor-02/floor-02-routing.json",
       "docs/design/equity-uprise-building/production/floor-02/floor-02-scene-manifest.json",
       "docs/design/equity-uprise-building/production/floor-02/floor-02-states.json",
@@ -270,6 +273,10 @@
     {
       "sha": "752c70444e12f44abdeacdd19697f7db88937d44",
       "role": "V1 Floor 1 interactive interior viewer"
+    },
+    {
+      "sha": "7c7726289781f270da25eef70789b704b63b30bd",
+      "role": "V1 Floor 2 Public Forum deterministic interactive viewer"
     },
     {
       "sha": "c674e07daf772ea739d93cc515657deb028e8b75",
