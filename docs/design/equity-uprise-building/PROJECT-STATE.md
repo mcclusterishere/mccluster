@@ -91,12 +91,23 @@ Preparation complete:
 - machine inventory created with **48 stable records / 72 total object instances**;
 - current Core V2 west service/freight + Stair B corrections retained.
 
-Floor 2 is **not yet a finished real 3D environment**. No Floor 2 builder/modeling work is included in this checkpoint.
+Floor 2 now has an inventory-driven real 3D builder and standalone GLB/viewer. Visual approval is still pending.
 
 Required references:
 - `FLOOR-02-PROGRAM-RECONCILIATION.md`;
 - `FLOOR-02-V1-V2-PRESERVATION-MAP.md`;
 - `production/floor-02/floor-02-object-inventory.json`.
+
+## Working full-building stack — ACTIVE NOW
+
+The working viewer now treats the building as one continuous object from B1 through roof:
+- validated combined Core V2 chassis remains the structural/vertical-continuity layer;
+- detailed Floor 1 is inserted at FFE 0;
+- detailed Floor 2 is inserted at FFE +13.5 ft;
+- Floors 3–7 remain visible as chassis placeholders at their real elevations;
+- each future floor pass replaces/improves its level **inside this stack**, not as an isolated experiment.
+
+Public working-stack viewer: `equity-uprise-building-core-v2-3d.html`.
 
 ## Floors 3–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
 
@@ -124,7 +135,8 @@ Use these to recover design quality, not obsolete stair/core geometry.
 3. **IN PROGRESS:** hybrid Floor 1 builder now consumes the canonical inventory and is being upgraded from the technical scaffold into the V1-feel / V2-truth environment.
 4. Review Floor 1 visually in the real 3D viewer.
 5. Insert the approved hybrid Floor 1 into the whole-building assembly and verify stacking.
-6. Once approved, use the same authority → inventory → 3D → verify → stack workflow for Floor 2.
+6. **ACTIVE:** Floor 2 real 3D + working-stack integration.
+7. Continue Floor 3 → Floor 7 using the same authority → inventory → 3D → verify → stack workflow while keeping all levels assembled.
 
 ## Do not waste time on
 

@@ -1,18 +1,17 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Equity Uprise — Floor 2 — Public Forum — Core V2</title>
-<meta name="robots" content="noindex">
-<style>html,body{height:100%;margin:0;background:#111;color:#fff;font-family:system-ui,sans-serif;display:grid;place-items:center}a{color:#fff}main{max-width:540px;padding:24px;text-align:center}</style>
-</head>
-<body>
-<main>
-<p>Opening Floor 2 — Public Forum as a derived view of the shared Core V2 stacked building…</p>
-<p><a href="/equity-uprise-building-core-v2-3d.html?floor=2">Open Floor 2 — Public Forum</a></p>
-<p><small>Schematic migration preview · not for construction.</small></p>
-</main>
-<script>location.replace("/equity-uprise-building-core-v2-3d.html?floor=2");</script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-store"><meta name="equity-uprise-build" content="__STAMP__"><title>Equity Uprise — Floor 2 Public Forum</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:Inter,system-ui,sans-serif}#app{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none}.hud{position:fixed;z-index:4;left:14px;top:14px;max-width:min(520px,calc(100vw - 28px));padding:13px;border:1px solid #444;border-radius:14px;background:#111d}.hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#ccc;margin:0 0 9px}.c{display:flex;flex-wrap:wrap;gap:6px}button{border:1px solid #555;border-radius:999px;background:#252525;color:#fff;padding:7px 10px;font:700 11px system-ui}.s{position:fixed;right:14px;bottom:14px;background:#111d;border:1px solid #444;border-radius:10px;padding:8px 10px;font-size:10px}</style></head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · FLOOR 2 · PUBLIC FORUM</h1><p>V1 Public Forum composition + Core V2 stack geometry. Centered orbit, original navigation pattern.</p><div class="c"><button data-v="forum">Forum</button><button data-v="wall">Feature Wall</button><button data-v="elevator">Elevator</button><button data-v="lounge">Listening Lounge</button><button data-v="south">South Glazing</button><button id="ceil">Hide ceiling</button><button id="wire">Wireframe</button></div></div><div class="s" id="status">Loading Floor 2…</div>
+<script type="module">
+import * as THREE from 'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';import{GLTFLoader}from'three/addons/loaders/GLTFLoader.js';
+const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x121314);scene.fog=new THREE.Fog(0x121314,ft(48),ft(120));
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.03,ft(160));const r=new THREE.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(devicePixelRatio,2));r.setSize(innerWidth,innerHeight);r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.05;r.shadowMap.enabled=true;app.appendChild(r.domElement);
+const ctl=new OrbitControls(camera,r.domElement);ctl.enableDamping=true;ctl.minDistance=ft(4);ctl.maxDistance=ft(100);ctl.maxPolarAngle=Math.PI/2-.01;
+scene.add(new THREE.HemisphereLight(0xf4ede2,0x161719,1.7));const d=new THREE.DirectionalLight(0xfff0da,2.2);d.position.set(ft(15),ft(28),ft(-8));scene.add(d);const warm=new THREE.PointLight(0xffd7a6,58,ft(36),2);warm.position.set(ft(36),ft(8.5),ft(-39));scene.add(warm);
+let model,ceil=[],wire=false;new GLTFLoader().load('/equity-uprise-preview/equity-uprise-floor-02-core-v2.glb?v=__STAMP__',g=>{model=g.scene;scene.add(model);let n=0;model.traverse(o=>{if(o.isMesh){n++;o.castShadow=o.receiveShadow=true;if((o.name||'').includes('CEILING')||(o.name||'').includes('ceiling'))ceil.push(o)}});status.textContent=n+' meshes · 48 inventory records';go('forum')},undefined,e=>status.textContent='Model load failed');
+const V={forum:{p:[36,6.2,21],t:[36,4.1,39]},wall:{p:[36,5.8,35],t:[36,4.8,52]},elevator:{p:[45,5.8,31],t:[56,4.3,39]},lounge:{p:[24,5.8,24],t:[10,3.8,22]},south:{p:[36,5.8,28],t:[36,4,2]}};
+function go(k){const v=V[k];camera.position.set(ft(v.p[0]),ft(v.p[1]),ft(-v.p[2]));ctl.target.set(ft(v.t[0]),ft(v.t[1]),ft(-v.t[2]));ctl.update()}document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>go(b.dataset.v));
+document.getElementById('ceil').onclick=e=>{const on=e.target.textContent.startsWith('Hide');ceil.forEach(x=>x.visible=!on);e.target.textContent=on?'Show ceiling':'Hide ceiling'};
+document.getElementById('wire').onclick=e=>{wire=!wire;model?.traverse(o=>{if(o.isMesh){const m=Array.isArray(o.material)?o.material:[o.material];m.forEach(x=>{if('wireframe'in x){x.wireframe=wire;x.needsUpdate=true}})}});e.target.textContent=wire?'Solid':'Wireframe'};
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();r.setSize(innerWidth,innerHeight)});r.setAnimationLoop(()=>{ctl.update();r.render(scene,camera)});
+</script></body></html>

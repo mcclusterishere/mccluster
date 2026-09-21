@@ -43,10 +43,11 @@ jobs:
             git add -f site0 || true
           fi
 
-      - name: Build Equity Uprise Floor 1 volumetric GLB
+      - name: Build detailed Equity Uprise floors
         run: |
           python -m pip install --disable-pip-version-check numpy scipy trimesh
           python docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01_v2.py
+          python docs/design/equity-uprise-building/production/floor-02/build_equity_uprise_floor_02_v2.py
 
       - name: Publish Equity Uprise preview assets
         run: |
@@ -57,6 +58,8 @@ jobs:
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb equity-uprise-preview/equity-uprise-building-core-v2.glb
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-core-v2.glb equity-uprise-preview/equity-uprise-floor-01-core-v2.glb
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-core-v2-report.json equity-uprise-preview/equity-uprise-floor-01-core-v2-report.json
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-02-core-v2.glb equity-uprise-preview/equity-uprise-floor-02-core-v2.glb
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-02-core-v2-report.json equity-uprise-preview/equity-uprise-floor-02-core-v2-report.json
           cp docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png equity-uprise-preview/floor-01-plan.png
           cp docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg equity-uprise-preview/floor-01-plan.svg
           cp docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png equity-uprise-preview/floor-01-site-egress.png

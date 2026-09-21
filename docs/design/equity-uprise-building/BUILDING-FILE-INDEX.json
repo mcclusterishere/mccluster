@@ -21,7 +21,7 @@
       ".github/copilot-instructions.md"
     ]
   },
-  "tracked_count": 221,
+  "tracked_count": 222,
   "categories": {
     "agent_entrypoints": [
       ".cursorrules",
@@ -113,6 +113,7 @@
       "docs/design/equity-uprise-building/production/floor-01/floor-01-site-egress.json",
       "docs/design/equity-uprise-building/production/floor-01/floor-01-states.json",
       "docs/design/equity-uprise-building/production/floor-02/README.md",
+      "docs/design/equity-uprise-building/production/floor-02/build_equity_uprise_floor_02_v2.py",
       "docs/design/equity-uprise-building/production/floor-02/floor-02-camera.json",
       "docs/design/equity-uprise-building/production/floor-02/floor-02-geometry-notes.md",
       "docs/design/equity-uprise-building/production/floor-02/floor-02-hotspots.json",

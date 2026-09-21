@@ -1,163 +1,18 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">\n<meta http-equiv="Pragma" content="no-cache">\n<meta http-equiv="Expires" content="0">\n<meta name="equity-uprise-build" content="__STAMP__">
-<title>Equity Uprise — Core V2 Authority Diagnostic</title>
-<style>
-:root{color-scheme:dark;--bg:#101214;--panel:rgba(8,10,12,.90);--edge:rgba(255,255,255,.15);--text:#f5f3ef;--dim:#aaa;--accent:#b32930}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-#view{position:fixed;inset:0;width:100%;height:100%;display:block;background:linear-gradient(#171a1d,#0d0f11);touch-action:none}
-.panel{position:fixed;z-index:10;border:1px solid var(--edge);border-radius:14px;background:var(--panel);backdrop-filter:blur(10px)}
-#hud{left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));width:min(690px,calc(100vw - 20px));padding:12px}
-#status{right:max(10px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));max-width:min(520px,calc(100vw - 20px));padding:9px 11px;font-size:10px;color:#ddd}
-h1{font-size:14px;letter-spacing:.045em;margin:0 0 4px}p{font-size:11px;line-height:1.4;color:#ccc;margin:0 0 9px}
-.controls{display:flex;gap:5px;flex-wrap:wrap}button{border:1px solid #555;border-radius:999px;padding:6px 9px;background:#232629;color:#fff;font-size:10px;font-weight:750;cursor:pointer}
-button.active{background:#7f191e;border-color:#bd343b}.summary{margin-top:9px;padding-top:8px;border-top:1px solid var(--edge);font-size:10px;line-height:1.45;color:#ddd}.summary b{color:#fff}
-.badge{display:inline-block;padding:2px 6px;border:1px solid var(--edge);border-radius:999px;font-size:9px;margin-right:5px;color:#bbb}
-#boot{position:fixed;z-index:30;left:50%;top:50%;transform:translate(-50%,-50%);padding:14px 17px;border-radius:12px;background:#111;border:1px solid #555;font-size:12px;text-align:center}
-</style>
-</head>
-<body>
-<canvas id="view"></canvas>
-<div id="hud" class="panel">
-  <h1>EQUITY UPRISE · CORE V2 · AUTHORITY DIAGNOSTIC</h1>
-  <p>This preview reads the canonical machine authorities at runtime. It is a design/debug view, not a second source of truth and not a production authorization layer.</p>
-  <div class="controls" id="controls">
-    <button data-view="stack" class="active">B1→Roof stack</button>
-    <button data-floor="1">1</button><button data-floor="2">2</button><button data-floor="3">3</button>
-    <button data-floor="4">4</button><button data-floor="5">5</button><button data-floor="6">6</button><button data-floor="7">↑</button>
-  </div>
-  <div class="summary" id="summary">Loading authority…</div>
-</div>
-<div id="status" class="panel">Loading Core V2 authority…</div>
-<div id="boot">Loading canonical building data…</div>
-<script>
-(()=>{
-"use strict";
-const ROOT="/equity-uprise-preview/";
-const PATHS={
-  core:ROOT+"building-core-v2.json",
-  programs:ROOT+"core-v2-floor-programs.json",
-  b1:ROOT+"basement-b1-program.json"
-};
-const canvas=document.getElementById("view"),ctx=canvas.getContext("2d"),boot=document.getElementById("boot"),summary=document.getElementById("summary"),status=document.getElementById("status"),controls=document.getElementById("controls");
-let CORE,PROGRAMS,B1,selected=null,scale=1,panX=0,panY=0,drag=null;
-
-const fetchJSON=p=>fetch(p,{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error(p+" · HTTP "+r.status);return r.json()});
-function levelProgram(n){return n===0?B1:PROGRAMS.levels.find(x=>x.level===n)}
-function levelName(n){
-  if(n===0)return B1.title;
-  const p=levelProgram(n),c=CORE.levels.find(x=>x.level===n);
-  return (p&&p.program_identity)||(p&&p.title)||(c&&c.name)||("Level "+n);
-}
-function zones(n){const p=levelProgram(n);return (p&&(p.zones||p.spaces))||[]}
-function elev(n){const c=CORE.levels.find(x=>x.level===n);return c?c.finished_floor_elevation_ft:(n===0?B1.elevation_ft:0)}
-function project(x,y,z){
-  const w=canvas.clientWidth,h=canvas.clientHeight;
-  const s=Math.min(w,h)/190*scale;
-  return {x:w*.52+(x-y)*.63*s+panX,y:h*.76-(x+y)*.26*s-z*1.35*s+panY};
-}
-function poly(points,fill,stroke="rgba(255,255,255,.22)",lw=1){
-  ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();
-  if(fill){ctx.fillStyle=fill;ctx.fill()}ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();
-}
-function floorPlate(n,alpha){
-  const z=elev(n),w=CORE.shell.width_ft,d=CORE.shell.depth_ft;
-  const pts=[project(0,0,z),project(w,0,z),project(w,d,z),project(0,d,z)];
-  const b1=n===0;
-  poly(pts,b1?`rgba(75,82,91,${alpha})`:`rgba(90,94,98,${alpha})`,b1?"rgba(150,170,185,.5)":"rgba(255,255,255,.22)",1);
-  const label=project(w+2,d*.5,z+1);
-  ctx.fillStyle=b1?"#9db3c1":"#e4e4e4";ctx.font="700 10px system-ui";ctx.fillText(n===0?"B1 · RESTRICTED":(n===7?"↑ · ":"F"+n+" · ")+levelName(n),label.x,label.y);
-}
-function drawCore(){
-  const systems=CORE.vertical_systems||{};
-  const items=[
-    systems.passenger_elevator?.shaft_bounds_ft,
-    systems.service_freight_elevator?.shaft_bounds_ft,
-    systems.stair_a?.enclosure_bounds_ft,
-    systems.stair_b?.enclosure_bounds_ft
-  ].filter(Boolean);
-  const top=Math.max(...CORE.levels.map(x=>x.finished_floor_elevation_ft))+8;
-  const bottom=Math.min(...CORE.levels.map(x=>x.finished_floor_elevation_ft));
-  items.forEach((b,i)=>{
-    const a=project(b.x1,b.y1,bottom),c=project(b.x2,b.y1,bottom),d=project(b.x2,b.y2,bottom),e=project(b.x1,b.y2,bottom);
-    const at=project(b.x1,b.y1,top),ct=project(b.x2,b.y1,top),dt=project(b.x2,b.y2,top),et=project(b.x1,b.y2,top);
-    const col=i<2?"rgba(78,96,112,.16)":"rgba(120,112,98,.13)";
-    poly([a,c,ct,at],col);poly([c,d,dt,ct],col);poly([d,e,et,dt],col);poly([at,ct,dt,et],"rgba(120,130,138,.12)");
-  });
-}
-function drawStack(){
-  const order=[0,1,2,3,4,5,6,7];
-  order.forEach(n=>floorPlate(n,n===0?.55:.38));
-  drawCore();
-}
-function topDownPoint(x,y){
-  const w=canvas.clientWidth,h=canvas.clientHeight,pad=Math.min(w,h)*.12;
-  const s=Math.min((w-2*pad)/CORE.shell.width_ft,(h-2*pad)/CORE.shell.depth_ft)*scale;
-  return{x:w/2+(x-CORE.shell.width_ft/2)*s+panX,y:h/2-(y-CORE.shell.depth_ft/2)*s+panY};
-}
-function drawPlan(n){
-  const p1=topDownPoint(0,0),p2=topDownPoint(CORE.shell.width_ft,CORE.shell.depth_ft);
-  ctx.fillStyle=n===0?"rgba(65,73,82,.52)":"rgba(75,78,80,.55)";
-  ctx.fillRect(p1.x,p2.y,p2.x-p1.x,p1.y-p2.y);ctx.strokeStyle="rgba(255,255,255,.35)";ctx.strokeRect(p1.x,p2.y,p2.x-p1.x,p1.y-p2.y);
-  zones(n).forEach((z,i)=>{
-    const b=z.bounds_ft;if(!b)return;
-    const a=topDownPoint(b.x1,b.y1),c=topDownPoint(b.x2,b.y2);
-    ctx.fillStyle=n===0?"rgba(105,137,155,.20)":"rgba(160,160,160,.18)";
-    ctx.fillRect(a.x,c.y,c.x-a.x,a.y-c.y);ctx.strokeStyle="rgba(255,255,255,.32)";ctx.strokeRect(a.x,c.y,c.x-a.x,a.y-c.y);
-    if(c.x-a.x>62&&a.y-c.y>24){ctx.fillStyle="#ddd";ctx.font="600 9px system-ui";ctx.fillText(z.label||z.id,a.x+4,c.y+12)}
-  });
-  // Shared cores on every plan.
-  const sys=CORE.vertical_systems||{};
-  [sys.passenger_elevator?.shaft_bounds_ft,sys.service_freight_elevator?.shaft_bounds_ft,sys.stair_a?.enclosure_bounds_ft,sys.stair_b?.enclosure_bounds_ft].filter(Boolean).forEach(b=>{
-    const a=topDownPoint(b.x1,b.y1),c=topDownPoint(b.x2,b.y2);
-    ctx.fillStyle="rgba(30,35,40,.72)";ctx.fillRect(a.x,c.y,c.x-a.x,a.y-c.y);ctx.strokeStyle="rgba(170,190,205,.55)";ctx.strokeRect(a.x,c.y,c.x-a.x,a.y-c.y);
-  });
-}
-function updateSummary(){
-  if(selected===null){
-    summary.innerHTML="<b>Stack authority</b> — "+CORE.levels.length+" physical levels modeled from B1 through roof. B1 exists structurally but is omitted from ordinary participant navigation.<br><span class='badge'>"+CORE.status+"</span><span class='badge'>NOT FOR CONSTRUCTION</span>";
-    return;
-  }
-  const p=levelProgram(selected),zs=zones(selected);
-  if(selected===0){
-    summary.innerHTML="<b>B1 · "+B1.title+"</b> — "+B1.purpose+"<br><span class='badge'>restricted live access</span><span class='badge'>training = sandbox clone</span>";
-  }else{
-    summary.innerHTML="<b>"+(selected===7?"↑":"F"+selected)+" · "+levelName(selected)+"</b> — "+zs.length+" modeled program zones. "+(p?.working_development_stage?"Development stage: "+p.working_development_stage+". ":"")+"Derived from core-v2-floor-programs.json.";
-  }
-}
-function render(){
-  const d=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*d);canvas.height=Math.round(innerHeight*d);canvas.style.width=innerWidth+"px";canvas.style.height=innerHeight+"px";ctx.setTransform(d,0,0,d,0,0);
-  ctx.clearRect(0,0,innerWidth,innerHeight);
-  selected===null?drawStack():drawPlan(selected);
-  updateSummary();
-}
-function setSelected(n,btn){
-  selected=n;scale=1;panX=panY=0;document.querySelectorAll("button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
-  const u=new URL(location.href);if(n===null)u.searchParams.delete("floor");else u.searchParams.set("floor",String(n));history.replaceState(null,"",u.pathname+u.search);render();
-}
-controls.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.view==="stack")setSelected(null,b);else if(b.dataset.floor)setSelected(+b.dataset.floor,b)});
-canvas.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY,px:panX,py:panY};canvas.setPointerCapture(e.pointerId)});
-canvas.addEventListener("pointermove",e=>{if(!drag)return;panX=drag.px+e.clientX-drag.x;panY=drag.py+e.clientY-drag.y;render()});
-canvas.addEventListener("pointerup",()=>drag=null);canvas.addEventListener("pointercancel",()=>drag=null);
-canvas.addEventListener("wheel",e=>{e.preventDefault();scale=Math.max(.55,Math.min(2.5,scale*Math.exp(-e.deltaY*.001)));render()},{passive:false});
-window.addEventListener("resize",render);
-
-Promise.all([fetchJSON(PATHS.core),fetchJSON(PATHS.programs),fetchJSON(PATHS.b1)]).then(([core,programs,b1])=>{
-  CORE=core;PROGRAMS=programs;B1=b1;
-  const q=new URLSearchParams(location.search),requested=Number(q.get("floor"));
-  // B1 is intentionally not offered in ordinary controls. floor=0 is accepted only
-  // for explicit design diagnostics; this is not application authorization.
-  if(q.has("floor")&&Number.isFinite(requested)&&(requested>=1&&requested<=7)){
-    const b=document.querySelector('[data-floor="'+requested+'"]');setSelected(requested,b);
-  }else if(requested===0&&q.get("underground")==="design"){
-    const b=document.createElement("button");b.textContent="B1 · design audit";b.dataset.floor="0";controls.appendChild(b);setSelected(0,b);
-  }else render();
-  status.textContent=`Authority loaded · ${CORE.schema_version} · ${CORE.shell.width_ft}' × ${CORE.shell.depth_ft}' · B1 FFE ${elev(0)} ft · Roof FFE ${elev(7)} ft · generated GLB remains the 3D geometry artifact`;
-  boot.style.display="none";
-}).catch(err=>{boot.textContent="Authority load failed: "+err.message;status.textContent="No fallback geometry is rendered when canonical JSON cannot load.";console.error(err)});
-})();
-</script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-store"><meta name="equity-uprise-build" content="__STAMP__"><title>Equity Uprise — Working Building Stack</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101214;color:#fff;font-family:Inter,system-ui,sans-serif}#app{position:fixed;inset:0}.hud{position:fixed;z-index:5;left:12px;top:12px;max-width:min(660px,calc(100vw - 24px));background:#0b0d10df;border:1px solid #444;border-radius:14px;padding:12px}.hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#ccc;margin:0 0 8px}.c{display:flex;gap:5px;flex-wrap:wrap}button{border:1px solid #555;border-radius:999px;background:#232629;color:#fff;padding:6px 9px;font:700 10px system-ui}button.active{background:#851a1d}.s{position:fixed;right:12px;bottom:12px;background:#0b0d10df;border:1px solid #444;border-radius:10px;padding:8px 10px;font-size:10px}</style></head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now. F1 + F2 are detailed inserts; F3–F7 remain chassis until their floor-by-floor passes.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button id="wire">Wireframe</button></div></div><div class="s" id="status">Loading working stack…</div>
+<script type="module">
+import * as THREE from'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';import{GLTFLoader}from'three/addons/loaders/GLTFLoader.js';
+const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status');const scene=new THREE.Scene();scene.background=new THREE.Color(0x101214);scene.fog=new THREE.Fog(0x101214,ft(100),ft(240));
+const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.0;app.appendChild(ren.domElement);const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);
+scene.add(new THREE.HemisphereLight(0xf2eee6,0x111315,1.8));const dl=new THREE.DirectionalLight(0xfff1df,2.5);dl.position.set(ft(90),ft(150),ft(20));scene.add(dl);
+const loader=new GLTFLoader();let base,f1,f2,wire=false,loaded=0;
+function done(){loaded++;if(loaded===3){status.textContent='Working stack loaded · detailed F1 + F2 · chassis F3–F7';focus('stack')}}
+loader.load('/equity-uprise-preview/equity-uprise-building-core-v2.glb?v=__STAMP__',g=>{base=g.scene;scene.add(base);base.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^L[12]_(program|circle|support|slab|north_wall|south_|west_wall|east_wall)/.test(n))o.visible=false});done()});
+loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{f1=g.scene;scene.add(f1);f1.traverse(o=>{if(o.isMesh&&/^(stair_|passenger_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
+loader.load('/equity-uprise-preview/equity-uprise-floor-02-core-v2.glb?v=__STAMP__',g=>{f2=g.scene;f2.position.y=ft(13.5);scene.add(f2);f2.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
+const elev={0:-13.5,1:0,2:13.5,3:27,4:40.5,5:54,6:67.5,7:81};
+function focus(k){document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('active',b.dataset.f===String(k)));if(k==='stack'){cam.position.set(ft(130),ft(110),ft(145));ctl.target.set(ft(36),ft(38),ft(-36))}else{const z=elev[+k];cam.position.set(ft(95),ft(z+22),ft(58));ctl.target.set(ft(36),ft(z+5),ft(-36))}ctl.update()}
+document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>focus(b.dataset.f));document.getElementById('wire').onclick=e=>{wire=!wire;scene.traverse(o=>{if(o.isMesh){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}})}});e.target.textContent=wire?'Solid':'Wireframe'};
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});ren.setAnimationLoop(()=>{ctl.update();ren.render(scene,cam)});
+</script></body></html>
