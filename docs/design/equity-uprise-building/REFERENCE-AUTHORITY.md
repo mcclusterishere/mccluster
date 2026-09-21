@@ -124,6 +124,7 @@ Floor 2 has **no exterior public entrance, balcony, or terrace**.
 Canonical Floor 2 assets:
 - `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.png`
 
 ## Locked six-floor program
 
