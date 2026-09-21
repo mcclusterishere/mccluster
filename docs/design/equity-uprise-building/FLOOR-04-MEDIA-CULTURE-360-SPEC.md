@@ -4,8 +4,7 @@
 > Program note: this floor has **not** yet received the activity/space reconciliation completed for Floor 1. Preserve useful repo-derived requirements, but do not treat the current room program or working identity as final.  
 > Building: compact six-floor Equity Uprise headquarters / civic institute  
 > Floor identity: **Media + Culture**  
-> This file is the source of truth for Floor 4 floor-plan work, 360 panorama generation, hotspot placement, 3D reconstruction, and implementation.  
-> Do not generate a Floor 4 environment that conflicts with this document.
+> This file is a **provisional program/spatial reference only**. It may inform chassis coordination and the future iterative rewrite, but it must not be treated as final room/program authority or as a render-ready floor specification.
 
 
 > **Core V2 chassis authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
