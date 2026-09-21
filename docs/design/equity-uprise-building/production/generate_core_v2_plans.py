@@ -181,7 +181,12 @@ def svg(level,path):
 
 def plan_readme(level,base):
     label="Basement B1" if level.get("basement") else f"Floor {level['level']:02d}"
-    status="RESTRICTED CORE V2 PLAN REFERENCE" if level.get("basement") else "ACTIVE CORE V2 PLAN REFERENCE"
+    if level.get("basement"):
+        status="RESTRICTED CORE V2 PLAN REFERENCE"
+    elif level.get("design_maturity")=="reconciled-current-iterative-pass":
+        status="ACTIVE CORE V2 PLAN REFERENCE"
+    else:
+        status="PROVISIONAL CORE V2 CHASSIS PLAN — PROGRAM PRE-ITERATIVE"
     authority="basement-b1-program.json" if level.get("basement") else "core-v2-floor-programs.json"
     return f"""# {label} — {level['title']} — Core V2 Plan References
 
@@ -202,6 +207,8 @@ Finished-floor elevation: **{elev_label(level['elevation_ft'])}**.
 These files are **generated-only**. Do not hand-edit them or treat this README as geometry authority.
 
 The machine-readable source files above control title, level identity, program zones, shared vertical systems, and regeneration.
+
+Design maturity: **{level.get('design_maturity','support-level' if level.get('basement') else 'unspecified')}**.
 """
 
 def dxf(level,path):
@@ -230,7 +237,14 @@ for level in plan_levels:
     paths={"png":d/f"{base}.png","svg":d/f"{base}.svg","dxf":d/f"{base}.dxf"}
     png(level,paths["png"]);svg(level,paths["svg"]);dxf(level,paths["dxf"])
     (d/"README.md").write_text(plan_readme(level,base))
-    manifest.append({"level":n,"title":level["title"],"elevation_ft":level["elevation_ft"],"files":{k:str(v.relative_to(BUILDING)) for k,v in paths.items()}})
+    manifest.append({
+        "level":n,
+        "title":level["title"],
+        "elevation_ft":level["elevation_ft"],
+        "design_maturity":level.get("design_maturity","support-level" if level.get("basement") else None),
+        "render_readiness":level.get("render_readiness"),
+        "files":{k:str(v.relative_to(BUILDING)) for k,v in paths.items()}
+    })
 
 # contact sheet
 ims=[Image.open(ref_dir(x)/f"{OUT_NAMES[x['level']]}.png").resize((400,420)) for x in plan_levels]
