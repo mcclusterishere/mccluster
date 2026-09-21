@@ -8,10 +8,11 @@
   "floor_program_ref": "../core-v2-floor-programs.json",
   "capability_map_ref": "../equity-uprise-capability-map-v2.json",
   "feature_ids": [
-    "verification",
-    "stakeholder-intake",
+    "conversation-agent",
+    "fellowship-applications",
     "interviews-calendar",
-    "conversation-agent"
+    "verification",
+    "stakeholder-intake"
   ],
   "authority": {
     "building_core": [

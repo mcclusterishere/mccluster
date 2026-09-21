@@ -8,6 +8,7 @@
   "floor_program_ref": "../core-v2-floor-programs.json",
   "capability_map_ref": "../equity-uprise-capability-map-v2.json",
   "feature_ids": [
+    "member-dashboard",
     "profiles",
     "private-contact",
     "fellowship-directory",
@@ -15,9 +16,14 @@
     "host-listings",
     "fellowship-applications",
     "interviews-calendar",
+    "verification",
+    "stakeholder-intake",
     "stakeholder-graph",
     "meetings-commitments",
-    "verification"
+    "partnership-sponsorship",
+    "artist-creator",
+    "google-workspace",
+    "outreach"
   ],
   "authority": {
     "building_core": [

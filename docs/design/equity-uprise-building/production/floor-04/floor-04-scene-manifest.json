@@ -8,14 +8,15 @@
   "floor_program_ref": "../core-v2-floor-programs.json",
   "capability_map_ref": "../equity-uprise-capability-map-v2.json",
   "feature_ids": [
+    "evidence-room",
+    "artifacts",
     "music-catalogue",
     "artist-creator",
     "music-rights",
     "music-release",
     "ddex",
     "rally-media",
-    "communication-derivatives",
-    "artifacts"
+    "communication-derivatives"
   ],
   "authority": {
     "building_core": [
