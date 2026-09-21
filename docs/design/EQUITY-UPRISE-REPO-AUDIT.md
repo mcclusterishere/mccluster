@@ -22,7 +22,7 @@ The canonical machine-readable program authority is:
 
 `docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json`
 
-That map currently contains **51 repo-grounded capabilities**.
+That map currently contains **56 repo-grounded capabilities**.
 
 Status distribution:
 - `built` — Implemented in repo.
@@ -59,6 +59,7 @@ The branch tree was swept for Equity Uprise and closely related surfaces, then t
 - control approvals, OAuth/integrations, jobs/workflows, status/health and event ledger;
 - Google Workspace relationship bridge;
 - consent-aware outbound outreach;
+- Hitman's Halo / Seek First spatial-intelligence projection and entitlement boundary;
 - Level 7 ecosystem routing and the separate experimental Uprise World.
 
 Representative source authority includes:
@@ -91,20 +92,21 @@ The prior floor hierarchy was sound. The missing fidelity was mostly semantic:
 4. **Floor 4** represented media/culture but under-described release operations, rights/catalog state, DDEX and communication derivatives.
 5. **Floor 5** represented policy/evidence but under-described the living initiative docket, claim/evidence graph, manuscripts/reviews, canonical publications, distribution, government filings, monitoring, citations and impact.
 6. **Floor 6** represented institutional direction but under-described the real private Desk: moderation, roles, approvals, integrations, workflow/jobs, outreach, health/status and immutable audit/event state.
-7. **Level 7** incorrectly had a generated passenger-elevator hotspot despite Core V2 explicitly not assuming direct passenger-elevator roof service.
+7. **Floor 6** also lacked a coherent spatial-intelligence instrument. The reconciliation adds one restrained Halo Globe / Spatial Intelligence viewport, visible to all through a sanitized read-only projection while protected owner/admin operations remain in the real Halo / Seek First plane.
+8. **Level 7** incorrectly had a generated passenger-elevator hotspot despite Core V2 explicitly not assuming direct passenger-elevator roof service.
 
-All seven issues are now represented in the Core V2 program/capability authority. The production generator has also been changed so future routing preserves those boundaries.
+All eight issues are now represented in the Core V2 program/capability authority. The production generator has also been changed so future routing preserves those boundaries.
 
 ## Canonical floor model
 
 | Level | Identity | Functional role | Primary capability count | Total represented capability count |
 |---|---|---|---:|---:|
-| 1 | Lobby + Intake | arrival / trust / verification / intake / routing | 2 | 5 |
+| 1 | Lobby + Intake | arrival / trust / verification / intake / routing | 2 | 7 |
 | 2 | Public Forum | listen / discuss / record / member context | 4 | 5 |
-| 3 | Fellowship + Network | people / opportunities / relationships / meetings | 9 | 16 |
-| 4 | Media + Culture | listen / create / edit / archive / release | 7 | 9 |
+| 3 | Fellowship + Network | people / opportunities / relationships / meetings | 11 | 18 |
+| 4 | Media + Culture | listen / create / edit / archive / release | 8 | 10 |
 | 5 | Policy + Proof | research / evidence / publication / filings / impact | 15 | 18 |
-| 6 | Penthouse Command | institutional direction / Desk / approvals / operations | 11 | 28 |
+| 6 | Penthouse Command | institutional direction / Desk / approvals / operations / spatial intelligence | 13 | 32 |
 | 7 | Roof / Mobility Portal | ecosystem navigation / departure / arrival | 3 | 3 |
 
 A capability may appear on more than one floor only when the secondary location expresses a real part of the same workflow. Example: a government submission is prepared/reviewed on Floor 5, while irreversible authorization belongs to Floor 6.
@@ -297,6 +299,8 @@ A capability may appear on more than one floor only when the secondary location 
 | `google-workspace` | Google Workspace/Gmail relationship bridge | built_disabled_until_configured | private |
 | `outreach` | Consent-aware outbound stakeholder outreach bridge | built_not_armed_by_default | private-high-risk |
 | `event-ledger` | Immutable normalized Equity Uprise event ledger | built | private-audit |
+| `program-support-funding` | Program funding / support pathway | built_public_pathway | public-support-pathway-private-detailed-fund-governance |
+| `halo-spatial-intelligence` | Hitman's Halo / Seek First spatial-intelligence viewport | built_shared_platform | public-sanitized-read-only-role-scoped-owner-admin |
 
 ### Cross-floor capabilities represented here
 
@@ -327,8 +331,9 @@ A capability may appear on more than one floor only when the secondary location 
 - controlled/back-office: **Partner / Executive Briefing**
 - controlled/back-office: **Control / Audit Records**
 - controlled/back-office: **Desk Operations / Systems**
+- shared-platform instrument: **Halo Globe / Spatial Intelligence** — public sanitized read-only projection; protected owner/admin operational handoff
 
-**Boundary:** Private control/admin/outreach functions must be access-controlled and must not turn the public building into a surveillance or tactical control room.
+**Boundary:** Private control/admin/outreach functions must be access-controlled and must not turn the public building into a surveillance or tactical control room. The Halo Globe is a shared spatial-intelligence instrument, not permission to expose private data or duplicate Halo's backend.
 
 ## Floor 7 — Roof / Mobility Portal
 
@@ -495,10 +500,10 @@ The reconciliation is backed by four separate deterministic checks:
 
 | Layer | Result | What it proves |
 |---|---:|---|
-| Repo-source classification | **260 / 260 passed** | 77 Equity Uprise-specific repo sources were discovered; 50 are capability sources, 27 are explicitly support-only, and none are unclassified. |
-| Capability / floor / routing coverage | **162 / 162 passed** | All 51 canonical capabilities are assigned to their primary and declared secondary floors; route keys resolve; private/high-risk routes remain non-public; Level 7 does not imply passenger-elevator service. |
-| Generated plan semantics | **310 / 310 passed** | Active Core V2 SVG/DXF/PNG sets exist for all seven levels; generated vector/CAD labels match the canonical floor program; stale semantic labels are absent; only the Core V2 triplets remain active. |
-| Combined stacked geometry | **27 / 27 passed** | Seven shared elevations and all 12 stair transitions remain continuous in the combined GLB; shared Core V2 geometry still passes its deterministic continuity checks. |
+| Repo-source classification | **244 sources classified** | Current source ledger contains 102 capability sources and 142 explicitly support-only sources. The exact discovered-set gate remains enforced by `verify_equity_uprise_repo_sources.py`. |
+| Capability / floor / routing coverage | **429 / 429 passed** | All 56 canonical capabilities are assigned to their primary and declared secondary floors; interaction-mode and zone routes resolve; private/high-risk routes remain non-public; Halo public mode is read-only with owner-authenticated operational handoff; Level 7 does not imply passenger-elevator service. |
+| Generated plan semantics | **312 / 312 passed** | Active Core V2 SVG/DXF/PNG sets exist for all seven levels; generated vector/CAD labels include the Halo Globe and match the canonical floor program; stale semantic labels are absent; only the Core V2 triplets remain active. |
+| Combined stacked geometry | **32 / 32 passed** | Seven shared elevations, all 12 stair transitions and the single suspended Floor 6 Halo Globe remain valid in the combined GLB; the Halo envelope clears the fixed core and circulation height constraints. |
 
 Canonical audit support files:
 - `production/equity-uprise-repo-source-map-v2.json`
@@ -510,9 +515,9 @@ Canonical audit support files:
 - `production/generated/equity-uprise-building-core-v2-report.json`
 
 Current combined GLB report:
-- meshes: **667**
-- deterministic geometry checks: **27 / 27**
-- GLB SHA-256: `1febf1593fcdac4a5848235b199e9981bbccbf137edf00e4455381852c3a5db7`
+- meshes: **668**
+- deterministic geometry checks: **32 / 32**
+- GLB SHA-256: `2698349a3c9073cfd04de6db232672c7b8c26e3101c7a57bb656def3bf5427c0`
 
 These checks establish current repo/building consistency. They do **not** establish building-code compliance, permit readiness, structural adequacy, accessibility compliance, fire/life-safety compliance, or operational aviation feasibility.
 
@@ -527,6 +532,8 @@ Against the Equity Uprise functionality currently implemented or explicitly repr
 - semantic floor labels have been tightened to match actual repo functions;
 - the old floor-local vertical-core problem remains fixed by Core V2;
 - Level 7 passenger-elevator semantics are corrected;
+- Floor 6 contains one permissioned Halo Globe / Spatial Intelligence instrument without changing the shared shell/core;
+- the previously weakly expressed capabilities on Floors 3–6 now have explicit interaction modes rather than extra rooms;
 - no extra decorative department/floor is required.
 
 Future Equity Uprise features must update the capability map and pass program-coverage validation before architectural work treats the building as complete.
