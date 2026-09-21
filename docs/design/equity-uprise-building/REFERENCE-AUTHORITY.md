@@ -34,17 +34,17 @@ Read in this order:
 
 3. The floor-specific written specification.
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
+   - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
 
 4. The floor-specific schematic-plan basis.
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
+   - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
 
 5. The canonical floor-plan assets.
-   - PNG preview:
-     `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-viable-schematic-v3.png`
-   - SVG vector source:
-     `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-viable-schematic-v3.svg`
-   - DXF CAD handoff:
-     `docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-viable-schematic-v3.dxf`
+   - Floor 1: `docs/design/equity-uprise-building/references/floor-01/`
+   - Floor 2: `docs/design/equity-uprise-building/references/floor-02/`
+
+For geometry, prefer DXF → SVG → raster preview → later renders.
 
 ## Which source controls what
 
@@ -98,6 +98,32 @@ Floor 1 currently establishes the building datum:
 - -90° west: lounge/intake.
 
 Floors 2–6 must stack on this shell/core logic unless the owner explicitly approves a formal building-wide revision.
+
+## Floor 2 locked geometry
+
+Floor 2 preserves the Floor 1 building datum:
+
+- floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
+- grid: **18' × 18' coordination module**;
+- elevator hoistway: **X 54–62 / Y 34–44**;
+- Stair A: **X 60–72 / Y 54–72**;
+- Stair B: **X 0–12 / Y 54–72**;
+- MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
+- forum table: approximately **12 ft diameter**, centered near **(36,39)**;
+- member check-in: adjacent to elevator, approximately **X 49–51 / Y 24–29**;
+- conversation/lounge zone: **X 2–18 / Y 14–30**;
+- feature wall: approximately **X 24–48 / Y 50–54**;
+- 360 camera datum: approximately **(36,28), 5'-4" AFF**;
+- 0° north: forum table / feature wall;
+- +90° east: elevator + member check-in;
+- 180° south: sealed upper-floor glazing — **no exterior door**;
+- -90° west: conversation/listening lounge.
+
+Floor 2 has **no exterior public entrance, balcony, or terrace**.
+
+Canonical Floor 2 assets:
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.svg`
 
 ## Locked six-floor program
 
