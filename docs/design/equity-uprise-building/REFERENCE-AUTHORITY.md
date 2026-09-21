@@ -32,9 +32,12 @@ Read in this order:
 2. `docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md`
    - Defines the locked six occupied-floor program plus Level 7 roof, vertical narrative, continuity rules and one-level-at-a-time design process.
 
-2A. `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`
-   - Mandatory before Floor 6, roof, exterior-master, rooftop 3D, or cross-site mobility work.
-   - Locks the roof as Level 7 / Mobility Portal while deliberately leaving final helipad geometry pending feasibility.
+2A. Level 7 roof / ecosystem authority:
+   - `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
+   - `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
+   - `docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
+   - `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md` is retained as origin/context only.
+   - Mandatory before Floor 6 roof-interface, roof, exterior-master, rooftop 3D, cross-site mobility, destination-building, helicopter/VTOL transition, or ecosystem-navigation work.
 
 3. The floor-specific written specification.
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
@@ -42,6 +45,8 @@ Read in this order:
    - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
    - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
    - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
+   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
+   - Level 7: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
    - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
 
 4. The floor-specific schematic-plan basis.
@@ -51,6 +56,8 @@ Read in this order:
    - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
    - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
    - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
+   - Level 7: `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
+   - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
 
 5. The canonical floor-plan assets.
    - Floor 1: `docs/design/equity-uprise-building/references/floor-01/`
@@ -58,6 +65,8 @@ Read in this order:
    - Floor 3: `docs/design/equity-uprise-building/references/floor-03/`
    - Floor 4: `docs/design/equity-uprise-building/references/floor-04/`
    - Floor 5: `docs/design/equity-uprise-building/references/floor-05/`
+   - Floor 6: `docs/design/equity-uprise-building/references/floor-06/`
+   - Level 7: `docs/design/equity-uprise-building/references/floor-07/`
    - Floor 6: `docs/design/equity-uprise-building/references/floor-06/`
 
 For geometry, prefer DXF → SVG → raster preview → later renders.
@@ -263,6 +272,33 @@ Canonical Floor 6 assets:
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
+## Level 7 locked geometry and ecosystem semantics
+
+Level 7 preserves the inherited 72' × 72' roof datum and is the canonical **ecosystem plane**.
+
+Locked schematic conditions:
+- roof plate: **72' × 72'**;
+- grid: **18' × 18'**;
+- elevator shaft: **X 54–62 / Y 34–44**;
+- Stair A: **X 60–72 / Y 54–72**;
+- Stair B: **X 0–12 / Y 54–72**;
+- MEP/roof services: approximately **X 50–60 / Y 66–72**;
+- conceptual roof-access/core envelope: **X 50–64 / Y 30–48**;
+- ecosystem routing beacon: **X 46–50 / Y 24–30**;
+- candidate mobility-zone reservation: **X 10–48 / Y 8–46**;
+- city-overlook band: **X 12–46 / Y 0–6**;
+- rooftop service/equipment band: **X 28–60 / Y 60–72**;
+- roof camera datum: approximately **(36,28), 5'-4" above roof walking surface**.
+
+Canonical Level 7 assets:
+- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.png`
+
+The roof is **portal infrastructure**. Ecosystem destinations are dynamic routing data. Do not bake the website ecosystem into the roof geometry.
+
+The candidate mobility zone is **not** an approved helipad/vertiport. Final operational aviation geometry remains pending site/aircraft/regulatory/structural feasibility.
+
 ## Locked building program
 
 The building contains **six enclosed occupied floors plus one navigable roof level**:
@@ -303,7 +339,7 @@ Before generating an Equity Uprise building image:
 5. preserve all locked geometry;
 6. generate only after those checks pass.
 
-If a requested floor/level does not yet have a canonical written builder/360 spec, **stop the image-generation workflow and write/review the description first**. For Floor 6 or Level 7 work, also read `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`.
+If a requested floor/level does not yet have a canonical written builder/360 spec, **stop the image-generation workflow and write/review the description first**. For Floor 6 roof-interface or Level 7 work, read the Level 7 canonical spec, schematic basis, and ecosystem-routing contract; the pre-program is historical context only.
 
 ## Lore / worldbuilding rule
 
