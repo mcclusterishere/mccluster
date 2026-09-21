@@ -1,6 +1,6 @@
 # Equity Uprise Building — Floor 01: Arrival / Orientation / Intake
 
-> Status: **CANONICAL FLOOR 1 EXPERIENCE / DIGITAL-TWIN SPEC — CORE V2**  
+> Status: **CANONICAL FLOOR 1 EXPERIENCE / DIGITAL-TWIN SPEC — CORE V2 — PROGRAM + SCHEMATIC COMPLETE**  
 > Building: compact six-floor Equity Uprise headquarters / civic institute  
 > Floor identity: **Arrival / Orientation / Intake**  
 > This file is the source of truth for future Floor 1 floor-plan work, 360 panorama generation, hotspot placement, and implementation.  
@@ -774,3 +774,23 @@ The model now includes:
 - below-grade egress/accessibility training hooks.
 
 See `SIMULATION-CODE-REFERENCE-PROFILE.md` for the researched real-world reference basis and its limitations.
+
+### Floor 1 Core V2 completion lock — 2026-09-21
+
+Floor 1 is **complete for the current Core V2 program, schematic, digital-twin, site/egress-simulation, and repo-authority scope**. This completion statement does not claim permit readiness, final code compliance, or licensed architectural/engineering approval.
+
+The committed completion evidence is:
+
+- `production/generated/equity-uprise-authority-hygiene-report.json` — active authority paths and deprecations;
+- `production/generated/equity-uprise-program-coverage-report.json` — repo capability/program coverage;
+- `production/generated/equity-uprise-core-v2-plan-semantics-report.json` — active Core V2 plan labels and stale-plan exclusion;
+- `production/generated/equity-uprise-building-core-v2-report.json` — combined B1-to-roof geometry/vertical-continuity validation;
+- `production/generated/equity-uprise-floor-01-b1-simulation-report.json` — Floor 1/B1 access, simulation and boundary validation;
+- active Floor 1 Core V2 DXF/SVG/PNG under `references/floor-01/`;
+- active Floor 1 site/egress Core V2 DXF/SVG/PNG under `references/floor-01-site/`.
+
+The older `FLOOR-01-LOBBY-INTAKE-360-SPEC.md` path is compatibility-only and must never regain authority. Archived Core V1 plans remain historical only.
+
+The unchecked render/QC checklists in this document are **repeatable acceptance criteria for future derived images, scenes and revisions**, not an indication that the current canonical Floor 1 program is unfinished.
+
+Any future change to Floor 1 shared-core geometry, canonical program, B1 interface, exterior/site egress layer, capability bindings, active plan triplets, or public/private route boundaries invalidates this completion lock until the applicable verification reports pass again.
