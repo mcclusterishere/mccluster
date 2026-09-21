@@ -1,7 +1,6 @@
 {
-  "schema_version": "2.2.0",
+  "schema_version": "2.3.0",
   "audit_date": "2026-09-21",
-  "branch": "architecture/equity-uprise-core-v2",
   "repo": "mcclusterishere/mccluster",
   "not_for_construction": true,
   "scope": "Repo-grounded capability-to-building map. Describes features implemented, manually operated, shared-platform, disabled-until-configured, or schematic-future according to repository sources. It does not independently verify public factual claims inside program content.",
@@ -19,8 +18,8 @@
   "floors": [
     {
       "level": 1,
-      "title": "Lobby + Intake",
-      "role": "arrival / trust / human routing",
+      "title": "Arrival / Orientation / Intake",
+      "role": "arrival / orientation / trust / verification / Development Passport / next-action routing",
       "feature_ids": [
         "verification",
         "stakeholder-intake"
@@ -33,15 +32,21 @@
         "enterprise-development"
       ],
       "public_surfaces": [
-        "Reception",
+        "Entry Vestibule",
+        "Arrival Atrium",
+        "Orientation Lounge",
         "Intake / Verification Consultation",
-        "Arrival / Routing Directory"
+        "Development Passport Studio",
+        "Journey Wall",
+        "Reception / Concierge / Security Desk",
+        "Next Action / Building Directory"
       ],
       "private_surfaces": [
-        "Reception Support / Storage",
-        "IT / Electrical"
+        "Building Operations / Life Safety",
+        "IT / Electrical",
+        "Live B1 / Underground Operations interface (hidden from ordinary navigation)"
       ],
-      "rule": "This floor receives people and routes them into fellowship, enterprise, verification and support pathways; it does not expose privileged workflow, financial or relationship state."
+      "rule": "This floor receives and orients people, establishes/continues Development Passport state, performs intake/verification, and routes participants to the next appropriate action. It does not expose privileged workflow, financial, relationship, live B1, or underground operational state."
     },
     {
       "level": 2,
@@ -1099,5 +1104,6 @@
     "The detailed Equity Uprise Mission Fund remains visually quiet until its governance/custody/accounting/reporting state is publishable.",
     "The Equity Uprise cohort is distinct from the external fellowship directory and must remain visible as its own program record.",
     "Hitman's Halo remains a shared McCluster spatial-intelligence system; Equity Uprise consumes a permissioned projection and never becomes the spatial source of truth."
-  ]
+  ],
+  "authority_scope": "repository-current"
 }
