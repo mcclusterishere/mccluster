@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "core_ref": "building-core-v2.json",
   "not_for_construction": true,
   "common_support": {
@@ -85,17 +85,18 @@
           }
         },
         {
-          "label": "Intake / Consultation",
+          "label": "Intake / Verification Consultation",
           "kind": "room",
           "bounds_ft": {
             "x1": 2,
             "y1": 32,
             "x2": 16,
             "y2": 44
-          }
+          },
+          "route_key": "verification"
         },
         {
-          "label": "Reception Feature",
+          "label": "Arrival / Identity Wall",
           "kind": "feature",
           "bounds_ft": {
             "x1": 28,
@@ -115,16 +116,24 @@
           }
         },
         {
-          "label": "Directory",
+          "label": "Arrival / Routing Directory",
           "kind": "terminal",
           "bounds_ft": {
             "x1": 49,
             "y1": 24,
             "x2": 51,
             "y2": 29
-          }
+          },
+          "route_key": "institutional_overview"
         }
-      ]
+      ],
+      "feature_ids": [
+        "verification",
+        "stakeholder-intake",
+        "interviews-calendar",
+        "conversation-agent"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
     {
       "level": 2,
@@ -148,14 +157,15 @@
           }
         },
         {
-          "label": "Public Forum Feature Wall",
+          "label": "Topics / Perspectives / Conversations Wall",
           "kind": "feature",
           "bounds_ft": {
             "x1": 24,
             "y1": 50,
             "x2": 48,
             "y2": 54
-          }
+          },
+          "route_key": "current_issues"
         },
         {
           "label": "Listening Lounge",
@@ -165,7 +175,8 @@
             "y1": 14,
             "x2": 18,
             "y2": 30
-          }
+          },
+          "route_key": "conversation"
         },
         {
           "label": "Member Check-In",
@@ -175,7 +186,8 @@
             "y1": 24,
             "x2": 51,
             "y2": 29
-          }
+          },
+          "route_key": "member_dashboard"
         }
       ],
       "circles": [
@@ -188,7 +200,15 @@
           },
           "radius_ft": 6
         }
-      ]
+      ],
+      "feature_ids": [
+        "public-issues",
+        "perspectives",
+        "conversation-agent",
+        "member-dashboard",
+        "fellowship-matching"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
     {
       "level": 3,
@@ -197,7 +217,7 @@
       "elevation_ft": 27,
       "south_condition": "sealed upper-floor glazing",
       "support_names": [
-        "Fellowship Support / Records",
+        "Fellowship / Relationship Records",
         "Network / IT"
       ],
       "zones": [
@@ -212,14 +232,15 @@
           }
         },
         {
-          "label": "Identity / Opportunity Wall",
+          "label": "Opportunity / Network Wall",
           "kind": "feature",
           "bounds_ft": {
             "x1": 22,
             "y1": 50,
             "x2": 50,
             "y2": 54
-          }
+          },
+          "route_key": "opportunities"
         },
         {
           "label": "People + Network Lounge",
@@ -229,37 +250,41 @@
             "y1": 18,
             "x2": 18,
             "y2": 34
-          }
+          },
+          "route_key": "people_network"
         },
         {
-          "label": "Interview Room A",
+          "label": "Interview / Stakeholder Meeting A",
           "kind": "room",
           "bounds_ft": {
             "x1": 2,
             "y1": 4,
             "x2": 14,
             "y2": 16
-          }
+          },
+          "route_key": "meeting_workspace"
         },
         {
-          "label": "Interview Room B",
+          "label": "Interview / Stakeholder Meeting B",
           "kind": "room",
           "bounds_ft": {
             "x1": 16,
             "y1": 4,
             "x2": 28,
             "y2": 16
-          }
+          },
+          "route_key": "meeting_workspace"
         },
         {
-          "label": "Member / Interview Check-In",
+          "label": "Member / Meeting Check-In",
           "kind": "terminal",
           "bounds_ft": {
             "x1": 49,
             "y1": 24,
             "x2": 51,
             "y2": 29
-          }
+          },
+          "route_key": "member_dashboard"
         },
         {
           "label": "16 x 4 Opportunity Table",
@@ -271,7 +296,20 @@
             "y2": 43
           }
         }
-      ]
+      ],
+      "feature_ids": [
+        "profiles",
+        "private-contact",
+        "fellowship-directory",
+        "fellowship-matching",
+        "host-listings",
+        "fellowship-applications",
+        "interviews-calendar",
+        "stakeholder-graph",
+        "meetings-commitments",
+        "verification"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
     {
       "level": 4,
@@ -281,7 +319,7 @@
       "south_condition": "sealed upper-floor glazing",
       "support_names": [
         "Media Equipment / Storage",
-        "Media / Music IT"
+        "Media / Music Operations"
       ],
       "zones": [
         {
@@ -295,14 +333,15 @@
           }
         },
         {
-          "label": "Media / Identity Wall",
+          "label": "Media / Release Wall",
           "kind": "feature",
           "bounds_ft": {
             "x1": 22,
             "y1": 50,
             "x2": 50,
             "y2": 54
-          }
+          },
+          "route_key": "media_catalogue"
         },
         {
           "label": "Culture Archive / Rally Gallery",
@@ -312,7 +351,8 @@
             "y1": 18,
             "x2": 18,
             "y2": 38
-          }
+          },
+          "route_key": "rally_archive"
         },
         {
           "label": "Creator Recording Room",
@@ -322,7 +362,8 @@
             "y1": 4,
             "x2": 15,
             "y2": 16
-          }
+          },
+          "route_key": "creator_studio"
         },
         {
           "label": "Edit / Review Suite",
@@ -332,17 +373,19 @@
             "y1": 4,
             "x2": 31,
             "y2": 16
-          }
+          },
+          "route_key": "media_derivatives"
         },
         {
-          "label": "Media Control",
+          "label": "Media / Release Control",
           "kind": "terminal",
           "bounds_ft": {
             "x1": 49,
             "y1": 24,
             "x2": 51,
             "y2": 29
-          }
+          },
+          "route_key": "media_release_ops"
         },
         {
           "label": "Listening Seating",
@@ -354,7 +397,18 @@
             "y2": 43
           }
         }
-      ]
+      ],
+      "feature_ids": [
+        "music-catalogue",
+        "artist-creator",
+        "music-rights",
+        "music-release",
+        "ddex",
+        "rally-media",
+        "communication-derivatives",
+        "artifacts"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
     {
       "level": 5,
@@ -364,7 +418,7 @@
       "south_condition": "sealed upper-floor glazing",
       "support_names": [
         "Secure Evidence Storage",
-        "Research / Policy IT"
+        "Research / Publication Systems"
       ],
       "zones": [
         {
@@ -378,14 +432,15 @@
           }
         },
         {
-          "label": "Policy + Proof Wall",
+          "label": "Policy / Publication / Impact Wall",
           "kind": "feature",
           "bounds_ft": {
             "x1": 22,
             "y1": 50,
             "x2": 50,
             "y2": 54
-          }
+          },
+          "route_key": "policy_workspace"
         },
         {
           "label": "Evidence + Proof Archive",
@@ -395,7 +450,8 @@
             "y1": 18,
             "x2": 18,
             "y2": 40
-          }
+          },
+          "route_key": "evidence_archive"
         },
         {
           "label": "Source Review Room",
@@ -415,17 +471,19 @@
             "y1": 4,
             "x2": 32,
             "y2": 16
-          }
+          },
+          "route_key": "publication_submission"
         },
         {
-          "label": "Research Navigation",
+          "label": "Research / Publication Navigator",
           "kind": "terminal",
           "bounds_ft": {
             "x1": 49,
             "y1": 24,
             "x2": 51,
             "y2": 29
-          }
+          },
+          "route_key": "research_publication"
         },
         {
           "label": "16 x 5 Policy Table",
@@ -437,7 +495,27 @@
             "y2": 43.5
           }
         }
-      ]
+      ],
+      "feature_ids": [
+        "initiative-portfolio",
+        "research-projects",
+        "source-graph",
+        "claim-evidence",
+        "manuscript-review",
+        "evidence-room",
+        "credentials-proof",
+        "artifacts",
+        "publications",
+        "publication-distribution",
+        "orcid",
+        "crossref",
+        "government-dockets",
+        "government-submissions",
+        "monitoring",
+        "citations-impact",
+        "event-ledger"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
     {
       "level": 6,
@@ -446,8 +524,8 @@
       "elevation_ft": 67.5,
       "south_condition": "sealed upper-floor glazing",
       "support_names": [
-        "Command Support / Secure Records",
-        "Operations / Systems Support"
+        "Control / Audit Records",
+        "Desk Operations / Systems"
       ],
       "zones": [
         {
@@ -461,14 +539,15 @@
           }
         },
         {
-          "label": "NOW / PAST WORK / JOIN Wall",
+          "label": "Institutional Command Wall",
           "kind": "feature",
           "bounds_ft": {
             "x1": 22,
             "y1": 50,
             "x2": 50,
             "y2": 54
-          }
+          },
+          "route_key": "institutional_command"
         },
         {
           "label": "Institutional Salon",
@@ -478,7 +557,8 @@
             "y1": 18,
             "x2": 18,
             "y2": 38
-          }
+          },
+          "route_key": "institutional_overview"
         },
         {
           "label": "Strategy Review Room",
@@ -488,7 +568,8 @@
             "y1": 4,
             "x2": 15,
             "y2": 16
-          }
+          },
+          "route_key": "initiative_portfolio"
         },
         {
           "label": "Partner / Executive Briefing",
@@ -498,7 +579,8 @@
             "y1": 4,
             "x2": 32,
             "y2": 16
-          }
+          },
+          "route_key": "partner_briefing"
         },
         {
           "label": "Roof / Mobility Transition",
@@ -508,7 +590,8 @@
             "y1": 24,
             "x2": 51,
             "y2": 29
-          }
+          },
+          "route_key": "roof_transition"
         },
         {
           "label": "16 x 5 Command Table",
@@ -520,7 +603,28 @@
             "y2": 43.5
           }
         }
-      ]
+      ],
+      "feature_ids": [
+        "institutional-desk",
+        "initiative-portfolio",
+        "partnership-sponsorship",
+        "stakeholder-graph",
+        "meetings-commitments",
+        "admin-desk",
+        "control-approvals",
+        "integrations-oauth",
+        "workflows-jobs",
+        "status-health",
+        "google-workspace",
+        "outreach",
+        "event-ledger",
+        "publications",
+        "publication-distribution",
+        "government-submissions",
+        "music-release",
+        "ddex"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
     {
       "level": 7,
@@ -548,7 +652,8 @@
             "y1": 24,
             "x2": 50,
             "y2": 30
-          }
+          },
+          "route_key": "ecosystem_routes"
         },
         {
           "label": "Candidate Mobility Zone",
@@ -580,7 +685,14 @@
             "y2": 72
           }
         }
-      ]
+      ],
+      "feature_ids": [
+        "ecosystem-routing",
+        "roof-mobility",
+        "uprise-world"
+      ],
+      "capability_map_ref": "equity-uprise-capability-map-v2.json"
     }
-  ]
+  ],
+  "capability_map_ref": "equity-uprise-capability-map-v2.json"
 }
