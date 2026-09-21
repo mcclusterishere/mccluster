@@ -27,6 +27,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Verify Halo projection owner boundary
+        run: node --test workers/mccluster/test/halo-projection.test.mjs
+
       - name: Regenerate Core V2 production packages for semantic validation
         run: python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
 
