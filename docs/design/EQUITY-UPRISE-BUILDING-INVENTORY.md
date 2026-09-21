@@ -334,19 +334,19 @@ The building UI can link to or contain an entry point to this world later, but t
 
 ---
 
-## 2. Locked building information architecture — six enclosed floors + roof level
+## 2. Current building information architecture — B1 + six enclosed floors + roof level
 
 The building is intentionally compact: **six enclosed occupied floors plus a seventh navigable roof level**. Wider, more useful floors are preferred over a tall decorative tower.
 
-| Level | Locked identity | Real Equity Uprise functions compressed into the level | Builder-spec status |
+| Level | Current working identity | Real Equity Uprise functions compressed into the level | Iterative status |
 |---|---|---|---|
-| 7 | Roof / Mobility Portal | Rooftop overlook, vertical arrival, **ecosystem-plane cross-site navigation/departure/arrival**, candidate mobility zone pending operational feasibility | **CANONICAL SPEC + SCHEMATIC GEOMETRY LOCKED** |
-| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy, permissioned Halo spatial-intelligence viewport, transition/access to roof | **LOCKED** |
-| 5 | Policy + Proof | initiatives, research workspace, sources/claims/evidence, Docket 516R, manuscripts, publications, filings, monitors, citations/impact | **LOCKED** |
-| 4 | Media + Culture | event media, music/catalogue, artists, civic anthems, recording/editing, release/rights/DDEX, cultural storytelling | **LOCKED** |
-| 3 | Fellowship + Network | Policy Fellowship, directory/matching, profiles, stakeholders, relationships, meetings/commitments, partner network | **LOCKED** |
-| 2 | Public Forum | topics, perspectives, neutral listening/conversations, member dashboard context, discussion/activity | **LOCKED** |
-| 1 | Lobby + Intake | arrival, reception, verification, stakeholder/organization intake, visitor orientation, routing | **LOCKED** |
+| 7 | Roof / Mobility Portal | Rooftop overlook, vertical arrival, ecosystem-plane navigation/departure/arrival, candidate mobility zone pending operational feasibility | **CHASSIS PRESENT / PRE-ITERATIVE PROGRAM REWRITE** |
+| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy, permissioned Halo spatial-intelligence viewport, transition/access to roof | **CORE + HALO PRESENT / PRE-ITERATIVE PROGRAM REWRITE** |
+| 5 | Policy + Proof | initiatives, research workspace, sources/claims/evidence, Docket 516R, manuscripts, publications, filings, monitors, citations/impact | **PRE-ITERATIVE PROGRAM REWRITE** |
+| 4 | Media + Culture | event media, music/catalogue, artists, civic anthems, recording/editing, release/rights/DDEX, cultural storytelling | **PRE-ITERATIVE PROGRAM REWRITE** |
+| 3 | Fellowship + Network | Policy Fellowship, directory/matching, profiles, stakeholders, relationships, meetings/commitments, partner network | **PRE-ITERATIVE PROGRAM REWRITE** |
+| 2 | Public Forum | topics, perspectives, neutral listening/conversations, member dashboard context, discussion/activity | **PRE-ITERATIVE PROGRAM REWRITE** |
+| 1 | Arrival / Orientation / Intake | arrival, orientation, Development Passport, verification/intake, next-action routing, building safety and first-stage competency work | **RECONCILED — CURRENT ITERATIVE PASS** |
 
 Do not add extra enclosed floors merely because a separate web page exists. Level 7 is the intentionally approved roof level.
 
@@ -614,19 +614,19 @@ The HM logo/reference is a **material-direction reference only**, not the Equity
 
 ---
 
-## 9. Locked decisions and quality-control gate
+## 9. Current chassis decisions and iterative-program gate
 
-The following are no longer open questions:
+The following chassis decisions are no longer open questions; floor-program semantics above Floor 1 remain iterative:
 
 - enclosed occupied floors: **6**;
 - navigable roof level: **Level 7 — Roof / Mobility Portal**;
-- Floor 1: **Lobby + Intake**;
-- Floor 2: **Public Forum**;
-- Floor 3: **Fellowship + Network**;
-- Floor 4: **Media + Culture**;
-- Floor 5: **Policy + Proof**;
-- Floor 6: **Penthouse Command**;
-- Level 7: **Roof / Mobility Portal**;
+- Floor 1: **Arrival / Orientation / Intake** — reconciled for the current iterative pass;
+- Floor 2 working identity: **Public Forum** — pre-iterative rewrite;
+- Floor 3 working identity: **Fellowship + Network** — pre-iterative rewrite;
+- Floor 4 working identity: **Media + Culture** — pre-iterative rewrite;
+- Floor 5 working identity: **Policy + Proof** — pre-iterative rewrite;
+- Floor 6 working identity: **Penthouse Command** — pre-iterative rewrite;
+- Level 7 working identity: **Roof / Mobility Portal** — pre-iterative rewrite;
 - only Floor 1 has a ground-level public exterior entrance;
 - Floors 2–6 have no exterior doors/balconies/terraces;
 - Level 7 is intentionally open-air and reached from the internal core;
