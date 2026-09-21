@@ -128,10 +128,11 @@
         }
       ],
       "feature_ids": [
-        "verification",
-        "stakeholder-intake",
+        "conversation-agent",
+        "fellowship-applications",
         "interviews-calendar",
-        "conversation-agent"
+        "verification",
+        "stakeholder-intake"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
@@ -298,6 +299,7 @@
         }
       ],
       "feature_ids": [
+        "member-dashboard",
         "profiles",
         "private-contact",
         "fellowship-directory",
@@ -305,9 +307,14 @@
         "host-listings",
         "fellowship-applications",
         "interviews-calendar",
+        "verification",
+        "stakeholder-intake",
         "stakeholder-graph",
         "meetings-commitments",
-        "verification"
+        "partnership-sponsorship",
+        "artist-creator",
+        "google-workspace",
+        "outreach"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
@@ -399,14 +406,15 @@
         }
       ],
       "feature_ids": [
+        "evidence-room",
+        "artifacts",
         "music-catalogue",
         "artist-creator",
         "music-rights",
         "music-release",
         "ddex",
         "rally-media",
-        "communication-derivatives",
-        "artifacts"
+        "communication-derivatives"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
@@ -513,6 +521,7 @@
         "government-submissions",
         "monitoring",
         "citations-impact",
+        "communication-derivatives",
         "event-ledger"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json"
@@ -606,10 +615,25 @@
       ],
       "feature_ids": [
         "institutional-desk",
-        "initiative-portfolio",
-        "partnership-sponsorship",
+        "perspectives",
+        "conversation-agent",
+        "private-contact",
+        "host-listings",
+        "interviews-calendar",
+        "stakeholder-intake",
         "stakeholder-graph",
         "meetings-commitments",
+        "partnership-sponsorship",
+        "initiative-portfolio",
+        "credentials-proof",
+        "publications",
+        "publication-distribution",
+        "government-dockets",
+        "government-submissions",
+        "monitoring",
+        "citations-impact",
+        "music-release",
+        "ddex",
         "admin-desk",
         "control-approvals",
         "integrations-oauth",
@@ -617,12 +641,7 @@
         "status-health",
         "google-workspace",
         "outreach",
-        "event-ledger",
-        "publications",
-        "publication-distribution",
-        "government-submissions",
-        "music-release",
-        "ddex"
+        "event-ledger"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
