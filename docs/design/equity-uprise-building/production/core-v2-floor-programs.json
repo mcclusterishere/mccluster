@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.4.0",
+  "schema_version": "2.5.0",
   "core_ref": "building-core-v2.json",
   "not_for_construction": true,
   "common_support": {
@@ -199,7 +199,10 @@
           "route_key": "emergency_exercise",
           "access": "authorized-participant-or-instructor"
         }
-      ]
+      ],
+      "site_egress_ref": "floor-01/floor-01-site-egress.json",
+      "basement_context_ref": "basement-b1-program.json",
+      "level_of_exit_discharge": true
     },
     {
       "level": 2,
