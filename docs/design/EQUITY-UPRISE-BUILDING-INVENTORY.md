@@ -1,6 +1,6 @@
 # Equity Uprise Building UI — Repo Inventory & Image Plan
 
-> Status: **SIX-FLOOR BUILDING SCHEME LOCKED. FLOORS 1–4 SPECS + SCHEMATIC GEOMETRY LOCKED. FLOORS 5–6 REQUIRE ONE-BY-ONE QUALITY-CONTROL SPECS BEFORE NEW PRODUCTION ART.**
+> Status: **SIX-FLOOR BUILDING SCHEME LOCKED. FLOORS 1–5 SPECS + SCHEMATIC GEOMETRY LOCKED. FLOOR 6 REQUIRES ITS ONE-BY-ONE QUALITY-CONTROL SPEC BEFORE NEW PRODUCTION ART.**
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
 > Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 > Canonical Floor 1 spec: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
@@ -15,6 +15,9 @@
 > Canonical Floor 4 spec: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
 > Canonical Floor 4 plan basis: `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
 > Canonical Floor 4 plan assets: `docs/design/equity-uprise-building/references/floor-04/`
+> Canonical Floor 5 spec: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
+> Canonical Floor 5 plan basis: `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
+> Canonical Floor 5 plan assets: `docs/design/equity-uprise-building/references/floor-05/`
 
 ## 1. What exists today
 
@@ -214,7 +217,7 @@ The building is intentionally compact: **six levels total**. Wider, more useful 
 | Floor | Locked identity | Real Equity Uprise functions compressed into the floor | Builder-spec status |
 |---|---|---|---|
 | 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy | pending |
-| 5 | Policy + Proof | Working paper, policy archive, Docket 516R, evidence, credentials, research/proof | pending |
+| 5 | Policy + Proof | Working paper, policy archive, Docket 516R, evidence, credentials, research/proof | **LOCKED** |
 | 4 | Media + Culture | Broadcast/event media, music, artists, civic anthems, cultural storytelling | **LOCKED** |
 | 3 | Fellowship + Network | Policy Fellowship, fellowship directory, profiles, people, opportunities/matching | **LOCKED** |
 | 2 | Public Forum | Topics, perspectives, conversations, member discussion/activity | **LOCKED** |
