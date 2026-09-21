@@ -1,13 +1,13 @@
 # Equity Uprise Building — Floor 02: Public Forum
 
-> Status: **CANONICAL FLOOR 2 SPEC — LOCKED FOR QUALITY CONTROL**  
+> Status: **WORKING PRE-ITERATIVE FLOOR 2 PROGRAM REFERENCE — CORE V2 CHASSIS RETAINED**  
+> Program note: this floor has **not** yet received the activity/space reconciliation completed for Floor 1. Preserve useful repo-derived requirements, but do not treat the current room program or working identity as final.  
 > Building: compact six-floor Equity Uprise headquarters / civic institute  
 > Floor identity: **Public Forum**  
-> This file is the source of truth for future Floor 2 floor-plan work, 360 panorama generation, hotspot placement, 3D reconstruction, and implementation.  
-> Do not generate a new Floor 2 environment that conflicts with this document.
+> This file is a **working pre-iterative program reference**. Shared Core V2 geometry remains authoritative; final room/activity semantics must be rewritten during this floor's iterative pass.
 
 
-> **Core V2 migration authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> **Core V2 chassis authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
 > Combined-model finished-floor elevation: **+13'-6"**.
 > Shared vertical systems override any stale Core V1 coordinate language on this branch.
 
