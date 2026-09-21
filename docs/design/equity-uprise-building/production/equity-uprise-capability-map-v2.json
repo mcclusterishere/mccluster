@@ -14,8 +14,7 @@
     "built_shared_platform": "Implemented in shared McCluster platform and used by Equity Uprise rather than duplicated.",
     "built_public_pathway": "Public path exists; relationship/fulfillment work is handled institutionally.",
     "schematic_future_feasibility": "Architectural/digital reservation only, subject to real-world feasibility.",
-    "experimental_separate": "Separate experimental system; optional route, not building authority.",
-    "built_quiet_until_governance": "Underlying program/fund record exists, but detailed public presentation is intentionally withheld until governance, custody, accounting and reporting are publishable."
+    "experimental_separate": "Separate experimental system; optional route, not building authority."
   },
   "floors": [
     {
@@ -30,8 +29,8 @@
         "conversation-agent",
         "fellowship-applications",
         "interviews-calendar",
-        "enterprise-development",
-        "program-funding"
+        "program-support-funding",
+        "enterprise-development"
       ],
       "public_surfaces": [
         "Reception",
@@ -191,8 +190,7 @@
         "google-workspace",
         "outreach",
         "event-ledger",
-        "program-support-funding",
-        "program-funding"
+        "program-support-funding"
       ],
       "secondary_feature_ids": [
         "perspectives",
@@ -988,11 +986,20 @@
       "name": "Program funding / support pathway",
       "status": "built_public_pathway",
       "primary_floor": 6,
-      "visibility": "public-contribution-private-finance",
+      "visibility": "public-support-pathway-private-detailed-fund-governance",
       "sources": [
-        "equity-uprise-fellowship.html"
+        "equity-uprise-fellowship.html",
+        "data/cause.json",
+        "give.html",
+        "docs/the-mission-fund.md",
+        "supabase/replay_migrations/0007_offerings.sql",
+        "supabase/functions/pay-now/index.ts",
+        "docs/pay-now.md"
       ],
-      "expression": "Institutional Salon / JOIN layer. Public support CTAs may route to the approved contribution path; payment/accounting state is not a public building room."
+      "expression": "Institutional Salon / Support represents donations, sponsorship and program-support routing. The detailed Equity Uprise Mission Fund record exists but its per-program meters/splits remain quiet until governance, custody, accounting and reporting are publishable.",
+      "secondary_floors": [
+        1
+      ]
     },
     {
       "id": "creator-licensing-commerce",
@@ -1054,25 +1061,6 @@
         "native/app/(tabs)/uprise.tsx"
       ],
       "expression": "Opportunity Exchange includes a business/workforce/digital-capacity program lane. Program fit, measurable connected revenue and signed agreements are reviewed in meeting/briefing spaces; the building does not hardcode prices or imply automatic approval."
-    },
-    {
-      "id": "program-funding",
-      "name": "Equity Uprise program funding / Mission Fund",
-      "status": "built_quiet_until_governance",
-      "primary_floor": 6,
-      "secondary_floors": [
-        1
-      ],
-      "visibility": "public-support-door-private-detailed-fund-governance",
-      "sources": [
-        "data/cause.json",
-        "give.html",
-        "docs/the-mission-fund.md",
-        "supabase/replay_migrations/0007_offerings.sql",
-        "supabase/functions/pay-now/index.ts",
-        "docs/pay-now.md"
-      ],
-      "expression": "Institutional Salon / Support represents donations, sponsorship and program-support routing. Detailed Equity Uprise fund meters/splits remain quiet until governance, custody, accounting and reporting are publishable."
     }
   ],
   "rules": [
