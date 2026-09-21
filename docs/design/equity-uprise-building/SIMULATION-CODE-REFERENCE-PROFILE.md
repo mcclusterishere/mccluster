@@ -99,3 +99,97 @@ Before any claim of compliance or a formal code-validation lab, select and versi
 - site/fire department access assumptions.
 
 Until those are explicitly selected, validators test internal simulation consistency—not legal compliance.
+
+
+## Underground tunnel research addendum
+
+### Real-world precedent
+
+The Architect of the Capitol documents an underground subway tunnel connecting the Rayburn House Office Building to the Capitol, with electric subway cars used for inter-building movement.
+
+Reference:
+- Architect of the Capitol — Rayburn House Office Building:
+  https://www.aoc.gov/explore-capitol-campus/buildings-grounds/house-office-buildings/rayburn
+
+This supports the plausibility of a campus-scale underground personnel-transport concept. It does not imply that Equity Uprise is copying the Capitol system or that its future tunnel geometry is code-approved.
+
+### Underground access, accountability and environmental controls
+
+OSHA 29 CFR 1926.800 addresses underground construction and includes concepts directly useful to the simulation model, including:
+
+- controlled access to underground openings;
+- safe access/egress;
+- check-in/check-out so above-ground personnel can determine an accurate underground headcount during an emergency;
+- hazard instruction;
+- air monitoring;
+- ventilation;
+- illumination;
+- communications;
+- flood control;
+- mechanical equipment;
+- fire prevention/protection;
+- emergency procedures;
+- underground haulage/mobile-equipment controls.
+
+Reference:
+- OSHA 1926.800 — Underground Construction:
+  https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.800
+
+The Equity Uprise live underground control plane therefore explicitly tracks authorized underground occupancy and route/sector state.
+
+### Tunnel operations / systems
+
+FHWA tunnel guidance and manuals treat tunnel operation as a systems problem involving items such as:
+
+- ventilation;
+- drainage / sump systems;
+- fire and life safety;
+- power distribution;
+- emergency power;
+- lighting;
+- fire detection;
+- communications;
+- security;
+- controls;
+- operations, maintenance and inspection.
+
+References:
+- FHWA Tunnel Library:
+  https://www.fhwa.dot.gov/bridge/tunnel/library.cfm
+- FHWA Tunnel Operations, Maintenance, Inspection, and Evaluation (TOMIE) Manual:
+  https://www.fhwa.dot.gov/bridge/inspection/tunnel/tomie/hif15005.pdf
+- FHWA Highway and Rail Transit Tunnel Inspection Manual:
+  https://www.fhwa.dot.gov/bridge/tunnel/inspectman.pdf
+
+These concepts drive the tunnel subsystem model. They do not create a claim that the fictional Equity Uprise tunnel satisfies roadway/transit tunnel standards.
+
+### Emergency exercise design / evaluation
+
+FEMA's Independent Study catalog currently includes:
+
+- IS-120.c — An Introduction to Exercises;
+- IS-130.a — How to be an Exercise Evaluator;
+- IS-200.c — Basic Incident Command System for Initial Response;
+- IS-201.a — Forms Used for the Development of the Incident Action Plan and Incident Management;
+- IS-235.c — Emergency Planning;
+- IS-238 — Critical Concepts of Supply Chain Flow and Resilience.
+
+References:
+- FEMA Independent Study course list:
+  https://training.fema.gov/is/crslist.aspx/?all=true&lang=en
+- FEMA Independent Study program brochure:
+  https://training.fema.gov/IS/docs/fema_ndemu_independent-study-brochure_12-05-2025.pdf
+
+The tunnel environment may be used as a fictional exercise venue for these concepts. Completion of an Equity Uprise tunnel exercise is not represented as a FEMA credential.
+
+## Underground modeling consequences adopted now
+
+- B1 live access is restricted to house-owner or explicitly delegated underground-operations-admin authority.
+- Ordinary Equity Uprise admin/staff roles do not inherit underground authority.
+- Learners/instructors use a sandboxed clone rather than live B1/tunnel systems.
+- Underground occupancy/accountability is a first-class live system state.
+- Tunnel transport is low-speed electric personnel/logistics movement rather than speculative high-speed transit.
+- Walking/inspection routes are separated conceptually from mobile haulage/transport where practical.
+- Ventilation, drainage, fire/life safety, power, communications, lighting, access/security and controls are modeled as stateful tunnel subsystems.
+- Future branch destinations remain unnamed until their connected building authority exists.
+- Restricted visibility never removes emergency egress, accountability, incident reporting or audit requirements.
