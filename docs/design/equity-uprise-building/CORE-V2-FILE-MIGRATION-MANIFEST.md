@@ -6,6 +6,49 @@
 >
 > **Not for construction.** Core/stair/elevator/life-safety geometry remains schematic pending licensed professional design and jurisdiction-specific review.
 
+## Current migration progress — 2026-09-21
+
+### Completed on migration branch
+- [x] shared Core V2 written spec
+- [x] shared machine-readable `building-core-v2.json`
+- [x] cross-floor validation contract
+- [x] building inventory Core V2 update
+- [x] branch-scoped reference authority update
+- [x] Floor 1–6 + Level 7 schematic-plan bases rewritten
+- [x] Floor 1–6 + Level 7 long-form specs rewritten
+- [x] all seven versioned Core V2 DXF/SVG/PNG plan sets generated
+- [x] all seven reference READMEs point to Core V2 and label Core V1 files legacy
+- [x] Floor 1–7 deterministic production packages generated from shared core
+- [x] combined stacked GLB generated
+- [x] combined GLB independently verified: **27/27 checks passed**
+- [x] both stairs verified across all six 13'-6" level transitions
+- [x] continuous passenger and freight/service shaft geometry generated
+- [x] combined self-contained browser viewer built
+- [x] Floor 1–7 viewer entry files converted to derived shared-building views
+- [x] agent instruction files updated with Core V2 authority
+- [x] old Floor 1 Core V1 Python builder/verifier retired on migration branch
+- [x] old Floor 1-only workflow restricted to Core V1/main compatibility
+- [x] Level 7 routing/preprogram documents coordinated with Core V2 physical arrival
+
+### Combined-model validation evidence
+- GLB: `production/generated/equity-uprise-building-core-v2.glb`
+- report: `production/generated/equity-uprise-building-core-v2-report.json`
+- GLB size: **389,456 bytes**
+- mesh count: **667**
+- SHA-256: `1febf1593fcdac4a5848235b199e9981bbccbf137edf00e4455381852c3a5db7`
+- deterministic checks: **27 passed / 0 failed**
+
+### Remaining before promotion to main
+- [ ] audit public Equity Uprise pages for old 3D/viewer links
+- [ ] audit active text files for stale Core V1 geometry outside intentionally retained legacy/history files
+- [ ] visually review the combined Core V2 browser scene with owner
+- [ ] visually review the seven Core V2 plan images with owner
+- [ ] resolve any owner-requested layout changes
+- [ ] final branch-wide migration validation
+- [ ] owner approval to promote Core V2
+- [ ] merge/promote to main
+- [ ] allow normal Pages deployment to replace legacy Floor 1/Floor 2 live entry points
+
 ## Migration status vocabulary
 
 - **NEW** — does not exist on main; create as a Core V2 authority/derived artifact.
