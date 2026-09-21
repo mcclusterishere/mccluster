@@ -39,13 +39,19 @@
       "id": "building_systems_lab",
       "label": "Building Systems Lab",
       "route_key": "building_systems_lab",
-      "access": "authorized-learner-or-instructor"
+      "access": "authorized-learner-or-instructor-sandbox-only"
     },
     {
       "id": "emergency_exercise",
       "label": "Emergency Exercise",
       "route_key": "emergency_exercise",
       "access": "authorized-participant-or-instructor"
+    },
+    {
+      "id": "underground_operations_access",
+      "label": "Underground Operations Access",
+      "route_key": "underground_operations",
+      "access": "mccluster-house-owner-or-underground-operations-admin"
     }
   ]
 }
