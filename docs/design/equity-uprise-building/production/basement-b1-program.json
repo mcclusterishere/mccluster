@@ -189,9 +189,9 @@
       "label": "Service Receiving / Staging",
       "kind": "zone",
       "bounds_ft": {
-        "x1": 2,
+        "x1": 0,
         "y1": 54,
-        "x2": 18,
+        "x2": 8,
         "y2": 60
       },
       "systems": [
