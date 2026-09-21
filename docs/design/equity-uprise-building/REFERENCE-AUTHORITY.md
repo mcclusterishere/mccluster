@@ -77,6 +77,7 @@ Read program and geometry authority in this order:
    - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
    - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
    - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
+   - Floor 6 Halo instrument: `docs/design/equity-uprise-building/HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`
    - Level 7: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
 
 7. Floor-specific schematic-plan basis.
@@ -147,7 +148,7 @@ The exhaustive source-classification ledger is:
 
 `docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json`
 
-The repo-source gate must prove that every discovered Equity Uprise-specific product/support source is either mapped to one or more canonical capabilities or explicitly classified as support-only. The program gate must verify that every capability in the canonical map is represented on its primary and declared secondary floors, that floor route keys resolve, that private/high-risk routes are not marked public, and that passenger-elevator semantics do not imply Level 7 service. The plan-semantic gate must prove that active Core V2 DXF/SVG/PNG outputs carry the canonical program labels and do not retain stale semantic labels.
+The repo-source gate must prove that every discovered Equity Uprise-specific product/support source is either mapped to one or more canonical capabilities or explicitly classified as support-only. The program gate must verify that every capability in the canonical map is represented on its primary and declared secondary floors, that floor route keys resolve, that private/high-risk routes are not marked public, that the Floor 6 Halo Globe resolves to a sanitized read-only projection with owner-only operational handoff, and that passenger-elevator semantics do not imply Level 7 service. The plan-semantic gate must prove that active Core V2 DXF/SVG/PNG outputs carry the canonical program labels and do not retain stale semantic labels.
 
 ## Which source controls what
 
@@ -338,6 +339,7 @@ Floor 6 preserves the building datum and the Level 7 roof interface:
 - Stair B: **X 8–18 / Y 54–72**, with vertical continuity reserved;
 - MEP / roof-service reservation: **X 50–60 / Y 66–72**;
 - Penthouse Command table: **16' × 5'**, centered near **(36,41)**, six seats maximum;
+- Halo Globe / Spatial Intelligence: suspended sphere centered approximately **(24.5,34.5)**, radius **2.25 ft**, center **8.25 ft AFF**;
 - Institutional Salon / Join Lounge: **X 2–18 / Y 18–38**;
 - Strategy Review Room: **X 2–15 / Y 4–16**;
 - Partner / Executive Briefing Room: **X 17–32 / Y 4–16**;
@@ -357,6 +359,10 @@ Canonical Floor 6 assets:
 - `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png`
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
+
+### Floor 6 Halo Globe rule
+
+Floor 6 may contain exactly one canonical **Halo Globe / Spatial Intelligence** instrument under `HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`. It is a permissioned viewport into the shared McCluster Seek First / Hitman's Halo plane, not a new backend, room, floor, or tactical-surveillance authority. Public and non-owner modes are read-only. Owner/admin interaction must hand off to the protected spatial console and preserve source entitlements, provider terms, approvals, provenance and audit boundaries.
 
 ## Level 7 locked geometry and ecosystem semantics
 
