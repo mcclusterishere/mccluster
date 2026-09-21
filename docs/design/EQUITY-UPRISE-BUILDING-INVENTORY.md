@@ -1,11 +1,14 @@
 # Equity Uprise Building UI — Repo Inventory & Image Plan
 
-> Status: **SIX-FLOOR BUILDING SCHEME LOCKED. FLOOR 1 SPEC LOCKED. FLOORS 2–6 REQUIRE ONE-BY-ONE QUALITY-CONTROL SPECS BEFORE NEW PRODUCTION ART.**
+> Status: **SIX-FLOOR BUILDING SCHEME LOCKED. FLOORS 1–2 SPECS + SCHEMATIC GEOMETRY LOCKED. FLOORS 3–6 REQUIRE ONE-BY-ONE QUALITY-CONTROL SPECS BEFORE NEW PRODUCTION ART.**
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
 > Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 > Canonical Floor 1 spec: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
 > **Mandatory spatial authority:** `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
 > Canonical Floor 1 plan assets: `docs/design/equity-uprise-building/references/floor-01/`
+> Canonical Floor 2 spec: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
+> Canonical Floor 2 plan basis: `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
+> Canonical Floor 2 plan assets: `docs/design/equity-uprise-building/references/floor-02/`
 
 ## 1. What exists today
 
@@ -208,7 +211,7 @@ The building is intentionally compact: **six levels total**. Wider, more useful 
 | 5 | Policy + Proof | Working paper, policy archive, Docket 516R, evidence, credentials, research/proof | pending |
 | 4 | Media + Culture | Broadcast/event media, music, artists, civic anthems, cultural storytelling | pending |
 | 3 | Fellowship + Network | Policy Fellowship, fellowship directory, profiles, people, opportunities/matching | pending |
-| 2 | Public Forum | Topics, perspectives, conversations, member discussion/activity | pending canonical rewrite |
+| 2 | Public Forum | Topics, perspectives, conversations, member discussion/activity | **LOCKED** |
 | 1 | Lobby + Intake | Arrival, reception, visitor orientation, stakeholder/organization intake, routing | **LOCKED** |
 
 Do not add extra floors merely because a separate web page exists.
@@ -458,7 +461,14 @@ The following are no longer open questions:
 Canonical file:
 `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
 
-**Floors 2–6 — NOT YET LOCKED AS BUILDER/360 SPECS**
+**Floor 2 — LOCKED**
+
+Canonical files:
+- `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
+- `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
+- `docs/design/equity-uprise-building/references/floor-02/`
+
+**Floors 3–6 — NOT YET LOCKED AS BUILDER/360 SPECS**
 
 Do not treat prior generated floor images as architectural authority. They are concept iterations only.
 
