@@ -411,22 +411,24 @@ The roof is **portal infrastructure**. Ecosystem destinations are dynamic routin
 
 The candidate mobility zone is **not** an approved helipad/vertiport. Final operational aviation geometry remains pending site/aircraft/regulatory/structural feasibility.
 
-## Locked building program
+## Current building program and iterative status
 
 The developmental building contains **six enclosed occupied floors plus one navigable roof level**, supported by one restricted non-developmental B1 infrastructure level:
 
 - B1 — **Underground Operations / Technical Service** (restricted support level; no E-Q-U-I-T-Y letter)
-- Floor 1 — Lobby + Intake
-- Floor 2 — Public Forum
-- Floor 3 — Fellowship + Network
-- Floor 4 — Media + Culture
-- Floor 5 — Policy + Proof
-- Floor 6 — Penthouse Command
-- Level 7 — **Roof / Mobility Portal**
+- Floor 1 — **Arrival / Orientation / Intake** — reconciled current iterative pass
+- Floor 2 — Public Forum — working identity / pre-iterative rewrite
+- Floor 3 — Fellowship + Network — working identity / pre-iterative rewrite
+- Floor 4 — Media + Culture — working identity / pre-iterative rewrite
+- Floor 5 — Policy + Proof — working identity / pre-iterative rewrite
+- Floor 6 — Penthouse Command — working identity / pre-iterative rewrite
+- Level 7 — **Roof / Mobility Portal** — working identity / pre-iterative rewrite
 
 Level 7 is the roof, not a normal enclosed floor. It is the canonical cross-site departure/arrival layer and may contain a **candidate rooftop mobility pad / helipad zone** subject to later real-world feasibility.
 
-Do not add further developmental levels or rename/reassign them without explicit owner approval. B1 is an approved restricted support level. Future tunnel-connected buildings are separate canonical facilities, not additional Equity Uprise developmental floors.
+Do not add further developmental levels without explicit owner approval. B1 is an approved restricted support level. Future tunnel-connected buildings are separate canonical facilities, not additional Equity Uprise developmental floors.
+
+Floor 1 program identity is reconciled for the current pass. Floors 2–7 retain working identities only until their own iterative activity/space reconciliations. The final E-Q-U-I-T-Y acronym words remain intentionally deferred and may rename those working identities without changing the approved physical level count or shared vertical chassis.
 
 ## Core V2 shared vertical systems
 
