@@ -1,15 +1,16 @@
 # Equity Uprise Building — Level 07: Roof / Mobility Portal
 
-> Status: **CANONICAL LEVEL 7 SPEC — LOCKED FOR QUALITY CONTROL**  
+> Status: **WORKING PRE-ITERATIVE LEVEL 7 PROGRAM REFERENCE — ROOF/CORE CONSTRAINTS RETAINED**
+> Program note: the roof's physical/core constraints and ecosystem-routing contract remain useful, but the final RISE/LAUNCH developmental program has not yet been reconciled.  
 > Building: Equity Uprise headquarters / civic institute  
 > Level identity: **Roof / Mobility Portal**  
 > Digital identity: **Ecosystem Plane**  
 > This is an open-air roof level above Floor 6, not a seventh enclosed occupied floor.  
-> This file is the source of truth for Level 7 roof scenes, rooftop 360 work, exterior-master coordination, cross-site departure/arrival logic, and future 3D reconstruction.  
+> This file is a working roof-program reference. Shared Core V2 roof/core geometry and the ecosystem-routing contract control current coordination; the final developmental/launch program remains subject to the Level 7 iterative pass.  
 > **Not for construction.**
 
 
-> **Core V2 migration authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
+> **Core V2 chassis authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
 > Combined-model finished-floor elevation: **+81'-0"**.
 > Shared vertical systems override any stale Core V1 coordinate language on this branch.
 
