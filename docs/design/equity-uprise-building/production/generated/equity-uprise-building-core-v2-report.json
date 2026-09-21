@@ -2,9 +2,9 @@
   "building_id": "equity-uprise-building",
   "core_id": "equity-uprise-core-v2",
   "not_for_construction": true,
-  "glb_bytes": 389456,
-  "sha256": "1febf1593fcdac4a5848235b199e9981bbccbf137edf00e4455381852c3a5db7",
-  "mesh_count": 667,
+  "glb_bytes": 415904,
+  "sha256": "2698349a3c9073cfd04de6db232672c7b8c26e3101c7a57bb656def3bf5427c0",
+  "mesh_count": 668,
   "bounds_m": [
     [
       0.0,
@@ -17,8 +17,8 @@
       27.127200000000002
     ]
   ],
-  "checks_total": 27,
-  "checks_passed": 27,
+  "checks_total": 32,
+  "checks_passed": 32,
   "checks_failed": 0,
   "passed": true,
   "stair_transitions": [
@@ -309,6 +309,36 @@
       "passed": true,
       "actual": 12,
       "expected": 12
+    },
+    {
+      "name": "exactly one Halo Globe instrument",
+      "passed": true,
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "Halo Globe lives on Floor 6",
+      "passed": true,
+      "actual": 6,
+      "expected": 6
+    },
+    {
+      "name": "Halo Globe bottom clears circulation",
+      "passed": true,
+      "actual": 6.0,
+      "expected": ">=6.0"
+    },
+    {
+      "name": "Halo Globe top stays below ceiling zone",
+      "passed": true,
+      "actual": 10.5,
+      "expected": "<=11.0"
+    },
+    {
+      "name": "Halo Globe plan envelope avoids fixed core",
+      "passed": true,
+      "actual": [],
+      "expected": []
     },
     {
       "name": "stair-a-east 0.0->13.5 full rise",
