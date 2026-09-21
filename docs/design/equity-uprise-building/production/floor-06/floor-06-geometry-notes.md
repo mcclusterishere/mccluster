@@ -2,6 +2,7 @@
 
 Shared source of truth:
 - `../building-core-v2.json`
+- `../equity-uprise-capability-map-v2.json`
 - `../../BUILDING-CORE-V2-SPEC.md`
 
 Finished-floor elevation: **+67.5 ft**.

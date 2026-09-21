@@ -1,6 +1,7 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "scene_id": "equity-uprise-level-07",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
   "hotspots": [
     {
       "id": "hs_zone_01",
@@ -15,8 +16,8 @@
         "y": 39.0,
         "z": 85.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_01"
+      "zone_id": "zone_01",
+      "action": "focus_zone"
     },
     {
       "id": "hs_zone_02",
@@ -31,8 +32,9 @@
         "y": 27.0,
         "z": 85.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_02"
+      "zone_id": "zone_02",
+      "action": "open_route",
+      "route_key": "ecosystem_routes"
     },
     {
       "id": "hs_zone_03",
@@ -47,8 +49,8 @@
         "y": 27.0,
         "z": 85.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_03"
+      "zone_id": "zone_03",
+      "action": "focus_zone"
     },
     {
       "id": "hs_zone_04",
@@ -63,8 +65,8 @@
         "y": 3.0,
         "z": 85.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_04"
+      "zone_id": "zone_04",
+      "action": "focus_zone"
     },
     {
       "id": "hs_zone_05",
@@ -79,19 +81,8 @@
         "y": 66.0,
         "z": 85.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_05"
-    },
-    {
-      "id": "hs_passenger_elevator",
-      "label": "Passenger Elevator",
-      "position_ft_world": {
-        "x": 53.5,
-        "y": 39,
-        "z": 85.5
-      },
-      "action": "open_route",
-      "route_key": "floor_selector"
+      "zone_id": "zone_05",
+      "action": "focus_zone"
     },
     {
       "id": "hs_stair_a",
@@ -118,6 +109,8 @@
   ],
   "rules": [
     "Hotspots do not redefine geometry.",
-    "Service/freight elevator is not exposed as a normal public hotspot."
+    "Service/freight elevator is not exposed as a normal public hotspot.",
+    "Level 7 does not expose passenger-elevator service unless later professional design resolves an actual roof stop.",
+    "Private routes preserve the source product's access-control boundary."
   ]
 }

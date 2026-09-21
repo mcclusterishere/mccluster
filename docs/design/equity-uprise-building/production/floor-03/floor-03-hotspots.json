@@ -1,6 +1,7 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "scene_id": "equity-uprise-floor-03",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
   "hotspots": [
     {
       "id": "hs_zone_01",
@@ -15,8 +16,8 @@
         "y": 40.0,
         "z": 31.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_01"
+      "zone_id": "zone_01",
+      "action": "focus_zone"
     },
     {
       "id": "hs_zone_02",
@@ -31,8 +32,9 @@
         "y": 52.0,
         "z": 31.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_02"
+      "zone_id": "zone_02",
+      "action": "open_route",
+      "route_key": "opportunities"
     },
     {
       "id": "hs_zone_03",
@@ -47,8 +49,9 @@
         "y": 26.0,
         "z": 31.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_03"
+      "zone_id": "zone_03",
+      "action": "open_route",
+      "route_key": "people_network"
     },
     {
       "id": "hs_zone_04",
@@ -63,8 +66,9 @@
         "y": 10.0,
         "z": 31.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_04"
+      "zone_id": "zone_04",
+      "action": "open_route",
+      "route_key": "meeting_workspace"
     },
     {
       "id": "hs_zone_05",
@@ -79,8 +83,9 @@
         "y": 10.0,
         "z": 31.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_05"
+      "zone_id": "zone_05",
+      "action": "open_route",
+      "route_key": "meeting_workspace"
     },
     {
       "id": "hs_zone_06",
@@ -95,8 +100,25 @@
         "y": 26.5,
         "z": 31.2
       },
-      "action": "focus_zone",
-      "zone_id": "zone_06"
+      "zone_id": "zone_06",
+      "action": "open_route",
+      "route_key": "member_dashboard"
+    },
+    {
+      "id": "hs_zone_07",
+      "label": "16 x 4 Opportunity Table",
+      "position_ft_local": {
+        "x": 36.0,
+        "y": 41.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 36.0,
+        "y": 41.0,
+        "z": 31.2
+      },
+      "zone_id": "zone_07",
+      "action": "focus_zone"
     },
     {
       "id": "hs_passenger_elevator",
@@ -107,7 +129,7 @@
         "z": 31.5
       },
       "action": "open_route",
-      "route_key": "floor_selector"
+      "route_key": "passenger_elevator_selector"
     },
     {
       "id": "hs_stair_a",
@@ -134,6 +156,8 @@
   ],
   "rules": [
     "Hotspots do not redefine geometry.",
-    "Service/freight elevator is not exposed as a normal public hotspot."
+    "Service/freight elevator is not exposed as a normal public hotspot.",
+    "Level 7 does not expose passenger-elevator service unless later professional design resolves an actual roof stop.",
+    "Private routes preserve the source product's access-control boundary."
   ]
 }

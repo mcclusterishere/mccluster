@@ -1,6 +1,7 @@
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "scene_id": "equity-uprise-floor-03",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
   "routes": {
     "floor_selector": {
       "type": "floor_selector",
@@ -41,7 +42,44 @@
           "enabled": true
         }
       ],
-      "note": "Core V2 guarantees stair continuity through Level 7. Passenger-elevator service to Level 7 is not assumed."
+      "note": "Building-level selector. Level 7 is reachable through protected stairs; this selector is not an elevator-service claim."
+    },
+    "passenger_elevator_selector": {
+      "type": "floor_selector",
+      "vertical_system_id": "passenger-elevator-a",
+      "levels": [
+        {
+          "level": 1,
+          "scene_id": "equity-uprise-floor-01",
+          "enabled": true
+        },
+        {
+          "level": 2,
+          "scene_id": "equity-uprise-floor-02",
+          "enabled": true
+        },
+        {
+          "level": 3,
+          "scene_id": "equity-uprise-floor-03",
+          "enabled": true
+        },
+        {
+          "level": 4,
+          "scene_id": "equity-uprise-floor-04",
+          "enabled": true
+        },
+        {
+          "level": 5,
+          "scene_id": "equity-uprise-floor-05",
+          "enabled": true
+        },
+        {
+          "level": 6,
+          "scene_id": "equity-uprise-floor-06",
+          "enabled": true
+        }
+      ],
+      "note": "Passenger-elevator destinations only. Direct Level 7 service is not assumed."
     },
     "building_return": {
       "type": "scene",
@@ -49,64 +87,165 @@
     },
     "institutional_overview": {
       "type": "url",
-      "url": "/equity-uprise.html"
+      "url": "/equity-uprise.html",
+      "access": "public"
     },
     "institutional_join": {
       "type": "url",
       "url": "/equity-uprise.html",
-      "state_hint": "join"
+      "state_hint": "join",
+      "access": "public"
+    },
+    "verification": {
+      "type": "url",
+      "url": "/verify.html",
+      "access": "public",
+      "completion": "human-reviewed"
     },
     "current_issues": {
       "type": "url",
-      "url": "/topics.html"
+      "url": "/topics.html",
+      "access": "public"
     },
     "conversation": {
       "type": "conversation",
-      "endpoint_hint": "eu-converse"
+      "endpoint_hint": "eu-converse",
+      "access": "public-with-thread-ownership"
+    },
+    "member_dashboard": {
+      "type": "url",
+      "url": "/dashboard.html",
+      "access": "authenticated-member"
     },
     "opportunities": {
       "type": "url",
-      "url": "/fellowships.html"
+      "url": "/fellowships.html",
+      "access": "public"
     },
     "people_network": {
       "type": "url",
-      "url": "/profile.html"
+      "url": "/profile.html",
+      "access": "public-self-controlled"
     },
-    "media_archive": {
-      "type": "url",
-      "url": "/equity-uprise.html",
-      "state_hint": "media"
-    },
-    "creator_tools": {
+    "meeting_workspace": {
       "type": "ui_state",
-      "target": "creator_tools"
+      "target": "meeting_workspace",
+      "endpoint_hints": [
+        "eu-calendar"
+      ],
+      "access": "authenticated-member-or-staff"
+    },
+    "media_catalogue": {
+      "type": "url",
+      "url": "/album.html?album=equity-uprise",
+      "access": "public"
+    },
+    "rally_archive": {
+      "type": "url",
+      "url": "/walls/eu-rally.html",
+      "access": "public"
+    },
+    "creator_studio": {
+      "type": "url",
+      "url": "/creator.html",
+      "access": "authenticated-for-write"
+    },
+    "media_derivatives": {
+      "type": "ui_state",
+      "target": "media_derivatives",
+      "endpoint_hints": [
+        "eu-derivatives"
+      ],
+      "access": "authorized-editor-or-admin"
+    },
+    "media_release_ops": {
+      "type": "ui_state",
+      "target": "media_release_ops",
+      "endpoint_hints": [
+        "eu-music",
+        "eu-ddex-worker"
+      ],
+      "access": "authorized-admin",
+      "approval_gated": true
     },
     "policy_workspace": {
       "type": "url",
-      "url": "/policy.html"
+      "url": "/policy.html",
+      "access": "public-record-with-private-workspace"
     },
     "evidence_archive": {
       "type": "url",
-      "url": "/docket-516.html"
+      "url": "/docket-516.html",
+      "access": "public"
+    },
+    "publication_submission": {
+      "type": "ui_state",
+      "target": "publication_submission",
+      "endpoint_hints": [
+        "eu-publish",
+        "eu-government"
+      ],
+      "access": "authorized-researcher-editor-admin",
+      "approval_gated": true
+    },
+    "research_publication": {
+      "type": "ui_state",
+      "target": "research_publication",
+      "endpoint_hints": [
+        "eu-workspace",
+        "eu-publish",
+        "eu-monitor"
+      ],
+      "access": "authorized-researcher-editor-admin"
     },
     "institutional_command": {
       "type": "url",
       "url": "/equity-uprise.html",
-      "state_hint": "institutional"
+      "state_hint": "institutional",
+      "access": "public-summary-with-authenticated-operations"
+    },
+    "initiative_portfolio": {
+      "type": "ui_state",
+      "target": "initiative_portfolio",
+      "access": "authorized-staff"
+    },
+    "partner_briefing": {
+      "type": "url",
+      "url": "/equity-uprise.html",
+      "state_hint": "join",
+      "access": "public-contact-private-follow-through"
+    },
+    "admin_desk": {
+      "type": "url",
+      "url": "/uprise-admin.html",
+      "access": "editor-or-admin"
+    },
+    "control_plane": {
+      "type": "ui_state",
+      "target": "control_plane",
+      "endpoint_hints": [
+        "eu-control",
+        "eu-status"
+      ],
+      "access": "authorized-admin",
+      "approval_gated": true
     },
     "roof_transition": {
       "type": "scene",
-      "scene_id": "equity-uprise-level-07"
+      "scene_id": "equity-uprise-level-07",
+      "access": "via-protected-stairs-unless-later-elevator-design"
     },
     "ecosystem_routes": {
       "type": "ui_state",
-      "target": "ecosystem_routes"
+      "target": "ecosystem_routes",
+      "access": "public"
     }
   },
   "security": {
     "allowlisted_url_prefixes": [
       "/"
     ],
-    "allow_arbitrary_external_redirects": false
+    "allow_arbitrary_external_redirects": false,
+    "private_routes_require_declared_access": true
   }
 }

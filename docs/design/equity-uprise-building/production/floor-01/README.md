@@ -2,8 +2,9 @@
 
 Status: **CORE V2 MIGRATION / NOT FOR CONSTRUCTION**
 
-This package inherits the shared building core from:
+This package inherits the shared building/program authority from:
 - `../building-core-v2.json`
+- `../equity-uprise-capability-map-v2.json`
 - `../../BUILDING-CORE-V2-SPEC.md`
 
 Canonical branch geometry:

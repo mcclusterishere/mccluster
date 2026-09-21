@@ -6,6 +6,13 @@
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
   "floor_program_ref": "../core-v2-floor-programs.json",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
+  "feature_ids": [
+    "verification",
+    "stakeholder-intake",
+    "interviews-calendar",
+    "conversation-agent"
+  ],
   "authority": {
     "building_core": [
       "../../BUILDING-CORE-V2-SPEC.md",
@@ -269,7 +276,8 @@
         "y1": 32,
         "x2": 16,
         "y2": 44
-      }
+      },
+      "route_key": "verification"
     },
     {
       "id": "zone_04",
@@ -302,7 +310,8 @@
         "y1": 24,
         "x2": 51,
         "y2": 29
-      }
+      },
+      "route_key": "institutional_overview"
     },
     {
       "id": "north_corridor",

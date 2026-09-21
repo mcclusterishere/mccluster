@@ -6,6 +6,12 @@
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
   "floor_program_ref": "../core-v2-floor-programs.json",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
+  "feature_ids": [
+    "ecosystem-routing",
+    "roof-mobility",
+    "uprise-world"
+  ],
   "authority": {
     "building_core": [
       "../../BUILDING-CORE-V2-SPEC.md",
@@ -258,7 +264,8 @@
         "y1": 24,
         "x2": 50,
         "y2": 30
-      }
+      },
+      "route_key": "ecosystem_routes"
     },
     {
       "id": "zone_03",

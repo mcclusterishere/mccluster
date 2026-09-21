@@ -6,6 +6,26 @@
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
   "floor_program_ref": "../core-v2-floor-programs.json",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
+  "feature_ids": [
+    "initiative-portfolio",
+    "research-projects",
+    "source-graph",
+    "claim-evidence",
+    "manuscript-review",
+    "evidence-room",
+    "credentials-proof",
+    "artifacts",
+    "publications",
+    "publication-distribution",
+    "orcid",
+    "crossref",
+    "government-dockets",
+    "government-submissions",
+    "monitoring",
+    "citations-impact",
+    "event-ledger"
+  ],
   "authority": {
     "building_core": [
       "../../BUILDING-CORE-V2-SPEC.md",
@@ -258,7 +278,8 @@
         "y1": 50,
         "x2": 50,
         "y2": 54
-      }
+      },
+      "route_key": "policy_workspace"
     },
     {
       "id": "zone_03",
@@ -269,7 +290,8 @@
         "y1": 18,
         "x2": 18,
         "y2": 40
-      }
+      },
+      "route_key": "evidence_archive"
     },
     {
       "id": "zone_04",
@@ -291,7 +313,8 @@
         "y1": 4,
         "x2": 32,
         "y2": 16
-      }
+      },
+      "route_key": "publication_submission"
     },
     {
       "id": "zone_06",
@@ -302,7 +325,8 @@
         "y1": 24,
         "x2": 51,
         "y2": 29
-      }
+      },
+      "route_key": "research_publication"
     },
     {
       "id": "zone_07",

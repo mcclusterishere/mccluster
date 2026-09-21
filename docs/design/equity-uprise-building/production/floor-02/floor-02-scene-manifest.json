@@ -6,6 +6,14 @@
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
   "floor_program_ref": "../core-v2-floor-programs.json",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
+  "feature_ids": [
+    "public-issues",
+    "perspectives",
+    "conversation-agent",
+    "member-dashboard",
+    "fellowship-matching"
+  ],
   "authority": {
     "building_core": [
       "../../BUILDING-CORE-V2-SPEC.md",
@@ -258,7 +266,8 @@
         "y1": 50,
         "x2": 48,
         "y2": 54
-      }
+      },
+      "route_key": "current_issues"
     },
     {
       "id": "zone_03",
@@ -269,7 +278,8 @@
         "y1": 14,
         "x2": 18,
         "y2": 30
-      }
+      },
+      "route_key": "conversation"
     },
     {
       "id": "zone_04",
@@ -280,7 +290,8 @@
         "y1": 24,
         "x2": 51,
         "y2": 29
-      }
+      },
+      "route_key": "member_dashboard"
     },
     {
       "id": "north_corridor",

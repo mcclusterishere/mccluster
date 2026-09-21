@@ -6,6 +6,17 @@
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
   "floor_program_ref": "../core-v2-floor-programs.json",
+  "capability_map_ref": "../equity-uprise-capability-map-v2.json",
+  "feature_ids": [
+    "music-catalogue",
+    "artist-creator",
+    "music-rights",
+    "music-release",
+    "ddex",
+    "rally-media",
+    "communication-derivatives",
+    "artifacts"
+  ],
   "authority": {
     "building_core": [
       "../../BUILDING-CORE-V2-SPEC.md",
@@ -258,7 +269,8 @@
         "y1": 50,
         "x2": 50,
         "y2": 54
-      }
+      },
+      "route_key": "media_catalogue"
     },
     {
       "id": "zone_03",
@@ -269,7 +281,8 @@
         "y1": 18,
         "x2": 18,
         "y2": 38
-      }
+      },
+      "route_key": "rally_archive"
     },
     {
       "id": "zone_04",
@@ -280,7 +293,8 @@
         "y1": 4,
         "x2": 15,
         "y2": 16
-      }
+      },
+      "route_key": "creator_studio"
     },
     {
       "id": "zone_05",
@@ -291,7 +305,8 @@
         "y1": 4,
         "x2": 31,
         "y2": 16
-      }
+      },
+      "route_key": "media_derivatives"
     },
     {
       "id": "zone_06",
@@ -302,7 +317,8 @@
         "y1": 24,
         "x2": 51,
         "y2": 29
-      }
+      },
+      "route_key": "media_release_ops"
     },
     {
       "id": "zone_07",
