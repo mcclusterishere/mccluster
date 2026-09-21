@@ -83,8 +83,7 @@
             "y1": 12,
             "x2": 18,
             "y2": 28
-          },
-          "route_key": "institutional_join"
+          }
         },
         {
           "label": "Intake / Verification Consultation",
@@ -128,7 +127,7 @@
             "x2": 51,
             "y2": 29
           },
-          "route_key": "institutional_overview"
+          "route_key": "floor_selector"
         }
       ],
       "feature_ids": [
@@ -704,8 +703,7 @@
             "y1": 0,
             "x2": 46,
             "y2": 6
-          },
-          "route_key": "ecosystem_routes"
+          }
         },
         {
           "label": "Service / Equipment Band",
