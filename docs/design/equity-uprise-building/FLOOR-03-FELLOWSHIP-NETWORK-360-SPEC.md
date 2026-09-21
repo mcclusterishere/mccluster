@@ -77,7 +77,7 @@ Existing functions relevant here:
 Existing workflow includes real fellowship interview requests and confirmed meetings.
 
 Physical implication:
-- Floor 3 needs modest, private interview rooms;
+- Floor 3 needs modest, private interview / stakeholder meeting rooms;
 - it does not need a large conference suite.
 
 ### Boundary with other floors
@@ -166,7 +166,7 @@ The **Opportunity Exchange**: one shared opportunity table with the **FELLOWSHIP
 The **fixed elevator/core** with one slim member/interview check-in terminal adjacent to the elevator lobby.
 
 ### 180° / south-behind
-Two modest, glazed fellowship interview rooms along the southwest/south-central portion of the floor, with sealed upper-floor glazing continuing along the south perimeter.
+Two modest, glazed fellowship interview / stakeholder meeting rooms along the southwest/south-central portion of the floor, with sealed upper-floor glazing continuing along the south perimeter.
 
 There is **no exterior door**.
 
@@ -197,7 +197,7 @@ Use one rectangular shared table:
 
 This is not a giant interactive command table.
 
-### Identity / opportunity wall
+### Opportunity / Network Wall
 Approximate wall band:
 - **X 22–50 / Y 50–54**
 
@@ -250,16 +250,16 @@ Never show:
 
 ---
 
-## 8. Fellowship interview rooms
+## 8. Interview / stakeholder meeting rooms
 
-Floor 3 includes **two** small interview rooms because the repo has an actual interview scheduling workflow.
+Floor 3 includes **two** small interview / stakeholder meeting rooms because the repo has an actual interview scheduling workflow.
 
-### Interview Room A
+### Interview / Stakeholder Meeting A
 Approximate coordinates:
 - **X 2–14 / Y 4–16**
 - approximate inside size: **12' × 12'**
 
-### Interview Room B
+### Interview / Stakeholder Meeting B
 Approximate coordinates:
 - **X 16–28 / Y 4–16**
 - approximate inside size: **12' × 12'**
@@ -284,7 +284,7 @@ They are not private offices assigned to specific people.
 
 ---
 
-## 9. Member / interview check-in
+## 9. Member / Meeting Check-In
 
 Use one slim terminal beside the elevator lobby:
 - approximate footprint **X 49–51 / Y 24–29**.
@@ -306,7 +306,7 @@ The south facade remains an upper-floor facade.
 Use:
 - sealed glazing/windows;
 - column rhythm aligned with the building grid;
-- the two interview rooms positioned inside the glazing line;
+- the two interview / stakeholder meeting rooms positioned inside the glazing line;
 - no exterior door;
 - no terrace/balcony access.
 
@@ -335,7 +335,7 @@ The north support band is replanned around the Core V2 West Service Core.
 - **X26–34 / Y60–70**
 - conceptual 8' × 10'
 
-### Fellowship support / records
+### Fellowship / Relationship Records
 - **X34–42 / Y60–72**
 - conceptual 8' × 12'
 
@@ -392,7 +392,7 @@ Opportunity Exchange → People Lounge:
 - at least approximately **4 ft clear** at schematic level.
 
 ### Interview route
-Elevator/Opportunity Exchange → interview rooms:
+Elevator/Opportunity Exchange → interview / stakeholder meeting rooms:
 - direct;
 - unobstructed;
 - does not cut through lounge furniture.
@@ -457,7 +457,7 @@ Continue the same building family:
 - warm dark-gray mineral finish;
 - blackened/gunmetal steel;
 - restrained warm wood at shared table/wall details;
-- framed glass at interview rooms.
+- framed glass at interview / stakeholder meeting rooms.
 
 ### Red accent
 Use sparingly:
@@ -474,7 +474,7 @@ No nightclub red wash.
 ### Opportunity Exchange
 Use a simple linear or rectangular architectural pendant/ceiling element aligned with the shared table.
 
-### Interview rooms
+### Interview / stakeholder meeting rooms
 Warm, flattering, low-glare task/ambient lighting.
 
 ### Lounge
@@ -591,7 +591,7 @@ Opportunity table + FELLOWSHIP + NETWORK wall with Match / People / Applications
 Fixed elevator/core + member/interview check-in.
 
 **180° / south:**  
-Two modest glazed interview rooms with sealed upper-floor glazing beyond/around them. No exterior door.
+Two modest glazed interview / stakeholder meeting rooms with sealed upper-floor glazing beyond/around them. No exterior door.
 
 **-90° / west:**  
 People + Network lounge and public people/network surface.
@@ -623,7 +623,7 @@ Suggested Floor 3 hotspots:
 2. **People** → public profile/network directory.
 3. **Applications** → signed-in application tracker/dashboard.
 4. **Opportunity table** → directory/browse experience.
-5. **Interview Room A/B** → scheduled interview/meeting context.
+5. **Interview / Stakeholder Meeting A/B** → scheduled interview/meeting context.
 6. **Member check-in** → personal dashboard/interview arrival.
 7. **Elevator** → floor selector.
 8. **People + Network lounge** → profile/network experience.
@@ -659,7 +659,7 @@ The physical architecture should not favor a political position or political org
 - [ ] 360 camera approximately (36,28)
 - [ ] opportunity table north/forward
 - [ ] elevator + check-in east/right
-- [ ] two interview rooms south
+- [ ] two interview / stakeholder meeting rooms south
 - [ ] people/network lounge west
 - [ ] no staffed reception desk
 - [ ] services/restrooms stack vertically
@@ -677,3 +677,33 @@ The physical architecture should not favor a political position or political org
 - [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
 - [ ] shared slab openings remain unobstructed
 - [ ] no floor-local decorative stair is treated as vertical-continuity authority
+
+## Repo capability binding — 2026-09-21 reconciliation audit
+
+This floor is bound to the repo-wide program map:
+`production/equity-uprise-capability-map-v2.json`.
+
+### Primary capabilities
+- **Public profiles / people directory** (`profiles`, built) — People + Network Lounge and Opportunity / Network Wall.
+- **Private member contact/consent record** (`private-contact`, built) — Never shown publicly; represented only as protected relationship records/back-office state.
+- **Fellowship/opportunity directory** (`fellowship-directory`, built) — Opportunity Exchange.
+- **Profile/topic-based opportunity matching** (`fellowship-matching`, built) — Opportunity table and member check-in.
+- **Host-submitted fellowship listings with moderation** (`host-listings`, built) — Opportunity Exchange submission path; moderation on Floor 6 Desk.
+- **Policy Fellowship/application workflow** (`fellowship-applications`, built) — Fellowship application path, application tracking, and interview/meeting rooms.
+- **Interview requests, availability and calendar scheduling** (`interviews-calendar`, built_guarded) — Member / Meeting Check-In and two Interview / Stakeholder Meeting rooms; no private calendar data shown publicly.
+- **Stakeholder people/organizations and initiative relationship graph** (`stakeholder-graph`, built) — People + Network layer and access-controlled relationship views; not a public contact database.
+- **Meetings, participants and commitments** (`meetings-commitments`, built) — Interview / Stakeholder Meeting rooms plus institutional follow-through in Penthouse Command.
+
+### Secondary / cross-floor capabilities
+- **Member dashboard / private personal desk** (`member-dashboard`, built) — Member Check-In opens private matches, applications, saves, perspectives and conversation threads.
+- **M-Verified organization/profile intake** (`verification`, built_manual) — Intake / Verification Consultation on Floor 1; verified identity becomes part of Floor 3 network context.
+- **Stakeholder and organization intake** (`stakeholder-intake`, built) — Reception/intake on Floor 1; relationship graph on Floors 3 and 6.
+- **Partner / sponsor pathways** (`partnership-sponsorship`, built_public_pathway) — Partner / Executive Briefing room and Institutional Salon.
+- **Artist/creator participation and studio workflow** (`artist-creator`, built_shared_platform) — Creator Recording Room and Edit / Review Suite.
+- **Google Workspace/Gmail relationship bridge** (`google-workspace`, built_disabled_until_configured) — Desk Operations / Systems; relevant communications project into stakeholder relationship state.
+- **Consent-aware outbound stakeholder outreach bridge** (`outreach`, built_not_armed_by_default) — Access-controlled stakeholder pipeline; never a public blast console.
+
+### Boundary rule
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
