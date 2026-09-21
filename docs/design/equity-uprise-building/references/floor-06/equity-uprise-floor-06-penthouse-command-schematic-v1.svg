@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -6 104 84">
+<style>text{font-family:Arial,sans-serif;fill:#111}.n{font-size:1.2}.h{font-size:2;font-weight:700}.r{fill:none;stroke:#8b1e1e;stroke-width:.18;stroke-dasharray:.8 .6}</style>
+<text x="0" y="-3.5" class="h">EQUITY UPRISE — FLOOR 06 PENTHOUSE COMMAND</text>
+<text x="0" y="-1.2" class="n">72'×72' · 5,184 GSF · 18' GRID · NORTH UP · NOT FOR CONSTRUCTION</text>
+<g transform="translate(0,72) scale(1,-1)"><path d="M0 0V72M0 0H72" stroke="#bbb" stroke-width=".08" stroke-dasharray=".7 .7"/><path d="M18 0V72M0 18H72" stroke="#bbb" stroke-width=".08" stroke-dasharray=".7 .7"/><path d="M36 0V72M0 36H72" stroke="#bbb" stroke-width=".08" stroke-dasharray=".7 .7"/><path d="M54 0V72M0 54H72" stroke="#bbb" stroke-width=".08" stroke-dasharray=".7 .7"/><path d="M72 0V72M0 72H72" stroke="#bbb" stroke-width=".08" stroke-dasharray=".7 .7"/><rect x="0" y="0" width="72" height="72" fill="none" stroke="#111" stroke-width=".5"/>
+<path d="M0 0H72" stroke="#6d8a96" stroke-width=".35"/>
+</g>
+<g><rect x="0" y="0" width="12" height="18" fill="#dededb" stroke="#333" stroke-width=".18"/><text x="6" y="9" text-anchor="middle" font-size="1.15">STAIR B</text></g>
+<g><rect x="60" y="0" width="12" height="18" fill="#dededb" stroke="#333" stroke-width=".18"/><text x="66" y="9" text-anchor="middle" font-size="1.15">STAIR A</text></g>
+<g><rect x="54" y="28" width="8" height="10" fill="#dededb" stroke="#333" stroke-width=".18"/><text x="58" y="33" text-anchor="middle" font-size="1.15">ELEVATOR</text></g>
+<g><rect x="12" y="2" width="8" height="10" fill="#f1f1ef" stroke="#333" stroke-width=".18"/><text x="16" y="7" text-anchor="middle" font-size="1.15">RESTROOM A</text></g>
+<g><rect x="20" y="2" width="8" height="10" fill="#f1f1ef" stroke="#333" stroke-width=".18"/><text x="24" y="7" text-anchor="middle" font-size="1.15">RESTROOM B</text></g>
+<g><rect x="28" y="0" width="12" height="12" fill="#f1f1ef" stroke="#333" stroke-width=".18"/><text x="34" y="6" text-anchor="middle" font-size="1.15">COMMAND SUPPORT</text></g>
+<g><rect x="40" y="0" width="10" height="12" fill="#f1f1ef" stroke="#333" stroke-width=".18"/><text x="45" y="6" text-anchor="middle" font-size="1.15">OPS / SYSTEMS</text></g>
+<g><rect x="50" y="6" width="4" height="6" fill="#f1f1ef" stroke="#333" stroke-width=".18"/><text x="52" y="9" text-anchor="middle" font-size="1.15">JANITOR</text></g>
+<g><rect x="50" y="0" width="10" height="6" fill="#e8e8e4" stroke="#333" stroke-width=".18"/><text x="55" y="3" text-anchor="middle" font-size="1.15">MEP / ROOF SERVICES</text></g>
+<g><rect x="2" y="56" width="13" height="12" fill="#eef4f6" stroke="#333" stroke-width=".18"/><text x="8.5" y="62" text-anchor="middle" font-size="1.15">STRATEGY REVIEW</text></g>
+<g><rect x="17" y="56" width="15" height="12" fill="#eef4f6" stroke="#333" stroke-width=".18"/><text x="24.5" y="62" text-anchor="middle" font-size="1.15">PARTNER / EXEC BRIEF</text></g>
+<rect x="22" y="18" width="28" height="4" fill="#e9e8e4" stroke="#333" stroke-width=".18"/>
+<text x="26.7" y="20" class="n" text-anchor="middle">NOW</text><text x="36" y="20" class="n" text-anchor="middle">PAST WORK</text><text x="45.3" y="20" class="n" text-anchor="middle">JOIN</text>
+<rect x="28" y="28.5" width="16" height="5" fill="#d8cec0" stroke="#333" stroke-width=".18"/><text x="36" y="31" class="n" text-anchor="middle">16'×5' COMMAND TABLE · 6 SEATS</text>
+<rect x="2" y="34" width="16" height="20" fill="#f8f6f2" stroke="#999" stroke-width=".12" stroke-dasharray=".7 .5"/><text x="10" y="43" class="n" text-anchor="middle">INSTITUTIONAL SALON / JOIN LOUNGE</text>
+<rect x="49" y="43" width="2" height="5" fill="#222"/><text x="50" y="45.5" font-size=".8" fill="#fff" text-anchor="middle">LEVEL 7 ↑</text>
+<circle cx="36" cy="44" r=".55" fill="#fff" stroke="#111" stroke-width=".2"/><text x="36.8" y="44" font-size=".9">360 CAMERA (36,28)</text>
+<rect x="48" y="24" width="16" height="20" class="r"/><text x="56" y="25" font-size=".9" text-anchor="middle" fill="#8b1e1e">CORE / ROOF TRANSITION FIELD</text>
+<text x="6" y="2" font-size=".9" text-anchor="middle" fill="#8b1e1e">↑ LEVEL 7</text><text x="66" y="2" font-size=".9" text-anchor="middle" fill="#8b1e1e">↑ LEVEL 7</text>
+<text x="76" y="5" class="h">LOCKED DATUM</text><text x="76" y="8" class="n">Elevator X54–62 / Y34–44</text><text x="76" y="10" class="n">Stair A X60–72 / Y54–72</text><text x="76" y="12" class="n">Stair B X0–12 / Y54–72</text><text x="76" y="14" class="n">MEP X50–60 / Y66–72</text>
+<text x="76" y="19" class="h">360</text><text x="76" y="22" class="n">0° north: NOW / PAST WORK / JOIN</text><text x="76" y="24" class="n">+90° east: elevator / roof transition</text><text x="76" y="26" class="n">180° south: enclosed briefing rooms</text><text x="76" y="28" class="n">−90° west: institutional salon</text>
+<text x="76" y="34" class="h">ROOF CONTINUITY</text><text x="76" y="37" class="n">Preserve Stair A/B upward continuity</text><text x="76" y="39" class="n">Reserve elevator overrun/service volume</text><text x="76" y="41" class="n">Do not block MEP / roof services</text><text x="76" y="43" class="n">Level 7 geometry governed separately</text>
+<text x="76" y="49" class="h">ABSOLUTE</text><text x="76" y="52" class="n">NO exterior public door</text><text x="76" y="54" class="n">NO balcony / terrace</text><text x="76" y="56" class="n">NO helipad / helicopter inside Floor 6</text>
+</svg>
