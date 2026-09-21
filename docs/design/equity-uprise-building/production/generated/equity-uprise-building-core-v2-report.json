@@ -2,9 +2,9 @@
   "building_id": "equity-uprise-building",
   "core_id": "equity-uprise-core-v2",
   "not_for_construction": true,
-  "glb_bytes": 483704,
-  "sha256": "288ff5d916960849e5b7fcc67793982024ae9cbc7724e0ca4b72b96bc25f4cf3",
-  "mesh_count": 782,
+  "glb_bytes": 484868,
+  "sha256": "2bfa861469ab45fc4933eb8c2dbefe14e9d4512757245bd894f6885adb48a960",
+  "mesh_count": 784,
   "bounds_m": [
     [
       -7.315200000000001,

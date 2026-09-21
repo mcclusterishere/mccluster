@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Floor 1 + B1 digital-twin simulation authority",
-  "checks_total": 54,
-  "checks_passed": 54,
+  "checks_total": 58,
+  "checks_passed": 58,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -134,6 +134,26 @@
     },
     {
       "name": "B1 zone clear of fixed core: b1-service-staging",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "B1 zone inside shell: b1-tunnel-ops-concourse",
+      "passed": true,
+      "detail": "(20, 54, 48, 64)"
+    },
+    {
+      "name": "B1 zone clear of fixed core: b1-tunnel-ops-concourse",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "B1 zone inside shell: b1-tunnel-transfer-lock",
+      "passed": true,
+      "detail": "(24, 64, 44, 72)"
+    },
+    {
+      "name": "B1 zone clear of fixed core: b1-tunnel-transfer-lock",
       "passed": true,
       "detail": "[]"
     },
