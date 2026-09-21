@@ -1,0 +1,254 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1787" height="1320" viewBox="0 0 1787 1320">
+<rect width="100%" height="100%" fill="#fbfbfa"/>
+<style>.small{font-family:Arial,sans-serif;font-size:11px;fill:#222}.note{font-family:Arial,sans-serif;font-size:12px;fill:#333}.dim{font-family:Arial,sans-serif;font-size:12px;fill:#222}</style>
+<text x="110.0" y="42.0" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="bold" text-anchor="start" fill="#111" >EQUITY UPRISE — FLOOR 01 LOBBY + INTAKE</text>
+<text x="110.0" y="68.0" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#111" >SCHEMATIC DESIGN PLAN · 72'-0" × 72'-0" · 5,184 GSF · NORTH UP</text>
+<text x="110.0" y="88.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#8b1e1e" >Geometry locked to repo spec + FLOOR-01-SCHEMATIC-PLAN-BASIS.md · NOT FOR CONSTRUCTION</text>
+<line x1="110.0" y1="1082.0" x2="110.0" y2="110.0" stroke="#bcbcbc" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="110.0" y="90.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >A</text>
+<text x="110.0" y="1109.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >A</text>
+<line x1="353.0" y1="1082.0" x2="353.0" y2="110.0" stroke="#bcbcbc" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="353.0" y="90.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >B</text>
+<text x="353.0" y="1109.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >B</text>
+<line x1="596.0" y1="1082.0" x2="596.0" y2="110.0" stroke="#bcbcbc" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="596.0" y="90.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >C</text>
+<text x="596.0" y="1109.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >C</text>
+<line x1="839.0" y1="1082.0" x2="839.0" y2="110.0" stroke="#bcbcbc" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="839.0" y="90.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >D</text>
+<text x="839.0" y="1109.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >D</text>
+<line x1="1082.0" y1="1082.0" x2="1082.0" y2="110.0" stroke="#bcbcbc" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="1082.0" y="90.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >E</text>
+<text x="1082.0" y="1109.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >E</text>
+<line x1="110.0" y1="1082.0" x2="1082.0" y2="1082.0" stroke="#bcbcbc" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="85.0" y="1086.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >1</text>
+<text x="1107.0" y="1086.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >1</text>
+<line x1="110.0" y1="839.0" x2="1082.0" y2="839.0" stroke="#bcbcbc" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="85.0" y="843.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >2</text>
+<text x="1107.0" y="843.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >2</text>
+<line x1="110.0" y1="596.0" x2="1082.0" y2="596.0" stroke="#bcbcbc" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="85.0" y="600.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >3</text>
+<text x="1107.0" y="600.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >3</text>
+<line x1="110.0" y1="353.0" x2="1082.0" y2="353.0" stroke="#bcbcbc" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="85.0" y="357.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >4</text>
+<text x="1107.0" y="357.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >4</text>
+<line x1="110.0" y1="110.0" x2="1082.0" y2="110.0" stroke="#bcbcbc" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="85.0" y="114.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >5</text>
+<text x="1107.0" y="114.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >5</text>
+<rect x="110.0" y="110.0" width="972.0" height="972.0" fill="#ffffff" stroke="none"/>
+<rect x="137.0" y="704.0" width="216.0" height="216.0" fill="#f8f6f2" stroke="#aaa" stroke-width="1" stroke-dasharray="5 4"/>
+<rect x="137.0" y="488.0" width="189.0" height="162.0" fill="#eef4f6" stroke="#444" stroke-width="2"/>
+<rect x="501.5" y="960.5" width="189.0" height="121.5" fill="#f5f7f7" stroke="#444" stroke-width="2"/>
+<rect x="110.0" y="110.0" width="162.0" height="243.0" fill="#dededb" stroke="#333" stroke-width="3"/>
+<rect x="272.0" y="272.0" width="648.0" height="81.0" fill="#f7f7f4" stroke="#555" stroke-width="1.5"/>
+<rect x="272.0" y="137.0" width="108.0" height="135.0" fill="#f0f0ed" stroke="#444" stroke-width="2"/>
+<rect x="380.0" y="137.0" width="108.0" height="135.0" fill="#f0f0ed" stroke="#444" stroke-width="2"/>
+<rect x="488.0" y="110.0" width="162.0" height="162.0" fill="#f0f0ed" stroke="#444" stroke-width="2"/>
+<rect x="650.0" y="110.0" width="135.0" height="162.0" fill="#f0f0ed" stroke="#444" stroke-width="2"/>
+<rect x="785.0" y="191.0" width="54.0" height="81.0" fill="#f0f0ed" stroke="#444" stroke-width="2"/>
+<rect x="785.0" y="110.0" width="135.0" height="81.0" fill="#e8e8e4" stroke="#444" stroke-width="2"/>
+<rect x="920.0" y="110.0" width="162.0" height="243.0" fill="#dededb" stroke="#333" stroke-width="3"/>
+<rect x="839.0" y="488.0" width="108.0" height="135.0" fill="#dededb" stroke="#222" stroke-width="3"/>
+<rect x="758.0" y="434.0" width="216.0" height="270.0" fill="none" stroke="#777" stroke-width="1.2" stroke-dasharray="7 5"/>
+<rect x="488.0" y="353.0" width="216.0" height="54.0" fill="#e9e8e4" stroke="#222" stroke-width="2"/>
+<rect x="515.0" y="447.5" width="162.0" height="40.5" fill="#ddd7cf" stroke="#222" stroke-width="2"/>
+<rect x="110.0" y="110.0" width="972.0" height="972.0" fill="none" stroke="#111" stroke-width="7"/>
+<line x1="110.0" y1="1082.0" x2="501.5" y2="1082.0" stroke="#6d8a96" stroke-width="3"/>
+<line x1="690.5" y1="1082.0" x2="1082.0" y2="1082.0" stroke="#6d8a96" stroke-width="3"/>
+<line x1="110.0" y1="1082.0" x2="110.0" y2="407.0" stroke="#6d8a96" stroke-width="3"/>
+<line x1="542.0" y1="1082.0" x2="650.0" y2="1082.0" stroke="#fbfbfa" stroke-width="10"/>
+<line x1="542.0" y1="1082.0" x2="596.0" y2="1028.0" stroke="#111" stroke-width="2"/>
+<line x1="650.0" y1="1082.0" x2="596.0" y2="1028.0" stroke="#111" stroke-width="2"/>
+<line x1="542.0" y1="960.5" x2="650.0" y2="960.5" stroke="#fbfbfa" stroke-width="8"/>
+<line x1="542.0" y1="960.5" x2="596.0" y2="906.5" stroke="#111" stroke-width="2"/>
+<line x1="650.0" y1="960.5" x2="596.0" y2="906.5" stroke="#111" stroke-width="2"/>
+<line x1="326.0" y1="650.0" x2="326.0" y2="488.0" stroke="#527481" stroke-width="3"/>
+<line x1="137.0" y1="650.0" x2="326.0" y2="650.0" stroke="#527481" stroke-width="3"/>
+<line x1="326.0" y1="596.0" x2="326.0" y2="555.5" stroke="#fbfbfa" stroke-width="8"/>
+<line x1="326.0" y1="596.0" x2="285.5" y2="555.5" stroke="#111" stroke-width="2"/>
+<line x1="420.5" y1="353.0" x2="474.5" y2="353.0" stroke="#fbfbfa" stroke-width="8"/>
+<line x1="420.5" y1="353.0" x2="474.5" y2="407.0" stroke="#111" stroke-width="2"/>
+<line x1="488.0" y1="353.0" x2="488.0" y2="272.0" stroke="#a33" stroke-width="2" stroke-dasharray="4 3"/>
+<text x="493.4" y="312.5" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="normal" text-anchor="start" fill="#8b1e1e" >SECURE</text>
+<line x1="305.8" y1="272.0" x2="346.2" y2="272.0" stroke="#fbfbfa" stroke-width="7"/>
+<line x1="305.8" y1="272.0" x2="305.8" y2="231.5" stroke="#111" stroke-width="1.7"/>
+<line x1="413.8" y1="272.0" x2="454.2" y2="272.0" stroke="#fbfbfa" stroke-width="7"/>
+<line x1="413.8" y1="272.0" x2="413.8" y2="231.5" stroke="#111" stroke-width="1.7"/>
+<line x1="528.5" y1="272.0" x2="569.0" y2="272.0" stroke="#fbfbfa" stroke-width="7"/>
+<line x1="528.5" y1="272.0" x2="528.5" y2="231.5" stroke="#111" stroke-width="1.7"/>
+<line x1="690.5" y1="272.0" x2="731.0" y2="272.0" stroke="#fbfbfa" stroke-width="7"/>
+<line x1="690.5" y1="272.0" x2="690.5" y2="231.5" stroke="#111" stroke-width="1.7"/>
+<line x1="798.5" y1="272.0" x2="832.2" y2="272.0" stroke="#fbfbfa" stroke-width="7"/>
+<line x1="798.5" y1="272.0" x2="798.5" y2="231.5" stroke="#111" stroke-width="1.7"/>
+<line x1="839.0" y1="582.5" x2="839.0" y2="528.5" stroke="#fbfbfa" stroke-width="9"/>
+<line x1="839.0" y1="582.5" x2="893.0" y2="555.5" stroke="#111" stroke-width="1.7"/>
+<line x1="839.0" y1="528.5" x2="893.0" y2="555.5" stroke="#111" stroke-width="1.7"/>
+<line x1="272.0" y1="312.5" x2="272.0" y2="272.0" stroke="#fbfbfa" stroke-width="8"/>
+<line x1="272.0" y1="312.5" x2="231.5" y2="272.0" stroke="#111" stroke-width="2"/>
+<line x1="110.0" y1="245.0" x2="110.0" y2="191.0" stroke="#fbfbfa" stroke-width="9"/>
+<line x1="110.0" y1="245.0" x2="164.0" y2="218.0" stroke="#111" stroke-width="2"/>
+<line x1="920.0" y1="312.5" x2="920.0" y2="272.0" stroke="#fbfbfa" stroke-width="8"/>
+<line x1="920.0" y1="312.5" x2="960.5" y2="272.0" stroke="#111" stroke-width="2"/>
+<line x1="1082.0" y1="245.0" x2="1082.0" y2="191.0" stroke="#fbfbfa" stroke-width="9"/>
+<line x1="1082.0" y1="245.0" x2="1028.0" y2="218.0" stroke="#111" stroke-width="2"/>
+<line x1="126.2" y1="326.0" x2="255.8" y2="326.0" stroke="#777" stroke-width="1"/>
+<line x1="936.2" y1="326.0" x2="1065.8" y2="326.0" stroke="#777" stroke-width="1"/>
+<line x1="126.2" y1="299.0" x2="255.8" y2="299.0" stroke="#777" stroke-width="1"/>
+<line x1="936.2" y1="299.0" x2="1065.8" y2="299.0" stroke="#777" stroke-width="1"/>
+<line x1="126.2" y1="272.0" x2="255.8" y2="272.0" stroke="#777" stroke-width="1"/>
+<line x1="936.2" y1="272.0" x2="1065.8" y2="272.0" stroke="#777" stroke-width="1"/>
+<line x1="126.2" y1="245.0" x2="255.8" y2="245.0" stroke="#777" stroke-width="1"/>
+<line x1="936.2" y1="245.0" x2="1065.8" y2="245.0" stroke="#777" stroke-width="1"/>
+<line x1="126.2" y1="218.0" x2="255.8" y2="218.0" stroke="#777" stroke-width="1"/>
+<line x1="936.2" y1="218.0" x2="1065.8" y2="218.0" stroke="#777" stroke-width="1"/>
+<line x1="126.2" y1="191.0" x2="255.8" y2="191.0" stroke="#777" stroke-width="1"/>
+<line x1="936.2" y1="191.0" x2="1065.8" y2="191.0" stroke="#777" stroke-width="1"/>
+<line x1="126.2" y1="164.0" x2="255.8" y2="164.0" stroke="#777" stroke-width="1"/>
+<line x1="936.2" y1="164.0" x2="1065.8" y2="164.0" stroke="#777" stroke-width="1"/>
+<line x1="126.2" y1="137.0" x2="255.8" y2="137.0" stroke="#777" stroke-width="1"/>
+<line x1="936.2" y1="137.0" x2="1065.8" y2="137.0" stroke="#777" stroke-width="1"/>
+<text x="191.0" y="204.5" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >STAIR B</text>
+<text x="191.0" y="235.5" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="normal" text-anchor="middle" fill="#111" >REMOTE EGRESS</text>
+<text x="1001.0" y="204.5" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >STAIR A</text>
+<text x="1001.0" y="235.5" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="normal" text-anchor="middle" fill="#111" >PROTECTED</text>
+<circle cx="326.0" cy="204.5" r="33.8" fill="none" stroke="#8a8a8a" stroke-width="1" stroke-dasharray="4 3"/>
+<rect x="286.9" y="149.2" width="16.2" height="20.2" fill="#fff" stroke="#555" stroke-width="1"/>
+<circle cx="355.7" cy="158.6" r="8.8" fill="#fff" stroke="#555" stroke-width="1"/>
+<circle cx="434.0" cy="204.5" r="33.8" fill="none" stroke="#8a8a8a" stroke-width="1" stroke-dasharray="4 3"/>
+<rect x="394.9" y="149.2" width="16.2" height="20.2" fill="#fff" stroke="#555" stroke-width="1"/>
+<circle cx="463.7" cy="158.6" r="8.8" fill="#fff" stroke="#555" stroke-width="1"/>
+<rect x="153.2" y="863.3" width="85.0" height="29.7" fill="#d8d5cf" stroke="#555" stroke-width="1.5"/>
+<rect x="272.0" y="856.5" width="33.8" height="33.8" fill="#d8d5cf" stroke="#555" stroke-width="1.5"/>
+<rect x="272.0" y="751.2" width="33.8" height="33.8" fill="#d8d5cf" stroke="#555" stroke-width="1.5"/>
+<circle cx="238.2" cy="812.0" r="27.0" fill="#ece9e2" stroke="#666" stroke-width="1"/>
+<rect x="177.5" y="558.2" width="108.0" height="48.6" fill="#c7b49a" stroke="#555" stroke-width="1"/>
+<rect x="191.0" y="598.7" width="21.6" height="21.6" fill="#d8d5cf" stroke="#555" stroke-width="1"/>
+<rect x="245.0" y="598.7" width="21.6" height="21.6" fill="#d8d5cf" stroke="#555" stroke-width="1"/>
+<rect x="191.0" y="523.1" width="21.6" height="21.6" fill="#d8d5cf" stroke="#555" stroke-width="1"/>
+<rect x="245.0" y="523.1" width="21.6" height="21.6" fill="#d8d5cf" stroke="#555" stroke-width="1"/>
+<circle cx="569.0" cy="420.5" r="10.8" fill="#ddd" stroke="#555" stroke-width="1"/>
+<circle cx="623.0" cy="420.5" r="10.8" fill="#ddd" stroke="#555" stroke-width="1"/>
+<rect x="515.0" y="458.3" width="40.5" height="29.7" fill="#c9c3bb" stroke="#555" stroke-width="1"/>
+<text x="535.2" y="494.8" font-family="Arial, Helvetica, sans-serif" font-size="7" font-weight="normal" text-anchor="middle" fill="#555" >LOW</text>
+<rect x="771.5" y="690.5" width="27.0" height="67.5" fill="#222" stroke="#111" stroke-width="1.5"/>
+<text x="785.0" y="724.2" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" text-anchor="middle" fill="#fff" >DIR.</text>
+<circle cx="596.0" cy="704.0" r="9" fill="#fff" stroke="#111" stroke-width="2.5"/>
+<circle cx="596.0" cy="704.0" r="3" fill="#111"/>
+<text x="596.0" y="724.2" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" text-anchor="middle" fill="#111" >360 CAMERA</text>
+<line x1="596.0" y1="704.0" x2="596.0" y2="434.0" stroke="#6a6a6a" stroke-width="1.4" stroke-dasharray="5 4"/>
+<text x="606.8" y="542.0" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="normal" text-anchor="start" fill="#111" >0°</text>
+<line x1="596.0" y1="704.0" x2="812.0" y2="704.0" stroke="#6a6a6a" stroke-width="1.4" stroke-dasharray="5 4"/>
+<text x="731.0" y="693.2" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="normal" text-anchor="middle" fill="#111" >+90°</text>
+<line x1="596.0" y1="704.0" x2="596.0" y2="947.0" stroke="#6a6a6a" stroke-width="1.4" stroke-dasharray="5 4"/>
+<text x="606.8" y="893.0" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="normal" text-anchor="start" fill="#111" >180°</text>
+<line x1="596.0" y1="704.0" x2="353.0" y2="704.0" stroke="#6a6a6a" stroke-width="1.4" stroke-dasharray="5 4"/>
+<text x="434.0" y="693.2" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="normal" text-anchor="middle" fill="#111" >−90°</text>
+<line x1="596.0" y1="960.5" x2="596.0" y2="488.0" stroke="#9b1c1c" stroke-width="2.4" stroke-dasharray="8 6"/>
+<line x1="596.0" y1="508.2" x2="812.0" y2="555.5" stroke="#9b1c1c" stroke-width="2.4" stroke-dasharray="8 6"/>
+<text x="650.0" y="812.0" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="normal" text-anchor="start" fill="#8b1e1e" >PRIMARY ~6' CLEAR</text>
+<line x1="515.0" y1="515.0" x2="353.0" y2="569.0" stroke="#3a6480" stroke-width="1.8" stroke-dasharray="6 5"/>
+<text x="420.5" y="548.8" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="normal" text-anchor="middle" fill="#3a6480" >SECONDARY ≥4'</text>
+<text x="245.0" y="687.8" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#111" >VISITOR LOUNGE</text>
+<text x="245.0" y="714.8" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >16' × 16' zone · 6–8 seats</text>
+<text x="231.5" y="517.7" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" text-anchor="middle" fill="#111" >INTAKE / CONSULTATION</text>
+<text x="231.5" y="544.7" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >14' × 12' · 4–6 seats</text>
+<text x="596.0" y="384.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#111" >FEATURE WALL</text>
+<text x="596.0" y="411.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >APPROVED EQUITY UPRISE LOGO LOCATION</text>
+<text x="596.0" y="469.1" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" text-anchor="middle" fill="#111" >RECEPTION</text>
+<text x="596.0" y="496.1" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >12' × 3' desk</text>
+<text x="596.0" y="1011.8" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#111" >VESTIBULE</text>
+<text x="596.0" y="1038.8" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >14' × 9'</text>
+<text x="596.0" y="1106.3" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" text-anchor="middle" fill="#111" >MAIN PUBLIC ENTRANCE / STREET</text>
+<text x="326.0" y="191.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#111" >RESTROOM A</text>
+<text x="326.0" y="218.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >8' × 10' · accessible concept</text>
+<text x="434.0" y="191.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#111" >RESTROOM B</text>
+<text x="434.0" y="218.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >8' × 10' · accessible concept</text>
+<text x="569.0" y="191.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#111" >RECEPTION SUPPORT</text>
+<text x="569.0" y="218.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >12' × 12'</text>
+<text x="717.5" y="191.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#111" >IT / ELECTRICAL</text>
+<text x="717.5" y="218.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >10' × 12'</text>
+<text x="812.0" y="231.5" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" text-anchor="middle" fill="#111" >JANITOR</text>
+<text x="812.0" y="258.5" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >4' × 6'</text>
+<text x="852.5" y="150.5" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" text-anchor="middle" fill="#111" >MEP / RISERS</text>
+<text x="852.5" y="177.5" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >10' × 6' reserved</text>
+<text x="872.8" y="555.5" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#111" >ELEVATOR</text>
+<text x="872.8" y="582.5" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="middle" fill="#111" >8' × 10' FIXED CORE</text>
+<text x="866.0" y="683.8" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="bold" text-anchor="middle" fill="#111" >ELEVATOR LOBBY / CORE</text>
+<text x="596.0" y="312.5" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="bold" text-anchor="middle" fill="#111" >6' SUPPORT CORRIDOR</text>
+<line x1="1042.0" y1="183" x2="1042.0" y2="150" stroke="#111" stroke-width="3"/>
+<polygon points="1042.0,137 1034.0,153 1050.0,153" fill="#111"/>
+<text x="1042.0" y="201.0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#111" >N</text>
+<line x1="110.0" y1="1138.0" x2="1082.0" y2="1138.0" stroke="#111" stroke-width="1.2"/>
+<line x1="110.0" y1="1130.0" x2="110.0" y2="1146.0" stroke="#111" stroke-width="1.2"/>
+<line x1="353.0" y1="1130.0" x2="353.0" y2="1146.0" stroke="#111" stroke-width="1.2"/>
+<line x1="596.0" y1="1130.0" x2="596.0" y2="1146.0" stroke="#111" stroke-width="1.2"/>
+<line x1="839.0" y1="1130.0" x2="839.0" y2="1146.0" stroke="#111" stroke-width="1.2"/>
+<line x1="1082.0" y1="1130.0" x2="1082.0" y2="1146.0" stroke="#111" stroke-width="1.2"/>
+<text x="231.5" y="1130.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#111" >18'-0"</text>
+<text x="474.5" y="1130.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#111" >18'-0"</text>
+<text x="717.5" y="1130.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#111" >18'-0"</text>
+<text x="960.5" y="1130.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#111" >18'-0"</text>
+<text x="596.0" y="1166.0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#111" >72'-0" OVERALL</text>
+<line x1="52" y1="1082.0" x2="52" y2="110.0" stroke="#111" stroke-width="1.2"/>
+<line x1="44" y1="1082.0" x2="60" y2="1082.0" stroke="#111" stroke-width="1.2"/>
+<line x1="44" y1="839.0" x2="60" y2="839.0" stroke="#111" stroke-width="1.2"/>
+<line x1="44" y1="596.0" x2="60" y2="596.0" stroke="#111" stroke-width="1.2"/>
+<line x1="44" y1="353.0" x2="60" y2="353.0" stroke="#111" stroke-width="1.2"/>
+<line x1="44" y1="110.0" x2="60" y2="110.0" stroke="#111" stroke-width="1.2"/>
+<text x="42.0" y="596.0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#111" transform="rotate(-90 42.0 596.0)">72'-0" OVERALL</text>
+<text x="1167.0" y="120.0" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="bold" text-anchor="start" fill="#111" >SCHEMATIC PLAN BASIS</text>
+<text x="1167.0" y="146.0" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="normal" text-anchor="start" fill="#111" >Floor 01 · Lobby + Intake</text>
+<line x1="1167.0" y1="164" x2="1742" y2="164" stroke="#222" stroke-width="1.5"/>
+<text x="1167.0" y="200.0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#111" >FIXED BUILDING DATA</text>
+<text x="1167.0" y="221.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Floor plate: 72' × 72' = 5,184 GSF</text>
+<text x="1167.0" y="239.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Grid: 18' × 18' coordination module</text>
+<text x="1167.0" y="257.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Floor-to-floor target: 13'-6"</text>
+<text x="1167.0" y="284.0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#111" >LOCKED VERTICAL CORE</text>
+<text x="1167.0" y="305.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Elevator: X 54–62 / Y 34–44</text>
+<text x="1167.0" y="323.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Stair A: X 60–72 / Y 54–72</text>
+<text x="1167.0" y="341.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Stair B: X 0–12 / Y 54–72</text>
+<text x="1167.0" y="359.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >MEP risers: X 50–60 / Y 66–72</text>
+<text x="1167.0" y="386.0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#111" >CARDINAL 360 DATUM</text>
+<text x="1167.0" y="407.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >0° north: reception / feature wall</text>
+<text x="1167.0" y="425.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >+90° east: elevator / core</text>
+<text x="1167.0" y="443.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >180° south: public entrance</text>
+<text x="1167.0" y="461.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >−90° west: lounge / intake</text>
+<text x="1167.0" y="479.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Camera: approx. (36, 28), 5'-4" AFF</text>
+<text x="1167.0" y="506.0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#111" >FLOOR 1 PROGRAM</text>
+<text x="1167.0" y="527.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Entrance vestibule: 14' × 9'</text>
+<text x="1167.0" y="545.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Visitor lounge: 16' × 16' zone</text>
+<text x="1167.0" y="563.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Intake room: 14' × 12'</text>
+<text x="1167.0" y="581.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Reception desk: 12' × 3'</text>
+<text x="1167.0" y="599.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >2 accessible-restroom concepts</text>
+<text x="1167.0" y="617.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Reception support / storage</text>
+<text x="1167.0" y="635.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >IT / electrical</text>
+<text x="1167.0" y="653.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >Janitor + MEP / risers</text>
+<text x="1167.0" y="671.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#111" >One directory only</text>
+<line x1="1167.0" y1="693" x2="1742" y2="693" stroke="#777" stroke-width="1"/>
+<text x="1167.0" y="723.0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#8b1e1e" >CRITICAL LIMITATIONS</text>
+<text x="1167.0" y="745.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#333" >Not a permit or construction document.</text>
+<text x="1167.0" y="762.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#333" >No claim of code/ADA compliance.</text>
+<text x="1167.0" y="779.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#333" >Final occupancy, exit separation, travel distance,</text>
+<text x="1167.0" y="796.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#333" >stair geometry, rated assemblies, structure, MEP,</text>
+<text x="1167.0" y="813.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#333" >plumbing fixtures, sprinklers and zoning require</text>
+<text x="1167.0" y="830.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#333" >licensed professional review for the actual site.</text>
+<text x="1167.0" y="861.0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#111" >DRAWING AUTHORITY</text>
+<text x="1167.0" y="883.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#111" >1. FLOOR-01-LOBBY-INTAKE-360-SPEC.md</text>
+<text x="1167.0" y="901.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#111" >2. FLOOR-01-SCHEMATIC-PLAN-BASIS.md</text>
+<text x="1167.0" y="919.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#111" >3. This vector schematic</text>
+<text x="1167.0" y="937.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="start" fill="#111" >4. Any render / 360 image</text>
+<text x="1167.0" y="973.0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#111" >LEGEND</text>
+<rect x="1167.0" y="983" width="22" height="8" fill="#9b1c1c" stroke="#555" stroke-width="0.5"/>
+<text x="1199.0" y="991.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#111" >Primary public circulation</text>
+<rect x="1167.0" y="1004" width="22" height="8" fill="#3a6480" stroke="#555" stroke-width="0.5"/>
+<text x="1199.0" y="1012.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#111" >Secondary circulation</text>
+<rect x="1167.0" y="1025" width="22" height="8" fill="#527481" stroke="#555" stroke-width="0.5"/>
+<text x="1199.0" y="1033.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#111" >Glazed partition</text>
+<rect x="1167.0" y="1046" width="22" height="8" fill="#dededb" stroke="#555" stroke-width="0.5"/>
+<text x="1199.0" y="1054.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#111" >Vertical core / protected stair</text>
+<rect x="1167.0" y="1067" width="22" height="8" fill="#f0f0ed" stroke="#555" stroke-width="0.5"/>
+<text x="1199.0" y="1075.0" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#111" >Support / service room</text>
+<line x1="110" y1="1243" x2="1742" y2="1243" stroke="#222" stroke-width="1"/>
+<text x="110.0" y="1265.0" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="start" fill="#111" >EQUITY UPRISE · FLOOR 01 · SCHEMATIC DESIGN / SPATIAL COORDINATION</text>
+<text x="1742.0" y="1265.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="end" fill="#111" >REV 3 · 2026-09-20</text>
+<text x="110.0" y="1285.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="bold" text-anchor="start" fill="#8b1e1e" >NOT FOR CONSTRUCTION — geometry intended for architectural development and 360 continuity control.</text>
+</svg>
