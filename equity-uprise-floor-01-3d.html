@@ -90,9 +90,9 @@ controls.maxPolarAngle=Math.PI/2-.015;
 
 scene.add(new THREE.HemisphereLight(0xf4ede2,0x1a1b1d,1.6));
 const sun=new THREE.DirectionalLight(0xfff3df,2.4);sun.position.set(ft(15),ft(28),ft(-10));sun.castShadow=true;scene.add(sun);
-const receptionLight=new THREE.PointLight(0xffd7a6,75,ft(35),2);receptionLight.position.set(ft(36),ft(9.5),ft(46));scene.add(receptionLight);
-const loungeLight=new THREE.PointLight(0xffddb5,40,ft(25),2);loungeLight.position.set(ft(10),ft(8),ft(20));scene.add(loungeLight);
-const passportLight=new THREE.PointLight(0xffe7c8,30,ft(24),2);passportLight.position.set(ft(36),ft(8),ft(38));scene.add(passportLight);
+const receptionLight=new THREE.PointLight(0xffd7a6,75,ft(35),2);receptionLight.position.set(ft(36),ft(9.5),ft(-46));scene.add(receptionLight);
+const loungeLight=new THREE.PointLight(0xffddb5,40,ft(25),2);loungeLight.position.set(ft(10),ft(8),ft(-20));scene.add(loungeLight);
+const passportLight=new THREE.PointLight(0xffe7c8,30,ft(24),2);passportLight.position.set(ft(36),ft(8),ft(-38));scene.add(passportLight);
 
 const grid=new THREE.GridHelper(ft(72),36,0x4c4c4c,0x2c2c2c);
 grid.position.set(ft(36),.005,ft(-36));scene.add(grid);
