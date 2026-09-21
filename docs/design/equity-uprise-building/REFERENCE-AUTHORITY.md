@@ -80,6 +80,11 @@ Floor 1 production package:
 - `docs/design/equity-uprise-building/production/floor-01/floor-01-scene-manifest.json`
 - companion material, lighting, camera, hotspot, routing and state JSON files in the same folder.
 
+Floor 2 production package:
+- `docs/design/equity-uprise-building/production/floor-02/README.md`
+- `docs/design/equity-uprise-building/production/floor-02/floor-02-scene-manifest.json`
+- companion material, lighting, camera, hotspot, routing and state JSON files in the same folder.
+
 Authority order remains:
 **written spec → schematic basis → DXF → SVG → deterministic production package → generated 3D/render/web output**.
 
