@@ -207,7 +207,7 @@ It provides:
 
 Because Stair A and Stair B continue down to B1, Floor 1 also includes explicit discharge-direction barriers/wayfinding so evacuation does not unintentionally continue below grade.
 
-## 12A. B1 Technical / Service Basement
+## 12A. B1 Underground Operations / Technical Service Basement
 
 B1 now exists at **-13'-6"**.
 
