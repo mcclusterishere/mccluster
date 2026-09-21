@@ -24,8 +24,11 @@ BUILDING=HERE.parent
 REFS=BUILDING/"references"
 core=json.loads((HERE/"building-core-v2.json").read_text())
 programs=json.loads((HERE/"core-v2-floor-programs.json").read_text())
+b1=json.loads((HERE/"basement-b1-program.json").read_text())
+plan_levels=[b1]+programs["levels"]
 
 OUT_NAMES={
+  0:"equity-uprise-basement-b1-core-v2-schematic-v1",
   1:"equity-uprise-floor-01-core-v2-schematic-v1",
   2:"equity-uprise-floor-02-public-forum-core-v2-schematic-v1",
   3:"equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1",
@@ -52,6 +55,8 @@ common=programs["common_support"]
 
 def support_zones(level):
     if level.get("roof"): return []
+    if level.get("basement"):
+        return [("MEP / RISERS",CORE["mep"],"service")]
     a,b=level["support_names"]
     return [
       ("PUBLIC / SUPPORT CORRIDOR",b4(common["corridor"]["bounds_ft"]),"corridor"),
@@ -93,6 +98,15 @@ def circles(level):
     out += [(x["label"].upper(),(x["center_ft"]["x"],x["center_ft"]["y"]),x["radius_ft"],x.get("kind","instrument")) for x in level.get("spheres",[])]
     return out
 
+def level_label(level):
+    return "BASEMENT B1" if level.get("basement") else f"LEVEL {level['level']:02d}"
+
+def elev_label(v):
+    return f"{v:+g} FT"
+
+def ref_dir(level):
+    return REFS/"basement-b1" if level.get("basement") else REFS/f"floor-{level['level']:02d}"
+
 def font(size,bold=False):
     p="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     try:return ImageFont.truetype(p,size)
@@ -112,9 +126,9 @@ def png(level,path):
     W,H=1600,1680;m=180;s=17
     im=Image.new("RGB",(W,H),"white");d=ImageDraw.Draw(im)
     X=lambda x:m+x*s;Y=lambda y:m+(72-y)*s
-    d.text((90,45),f"EQUITY UPRISE — LEVEL {level['level']:02d} — {level['title'].upper()}",font=font(30,True),fill="black")
+    d.text((90,45),f"EQUITY UPRISE — {level_label(level)} — {level['title'].upper()}",font=font(30,True),fill="black")
     ffe=level["elevation_ft"]
-    d.text((90,90),f"CORE V2 SCHEMATIC PLAN · FFE +{ffe:g} FT · NOT FOR CONSTRUCTION",font=font(18),fill=(55,55,55))
+    d.text((90,90),f"CORE V2 SCHEMATIC PLAN · FFE {elev_label(ffe)} · NOT FOR CONSTRUCTION",font=font(18),fill=(55,55,55))
     for g in [0,18,36,54,72]:
         d.line((X(g),Y(0),X(g),Y(72)),fill=(215,215,215));d.line((X(0),Y(g),X(72),Y(g)),fill=(215,215,215))
     d.rectangle((X(0),Y(72),X(72),Y(0)),outline="black",width=5)
@@ -145,8 +159,8 @@ def svg(level,path):
     W,H=1000,1060;m=90;s=11.5;X=lambda x:m+x*s;Y=lambda y:m+(72-y)*s
     out=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',
          '<style>.t{font-family:Arial,sans-serif;fill:#111}.small{font-size:9px}.med{font-size:11px}.title{font-size:18px;font-weight:700}.room{stroke:#444;stroke-width:1.5}.grid{stroke:#ddd;stroke-width:1}.shell{fill:none;stroke:#111;stroke-width:3}.open{fill:none;stroke:#8a1f23;stroke-width:1.5;stroke-dasharray:5 4}</style>',
-         f'<text x="55" y="35" class="t title">EQUITY UPRISE — LEVEL {level["level"]:02d} — {esc(level["title"].upper())}</text>',
-         f'<text x="55" y="55" class="t med">CORE V2 SCHEMATIC PLAN · FFE +{level["elevation_ft"]:g} FT · NOT FOR CONSTRUCTION</text>']
+         f'<text x="55" y="35" class="t title">EQUITY UPRISE — {esc(level_label(level))} — {esc(level["title"].upper())}</text>',
+         f'<text x="55" y="55" class="t med">CORE V2 SCHEMATIC PLAN · FFE {esc(elev_label(level["elevation_ft"]))} · NOT FOR CONSTRUCTION</text>']
     for g in [0,18,36,54,72]:
         out += [f'<line x1="{X(g)}" y1="{Y(0)}" x2="{X(g)}" y2="{Y(72)}" class="grid"/>',f'<line x1="{X(0)}" y1="{Y(g)}" x2="{X(72)}" y2="{Y(g)}" class="grid"/>']
     out.append(f'<rect x="{X(0)}" y="{Y(72)}" width="{72*s}" height="{72*s}" class="shell"/>')
@@ -181,21 +195,21 @@ def dxf(level,path):
         m.add_circle((cx,cy),r,dxfattribs={"layer":"PROGRAM"});m.add_text(label,dxfattribs={"layer":"TEXT","height":0.55}).set_placement((cx,cy))
     for b in (CORE["stair_b_open"],CORE["stair_a_open"]):rect(b,"OPENINGS")
     m.add_circle((36,28),0.45,dxfattribs={"layer":"TEXT"});m.add_text("360 CAMERA",dxfattribs={"layer":"TEXT","height":0.5}).set_placement((36.7,28))
-    m.add_text(f"CORE V2 LEVEL {level['level']:02d} {level['title'].upper()} FFE +{level['elevation_ft']:g} FT",dxfattribs={"layer":"TEXT","height":0.8}).set_placement((2,75))
+    m.add_text(f"CORE V2 {level_label(level)} {level['title'].upper()} FFE {elev_label(level['elevation_ft'])}",dxfattribs={"layer":"TEXT","height":0.8}).set_placement((2,75))
     m.add_text("NOT FOR CONSTRUCTION",dxfattribs={"layer":"TEXT","height":0.65}).set_placement((2,-3))
     doc.saveas(path)
 
 manifest=[]
-for level in programs["levels"]:
-    n=level["level"];d=REFS/f"floor-{n:02d}";d.mkdir(parents=True,exist_ok=True);base=OUT_NAMES[n]
+for level in plan_levels:
+    n=level["level"];d=ref_dir(level);d.mkdir(parents=True,exist_ok=True);base=OUT_NAMES[n]
     paths={"png":d/f"{base}.png","svg":d/f"{base}.svg","dxf":d/f"{base}.dxf"}
     png(level,paths["png"]);svg(level,paths["svg"]);dxf(level,paths["dxf"])
     manifest.append({"level":n,"title":level["title"],"elevation_ft":level["elevation_ft"],"files":{k:str(v.relative_to(BUILDING)) for k,v in paths.items()}})
 
 # contact sheet
-ims=[Image.open(REFS/f"floor-{x['level']:02d}"/f"{OUT_NAMES[x['level']]}.png").resize((400,420)) for x in programs["levels"]]
+ims=[Image.open(ref_dir(x)/f"{OUT_NAMES[x['level']]}.png").resize((400,420)) for x in plan_levels]
 sheet=Image.new("RGB",(1200,1260),"white")
 for i,im in enumerate(ims):sheet.paste(im,((i%3)*400,(i//3)*420))
 sheet.save(REFS/"equity-uprise-core-v2-plan-contact-sheet.png")
 (REFS/"core-v2-plan-generation-manifest.json").write_text(json.dumps(manifest,indent=2))
-print("Generated Core V2 plan references for levels 1–7")
+print("Generated Core V2 plan references for B1 and levels 1–7")
