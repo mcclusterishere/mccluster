@@ -1,7 +1,9 @@
 # Equity Uprise Building UI — Repo Inventory & Image Plan
 
-> Status: AUDIT FIRST. Do not generate production building art until this inventory is approved.
+> Status: **SIX-FLOOR BUILDING SCHEME LOCKED. FLOOR 1 SPEC LOCKED. FLOORS 2–6 REQUIRE ONE-BY-ONE QUALITY-CONTROL SPECS BEFORE NEW PRODUCTION ART.**
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
+> Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
+> Canonical Floor 1 spec: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
 
 ## 1. What exists today
 
@@ -194,65 +196,88 @@ The building UI can link to or contain an entry point to this world later, but t
 
 ---
 
-## 2. Recommended building information architecture
+## 2. Locked six-floor building information architecture
 
-The building should represent **real Equity Uprise functions**, not generic office filler.
+The building is intentionally compact: **six levels total**. Wider, more useful floors are preferred over a tall decorative tower.
 
-### Floor / zone candidates
+| Floor | Locked identity | Real Equity Uprise functions compressed into the floor | Builder-spec status |
+|---|---|---|---|
+| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy | pending |
+| 5 | Policy + Proof | Working paper, policy archive, Docket 516R, evidence, credentials, research/proof | pending |
+| 4 | Media + Culture | Broadcast/event media, music, artists, civic anthems, cultural storytelling | pending |
+| 3 | Fellowship + Network | Policy Fellowship, fellowship directory, profiles, people, opportunities/matching | pending |
+| 2 | Public Forum | Topics, perspectives, conversations, member discussion/activity | pending canonical rewrite |
+| 1 | Lobby + Intake | Arrival, reception, visitor orientation, stakeholder/organization intake, routing | **LOCKED** |
 
-| Zone | Real Equity Uprise function | Existing destination |
-|---|---|---|
-| Penthouse / Command | Equity Uprise overview + live institutional work | `equity-uprise.html` |
-| Policy Lab | Working paper + policy architecture | Institutional Desk / `policy.html` |
-| Evidence Room | Docket 516R + source documents | `docket-516.html` |
-| Proof Room | Citations, proclamations, credentials, verified claims | credentials + Past Work |
-| Media Studio | Broadcasts, event media, civic explainers | Institutional Desk / archives |
-| Music / Culture Studio | Equity Uprise album + civic anthems + artists | `album.html?album=equity-uprise` |
-| Fellowship Floor | Policy Fellowship / fellow participation | `fellowship.html` |
-| Opportunity Exchange | Fellowship directory + matching | `fellowships.html` |
-| Public Forum | Topics / perspectives / public issue participation | `topics.html` |
-| People / Network | Profiles + people directory | `profile.html` |
-| Member Desk | Saves, applications, threads, matches | `dashboard.html` |
-| Partnerships / Intake | Organizations, sponsors, issue intake | Join view |
-| Archive | Past work / case files | Institutional Desk Past Work |
-| Operations / Back Office | Admin / moderation / campaigns | `uprise-admin.html` |
-| World Portal | Future entry to Uprise World | unfinished Uprise World |
+Do not add extra floors merely because a separate web page exists.
 
-These names are working labels, not final art labels.
+### Floor 1 canonical file
 
----
+`docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
 
-## 3. Building hierarchy recommendation
+### Builder-spec workflow
 
-### Public / prestige floors
-Top of tower:
-- Penthouse Command
-- Policy Lab
-- Proof Room
-- Evidence Room
-- Media / Culture
+Each remaining floor must be completed one at a time:
 
-### Community / participation floors
-Middle:
-- Fellowship
-- Opportunity Exchange
-- Public Forum
-- People / Network
-- Partnerships / Intake
-
-### Operational / archive floors
-Lower:
-- Member Desk
-- Archive
-- Operations / Back Office
-- Systems / Data
-- Lobby / Entry
-
-This gives the building a logical vertical narrative:
-**vision → policy → proof → media → people → participation → operations → record.**
+1. audit the repo functions that belong on that floor;
+2. write a real-building program and adjacency description;
+3. lock vertical-core continuity;
+4. define the 360 coordinate system and required cardinal views;
+5. define what may and may not appear;
+6. review the written spec;
+7. only then generate or revise the 360 panorama.
 
 ---
 
+## 3. Locked building hierarchy and physical continuity
+
+The vertical narrative is:
+
+**arrival → public conversation → people/opportunity → culture/media → policy/proof → institutional direction**
+
+### Fixed vertical core
+
+The elevator is a single real shaft.
+
+- It remains in the exact same plan location on Floors 1–6.
+- In canonical 360 panoramas it occupies the **+90° / right quadrant** relative to the fixed camera.
+- Stairs/service risers remain vertically aligned as well.
+- A floor's furniture program may never displace or relocate the core.
+
+### Exterior-access rule
+
+- **Floor 1 is the only public level with an exterior entrance.**
+- Floors 2–6 have no exterior doors in their 360 environments.
+- Floors 2–6 have no balconies or terraces.
+- Upper-floor perimeter glazing is sealed building glazing unless a later architectural revision explicitly changes the shell.
+
+### Canonical 360 orientation
+
+- **0° / image center:** primary identity/function wall for that floor.
+- **+90° / right quadrant:** fixed elevator/core.
+- **180° / panorama seam:** opposite side of room.
+  - Floor 1: main public entrance crosses this seam.
+  - Floors 2–6: enclosed interior/perimeter wall/circulation, never an outside door.
+- **-90° / left quadrant:** secondary program zone.
+
+The virtual camera stays in approximately the same plan position relative to the core on every level.
+
+### Architectural character
+
+The building is a compact civic-policy institute, not a luxury skyscraper.
+
+Base language:
+- charcoal stone / mineral finish;
+- blackened or gunmetal steel;
+- smoked/clear glass;
+- warm wood used sparingly;
+- honed stone or polished concrete;
+- warm practical white lighting;
+- restrained red accent lighting.
+
+Empty space is allowed. Quality is preferred over object count.
+
+---
 ## 4. Interaction model
 
 ### Default state
@@ -406,13 +431,33 @@ The HM logo/reference is a **material-direction reference only**, not the Equity
 
 ---
 
-## 9. Current decision gate
+## 9. Locked decisions and quality-control gate
 
-Before any new production image is generated, decide:
+The following are no longer open questions:
 
-- exact number of floors
-- which existing Equity Uprise functions deserve their own room
-- which functions should be grouped
-- whether internal/admin rooms are visible to the public
-- whether Uprise World is a room/portal in this building
-- whether the building is branded as Equity Uprise HQ, a civic institute, or another in-world name
+- number of floors: **6**;
+- Floor 1: **Lobby + Intake**;
+- Floor 2: **Public Forum**;
+- Floor 3: **Fellowship + Network**;
+- Floor 4: **Media + Culture**;
+- Floor 5: **Policy + Proof**;
+- Floor 6: **Penthouse Command**;
+- only Floor 1 has a public exterior entrance;
+- Floors 2–6 have no exterior doors/balconies/terraces;
+- elevator/core location is fixed vertically;
+- 360 camera orientation is fixed relative to the core;
+- HM graphics are not Equity Uprise building branding;
+- room content must map to audited Equity Uprise functions.
+
+### Current quality-control status
+
+**Floor 1 — LOCKED**
+
+Canonical file:
+`docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
+
+**Floors 2–6 — NOT YET LOCKED AS BUILDER/360 SPECS**
+
+Do not treat prior generated floor images as architectural authority. They are concept iterations only.
+
+Proceed one floor at a time.
