@@ -18,5 +18,6 @@ The candidate mobility zone is a schematic reservation only. It is not an approv
 Canonical files:
 - `equity-uprise-level-07-roof-mobility-portal-schematic-v1.dxf`
 - `equity-uprise-level-07-roof-mobility-portal-schematic-v1.svg`
+- `equity-uprise-level-07-roof-mobility-portal-schematic-v1.png`
 
-A local PNG preview is generated from the same schematic for review; any raster preview is derivative and cannot override the DXF/SVG/written authority.
+The PNG is a derivative preview and cannot override the DXF/SVG/written authority.
