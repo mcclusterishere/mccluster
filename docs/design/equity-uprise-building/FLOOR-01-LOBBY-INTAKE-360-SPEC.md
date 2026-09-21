@@ -59,7 +59,9 @@ The floor should be visually calm. Empty space is intentional.
 - Stair A: **X60–72 / Y54–72**
 - MEP/riser: approximately **X50–60 / Y66–72**
 
-Floor 1 remains the only ground-level public entrance. The freight/service elevator is back-of-house/service circulation, not a second public entrance.
+Floor 1 remains the only normal ground-level public entrance. Exit-only protected-stair discharge doors and the secure service/delivery entrance are not public entrances.
+
+A non-developmental B1 Technical / Service Basement exists at -13'-6". Stair A, Stair B, the passenger elevator, freight/service elevator and MEP systems continue to B1. Floor 1 remains the modeled level of exit discharge.
 
 ### Floor 1 public-facing area
 The approved Floor 1 program now centers the Entry Vestibule, Arrival Atrium, Orientation Lounge, Intake / Verification Consultation, Development Passport Studio, Journey Wall, Reception / Concierge / Security Desk and Next Action / Building Directory. Core V2 preserves the north/west service and vertical chassis while the digital-twin program deepens the floor's institutional and simulation functions.
@@ -391,6 +393,16 @@ Final dimensions/code compliance require licensed design review for the real jur
 ---
 
 ## 13. Life safety
+
+Exterior/site authority:
+- `FLOOR-01-SITE-EGRESS-SIMULATION.md`
+- `production/floor-01/floor-01-site-egress.json`
+
+B1 authority:
+- `BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `production/basement-b1-program.json`
+
+Because protected stairs continue below Floor 1, the level-of-discharge landing must include modeled barriers/wayfinding that prevent occupants from unintentionally continuing to B1 during evacuation.
 
 Even though the 360 visual is not a construction document, the room must be designed as if it can actually exist.
 
@@ -745,3 +757,20 @@ The building metaphor must preserve the source product's public/private and appr
 Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
 
 This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
+
+
+## Floor 1 completion addendum — B1 / site / emergency planning
+
+Floor 1 is considered simulation-program complete only when the current machine-readable site/B1 authorities remain present and validated.
+
+The model now includes:
+- two protected-stair exterior discharge concepts;
+- a south public/accessible approach;
+- a secure west service approach;
+- two assembly areas;
+- emergency equipment markers;
+- emergency-action-plan data;
+- B1 technical/service infrastructure;
+- below-grade egress/accessibility training hooks.
+
+See `SIMULATION-CODE-REFERENCE-PROFILE.md` for the researched real-world reference basis and its limitations.
