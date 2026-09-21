@@ -2,26 +2,68 @@
   "building_id": "equity-uprise-building",
   "core_id": "equity-uprise-core-v2",
   "not_for_construction": true,
-  "glb_bytes": 415904,
-  "sha256": "2698349a3c9073cfd04de6db232672c7b8c26e3101c7a57bb656def3bf5427c0",
-  "mesh_count": 668,
+  "glb_bytes": 483720,
+  "sha256": "63c3231a24f3e70ad468293316b8e346f1274af352aa87fc87cf8f433fadc42f",
+  "mesh_count": 782,
   "bounds_m": [
     [
-      0.0,
-      0.0,
-      -0.1524
+      -7.315200000000001,
+      -10.9728,
+      -4.2672
     ],
     [
-      21.945600000000002,
-      21.945600000000002,
+      32.9184,
+      31.089600000000004,
       27.127200000000002
     ]
   ],
-  "checks_total": 32,
-  "checks_passed": 32,
+  "checks_total": 41,
+  "checks_passed": 41,
   "checks_failed": 0,
   "passed": true,
   "stair_transitions": [
+    {
+      "system": "stair-a-east",
+      "base_ft": -13.5,
+      "top_ft": 0,
+      "mid_ft": -6.75,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 5.0,
+      "lower_landing": [
+        60.75,
+        54.75,
+        65.75,
+        58.25
+      ],
+      "upper_landing": [
+        66.25,
+        54.75,
+        71.25,
+        58.25
+      ]
+    },
+    {
+      "system": "stair-b-west",
+      "base_ft": -13.5,
+      "top_ft": 0,
+      "mid_ft": -6.75,
+      "riser_ft": 0.6136363636363636,
+      "tread_ft": 0.9166666666666666,
+      "flight_width_ft": 4.0,
+      "lower_landing": [
+        8.75,
+        54.75,
+        12.75,
+        58.25
+      ],
+      "upper_landing": [
+        13.25,
+        54.75,
+        17.25,
+        58.25
+      ]
+    },
     {
       "system": "stair-a-east",
       "base_ft": 0,
@@ -277,15 +319,16 @@
   ],
   "checks": [
     {
-      "name": "seven levels",
+      "name": "eight levels including B1",
       "passed": true,
-      "actual": 7,
-      "expected": 7
+      "actual": 8,
+      "expected": 8
     },
     {
       "name": "floor elevations",
       "passed": true,
       "actual": [
+        -13.5,
         0,
         13.5,
         27,
@@ -295,6 +338,7 @@
         81
       ],
       "expected": [
+        -13.5,
         0,
         13.5,
         27,
@@ -305,10 +349,49 @@
       ]
     },
     {
-      "name": "twelve stair transitions",
+      "name": "fourteen stair transitions",
       "passed": true,
-      "actual": 12,
-      "expected": 12
+      "actual": 14,
+      "expected": 14
+    },
+    {
+      "name": "B1 is support level",
+      "passed": true,
+      "actual": null,
+      "expected": null
+    },
+    {
+      "name": "Floor 1 is level of exit discharge",
+      "passed": true,
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "site defines two assembly areas",
+      "passed": true,
+      "actual": 2,
+      "expected": 2
+    },
+    {
+      "name": "site defines both protected-stair discharge doors",
+      "passed": true,
+      "actual": [
+        "F1-DOOR-PUBLIC-OUTER",
+        "F1-DOOR-PUBLIC-INNER",
+        "F1-DOOR-STAIR-A-DISCHARGE",
+        "F1-DOOR-STAIR-B-DISCHARGE",
+        "F1-DOOR-SERVICE-WEST"
+      ],
+      "expected": [
+        "F1-DOOR-STAIR-A-DISCHARGE",
+        "F1-DOOR-STAIR-B-DISCHARGE"
+      ]
+    },
+    {
+      "name": "Floor 1 defines two basement-direction discharge controls",
+      "passed": true,
+      "actual": 2,
+      "expected": 2
     },
     {
       "name": "exactly one Halo Globe instrument",
@@ -339,6 +422,30 @@
       "passed": true,
       "actual": [],
       "expected": []
+    },
+    {
+      "name": "stair-a-east -13.5->0.0 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-a-east upper landing reaches next FFE",
+      "passed": true,
+      "actual": 0,
+      "expected": 0.0
+    },
+    {
+      "name": "stair-b-west -13.5->0.0 full rise",
+      "passed": true,
+      "actual": 13.5,
+      "expected": 13.5
+    },
+    {
+      "name": "stair-b-west upper landing reaches next FFE",
+      "passed": true,
+      "actual": 0,
+      "expected": 0.0
     },
     {
       "name": "stair-a-east 0.0->13.5 full rise",
