@@ -8,6 +8,7 @@ on:
       - 'docs/design/equity-uprise-building/production/building-core-v2.json'
       - 'docs/design/equity-uprise-building/production/core-v2-floor-programs.json'
       - 'docs/design/equity-uprise-building/production/generate_core_v2_plans.py'
+      - 'docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py'
       - '.github/workflows/equity-uprise-core-v2-plans.yml'
   workflow_dispatch: {}
 
@@ -15,7 +16,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: equity-uprise-core-v2-generated-artifacts
+  group: equity-uprise-core-v2-plans
   cancel-in-progress: false
 
 jobs:
@@ -38,11 +39,15 @@ jobs:
       - name: Generate Core V2 plans
         run: python docs/design/equity-uprise-building/production/generate_core_v2_plans.py
 
+      - name: Validate Core V2 plan semantics
+        run: python docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py
+
       - name: Commit generated plan references
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/design/equity-uprise-building/references
+          git add docs/design/equity-uprise-building/production/generated/equity-uprise-core-v2-plan-semantics-report.json
           if git diff --cached --quiet; then
             echo "Core V2 plan references already current."
             exit 0
