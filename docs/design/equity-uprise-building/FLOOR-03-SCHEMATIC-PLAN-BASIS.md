@@ -77,7 +77,7 @@ Floor 3 has:
 South facade:
 - sealed upper-floor glazing/window wall.
 
-Interview rooms are internal rooms located inside the south facade line.
+Interview / stakeholder meeting rooms are internal rooms located inside the south facade line.
 
 ---
 
@@ -93,7 +93,7 @@ Interview rooms are internal rooms located inside the south facade line.
 
 Maintain open circulation around the table.
 
-### Identity / information wall
+### Opportunity / Network Wall
 - approximately **X 22–50 / Y 50–54**
 - three dynamic information zones:
   - Match
@@ -117,13 +117,13 @@ Public People/Network display may be wall-mounted at the west/north edge of this
 
 ---
 
-## 6. Interview rooms
+## 6. Interview / stakeholder meeting rooms
 
-### Interview Room A
+### Interview / Stakeholder Meeting A
 - **X 2–14 / Y 4–16**
 - 12' × 12'
 
-### Interview Room B
+### Interview / Stakeholder Meeting B
 - **X 16–28 / Y 4–16**
 - 12' × 12'
 
@@ -137,7 +137,7 @@ No door opens to the exterior.
 
 ---
 
-## 7. Member / interview check-in
+## 7. Member / Meeting Check-In
 
 - approximate footprint **X 49–51 / Y 24–29**
 - adjacent to elevator lobby
@@ -179,7 +179,7 @@ The north band is replanned around the Core V2 west service core.
 - **X 26–34 / Y 60–70**
 - conceptual 8' × 10'
 
-### Fellowship support / records
+### Fellowship / Relationship Records
 - **X 34–42 / Y 60–72**
 - conceptual 8' × 12'
 
@@ -225,7 +225,7 @@ Approximately **6 ft clear** where practical.
 At least approximately **4 ft clear** at schematic level.
 
 ### Interview approach
-Maintain accessible turning/door approach at both interview rooms.
+Maintain accessible turning/door approach at both interview / stakeholder meeting rooms.
 
 ---
 
@@ -237,7 +237,7 @@ Maintain accessible turning/door approach at both interview rooms.
 Orientation:
 - **0° north:** Opportunity Exchange + identity wall
 - **+90° east:** elevator + member/interview check-in
-- **180° south:** two interview rooms + sealed glazing
+- **180° south:** two interview / stakeholder meeting rooms + sealed glazing
 - **-90° west:** People + Network lounge
 
 ---
@@ -333,7 +333,7 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] 16' × 4' opportunity table
 - [ ] Fellowship + Network wall
 - [ ] People + Network lounge west
-- [ ] two 12' × 12' interview rooms south
+- [ ] two 12' × 12' interview / stakeholder meeting rooms south
 - [ ] member/interview check-in by elevator
 - [ ] stacked restroom/support rooms north
 - [ ] circulation targets
@@ -348,3 +348,13 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] full 13'-6" stair rise represented in combined geometry
 - [ ] shared slab openings remain clear
 - [ ] floor elevation matches building-core-v2.json
+
+## Repo capability authority
+
+Program semantics for this floor are controlled by:
+- `production/equity-uprise-capability-map-v2.json`
+- `production/core-v2-floor-programs.json`
+- the companion long-form floor spec.
+
+This schematic basis controls plan geometry; it may not silently rename or delete a repo-backed capability represented by the floor program. Public/private and approval boundaries remain those of the source Equity Uprise system.
+
