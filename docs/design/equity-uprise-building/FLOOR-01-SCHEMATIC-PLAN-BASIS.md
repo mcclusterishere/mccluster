@@ -37,7 +37,7 @@ Floor 1 inherits the shared Core V2 geometry from `BUILDING-CORE-V2-SPEC.md` and
 Finished-floor elevation:
 - **0'-0"**
 - Floor 1 is the modeled **level of exit discharge**.
-- B1 Technical / Service Basement is directly below at **-13'-6"**.
+- B1 Underground Operations / Technical Service Basement is directly below at **-13'-6"**.
 
 ### Passenger elevator
 - shaft: **X 54–62 / Y 34–44**
