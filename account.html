@@ -70,6 +70,26 @@
       flex: none; width: 1.1rem; height: 1.1rem; margin: 0.12rem 0 0;
       accent-color: var(--ruby-hot); }
     .fan__check span { flex: 1; min-width: 0; }
+    /* The raised ask. It gets a panel of its own because it is now the one
+       thing on this card that a listener is likely to want, and a bare
+       checkbox in a stack of fields reads as fine print. */
+    .fan__ask { margin-top: 0; padding: 0.9rem 1rem; border-radius: 13px;
+      background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px var(--edge); }
+    .fan__ask b { display: block; font-size: 0.95rem; font-weight: 700; }
+    .fan__ask em { display: block; margin-top: 0.25rem; font-style: normal;
+      font-size: 0.78rem; line-height: 1.45; color: var(--cream-dim); }
+    .fan__ask:has(input:checked) { box-shadow: inset 0 0 0 1px var(--ruby-hot); }
+    .fan__more { margin-top: 1.1rem; border-top: 1px solid var(--edge); padding-top: 0.2rem; }
+    /* flex, so the +/- is an affordance pinned to the right edge rather
+       than a character stranded at the end of whatever the label wrapped to */
+    .fan__more > summary { cursor: pointer; padding: 0.75rem 0; list-style: none;
+      display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+      font: 600 0.84rem/1.4 var(--ui); color: var(--cream-dim); }
+    .fan__more > summary::-webkit-details-marker { display: none; }
+    .fan__more > summary::after { content: "+"; flex: none;
+      font-size: 1.1rem; line-height: 1; color: var(--cream); }
+    .fan__more[open] > summary::after { content: "\2013"; }
+    .fan__more > summary:hover { color: var(--cream); }
     .ac__flip { background: none; border: 0; cursor: pointer; padding: 0; margin-top: 0.9rem; color: var(--cream-dim); font-size: 0.82rem; text-decoration: underline; }
     .ac__tabs { display:grid; grid-template-columns:1fr 1fr; gap:.35rem; margin-bottom:.85rem; padding:.28rem; border:1px solid var(--edge); border-radius:13px; background:rgba(255,255,255,.025); }
     .ac__tab { border:0; border-radius:9px; padding:.7rem .6rem; cursor:pointer; background:transparent; color:var(--cream-dim); font:800 .78rem var(--ui); }
@@ -152,31 +172,53 @@
       <p class="ac__lab">Your details</p>
       <p class="ac__sub" id="fanWhy">Tell us where to send things. The music is already unlocked.</p>
 
-      <input type="text" id="fnLegal" placeholder="Full legal name" autocomplete="name">
-      <input type="text" id="fnAddr1" placeholder="Address" autocomplete="address-line1">
-      <input type="text" id="fnAddr2" placeholder="Apt, suite (optional)" autocomplete="address-line2">
-      <div class="fan__row">
-        <input type="text" id="fnCity" placeholder="City" autocomplete="address-level2">
-        <input type="text" id="fnRegion" placeholder="State" autocomplete="address-level1">
-      </div>
-      <div class="fan__row">
-        <input type="text" id="fnPostal" placeholder="ZIP" autocomplete="postal-code" inputmode="numeric">
-        <input type="text" id="fnCountry" placeholder="Country" autocomplete="country-name">
-      </div>
-      <input type="tel" id="fnPhone" placeholder="Phone" autocomplete="tel" inputmode="tel">
-      <p class="fan__note" id="fnPhoneNote" hidden></p>
-      <input type="number" id="fnBirth" placeholder="Year you were born" inputmode="numeric" min="1900" max="2100">
-
-      <label class="fan__check">
+      <!-- THE ASK COMES FIRST, AND HERE IS WHY IT MOVED.
+           This used to be a bare checkbox sitting under a legal name, a
+           street address, a phone number and a birth year. Somebody who had
+           just tapped download to get a song was never going to scroll past
+           four fields of paperwork to find it, and the numbers said so:
+           three listener records, zero ticks. The address is for merch and
+           is rare; the email is the only way anyone hears about the next
+           record, so it goes where the eye already is. It is still one
+           unbundled, optional checkbox — moving an ask is not the same as
+           pre-ticking it, and nothing here is pre-ticked. -->
+      <label class="fan__check fan__ask">
         <input type="checkbox" id="fnMarketing">
-        <span>Email me about new records, shows and drops.</span>
+        <span><b>Email me when there&rsquo;s a new record.</b>
+          <em>New records, shows and drops. Not often, and every one of them
+          has an unsubscribe link that works.</em></span>
       </label>
-      <label class="fan__check" id="fnShareWrap">
-        <input type="checkbox" id="fnShare">
-        <span id="fnShareLabel">Share my details with partners McCluster works with.</span>
-      </label>
-      <p class="fan__fine">Both are optional and neither unlocks anything. You can change them here any time.
+      <p class="fan__fine">Optional, and it unlocks nothing &mdash; the music is already yours.
+        You can untick it here any time.
         <a href="privacy.html">What we record, and how to have it deleted</a>.</p>
+
+      <!-- Closed by default for somebody arriving from a download: they came
+           for a song, not to fill in a postal address. openFan() opens it on
+           its own when there is already something saved in here. -->
+      <details class="fan__more" id="fanMore">
+        <summary>Mailing address &mdash; for merch and anything physical</summary>
+
+        <input type="text" id="fnLegal" placeholder="Full legal name" autocomplete="name">
+        <input type="text" id="fnAddr1" placeholder="Address" autocomplete="address-line1">
+        <input type="text" id="fnAddr2" placeholder="Apt, suite (optional)" autocomplete="address-line2">
+        <div class="fan__row">
+          <input type="text" id="fnCity" placeholder="City" autocomplete="address-level2">
+          <input type="text" id="fnRegion" placeholder="State" autocomplete="address-level1">
+        </div>
+        <div class="fan__row">
+          <input type="text" id="fnPostal" placeholder="ZIP" autocomplete="postal-code" inputmode="numeric">
+          <input type="text" id="fnCountry" placeholder="Country" autocomplete="country-name">
+        </div>
+        <input type="tel" id="fnPhone" placeholder="Phone" autocomplete="tel" inputmode="tel">
+        <p class="fan__note" id="fnPhoneNote" hidden></p>
+        <input type="number" id="fnBirth" placeholder="Year you were born" inputmode="numeric" min="1900" max="2100">
+
+        <label class="fan__check" id="fnShareWrap">
+          <input type="checkbox" id="fnShare">
+          <span id="fnShareLabel">Share my details with partners McCluster works with.</span>
+        </label>
+        <p class="fan__fine">Also optional, also unlocks nothing.</p>
+      </details>
 
       <button class="ac__btn" id="fnSave" type="button">Save</button>
       <p class="ac__note" id="fnMsg"></p>
@@ -368,6 +410,12 @@
       });
       el("fnMarketing").checked = !!(row && row.marketing_consent);
       el("fnShare").checked = !!(row && row.share_consent);
+      /* Somebody who has already given an address is coming back to edit it,
+         so the drawer that holds it should not make them hunt for it. A
+         first-time visitor from a download gets it closed. */
+      if (FAN.some(function (id) { return el(id).value !== ""; })) {
+        el("fanMore").open = true;
+      }
       syncShareGate();
       if (row && row.phone_e164 && !row.phone_verified_at) {
         el("fnPhoneNote").hidden = false;
@@ -378,7 +426,7 @@
     function openFan() {
       el("fanCard").hidden = false;
       if (source()) el("fanWhy").textContent =
-        "The record is unlocked and downloading. Tell us where to send the rest.";
+        "The record is unlocked and downloading. Want to know when the next one lands?";
       window.MCC_FAN.load().then(paintFan).catch(function () { syncShareGate(); });
       /* Text messaging is off in this project, so the form does not pretend
          a code is coming. It still keeps the number. */

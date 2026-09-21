@@ -1,8 +1,8 @@
 
 @font-face{font-family:"Anton";src:url("../assets/fonts/anton-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
-@font-face{font-family:"Archivo";src:url("../assets/fonts/archivo-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Manrope";font-weight:400;font-style:normal;font-display:swap;src:url("../assets/fonts/manrope-latin-400-normal.woff2") format("woff2")}@font-face{font-family:"Manrope";font-weight:600;font-style:normal;font-display:swap;src:url("../assets/fonts/manrope-latin-600-normal.woff2") format("woff2")}@font-face{font-family:"Manrope";font-weight:800;font-style:normal;font-display:swap;src:url("../assets/fonts/manrope-latin-800-normal.woff2") format("woff2")}@font-face{font-family:"Archivo";src:url("../assets/fonts/archivo-latin-400-normal.woff2") format("woff2");font-weight:400;font-display:swap}
 @font-face{font-family:"Archivo";src:url("../assets/fonts/archivo-latin-500-normal.woff2") format("woff2");font-weight:500;font-display:swap}
-@font-face{font-family:"Archivo";src:url("../assets/fonts/archivo-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}:root{--ink:#0a0807;--ink-2:#120d0c;--ruby:#c1121f;--ruby-hot:#e5383b;--cream:#f4efe6;--cream-dim:rgba(244,239,230,0.88);--on-ruby:#f4efe6;--display:"Anton",Impact,"Arial Narrow",sans-serif;--body:"Archivo","Helvetica Neue",Arial,sans-serif;--metal:linear-gradient(165deg,#ff5a5c 0%,#e5383b 34%,#b3121b 58%,#ff6a6c 100%);--glass-hi:rgba(255,255,255,0.12);--glass-lo:rgba(255,255,255,0.045);--edge:rgba(255,255,255,0.14)}
+@font-face{font-family:"Archivo";src:url("../assets/fonts/archivo-latin-700-normal.woff2") format("woff2");font-weight:700;font-display:swap}:root{--ink:#0a0807;--ink-2:#120d0c;--ruby:#c1121f;--ruby-hot:#e5383b;--cream:#f4efe6;--cream-dim:rgba(244,239,230,0.88);--on-ruby:#f4efe6;--display:"Anton",Impact,"Arial Narrow",sans-serif;--body:"Archivo","Helvetica Neue",Arial,sans-serif;--metal:linear-gradient(165deg,#ff5a5c 0%,#e5383b 34%,#b3121b 58%,#ff6a6c 100%);--glass-hi:rgba(255,255,255,0.12);--glass-lo:rgba(255,255,255,0.045);--edge:rgba(255,255,255,0.14);--ui:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif}
 html[data-theme="light"]{--ruby-hot:#c1121f;--ruby:#a30d18;--ink:#f2ede4;--ink-2:#e8e1d4;--cream:#1a140d;--cream-dim:rgba(26,20,13,0.72);--glass-hi:rgba(26,20,13,0.08);--glass-lo:rgba(26,20,13,0.035);--edge:rgba(26,20,13,0.14)}
 html[data-theme="light"] .appbar{background:linear-gradient(180deg,rgba(255,255,255,0.85),rgba(240,234,224,0.88));box-shadow:0 18px 50px -12px rgba(26,20,13,0.32),inset 0 1px 0 rgba(255,255,255,0.95)}
 html[data-theme="light"] .appbar__tab{color:#1a140d}
@@ -1237,20 +1237,6 @@ html.psy-locked,html.psy-locked body{overflow:hidden}
 .duotag__half--blue{background:linear-gradient(120deg,#1d4ed8,#3b82f6)}
 .songquiz{position:relative;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:16vh clamp(1rem,4vw,2.5rem)}
 .songquiz__inner{width:min(36rem,100%)}
-.leadov{position:fixed;inset:0;z-index:210;display:grid;place-items:center;padding:1.2rem;background:rgba(5,4,4,0.82);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity 0.3s ease}
-.leadov.is-open{opacity:1;pointer-events:auto}
-.leadov__box{position:relative;width:min(92vw,26rem);border-radius:18px;border:1px solid rgba(244,239,230,0.18);background:var(--ink-2);padding:1.8rem 1.6rem;box-shadow:0 30px 80px rgba(0,0,0,0.6);transform:translateY(14px);transition:transform 0.3s cubic-bezier(0.2,0.9,0.2,1)}
-.leadov.is-open .leadov__box{transform:translateY(0)}
-.leadov__x{position:absolute;top:0.8rem;right:0.9rem;background:none;border:none;color:var(--cream-dim);font-size:1rem;cursor:pointer}
-.leadov__x:hover{color:var(--cream)}
-.leadov__kicker{font-size:0.78rem;letter-spacing:0.26em;text-transform:uppercase;color:var(--ruby-hot)}
-.leadov__h{font-family:var(--display);font-size:1.7rem;text-transform:uppercase;margin:0.25rem 0 1rem}
-.leadov__form{display:grid;gap:0.7rem}
-.leadov__in{width:100%;border:1px solid rgba(244,239,230,0.22);border-radius:10px;background:rgba(244,239,230,0.04);color:var(--cream);font:inherit;padding:0.75em 0.95em;outline:none;transition:border-color 0.2s}
-.leadov__in:focus{border-color:var(--ruby-hot)}
-.leadov__ta{resize:vertical;min-height:5.5em}
-.leadov__go{justify-self:start}
-.leadov__note{font-size:0.84rem;color:var(--cream-dim);line-height:1.5}
 .dq{margin:2.4rem 0 0.5rem}
 .dq__offline{color:var(--cream-dim);font-size:0.9rem}
 .dq__card{border:1px solid rgba(244,239,230,0.16);border-radius:18px;background:linear-gradient(180deg,rgba(244,239,230,0.05),rgba(244,239,230,0.015));padding:clamp(1.5rem,4vw,2.6rem);position:relative;overflow:hidden}

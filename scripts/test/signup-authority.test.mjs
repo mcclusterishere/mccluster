@@ -76,9 +76,24 @@ test('consent is unbundled: neither box gates the music', async () => {
     assert.doesNotMatch(gate, term,
       'the unlock path must not know anything about consent');
   }
+  /* Saying so on the page matters as much as it being true in the code,
+     and it has to be said next to EACH box rather than once at the
+     bottom: the two asks now sit apart, so one shared footnote would
+     leave whichever box the reader is looking at undisclosed. */
   const html = await read('account.html');
-  assert.match(html, /neither unlocks anything/i,
-    'the form must say plainly that the boxes are optional');
+  /* Deliberately NOT a /g regex reused across assertions: assert.match
+     runs .test(), which advances lastIndex on a global regex, so the
+     second check would silently start halfway down the file. */
+  const DISCLAIMER = /unlocks? (?:nothing|anything)/i;
+  assert.ok((html.match(/unlocks? (?:nothing|anything)/gi) ?? []).length >= 2,
+    'each consent box must carry its own "this unlocks nothing" line');
+  for (const id of ['fnMarketing', 'fnShare']) {
+    const at = html.indexOf(`id="${id}"`);
+    assert.ok(at > 0, `${id} should exist`);
+    assert.match(html.slice(at, at + 900), DISCLAIMER,
+      `the ${id} box must say plainly that it gates nothing`);
+  }
+  assert.match(html, /optional/i, 'and must say the asks are optional');
 });
 
 test('the intake writes a short, fixed column list', async () => {
