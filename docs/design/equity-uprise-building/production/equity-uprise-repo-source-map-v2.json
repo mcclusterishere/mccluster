@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "audit_date": "2026-09-21",
   "repo": "mcclusterishere/mccluster",
   "branch": "architecture/equity-uprise-core-v2",
@@ -21,6 +21,156 @@
   "support_only_count": 27,
   "entries": [
     {
+      "path": "_unfinished/README.md",
+      "classification": "unrelated_experimental_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unfinished adjacent project contains cross-navigation/reference text only; not part of the Equity Uprise building program."
+    },
+    {
+      "path": "_unfinished/shake-shop/shake-desk.html",
+      "classification": "unrelated_experimental_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unfinished adjacent project contains cross-navigation/reference text only; not part of the Equity Uprise building program."
+    },
+    {
+      "path": "_unfinished/shake-shop/shakes.css",
+      "classification": "unrelated_experimental_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unfinished adjacent project contains cross-navigation/reference text only; not part of the Equity Uprise building program."
+    },
+    {
+      "path": "_unfinished/shake-shop/shakes.html",
+      "classification": "unrelated_experimental_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unfinished adjacent project contains cross-navigation/reference text only; not part of the Equity Uprise building program."
+    },
+    {
+      "path": "_unfinished/shake-shop/shakes.js",
+      "classification": "unrelated_experimental_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Unfinished adjacent project contains cross-navigation/reference text only; not part of the Equity Uprise building program."
+    },
+    {
+      "path": "_unfinished/uprise-world/uprise-npc.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "uprise-world"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "_unfinished/uprise-world/uprise-world.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "uprise-world"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "_unfinished/uprise-world/uprise-world.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "uprise-world"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "_unfinished/uprise-world/uprise-world.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "uprise-world"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": ".cursorrules",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": ".github/workflows/equity-uprise-building-v2.yml",
+      "classification": "workflow_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
+    },
+    {
+      "path": ".github/workflows/equity-uprise-core-v2-plans.yml",
+      "classification": "workflow_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
+    },
+    {
+      "path": ".github/workflows/equity-uprise-core-v2-production.yml",
+      "classification": "workflow_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
+    },
+    {
+      "path": ".github/workflows/equity-uprise-floor-01-3d.yml",
+      "classification": "workflow_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
+    },
+    {
+      "path": ".github/workflows/equity-uprise-repo-audit.yml",
+      "classification": "workflow_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
+    },
+    {
+      "path": ".github/workflows/reconciliation-ci.yml",
+      "classification": "workflow_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "CI/workflow file automates or validates Equity Uprise work; it is implementation support, not program inventory."
+    },
+    {
+      "path": "admin.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "AGENTS.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": "album.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
       "path": "assets/img/equity-uprise-logo.webp",
       "classification": "presentation_support",
       "capability_ids": [],
@@ -33,6 +183,64 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Equity Uprise browser/icon asset; no independent room or workflow."
+    },
+    {
+      "path": "audit/2026-09-13-p0-supabase-containment.md",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "card.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "catalogue.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "CLAUDE.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": "closet/sent.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "CODEX.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": "console.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "crm.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
       "path": "css/equity-uprise-app.css",
@@ -49,6 +257,41 @@
       "rationale": "Institutional Desk styling; presentation only."
     },
     {
+      "path": "css/music-director-base.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Stylesheet carries Equity Uprise presentation/navigation tokens only; no independent program function."
+    },
+    {
+      "path": "css/music-director.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Stylesheet carries Equity Uprise presentation/navigation tokens only; no independent program function."
+    },
+    {
+      "path": "css/offers.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Stylesheet carries Equity Uprise presentation/navigation tokens only; no independent program function."
+    },
+    {
+      "path": "css/onboard.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Stylesheet carries Equity Uprise presentation/navigation tokens only; no independent program function."
+    },
+    {
+      "path": "css/style.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Stylesheet carries Equity Uprise presentation/navigation tokens only; no independent program function."
+    },
+    {
       "path": "dashboard.html",
       "classification": "capability_source",
       "capability_ids": [
@@ -57,6 +300,83 @@
         "member-dashboard"
       ],
       "support_only": false
+    },
+    {
+      "path": "data/albums.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/archive.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "institutional-desk",
+        "evidence-room"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/brands.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "institutional-desk",
+        "ecosystem-routing"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/catalogue.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue",
+        "music-rights"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/cause.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "program-support-funding"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/ddex/identifiers.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "ddex",
+        "music-rights"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/domains.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "ecosystem-routing"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/dossier.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "credentials-proof",
+        "institutional-desk"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
       "path": "data/eu-fellowships.json",
@@ -75,12 +395,147 @@
       "support_only": false
     },
     {
+      "path": "data/fellows.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-cohort"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/gallery.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "rally-media"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/merch.json",
+      "classification": "shared_data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site data contains an Equity Uprise reference/asset but does not define a distinct program capability beyond mapped ledgers."
+    },
+    {
+      "path": "data/offers.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/playlists.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/portfolio.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "rally-media",
+        "institutional-desk"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "data/prayer-closet.json",
+      "classification": "shared_data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site data contains an Equity Uprise reference/asset but does not define a distinct program capability beyond mapped ledgers."
+    },
+    {
+      "path": "data/roles.json",
+      "classification": "shared_data_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site data contains an Equity Uprise reference/asset but does not define a distinct program capability beyond mapped ledgers."
+    },
+    {
+      "path": "data/sites.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Legacy/shared sites ledger confirms the enterprise-development lane. Semantic evidence only; data/offers.json is the canonical pricing authority."
+    },
+    {
+      "path": "demos/shiloh/data/impact.json",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
       "path": "docket-516.html",
       "classification": "capability_source",
       "capability_ids": [
         "evidence-room"
       ],
       "support_only": false
+    },
+    {
+      "path": "docs/agent-web.md",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-directory",
+        "fellowship-matching"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "docs/control-plane/GMAIL-CONNECT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/control-plane/registry.json",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/control-plane/SPATIAL-INTELLIGENCE.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/design/HERE-BRAND-LIBRARY.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/design/HERE-CURRENT-STATE-AUDIT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/design/redesign-before-after.html",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
     },
     {
       "path": "docs/equity-uprise-platform.md",
@@ -95,6 +550,34 @@
       "support_only": false
     },
     {
+      "path": "docs/gated-audio.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/here-inventory.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/here-url-migration-map.csv",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/inbox.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
       "path": "docs/music-platform.md",
       "classification": "capability_source",
       "capability_ids": [
@@ -106,15 +589,151 @@
       "support_only": false
     },
     {
+      "path": "docs/pay-now.md",
+      "classification": "capability_source",
+      "capability_ids": [
+        "program-support-funding"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/sales-redesign/CRM-MIGRATION.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/sales-redesign/MOBBIN-REFERENCES.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/seo-matthew-mccluster.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/shake-delivery.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/social-desk-setup.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/stocksy-shot-list.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
+    },
+    {
+      "path": "docs/the-mission-fund.md",
+      "classification": "capability_source",
+      "capability_ids": [
+        "program-support-funding"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "docs/uprise-world/AUDIT-REPORT.md",
+      "classification": "capability_source",
+      "capability_ids": [
+        "uprise-world"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "ecosystem.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "ecosystem-routing",
+        "institutional-desk"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
       "path": "equity-uprise-fellowship.html",
       "classification": "capability_source",
       "capability_ids": [
         "artist-creator",
         "credentials-proof",
         "partnership-sponsorship",
-        "program-support-funding"
+        "program-support-funding",
+        "fellowship-cohort"
       ],
       "support_only": false
+    },
+    {
+      "path": "equity-uprise-floor-01-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
+    },
+    {
+      "path": "equity-uprise-floor-02-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
+    },
+    {
+      "path": "equity-uprise-floor-03-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
+    },
+    {
+      "path": "equity-uprise-floor-04-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
+    },
+    {
+      "path": "equity-uprise-floor-05-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
+    },
+    {
+      "path": "equity-uprise-floor-06-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
+    },
+    {
+      "path": "equity-uprise-floor-07-3d.html",
+      "classification": "building_projection_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Derived per-floor 3D viewer; building projection, not a source program capability."
     },
     {
       "path": "equity-uprise.html",
@@ -127,6 +746,13 @@
         "partnership-sponsorship"
       ],
       "support_only": false
+    },
+    {
+      "path": "feed.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
     },
     {
       "path": "fellowship.html",
@@ -145,6 +771,83 @@
         "host-listings"
       ],
       "support_only": false
+    },
+    {
+      "path": "films.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "gallery.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "GEMINI.md",
+      "classification": "governance_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Agent/instruction file references Equity Uprise authority but does not define an independent program capability."
+    },
+    {
+      "path": "give.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "program-support-funding",
+        "partnership-sponsorship"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "hire.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "hitman-facility.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "index.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "inner-room.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "js/chatfirst.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
+    },
+    {
+      "path": "js/crm.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
       "path": "js/equity-uprise-fellowship-live.js",
@@ -180,6 +883,188 @@
       "support_only": false
     },
     {
+      "path": "js/fan-intake.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
+    },
+    {
+      "path": "js/here-material.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
+    },
+    {
+      "path": "js/hire-offers.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "js/lockroom.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
+    },
+    {
+      "path": "js/masthead.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
+    },
+    {
+      "path": "js/offers.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "js/onboard.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "js/payments.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "js/tabbar.js",
+      "classification": "shared_frontend_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
+    },
+    {
+      "path": "LICENSE",
+      "classification": "incidental_text_match",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "License text triggered a broad semantic marker but is not Equity Uprise program material."
+    },
+    {
+      "path": "license.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "listen.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-catalogue"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "llms.txt",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-directory",
+        "fellowship-matching",
+        "evidence-room"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "management.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "matthew-mccluster.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "native/app/(tabs)/_layout.tsx",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
+    },
+    {
+      "path": "native/app/(tabs)/desk.tsx",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
+    },
+    {
+      "path": "native/app/(tabs)/uprise.tsx",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development",
+        "institutional-desk"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "native/src/AppBar.tsx",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
+    },
+    {
+      "path": "native/src/content.ts",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
+    },
+    {
+      "path": "native/src/RoomScreen.tsx",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Native shell/navigation references Equity Uprise but does not add a distinct capability beyond mapped native program sources."
+    },
+    {
+      "path": "platform/sql/001_init.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "platform/src/server.mjs",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
       "path": "policy-memo-dna.html",
       "classification": "capability_source",
       "capability_ids": [
@@ -200,6 +1085,44 @@
       "support_only": false
     },
     {
+      "path": "portfolio.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "prayer-closet.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "press.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "credentials-proof",
+        "institutional-desk"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "privacy.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "production.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
       "path": "profile.html",
       "classification": "capability_source",
       "capability_ids": [
@@ -209,11 +1132,108 @@
       "support_only": false
     },
     {
+      "path": "README.md",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "redirects/equity-uprise.html",
+      "classification": "redirect_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Redirect preserves a route to Equity Uprise content but defines no program behavior."
+    },
+    {
+      "path": "redirects/walls/eu-rally.html",
+      "classification": "redirect_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Redirect preserves a route to Equity Uprise content but defines no program behavior."
+    },
+    {
+      "path": "scripts/kb-build.mjs",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "scripts/sites-buy-smoke.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
+    },
+    {
+      "path": "scripts/smoke.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
+    },
+    {
+      "path": "scripts/test/signup-authority.test.mjs",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
+    },
+    {
+      "path": "shots.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "sitemap.xml",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "sites-details.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "sites.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "supabase/config.toml",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
       "path": "supabase/functions/_shared/eu-policy-os.ts",
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Shared Policy OS server helper used by multiple mapped Edge Functions; no independent user-facing capability."
+    },
+    {
+      "path": "supabase/functions/collect/index.ts",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     },
     {
       "path": "supabase/functions/eu-calendar/index.ts",
@@ -363,6 +1383,22 @@
       "support_only": false
     },
     {
+      "path": "supabase/functions/pay-now/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "program-support-funding"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "supabase/functions/shake-order/index.ts",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
       "path": "supabase/migrations/0017_equity_uprise_platform.sql",
       "classification": "migration_wrapper",
       "capability_ids": [],
@@ -454,6 +1490,82 @@
       "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
     },
     {
+      "path": "supabase/migrations/20260913034132_harden_security_definer_execution_surface.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/migrations/20260913041323_security_definer_execute_hardening.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/migrations/20260919042036_fan_profiles.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/migrations/20260919093553_native_telemetry_columns.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/migrations/20260919094143_native_telemetry_views.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/migrations/20260919120233_public_projection_invoker_boundaries.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/production-ledger.json",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
+      "path": "supabase/replay_migrations/0007_offerings.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "program-support-funding"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "supabase/replay_migrations/0009_offer_configurations.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "supabase/replay_migrations/0012_management_upgrade_offerings.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
       "path": "supabase/replay_migrations/0017_equity_uprise_platform.sql",
       "classification": "capability_source",
       "capability_ids": [
@@ -471,11 +1583,96 @@
       "support_only": false
     },
     {
+      "path": "supabase/replay_migrations/0019_shake_delivery.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/replay_migrations/0020_harden_function_surface.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/replay_migrations/0021_inbox.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/replay_migrations/0026_tenancy.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/replay_migrations/0031_org_helpers_out_of_the_api.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/replay_migrations/0033_knowledge_base.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "enterprise-development"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "supabase/replay_migrations/0061_close_anonymous_rpc_holes.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/replay_migrations/0065_outreach_engine_core.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "outreach",
+        "stakeholder-graph"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
+      "path": "supabase/replay_migrations/0066_control_authority_v2.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "control-approvals",
+        "workflows-jobs"
+      ],
+      "support_only": false,
+      "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
+    },
+    {
       "path": "supabase/replay_migrations/0067_equity_uprise_runtime_extensions.sql",
       "classification": "runtime_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Database runtime prerequisite; supports mapped capabilities without creating a new program function."
+    },
+    {
+      "path": "supabase/replay_migrations/0072_org_helper_replay_foundation.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/replay_migrations/0073_legacy_rpc_replay_foundation.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
     },
     {
       "path": "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
@@ -617,12 +1814,33 @@
       "support_only": false
     },
     {
+      "path": "supabase/replay_migrations/20260908234500_revoke_anon_writes_on_legacy_eu_tables.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
+      "path": "supabase/replay_migrations/20260908235000_close_view_rls_bypass.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
+    },
+    {
       "path": "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql",
       "classification": "capability_source",
       "capability_ids": [
         "initiative-portfolio"
       ],
       "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic migration/hardening/tenancy substrate references EU objects but does not add a distinct Equity Uprise function."
     },
     {
       "path": "supabase/tests/eu_platform_test.sql",
@@ -632,11 +1850,25 @@
       "rationale": "Automated policy/platform assertions; validates mapped features but is not itself a building capability."
     },
     {
+      "path": "supabase/tests/run-eu-tests.sh",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
+    },
+    {
       "path": "tools/eu-export-seed.sh",
       "classification": "build_support",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Exports the static topic/fellowship mirrors; build/support tool, not an independent program function."
+    },
+    {
+      "path": "tools/verify-llms.py",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
     },
     {
       "path": "topics.html",
@@ -672,6 +1904,35 @@
         "rally-media"
       ],
       "support_only": false
+    },
+    {
+      "path": "whip.html",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared site/page/navigation content references Equity Uprise but does not define a distinct program capability."
+    },
+    {
+      "path": "workers/mccluster/src/entry.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
+      "path": "workers/mccluster/src/seek-first/catalogs.js",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
+    },
+    {
+      "path": "workers/mccluster/test/seek-first-catalogs.test.mjs",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared runtime/router/configuration references Equity Uprise but adds no separate program capability."
     }
-  ]
+  ],
+  "scope": "Repo-wide direct semantic references to Equity Uprise, classified as capability sources or support-only."
 }
