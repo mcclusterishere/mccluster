@@ -15,6 +15,9 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: read
+
 concurrency:
   group: equity-uprise-core-v2-${{ github.ref }}
   cancel-in-progress: true
