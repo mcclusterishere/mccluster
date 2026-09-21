@@ -20,7 +20,15 @@ def check(name, passed, detail=""):
 
 caps=CAP["capabilities"]
 cap_ids=[c["id"] for c in caps]
+ROOT=HERE.parents[3]
 check("capability ids unique",len(cap_ids)==len(set(cap_ids)),f"{len(cap_ids)} capabilities")
+
+# Every repository path cited as evidence for a capability must still exist.
+# This includes shared-platform dependencies whose filenames are not EU-prefixed.
+for c in caps:
+    for source in c.get("sources",[]):
+        p=ROOT/source.rstrip("/")
+        check(f"capability source exists: {c['id']} -> {source}",p.exists(),str(p))
 
 levels={int(x["level"]):x for x in PROGRAM["levels"]}
 check("levels 1-7 present",set(levels)==set(range(1,8)),str(sorted(levels)))

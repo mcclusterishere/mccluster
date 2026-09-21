@@ -420,7 +420,8 @@
         "music-release",
         "ddex",
         "rally-media",
-        "communication-derivatives"
+        "communication-derivatives",
+        "creator-licensing-commerce"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },
@@ -650,7 +651,8 @@
         "status-health",
         "google-workspace",
         "outreach",
-        "event-ledger"
+        "event-ledger",
+        "program-support-funding"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json"
     },

@@ -99,6 +99,7 @@
       "classification": "capability_source",
       "capability_ids": [
         "artist-creator",
+        "creator-licensing-commerce",
         "music-catalogue",
         "music-rights"
       ],
@@ -110,7 +111,8 @@
       "capability_ids": [
         "artist-creator",
         "credentials-proof",
-        "partnership-sponsorship"
+        "partnership-sponsorship",
+        "program-support-funding"
       ],
       "support_only": false
     },

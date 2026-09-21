@@ -939,6 +939,33 @@
         "docs/design/EQUITY-UPRISE-REPO-AUDIT.md"
       ],
       "expression": "May be a Level 7 destination route later; must not dictate building geometry or branding."
+    },
+    {
+      "id": "program-support-funding",
+      "name": "Program funding / support pathway",
+      "status": "built_public_pathway",
+      "primary_floor": 6,
+      "visibility": "public-contribution-private-finance",
+      "sources": [
+        "equity-uprise-fellowship.html"
+      ],
+      "expression": "Institutional Salon / JOIN layer. Public support CTAs may route to the approved contribution path; payment/accounting state is not a public building room."
+    },
+    {
+      "id": "creator-licensing-commerce",
+      "name": "Creator licensing / commerce",
+      "status": "built_shared_platform",
+      "primary_floor": 4,
+      "visibility": "public-catalogue-authenticated-checkout-private-rights-state",
+      "sources": [
+        "creator.html",
+        "docs/music-platform.md",
+        "music-creator-terms.html",
+        "supabase/functions/music-checkout/index.ts",
+        "supabase/migrations/20260920041250_music_commerce_v1.sql",
+        "js/music-creator-profile.js"
+      ],
+      "expression": "Creator Studio / Media + Culture workflow. Rights-cleared releases may expose licensing offers and authenticated checkout through the shared McCluster Music stack; this does not resurrect the retired marketplace."
     }
   ],
   "rules": [
