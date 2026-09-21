@@ -192,6 +192,20 @@ Any task that touches game worlds, level selectors, portals, or per-world saved 
 This schema does not relax any existing gate: Uprise World work still follows `docs/uprise-world/` phases, and Site 0 work still follows `assets/3d/prim3-site0/AGENTS.md`.
 
 
+## EQUITY UPRISE BUILDING — LOCAL CONTEXT GATE
+
+Before **any** Equity Uprise building/spatial task, first read:
+
+`docs/design/equity-uprise-building/AGENTS.md`
+
+Then run:
+
+```bash
+python docs/design/equity-uprise-building/production/audit_building_context.py
+```
+
+That local contract, master index, project-state ledger, historical-build register, and build pipeline exist specifically to prevent agents from missing completed work or rebuilding the project from partial context. If the audit fails, fix the context/index before implementation.
+
 ## EQUITY UPRISE BUILDING / 360 / SPATIAL AUTHORITY — MANDATORY
 
 For **any Equity Uprise task involving geometry, architecture, floors, rooms, building imagery, 360 panoramas, environmental rendering, physical navigation, spatial transitions, or spatial lore/worldbuilding**, you MUST read:

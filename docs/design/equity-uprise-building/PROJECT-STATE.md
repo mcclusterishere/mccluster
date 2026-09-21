@@ -1,0 +1,105 @@
+# Equity Uprise Building — Current Project State
+
+> Update this file whenever completion, maturity, visual direction, or next work changes.
+
+## End goal
+
+A real, fully furnished, program-aware, navigable 3D headquarters from B1 through Level 7, with finished floor environments that assemble into one coherent building.
+
+## Current authoritative geometry
+
+Core V2 is the active geometry authority:
+- 72' × 72' plate;
+- B1 -13.5';
+- F1 0';
+- F2 13.5';
+- F3 27';
+- F4 40.5';
+- F5 54';
+- F6 67.5';
+- L7 roof 81';
+- passenger elevator X54–62 / Y34–44;
+- service/freight elevator X0–8 / Y60–72;
+- Stair B X8–18 / Y54–72;
+- Stair A X60–72 / Y54–72;
+- MEP/riser approximately X50–60 / Y66–72.
+
+## Whole-building assembly — DONE as continuity chassis, NOT finished as designed interiors
+
+Current combined B1→roof model:
+- source: `production/build_equity_uprise_building_v2.py`
+- GLB: `production/generated/equity-uprise-building-core-v2.glb`
+- current report: `production/generated/equity-uprise-building-core-v2-report.json`
+- current committed report: **792 meshes, 41/41 checks passing**
+- includes B1, site/egress context, both stair systems, passenger core, freight/service core, Halo Globe, and roof continuity.
+
+This proves the stack. It is **not** the final visual/interior building.
+
+## Historical fully assembled reference — PRESERVE
+
+Earlier assembled Core V2 reference:
+- generator commit: `c674e07daf772ea739d93cc515657deb028e8b75`
+- assembled GLB build: `ef3fd47d543318fd3ed129fa3f58fc7fab5fabce`
+- stacked viewer: `7ea458406cc862656b5952a350fe87bcdc16110b`
+- historical report: **667 meshes, 27/27 continuity checks**
+- useful for stacking, floor isolation, cutaway/core views, elevations, and whole-building behavior.
+
+## Floor 1 — authority locked; visual hybrid rebuild is CURRENT WORK
+
+Canonical identity: **Arrival / Orientation / Intake**.
+
+Done:
+- Core V2 program / schematic / digital-twin / site-egress authority reconciled.
+- active plan triplets regenerated.
+- B1 interface and restricted access semantics validated.
+- Floor 1 completion lock exists for program/schematic authority.
+- standalone V2 volumetric scaffold exists in the deploy pipeline.
+
+Current standalone scaffold:
+- builder: `production/floor-01/build_equity_uprise_floor_01_v2.py`
+- deployed build has **189 meshes and 13/13 geometry sanity checks**
+- it is a technical scaffold, **not the accepted aesthetic target**.
+
+Accepted visual direction:
+- the original V1 Floor 1 looked/felt better;
+- preserve its dark premium interior language, glass, lighting, reception composition, lounge, furniture feel, warm wood, rugs/greenery, and human-scale camera experience;
+- apply current V2 geometry/program research to that design rather than replacing it.
+
+Required reference:
+- `FLOOR-01-V1-V2-MERGE-MAP.md`
+
+## Floors 2–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
+
+Current `core-v2-floor-programs.json` still treats Floors 2–7 as pre-iterative program/interior work relative to Floor 1.
+
+Do not interpret generated plan/program plates as finished 3D floors.
+
+## B1 — program/geometry integrated; final designed environment still future work
+
+Restricted underground operations authority and tunnel semantics exist. B1 is connected to the shared building stack and simulation model, but it is not a finished cinematic/interior environment.
+
+## Historical V1 Floor 1 — DESIGN REFERENCE, NOT geometry authority
+
+Key references:
+- GLB generator commit `59af7f6386ee69edc023927971ea5918fffa6acc`
+- interactive viewer commit `752c70444e12f44abdeacdd19697f7db88937d44`
+- archived plans under `references/archive/core-v1/floor-01/`
+
+Use these to recover design quality, not obsolete stair/core geometry.
+
+## NEXT APPROVED WORK
+
+1. Build a formal Floor 1 furniture/equipment/object inventory with stable IDs.
+2. Compare the liked V1 interior against the current V2 Floor 1 and list every design element to preserve/upgrade.
+3. Rebuild Floor 1 as the hybrid: **V1 feel + V2 truth + current Equity Uprise program**.
+4. Review Floor 1 visually in the real 3D viewer.
+5. Once approved, use the same authority → inventory → 3D → verify → stack workflow for Floor 2.
+6. Continuously insert approved floor environments into the whole-building assembly; do not wait until the end to test stacking.
+
+## Do not waste time on
+
+- re-auditing already locked Floor 1 authority unless a new design change invalidates it;
+- treating PNG/SVG/DXF as final deliverables;
+- replacing V1 design qualities with generic debug geometry;
+- rebuilding the whole stack from scratch when a validated assembly already exists;
+- inventing new floor identities without current program authority.

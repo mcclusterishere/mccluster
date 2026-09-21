@@ -40,6 +40,9 @@ jobs:
       - name: Install deterministic building dependencies
         run: python -m pip install --disable-pip-version-check numpy scipy trimesh pillow ezdxf
 
+      - name: Audit Equity Uprise building context index
+        run: python docs/design/equity-uprise-building/production/audit_building_context.py
+
       - name: Verify Halo projection owner boundary
         run: node --test workers/mccluster/test/halo-projection.test.mjs
 
