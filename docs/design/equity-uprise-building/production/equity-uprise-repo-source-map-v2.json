@@ -1,0 +1,675 @@
+{
+  "schema_version": "1.0.0",
+  "audit_date": "2026-09-21",
+  "repo": "mcclusterishere/mccluster",
+  "branch": "architecture/equity-uprise-core-v2",
+  "audited_head": "2d5dc165cf067f40d9ec5017b96a5a9477ad47b3",
+  "purpose": "Exhaustive classification of Equity Uprise-specific product/support sources discovered by the repo audit. Every discovered source must map to at least one canonical building capability or be explicitly support-only.",
+  "discovery_rules": {
+    "include": "Known Equity Uprise pages plus paths containing equity-uprise/equity_uprise, eu-/eu_ components, Equity Uprise Edge Functions, and Equity Uprise migrations.",
+    "exclude": [
+      "docs/design/equity-uprise-building/**",
+      "docs/design/EQUITY-UPRISE-*.md",
+      "redirects/**",
+      "_unfinished/**",
+      "docs/uprise-world/**",
+      "Equity Uprise building CI/viewer artifacts"
+    ]
+  },
+  "candidate_count": 77,
+  "capability_source_count": 50,
+  "support_only_count": 27,
+  "entries": [
+    {
+      "path": "assets/img/equity-uprise-logo.webp",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Approved identity artwork; branding asset, not an independent program capability."
+    },
+    {
+      "path": "assets/img/eu-favicon.png",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Equity Uprise browser/icon asset; no independent room or workflow."
+    },
+    {
+      "path": "css/equity-uprise-app.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared Equity Uprise app-shell styling; presentation only."
+    },
+    {
+      "path": "css/equity-uprise-institutional.css",
+      "classification": "presentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Institutional Desk styling; presentation only."
+    },
+    {
+      "path": "dashboard.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "conversation-agent",
+        "fellowship-matching",
+        "member-dashboard"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "data/eu-fellowships.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-directory"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "data/eu-topics.json",
+      "classification": "capability_source",
+      "capability_ids": [
+        "public-issues"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "docket-516.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "evidence-room"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "docs/equity-uprise-platform.md",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-matching",
+        "outreach",
+        "perspectives",
+        "private-contact",
+        "profiles"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "docs/music-platform.md",
+      "classification": "capability_source",
+      "capability_ids": [
+        "artist-creator",
+        "music-catalogue",
+        "music-rights"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "equity-uprise-fellowship.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "artist-creator",
+        "credentials-proof",
+        "partnership-sponsorship"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "equity-uprise.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "credentials-proof",
+        "initiative-portfolio",
+        "institutional-desk",
+        "music-catalogue",
+        "partnership-sponsorship"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "fellowship.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-applications"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "fellowships.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-directory",
+        "fellowship-matching",
+        "host-listings"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "js/equity-uprise-fellowship-live.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-applications"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "js/equity-uprise-institutional.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "institutional-desk"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "js/eu-api.js",
+      "classification": "capability_source",
+      "capability_ids": [
+        "admin-desk",
+        "conversation-agent",
+        "fellowship-directory",
+        "fellowship-matching",
+        "host-listings",
+        "member-dashboard",
+        "perspectives",
+        "private-contact",
+        "profiles",
+        "public-issues"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "policy-memo-dna.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "credentials-proof",
+        "evidence-room",
+        "publications"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "policy.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "credentials-proof",
+        "evidence-room",
+        "publications"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "profile.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "private-contact",
+        "profiles"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/_shared/eu-policy-os.ts",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared Policy OS server helper used by multiple mapped Edge Functions; no independent user-facing capability."
+    },
+    {
+      "path": "supabase/functions/eu-calendar/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "interviews-calendar"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-control/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "control-approvals"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-converse/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "conversation-agent"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-crossref-callback/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "crossref"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-ddex-worker/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "ddex"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-derivatives/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "communication-derivatives"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-external-worker/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "ddex",
+        "government-submissions",
+        "orcid",
+        "publication-distribution",
+        "workflows-jobs"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-google-workspace/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "google-workspace"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-government/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "government-submissions"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-intake/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-applications",
+        "stakeholder-intake"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-monitor/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "government-dockets",
+        "monitoring"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-music/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "music-release"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-orcid-oauth/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "orcid"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-publish/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "publication-distribution",
+        "publications"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-status/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "status-health"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-worker/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "crossref",
+        "workflows-jobs"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/functions/eu-workspace/index.ts",
+      "classification": "capability_source",
+      "capability_ids": [
+        "claim-evidence",
+        "manuscript-review",
+        "research-projects",
+        "source-graph"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/migrations/0017_equity_uprise_platform.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/0018_equity_uprise_seed.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260818001911_equity_uprise_platform.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260818002042_equity_uprise_seed.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260908233828_equity_uprise_policy_graph_tables.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260908234055_equity_uprise_capabilities_and_rls_enable.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260908234117_equity_uprise_research_rls_and_grants.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260908234300_equity_uprise_automation_tables.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260908234320_equity_uprise_automation_seed_and_rls.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260908234352_equity_uprise_worker_rpc_and_booking_tokens.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260908234509_equity_uprise_publication_tables.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260908234531_equity_uprise_publication_rls_and_targets.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/migrations/20260908234602_equity_uprise_outreach_bridge.sql",
+      "classification": "migration_wrapper",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Thin migration-ledger wrapper; canonical behavior is represented by replay migration/source files already mapped or support-classified."
+    },
+    {
+      "path": "supabase/replay_migrations/0017_equity_uprise_platform.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "perspectives"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/0018_equity_uprise_seed.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "fellowship-directory",
+        "public-issues"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/0067_equity_uprise_runtime_extensions.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Database runtime prerequisite; supports mapped capabilities without creating a new program function."
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "claim-evidence",
+        "control-approvals",
+        "event-ledger",
+        "initiative-portfolio",
+        "interviews-calendar",
+        "manuscript-review",
+        "meetings-commitments",
+        "research-projects",
+        "source-graph",
+        "stakeholder-graph",
+        "stakeholder-intake"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213100_equity_uprise_automation.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "government-dockets",
+        "integrations-oauth",
+        "workflows-jobs"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "artifacts",
+        "citations-impact",
+        "music-rights",
+        "publication-distribution",
+        "publications"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213300_equity_uprise_worker_rpc.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker RPC plumbing for already mapped automation/external jobs."
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213350_equity_uprise_booking_tokens.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Booking-token plumbing supporting the mapped interview/calendar workflow."
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213400_equity_uprise_publication_sequences.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Sequence/id infrastructure supporting mapped publication/version-of-record capabilities."
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213500_equity_uprise_storage.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Storage plumbing supporting mapped artifacts/publications."
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213600_equity_uprise_outreach_bridge.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "outreach"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213700_equity_uprise_worker_partition.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Worker partitioning/lease plumbing for mapped jobs and adapters."
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213800_equity_uprise_oauth_runtime.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "integrations-oauth",
+        "orcid"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260908213900_equity_uprise_event_dispatch.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "workflows-jobs"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260908214000_equity_uprise_monitor_runtime.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "monitoring"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260908214100_equity_uprise_government_metadata.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "government-submissions"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260908214200_equity_uprise_cron.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Scheduler/runtime plumbing for mapped monitors, workers and integrations."
+    },
+    {
+      "path": "supabase/replay_migrations/20260908214300_equity_uprise_outbound_communications.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "outreach"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260908214400_equity_uprise_ddex_worker.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "ddex"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql",
+      "classification": "capability_source",
+      "capability_ids": [
+        "initiative-portfolio"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "supabase/tests/eu_platform_test.sql",
+      "classification": "test_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Automated policy/platform assertions; validates mapped features but is not itself a building capability."
+    },
+    {
+      "path": "tools/eu-export-seed.sh",
+      "classification": "build_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Exports the static topic/fellowship mirrors; build/support tool, not an independent program function."
+    },
+    {
+      "path": "topics.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "conversation-agent",
+        "public-issues"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "uprise-admin.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "admin-desk",
+        "host-listings",
+        "perspectives"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "verify.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "verification"
+      ],
+      "support_only": false
+    },
+    {
+      "path": "walls/eu-rally.html",
+      "classification": "capability_source",
+      "capability_ids": [
+        "rally-media"
+      ],
+      "support_only": false
+    }
+  ]
+}
