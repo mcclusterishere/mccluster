@@ -17,7 +17,8 @@
         "z": 4.2
       },
       "zone_id": "zone_01",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "institutional_overview"
     },
     {
       "id": "hs_zone_02",
@@ -33,7 +34,8 @@
         "z": 4.2
       },
       "zone_id": "zone_02",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "institutional_join"
     },
     {
       "id": "hs_zone_03",
@@ -66,7 +68,8 @@
         "z": 4.2
       },
       "zone_id": "zone_04",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "institutional_overview"
     },
     {
       "id": "hs_zone_05",
@@ -82,7 +85,8 @@
         "z": 4.2
       },
       "zone_id": "zone_05",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "institutional_join"
     },
     {
       "id": "hs_zone_06",

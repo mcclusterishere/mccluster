@@ -268,7 +268,8 @@
         "y1": 28,
         "x2": 50,
         "y2": 50
-      }
+      },
+      "route_key": "research_publication"
     },
     {
       "id": "zone_02",
@@ -303,7 +304,8 @@
         "y1": 4,
         "x2": 15,
         "y2": 16
-      }
+      },
+      "route_key": "research_publication"
     },
     {
       "id": "zone_05",

@@ -255,7 +255,8 @@
         "y1": 0,
         "x2": 43,
         "y2": 9
-      }
+      },
+      "route_key": "institutional_overview"
     },
     {
       "id": "zone_02",
@@ -266,7 +267,8 @@
         "y1": 12,
         "x2": 18,
         "y2": 28
-      }
+      },
+      "route_key": "institutional_join"
     },
     {
       "id": "zone_03",
@@ -289,7 +291,8 @@
         "y1": 50,
         "x2": 44,
         "y2": 54
-      }
+      },
+      "route_key": "institutional_overview"
     },
     {
       "id": "zone_05",
@@ -300,7 +303,8 @@
         "y1": 44,
         "x2": 42,
         "y2": 47
-      }
+      },
+      "route_key": "institutional_join"
     },
     {
       "id": "zone_06",

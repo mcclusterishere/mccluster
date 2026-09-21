@@ -253,7 +253,8 @@
         "y1": 30,
         "x2": 64,
         "y2": 48
-      }
+      },
+      "route_key": "building_return"
     },
     {
       "id": "zone_02",
@@ -276,7 +277,8 @@
         "y1": 8,
         "x2": 48,
         "y2": 46
-      }
+      },
+      "route_key": "ecosystem_routes"
     },
     {
       "id": "zone_04",
@@ -287,7 +289,8 @@
         "y1": 0,
         "x2": 46,
         "y2": 6
-      }
+      },
+      "route_key": "ecosystem_routes"
     },
     {
       "id": "zone_05",

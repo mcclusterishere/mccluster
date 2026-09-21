@@ -278,7 +278,8 @@
         "y1": 28,
         "x2": 50,
         "y2": 50
-      }
+      },
+      "route_key": "institutional_command"
     },
     {
       "id": "zone_02",

@@ -259,7 +259,8 @@
         "y1": 28,
         "x2": 48,
         "y2": 50
-      }
+      },
+      "route_key": "media_catalogue"
     },
     {
       "id": "zone_02",

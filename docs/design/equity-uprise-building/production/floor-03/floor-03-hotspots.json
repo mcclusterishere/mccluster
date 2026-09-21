@@ -17,7 +17,8 @@
         "z": 31.2
       },
       "zone_id": "zone_01",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "opportunities"
     },
     {
       "id": "hs_zone_02",

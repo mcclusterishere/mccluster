@@ -17,7 +17,8 @@
         "z": 58.2
       },
       "zone_id": "zone_01",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "research_publication"
     },
     {
       "id": "hs_zone_02",
@@ -67,7 +68,8 @@
         "z": 58.2
       },
       "zone_id": "zone_04",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "research_publication"
     },
     {
       "id": "hs_zone_05",

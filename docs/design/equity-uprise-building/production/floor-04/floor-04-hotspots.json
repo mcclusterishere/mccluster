@@ -17,7 +17,8 @@
         "z": 44.7
       },
       "zone_id": "zone_01",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "media_catalogue"
     },
     {
       "id": "hs_zone_02",

@@ -17,7 +17,8 @@
         "z": 17.7
       },
       "zone_id": "zone_01",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "current_issues"
     },
     {
       "id": "hs_zone_02",

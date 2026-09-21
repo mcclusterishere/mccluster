@@ -17,7 +17,8 @@
         "z": 85.2
       },
       "zone_id": "zone_01",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "building_return"
     },
     {
       "id": "hs_zone_02",
@@ -50,7 +51,8 @@
         "z": 85.2
       },
       "zone_id": "zone_03",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "ecosystem_routes"
     },
     {
       "id": "hs_zone_04",
@@ -66,7 +68,8 @@
         "z": 85.2
       },
       "zone_id": "zone_04",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "ecosystem_routes"
     },
     {
       "id": "hs_zone_05",

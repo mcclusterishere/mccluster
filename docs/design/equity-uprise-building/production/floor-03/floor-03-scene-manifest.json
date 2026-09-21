@@ -266,7 +266,8 @@
         "y1": 30,
         "x2": 50,
         "y2": 50
-      }
+      },
+      "route_key": "opportunities"
     },
     {
       "id": "zone_02",
