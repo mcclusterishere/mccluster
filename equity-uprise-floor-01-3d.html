@@ -8,72 +8,120 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="equity-uprise-build" content="__STAMP__">
-<title>Equity Uprise — Floor 1 — Volumetric Core V2</title>
-<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+<title>Equity Uprise — Floor 1 Hybrid 3D</title>
 <style>
-:root{color-scheme:dark;--panel:rgba(9,10,12,.86);--edge:rgba(255,255,255,.15);--text:#f4f2ef;--dim:#b3b3b3;--red:#8b2025}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-model-viewer{width:100%;height:100%;background:radial-gradient(circle at 50% 38%,#34383c 0,#181b1e 43%,#0d0f11 100%);--poster-color:transparent}
-.hud{position:fixed;z-index:5;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));width:min(620px,calc(100vw - 24px));padding:12px 13px;border:1px solid var(--edge);border-radius:15px;background:var(--panel);backdrop-filter:blur(12px)}
-h1{font-size:14px;letter-spacing:.055em;margin:0 0 5px}p{font-size:11px;line-height:1.42;color:#ccc;margin:0 0 9px}.badges{display:flex;gap:6px;flex-wrap:wrap}.badge{font-size:9px;border:1px solid var(--edge);border-radius:999px;padding:3px 7px;color:#ddd}
+:root{color-scheme:dark;--panel:rgba(9,10,12,.82);--edge:rgba(255,255,255,.15);--text:#f4f2ef;--dim:#b8b8b8;--red:#8b2025}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101214;color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#app{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:fixed;z-index:5;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));width:min(620px,calc(100vw - 24px));padding:12px 13px;border:1px solid var(--edge);border-radius:15px;background:var(--panel);backdrop-filter:blur(12px);box-shadow:0 14px 45px rgba(0,0,0,.25)}
+h1{font-size:14px;letter-spacing:.055em;margin:0 0 5px}p{font-size:11px;line-height:1.42;color:#d0d0d0;margin:0 0 9px}.badges{display:flex;gap:6px;flex-wrap:wrap}.badge{font-size:9px;border:1px solid var(--edge);border-radius:999px;padding:3px 7px;color:#ddd}
 .controls{position:fixed;z-index:6;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 24px)}
-button{appearance:none;border:1px solid #585b5e;border-radius:999px;background:rgba(24,26,29,.92);color:#fff;font:700 10px system-ui;padding:8px 11px}button:active{background:var(--red)}
+button{appearance:none;border:1px solid #585b5e;border-radius:999px;background:rgba(24,26,29,.92);color:#fff;font:700 10px system-ui;padding:8px 11px}button:active,button.active{background:var(--red);border-color:#b84549}
 .status{position:fixed;z-index:5;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));padding:7px 10px;border:1px solid var(--edge);border-radius:999px;background:var(--panel);font-size:9px;color:var(--dim)}
-@media(max-width:720px){.hud{width:calc(100vw - 24px)}.status{bottom:64px}.controls{left:12px;right:12px;justify-content:center}}
+@media(max-width:720px){.hud{width:calc(100vw - 24px)}.status{bottom:102px}.controls{left:12px;right:12px;justify-content:center}}
 </style>
 </head>
 <body>
-<model-viewer id="building"
- src="/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__"
- alt="Equity Uprise Floor 1 volumetric Core V2 architectural model"
- camera-controls
- touch-action="pan-y"
- shadow-intensity="1.15"
- shadow-softness=".8"
- exposure="1.05"
- environment-image="neutral"
- interaction-prompt="auto"
- min-camera-orbit="auto 20deg 12m"
- max-camera-orbit="auto 88deg 70m"
- camera-orbit="42deg 58deg 34m"
- field-of-view="38deg"
- ar
- ar-modes="webxr scene-viewer quick-look">
-</model-viewer>
-
+<div id="app"></div>
 <div class="hud">
- <h1>EQUITY UPRISE · FLOOR 1 · REAL 3D · CORE V2</h1>
- <p>This is the volumetric Floor 1 build: walls, glass entry, reception/Journey Wall, lounge, intake room, Passport Studio, passenger + service/freight elevators, and both protected stairs. Drag to orbit. Pinch to zoom.</p>
- <div class="badges"><span class="badge">Arrival / Orientation / Intake</span><span class="badge">72′ × 72′</span><span class="badge">189 meshes</span><span class="badge">NOT FOR CONSTRUCTION</span></div>
+ <h1>EQUITY UPRISE · FLOOR 1 · HYBRID REAL 3D</h1>
+ <p><b>V1 interior feel + Core V2 geometry + current Equity Uprise program.</b> Drag to orbit, pinch/scroll to zoom. Human views restore the original dark/warm interior experience; Cutaway exposes the full V2 plan and cores.</p>
+ <div class="badges"><span class="badge">Arrival / Orientation / Intake</span><span class="badge">67 inventory records</span><span class="badge" id="meshBadge">loading meshes…</span><span class="badge">NOT FOR CONSTRUCTION</span></div>
 </div>
-
 <div class="controls">
- <button data-view="iso">Isometric</button>
- <button data-view="entry">Entry</button>
- <button data-view="lounge">Lounge</button>
+ <button data-view="lobby">Lobby</button>
  <button data-view="reception">Reception</button>
- <button data-view="top">Top Cutaway</button>
+ <button data-view="lounge">Lounge</button>
+ <button data-view="intake">Intake</button>
+ <button data-view="passport">Passport</button>
+ <button data-view="elevator">Elevator</button>
+ <button data-view="journey">Journey Wall</button>
+ <button data-view="iso">Cutaway</button>
+ <button id="ceiling">Hide ceiling</button>
  <button id="spin">Auto Rotate</button>
 </div>
-<div class="status" id="status">Loading volumetric GLB…</div>
+<div class="status" id="status">Loading hybrid GLB…</div>
 
-<script>
-const mv=document.getElementById("building"),status=document.getElementById("status");
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
+
+const FT=.3048,ft=v=>v*FT;
+const app=document.getElementById('app'),status=document.getElementById('status'),meshBadge=document.getElementById('meshBadge');
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x111315);
+scene.fog=new THREE.Fog(0x111315,ft(42),ft(125));
+
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.03,ft(190));
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.1;
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+app.appendChild(renderer.domElement);
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+controls.dampingFactor=.06;
+controls.minDistance=ft(4);
+controls.maxDistance=ft(110);
+controls.maxPolarAngle=Math.PI/2-.01;
+
+scene.add(new THREE.HemisphereLight(0xf4ede2,0x141619,1.85));
+const sun=new THREE.DirectionalLight(0xfff1dc,2.4);
+sun.position.set(ft(12),ft(28),ft(-10));sun.castShadow=true;scene.add(sun);
+const lobbyGlow=new THREE.PointLight(0xffd7a6,68,ft(42),2);lobbyGlow.position.set(ft(36),ft(8.8),ft(47));scene.add(lobbyGlow);
+const loungeGlow=new THREE.PointLight(0xffddb5,42,ft(28),2);loungeGlow.position.set(ft(10),ft(7.5),ft(20));scene.add(loungeGlow);
+const passportGlow=new THREE.PointLight(0xffe7c8,38,ft(28),2);passportGlow.position.set(ft(35),ft(8),ft(38));scene.add(passportGlow);
+const entranceGlow=new THREE.PointLight(0xe7f0f2,24,ft(22),2);entranceGlow.position.set(ft(36),ft(8),ft(7));scene.add(entranceGlow);
+
+let model=null,ceilings=[],ceilingVisible=true,meshCount=0;
+const loader=new GLTFLoader();
+loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{
+ model=g.scene;scene.add(model);
+ model.traverse(o=>{
+   if(o.isMesh){
+     meshCount++;o.castShadow=true;o.receiveShadow=true;
+     if(o.material){o.material.needsUpdate=true;}
+   }
+   if((o.name||'').startsWith('ceiling_'))ceilings.push(o);
+ });
+ meshBadge.textContent=meshCount+' meshes';
+ status.textContent='Hybrid Floor 1 loaded · build __STAMP__';
+ gotoView('lobby');
+},undefined,e=>{console.error(e);status.textContent='Hybrid GLB failed to load';});
+
 const views={
- iso:{orbit:"42deg 58deg 34m",target:"0m 0m 1.4m"},
- entry:{orbit:"180deg 73deg 25m",target:"0m -4.5m 1.4m"},
- lounge:{orbit:"125deg 68deg 18m",target:"-7m -3m 1.2m"},
- reception:{orbit:"12deg 70deg 20m",target:"0m 4m 1.3m"},
- top:{orbit:"0deg 24deg 39m",target:"0m 0m 0m"}
+ lobby:{p:[36,6.0,18],t:[36,4.2,45],ceiling:true},
+ reception:{p:[36,5.6,31],t:[36,4.0,48],ceiling:true},
+ lounge:{p:[24,5.5,23],t:[10,3.6,20],ceiling:true},
+ intake:{p:[22,5.5,35],t:[9,3.6,38],ceiling:true},
+ passport:{p:[36,5.8,28],t:[36,3.8,38],ceiling:true},
+ elevator:{p:[45,5.8,30],t:[55,4.3,39],ceiling:true},
+ journey:{p:[36,5.6,39],t:[36,4.8,52],ceiling:true},
+ iso:{p:[90,58,-20],t:[36,2.0,36],ceiling:false}
 };
-document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{
- const v=views[b.dataset.view];mv.cameraOrbit=v.orbit;mv.cameraTarget=v.target;mv.jumpCameraToGoal();
-}));
-document.getElementById("spin").addEventListener("click",e=>{
- mv.autoRotate=!mv.autoRotate;e.target.textContent=mv.autoRotate?"Stop Rotate":"Auto Rotate";
-});
-mv.addEventListener("load",()=>{status.textContent="Volumetric Floor 1 loaded · build __STAMP__";});
-mv.addEventListener("error",e=>{status.textContent="3D model failed to load";console.error(e);});
+function setCeiling(show){
+ ceilingVisible=show;ceilings.forEach(o=>o.visible=show);
+ document.getElementById('ceiling').textContent=show?'Hide ceiling':'Show ceiling';
+}
+function gotoView(key){
+ const v=views[key];if(!v)return;
+ if(v.ceiling!==undefined)setCeiling(v.ceiling);
+ camera.position.set(ft(v.p[0]),ft(v.p[1]),ft(v.p[2]));
+ controls.target.set(ft(v.t[0]),ft(v.t[1]),ft(v.t[2]));
+ controls.update();
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>gotoView(b.dataset.view));
+document.getElementById('ceiling').onclick=()=>setCeiling(!ceilingVisible);
+document.getElementById('spin').onclick=e=>{controls.autoRotate=!controls.autoRotate;controls.autoRotateSpeed=.7;e.currentTarget.classList.toggle('active',controls.autoRotate);e.currentTarget.textContent=controls.autoRotate?'Stop Rotate':'Auto Rotate'};
+
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera)});
 </script>
 </body>
 </html>

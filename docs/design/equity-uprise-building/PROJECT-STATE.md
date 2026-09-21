@@ -74,6 +74,12 @@ Inventory / preservation checkpoint:
 - **COMPLETE** — formal Floor 1 object inventory now exists with stable IDs, placement/function/style metadata and V1/V2 heritage decisions.
 - **COMPLETE** — detailed V1→V2 preservation map records what survives, what is corrected, and what is newly added.
 
+Hybrid builder implementation checkpoint:
+- builder requires all 67 inventory records to be represented in 3D or validation fails;
+- V1-style lounge, reception/Journey Wall, intake, warm lighting, glass entry, human-scale views and ceiling/cutaway behavior are restored as the design baseline;
+- Development Passport Studio, life-safety/support equipment, freight core and corrected Stair B are integrated into the same environment;
+- shared Core V2 geometry remains unchanged.
+
 ## Floors 2–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
 
 Current `core-v2-floor-programs.json` still treats Floors 2–7 as pre-iterative program/interior work relative to Floor 1.
@@ -97,7 +103,7 @@ Use these to recover design quality, not obsolete stair/core geometry.
 
 1. **DONE:** formal Floor 1 furniture/equipment/object inventory with stable IDs.
 2. **DONE:** detailed V1→V2 preservation map.
-3. Rebuild Floor 1 as the hybrid: **V1 feel + V2 truth + current Equity Uprise program**, consuming the new inventory.
+3. **IN PROGRESS:** hybrid Floor 1 builder now consumes the canonical inventory and is being upgraded from the technical scaffold into the V1-feel / V2-truth environment.
 4. Review Floor 1 visually in the real 3D viewer.
 5. Insert the approved hybrid Floor 1 into the whole-building assembly and verify stacking.
 6. Once approved, use the same authority → inventory → 3D → verify → stack workflow for Floor 2.
