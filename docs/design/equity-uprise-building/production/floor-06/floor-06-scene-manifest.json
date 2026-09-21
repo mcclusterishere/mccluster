@@ -36,7 +36,9 @@
     "google-workspace",
     "outreach",
     "event-ledger",
-    "program-support-funding"
+    "program-support-funding",
+    "fellowship-cohort",
+    "enterprise-development"
   ],
   "authority": {
     "building_core": [
@@ -296,7 +298,7 @@
     },
     {
       "id": "zone_03",
-      "label": "Institutional Salon",
+      "label": "Institutional Salon / Support",
       "type": "zone",
       "bounds_ft": {
         "x1": 2,
@@ -304,7 +306,7 @@
         "x2": 18,
         "y2": 38
       },
-      "route_key": "institutional_overview"
+      "route_key": "program_support"
     },
     {
       "id": "zone_04",

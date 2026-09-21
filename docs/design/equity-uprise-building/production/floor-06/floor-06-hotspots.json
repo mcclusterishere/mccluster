@@ -39,7 +39,7 @@
     },
     {
       "id": "hs_zone_03",
-      "label": "Institutional Salon",
+      "label": "Institutional Salon / Support",
       "position_ft_local": {
         "x": 10.0,
         "y": 28.0,
@@ -52,7 +52,7 @@
       },
       "zone_id": "zone_03",
       "action": "open_route",
-      "route_key": "institutional_overview"
+      "route_key": "program_support"
     },
     {
       "id": "hs_zone_04",

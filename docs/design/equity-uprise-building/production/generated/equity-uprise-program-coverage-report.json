@@ -1,25 +1,25 @@
 {
   "schema_version": "1.0.0",
   "not_for_construction": true,
-  "capability_count": 53,
+  "capability_count": 55,
   "floor_feature_counts": {
-    "1": 5,
+    "1": 7,
     "2": 5,
-    "3": 16,
+    "3": 18,
     "4": 10,
     "5": 18,
-    "6": 29,
+    "6": 31,
     "7": 3
   },
-  "checks_total": 269,
-  "checks_passed": 269,
+  "checks_total": 330,
+  "checks_passed": 330,
   "checks_failed": 0,
   "passed": true,
   "checks": [
     {
       "name": "capability ids unique",
       "passed": true,
-      "detail": "53 capabilities"
+      "detail": "55 capabilities"
     },
     {
       "name": "capability source exists: institutional-desk -> equity-uprise.html",
@@ -30,6 +30,26 @@
       "name": "capability source exists: institutional-desk -> js/equity-uprise-institutional.js",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/js/equity-uprise-institutional.js"
+    },
+    {
+      "name": "capability source exists: institutional-desk -> data/dossier.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/dossier.json"
+    },
+    {
+      "name": "capability source exists: institutional-desk -> data/archive.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/archive.json"
+    },
+    {
+      "name": "capability source exists: institutional-desk -> data/brands.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/brands.json"
+    },
+    {
+      "name": "capability source exists: institutional-desk -> ecosystem.html",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/ecosystem.html"
     },
     {
       "name": "capability source exists: public-issues -> topics.html",
@@ -107,6 +127,16 @@
       "detail": "/home/runner/work/mccluster/mccluster/data/eu-fellowships.json"
     },
     {
+      "name": "capability source exists: fellowship-directory -> docs/agent-web.md",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/agent-web.md"
+    },
+    {
+      "name": "capability source exists: fellowship-directory -> llms.txt",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/llms.txt"
+    },
+    {
       "name": "capability source exists: fellowship-matching -> fellowships.html",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/fellowships.html"
@@ -120,6 +150,16 @@
       "name": "capability source exists: fellowship-matching -> docs/equity-uprise-platform.md",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/equity-uprise-platform.md"
+    },
+    {
+      "name": "capability source exists: fellowship-matching -> docs/agent-web.md",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/agent-web.md"
+    },
+    {
+      "name": "capability source exists: fellowship-matching -> llms.txt",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/llms.txt"
     },
     {
       "name": "capability source exists: host-listings -> fellowships.html",
@@ -175,6 +215,11 @@
       "name": "capability source exists: stakeholder-graph -> supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
+    },
+    {
+      "name": "capability source exists: stakeholder-graph -> supabase/replay_migrations/0065_outreach_engine_core.sql",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0065_outreach_engine_core.sql"
     },
     {
       "name": "capability source exists: meetings-commitments -> supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
@@ -262,6 +307,11 @@
       "detail": "/home/runner/work/mccluster/mccluster/assets/landmarks/shiloh-docket-516"
     },
     {
+      "name": "capability source exists: evidence-room -> data/archive.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/archive.json"
+    },
+    {
       "name": "capability source exists: credentials-proof -> assets/credentials/",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/assets/credentials"
@@ -275,6 +325,11 @@
       "name": "capability source exists: credentials-proof -> equity-uprise-fellowship.html",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/equity-uprise-fellowship.html"
+    },
+    {
+      "name": "capability source exists: credentials-proof -> data/dossier.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/dossier.json"
     },
     {
       "name": "capability source exists: artifacts -> supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql",
@@ -372,6 +427,31 @@
       "detail": "/home/runner/work/mccluster/mccluster/equity-uprise.html"
     },
     {
+      "name": "capability source exists: music-catalogue -> data/albums.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/albums.json"
+    },
+    {
+      "name": "capability source exists: music-catalogue -> data/catalogue.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/catalogue.json"
+    },
+    {
+      "name": "capability source exists: music-catalogue -> data/playlists.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/playlists.json"
+    },
+    {
+      "name": "capability source exists: music-catalogue -> catalogue.html",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/catalogue.html"
+    },
+    {
+      "name": "capability source exists: music-catalogue -> listen.html",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/listen.html"
+    },
+    {
       "name": "capability source exists: artist-creator -> equity-uprise-fellowship.html",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/equity-uprise-fellowship.html"
@@ -397,6 +477,16 @@
       "detail": "/home/runner/work/mccluster/mccluster/docs/music-platform.md"
     },
     {
+      "name": "capability source exists: music-rights -> data/catalogue.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/catalogue.json"
+    },
+    {
+      "name": "capability source exists: music-rights -> data/ddex/identifiers.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/ddex/identifiers.json"
+    },
+    {
       "name": "capability source exists: music-release -> supabase/functions/eu-music/index.ts",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/supabase/functions/eu-music/index.ts"
@@ -412,6 +502,11 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/20260908214400_equity_uprise_ddex_worker.sql"
     },
     {
+      "name": "capability source exists: ddex -> data/ddex/identifiers.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/ddex/identifiers.json"
+    },
+    {
       "name": "capability source exists: rally-media -> walls/eu-rally.html",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/walls/eu-rally.html"
@@ -420,6 +515,16 @@
       "name": "capability source exists: rally-media -> assets/img/rally/",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/assets/img/rally"
+    },
+    {
+      "name": "capability source exists: rally-media -> data/gallery.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/gallery.json"
+    },
+    {
+      "name": "capability source exists: rally-media -> data/portfolio.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/portfolio.json"
     },
     {
       "name": "capability source exists: communication-derivatives -> supabase/functions/eu-derivatives/index.ts",
@@ -440,6 +545,11 @@
       "name": "capability source exists: control-approvals -> supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
+    },
+    {
+      "name": "capability source exists: control-approvals -> supabase/replay_migrations/0066_control_authority_v2.sql",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0066_control_authority_v2.sql"
     },
     {
       "name": "capability source exists: integrations-oauth -> supabase/replay_migrations/20260908213100_equity_uprise_automation.sql",
@@ -467,6 +577,11 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/functions/eu-worker/index.ts"
     },
     {
+      "name": "capability source exists: workflows-jobs -> supabase/replay_migrations/0066_control_authority_v2.sql",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0066_control_authority_v2.sql"
+    },
+    {
       "name": "capability source exists: status-health -> supabase/functions/eu-status/index.ts",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/supabase/functions/eu-status/index.ts"
@@ -492,6 +607,11 @@
       "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/20260908214300_equity_uprise_outbound_communications.sql"
     },
     {
+      "name": "capability source exists: outreach -> supabase/replay_migrations/0065_outreach_engine_core.sql",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0065_outreach_engine_core.sql"
+    },
+    {
       "name": "capability source exists: event-ledger -> supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql"
@@ -500,6 +620,16 @@
       "name": "capability source exists: ecosystem-routing -> docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md"
+    },
+    {
+      "name": "capability source exists: ecosystem-routing -> data/brands.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/brands.json"
+    },
+    {
+      "name": "capability source exists: ecosystem-routing -> ecosystem.html",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/ecosystem.html"
     },
     {
       "name": "capability source exists: roof-mobility -> docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md",
@@ -512,9 +642,64 @@
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/EQUITY-UPRISE-REPO-AUDIT.md"
     },
     {
+      "name": "capability source exists: uprise-world -> _unfinished/uprise-world/uprise-world.html",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/uprise-world/uprise-world.html"
+    },
+    {
+      "name": "capability source exists: uprise-world -> _unfinished/uprise-world/uprise-world.js",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/uprise-world/uprise-world.js"
+    },
+    {
+      "name": "capability source exists: uprise-world -> _unfinished/uprise-world/uprise-world.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/uprise-world/uprise-world.json"
+    },
+    {
+      "name": "capability source exists: uprise-world -> _unfinished/uprise-world/uprise-npc.js",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/_unfinished/uprise-world/uprise-npc.js"
+    },
+    {
+      "name": "capability source exists: uprise-world -> docs/uprise-world/AUDIT-REPORT.md",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/uprise-world/AUDIT-REPORT.md"
+    },
+    {
       "name": "capability source exists: program-support-funding -> equity-uprise-fellowship.html",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/equity-uprise-fellowship.html"
+    },
+    {
+      "name": "capability source exists: program-support-funding -> data/cause.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/cause.json"
+    },
+    {
+      "name": "capability source exists: program-support-funding -> give.html",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/give.html"
+    },
+    {
+      "name": "capability source exists: program-support-funding -> docs/the-mission-fund.md",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/the-mission-fund.md"
+    },
+    {
+      "name": "capability source exists: program-support-funding -> supabase/replay_migrations/0007_offerings.sql",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0007_offerings.sql"
+    },
+    {
+      "name": "capability source exists: program-support-funding -> supabase/functions/pay-now/index.ts",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/supabase/functions/pay-now/index.ts"
+    },
+    {
+      "name": "capability source exists: program-support-funding -> docs/pay-now.md",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/pay-now.md"
     },
     {
       "name": "capability source exists: creator-licensing-commerce -> creator.html",
@@ -545,6 +730,96 @@
       "name": "capability source exists: creator-licensing-commerce -> js/music-creator-profile.js",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/js/music-creator-profile.js"
+    },
+    {
+      "name": "capability source exists: fellowship-cohort -> equity-uprise-fellowship.html",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/equity-uprise-fellowship.html"
+    },
+    {
+      "name": "capability source exists: fellowship-cohort -> data/fellows.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/fellows.json"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> data/offers.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/offers.json"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> data/sites.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/data/sites.json"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> hire.html",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/hire.html"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> sites.html",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/sites.html"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> sites-details.html",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/sites-details.html"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> js/hire-offers.js",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/js/hire-offers.js"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> js/crm.js",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/js/crm.js"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> js/offers.js",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/js/offers.js"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> js/onboard.js",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/js/onboard.js"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> platform/sql/001_init.sql",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/platform/sql/001_init.sql"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> platform/src/server.mjs",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/platform/src/server.mjs"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> supabase/replay_migrations/0009_offer_configurations.sql",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0009_offer_configurations.sql"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> supabase/replay_migrations/0012_management_upgrade_offerings.sql",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0012_management_upgrade_offerings.sql"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> supabase/replay_migrations/0033_knowledge_base.sql",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/supabase/replay_migrations/0033_knowledge_base.sql"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> scripts/kb-build.mjs",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/scripts/kb-build.mjs"
+    },
+    {
+      "name": "capability source exists: enterprise-development -> native/app/(tabs)/uprise.tsx",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/native/app/(tabs)/uprise.tsx"
     },
     {
       "name": "levels 1-7 present",
@@ -977,7 +1252,37 @@
       "detail": ""
     },
     {
+      "name": "program-support-funding secondary floor 1",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "creator-licensing-commerce primary floor 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fellowship-cohort primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fellowship-cohort secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "enterprise-development primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "enterprise-development secondary floor 1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "enterprise-development secondary floor 6",
       "passed": true,
       "detail": ""
     },
@@ -1227,14 +1532,14 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 1 media_release_ops is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
       "name": "floor 1 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 1 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
     },
     {
       "name": "floor 1 control_plane is not public",
@@ -1247,14 +1552,14 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 2 media_release_ops is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
       "name": "floor 2 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 2 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
     },
     {
       "name": "floor 2 control_plane is not public",
@@ -1267,14 +1572,14 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 3 media_release_ops is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
       "name": "floor 3 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 3 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
     },
     {
       "name": "floor 3 control_plane is not public",
@@ -1287,14 +1592,14 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 4 media_release_ops is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
       "name": "floor 4 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 4 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
     },
     {
       "name": "floor 4 control_plane is not public",
@@ -1307,14 +1612,14 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 5 media_release_ops is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
       "name": "floor 5 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 5 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
     },
     {
       "name": "floor 5 control_plane is not public",
@@ -1327,14 +1632,14 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 6 media_release_ops is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
       "name": "floor 6 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 6 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
     },
     {
       "name": "floor 6 control_plane is not public",
@@ -1347,14 +1652,14 @@
       "detail": "authorized-researcher-editor-admin"
     },
     {
-      "name": "floor 7 media_release_ops is not public",
-      "passed": true,
-      "detail": "authorized-admin"
-    },
-    {
       "name": "floor 7 admin_desk is not public",
       "passed": true,
       "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 7 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
     },
     {
       "name": "floor 7 control_plane is not public",

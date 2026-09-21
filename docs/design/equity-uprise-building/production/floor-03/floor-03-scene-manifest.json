@@ -23,7 +23,9 @@
     "partnership-sponsorship",
     "artist-creator",
     "google-workspace",
-    "outreach"
+    "outreach",
+    "fellowship-cohort",
+    "enterprise-development"
   ],
   "authority": {
     "building_core": [
@@ -279,7 +281,7 @@
         "x2": 50,
         "y2": 54
       },
-      "route_key": "opportunities"
+      "route_key": "fellowship_record"
     },
     {
       "id": "zone_03",
@@ -338,7 +340,8 @@
         "y1": 39,
         "x2": 44,
         "y2": 43
-      }
+      },
+      "route_key": "enterprise_program"
     },
     {
       "id": "north_corridor",

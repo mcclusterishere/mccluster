@@ -122,6 +122,11 @@
       "url": "/fellowships.html",
       "access": "public"
     },
+    "fellowship_record": {
+      "type": "url",
+      "url": "/equity-uprise-fellowship.html",
+      "access": "public-record-with-consent"
+    },
     "people_network": {
       "type": "url",
       "url": "/profile.html",
@@ -134,6 +139,15 @@
         "eu-calendar"
       ],
       "access": "authenticated-member-or-staff"
+    },
+    "enterprise_program": {
+      "type": "url",
+      "url": "/sites-details.html#equity",
+      "access": "public-program-information",
+      "fit_review": "required-before-participation",
+      "agreement": "required",
+      "approval_gated": true,
+      "note": "Program information only. Pricing is not architectural authority and participation is never implied by entering this route."
     },
     "media_catalogue": {
       "type": "url",
@@ -149,6 +163,11 @@
       "type": "url",
       "url": "/creator.html",
       "access": "authenticated-for-write"
+    },
+    "creator_licensing": {
+      "type": "url",
+      "url": "/music-creator-terms.html",
+      "access": "public-terms-authenticated-checkout"
     },
     "media_derivatives": {
       "type": "ui_state",
@@ -214,6 +233,13 @@
       "url": "/equity-uprise.html",
       "state_hint": "join",
       "access": "public-contact-private-follow-through"
+    },
+    "program_support": {
+      "type": "url",
+      "url": "/give.html",
+      "access": "public-support-pathway",
+      "detail_state": "quiet-until-governance",
+      "note": "Detailed per-program fund meters, reserve/custody/accounting state and internal finance remain non-public until governance is publishable."
     },
     "admin_desk": {
       "type": "url",

@@ -35,7 +35,7 @@
       },
       "zone_id": "zone_02",
       "action": "open_route",
-      "route_key": "opportunities"
+      "route_key": "fellowship_record"
     },
     {
       "id": "hs_zone_03",
@@ -119,7 +119,8 @@
         "z": 31.2
       },
       "zone_id": "zone_07",
-      "action": "focus_zone"
+      "action": "open_route",
+      "route_key": "enterprise_program"
     },
     {
       "id": "hs_passenger_elevator",
