@@ -178,7 +178,7 @@ Beyond/around them is sealed upper-floor glazing.
 There is no exterior door.
 
 ### -90° / west-left
-The **Institutional Salon / Join Lounge**.
+The **Institutional Salon / Support**.
 
 ---
 
@@ -242,7 +242,7 @@ The wall must not expose raw admin/control data or private information.
 
 ---
 
-## 9. Institutional Salon / Join Lounge
+## 9. Institutional Salon / Support
 
 Planning zone:
 - approximately **X 2–18 / Y 18–38**
@@ -437,7 +437,7 @@ Command table → roof-transition terminal:
 - approximately **6 ft clear** where practical.
 
 ### Secondary
-Command table → Institutional Salon:
+Command table → Institutional Salon / Support:
 - at least approximately **4 ft clear**.
 
 Command table → Strategy/Briefing rooms:
@@ -634,7 +634,7 @@ Fixed elevator/core + Roof Access / Mobility Transition terminal + upward Level 
 Strategy Review Room + Partner / Executive Briefing Room + sealed upper-floor glazing. No exterior door.
 
 **-90° / west:**  
-Institutional Salon / Join Lounge.
+Institutional Salon / Support.
 
 ### Must not appear
 - exterior public entrance;
@@ -708,7 +708,7 @@ The architecture itself does not endorse a political side.
 - [ ] Institutional Command Wall — NOW / PAST WORK / JOIN
 - [ ] elevator + roof-transition terminal east/right
 - [ ] Strategy + Partner rooms south
-- [ ] Institutional Salon west
+- [ ] Institutional Salon / Support west
 - [ ] vertical access to Level 7 remains possible
 - [ ] roof-service/structural coordination not blocked
 - [ ] no helicopter/helipad depicted inside Floor 6
@@ -729,6 +729,8 @@ The architecture itself does not endorse a political side.
 This floor is bound to the repo-wide program map:
 `production/equity-uprise-capability-map-v2.json`.
 
+The current repo-wide audit classifies **241 Equity Uprise semantic sources** and **55 canonical capabilities**. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+
 ### Primary capabilities
 - **Institutional Desk / finished public record** (`institutional-desk`, built) — Penthouse Command public/institutional mode: NOW, PAST WORK, JOIN, current initiative portfolio and proof links.
 - **Partner / sponsor pathways** (`partnership-sponsorship`, built_public_pathway) — Partner / Executive Briefing room and Institutional Salon.
@@ -741,6 +743,7 @@ This floor is bound to the repo-wide program map:
 - **Google Workspace/Gmail relationship bridge** (`google-workspace`, built_disabled_until_configured) — Desk Operations / Systems; relevant communications project into stakeholder relationship state.
 - **Consent-aware outbound stakeholder outreach bridge** (`outreach`, built_not_armed_by_default) — Access-controlled stakeholder pipeline; never a public blast console.
 - **Immutable normalized Equity Uprise event ledger** (`event-ledger`, built) — Control / Audit Records support and cross-floor institutional memory.
+- **Program funding / support pathway** (`program-support-funding`, built_public_pathway) — Institutional Salon / Support represents donations, sponsorship and program-support routing. The detailed Equity Uprise Mission Fund record exists but its per-program meters/splits remain quiet until governance, custody, accounting and reporting are publishable.
 
 ### Secondary / cross-floor capabilities
 - **Public perspectives with consent + moderation** (`perspectives`, built) — Public Forum record surfaces; moderation remains private Desk work on Floor 6.
@@ -760,8 +763,12 @@ This floor is bound to the repo-wide program map:
 - **Citation snapshots and impact events** (`citations-impact`, built) — Policy / Publication / Impact Wall and institutional proof.
 - **Equity Uprise/McCluster release preparation** (`music-release`, built_guarded) — Media / Release Control; high-risk delivery approval belongs to Floor 6.
 - **DDEX ERN delivery** (`ddex`, built_disabled_until_configured) — Media release pipeline, not a public room.
+- **Equity Uprise fellowship cohort / fellow record** (`fellowship-cohort`, built) — People + Network Lounge / Opportunity Wall carries the actual Equity Uprise cohort and fellow record, distinct from the external fellowship directory.
+- **Equity Uprise enterprise development program lane** (`enterprise-development`, built_guarded) — Opportunity Exchange includes a business/workforce/digital-capacity program lane. Program fit, measurable connected revenue and signed agreements are reviewed in meeting/briefing spaces; the building does not hardcode prices or imply automatic approval.
 
 ### Boundary rule
-The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, financial/accounting details, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
 
 This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
