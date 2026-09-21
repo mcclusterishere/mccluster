@@ -3,7 +3,7 @@
   "audit_date": "2026-09-21",
   "repo": "mcclusterishere/mccluster",
   "branch": "architecture/equity-uprise-core-v2",
-  "audited_head": "live-branch-reconciliation-2026-09-21-floor-01-digital-twin",
+  "audited_head": "live-branch-reconciliation-2026-09-21-floor-01-b1-complete",
   "purpose": "Exhaustive classification of Equity Uprise-specific and explicitly bound shared-platform product/support sources for the current Core V2 branch. Every discovered source must map to at least one canonical building capability or be explicitly support-only.",
   "discovery_rules": {
     "include": "Known Equity Uprise pages plus paths containing equity-uprise/equity_uprise, eu-/eu_ components, Equity Uprise Edge Functions, and Equity Uprise migrations.",
@@ -16,9 +16,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 256,
+  "candidate_count": 262,
   "capability_source_count": 102,
-  "support_only_count": 154,
+  "support_only_count": 160,
   "entries": [
     {
       "path": "_unfinished/README.md",
@@ -519,6 +519,13 @@
       "rationale": "Defines the canonical Seek First / Hitman's Halo control-plane boundary and the sanitized Equity Uprise Floor 6 projection."
     },
     {
+      "path": "docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "classification": "building_support_simulation_authority",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical B1 technical/service support-level program; does not add a product capability ID."
+    },
+    {
       "path": "docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
       "classification": "building_activity_simulation_authority",
       "capability_ids": [],
@@ -526,11 +533,46 @@
       "rationale": "Canonical Floor 1 virtual-building activity, simulation, training and multiplayer authority. It extends spatial/program semantics without creating a new audited product capability ID."
     },
     {
+      "path": "docs/design/equity-uprise-building/FLOOR-01-SITE-EGRESS-SIMULATION.md",
+      "classification": "building_site_egress_simulation_authority",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Canonical Floor 1 exterior, exit-discharge, service and assembly simulation authority."
+    },
+    {
+      "path": "docs/design/equity-uprise-building/production/basement-b1-program.json",
+      "classification": "building_support_simulation_authority_machine_readable",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Machine-readable B1 technical/service program."
+    },
+    {
       "path": "docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json",
       "classification": "building_activity_simulation_authority_machine_readable",
       "capability_ids": [],
       "support_only": true,
       "rationale": "Machine-readable companion for Floor 1 activity/simulation authority; intentionally separate from the current 56 product capability IDs."
+    },
+    {
+      "path": "docs/design/equity-uprise-building/production/floor-01/floor-01-site-egress.json",
+      "classification": "building_site_egress_simulation_authority_machine_readable",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Machine-readable Floor 1 site/egress simulation layer."
+    },
+    {
+      "path": "docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py",
+      "classification": "building_simulation_validation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Validation support for Floor 1/B1 simulation authority."
+    },
+    {
+      "path": "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
+      "classification": "building_code_safety_research_reference",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Research reference for code/accessibility/emergency-planning concepts; explicitly not a compliance certification."
     },
     {
       "path": "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md",
