@@ -4,6 +4,19 @@
 >
 > Any agent, model, designer, renderer, developer, image generator, 3D tool, CAD workflow, or lore/worldbuilding task that touches Equity Uprise architecture, rooms, floors, geometry, 360 environments, building imagery, spatial navigation, physical-world continuity, or architectural narrative **must read and obey this file and the references below before producing work**.
 
+## Core V2 migration authority
+
+> **BRANCH-SCOPED AUTHORITY — `architecture/equity-uprise-core-v2`**
+>
+> On this migration branch, the old floor-local core coordinates are superseded by:
+> 1. `BUILDING-CORE-V2-SPEC.md`
+> 2. `production/building-core-v2.json`
+> 3. `production/building-v2-validation.json`
+>
+> These shared files control vertical systems before any floor-specific spec, plan basis, DXF/SVG, production manifest, GLB or browser scene.
+>
+> Main remains Core V1 until the migration is fully regenerated, validated and promoted.
+
 ## Trigger conditions
 
 This authority applies whenever a task involves any of the following in connection with Equity Uprise:
@@ -69,7 +82,7 @@ Read in this order:
    - Level 7: `docs/design/equity-uprise-building/references/floor-07/`
    - Floor 6: `docs/design/equity-uprise-building/references/floor-06/`
 
-For geometry, prefer DXF → SVG → raster preview → later renders.
+For Core V2 geometry on this branch, prefer shared Core V2 spec/JSON → floor written basis → DXF → SVG → raster preview → deterministic production package → generated 3D/render/web output.
 
 ## Deterministic production packages
 
@@ -85,8 +98,8 @@ Floor 2 production package:
 - `docs/design/equity-uprise-building/production/floor-02/floor-02-scene-manifest.json`
 - companion material, lighting, camera, hotspot, routing and state JSON files in the same folder.
 
-Authority order remains:
-**written spec → schematic basis → DXF → SVG → deterministic production package → generated 3D/render/web output**.
+Core V2 branch authority order is:
+**BUILDING-CORE-V2-SPEC.md → building-core-v2.json → floor written spec → floor schematic basis → DXF → SVG → floor deterministic production package → generated 3D/render/web output**.
 
 The production package operationalizes the architecture; it may never override canonical dimensions, core placement, circulation, access, or room program.
 
@@ -132,8 +145,9 @@ Floor 1 currently establishes the building datum:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - 360 camera datum: approximately **(36, 28), 5'-4" AFF**;
 - 0° north: reception / feature wall;
@@ -150,8 +164,9 @@ Floor 2 preserves the Floor 1 building datum:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - forum table: approximately **12 ft diameter**, centered near **(36,39)**;
 - member check-in: adjacent to elevator, approximately **X 49–51 / Y 24–29**;
@@ -177,8 +192,9 @@ Floor 3 preserves the same building datum:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - Opportunity Exchange table: **16' × 4'**, centered near **(36,41)**;
 - People + Network lounge: **X 2–18 / Y 18–34**;
@@ -205,8 +221,9 @@ Floor 4 preserves the same building datum:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - Media / Listening planning zone: approximately **X 24–48 / Y 28–50**;
 - Culture Archive / Rally Gallery: approximately **X 2–18 / Y 18–38**;
@@ -236,8 +253,9 @@ Floor 5 preserves the same building datum:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - Policy Lab table: **16' × 5'**, centered near **(36,41)**;
 - Evidence + Proof Archive: **X 2–18 / Y 18–40**;
@@ -267,8 +285,9 @@ Floor 6 preserves the building datum and the Level 7 roof interface:
 - floor plate: **72'-0" × 72'-0" = 5,184 GSF**;
 - grid: **18' × 18' coordination module**;
 - elevator hoistway: **X 54–62 / Y 34–44**;
+- service/freight elevator shaft: **X 0–8 / Y 60–72**;
 - Stair A: **X 60–72 / Y 54–72**, with upward continuity reserved;
-- Stair B: **X 0–12 / Y 54–72**, with vertical continuity reserved;
+- Stair B: **X 8–18 / Y 54–72**, with vertical continuity reserved;
 - MEP / roof-service reservation: **X 50–60 / Y 66–72**;
 - Penthouse Command table: **16' × 5'**, centered near **(36,41)**, six seats maximum;
 - Institutional Salon / Join Lounge: **X 2–18 / Y 18–38**;
@@ -300,7 +319,7 @@ Locked schematic conditions:
 - grid: **18' × 18'**;
 - elevator shaft: **X 54–62 / Y 34–44**;
 - Stair A: **X 60–72 / Y 54–72**;
-- Stair B: **X 0–12 / Y 54–72**;
+- Stair B: **X 8–18 / Y 54–72**;
 - MEP/roof services: approximately **X 50–60 / Y 66–72**;
 - conceptual roof-access/core envelope: **X 50–64 / Y 30–48**;
 - ecosystem routing beacon: **X 46–50 / Y 24–30**;
@@ -333,6 +352,18 @@ The building contains **six enclosed occupied floors plus one navigable roof lev
 Level 7 is the roof, not a normal enclosed floor. It is the canonical cross-site departure/arrival layer and may contain a **candidate rooftop mobility pad / helipad zone** subject to later real-world feasibility.
 
 Do not add further levels or rename/reassign them without explicit owner approval.
+
+## Core V2 shared vertical systems
+
+- passenger elevator: **X 54–62 / Y 34–44**;
+- west service core: **X 0–18 / Y 54–72**;
+- service/freight elevator: **X 0–8 / Y 60–72**;
+- revised Stair B: **X 8–18 / Y 54–72**;
+- Stair A: **X 60–72 / Y 54–72**;
+- east MEP/riser: approximately **X 50–60 / Y 66–72**;
+- finished-floor elevations: **0, 13.5, 27, 40.5, 54, 67.5, 81 ft**;
+- per-floor stair placeholders may not redefine or shorten shared vertical geometry;
+- the combined stacked building model is the required proof of vertical continuity.
 
 ## Building-wide continuity rules
 
