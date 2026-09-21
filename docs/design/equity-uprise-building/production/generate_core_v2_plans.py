@@ -234,6 +234,51 @@ def normalize_dxf_metadata(path, level):
         elif key.startswith(stamp_prefix):
             indent=line[:len(line)-len(line.lstrip())]
             lines[i]=indent+stamp_prefix+"2000-01-01T00:00:00+00:00"
+
+    # ezdxf may emit ObjectDBX CLASS records in process-dependent order.
+    # Canonicalize the CLASSES section so byte output is stable without
+    # changing any geometry/entity data.
+    odd_tail=lines[-1:] if len(lines)%2 else []
+    pairs=[(lines[i],lines[i+1]) for i in range(0,len(lines)-1,2)]
+    class_start=class_end=None
+    for i,(code,value) in enumerate(pairs[:-1]):
+        if code.strip()=="0" and value.strip()=="SECTION":
+            ncode,nvalue=pairs[i+1]
+            if ncode.strip()=="2" and nvalue.strip()=="CLASSES":
+                class_start=i+2
+                break
+    if class_start is not None:
+        for i in range(class_start,len(pairs)):
+            code,value=pairs[i]
+            if code.strip()=="0" and value.strip()=="ENDSEC":
+                class_end=i
+                break
+    if class_start is not None and class_end is not None:
+        prefix=[]
+        records=[]
+        current=None
+        for pair in pairs[class_start:class_end]:
+            code,value=pair
+            if code.strip()=="0" and value.strip()=="CLASS":
+                if current is not None:
+                    records.append(current)
+                current=[pair]
+            elif current is None:
+                prefix.append(pair)
+            else:
+                current.append(pair)
+        if current is not None:
+            records.append(current)
+        def class_name(record):
+            for code,value in record:
+                if code.strip()=="1":
+                    return value.strip().upper()
+            return ""
+        records.sort(key=class_name)
+        body=prefix+[pair for record in records for pair in record]
+        pairs=pairs[:class_start]+body+pairs[class_end:]
+        lines=[line for pair in pairs for line in pair]+odd_tail
+
     path.write_text("\n".join(lines)+"\n",encoding="utf-8",newline="\n")
 
 def dxf(level,path):
