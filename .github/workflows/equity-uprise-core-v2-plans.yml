@@ -7,6 +7,7 @@ on:
     paths:
       - 'docs/design/equity-uprise-building/production/building-core-v2.json'
       - 'docs/design/equity-uprise-building/production/core-v2-floor-programs.json'
+      - 'docs/design/equity-uprise-building/production/basement-b1-program.json'
       - 'docs/design/equity-uprise-building/production/generate_core_v2_plans.py'
       - 'docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py'
       - '.github/workflows/equity-uprise-core-v2-plans.yml'
