@@ -60,6 +60,7 @@ for n,level in levels.items():
 
     required={z["route_key"] for z in level.get("zones",[]) if z.get("route_key")}
     required.update({s["route_key"] for s in level.get("spheres",[]) if s.get("route_key")})
+    required.update({m["route_key"] for m in level.get("interaction_modes",[]) if m.get("route_key")})
     missing=sorted(required-set(routes))
     check(f"floor {n} zone routes resolve",not missing,", ".join(missing))
 
@@ -68,6 +69,14 @@ for n,level in levels.items():
 
     freight_public=[h for h in hotspots.get("hotspots",[]) if "freight" in h.get("id","").lower() or "freight" in h.get("label","").lower()]
     check(f"floor {n} freight elevator has no public hotspot",not freight_public)
+
+# Interaction modes are explicit semantic states, not hidden capability claims.
+for n,level in levels.items():
+    modes=level.get("interaction_modes",[])
+    ids=[m.get("id") for m in modes]
+    check(f"floor {n} interaction mode ids unique",len(ids)==len(set(ids)),str(ids))
+    for mode in modes:
+        check(f"floor {n} mode {mode.get('id')} declares access",bool(mode.get("access")),str(mode.get("access")))
 
 # Passenger elevator service: Floors 1-6 only. Roof must not imply a stop.
 for n in range(1,7):
@@ -89,7 +98,11 @@ for n in range(1,8):
     check(f"floor {n} passenger selector excludes roof",7 not in dest,str(dest))
 
 # High-risk/private surfaces must never be declared public.
-high_risk={"media_release_ops","publication_submission","admin_desk","control_plane"}
+high_risk={
+    "media_release_ops","publication_submission","publication_distribution",
+    "admin_desk","control_plane","approvals","jobs","integrations",
+    "relationship_comms","outreach_ops","relationship_graph"
+}
 
 # Floor 6 Halo Globe is visible to all but never grants public write/control.
 halo_cap=next((x for x in caps if x.get("id")=="halo-spatial-intelligence"),None)
