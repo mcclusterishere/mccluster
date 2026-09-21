@@ -140,10 +140,17 @@ function visible(o){
  return true;
 }
 function setActive(el){document.querySelectorAll("button").forEach(x=>x.classList.remove("active"));if(el)el.classList.add("active")}
-document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;floorFilter=null;setActive(b);render()});
-document.querySelectorAll("[data-floor]").forEach(b=>b.onclick=()=>{floorFilter=+b.dataset.floor;mode="floor";target={x:36,y:38,z:levels[floorFilter-1]+4};dist=60;pitch=.43;setActive(b);render()});
+function setQuery(){
+ const u=new URL(location.href);
+ if(floorFilter){u.searchParams.set("floor",String(floorFilter));u.searchParams.delete("mode");}
+ else if(mode!=="all"){u.searchParams.set("mode",mode);u.searchParams.delete("floor");}
+ else{u.searchParams.delete("floor");u.searchParams.delete("mode");}
+ history.replaceState(null,"",u.pathname+u.search+u.hash);
+}
+document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;floorFilter=null;setActive(b);setQuery();render()});
+document.querySelectorAll("[data-floor]").forEach(b=>b.onclick=()=>{floorFilter=+b.dataset.floor;mode="floor";target={x:36,y:38,z:levels[floorFilter-1]+4};dist=60;pitch=.43;setActive(b);setQuery();render()});
 document.getElementById("wireBtn").onclick=e=>{wire=!wire;e.target.classList.toggle("active",wire);render()};
-document.getElementById("resetBtn").onclick=()=>{mode="all";floorFilter=null;yaw=-.68;pitch=.31;dist=155;target={x:36,y:38,z:39};setActive(document.querySelector('[data-mode="all"]'));render()};
+document.getElementById("resetBtn").onclick=()=>{mode="all";floorFilter=null;yaw=-.68;pitch=.31;dist=155;target={x:36,y:38,z:39};setActive(document.querySelector('[data-mode="all"]'));setQuery();render()};
 
 function sub(a,b){return{x:a.x-b.x,y:a.y-b.y,z:a.z-b.z}}function dot(a,b){return a.x*b.x+a.y*b.y+a.z*b.z}function cross(a,b){return{x:a.y*b.z-a.z*b.y,y:a.z*b.x-a.x*b.z,z:a.x*b.y-a.y*b.x}}function norm(a){const n=Math.hypot(a.x,a.y,a.z)||1;return{x:a.x/n,y:a.y/n,z:a.z/n}}
 function cam(){const cp=Math.cos(pitch),sp=Math.sin(pitch),cy=Math.cos(yaw),sy=Math.sin(yaw),pos={x:target.x+dist*cp*sy,y:target.y-dist*cp*cy,z:target.z+dist*sp};const f=norm(sub(target,pos));let r=norm(cross(f,{x:0,y:0,z:1}));if(Math.hypot(r.x,r.y,r.z)<.1)r={x:1,y:0,z:0};return{pos,f,r,u:norm(cross(r,f))}}
@@ -168,6 +175,13 @@ canvas.addEventListener("pointermove",e=>{if(!active.has(e.pointerId))return;con
 function up(e){active.delete(e.pointerId);pinch=null}canvas.addEventListener("pointerup",up);canvas.addEventListener("pointercancel",up);
 canvas.addEventListener("wheel",e=>{e.preventDefault();dist*=Math.exp(e.deltaY*.001);dist=Math.max(20,Math.min(280,dist));render()},{passive:false});
 window.addEventListener("resize",resize);window.addEventListener("error",e=>{boot.style.display="block";boot.textContent="Viewer error: "+(e.message||"unknown")});
+const q=new URLSearchParams(location.search),qFloor=Number(q.get("floor")),qMode=q.get("mode");
+if(Number.isInteger(qFloor)&&qFloor>=1&&qFloor<=7){
+ floorFilter=qFloor;mode="floor";target={x:36,y:38,z:levels[qFloor-1]+4};dist=60;pitch=.43;
+ const b=document.querySelector('[data-floor="'+qFloor+'"]');if(b)setActive(b);
+}else if(["all","cutaway","core"].includes(qMode)){
+ mode=qMode;floorFilter=null;const b=document.querySelector('[data-mode="'+qMode+'"]');if(b)setActive(b);
+}
 resize();
 })();
 </script>
