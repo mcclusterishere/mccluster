@@ -489,6 +489,33 @@ For deciding **what Equity Uprise contains and which floor represents it**, auth
 
 For **geometry**, `BUILDING-CORE-V2-SPEC.md` and `production/building-core-v2.json` remain above floor-local artifacts.
 
+## Validation evidence — 2026-09-21
+
+The reconciliation is backed by four separate deterministic checks:
+
+| Layer | Result | What it proves |
+|---|---:|---|
+| Repo-source classification | **260 / 260 passed** | 77 Equity Uprise-specific repo sources were discovered; 50 are capability sources, 27 are explicitly support-only, and none are unclassified. |
+| Capability / floor / routing coverage | **162 / 162 passed** | All 51 canonical capabilities are assigned to their primary and declared secondary floors; route keys resolve; private/high-risk routes remain non-public; Level 7 does not imply passenger-elevator service. |
+| Generated plan semantics | **310 / 310 passed** | Active Core V2 SVG/DXF/PNG sets exist for all seven levels; generated vector/CAD labels match the canonical floor program; stale semantic labels are absent; only the Core V2 triplets remain active. |
+| Combined stacked geometry | **27 / 27 passed** | Seven shared elevations and all 12 stair transitions remain continuous in the combined GLB; shared Core V2 geometry still passes its deterministic continuity checks. |
+
+Canonical audit support files:
+- `production/equity-uprise-repo-source-map-v2.json`
+- `production/verify_equity_uprise_repo_sources.py`
+- `production/verify_equity_uprise_program_coverage.py`
+- `production/verify_core_v2_plan_semantics.py`
+- `production/generated/equity-uprise-program-coverage-report.json`
+- `production/generated/equity-uprise-core-v2-plan-semantics-report.json`
+- `production/generated/equity-uprise-building-core-v2-report.json`
+
+Current combined GLB report:
+- meshes: **667**
+- deterministic geometry checks: **27 / 27**
+- GLB SHA-256: `1febf1593fcdac4a5848235b199e9981bbccbf137edf00e4455381852c3a5db7`
+
+These checks establish current repo/building consistency. They do **not** establish building-code compliance, permit readiness, structural adequacy, accessibility compliance, fire/life-safety compliance, or operational aviation feasibility.
+
 ## Audit verdict
 
 Against the Equity Uprise functionality currently implemented or explicitly represented in this repository:
