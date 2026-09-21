@@ -586,3 +586,8 @@ After the 2026-09-21 Floor 1/B1 authority reconciliation, committed derived arti
 ### Current-pass publication checkpoint
 
 Final current-pass derived-artifact publish completed after the Floor 1 render-readiness status and later-floor authority demotion changes. The committed generated snapshot now matches the current authority and is guarded by CI drift detection.
+
+
+### Deterministic derived-artifact guarantee
+
+DXF run-specific header metadata and program-coverage set iteration are normalized so committed derived artifacts can be checked byte-for-byte for deterministic drift.
