@@ -132,7 +132,7 @@ check("Halo route has separate public projection endpoint",str(halo_route.get("p
 for n in range(1,8):
     routing=json.loads((HERE/f"floor-{n:02d}"/f"floor-{n:02d}-routing.json").read_text())
     routes=routing.get("routes",{})
-    for key in high_risk:
+    for key in sorted(high_risk):
         r=routes.get(key,{})
         check(f"floor {n} {key} is not public",r.get("access")!="public",str(r.get("access")))
 
