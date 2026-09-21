@@ -171,27 +171,32 @@ The repo-source gate must prove that every discovered Equity Uprise-specific pro
 
 ## Which source controls what
 
-### Program / lore / room identity
+### Program / developmental intent / room identity
 
 Authority:
 1. repo reconciliation audit;
 2. capability map;
-3. building inventory;
-4. shared floor-program JSON;
-5. floor written spec.
+3. Lifetime Development journey / competency / evidence authority;
+4. building inventory;
+5. shared floor-program JSON;
+6. floor-specific digital-twin/activity authority when present;
+7. floor written spec **only to the maturity level declared by the shared floor-program JSON**.
+
+For a floor marked `pre-iterative-program-rewrite`, its legacy long-form room program is a working reference, not final authority.
 
 Do not invent a room, department, floor function or public-facing feature merely because it looks cinematic.
 
 ### Geometry / dimensions / vertical continuity
 
 Authority:
-1. floor schematic-plan basis;
-2. DXF;
-3. SVG;
-4. PNG preview;
-5. later renders.
+1. `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json` for shell, elevations, shafts, stairs, risers and vertical continuity;
+2. floor schematic-plan basis for floor-local coordination that does not conflict with the shared core;
+3. generated DXF;
+4. generated SVG;
+5. generated PNG preview;
+6. later renders.
 
-A generated image is **never** geometric authority.
+Generated DXF/SVG/PNG are **derived artifacts** and never override the machine-readable/shared written Core V2 authority. A generated image is never geometric authority.
 
 ### Visual materials / atmosphere
 
@@ -231,7 +236,7 @@ Floor 1 remains the principal building datum and the modeled **level of exit dis
 
 Floors 2–6 and Level 7 roof access must stack on this shell/core logic unless the owner explicitly approves a formal building-wide revision.
 
-## Floor 2 locked geometry
+## Floor 2 Core V2 chassis geometry — program provisional
 
 Floor 2 preserves the Floor 1 building datum:
 
@@ -254,12 +259,12 @@ Floor 2 preserves the Floor 1 building datum:
 
 Floor 2 has **no exterior public entrance, balcony, or terrace**.
 
-Canonical Floor 2 assets:
+Current generated Floor 2 chassis-plan assets:
 - `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg`
 - `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png`
 
-## Floor 3 locked geometry
+## Floor 3 Core V2 chassis geometry — program provisional
 
 Floor 3 preserves the same building datum:
 
@@ -283,12 +288,12 @@ Floor 3 preserves the same building datum:
 
 Floor 3 has **no exterior public entrance, balcony, or terrace**.
 
-Canonical Floor 3 assets:
+Current generated Floor 3 chassis-plan assets:
 - `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg`
 - `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png`
 
-## Floor 4 locked geometry
+## Floor 4 Core V2 chassis geometry — program provisional
 
 Floor 4 preserves the same building datum:
 
@@ -313,14 +318,14 @@ Floor 4 preserves the same building datum:
 
 Floor 4 has **no exterior public entrance, balcony, or terrace**.
 
-Canonical Floor 4 assets:
+Current generated Floor 4 chassis-plan assets:
 - `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg`
 - `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png`
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
-## Floor 5 locked geometry
+## Floor 5 Core V2 chassis geometry — program provisional
 
 Floor 5 preserves the same building datum:
 
@@ -345,14 +350,14 @@ Floor 5 preserves the same building datum:
 
 Floor 5 has **no exterior public entrance, balcony, or terrace**.
 
-Canonical Floor 5 assets:
+Current generated Floor 5 chassis-plan assets:
 - `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg`
 - `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png`
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
-## Floor 6 locked geometry
+## Floor 6 Core V2 chassis geometry — program provisional
 
 Floor 6 preserves the building datum and the Level 7 roof interface:
 
@@ -378,7 +383,7 @@ Floor 6 preserves the building datum and the Level 7 roof interface:
 
 Floor 6 has **no exterior public entrance, balcony, or terrace**. It is the last enclosed level and must preserve vertical/core/service continuity to **Level 7 — Roof / Mobility Portal**.
 
-Canonical Floor 6 assets:
+Current generated Floor 6 chassis-plan assets:
 - `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf`
 - `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg`
 - `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png`
@@ -389,11 +394,11 @@ The raster preview is derivative and cannot override the DXF/SVG/written geometr
 
 Floor 6 may contain exactly one canonical **Halo Globe / Spatial Intelligence** instrument under `HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`. It is a permissioned viewport into the shared McCluster Seek First / Hitman's Halo plane, not a new backend, room, floor, or tactical-surveillance authority. Public and non-owner modes are read-only. Owner/admin interaction must hand off to the protected spatial console and preserve source entitlements, provider terms, approvals, provenance and audit boundaries.
 
-## Level 7 locked geometry and ecosystem semantics
+## Level 7 Core V2 roof chassis and ecosystem-routing constraints — program provisional
 
 Level 7 preserves the inherited 72' × 72' roof datum and is the canonical **ecosystem plane**.
 
-Locked schematic conditions:
+Current chassis/coordination conditions:
 - roof plate: **72' × 72'**;
 - grid: **18' × 18'**;
 - elevator shaft: **X 54–62 / Y 34–44**;
@@ -468,7 +473,7 @@ Before generating an Equity Uprise building image:
 2. read the floor spec;
 3. inspect its canonical plan assets;
 4. state/verify the fixed core and cardinal orientation;
-5. preserve all locked geometry;
+5. preserve all current shared/chassis geometry;
 6. generate only after those checks pass.
 
 If a requested floor/level does not yet have a canonical written builder/360 spec, **stop the image-generation workflow and write/review the description first**. For Floor 6 roof-interface or Level 7 work, read the Level 7 canonical spec, schematic basis, and ecosystem-routing contract; the pre-program is historical context only.
@@ -479,7 +484,7 @@ Spatial lore must emerge from actual Equity Uprise functions documented in the r
 
 Allowed:
 - naming a circulation space consistently;
-- describing how a visitor experiences a locked room;
+- describing how a visitor experiences a current room/program state;
 - non-structural atmosphere/material details;
 - narrative transitions that respect actual floor purpose.
 
@@ -505,10 +510,10 @@ Each floor/roof level must receive, in order:
 
 1. written builder/program spec;
 2. owner review;
-3. schematic-plan basis locked to the building core;
+3. schematic-plan basis coordinated to the building core;
 4. vector/CAD plan assets;
 5. 360/image-generation spec;
 6. generated imagery;
 7. audit against the written/plan authority.
 
-No later generated image can retroactively redefine an earlier locked floor.
+No later generated image can retroactively redefine the shared Core V2 chassis or a reconciled floor authority.
