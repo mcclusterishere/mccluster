@@ -31,7 +31,9 @@ for c in caps:
         check(f"capability source exists: {c['id']} -> {source}",p.exists(),str(p))
 
 levels={int(x["level"]):x for x in PROGRAM["levels"]}
+cap_floors={int(x["level"]):x for x in CAP["floors"]}
 check("levels 1-7 present",set(levels)==set(range(1,8)),str(sorted(levels)))
+check("capability map levels 1-7 present",set(cap_floors)==set(range(1,8)),str(sorted(cap_floors)))
 
 # Every declared capability must be represented on its primary floor and every
 # declared secondary floor. No floor may claim a capability absent from the map.
@@ -44,6 +46,9 @@ for c in caps:
 
 known=set(cap_ids)
 for n,level in levels.items():
+    expected_cap_status="reconciled-current-iterative-pass" if level.get("design_maturity")=="reconciled-current-iterative-pass" else "working-pre-iterative-program"
+    check(f"floor {n} capability-map program status matches maturity",cap_floors[n].get("program_status")==expected_cap_status,str(cap_floors[n].get("program_status")))
+    check(f"floor {n} capability-map render readiness matches program",cap_floors[n].get("render_readiness")==("basic-render-ready" if n==1 else "chassis-only-not-final-program"),str(cap_floors[n].get("render_readiness")))
     unknown=[x for x in level.get("feature_ids",[]) if x not in known]
     check(f"floor {n} has no unknown capability ids",not unknown,", ".join(unknown))
 
@@ -56,7 +61,11 @@ for n,level in levels.items():
         continue
     routing=json.loads(routing_path.read_text())
     hotspots=json.loads(hotspots_path.read_text())
+    scene=json.loads((HERE/f"floor-{n:02d}"/f"floor-{n:02d}-scene-manifest.json").read_text())
     routes=routing.get("routes",{})
+    expected_scene_status="core-v2-active" if level.get("design_maturity")=="reconciled-current-iterative-pass" else "core-v2-provisional-program"
+    check(f"floor {n} scene status matches maturity",scene.get("status")==expected_scene_status,f"{scene.get('status')} != {expected_scene_status}")
+    check(f"floor {n} scene design maturity matches program",scene.get("design_maturity")==level.get("design_maturity"),f"{scene.get('design_maturity')} != {level.get('design_maturity')}")
 
     required={z["route_key"] for z in level.get("zones",[]) if z.get("route_key")}
     required.update({s["route_key"] for s in level.get("spheres",[]) if s.get("route_key")})
