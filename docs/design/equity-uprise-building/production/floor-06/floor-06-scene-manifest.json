@@ -35,7 +35,8 @@
     "status-health",
     "google-workspace",
     "outreach",
-    "event-ledger"
+    "event-ledger",
+    "program-support-funding"
   ],
   "authority": {
     "building_core": [
