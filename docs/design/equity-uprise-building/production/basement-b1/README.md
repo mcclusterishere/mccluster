@@ -12,7 +12,7 @@ Authority:
 - `../building-core-v2.json`
 - `../basement-b1-program.json`
 - `../underground-tunnel-network.json`
-- `../../BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md`
+- `../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
 - `../../UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
 
 Canonical plan:

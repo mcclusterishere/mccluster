@@ -44,7 +44,7 @@
       "../building-core-v2.json"
     ],
     "spatial_authority": [
-      "../../FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "../../FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md",
       "../../FLOOR-01-SCHEMATIC-PLAN-BASIS.md",
       "../../REFERENCE-AUTHORITY.md"
     ],
@@ -63,7 +63,7 @@
       "floor-01-site-egress.json"
     ],
     "basement_support_authority": [
-      "../../BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md",
       "../basement-b1-program.json"
     ]
   },
@@ -485,5 +485,11 @@
   "states_ref": "floor-01-states.json",
   "digital_twin_program_ref": "floor-01-digital-twin-program.json",
   "site_egress_ref": "floor-01-site-egress.json",
-  "basement_program_ref": "../basement-b1-program.json"
+  "basement_program_ref": "../basement-b1-program.json",
+  "simulation_objects_ref": "floor-01-simulation-objects.json",
+  "site_plan_geometry_authority": [
+    "../../references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf",
+    "../../references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg",
+    "../../references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png"
+  ]
 }

@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Core V2 generated plan semantic/artifact validation",
-  "checks_total": 437,
-  "checks_passed": 437,
+  "checks_total": 488,
+  "checks_passed": 488,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -2176,6 +2176,261 @@
       "name": "L7 manifest PNG points at Core V2",
       "passed": true,
       "detail": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "Floor 1 site plan README exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/README.md"
+    },
+    {
+      "name": "Floor 1 site artifact exists: equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg"
+    },
+    {
+      "name": "Floor 1 site artifact exists: equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf"
+    },
+    {
+      "name": "Floor 1 site artifact exists: equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png"
+    },
+    {
+      "name": "Floor 1 site artifact exists: floor-01-site-plan-generation-manifest.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/floor-01-site-plan-generation-manifest.json"
+    },
+    {
+      "name": "Floor 1 site README generated-only",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/references/floor-01-site/README.md"
+    },
+    {
+      "name": "Floor 1 site SVG label AED",
+      "passed": true,
+      "detail": "AED"
+    },
+    {
+      "name": "Floor 1 site DXF label AED",
+      "passed": true,
+      "detail": "AED"
+    },
+    {
+      "name": "Floor 1 site SVG label ASSEMBLY AREA A",
+      "passed": true,
+      "detail": "ASSEMBLY AREA A"
+    },
+    {
+      "name": "Floor 1 site DXF label ASSEMBLY AREA A",
+      "passed": true,
+      "detail": "ASSEMBLY AREA A"
+    },
+    {
+      "name": "Floor 1 site SVG label ASSEMBLY AREA B",
+      "passed": true,
+      "detail": "ASSEMBLY AREA B"
+    },
+    {
+      "name": "Floor 1 site DXF label ASSEMBLY AREA B",
+      "passed": true,
+      "detail": "ASSEMBLY AREA B"
+    },
+    {
+      "name": "Floor 1 site SVG label EAST EXIT DISCHARGE WALK",
+      "passed": true,
+      "detail": "EAST EXIT DISCHARGE WALK"
+    },
+    {
+      "name": "Floor 1 site DXF label EAST EXIT DISCHARGE WALK",
+      "passed": true,
+      "detail": "EAST EXIT DISCHARGE WALK"
+    },
+    {
+      "name": "Floor 1 site SVG label EMERGENCY TWO-WAY COMMUNICATION CONCEPT",
+      "passed": true,
+      "detail": "EMERGENCY TWO-WAY COMMUNICATION CONCEPT"
+    },
+    {
+      "name": "Floor 1 site DXF label EMERGENCY TWO-WAY COMMUNICATION CONCEPT",
+      "passed": true,
+      "detail": "EMERGENCY TWO-WAY COMMUNICATION CONCEPT"
+    },
+    {
+      "name": "Floor 1 site SVG label FIRE EXTINGUISHER CABINET \u2014 LOBBY",
+      "passed": true,
+      "detail": "FIRE EXTINGUISHER CABINET \u2014 LOBBY"
+    },
+    {
+      "name": "Floor 1 site DXF label FIRE EXTINGUISHER CABINET \u2014 LOBBY",
+      "passed": true,
+      "detail": "FIRE EXTINGUISHER CABINET \u2014 LOBBY"
+    },
+    {
+      "name": "Floor 1 site SVG label FIRE EXTINGUISHER CABINET \u2014 WEST SERVICE",
+      "passed": true,
+      "detail": "FIRE EXTINGUISHER CABINET \u2014 WEST SERVICE"
+    },
+    {
+      "name": "Floor 1 site DXF label FIRE EXTINGUISHER CABINET \u2014 WEST SERVICE",
+      "passed": true,
+      "detail": "FIRE EXTINGUISHER CABINET \u2014 WEST SERVICE"
+    },
+    {
+      "name": "Floor 1 site SVG label FIRST AID KIT",
+      "passed": true,
+      "detail": "FIRST AID KIT"
+    },
+    {
+      "name": "Floor 1 site DXF label FIRST AID KIT",
+      "passed": true,
+      "detail": "FIRST AID KIT"
+    },
+    {
+      "name": "Floor 1 site SVG label NORTH / REAR EXIT DISCHARGE WALK",
+      "passed": true,
+      "detail": "NORTH / REAR EXIT DISCHARGE WALK"
+    },
+    {
+      "name": "Floor 1 site DXF label NORTH / REAR EXIT DISCHARGE WALK",
+      "passed": true,
+      "detail": "NORTH / REAR EXIT DISCHARGE WALK"
+    },
+    {
+      "name": "Floor 1 site SVG label PUBLIC / ACCESSIBLE APPROACH",
+      "passed": true,
+      "detail": "PUBLIC / ACCESSIBLE APPROACH"
+    },
+    {
+      "name": "Floor 1 site DXF label PUBLIC / ACCESSIBLE APPROACH",
+      "passed": true,
+      "detail": "PUBLIC / ACCESSIBLE APPROACH"
+    },
+    {
+      "name": "Floor 1 site SVG label PUBLIC ENTRANCE INNER DOORS",
+      "passed": true,
+      "detail": "PUBLIC ENTRANCE INNER DOORS"
+    },
+    {
+      "name": "Floor 1 site DXF label PUBLIC ENTRANCE INNER DOORS",
+      "passed": true,
+      "detail": "PUBLIC ENTRANCE INNER DOORS"
+    },
+    {
+      "name": "Floor 1 site SVG label PUBLIC ENTRANCE OUTER DOORS",
+      "passed": true,
+      "detail": "PUBLIC ENTRANCE OUTER DOORS"
+    },
+    {
+      "name": "Floor 1 site DXF label PUBLIC ENTRANCE OUTER DOORS",
+      "passed": true,
+      "detail": "PUBLIC ENTRANCE OUTER DOORS"
+    },
+    {
+      "name": "Floor 1 site SVG label RESPONDER KEEP-CLEAR PERIMETER",
+      "passed": true,
+      "detail": "RESPONDER KEEP-CLEAR PERIMETER"
+    },
+    {
+      "name": "Floor 1 site DXF label RESPONDER KEEP-CLEAR PERIMETER",
+      "passed": true,
+      "detail": "RESPONDER KEEP-CLEAR PERIMETER"
+    },
+    {
+      "name": "Floor 1 site SVG label SECURE SERVICE / DELIVERY APRON",
+      "passed": true,
+      "detail": "SECURE SERVICE / DELIVERY APRON"
+    },
+    {
+      "name": "Floor 1 site DXF label SECURE SERVICE / DELIVERY APRON",
+      "passed": true,
+      "detail": "SECURE SERVICE / DELIVERY APRON"
+    },
+    {
+      "name": "Floor 1 site SVG label SECURE SERVICE / DELIVERY ENTRANCE",
+      "passed": true,
+      "detail": "SECURE SERVICE / DELIVERY ENTRANCE"
+    },
+    {
+      "name": "Floor 1 site DXF label SECURE SERVICE / DELIVERY ENTRANCE",
+      "passed": true,
+      "detail": "SECURE SERVICE / DELIVERY ENTRANCE"
+    },
+    {
+      "name": "Floor 1 site SVG label SOUTH PUBLIC WAY / STREET EDGE",
+      "passed": true,
+      "detail": "SOUTH PUBLIC WAY / STREET EDGE"
+    },
+    {
+      "name": "Floor 1 site DXF label SOUTH PUBLIC WAY / STREET EDGE",
+      "passed": true,
+      "detail": "SOUTH PUBLIC WAY / STREET EDGE"
+    },
+    {
+      "name": "Floor 1 site SVG label SPILL KIT",
+      "passed": true,
+      "detail": "SPILL KIT"
+    },
+    {
+      "name": "Floor 1 site DXF label SPILL KIT",
+      "passed": true,
+      "detail": "SPILL KIT"
+    },
+    {
+      "name": "Floor 1 site SVG label STAIR A EXIT DISCHARGE",
+      "passed": true,
+      "detail": "STAIR A EXIT DISCHARGE"
+    },
+    {
+      "name": "Floor 1 site DXF label STAIR A EXIT DISCHARGE",
+      "passed": true,
+      "detail": "STAIR A EXIT DISCHARGE"
+    },
+    {
+      "name": "Floor 1 site SVG label STAIR B EXIT DISCHARGE",
+      "passed": true,
+      "detail": "STAIR B EXIT DISCHARGE"
+    },
+    {
+      "name": "Floor 1 site DXF label STAIR B EXIT DISCHARGE",
+      "passed": true,
+      "detail": "STAIR B EXIT DISCHARGE"
+    },
+    {
+      "name": "Floor 1 site SVG label YOU ARE HERE / EGRESS MAP",
+      "passed": true,
+      "detail": "YOU ARE HERE / EGRESS MAP"
+    },
+    {
+      "name": "Floor 1 site DXF label YOU ARE HERE / EGRESS MAP",
+      "passed": true,
+      "detail": "YOU ARE HERE / EGRESS MAP"
+    },
+    {
+      "name": "Floor 1 site SVG label YOU ARE HERE / EGRESS MAP \u2014 NORTH",
+      "passed": true,
+      "detail": "YOU ARE HERE / EGRESS MAP \u2014 NORTH"
+    },
+    {
+      "name": "Floor 1 site DXF label YOU ARE HERE / EGRESS MAP \u2014 NORTH",
+      "passed": true,
+      "detail": "YOU ARE HERE / EGRESS MAP \u2014 NORTH"
+    },
+    {
+      "name": "Floor 1 site PNG signature",
+      "passed": true,
+      "detail": "bytes=68918"
+    },
+    {
+      "name": "Floor 1 site PNG nontrivial size",
+      "passed": true,
+      "detail": "bytes=68918"
+    },
+    {
+      "name": "Floor 1 site active plan triplet only",
+      "passed": true,
+      "detail": "[\"equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf\", \"equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png\", \"equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg\"]"
     },
     {
       "name": "contact sheet exists",

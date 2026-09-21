@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1120" viewBox="0 0 1100 1120">
+<style>.t{font-family:Arial,sans-serif;fill:#111}.small{font-size:8px}.med{font-size:10px}.title{font-size:18px;font-weight:700}.site{stroke:#555;stroke-width:1.5}.bldg{fill:none;stroke:#111;stroke-width:4}.door{stroke:#851a1d;stroke-width:5}.equip{fill:#851a1d;stroke:#fff;stroke-width:1}</style>
+<text x="45" y="30" class="t title">EQUITY UPRISE — FLOOR 01 SITE / EXIT DISCHARGE</text>
+<text x="45" y="50" class="t med">CORE V2 SITE / EGRESS SIMULATION PLAN · NOT FOR CONSTRUCTION</text>
+<rect x="195.0" y="860.0" width="630.0" height="70.0" fill="#d3d5d6" class="site"/>
+<text x="510.0" y="895.0" text-anchor="middle" dominant-baseline="middle" class="t small">SOUTH PUBLIC WAY / STREET EDGE</text>
+<rect x="475.0" y="720.0" width="70.0" height="140.0" fill="#e8e8e3" class="site"/>
+<text x="510.0" y="790.0" text-anchor="middle" dominant-baseline="middle" class="t small">PUBLIC / ACCESSIBLE APPROACH</text>
+<rect x="720.0" y="358.3333333333333" width="70.0" height="501.66666666666663" fill="#e8e8e3" class="site"/>
+<text x="755.0" y="609.1666666666666" text-anchor="middle" dominant-baseline="middle" class="t small">EAST EXIT DISCHARGE WALK</text>
+<polyline points="378.75,300.0 378.75,195.0 790.0,195.0 790.0,860.0" fill="none" stroke="#666" stroke-width="6"/>
+<text x="790.0" y="195.0" text-anchor="middle" class="t small">NORTH / REAR EXIT DISCHARGE WALK</text>
+<rect x="160.0" y="323.3333333333333" width="140.0" height="116.66666666666666" fill="#d7cdc1" class="site"/>
+<text x="230.0" y="381.66666666666663" text-anchor="middle" dominant-baseline="middle" class="t small">SECURE SERVICE / DELIVERY APRON</text>
+<rect x="813.3333333333333" y="626.6666666666666" width="116.66666666666666" height="140.0" fill="#dde4d7" class="site"/>
+<text x="871.6666666666666" y="696.6666666666666" text-anchor="middle" dominant-baseline="middle" class="t small">ASSEMBLY AREA A</text>
+<rect x="813.3333333333333" y="125.0" width="116.66666666666666" height="140.0" fill="#dde4d7" class="site"/>
+<text x="871.6666666666666" y="195.0" text-anchor="middle" dominant-baseline="middle" class="t small">ASSEMBLY AREA B</text>
+<rect x="230.0" y="230.0" width="560.0" height="560.0" fill="none" stroke="#8a1f23" stroke-width="2" stroke-dasharray="6 5"/>
+<text x="786.0" y="242.0" text-anchor="end" class="t small">RESPONDER KEEP-CLEAR PERIMETER</text>
+<rect x="300.0" y="300.0" width="420.0" height="420.0" class="bldg"/>
+<text x="510.0" y="510.0" text-anchor="middle" class="t med">EQUITY UPRISE FLOOR 1 FOOTPRINT</text>
+<line x1="480.8333333333333" y1="720.0" x2="539.1666666666666" y2="720.0" class="door"/>
+<text x="510.0" y="713.0" class="t small">PUBLIC ENTRANCE OUTER DOORS</text>
+<line x1="480.8333333333333" y1="667.5" x2="539.1666666666666" y2="667.5" class="door"/>
+<text x="510.0" y="660.5" class="t small">PUBLIC ENTRANCE INNER DOORS</text>
+<line x1="720.0" y1="393.3333333333333" x2="720.0" y2="370.0" class="door"/>
+<text x="727.0" y="381.66666666666663" class="t small">STAIR A EXIT DISCHARGE</text>
+<line x1="370.0" y1="300.0" x2="387.5" y2="300.0" class="door"/>
+<text x="378.75" y="293.0" class="t small">STAIR B EXIT DISCHARGE</text>
+<line x1="300.0" y1="393.3333333333333" x2="300.0" y2="375.8333333333333" class="door"/>
+<text x="307.0" y="384.5833333333333" class="t small">SECURE SERVICE / DELIVERY ENTRANCE</text>
+<circle cx="556.6666666666666" cy="451.66666666666663" r="4" class="equip"/>
+<text x="563.6666666666666" y="454.66666666666663" class="t small">AED</text>
+<circle cx="550.8333333333333" cy="451.66666666666663" r="4" class="equip"/>
+<text x="557.8333333333333" y="454.66666666666663" class="t small">FIRST AID KIT</text>
+<circle cx="609.1666666666666" cy="399.16666666666663" r="4" class="equip"/>
+<text x="616.1666666666666" y="402.16666666666663" class="t small">FIRE EXTINGUISHER CABINET — LOBBY</text>
+<circle cx="405.0" cy="387.5" r="4" class="equip"/>
+<text x="412.0" y="390.5" class="t small">FIRE EXTINGUISHER CABINET — WEST SERVICE</text>
+<circle cx="510.0" cy="340.8333333333333" r="4" class="equip"/>
+<text x="517.0" y="343.8333333333333" class="t small">SPILL KIT</text>
+<circle cx="580.0" cy="562.5" r="4" class="equip"/>
+<text x="587.0" y="565.5" class="t small">YOU ARE HERE / EGRESS MAP</text>
+<circle cx="527.5" cy="387.5" r="4" class="equip"/>
+<text x="534.5" y="390.5" class="t small">YOU ARE HERE / EGRESS MAP — NORTH</text>
+<circle cx="609.1666666666666" cy="492.5" r="4" class="equip"/>
+<text x="616.1666666666666" y="495.5" class="t small">EMERGENCY TWO-WAY COMMUNICATION CONCEPT</text>
+<text x="45" y="1070" class="t med">Generated-only site / egress simulation authority · not a permit/site-plan.</text>
+</svg>
