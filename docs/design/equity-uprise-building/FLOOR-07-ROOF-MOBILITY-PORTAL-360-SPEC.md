@@ -504,3 +504,21 @@ The default conceptual return is Level 7.
 - [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
 - [ ] shared slab openings remain unobstructed
 - [ ] no floor-local decorative stair is treated as vertical-continuity authority
+
+## Repo capability binding — 2026-09-21 reconciliation audit
+
+This floor is bound to the repo-wide program map:
+`production/equity-uprise-capability-map-v2.json`.
+
+### Primary capabilities
+- **Cross-site ecosystem routing/departure/arrival layer** (`ecosystem-routing`, built_as_building_contract) — Ecosystem Routing Interface.
+- **Candidate rooftop mobility reservation** (`roof-mobility`, schematic_future_feasibility) — Candidate Mobility Zone only; no operational aviation claim.
+- **Uprise World experimental visual system** (`uprise-world`, experimental_separate) — May be a Level 7 destination route later; must not dictate building geometry or branding.
+
+### Secondary / cross-floor capabilities
+- None.
+
+### Boundary rule
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
