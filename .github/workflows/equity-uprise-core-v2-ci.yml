@@ -70,10 +70,35 @@ jobs:
       - name: Verify Floor 1 / B1 authority boundary
         run: python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
 
+      - name: Require committed generated artifacts to be current
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            docs/design/equity-uprise-building/references
+            docs/design/equity-uprise-building/production/basement-b1
+            docs/design/equity-uprise-building/production/floor-01
+            docs/design/equity-uprise-building/production/floor-02
+            docs/design/equity-uprise-building/production/floor-03
+            docs/design/equity-uprise-building/production/floor-04
+            docs/design/equity-uprise-building/production/floor-05
+            docs/design/equity-uprise-building/production/floor-06
+            docs/design/equity-uprise-building/production/floor-07
+            docs/design/equity-uprise-building/production/generated
+          )
+          dirty="$(git status --short -- "${paths[@]}")"
+          if [ -n "$dirty" ]; then
+            echo "Committed Equity Uprise derived artifacts are stale after deterministic regeneration:" >&2
+            echo "$dirty" >&2
+            git diff --stat -- "${paths[@]}" >&2 || true
+            exit 1
+          fi
+          echo "Committed Equity Uprise derived artifacts match deterministic regeneration."
+
   publish-generated:
     name: Publish generated building artifacts
     needs: validate
-    if: ${{ github.ref_name != 'main' && ((github.event_name == 'workflow_dispatch' && inputs.publish_generated == true) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-generated]'))) }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_generated == true && github.ref_name != 'main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
