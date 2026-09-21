@@ -4,7 +4,8 @@
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
 > Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 > Canonical Floor 1 semantic identity: **Arrival / Orientation / Intake**  
-> Canonical Floor 1 long-form spec (legacy-compatible filename): `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
+> Canonical Floor 1 long-form spec (legacy-compatible filename): `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`  
+Legacy-compatible filename; semantic identity is **Arrival / Orientation / Intake**.
 > **Mandatory spatial authority:** `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
 > Canonical Floor 1 plan assets: `docs/design/equity-uprise-building/references/floor-01/`
 > Canonical Floor 2 spec: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
@@ -380,7 +381,11 @@ Authority:
 - `equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
 - `equity-uprise-building/production/underground-tunnel-network.json`
 
-## Floor 1 canonical file
+Derived restricted scene package:
+- `equity-uprise-building/production/basement-b1/README.md`
+- generated B1 manifest/materials/lighting/camera/hotspots/routing/states in the same folder
+
+## Floor 1 canonical long-form file
 
 `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
 
@@ -398,9 +403,9 @@ Each remaining floor must be completed one at a time:
 
 ---
 
-## 3. Locked building hierarchy and physical continuity
+## 3. Building hierarchy and physical continuity
 
-The vertical narrative is:
+The current working vertical narrative is:
 
 **arrival → public conversation → people/opportunity → culture/media → policy/proof → institutional direction → rooftop mobility / departure**
 
