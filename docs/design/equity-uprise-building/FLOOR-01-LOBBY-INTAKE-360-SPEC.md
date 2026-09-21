@@ -1,10 +1,11 @@
 # Equity Uprise Building — Floor 01: Lobby + Intake
 
-> Status: **CANONICAL FLOOR 1 SPEC — LOCKED FOR QUALITY CONTROL**  
+> Status: **CANONICAL FLOOR 1 EXPERIENCE / DIGITAL-TWIN SPEC — CORE V2 CHASSIS RETAINED**  
 > Building: compact six-floor Equity Uprise headquarters / civic institute  
-> Floor identity: **Lobby + Intake**  
+> Floor identity: **Arrival / Orientation / Intake**  
 > This file is the source of truth for future Floor 1 floor-plan work, 360 panorama generation, hotspot placement, and implementation.  
 > Do not generate a new Floor 1 environment that conflicts with this document.
+> Activity/simulation authority: `FLOOR-01-DIGITAL-TWIN-PROGRAM.md` + `production/floor-01/floor-01-digital-twin-program.json`
 > Geometry companion: `FLOOR-01-SCHEMATIC-PLAN-BASIS.md`
 > Mandatory authority: `REFERENCE-AUTHORITY.md`
 > Canonical plan references: `references/floor-01/`
@@ -13,6 +14,14 @@
 > **Core V2 migration authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
 > Combined-model finished-floor elevation: **0'-0"**.
 > Shared vertical systems override any stale Core V1 coordinate language on this branch.
+
+### Digital-twin fidelity rule
+
+Floor 1 is part of a virtual headquarters, but it must be designed and modeled as a high-fidelity hypothetical physical building. Architectural, accessibility, life-safety, MEP, IT, security, service and operational systems are educational/simulation assets, not decorative leftovers.
+
+The project does **not** currently claim real-world code compliance. Exact compliance requires a later explicit simulation profile with jurisdiction, code editions, occupancy assumptions and engineering assumptions.
+
+The Floor 1 activity/simulation program controls what people do and what systems/scenarios must be representable. The shared Core V2 files continue to control the fixed vertical chassis.
 
 ## 1. Architectural intent
 
@@ -53,7 +62,31 @@ The floor should be visually calm. Empty space is intentional.
 Floor 1 remains the only ground-level public entrance. The freight/service elevator is back-of-house/service circulation, not a second public entrance.
 
 ### Floor 1 public-facing area
-The existing lobby, reception, visitor lounge, intake room, directory and public entrance remain the primary Floor 1 identity. Core V2 changes the north/west service geometry, not the basic arrival narrative.
+The approved Floor 1 program now centers the Entry Vestibule, Arrival Atrium, Orientation Lounge, Intake / Verification Consultation, Development Passport Studio, Journey Wall, Reception / Concierge / Security Desk and Next Action / Building Directory. Core V2 preserves the north/west service and vertical chassis while the digital-twin program deepens the floor's institutional and simulation functions.
+
+### Arrival Atrium
+
+Planning zone:
+- **X20–52 / Y10–30**
+
+Purpose:
+- public arrival and avatar presence;
+- returning-member continue-work prompt;
+- wayfinding and meeting routing;
+- emergency-map and alarm/navigation context.
+
+### Development Passport Studio
+
+Planning zone:
+- **X20–52 / Y32–44**
+
+Purpose:
+- goals and pathway selection;
+- competency/credential/project review;
+- private personalized next action;
+- privacy/accessibility preferences.
+
+The Studio is a shared architectural area with private user interfaces. Nearby avatars may see occupancy/activity status but never another participant's private Passport content.
 
 ## 3. Canonical 360 coordinate system
 
@@ -90,7 +123,7 @@ This seam location is a public exterior entry **only on Floor 1**.
 
 ### -90° — left quadrant
 
-The **visitor lounge and intake room**.
+The **orientation lounge and intake room**.
 
 ---
 
@@ -128,7 +161,7 @@ Wayfinding should be intuitive before signage is read.
 
 ---
 
-## 5. Reception zone
+## 5. Reception / Concierge / Security zone
 
 ### Function
 
@@ -175,7 +208,7 @@ One secondary line such as **LOBBY + INTAKE** or a small directory is acceptable
 
 ---
 
-## 6. Visitor lounge
+## 6. Orientation lounge
 
 Locate left of the central lobby.
 
@@ -281,22 +314,19 @@ The browser/3D model may no longer use shortened decorative stair flights as ver
 
 ## 9. Public wayfinding / digital interaction
 
-Floor 1 gets **one** public digital interaction point, not a bank of kiosks.
+Floor 1 gets **one canonical wayfinding / next-action terminal**, not a bank of competing public kiosks.
 
-A single slim freestanding or wall-mounted directory can provide:
+The Development Passport Studio may contain multiple work positions because it is a work area, not a collection of unrelated lobby kiosks.
+
+The slim Next Action / Building Directory can provide:
 - check in;
 - building directory;
+- personalized next action after authentication;
 - appointment lookup;
-- accessibility/help request.
+- accessible-route/help request;
+- emergency-route guidance during scenarios.
 
-Do not show three separate kiosks for:
-- Submit an Idea;
-- Join Network;
-- Explore Opportunities.
-
-Those are digital destinations, not three pieces of lobby furniture.
-
-A visitor can be routed to those functions through the single directory or the site.
+Do not create separate lobby kiosks for every Equity Uprise capability. The building routes people into work; it does not turn the lobby into a menu wall.
 
 ---
 
@@ -308,7 +338,7 @@ Core V2 replans the north support band around the West Service Core.
 - public/support corridor: **X18–60 / Y54–60**
 - accessible restroom A: **X18–26 / Y60–70**
 - accessible restroom B: **X26–34 / Y60–70**
-- reception support / storage: **X34–42 / Y60–72**
+- building operations / life safety: **X34–42 / Y60–72**
 - IT / electrical: **X42–50 / Y60–72**
 - janitor: **X50–54 / Y60–66**
 - MEP / riser: **X50–60 / Y66–72**
@@ -696,7 +726,7 @@ Before approving any new Floor 1 panorama, answer yes to every item:
 This floor is bound to the repo-wide program map:
 `production/equity-uprise-capability-map-v2.json`.
 
-The current repo-wide audit classifies **241 Equity Uprise semantic sources** and **55 canonical capabilities**. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+The current capability authority contains **56 canonical building capabilities**; repo-source counts are governed by the generated source-coverage report. The separate Lifetime Development competency architecture is intentionally not collapsed into the building-capability count.
 
 ### Primary capabilities
 - **M-Verified organization/profile intake** (`verification`, built_manual) — Intake / Verification Consultation on Floor 1; verified identity becomes part of Floor 3 network context.
