@@ -34,8 +34,7 @@
         "z": 4.2
       },
       "zone_id": "zone_02",
-      "action": "open_route",
-      "route_key": "institutional_join"
+      "action": "focus_zone"
     },
     {
       "id": "hs_zone_03",
@@ -103,7 +102,7 @@
       },
       "zone_id": "zone_06",
       "action": "open_route",
-      "route_key": "institutional_overview"
+      "route_key": "floor_selector"
     },
     {
       "id": "hs_zone_07",

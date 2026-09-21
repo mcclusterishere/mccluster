@@ -267,8 +267,7 @@
         "y1": 12,
         "x2": 18,
         "y2": 28
-      },
-      "route_key": "institutional_join"
+      }
     },
     {
       "id": "zone_03",
@@ -316,7 +315,7 @@
         "x2": 51,
         "y2": 29
       },
-      "route_key": "institutional_overview"
+      "route_key": "floor_selector"
     },
     {
       "id": "north_corridor",

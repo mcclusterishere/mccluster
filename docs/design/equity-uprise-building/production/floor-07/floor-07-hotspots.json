@@ -68,8 +68,7 @@
         "z": 85.2
       },
       "zone_id": "zone_04",
-      "action": "open_route",
-      "route_key": "ecosystem_routes"
+      "action": "focus_zone"
     },
     {
       "id": "hs_zone_05",
