@@ -98,6 +98,27 @@ Floor 2 production package:
 - `docs/design/equity-uprise-building/production/floor-02/floor-02-scene-manifest.json`
 - companion material, lighting, camera, hotspot, routing and state JSON files in the same folder.
 
+
+Floor 3 Core V2 production package:
+- `docs/design/equity-uprise-building/production/floor-03/README.md`
+- `docs/design/equity-uprise-building/production/floor-03/floor-03-scene-manifest.json`
+
+Floor 4 Core V2 production package:
+- `docs/design/equity-uprise-building/production/floor-04/README.md`
+- `docs/design/equity-uprise-building/production/floor-04/floor-04-scene-manifest.json`
+
+Floor 5 Core V2 production package:
+- `docs/design/equity-uprise-building/production/floor-05/README.md`
+- `docs/design/equity-uprise-building/production/floor-05/floor-05-scene-manifest.json`
+
+Floor 6 Core V2 production package:
+- `docs/design/equity-uprise-building/production/floor-06/README.md`
+- `docs/design/equity-uprise-building/production/floor-06/floor-06-scene-manifest.json`
+
+Floor 7 Core V2 production package:
+- `docs/design/equity-uprise-building/production/floor-07/README.md`
+- `docs/design/equity-uprise-building/production/floor-07/floor-07-scene-manifest.json`
+
 Core V2 branch authority order is:
 **BUILDING-CORE-V2-SPEC.md → building-core-v2.json → floor written spec → floor schematic basis → DXF → SVG → floor deterministic production package → generated 3D/render/web output**.
 
