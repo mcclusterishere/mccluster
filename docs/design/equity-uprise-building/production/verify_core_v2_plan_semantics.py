@@ -13,7 +13,9 @@ BUILDING = HERE.parent
 REFS = BUILDING / "references"
 PROGRAM = json.loads((HERE / "core-v2-floor-programs.json").read_text())
 B1 = json.loads((HERE / "basement-b1-program.json").read_text())
+SITE = json.loads((HERE / "floor-01" / "floor-01-site-egress.json").read_text())
 PLAN_LEVELS = [B1] + PROGRAM["levels"]
+SITE_OUT_NAME = "equity-uprise-floor-01-site-egress-core-v2-schematic-v1"
 
 OUT_NAMES = {
     0: "equity-uprise-basement-b1-core-v2-schematic-v1",
@@ -147,10 +149,19 @@ for level in PLAN_LEVELS:
         for p in floor_dir.iterdir()
         if p.is_file() and p.suffix.lower() in {".dxf", ".svg", ".png"}
     )
-    expected_triplet = sorted([f"{base}.dxf", f"{base}.svg", f"{base}.png"])
+    expected_active = [f"{base}.dxf", f"{base}.svg", f"{base}.png"]
+    if n == 1:
+        expected_active += [f"{SITE_OUT_NAME}.dxf", f"{SITE_OUT_NAME}.svg", f"{SITE_OUT_NAME}.png"]
+        for label in ["STAIR A EXIT DISCHARGE","STAIR B EXIT DISCHARGE","SECURE SERVICE / DELIVERY ENTRANCE"]:
+            check(f"L1 main SVG exterior opening {label}",label in svg_text,label)
+            check(f"L1 main DXF exterior opening {label}",label in dxf_text,label)
+    if level.get("basement"):
+        marker="TO FUTURE UNDERGROUND NETWORK"
+        check("B1 SVG tunnel continuation marker",marker in svg_text,marker)
+        check("B1 DXF tunnel continuation marker",marker in dxf_text,marker)
     check(
-        f"L{n} active plan triplet only",
-        active == expected_triplet,
+        f"L{n} active generated plan set only",
+        active == sorted(expected_active),
         json.dumps(active),
     )
 
@@ -196,6 +207,49 @@ if manifest_path.exists():
             files.get("png", "").endswith(expected_base + ".png"),
             files.get("png", ""),
         )
+        if n == 1:
+            site_files=row.get("site_plan_files",{})
+            for ext in ("dxf","svg","png"):
+                check(
+                    f"L1 manifest site {ext.upper()} points at generated site plan",
+                    site_files.get(ext,"").endswith(SITE_OUT_NAME + "." + ext),
+                    site_files.get(ext,""),
+                )
+            check(
+                "L1 manifest site authority",
+                row.get("site_plan_authority")=="production/floor-01/floor-01-site-egress.json",
+                str(row.get("site_plan_authority")),
+            )
+
+site_dir=REFS/"floor-01"
+site_svg=site_dir/f"{SITE_OUT_NAME}.svg"
+site_dxf=site_dir/f"{SITE_OUT_NAME}.dxf"
+site_png=site_dir/f"{SITE_OUT_NAME}.png"
+for p in (site_svg,site_dxf,site_png):
+    check(f"Floor 1 site plan {p.suffix} exists",p.exists(),str(p))
+if site_svg.exists() and site_dxf.exists():
+    st=site_svg.read_text(errors="ignore"); dt=site_dxf.read_text(errors="ignore")
+    required_site_labels=[
+        "SOUTH PUBLIC WAY / STREET EDGE",
+        "PUBLIC / ACCESSIBLE APPROACH",
+        "EAST EXIT DISCHARGE WALK",
+        "NORTH / REAR EXIT DISCHARGE WALK",
+        "SECURE SERVICE / DELIVERY APRON",
+        "ASSEMBLY AREA A",
+        "ASSEMBLY AREA B",
+        "STAIR A EXIT DISCHARGE",
+        "STAIR B EXIT DISCHARGE",
+        "SECURE SERVICE / DELIVERY ENTRANCE",
+        "AED",
+        "EMERGENCY TWO-WAY COMMUNICATION CONCEPT",
+    ]
+    for label in required_site_labels:
+        check(f"Floor 1 site SVG label {label}",label in st,label)
+        check(f"Floor 1 site DXF label {label}",label in dt,label)
+if site_png.exists():
+    raw=site_png.read_bytes()
+    check("Floor 1 site PNG signature",raw[:8]==b"\x89PNG\r\n\x1a\n")
+    check("Floor 1 site PNG nontrivial size",len(raw)>10000,f"bytes={len(raw)}")
 
 sheet = REFS / "equity-uprise-core-v2-plan-contact-sheet.png"
 check("contact sheet exists", sheet.exists())
