@@ -9,7 +9,7 @@ These files are the visual/CAD representation of the locked Floor 4 Media + Cult
 - `equity-uprise-floor-04-media-culture-schematic-v1.dxf`
   - CAD-style downstream geometry handoff.
 - `equity-uprise-floor-04-media-culture-schematic-v1.png`
-  - raster preview when present; never overrides DXF/SVG/written dimensions.
+  - raster preview for quick visual inspection; never overrides DXF/SVG/written dimensions.
 
 ## Mandatory companion documents
 
