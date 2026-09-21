@@ -104,7 +104,9 @@ check("Floor 1 primary competencies match canonical stage 1",f1_program.get("pri
 check("Floor 1 all primary competencies exist",all(x in catalog_ids for x in f1_program.get("primary_competency_ids",[])),str(f1_program.get("primary_competency_ids")))
 check("Floor 1 all secondary competencies exist",all(x in catalog_ids for x in f1_program.get("secondary_competency_ids",[])),str(f1_program.get("secondary_competency_ids")))
 check("Floor 1 maturity reconciled",f1_program.get("design_maturity")=="reconciled-current-iterative-pass",str(f1_program.get("design_maturity")))
-check("Floors 2-7 remain explicitly provisional",all(x.get("design_maturity")=="pre-iterative-program-rewrite" for x in PROGRAMS["levels"] if x["level"]>=2),str([(x["level"],x.get("design_maturity")) for x in PROGRAMS["levels"] if x["level"]>=2]))
+f2_program=next(x for x in PROGRAMS["levels"] if x["level"]==2)
+check("Floor 2 maturity reconciled",f2_program.get("design_maturity")=="reconciled-current-iterative-pass",str(f2_program.get("design_maturity")))
+check("Floors 3-7 remain explicitly provisional",all(x.get("design_maturity")=="pre-iterative-program-rewrite" for x in PROGRAMS["levels"] if x["level"]>=3),str([(x["level"],x.get("design_maturity")) for x in PROGRAMS["levels"] if x["level"]>=3]))
 
 # Floor 1 authority must point at the resolved site/B1 layers.
 check("Floor 1 site ref",F1.get("site_egress_ref")=="floor-01-site-egress.json",str(F1.get("site_egress_ref")))
