@@ -4,6 +4,18 @@
 > Scope: website/building ecosystem behavior, not roof geometry.  
 > This document exists so future agents and implementations understand what Level 7 means even when no current destination map has been designed.
 
+## Core V2 physical-arrival note
+
+On branch `architecture/equity-uprise-core-v2`, the ecosystem semantics in this document remain unchanged. Physical Level 7 arrival must inherit:
+
+- Stair A: X60–72 / Y54–72;
+- revised Stair B: X8–18 / Y54–72;
+- service/freight shaft reservation: X0–8 / Y60–72;
+- passenger-elevator shaft: X54–62 / Y34–44, with direct Level 7 passenger service still unassumed;
+- Level 7 roof datum: +81'-0".
+
+The routing registry may not redefine those physical systems.
+
 ## 1. Core rule
 
 **Level 7 — Roof / Mobility Portal is the ecosystem plane.**
