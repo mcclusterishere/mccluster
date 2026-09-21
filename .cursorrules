@@ -92,4 +92,12 @@ For Floor 4, also read:
 - `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.svg`
 - `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.png`
 
+For Floor 5, also read:
+- `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
+- `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
+- `docs/design/equity-uprise-building/references/floor-05/README.md`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.png`
+
 These files are geometry authority. **Generative images are not geometry authority.** Never move the elevator, stairs, risers, structural grid, building footprint, entrances, floor program, or 360 datum merely to improve a render. Never invent spatial lore that conflicts with the canonical geometry.
