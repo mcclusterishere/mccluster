@@ -8,6 +8,7 @@ CORE=json.loads((HERE/"building-core-v2.json").read_text())
 B1=json.loads((HERE/"basement-b1-program.json").read_text())
 SITE=json.loads((HERE/"floor-01"/"floor-01-site-egress.json").read_text())
 F1=json.loads((HERE/"floor-01"/"floor-01-digital-twin-program.json").read_text())
+TUNNEL=json.loads((HERE/"underground-tunnel-network.json").read_text())
 
 checks=[]
 def check(name, passed, detail=""):
@@ -19,6 +20,12 @@ check("B1 elevation -13.5",levels.get(0,{}).get("finished_floor_elevation_ft")==
 check("Floor 1 is level of exit discharge",CORE.get("level_of_exit_discharge")==1,str(CORE.get("level_of_exit_discharge")))
 check("B1 is not developmental",B1.get("developmental_stage") is None,str(B1.get("developmental_stage")))
 check("B1 normal public access false",B1.get("normal_public_access") is False,str(B1.get("normal_public_access")))
+check("B1 live access is restricted",B1.get("access")=="mccluster-house-owner-or-underground-operations-admin",str(B1.get("access")))
+check("B1 training is sandbox only",B1.get("training_access",{}).get("mode")=="sandboxed_clone_only",str(B1.get("training_access")))
+check("ordinary EU admin cannot unlock live B1",B1.get("live_access",{}).get("ordinary_equity_uprise_admin_sufficient") is False,str(B1.get("live_access")))
+check("tunnel is not publicly visible",TUNNEL.get("public_visibility") is False,str(TUNNEL.get("public_visibility")))
+check("tunnel training clone has no live access",TUNNEL.get("training_access",{}).get("live_tunnel_access") is False,str(TUNNEL.get("training_access")))
+check("tunnel has future reserved branches only",all(x.get("destination") is None for x in TUNNEL.get("backbone",{}).get("future_connections",[])),str(TUNNEL.get("backbone",{}).get("future_connections")))
 
 for key in ("passenger_elevator","service_freight_elevator","stair_a","stair_b","mep_riser"):
     serves=CORE["vertical_systems"][key]["serves_levels"]
@@ -68,6 +75,9 @@ for key in ("report_emergency","evacuation","critical_operations","accountabilit
 check("Floor 1 site ref",F1.get("site_egress_ref")=="floor-01-site-egress.json",str(F1.get("site_egress_ref")))
 check("Floor 1 basement ref",F1.get("basement_ref")=="../basement-b1-program.json",str(F1.get("basement_ref")))
 check("no unresolved geometry requirements","unresolved_geometry_requirements" not in F1,str(F1.get("unresolved_geometry_requirements")))
+check("Floor 1 hides B1 from normal navigation",F1.get("underground_access_model",{}).get("public_directory_shows_b1") is False,str(F1.get("underground_access_model")))
+check("Floor 1 ordinary EU admin cannot see B1",F1.get("underground_access_model",{}).get("ordinary_equity_uprise_admin_can_see_b1") is False,str(F1.get("underground_access_model")))
+check("Floor 1 training goes to sandbox clone",F1.get("underground_access_model",{}).get("training",{}).get("destination")=="sandboxed B1/tunnel clone",str(F1.get("underground_access_model",{}).get("training")))
 resolved={x["id"]:x.get("status") for x in F1.get("resolved_geometry_requirements",[])}
 for rid in ("f1-stair-a-exit-discharge","f1-stair-b-exit-discharge","f1-secure-service-entrance","f1-exterior-assembly-area","f1-basement-discharge-direction-controls"):
     check(f"resolved geometry: {rid}",rid in resolved,str(resolved.get(rid)))
