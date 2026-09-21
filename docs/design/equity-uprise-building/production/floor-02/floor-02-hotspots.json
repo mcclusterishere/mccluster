@@ -72,54 +72,6 @@
       "route_key": "member_dashboard"
     },
     {
-      "id": "hs_zone_05",
-      "label": "Public / Support Corridor",
-      "position_ft_local": {
-        "x": 39.0,
-        "y": 57.0,
-        "z": 4.2
-      },
-      "position_ft_world": {
-        "x": 39.0,
-        "y": 57.0,
-        "z": 17.7
-      },
-      "zone_id": "north_corridor",
-      "action": "focus_zone"
-    },
-    {
-      "id": "hs_zone_06",
-      "label": "Restroom A",
-      "position_ft_local": {
-        "x": 22.0,
-        "y": 65.0,
-        "z": 4.2
-      },
-      "position_ft_world": {
-        "x": 22.0,
-        "y": 65.0,
-        "z": 17.7
-      },
-      "zone_id": "restroom_a",
-      "action": "focus_zone"
-    },
-    {
-      "id": "hs_zone_07",
-      "label": "Restroom B",
-      "position_ft_local": {
-        "x": 30.0,
-        "y": 65.0,
-        "z": 4.2
-      },
-      "position_ft_world": {
-        "x": 30.0,
-        "y": 65.0,
-        "z": 17.7
-      },
-      "zone_id": "restroom_b",
-      "action": "focus_zone"
-    },
-    {
       "id": "hs_passenger_elevator",
       "label": "Passenger Elevator",
       "position_ft_world": {

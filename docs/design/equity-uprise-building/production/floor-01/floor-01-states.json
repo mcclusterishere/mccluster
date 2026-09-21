@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.2.0",
+  "schema_version": "2.3.0",
   "scene_id": "equity-uprise-floor-01",
   "default_state": "idle",
   "states": [
@@ -16,6 +16,36 @@
       "id": "after_hours",
       "label": "After Hours",
       "lighting_multiplier": 0.45
+    },
+    {
+      "id": "new_member_orientation",
+      "label": "New Member Orientation",
+      "route_key": "orientation_experience",
+      "access": "public"
+    },
+    {
+      "id": "passport_mode",
+      "label": "Development Passport",
+      "route_key": "development_passport",
+      "access": "authenticated-member"
+    },
+    {
+      "id": "public_service_clinic",
+      "label": "Public Service Clinic",
+      "route_key": "service_intake",
+      "access": "public-intake-private-session"
+    },
+    {
+      "id": "building_systems_lab",
+      "label": "Building Systems Lab",
+      "route_key": "building_systems_lab",
+      "access": "authorized-learner-or-instructor"
+    },
+    {
+      "id": "emergency_exercise",
+      "label": "Emergency Exercise",
+      "route_key": "emergency_exercise",
+      "access": "authorized-participant-or-instructor"
     }
   ]
 }

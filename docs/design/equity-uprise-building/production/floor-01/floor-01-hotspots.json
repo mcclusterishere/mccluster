@@ -18,11 +18,28 @@
       },
       "zone_id": "zone_01",
       "action": "open_route",
-      "route_key": "institutional_overview"
+      "route_key": "orientation_experience"
     },
     {
       "id": "hs_zone_02",
-      "label": "Visitor Lounge",
+      "label": "Arrival Atrium",
+      "position_ft_local": {
+        "x": 36.0,
+        "y": 20.0,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 36.0,
+        "y": 20.0,
+        "z": 4.2
+      },
+      "zone_id": "zone_02",
+      "action": "open_route",
+      "route_key": "next_action"
+    },
+    {
+      "id": "hs_zone_03",
+      "label": "Orientation Lounge",
       "position_ft_local": {
         "x": 10.0,
         "y": 20.0,
@@ -33,11 +50,12 @@
         "y": 20.0,
         "z": 4.2
       },
-      "zone_id": "zone_02",
-      "action": "focus_zone"
+      "zone_id": "zone_03",
+      "action": "open_route",
+      "route_key": "orientation_experience"
     },
     {
-      "id": "hs_zone_03",
+      "id": "hs_zone_04",
       "label": "Intake / Verification Consultation",
       "position_ft_local": {
         "x": 9.0,
@@ -49,76 +67,77 @@
         "y": 38.0,
         "z": 4.2
       },
-      "zone_id": "zone_03",
-      "action": "open_route",
-      "route_key": "verification"
-    },
-    {
-      "id": "hs_zone_04",
-      "label": "Arrival / Identity Wall",
-      "position_ft_local": {
-        "x": 36.0,
-        "y": 52.0,
-        "z": 4.2
-      },
-      "position_ft_world": {
-        "x": 36.0,
-        "y": 52.0,
-        "z": 4.2
-      },
       "zone_id": "zone_04",
       "action": "open_route",
-      "route_key": "institutional_overview"
+      "route_key": "service_intake"
     },
     {
       "id": "hs_zone_05",
-      "label": "Reception Desk",
+      "label": "Development Passport Studio",
       "position_ft_local": {
         "x": 36.0,
-        "y": 45.5,
+        "y": 38.0,
         "z": 4.2
       },
       "position_ft_world": {
         "x": 36.0,
-        "y": 45.5,
+        "y": 38.0,
         "z": 4.2
       },
       "zone_id": "zone_05",
       "action": "open_route",
-      "route_key": "institutional_join"
+      "route_key": "development_passport"
     },
     {
       "id": "hs_zone_06",
-      "label": "Arrival / Routing Directory",
+      "label": "Journey Wall",
       "position_ft_local": {
-        "x": 50.0,
-        "y": 26.5,
+        "x": 36.0,
+        "y": 52.0,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 50.0,
-        "y": 26.5,
+        "x": 36.0,
+        "y": 52.0,
         "z": 4.2
       },
       "zone_id": "zone_06",
       "action": "open_route",
-      "route_key": "floor_selector"
+      "route_key": "journey_progression"
     },
     {
       "id": "hs_zone_07",
-      "label": "Public / Support Corridor",
+      "label": "Reception / Concierge / Security Desk",
       "position_ft_local": {
-        "x": 39.0,
-        "y": 57.0,
+        "x": 36.0,
+        "y": 45.5,
         "z": 4.2
       },
       "position_ft_world": {
-        "x": 39.0,
-        "y": 57.0,
+        "x": 36.0,
+        "y": 45.5,
         "z": 4.2
       },
-      "zone_id": "north_corridor",
-      "action": "focus_zone"
+      "zone_id": "zone_07",
+      "action": "open_route",
+      "route_key": "concierge"
+    },
+    {
+      "id": "hs_zone_08",
+      "label": "Next Action / Building Directory",
+      "position_ft_local": {
+        "x": 50.0,
+        "y": 26.5,
+        "z": 4.2
+      },
+      "position_ft_world": {
+        "x": 50.0,
+        "y": 26.5,
+        "z": 4.2
+      },
+      "zone_id": "zone_08",
+      "action": "open_route",
+      "route_key": "next_action"
     },
     {
       "id": "hs_passenger_elevator",

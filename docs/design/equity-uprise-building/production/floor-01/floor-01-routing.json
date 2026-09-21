@@ -102,6 +102,62 @@
       "access": "public",
       "completion": "human-reviewed"
     },
+    "orientation_experience": {
+      "type": "ui_state",
+      "target": "orientation_experience",
+      "access": "public"
+    },
+    "next_action": {
+      "type": "ui_state",
+      "target": "next_action",
+      "access": "public-with-authenticated-personalization",
+      "private_personalization": true
+    },
+    "building_directory": {
+      "type": "ui_state",
+      "target": "building_directory",
+      "access": "public-with-authenticated-personalization"
+    },
+    "development_passport": {
+      "type": "ui_state",
+      "target": "development_passport",
+      "access": "authenticated-member",
+      "private_by_default": true
+    },
+    "journey_progression": {
+      "type": "ui_state",
+      "target": "journey_progression",
+      "access": "public-with-private-personalization",
+      "read_only": true
+    },
+    "concierge": {
+      "type": "ui_state",
+      "target": "concierge",
+      "access": "public-summary-staff-private-view"
+    },
+    "service_intake": {
+      "type": "ui_state",
+      "target": "service_intake",
+      "access": "public-intake-private-session"
+    },
+    "building_systems_lab": {
+      "type": "ui_state",
+      "target": "building_systems_lab",
+      "access": "authorized-learner-or-instructor",
+      "simulation": true
+    },
+    "emergency_exercise": {
+      "type": "ui_state",
+      "target": "emergency_exercise",
+      "access": "authorized-participant-or-instructor",
+      "simulation": true
+    },
+    "life_safety_status": {
+      "type": "ui_state",
+      "target": "life_safety_status",
+      "access": "public-sanitized-authorized-detailed",
+      "read_only": true
+    },
     "current_issues": {
       "type": "url",
       "url": "/topics.html",

@@ -31,7 +31,11 @@
       "../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg",
       "../../references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png"
     ],
-    "rule": "Shared Core V2 vertical systems override floor-local geometry."
+    "rule": "Shared Core V2 vertical systems override floor-local geometry.",
+    "activity_simulation_authority": [
+      "../FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
+      "floor-01/floor-01-digital-twin-program.json"
+    ]
   },
   "units": {
     "authoring": "feet",
@@ -258,21 +262,34 @@
         "x2": 43,
         "y2": 9
       },
-      "route_key": "institutional_overview"
+      "route_key": "orientation_experience"
     },
     {
       "id": "zone_02",
-      "label": "Visitor Lounge",
+      "label": "Arrival Atrium",
+      "type": "zone",
+      "bounds_ft": {
+        "x1": 20,
+        "y1": 10,
+        "x2": 52,
+        "y2": 30
+      },
+      "route_key": "next_action"
+    },
+    {
+      "id": "zone_03",
+      "label": "Orientation Lounge",
       "type": "zone",
       "bounds_ft": {
         "x1": 2,
         "y1": 12,
         "x2": 18,
         "y2": 28
-      }
+      },
+      "route_key": "orientation_experience"
     },
     {
-      "id": "zone_03",
+      "id": "zone_04",
       "label": "Intake / Verification Consultation",
       "type": "room",
       "bounds_ft": {
@@ -281,11 +298,23 @@
         "x2": 16,
         "y2": 44
       },
-      "route_key": "verification"
+      "route_key": "service_intake"
     },
     {
-      "id": "zone_04",
-      "label": "Arrival / Identity Wall",
+      "id": "zone_05",
+      "label": "Development Passport Studio",
+      "type": "zone",
+      "bounds_ft": {
+        "x1": 20,
+        "y1": 32,
+        "x2": 52,
+        "y2": 44
+      },
+      "route_key": "development_passport"
+    },
+    {
+      "id": "zone_06",
+      "label": "Journey Wall",
       "type": "feature",
       "bounds_ft": {
         "x1": 28,
@@ -293,11 +322,11 @@
         "x2": 44,
         "y2": 54
       },
-      "route_key": "institutional_overview"
+      "route_key": "journey_progression"
     },
     {
-      "id": "zone_05",
-      "label": "Reception Desk",
+      "id": "zone_07",
+      "label": "Reception / Concierge / Security Desk",
       "type": "furniture",
       "bounds_ft": {
         "x1": 30,
@@ -305,11 +334,11 @@
         "x2": 42,
         "y2": 47
       },
-      "route_key": "institutional_join"
+      "route_key": "concierge"
     },
     {
-      "id": "zone_06",
-      "label": "Arrival / Routing Directory",
+      "id": "zone_08",
+      "label": "Next Action / Building Directory",
       "type": "terminal",
       "bounds_ft": {
         "x1": 49,
@@ -317,7 +346,7 @@
         "x2": 51,
         "y2": 29
       },
-      "route_key": "floor_selector"
+      "route_key": "next_action"
     },
     {
       "id": "north_corridor",
@@ -354,7 +383,7 @@
     },
     {
       "id": "support_a",
-      "label": "Reception Support / Storage",
+      "label": "Building Operations / Life Safety",
       "type": "secure_support",
       "bounds_ft": {
         "x1": 34,
@@ -393,5 +422,6 @@
   "lighting_ref": "floor-01-lighting.json",
   "hotspots_ref": "floor-01-hotspots.json",
   "routing_ref": "floor-01-routing.json",
-  "states_ref": "floor-01-states.json"
+  "states_ref": "floor-01-states.json",
+  "digital_twin_program_ref": "floor-01/floor-01-digital-twin-program.json"
 }
