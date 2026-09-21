@@ -251,7 +251,7 @@
     },
     {
       "id": "zone_02",
-      "label": "Policy + Proof Wall",
+      "label": "Policy / Publication / Impact Wall",
       "type": "feature",
       "bounds_ft": {
         "x1": 22,
@@ -295,7 +295,7 @@
     },
     {
       "id": "zone_06",
-      "label": "Research Navigation",
+      "label": "Research / Publication Navigator",
       "type": "terminal",
       "bounds_ft": {
         "x1": 49,
@@ -361,7 +361,7 @@
     },
     {
       "id": "support_b",
-      "label": "Research / Policy IT",
+      "label": "Research / Publication Systems",
       "type": "secure_support",
       "bounds_ft": {
         "x1": 42,

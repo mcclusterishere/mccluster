@@ -251,7 +251,7 @@
     },
     {
       "id": "zone_02",
-      "label": "Media / Identity Wall",
+      "label": "Media / Release Wall",
       "type": "feature",
       "bounds_ft": {
         "x1": 22,
@@ -295,7 +295,7 @@
     },
     {
       "id": "zone_06",
-      "label": "Media Control",
+      "label": "Media / Release Control",
       "type": "terminal",
       "bounds_ft": {
         "x1": 49,
@@ -361,7 +361,7 @@
     },
     {
       "id": "support_b",
-      "label": "Media / Music IT",
+      "label": "Media / Music Operations",
       "type": "secure_support",
       "bounds_ft": {
         "x1": 42,

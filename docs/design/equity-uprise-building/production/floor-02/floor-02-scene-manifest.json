@@ -251,7 +251,7 @@
     },
     {
       "id": "zone_02",
-      "label": "Public Forum Feature Wall",
+      "label": "Topics / Perspectives / Conversations Wall",
       "type": "feature",
       "bounds_ft": {
         "x1": 24,

@@ -36,7 +36,7 @@
     },
     {
       "id": "hs_zone_03",
-      "label": "Intake / Consultation",
+      "label": "Intake / Verification Consultation",
       "position_ft_local": {
         "x": 9.0,
         "y": 38.0,
@@ -52,7 +52,7 @@
     },
     {
       "id": "hs_zone_04",
-      "label": "Reception Feature",
+      "label": "Arrival / Identity Wall",
       "position_ft_local": {
         "x": 36.0,
         "y": 52.0,
@@ -84,7 +84,7 @@
     },
     {
       "id": "hs_zone_06",
-      "label": "Directory",
+      "label": "Arrival / Routing Directory",
       "position_ft_local": {
         "x": 50.0,
         "y": 26.5,

@@ -262,7 +262,7 @@
     },
     {
       "id": "zone_03",
-      "label": "Intake / Consultation",
+      "label": "Intake / Verification Consultation",
       "type": "room",
       "bounds_ft": {
         "x1": 2,
@@ -273,7 +273,7 @@
     },
     {
       "id": "zone_04",
-      "label": "Reception Feature",
+      "label": "Arrival / Identity Wall",
       "type": "feature",
       "bounds_ft": {
         "x1": 28,
@@ -295,7 +295,7 @@
     },
     {
       "id": "zone_06",
-      "label": "Directory",
+      "label": "Arrival / Routing Directory",
       "type": "terminal",
       "bounds_ft": {
         "x1": 49,

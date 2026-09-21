@@ -20,7 +20,7 @@
     },
     {
       "id": "hs_zone_02",
-      "label": "Policy + Proof Wall",
+      "label": "Policy / Publication / Impact Wall",
       "position_ft_local": {
         "x": 36.0,
         "y": 52.0,
@@ -84,7 +84,7 @@
     },
     {
       "id": "hs_zone_06",
-      "label": "Research Navigation",
+      "label": "Research / Publication Navigator",
       "position_ft_local": {
         "x": 50.0,
         "y": 26.5,

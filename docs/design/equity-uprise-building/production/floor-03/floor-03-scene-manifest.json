@@ -251,7 +251,7 @@
     },
     {
       "id": "zone_02",
-      "label": "Identity / Opportunity Wall",
+      "label": "Opportunity / Network Wall",
       "type": "feature",
       "bounds_ft": {
         "x1": 22,
@@ -273,7 +273,7 @@
     },
     {
       "id": "zone_04",
-      "label": "Interview Room A",
+      "label": "Interview / Stakeholder Meeting A",
       "type": "room",
       "bounds_ft": {
         "x1": 2,
@@ -284,7 +284,7 @@
     },
     {
       "id": "zone_05",
-      "label": "Interview Room B",
+      "label": "Interview / Stakeholder Meeting B",
       "type": "room",
       "bounds_ft": {
         "x1": 16,
@@ -295,7 +295,7 @@
     },
     {
       "id": "zone_06",
-      "label": "Member / Interview Check-In",
+      "label": "Member / Meeting Check-In",
       "type": "terminal",
       "bounds_ft": {
         "x1": 49,
@@ -350,7 +350,7 @@
     },
     {
       "id": "support_a",
-      "label": "Fellowship Support / Records",
+      "label": "Fellowship / Relationship Records",
       "type": "secure_support",
       "bounds_ft": {
         "x1": 34,
