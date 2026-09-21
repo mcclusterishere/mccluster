@@ -1,0 +1,830 @@
+{
+  "schema_version": "1.0.0",
+  "not_for_construction": true,
+  "capability_count": 51,
+  "floor_feature_counts": {
+    "1": 5,
+    "2": 5,
+    "3": 16,
+    "4": 9,
+    "5": 18,
+    "6": 28,
+    "7": 3
+  },
+  "checks_total": 162,
+  "checks_passed": 162,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "capability ids unique",
+      "passed": true,
+      "detail": "51 capabilities"
+    },
+    {
+      "name": "levels 1-7 present",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6, 7]"
+    },
+    {
+      "name": "institutional-desk primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "public-issues primary floor 2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "perspectives primary floor 2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "perspectives secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "conversation-agent primary floor 2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "conversation-agent secondary floor 1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "conversation-agent secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "member-dashboard primary floor 2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "member-dashboard secondary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "profiles primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "private-contact primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "private-contact secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fellowship-directory primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fellowship-matching primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fellowship-matching secondary floor 2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "host-listings primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "host-listings secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fellowship-applications primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fellowship-applications secondary floor 1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "interviews-calendar primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "interviews-calendar secondary floor 1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "interviews-calendar secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "verification primary floor 1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "verification secondary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "stakeholder-intake primary floor 1",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "stakeholder-intake secondary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "stakeholder-intake secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "stakeholder-graph primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "stakeholder-graph secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "meetings-commitments primary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "meetings-commitments secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "partnership-sponsorship primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "partnership-sponsorship secondary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initiative-portfolio primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initiative-portfolio secondary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "research-projects primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "source-graph primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "claim-evidence primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "manuscript-review primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "evidence-room primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "evidence-room secondary floor 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "credentials-proof primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "credentials-proof secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "artifacts primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "artifacts secondary floor 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "publications primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "publications secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "publication-distribution primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "publication-distribution secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "orcid primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "crossref primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "government-dockets primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "government-dockets secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "government-submissions primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "government-submissions secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "monitoring primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "monitoring secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "citations-impact primary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "citations-impact secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "music-catalogue primary floor 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "artist-creator primary floor 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "artist-creator secondary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "music-rights primary floor 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "music-release primary floor 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "music-release secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "ddex primary floor 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "ddex secondary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "rally-media primary floor 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "communication-derivatives primary floor 4",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "communication-derivatives secondary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "admin-desk primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "control-approvals primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "integrations-oauth primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "workflows-jobs primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "status-health primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "google-workspace primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "google-workspace secondary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "outreach primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "outreach secondary floor 3",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "event-ledger primary floor 6",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "event-ledger secondary floor 5",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "ecosystem-routing primary floor 7",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "roof-mobility primary floor 7",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "uprise-world primary floor 7",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 1 has no unknown capability ids",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 2 has no unknown capability ids",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 3 has no unknown capability ids",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 4 has no unknown capability ids",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 5 has no unknown capability ids",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 6 has no unknown capability ids",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 7 has no unknown capability ids",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 1 zone routes resolve",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 1 arbitrary redirects disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 1 freight elevator has no public hotspot",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 2 zone routes resolve",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 2 arbitrary redirects disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 2 freight elevator has no public hotspot",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 3 zone routes resolve",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 3 arbitrary redirects disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 3 freight elevator has no public hotspot",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 4 zone routes resolve",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 4 arbitrary redirects disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 4 freight elevator has no public hotspot",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 5 zone routes resolve",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 5 arbitrary redirects disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 5 freight elevator has no public hotspot",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 6 zone routes resolve",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 6 arbitrary redirects disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 6 freight elevator has no public hotspot",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 7 zone routes resolve",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 7 arbitrary redirects disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 7 freight elevator has no public hotspot",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 1 passenger elevator hotspot exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 1 passenger elevator uses restricted selector",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 2 passenger elevator hotspot exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 2 passenger elevator uses restricted selector",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 3 passenger elevator hotspot exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 3 passenger elevator uses restricted selector",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 4 passenger elevator hotspot exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 4 passenger elevator uses restricted selector",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 5 passenger elevator hotspot exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 5 passenger elevator uses restricted selector",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 6 passenger elevator hotspot exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 6 passenger elevator uses restricted selector",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "level 7 has no passenger elevator hotspot",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor 1 passenger selector excludes roof",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6]"
+    },
+    {
+      "name": "floor 2 passenger selector excludes roof",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6]"
+    },
+    {
+      "name": "floor 3 passenger selector excludes roof",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6]"
+    },
+    {
+      "name": "floor 4 passenger selector excludes roof",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6]"
+    },
+    {
+      "name": "floor 5 passenger selector excludes roof",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6]"
+    },
+    {
+      "name": "floor 6 passenger selector excludes roof",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6]"
+    },
+    {
+      "name": "floor 7 passenger selector excludes roof",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6]"
+    },
+    {
+      "name": "floor 1 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 1 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 1 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 2 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 2 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 2 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 3 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 3 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 3 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 4 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 4 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 4 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 5 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 5 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 5 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 6 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 6 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 6 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    },
+    {
+      "name": "floor 7 media_release_ops is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 admin_desk is not public",
+      "passed": true,
+      "detail": "editor-or-admin"
+    },
+    {
+      "name": "floor 7 control_plane is not public",
+      "passed": true,
+      "detail": "authorized-admin"
+    },
+    {
+      "name": "floor 7 publication_submission is not public",
+      "passed": true,
+      "detail": "authorized-researcher-editor-admin"
+    }
+  ]
+}
