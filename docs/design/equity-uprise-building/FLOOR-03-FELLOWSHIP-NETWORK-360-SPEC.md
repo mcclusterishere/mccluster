@@ -630,6 +630,19 @@ Suggested Floor 3 hotspots:
 
 ---
 
+## 25A. Semantic interaction modes
+
+The existing Floor 3 rooms and surfaces support distinct digital modes without adding rooms or changing geometry:
+
+- **Our Fellows** — the Equity Uprise cohort / fellow record, distinct from external opportunities.
+- **External Opportunities** — the fellowship/opportunity directory.
+- **Submit / Host Programs** — authenticated host/member submission path; moderation remains private.
+- **Apply / Application Status** — fellowship application intake and private status tracking.
+- **Relationship Graph** — authorized staff view of people, organizations, initiatives and relationship stage; never a public contact database.
+- **Enterprise Development** — public program information with private fit review/agreement state.
+
+These modes primarily live on the Opportunity / Network Wall, Opportunity Exchange, Member / Meeting Check-In and meeting-room displays. They are **states of existing architecture**, not separate departments.
+
 ## 26. Content neutrality / authenticity rule
 
 Program names, deadlines, eligibility, stipends, and source claims shown in the environment must come from the actual live directory or verified source data.
@@ -683,7 +696,7 @@ The physical architecture should not favor a political position or political org
 This floor is bound to the repo-wide program map:
 `production/equity-uprise-capability-map-v2.json`.
 
-The current repo-wide audit classifies **241 Equity Uprise semantic sources** and **55 canonical capabilities**. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
+The current capability authority contains **56 canonical capabilities**. Repo-source counts are governed by the generated source-coverage report. A capability may appear here as a primary function or as a cross-floor part of a larger workflow.
 
 ### Primary capabilities
 - **Public profiles / people directory** (`profiles`, built) — People + Network Lounge and Opportunity / Network Wall.
