@@ -1,6 +1,6 @@
 # Equity Uprise Building UI — Repo Inventory & Image Plan
 
-> Status: **SIX-FLOOR BUILDING SCHEME LOCKED. FLOORS 1–2 SPECS + SCHEMATIC GEOMETRY LOCKED. FLOORS 3–6 REQUIRE ONE-BY-ONE QUALITY-CONTROL SPECS BEFORE NEW PRODUCTION ART.**
+> Status: **SIX-FLOOR BUILDING SCHEME LOCKED. FLOORS 1–3 SPECS + SCHEMATIC GEOMETRY LOCKED. FLOORS 4–6 REQUIRE ONE-BY-ONE QUALITY-CONTROL SPECS BEFORE NEW PRODUCTION ART.**
 > Purpose: turn the existing Equity Uprise ecosystem into a navigable building UI rather than inventing generic rooms.
 > Full repo audit: `docs/design/EQUITY-UPRISE-REPO-AUDIT.md`
 > Canonical Floor 1 spec: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
@@ -9,6 +9,9 @@
 > Canonical Floor 2 spec: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
 > Canonical Floor 2 plan basis: `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
 > Canonical Floor 2 plan assets: `docs/design/equity-uprise-building/references/floor-02/`
+> Canonical Floor 3 spec: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
+> Canonical Floor 3 plan basis: `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
+> Canonical Floor 3 plan assets: `docs/design/equity-uprise-building/references/floor-03/`
 
 ## 1. What exists today
 
@@ -210,7 +213,7 @@ The building is intentionally compact: **six levels total**. Wider, more useful 
 | 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy | pending |
 | 5 | Policy + Proof | Working paper, policy archive, Docket 516R, evidence, credentials, research/proof | pending |
 | 4 | Media + Culture | Broadcast/event media, music, artists, civic anthems, cultural storytelling | pending |
-| 3 | Fellowship + Network | Policy Fellowship, fellowship directory, profiles, people, opportunities/matching | pending |
+| 3 | Fellowship + Network | Policy Fellowship, fellowship directory, profiles, people, opportunities/matching | **LOCKED** |
 | 2 | Public Forum | Topics, perspectives, conversations, member discussion/activity | **LOCKED** |
 | 1 | Lobby + Intake | Arrival, reception, visitor orientation, stakeholder/organization intake, routing | **LOCKED** |
 
@@ -468,7 +471,7 @@ Canonical files:
 - `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
 - `docs/design/equity-uprise-building/references/floor-02/`
 
-**Floors 3–6 — NOT YET LOCKED AS BUILDER/360 SPECS**
+**Floors 4–6 — NOT YET LOCKED AS BUILDER/360 SPECS**
 
 Do not treat prior generated floor images as architectural authority. They are concept iterations only.
 
