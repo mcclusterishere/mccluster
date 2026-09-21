@@ -16,6 +16,95 @@ The completed stacked building remains the reference for how individually finish
 
 ---
 
+## 1A. Historical reference set — all three are mandatory
+
+Do **not** reduce the project to a single historical reference. The rebuild depends on three different reference classes.
+
+### A. V1 Floor 1 — interior design reference
+
+Use the pre-Core-V2 Floor 1 implementation as the reference for:
+- interior atmosphere;
+- material contrast;
+- lighting;
+- furniture composition;
+- entrance/lobby experience;
+- reception/feature-wall treatment;
+- camera framing;
+- human-scale architectural feel.
+
+Key historical implementation points include:
+- `docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01.py`;
+- the original interactive Floor 1 viewer history, including commit `752c70444e12f44abdeacdd19697f7db88937d44`;
+- the V1 Floor 1 deterministic GLB pipeline introduced around commit `59af7f6386ee69edc023927971ea5918fffa6acc`.
+
+This is a **design-language reference**, not current geometry authority.
+
+### B. Fully assembled building — stacking / whole-building reference
+
+Use the completed stacked Core V2 building as the reference for how independently designed floors become one building.
+
+Historical whole-building reference:
+- combined-building generator: `docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py`;
+- initial generator commit: `c674e07daf772ea739d93cc515657deb028e8b75`;
+- assembled GLB build commit: `ef3fd47d543318fd3ed129fa3f58fc7fab5fabce`;
+- stacked interactive viewer commit: `7ea458406cc862656b5952a350fe87bcdc16110b`;
+- generated artifact: `production/generated/equity-uprise-building-core-v2.glb`.
+
+That assembled reference demonstrated:
+- one coherent 72' × 72' stack;
+- finished-floor elevations at 0 / 13.5 / 27 / 40.5 / 54 / 67.5 / 81 ft;
+- continuous passenger core;
+- continuous service/freight core;
+- continuous Stair A and Stair B;
+- 12 full floor-to-floor stair transitions;
+- coordinated slab openings;
+- roof integration;
+- whole-building / cutaway / core-only / per-floor viewing;
+- 667 meshes in the historical assembled GLB;
+- 27/27 vertical-continuity checks passing.
+
+This assembled version is **not the final interior-design target**, but it is a primary reference for:
+- stacking;
+- world coordinates;
+- vertical alignment;
+- floor elevations;
+- how complete floor scenes must be assembled;
+- whole-building cutaway/navigation behavior.
+
+Later Core V2 work extended this assembly downward to B1 and added more current program/site research. The final building must preserve the successful whole-building assembly behavior while using the latest authority.
+
+### C. Current Core V2 research / authority — truth reference
+
+Use current canonical authority for:
+- corrected shared geometry;
+- B1;
+- service/freight elevator;
+- revised Stair B;
+- site/egress;
+- current floor programs;
+- capability mapping;
+- public/private boundaries;
+- furniture/object inventory;
+- current Equity Uprise research.
+
+### Combined target
+
+The target is therefore not merely "V1 + V2."
+
+It is:
+
+**V1 interior design quality**
++
+**fully assembled building stacking behavior**
++
+**current Core V2 geometry/program/research**
+=
+**next-generation complete Equity Uprise 3D building**
+
+The process must preserve all three reference classes.
+
+---
+
 ## 2. KEEP FROM V1 — design DNA
 
 These qualities were successful and should survive unless they directly conflict with Core V2 authority.
