@@ -69,6 +69,10 @@ Read program and geometry authority in this order:
 5. Shared floor-program authority:
    - `docs/design/equity-uprise-building/production/core-v2-floor-programs.json`
    - Floor program may name/route capabilities but may not redefine shared vertical geometry.
+   - Floor 1 additional activity/simulation authority:
+     - `docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md`
+     - `docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json`
+   - These Floor 1 files define institutional activity, simulation systems, operating modes and training scenarios. They do not override the shared Core V2 vertical chassis.
 
 6. Floor-specific long-form specification:
    - Floor 1: `docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md`
@@ -199,10 +203,10 @@ Floor 1 currently establishes the building datum:
 - Stair B: **X 8–18 / Y 54–72**;
 - MEP/riser reservation: approximately **X 50–60 / Y 66–72**;
 - 360 camera datum: approximately **(36, 28), 5'-4" AFF**;
-- 0° north: reception / Arrival / Identity Wall;
+- 0° north: Reception / Concierge / Security + Journey Wall;
 - +90° east: elevator/core;
 - 180° south: entrance/vestibule on Floor 1 only;
-- -90° west: lounge/intake.
+- -90° west: Orientation Lounge / intake.
 
 Floors 2–6 and Level 7 roof access must stack on this shell/core logic unless the owner explicitly approves a formal building-wide revision.
 
