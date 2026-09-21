@@ -213,7 +213,7 @@ Protected stair doors enter protected stair enclosures only.
 The **Policy Lab** with the **POLICY + PROOF** research/evidence wall beyond it.
 
 ### +90° / east-right
-The fixed elevator/core with one slim research-navigation terminal adjacent to the elevator lobby.
+The fixed elevator/core with one slim Research / Publication Navigator adjacent to the elevator lobby.
 
 ### 180° / south-behind
 Two modest enclosed rooms:
@@ -251,7 +251,7 @@ Use one substantial but modest shared research table:
 
 This is a working table, not a holographic command table.
 
-### Policy + Proof wall
+### Policy / Publication / Impact Wall
 Approximate wall band:
 - **X 22–50 / Y 50–54**
 
@@ -369,7 +369,7 @@ Public-facing imagery must not reveal:
 
 ---
 
-## 10. Research navigation terminal
+## 10. Research / Publication Navigator
 
 One slim terminal adjacent to the elevator:
 - approximate footprint **X 49–51 / Y 24–29**
@@ -423,7 +423,7 @@ The north support band is replanned around the Core V2 West Service Core.
 - **X34–42 / Y60–72**
 - conceptual 8' × 12'
 
-### Research / Policy IT
+### Research / Publication Systems
 - **X42–50 / Y60–72**
 - conceptual 8' × 12'
 
@@ -597,9 +597,9 @@ Normal review-room conversation should not carry into the central lab.
 ## 21. Technology / power / data
 
 Provide plausible service routes for:
-- Policy + Proof wall;
+- Policy / Publication / Impact Wall;
 - archive/search surface;
-- research-navigation terminal;
+- Research / Publication Navigator;
 - Policy Lab table;
 - Source Review Room;
 - Publication/Submission Review Room;
@@ -637,7 +637,7 @@ Secure Evidence Storage and Research/Policy IT are back-of-house.
 Use the exact approved Equity Uprise mark.
 
 Primary:
-- north POLICY + PROOF wall.
+- north POLICY / PUBLICATION / IMPACT wall.
 
 Secondary:
 - modest Floor 5 identifier at elevator.
@@ -659,7 +659,7 @@ Canonical visible furniture:
 - 4 archive seats maximum;
 - one Source Review table + 4 chairs;
 - one Publication/Submission Review table + 4–6 chairs;
-- one research-navigation terminal;
+- one Research / Publication Navigator;
 - restrained archive cabinets/display cases.
 
 No additional large furniture is canonical.
@@ -678,10 +678,10 @@ No additional large furniture is canonical.
 ### Required cardinal views
 
 **0° / north:**  
-Policy Lab + POLICY + PROOF wall with Research / Evidence / Record surfaces.
+Policy Lab + POLICY / PUBLICATION / IMPACT wall with Research / Evidence / Record surfaces.
 
 **+90° / east:**  
-Fixed elevator/core + research-navigation terminal.
+Fixed elevator/core + Research / Publication Navigator.
 
 **180° / south:**  
 Source Review Room + Publication / Submission Review Room + sealed glazing. No exterior door.
@@ -778,3 +778,35 @@ Do not convert draft or contested material into permanent architectural fact.
 - [ ] both stairs span the full 13'-6" floor-to-floor rise in combined geometry
 - [ ] shared slab openings remain unobstructed
 - [ ] no floor-local decorative stair is treated as vertical-continuity authority
+
+## Repo capability binding — 2026-09-21 reconciliation audit
+
+This floor is bound to the repo-wide program map:
+`production/equity-uprise-capability-map-v2.json`.
+
+### Primary capabilities
+- **Research projects and memberships** (`research-projects`, built) — Policy Lab.
+- **Sources, verification, supersession and citations** (`source-graph`, built) — Source Review Room and Evidence + Proof Archive.
+- **Claims linked to evidence** (`claim-evidence`, built) — Evidence graph on Policy / Publication / Impact Wall.
+- **Manuscripts, sections, revisions and review comments** (`manuscript-review`, built) — Policy Lab and Publication / Submission Review room.
+- **Docket 516/516R evidence room and public-record archive** (`evidence-room`, built) — Evidence + Proof Archive; media context may also appear on Floor 4.
+- **Credentials, citations, proclamations and proof documents** (`credentials-proof`, built) — Evidence + Proof Archive and institutional record.
+- **Canonical artifact graph and derivative lineage** (`artifacts`, built) — Publication/Proof systems; communication derivatives route to Floor 4.
+- **Canonical publications and versions of record** (`publications`, built_guarded) — Publication / Submission Review and Policy / Publication / Impact Wall.
+- **Approved publication distribution/syndication** (`publication-distribution`, built_disabled_until_configured) — Access-controlled distribution state on Floor 5; approval authority on Floor 6.
+- **ORCID contributor identity** (`orcid`, built_disabled_until_configured) — Publication contributor identity; no separate room.
+- **Crossref DOI deposit/verification** (`crossref`, built_disabled_until_configured) — Publication/version-of-record system; no separate room.
+- **Government targets/dockets and recurring docket intelligence** (`government-dockets`, built_guarded) — Policy Lab and monitor/filing surfaces.
+- **Government filing/submission workflow** (`government-submissions`, built_guarded) — Publication / Submission Review; final external authorization is a Floor 6 control function.
+- **Research/source/government/stakeholder/citation monitors** (`monitoring`, built) — Policy / Publication / Impact Wall for findings; operations health on Floor 6.
+- **Citation snapshots and impact events** (`citations-impact`, built) — Policy / Publication / Impact Wall and institutional proof.
+
+### Secondary / cross-floor capabilities
+- **Living policy initiative portfolio** (`initiative-portfolio`, built) — Penthouse Command portfolio direction; individual research/evidence work occurs on Floor 5.
+- **Press release, executive summary and social-prep derivatives** (`communication-derivatives`, built) — Edit / Review Suite; lineage remains tied to Floor 5 source artifacts.
+- **Immutable normalized Equity Uprise event ledger** (`event-ledger`, built) — Control / Audit Records support and cross-floor institutional memory.
+
+### Boundary rule
+The building metaphor must preserve the source product's public/private and approval boundaries. A capability being represented on this floor does **not** make private records, OAuth credentials, contact data, moderation state, outreach controls, government submission controls, music delivery controls, or other guarded operations publicly accessible.
+
+This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
