@@ -41,6 +41,12 @@ CONTENT_PATTERNS = [
     re.compile(r"\beu-[a-z0-9][a-z0-9-]*\b", re.I),
 ]
 
+# Shared sources can materially define an Equity Uprise capability even when
+# they do not repeat the program name literally.
+MANUAL_CANDIDATES = {
+    "docs/music-platform.md",
+}
+
 def readable_text(path: Path) -> str:
     try:
         # Audit source/code/docs, not binaries or giant generated payloads.
@@ -76,7 +82,7 @@ for p in ROOT.rglob("*"):
         continue
     rel = p.relative_to(ROOT).as_posix()
     text = readable_text(p)
-    if is_candidate(rel, text):
+    if is_candidate(rel, text) or rel in MANUAL_CANDIDATES:
         discovered.append(rel)
 discovered = sorted(set(discovered))
 
