@@ -133,6 +133,10 @@ def route_config(n):
       "fellowship_record":{"type":"url","url":"/equity-uprise-fellowship.html","access":"public-record-with-consent"},
       "people_network":{"type":"url","url":"/profile.html","access":"public-self-controlled"},
       "meeting_workspace":{"type":"ui_state","target":"meeting_workspace","endpoint_hints":["eu-calendar"],"access":"authenticated-member-or-staff"},
+      "host_opportunity_submit":{"type":"url","url":"/fellowships.html","state_hint":"host-submit","access":"authenticated-member-or-host"},
+      "fellowship_application":{"type":"url","url":"/fellowship.html","access":"public-intake-private-state"},
+      "relationship_graph":{"type":"ui_state","target":"relationship_graph","access":"authorized-staff","read_only":True},
+      "fellowship_cohort":{"type":"url","url":"/equity-uprise-fellowship.html","state_hint":"our-fellows","access":"public-record-with-consent"},
       "enterprise_program":{
         "type":"url","url":"/sites-details.html#equity",
         "access":"public-program-information",
@@ -146,6 +150,7 @@ def route_config(n):
       "media_catalogue":{"type":"url","url":"/album.html?album=equity-uprise","access":"public"},
       "rally_archive":{"type":"url","url":"/walls/eu-rally.html","access":"public"},
       "creator_studio":{"type":"url","url":"/creator.html","access":"authenticated-for-write"},
+      "media_rights":{"type":"ui_state","target":"media_rights","access":"authorized-creator-editor-admin","read_only":True},
       "creator_licensing":{"type":"url","url":"/music-creator-terms.html","access":"public-terms-authenticated-checkout"},
       "media_derivatives":{"type":"ui_state","target":"media_derivatives","endpoint_hints":["eu-derivatives"],"access":"authorized-editor-or-admin"},
       "media_release_ops":{"type":"ui_state","target":"media_release_ops","endpoint_hints":["eu-music","eu-ddex-worker"],"access":"authorized-admin","approval_gated":True},
@@ -155,6 +160,12 @@ def route_config(n):
       "evidence_archive":{"type":"url","url":"/docket-516.html","access":"public"},
       "publication_submission":{"type":"ui_state","target":"publication_submission","endpoint_hints":["eu-publish","eu-government"],"access":"authorized-researcher-editor-admin","approval_gated":True},
       "research_publication":{"type":"ui_state","target":"research_publication","endpoint_hints":["eu-workspace","eu-publish","eu-monitor"],"access":"authorized-researcher-editor-admin"},
+      "claims_evidence":{"type":"ui_state","target":"claims_evidence","endpoint_hints":["eu-workspace"],"access":"authorized-researcher-editor-admin","read_only":True},
+      "artifact_lineage":{"type":"ui_state","target":"artifact_lineage","endpoint_hints":["eu-publish","eu-derivatives"],"access":"published-public-private-workflow","read_only":True},
+      "publication_distribution":{"type":"ui_state","target":"publication_distribution","endpoint_hints":["eu-publish"],"access":"authorized-admin","approval_gated":True},
+      "publication_identity":{"type":"ui_state","target":"publication_identity","endpoint_hints":["eu-orcid-oauth","eu-crossref-callback"],"access":"authorized-researcher-editor-admin","read_only":True},
+      "docket_watch":{"type":"ui_state","target":"docket_watch","endpoint_hints":["eu-monitor","eu-government"],"access":"authorized-researcher-editor-admin","read_only":True},
+      "monitoring_impact":{"type":"ui_state","target":"monitoring_impact","endpoint_hints":["eu-monitor"],"access":"authorized-researcher-editor-admin","read_only":True},
 
       # Institutional command / private Desk.
       "institutional_command":{"type":"url","url":"/equity-uprise.html","state_hint":"institutional","access":"public-summary-with-authenticated-operations"},
@@ -168,6 +179,11 @@ def route_config(n):
       },
       "admin_desk":{"type":"url","url":"/uprise-admin.html","access":"editor-or-admin"},
       "control_plane":{"type":"ui_state","target":"control_plane","endpoint_hints":["eu-control","eu-status"],"access":"authorized-admin","approval_gated":True},
+      "approvals":{"type":"ui_state","target":"approvals","endpoint_hints":["eu-control"],"access":"authorized-admin","approval_gated":True},
+      "jobs":{"type":"ui_state","target":"jobs","endpoint_hints":["eu-worker","eu-status"],"access":"authorized-admin"},
+      "integrations":{"type":"ui_state","target":"integrations","endpoint_hints":["eu-status","eu-google-workspace"],"access":"authorized-admin"},
+      "relationship_comms":{"type":"ui_state","target":"relationship_comms","endpoint_hints":["eu-google-workspace"],"access":"authorized-admin","read_only":True},
+      "outreach_ops":{"type":"ui_state","target":"outreach_ops","access":"authorized-admin","approval_gated":True,"note":"Consent-aware outbound workflow; never a public blast console."},
       "halo_spatial_intelligence":{
         "type":"ui_state",
         "target":"halo_spatial_intelligence",
@@ -346,19 +362,12 @@ for level in programs["levels"]:
       {"id":"floor_focus","label":level["title"],"camera_id":"floor_overview"},
       {"id":"after_hours","label":"After Hours","lighting_multiplier":0.45}
     ]
-    if n==6:
-        state_list += [
-          {"id":"halo_ambient","label":"Halo Ambient","route_key":"halo_spatial_intelligence","access":"public","read_only":True},
-          {"id":"halo_public","label":"Halo Public","route_key":"halo_spatial_intelligence","access":"public-sanitized","read_only":True},
-          {"id":"halo_member","label":"Halo Member","route_key":"halo_spatial_intelligence","access":"authenticated-role-scoped","read_only":True},
-          {"id":"halo_staff","label":"Halo Staff","route_key":"halo_spatial_intelligence","access":"authorized-staff","read_only":True},
-          {"id":"halo_owner","label":"Halo Owner / Admin","route_key":"halo_spatial_intelligence","access":"house-owner","read_only":False,"owner_handoff_required":True},
-          {"id":"approvals","label":"Approvals","route_key":"control_plane","access":"authorized-admin"},
-          {"id":"jobs","label":"Jobs / Workflow Queue","route_key":"control_plane","access":"authorized-admin"},
-          {"id":"integrations","label":"Connections / Integrations","route_key":"control_plane","access":"authorized-admin"},
-          {"id":"outreach","label":"Outreach / Consent / Contact State","route_key":"control_plane","access":"authorized-admin"}
-        ]
-    states={"schema_version":"2.1.0","scene_id":scene_id,"default_state":"idle","states":state_list}
+    for mode in level.get("interaction_modes",[]):
+        state={"id":mode["id"],"label":mode["label"],"route_key":mode["route_key"],"access":mode.get("access","public")}
+        for key in ("read_only","approval_gated","owner_handoff_required"):
+            if key in mode: state[key]=mode[key]
+        state_list.append(state)
+    states={"schema_version":"2.2.0","scene_id":scene_id,"default_state":"idle","states":state_list}
 
     notes=f"""# Level {n:02d} — Core V2 Deterministic Geometry Notes
 
@@ -376,7 +385,9 @@ Inherited vertical systems:
 - Stair A X60–72 / Y54–72
 - MEP X50–60 / Y66–72
 
-The floor may define program zones but may not move these systems or cover shared slab openings.
+The floor may define program zones and interaction modes but may not move these systems or cover shared slab openings.
+
+Declared interaction modes are semantic/UI states on existing rooms, walls, terminals and instruments; they do not create additional rooms or floor area.
 
 Floor 6 additionally reserves one suspended Halo Globe / Spatial Intelligence sphere at (24.5,34.5), radius 2.25 ft, center 8.25 ft AFF. Its footprint is coordination-only and may not obstruct circulation or the fixed core.
 
