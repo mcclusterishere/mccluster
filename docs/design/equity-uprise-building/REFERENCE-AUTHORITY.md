@@ -181,9 +181,9 @@ Floor 2 preserves the Floor 1 building datum:
 Floor 2 has **no exterior public entrance, balcony, or terrace**.
 
 Canonical Floor 2 assets:
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png`
 
 ## Floor 3 locked geometry
 
@@ -210,9 +210,9 @@ Floor 3 preserves the same building datum:
 Floor 3 has **no exterior public entrance, balcony, or terrace**.
 
 Canonical Floor 3 assets:
-- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png`
 
 ## Floor 4 locked geometry
 
@@ -240,9 +240,9 @@ Floor 4 preserves the same building datum:
 Floor 4 has **no exterior public entrance, balcony, or terrace**.
 
 Canonical Floor 4 assets:
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png`
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
@@ -272,9 +272,9 @@ Floor 5 preserves the same building datum:
 Floor 5 has **no exterior public entrance, balcony, or terrace**.
 
 Canonical Floor 5 assets:
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png`
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
@@ -304,9 +304,9 @@ Floor 6 preserves the building datum and the Level 7 roof interface:
 Floor 6 has **no exterior public entrance, balcony, or terrace**. It is the last enclosed level and must preserve vertical/core/service continuity to **Level 7 — Roof / Mobility Portal**.
 
 Canonical Floor 6 assets:
-- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png`
 
 The raster preview is derivative and cannot override the DXF/SVG/written geometry.
 
@@ -329,9 +329,9 @@ Locked schematic conditions:
 - roof camera datum: approximately **(36,28), 5'-4" above roof walking surface**.
 
 Canonical Level 7 assets:
-- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.dxf`
-- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.svg`
-- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.png`
+- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf`
+- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg`
+- `docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png`
 
 The roof is **portal infrastructure**. Ecosystem destinations are dynamic routing data. Do not bake the website ecosystem into the roof geometry.
 
