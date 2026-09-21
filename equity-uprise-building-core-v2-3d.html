@@ -51,7 +51,17 @@ function levelName(n){
   const p=levelProgram(n),c=CORE.levels.find(x=>x.level===n);
   return (p&&p.program_identity)||(p&&p.title)||(c&&c.name)||("Level "+n);
 }
-function zones(n){const p=levelProgram(n);return (p&&(p.zones||p.spaces))||[]}
+function programRenderable(n){
+  if(n===0)return B1?.render_readiness==="basic-render-ready-restricted";
+  const p=levelProgram(n);
+  return p?.render_readiness==="basic-render-ready-current-pass";
+}
+function zones(n){
+  const p=levelProgram(n);
+  if(!p)return[];
+  const requested=new URLSearchParams(location.search).get("provisional")==="1";
+  return (programRenderable(n)||requested)?((p.zones||p.spaces)||[]):[];
+}
 function elev(n){const c=CORE.levels.find(x=>x.level===n);return c?c.finished_floor_elevation_ft:(n===0?B1.elevation_ft:0)}
 function project(x,y,z){
   const w=canvas.clientWidth,h=canvas.clientHeight;
@@ -108,6 +118,10 @@ function drawPlan(n){
     ctx.fillRect(a.x,c.y,c.x-a.x,a.y-c.y);ctx.strokeStyle="rgba(255,255,255,.32)";ctx.strokeRect(a.x,c.y,c.x-a.x,a.y-c.y);
     if(c.x-a.x>62&&a.y-c.y>24){ctx.fillStyle="#ddd";ctx.font="600 9px system-ui";ctx.fillText(z.label||z.id,a.x+4,c.y+12)}
   });
+  if(!programRenderable(n) && n!==0){
+    ctx.fillStyle="rgba(255,255,255,.78)";ctx.font="800 18px system-ui";
+    ctx.fillText("PROGRAM PROVISIONAL — CHASSIS ONLY",Math.min(p1.x,p2.x)+20,Math.min(p1.y,p2.y)+35);
+  }
   // Shared cores on every plan.
   const sys=CORE.vertical_systems||{};
   [sys.passenger_elevator?.shaft_bounds_ft,sys.service_freight_elevator?.shaft_bounds_ft,sys.stair_a?.enclosure_bounds_ft,sys.stair_b?.enclosure_bounds_ft].filter(Boolean).forEach(b=>{
@@ -123,8 +137,10 @@ function updateSummary(){
   const p=levelProgram(selected),zs=zones(selected);
   if(selected===0){
     summary.innerHTML="<b>B1 · "+B1.title+"</b> — "+B1.purpose+"<br><span class='badge'>restricted live access</span><span class='badge'>training = sandbox clone</span>";
+  }else if(programRenderable(selected)){
+    summary.innerHTML="<b>"+(selected===7?"↑":"F"+selected)+" · "+levelName(selected)+"</b> — "+zs.length+" current modeled program zones. "+(p?.working_development_stage?"Development stage: "+p.working_development_stage+". ":"")+"Program render is allowed by current render_readiness.";
   }else{
-    summary.innerHTML="<b>"+(selected===7?"↑":"F"+selected)+" · "+levelName(selected)+"</b> — "+zs.length+" modeled program zones. "+(p?.working_development_stage?"Development stage: "+p.working_development_stage+". ":"")+"Derived from core-v2-floor-programs.json.";
+    summary.innerHTML="<b>"+(selected===7?"↑":"F"+selected)+" · "+levelName(selected)+"</b> — <b>PROGRAM PROVISIONAL / CHASSIS ONLY.</b> Shared shell/core is current; room/activity zones are intentionally suppressed until this floor receives its iterative program rewrite. Add <code>?provisional=1</code> only for design-debug inspection of the legacy snapshot.";
   }
 }
 function render(){
