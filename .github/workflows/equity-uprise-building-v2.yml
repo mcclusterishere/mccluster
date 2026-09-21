@@ -7,6 +7,10 @@ on:
     paths:
       - 'docs/design/equity-uprise-building/production/building-core-v2.json'
       - 'docs/design/equity-uprise-building/production/core-v2-floor-programs.json'
+      - 'docs/design/equity-uprise-building/production/basement-b1-program.json'
+      - 'docs/design/equity-uprise-building/production/floor-01/floor-01-site-egress.json'
+      - 'docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json'
+      - 'docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py'
       - 'docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py'
       - 'docs/design/equity-uprise-building/production/verify_equity_uprise_building_v2.py'
       - '.github/workflows/equity-uprise-building-v2.yml'
@@ -42,12 +46,16 @@ jobs:
       - name: Verify combined Core V2 GLB
         run: python docs/design/equity-uprise-building/production/verify_equity_uprise_building_v2.py
 
+      - name: Validate Floor 1 + B1 simulation authority
+        run: python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
+
       - name: Commit generated building artifacts
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -f docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb
           git add docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2-report.json
+          git add docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-b1-simulation-report.json
           if git diff --cached --quiet; then
             echo "Combined building artifact already current."
             exit 0
