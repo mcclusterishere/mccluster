@@ -143,8 +143,16 @@
     "building_systems_lab": {
       "type": "ui_state",
       "target": "building_systems_lab",
-      "access": "authorized-learner-or-instructor",
-      "simulation": true
+      "access": "authorized-learner-or-instructor-sandbox-only",
+      "simulation": true,
+      "live_b1_access": false
+    },
+    "underground_operations": {
+      "type": "ui_state",
+      "target": "underground_operations",
+      "access": "mccluster-house-owner-or-underground-operations-admin",
+      "hidden_from_normal_navigation": true,
+      "live_b1_access": true
     },
     "emergency_exercise": {
       "type": "ui_state",
