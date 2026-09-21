@@ -104,3 +104,34 @@ Before any Floor 6 roof-interface, Level 7 roof, exterior-master, rooftop 3D, cr
 
 ### Equity Uprise deterministic Floor 1 implementation
 For any Floor 1 3D reconstruction, GLB/glTF export, Three.js/browser scene, hotspot implementation, lighting/material setup, or scene-state work, read `docs/design/equity-uprise-building/production/floor-01/floor-01-scene-manifest.json` and its companion files **after** the canonical Floor 1 written spec, schematic basis, and DXF/SVG. The production package cannot override architectural authority.
+
+## Equity Uprise Core V2 migration authority
+
+When working on branch `architecture/equity-uprise-core-v2` or on artifacts explicitly labeled Core V2, read these **before any floor-specific production file**:
+
+1. `docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md`
+2. `docs/design/equity-uprise-building/production/building-core-v2.json`
+3. `docs/design/equity-uprise-building/production/building-v2-validation.json`
+4. `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
+5. the floor-specific spec, schematic basis, Core V2 DXF/SVG, and production package.
+
+Core V2 shared geometry is not floor-local:
+
+- passenger elevator: X54–62 / Y34–44;
+- service/freight elevator: X0–8 / Y60–72;
+- revised Stair B: X8–18 / Y54–72;
+- Stair A: X60–72 / Y54–72;
+- MEP/riser: approximately X50–60 / Y66–72;
+- floor elevations: 0 / 13.5 / 27 / 40.5 / 54 / 67.5 / 81 ft.
+
+Rules:
+
+- Floor-specific files may add program but may not redefine shared vertical systems.
+- Both stairs must span the full 13'-6" between finished floors in combined geometry.
+- Do not use the old X0–12/Y54–72 Stair B assumption for new Core V2 work.
+- Do not treat the service/freight elevator as a substitute for a required exit.
+- Do not use Core V1 DXF/SVG/PNG files for new Core V2 modeling.
+- Per-floor viewers are derived isolated views; the combined stacked building is the vertical-continuity authority.
+- Generated images/renders never override the written/shared geometry.
+- All architecture remains schematic and NOT FOR CONSTRUCTION pending licensed professional review.
+
