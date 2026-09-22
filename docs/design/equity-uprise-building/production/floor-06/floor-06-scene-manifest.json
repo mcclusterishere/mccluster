@@ -464,14 +464,14 @@
       "label": "Halo Globe / Spatial Intelligence",
       "type": "instrument",
       "center_ft": {
-        "x": 41,
-        "y": 22
+        "x": 22,
+        "y": 22.5
       },
       "radius_ft": 2.25,
       "center_z_local_ft": 8.25,
       "route_key": "halo_spatial_intelligence",
       "access": "public-sanitized-read-only-role-scoped-owner-admin",
-      "note": "Suspended coordination envelope in the open southeast-central pocket; visually isolated from command seating, salon furniture and core circulation. Public and role-scoped modes are read-only. Owner/admin operations hand off to the protected Halo/Seek First plane."
+      "note": "Suspended coordination envelope in the isolated southwest open pocket, east of the Institutional Salon and north of the south review rooms. Preserve clear breathing room around the full globe envelope. Public and role-scoped modes are read-only. Owner/admin operations hand off to the protected Halo/Seek First plane."
     }
   ],
   "south_condition": "sealed upper-floor glazing",

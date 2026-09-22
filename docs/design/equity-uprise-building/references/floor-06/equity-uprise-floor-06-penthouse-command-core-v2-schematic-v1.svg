@@ -49,8 +49,8 @@
 <text x="757.0" y="469.5" text-anchor="middle" dominant-baseline="middle" class="t small">PASSENGER ELEVATOR</text>
 <rect x="780.0" y="90.0" width="138.0" height="207.0" fill="#b9bdc2" class="room"/>
 <text x="849.0" y="193.5" text-anchor="middle" dominant-baseline="middle" class="t small">STAIR A</text>
-<circle cx="561.5" cy="665.0" r="25.875" fill="#eeeeea" class="room"/>
-<text x="561.5" y="665.0" text-anchor="middle" dominant-baseline="middle" class="t small">HALO GLOBE / SPATIAL INTELLIGENCE</text>
+<circle cx="343.0" cy="659.25" r="25.875" fill="#eeeeea" class="room"/>
+<text x="343.0" y="659.25" text-anchor="middle" dominant-baseline="middle" class="t small">HALO GLOBE / SPATIAL INTELLIGENCE</text>
 <rect x="190.625" y="98.625" width="97.75" height="149.5" class="open"/>
 <rect x="788.625" y="98.625" width="120.75" height="149.5" class="open"/>
 <circle cx="504.0" cy="596.0" r="4" fill="#fff" stroke="#111"/>

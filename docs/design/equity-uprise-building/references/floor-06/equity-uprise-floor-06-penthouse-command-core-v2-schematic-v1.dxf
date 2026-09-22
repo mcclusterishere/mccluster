@@ -6853,9 +6853,9 @@ PROGRAM
 100
 AcDbCircle
  10
-41.0
- 20
 22.0
+ 20
+22.5
  30
 0.0
  40
@@ -6873,9 +6873,9 @@ TEXT
 100
 AcDbText
  10
-41.0
- 20
 22.0
+ 20
+22.5
  30
 0.0
  40
@@ -6883,9 +6883,9 @@ AcDbText
   1
 HALO GLOBE / SPATIAL INTELLIGENCE
  11
-41.0
- 21
 22.0
+ 21
+22.5
  31
 0.0
 100
