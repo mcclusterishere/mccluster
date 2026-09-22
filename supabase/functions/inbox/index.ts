@@ -73,6 +73,7 @@ const SB = Deno.env.get("SUPABASE_URL")!;
 const SRV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VERIFY = Deno.env.get("META_VERIFY_TOKEN") ?? "";
 const APP_SECRET = Deno.env.get("META_APP_SECRET") ?? "";
+const OLLAMA_URL = Deno.env.get("OLLAMA_URL") ?? "";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -290,6 +291,53 @@ async function runFlows(opts: {
   return replies;
 }
 
+/** Call Ollama on the OVH VPS for local inference.
+ *
+ *  Returns an Answered-compatible response, or null if Ollama is unavailable.
+ */
+async function callOllama(opts: {
+  question: string;
+  history?: { role: "user" | "assistant"; text: string }[];
+}): Promise<{ gate: { send: true; text: string; tags: string[]; cites: number[]; confidence: number }; model: string; cost_micros: number; hits: any[] } | null> {
+  if (!OLLAMA_URL) return null;
+
+  const messages: { role: "user" | "assistant"; content: string }[] = [];
+  if (opts.history) {
+    for (const h of opts.history) {
+      messages.push({ role: h.role, content: h.text });
+    }
+  }
+  messages.push({ role: "user", content: opts.question });
+
+  try {
+    const res = await fetch(OLLAMA_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "deepseek-r1:8b",
+        prompt: messages.map((m) => `${m.role}: ${m.content}`).join("\n") + "\nassistant: ",
+        stream: false,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json() as { response?: string };
+    const text = (data.response ?? "").trim();
+    if (!text) return null;
+
+    return {
+      gate: { send: true, text, tags: [], cites: [], confidence: 0.7 },
+      model: "ollama/deepseek-r1:8b",
+      cost_micros: 0,
+      hits: [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** The flows had nothing to say. Ask the brain.
  *
  *  Order matters and it is deliberate: a written rule ALWAYS wins. The
@@ -365,16 +413,20 @@ async function aiFallback(opts: {
     .filter((m) => m.body && m.body !== "[handed to a person]")
     .map((m) => ({ role: (m.direction === "in" ? "user" : "assistant") as "user" | "assistant", text: m.body }));
 
-  const res = await answerQuestion(db, {
-    orgId: opts.orgId,
-    triage: t.triage?.kind,
-    question: opts.body,
-    convId: opts.convId,
-    contactId: opts.contactId,
-    channel: opts.channel,
-    kind: opts.kind,
-    history,
-  });
+  // Try Ollama first if configured, fall back to Claude
+  let res = await callOllama({ question: opts.body, history });
+  if (!res) {
+    res = await answerQuestion(db, {
+      orgId: opts.orgId,
+      triage: t.triage?.kind,
+      question: opts.body,
+      convId: opts.convId,
+      contactId: opts.contactId,
+      channel: opts.channel,
+      kind: opts.kind,
+      history,
+    });
+  }
 
   if (!res.gate.send) {
     // Leave it where a human will see it, and say in the record WHY the
