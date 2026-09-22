@@ -255,6 +255,30 @@ Use these to recover design quality, not obsolete stair/core geometry.
 - inventing new floor identities without current program authority.
 
 
+## Exterior facade upgrade spec — DETAILED AUTHORITY LOCKED / GEOMETRY PENDING
+
+The exterior-facade design is now coordinated to the existing Core V2 math rather than remaining a generic future aspiration.
+
+Locked current-pass facade authority:
+- 72 ft exterior control planes preserved;
+- 18 ft structural grid retained;
+- **6 ft secondary facade module / 12 modules per elevation**;
+- base / middle / crown composition locked;
+- Floor 1 south entrance remains aligned to the existing X29–43 vestibule, with a larger X24–48 architectural entrance composition;
+- Floors 2–6 remain sealed exterior glazing with no new balconies/terraces/doors;
+- south elevation = primary civic/public face;
+- north elevation = intentionally more opaque support/service face;
+- east/west elevations transition from occupied glazing to north core/service opacity;
+- Floor 4 recording-room acoustic opacity is an explicit facade exception;
+- conceptual material family now distinguishes primary glass, privacy glass, dark metal frames, opaque panels, mineral base and limited warm entry material;
+- primary entry E = U / Equity Uprise identity and one restrained south crown E = U mark are coordinated;
+- Level 7 remains open-air and existing parapets/headhouses/service screens remain authoritative;
+- review requirements now include all four elevations, street perspectives, human-eye entry, crown, day/night, isolation and wireframe states.
+
+Machine authority: `production/facade-system-core-v2.json` schema **1.1.0**.
+
+**No facade geometry has been implemented in this step.** The next facade stage is per-module classification/object inventory and deterministic geometry generation after this detailed spec is accepted.
+
 ## Whole-building facade + nervous-system authority — AUTHORITY PASS ONLY
 
 The post-B1 realism phase now has a canonical written + machine-readable authority set covering:
