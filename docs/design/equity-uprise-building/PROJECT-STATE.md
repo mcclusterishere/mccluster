@@ -567,6 +567,8 @@ Implemented on the Step 3 branch:
 - direct B1 inspection remains supported through `?floor=0&services=1`;
 - Core V2 CI and Pages deployment now build/publish the Step 3 services layer and B1 connection authority.
 
-Branch-side deterministic preflight: **294 meshes / 233,372 bytes**, including **159 B1 distribution meshes**, **9/9 B1 source connections**, **63 riser segments**, **63 handoff stubs**, and **28/28 Step 3 checks passing**.
+Repository-generated Step 3 snapshot: **294 meshes / 233,340 bytes**, including **159 B1 distribution meshes**, **9/9 B1 source connections**, **63 riser segments**, **63 handoff stubs**, and **28/28 Step 3 checks passing**.
 
-Step 3 still requires repository CI/generated-artifact publication and merge verification before it becomes a main/live checkpoint.
+Generated GLB SHA-256: `28d774da3a23c099068dc6f2481446dbfa2612b12f0290c90749002efdb18d8e`.
+
+The full Equity Uprise Core V2 validation and generated-artifact publication are green on the Step 3 branch. Merge/live verification remains before this becomes the main checkpoint.
