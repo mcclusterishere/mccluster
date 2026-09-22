@@ -352,5 +352,6 @@
   ],
   "current_implementation_phase": "services-step-1-backbone-coordination",
   "floor_addenda_root": "services/floor-addenda",
-  "visible_geometry_status": "Services Step 2 pending"
+  "visible_geometry_status": "Services Step 2 pending",
+  "floor_addenda_ref": "services/floor-services-addenda.json"
 }
