@@ -201,7 +201,7 @@ Level 7 is **implementation-complete for the current review pass but still await
 - current-pass reconciliation + preservation map + schematic basis added;
 - **67 stable inventory records** define the detailed B1 environment;
 - deterministic detailed B1 builder added;
-- local preflight build produced **382 meshes, 67/67 inventory records represented, 18/18 checks passing**;
+- deterministic committed B1 report: **382 meshes, 67/67 inventory records represented, 18/18 checks passing**, GLB SHA-256 `2cf95b25d6b40568b3039f2cdb5dad55a54e989339f824e64ff40c65037f4a37`;
 - all ten canonical B1 zones are physically expressed;
 - mechanical, electrical, fire/water, telecom, flood, workshop, systems-lab, service-staging, tunnel-ops and transfer-lock equipment/furniture are modeled;
 - both protected stairs include the complete **13.5 ft B1→Floor 1 rise** for isolated review;
@@ -218,7 +218,7 @@ Required references:
 - `production/basement-b1/basement-b1-object-inventory.json`;
 - `production/basement-b1/build_equity_uprise_basement_b1_v2.py`.
 
-B1 is **implementation-complete for the current review pass; deterministic regeneration/pinning is requested on the final reconciliation branch, with direct visual approval still required**.
+B1 is **implementation-complete for the current review pass with the deterministic GLB/report pinned by green CI; direct visual approval is the remaining B1 gate**.
 
 ## Historical V1 Floor 1 — DESIGN REFERENCE, NOT geometry authority
 
@@ -243,7 +243,7 @@ Use these to recover design quality, not obsolete stair/core geometry.
 10. **DONE:** Floor 6 — Penthouse Command — reconciliation → Halo/roof boundary → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration → requested Halo relocation to (55,12) with synchronized authority/generated artifacts.
 11. **DONE FOR REVIEW:** Level 7 — Roof / Mobility Portal — reconciliation → historical preservation → inventory → real rooftop environment → human-walkable Stair A/B roof arrivals → true isolation → working-stack integration.
 12. **CURRENT:** B1 detailed pass — reconciliation → inventory → real technical environment → B1→Floor 1 stair review → true isolation → stack integration.
-13. **NEXT GATE:** deterministic B1 generation + whole-building CI, then direct visual approval of isolated B1 and the complete B1→roof stack.
+13. **NEXT GATE:** direct visual approval of isolated B1 and the complete B1→roof stack; deterministic B1 generation and whole-building CI are green.
 14. **AFTER B1 VISUAL APPROVAL:** exterior/facade/branding/material pass, including coherent glazing, crown/base composition and Equity Uprise building identity; do not reopen approved floor programs without a new repo capability or explicit design correction.
 
 ## Do not waste time on
