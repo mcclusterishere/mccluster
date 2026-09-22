@@ -117,6 +117,30 @@ Do **not** preserve obsolete west Stair B/service-core coordinates.
 
 See `FLOOR-05-V1-V2-PRESERVATION-MAP.md`.
 
+## Reference A6 — historical Floor 6 Penthouse Command
+
+Historical architecture references:
+- canonical Floor 6 program/spec commit `663c24579ff7643433e0becf98379cd4cc7625b0`;
+- locked Floor 6 schematic geometry commit `8ac6de5c8fa8d9c623061ec8fbcabaab2be26f65`.
+
+Preserve:
+- central Penthouse Command;
+- 16' × 5' / six-seat maximum command table;
+- NOW / PAST WORK / JOIN command wall;
+- one restrained suspended Halo Globe;
+- Institutional Salon / Support;
+- Strategy Review Room;
+- Partner / Executive Briefing Room;
+- Roof / Mobility Transition terminal;
+- quiet refined institutional character;
+- dark/gunmetal/warm-wood/charcoal material family.
+
+There was no comparable standalone historical Floor 6 3D viewer in repo history. Do not invent one as precedent.
+
+Do **not** preserve obsolete west Stair B/service-core coordinates.
+
+See `FLOOR-06-V1-V2-PRESERVATION-MAP.md`.
+
 ## Reference B — fully assembled Core V2 building
 
 ### Combined generator
