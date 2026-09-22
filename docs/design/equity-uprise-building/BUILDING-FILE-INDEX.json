@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 270,
+  "tracked_count": 271,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -203,6 +203,7 @@
       "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json",
       "docs/design/equity-uprise-building/production/facade-system-core-v2.json",
       "docs/design/equity-uprise-building/production/facade/build_equity_uprise_facade_v2.py",
+      "docs/design/equity-uprise-building/production/facade/equity-uprise-logo-vector.json",
       "docs/design/equity-uprise-building/production/facade/facade-finish-inventory.json",
       "docs/design/equity-uprise-building/production/facade/facade-module-inventory.json",
       "docs/design/equity-uprise-building/production/floor-01/README.md",
