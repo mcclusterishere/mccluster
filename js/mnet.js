@@ -623,12 +623,30 @@
             var path = grant && grant.upload && grant.upload.path;
             var asset = grant && grant.asset;
             if (!path || !asset) throw new Error("The upload slot was not created.");
-            return fetch(SB_URL + "/storage/v1/object/mnet-media/" + storagePath(path), {
-              method:"POST",
+            /* USE THE SIGNED SLOT WE WERE JUST HANDED.
+               supabase/functions/mnet-media mints one with
+               createSignedUploadUrl and returns grant.upload.token. This
+               code was throwing that away and POSTing to the plain object
+               endpoint on the user's own JWT instead -- which depends on
+               storage RLS lining up at upload time, on a PRIVATE bucket,
+               with x-upsert:false against a path the signing step already
+               reserved. The signed endpoint is what the token is for, it
+               does not care about RLS, and it is the documented path. */
+            var uploadToken = grant.upload && grant.upload.token;
+            var url = uploadToken
+              ? SB_URL + "/storage/v1/object/upload/sign/mnet-media/" + storagePath(path) +
+                  "?token=" + encodeURIComponent(uploadToken)
+              : SB_URL + "/storage/v1/object/mnet-media/" + storagePath(path);
+            return fetch(url, {
+              method: uploadToken ? "PUT" : "POST",
               headers:{ apikey:SB_KEY, authorization:"Bearer " + token, "content-type":file.type || "application/octet-stream", "x-upsert":"false" },
               body:file
             }).then(function (res) {
-              if (!res.ok) return res.text().then(function (t) { throw new Error(t || "Media upload failed."); });
+              if (!res.ok) return res.text().then(function (t) {
+                /* Say which step failed. "Media upload failed." with no
+                   detail is why this went unnoticed for so long. */
+                throw new Error("Upload rejected (" + res.status + "): " + (t || "no detail"));
+              });
               return api("/v1/mnet/media/finalize", { method:"POST", body:{ asset_id:asset.id } });
             }).then(function (fin) {
               var ready = fin && fin.asset || asset;
