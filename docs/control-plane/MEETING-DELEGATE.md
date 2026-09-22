@@ -8,7 +8,7 @@ McCluster owns the meeting intelligence plane.
 
 Third-party/open-source code may provide a replaceable transport implementation, but calendar policy, identity, scheduling, durable state, transcripts, debriefs, model reasoning, CRM/work integration, and approvals remain inside McCluster.
 
-The initial engine contract is compatible with the Apache-2.0 Vexa API. The first upstream pin is Vexa `v0.12.25`.
+The initial engine contract is compatible with the Apache-2.0 Vexa API. The first audited upstream pin is `Vexa-ai/vexa-core` commit `37a920cd05116d6919186b0b9b4d564247d0e929`.
 
 ## Why this architecture
 
@@ -82,6 +82,16 @@ Both timings are configurable per request.
 
 The existing Core runner already respects `ops_agent_jobs.run_after`, so there is no second cron/scheduler.
 
+## Meeting credential containment
+
+Scheduled meeting URLs and passcodes are treated as credentials.
+
+Core hashes the meeting URL for correlation, encrypts the complete join target with AES 256 GCM using the OVH only `MCCLUSTER_MEETING_TARGET_KEY`, and stores only the ciphertext in the durable job input.
+
+The target is decrypted in memory only when the dispatch or transcript collection job actually runs.
+
+Changing the encryption key invalidates any meeting jobs still queued under the old key.
+
 ## Consent and authority
 
 Transcription is fail-closed.
@@ -121,6 +131,7 @@ Core expects a private/loopback meeting engine:
 ```
 MCCLUSTER_MEETING_ENGINE_URL=http://127.0.0.1:18056
 MCCLUSTER_MEETING_ENGINE_API_KEY=<server-side token>
+MCCLUSTER_MEETING_TARGET_KEY=<long random Core-only encryption key>
 MCCLUSTER_MEETING_PRINCIPAL_NAME=Matthew McCluster
 MCCLUSTER_MEETING_INTERACTIVE=0
 ```
