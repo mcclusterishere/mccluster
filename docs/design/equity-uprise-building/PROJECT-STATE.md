@@ -571,4 +571,16 @@ Connected source families:
 
 The new routes are overhead digital-twin coordination geometry tied to existing B1 equipment IDs. They do not move the canonical B1 rooms, cores, stairs, elevators, tunnel interface or circulation.
 
-Current gate: deterministic regeneration and full Core V2 CI.
+Services Step 3 deterministic generation is **GREEN**.
+
+Verified snapshot:
+- Services GLB: **196 meshes / 121,788 bytes**;
+- **10** explicit B1 source-to-riser connections;
+- **52** overhead route segments;
+- **9** source vertical drops;
+- all **9** backbone systems connected to B1 sources;
+- existing **63** vertical riser segments and **63** floor handoff stubs preserved;
+- Services Step 3 checks: **18/18 passing**;
+- GLB SHA-256: `828e5fd9f4facc11c9026badfccbc53ac538d328873674371c55993ad9cd5684`.
+
+Services Step 3 is verified. **Next: Services Step 4 — Floors 1–3 branch distribution and representative endpoints.**
