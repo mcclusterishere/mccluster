@@ -119,17 +119,19 @@ Any future feature that materially changes Equity Uprise must:
 
 ### Reconciliation proof status
 
-As of the 2026-09-21 repo-wide reconciliation:
+As of the 2026-09-22 roof/whole-building reconciliation:
 
-- **251** Equity Uprise source/support files are currently classified in the source ledger;
+- **253** Equity Uprise source/support files are classified in the source ledger;
 - **102** are directly tied to one or more building capabilities;
-- **149** are support/development-authority sources (presentation, runtime plumbing, tests/build support, Lifetime Development authority, digital-twin program authority, and the unified build-validation workflow) and intentionally do not create additional rooms/floors;
+- **151** are support/development-authority sources and intentionally do not create additional rooms/floors;
 - **56** canonical Equity Uprise capabilities are represented in the building;
 - repo-source exact-set classification is enforced by `production/verify_equity_uprise_repo_sources.py`;
-- repo-source exact-set audit: **904 / 904 passed**;
-- capability/floor/routing audit: **464 / 464 passed**;
-- generated plan semantic/artifact audit: **437 / 437 passed**;
-- combined B1-to-roof geometry audit: **41 / 41 passed** with **784 meshes**.
+- repo-source exact-set audit baseline: **912 / 912 passed**;
+- capability/floor/routing audit baseline: **464 / 464 passed** and reruns on every program change;
+- generated plan semantic/artifact audit baseline: **437 / 437 passed** and reruns deterministically;
+- Level 7 detailed roof: **45 / 45 inventory records**, **15 / 15 build/visual-completeness checks passed**;
+- B1→Level 7 schematic human-walkability audit: **41 / 41 passed**;
+- combined B1-to-roof geometry remains a mandatory deterministic CI gate; exact current mesh count/SHA live in `production/generated/equity-uprise-building-core-v2-report.json` rather than being duplicated here.
 
 The source classification ledger is:
 `docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json`.
