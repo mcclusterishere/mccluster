@@ -352,7 +352,7 @@ for level in programs["levels"]:
       {"id":"program_focus","type":"soft_area","temperature_k":3000,"intensity_relative":0.62,"position_ft_local":{"x":36,"y":40,"z":10.5}}
     ]
     if n==6:
-        fixtures.append({"id":"halo_globe_soft_emission","type":"object_emission","temperature_k":5200,"intensity_relative":0.18,"position_ft_local":{"x":41,"y":22,"z":8.25},"rule":"Subtle only; must not turn Penthouse Command into a tactical command center."})
+        fixtures.append({"id":"halo_globe_soft_emission","type":"object_emission","temperature_k":5200,"intensity_relative":0.18,"position_ft_local":{"x":22,"y":22.5,"z":8.25},"rule":"Subtle only; must not turn Penthouse Command into a tactical command center."})
     lighting={"schema_version":"2.0.0","scene_id":scene_id,"color_temperature_default_k":3000,
       "fixtures":fixtures,
       "rules":["Warm-white practical light is primary.","Red remains a restrained state/wayfinding accent.","Halo emission on Floor 6 remains subordinate to architectural lighting."]
