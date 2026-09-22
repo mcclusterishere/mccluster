@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 290,
+  "tracked_count": 294,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -83,6 +83,7 @@
       "docs/design/equity-uprise-building/BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md",
       "docs/design/equity-uprise-building/BUILDING-SYSTEMS-AND-FACADE-CORE-RULES.md",
       "docs/design/equity-uprise-building/DIGITAL-PHYSICAL-ASSET-REGISTRY-SPEC.md",
+      "docs/design/equity-uprise-building/ELECTRONICS-IT-INFRASTRUCTURE-SPEC.md",
       "docs/design/equity-uprise-building/EXTERIOR-FACADE-UPGRADE-SPEC.md",
       "docs/design/equity-uprise-building/FACADE-ARCHITECTURAL-FINISH-PASS-SPEC.md",
       "docs/design/equity-uprise-building/FACADE-BRANDING-AND-SIGNAGE-SPEC.md",
@@ -216,6 +217,9 @@
       "docs/design/equity-uprise-building/production/building-services-core-v2.json",
       "docs/design/equity-uprise-building/production/building-v2-validation.json",
       "docs/design/equity-uprise-building/production/core-v2-floor-programs.json",
+      "docs/design/equity-uprise-building/production/electronics/build_equity_uprise_electronics_v1.py",
+      "docs/design/equity-uprise-building/production/electronics/electronics-population-policy-v1.json",
+      "docs/design/equity-uprise-building/production/electronics/verify_equity_uprise_electronics_v1.py",
       "docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json",
       "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json",
       "docs/design/equity-uprise-building/production/facade-system-core-v2.json",

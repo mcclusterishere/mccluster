@@ -1,6 +1,6 @@
 # Equity Uprise — Digital-to-Physical Asset Registry
 
-> Status: **STEP 3B — FLOOR BRANCH / ENDPOINT GRAPH**
+> Status: **STEP 4A — WHOLE-BUILDING ELECTRONICS FABRIC**
 >
 > This is digital-twin, training, commissioning and facilities information architecture. It is **not construction documentation, engineering approval, or authorization to control physical building systems**.
 
@@ -170,3 +170,30 @@ Rules:
 The services builder now publishes deterministic `floor_branch_records` into its generated report. Step 3B consumes those records after the services build, enriches the canonical registry, and produces complete lab-trace records for every modeled F1-L7 service branch.
 
 **Next:** derive first scenario definitions from the graph: source failure, dependency propagation, affected endpoint discovery, inspection route, learner action and reset criteria.
+
+
+## Step 4A — whole-building electronics fabric
+
+Step 4A overlays a research-grounded electronics/IT/OT fabric on the existing building and extends the same canonical asset registry.
+
+It distinguishes:
+- physical active electronics;
+- passive structured cabling and termination;
+- power feeds and PoE;
+- wired and wireless links;
+- logical VLAN/SSID/service objects;
+- transient mobile-client profiles;
+- lab scenarios.
+
+The generated electronics fabric includes a B1 MDF/core, F1–F6 IDF/access layer, roof electronics served from F6, Cat6A horizontal links, OS2 backbone links, field buses for BAS and access control, segregated fire-alarm field circuits, AV local wiring, rack power/UPS/PDU dependencies, wireless client profiles, and logical network services such as DHCP/DNS/NTP/AAA/VPN/VMS/BAS/AV control.
+
+All new physical assets are design-intent/planned and **not as-built**. AP locations/counts require RF design and survey; electrical and fire/life-safety conductors require site-specific engineering/AHJ review; carrier circuits and truly diverse pathways are not claimed unless later verified.
+
+Generated Step 4A artifacts:
+- `production/electronics/generated/equity-uprise-electronics-manifest-v1.json`
+- `production/electronics/generated/equity-uprise-electronics-connections-v1.json`
+- `production/electronics/generated/equity-uprise-it-lab-catalog-v1.json`
+- `production/electronics/generated/equity-uprise-electronics-step4a-report.json`
+- `production/electronics/generated/equity-uprise-electronics-fabric-v1.glb`
+
+**Next:** integrate the electronics overlay into the interactive building viewer and promote the generated lab catalog into executable Lab Runtime scenarios.

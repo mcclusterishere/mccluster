@@ -88,6 +88,12 @@ jobs:
       - name: Verify Digital-to-Physical Asset Registry Step 3B
         run: python docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step3b.py
 
+      - name: Build Whole-Building Electronics Fabric Step 4A
+        run: python docs/design/equity-uprise-building/production/electronics/build_equity_uprise_electronics_v1.py
+
+      - name: Verify Whole-Building Electronics Fabric Step 4A
+        run: python docs/design/equity-uprise-building/production/electronics/verify_equity_uprise_electronics_v1.py
+
       - name: Verify B1-to-roof human walkability
         run: python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 
@@ -130,6 +136,7 @@ jobs:
             docs/design/equity-uprise-building/production/facade
             docs/design/equity-uprise-building/production/generated
             docs/design/equity-uprise-building/production/asset-registry/generated
+            docs/design/equity-uprise-building/production/electronics/generated
           )
           dirty="$(git status --short -- "${paths[@]}")"
           if [ -n "$dirty" ]; then
@@ -176,6 +183,8 @@ jobs:
           python docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py
           python docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_step3b.py
           python docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step3b.py
+          python docs/design/equity-uprise-building/production/electronics/build_equity_uprise_electronics_v1.py
+          python docs/design/equity-uprise-building/production/electronics/verify_equity_uprise_electronics_v1.py
           python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
           python docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py
           python docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py
@@ -191,6 +200,7 @@ jobs:
           # when the exhaustive building index is regenerated.
           git add -f docs/design/equity-uprise-building/production/generated
           git add -f docs/design/equity-uprise-building/production/asset-registry/generated
+          git add -f docs/design/equity-uprise-building/production/electronics/generated
           python docs/design/equity-uprise-building/production/audit_building_context.py --write
           python docs/design/equity-uprise-building/production/audit_building_context.py
 
@@ -211,6 +221,7 @@ jobs:
           git add docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json
           git add -f docs/design/equity-uprise-building/production/generated
           git add -f docs/design/equity-uprise-building/production/asset-registry/generated
+          git add -f docs/design/equity-uprise-building/production/electronics/generated
           if git diff --cached --quiet; then
             echo "Generated building artifacts already current."
             exit 0
