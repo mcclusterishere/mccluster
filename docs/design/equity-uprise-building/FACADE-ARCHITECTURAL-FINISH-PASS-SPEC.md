@@ -386,3 +386,23 @@ Step 5 deterministic verification is **GREEN** at snapshot `39305ef8b27a5c521aa7
 - **32/32 facade checks passing**;
 - exact approved repo logo hash locked;
 - remaining **14 records** are crown / roof-edge / crown-lighting scope only.
+
+
+## 21. Step 6 crown / roof-edge completion state
+
+Step 6 source geometry is implemented pending deterministic verification.
+
+Scope:
+- four deepened Floor 6 crown bands;
+- four resolved Level 7 parapet caps;
+- open north MEP/service screens;
+- Stair A and Stair B headhouse trim with door openings preserved;
+- passenger-elevator overrun trim without asserting roof passenger service;
+- approved crown-logo halo;
+- six restrained crown/service-screen exterior-light fixtures.
+
+Step 6 inventory scope: **14 records**. Cumulative facade architectural-finish scope: **68/68 records**. Nothing remains intentionally deferred.
+
+Level 7 remains open-air and this pass does not create a seventh enclosed floor.
+
+Deterministic verification is the current gate.
