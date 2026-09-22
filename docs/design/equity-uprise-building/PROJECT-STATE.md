@@ -108,8 +108,9 @@ The working viewer now treats the building as one continuous object from B1 thro
 - detailed Floor 4 is inserted at FFE +40.5 ft;
 - detailed Floor 5 is inserted at FFE +54 ft;
 - detailed Floor 6 is inserted at FFE +67.5 ft;
-- Level 7 roof remains visible as a chassis placeholder at +81 ft;
-- each future floor pass replaces/improves its level **inside this stack**, not as an isolated experiment.
+- detailed Level 7 Roof / Mobility Portal is inserted at FFE +81 ft;
+- the combined Core V2 chassis supplies continuous B1→roof protected stair geometry, while Level 7 isolation includes the actual Floor 6→roof stair transition and roof-door arrival condition;
+- each future refinement occurs **inside this stack**, not as an isolated experiment.
 
 Public working-stack viewer: `equity-uprise-building-core-v2-3d.html`.
 
@@ -216,11 +217,36 @@ Required references:
 
 Floor 6 is **visually reviewable with the requested Halo placement correction committed**. Final visual confirmation should verify the globe appears in the circled open corner; no further Floor 6 redesign is authorized unless that preview reveals a collision or placement error.
 
-## Level 7 — geometry/program chassis exists; iterative roof redesign NOT COMPLETE
+## Level 7 — RECONCILED / REAL 3D ACTIVE / STACK-INTEGRATED
 
-Current `core-v2-floor-programs.json` still treats Level 7 as pre-iterative roof/mobility work.
+Canonical identity: **Roof / Mobility Portal**.
 
-Do not interpret generated plan/program plates as a finished rooftop environment.
+Current state:
+- current-pass program reconciliation complete;
+- historical/origin roof intent preserved without restoring obsolete geometry;
+- machine inventory: **45 stable records**;
+- deterministic detailed roof builder active;
+- standalone Level 7 viewer is a real 3D roof viewer rather than a redirect to the chassis;
+- working-stack viewer loads the detailed roof at **FFE +81 ft** and truly isolates it;
+- exactly three repo-backed Level 7 capabilities are represented: **ecosystem-routing**, **roof-mobility**, and optional-route-only **uprise-world**;
+- candidate mobility geometry remains explicitly conceptual/non-operational — no runway, no certified helipad/TLOF/FATO claim;
+- passenger-elevator direct Level 7 service remains unassumed;
+- Stair A and Stair B each preserve the complete **13.5 ft Floor 6→roof rise**, 22-riser conceptual geometry, upper landing at +81 ft, and a real 3 ft south-facing roof-door opening;
+- the combined building stair enclosures are now segmented around canonical access openings on every served level instead of visually sealing the south stair wall;
+- a dedicated B1→Level 7 walkability audit is part of CI;
+- inventory coverage and visual-completeness gates are required before user visual approval.
+
+Required references:
+- `FLOOR-07-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-07-V1-V2-PRESERVATION-MAP.md`;
+- `FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`;
+- `FLOOR-07-SCHEMATIC-PLAN-BASIS.md`;
+- `FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`;
+- `production/floor-07/floor-07-object-inventory.json`;
+- `production/floor-07/build_equity_uprise_floor_07_v2.py`;
+- `production/audit_vertical_circulation_walkability.py`.
+
+Level 7 is **implementation-complete for the current review pass but still awaits direct user visual approval**. Real construction/aviation feasibility is explicitly outside this digital-twin approval.
 
 ## B1 — program/geometry integrated; final designed environment still future work
 
@@ -247,7 +273,9 @@ Use these to recover design quality, not obsolete stair/core geometry.
 8. **DONE:** Floor 4 — Media + Culture — reconciliation → inventory → real 3D → working-stack integration.
 9. **DONE:** Floor 5 — Policy + Proof — reconciliation → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration.
 10. **DONE:** Floor 6 — Penthouse Command — reconciliation → Halo/roof boundary → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration → requested Halo relocation to (55,12) with synchronized authority/generated artifacts.
-11. **NEXT:** Level 7 — Roof / Mobility Portal — reconcile roof program, preserve historical roof intent, inventory, build real rooftop environment, then complete the B1→roof stack.
+11. **DONE FOR REVIEW:** Level 7 — Roof / Mobility Portal — reconciliation → historical preservation → inventory → real rooftop environment → human-walkable Stair A/B roof arrivals → true isolation → working-stack integration.
+12. **CURRENT GATE:** deterministic regeneration + whole-repo/source/program/authority/plan/building/walkability CI, then direct visual approval of isolated Level 7 and the complete stacked building.
+13. **AFTER ROOF VISUAL APPROVAL:** final exterior/crown/context pass and later B1 cinematic/detail refinement; do not reopen approved floor programs without a new repo capability or explicit design correction.
 
 ## Do not waste time on
 
