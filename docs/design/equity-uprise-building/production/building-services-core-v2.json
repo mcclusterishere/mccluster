@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-building-services-core-v2",
-  "status": "services-step3-b1-plant-connections-source-implemented-pending-verification",
+  "status": "services-step3-b1-plant-connections-verified",
   "not_for_construction": true,
   "building_id": "equity-uprise-building",
   "source_level": "basement-b1",
@@ -350,9 +350,9 @@
     "code-required ratings",
     "final equipment replacement paths"
   ],
-  "current_implementation_phase": "services-step-3-b1-source-connections",
+  "current_implementation_phase": "services-step-3-complete",
   "floor_addenda_root": "services/floor-addenda",
-  "visible_geometry_status": "vertical backbone + B1 plant-to-riser routes; deterministic verification pending",
+  "visible_geometry_status": "verified vertical backbone + B1 plant-to-riser connections",
   "floor_addenda_ref": "services/floor-services-addenda.json",
   "services_glb": "generated/equity-uprise-building-services-core-v2.glb",
   "services_report": "generated/equity-uprise-building-services-core-v2-report.json",
@@ -367,5 +367,17 @@
     "checks": "12/12",
     "sha256": "4fa994486889fa135d9dae163df3b8d9dabb81eef692520b642f53ad8dc3d1ef"
   },
-  "b1_source_connections_ref": "services/b1-services-source-connections.json"
+  "b1_source_connections_ref": "services/b1-services-source-connections.json",
+  "step3_verification": {
+    "glb_bytes": 121788,
+    "mesh_count": 196,
+    "b1_source_connections": 10,
+    "b1_route_segments": 52,
+    "b1_source_vertical_drops": 9,
+    "connected_systems": "9/9",
+    "riser_segments": 63,
+    "floor_handoff_stubs": "63/63",
+    "checks": "18/18",
+    "sha256": "828e5fd9f4facc11c9026badfccbc53ac538d328873674371c55993ad9cd5684"
+  }
 }
