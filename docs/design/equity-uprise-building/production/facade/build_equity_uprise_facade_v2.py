@@ -473,6 +473,86 @@ add_box("FAC-SITE-APRON-EDGE-01::west",23.82,-14.0,-.18,24.10,0,.02,C["FAC-SITE-
 add_box("FAC-SITE-APRON-EDGE-01::east",47.90,-14.0,-.18,48.18,0,.02,C["FAC-SITE-EDGE"]); finish_mark("FAC-SITE-APRON-EDGE-01")
 add_box("FAC-SITE-THRESHOLD-PAVING-01",30,-4.2,-.015,42,-.02,.035,C["FAC-PAVER-02"]); finish_mark("FAC-SITE-THRESHOLD-PAVING-01")
 
+# -----------------------------------------------------------------------------
+# Architectural finish Step 6: crown / roof edge / service screens / headhouse
+# integration / restrained crown lighting. Level 7 remains open-air.
+# -----------------------------------------------------------------------------
+# Deepened F6 crown bands: upper 3.25 ft only, matching the locked F6 crown datum.
+for elev,fid in (
+    ("south","FAC-CROWN-BAND-FINISH-SOUTH-01"),
+    ("east","FAC-CROWN-BAND-FINISH-EAST-01"),
+    ("north","FAC-CROWN-BAND-FINISH-NORTH-01"),
+    ("west","FAC-CROWN-BAND-FINISH-WEST-01"),
+):
+    panel(fid+"::main",elev,0,72,77.75,81.0,.58,C["FAC-OPAQUE-01"],extra_out=.16)
+    # 6 ft module joints preserve the established facade rhythm.
+    for x in range(6,72,6):
+        finish_face(fid+f"::joint-{x:02d}",elev,x-.045,x+.045,77.88,80.90,.045,.74,C["FAC-SHADOW-01"])
+    finish_mark(fid)
+
+# Roof-edge caps sit on the parapet perimeter only; they do not enclose Level 7.
+add_box("FAC-PARAPET-CAP-SOUTH-01",0,-.58,81.00,72,.58,81.34,C["FAC-METAL-01"]); finish_mark("FAC-PARAPET-CAP-SOUTH-01")
+add_box("FAC-PARAPET-CAP-NORTH-01",0,71.42,81.00,72,72.58,81.34,C["FAC-METAL-01"]); finish_mark("FAC-PARAPET-CAP-NORTH-01")
+add_box("FAC-PARAPET-CAP-WEST-01",-.58,0,81.00,.58,72,81.34,C["FAC-METAL-01"]); finish_mark("FAC-PARAPET-CAP-WEST-01")
+add_box("FAC-PARAPET-CAP-EAST-01",71.42,0,81.00,72.58,72,81.34,C["FAC-METAL-01"]); finish_mark("FAC-PARAPET-CAP-EAST-01")
+
+# North roof-service screen refinement. These are slatted/open screens around the
+# already-authorized service/MEP zones, not a seventh-floor enclosure.
+add_box("FAC-CROWN-SCREEN-NORTH-01::mep-top",49.85,71.30,86.78,60.15,72.16,87.08,C["FAC-METAL-01"])
+add_box("FAC-CROWN-SCREEN-NORTH-01::mep-bottom",49.85,71.30,81.28,60.15,72.16,81.55,C["FAC-METAL-01"])
+for i,x in enumerate((50.2,51.7,53.2,54.7,56.2,57.7,59.2),1):
+    add_box(f"FAC-CROWN-SCREEN-NORTH-01::mep-slat-{i:02d}",x-.17,71.38,81.45,x+.17,72.08,86.90,C["FAC-OPAQUE-01"])
+add_box("FAC-CROWN-SCREEN-NORTH-01::service-top",33.85,59.74,86.78,50.15,60.46,87.08,C["FAC-METAL-01"])
+add_box("FAC-CROWN-SCREEN-NORTH-01::service-bottom",33.85,59.74,81.28,50.15,60.46,81.55,C["FAC-METAL-01"])
+for i,x in enumerate((34.4,36.3,38.2,40.1,42.0,43.9,45.8,47.7,49.4),1):
+    add_box(f"FAC-CROWN-SCREEN-NORTH-01::service-slat-{i:02d}",x-.17,59.80,81.45,x+.17,60.40,86.90,C["FAC-OPAQUE-01"])
+finish_mark("FAC-CROWN-SCREEN-NORTH-01")
+
+# Stair A headhouse trim; south face is broken around the existing X61.5-64.5 roof door.
+for name,x1,y1,x2,y2 in (
+    ("south-west",59.85,53.78,61.30,54.18),
+    ("south-east",64.70,53.78,72.15,54.18),
+    ("east",71.78,54.0,72.18,72.0),
+    ("north",59.85,71.78,72.15,72.18),
+):
+    add_box(f"FAC-CROWN-HEADHOUSE-TRIM-A-01::{name}",x1,y1,81.22,x2,y2,88.72,C["FAC-METAL-01"])
+add_box("FAC-CROWN-HEADHOUSE-TRIM-A-01::cap",59.85,53.78,88.72,72.15,72.18,89.04,C["FAC-OPAQUE-01"])
+finish_mark("FAC-CROWN-HEADHOUSE-TRIM-A-01")
+
+# Stair B headhouse trim; preserve existing X14-17 south roof-door opening.
+for name,x1,y1,x2,y2 in (
+    ("south-west",7.85,53.78,13.80,54.18),
+    ("south-east",17.20,53.78,18.15,54.18),
+    ("west",7.82,54.0,8.22,72.0),
+    ("east",17.78,54.0,18.18,72.0),
+    ("north",7.85,71.78,18.15,72.18),
+):
+    add_box(f"FAC-CROWN-HEADHOUSE-TRIM-B-01::{name}",x1,y1,81.22,x2,y2,88.72,C["FAC-METAL-01"])
+add_box("FAC-CROWN-HEADHOUSE-TRIM-B-01::cap",7.85,53.78,88.72,18.15,72.18,89.04,C["FAC-OPAQUE-01"])
+finish_mark("FAC-CROWN-HEADHOUSE-TRIM-B-01")
+
+# Passenger-elevator overrun receives corner/cap trim only; this does NOT assert a
+# passenger roof stop or create new roof service.
+for i,(x,y) in enumerate(((54,34),(62,34),(54,44),(62,44)),1):
+    add_box(f"FAC-CROWN-ELEVATOR-TRIM-01::corner-{i:02d}",x-.16,y-.16,81.18,x+.16,y+.16,88.92,C["FAC-METAL-01"])
+add_box("FAC-CROWN-ELEVATOR-TRIM-01::north-cap",53.84,43.78,88.72,62.16,44.22,89.04,C["FAC-OPAQUE-01"])
+add_box("FAC-CROWN-ELEVATOR-TRIM-01::south-cap",53.84,33.78,88.72,62.16,34.22,89.04,C["FAC-OPAQUE-01"])
+add_box("FAC-CROWN-ELEVATOR-TRIM-01::east-cap",61.78,34.0,88.72,62.22,44.0,89.04,C["FAC-OPAQUE-01"])
+add_box("FAC-CROWN-ELEVATOR-TRIM-01::west-cap",53.78,34.0,88.72,54.22,44.0,89.04,C["FAC-OPAQUE-01"])
+finish_mark("FAC-CROWN-ELEVATOR-TRIM-01")
+
+# Crown logo halo sits behind the already-correct approved logo.
+add_box("FAC-SIGN-HALO-CROWN-01",33.18,-.48,77.48,38.82,-.39,80.28,C["LIGHT-WARM-ARCH"])
+finish_mark("FAC-SIGN-HALO-CROWN-01")
+
+# Six restrained crown/service-screen light fixtures: three south, three north.
+for i,x in enumerate((18,36,54),1):
+    add_box(f"FAC-EXTERIOR-LIGHT-CROWN-01::south-{i:02d}",x-.12,-.86,78.35,x+.12,-.64,79.20,C["LIGHT-WARM-ARCH"])
+    finish_mark("FAC-EXTERIOR-LIGHT-CROWN-01")
+for i,x in enumerate((36,48,58),1):
+    add_box(f"FAC-EXTERIOR-LIGHT-CROWN-01::north-{i:02d}",x-.12,72.64,82.05,x+.12,72.86,82.90,C["LIGHT-WARM-ARCH"])
+    finish_mark("FAC-EXTERIOR-LIGHT-CROWN-01")
+
 required_modules={x["id"] for x in INV_RAW["modules"]}
 required_features={x["id"] for x in INV_RAW["features"]}
 missing_modules=sorted(required_modules-modeled)
@@ -492,9 +572,18 @@ step5_ids={
 }
 step4_required={x for x in step4_required}
 step5_required=required_finish & step5_ids
+step6_ids={
+ "FAC-SIGN-HALO-CROWN-01",
+ "FAC-CROWN-BAND-FINISH-SOUTH-01","FAC-CROWN-BAND-FINISH-EAST-01","FAC-CROWN-BAND-FINISH-NORTH-01","FAC-CROWN-BAND-FINISH-WEST-01",
+ "FAC-PARAPET-CAP-SOUTH-01","FAC-PARAPET-CAP-EAST-01","FAC-PARAPET-CAP-NORTH-01","FAC-PARAPET-CAP-WEST-01",
+ "FAC-CROWN-SCREEN-NORTH-01","FAC-CROWN-HEADHOUSE-TRIM-A-01","FAC-CROWN-HEADHOUSE-TRIM-B-01","FAC-CROWN-ELEVATOR-TRIM-01",
+ "FAC-EXTERIOR-LIGHT-CROWN-01"
+}
+step6_required=required_finish & step6_ids
 step4_missing=sorted(step4_required-finish_modeled)
 step5_missing=sorted(step5_required-finish_modeled)
-completed_scope=step4_required|step5_required
+step6_missing=sorted(step6_required-finish_modeled)
+completed_scope=step4_required|step5_required|step6_required
 future_finish=required_finish-completed_scope
 checks=[]
 def ck(name,ok,detail=""): checks.append({"name":name,"passed":bool(ok),"detail":detail})
@@ -529,15 +618,23 @@ ck("canopy soffit fascia downlights complete",all(x in finish_modeled for x in (
 ck("exact approved entry logo + wordmark modeled",all(x in finish_modeled for x in ("FAC-SIGN-BACKER-ENTRY-01","FAC-SIGN-LOGO-ENTRY-01","FAC-SIGN-LETTER-WORDMARK-ENTRY-01")))
 ck("false crown E=U replaced by approved logo",all(x in finish_modeled for x in ("FAC-SIGN-BACKER-CROWN-01","FAC-SIGN-LOGO-CROWN-01")))
 ck("entry ground contact complete",all(x in finish_modeled for x in ("FAC-SITE-APRON-01","FAC-SITE-APRON-EDGE-01","FAC-SITE-THRESHOLD-PAVING-01")))
-ck("remaining crown structural finish intentionally deferred",not any(x in finish_modeled for x in future_finish),str(sorted(finish_modeled & future_finish)))
-ck("substantial real geometry after replacing pixel-sign mesh spam",len(scene.geometry)>=3800,str(len(scene.geometry)))
+ck("step 6 crown scope has 14 records",len(step6_required)==14,str(len(step6_required)))
+ck("all step 6 crown records modeled",not step6_missing,", ".join(step6_missing))
+ck("all 68 architectural finish records modeled",len(required_finish)==68 and not (required_finish-finish_modeled),", ".join(sorted(required_finish-finish_modeled)))
+ck("four deepened crown bands complete",all(x in finish_modeled for x in ("FAC-CROWN-BAND-FINISH-SOUTH-01","FAC-CROWN-BAND-FINISH-EAST-01","FAC-CROWN-BAND-FINISH-NORTH-01","FAC-CROWN-BAND-FINISH-WEST-01")))
+ck("four roof-edge parapet caps complete",all(x in finish_modeled for x in ("FAC-PARAPET-CAP-SOUTH-01","FAC-PARAPET-CAP-EAST-01","FAC-PARAPET-CAP-NORTH-01","FAC-PARAPET-CAP-WEST-01")))
+ck("roof service/headhouse integration complete",all(x in finish_modeled for x in ("FAC-CROWN-SCREEN-NORTH-01","FAC-CROWN-HEADHOUSE-TRIM-A-01","FAC-CROWN-HEADHOUSE-TRIM-B-01","FAC-CROWN-ELEVATOR-TRIM-01")))
+ck("crown lighting complete",all(x in finish_modeled for x in ("FAC-SIGN-HALO-CROWN-01","FAC-EXTERIOR-LIGHT-CROWN-01")))
+ck("Level 7 remains open-air",not any(name.startswith("FAC-ROOF-ENCLOSURE") for name in scene.geometry.keys()))
+ck("no finish records remain deferred",not future_finish,str(sorted(future_finish)))
+ck("substantial finished facade geometry",len(scene.geometry)>=3900,str(len(scene.geometry)))
 
 scene.metadata.update({
  "scene_id":"equity-uprise-facade-core-v2",
- "version":"facade-architectural-finish-step5-entry-v1",
+ "version":"facade-architectural-finish-step6-complete-v1",
  "inventory_ref":"facade-module-inventory.json",
  "finish_inventory_ref":"facade-finish-inventory.json",
- "finish_step":"completed-south-entry-approved-logo-ground-contact",
+ "finish_step":"complete-architectural-finish-crown-roof-edge",
  "facade_module_ft":6,
  "structural_grid_ft":[0,18,36,54,72],
  "not_for_construction":True
@@ -564,6 +661,9 @@ report={
  "finish_step5_records":len(step5_required),
  "finish_step5_modeled":len(step5_required)-len(step5_missing),
  "finish_step5_missing":step5_missing,
+ "finish_step6_records":len(step6_required),
+ "finish_step6_modeled":len(step6_required)-len(step6_missing),
+ "finish_step6_missing":step6_missing,
  "canonical_logo_asset":LOGO_RAW["source_asset"]["path"],
  "canonical_logo_sha256":LOGO_RAW["source_asset"]["sha256"],
  "finish_records_modeled_total":len(finish_modeled),
@@ -579,5 +679,5 @@ report={
  "checks":checks
 }
 REPORT.write_text(json.dumps(report,indent=2)+"\n")
-print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","inventory_modules","inventory_modules_modeled","inventory_features","inventory_features_modeled","finish_inventory_records","finish_step4_records","finish_step4_modeled","finish_step5_records","finish_step5_modeled","finish_future_records_remaining","finished_window_modules","checks_total","checks_passed","checks_failed","passed")},indent=2))
+print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","inventory_modules","inventory_modules_modeled","inventory_features","inventory_features_modeled","finish_inventory_records","finish_step4_records","finish_step4_modeled","finish_step5_records","finish_step5_modeled","finish_step6_records","finish_step6_modeled","finish_future_records_remaining","finished_window_modules","checks_total","checks_passed","checks_failed","passed")},indent=2))
 if failed: raise SystemExit(1)
