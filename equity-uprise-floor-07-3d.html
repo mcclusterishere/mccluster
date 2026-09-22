@@ -1,18 +1,73 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Equity Uprise — Level 7 — Roof / Mobility Portal — Core V2</title>
-<meta name="robots" content="noindex">
-<style>html,body{height:100%;margin:0;background:#111;color:#fff;font-family:system-ui,sans-serif;display:grid;place-items:center}a{color:#fff}main{max-width:540px;padding:24px;text-align:center}</style>
-</head>
-<body>
-<main>
-<p>Opening Level 7 — Roof / Mobility Portal as a derived view of the shared Core V2 stacked building…</p>
-<p><a href="/equity-uprise-building-core-v2-3d.html?floor=7">Open Level 7 — Roof / Mobility Portal</a></p>
-<p><small>Schematic migration preview · not for construction.</small></p>
-</main>
-<script>location.replace("/equity-uprise-building-core-v2-3d.html?floor=7");</script>
-</body>
-</html>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-store"><meta name="equity-uprise-build" content="__STAMP__">
+<title>Equity Uprise — Level 7 Roof / Mobility Portal</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#11161a;color:#fff;font-family:Inter,system-ui,sans-serif}
+#app{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:fixed;z-index:4;left:14px;top:14px;max-width:min(760px,calc(100vw - 28px));padding:13px;border:1px solid #485057;border-radius:14px;background:#0c1115dc;backdrop-filter:blur(10px)}
+.hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#c9d0d4;margin:0 0 9px}.c{display:flex;flex-wrap:wrap;gap:6px}
+button{border:1px solid #56616a;border-radius:999px;background:#252c31;color:#fff;padding:7px 10px;font:700 11px system-ui}
+.s{position:fixed;right:14px;bottom:14px;background:#0c1115dc;border:1px solid #485057;border-radius:10px;padding:8px 10px;font-size:10px}
+</style></head><body>
+<div id="app"></div>
+<div class="hud"><h1>EQUITY UPRISE · LEVEL 7 · ROOF / MOBILITY PORTAL</h1>
+<p>Open-air ecosystem plane. Both protected stairs physically reach the roof; mobility remains conceptual and non-operational. Drag to orbit; pinch/scroll to zoom.</p>
+<div class="c">
+<button data-v="staira">Stair A Arrival</button>
+<button data-v="stairb">Stair B Arrival</button>
+<button data-v="ecosystem">Ecosystem Beacon</button>
+<button data-v="mobility">Mobility Zone</button>
+<button data-v="overlook">City Overlook</button>
+<button data-v="service">Service Band</button>
+<button id="frame">Full Roof</button>
+<button id="wire">Wireframe</button>
+</div></div>
+<div class="s" id="status">Loading Level 7…</div>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x11181d);scene.fog=new THREE.Fog(0x11181d,ft(85),ft(210));
+const camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.02,ft(300));
+const r=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});r.setPixelRatio(Math.min(devicePixelRatio,2));r.setSize(innerWidth,innerHeight);r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.08;r.shadowMap.enabled=true;app.appendChild(r.domElement);
+const ctl=new OrbitControls(camera,r.domElement);ctl.enableDamping=true;ctl.minDistance=ft(4);ctl.maxDistance=ft(150);ctl.maxPolarAngle=Math.PI/2-.01;
+scene.add(new THREE.HemisphereLight(0xd8ecf6,0x20252a,2.2));
+const sun=new THREE.DirectionalLight(0xfff0d8,3.0);sun.position.set(ft(20),ft(70),ft(-25));sun.castShadow=true;scene.add(sun);
+const beacon=new THREE.PointLight(0x9fd6e4,24,ft(26),2);beacon.position.set(ft(48),ft(7),ft(-27));scene.add(beacon);
+const warmA=new THREE.PointLight(0xffdeb5,18,ft(22),2);warmA.position.set(ft(63),ft(7),ft(-52));scene.add(warmA);
+const warmB=new THREE.PointLight(0xffdeb5,18,ft(22),2);warmB.position.set(ft(15.5),ft(7),ft(-52));scene.add(warmB);
+
+let model,wire=false;
+function frameLoadedModel(){
+  model.updateMatrixWorld(true);
+  const box=new THREE.Box3().setFromObject(model),size=new THREE.Vector3(),center=new THREE.Vector3();
+  box.getSize(size);box.getCenter(center);
+  const span=Math.max(size.x,size.z);
+  camera.position.set(center.x+span*.58,Math.max(center.y+size.y*1.1,ft(23)),center.z+span*.76);
+  ctl.target.copy(center);camera.near=.02;camera.far=Math.max(ft(360),span*9);camera.updateProjectionMatrix();ctl.update();
+  return {size,center};
+}
+new GLTFLoader().load('/equity-uprise-preview/equity-uprise-floor-07-core-v2.glb?v=__STAMP__',g=>{
+  model=g.scene;model.rotation.x=-Math.PI/2;model.updateMatrixWorld(true);scene.add(model);
+  let n=0;model.traverse(o=>{if(o.isMesh){n++;o.castShadow=o.receiveShadow=true;o.frustumCulled=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.side=THREE.DoubleSide;m.needsUpdate=true})}});
+  const f=frameLoadedModel();status.textContent=n+' meshes · 45 inventory records · detailed roof · protected stairs to +81 ft';
+},undefined,e=>{console.error(e);status.textContent='Model load failed: '+(e?.message||e)});
+
+const V={
+ staira:{p:[52,8,46],t:[63,2.8,56]},
+ stairb:{p:[27,8,48],t:[15.5,2.8,56]},
+ ecosystem:{p:[61,7,18],t:[48,3.6,27]},
+ mobility:{p:[52,15,14],t:[29,1.2,27]},
+ overlook:{p:[38,7,14],t:[29,2.2,3]},
+ service:{p:[28,9,49],t:[42,3.4,65]}
+};
+function go(k){const v=V[k];camera.position.set(ft(v.p[0]),ft(v.p[1]),ft(-v.p[2]));ctl.target.set(ft(v.t[0]),ft(v.t[1]),ft(-v.t[2]));ctl.update()}
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>go(b.dataset.v));
+document.getElementById('frame').onclick=()=>{if(model)frameLoadedModel()};
+document.getElementById('wire').onclick=e=>{wire=!wire;model?.traverse(o=>{if(o.isMesh){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}})}});e.target.textContent=wire?'Solid':'Wireframe'};
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();r.setSize(innerWidth,innerHeight)});
+r.setAnimationLoop(()=>{ctl.update();r.render(scene,camera)});
+</script></body></html>
