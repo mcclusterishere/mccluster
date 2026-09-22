@@ -443,3 +443,31 @@ The post-B1 realism phase now has a canonical written + machine-readable authori
 Core rule: every meaningful building system must trace **source → vertical route → floor branch → representative endpoint → monitoring/service access**.
 
 **Implementation has intentionally not started in this authority snapshot.** Existing B1/F1–F7 geometry remains unchanged. The next phase is per-floor services coordination + facade/riser geometric implementation after this authority set is accepted.
+
+
+## Facade Step 7 material pass — SOURCE IMPLEMENTED / VERIFICATION PENDING
+
+This pass changes the actual rendered facade, not only documentation.
+
+Implemented in the deterministic facade GLB builder:
+- glTF PBR materials embedded directly into generated facade meshes;
+- separate clear-glass and privacy-glass material behavior;
+- high-metalness / controlled-roughness dark facade metal;
+- rough, non-metallic mineral/plinth material;
+- distinct opaque/service panel response;
+- warm entrance accent response;
+- canonical navy logo material;
+- pale sign plate;
+- architectural paver/site-edge materials;
+- emissive warm architectural-light material.
+
+Implemented in the whole-building viewer:
+- neutral reflection environment via Three.js RoomEnvironment / PMREM;
+- soft shadow map support;
+- facade meshes cast/receive shadows where appropriate;
+- transparent glazing does not cast opaque shadows;
+- material-dependent environment intensity;
+- day exposure improved;
+- night mode now activates real facade emissive materials.
+
+Current gate: deterministic PBR regeneration + CI, then human-eye visual preview.
