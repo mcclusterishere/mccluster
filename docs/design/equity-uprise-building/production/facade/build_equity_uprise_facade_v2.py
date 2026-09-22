@@ -8,6 +8,7 @@ from pathlib import Path
 import json, hashlib, math
 from collections import Counter
 import trimesh
+from trimesh.visual.material import PBRMaterial
 
 HERE=Path(__file__).resolve().parent
 INV_RAW=json.loads((HERE/"facade-module-inventory.json").read_text())
@@ -36,6 +37,43 @@ C={
  "FAC-SITE-EDGE":[48,50,52,255],
  "LIGHT-WARM-ARCH":[255,218,154,255],
 }
+
+# Step 7: embedded glTF PBR material system. These materials travel with the GLB,
+# so the facade no longer depends on a viewer guessing material behavior from flat colors.
+PBR_SPECS={
+ "FAC-GLASS-01":{"metallicFactor":0.0,"roughnessFactor":0.14,"alphaMode":"BLEND","doubleSided":True},
+ "FAC-GLASS-02":{"metallicFactor":0.0,"roughnessFactor":0.30,"alphaMode":"BLEND","doubleSided":True},
+ "FAC-METAL-01":{"metallicFactor":0.76,"roughnessFactor":0.34,"doubleSided":True},
+ "FAC-OPAQUE-01":{"metallicFactor":0.18,"roughnessFactor":0.68,"doubleSided":True},
+ "FAC-MINERAL-01":{"metallicFactor":0.0,"roughnessFactor":0.90,"doubleSided":True},
+ "FAC-WARM-01":{"metallicFactor":0.28,"roughnessFactor":0.48,"doubleSided":True},
+ "FAC-SIGN-01":{"metallicFactor":0.42,"roughnessFactor":0.36,"doubleSided":True},
+ "FAC-LOUVER-01":{"metallicFactor":0.64,"roughnessFactor":0.42,"doubleSided":True},
+ "FAC-SHADOW-01":{"metallicFactor":0.0,"roughnessFactor":0.96,"doubleSided":True},
+ "FAC-LOGO-NAVY":{"metallicFactor":0.20,"roughnessFactor":0.34,"doubleSided":True},
+ "FAC-SIGN-PLATE":{"metallicFactor":0.0,"roughnessFactor":0.72,"doubleSided":True},
+ "FAC-PAVER-01":{"metallicFactor":0.0,"roughnessFactor":0.96,"doubleSided":True},
+ "FAC-PAVER-02":{"metallicFactor":0.0,"roughnessFactor":0.90,"doubleSided":True},
+ "FAC-SITE-EDGE":{"metallicFactor":0.34,"roughnessFactor":0.58,"doubleSided":True},
+ "LIGHT-WARM-ARCH":{"metallicFactor":0.0,"roughnessFactor":0.22,"emissiveFactor":[1.0,0.56,0.22],"doubleSided":True},
+}
+COLOR_TO_ROLE={tuple(v):k for k,v in C.items()}
+PBR_CACHE={}
+
+def pbr_material_for(color):
+    role=COLOR_TO_ROLE.get(tuple(color),"FAC-OPAQUE-01")
+    if role not in PBR_CACHE:
+        spec=dict(PBR_SPECS[role])
+        PBR_CACHE[role]=PBRMaterial(
+            name=role,
+            baseColorFactor=C[role],
+            **spec
+        )
+    return PBR_CACHE[role]
+
+def apply_pbr(mesh,color):
+    mesh.visual=trimesh.visual.TextureVisuals(material=pbr_material_for(color))
+
 scene=trimesh.Scene()
 modeled=set()
 finish_modeled=set()
@@ -47,7 +85,7 @@ def add_box(name,x1,y1,z1,x2,y2,z2,color,obj=None):
         raise ValueError(f"invalid box {name}: {(x1,y1,z1,x2,y2,z2)}")
     m=trimesh.creation.box(extents=((x2-x1)*FT,(y2-y1)*FT,(z2-z1)*FT))
     m.apply_translation((((x1+x2)/2)*FT,((y1+y2)/2)*FT,((z1+z2)/2)*FT))
-    m.visual.face_colors=color
+    apply_pbr(m,color)
     scene.add_geometry(m,node_name=name,geom_name=name)
     records.append({"name":name,"bounds_ft":[x1,y1,z1,x2,y2,z2]})
     if obj: modeled.add(obj)
@@ -97,7 +135,7 @@ def finish_face(name,elev,a,b,z1,z2,depth=.08,outset=.38,color=None,obj=None):
 def add_cylinder_z(name,x,y,z,radius,height,color,obj=None,sections=24):
     m=trimesh.creation.cylinder(radius=radius*FT,height=height*FT,sections=sections)
     m.apply_translation((x*FT,y*FT,(z+height/2)*FT))
-    m.visual.face_colors=color
+    apply_pbr(m,color)
     scene.add_geometry(m,node_name=name,geom_name=name)
     records.append({"name":name,"bounds_ft":[x-radius,y-radius,z,x+radius,y+radius,z+height]})
     if obj: finish_mark(obj)
@@ -111,7 +149,7 @@ def add_south_line(name,x1,z1,x2,z2,front_y,stroke,depth,color,obj=None):
     angle=-math.atan2(dz,dx)
     m.apply_transform(trimesh.transformations.rotation_matrix(angle,[0,1,0]))
     m.apply_translation((((x1+x2)/2)*FT,(front_y-depth/2)*FT,((z1+z2)/2)*FT))
-    m.visual.face_colors=color
+    apply_pbr(m,color)
     scene.add_geometry(m,node_name=name,geom_name=name)
     records.append({"name":name,"bounds_ft":[min(x1,x2)-stroke,front_y-depth,min(z1,z2)-stroke,max(x1,x2)+stroke,front_y,max(z1,z2)+stroke]})
     if obj: finish_mark(obj)
@@ -123,7 +161,7 @@ def add_south_triangle(name,pts,front_y,depth,color,obj=None):
         for x,z in pts: verts.append([x*FT,y*FT,z*FT])
     faces=[[0,1,2],[5,4,3],[0,3,4],[0,4,1],[1,4,5],[1,5,2],[2,5,3],[2,3,0]]
     m=trimesh.Trimesh(vertices=verts,faces=faces,process=False)
-    m.visual.face_colors=color
+    apply_pbr(m,color)
     scene.add_geometry(m,node_name=name,geom_name=name)
     xs=[p[0] for p in pts]; zs=[p[1] for p in pts]
     records.append({"name":name,"bounds_ft":[min(xs),front_y-depth,min(zs),max(xs),front_y,max(zs)]})
@@ -627,14 +665,18 @@ ck("roof service/headhouse integration complete",all(x in finish_modeled for x i
 ck("crown lighting complete",all(x in finish_modeled for x in ("FAC-SIGN-HALO-CROWN-01","FAC-EXTERIOR-LIGHT-CROWN-01")))
 ck("Level 7 remains open-air",not any(name.startswith("FAC-ROOF-ENCLOSURE") for name in scene.geometry.keys()))
 ck("no finish records remain deferred",not future_finish,str(sorted(future_finish)))
+ck("Step 7 PBR library covers every facade color role",set(PBR_SPECS)==set(C),str(sorted(set(C)-set(PBR_SPECS))))
+ck("clear and privacy glass use alpha blend",PBR_SPECS["FAC-GLASS-01"]["alphaMode"]=="BLEND" and PBR_SPECS["FAC-GLASS-02"]["alphaMode"]=="BLEND")
+ck("metal and mineral material response differentiated",PBR_SPECS["FAC-METAL-01"]["metallicFactor"]>.7 and PBR_SPECS["FAC-MINERAL-01"]["roughnessFactor"]>.85)
+ck("architectural light material is emissive","emissiveFactor" in PBR_SPECS["LIGHT-WARM-ARCH"])
 ck("substantial finished facade geometry",len(scene.geometry)>=3900,str(len(scene.geometry)))
 
 scene.metadata.update({
  "scene_id":"equity-uprise-facade-core-v2",
- "version":"facade-architectural-finish-step6-complete-v1",
+ "version":"facade-architectural-finish-step7-pbr-v1",
  "inventory_ref":"facade-module-inventory.json",
  "finish_inventory_ref":"facade-finish-inventory.json",
- "finish_step":"complete-architectural-finish-crown-roof-edge",
+ "finish_step":"pbr-material-pass-after-complete-finish",
  "facade_module_ft":6,
  "structural_grid_ft":[0,18,36,54,72],
  "not_for_construction":True
@@ -669,6 +711,9 @@ report={
  "finish_records_modeled_total":len(finish_modeled),
  "finish_future_records_remaining":len(required_finish-finish_modeled),
  "finished_window_modules":finished_window_modules,
+ "material_system_version":"pbr-v1",
+ "pbr_materials_embedded":len(PBR_SPECS),
+ "pbr_material_roles":sorted(PBR_SPECS.keys()),
  "finish_geometry_counts":dict(finish_counts),
  "classification_counts":dict(counts),
  "bounds_m":scene.bounds.tolist(),
@@ -679,5 +724,5 @@ report={
  "checks":checks
 }
 REPORT.write_text(json.dumps(report,indent=2)+"\n")
-print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","inventory_modules","inventory_modules_modeled","inventory_features","inventory_features_modeled","finish_inventory_records","finish_step4_records","finish_step4_modeled","finish_step5_records","finish_step5_modeled","finish_step6_records","finish_step6_modeled","finish_future_records_remaining","finished_window_modules","checks_total","checks_passed","checks_failed","passed")},indent=2))
+print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","inventory_modules","inventory_modules_modeled","inventory_features","inventory_features_modeled","finish_inventory_records","finish_step4_records","finish_step4_modeled","finish_step5_records","finish_step5_modeled","finish_step6_records","finish_step6_modeled","finish_future_records_remaining","finished_window_modules","pbr_materials_embedded","checks_total","checks_passed","checks_failed","passed")},indent=2))
 if failed: raise SystemExit(1)
