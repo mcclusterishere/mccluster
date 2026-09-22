@@ -331,9 +331,15 @@
       btn.disabled = true; btn.textContent = "Sending…";
       MCC.resendSignupVerification(em).then(function () {
         el("acCreateMsg").textContent = "Verification email sent. Check your inbox and spam folder.";
+        /* Even on success: one message per minute is all this button is
+           for, and the quota it spends is shared with everyone signing
+           up right now. */
+        MCC.holdButton(btn, 60, "Resend verification email");
       }).catch(function (e) {
         el("acCreateMsg").textContent = e.message || "Could not resend verification.";
-      }).finally(function () { btn.disabled = false; btn.textContent = "Resend verification email"; });
+        if (e.mailQuota) MCC.holdButton(btn, e.retryAfter, "Resend verification email");
+        else { btn.disabled = false; btn.textContent = "Resend verification email"; }
+      });
     };
 
     var pendingVerificationEmail = "";

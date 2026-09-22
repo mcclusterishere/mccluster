@@ -55,12 +55,62 @@
     return s;
   }
 
+  /* THE MAIL QUOTA, AND WHY IT GETS ITS OWN BRANCH.
+
+     Supabase answers 429 with error_code over_email_send_rate_limit when
+     the project's mail allowance for the hour is spent. That is not the
+     visitor doing anything wrong and it is not their password: it is our
+     sender being full. Passing the raw string through meant somebody
+     trying to make an account read "email rate limit exceeded", assumed
+     the site was broken, and hammered "Resend verification email" — and
+     every one of those taps asks for another message from the same empty
+     bucket, which is how one blocked person becomes an hour of blocked
+     people. The auth log for this project shows exactly that: four 429s
+     in forty-three seconds from one signup at 23:47.
+
+     So the error is named here, carries how long to wait, and the
+     callers below use it to hold the button shut instead of offering it
+     again immediately. */
+  var MAIL_QUOTA = /over_email_send_rate_limit|email rate limit|rate limit exceeded/i;
+
+  /* How long to hold the button. All three branches are fallbacks for
+     each other, and the last one does most of the work in practice:
+
+     Retry-After is NOT a CORS-safelisted response header, and the auth
+     host does not expose it, so res.headers.get('retry-after') reads
+     null from a browser on our origin. It is tried anyway because it
+     costs nothing and same-origin callers (and tests) can see it.
+
+     Some auth errors phrase the wait in the message, but the mail-quota
+     one does not — its bucket refills on the hour, not on a countdown.
+
+     So 60s is the honest floor rather than a promise: the button comes
+     back, and if the bucket is still empty the next tap says so again
+     and holds it for another minute. That is a retry cadence, not a
+     claim about when the mail will flow. */
+  function retryAfterSeconds(res, data) {
+    var h = Number(res.headers && res.headers.get && res.headers.get('retry-after'));
+    if (h > 0) return h;
+    var m = /after (\d+) seconds?/i.exec((data && (data.message || data.msg)) || '');
+    if (m) return Number(m[1]);
+    return 60;
+  }
+
   function parseResponse(res) {
     return res.text().then(function (text) {
       var data = null;
       try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
       if (!res.ok) {
         var msg = data && (data.message || data.error_description || data.msg || data.error);
+        var code = (data && data.error_code) || '';
+        if (res.status === 429 && (MAIL_QUOTA.test(code) || MAIL_QUOTA.test(msg || ''))) {
+          var wait = retryAfterSeconds(res, data);
+          throw Object.assign(
+            new Error('Our email sender is at its limit for the moment — this is on us, not you. '
+                    + 'Try again in about ' + (wait >= 60 ? Math.ceil(wait / 60) + ' minute'
+                        + (Math.ceil(wait / 60) === 1 ? '' : 's') : wait + ' seconds') + '.'),
+            { status: 429, data: data, mailQuota: true, retryAfter: wait });
+        }
         throw Object.assign(new Error(msg || 'Request failed'), { status: res.status, data: data });
       }
       return data;
@@ -271,6 +321,26 @@
           redirect_to: redirectTo || (root.location.origin + '/reset-password.html')
         }
       });
+    },
+
+    /* Holds a button shut for `seconds`, counting down in its own label.
+       Used after a mail-quota 429: offering "Resend verification email"
+       again straight away invites the tap that spends the next message
+       we do not have. Returns nothing; the button restores itself. */
+    holdButton: function (btn, seconds, label) {
+      if (!btn) return;
+      var left = Math.max(1, Math.ceil(seconds || 60));
+      btn.disabled = true;
+      var tick = function () {
+        btn.textContent = 'Try again in ' + left + 's';
+        if (left-- <= 0) {
+          clearInterval(t);
+          btn.disabled = false;
+          btn.textContent = label;
+        }
+      };
+      tick();
+      var t = setInterval(tick, 1000);
     },
 
     resendSignupVerification: function (email) {

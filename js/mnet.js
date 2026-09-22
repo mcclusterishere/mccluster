@@ -921,9 +921,12 @@
       button.disabled = true; button.textContent = "Sending…";
       MCC.resendSignupVerification(email).then(function () {
         setStatus($("mnAuthStatus"), "Verification email sent. Check your inbox and spam folder.", "ok");
+        MCC.holdButton(button, 60, "Resend verification email");
       }).catch(function (e) {
         setStatus($("mnAuthStatus"), e.message || "Could not resend verification.", "error");
-      }).finally(function () { button.disabled = false; button.textContent = "Resend verification email"; });
+        if (e.mailQuota) MCC.holdButton(button, e.retryAfter, "Resend verification email");
+        else { button.disabled = false; button.textContent = "Resend verification email"; }
+      });
     };
     $("mnPassword").addEventListener("keydown", function (e) {
       if (e.key === "Enter" && $("mnSignedOut").getAttribute("data-auth-mode") !== "create") submitPasswordAuth();
