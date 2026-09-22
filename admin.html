@@ -197,6 +197,7 @@
 
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/workspace.js?v=__STAMP__"></script>
   <script src="js/prices.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
@@ -265,13 +266,15 @@
         });
       });
     }
+    /* Through the Worker, not straight at the table. The old browser PATCH
+       leaned on an RLS policy comparing the JWT email to one hardcoded
+       address, which authorizes exactly one person forever and records
+       nothing. The route resolves the caller's role from org membership
+       and writes the change to the ledger with what it was before. */
     function setStatus(id, st) {
-      return token().then(function (t) {
-        return fetch(SB + "/rest/v1/leads?id=eq." + encodeURIComponent(id), {
-          method: "PATCH",
-          headers: { apikey: KEY, Authorization: "Bearer " + t, "Content-Type": "application/json", Prefer: "return=minimal" },
-          body: JSON.stringify({ status: st }),
-        });
+      return window.MCC_WORKSPACE.api("/v1/leads/status", {
+        method: "POST",
+        body: { lead_id: id, status: st },
       });
     }
 
@@ -446,8 +449,18 @@
       var row = b.closest(".row"), id = row.getAttribute("data-id"), st = b.getAttribute("data-st");
       var rec = LEADS.filter(function (r) { return String(r.id) === String(id); })[0];
       if (!rec) return;
+      /* Optimistic, but honestly so: the old handler repainted on success
+         AND on failure, so a refused change sat on screen looking done. */
+      var was = rec.status;
       rec.status = st;
-      setStatus(id, st).then(paint).catch(paint);
+      paint();
+      setStatus(id, st).catch(function (err) {
+        rec.status = was;
+        paint();
+        alert(err && err.status === 403
+          ? "That account cannot move leads in this workspace."
+          : "That change did not save: " + ((err && err.message) || "unknown error"));
+      });
     });
 
     /* ---------- the walls ---------- */
