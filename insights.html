@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en" data-theme-lock="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Insights · McCluster</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <link rel="stylesheet" href="css/control-system.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    /* MOBILE FIRST, and meant literally: these are the phone rules. The
+       wider breakpoint only lets panels sit side by side — no panel, no
+       number and no export is withheld from the small screen. */
+    .ins { max-width: 78rem; margin: 0 auto; padding: 1.1rem 1rem 7rem; color: var(--cs-text); }
+    .ins__top { display: flex; flex-wrap: wrap; gap: .75rem; align-items: baseline;
+      justify-content: space-between; margin-bottom: 1.2rem; }
+    .ins__k { font: 700 .68rem/1 var(--cs-ui); letter-spacing: .2em; text-transform: uppercase;
+      color: var(--cs-ruby); }
+    .ins h1 { font: 800 clamp(1.6rem,6vw,2.2rem)/1.05 var(--cs-ui); letter-spacing: -.03em; margin: .3rem 0 0; }
+    .ins__range { display: flex; gap: .3rem; flex-wrap: wrap; }
+    .ins__range button { min-height: 40px; border: 0; cursor: pointer; border-radius: 9px;
+      padding: .5rem .8rem; background: var(--cs-2); color: var(--cs-dim);
+      font: 700 .78rem var(--cs-ui); box-shadow: inset 0 0 0 1px var(--cs-edge); }
+    .ins__range button.is-on { background: var(--cs-3); color: var(--cs-text);
+      box-shadow: inset 0 0 0 1px var(--cs-edge-strong); }
+
+    .ins__grid { display: grid; gap: .9rem; }
+    @media (min-width: 60rem) { .ins__grid { grid-template-columns: 1fr 1fr; }
+      .ins__grid > .is-wide { grid-column: 1 / -1; } }
+
+    .panel { border-radius: var(--cs-r-lg); background: var(--cs-1);
+      box-shadow: inset 0 0 0 1px var(--cs-edge); padding: 1rem 1.05rem 1.15rem; }
+    .panel__head { display: flex; gap: .6rem; align-items: baseline; justify-content: space-between;
+      margin-bottom: .2rem; }
+    .panel h2 { font: 700 .95rem/1.2 var(--cs-ui); margin: 0; letter-spacing: -.01em; }
+    .panel__why { font: 400 .78rem/1.45 var(--body); color: var(--cs-faint); margin: .15rem 0 .9rem; }
+    .panel__csv { min-height: 34px; border: 0; cursor: pointer; border-radius: 8px; flex: none;
+      padding: .35rem .6rem; background: var(--cs-2); color: var(--cs-dim);
+      font: 700 .68rem var(--cs-ui); box-shadow: inset 0 0 0 1px var(--cs-edge); }
+    .panel__csv:hover { color: var(--cs-text); background: var(--cs-3); }
+
+    /* Hero numbers. Tabular so the digits line up when they change. */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: .8rem; }
+    .stat b { display: block; font: 800 clamp(1.5rem,5vw,2rem)/1 var(--cs-ui);
+      letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+    .stat span { display: block; margin-top: .25rem; font: 600 .68rem/1.3 var(--cs-ui);
+      letter-spacing: .07em; text-transform: uppercase; color: var(--cs-faint); }
+    .stat em { font-style: normal; color: var(--cs-faint); font-size: .78rem; }
+
+    figure { margin: 0; }
+    svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .tbl { width: 100%; border-collapse: collapse; font: 500 .82rem var(--cs-ui); }
+    .tbl th, .tbl td { text-align: left; padding: .45rem .4rem; border-bottom: 1px solid var(--cs-edge);
+      vertical-align: middle; }
+    .tbl th { font: 700 .64rem var(--cs-ui); letter-spacing: .08em; text-transform: uppercase;
+      color: var(--cs-faint); }
+    .tbl td.n { text-align: right; font-variant-numeric: tabular-nums; }
+    .tblwrap { overflow-x: auto; }
+    .bar { height: 8px; border-radius: 4px; background: var(--cs-3); overflow: hidden; min-width: 3rem; }
+    .bar i { display: block; height: 100%; border-radius: 4px; }
+
+    .legend { display: flex; gap: .9rem; flex-wrap: wrap; margin: 0 0 .6rem;
+      font: 600 .72rem var(--cs-ui); color: var(--cs-dim); }
+    .legend span { display: inline-flex; align-items: center; gap: .35rem; }
+    .legend i { width: 10px; height: 10px; border-radius: 3px; }
+
+    .note { font: 400 .76rem/1.45 var(--body); color: var(--cs-warn);
+      background: rgba(217,164,65,.1); border-radius: 9px; padding: .55rem .7rem; margin-top: .7rem; }
+    .gate { max-width: 26rem; margin: 18vh auto; text-align: center; }
+    .gate a { color: var(--cs-ruby); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body class="songpage">
+  <main class="ins">
+    <div class="gate" id="insGate">
+      <p class="ins__k">McCluster</p>
+      <h1>Insights</h1>
+      <p class="panel__why">Sign in as the owner to see this.
+        <a href="account.html">Sign in</a></p>
+    </div>
+
+    <div id="insApp" hidden>
+      <div class="ins__top">
+        <div>
+          <p class="ins__k">McCluster</p>
+          <h1>Insights</h1>
+        </div>
+        <div class="ins__range" id="insRange" role="group" aria-label="Time range">
+          <button type="button" data-days="7" class="is-on">7 days</button>
+          <button type="button" data-days="30">30 days</button>
+          <button type="button" data-days="90">90 days</button>
+        </div>
+      </div>
+
+      <div class="ins__grid">
+        <section class="panel is-wide">
+          <div class="panel__head"><h2>Audience</h2>
+            <button class="panel__csv" type="button" data-csv="engagement">CSV</button></div>
+          <p class="panel__why">Traffic is who arrived. Audience is who stayed — a session
+            counts as engaged if it converted, saw two pages, or lasted ten seconds.</p>
+          <div class="stats" id="insHero"></div>
+          <figure id="insTrend" style="margin-top:1rem"></figure>
+        </section>
+
+        <section class="panel is-wide">
+          <div class="panel__head"><h2>The funnel</h2>
+            <button class="panel__csv" type="button" data-csv="funnel">CSV</button></div>
+          <p class="panel__why">Counted in people, not events. Accounts come from the auth
+            records, not from the browser, because the browser cannot honestly report one.</p>
+          <div id="insFunnel"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__head"><h2>Habit</h2>
+            <button class="panel__csv" type="button" data-csv="stickiness">CSV</button></div>
+          <p class="panel__why">Of everyone active this month, how many came back today.
+            The number a traffic chart can never show.</p>
+          <div class="stats" id="insSticky"></div>
+          <div class="note" id="insStickyNote" hidden></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel__head"><h2>Where they came from</h2>
+            <button class="panel__csv" type="button" data-csv="acquisition">CSV</button></div>
+          <p class="panel__why">And whether they were any good. A thousand who bounce lose
+            to forty who stay.</p>
+          <div class="tblwrap"><table class="tbl" id="insAcq"></table></div>
+        </section>
+
+        <section class="panel is-wide">
+          <div class="panel__head"><h2>The music</h2>
+            <button class="panel__csv" type="button" data-csv="content">CSV</button></div>
+          <p class="panel__why">Here the site <em>is</em> the media, so tracks are measured
+            as product: reach, repeat listeners, and plays per listener.</p>
+          <div class="tblwrap"><table class="tbl" id="insContent"></table></div>
+        </section>
+
+        <section class="panel is-wide">
+          <div class="panel__head"><h2>Where they go next</h2>
+            <button class="panel__csv" type="button" data-csv="paths">CSV</button></div>
+          <p class="panel__why">What people actually do in sequence, which is almost never
+            what the navigation assumes.</p>
+          <div class="tblwrap"><table class="tbl" id="insPaths"></table></div>
+        </section>
+      </div>
+      <p class="panel__why" id="insStamp" style="margin-top:1rem"></p>
+    </div>
+  </main>
+
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <script src="js/control-registry.js?v=__STAMP__"></script>
+  <script src="js/insights.js?v=__STAMP__" defer></script>
+  <script src="js/control-palette.js?v=__STAMP__" defer></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+</body>
+</html>

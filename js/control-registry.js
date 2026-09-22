@@ -42,6 +42,10 @@
       keywords: "orders bookings back office prints", state: "legacy" },
 
     /* ---- AUDIENCE ----------------------------------------------- */
+    { id: "insights", label: "Insights", href: "insights.html", group: "Audience",
+      blurb: "Engagement, funnel, habit, what the music is doing.",
+      keywords: "insights analytics engagement funnel retention stickiness cohort paths content export csv numbers dashboard",
+      state: "live" },
     { id: "analytics", label: "Analytics", href: "analytics.html", group: "Audience",
       blurb: "First-party only. No Google, no pixel.",
       keywords: "analytics traffic visitors telemetry stats reach signups signed accounts", state: "live" },
