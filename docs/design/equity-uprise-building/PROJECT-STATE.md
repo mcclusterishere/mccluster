@@ -585,3 +585,34 @@ Canonical generated Step 3 snapshot:
 The work remains conceptual digital-twin coordination and **not for construction**.
 
 **Next: Services Step 4 — Floors 1–3 representative branches/endpoints.**
+
+
+## Digital-to-Physical Asset Registry — STEP 1 SCHEMA COMPLETE
+
+The post-services bridge between the digital twin, future physical infrastructure and training system now has a canonical schema and source contract.
+
+Step 1 covers:
+- **512** B1–L7 stable inventory records;
+- **288** facade module records;
+- **68** facade finish/assembly records;
+- **14** service families;
+- **10** riser/separation allocations;
+- **56** program/capability records;
+- **8** canonical levels from B1 through Level 7.
+
+Locked policy:
+- preserve stable existing object IDs;
+- future physical tags encode the same canonical asset ID;
+- quantity records expand to individual instances only when tagging/state/telemetry/commissioning/maintenance/training requires it;
+- SIMULATION is sandboxed;
+- SHADOW is read-only;
+- LIVE control is deny-by-default and requires explicit authorization;
+- manufacturer/model/serial/BACnet/protocol/as-built values remain unassigned until verified from a real source.
+
+Canonical files:
+- `DIGITAL-PHYSICAL-ASSET-REGISTRY-SPEC.md`
+- `production/asset-registry/asset-registry-schema-v1.json`
+- `production/asset-registry/asset-registry-source-contract-v1.json`
+- `production/asset-registry/verify_asset_registry_schema.py`
+
+**NEXT:** Step 2 deterministic registry ingestion, including explicit aggregate-vs-instance decisions and digital-only vs future-physicalizable classification.
