@@ -28,7 +28,7 @@ Generate a dedicated services GLB for normal power, emergency power, data, contr
 
 Connect the modeled mechanical plant, electrical/emergency room, telecom core, fire/water room, sump/flood management and BAS observation to the vertical backbone.
 
-Implementation source: `production/services/b1-services-source-connections.json`. The services builder now generates the plant-to-riser routes and source drops directly into the shared Services GLB.
+Implementation source: `production/services/b1-services-source-connections.json`. The services builder now generates the plant-to-riser routes and source drops directly into the shared Services GLB. **Verified:** 10 source connections, 52 route segments, 9 source drops, 18/18 checks passing.
 
 ## Services Step 4 — Floors 1–3 branches
 
