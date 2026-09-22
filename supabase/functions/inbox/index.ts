@@ -298,9 +298,11 @@ async function runFlows(opts: {
 async function callOllama(opts: {
   question: string;
   history?: { role: "user" | "assistant"; text: string }[];
+  model?: string;
 }): Promise<{ gate: { send: true; text: string; tags: string[]; cites: number[]; confidence: number }; model: string; cost_micros: number; hits: any[] } | null> {
   if (!OLLAMA_URL) return null;
 
+  const model = opts.model ?? "qwen3:8b";
   const messages: { role: "user" | "assistant"; content: string }[] = [];
   if (opts.history) {
     for (const h of opts.history) {
@@ -314,7 +316,7 @@ async function callOllama(opts: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "deepseek-r1:8b",
+        model,
         prompt: messages.map((m) => `${m.role}: ${m.content}`).join("\n") + "\nassistant: ",
         stream: false,
         temperature: 0.7,
@@ -329,7 +331,7 @@ async function callOllama(opts: {
 
     return {
       gate: { send: true, text, tags: [], cites: [], confidence: 0.7 },
-      model: "ollama/deepseek-r1:8b",
+      model: `ollama/${model}`,
       cost_micros: 0,
       hits: [],
     };
@@ -413,8 +415,15 @@ async function aiFallback(opts: {
     .filter((m) => m.body && m.body !== "[handed to a person]")
     .map((m) => ({ role: (m.direction === "in" ? "user" : "assistant") as "user" | "assistant", text: m.body }));
 
+  // Determine which model to use: deepseek for the owner, qwen for customers
+  let model = "qwen3:8b";
+  const contact = await db(`inbox_contacts?id=eq.${opts.contactId}&select=meta`).catch(() => []);
+  if (contact?.[0]?.meta?.email === "matthew@mccluster.org") {
+    model = "deepseek-r1:8b";
+  }
+
   // Try Ollama first if configured, fall back to Claude
-  let res = await callOllama({ question: opts.body, history });
+  let res = await callOllama({ question: opts.body, history, model });
   if (!res) {
     res = await answerQuestion(db, {
       orgId: opts.orgId,
