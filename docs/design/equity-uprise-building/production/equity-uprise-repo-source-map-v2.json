@@ -1233,6 +1233,13 @@
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
     },
     {
+      "path": "scripts/test/appbar-consistency.test.mjs",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared app-bar consistency regression test covers shell/navigation presentation across pages; it does not define a distinct Equity Uprise building capability."
+    },
+    {
       "path": "scripts/test/control-surface.test.mjs",
       "classification": "build_validation_support",
       "capability_ids": [],
