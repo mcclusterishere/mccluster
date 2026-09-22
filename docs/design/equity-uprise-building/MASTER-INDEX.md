@@ -115,3 +115,18 @@ Tracked from repo root because Pages serves them there:
 ## 9. Exhaustive inventory
 
 Do not rely on this markdown page for every path. `BUILDING-FILE-INDEX.json` is generated from tracked files and is the exhaustive source for navigation coverage. Run the context audit before work.
+
+
+## Detailed B1 current-pass implementation
+
+B1 now follows the same hardened floor workflow:
+- `BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
+- `BASEMENT-B1-PROGRAM-RECONCILIATION.md`
+- `BASEMENT-B1-V1-V2-PRESERVATION-MAP.md`
+- `BASEMENT-B1-SCHEMATIC-PLAN-BASIS.md`
+- `production/basement-b1/basement-b1-object-inventory.json`
+- `production/basement-b1/build_equity_uprise_basement_b1_v2.py`
+- generated detailed B1 GLB/report under `production/generated/`
+- standalone review viewer: `equity-uprise-basement-b1-3d.html`
+
+The combined Core V2 chassis remains vertical-continuity authority; the detailed B1 asset is the visual/interior implementation at -13.5 ft.
