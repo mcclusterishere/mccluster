@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-building-services-core-v2",
-  "status": "services-step2-visible-backbone-verified",
+  "status": "services-step3-b1-plant-connections-implemented",
   "not_for_construction": true,
   "building_id": "equity-uprise-building",
   "source_level": "basement-b1",
@@ -366,5 +366,7 @@
     "floor_handoff_stubs": "63/63",
     "checks": "12/12",
     "sha256": "4fa994486889fa135d9dae163df3b8d9dabb81eef692520b642f53ad8dc3d1ef"
-  }
+  },
+  "current_services_step": 3,
+  "b1_source_connections_ref": "services/b1-source-connections.json"
 }
