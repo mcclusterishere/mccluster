@@ -25,7 +25,7 @@ export async function meetingDelegateDispatch(job) {
   const orgId = job.org_id;
   const input = job.input || {};
   const sessionId = clean(input.session_id, 100);
-  if (!orgId || !sessionId) throw new Error('meeting_delegate_dispatch requires org_id and input.session_id');
+  if (!orgId || !sessionId) throw new Error('meeting_delegate_dispatch requires org_id and input.session_id');\n  const target = openMeetingTarget(input.sealed_target);
 
   await updateMeetingSession({
     orgId,
@@ -37,12 +37,12 @@ export async function meetingDelegateDispatch(job) {
     orgId,
     sessionId,
     eventType: 'dispatch_started',
-    payload: { worker_job_id: job.id, target: input.target || null },
+    payload: { worker_job_id: job.id, platform: target.platform },
   });
 
   try {
     const joined = await joinMeeting({
-      ...(input.target || {}),
+      ...target,
       mode: input.mode || 'notes',
       principal_name: input.principal_name || 'Matthew McCluster',
       transcribe_enabled: input.transcribe_enabled === true,
@@ -55,7 +55,7 @@ export async function meetingDelegateDispatch(job) {
     if (input.policy?.allow_chat === true && process.env.MCCLUSTER_MEETING_INTERACTIVE === '1') {
       try {
         chatDisclosure = await sendMeetingChat({
-          ...(input.target || {}),
+          ...target,
           text: disclosure(input.principal_name),
         });
       } catch (error) {
