@@ -18,7 +18,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "registry_version": {
       "type": "string",
@@ -117,6 +117,7 @@
       "required": [
         "asset_id",
         "label",
+        "source_snapshot",
         "identity",
         "classification",
         "location",
@@ -234,7 +235,8 @@
             "asset_class",
             "source_category",
             "asset_type",
-            "physicalization"
+            "physicalization",
+            "registry_role"
           ],
           "properties": {
             "asset_class": {
@@ -285,6 +287,17 @@
                 "not_applicable",
                 "deferred"
               ]
+            },
+            "registry_role": {
+              "type": "string",
+              "enum": [
+                "digital_only",
+                "aggregate_physicalizable",
+                "individual_physicalizable",
+                "system_semantic",
+                "capability_semantic"
+              ],
+              "description": "Step 2 registry role distinguishing digital-only, aggregate/individual future physicalization, system semantics, and capability semantics."
             }
           }
         },
@@ -954,6 +967,11 @@
               }
             }
           }
+        },
+        "source_snapshot": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Zero-loss copy of the canonical source record used to create this registry asset."
         }
       }
     },

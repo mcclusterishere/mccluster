@@ -616,3 +616,27 @@ Canonical files:
 - `production/asset-registry/verify_asset_registry_schema.py`
 
 **NEXT:** Step 2 deterministic registry ingestion, including explicit aggregate-vs-instance decisions and digital-only vs future-physicalizable classification.
+
+
+## Digital-to-Physical Asset Registry — STEP 2 DETERMINISTIC INGESTION IMPLEMENTED
+
+Step 2 now generates the first populated canonical registry from the complete B1–L7 source surface.
+
+Each canonical source record receives exactly one ingestion decision:
+- `digital_only`
+- `aggregate_physicalizable`
+- `individual_physicalizable`
+- `system_semantic`
+- `capability_semantic`
+
+The generator preserves every raw source record as a zero-loss `source_snapshot`. Repeated records classified as `individual_physicalizable` expand deterministically to `<source-id>-I001`, `-I002`, etc.; aggregate assemblies do not expand prematurely.
+
+Physical floor glazing records are intentionally digital/programmatic where the facade-module inventory already owns the actual envelope identity, preventing duplicate future physical tags.
+
+Step 2 explicitly leaves manufacturers, models, serials, as-built locations, QR/NFC tags, IFC/BACnet identities, protocol addresses, commissioning results and LIVE control unassigned.
+
+Generated artifacts:
+- `production/asset-registry/generated/equity-uprise-asset-registry-v1.json`
+- `production/asset-registry/generated/equity-uprise-asset-registry-step2-report.json`
+
+**NEXT:** Step 3 builds the upstream/downstream/dependency relationship graph across these canonical asset identities.

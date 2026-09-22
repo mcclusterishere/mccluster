@@ -199,3 +199,12 @@ Canonical Step 1 authority:
 - `production/asset-registry/verify_asset_registry_schema.py`
 
 Purpose: preserve one canonical asset identity across the digital twin, future physical tags, training, telemetry, commissioning, maintenance and operations. Step 1 is schema/source authority only; physical identifiers and live protocol bindings are not invented.
+
+
+### Step 2 populated registry
+- `production/asset-registry/build_asset_registry_v1.py`
+- `production/asset-registry/verify_asset_registry_step2.py`
+- `production/asset-registry/generated/equity-uprise-asset-registry-v1.json`
+- `production/asset-registry/generated/equity-uprise-asset-registry-step2-report.json`
+
+Step 2 is the deterministic ingestion layer: every B1–L7 object, facade source, service family, riser allocation, capability record and building level is classified and reconciled without fabricating physical-world data.
