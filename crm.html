@@ -77,6 +77,16 @@
     <p class="fd__k">Owner only · the pipeline</p>
     <h1>The Front<br>Desk</h1>
 
+    <!-- This desk and admin.html are two rooms working the same leads table.
+         Control Room is the one that is being kept. -->
+    <p style="margin:0 0 1.2rem;padding:.7rem .9rem;border-radius:14px;line-height:1.5;
+              font-size:.82rem;border:1px solid rgba(229,56,59,.35);background:rgba(229,56,59,.1)">
+      <b>Legacy surface.</b> This page and the Back Office both work the same
+      pipeline. New work goes to <a href="control.html" style="color:inherit">Control Room</a>,
+      which is the one being kept. Lead reads here still run on a policy scoped
+      to a single address, so a second workspace will look empty rather than say so.
+    </p>
+
     <div id="gate">
       <p class="fd__sub">Sign in and the leads are on the desk: newest first, sources marked, one tap to reply.</p>
       <input id="email" type="email" placeholder="matthew@mccluster.org" autocomplete="email">
@@ -140,13 +150,20 @@
 
   <script src="js/analytics.js?v=__STAMP__"></script>
   <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/workspace.js?v=__STAMP__"></script>
   <script src="js/tabbar.js?v=__STAMP__"></script>
   <script>
   (function () {
     "use strict";
     var SB_URL = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
     var SB_KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+    /* A convenience default for the sign-in field, and nothing more. It
+       used to be the authorization: the gate compared this string to the
+       one the browser was holding, which grants exactly one person
+       forever and cannot express "owner of this workspace" at all.
+       Whether the desk opens is the server's answer now. */
     var OWNER = "matthew@mccluster.org";
+    var booted = false;
     var el = function (id) { return document.getElementById(id); };
     var esc = function (x) { var d = document.createElement("i"); d.textContent = x == null ? "" : x; return d.innerHTML; };
     var STATUSES = ["new", "replied", "booked", "closed"];
@@ -158,9 +175,8 @@
       return Math.round(m / 1440) + "d";
     }
 
-    function authed() {
-      var u = window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user();
-      return u && (u.email || "").toLowerCase() === OWNER ? u : null;
+    function signedIn() {
+      return !!(window.MCC_AUTH && MCC_AUTH.user && MCC_AUTH.user());
     }
 
     el("signin").addEventListener("click", function () {
@@ -179,17 +195,22 @@
       });
     }
 
+    /* Through the Worker, which resolves the caller's role and records the
+       change. The old PATCH went straight at the table and returned early
+       on !r.ok — so a refused change looked exactly like nothing happening. */
     function setStatus(id, status, card) {
-      hdrs().then(function (h) {
-        return fetch(SB_URL + "/rest/v1/leads?id=eq." + id, {
-          method: "PATCH", headers: h, body: JSON.stringify({ status: status }),
-        });
-      }).then(function (r) {
-        if (!r.ok) return;
+      window.MCC_WORKSPACE.api("/v1/leads/status", {
+        method: "POST",
+        body: { lead_id: id, status: status },
+      }).then(function () {
         card.querySelectorAll("[data-st]").forEach(function (b) {
           b.classList.toggle("on", b.getAttribute("data-st") === status);
         });
         card.classList.toggle("is-closed", status === "closed");
+      }).catch(function (err) {
+        alert(err && err.status === 403
+          ? "That account cannot move leads in this workspace."
+          : "That change did not save: " + ((err && err.message) || "unknown error"));
       });
     }
 
@@ -263,7 +284,22 @@
     });
 
     function boot() {
-      if (authed()) { el("gate").hidden = true; el("desk").hidden = false; load(); }
+      if (booted || !signedIn()) return;
+      window.MCC_WORKSPACE.ready().then(function (ws) {
+        if (booted) return;
+        if (ws.role !== "owner") {
+          /* Say which refusal this is. The old gate had one silent
+             outcome for every reason the desk might not open. */
+          el("gateNote").textContent = !ws.signedIn ? ""
+            : ws.workspaces.length ? "That account is in this workspace, but only an owner can work the pipeline."
+            : "That account is signed in but belongs to no workspace yet.";
+          return;
+        }
+        booted = true;
+        el("gate").hidden = true;
+        el("desk").hidden = false;
+        load();
+      });
     }
     boot();
     setTimeout(boot, 800); // the magic-link landing settles a beat after load
