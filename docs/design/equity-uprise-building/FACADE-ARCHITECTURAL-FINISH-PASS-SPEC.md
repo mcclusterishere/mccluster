@@ -452,3 +452,5 @@ Required behavior:
 - manual Day/Night states are QA overrides only and Auto remains the default.
 
 The solar pass is presentation/visualization logic only and does not change facade geometry or construction authority.
+
+Step 8 verification: **GREEN / LIVE** on main after PR #162.
