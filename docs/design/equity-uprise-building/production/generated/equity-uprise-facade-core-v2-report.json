@@ -2,9 +2,9 @@
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-facade-core-v2",
   "not_for_construction": true,
-  "glb_bytes": 2428900,
-  "sha256": "fc414f4609173b7c572830ef605c11db711440b7de69ff109ba5d17ec899cab3",
-  "mesh_count": 3877,
+  "glb_bytes": 2492132,
+  "sha256": "cffae5cf77f29c65b1273c4872241dca939b1c0ae31d6de6545b7e3f31c4ba31",
+  "mesh_count": 3975,
   "inventory_modules": 288,
   "inventory_modules_modeled": 288,
   "inventory_features": 9,
@@ -16,10 +16,13 @@
   "finish_step5_records": 22,
   "finish_step5_modeled": 22,
   "finish_step5_missing": [],
+  "finish_step6_records": 14,
+  "finish_step6_modeled": 14,
+  "finish_step6_missing": [],
   "canonical_logo_asset": "assets/img/equity-uprise-logo.webp",
   "canonical_logo_sha256": "3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f",
-  "finish_records_modeled_total": 54,
-  "finish_future_records_remaining": 14,
+  "finish_records_modeled_total": 68,
+  "finish_future_records_remaining": 0,
   "finished_window_modules": 238,
   "finish_geometry_counts": {
     "FAC-WIN-JAMB-CLEAR-01": 304,
@@ -75,7 +78,21 @@
     "FAC-EXTERIOR-LIGHT-BASE-01": 4,
     "FAC-SITE-APRON-01": 1,
     "FAC-SITE-APRON-EDGE-01": 2,
-    "FAC-SITE-THRESHOLD-PAVING-01": 1
+    "FAC-SITE-THRESHOLD-PAVING-01": 1,
+    "FAC-CROWN-BAND-FINISH-SOUTH-01": 1,
+    "FAC-CROWN-BAND-FINISH-EAST-01": 1,
+    "FAC-CROWN-BAND-FINISH-NORTH-01": 1,
+    "FAC-CROWN-BAND-FINISH-WEST-01": 1,
+    "FAC-PARAPET-CAP-SOUTH-01": 1,
+    "FAC-PARAPET-CAP-NORTH-01": 1,
+    "FAC-PARAPET-CAP-WEST-01": 1,
+    "FAC-PARAPET-CAP-EAST-01": 1,
+    "FAC-CROWN-SCREEN-NORTH-01": 1,
+    "FAC-CROWN-HEADHOUSE-TRIM-A-01": 1,
+    "FAC-CROWN-HEADHOUSE-TRIM-B-01": 1,
+    "FAC-CROWN-ELEVATOR-TRIM-01": 1,
+    "FAC-SIGN-HALO-CROWN-01": 1,
+    "FAC-EXTERIOR-LIGHT-CROWN-01": 6
   },
   "classification_counts": {
     "clear_vision": 152,
@@ -96,12 +113,12 @@
     ],
     [
       22.18944,
-      22.18944,
-      24.688800000000004
+      22.207728000000003,
+      27.139392
     ]
   ],
-  "checks_total": 32,
-  "checks_passed": 32,
+  "checks_total": 40,
+  "checks_passed": 40,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -256,14 +273,54 @@
       "detail": ""
     },
     {
-      "name": "remaining crown structural finish intentionally deferred",
+      "name": "step 6 crown scope has 14 records",
+      "passed": true,
+      "detail": "14"
+    },
+    {
+      "name": "all step 6 crown records modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all 68 architectural finish records modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "four deepened crown bands complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "four roof-edge parapet caps complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "roof service/headhouse integration complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "crown lighting complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Level 7 remains open-air",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "no finish records remain deferred",
       "passed": true,
       "detail": "[]"
     },
     {
-      "name": "substantial real geometry after replacing pixel-sign mesh spam",
+      "name": "substantial finished facade geometry",
       "passed": true,
-      "detail": "3877"
+      "detail": "3975"
     }
   ]
 }
