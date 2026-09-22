@@ -252,13 +252,13 @@ Architectural role:
 - Halo Globe = what is happening in the world around those decisions.
 
 Canonical coordination envelope:
-- plan center approximately **(41,22)**;
+- plan center approximately **(22,22.5)**;
 - radius **2.25 ft**;
 - center **8.25 ft AFF**;
 - bottom **6.0 ft AFF**;
 - top **10.5 ft AFF**.
 
-The globe is suspended/overhead and must read as an instrument, not giant furniture. Its revised southeast-central position intentionally occupies an open pocket between the south briefing rooms and the command/elevator zones, keeping the globe visually isolated from furniture and primary circulation. It rotates slowly in ambient mode.
+The globe is suspended/overhead and must read as an instrument, not giant furniture. Its revised southwest position intentionally occupies an open pocket immediately east of the Institutional Salon and north of the south review rooms, keeping the globe visually isolated from furniture and primary circulation. It rotates slowly in ambient mode.
 
 Access model:
 - guests: sanitized public-display-approved layers, read-only;
