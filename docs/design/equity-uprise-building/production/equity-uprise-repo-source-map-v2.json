@@ -614,6 +614,13 @@
       "rationale": "Shared or adjacent documentation mentions Equity Uprise context but does not define a distinct program capability beyond canonical mapped sources."
     },
     {
+      "path": "docs/legal/EXPOSURE-AUDIT.md",
+      "classification": "documentation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Repo-wide legal/security exposure audit mentions Equity Uprise among broader McCluster systems; it does not define a distinct Equity Uprise product or building capability."
+    },
+    {
       "path": "docs/music-platform.md",
       "classification": "capability_source",
       "capability_ids": [
@@ -1601,6 +1608,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Analytics/event-taxonomy and funnel-correction migration references Equity Uprise telemetry among broader runtime analytics events; it does not define a distinct Equity Uprise building capability."
+    },
+    {
+      "path": "supabase/migrations/20260922094512_harden_anonymous_lead_intake.sql",
+      "classification": "runtime_security_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Generic lead-intake hardening migration secures shared CRM intake and does not define a distinct Equity Uprise capability."
     },
     {
       "path": "supabase/production-ledger.json",

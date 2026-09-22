@@ -1,16 +1,105 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "authority_id": "equity-uprise-facade-system-core-v2",
-  "status": "active-authority-geometry-implementation-pending",
+  "status": "detailed-facade-coordination-authority-locked-geometry-pending",
   "not_for_construction": true,
   "building_id": "equity-uprise-building",
   "core_geometry_ref": "building-core-v2.json",
+  "written_spec_ref": "../EXTERIOR-FACADE-UPGRADE-SPEC.md",
+  "branding_ref": "../FACADE-BRANDING-AND-SIGNAGE-SPEC.md",
+  "control_planes_ft": {
+    "west_x": 0,
+    "east_x": 72,
+    "south_y": 0,
+    "north_y": 72
+  },
+  "structural_grid_ft": [
+    0,
+    18,
+    36,
+    54,
+    72
+  ],
+  "facade_module": {
+    "secondary_module_ft": 6,
+    "module_lines_ft": [
+      0,
+      6,
+      12,
+      18,
+      24,
+      30,
+      36,
+      42,
+      48,
+      54,
+      60,
+      66,
+      72
+    ],
+    "modules_per_elevation": 12,
+    "primary_grid_emphasis_ft": [
+      0,
+      18,
+      36,
+      54,
+      72
+    ],
+    "typical_mullion_face_width_ft": 0.25,
+    "typical_mullion_depth_ft": 0.35,
+    "primary_fin_width_range_ft": [
+      0.6,
+      0.9
+    ],
+    "primary_fin_projection_range_ft": [
+      0.4,
+      0.7
+    ],
+    "geometry_role": "digital-twin coordination / visualization only"
+  },
+  "vertical_story_module": {
+    "floor_to_floor_ft": 13.5,
+    "floors_2_to_5": {
+      "lower_opaque_or_sill_band_aff_ft": [
+        0,
+        1.5
+      ],
+      "primary_vision_band_aff_ft": [
+        1.5,
+        10.5
+      ],
+      "upper_spandrel_service_band_aff_ft": [
+        10.5,
+        13.5
+      ]
+    },
+    "floor_1": {
+      "public_vision_entry_band_aff_ft": [
+        0.5,
+        11
+      ],
+      "upper_entry_spandrel_signage_band_aff_ft": [
+        11,
+        13.5
+      ]
+    },
+    "floor_6": {
+      "primary_vision_band_aff_ft": [
+        1,
+        10.25
+      ],
+      "upper_crown_band_aff_ft": [
+        10.25,
+        13.5
+      ]
+    }
+  },
   "composition": {
     "base": {
       "levels": [
         1
       ],
-      "intent": "public/pedestrian-scaled transparent institutional base with principal entrance"
+      "intent": "public pedestrian-scaled transparent institutional base with grounded mineral material and principal entrance"
     },
     "middle": {
       "levels": [
@@ -19,48 +108,208 @@
         4,
         5
       ],
-      "intent": "disciplined repeated glazing/opaque-panel rhythm coordinated with room program"
+      "intent": "disciplined 6-ft glazing/opaque-panel rhythm coordinated with room program"
     },
     "crown": {
       "levels": [
         6,
         7
       ],
-      "intent": "refined penthouse/crown and screened rooftop-service expression"
+      "intent": "refined Floor 6 crown integrated with open-air roof parapets/headhouses/service screens"
     }
   },
-  "elevations": [
-    "south",
-    "east",
-    "north",
-    "west"
+  "south_elevation": {
+    "role": "primary civic / public identity face",
+    "floor_1_entry": {
+      "vestibule_bounds_ref_ft": [
+        29,
+        0,
+        43,
+        9
+      ],
+      "entrance_composition_x_ft": [
+        24,
+        48
+      ],
+      "primary_door_zone_x_ft": [
+        30,
+        42
+      ],
+      "canopy_x_ft": [
+        24,
+        48
+      ],
+      "canopy_max_projection_south_ft": 5.5
+    },
+    "upper_floor_condition": "sealed glazing/windows; no balcony/terrace/exterior door Floors 2-6",
+    "typical_visual_glazing_target_pct": [
+      75,
+      90
+    ],
+    "floor_modulation": {
+      "F2": "predominantly clear vision glazing",
+      "F3": "privacy/frit allowed at interview/meeting rooms",
+      "F4": "Creator Recording Room may use substantial acoustic opacity; Edit/Review controlled glazing",
+      "F5": "review rooms may use privacy/frit treatment",
+      "F6": "briefing/review privacy treatment allowed; open command/Halo-side zones remain lighter"
+    }
+  },
+  "east_elevation": {
+    "occupied_band_y_ft": [
+      0,
+      54
+    ],
+    "occupied_band_visual_glazing_target_pct": [
+      60,
+      80
+    ],
+    "core_service_band_y_ft": [
+      54,
+      72
+    ],
+    "core_service_strategy": "substantially opaque with controlled stair-light glazing and coordinated MEP/service louver fields"
+  },
+  "west_elevation": {
+    "occupied_band_y_ft": [
+      0,
+      54
+    ],
+    "occupied_band_visual_glazing_target_pct": [
+      55,
+      75
+    ],
+    "service_core_band_y_ft": [
+      54,
+      72
+    ],
+    "service_core_strategy": "opaque panel/service expression; no exterior loading/freight opening assumed without later site authority"
+  },
+  "north_elevation": {
+    "role": "service/support face",
+    "overall_visual_opening_target_pct": [
+      15,
+      35
+    ],
+    "strategy": "opaque panel rhythm with limited stair daylight, support clerestories, and real MEP/service louvers only",
+    "adjacent_zones": [
+      "freight/service shaft",
+      "Stair B",
+      "restrooms/support band",
+      "MEP/service reservation",
+      "Stair A"
+    ]
+  },
+  "corner_strategy": {
+    "south_corners": "lighter / more glazed where interior conditions allow",
+    "north_corners": "heavier due to core/service adjacency",
+    "continuous_slab_edge_bands": true,
+    "module_turns_corner": true
+  },
+  "acoustic_exception": {
+    "level": 4,
+    "zone": "Creator Recording Room",
+    "rule": "full clear glazing is not required; acoustic opaque/high-clerestory/double-layer treatment may preserve facade rhythm"
+  },
+  "roof_crown": {
+    "roof_level_ft": 81,
+    "remains_open_air": true,
+    "preserve_existing_parapets": true,
+    "preserve_stair_headhouses": true,
+    "preserve_service_screens": true,
+    "typical_existing_service_screen_height_ft": 6,
+    "rule": "screen rooftop clutter without visually creating an enclosed seventh occupied floor"
+  },
+  "branding": {
+    "primary_entry": {
+      "elevation": "south",
+      "center_axis_x_ft": 36,
+      "mark": "E = U",
+      "wordmark": "Equity Uprise"
+    },
+    "secondary_crown": {
+      "allowed": true,
+      "elevation": "south",
+      "center_axis_x_ft": 36,
+      "mark": "E = U",
+      "rule": "single restrained architectural mark integrated into Floor 6 upper crown band"
+    }
+  },
+  "material_system": [
+    {
+      "id": "FAC-GLASS-01",
+      "role": "primary vision glass",
+      "direction": "neutral clear/low-iron appearance; not mirror-black or bright-blue corporate glass"
+    },
+    {
+      "id": "FAC-GLASS-02",
+      "role": "privacy/frit glass",
+      "direction": "same family as primary glass with controlled privacy treatment"
+    },
+    {
+      "id": "FAC-METAL-01",
+      "role": "mullions/frames/fins",
+      "direction": "charcoal / blackened bronze / dark gunmetal"
+    },
+    {
+      "id": "FAC-OPAQUE-01",
+      "role": "spandrel/service/crown panels",
+      "direction": "dark charcoal / bronze-black architectural panel"
+    },
+    {
+      "id": "FAC-MINERAL-01",
+      "role": "grounded Floor 1 base",
+      "direction": "warm gray stone / precast / honed mineral"
+    },
+    {
+      "id": "FAC-WARM-01",
+      "role": "limited entrance accent",
+      "direction": "restrained warm bronze / wood-like / warm metal"
+    }
   ],
-  "mandatory_elements": [
-    "glazing system",
-    "mullions/frames",
-    "opaque panels",
-    "spandrel/slab-edge logic",
-    "corner conditions",
-    "principal entrance framing",
-    "parapet/crown",
-    "roof-service screening",
-    "architectural signage"
+  "reserved_object_families": [
+    "FAC-SOUTH-VISION-*",
+    "FAC-EAST-VISION-*",
+    "FAC-WEST-VISION-*",
+    "FAC-NORTH-SERVICE-*",
+    "FAC-MULLION-*",
+    "FAC-PRIMARY-FIN-*",
+    "FAC-SPANDREL-*",
+    "FAC-OPAQUE-PANEL-*",
+    "FAC-LOUVER-*",
+    "FAC-CORNER-*",
+    "FAC-ENTRY-PORTAL-01",
+    "FAC-ENTRY-DOORS-01",
+    "FAC-ENTRY-CANOPY-01",
+    "FAC-BRAND-ENTRY-01",
+    "FAC-BRAND-CROWN-01",
+    "FAC-CROWN-BAND-01",
+    "FAC-ROOF-SCREEN-*"
   ],
-  "material_direction": [
-    "neutral clear glazing",
-    "charcoal/dark-bronze metal framing",
-    "warm-gray mineral/precast/stone-like base",
-    "dark architectural metal service/crown panels",
-    "restrained warm entry material"
-  ],
-  "branding_refs": [
-    "../FACADE-BRANDING-AND-SIGNAGE-SPEC.md"
+  "required_review_views": [
+    "south elevation",
+    "east elevation",
+    "north elevation",
+    "west elevation",
+    "southeast street perspective",
+    "southwest street perspective",
+    "entrance human-eye view",
+    "crown/roof perspective",
+    "day state",
+    "night state",
+    "facade-only isolation",
+    "facade + occupied interiors",
+    "wireframe/coordination"
   ],
   "constraints": [
     "B1 remains below-grade and windowless.",
-    "Floors 2-6 gain no new exterior door, balcony or terrace without separate authority.",
+    "Floors 2-6 gain no exterior door, balcony or terrace without separate authority.",
+    "Primary enclosure remains coordinated to the 72 ft x 72 ft control planes.",
+    "Floor 1 entrance remains aligned to the existing south vestibule.",
     "Facade must coordinate with rooms behind it and fixed Core V2 systems.",
-    "Facade work may not move the shared shell, floor elevations, stairs, elevators or slab openings."
+    "Facade work may not move the shared shell, floor elevations, stairs, elevators or slab openings.",
+    "Louvers require a real MEP/service need behind them.",
+    "North/service facade may be more opaque but may not become an unarticulated blank wall."
   ],
-  "exact_bay_geometry_status": "pending-detailed-facade-coordination"
+  "exact_bay_geometry_status": "locked-at-6-ft-coordination-module; per-module classification pending implementation inventory",
+  "implementation_status": "spec-complete / geometry-not-started"
 }
