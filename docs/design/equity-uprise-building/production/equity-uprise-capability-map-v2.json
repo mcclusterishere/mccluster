@@ -1005,7 +1005,7 @@
         "_unfinished/uprise-world/uprise-npc.js",
         "docs/uprise-world/AUDIT-REPORT.md"
       ],
-      "expression": "May be a Level 7 destination route later; must not dictate building geometry or branding."
+      "expression": "Represented on Level 7 as a disabled, read-only optional route node; must not dictate building geometry or branding and must not launch until explicitly enabled."
     },
     {
       "id": "program-support-funding",
