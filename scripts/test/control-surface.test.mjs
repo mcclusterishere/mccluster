@@ -18,6 +18,11 @@ import { dirname, join } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFile(join(ROOT, p), 'utf8');
 
+/* A surface's href is a URL, not a path: it may legitimately carry a
+   query string ("index.html?edit=1" opens the page in edit mode) or a
+   fragment. The file on disk is the part before those. */
+const fileOf = (href) => String(href).split(/[?#]/)[0];
+
 async function registry() {
   const src = await read('js/control-registry.js');
   const scope = { window: {} };
@@ -30,7 +35,7 @@ async function registry() {
 test('every surface in the registry is a page that exists', async () => {
   const R = await registry();
   for (const s of R.all) {
-    await assert.doesNotReject(read(s.href), `${s.label} points at ${s.href}, which is not there`);
+    await assert.doesNotReject(read(fileOf(s.href)), `${s.label} points at ${s.href}, which is not there`);
   }
 });
 
@@ -42,7 +47,7 @@ test('every operator page is in the registry', async () => {
     'uprise-admin.html','music-admin.html','travel-desk.html','dashboard.html',
     'management.html','studio.html','lanes.html','vault.html','ecosystem.html'];
   const R = await registry();
-  const known = new Set(R.all.map((s) => s.href));
+  const known = new Set(R.all.map((s) => fileOf(s.href)));
   for (const page of OPERATOR) {
     assert.ok(known.has(page), `${page} is an operator surface but is in no group — unreachable`);
   }
@@ -53,11 +58,11 @@ test('every operator page is in the registry', async () => {
 test('every operator page can reach every other one', async () => {
   const R = await registry();
   for (const s of R.all) {
-    const html = await read(s.href);
+    const html = await read(fileOf(s.href));
     assert.match(html, /js\/control-palette\.js/,
       `${s.label} (${s.href}) has no command palette — landing there is a dead end`);
     assert.match(html, /js\/control-registry\.js/,
-      `${s.href} loads the palette but not the registry it reads`);
+      `${fileOf(s.href)} loads the palette but not the registry it reads`);
   }
 });
 

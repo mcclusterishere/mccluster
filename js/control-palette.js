@@ -11,6 +11,7 @@
    there is instantly reachable from every page without touching this.
    ============================================================ */
 (function (root, doc) {
+  var w = root;
   "use strict";
 
   var R = root.MCC_SURFACES;
@@ -96,6 +97,23 @@
     });
   }
 
+  /* ACTIONS are things you do on the page you are already on, as opposed
+     to places you go. "Edit this page" is the clearest case: the editor
+     is a MODE available everywhere, not a destination, and listing it as
+     a link to index.html would have been a lie that also failed the
+     no-orphans test. */
+  function actions() {
+    var out = [];
+    if (w.MCC_EDITOR) {
+      out.push({
+        label: w.MCC_EDITOR.on() ? "Stop editing this page" : "Edit this page",
+        blurb: "Change the words in place. Nothing deploys; every edit reverts.",
+        run: function () { var b = doc.getElementById("mccEditToggle"); if (b) b.click(); }
+      });
+    }
+    return out;
+  }
+
   function paint(q) {
     var matches = R.search(q);
     rows = [];
@@ -107,6 +125,20 @@
        for orientation, and when you have typed something you want the
        best match first, not the best match in the third heading down. */
     var html = "";
+    var acts = actions().filter(function (a) {
+      var t = String(q || "").trim().toLowerCase();
+      return !t || (a.label + " " + a.blurb).toLowerCase().indexOf(t) >= 0 ||
+             "edit copy content cms rewrite wording".indexOf(t) >= 0;
+    });
+    if (acts.length) {
+      html += '<li class="cmdk__group">On this page</li>';
+      acts.forEach(function (a) {
+        html += '<li><button class="cmdk__item" type="button" role="option">' +
+          '<span class="cmdk__label">' + esc(a.label) + "</span>" +
+          '<span class="cmdk__blurb">' + esc(a.blurb) + "</span></button></li>";
+        rows.push(a);
+      });
+    }
     if (!String(q || "").trim()) {
       R.byGroup().forEach(function (g) {
         html += '<li class="cmdk__group">' + esc(g.group) + "</li>";
@@ -158,8 +190,10 @@
   }
 
   function go() {
+    var row = rows[cursor];
+    if (row && typeof row.run === "function") { close(); row.run(); return; }
     var node = items()[cursor];
-    if (node) location.href = node.getAttribute("href");
+    if (node && node.getAttribute("href")) location.href = node.getAttribute("href");
   }
 
   /* PARITY, stated properly: every device gets the same features. The
@@ -180,7 +214,14 @@
   hint.addEventListener("click", open);
   input.addEventListener("input", function () { paint(input.value); });
 
-  el.addEventListener("click", function (e) { if (e.target === el) close(); });
+  el.addEventListener("click", function (e) {
+    if (e.target === el) { close(); return; }
+    var btn = e.target.closest && e.target.closest("button.cmdk__item");
+    if (!btn) return;
+    var idx = Array.prototype.indexOf.call(items(), btn);
+    var row = rows[idx];
+    if (row && typeof row.run === "function") { e.preventDefault(); close(); row.run(); }
+  });
 
   el.addEventListener("keydown", function (e) {
     if (e.key.length === 1 || e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter") keyboardSeen();

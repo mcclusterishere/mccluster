@@ -32,6 +32,7 @@ button.active{background:#8b1e1e;border-color:#b52c31}
 #north{color:#ff575d;font-weight:800}
 #boot{position:fixed;z-index:20;left:50%;top:50%;transform:translate(-50%,-50%);padding:13px 16px;border-radius:12px;background:#111;border:1px solid #555;font-size:12px;text-align:center;max-width:calc(100vw - 30px)}
 </style>
+  <script src="js/live-content.js?v=__STAMP__"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -190,5 +191,6 @@ grid.visible=false;
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera)});
 </script>
+  <script src="js/site-editor.js?v=__STAMP__" defer></script>
 </body>
 </html>

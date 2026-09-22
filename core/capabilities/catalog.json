@@ -5,7 +5,7 @@
     {
       "id": "core.resume",
       "title": "Resume working session",
-      "description": "Return durable McCluster session state — workspace, active and stale work, pending approvals, catalog version, system health and exact deploy commit — so a model can rehydrate after context loss. Read-only.",
+      "description": "Return durable McCluster session state \u2014 workspace, active and stale work, pending approvals, catalog version, system health and exact deploy commit \u2014 so a model can rehydrate after context loss. Read-only.",
       "domain": "control",
       "lifecycle": "active",
       "execution": "sync",
@@ -1894,6 +1894,55 @@
         "owned",
         "feature-gated"
       ]
+    },
+    {
+      "id": "site.edit",
+      "title": "Edit site copy",
+      "description": "Change the words on any page of matthew.mccluster.org without a deploy. Writes a content override row; the HTML in git is never rewritten, so every edit is reversible by deleting the row. Identify the target by its data-edit slot where one exists. Edits made here are tagged via='llm' and can be rolled back as a group with site_content_revert_via, separately from the owner's own edits.",
+      "domain": "control",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "page",
+          "slot",
+          "value"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "type": "string",
+            "description": "File name, e.g. index.html"
+          },
+          "slot": {
+            "type": "string",
+            "description": "data-edit slot name, or a generated path"
+          },
+          "value": {
+            "type": "string",
+            "maxLength": 20000,
+            "description": "The new text"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "text",
+              "html",
+              "hidden",
+              "order"
+            ],
+            "default": "text"
+          }
+        }
+      }
     }
   ],
   "bindings": [
@@ -2614,6 +2663,23 @@
         "owned_data": true,
         "transparent_identity": true,
         "provider_neutral": true
+      }
+    },
+    {
+      "id": "site.edit-local",
+      "capability": "site.edit",
+      "provider": "mccluster-core",
+      "tool": "site.edit",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 200,
+      "economics": {
+        "hosting": "owned",
+        "billing": "free"
+      },
+      "features": {
+        "read_only": false,
+        "self_hosted": true
       }
     }
   ]
