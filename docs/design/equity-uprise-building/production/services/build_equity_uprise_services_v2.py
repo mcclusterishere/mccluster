@@ -687,4 +687,5 @@ report["passed"]=report["checks_failed"]==0
 REPORT.write_text(json.dumps(report,indent=2)+"\n")
 print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","system_risers","riser_segments","floor_handoff_stubs","b1_source_equipment_meshes","b1_distribution_segments","b1_riser_connections","step5_floor_branch_segments","step5_floor_endpoints","step6_roof_branch_segments","step6_roof_endpoints","step6_roof_termination_devices","step7_device_meshes","step8_branch_segments","step8_endpoints","step8_traceability_systems_passing","checks_total","checks_passed","checks_failed","passed")},indent=2))
 if not report["passed"]:
+    print(json.dumps({"failed_checks":[x for x in checks if not x["passed"]]},indent=2))
     raise SystemExit("building services Step 8 verification failed")
