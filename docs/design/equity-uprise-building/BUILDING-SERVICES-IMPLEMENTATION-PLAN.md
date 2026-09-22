@@ -40,9 +40,11 @@ Higher-density distribution is modeled for media/recording/editing, policy/archi
 
 Verified Step 5 snapshot: **492 meshes / 346,088 bytes / 114 Step 5 branch segments / 39 Step 5 endpoints / 34 of 34 checks passing / SHA-256 `424553e20e8231daf74e54cd9676604b041cdd850519f5a390a3ad7820568886`**.
 
-## Services Step 6 — Level 7 terminations — ACTIVE SOURCE IMPLEMENTATION
+## Services Step 6 — Level 7 terminations — COMPLETE
 
-Complete the representative Step 5 roof handoffs with explicit service geometry for all three canonical roof mechanical units, six roof drains, path/stair lighting, two emergency communication points, two fire-support points, four lightning-protection terminals plus perimeter conductor, and north service-screen/service-walk routes. Preserve the open-air roof, mobility reservation and both protected-stair arrivals.
+The representative Step 5 roof handoffs are now completed with explicit service geometry for all three canonical roof mechanical units, six roof drains, path/stair lighting, two emergency communication points, two fire-support points, four lightning-protection terminals plus perimeter conductor, and north service-screen/service-walk routes. The open-air roof, mobility reservation and both protected-stair arrivals remain preserved.
+
+Verified Step 6 snapshot: **608 meshes / 425,284 bytes / 57 Step 6 roof branch segments / 21 Step 6 endpoints / 38 detailed roof devices / 45 of 45 checks passing / SHA-256 `a6c3aaf47d2d8e30950306dad7b0e260e7b50967a973d4eedad39e1aebe77f81`**.
 
 ## Services Step 7 — interior device / ceiling realism
 
@@ -54,4 +56,4 @@ Require vertical continuity B1→L7, no core/circulation clashes, traceability f
 
 ## Current stop point
 
-Services Steps 1–5 are complete and verified. Step 5 is live on main and preserves the B1 backbone plus Floors 1–6 branches and representative roof handoffs. **Current work is Services Step 6: detailed Level 7 terminations and roof service-access routing.** After Step 6 verification, the next implementation gate is Services Step 7: interior device / ceiling realism.
+Services Steps 1–6 are complete and verified on the Step 6 branch. The nervous-system model now traces B1 source/plant through the nine vertical risers, Floors 1–6 representative distribution and detailed Level 7 terminations. **Next is Services Step 7: interior device / ceiling realism.**
