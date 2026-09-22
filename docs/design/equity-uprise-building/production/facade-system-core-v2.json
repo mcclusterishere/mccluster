@@ -220,18 +220,30 @@
     "rule": "screen rooftop clutter without visually creating an enclosed seventh occupied floor"
   },
   "branding": {
+    "canonical_asset": "assets/img/equity-uprise-logo.webp",
+    "asset_git_blob_sha": "53b9a07ee14c107e45cb13b871bd1637db7bebe6",
+    "asset_sha256": "3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f",
+    "vector_source": "equity-uprise.html::.appbar__eq",
+    "machine_vector_ref": "facade/equity-uprise-logo-vector.json",
+    "canonical_navy_rgb": [
+      4,
+      45,
+      82
+    ],
+    "recolor_allowed": false,
+    "pale_plate_on_dark_background": true,
     "primary_entry": {
       "elevation": "south",
       "center_axis_x_ft": 36,
-      "mark": "E = U",
+      "mark": "exact approved Equity Uprise logo",
       "wordmark": "Equity Uprise"
     },
     "secondary_crown": {
       "allowed": true,
       "elevation": "south",
       "center_axis_x_ft": 36,
-      "mark": "E = U",
-      "rule": "single restrained architectural mark integrated into Floor 6 upper crown band"
+      "mark": "exact approved Equity Uprise logo",
+      "rule": "single restrained architectural use of the same approved mark; literal E=U substitution prohibited"
     }
   },
   "material_system": [
