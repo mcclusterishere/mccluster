@@ -55,6 +55,7 @@ jobs:
           python docs/design/equity-uprise-building/production/floor-06/build_equity_uprise_floor_06_v2.py
           python docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py
           python docs/design/equity-uprise-building/production/facade/build_equity_uprise_facade_v2.py
+          python docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py
           python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
           python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 
@@ -68,6 +69,8 @@ jobs:
           cp docs/design/equity-uprise-building/production/facade/facade-module-inventory.json equity-uprise-preview/facade-module-inventory.json
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2.glb equity-uprise-preview/equity-uprise-facade-core-v2.glb
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2-report.json equity-uprise-preview/equity-uprise-facade-core-v2-report.json
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2.glb equity-uprise-preview/equity-uprise-building-services-core-v2.glb
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2-report.json equity-uprise-preview/equity-uprise-building-services-core-v2-report.json
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2.glb equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2-report.json equity-uprise-preview/equity-uprise-basement-b1-core-v2-report.json
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb equity-uprise-preview/equity-uprise-building-core-v2.glb
