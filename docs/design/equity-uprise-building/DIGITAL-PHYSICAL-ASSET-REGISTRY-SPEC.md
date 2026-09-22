@@ -1,6 +1,6 @@
 # Equity Uprise — Digital-to-Physical Asset Registry
 
-> Status: **STEP 2 — DETERMINISTIC REGISTRY INGESTION**
+> Status: **STEP 3A — B1 OPERATIONAL NERVOUS-SYSTEM GRAPH**
 >
 > This is digital-twin, training, commissioning and facilities information architecture. It is **not construction documentation, engineering approval, or authorization to control physical building systems**.
 
@@ -129,3 +129,28 @@ Step 1 is complete when:
 **Step 2 — deterministic registry ingestion.**
 
 Step 2 will create the first real registry document from current authority, preserve stable IDs, make explicit aggregate-vs-instance decisions, and classify each record as digital-only, physicalizable, or deferred.
+
+
+## Step 3A — B1 operational graph
+
+Step 3A enriches the populated Step 2 registry without changing asset identity.
+
+Authority-backed graph layers:
+- B1 source equipment/instances **feeds** one of the nine source-connected service families;
+- each of those nine service families **routes_through** its dedicated conceptual riser allocation;
+- all 14 service families materialize their declared **depends_on** relationships.
+
+When Step 2 expanded a grouped source record (for example pumps, UPS cabinets or telecom racks), Step 3A resolves the source reference to every deterministic instance ID rather than reconnecting the obsolete aggregate ID.
+
+Every graph edge is written into both:
+- the top-level relationship graph; and
+- the affected assets' upstream/downstream/dependency fields.
+
+This is the first lab-ready causal layer: a future scenario can start at a B1 component, identify the service family it feeds, identify the riser that carries that service vertically, and follow declared system prerequisites.
+
+Step 3A does **not** claim utility capacities, pipe/duct/wire sizing, external utility connections, live-control connectivity, or engineering approval.
+
+Generated report:
+- `production/asset-registry/generated/equity-uprise-asset-registry-step3a-report.json`
+
+**Next:** Step 3B extends the graph from riser/service families into floor branches and representative endpoints, beginning with the operational assets that already have reliable placement.

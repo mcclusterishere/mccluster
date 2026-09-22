@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1.0",
   "contract_id": "equity-uprise-asset-registry-source-contract-v1",
-  "status": "step2-deterministic-ingestion-source",
+  "status": "step3a-b1-operational-graph-source",
   "building_id": "equity-uprise-core-v2",
   "source_revision": "caa9c6d36e45f45c8e98f800e6355be25782d66b",
   "not_for_construction": true,
@@ -237,5 +237,25 @@
     "report": "docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-step2-report.json",
     "builder": "docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_v1.py",
     "verifier": "docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step2.py"
+  },
+  "step3a_graph_policy": {
+    "scope": "B1 authority-backed source equipment to semantic service family to dedicated riser, plus declared service-family dependencies",
+    "source_connection_authority": "docs/design/equity-uprise-building/production/building-services-core-v2.json#b1_source_connections",
+    "riser_authority": "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json#sub_riser_envelopes_ft",
+    "expanded_source_resolution": "all Step 2 asset instances whose identity.source_record_id matches a B1 source_equipment_ref",
+    "relationship_types": [
+      "feeds",
+      "routes_through",
+      "depends_on"
+    ],
+    "no_unverified_physical_connections": true,
+    "no_live_control_enablement": true,
+    "lab_use": "supports source-to-riser causal tracing, fault-propagation queries and first B1 lab scenario derivation"
+  },
+  "step3a_output": {
+    "registry": "docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-v1.json",
+    "report": "docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-step3a-report.json",
+    "builder": "docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_step3a.py",
+    "verifier": "docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step3a.py"
   }
 }

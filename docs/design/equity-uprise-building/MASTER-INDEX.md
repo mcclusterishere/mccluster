@@ -208,3 +208,11 @@ Purpose: preserve one canonical asset identity across the digital twin, future p
 - `production/asset-registry/generated/equity-uprise-asset-registry-step2-report.json`
 
 Step 2 is the deterministic ingestion layer: every B1–L7 object, facade source, service family, riser allocation, capability record and building level is classified and reconciled without fabricating physical-world data.
+
+
+### Step 3A B1 operational graph
+- `production/asset-registry/build_asset_registry_step3a.py`
+- `production/asset-registry/verify_asset_registry_step3a.py`
+- `production/asset-registry/generated/equity-uprise-asset-registry-step3a-report.json`
+
+Step 3A materializes B1 source→service→riser relationships and all declared service-family dependencies inside the same canonical registry. It is the first graph layer intended for causal lab queries and fault-propagation training.
