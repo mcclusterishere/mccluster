@@ -177,3 +177,14 @@ The finish pass governs window assembly depth, corners, base/plinth, completed e
 Finish inventory is now locked at `production/facade/facade-finish-inventory.json`, with 68 stable finish records spanning windows, frames, corners, base, entry, canopy, branding, crown, service facade, lighting and site contact.
 
 No finish geometry is implemented by this inventory commit. The next deterministic step is builder implementation beginning with window assembly depth + base/corner finish.
+
+
+## Building services / nervous system implementation
+
+Active implementation sequence:
+- `BUILDING-SERVICES-IMPLEMENTATION-PLAN.md`
+- `production/building-services-core-v2.json`
+- `production/vertical-risers-core-v2.json`
+- `production/services/floor-services-addenda.json`
+
+Services Step 1 is complete: the digital-twin sub-riser allocation and B1→L7 service requirements are locked. Services Step 2 is the first visible geometry pass.
