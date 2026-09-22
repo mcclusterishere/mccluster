@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 254,
+  "candidate_count": 255,
   "capability_source_count": 102,
-  "support_only_count": 152,
-  "checks_total": 916,
-  "checks_passed": 916,
+  "support_only_count": 153,
+  "checks_total": 920,
+  "checks_passed": 920,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -209,6 +209,7 @@
     "supabase/migrations/20260919094143_native_telemetry_views.sql",
     "supabase/migrations/20260919120233_public_projection_invoker_boundaries.sql",
     "supabase/migrations/20260921050000_mnet_profile_save_autofollow_admin.sql",
+    "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -268,7 +269,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "254 entries"
+      "detail": "255 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3892,6 +3893,26 @@
     },
     {
       "name": "supabase/migrations/20260921050000_mnet_profile_save_autofollow_admin.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql support rationale present",
       "passed": true,
       "detail": ""
     },
