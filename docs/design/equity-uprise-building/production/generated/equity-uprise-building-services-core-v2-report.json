@@ -1,11 +1,11 @@
 {
   "schema_version": "1.1.0",
   "asset": "equity-uprise-building-services-core-v2",
-  "status": "services-step6-level7-terminations",
+  "status": "services-step7-interior-device-ceiling-realism",
   "not_for_construction": true,
-  "glb_bytes": 425284,
-  "sha256": "a6c3aaf47d2d8e30950306dad7b0e260e7b50967a973d4eedad39e1aebe77f81",
-  "mesh_count": 608,
+  "glb_bytes": 594088,
+  "sha256": "ff667d1c84006251a221d109446c519985e1e82a32943158c002daf3131d641c",
+  "mesh_count": 830,
   "system_risers": 9,
   "system_risers_modeled": 9,
   "riser_segments": 63,
@@ -53,6 +53,51 @@
   "step6_lightning_conductor_segments": 4,
   "step6_service_screen_routes": 2,
   "step6_level": 7,
+  "step7_device_meshes": 222,
+  "step7_levels": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "step7_device_kinds": {
+    "interior_electrical_panel": 6,
+    "interior_data_rack": 6,
+    "interior_cable_tray": 12,
+    "interior_conduit_drop": 12,
+    "interior_diffuser": 24,
+    "interior_return_grille": 12,
+    "interior_detector": 24,
+    "interior_strobe": 12,
+    "interior_extinguisher": 12,
+    "interior_access_reader": 6,
+    "interior_intercom": 6,
+    "interior_camera": 12,
+    "interior_receptacle": 24,
+    "interior_floor_box": 12,
+    "interior_valve": 12,
+    "interior_access_panel": 18,
+    "interior_plumbing_connection": 12
+  },
+  "step7_electrical_panels": 6,
+  "step7_data_racks": 6,
+  "step7_cable_trays": 12,
+  "step7_conduit_drops": 12,
+  "step7_diffusers": 24,
+  "step7_return_grilles": 12,
+  "step7_detectors": 24,
+  "step7_strobes": 12,
+  "step7_extinguishers": 12,
+  "step7_access_readers": 6,
+  "step7_intercoms": 6,
+  "step7_cameras": 12,
+  "step7_receptacles": 24,
+  "step7_floor_boxes": 12,
+  "step7_valves": 12,
+  "step7_access_panels": 18,
+  "step7_plumbing_connections": 12,
   "floor_branch_segments": 263,
   "floor_endpoints": 91,
   "shared_reservation_ft": {
@@ -72,8 +117,8 @@
     "STORM-DRAINAGE",
     "WATER-DOMESTIC"
   ],
-  "checks_total": 45,
-  "checks_passed": 45,
+  "checks_total": 59,
+  "checks_passed": 59,
   "checks_failed": 0,
   "checks": [
     {
@@ -134,7 +179,7 @@
     {
       "name": "substantial visible nervous-system geometry",
       "passed": true,
-      "detail": "608"
+      "detail": "830"
     },
     {
       "name": "Step 3 authority covers all nine backbone systems",
@@ -290,6 +335,76 @@
       "name": "Step 6 detailed roof terminations are substantial",
       "passed": true,
       "detail": "116"
+    },
+    {
+      "name": "Step 7 devices cover Floors 1-6",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6]"
+    },
+    {
+      "name": "Step 7 electrical panels modeled",
+      "passed": true,
+      "detail": "6"
+    },
+    {
+      "name": "Step 7 data racks modeled",
+      "passed": true,
+      "detail": "6"
+    },
+    {
+      "name": "Step 7 cable trays modeled",
+      "passed": true,
+      "detail": "12"
+    },
+    {
+      "name": "Step 7 conduit drops modeled",
+      "passed": true,
+      "detail": "12"
+    },
+    {
+      "name": "Step 7 HVAC ceiling devices modeled",
+      "passed": true,
+      "detail": "{'interior_electrical_panel': 6, 'interior_data_rack': 6, 'interior_cable_tray': 12, 'interior_conduit_drop': 12, 'interior_diffuser': 24, 'interior_return_grille': 12, 'interior_detector': 24, 'interior_strobe': 12, 'interior_extinguisher': 12, 'interior_access_reader': 6, 'interior_intercom': 6, 'interior_camera': 12, 'interior_receptacle': 24, 'interior_floor_box': 12, 'interior_valve': 12, 'interior_access_panel': 18, 'interior_plumbing_connection': 12}"
+    },
+    {
+      "name": "Step 7 fire alarm devices modeled",
+      "passed": true,
+      "detail": "{'interior_electrical_panel': 6, 'interior_data_rack': 6, 'interior_cable_tray': 12, 'interior_conduit_drop': 12, 'interior_diffuser': 24, 'interior_return_grille': 12, 'interior_detector': 24, 'interior_strobe': 12, 'interior_extinguisher': 12, 'interior_access_reader': 6, 'interior_intercom': 6, 'interior_camera': 12, 'interior_receptacle': 24, 'interior_floor_box': 12, 'interior_valve': 12, 'interior_access_panel': 18, 'interior_plumbing_connection': 12}"
+    },
+    {
+      "name": "Step 7 extinguishers modeled",
+      "passed": true,
+      "detail": "12"
+    },
+    {
+      "name": "Step 7 access/comms devices modeled",
+      "passed": true,
+      "detail": "{'interior_electrical_panel': 6, 'interior_data_rack': 6, 'interior_cable_tray': 12, 'interior_conduit_drop': 12, 'interior_diffuser': 24, 'interior_return_grille': 12, 'interior_detector': 24, 'interior_strobe': 12, 'interior_extinguisher': 12, 'interior_access_reader': 6, 'interior_intercom': 6, 'interior_camera': 12, 'interior_receptacle': 24, 'interior_floor_box': 12, 'interior_valve': 12, 'interior_access_panel': 18, 'interior_plumbing_connection': 12}"
+    },
+    {
+      "name": "Step 7 receptacles and floor boxes modeled",
+      "passed": true,
+      "detail": "{'interior_electrical_panel': 6, 'interior_data_rack': 6, 'interior_cable_tray': 12, 'interior_conduit_drop': 12, 'interior_diffuser': 24, 'interior_return_grille': 12, 'interior_detector': 24, 'interior_strobe': 12, 'interior_extinguisher': 12, 'interior_access_reader': 6, 'interior_intercom': 6, 'interior_camera': 12, 'interior_receptacle': 24, 'interior_floor_box': 12, 'interior_valve': 12, 'interior_access_panel': 18, 'interior_plumbing_connection': 12}"
+    },
+    {
+      "name": "Step 7 valves and access panels modeled",
+      "passed": true,
+      "detail": "{'interior_electrical_panel': 6, 'interior_data_rack': 6, 'interior_cable_tray': 12, 'interior_conduit_drop': 12, 'interior_diffuser': 24, 'interior_return_grille': 12, 'interior_detector': 24, 'interior_strobe': 12, 'interior_extinguisher': 12, 'interior_access_reader': 6, 'interior_intercom': 6, 'interior_camera': 12, 'interior_receptacle': 24, 'interior_floor_box': 12, 'interior_valve': 12, 'interior_access_panel': 18, 'interior_plumbing_connection': 12}"
+    },
+    {
+      "name": "Step 7 plumbing service connections modeled",
+      "passed": true,
+      "detail": "12"
+    },
+    {
+      "name": "Step 7 devices avoid protected stair/elevator zones",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "Step 7 adds substantial interior service realism",
+      "passed": true,
+      "detail": "222"
     },
     {
       "name": "Services viewer still loads canonical asset",
