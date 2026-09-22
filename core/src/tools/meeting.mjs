@@ -160,7 +160,14 @@ export const MEETING_TOOLS = Object.freeze([
 ]);
 
 export function activeMeetingTools() {
-  return meetingEngineConfigured() ? MEETING_TOOLS : [];
+  if (!meetingEngineConfigured()) return [];
+  if (process.env.MCCLUSTER_MEETING_INTERACTIVE === '1') return MEETING_TOOLS;
+  const interactive = new Set([
+    'core.meeting.chat.read',
+    'core.meeting.chat.send',
+    'core.meeting.speak',
+  ]);
+  return MEETING_TOOLS.filter((tool) => !interactive.has(tool.name));
 }
 
 export async function scheduleMeetingDelegate(args = {}) {
