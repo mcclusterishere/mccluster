@@ -188,3 +188,14 @@ Active implementation sequence:
 - `production/services/floor-services-addenda.json`
 
 Services Steps 1–3 are complete through the B1 source-to-riser layer: the digital-twin sub-riser allocation and B1→L7 requirements are locked; the real vertical services GLB/viewer layer exists; and authorized B1 plant/source equipment now connects through representative B1 distribution geometry to all nine risers. Next is Services Step 4: Floors 1–3 representative branches/endpoints.
+
+
+## Digital-to-Physical Asset Registry
+
+Canonical Step 1 authority:
+- `DIGITAL-PHYSICAL-ASSET-REGISTRY-SPEC.md`
+- `production/asset-registry/asset-registry-schema-v1.json`
+- `production/asset-registry/asset-registry-source-contract-v1.json`
+- `production/asset-registry/verify_asset_registry_schema.py`
+
+Purpose: preserve one canonical asset identity across the digital twin, future physical tags, training, telemetry, commissioning, maintenance and operations. Step 1 is schema/source authority only; physical identifiers and live protocol bindings are not invented.
