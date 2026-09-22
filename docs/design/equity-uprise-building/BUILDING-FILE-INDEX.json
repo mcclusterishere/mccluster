@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 254,
+  "tracked_count": 264,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -79,6 +79,10 @@
       "docs/design/equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md",
       "docs/design/equity-uprise-building/BASEMENT-B1-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md",
+      "docs/design/equity-uprise-building/BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md",
+      "docs/design/equity-uprise-building/BUILDING-SYSTEMS-AND-FACADE-CORE-RULES.md",
+      "docs/design/equity-uprise-building/EXTERIOR-FACADE-UPGRADE-SPEC.md",
+      "docs/design/equity-uprise-building/FACADE-BRANDING-AND-SIGNAGE-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
       "docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
@@ -113,9 +117,11 @@
       "docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md",
       "docs/design/equity-uprise-building/FLOOR-07-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md",
+      "docs/design/equity-uprise-building/INTERIOR-ENVELOPE-AND-GEOMETRY-UPGRADE-SPEC.md",
       "docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md",
       "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
-      "docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md"
+      "docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md",
+      "docs/design/equity-uprise-building/VERTICAL-DISTRIBUTION-AND-RISER-SPEC.md"
     ],
     "context": [
       "docs/design/equity-uprise-building/AGENTS.md",
@@ -187,10 +193,12 @@
       "docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py",
       "docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py",
       "docs/design/equity-uprise-building/production/building-core-v2.json",
+      "docs/design/equity-uprise-building/production/building-services-core-v2.json",
       "docs/design/equity-uprise-building/production/building-v2-validation.json",
       "docs/design/equity-uprise-building/production/core-v2-floor-programs.json",
       "docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json",
       "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json",
+      "docs/design/equity-uprise-building/production/facade-system-core-v2.json",
       "docs/design/equity-uprise-building/production/floor-01/README.md",
       "docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01_v2.py",
       "docs/design/equity-uprise-building/production/floor-01/floor-01-camera.json",
@@ -274,13 +282,15 @@
       "docs/design/equity-uprise-building/production/generate_b1_production_package.py",
       "docs/design/equity-uprise-building/production/generate_core_v2_plans.py",
       "docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py",
+      "docs/design/equity-uprise-building/production/interior-envelope-audit.json",
       "docs/design/equity-uprise-building/production/underground-tunnel-network.json",
       "docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py",
       "docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py",
       "docs/design/equity-uprise-building/production/verify_equity_uprise_building_v2.py",
       "docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py",
       "docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py",
-      "docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py"
+      "docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py",
+      "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
     ],
     "public_viewers": [
       "equity-uprise-basement-b1-3d.html",

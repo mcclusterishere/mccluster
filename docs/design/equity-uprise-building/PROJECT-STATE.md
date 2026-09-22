@@ -253,3 +253,18 @@ Use these to recover design quality, not obsolete stair/core geometry.
 - replacing V1 design qualities with generic debug geometry;
 - rebuilding the whole stack from scratch when a validated assembly already exists;
 - inventing new floor identities without current program authority.
+
+
+## Whole-building facade + nervous-system authority — AUTHORITY PASS ONLY
+
+The post-B1 realism phase now has a canonical written + machine-readable authority set covering:
+- exterior facade / glazing / base-middle-crown composition;
+- E = U / Equity Uprise architectural branding;
+- interior envelope / ceiling / support-space realism;
+- electrical, lighting, data/telecom/AV, BAS/controls, security, HVAC, plumbing, sanitary, storm, fire protection and life-safety system logic;
+- shared vertical service/riser coordination;
+- interior-envelope audit requirements.
+
+Core rule: every meaningful building system must trace **source → vertical route → floor branch → representative endpoint → monitoring/service access**.
+
+**Implementation has intentionally not started in this authority snapshot.** Existing B1/F1–F7 geometry remains unchanged. The next phase is per-floor services coordination + facade/riser geometric implementation after this authority set is accepted.

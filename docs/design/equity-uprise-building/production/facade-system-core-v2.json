@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0.0",
+  "authority_id": "equity-uprise-facade-system-core-v2",
+  "status": "active-authority-geometry-implementation-pending",
+  "not_for_construction": true,
+  "building_id": "equity-uprise-building",
+  "core_geometry_ref": "building-core-v2.json",
+  "composition": {
+    "base": {
+      "levels": [
+        1
+      ],
+      "intent": "public/pedestrian-scaled transparent institutional base with principal entrance"
+    },
+    "middle": {
+      "levels": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "intent": "disciplined repeated glazing/opaque-panel rhythm coordinated with room program"
+    },
+    "crown": {
+      "levels": [
+        6,
+        7
+      ],
+      "intent": "refined penthouse/crown and screened rooftop-service expression"
+    }
+  },
+  "elevations": [
+    "south",
+    "east",
+    "north",
+    "west"
+  ],
+  "mandatory_elements": [
+    "glazing system",
+    "mullions/frames",
+    "opaque panels",
+    "spandrel/slab-edge logic",
+    "corner conditions",
+    "principal entrance framing",
+    "parapet/crown",
+    "roof-service screening",
+    "architectural signage"
+  ],
+  "material_direction": [
+    "neutral clear glazing",
+    "charcoal/dark-bronze metal framing",
+    "warm-gray mineral/precast/stone-like base",
+    "dark architectural metal service/crown panels",
+    "restrained warm entry material"
+  ],
+  "branding_refs": [
+    "../FACADE-BRANDING-AND-SIGNAGE-SPEC.md"
+  ],
+  "constraints": [
+    "B1 remains below-grade and windowless.",
+    "Floors 2-6 gain no new exterior door, balcony or terrace without separate authority.",
+    "Facade must coordinate with rooms behind it and fixed Core V2 systems.",
+    "Facade work may not move the shared shell, floor elevations, stairs, elevators or slab openings."
+  ],
+  "exact_bay_geometry_status": "pending-detailed-facade-coordination"
+}

@@ -1,0 +1,353 @@
+{
+  "schema_version": "1.0.0",
+  "authority_id": "equity-uprise-building-services-core-v2",
+  "status": "active-authority-implementation-pending",
+  "not_for_construction": true,
+  "building_id": "equity-uprise-building",
+  "source_level": "basement-b1",
+  "shared_riser_ref": "vertical-risers-core-v2.json",
+  "core_geometry_ref": "building-core-v2.json",
+  "system_families": [
+    {
+      "id": "ELEC-NORMAL",
+      "label": "Normal electrical power",
+      "origin": "B1 electrical / emergency power",
+      "vertical_route": "MEP service spine",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "representative_endpoints": [
+        "floor distribution",
+        "receptacles/floor boxes",
+        "equipment loads",
+        "normal lighting"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "ELEC-EMERGENCY",
+      "label": "Emergency / standby / UPS-backed power concept",
+      "origin": "B1 electrical / emergency power",
+      "vertical_route": "MEP service spine",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "representative_endpoints": [
+        "egress lighting",
+        "life-safety/support loads",
+        "selected network/control loads"
+      ],
+      "dependencies": [
+        "ELEC-NORMAL"
+      ]
+    },
+    {
+      "id": "LIGHTING-CONTROLS",
+      "label": "Lighting and controls",
+      "origin": "floor distribution + control backbone",
+      "vertical_route": "electrical/control spine",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "representative_endpoints": [
+        "architectural lighting",
+        "emergency lighting",
+        "scene controls",
+        "exterior/roof lighting"
+      ],
+      "dependencies": [
+        "ELEC-NORMAL",
+        "ELEC-EMERGENCY",
+        "BAS-CONTROLS"
+      ]
+    },
+    {
+      "id": "DATA-STRUCTURED",
+      "label": "Structured data / telecom",
+      "origin": "B1 Network / Telecom Core",
+      "vertical_route": "data riser",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "representative_endpoints": [
+        "floor IDF/distribution",
+        "workstations",
+        "displays",
+        "Wi-Fi/network endpoints",
+        "building systems network"
+      ],
+      "dependencies": [
+        "ELEC-NORMAL",
+        "ELEC-EMERGENCY"
+      ]
+    },
+    {
+      "id": "AV-MEDIA",
+      "label": "AV / media distribution",
+      "origin": "floor-local AV support backed by structured data",
+      "vertical_route": "data/AV backbone as required",
+      "serves_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "representative_endpoints": [
+        "forum AV",
+        "recording/editing",
+        "briefing displays",
+        "media playback"
+      ],
+      "dependencies": [
+        "DATA-STRUCTURED",
+        "ELEC-NORMAL"
+      ]
+    },
+    {
+      "id": "BAS-CONTROLS",
+      "label": "Building automation / controls / sensors",
+      "origin": "B1 Building Systems Lab / plant controls",
+      "vertical_route": "controls backbone",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "representative_endpoints": [
+        "HVAC sensors",
+        "metering/status",
+        "flood monitoring",
+        "system dashboards"
+      ],
+      "dependencies": [
+        "DATA-STRUCTURED",
+        "ELEC-EMERGENCY"
+      ]
+    },
+    {
+      "id": "SECURITY-ACCESS",
+      "label": "Security / access / communications",
+      "origin": "authorized building-security/control infrastructure",
+      "vertical_route": "data/control backbone",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "representative_endpoints": [
+        "door readers",
+        "intercoms",
+        "cameras where appropriate",
+        "restricted-zone controls"
+      ],
+      "dependencies": [
+        "DATA-STRUCTURED",
+        "ELEC-EMERGENCY"
+      ]
+    },
+    {
+      "id": "HVAC-AIR",
+      "label": "HVAC air distribution",
+      "origin": "B1 Mechanical Plant concept",
+      "vertical_route": "HVAC riser family",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "representative_endpoints": [
+        "supply terminals",
+        "returns",
+        "exhaust terminals",
+        "equipment/media environmental support"
+      ],
+      "dependencies": [
+        "ELEC-NORMAL",
+        "BAS-CONTROLS"
+      ]
+    },
+    {
+      "id": "WATER-DOMESTIC",
+      "label": "Domestic water",
+      "origin": "B1 Fire Protection / Water service boundary concept",
+      "vertical_route": "domestic-water riser",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "representative_endpoints": [
+        "restrooms",
+        "service/janitor fixtures",
+        "authorized plumbing endpoints"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "SANITARY-VENT",
+      "label": "Sanitary drainage / vent",
+      "origin": "building plumbing boundary concept",
+      "vertical_route": "sanitary/vent stack",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "representative_endpoints": [
+        "restroom fixtures",
+        "service sinks",
+        "authorized plumbing fixtures"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "STORM-DRAINAGE",
+      "label": "Storm / roof drainage / sump",
+      "origin": "Level 7 roof drainage collection + B1 flood/sump management",
+      "vertical_route": "storm drainage stack",
+      "serves_levels": [
+        0,
+        7
+      ],
+      "representative_endpoints": [
+        "roof drains",
+        "drainage collection",
+        "B1 flood/sump monitoring"
+      ],
+      "dependencies": [
+        "BAS-CONTROLS"
+      ]
+    },
+    {
+      "id": "FIRE-PROTECTION",
+      "label": "Fire protection water distribution",
+      "origin": "B1 Fire Protection / Water",
+      "vertical_route": "fire-protection riser",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "representative_endpoints": [
+        "sprinkler branch concept",
+        "stair/core protection concept",
+        "status valves/devices"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "FIRE-ALARM",
+      "label": "Fire alarm / notification / emergency communications",
+      "origin": "building life-safety control concept",
+      "vertical_route": "life-safety/data pathway",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "representative_endpoints": [
+        "detectors",
+        "notification devices",
+        "emergency communication",
+        "building-status interfaces"
+      ],
+      "dependencies": [
+        "ELEC-EMERGENCY"
+      ]
+    },
+    {
+      "id": "SERVICE-HOUSEKEEPING",
+      "label": "Service / maintenance / housekeeping",
+      "origin": "B1 Facilities Workshop / Storage + floor support",
+      "vertical_route": "freight/service circulation",
+      "serves_levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "representative_endpoints": [
+        "janitorial support",
+        "maintenance storage",
+        "equipment replacement/service routes"
+      ],
+      "dependencies": []
+    }
+  ],
+  "modeling_rule": "Every system requires source -> vertical route -> floor branch -> representative endpoint -> service/monitoring logic.",
+  "unresolved_engineering": [
+    "utility capacities",
+    "equipment sizing",
+    "duct/pipe/wire sizes",
+    "final electrical studies",
+    "final pressure/flow calculations",
+    "code-required ratings",
+    "final equipment replacement paths"
+  ]
+}
