@@ -1,0 +1,11 @@
+# Postfix: which domains do we accept mail for?
+#
+# Reads the view, never the table. The mail server's role has SELECT on
+# mail_v_domains and nothing else -- it cannot see mail_users.password_hash,
+# auth.users, or a single listener record. A mail server is internet-facing
+# and occasionally has bad days; it does not get the keys to the house.
+hosts = REPLACE_DB_HOST
+dbname = postgres
+user = mailserver
+password = REPLACE_DB_PASSWORD
+query = SELECT domain FROM public.mail_v_domains WHERE domain='%s'

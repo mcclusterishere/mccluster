@@ -1,0 +1,24 @@
+# Dovecot: authentication and mailbox location, from Postgres.
+#
+# default_pass_scheme = BLF-CRYPT because mail_mint_mailbox() stores
+# bcrypt via pgcrypto. Dovecot does the comparison itself, so the
+# plaintext password existed only in the call that created it and is
+# nowhere on this disk.
+driver = pgsql
+connect = host=REPLACE_DB_HOST dbname=postgres user=mailserver password=REPLACE_DB_PASSWORD sslmode=require
+default_pass_scheme = BLF-CRYPT
+
+password_query = \
+  SELECT email AS user, password_hash AS password \
+  FROM public.mail_v_users WHERE email = '%u'
+
+# uid/gid are fixed: every mailbox is owned by vmail, and the per-user
+# separation is the directory, not the unix user. Quota comes from the
+# row so a client's ceiling is data rather than a config edit.
+user_query = \
+  SELECT '/var/mail/vhosts/' || maildir AS home, \
+         5000 AS uid, 5000 AS gid, \
+         'quota_rule=*:bytes=' || quota_bytes AS userdb_quota_rule \
+  FROM public.mail_v_users WHERE email = '%u'
+
+iterate_query = SELECT email AS user FROM public.mail_v_users
