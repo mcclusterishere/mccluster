@@ -51,79 +51,129 @@
   --cs-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
 }
 
-/* ---------- the palette: the thing that ends the guessing ---------- */
+/* ---------- the palette: the thing that ends the guessing ----------
+
+   MOBILE FIRST, and meant literally: the phone gets the full thing, not
+   a cut-down version. The owner works from a phone and a tablet more
+   than a laptop, so the base rules below ARE the phone rules, and the
+   only thing the desktop media query adds is a narrower box and a
+   keyboard hint that a phone has no use for.
+
+   A keyboard shortcut alone would have made this desktop-only. Ctrl-K
+   still works where there is a keyboard, but the tap target is the
+   primary way in, not a fallback.                                    */
+
 .cmdk { position: fixed; inset: 0; z-index: 9000; display: none;
-  align-items: flex-start; justify-content: center;
-  padding: max(10vh, 3rem) 1rem 1rem;
-  background: rgba(4,3,3,.72); backdrop-filter: blur(6px); }
+  flex-direction: column; align-items: stretch;
+  /* Phone: start near the top so the on-screen keyboard does not shove
+     the list off the bottom the moment it opens. */
+  padding: calc(env(safe-area-inset-top, 0px) + .5rem) .5rem 0;
+  background: rgba(4,3,3,.78); backdrop-filter: blur(6px); }
 .cmdk.is-open { display: flex; }
 
-.cmdk__box { width: min(100%, 34rem); max-height: min(70vh, 34rem);
+.cmdk__box { width: 100%; flex: 1; min-height: 0;
   display: flex; flex-direction: column; overflow: hidden;
-  border-radius: var(--cs-r-lg); background: var(--cs-1);
+  border-radius: var(--cs-r-lg) var(--cs-r-lg) 0 0; background: var(--cs-1);
   box-shadow: inset 0 0 0 1px var(--cs-edge-strong), 0 32px 80px rgba(0,0,0,.6); }
 
 /* The palette mounts INSIDE whatever page you were on, so it inherits
    that page's field styling. The listening room paints a ruby underline
    on a focused input -- in this house that colour means something is
    wrong, so the search box read as a validation error the moment it
-   opened. Everything is reset explicitly, and !important is the honest
-   tool here: this element has to look the same on seventeen pages that
-   each style their own inputs. */
+   opened. Reset explicitly; !important is the honest tool here, because
+   this element has to look the same on twenty pages that each style
+   their own inputs. */
 .cmdk__in, .cmdk .cmdk__in:focus {
   width: 100%; margin: 0; border: 0 !important; border-radius: 0 !important;
   background: none !important; color: var(--cs-text);
-  font: 500 1.05rem var(--cs-ui); padding: 1.05rem 1.15rem;
+  /* 16px minimum, or iOS Safari zooms the whole page on focus. */
+  font: 500 16px var(--cs-ui); padding: 1.05rem 1.15rem;
   outline: none !important; box-shadow: none !important; }
 .cmdk__in::placeholder { color: var(--cs-faint); }
 
-.cmdk__list { overflow-y: auto; border-top: 1px solid var(--cs-edge);
-  padding: .4rem; margin: 0; list-style: none; }
+.cmdk__list { flex: 1; min-height: 0; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-top: 1px solid var(--cs-edge);
+  padding: .4rem .4rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  margin: 0; list-style: none; }
 
 .cmdk__group { font: 700 .64rem/1 var(--cs-ui); letter-spacing: .14em;
   text-transform: uppercase; color: var(--cs-faint);
   padding: .85rem .75rem .45rem; }
 
-.cmdk__item { display: flex; align-items: baseline; gap: .6rem;
+/* Stacked on a phone: a name and its description side by side on a
+   390px screen truncates the description to nothing useful. */
+.cmdk__item { display: flex; flex-direction: column; gap: .15rem;
   width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
-  color: var(--cs-text); font: 500 .94rem var(--cs-ui);
-  padding: .6rem .75rem; border-radius: var(--cs-r-sm); text-decoration: none; }
-/* One highlight style for hover AND keyboard, because two different
-   "selected" looks in one list is how you lose your place in it. */
+  color: var(--cs-text); font: 500 .98rem var(--cs-ui);
+  /* 48px min: a row you cannot reliably hit is a row that does not work. */
+  min-height: 48px; justify-content: center;
+  padding: .55rem .75rem; border-radius: var(--cs-r-sm); text-decoration: none; }
+/* One highlight for hover AND keyboard: two different "selected" looks
+   in one list is how you lose your place in it. */
 .cmdk__item:hover, .cmdk__item.is-on { background: var(--cs-3); }
 .cmdk__item.is-on { box-shadow: inset 0 0 0 1px var(--cs-edge-strong); }
 
 .cmdk__label { flex: none; }
-.cmdk__blurb { flex: 1; min-width: 0; color: var(--cs-faint);
-  font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmdk__blurb { color: var(--cs-faint); font-size: .78rem; line-height: 1.35; }
 
-/* State is a word, not a colour alone -- a dot nobody can name tells
-   the operator nothing when the click fails. */
-.cmdk__tag { flex: none; font: 700 .6rem/1 var(--cs-ui); letter-spacing: .1em;
-  text-transform: uppercase; padding: .28rem .42rem; border-radius: 4px; }
+/* State is a word, not a colour alone -- a dot nobody can name tells the
+   operator nothing when the click fails. */
+.cmdk__tag { align-self: flex-start; margin-top: .1rem;
+  font: 700 .58rem/1 var(--cs-ui); letter-spacing: .1em;
+  text-transform: uppercase; padding: .26rem .4rem; border-radius: 4px; }
 .cmdk__tag--legacy { background: rgba(217,164,65,.16); color: var(--cs-warn); }
 .cmdk__tag--dark   { background: rgba(229,72,77,.16);  color: var(--cs-bad); }
 
 .cmdk__empty { padding: 1.4rem .95rem; color: var(--cs-faint); font: 400 .9rem var(--cs-body); }
 
-.cmdk__foot { display: flex; gap: 1rem; flex-wrap: wrap;
-  border-top: 1px solid var(--cs-edge); padding: .6rem .95rem;
-  font: 500 .7rem var(--cs-ui); color: var(--cs-faint); }
-.cmdk__foot kbd { font: 700 .7rem var(--cs-ui); color: var(--cs-dim);
-  background: var(--cs-2); border-radius: 4px; padding: .16rem .34rem;
-  box-shadow: inset 0 0 0 1px var(--cs-edge); }
+/* Keyboard legend is desktop-only; on a phone it is three lies. */
+.cmdk__foot { display: none; }
 
-/* The hint that the palette exists at all. Fixed, small, out of the way,
-   and the only thing on an admin page that advertises navigation. */
-.cmdk-hint { position: fixed; z-index: 400;
-  right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+/* ---------- the way in ----------
+   The bottom-right corner is contended: the app bar owns the bottom
+   strip and js/tabbar.js pins the auth chip at 5.45rem with z-index 999.
+   The first version of this sat at ~5.6rem with z-index 400 -- visible,
+   and completely untappable behind the chip on a phone. Found by tapping
+   it in a real mobile viewport rather than by looking at it.
+   So: stacked clear ABOVE the chip, and above it in the stack too. */
+.cmdk-hint { position: fixed; z-index: 1000;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   display: inline-flex; align-items: center; gap: .45rem;
-  border: 0; cursor: pointer; border-radius: 999px;
-  padding: .6rem .85rem; color: var(--cs-dim); background: var(--cs-2);
-  font: 600 .74rem var(--cs-ui);
-  box-shadow: inset 0 0 0 1px var(--cs-edge-strong), 0 10px 30px rgba(0,0,0,.45); }
-.cmdk-hint:hover { color: var(--cs-text); background: var(--cs-3); }
-/* The appbar owns the bottom-right on pages that have one. */
-body.has-appbar .cmdk-hint { bottom: calc(var(--appbar-h, 4.6rem) + 1rem + env(safe-area-inset-bottom, 0px)); }
+  min-height: 44px; border: 0; cursor: pointer; border-radius: 999px;
+  padding: .6rem .95rem; color: var(--cs-text); background: var(--cs-2);
+  font: 700 .78rem var(--cs-ui);
+  box-shadow: inset 0 0 0 1px var(--cs-edge-strong), 0 10px 30px rgba(0,0,0,.5); }
+.cmdk-hint:hover { background: var(--cs-3); }
+.cmdk-hint kbd { display: none; }
+/* Clears the app bar AND the auth chip that sits on top of it. */
+body.has-appbar .cmdk-hint { bottom: calc(7.9rem + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 420px) {
+  body.has-appbar .cmdk-hint { bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ---------- desktop: a dialog, and the keyboard legend ---------- */
+@media (min-width: 720px) and (pointer: fine) {
+  .cmdk { align-items: flex-start; flex-direction: row; justify-content: center;
+    padding: max(10vh, 3rem) 1rem 1rem; }
+  .cmdk__box { width: min(100%, 34rem); flex: 0 1 auto;
+    max-height: min(70vh, 34rem); border-radius: var(--cs-r-lg); }
+  .cmdk__item { flex-direction: row; align-items: baseline; gap: .6rem;
+    min-height: 0; }
+  .cmdk__blurb { flex: 1; min-width: 0; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
+  .cmdk__tag { align-self: auto; margin-top: 0; }
+  .cmdk__foot { display: flex; gap: 1rem; flex-wrap: wrap;
+    border-top: 1px solid var(--cs-edge); padding: .6rem .95rem;
+    font: 500 .7rem var(--cs-ui); color: var(--cs-faint); }
+  .cmdk__foot kbd { font: 700 .7rem var(--cs-ui); color: var(--cs-dim);
+    background: var(--cs-2); border-radius: 4px; padding: .16rem .34rem;
+    box-shadow: inset 0 0 0 1px var(--cs-edge); }
+  .cmdk-hint kbd { display: inline; font: 700 .7rem var(--cs-ui);
+    color: var(--cs-dim); background: var(--cs-1); border-radius: 4px;
+    padding: .16rem .34rem; box-shadow: inset 0 0 0 1px var(--cs-edge); }
+  body.has-appbar .cmdk-hint { bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); }
+}
 
 @media (prefers-reduced-motion: reduce) { .cmdk, .cmdk__box { transition: none !important; } }

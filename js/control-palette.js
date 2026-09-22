@@ -67,7 +67,7 @@
   el.innerHTML =
     '<div class="cmdk__box">' +
       '<input class="cmdk__in" id="cmdkIn" type="text" autocomplete="off" spellcheck="false"' +
-        ' placeholder="Where to? Type a name, or what you want to do…" aria-label="Search surfaces">' +
+        ' placeholder="Where to? Type anything…" aria-label="Search surfaces">' +
       '<ul class="cmdk__list" id="cmdkList" role="listbox"></ul>' +
       '<div class="cmdk__foot">' +
         '<span><kbd>&uarr;</kbd><kbd>&darr;</kbd> move</span>' +
