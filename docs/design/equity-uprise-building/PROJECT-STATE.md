@@ -285,7 +285,14 @@ The finish pass must add/resolve:
 
 **No finish geometry, builder changes, viewer changes or generated GLB changes are included in this authority step.**
 
-Next gate: create `production/facade/facade-finish-inventory.json` with stable component IDs before modeling.
+Finish inventory gate: **COMPLETE**.
+
+- `production/facade/facade-finish-inventory.json` is now canonical.
+- **68 stable finish records** are locked before geometry work.
+- inventory covers all 238 window-like modules plus frame hierarchy, acoustic/service panels, four corners, all-side base/plinth, complete entry/canopy/branding, crown/parapet/headhouse integration, exterior lighting and entry ground contact.
+- existing Facade V1 geometry remains unchanged.
+
+Next gate: implement **window assembly depth + base/corner finish** in the facade generator against this inventory, then regenerate/verify before touching the entrance/crown.
 
 ## Exterior facade implementation — DETAILED CURRENT PASS ACTIVE / VISUAL APPROVAL PENDING
 

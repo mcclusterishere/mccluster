@@ -174,4 +174,6 @@ Architectural-finish authority:
 
 The finish pass governs window assembly depth, corners, base/plinth, completed entrance/doors/canopy, architectural signage, crown/service-screen integration, material realism, exterior lighting and building-to-ground contact.
 
-No finish geometry is implemented by this authority commit. The next deterministic source is the pending `production/facade/facade-finish-inventory.json`.
+Finish inventory is now locked at `production/facade/facade-finish-inventory.json`, with 68 stable finish records spanning windows, frames, corners, base, entry, canopy, branding, crown, service facade, lighting and site contact.
+
+No finish geometry is implemented by this inventory commit. The next deterministic step is builder implementation beginning with window assembly depth + base/corner finish.

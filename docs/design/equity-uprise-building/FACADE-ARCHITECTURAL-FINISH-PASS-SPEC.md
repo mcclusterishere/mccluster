@@ -357,4 +357,6 @@ It does not:
 - add finish geometry;
 - change existing floor geometry.
 
-Next step: create the canonical `production/facade/facade-finish-inventory.json` and assign stable finish-component IDs before modeling.
+The canonical `production/facade/facade-finish-inventory.json` now assigns stable finish-component IDs before modeling.
+
+Next step: upgrade the facade generator beginning with **window assembly depth + base/corner finish**, using the inventory as the completeness contract.
