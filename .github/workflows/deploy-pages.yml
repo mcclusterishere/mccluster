@@ -51,6 +51,7 @@ jobs:
           python docs/design/equity-uprise-building/production/floor-03/build_equity_uprise_floor_03_v2.py
           python docs/design/equity-uprise-building/production/floor-04/build_equity_uprise_floor_04_v2.py
           python docs/design/equity-uprise-building/production/floor-05/build_equity_uprise_floor_05_v2.py
+          python docs/design/equity-uprise-building/production/floor-06/build_equity_uprise_floor_06_v2.py
 
       - name: Publish Equity Uprise preview assets
         run: |
@@ -69,6 +70,8 @@ jobs:
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-04-core-v2-report.json equity-uprise-preview/equity-uprise-floor-04-core-v2-report.json
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-05-core-v2.glb equity-uprise-preview/equity-uprise-floor-05-core-v2.glb
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-05-core-v2-report.json equity-uprise-preview/equity-uprise-floor-05-core-v2-report.json
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-06-core-v2.glb equity-uprise-preview/equity-uprise-floor-06-core-v2.glb
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-06-core-v2-report.json equity-uprise-preview/equity-uprise-floor-06-core-v2-report.json
           cp docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png equity-uprise-preview/floor-01-plan.png
           cp docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg equity-uprise-preview/floor-01-plan.svg
           cp docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png equity-uprise-preview/floor-01-site-egress.png
