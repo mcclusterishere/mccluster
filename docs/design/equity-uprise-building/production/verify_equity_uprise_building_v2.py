@@ -49,9 +49,19 @@ for base in expected[:-1]:
         needle=f"{prefix}_L{base:g}_upper_landing"
         if needle not in names: errors.append(f"missing {needle}")
 
-# Shaft proof.
+# Shaft / protected-stair enclosure proof.
 for node in ["passenger_elevator_shaft_north","freight_elevator_shaft_north","stair_a_enclosure_north","stair_b_enclosure_north"]:
     if node not in names: errors.append(f"missing vertical system node {node}")
+
+# Human-walkable stair access proof: the stair enclosure south face must have
+# a real door opening at every served level rather than one sealed wall.
+for level in range(0,8):
+    for prefix in ["stair_a_enclosure","stair_b_enclosure"]:
+        for suffix in ["south_left","south_right","south_lintel"]:
+            node=f"{prefix}_L{level}_{suffix}"
+            if node not in names: errors.append(f"missing protected-stair door geometry {node}")
+for sealed in ["stair_a_enclosure_south","stair_b_enclosure_south"]:
+    if sealed in names: errors.append(f"sealed stair south wall returned: {sealed}")
 
 # B1 / site proof.
 if CORE.get("level_of_exit_discharge") != 1:
