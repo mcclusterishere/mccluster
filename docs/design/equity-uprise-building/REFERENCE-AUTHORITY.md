@@ -141,7 +141,7 @@ For any facade, glazing, exterior branding, interior-envelope, MEP, IT, plumbing
 
 These authorities **do not move the existing Core V2 shell/core**. They establish the next-pass requirement that the building function as a coordinated architectural envelope + services network rather than a set of visually implied systems.
 
-Current facade boundary: the Facade V1 structural shell is implemented and checkpointed; the architectural finish pass is active but not yet geometrically implemented. Riser sub-allocation, floor services addenda and interior systems implementation remain pending.
+Current implementation boundary: the facade structural shell and architectural finish are implemented. Building-services riser sub-allocation, B1→L7 floor addenda, the visible nine-system backbone and Services Step 3 B1 source/plant connections are implemented; floor-local branch/device realism remains later Services work.
 
 ## Deterministic production packages
 
