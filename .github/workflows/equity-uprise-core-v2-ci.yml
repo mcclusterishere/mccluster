@@ -43,6 +43,9 @@ jobs:
       - name: Audit Equity Uprise building context index
         run: python docs/design/equity-uprise-building/production/audit_building_context.py
 
+      - name: Verify Digital-to-Physical Asset Registry Step 1 schema
+        run: python docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_schema.py
+
       - name: Verify Halo projection owner boundary
         run: node --test workers/mccluster/test/halo-projection.test.mjs
 
