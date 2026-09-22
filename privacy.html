@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Privacy: what this site records, and what it never does · Matthew McCluster</title>
-  <meta name="description" content="Plainly: what matthew.mccluster.org records about a visit, what it deliberately does not record, who it is shared with, how long it is kept, and how to have it deleted.">
+  <title>Privacy · McCluster Corp</title>
+  <meta name="description" content="What McCluster Corp collects across its services, how each piece is used, who it reaches, how long it is kept, and how to have it deleted. Written to be read, not to be survived.">
   <link rel="canonical" href="https://matthew.mccluster.org/privacy.html">
   <link rel="icon" type="image/png" href="assets/img/m-mark.png">
   <link rel="manifest" href="manifest.json">
@@ -17,6 +17,25 @@
   <link rel="stylesheet" href="css/style.css?v=__STAMP__">
   <script src="js/theme.js?v=__STAMP__"></script>
   <style>
+    /* Mobile first. The owner reads this on a phone, and so does most of
+       the audience; the wider screens only get a longer measure. */
+    .pv__toc { margin: 1.8rem 0 0; padding: 1rem 1.15rem; border-radius: 14px;
+      background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+    .pv__toc p { margin: 0 0 .5rem; font-weight: 700; color: var(--cream); font-size: .82rem;
+      letter-spacing: .1em; text-transform: uppercase; }
+    .pv__toc ol { margin: 0; padding-left: 1.15rem; }
+    .pv__toc li { margin: .3rem 0; font-size: .92rem; }
+    .pv__toc a { color: var(--cream-dim); }
+    .pv__toc a:hover { color: var(--cream); }
+    .pv h3 { font-size: .98rem; margin: 1.5rem 0 .4rem; color: var(--cream); }
+    .pv__tbl { width: 100%; border-collapse: collapse; margin: 0 0 1.2rem; font-size: .88rem; }
+    .pv__tbl th, .pv__tbl td { text-align: left; padding: .55rem .6rem; vertical-align: top;
+      border-bottom: 1px solid rgba(255,255,255,.12); color: var(--cream-dim); }
+    .pv__tbl th { color: var(--cream); font-size: .72rem; letter-spacing: .08em;
+      text-transform: uppercase; }
+    .pv__wrap { overflow-x: auto; }
+    .pv__note { border-left: 3px solid var(--ruby-hot); padding: .1rem 0 .1rem 1rem; margin: 1.2rem 0; }
+    .pv__note p:last-child { margin-bottom: 0; }
     .pv { max-width: 42rem; margin: 0 auto; padding: clamp(3.4rem, 8vh, 5rem) clamp(1.1rem, 4vw, 2rem) 9rem;
       font-family: var(--body); color: var(--cream); }
     .pv__k { font-weight: 800; font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--ruby-hot); }
@@ -48,155 +67,225 @@
   <main>
     <section class="pv">
 
-      <p class="pv__k">matthew.mccluster.org &middot; privacy</p>
-      <h1>What we record.<br>And what we <em>refuse</em> to.</h1>
-      <p class="pv__lede">This site runs <b>no Google Analytics, no advertising pixel and no
-        third-party tracker of anything</b>. Nothing here is sold, rented or traded &mdash; not
-        as a promise, but because there is no one in this stack to sell it to. What the site
-        measures, it measures itself and keeps to itself. Below is the whole list, in plain
-        English, including the parts these notices usually leave vague.</p>
+      <p class="pv__k">McCluster Corp &middot; privacy</p>
+      <h1>What we hold.<br>And what we <em>refuse</em> to.</h1>
 
-      <div class="pv__sum">
-        <p>The short version</p>
-        <ul>
-          <li>We record your <b>IP address</b>, an <b>approximate city-level location</b>, your
-            <b>network provider</b> and what your <b>device</b> can tell us about itself.</li>
-          <li>We record <b>what you click, how far you read and where the page frustrated
-            you</b>.</li>
-          <li>We <b>never record what you type</b>. Not one character.</li>
-          <li>We <b>never give any of it to anyone</b>.</li>
-          <li>Ask for it to be deleted and it is deleted.</li>
-        </ul>
-      </div>
+      <p class="pv__lede">This covers every McCluster service: the site and the music, the
+        Mnet network, Equity Uprise, the mailing list, and — for business customers — the
+        mailboxes and sites we host. It is written to be read. Where a practice would sound
+        better in vaguer words, the plainer words are used instead.</p>
 
-      <h2>What arrives with your visit</h2>
-      <p>Every request to every website on the internet carries an address, because that is how
-        a reply finds its way back. This one writes it down, along with what the network says
-        about itself:</p>
+      <p class="pv__lede"><b>Last updated 22 September 2026.</b></p>
+
+      <nav class="pv__toc" aria-label="Contents">
+        <p>Contents</p>
+        <ol>
+          <li><a href="#collect">What we collect</a></li>
+          <li><a href="#use">How we use it</a></li>
+          <li><a href="#public">What is public on Mnet</a></li>
+          <li><a href="#third">Who else touches it</a></li>
+          <li><a href="#together">How the services work together</a></li>
+          <li><a href="#rights">Your rights, and how to use them</a></li>
+          <li><a href="#keep">How long we keep it</a></li>
+          <li><a href="#where">Where it is processed</a></li>
+          <li><a href="#legal">Legal requests and preventing harm</a></li>
+          <li><a href="#business">If you are a business customer</a></li>
+          <li><a href="#children">Children</a></li>
+          <li><a href="#changes">Changes, and how you will know</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ol>
+      </nav>
+
+      <h2 id="collect">1 &middot; What we collect</h2>
+
+      <h3>What you give us</h3>
       <ul>
-        <li>Your <b>IP address</b>.
-          <span class="pv__why">Why: it is the only thing that distinguishes one visitor from
-            another before anyone signs in, and it is how abuse gets stopped.</span></li>
-        <li>An <b>approximate location worked out from that address</b> &mdash; country, region,
-          city, postal code, an approximate latitude and longitude, and a timezone.
-          <span class="pv__why">Why: so the site knows which audiences it is actually reaching.
-            This comes from the network and is ordinarily accurate only to roughly a city.</span></li>
-        <li>If you explicitly grant the browser's location permission, the site can also record a
-          <b>precise device location</b> together with the accuracy reported by the device.
-          <span class="pv__why">The site does not silently request this permission. A first-time
-            location prompt must come from an explicit action, and the browser can revoke it.</span></li>
-        <li>The <b>network you are on</b> &mdash; its operator's name and number, usually your
-          internet provider or mobile carrier, plus connection-quality and transport information
-          the edge can observe: data-center region, HTTP/TLS version, round-trip time, delivery
-          rate and related protocol diagnostics when available.
-          <span class="pv__why">Why: a page that is fast on fibre and unusable on a phone in a
-            dead zone is a problem you cannot see any other way.</span></li>
-        <li>Your browser's <b>user-agent string</b>, and whether the request looks automated.
-          <span class="pv__why">Why: roughly half of all web traffic is robots, and counting
-            them as an audience makes every other number a lie.</span></li>
+        <li><b>An account.</b> Email address and password. The password is hashed by our
+          authentication provider and is never visible to us.</li>
+        <li><b>Your details, if you fill them in.</b> Name, postal address, phone, and the
+          year you were born. All optional. The birth year exists because sharing a minor's
+          details is a different legal question from sharing an adult's, and the answer has
+          to be recorded before the ask.</li>
+        <li><b>What you post.</b> On Mnet: posts, replies, follows, blocks, mutes, your
+          profile photo and anything you attach.</li>
+        <li><b>Purchases.</b> What you bought and the email it is tied to. <b>Card numbers
+          never reach us</b> — Stripe handles payment and we are told only that it
+          succeeded.</li>
+        <li><b>Messages you send us.</b> Enquiries, licensing requests, fellowship
+          applications.</li>
       </ul>
-      <p>These are observed on arrival rather than asked for. A browser cannot be asked for its
-        own address &mdash; there is no such thing &mdash; which is exactly why this happens on
-        the server instead of in the page.</p>
 
-      <h2>What your device volunteers</h2>
-      <p>Alongside that, the page notes what your device can say about itself: <b>screen and
-        viewport size, pixel density and colour depth, orientation, graphics hardware, touch
-        support, language and timezone, CPU and memory hints, browser platform capabilities,
-        online/offline state, battery level and charging state, connection type, effective
-        connection class, estimated downlink, round-trip time and data-saver state</b> when the
-        browser exposes those signals.</p>
-      <p>This is the honest reason a site works on a three-year-old phone on a bad connection:
-        somebody looked at what real visitors were actually holding instead of testing on a
-        developer's desk. Your reduced-motion setting is respected because it is read.</p>
+      <h3>What your device sends</h3>
+      <p>Every request to any website carries these. We record them rather than pretending
+        they are not there:</p>
+      <div class="pv__wrap"><table class="pv__tbl">
+        <tr><th>What</th><th>Why we keep it</th></tr>
+        <tr><td>IP address</td><td>Abuse prevention, and to derive rough location. Recorded
+          server-side.</td></tr>
+        <tr><td>Country, region, city, timezone</td><td>To know where the music is being
+          heard.</td></tr>
+        <tr><td>Browser and device type</td><td>To know what to build for and what is
+          broken.</td></tr>
+        <tr><td>Your network (the ISP or carrier your connection belongs to)</td>
+          <td>To tell a real listener from a datacentre, and to spot abuse.</td></tr>
+        <tr><td>A device identifier we generate</td><td>To tell one returning visitor from
+          two new ones. Ours alone; it follows you nowhere else.</td></tr>
+        <tr><td>Referring page</td><td>To know how you arrived.</td></tr>
+      </table></div>
 
-      <h2>How a visit is counted</h2>
+      <h3>What you do here</h3>
+      <p>Which pages you open, which tracks you play and for how long, what you save,
+        search and download, and how far down a page you read. This is what ranks the
+        listening room — the ordering is computed from real listening, not bought.</p>
+
+      <h3>What we do not collect, and will not</h3>
       <ul>
-        <li>A <b>random identifier stored in your browser</b>, so a return visit can be told
-          from a first one. It is a random number and nothing else.
-          <span class="pv__why"><b>Clearing your browser data genuinely erases it</b>, and the
-            next visit is a stranger.</span></li>
-        <li>A <b>session identifier</b> for a single sitting, which lapses after thirty minutes
-          of nothing.</li>
-        <li>If you are <b>signed in</b>, your account &mdash; verified against the login server,
-          never taken on the browser's word.</li>
+        <li>No Google Analytics. No advertising pixels. No Meta pixel, no TikTok pixel.</li>
+        <li>No cross-site tracking. Nothing we set is readable by any other website.</li>
+        <li><b>No keystrokes, and no reading of what you type.</b> A copy from a page is
+          recorded as having happened; the words are not banked. Anything marked as your own
+          record — your address, your phone — is exempt even from that.</li>
+        <li>No microphone, no camera, no contacts. <b>No precise device location</b> — we
+          never ask your browser or phone for GPS, and the only location we have is the
+          rough one an IP address implies, which is usually your city and is sometimes
+          wrong by a hundred miles.</li>
+        <li><b>Nothing is sold. Ever.</b> Not to advertisers, not to data brokers, not to
+          anyone. There is no "trusted partners" clause here because there are none.</li>
       </ul>
+
+      <h2 id="use">2 &middot; How we use it</h2>
+      <div class="pv__wrap"><table class="pv__tbl">
+        <tr><th>Purpose</th><th>What it uses</th></tr>
+        <tr><td>Running the service</td><td>Account, device and activity data</td></tr>
+        <tr><td>Ranking the listening room</td><td>Plays, saves and downloads, aggregated</td></tr>
+        <tr><td>Showing you what you last played</td><td>Kept <b>on your device</b>, not on our servers</td></tr>
+        <tr><td>Fulfilling an order</td><td>Purchase record and email</td></tr>
+        <tr><td>Emailing you about new music</td><td>Only with the box ticked, and only once your address is confirmed</td></tr>
+        <tr><td>Answering you</td><td>What you sent us</td></tr>
+        <tr><td>Preventing abuse and fraud</td><td>IP, device identifier, rate-limit counters</td></tr>
+        <tr><td>Meeting legal obligations</td><td>Purchase and tax records</td></tr>
+      </table></div>
+
       <div class="pv__note">
-        <p><b>Worth saying out loud:</b> there is no canvas, audio or font fingerprinting here.
-          Those techniques exist specifically to recognise somebody who has cleared their data
-          &mdash; which makes them a tracking measure rather than a counting one. Most sites
-          that claim to respect your choices still use them. The identifier here is one you can
-          actually get rid of, and getting rid of it actually works.</p>
+        <p><b>Consent is unbundled and it gates nothing.</b> A listener who ticks no boxes
+          still gets the full record and every download format. Conditioning the music on
+          consent is the part the privacy laws actually prohibit, and it would be a bad trade
+          to offer someone who just wanted a song.</p>
       </div>
 
-      <h2>What you do while you are here</h2>
-      <p>Which pages you open and for how long. How far down you read, and which sections held
-        your attention. What you click &mdash; including the clicks that mean the page is
-        fighting you, like a button tapped three times because nothing happened. Errors that
-        only ever happen to visitors and never to the person who built it. How quickly the page
-        actually loaded on your device rather than on a fast connection somewhere else. When a
-        form is started, which fields were visited in which order, how long each took and how
-        often it was corrected. That a selection was copied, and how long it was.</p>
-      <p>All of it exists to answer one question: where is this site wasting your time?</p>
-
-      <h2>What is never recorded</h2>
-      <p>These are hard limits in the code, not intentions:</p>
+      <h2 id="public">3 &middot; What is public on Mnet</h2>
+      <p>A social network only works if it is clear what everyone can see. On Mnet:</p>
       <ul>
-        <li><b>Nothing you type.</b> Form measurement records field names, order and timing. The
-          characters themselves are never read. Ever.</li>
-        <li><b>Password, payment and one-time-code fields are not instrumented at all</b> &mdash;
-          not even for timing.</li>
-        <li><b>Text you copy on a signed-in page, or out of any field, is not kept</b> &mdash;
-          only that a copy happened and how long it was. What is on screen there is your
-          information, not this site's.</li>
-        <li><b>No IMEI, hardware serial number or MAC address is collected.</b> Ordinary web
-          pages do not receive those identifiers, and this site does not try to reconstruct them
-          through WebRTC address leaks or fingerprint hashes.</li>
-        <li><b>No microphone, no camera, no clipboard reading</b>, and nothing from your
-          device's own location services.</li>
+        <li><b>Public:</b> your display name, your photo, your posts and replies, and who
+          you follow.</li>
+        <li><b>Only you:</b> your email, your postal address, your phone, your birth year,
+          your purchases, and anything you blocked or muted.</li>
+        <li><b>Blocks and mutes are not announced.</b> The person is not told.</li>
       </ul>
+      <p>A removed post is kept as a record of the removal, with the reason, rather than
+        being erased from the account of what was moderated and why.</p>
 
-      <h2>Who else sees it</h2>
-      <p><b>Nobody.</b> Not sold, not rented, not traded, not handed to advertisers, data brokers
-        or analytics companies &mdash; because there are none involved to hand it to. It lives on
-        infrastructure this site runs, is readable only by the site's owner, and exists to make
-        the thing work better and to understand what people came for. It would be disclosed only
-        where the law actually requires it.</p>
+      <h2 id="third">4 &middot; Who else touches it</h2>
+      <p>Not a vague list of "partners". These are the only companies involved, and exactly
+        what each one does:</p>
+      <div class="pv__wrap"><table class="pv__tbl">
+        <tr><th>Who</th><th>What they do</th><th>What they get</th></tr>
+        <tr><td>Supabase</td><td>Database and sign-in</td><td>Everything stored, as our processor</td></tr>
+        <tr><td>Cloudflare</td><td>Serves the site and the API</td><td>Request data in transit</td></tr>
+        <tr><td>Stripe</td><td>Takes payment</td><td>Payment details, directly — never through us</td></tr>
+        <tr><td>OVHcloud</td><td>Our own server</td><td>What is stored on it, including mail</td></tr>
+        <tr><td>Resend / our own mail server</td><td>Sends email</td><td>Your address and the message</td></tr>
+      </table></div>
+      <p>Each is a <b>processor</b>: they act on our instructions and may not use your
+        information for their own purposes.</p>
 
-      <h2>How long it is kept</h2>
-      <p>Behavioural records are kept for up to <b>400 days</b> and then purged automatically.
-        Ask sooner and it goes sooner.</p>
+      <h2 id="together">5 &middot; How the services work together</h2>
+      <p>One McCluster account signs you into all of it — the site, Mnet, Equity Uprise.
+        Your identity, follows and profile travel with you, because they are one system
+        rather than several pretending to be.</p>
+      <p>What does <b>not</b> travel: a fellowship application does not become marketing,
+        and a purchase does not put you on the mailing list. The mailing list has exactly
+        one door in, and it is the box you tick yourself.</p>
 
-      <h2>Your rights, and how to use them</h2>
-      <p>Wherever you live &mdash; and regardless of whether your state or country has a law
-        granting them &mdash; you can ask for any of these and it will be honoured:</p>
+      <h2 id="rights">6 &middot; Your rights, and how to use them</h2>
+      <p>Depending on where you live — Connecticut, the rest of the US, the UK, the EU —
+        you have some or all of these. <b>We extend all of them to everyone</b>, because
+        running two standards is how you get one of them wrong:</p>
       <ul>
-        <li><b>See it</b> &mdash; a copy of everything held about you.</li>
-        <li><b>Correct it</b>, if something is wrong.</li>
-        <li><b>Delete it</b> &mdash; all of it.</li>
-        <li><b>Take it with you</b>, in a portable format.</li>
-        <li><b>Object</b> to the measurement entirely.</li>
+        <li><b>Know</b> what we hold about you.</li>
+        <li><b>Get a copy</b> of it.</li>
+        <li><b>Correct</b> it.</li>
+        <li><b>Delete</b> it, including your whole account.</li>
+        <li><b>Withdraw consent</b> at any time, as easily as you gave it.</li>
+        <li><b>Opt out</b> of sale or targeted advertising — trivially, since we do neither.</li>
+        <li><b>Not be discriminated against</b> for exercising any of it.</li>
       </ul>
-      <p>Write to <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a> and say which.
-        No account and no special form &mdash; if you are not signed in, say roughly when and
-        from where you visited so the right records can be found. A reply comes within 45 days.
-        If a request is refused you can appeal by replying, and the appeal gets a written
-        answer.</p>
-      <p>Connecticut residents may also contact the Office of the Attorney General. There is no
-        sale of personal data and no targeted advertising to opt out of here, because neither
-        one happens.</p>
+      <p>Email <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a> and say what
+        you want. A person reads it. We answer within 45 days and usually the same week. We
+        will not make you create an account to ask.</p>
+      <p><b>Global Privacy Control is honoured.</b> If your browser sends GPC — or the older
+        Do Not Track — we stop recording your IP, your device identifier, your session, and
+        your city and coordinates, automatically and with nothing to click. Country and
+        timezone survive so the counts stay honest.</p>
 
-      <h2>Turning it off</h2>
-      <p>The site honours <b>Global Privacy Control</b> and the browser's Do Not Track setting
-        wherever they are sent: the visit still gets counted, and your address, device,
-        identifiers, city and network provider are all dropped before anything is written.</p>
-      <p>Blocking the measurement outright with any content blocker is also completely fine.
-        Nothing on this site depends on it, and nothing will be withheld from you for it.</p>
+      <h2 id="keep">7 &middot; How long we keep it</h2>
+      <div class="pv__wrap"><table class="pv__tbl">
+        <tr><th>What</th><th>How long</th></tr>
+        <tr><td>Raw visit records</td><td>13 months, then aggregated and the detail dropped</td></tr>
+        <tr><td>Your account and profile</td><td>Until you delete it</td></tr>
+        <tr><td>Posts on Mnet</td><td>Until you delete them or the account</td></tr>
+        <tr><td>Purchase records</td><td>7 years — tax law, not preference</td></tr>
+        <tr><td>Mailing list membership</td><td>Until you unsubscribe</td></tr>
+        <tr><td>Proof you unsubscribed</td><td>Kept indefinitely, so we cannot mail you again by accident</td></tr>
+      </table></div>
 
-      <p class="pv__date">Last updated 19 September 2026. Questions:
-        <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a>.</p>
+      <h2 id="where">8 &middot; Where it is processed</h2>
+      <p>Servers in the United States. If you are in the UK or the EU, using this service
+        means your information is transferred there, under the standard contractual clauses
+        our processors operate with.</p>
+
+      <h2 id="legal">9 &middot; Legal requests and preventing harm</h2>
+      <p>We will hand over information if the law genuinely requires it. We will read the
+        request first, refuse one that overreaches, and tell you it happened unless we are
+        legally forbidden from doing so.</p>
+      <p>We may also act without a request to stop fraud, abuse, or a credible threat to
+        someone's safety.</p>
+
+      <h2 id="business">10 &middot; If you are a business customer</h2>
+      <p>Different relationship, so it is set out separately.</p>
+      <p>Where we host your <b>mailboxes, domain or site</b>, the contents are <b>yours</b>.
+        We are the processor and you are the controller. We hold what is technically
+        necessary to deliver it: your mail in storage, the logs that prove delivery, and
+        your account and billing records.</p>
+      <div class="pv__note">
+        <p><b>We do not read your mail.</b> Spam filtering runs on our own server and no
+          third party sees the contents. We do not scan it for advertising — there is no
+          advertising — and we do not train anything on it.</p>
+        <p>Access happens only when you ask for support, or where the law requires it. Either
+          way it is logged.</p>
+      </div>
+      <p>If you leave, your data leaves with you: we will export it, and delete our copies
+        within 30 days of your asking.</p>
+
+      <h2 id="children">11 &middot; Children</h2>
+      <p>This service is not for under-13s and we do not knowingly hold their information.
+        Some things — sharing details onward — are offered only to adults, which is why the
+        birth year is asked. Tell us if a child has made an account and it will be removed.</p>
+
+      <h2 id="changes">12 &middot; Changes, and how you will know</h2>
+      <p>The date at the top changes when this does. For a change that <b>materially</b>
+        affects what we collect or who sees it, we will tell you before it takes effect —
+        by email if you are on the list, and on the site if you are not. We will not widen
+        what we collect and let you find out by reading this page again.</p>
+
+      <h2 id="contact">13 &middot; Contact</h2>
+      <p>McCluster Corp<br>
+        <a href="mailto:matthew@mccluster.org">matthew@mccluster.org</a></p>
+      <p>A person reads it. If you think we have got something wrong here, say so — that is
+        worth more to us than being told the page looks thorough.</p>
 
     </section>
+</section>
   </main>
 
   <script src="js/masthead.js?v=__STAMP__"></script>
