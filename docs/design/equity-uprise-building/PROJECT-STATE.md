@@ -661,3 +661,27 @@ Canonical Step 3A files:
 - `production/asset-registry/generated/equity-uprise-asset-registry-step3a-report.json`
 
 **NEXT:** Step 3B connects service/riser semantics to floor branches and representative endpoints and begins resolving the highest-value placement gaps.
+
+
+## Digital-to-Physical Asset Registry — STEP 3B FLOOR BRANCH / ENDPOINT GRAPH
+
+Step 3B extends the operational graph from the B1 source/system/riser layer into modeled F1-L7 service branches and canonical endpoint assets.
+
+The services build now emits deterministic branch topology records with:
+- floor handoff ID;
+- branch ID;
+- service family;
+- endpoint label;
+- canonical inventory reference when verified;
+- route points;
+- modeled connection XY;
+- source services implementation step.
+
+Step 3B links only references that resolve to real current registry assets. Ambiguous legacy endpoints remain semantic-only instead of becoming fabricated equipment. Modeled service connection points are retained for training/navigation but do not overwrite unverified as-built asset locations.
+
+Canonical files:
+- `production/asset-registry/build_asset_registry_step3b.py`
+- `production/asset-registry/verify_asset_registry_step3b.py`
+- `production/asset-registry/generated/equity-uprise-asset-registry-step3b-report.json`
+
+**NEXT:** generate the first lab scenario set from causal source → system → riser → branch → endpoint traces.

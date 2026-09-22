@@ -1,6 +1,6 @@
 # Equity Uprise — Digital-to-Physical Asset Registry
 
-> Status: **STEP 3A — B1 OPERATIONAL NERVOUS-SYSTEM GRAPH**
+> Status: **STEP 3B — FLOOR BRANCH / ENDPOINT GRAPH**
 >
 > This is digital-twin, training, commissioning and facilities information architecture. It is **not construction documentation, engineering approval, or authorization to control physical building systems**.
 
@@ -154,3 +154,19 @@ Generated report:
 - `production/asset-registry/generated/equity-uprise-asset-registry-step3a-report.json`
 
 **Next:** Step 3B extends the graph from riser/service families into floor branches and representative endpoints, beginning with the operational assets that already have reliable placement.
+
+
+## Step 3B — floor branch / endpoint graph
+
+Step 3B extends the Step 3A causal graph upward from service systems and dedicated risers into modeled floor handoffs, branch routes and canonical endpoint assets from F1 through L7.
+
+Rules:
+- a branch with a verified canonical inventory reference may create an asset relationship;
+- an old/generic or ambiguous endpoint never creates a fake physical asset;
+- semantic-only branches remain represented in the lab trace report;
+- service connection XY is a modeled training coordinate, not an as-built asset center;
+- grouped repeated assets are paired one-to-one only when branch count and expanded instance count match; otherwise the branch may serve the full canonical group.
+
+The services builder now publishes deterministic `floor_branch_records` into its generated report. Step 3B consumes those records after the services build, enriches the canonical registry, and produces complete lab-trace records for every modeled F1-L7 service branch.
+
+**Next:** derive first scenario definitions from the graph: source failure, dependency propagation, affected endpoint discovery, inspection route, learner action and reset criteria.

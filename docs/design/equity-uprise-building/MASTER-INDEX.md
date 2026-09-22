@@ -216,3 +216,11 @@ Step 2 is the deterministic ingestion layer: every B1–L7 object, facade source
 - `production/asset-registry/generated/equity-uprise-asset-registry-step3a-report.json`
 
 Step 3A materializes B1 source→service→riser relationships and all declared service-family dependencies inside the same canonical registry. It is the first graph layer intended for causal lab queries and fault-propagation training.
+
+
+### Step 3B floor branch / endpoint graph
+- `production/asset-registry/build_asset_registry_step3b.py`
+- `production/asset-registry/verify_asset_registry_step3b.py`
+- `production/asset-registry/generated/equity-uprise-asset-registry-step3b-report.json`
+
+Step 3B consumes the deterministic services branch topology after the services build and links verified canonical endpoints into the same registry while preserving semantic-only branches for lab traceability.
