@@ -1,9 +1,9 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "contract_id": "equity-uprise-asset-registry-source-contract-v1",
-  "status": "step1-schema-authority-complete",
+  "status": "step2-deterministic-ingestion-source",
   "building_id": "equity-uprise-core-v2",
-  "source_revision": "8afb66b0768bc32283984d8ced8346c0bcd96696",
+  "source_revision": "caa9c6d36e45f45c8e98f800e6355be25782d66b",
   "not_for_construction": true,
   "purpose": "Defines all current canonical source classes that later registry ingestion must reconcile without inventing physical equipment or renaming stable IDs.",
   "canonical_identity_policy": {
@@ -212,5 +212,30 @@
     "step3": "upstream/downstream/dependency graph",
     "step4": "future physical tag records without installation claims",
     "later": "telemetry, commissioning, as-built verification, training runtime and authorized physical bindings"
+  },
+  "registry_role_policy": {
+    "digital_only": "Spatial/program identity with no separate future physical tag target.",
+    "aggregate_physicalizable": "Physical assembly/group kept as one registry record until per-instance identity is operationally required.",
+    "individual_physicalizable": "Discrete maintainable/inspectable/controllable candidate; repeated quantities expand deterministically to -I### asset IDs.",
+    "system_semantic": "Building system or riser semantic identity; not itself a fabricated installed device.",
+    "capability_semantic": "Equity Uprise software/program capability identity; physical presence belongs to separately identified terminals/equipment."
+  },
+  "step2_classification_policy": {
+    "zero_loss_source_snapshot": true,
+    "preserve_source_id_when_not_expanded": true,
+    "expand_individual_quantity_records": true,
+    "floor_glazing_records": "digital_only because facade-module inventory is the physical envelope authority",
+    "facade_modules": "individual_physicalizable",
+    "facade_finish_records": "aggregate_physicalizable",
+    "service_families_and_risers": "system_semantic",
+    "capability_map": "capability_semantic",
+    "building_levels": "digital_only",
+    "no_physical_fact_invention": true
+  },
+  "step2_output": {
+    "registry": "docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-v1.json",
+    "report": "docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-step2-report.json",
+    "builder": "docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_v1.py",
+    "verifier": "docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step2.py"
   }
-}
+}\n

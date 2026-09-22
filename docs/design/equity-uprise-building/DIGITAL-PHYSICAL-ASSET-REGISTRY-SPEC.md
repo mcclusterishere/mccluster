@@ -1,6 +1,6 @@
 # Equity Uprise — Digital-to-Physical Asset Registry
 
-> Status: **STEP 1 — CANONICAL SCHEMA / SOURCE CONTRACT**
+> Status: **STEP 2 — DETERMINISTIC REGISTRY INGESTION**
 >
 > This is digital-twin, training, commissioning and facilities information architecture. It is **not construction documentation, engineering approval, or authorization to control physical building systems**.
 
