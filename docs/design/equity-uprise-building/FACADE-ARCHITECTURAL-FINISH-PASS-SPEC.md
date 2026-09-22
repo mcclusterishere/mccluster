@@ -380,4 +380,9 @@ Locked Step 5 implementation:
 
 Step 5 inventory scope: **22 records**. Cumulative finish scope after Step 5: **54/68**. Remaining: **14 crown/roof-edge/crown-lighting records**.
 
-Deterministic verification is the current gate.
+Step 5 deterministic verification is **GREEN** at snapshot `39305ef8b27a5c521aa7c8de68e1dac73691dc3b`:
+- **22/22 Step 5 records modeled**;
+- cumulative finish coverage **54/68**;
+- **32/32 facade checks passing**;
+- exact approved repo logo hash locked;
+- remaining **14 records** are crown / roof-edge / crown-lighting scope only.

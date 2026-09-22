@@ -328,7 +328,23 @@ Step 5 source implementation is now active on the architectural-finish branch:
 - **22 additional finish records** are in Step 5 scope, bringing cumulative implemented scope to **54 of 68**;
 - **14 records remain deliberately deferred** for crown/parapet/service-screen and crown-lighting finish.
 
-Current gate: deterministic regeneration + Step 5 report/CI verification before proceeding to crown completion.
+Step 5 deterministic verification: **GREEN**.
+
+Verified generated snapshot: `39305ef8b27a5c521aa7c8de68e1dac73691dc3b`
+
+- facade GLB: **3,877 meshes / 2,428,900 bytes**;
+- **32/32 Step 4 records remain modeled**;
+- **22/22 Step 5 entrance/logo records modeled**;
+- cumulative architectural-finish coverage: **54/68 records**;
+- **14 crown/roof-edge/crown-lighting records remain intentionally deferred**;
+- all **238/238 window-like modules** remain detailed;
+- exact approved logo asset: `assets/img/equity-uprise-logo.webp`;
+- exact approved logo SHA-256: `3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f`;
+- facade checks: **32/32 passing**;
+- GLB SHA-256: `fc414f4609173b7c572830ef605c11db711440b7de69ff109ba5d17ec899cab3`;
+- whole Core V2 CI passed.
+
+Step 5 is now a stable checkpoint. The next exterior stage is the remaining crown / parapet / service-screen / crown-lighting completion pass.
 
 ## Exterior facade implementation — DETAILED CURRENT PASS ACTIVE / VISUAL APPROVAL PENDING
 
