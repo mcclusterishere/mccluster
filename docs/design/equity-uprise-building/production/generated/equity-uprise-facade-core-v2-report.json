@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-facade-core-v2",
   "not_for_construction": true,
-  "glb_bytes": 2492132,
-  "sha256": "cffae5cf77f29c65b1273c4872241dca939b1c0ae31d6de6545b7e3f31c4ba31",
+  "glb_bytes": 2490740,
+  "sha256": "6a186e78f0e3ce5d5378394ae367dd6f3ca4451f62d9b7d8e558a89020878e67",
   "mesh_count": 3975,
   "inventory_modules": 288,
   "inventory_modules_modeled": 288,
@@ -24,6 +24,25 @@
   "finish_records_modeled_total": 68,
   "finish_future_records_remaining": 0,
   "finished_window_modules": 238,
+  "material_system_version": "pbr-v1",
+  "pbr_materials_embedded": 15,
+  "pbr_material_roles": [
+    "FAC-GLASS-01",
+    "FAC-GLASS-02",
+    "FAC-LOGO-NAVY",
+    "FAC-LOUVER-01",
+    "FAC-METAL-01",
+    "FAC-MINERAL-01",
+    "FAC-OPAQUE-01",
+    "FAC-PAVER-01",
+    "FAC-PAVER-02",
+    "FAC-SHADOW-01",
+    "FAC-SIGN-01",
+    "FAC-SIGN-PLATE",
+    "FAC-SITE-EDGE",
+    "FAC-WARM-01",
+    "LIGHT-WARM-ARCH"
+  ],
   "finish_geometry_counts": {
     "FAC-WIN-JAMB-CLEAR-01": 304,
     "FAC-WIN-HEAD-01": 238,
@@ -117,8 +136,8 @@
       27.139392
     ]
   ],
-  "checks_total": 40,
-  "checks_passed": 40,
+  "checks_total": 44,
+  "checks_passed": 44,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -316,6 +335,26 @@
       "name": "no finish records remain deferred",
       "passed": true,
       "detail": "[]"
+    },
+    {
+      "name": "Step 7 PBR library covers every facade color role",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "clear and privacy glass use alpha blend",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "metal and mineral material response differentiated",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "architectural light material is emissive",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "substantial finished facade geometry",
