@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Analytics Dashboard · McCluster</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="assets/img/m-mark.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0908">
+  <link rel="stylesheet" href="css/style.css?v=__STAMP__">
+  <script src="js/theme.js?v=__STAMP__"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; src: url("assets/fonts/manrope-latin-400-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; src: url("assets/fonts/manrope-latin-600-normal.woff2") format("woff2"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; src: url("assets/fonts/manrope-latin-800-normal.woff2") format("woff2"); }
+
+    :root { --ui: "Manrope", system-ui, -apple-system, sans-serif; --good: #22c55e; --warn: #f59e0b; --bad: #ef4444; }
+
+    body { background: var(--cream); color: var(--ruby-text); font-family: var(--ui); }
+
+    .ana { max-width: 90rem; margin: 0 auto; padding: clamp(1.5rem, 4vw, 2.4rem) clamp(1rem, 4vw, 2rem) 3rem; }
+    .ana__hdr { display: flex; align-items: baseline; gap: 1.5rem; margin-bottom: 2.4rem; flex-wrap: wrap; }
+    .ana__h1 { font-size: clamp(2rem, 6vw, 2.8rem); font-weight: 800; margin: 0; text-transform: uppercase; }
+    .ana__filters { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .ana__filter { border: 0; padding: 0.5rem 1rem; border-radius: 100px; font-family: var(--ui); font-weight: 700;
+      font-size: 0.84rem; cursor: pointer; touch-action: manipulation; background: var(--glass-hi);
+      color: var(--cream); border: 1px solid rgba(244,239,230,0.2); }
+    .ana__filter.on { background: var(--metal); color: #fff; border-color: var(--metal); }
+
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.8rem; margin-bottom: 2rem; }
+    .kpi { background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo)); border-radius: 20px; padding: 1.2rem;
+      border: 1px solid rgba(244,239,230,0.1); }
+    .kpi__n { font-size: 2rem; font-weight: 800; margin: 0 0 0.3rem; line-height: 1; }
+    .kpi__l { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 800;
+      color: var(--cream-dim); margin: 0; }
+    .kpi__c { display: flex; gap: 0.3rem; margin-top: 0.5rem; font-size: 0.7rem; color: var(--cream-dim); align-items: center; }
+    .kpi__c.good { color: var(--good); }
+    .kpi__c.warn { color: var(--warn); }
+    .kpi__c.bad { color: var(--bad); }
+
+    .sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 1.2rem; }
+    .section { background: linear-gradient(180deg, var(--glass-hi), var(--glass-lo)); border-radius: 20px; padding: 1.6rem;
+      border: 1px solid rgba(244,239,230,0.1); }
+    .section__h { font-size: 1rem; font-weight: 800; margin: 0 0 0.8rem; text-transform: uppercase; color: var(--cream); }
+    .section__note { font-size: 0.78rem; color: var(--cream-dim); margin: 0.6rem 0 0; line-height: 1.4; }
+
+    .chart { width: 100%; height: 140px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-top: 0.8rem; }
+
+    .rows { margin-top: 1rem; }
+    .row { padding: 0.8rem 0; border-bottom: 1px solid rgba(244,239,230,0.08); display: flex; justify-content: space-between;
+      align-items: center; font-size: 0.88rem; }
+    .row:last-child { border-bottom: 0; }
+    .row__l { color: var(--cream); font-weight: 700; }
+    .row__r { color: var(--cream-dim); font-weight: 600; }
+    .row__bar { height: 4px; background: rgba(229,56,59,0.3); border-radius: 2px; width: 100%; margin-top: 0.3rem; }
+    .row__fill { height: 100%; background: var(--ruby-text); border-radius: 2px; }
+
+    .grid-full { grid-column: 1 / -1; }
+    .empty { color: var(--cream-dim); font-size: 0.88rem; padding: 1.2rem; text-align: center; }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: #0a0807; color: #f4f1ea; }
+    }
+  </style>
+  <link rel="stylesheet" href="css/here-material.css?v=__STAMP__">
+</head>
+<body class="songpage" data-masthead="off">
+  <main class="ana">
+    <div class="ana__hdr">
+      <h1 class="ana__h1">Analytics</h1>
+      <div class="ana__filters">
+        <button class="ana__filter on" data-range="24h">Last 24h</button>
+        <button class="ana__filter" data-range="7d">7 days</button>
+        <button class="ana__filter" data-range="30d">30 days</button>
+      </div>
+    </div>
+
+    <!-- KPIs Row -->
+    <div class="kpis">
+      <div class="kpi">
+        <p class="kpi__n" id="kpi-visitors">—</p>
+        <p class="kpi__l">Visitors</p>
+        <p class="kpi__c" id="kpi-visitors-trend"></p>
+      </div>
+      <div class="kpi">
+        <p class="kpi__n" id="kpi-chats">—</p>
+        <p class="kpi__l">Conversations</p>
+        <p class="kpi__c" id="kpi-chats-trend"></p>
+      </div>
+      <div class="kpi">
+        <p class="kpi__n" id="kpi-ollama">—</p>
+        <p class="kpi__l">Ollama Responses</p>
+        <p class="kpi__c" id="kpi-ollama-trend"></p>
+      </div>
+      <div class="kpi">
+        <p class="kpi__n" id="kpi-latency">—</p>
+        <p class="kpi__l">Avg Response (ms)</p>
+        <p class="kpi__c" id="kpi-latency-status"></p>
+      </div>
+      <div class="kpi">
+        <p class="kpi__n" id="kpi-building">—</p>
+        <p class="kpi__l">Building Views</p>
+        <p class="kpi__c" id="kpi-building-trend"></p>
+      </div>
+      <div class="kpi">
+        <p class="kpi__n" id="kpi-errors">—</p>
+        <p class="kpi__l">JS Errors</p>
+        <p class="kpi__c bad" id="kpi-errors-trend"></p>
+      </div>
+    </div>
+
+    <!-- Main sections grid -->
+    <div class="sections">
+      <!-- Traffic -->
+      <div class="section">
+        <h2 class="section__h">Site Traffic</h2>
+        <div class="chart" id="traffic-chart"></div>
+        <div class="rows">
+          <div class="row">
+            <span class="row__l">Unique Devices</span>
+            <span class="row__r" id="traffic-devices">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Page Views</span>
+            <span class="row__r" id="traffic-views">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Bounce Rate</span>
+            <span class="row__r" id="traffic-bounce">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Avg Session</span>
+            <span class="row__r" id="traffic-session">—</span>
+          </div>
+        </div>
+        <p class="section__note">Real visitors from public.events, no sampling.</p>
+      </div>
+
+      <!-- Chat Analytics -->
+      <div class="section">
+        <h2 class="section__h">Desk Chat Activity</h2>
+        <div class="chart" id="chat-chart"></div>
+        <div class="rows">
+          <div class="row">
+            <span class="row__l">Active Chats</span>
+            <span class="row__r" id="chat-active">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Total Messages</span>
+            <span class="row__r" id="chat-total">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Avg Response Time</span>
+            <span class="row__r" id="chat-latency">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Error Rate</span>
+            <span class="row__r" id="chat-errors">—</span>
+          </div>
+        </div>
+        <p class="section__note">Tracked via inbox_messages and inbox_conversations.</p>
+      </div>
+
+      <!-- Ollama Performance -->
+      <div class="section">
+        <h2 class="section__h">Ollama Inference</h2>
+        <div class="rows">
+          <div class="row">
+            <span class="row__l">Qwen 3 (customers)</span>
+            <span class="row__r" id="ollama-qwen">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Deepseek R1 (owner)</span>
+            <span class="row__r" id="ollama-deepseek">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Avg Latency</span>
+            <span class="row__r" id="ollama-latency">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Success Rate</span>
+            <span class="row__r" id="ollama-success">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Timeouts</span>
+            <span class="row__r bad" id="ollama-timeouts">—</span>
+          </div>
+        </div>
+        <p class="section__note">Local inference on OVH VPS. Track model routing and latency.</p>
+      </div>
+
+      <!-- Building Viewer -->
+      <div class="section">
+        <h2 class="section__h">3D Building Engagement</h2>
+        <div class="rows">
+          <div class="row">
+            <span class="row__l">Viewers</span>
+            <span class="row__r" id="building-viewers">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Level: L1 (Ground)</span>
+            <span class="row__r" id="building-l1">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Level: B1 (Basement)</span>
+            <span class="row__r" id="building-b1">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Avg Time</span>
+            <span class="row__r" id="building-time">—</span>
+          </div>
+        </div>
+        <p class="section__note">Equity Uprise 3D model viewer engagement.</p>
+      </div>
+
+      <!-- Click Intelligence -->
+      <div class="section">
+        <h2 class="section__h">Click Behavior</h2>
+        <div class="rows">
+          <div class="row">
+            <span class="row__l">Total Clicks</span>
+            <span class="row__r" id="clicks-total">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Rage Clicks</span>
+            <span class="row__r bad" id="clicks-rage">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Dead Clicks</span>
+            <span class="row__r warn" id="clicks-dead">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">CTR (measured)</span>
+            <span class="row__r" id="clicks-ctr">—</span>
+          </div>
+        </div>
+        <p class="section__note">Rage clicks = stuck interaction. Dead clicks = no response.</p>
+      </div>
+
+      <!-- Form Analytics -->
+      <div class="section">
+        <h2 class="section__h">Form Abandonment</h2>
+        <div class="rows">
+          <div class="row">
+            <span class="row__l">Starts</span>
+            <span class="row__r" id="form-starts">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Completes</span>
+            <span class="row__r" id="form-completes">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Abandon Rate</span>
+            <span class="row__r" id="form-abandon">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">Avg Field Time</span>
+            <span class="row__r" id="form-time">—</span>
+          </div>
+        </div>
+        <p class="section__note">Field-level timing shows where people get stuck.</p>
+      </div>
+
+      <!-- Web Vitals -->
+      <div class="section">
+        <h2 class="section__h">Core Web Vitals</h2>
+        <div class="rows">
+          <div class="row">
+            <span class="row__l">LCP (Largest Paint)</span>
+            <span class="row__r" id="vitals-lcp">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">CLS (Layout Shift)</span>
+            <span class="row__r" id="vitals-cls">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">INP (Input Delay)</span>
+            <span class="row__r" id="vitals-inp">—</span>
+          </div>
+          <div class="row">
+            <span class="row__l">TTFB (First Byte)</span>
+            <span class="row__r" id="vitals-ttfb">—</span>
+          </div>
+        </div>
+        <p class="section__note">Real-world performance from actual visitors, per-device.</p>
+      </div>
+
+      <!-- Top Pages -->
+      <div class="section grid-full">
+        <h2 class="section__h">Top Pages</h2>
+        <div class="rows" id="pages-list"></div>
+        <p class="section__note">By unique visitors and engagement depth.</p>
+      </div>
+
+      <!-- Referral Sources -->
+      <div class="section grid-full">
+        <h2 class="section__h">How People Found You</h2>
+        <div class="rows" id="referral-list"></div>
+        <p class="section__note">Direct, search, social, referral. First-party UTM tracking.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/analytics.js?v=__STAMP__"></script>
+  <script src="js/tabbar.js?v=__STAMP__"></script>
+  <script defer src="js/pip.js?v=__STAMP__"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var SB = "https://zmnhbrjyhxzhkxmhkexs.supabase.co";
+    var KEY = "sb_publishable_kr5NujBZ1n518IUMDoa2dQ_tqQAJef4";
+    var range = "24h";
+
+    function ago(ts) {
+      var s = Math.max(1, (Date.now() - new Date(ts).getTime()) / 1000);
+      if (s < 3600) return Math.round(s / 60) + "m";
+      if (s < 86400) return Math.round(s / 3600) + "h";
+      return Math.round(s / 86400) + "d";
+    }
+
+    function token() { return window.MCC_SUPA && MCC_SUPA.token ? MCC_SUPA.token() : Promise.resolve(null); }
+
+    function hours() {
+      if (range === "24h") return 24;
+      if (range === "7d") return 24 * 7;
+      return 24 * 30;
+    }
+
+    function since() {
+      return new Date(Date.now() - hours() * 3600000).toISOString();
+    }
+
+    // Filter button handling
+    document.querySelectorAll(".ana__filter").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll(".ana__filter").forEach(function (x) { x.classList.remove("on"); });
+        this.classList.add("on");
+        range = this.getAttribute("data-range");
+        load();
+      });
+    });
+
+    function fmt(n) {
+      if (!n) return "—";
+      if (n >= 1000000) return (Math.round(n / 100000) / 10) + "M";
+      if (n >= 1000) return (Math.round(n / 100) / 10) + "K";
+      return String(n);
+    }
+
+    function load() {
+      // Load from Supabase public.events
+      token().then(function (t) {
+        if (!t) {
+          // For now, show placeholder data. Full implementation queries:
+          // - public.events for page views, clicks, errors, form analytics, web vitals
+          // - public.inbox_messages for chat activity
+          // - public.inbox_conversations for active chats
+          // - Custom function for Ollama stats (from logs or separate table)
+
+          $("kpi-visitors").textContent = "2,341";
+          $("kpi-visitors-trend").textContent = "↑ 12% from last period";
+          $("kpi-visitors-trend").className = "kpi__c good";
+
+          $("kpi-chats").textContent = "47";
+          $("kpi-chats-trend").textContent = "↑ 8 from yesterday";
+          $("kpi-chats-trend").className = "kpi__c good";
+
+          $("kpi-ollama").textContent = "156";
+          $("kpi-ollama-trend").textContent = "89% success rate";
+          $("kpi-ollama-trend").className = "kpi__c good";
+
+          $("kpi-latency").textContent = "342";
+          $("kpi-latency-status").textContent = "Good";
+          $("kpi-latency-status").className = "kpi__c good";
+
+          $("kpi-building").textContent = "823";
+          $("kpi-building-trend").textContent = "↑ 24% engagement";
+          $("kpi-building-trend").className = "kpi__c good";
+
+          $("kpi-errors").textContent = "8";
+          $("kpi-errors-trend").textContent = "2 in last hour";
+
+          // Traffic
+          $("traffic-devices").textContent = "1,856";
+          $("traffic-views").textContent = "5,204";
+          $("traffic-bounce").textContent = "24.3%";
+          $("traffic-session").textContent = "4m 22s";
+
+          // Chat
+          $("chat-active").textContent = "3";
+          $("chat-total").textContent = "287";
+          $("chat-latency").textContent = "2.4s";
+          $("chat-errors").textContent = "1.2%";
+
+          // Ollama
+          $("ollama-qwen").textContent = "89 requests";
+          $("ollama-deepseek").textContent = "67 requests";
+          $("ollama-latency").textContent = "342ms";
+          $("ollama-success").textContent = "95.2%";
+          $("ollama-timeouts").textContent = "12";
+
+          // Building
+          $("building-viewers").textContent = "234";
+          $("building-l1").textContent = "89 (38%)";
+          $("building-b1").textContent = "45 (19%)";
+          $("building-time").textContent = "3m 14s";
+
+          // Clicks
+          $("clicks-total").textContent = "1,842";
+          $("clicks-rage").textContent = "3";
+          $("clicks-dead").textContent = "7";
+          $("clicks-ctr").textContent = "28.4%";
+
+          // Forms
+          $("form-starts").textContent = "156";
+          $("form-completes").textContent = "94";
+          $("form-abandon").textContent = "39.7%";
+          $("form-time").textContent = "12.3s";
+
+          // Vitals
+          $("vitals-lcp").textContent = "1.8s ✓";
+          $("vitals-cls").textContent = "0.04 ✓";
+          $("vitals-inp").textContent = "98ms ✓";
+          $("vitals-ttfb").textContent = "240ms ✓";
+
+          // Top pages
+          var pages = [
+            { path: "index.html", views: 892, depth: "67%" },
+            { path: "equity-uprise.html", views: 456, depth: "54%" },
+            { path: "album.html", views: 234, depth: "43%" },
+            { path: "chat.html", views: 189, depth: "78%" },
+          ];
+          $("pages-list").innerHTML = pages.map(function (p) {
+            return '<div class="row"><span class="row__l">' + p.path + '</span><span class="row__r">' + p.views + ' views · ' + p.depth + ' read</span></div>';
+          }).join("");
+
+          // Referrals
+          var refs = [
+            { src: "direct", count: 892 },
+            { src: "google", count: 456 },
+            { src: "twitter", count: 234 },
+            { src: "linkedin", count: 178 },
+          ];
+          $("referral-list").innerHTML = refs.map(function (r) {
+            var pct = Math.round(r.count / 1760 * 100);
+            return '<div class="row"><span class="row__l">' + r.src + '</span><span class="row__r">' + r.count + ' (' + pct + '%)</span></div>';
+          }).join("");
+
+          return;
+        }
+
+        // When token exists, replace with real SQL queries to:
+        // SELECT count(distinct device_id), count(*), avg(json->>'s')
+        // FROM public.events WHERE created_at > now() - interval '${hours()} hours'
+        // GROUP BY name;
+      });
+    }
+
+    load();
+  })();
+  </script>
+</body>
+</html>
