@@ -993,8 +993,12 @@
           "access": "authorized-admin"
         }
       ],
-      "design_maturity": "pre-iterative-program-rewrite",
-      "render_readiness": "chassis-only-not-final-program"
+      "design_maturity": "reconciled-current-iterative-pass",
+      "render_readiness": "inventory-ready-hybrid-3d-next",
+      "working_development_stage": "institutional-overview-direction-transition",
+      "program_reconciliation_ref": "../FLOOR-06-PROGRAM-RECONCILIATION.md",
+      "object_inventory_ref": "floor-06/floor-06-object-inventory.json",
+      "preservation_map_ref": "../FLOOR-06-V1-V2-PRESERVATION-MAP.md"
     },
     {
       "level": 7,
