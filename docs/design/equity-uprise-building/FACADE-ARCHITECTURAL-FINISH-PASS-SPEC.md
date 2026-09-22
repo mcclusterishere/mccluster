@@ -361,3 +361,23 @@ It does not:
 The canonical `production/facade/facade-finish-inventory.json` assigns stable finish-component IDs before modeling.
 
 **Step 4 is implemented and deterministically verified:** window assembly depth + frame/reveal detail + opaque/service finish + base/plinth + four resolved corners are locked at verified snapshot `0c9ed33abcd679d2efc316ca82e998d3524e7ffe` with **22/22 checks passing**. Entry/canopy/branding/crown/lighting/site-contact finish remain intentionally deferred to subsequent steps.
+
+
+## 20. Step 5 implementation state
+
+Step 5 source geometry is now implemented pending deterministic verification.
+
+Locked Step 5 implementation:
+- completed south portal / paired doors / frames / pull hardware;
+- sidelights, transom and threshold;
+- canopy fascia, soffit, returns and six downlight fixtures;
+- exact approved repo Equity Uprise logo sourced from `assets/img/equity-uprise-logo.webp` and machine vector `production/facade/equity-uprise-logo-vector.json`;
+- no literal `E=U` substitute at the entrance;
+- architectural Equity Uprise wordmark;
+- exact approved logo also replaces the stale crown E=U identity while structural crown finish remains deferred;
+- entry lighting fixtures;
+- entry apron / threshold paving and building-to-ground contact.
+
+Step 5 inventory scope: **22 records**. Cumulative finish scope after Step 5: **54/68**. Remaining: **14 crown/roof-edge/crown-lighting records**.
+
+Deterministic verification is the current gate.
