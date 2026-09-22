@@ -471,3 +471,26 @@ Implemented in the whole-building viewer:
 - night mode now activates real facade emissive materials.
 
 Current gate: deterministic PBR regeneration + CI, then human-eye visual preview.
+
+
+## Facade Step 8 solar environment — SOURCE IMPLEMENTED / VERIFICATION PENDING
+
+Step 8 makes the exterior light respond automatically to the viewer's device clock.
+
+Default behavior:
+- `Sun: Auto` is active on page load;
+- the device's local date drives seasonal solar declination;
+- the device's local wall-clock time drives the sun's east → south → west daily path;
+- sunlight direction, shadow direction, sun warmth, sky/fog tone, hemisphere fill, exposure and facade emissive-light intensity update together;
+- the environment refreshes once per minute;
+- night architectural lights rise automatically as solar altitude falls;
+- no browser geolocation permission is required and no location is transmitted or stored;
+- a Connecticut/New Haven design latitude is used only to shape seasonal solar altitude/day length while the user's device clock remains authoritative.
+
+Manual QA overrides remain available by cycling `Sun: Auto → Sun: Day → Sun: Night → Sun: Auto`.
+
+The viewer also supports camera deep links such as:
+- `?view=facade&camera=entry`
+- `?view=facade&camera=crown`
+
+Current gate: Step 8 viewer CI + deployment + live visual review.
