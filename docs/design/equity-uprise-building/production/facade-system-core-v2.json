@@ -1,7 +1,7 @@
 {
-  "schema_version": "1.1.0",
+  "schema_version": "1.2.0",
   "authority_id": "equity-uprise-facade-system-core-v2",
-  "status": "detailed-facade-coordination-authority-locked-geometry-pending",
+  "status": "detailed-facade-geometry-implemented-current-pass",
   "not_for_construction": true,
   "building_id": "equity-uprise-building",
   "core_geometry_ref": "building-core-v2.json",
@@ -310,6 +310,37 @@
     "Louvers require a real MEP/service need behind them.",
     "North/service facade may be more opaque but may not become an unarticulated blank wall."
   ],
-  "exact_bay_geometry_status": "locked-at-6-ft-coordination-module; per-module classification pending implementation inventory",
-  "implementation_status": "spec-complete / geometry-not-started"
+  "exact_bay_geometry_status": "implemented-from-6-ft-coordination-module",
+  "implementation_status": "deterministic-glb-and-working-stack-integration-active-pending-direct-visual-approval",
+  "module_inventory_ref": "facade/facade-module-inventory.json",
+  "builder_ref": "facade/build_equity_uprise_facade_v2.py",
+  "generated_glb_ref": "generated/equity-uprise-facade-core-v2.glb",
+  "generated_report_ref": "generated/equity-uprise-facade-core-v2-report.json",
+  "current_pass_metrics": {
+    "mesh_count": 1578,
+    "inventory_modules": 288,
+    "inventory_modules_modeled": 288,
+    "inventory_features": 9,
+    "inventory_features_modeled": 9,
+    "checks_total": 15,
+    "checks_passed": 15,
+    "checks_failed": 0
+  },
+  "viewer_behavior": {
+    "combined_viewer": "equity-uprise-building-core-v2-3d.html",
+    "stack_mode": "facade visible; floor-local perimeter placeholders hidden so glazing exposes occupied interiors",
+    "floor_isolation": "facade hidden; floor-local perimeter geometry restored",
+    "facade_isolation_query": "?view=facade",
+    "review_views": [
+      "south",
+      "east",
+      "north",
+      "west",
+      "entry",
+      "crown",
+      "day",
+      "night",
+      "wireframe"
+    ]
+  }
 }

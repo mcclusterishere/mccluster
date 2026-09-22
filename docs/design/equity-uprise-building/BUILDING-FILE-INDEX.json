@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 264,
+  "tracked_count": 268,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -143,6 +143,8 @@
       "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-core-v2-plan-semantics-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2.glb",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-b1-simulation-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-floor-07-core-v2-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-floor-07-core-v2.glb",
@@ -199,6 +201,8 @@
       "docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json",
       "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json",
       "docs/design/equity-uprise-building/production/facade-system-core-v2.json",
+      "docs/design/equity-uprise-building/production/facade/build_equity_uprise_facade_v2.py",
+      "docs/design/equity-uprise-building/production/facade/facade-module-inventory.json",
       "docs/design/equity-uprise-building/production/floor-01/README.md",
       "docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01_v2.py",
       "docs/design/equity-uprise-building/production/floor-01/floor-01-camera.json",

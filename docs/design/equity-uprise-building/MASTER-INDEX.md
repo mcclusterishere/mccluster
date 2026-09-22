@@ -147,3 +147,17 @@ The next building-wide realism pass is now governed by:
 - `production/interior-envelope-audit.json`
 
 This snapshot defines authority only. No facade, riser or interior geometry is considered implemented by the presence of these files.
+
+
+## Detailed exterior facade implementation
+
+Current-pass facade implementation is coordinated by:
+- `EXTERIOR-FACADE-UPGRADE-SPEC.md`
+- `FACADE-BRANDING-AND-SIGNAGE-SPEC.md`
+- `production/facade-system-core-v2.json`
+- `production/facade/facade-module-inventory.json`
+- `production/facade/build_equity_uprise_facade_v2.py`
+- generated facade GLB/report under `production/generated/`
+- combined review viewer: `equity-uprise-building-core-v2-3d.html` with `?view=facade`
+
+The facade uses the existing 18 ft structural grid with a 6 ft secondary module and is a separate coordinated shell layer so approved floor interiors/core geometry are not destructively rebuilt.

@@ -1,0 +1,116 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-facade-core-v2",
+  "not_for_construction": true,
+  "glb_bytes": 952416,
+  "sha256": "a65e62741a0271e034d9421379e83077f56bf0fe63869b38ba72aad78af8590e",
+  "mesh_count": 1578,
+  "inventory_modules": 288,
+  "inventory_modules_modeled": 288,
+  "inventory_features": 9,
+  "inventory_features_modeled": 9,
+  "classification_counts": {
+    "clear_vision": 152,
+    "entrance_door": 2,
+    "stair_core_glazing": 36,
+    "service_opaque": 36,
+    "restroom_clerestory": 12,
+    "support_clerestory": 18,
+    "louver_service": 6,
+    "privacy_vision": 20,
+    "acoustic_opaque": 6
+  },
+  "bounds_m": [
+    [
+      -0.23164800000000002,
+      -1.755648,
+      0.0
+    ],
+    [
+      22.177248000000002,
+      22.177248000000002,
+      24.688800000000004
+    ]
+  ],
+  "checks_total": 15,
+  "checks_passed": 15,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "288 facade modules",
+      "passed": true,
+      "detail": "288"
+    },
+    {
+      "name": "all facade modules modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all facade features modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "72 modules per elevation",
+      "passed": true,
+      "detail": "{'south': 72, 'east': 72, 'north': 72, 'west': 72}"
+    },
+    {
+      "name": "48 modules per occupied level",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "module width exactly 6ft",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "two canonical Floor 1 entry modules",
+      "passed": true,
+      "detail": "2"
+    },
+    {
+      "name": "no upper-floor exterior doors",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Floor 4 acoustic facade exception modeled",
+      "passed": true,
+      "detail": "6"
+    },
+    {
+      "name": "north louver service modules present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "entry portal + canopy modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "entry identity modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "crown identity + cap modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "corner piers modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "substantial real geometry",
+      "passed": true,
+      "detail": "1578"
+    }
+  ]
+}
