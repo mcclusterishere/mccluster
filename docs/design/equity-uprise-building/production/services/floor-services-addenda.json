@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-floor-services-addenda",
-  "status": "active-coordination-addenda-services-step3-b1-connected",
+  "status": "active-coordination-addenda-services-step4-floors-1-3",
   "not_for_construction": true,
   "riser_source_ref": "../vertical-risers-core-v2.json",
   "services_core_ref": "../building-services-core-v2.json",
@@ -71,7 +71,8 @@
         "FIRE-PROTECTION",
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
-      ]
+      ],
+      "implementation_status": "services-step4-branches-endpoints-modeled"
     },
     "F2": {
       "display": "F2",
@@ -102,7 +103,8 @@
         "FIRE-PROTECTION",
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
-      ]
+      ],
+      "implementation_status": "services-step4-branches-endpoints-modeled"
     },
     "F3": {
       "display": "F3",
@@ -132,7 +134,8 @@
         "FIRE-PROTECTION",
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
-      ]
+      ],
+      "implementation_status": "services-step4-branches-endpoints-modeled"
     },
     "F4": {
       "display": "F4",

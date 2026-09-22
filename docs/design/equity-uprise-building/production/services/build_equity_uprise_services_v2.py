@@ -4,7 +4,8 @@ Build the visible Equity Uprise building-services / nervous-system layer.
 
 Services Step 2 established the B1-to-roof vertical backbone. Services Step 3
 adds representative B1 source/plant equipment plus source-to-riser distribution
-paths that reuse the current detailed-B1 equipment coordinates.
+paths that reuse the current detailed-B1 equipment coordinates. Services Step 4
+extends real branch geometry and endpoint drops across Floors 1–3.
 
 This is conceptual digital-twin coordination, not construction engineering.
 No final duct, pipe, conductor, breaker, pump, pressure, flow or code sizing is
@@ -47,6 +48,11 @@ COLORS={
  "ELEC-EMERGENCY":[244,203,66,240],
  "DATA-STRUCTURED":[151,93,207,235],
  "BAS-CONTROLS":[58,164,104,235],
+ "LIGHTING-CONTROLS":[255,205,96,220],
+ "AV-MEDIA":[196,92,180,225],
+ "SECURITY-ACCESS":[232,82,96,225],
+ "FIRE-ALARM":[255,105,68,225],
+ "SERVICE-HOUSEKEEPING":[145,150,155,190],
  "SEPARATION":[120,125,132,65],
 }
 PBR={}
@@ -253,6 +259,66 @@ for sid,path in connection_paths.items():
     cx=(a["x1"]+a["x2"])/2; cy=(a["y1"]+a["y2"])/2
     add_box(f"SVC-B1-CONNECTION::{sid}::RISER-COLLAR",(cx-.16,cy-.16,cx+.16,cy+.16),B1_Z+9.0,.9,sid,"b1_riser_connection",0)
 
+
+# SERVICES STEP 4 — Floors 1–3 representative branches and endpoints.
+# These routes stay conceptual and intentionally reuse the current floor-object
+# inventory coordinates/room zones. They do not claim construction sizing.
+floor_branch_records=[]
+def add_floor_branch(level,system_id,points,z_offset=10.15,style="tray",width=.18,height=.18,endpoint=None,inventory_ref=None):
+    z=LEVEL_Z[level]+z_offset
+    for idx,(a,bb) in enumerate(zip(points[:-1],points[1:])):
+        x1,y1=a; x2,y2=bb
+        if x1!=x2 and y1!=y2:
+            raise ValueError(f"F{level} {system_id} branch {idx} not orthogonal: {a}->{bb}")
+        name=f"SVC-F{level}-BRANCH::{system_id}::{endpoint or 'GENERAL'}::{idx:02d}"
+        if style=="pipe":
+            if y1==y2: add_cylinder(name,(x1+x2)/2,y1,z,width/2,abs(x2-x1),system_id,"floor_branch",level,18,"x")
+            else: add_cylinder(name,x1,(y1+y2)/2,z,width/2,abs(y2-y1),system_id,"floor_branch",level,18,"y")
+        else:
+            bounds=(min(x1,x2),y1-width/2,max(x1,x2),y1+width/2) if y1==y2 else (x1-width/2,min(y1,y2),x1+width/2,max(y1,y2))
+            add_box(name,bounds,z-height/2,height,system_id,"floor_branch",level)
+    ex,ey=points[-1]
+    add_box(f"SVC-F{level}-ENDPOINT::{system_id}::{endpoint or 'GENERAL'}",(ex-.22,ey-.22,ex+.22,ey+.22),LEVEL_Z[level]+8.7,.55,system_id,"floor_endpoint",level)
+    floor_branch_records.append({"level":level,"system_id":system_id,"endpoint":endpoint,"inventory_ref":inventory_ref,"points":points})
+
+# Shared north-band trunks originate at the verified riser handoff west of X59.
+# F1: reception/security, IT/ops, restrooms, HVAC/life safety.
+add_floor_branch(1,"ELEC-NORMAL",[(57.25,67.5),(48,67.5),(48,46),(36,46)],endpoint="RECEPTION",inventory_ref="F1-RECEPTION-MONITOR-01")
+add_floor_branch(1,"DATA-STRUCTURED",[(58.5,67.5),(46,67.5),(46,46),(36,46)],endpoint="RECEPTION-DATA",inventory_ref="F1-RECEPTION-SECURITY-01")
+add_floor_branch(1,"BAS-CONTROLS",[(58.5,70.5),(40,70.5),(40,65),(38,65)],endpoint="OPS-PANEL",inventory_ref="F1-OPS-PANEL-01")
+add_floor_branch(1,"DATA-STRUCTURED",[(58.5,67.5),(47,67.5),(47,65),(46,65)],endpoint="IT-RACK",inventory_ref="F1-IT-RACK-01")
+add_floor_branch(1,"WATER-DOMESTIC",[(54.25,70.5),(30,70.5),(30,64),(29,64)],style="pipe",width=.20,endpoint="RESTROOM-WATER",inventory_ref="F1-RR-B-VANITY-01")
+add_floor_branch(1,"SANITARY-VENT",[(55.75,67.5),(28,67.5),(28,69),(29,69)],style="pipe",width=.30,endpoint="RESTROOM-SANITARY",inventory_ref="F1-RR-B-FIXTURE-01")
+add_floor_branch(1,"HVAC-AIR",[(51.75,67.5),(44,67.5),(44,50),(36,50)],style="duct",width=.75,height=.45,endpoint="ARRIVAL-HVAC")
+add_floor_branch(1,"FIRE-PROTECTION",[(54.25,67.5),(32,67.5),(32,55)],style="pipe",width=.22,endpoint="LIFE-SAFETY")
+add_floor_branch(1,"ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,54),(44,54)],endpoint="EGRESS")
+
+# F2: forum table, feature-wall AV, AV/IT, check-in, restrooms, HVAC/life safety.
+add_floor_branch(2,"ELEC-NORMAL",[(57.25,67.5),(48,67.5),(48,39),(36,39)],endpoint="FORUM-TABLE",inventory_ref="F2-FORUM-POWER-01")
+add_floor_branch(2,"DATA-STRUCTURED",[(58.5,67.5),(46,67.5),(46,39),(36,39)],endpoint="FORUM-DATA",inventory_ref="F2-FORUM-POWER-01")
+add_floor_branch(2,"AV-MEDIA",[(58.5,67.5),(48,67.5),(48,52),(36,52)],endpoint="FEATURE-WALL",inventory_ref="F2-DISPLAY-PERSPECTIVES")
+add_floor_branch(2,"DATA-STRUCTURED",[(58.5,67.5),(47,67.5),(47,64),(46,64)],endpoint="AVIT-RACK",inventory_ref="F2-AVIT-RACK-01")
+add_floor_branch(2,"SECURITY-ACCESS",[(58.5,70.5),(52,70.5),(52,27),(50,27)],endpoint="MEMBER-CHECKIN",inventory_ref="F2-MEMBER-CHECKIN-01")
+add_floor_branch(2,"WATER-DOMESTIC",[(54.25,70.5),(30,70.5),(30,64),(29,64)],style="pipe",width=.20,endpoint="RESTROOM-WATER",inventory_ref="F2-RR-B-VANITY-01")
+add_floor_branch(2,"SANITARY-VENT",[(55.75,67.5),(28,67.5),(28,69),(29,69)],style="pipe",width=.30,endpoint="RESTROOM-SANITARY",inventory_ref="F2-RR-B-WC-01")
+add_floor_branch(2,"HVAC-AIR",[(51.75,67.5),(44,67.5),(44,48),(36,48)],style="duct",width=.75,height=.45,endpoint="FORUM-HVAC")
+add_floor_branch(2,"FIRE-PROTECTION",[(54.25,67.5),(32,67.5),(32,55)],style="pipe",width=.22,endpoint="LIFE-SAFETY")
+add_floor_branch(2,"ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,54),(44,54)],endpoint="EGRESS")
+
+# F3: exchange, network/lounge, interviews, check-in, IT, restrooms, HVAC/life safety.
+add_floor_branch(3,"ELEC-NORMAL",[(57.25,67.5),(48,67.5),(48,41),(36,41)],endpoint="OPPORTUNITY-TABLE",inventory_ref="F3-OPPORTUNITY-POWER-01")
+add_floor_branch(3,"DATA-STRUCTURED",[(58.5,67.5),(46,67.5),(46,41),(36,41)],endpoint="OPPORTUNITY-DATA",inventory_ref="F3-OPPORTUNITY-POWER-01")
+add_floor_branch(3,"AV-MEDIA",[(58.5,67.5),(48,67.5),(48,52),(36,52)],endpoint="OPPORTUNITY-DISPLAYS",inventory_ref="F3-DISPLAY-PEOPLE")
+add_floor_branch(3,"DATA-STRUCTURED",[(58.5,67.5),(47,67.5),(47,64),(46,64)],endpoint="NETWORK-IT",inventory_ref="F3-NETWORK-IT-RACK-01")
+add_floor_branch(3,"SECURITY-ACCESS",[(58.5,70.5),(52,70.5),(52,27),(50,27)],endpoint="MEMBER-CHECKIN",inventory_ref="F3-MEMBER-CHECKIN-01")
+add_floor_branch(3,"DATA-STRUCTURED",[(58.5,67.5),(45,67.5),(45,18),(22,18),(22,16)],endpoint="INTERVIEW-B",inventory_ref="F3-INTERVIEW-B-DISPLAY-01")
+add_floor_branch(3,"ELEC-NORMAL",[(57.25,67.5),(43,67.5),(43,18),(8,18),(8,16)],endpoint="INTERVIEW-A",inventory_ref="F3-INTERVIEW-A-DISPLAY-01")
+add_floor_branch(3,"WATER-DOMESTIC",[(54.25,70.5),(30,70.5),(30,64),(29,64)],style="pipe",width=.20,endpoint="RESTROOM-WATER",inventory_ref="F3-RR-B-VANITY-01")
+add_floor_branch(3,"SANITARY-VENT",[(55.75,67.5),(28,67.5),(28,69),(29,69)],style="pipe",width=.30,endpoint="RESTROOM-SANITARY",inventory_ref="F3-RR-B-WC-01")
+add_floor_branch(3,"HVAC-AIR",[(51.75,67.5),(44,67.5),(44,48),(36,48)],style="duct",width=.75,height=.45,endpoint="FELLOWSHIP-HVAC")
+add_floor_branch(3,"FIRE-PROTECTION",[(54.25,67.5),(32,67.5),(32,55)],style="pipe",width=.22,endpoint="LIFE-SAFETY")
+add_floor_branch(3,"ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,54),(44,54)],endpoint="EGRESS")
+
 checks=[]
 def ck(name,ok,detail=""):
     checks.append({"name":name,"passed":bool(ok),"detail":str(detail)})
@@ -321,6 +387,13 @@ ck("normal and emergency power remain distinct",connection_paths.get("ELEC-NORMA
 ck("fire and domestic water remain distinguishable",SOURCE_CONNECTIONS.get("FIRE-PROTECTION",{}).get("connection_target_riser")=="R-FIRE" and SOURCE_CONNECTIONS.get("WATER-DOMESTIC",{}).get("connection_target_riser")=="R-WATER")
 ck("storm/sump connects to STORM-DRAINAGE",SOURCE_CONNECTIONS.get("STORM-DRAINAGE",{}).get("connection_target_riser")=="R-STORM" and "STORM-DRAINAGE" in connection_paths)
 ck("HVAC plant connects to HVAC-AIR",SOURCE_CONNECTIONS.get("HVAC-AIR",{}).get("connection_target_riser")=="R-HVAC" and "HVAC-AIR" in connection_paths)
+step4=[r for r in records if r["kind"] in {"floor_branch","floor_endpoint"}]
+ck("Step 4 branches exist on Floors 1-3",{r["level"] for r in step4}=={1,2,3},sorted({r["level"] for r in step4}))
+ck("Step 4 endpoint inventory refs are explicit",all(x.get("inventory_ref") for x in floor_branch_records if x["endpoint"] not in {"ARRIVAL-HVAC","LIFE-SAFETY","EGRESS","FORUM-HVAC","FELLOWSHIP-HVAC"}))
+ck("Step 4 forum table has power and data",sum(1 for x in floor_branch_records if x["level"]==2 and x["endpoint"] in {"FORUM-TABLE","FORUM-DATA"})==2)
+ck("Step 4 Floor 3 interviews receive services",{"INTERVIEW-A","INTERVIEW-B"}<={x["endpoint"] for x in floor_branch_records if x["level"]==3})
+ck("Step 4 restroom wet branches exist on F1-F3",all({"WATER-DOMESTIC","SANITARY-VENT"}<={x["system_id"] for x in floor_branch_records if x["level"]==l} for l in (1,2,3)))
+ck("Step 4 routes stay west of Stair A",all(max(p[0] for p in x["points"])<60 for x in floor_branch_records))
 
 viewer=HERE.parents[4]/"equity-uprise-building-core-v2-3d.html"
 if viewer.exists():
@@ -330,7 +403,7 @@ if viewer.exists():
 
 scene.metadata.update({
     "asset":"equity-uprise-building-services-core-v2",
-    "version":"services-step3-b1-source-connected-v1",
+    "version":"services-step4-floors-1-3-branches-v1",
     "not_for_construction":True,
     "shared_service_reservation_ft":SHARED,
     "systems":sorted(modeled_systems),
@@ -345,7 +418,7 @@ sha=hashlib.sha256(glb).hexdigest()
 report={
     "schema_version":"1.1.0",
     "asset":"equity-uprise-building-services-core-v2",
-    "status":"services-step3-b1-source-connected",
+    "status":"services-step4-floors-1-3-branches",
     "not_for_construction":True,
     "glb_bytes":len(glb),
     "sha256":sha,
@@ -359,6 +432,9 @@ report={
     "b1_source_equipment_meshes":sum(1 for r in records if r["kind"]=="source_equipment"),
     "b1_distribution_segments":sum(1 for r in records if r["kind"]=="b1_distribution"),
     "b1_riser_connections":sum(1 for r in records if r["kind"]=="b1_riser_connection"),
+    "step4_floor_branch_segments":sum(1 for r in records if r["kind"]=="floor_branch"),
+    "step4_floor_endpoints":sum(1 for r in records if r["kind"]=="floor_endpoint"),
+    "step4_levels":[1,2,3],
     "shared_reservation_ft":SHARED,
     "systems":sorted(modeled_systems),
     "checks_total":len(checks),
