@@ -518,3 +518,22 @@ Services Step 1 locked:
 This is the coordination prerequisite for visible systems geometry.
 
 **Next: Services Step 2 — generate a real 3D services/backbone GLB and add a Services layer to the working building viewer.**
+
+
+## Building services / nervous system — SERVICES STEP 2 SOURCE IMPLEMENTED
+
+Services Step 2 now creates **real 3D building-services geometry**, not only documents.
+
+Implemented:
+- dedicated deterministic services builder: `production/services/build_equity_uprise_services_v2.py`;
+- dedicated generated GLB/report: `equity-uprise-building-services-core-v2.glb` / report;
+- nine color/material-coded service risers from B1 through Level 7;
+- story-by-story riser segmentation so floor isolation remains meaningful;
+- floor handoff stubs only at levels actually served by each system;
+- protected X59–60 separation/access buffer at the Stair A boundary;
+- working-stack viewer **Services: Off / Services: Exposed** control;
+- exposed-services mode ghosts the architecture so the internal backbone can be inspected;
+- floor isolation filters the services overlay to the relevant story/adjacent riser segments;
+- deploy pipeline publishes the services GLB/report.
+
+Current gate: deterministic generation + services-backbone checks + full Core V2 CI.
