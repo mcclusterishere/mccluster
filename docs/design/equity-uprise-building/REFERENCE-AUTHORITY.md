@@ -85,8 +85,8 @@ Read program and geometry authority in this order:
 
 6. Floor-specific program / spatial reference:
    - **Floor 1 — current program authority:** semantic identity **Arrival / Orientation / Intake**; long-form file retained under legacy-compatible filename `docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md`.
-   - **Floors 2–4 — reconciled current program authorities:** these floors have completed the present iterative activity/space reconciliation and have active real-3D implementations.
-   - **Floors 5–6 — provisional program references only:** the existing long-form specs remain useful spatial/history inputs, but their room/activity programs are **not final authority** until each floor receives the same iterative development-program reconciliation.
+   - **Floors 2–5 — reconciled current program authorities:** these floors have completed the present iterative activity/space reconciliation and have active real-3D implementations.
+   - **Floor 6 — provisional program reference only:** the existing long-form spec remains a useful spatial/history input, but its room/activity program is **not final authority** until it receives the same iterative development-program reconciliation.
      - Floor 2: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
      - Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
      - Floor 4: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
@@ -186,7 +186,7 @@ Authority:
 
 For a floor marked `pre-iterative-program-rewrite`, its legacy long-form room program is a working reference, not final authority.
 
-Generated plan labels for a provisional floor describe the **current legacy program snapshot only**. They are not evidence that the later-floor program has been finalized. Floors 1, 2, 3 and 4 are currently program-reconciled for the present iterative pass and have active real-3D implementations. Floors 5–7 remain pre-iterative.
+Generated plan labels for a provisional floor describe the **current legacy program snapshot only**. They are not evidence that the later-floor program has been finalized. Floors 1, 2, 3, 4 and 5 are currently program-reconciled for the present iterative pass and have active real-3D implementations. Floors 6–7 remain pre-iterative.
 
 Do not invent a room, department, floor function or public-facing feature merely because it looks cinematic.
 
