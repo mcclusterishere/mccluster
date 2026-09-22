@@ -218,7 +218,7 @@ Required references:
 - `production/basement-b1/basement-b1-object-inventory.json`;
 - `production/basement-b1/build_equity_uprise_basement_b1_v2.py`.
 
-B1 is **implementation-complete for the current review pass pending deterministic CI/generated snapshot and direct visual approval**.
+B1 is **implementation-complete for the current review pass; deterministic regeneration/pinning is requested on the final reconciliation branch, with direct visual approval still required**.
 
 ## Historical V1 Floor 1 — DESIGN REFERENCE, NOT geometry authority
 
