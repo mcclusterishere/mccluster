@@ -1068,8 +1068,12 @@
         "uprise-world"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json",
-      "design_maturity": "pre-iterative-program-rewrite",
-      "render_readiness": "chassis-only-not-final-program"
+      "design_maturity": "reconciled-current-iterative-pass",
+      "render_readiness": "basic-render-ready",
+      "working_development_stage": "ecosystem-departure-arrival-overlook",
+      "program_reconciliation_ref": "../FLOOR-07-PROGRAM-RECONCILIATION.md",
+      "object_inventory_ref": "floor-07/floor-07-object-inventory.json",
+      "preservation_map_ref": "../FLOOR-07-V1-V2-PRESERVATION-MAP.md"
     }
   ],
   "capability_map_ref": "equity-uprise-capability-map-v2.json",
