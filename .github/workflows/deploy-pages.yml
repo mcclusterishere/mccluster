@@ -59,22 +59,24 @@ jobs:
           python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
           python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 
-      - name: Verify Equity Uprise Services Step 4 deploy contract
+      - name: Verify Equity Uprise Services Step 5 deploy contract
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           p=Path("docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2-report.json")
           r=json.loads(p.read_text())
-          assert r.get("status")=="services-step4-floors-1-3-branches", r.get("status")
+          assert r.get("status")=="services-step5-floors-4-6-roof-branches", r.get("status")
           assert r.get("passed") is True
           assert r.get("checks_failed")==0
           assert r.get("b1_riser_connections")==9
           assert r.get("b1_distribution_segments",0)>0
-          assert r.get("step4_floor_branch_segments",0)>0
-          assert r.get("step4_floor_endpoints",0)>0
           assert r.get("step4_levels")==[1,2,3]
-          print("Services Step 4 deploy contract verified", r["sha256"])
+          assert r.get("step5_levels")==[4,5,6,7]
+          assert r.get("step4_floor_branch_segments",0)>0
+          assert r.get("step5_floor_branch_segments",0)>0
+          assert r.get("step5_floor_endpoints",0)>0
+          print("Services Step 5 deploy contract verified", r["sha256"])
           PY
 
       - name: Publish Equity Uprise preview assets
@@ -92,20 +94,10 @@ jobs:
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2.glb equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2-report.json equity-uprise-preview/equity-uprise-basement-b1-core-v2-report.json
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb equity-uprise-preview/equity-uprise-building-core-v2.glb
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-core-v2.glb equity-uprise-preview/equity-uprise-floor-01-core-v2.glb
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-core-v2-report.json equity-uprise-preview/equity-uprise-floor-01-core-v2-report.json
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-02-core-v2.glb equity-uprise-preview/equity-uprise-floor-02-core-v2.glb
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-02-core-v2-report.json equity-uprise-preview/equity-uprise-floor-02-core-v2-report.json
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-03-core-v2.glb equity-uprise-preview/equity-uprise-floor-03-core-v2.glb
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-03-core-v2-report.json equity-uprise-preview/equity-uprise-floor-03-core-v2-report.json
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-04-core-v2.glb equity-uprise-preview/equity-uprise-floor-04-core-v2.glb
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-04-core-v2-report.json equity-uprise-preview/equity-uprise-floor-04-core-v2-report.json
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-05-core-v2.glb equity-uprise-preview/equity-uprise-floor-05-core-v2.glb
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-05-core-v2-report.json equity-uprise-preview/equity-uprise-floor-05-core-v2-report.json
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-06-core-v2.glb equity-uprise-preview/equity-uprise-floor-06-core-v2.glb
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-06-core-v2-report.json equity-uprise-preview/equity-uprise-floor-06-core-v2-report.json
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-07-core-v2.glb equity-uprise-preview/equity-uprise-floor-07-core-v2.glb
-          cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-07-core-v2-report.json equity-uprise-preview/equity-uprise-floor-07-core-v2-report.json
+          for n in 01 02 03 04 05 06 07; do
+            cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-${n}-core-v2.glb equity-uprise-preview/equity-uprise-floor-${n}-core-v2.glb
+            cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-${n}-core-v2-report.json equity-uprise-preview/equity-uprise-floor-${n}-core-v2-report.json
+          done
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-vertical-circulation-walkability-report.json equity-uprise-preview/equity-uprise-vertical-circulation-walkability-report.json
           cp docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png equity-uprise-preview/floor-01-plan.png
           cp docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg equity-uprise-preview/floor-01-plan.svg
