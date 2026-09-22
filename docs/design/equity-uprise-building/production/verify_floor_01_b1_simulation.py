@@ -112,7 +112,9 @@ f4_program=next(x for x in PROGRAMS["levels"] if x["level"]==4)
 check("Floor 4 maturity reconciled",f4_program.get("design_maturity")=="reconciled-current-iterative-pass",str(f4_program.get("design_maturity")))
 f5_program=next(x for x in PROGRAMS["levels"] if x["level"]==5)
 check("Floor 5 maturity reconciled",f5_program.get("design_maturity")=="reconciled-current-iterative-pass",str(f5_program.get("design_maturity")))
-check("Floors 6-7 remain explicitly provisional",all(x.get("design_maturity")=="pre-iterative-program-rewrite" for x in PROGRAMS["levels"] if x["level"]>=6),str([(x["level"],x.get("design_maturity")) for x in PROGRAMS["levels"] if x["level"]>=6]))
+f6_program=next(x for x in PROGRAMS["levels"] if x["level"]==6)
+check("Floor 6 maturity reconciled",f6_program.get("design_maturity")=="reconciled-current-iterative-pass",str(f6_program.get("design_maturity")))
+check("Level 7 remains explicitly provisional",all(x.get("design_maturity")=="pre-iterative-program-rewrite" for x in PROGRAMS["levels"] if x["level"]>=7),str([(x["level"],x.get("design_maturity")) for x in PROGRAMS["levels"] if x["level"]>=7]))
 
 # Floor 1 authority must point at the resolved site/B1 layers.
 check("Floor 1 site ref",F1.get("site_egress_ref")=="floor-01-site-egress.json",str(F1.get("site_egress_ref")))
