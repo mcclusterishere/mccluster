@@ -4,25 +4,14 @@
   "discovery_rules": {
     "building_root": "docs/design/equity-uprise-building/",
     "external_authority": [
-      "docs/design/EQUITY-UPRISE-REPO-AUDIT.md",
-      "docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md"
+      "docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md",
+      "docs/design/EQUITY-UPRISE-REPO-AUDIT.md"
     ],
-    "public_viewer_regex": "^equity-uprise-(?:building-core-v2|floor-0[1-7])-3d\\\\.html$",
+    "public_viewer_regex": "^equity-uprise-(?:building-core-v2|floor-0[1-7])-3d\\.html$",
     "workflows": [
-      ".github/workflows/equity-uprise-core-v2-ci.yml",
-      ".github/workflows/deploy-pages.yml"
+      ".github/workflows/deploy-pages.yml",
+      ".github/workflows/equity-uprise-core-v2-ci.yml"
     ],
-    "agent_entrypoints": [
-      "AGENTS.md",
-      "CLAUDE.md",
-      "CODEX.md",
-      "GEMINI.md",
-      ".cursorrules",
-      ".github/copilot-instructions.md"
-    ]
-  },
-  "tracked_count": 243,
-  "categories": {
     "agent_entrypoints": [
       ".cursorrules",
       ".github/copilot-instructions.md",
@@ -30,23 +19,58 @@
       "CLAUDE.md",
       "CODEX.md",
       "GEMINI.md"
+    ]
+  },
+  "tracked_count": 243,
+  "categories": {
+    "active_references": [
+      "docs/design/equity-uprise-building/references/basement-b1/README.md",
+      "docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/core-v2-plan-generation-manifest.json",
+      "docs/design/equity-uprise-building/references/equity-uprise-core-v2-plan-contact-sheet.png",
+      "docs/design/equity-uprise-building/references/floor-01-site/README.md",
+      "docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/floor-01-site/floor-01-site-plan-generation-manifest.json",
+      "docs/design/equity-uprise-building/references/floor-01/README.md",
+      "docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/floor-02/README.md",
+      "docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/floor-03/README.md",
+      "docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/floor-04/README.md",
+      "docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/floor-05/README.md",
+      "docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/floor-06/README.md",
+      "docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/floor-07/README.md",
+      "docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg"
     ],
-    "workflows": [
-      ".github/workflows/deploy-pages.yml",
-      ".github/workflows/equity-uprise-core-v2-ci.yml"
-    ],
-    "external_authority": [
-      "docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md",
-      "docs/design/EQUITY-UPRISE-REPO-AUDIT.md"
-    ],
-    "context": [
-      "docs/design/equity-uprise-building/AGENTS.md",
-      "docs/design/equity-uprise-building/BUILD-PIPELINE.md",
-      "docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json",
-      "docs/design/equity-uprise-building/HISTORICAL-REFERENCE-BUILDS.md",
-      "docs/design/equity-uprise-building/MASTER-INDEX.md",
-      "docs/design/equity-uprise-building/PROJECT-STATE.md",
-      "docs/design/equity-uprise-building/README.md"
+    "agent_entrypoints": [
+      ".cursorrules",
+      ".github/copilot-instructions.md",
+      "AGENTS.md",
+      "CLAUDE.md",
+      "CODEX.md",
+      "GEMINI.md"
     ],
     "authority": [
       "docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
@@ -89,6 +113,54 @@
       "docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md",
       "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
       "docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md"
+    ],
+    "context": [
+      "docs/design/equity-uprise-building/AGENTS.md",
+      "docs/design/equity-uprise-building/BUILD-PIPELINE.md",
+      "docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json",
+      "docs/design/equity-uprise-building/HISTORICAL-REFERENCE-BUILDS.md",
+      "docs/design/equity-uprise-building/MASTER-INDEX.md",
+      "docs/design/equity-uprise-building/PROJECT-STATE.md",
+      "docs/design/equity-uprise-building/README.md"
+    ],
+    "external_authority": [
+      "docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md",
+      "docs/design/EQUITY-UPRISE-REPO-AUDIT.md"
+    ],
+    "generated_artifacts": [
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-authority-hygiene-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-core-v2-plan-semantics-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-b1-simulation-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-program-coverage-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json"
+    ],
+    "historical_references": [
+      "docs/design/equity-uprise-building/references/archive/core-v1/README.md",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-01/equity-uprise-floor-01-viable-schematic-v3.dxf",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-01/equity-uprise-floor-01-viable-schematic-v3.png",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-01/equity-uprise-floor-01-viable-schematic-v3.svg",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.dxf",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.png",
+      "docs/design/equity-uprise-building/references/archive/core-v1/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.svg",
+      "docs/design/equity-uprise-building/references/archive/core-v2-migration/BUILDING-CORE-V2-PROPOSAL.md",
+      "docs/design/equity-uprise-building/references/archive/core-v2-migration/CORE-V2-FILE-MIGRATION-MANIFEST.md"
     ],
     "production_source": [
       "docs/design/equity-uprise-building/production/audit_building_context.py",
@@ -200,82 +272,6 @@
       "docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py",
       "docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py"
     ],
-    "generated_artifacts": [
-      "docs/design/equity-uprise-building/production/generated/equity-uprise-authority-hygiene-report.json",
-      "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2-report.json",
-      "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb",
-      "docs/design/equity-uprise-building/production/generated/equity-uprise-core-v2-plan-semantics-report.json",
-      "docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-b1-simulation-report.json",
-      "docs/design/equity-uprise-building/production/generated/equity-uprise-program-coverage-report.json",
-      "docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json"
-    ],
-    "historical_references": [
-      "docs/design/equity-uprise-building/references/archive/core-v1/README.md",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-01/equity-uprise-floor-01-viable-schematic-v3.dxf",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-01/equity-uprise-floor-01-viable-schematic-v3.png",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-01/equity-uprise-floor-01-viable-schematic-v3.svg",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-02/equity-uprise-floor-02-public-forum-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-03/equity-uprise-floor-03-fellowship-network-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-04/equity-uprise-floor-04-media-culture-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-05/equity-uprise-floor-05-policy-proof-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-06/equity-uprise-floor-06-penthouse-command-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/archive/core-v1/floor-07/equity-uprise-level-07-roof-mobility-portal-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/archive/core-v2-migration/BUILDING-CORE-V2-PROPOSAL.md",
-      "docs/design/equity-uprise-building/references/archive/core-v2-migration/CORE-V2-FILE-MIGRATION-MANIFEST.md"
-    ],
-    "active_references": [
-      "docs/design/equity-uprise-building/references/basement-b1/README.md",
-      "docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/basement-b1/equity-uprise-basement-b1-core-v2-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/core-v2-plan-generation-manifest.json",
-      "docs/design/equity-uprise-building/references/equity-uprise-core-v2-plan-contact-sheet.png",
-      "docs/design/equity-uprise-building/references/floor-01-site/README.md",
-      "docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/floor-01-site/floor-01-site-plan-generation-manifest.json",
-      "docs/design/equity-uprise-building/references/floor-01/README.md",
-      "docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/floor-02/README.md",
-      "docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/floor-02/equity-uprise-floor-02-public-forum-core-v2-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/floor-03/README.md",
-      "docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/floor-03/equity-uprise-floor-03-fellowship-network-core-v2-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/floor-04/README.md",
-      "docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/floor-04/equity-uprise-floor-04-media-culture-core-v2-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/floor-05/README.md",
-      "docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/floor-05/equity-uprise-floor-05-policy-proof-core-v2-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/floor-06/README.md",
-      "docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/floor-06/equity-uprise-floor-06-penthouse-command-core-v2-schematic-v1.svg",
-      "docs/design/equity-uprise-building/references/floor-07/README.md",
-      "docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.dxf",
-      "docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png",
-      "docs/design/equity-uprise-building/references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg"
-    ],
     "public_viewers": [
       "equity-uprise-building-core-v2-3d.html",
       "equity-uprise-floor-01-3d.html",
@@ -285,6 +281,10 @@
       "equity-uprise-floor-05-3d.html",
       "equity-uprise-floor-06-3d.html",
       "equity-uprise-floor-07-3d.html"
+    ],
+    "workflows": [
+      ".github/workflows/deploy-pages.yml",
+      ".github/workflows/equity-uprise-core-v2-ci.yml"
     ]
   },
   "historical_reference_commits": [
@@ -297,18 +297,6 @@
       "role": "V1 Floor 1 interactive interior viewer"
     },
     {
-      "sha": "7c7726289781f270da25eef70789b704b63b30bd",
-      "role": "V1 Floor 2 Public Forum deterministic interactive viewer"
-    },
-    {
-      "sha": "54f8579b8ef5bb804fe8a3967199953e910e8d95",
-      "role": "Historical Floor 3 Fellowship + Network locked schematic geometry"
-    },
-    {
-      "sha": "9207174f179ea419396a9827d2d26cb025b859a1",
-      "role": "Historical Floor 3 Fellowship + Network canonical program/spec"
-    },
-    {
       "sha": "c674e07daf772ea739d93cc515657deb028e8b75",
       "role": "Core V2 combined whole-building generator"
     },
@@ -319,30 +307,6 @@
     {
       "sha": "7ea458406cc862656b5952a350fe87bcdc16110b",
       "role": "Historical fully stacked whole-building interactive viewer"
-    },
-    {
-      "sha": "07cc968e80f7c703cdea739ac38554331cad5a7c",
-      "role": "Historical Floor 4 Media + Culture canonical program/spec"
-    },
-    {
-      "sha": "8f3847d171864dcd721fe98ff8c1b2a469c41906",
-      "role": "Historical Floor 4 Media + Culture locked schematic geometry"
-    },
-    {
-      "sha": "06eaae3221f91c4d2c418a24df964af0a6db98af",
-      "role": "Historical Floor 5 Policy + Proof canonical program/spec"
-    },
-    {
-      "sha": "73016c8f98120088db87975f7128cc43429e6935",
-      "role": "Historical Floor 5 Policy + Proof locked schematic geometry"
-    },
-    {
-      "sha": "663c24579ff7643433e0becf98379cd4cc7625b0",
-      "role": "Historical Floor 6 Penthouse Command canonical program/spec"
-    },
-    {
-      "sha": "8ac6de5c8fa8d9c623061ec8fbcabaab2be26f65",
-      "role": "Historical Floor 6 Penthouse Command locked schematic geometry"
     }
   ]
 }

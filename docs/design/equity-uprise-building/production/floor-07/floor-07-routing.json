@@ -467,7 +467,16 @@
     "ecosystem_routes": {
       "type": "ui_state",
       "target": "ecosystem_routes",
-      "access": "public"
+      "access": "public",
+      "read_only": true
+    },
+    "uprise_world_optional": {
+      "type": "ui_state",
+      "target": "uprise_world_optional",
+      "access": "public-preview-disabled",
+      "read_only": true,
+      "enabled": false,
+      "note": "Experimental separate destination. No arbitrary redirect or launch is enabled by the building contract."
     }
   },
   "security": {

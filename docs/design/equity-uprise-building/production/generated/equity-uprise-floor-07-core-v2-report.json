@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-level-07",
+  "not_for_construction": true,
+  "not_for_aviation_approval": true,
+  "glb_bytes": 194224,
+  "sha256": "aee60fb4828a7dc1f907e5d8ac326fa7140b03ff6c556b10f94d61ca1773fd67",
+  "mesh_count": 283,
+  "inventory_records": 45,
+  "inventory_modeled": 45,
+  "checks_total": 15,
+  "checks_passed": 15,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "inventory coverage",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "72ft roof footprint",
+      "passed": true,
+      "detail": "0..72 x 0..72"
+    },
+    {
+      "name": "roof is open-air and guarded",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "both protected stairs reach roof",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "both roof stair doors modeled open",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "passenger roof stop not asserted",
+      "passed": true,
+      "detail": "overrun enclosure only; no passenger door/hotspot"
+    },
+    {
+      "name": "mobility zone remains conceptual",
+      "passed": true,
+      "detail": "no H/TLOF/FATO/regulatory marking"
+    },
+    {
+      "name": "ecosystem routing represented",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "uprise world optional route represented",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "city overlook represented",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "north service band equipped",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "primary public paths modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "visual completeness: lighting",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "visual completeness: roof support",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "visual completeness: life safety",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

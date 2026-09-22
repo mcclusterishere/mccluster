@@ -2,7 +2,7 @@
   "schema_version": "2.1.0",
   "scene_id": "equity-uprise-level-07",
   "scene_name": "Equity Uprise Level 07 \u2014 Roof / Mobility Portal",
-  "status": "core-v2-provisional-program",
+  "status": "core-v2-active",
   "not_for_construction": true,
   "shared_core_ref": "../building-core-v2.json",
   "floor_program_ref": "../core-v2-floor-programs.json",
@@ -12,9 +12,9 @@
     "roof-mobility",
     "uprise-world"
   ],
-  "design_maturity": "pre-iterative-program-rewrite",
-  "render_readiness": "chassis-only-not-final-program",
-  "working_development_stage": null,
+  "design_maturity": "reconciled-current-iterative-pass",
+  "render_readiness": "basic-render-ready",
+  "working_development_stage": "ecosystem-departure-arrival-overlook",
   "primary_competency_ids": [],
   "secondary_competency_ids": [],
   "authority": {
@@ -345,5 +345,10 @@
   "lighting_ref": "floor-07-lighting.json",
   "hotspots_ref": "floor-07-hotspots.json",
   "routing_ref": "floor-07-routing.json",
-  "states_ref": "floor-07-states.json"
+  "states_ref": "floor-07-states.json",
+  "object_inventory_ref": "floor-07-object-inventory.json",
+  "preservation_map_ref": "../../FLOOR-07-V1-V2-PRESERVATION-MAP.md",
+  "program_reconciliation_ref": "../../FLOOR-07-PROGRAM-RECONCILIATION.md",
+  "ecosystem_routing_contract_ref": "../../FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md",
+  "not_for_aviation_approval": true
 }
