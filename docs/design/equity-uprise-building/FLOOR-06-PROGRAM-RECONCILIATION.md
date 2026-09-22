@@ -11,7 +11,7 @@ Development role: **Institutional Overview / Direction / Transition**.
 ## Locked program
 - central Penthouse Command zone with one 16' × 5' table and maximum 6 canonical seats;
 - north PENTHOUSE COMMAND wall with dynamic **NOW / PAST WORK / JOIN** surfaces;
-- one suspended Halo Globe / Spatial Intelligence instrument at approximately (41,22), center 8.25 ft AFF, radius 2.25 ft, intentionally isolated in the open southeast-central pocket;
+- one suspended Halo Globe / Spatial Intelligence instrument at approximately (22,22.5), center 8.25 ft AFF, radius 2.25 ft, intentionally isolated in the open southwest pocket;
 - west Institutional Salon / Support with one sofa/bench, two lounge chairs, one table and up to two plants;
 - south Strategy Review Room;
 - south Partner / Executive Briefing Room;
