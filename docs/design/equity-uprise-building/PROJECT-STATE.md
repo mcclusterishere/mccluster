@@ -473,7 +473,7 @@ Implemented in the whole-building viewer:
 Current gate: deterministic PBR regeneration + CI, then human-eye visual preview.
 
 
-## Facade Step 8 solar environment — SOURCE IMPLEMENTED / VERIFICATION PENDING
+## Facade Step 8 solar environment — VERIFIED / LIVE
 
 Step 8 makes the exterior light respond automatically to the viewer's device clock.
 
@@ -493,4 +493,11 @@ The viewer also supports camera deep links such as:
 - `?view=facade&camera=entry`
 - `?view=facade&camera=crown`
 
-Current gate: Step 8 viewer CI + deployment + live visual review.
+Verification:
+- PR #162 merged to main at `96362e7f26085e9bf8baa0f91a210c22591f97f4`;
+- Equity Uprise Core V2 CI: green;
+- Canonical Architecture Contract: green;
+- MCP Continuity and Preview: green;
+- live-site deployment: green.
+
+Step 8 is live. Remaining work is visual QA/refinement against the real rendered experience, not missing implementation.
