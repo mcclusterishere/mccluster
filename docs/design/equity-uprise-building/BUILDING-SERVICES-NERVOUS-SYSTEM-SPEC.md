@@ -1,10 +1,10 @@
 # Equity Uprise — Building Services / Nervous System Spec
 
-> Status: **ACTIVE WHOLE-BUILDING SERVICES AUTHORITY — SERVICES STEP 6 VERIFIED / STEP 7 NEXT**
+> Status: **ACTIVE WHOLE-BUILDING SERVICES AUTHORITY — SERVICES STEP 6 VERIFIED / STEP 7 ACTIVE**
 >
 > Machine companion: `production/building-services-core-v2.json`.
 >
-> Current visible implementation: the canonical Services GLB/viewer layer contains the Step 2 vertical backbone, Step 3 B1 source/plant distribution, Step 4 Floors 1–3 branches, Step 5 Floors 4–6 distribution and representative Level 7 handoffs, plus the verified Step 6 detailed roof terminations, devices, service-screen routes and lightning-protection concept. The next implementation layer is Step 7 interior device / ceiling realism.
+> Current visible implementation: the canonical Services GLB/viewer layer contains the Step 2 vertical backbone, Step 3 B1 source/plant distribution, Step 4 Floors 1–3 branches, Step 5 Floors 4–6 distribution and representative Level 7 handoffs, plus the verified Step 6 detailed roof terminations, devices, service-screen routes and lightning-protection concept. Step 7 is the active implementation layer for representative interior device, ceiling and service-access realism across Floors 1–6.
 >
 > **Not for construction or engineering approval.**
 

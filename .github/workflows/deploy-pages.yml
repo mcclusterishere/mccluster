@@ -59,14 +59,14 @@ jobs:
           python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
           python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 
-      - name: Verify Equity Uprise Services Step 6 deploy contract
+      - name: Verify Equity Uprise Services Step 7 deploy contract
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           p=Path("docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2-report.json")
           r=json.loads(p.read_text())
-          assert r.get("status")=="services-step6-level7-terminations", r.get("status")
+          assert r.get("status")=="services-step7-interior-device-ceiling-realism", r.get("status")
           assert r.get("passed") is True
           assert r.get("checks_failed")==0
           assert r.get("b1_riser_connections")==9
@@ -87,7 +87,26 @@ jobs:
           assert r.get("step6_lightning_conductor_segments")==4
           assert r.get("step6_service_screen_routes",0)>=2
           assert r.get("step6_roof_termination_devices",0)>0
-          print("Services Step 6 deploy contract verified", r["sha256"])
+          assert r.get("step7_levels")==[1,2,3,4,5,6]
+          assert r.get("step7_device_meshes",0)>=220
+          assert r.get("step7_electrical_panels")==6
+          assert r.get("step7_data_racks")==6
+          assert r.get("step7_cable_trays")==12
+          assert r.get("step7_conduit_drops")==12
+          assert r.get("step7_diffusers")==24
+          assert r.get("step7_return_grilles")==12
+          assert r.get("step7_detectors")==24
+          assert r.get("step7_strobes")==12
+          assert r.get("step7_extinguishers")==12
+          assert r.get("step7_access_readers")==6
+          assert r.get("step7_intercoms")==6
+          assert r.get("step7_cameras")==12
+          assert r.get("step7_receptacles")==24
+          assert r.get("step7_floor_boxes")==12
+          assert r.get("step7_valves")==12
+          assert r.get("step7_access_panels")==18
+          assert r.get("step7_plumbing_connections")==12
+          print("Services Step 7 deploy contract verified", r["sha256"])
           PY
 
       - name: Publish Equity Uprise preview assets
