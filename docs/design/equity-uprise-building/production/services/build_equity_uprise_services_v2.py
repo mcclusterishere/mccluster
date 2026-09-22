@@ -227,12 +227,17 @@ add_floor_branch(3,"FIRE-PROTECTION",[(54.25,67.5),(32,67.5),(32,55)],style="pip
 add_floor_branch(3,"ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,54),(44,54)],endpoint="EGRESS")
 
 # Step 5: F4-F6 and L7 roof/service terminations.
+upper_floor_power_data_refs={
+    5:"F5-POLICY-POWER-01",
+    6:"F6-COMMAND-POWER-01",
+}
 for level,label,ycenter in [(4,"MEDIA",42),(5,"POLICY",40),(6,"COMMAND",38)]:
-    add_floor_branch(level,"ELEC-NORMAL",[(57.25,67.5),(48,67.5),(48,ycenter),(35,ycenter)],endpoint=f"{label}-POWER",inventory_ref=f"F{level}-{label}-POWER-01")
-    add_floor_branch(level,"DATA-STRUCTURED",[(58.5,67.5),(46,67.5),(46,ycenter),(35,ycenter)],endpoint=f"{label}-DATA",inventory_ref=f"F{level}-{label}-DATA-01")
-    add_floor_branch(level,"AV-MEDIA",[(58.5,67.5),(48,67.5),(48,52),(35,52)],endpoint=f"{label}-AV",inventory_ref=f"F{level}-{label}-DISPLAY-01")
-    add_floor_branch(level,"SECURITY-ACCESS",[(58.5,70.5),(52,70.5),(52,27),(50,27)],endpoint=f"{label}-CHECKIN",inventory_ref=f"F{level}-{label}-CHECKIN-01")
-    add_floor_branch(level,"BAS-CONTROLS",[(58.5,70.5),(43,70.5),(43,64),(40,64)],endpoint=f"{label}-BAS",inventory_ref=f"F{level}-{label}-BAS-01")
+    canonical_power_data_ref=upper_floor_power_data_refs.get(level)
+    add_floor_branch(level,"ELEC-NORMAL",[(57.25,67.5),(48,67.5),(48,ycenter),(35,ycenter)],endpoint=f"{label}-POWER",inventory_ref=canonical_power_data_ref)
+    add_floor_branch(level,"DATA-STRUCTURED",[(58.5,67.5),(46,67.5),(46,ycenter),(35,ycenter)],endpoint=f"{label}-DATA",inventory_ref=canonical_power_data_ref)
+    add_floor_branch(level,"AV-MEDIA",[(58.5,67.5),(48,67.5),(48,52),(35,52)],endpoint=f"{label}-AV")
+    add_floor_branch(level,"SECURITY-ACCESS",[(58.5,70.5),(52,70.5),(52,27),(50,27)],endpoint=f"{label}-CHECKIN")
+    add_floor_branch(level,"BAS-CONTROLS",[(58.5,70.5),(43,70.5),(43,64),(40,64)],endpoint=f"{label}-BAS")
     add_floor_branch(level,"WATER-DOMESTIC",[(54.25,70.5),(30,70.5),(30,64),(29,64)],style="pipe",width=.20,endpoint="RESTROOM-WATER",inventory_ref=f"F{level}-RR-B-VANITY-01")
     add_floor_branch(level,"SANITARY-VENT",[(55.75,67.5),(28,67.5),(28,69),(29,69)],style="pipe",width=.30,endpoint="RESTROOM-SANITARY",inventory_ref=f"F{level}-RR-B-WC-01")
     add_floor_branch(level,"HVAC-AIR",[(51.75,67.5),(44,67.5),(44,48),(36,48)],style="duct",width=.75,height=.45,endpoint=f"{label}-HVAC")
@@ -241,13 +246,13 @@ for level,label,ycenter in [(4,"MEDIA",42),(5,"POLICY",40),(6,"COMMAND",38)]:
 
 add_floor_branch(6,"DATA-STRUCTURED",[(58.5,67.5),(50,67.5),(50,12),(55,12)],endpoint="HALO-DATA",inventory_ref="F6-HALO-CEILING-FEED-01")
 add_floor_branch(6,"AV-MEDIA",[(58.5,67.5),(49,67.5),(49,13),(55,13),(55,12)],endpoint="HALO-MEDIA",inventory_ref="F6-HALO-CEILING-FEED-01")
-add_floor_branch(7,"ELEC-NORMAL",[(57.25,67.5),(48,67.5),(48,42),(36,42)],endpoint="ROOF-MECH-POWER",inventory_ref="L7-ROOF-MECH-01")
-add_floor_branch(7,"ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,54),(42,54)],endpoint="ROOF-EGRESS-LIGHT",inventory_ref="L7-EGRESS-LIGHT-01")
-add_floor_branch(7,"DATA-STRUCTURED",[(58.5,67.5),(47,67.5),(47,46),(36,46)],endpoint="ROOF-COMMS",inventory_ref="L7-ROOF-COMMS-01")
-add_floor_branch(7,"BAS-CONTROLS",[(58.5,70.5),(44,70.5),(44,50),(36,50)],endpoint="ROOF-SENSORS",inventory_ref="L7-BAS-WEATHER-01")
-add_floor_branch(7,"STORM-DRAINAGE",[(55.75,70.5),(42,70.5),(42,60),(32,60)],style="pipe",width=.35,endpoint="ROOF-DRAINAGE",inventory_ref="L7-ROOF-DRAIN-01")
-add_floor_branch(7,"FIRE-PROTECTION",[(54.25,67.5),(38,67.5),(38,55),(32,55)],style="pipe",width=.22,endpoint="ROOF-FIRE-CABINET",inventory_ref="L7-FIRE-CABINET-01")
-add_floor_branch(7,"SECURITY-ACCESS",[(58.5,70.5),(52,70.5),(52,38),(44,38)],endpoint="ROOF-INTERCOM",inventory_ref="L7-ROOF-INTERCOM-01")
+add_floor_branch(7,"ELEC-NORMAL",[(57.25,67.5),(48,67.5),(48,42),(36,42)],endpoint="ROOF-MECH-POWER")
+add_floor_branch(7,"ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,54),(42,54)],endpoint="ROOF-EGRESS-LIGHT")
+add_floor_branch(7,"DATA-STRUCTURED",[(58.5,67.5),(47,67.5),(47,46),(36,46)],endpoint="ROOF-COMMS")
+add_floor_branch(7,"BAS-CONTROLS",[(58.5,70.5),(44,70.5),(44,50),(36,50)],endpoint="ROOF-SENSORS")
+add_floor_branch(7,"STORM-DRAINAGE",[(55.75,70.5),(42,70.5),(42,60),(32,60)],style="pipe",width=.35,endpoint="ROOF-DRAINAGE")
+add_floor_branch(7,"FIRE-PROTECTION",[(54.25,67.5),(38,67.5),(38,55),(32,55)],style="pipe",width=.22,endpoint="ROOF-FIRE-CABINET")
+add_floor_branch(7,"SECURITY-ACCESS",[(58.5,70.5),(52,70.5),(52,38),(44,38)],endpoint="ROOF-INTERCOM")
 
 # Step 6: detailed Level 7 roof terminations and service-access routing.
 # Step 5's representative L7 handoffs remain intact; this pass adds the actual
@@ -607,6 +612,26 @@ OUT.write_bytes(glb)
 sha=hashlib.sha256(glb).hexdigest()
 branch_segments=sum(1 for r in records if r["kind"]=="floor_branch")
 endpoints=sum(1 for r in records if r["kind"]=="floor_endpoint")
+branch_occurrences={}
+floor_branch_topology=[]
+for b in floor_branch_records:
+    endpoint=b.get("endpoint") or "GENERAL"
+    key=(b["level"],b["system_id"],endpoint)
+    branch_occurrences[key]=branch_occurrences.get(key,0)+1
+    occurrence=branch_occurrences[key]
+    branch_id=f"BRANCH::F{b['level']}::{b['system_id']}::{endpoint}::{occurrence:02d}"
+    x,y=b["points"][-1]
+    floor_branch_topology.append({
+        "branch_id":branch_id,
+        "handoff_id":f"HANDOFF::F{b['level']}::{b['system_id']}",
+        "level":b["level"],
+        "system_id":b["system_id"],
+        "endpoint":b.get("endpoint"),
+        "inventory_ref":b.get("inventory_ref"),
+        "points_ft":[[float(px),float(py)] for px,py in b["points"]],
+        "connection_xy_ft":[float(x),float(y)],
+        "services_step":b.get("step") or (4 if b["level"] in {1,2,3} else 5),
+    })
 report={
     "schema_version":"1.1.0",
     "asset":"equity-uprise-building-services-core-v2",
@@ -676,6 +701,8 @@ report={
     "system_families_total":len(SYSTEMS),
     "floor_branch_segments":branch_segments,
     "floor_endpoints":endpoints,
+    "floor_branch_records_total":len(floor_branch_topology),
+    "floor_branch_records":floor_branch_topology,
     "shared_reservation_ft":SHARED,
     "systems":sorted(modeled_systems),
     "checks_total":len(checks),

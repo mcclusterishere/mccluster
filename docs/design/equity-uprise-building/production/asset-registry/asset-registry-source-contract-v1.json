@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1.0",
   "contract_id": "equity-uprise-asset-registry-source-contract-v1",
-  "status": "step3a-b1-operational-graph-source",
+  "status": "step3b-floor-branch-endpoint-graph-source",
   "building_id": "equity-uprise-core-v2",
   "source_revision": "caa9c6d36e45f45c8e98f800e6355be25782d66b",
   "not_for_construction": true,
@@ -257,5 +257,13 @@
     "report": "docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-step3a-report.json",
     "builder": "docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_step3a.py",
     "verifier": "docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step3a.py"
+  },
+  "step3b_graph_policy": {
+    "scope": "F1-L7 modeled service branches and endpoints",
+    "services_topology_authority": "docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2-report.json#floor_branch_records",
+    "relationship_rule": "link only canonical inventory refs that resolve to current asset identities; semantic-only branches remain explicit and do not invent physical assets",
+    "expanded_instance_rule": "when branch count equals expanded instance count for one source record, pair deterministically one-to-one; otherwise a branch may serve the full canonical asset group",
+    "modeled_connection_point_rule": "service endpoint XY is retained for training traceability only and must not overwrite unverified as-built asset center/bounds",
+    "no_live_control_enablement": true
   }
 }
