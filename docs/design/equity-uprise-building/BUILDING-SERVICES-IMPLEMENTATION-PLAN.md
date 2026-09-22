@@ -50,4 +50,4 @@ Require vertical continuity B1→L7, no core/circulation clashes, traceability f
 
 ## Current stop point
 
-Services Step 1 is complete. **Services Step 2 source is implemented:** a dedicated real 3D backbone GLB plus a Services viewer layer. Deterministic generation/CI is the current gate.
+Services Step 1 is complete. **Services Step 2 is implemented and verified:** a dedicated real 3D backbone GLB plus a Services viewer layer, with 9/9 risers, 63 story segments, 63/63 authorized floor handoff stubs and 12/12 checks passing. Next is Services Step 3: B1 source/plant connections.
