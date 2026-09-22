@@ -106,7 +106,8 @@ The working viewer now treats the building as one continuous object from B1 thro
 - detailed Floor 2 is inserted at FFE +13.5 ft;
 - detailed Floor 3 is inserted at FFE +27 ft;
 - detailed Floor 4 is inserted at FFE +40.5 ft;
-- Floors 5–7 remain visible as chassis placeholders at their real elevations;
+- detailed Floor 5 is inserted at FFE +54 ft;
+- Floors 6–7 remain visible as chassis placeholders at their real elevations;
 - each future floor pass replaces/improves its level **inside this stack**, not as an isolated experiment.
 
 Public working-stack viewer: `equity-uprise-building-core-v2-3d.html`.
@@ -130,8 +131,6 @@ Required references:
 - `production/floor-03/floor-03-object-inventory.json`;
 - `production/floor-03/build_equity_uprise_floor_03_v2.py`.
 
-Floor 4 is **visually reviewable, not user-approved complete**. Final approval depends on direct visual review in the isolated viewer.
-
 ## Floor 4 — RECONCILED / REAL 3D ACTIVE / STACKED
 
 Canonical identity: **Media + Culture**.
@@ -149,6 +148,8 @@ Current state:
 - builder now requires both inventory coverage and a dedicated visual-completeness gate;
 - public media surfaces are constrained to real/approved public Equity Uprise content; private masters, rights, DDEX, payment and approval state remain non-public.
 
+Floor 4 is **visually reviewable, not user-approved complete**. Final approval depends on direct visual review in the isolated viewer.
+
 Required references:
 - `FLOOR-04-PROGRAM-RECONCILIATION.md`;
 - `FLOOR-04-V1-V2-PRESERVATION-MAP.md`;
@@ -157,9 +158,33 @@ Required references:
 
 Visual approval remains iterative.
 
-## Floors 5–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
+## Floor 5 — RECONCILED / REAL 3D ACTIVE / STACKED
 
-Current `core-v2-floor-programs.json` still treats Floors 5–7 as pre-iterative program/interior work.
+Canonical identity: **Policy + Proof**.
+
+Current state:
+- program reconciliation complete;
+- historical Floor 5 spec/schematic audited;
+- preservation map complete;
+- machine inventory: **80 stable records / 106 total instances**;
+- inventory-driven GLB builder active;
+- standalone viewer active;
+- inserted into the working building at **FFE +54 ft**;
+- building-level Floor 5 control truly isolates the detailed Floor 5 model;
+- builder requires both inventory coverage and a dedicated visual-completeness gate;
+- public surfaces are limited to public/source-backed records, while drafts, sensitive notes, private review state, approval tokens and submission credentials remain authenticated/private.
+
+Required references:
+- `FLOOR-05-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-05-V1-V2-PRESERVATION-MAP.md`;
+- `production/floor-05/floor-05-object-inventory.json`;
+- `production/floor-05/build_equity_uprise_floor_05_v2.py`.
+
+Floor 5 is **visually reviewable, not user-approved complete**. Final approval depends on direct visual review in the isolated viewer.
+
+## Floors 6–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
+
+Current `core-v2-floor-programs.json` still treats Floors 6–7 as pre-iterative program/interior work.
 
 Do not interpret generated plan/program plates as finished 3D floors.
 
@@ -186,7 +211,8 @@ Use these to recover design quality, not obsolete stair/core geometry.
 6. **DONE:** Floor 2 real 3D + working-stack integration.
 7. **DONE:** Floor 3 reconciliation → inventory → real 3D → working-stack integration.
 8. **DONE:** Floor 4 — Media + Culture — reconciliation → inventory → real 3D → working-stack integration.
-9. **NEXT:** Floor 5 — Policy + Proof — reconciliation, preservation map, inventory, real 3D, then stack at +54 ft.
+9. **DONE:** Floor 5 — Policy + Proof — reconciliation → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration.
+10. **NEXT:** Floor 6 — institutional command / penthouse — reconciliation, preservation map, inventory, real 3D, then stack at +67.5 ft.
 
 ## Do not waste time on
 
