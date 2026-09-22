@@ -15,6 +15,9 @@
     ],
     "basement": [
       "../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md",
+      "../../BASEMENT-B1-PROGRAM-RECONCILIATION.md",
+      "../../BASEMENT-B1-V1-V2-PRESERVATION-MAP.md",
+      "../../BASEMENT-B1-SCHEMATIC-PLAN-BASIS.md",
       "../basement-b1-program.json"
     ],
     "tunnel": [
@@ -444,6 +447,13 @@
     "live_occupancy_visible": false,
     "competency_evidence_allowed": true
   },
+  "design_maturity": "reconciled-current-iterative-pass",
+  "render_readiness": "detailed-real-3d",
+  "object_inventory_ref": "basement-b1-object-inventory.json",
+  "program_reconciliation_ref": "../../BASEMENT-B1-PROGRAM-RECONCILIATION.md",
+  "preservation_map_ref": "../../BASEMENT-B1-V1-V2-PRESERVATION-MAP.md",
+  "schematic_basis_ref": "../../BASEMENT-B1-SCHEMATIC-PLAN-BASIS.md",
+  "detailed_builder_ref": "build_equity_uprise_basement_b1_v2.py",
   "camera_ref": "basement-b1-camera.json",
   "materials_ref": "basement-b1-materials.json",
   "lighting_ref": "basement-b1-lighting.json",

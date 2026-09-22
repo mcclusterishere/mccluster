@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 253,
+  "candidate_count": 254,
   "capability_source_count": 102,
-  "support_only_count": 151,
-  "checks_total": 912,
-  "checks_passed": 912,
+  "support_only_count": 152,
+  "checks_total": 916,
+  "checks_passed": 916,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -100,6 +100,7 @@
     "docs/the-mission-fund.md",
     "docs/uprise-world/AUDIT-REPORT.md",
     "ecosystem.html",
+    "equity-uprise-basement-b1-3d.html",
     "equity-uprise-fellowship.html",
     "equity-uprise-floor-01-3d.html",
     "equity-uprise-floor-02-3d.html",
@@ -267,7 +268,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "253 entries"
+      "detail": "254 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1873,6 +1874,26 @@
       "name": "ecosystem.html support-only semantics coherent",
       "passed": true,
       "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "equity-uprise-basement-b1-3d.html capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "equity-uprise-basement-b1-3d.html classified",
+      "passed": true,
+      "detail": "classification='building_preview_support'"
+    },
+    {
+      "name": "equity-uprise-basement-b1-3d.html support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "equity-uprise-basement-b1-3d.html support rationale present",
+      "passed": true,
+      "detail": ""
     },
     {
       "name": "equity-uprise-fellowship.html capability ids known",

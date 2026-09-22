@@ -7,7 +7,7 @@
       "docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md",
       "docs/design/EQUITY-UPRISE-REPO-AUDIT.md"
     ],
-    "public_viewer_regex": "^equity-uprise-(?:building-core-v2|floor-0[1-7])-3d\\.html$",
+    "public_viewer_regex": "^equity-uprise-(?:building-core-v2|floor-0[1-7]|basement-b1)-3d\\.html$",
     "workflows": [
       ".github/workflows/deploy-pages.yml",
       ".github/workflows/equity-uprise-core-v2-ci.yml"
@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 252,
+  "tracked_count": 254,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -132,6 +132,8 @@
     ],
     "generated_artifacts": [
       "docs/design/equity-uprise-building/production/generated/equity-uprise-authority-hygiene-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2.glb",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-core-v2-plan-semantics-report.json",
