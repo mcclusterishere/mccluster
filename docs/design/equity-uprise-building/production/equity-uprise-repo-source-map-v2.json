@@ -490,13 +490,6 @@
       "rationale": "Defines the canonical Seek First / Hitman's Halo control-plane boundary and the sanitized Equity Uprise Floor 6 projection."
     },
     {
-      "path": "docs/design/equity-uprise-building/production/facade/equity-uprise-logo-vector.json",
-      "classification": "building_preview_support",
-      "capability_ids": [],
-      "support_only": true,
-      "rationale": "Machine-readable exact Equity Uprise logo vector used by the facade generator; presentation/identity support only, not a distinct program capability."
-    },
-    {
       "path": "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md",
       "classification": "development_program_authority_pre_building_rewrite",
       "capability_ids": [],
