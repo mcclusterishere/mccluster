@@ -59,14 +59,14 @@ jobs:
           python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
           python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 
-      - name: Verify Equity Uprise Services Step 5 deploy contract
+      - name: Verify Equity Uprise Services Step 6 deploy contract
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           p=Path("docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2-report.json")
           r=json.loads(p.read_text())
-          assert r.get("status")=="services-step5-floors-4-6-roof-branches", r.get("status")
+          assert r.get("status")=="services-step6-level7-terminations", r.get("status")
           assert r.get("passed") is True
           assert r.get("checks_failed")==0
           assert r.get("b1_riser_connections")==9
@@ -76,7 +76,18 @@ jobs:
           assert r.get("step4_floor_branch_segments",0)>0
           assert r.get("step5_floor_branch_segments",0)>0
           assert r.get("step5_floor_endpoints",0)>0
-          print("Services Step 5 deploy contract verified", r["sha256"])
+          assert r.get("step6_level")==7
+          assert r.get("step6_mechanical_units_served")==3
+          assert r.get("step6_roof_drains")==6
+          assert r.get("step6_path_lights")==14
+          assert r.get("step6_stair_sconces")==4
+          assert r.get("step6_emergency_calls")==2
+          assert r.get("step6_fire_support_points")==2
+          assert r.get("step6_lightning_terminals")==4
+          assert r.get("step6_lightning_conductor_segments")==4
+          assert r.get("step6_service_screen_routes",0)>=2
+          assert r.get("step6_roof_termination_devices",0)>0
+          print("Services Step 6 deploy contract verified", r["sha256"])
           PY
 
       - name: Publish Equity Uprise preview assets

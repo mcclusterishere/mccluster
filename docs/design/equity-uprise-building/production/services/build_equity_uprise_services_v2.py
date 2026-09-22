@@ -6,7 +6,8 @@ Services Step 2 established the B1-to-roof vertical backbone. Services Step 3
 adds representative B1 source/plant equipment plus source-to-riser distribution
 paths. Services Step 4 extends real branch geometry and endpoint drops across
 Floors 1-3. Services Step 5 extends those branch routes through Floors 4-6 and
-Level 7 roof/service terminations.
+adds representative Level 7 handoffs. Services Step 6 completes the detailed
+Level 7 roof terminations, service routes, devices and lightning concept.
 
 This is conceptual digital-twin coordination, not construction engineering.
 No final duct, pipe, conductor, breaker, pump, pressure, flow or code sizing is
@@ -53,6 +54,7 @@ COLORS={
  "SECURITY-ACCESS":[232,82,96,225],
  "FIRE-ALARM":[255,105,68,225],
  "SERVICE-HOUSEKEEPING":[145,150,155,190],
+ "LIGHTNING-PROTECTION":[190,195,205,235],
  "SEPARATION":[120,125,132,65],
 }
 PBR={k:PBRMaterial(name="SVC-"+k,baseColorFactor=v,metallicFactor=.22,roughnessFactor=.44,alphaMode="BLEND",doubleSided=True) for k,v in COLORS.items()}
@@ -243,6 +245,98 @@ add_floor_branch(7,"STORM-DRAINAGE",[(55.75,70.5),(42,70.5),(42,60),(32,60)],sty
 add_floor_branch(7,"FIRE-PROTECTION",[(54.25,67.5),(38,67.5),(38,55),(32,55)],style="pipe",width=.22,endpoint="ROOF-FIRE-CABINET",inventory_ref="L7-FIRE-CABINET-01")
 add_floor_branch(7,"SECURITY-ACCESS",[(58.5,70.5),(52,70.5),(52,38),(44,38)],endpoint="ROOF-INTERCOM",inventory_ref="L7-ROOF-INTERCOM-01")
 
+# Step 6: detailed Level 7 roof terminations and service-access routing.
+# Step 5's representative L7 handoffs remain intact; this pass adds the actual
+# service/device layer against the canonical Floor 7 object inventory.
+step6_records=[]
+step6_branch_records=[]
+def tag_step6(start,inventory_ref):
+    for r in records[start:]:
+        r["step"]=6
+        r["inventory_ref"]=inventory_ref
+        step6_records.append(r)
+
+def add_step6_branch(system_id,points,endpoint,inventory_ref,style="tray",width=.18,height=.18,z_offset=None):
+    start=len(records)
+    add_floor_branch(7,system_id,points,z_offset=z_offset,style=style,width=width,height=height,endpoint=endpoint,inventory_ref=inventory_ref)
+    tag_step6(start,inventory_ref)
+    floor_branch_records[-1]["step"]=6
+    step6_branch_records.append(floor_branch_records[-1])
+
+def add_step6_box(name,bounds,z0,h,system_id,kind,inventory_ref):
+    add_box(name,bounds,z0,h,system_id,kind,7,{"step":6,"inventory_ref":inventory_ref})
+    step6_records.append(records[-1])
+
+def add_step6_cylinder(name,cx,cy,z0,radius,h,system_id,kind,inventory_ref,sections=18,axis="z"):
+    add_cylinder(name,cx,cy,z0,radius,h,system_id,kind,7,sections,axis,{"step":6,"inventory_ref":inventory_ref})
+    step6_records.append(records[-1])
+
+roof_mech=[
+    ("F7-MECH-UNIT-01",(37.5,65)),
+    ("F7-MECH-UNIT-02",(43.5,65)),
+    ("F7-MECH-UNIT-03",(48.5,63)),
+]
+for idx,(ref,(x,y)) in enumerate(roof_mech,1):
+    add_step6_branch("ELEC-NORMAL",[(57.25,67.5),(52,67.5),(52,y),(x,y)],f"ROOF-MECH-{idx}-POWER",ref)
+    add_step6_branch("BAS-CONTROLS",[(58.5,70.5),(53,70.5),(53,y),(x,y)],f"ROOF-MECH-{idx}-BAS",ref)
+    add_step6_branch("HVAC-AIR",[(51.75,69),(51.75,y),(x,y)],f"ROOF-MECH-{idx}-AIR",ref,style="duct",width=.62,height=.38)
+
+roof_drains=[(4,6),(24,6),(48,6),(4,48),(24,48),(48,60)]
+roof_drain_records=[]
+for idx,(x,y) in enumerate(roof_drains,1):
+    pts=[(55.75,70.5),(48,70.5),(48,y)]
+    if x!=48: pts.append((x,y))
+    add_step6_branch("STORM-DRAINAGE",pts,f"ROOF-DRAIN-{idx}","F7-DRAINS-01",style="pipe",width=.30,z_offset=.55)
+    add_step6_cylinder(f"SVC-F7-DEVICE::STORM-DRAINAGE::ROOF-DRAIN-{idx}",x,y,LEVEL_Z[7]+.03,.34,.16,"STORM-DRAINAGE","roof_drain","F7-DRAINS-01")
+    roof_drain_records.append(records[-1])
+
+add_step6_branch("ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,52),(20,52)],"ROOF-LIGHTING-POWER","F7-PATH-LIGHTS-01")
+add_step6_branch("LIGHTING-CONTROLS",[(50,52),(50,6),(48,6)],"ROOF-PATH-LIGHTING-CONTROL","F7-PATH-LIGHTS-01")
+path_light_positions=[
+    (22,52),(28,52),(34,52),(40,52),(46,52),
+    (50,42),(50,34),(50,26),(50,18),(50,10),
+    (42,6),(34,6),(26,6),(18,6),
+]
+path_light_records=[]
+for idx,(x,y) in enumerate(path_light_positions,1):
+    add_step6_cylinder(f"SVC-F7-DEVICE::LIGHTING-CONTROLS::PATH-{idx:02d}",x,y,LEVEL_Z[7]+.08,.11,1.05,"LIGHTING-CONTROLS","roof_path_light","F7-PATH-LIGHTS-01",sections=12)
+    path_light_records.append(records[-1])
+
+stair_sconces=[(61.0,53.55),(65.0,53.55),(13.5,53.55),(17.5,53.55)]
+sconce_records=[]
+for idx,(x,y) in enumerate(stair_sconces,1):
+    add_step6_box(f"SVC-F7-DEVICE::ELEC-EMERGENCY::STAIR-SCONCE-{idx}",(x-.18,y-.12,x+.18,y+.12),LEVEL_Z[7]+3.0,.75,"ELEC-EMERGENCY","roof_stair_sconce","F7-STAIR-SCONCES-01")
+    sconce_records.append(records[-1])
+
+add_step6_branch("DATA-STRUCTURED",[(58.5,67.5),(51,67.5),(51,52),(59,52)],"EMERGENCY-CALL-A","F7-EMERGENCY-CALL-01")
+add_step6_branch("DATA-STRUCTURED",[(58.5,67.5),(51,67.5),(51,52),(18.5,52)],"EMERGENCY-CALL-B","F7-EMERGENCY-CALL-01")
+emergency_call_records=[]
+for idx,(x,y) in enumerate(((59,52),(18.5,52)),1):
+    add_step6_box(f"SVC-F7-DEVICE::SECURITY-ACCESS::EMERGENCY-CALL-{idx}",(x-.24,y-.18,x+.24,y+.18),LEVEL_Z[7]+1.2,2.1,"SECURITY-ACCESS","roof_emergency_call","F7-EMERGENCY-CALL-01")
+    emergency_call_records.append(records[-1])
+
+add_step6_branch("FIRE-PROTECTION",[(54.25,67.5),(50,67.5),(50,52),(58.2,52)],"FIRE-CABINET-A","F7-FIRE-CABINET-01",style="pipe",width=.22)
+add_step6_branch("FIRE-PROTECTION",[(54.25,67.5),(50,67.5),(50,52),(19.5,52)],"FIRE-CABINET-B","F7-FIRE-CABINET-01",style="pipe",width=.22)
+fire_support_records=[]
+for idx,(x,y) in enumerate(((58.2,52),(19.5,52)),1):
+    add_step6_box(f"SVC-F7-DEVICE::FIRE-PROTECTION::CABINET-{idx}",(x-.42,y-.20,x+.42,y+.20),LEVEL_Z[7]+.8,2.4,"FIRE-PROTECTION","roof_fire_support","F7-FIRE-CABINET-01")
+    fire_support_records.append(records[-1])
+
+service_route_records=[]
+add_step6_box("SVC-F7-SERVICE-ROUTE::NORTH-WALK",(18,57.7,50,58.3),LEVEL_Z[7]+.04,.08,"SERVICE-HOUSEKEEPING","roof_service_route","F7-SERVICE-WALK-01")
+service_route_records.append(records[-1])
+add_step6_box("SVC-F7-SERVICE-ROUTE::SCREEN-ACCESS",(34,59.7,50,60.3),LEVEL_Z[7]+.04,.08,"SERVICE-HOUSEKEEPING","roof_service_route","F7-SERVICE-SCREEN-01")
+service_route_records.append(records[-1])
+
+lightning_terminal_records=[]
+for idx,(x,y) in enumerate(((2,2),(70,2),(2,70),(70,70)),1):
+    add_step6_cylinder(f"SVC-F7-DEVICE::LIGHTNING-PROTECTION::AIR-TERMINAL-{idx}",x,y,LEVEL_Z[7]+4.1,.055,2.2,"LIGHTNING-PROTECTION","roof_lightning_terminal","F7-LIGHTNING-RODS-01",sections=10)
+    lightning_terminal_records.append(records[-1])
+lightning_conductor_records=[]
+for idx,(cx,cy,length,axis) in enumerate(((36,2,68,"x"),(36,70,68,"x"),(2,36,68,"y"),(70,36,68,"y")),1):
+    add_step6_cylinder(f"SVC-F7-DEVICE::LIGHTNING-PROTECTION::PERIMETER-{idx}",cx,cy,LEVEL_Z[7]+4.2,.045,length,"LIGHTNING-PROTECTION","roof_lightning_conductor","F7-LIGHTNING-RODS-01",sections=10,axis=axis)
+    lightning_conductor_records.append(records[-1])
+
 checks=[]
 def ck(name,ok,detail=""):
     checks.append({"name":name,"passed":bool(ok),"detail":str(detail)})
@@ -296,7 +390,31 @@ ck("Step 5 upper floors have power/data/AV",all({"ELEC-NORMAL","DATA-STRUCTURED"
 ck("Step 5 Floor 6 Halo receives data and media",{"HALO-DATA","HALO-MEDIA"}<={x["endpoint"] for x in floor_branch_records if x["level"]==6})
 ck("Step 5 roof has power data BAS storm fire security",{"ELEC-NORMAL","DATA-STRUCTURED","BAS-CONTROLS","STORM-DRAINAGE","FIRE-PROTECTION","SECURITY-ACCESS"}<={x["system_id"] for x in floor_branch_records if x["level"]==7})
 ck("Step 5 restroom wet branches remain on F1-F6",all({"WATER-DOMESTIC","SANITARY-VENT"}<={x["system_id"] for x in floor_branch_records if x["level"]==l} for l in (1,2,3,4,5,6)))
-ck("Step 5 routes stay west of Stair A",all(max(p[0] for p in x["points"])<60 for x in floor_branch_records))
+ck("Step 5 routes stay west of Stair A",all(max(p[0] for p in x["points"])<60 for x in floor_branch_records if x.get("step")!=6))
+
+mobility=(10,8,48,46)
+def segment_enters_rect(a,b,r):
+    if a[0]==b[0]:
+        x=a[0]; lo,hi=sorted((a[1],b[1]))
+        return r[0]<x<r[2] and max(lo,r[1])<min(hi,r[3])
+    y=a[1]; lo,hi=sorted((a[0],b[0]))
+    return r[1]<y<r[3] and max(lo,r[0])<min(hi,r[2])
+
+ck("Step 6 roof mechanical units receive power BAS and HVAC",all({"ELEC-NORMAL","BAS-CONTROLS","HVAC-AIR"}<={x["system_id"] for x in step6_branch_records if x["inventory_ref"]==ref} for ref,_ in roof_mech))
+ck("Step 6 models six roof drains",len(roof_drain_records)==6,len(roof_drain_records))
+ck("Step 6 models fourteen low-level path lights",len(path_light_records)==14,len(path_light_records))
+ck("Step 6 models four stair sconces",len(sconce_records)==4,len(sconce_records))
+ck("Step 6 models two emergency call points",len(emergency_call_records)==2,len(emergency_call_records))
+ck("Step 6 models two roof fire support points",len(fire_support_records)==2,len(fire_support_records))
+ck("Step 6 models four lightning terminals",len(lightning_terminal_records)==4,len(lightning_terminal_records))
+ck("Step 6 models perimeter lightning conductor",len(lightning_conductor_records)==4,len(lightning_conductor_records))
+ck("Step 6 models north service-screen routes",len(service_route_records)>=2,len(service_route_records))
+step6_clashes=[]
+for x in step6_branch_records:
+    for a,b in zip(x["points"][:-1],x["points"][1:]):
+        if segment_enters_rect(a,b,mobility): step6_clashes.append((x["endpoint"],a,b))
+ck("Step 6 routed services keep mobility field clear",not step6_clashes,step6_clashes[:12])
+ck("Step 6 detailed roof terminations are substantial",len(step6_records)>=100,len(step6_records))
 
 viewer=HERE.parents[4]/"equity-uprise-building-core-v2-3d.html"
 if viewer.exists():
@@ -304,7 +422,7 @@ if viewer.exists():
     ck("Services viewer still loads canonical asset","equity-uprise-building-services-core-v2.glb" in vt)
     ck("Services viewer exposes per-floor service geometry","SVC-F" in vt and "requestedServices" in vt)
 
-scene.metadata.update({"asset":"equity-uprise-building-services-core-v2","version":"services-step5-floors-4-6-roof-branches-v1","not_for_construction":True,"shared_service_reservation_ft":SHARED,"systems":sorted(modeled_systems),"b1_source_systems":sorted(modeled_source_systems),"viewer_layer":"Services"})
+scene.metadata.update({"asset":"equity-uprise-building-services-core-v2","version":"services-step6-level7-terminations-v1","not_for_construction":True,"shared_service_reservation_ft":SHARED,"systems":sorted(modeled_systems),"b1_source_systems":sorted(modeled_source_systems),"viewer_layer":"Services"})
 glb=scene.export(file_type="glb")
 OUT.write_bytes(glb)
 sha=hashlib.sha256(glb).hexdigest()
@@ -313,7 +431,7 @@ endpoints=sum(1 for r in records if r["kind"]=="floor_endpoint")
 report={
     "schema_version":"1.1.0",
     "asset":"equity-uprise-building-services-core-v2",
-    "status":"services-step5-floors-4-6-roof-branches",
+    "status":"services-step6-level7-terminations",
     "not_for_construction":True,
     "glb_bytes":len(glb),
     "sha256":sha,
@@ -333,6 +451,19 @@ report={
     "step5_floor_branch_segments":sum(1 for r in records if r["kind"]=="floor_branch" and r["level"] in {4,5,6,7}),
     "step5_floor_endpoints":sum(1 for r in records if r["kind"]=="floor_endpoint" and r["level"] in {4,5,6,7}),
     "step5_levels":[4,5,6,7],
+    "step6_roof_branch_segments":sum(1 for r in step6_records if r["kind"]=="floor_branch"),
+    "step6_roof_endpoints":sum(1 for r in step6_records if r["kind"]=="floor_endpoint"),
+    "step6_roof_termination_devices":sum(1 for r in step6_records if r["kind"].startswith("roof_")),
+    "step6_mechanical_units_served":len(roof_mech),
+    "step6_roof_drains":len(roof_drain_records),
+    "step6_path_lights":len(path_light_records),
+    "step6_stair_sconces":len(sconce_records),
+    "step6_emergency_calls":len(emergency_call_records),
+    "step6_fire_support_points":len(fire_support_records),
+    "step6_lightning_terminals":len(lightning_terminal_records),
+    "step6_lightning_conductor_segments":len(lightning_conductor_records),
+    "step6_service_screen_routes":len(service_route_records),
+    "step6_level":7,
     "floor_branch_segments":branch_segments,
     "floor_endpoints":endpoints,
     "shared_reservation_ft":SHARED,
@@ -344,6 +475,6 @@ report={
 }
 report["passed"]=report["checks_failed"]==0
 REPORT.write_text(json.dumps(report,indent=2)+"\n")
-print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","system_risers","riser_segments","floor_handoff_stubs","b1_source_equipment_meshes","b1_distribution_segments","b1_riser_connections","step5_floor_branch_segments","step5_floor_endpoints","checks_total","checks_passed","checks_failed","passed")},indent=2))
+print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","system_risers","riser_segments","floor_handoff_stubs","b1_source_equipment_meshes","b1_distribution_segments","b1_riser_connections","step5_floor_branch_segments","step5_floor_endpoints","step6_roof_branch_segments","step6_roof_endpoints","step6_roof_termination_devices","checks_total","checks_passed","checks_failed","passed")},indent=2))
 if not report["passed"]:
-    raise SystemExit("building services Step 5 verification failed")
+    raise SystemExit("building services Step 6 verification failed")

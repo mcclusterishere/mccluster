@@ -30,17 +30,19 @@ The existing modeled B1 source equipment is now connected through representative
 
 Verified generated snapshot: **216 meshes / 151,760 bytes / 28 of 28 checks passing / SHA-256 `1c1772aaac2410dbe8b8c9e601a969ab715215df30f596dbdf8bea436cec5e91`**.
 
-## Services Step 4 — Floors 1–3 branches
+## Services Step 4 — Floors 1–3 branches — COMPLETE
 
-Route representative branches/endpoints for arrival/security, forum AV/table power-data, fellowship/interview/network, restrooms, HVAC and life safety.
+Representative branches/endpoints are modeled for arrival/security, forum AV/table power-data, fellowship/interview/network, restrooms, HVAC and life safety. The current Services asset retains **92 Step 4 branch segments and 31 Step 4 endpoints**.
 
-## Services Step 5 — Floors 4–6 branches
+## Services Step 5 — Floors 4–6 branches — COMPLETE
 
-Add higher-density distribution for media/recording/editing, policy/archive/review and command/Halo/briefing systems.
+Higher-density distribution is modeled for media/recording/editing, policy/archive/review and command/Halo/briefing systems. Step 5 also established representative Level 7 handoffs so the roof was not disconnected while the detailed termination pass remained pending.
 
-## Services Step 6 — Level 7 terminations
+Verified Step 5 snapshot: **492 meshes / 346,088 bytes / 114 Step 5 branch segments / 39 Step 5 endpoints / 34 of 34 checks passing / SHA-256 `424553e20e8231daf74e54cd9676604b041cdd850519f5a390a3ad7820568886`**.
 
-Coordinate roof mechanical equipment, roof drains, path lighting, emergency communications, fire support, lightning-protection concept and service-screen routes.
+## Services Step 6 — Level 7 terminations — ACTIVE SOURCE IMPLEMENTATION
+
+Complete the representative Step 5 roof handoffs with explicit service geometry for all three canonical roof mechanical units, six roof drains, path/stair lighting, two emergency communication points, two fire-support points, four lightning-protection terminals plus perimeter conductor, and north service-screen/service-walk routes. Preserve the open-air roof, mobility reservation and both protected-stair arrivals.
 
 ## Services Step 7 — interior device / ceiling realism
 
@@ -52,4 +54,4 @@ Require vertical continuity B1→L7, no core/circulation clashes, traceability f
 
 ## Current stop point
 
-Services Steps 1–3 are complete and verified. Step 3 connects the authorized B1 plant/source equipment through 34 representative B1 distribution segments into all nine existing risers, with 28/28 checks passing. **Next is Services Step 4: Floors 1–3 representative branch/endpoints.**
+Services Steps 1–5 are complete and verified. Step 5 is live on main and preserves the B1 backbone plus Floors 1–6 branches and representative roof handoffs. **Current work is Services Step 6: detailed Level 7 terminations and roof service-access routing.** After Step 6 verification, the next implementation gate is Services Step 7: interior device / ceiling realism.
