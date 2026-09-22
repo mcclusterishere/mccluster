@@ -200,6 +200,10 @@ Current state:
 - protected Stair A and Stair B continuity to Level 7 is preserved;
 - passenger-elevator direct Level 7 service remains unassumed;
 - Halo remains one restrained suspended read-only instrument in public/member/staff modes;
+- requested Halo Globe placement correction is now authoritative at **(55,12) ft local, 8.25 ft AFF, radius 2.25 ft** — the open south-east plan pocket that reads as the user's circled lower-left corner in the current Floor 6 viewer;
+- the old **(24.5,34.5)** checkpoint placement and the interim **(22,22.5)** placement are superseded;
+- authoritative inventory, builder-driven 3D placement, generated manifest/hotspot/lighting data, plan assets and standalone Halo camera/light targeting are synchronized to the corrected location;
+- no other approved Floor 6 layout is to move as part of this correction;
 - builder requires both inventory coverage and a dedicated visual-completeness gate.
 
 Required references:
@@ -210,7 +214,7 @@ Required references:
 - `production/floor-06/floor-06-object-inventory.json`;
 - `production/floor-06/build_equity_uprise_floor_06_v2.py`.
 
-Floor 6 is **visually reviewable, not user-approved complete**. Final approval depends on direct visual review in the isolated viewer.
+Floor 6 is **visually reviewable with the requested Halo placement correction committed**. Final visual confirmation should verify the globe appears in the circled open corner; no further Floor 6 redesign is authorized unless that preview reveals a collision or placement error.
 
 ## Level 7 — geometry/program chassis exists; iterative roof redesign NOT COMPLETE
 
@@ -242,7 +246,7 @@ Use these to recover design quality, not obsolete stair/core geometry.
 7. **DONE:** Floor 3 reconciliation → inventory → real 3D → working-stack integration.
 8. **DONE:** Floor 4 — Media + Culture — reconciliation → inventory → real 3D → working-stack integration.
 9. **DONE:** Floor 5 — Policy + Proof — reconciliation → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration.
-10. **DONE:** Floor 6 — Penthouse Command — reconciliation → Halo/roof boundary → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration.
+10. **DONE:** Floor 6 — Penthouse Command — reconciliation → Halo/roof boundary → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration → requested Halo relocation to (55,12) with synchronized authority/generated artifacts.
 11. **NEXT:** Level 7 — Roof / Mobility Portal — reconcile roof program, preserve historical roof intent, inventory, build real rooftop environment, then complete the B1→roof stack.
 
 ## Do not waste time on
