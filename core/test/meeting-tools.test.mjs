@@ -10,6 +10,7 @@ import {
   normalizeMeetingTarget,
   speakInMeeting,
 } from '../src/meeting/engine.mjs';
+import { openMeetingTarget, sealMeetingTarget } from '../src/meeting/target-crypto.mjs';
 
 test('meeting platform inference covers Meet, Zoom, Teams and Jitsi', () => {
   assert.equal(inferMeetingPlatform('https://meet.google.com/abc-defg-hij'), 'google_meet');
@@ -113,4 +114,22 @@ test('speaking is fail-closed until interactive mode is explicitly enabled', asy
     }, client),
     /interactive meeting controls are disabled/
   );
+});
+
+
+test('scheduled meeting targets encrypt credentials at rest', () => {
+  const secret = 'correct-horse-battery-staple-owned-key';
+  const target = {
+    platform: 'zoom',
+    meeting_url: 'https://acme.zoom.us/j/123456789?pwd=secret-pass',
+    native_meeting_id: '123456789',
+    passcode: 'secret-pass',
+  };
+
+  const sealed = sealMeetingTarget(target, { secret });
+  assert.equal(sealed.includes('secret-pass'), false);
+  assert.deepEqual(openMeetingTarget(sealed, { secret }), target);
+  assert.throws(() => openMeetingTarget(sealed, {
+    secret: 'a-different-and-long-enough-secret-value'
+  }));
 });
