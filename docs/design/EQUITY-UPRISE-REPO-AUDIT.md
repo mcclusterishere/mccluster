@@ -524,11 +524,11 @@ The current reconciliation is backed by deterministic repo, program, plan, geome
 |---|---:|---|
 | Repo-source classification | **253 sources classified** | Current source ledger contains 102 capability sources and 151 explicitly support/development-authority sources. The exact discovered-set gate remains enforced by `verify_equity_uprise_repo_sources.py`. |
 | Repo-source validator | **912 / 912 passed** | The discovered source set, classifications and support/capability accounting match the current repository state. |
-| Capability / floor / routing coverage | **464 / 464 baseline; rerun required after every program change** | All 56 canonical capabilities are assigned to their primary and declared secondary floors; interaction-mode and zone routes resolve; private/high-risk routes remain non-public; Halo public mode is read-only with owner-authenticated operational handoff; Level 7 does not imply passenger-elevator service. |
-| Generated plan semantics | **437 / 437 baseline; deterministic rerun required** | Active Core V2 SVG/DXF/PNG sets exist for B1 and Floors 1–7 and remain machine-checked against canonical labels/program semantics. |
+| Capability / floor / routing coverage | **466 / 466 passed** | All 56 canonical capabilities are assigned to their primary and declared secondary floors; interaction-mode and zone routes resolve; private/high-risk routes remain non-public; Halo public mode is read-only with owner-authenticated operational handoff; Level 7 does not imply passenger-elevator service. |
+| Generated plan semantics | **488 / 488 passed** | Active Core V2 SVG/DXF/PNG sets exist for B1 and Floors 1–7 and remain machine-checked against canonical labels/program semantics. |
 | Level 7 detailed roof | **45 / 45 inventory records; 15 / 15 build checks passed** | The current Level 7 builder represents the complete reconciled roof inventory and visual-completeness requirements. |
-| B1→Level 7 walkability | **41 / 41 checks passed** | Exact elevations/rises, 22-riser stair math, access openings, slab openings, roof-door state, roof walking-plane connection, Level 7 capability set, and passenger-elevator exclusion are coherent. |
-| Combined stacked geometry | **deterministic combined-model gate retained** | The combined GLB must prove eight physical elevations, all protected-stair transitions, real served-level stair openings, vertical shafts, Level 7 headhouse caps, and the Floor 6 Halo envelope. |
+| B1→Level 7 walkability | **44 / 44 checks passed** | Exact elevations/rises, 22-riser stair math, access openings, slab openings, roof-door state, roof walking-plane connection, Level 7 capability set, and passenger-elevator exclusion are coherent. |
+| Combined stacked geometry | **840 meshes / 41 / 41 checks passed** | The combined GLB must prove eight physical elevations, all protected-stair transitions, real served-level stair openings, vertical shafts, Level 7 headhouse caps, and the Floor 6 Halo envelope. |
 
 Canonical audit support files:
 - `production/equity-uprise-repo-source-map-v2.json`
@@ -539,7 +539,7 @@ Canonical audit support files:
 - `production/generated/equity-uprise-core-v2-plan-semantics-report.json`
 - `production/generated/equity-uprise-building-core-v2-report.json`
 
-The exact current combined-GLB mesh count and SHA-256 are intentionally read from `production/generated/equity-uprise-building-core-v2-report.json` rather than copied as a second authority into this narrative audit. The Level 7 detailed GLB/report and the vertical-circulation walkability report are likewise generated deterministically and must stay current in CI.
+Current combined deterministic chassis: **840 meshes**, **41/41 checks passing**, SHA-256 `afebd08c811d083b6ae957677cedbff51d4c629e36a19341eddc385b3e8e28c7`. The Level 7 detailed roof is **283 meshes**, **45/45 inventory records**, **15/15 checks passing**. These exact values remain independently recorded in generated reports and must stay current in CI.
 
 These checks establish current repo/building consistency. They do **not** establish building-code compliance, permit readiness, structural adequacy, accessibility compliance, fire/life-safety compliance, or operational aviation feasibility.
 
