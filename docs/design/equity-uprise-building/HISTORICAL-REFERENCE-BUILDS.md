@@ -221,3 +221,8 @@ When references disagree:
 - **current geometry / program / permissions / safety simulation** → obey current Core V2 authority.
 
 Never let one reference class erase the other two.
+
+
+## B1 historical-preservation note
+
+There is no historical finished B1 interior equivalent to the V1 Floor 1 viewer. B1 design work must therefore preserve the **current Core V2 B1/vertical chassis and support program** while borrowing only the successful V1 qualities of material weight, human scale and deliberate lighting. Do not manufacture an obsolete B1 geometry precedent.

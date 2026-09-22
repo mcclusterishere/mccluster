@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-basement-b1",
+  "not_for_construction": true,
+  "public_navigation": false,
+  "glb_bytes": 250092,
+  "sha256": "2cf95b25d6b40568b3039f2cdb5dad55a54e989339f824e64ff40c65037f4a37",
+  "mesh_count": 382,
+  "inventory_records": 67,
+  "inventory_modeled": 67,
+  "checks_total": 18,
+  "checks_passed": 18,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "inventory coverage",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "72ft basement footprint",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "below-grade perimeter enclosed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "ceiling/support plane modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "both protected stairs modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "B1 to Floor 1 stair transitions modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "passenger and freight landings modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "MEP riser modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "technical plant rooms equipped",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "facilities workshop equipped",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "systems lab equipped",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "service staging equipped",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "tunnel operations represented",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "transfer lock represented",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "visual completeness: lighting",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "visual completeness: overhead services",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "visual completeness: life safety",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "visual completeness: drainage",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

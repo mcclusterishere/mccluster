@@ -20,7 +20,7 @@ AGENT_ENTRYPOINTS={
     "AGENTS.md","CLAUDE.md","CODEX.md","GEMINI.md",
     ".cursorrules",".github/copilot-instructions.md",
 }
-VIEWER_RE=re.compile(r"^equity-uprise-(?:building-core-v2|floor-0[1-7])-3d\.html$")
+VIEWER_RE=re.compile(r"^equity-uprise-(?:building-core-v2|floor-0[1-7]|basement-b1)-3d\.html$")
 CONTEXT_NAMES={
     "AGENTS.md","README.md","MASTER-INDEX.md","PROJECT-STATE.md",
     "HISTORICAL-REFERENCE-BUILDS.md","BUILD-PIPELINE.md","BUILDING-FILE-INDEX.json",

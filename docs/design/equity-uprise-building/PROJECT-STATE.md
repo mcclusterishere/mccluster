@@ -195,9 +195,30 @@ Required references:
 
 Level 7 is **implementation-complete for the current review pass but still awaits direct user visual approval**. Real construction/aviation feasibility is explicitly outside this digital-twin approval.
 
-## B1 — program/geometry integrated; final designed environment still future work
+## B1 — UNDERGROUND OPERATIONS / TECHNICAL SERVICE — DETAILED CURRENT PASS IMPLEMENTED
 
-Restricted underground operations authority and tunnel semantics exist. B1 is connected to the shared building stack and simulation model, but it is not a finished cinematic/interior environment.
+- canonical B1 program retained at **FFE -13.5 ft**;
+- current-pass reconciliation + preservation map + schematic basis added;
+- **67 stable inventory records** define the detailed B1 environment;
+- deterministic detailed B1 builder added;
+- deterministic committed B1 report: **382 meshes, 67/67 inventory records represented, 18/18 checks passing**, GLB SHA-256 `2cf95b25d6b40568b3039f2cdb5dad55a54e989339f824e64ff40c65037f4a37`;
+- all ten canonical B1 zones are physically expressed;
+- mechanical, electrical, fire/water, telecom, flood, workshop, systems-lab, service-staging, tunnel-ops and transfer-lock equipment/furniture are modeled;
+- both protected stairs include the complete **13.5 ft B1→Floor 1 rise** for isolated review;
+- passenger/freight/MEP core relationships remain aligned to Core V2;
+- standalone B1 viewer and detailed working-stack integration are implemented;
+- live operations remain restricted and learner/instructor use remains sandbox-only;
+- tunnel geometry stops at the building-side Transfer Lock.
+
+Required references:
+- `BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`;
+- `BASEMENT-B1-PROGRAM-RECONCILIATION.md`;
+- `BASEMENT-B1-V1-V2-PRESERVATION-MAP.md`;
+- `BASEMENT-B1-SCHEMATIC-PLAN-BASIS.md`;
+- `production/basement-b1/basement-b1-object-inventory.json`;
+- `production/basement-b1/build_equity_uprise_basement_b1_v2.py`.
+
+B1 is **implementation-complete for the current review pass with the deterministic GLB/report pinned by green CI; direct visual approval is the remaining B1 gate**.
 
 ## Historical V1 Floor 1 — DESIGN REFERENCE, NOT geometry authority
 
@@ -221,8 +242,9 @@ Use these to recover design quality, not obsolete stair/core geometry.
 9. **DONE:** Floor 5 — Policy + Proof — reconciliation → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration.
 10. **DONE:** Floor 6 — Penthouse Command — reconciliation → Halo/roof boundary → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration → requested Halo relocation to (55,12) with synchronized authority/generated artifacts.
 11. **DONE FOR REVIEW:** Level 7 — Roof / Mobility Portal — reconciliation → historical preservation → inventory → real rooftop environment → human-walkable Stair A/B roof arrivals → true isolation → working-stack integration.
-12. **CURRENT GATE:** deterministic regeneration + whole-repo/source/program/authority/plan/building/walkability CI, then direct visual approval of isolated Level 7 and the complete stacked building.
-13. **AFTER ROOF VISUAL APPROVAL:** final exterior/crown/context pass and later B1 cinematic/detail refinement; do not reopen approved floor programs without a new repo capability or explicit design correction.
+12. **CURRENT:** B1 detailed pass — reconciliation → inventory → real technical environment → B1→Floor 1 stair review → true isolation → stack integration.
+13. **NEXT GATE:** direct visual approval of isolated B1 and the complete B1→roof stack; deterministic B1 generation and whole-building CI are green.
+14. **AFTER B1 VISUAL APPROVAL:** exterior/facade/branding/material pass, including coherent glazing, crown/base composition and Equity Uprise building identity; do not reopen approved floor programs without a new repo capability or explicit design correction.
 
 ## Do not waste time on
 

@@ -45,7 +45,7 @@ manifest={
     "tunnel_network_ref":"../underground-tunnel-network.json",
     "authority":{
         "building_core":["../../BUILDING-CORE-V2-SPEC.md","../building-core-v2.json"],
-        "basement":["../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md","../basement-b1-program.json"],
+        "basement":["../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md","../../BASEMENT-B1-PROGRAM-RECONCILIATION.md","../../BASEMENT-B1-V1-V2-PRESERVATION-MAP.md","../../BASEMENT-B1-SCHEMATIC-PLAN-BASIS.md","../basement-b1-program.json"],
         "tunnel":["../../UNDERGROUND-TUNNEL-NETWORK-SPEC.md","../underground-tunnel-network.json"],
         "code_reference":"../../SIMULATION-CODE-REFERENCE-PROFILE.md"
     },
@@ -61,6 +61,13 @@ manifest={
     "zones":zones,
     "live_access":b1["live_access"],
     "training_access":b1["training_access"],
+    "design_maturity":"reconciled-current-iterative-pass",
+    "render_readiness":"detailed-real-3d",
+    "object_inventory_ref":"basement-b1-object-inventory.json",
+    "program_reconciliation_ref":"../../BASEMENT-B1-PROGRAM-RECONCILIATION.md",
+    "preservation_map_ref":"../../BASEMENT-B1-V1-V2-PRESERVATION-MAP.md",
+    "schematic_basis_ref":"../../BASEMENT-B1-SCHEMATIC-PLAN-BASIS.md",
+    "detailed_builder_ref":"build_equity_uprise_basement_b1_v2.py",
     "camera_ref":"basement-b1-camera.json",
     "materials_ref":"basement-b1-materials.json",
     "lighting_ref":"basement-b1-lighting.json",

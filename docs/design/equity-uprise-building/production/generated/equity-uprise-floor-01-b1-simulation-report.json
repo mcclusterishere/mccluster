@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Floor 1 + B1 digital-twin simulation authority",
-  "checks_total": 115,
-  "checks_passed": 115,
+  "checks_total": 124,
+  "checks_passed": 124,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -488,6 +488,16 @@
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-scene-manifest.json"
     },
     {
+      "name": "B1 package file exists: basement-b1-object-inventory.json",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json"
+    },
+    {
+      "name": "B1 package file exists: build_equity_uprise_basement_b1_v2.py",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py"
+    },
+    {
       "name": "B1 package file exists: basement-b1-materials.json",
       "passed": true,
       "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/basement-b1/basement-b1-materials.json"
@@ -543,6 +553,21 @@
       "detail": "../underground-tunnel-network.json"
     },
     {
+      "name": "B1 scene maturity reconciled",
+      "passed": true,
+      "detail": "reconciled-current-iterative-pass"
+    },
+    {
+      "name": "B1 scene detailed render ready",
+      "passed": true,
+      "detail": "detailed-real-3d"
+    },
+    {
+      "name": "B1 scene inventory ref",
+      "passed": true,
+      "detail": "basement-b1-object-inventory.json"
+    },
+    {
       "name": "B1 sandbox cannot reach live B1",
       "passed": true,
       "detail": "{'type': 'ui_state', 'target': 'b1_tunnel_training_clone', 'access': 'authorized-learner-or-instructor', 'simulation': True, 'live_b1_access': False, 'live_tunnel_access': False}"
@@ -556,6 +581,26 @@
       "name": "B1 ordinary EU admin insufficient",
       "passed": true,
       "detail": "{'ordinary_equity_uprise_admin_sufficient': False, 'competency_sufficient': False, 'live_access_authorities': ['mccluster_house_owner', 'underground_operations_admin']}"
+    },
+    {
+      "name": "detailed B1 report exists",
+      "passed": true,
+      "detail": "/home/runner/work/mccluster/mccluster/docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2-report.json"
+    },
+    {
+      "name": "detailed B1 builder passes",
+      "passed": true,
+      "detail": "True"
+    },
+    {
+      "name": "detailed B1 inventory fully modeled",
+      "passed": true,
+      "detail": "(67, 67)"
+    },
+    {
+      "name": "detailed B1 visual gates pass",
+      "passed": true,
+      "detail": "0"
     },
     {
       "name": "resolved geometry: f1-stair-a-exit-discharge",

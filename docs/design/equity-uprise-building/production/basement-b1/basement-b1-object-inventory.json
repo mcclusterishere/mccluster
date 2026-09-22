@@ -1,0 +1,621 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-basement-b1",
+  "floor_identity": "Underground Operations / Technical Service Basement",
+  "status": "canonical_b1_detailed_inventory",
+  "not_for_construction": true,
+  "public_navigation": false,
+  "authority_refs": [
+    "../../BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md",
+    "../../BASEMENT-B1-PROGRAM-RECONCILIATION.md",
+    "../../BASEMENT-B1-V1-V2-PRESERVATION-MAP.md",
+    "../../BASEMENT-B1-SCHEMATIC-PLAN-BASIS.md",
+    "../basement-b1-program.json",
+    "../building-core-v2.json"
+  ],
+  "objects": [
+    {
+      "id": "B1-SLAB-01",
+      "label": "Basement walking slab",
+      "category": "architecture",
+      "zone_id": "whole_floor",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-CEILING-01",
+      "label": "Concrete/service ceiling",
+      "category": "architecture",
+      "zone_id": "whole_floor",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-PERIMETER-01",
+      "label": "Below-grade perimeter enclosure",
+      "category": "architecture",
+      "zone_id": "whole_floor",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-STAIR-A-ENCLOSURE-01",
+      "label": "Protected Stair A enclosure",
+      "category": "vertical_circulation",
+      "zone_id": "core",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-STAIR-B-ENCLOSURE-01",
+      "label": "Protected Stair B enclosure",
+      "category": "vertical_circulation",
+      "zone_id": "core",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-STAIR-A-TRANSITION-01",
+      "label": "B1 to Floor 1 Stair A transition",
+      "category": "vertical_circulation",
+      "zone_id": "core",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-STAIR-B-TRANSITION-01",
+      "label": "B1 to Floor 1 Stair B transition",
+      "category": "vertical_circulation",
+      "zone_id": "core",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-PASSENGER-CORE-01",
+      "label": "Restricted passenger elevator landing",
+      "category": "vertical_circulation",
+      "zone_id": "core",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-FREIGHT-CORE-01",
+      "label": "Freight/service elevator landing",
+      "category": "vertical_circulation",
+      "zone_id": "core",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-MEP-RISER-01",
+      "label": "MEP riser enclosure",
+      "category": "service",
+      "zone_id": "core",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-MECH-ROOM-01",
+      "label": "Mechanical Plant enclosure",
+      "category": "architecture",
+      "zone_id": "mechanical",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-MECH-AHU-01",
+      "label": "Air-handling / plant equipment",
+      "category": "equipment",
+      "zone_id": "mechanical",
+      "quantity": 2,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-MECH-PUMP-01",
+      "label": "Pump set",
+      "category": "equipment",
+      "zone_id": "mechanical",
+      "quantity": 3,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-MECH-PIPE-RACK-01",
+      "label": "Mechanical pipe rack",
+      "category": "equipment",
+      "zone_id": "mechanical",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-MECH-BAS-01",
+      "label": "Building automation panel",
+      "category": "equipment",
+      "zone_id": "mechanical",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-ELEC-ROOM-01",
+      "label": "Electrical / Emergency Power enclosure",
+      "category": "architecture",
+      "zone_id": "electrical",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-ELEC-SWITCHGEAR-01",
+      "label": "Main switchgear lineup",
+      "category": "equipment",
+      "zone_id": "electrical",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-ELEC-UPS-01",
+      "label": "UPS / emergency power cabinets",
+      "category": "equipment",
+      "zone_id": "electrical",
+      "quantity": 2,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-ELEC-METER-01",
+      "label": "Metering / emergency distribution panel",
+      "category": "equipment",
+      "zone_id": "electrical",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-FIRE-ROOM-01",
+      "label": "Fire Protection / Water enclosure",
+      "category": "architecture",
+      "zone_id": "fire_water",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-FIRE-PUMP-01",
+      "label": "Fire pump skid",
+      "category": "equipment",
+      "zone_id": "fire_water",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-FIRE-WATER-01",
+      "label": "Water/backflow assembly",
+      "category": "equipment",
+      "zone_id": "fire_water",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-FIRE-RISER-01",
+      "label": "Sprinkler riser / status panel",
+      "category": "equipment",
+      "zone_id": "fire_water",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-TELECOM-ROOM-01",
+      "label": "Network / Telecom Core enclosure",
+      "category": "architecture",
+      "zone_id": "telecom",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-TELECOM-RACKS-01",
+      "label": "Network racks",
+      "category": "equipment",
+      "zone_id": "telecom",
+      "quantity": 4,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-TELECOM-TRAY-01",
+      "label": "Overhead cable tray",
+      "category": "equipment",
+      "zone_id": "telecom",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-TELECOM-CONSOLE-01",
+      "label": "Network operations console",
+      "category": "furniture",
+      "zone_id": "telecom",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-FLOOD-ROOM-01",
+      "label": "Sump / Flood Management enclosure",
+      "category": "architecture",
+      "zone_id": "flood",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-FLOOD-SUMP-01",
+      "label": "Sump pits",
+      "category": "equipment",
+      "zone_id": "flood",
+      "quantity": 2,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-FLOOD-PUMP-01",
+      "label": "Sump pump assemblies",
+      "category": "equipment",
+      "zone_id": "flood",
+      "quantity": 2,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-FLOOD-SENSOR-01",
+      "label": "Flood sensor / alarm panel",
+      "category": "equipment",
+      "zone_id": "flood",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-WORKSHOP-ROOM-01",
+      "label": "Facilities Workshop / Storage enclosure",
+      "category": "architecture",
+      "zone_id": "workshop",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-WORKSHOP-BENCH-01",
+      "label": "Facilities workbench",
+      "category": "furniture",
+      "zone_id": "workshop",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-WORKSHOP-RACKS-01",
+      "label": "Parts storage racks",
+      "category": "furniture",
+      "zone_id": "workshop",
+      "quantity": 3,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-WORKSHOP-PPE-01",
+      "label": "PPE cabinet",
+      "category": "equipment",
+      "zone_id": "workshop",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-WORKSHOP-SPILL-01",
+      "label": "Spill response cabinet",
+      "category": "equipment",
+      "zone_id": "workshop",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LAB-ZONE-01",
+      "label": "Building Systems Lab / Observation zone",
+      "category": "architecture",
+      "zone_id": "systems_lab",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LAB-TABLE-01",
+      "label": "Systems observation table",
+      "category": "furniture",
+      "zone_id": "systems_lab",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LAB-CHAIRS-01",
+      "label": "Systems lab chairs",
+      "category": "furniture",
+      "zone_id": "systems_lab",
+      "quantity": 6,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LAB-DASHBOARD-01",
+      "label": "Digital twin dashboard wall",
+      "category": "display",
+      "zone_id": "systems_lab",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LAB-CONSOLE-01",
+      "label": "BAS simulation console",
+      "category": "equipment",
+      "zone_id": "systems_lab",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LAB-GLASS-01",
+      "label": "Observation partition",
+      "category": "architecture",
+      "zone_id": "systems_lab",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-STAGING-ZONE-01",
+      "label": "Service Receiving / Staging zone",
+      "category": "architecture",
+      "zone_id": "service_staging",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-STAGING-RACK-01",
+      "label": "Service pallet rack",
+      "category": "furniture",
+      "zone_id": "service_staging",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-STAGING-CART-01",
+      "label": "Service cart",
+      "category": "equipment",
+      "zone_id": "service_staging",
+      "quantity": 2,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-STAGING-MARK-01",
+      "label": "Staging floor markings",
+      "category": "wayfinding",
+      "zone_id": "service_staging",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-OPS-ZONE-01",
+      "label": "Tunnel Operations Concourse",
+      "category": "architecture",
+      "zone_id": "tunnel_ops",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-OPS-GATE-01",
+      "label": "Tunnel security gate",
+      "category": "security",
+      "zone_id": "tunnel_ops",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-OPS-DESK-01",
+      "label": "Operations desk",
+      "category": "furniture",
+      "zone_id": "tunnel_ops",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-OPS-CHAIRS-01",
+      "label": "Operations chairs",
+      "category": "furniture",
+      "zone_id": "tunnel_ops",
+      "quantity": 4,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-OPS-STATUS-01",
+      "label": "Incident / route status wall",
+      "category": "display",
+      "zone_id": "tunnel_ops",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-OPS-OCCUPANCY-01",
+      "label": "Underground occupancy board",
+      "category": "display",
+      "zone_id": "tunnel_ops",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-OPS-ROUTE-01",
+      "label": "Route authorization console",
+      "category": "equipment",
+      "zone_id": "tunnel_ops",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LOCK-ROOM-01",
+      "label": "Tunnel Portal / Transfer Lock enclosure",
+      "category": "architecture",
+      "zone_id": "transfer_lock",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LOCK-INNER-DOOR-01",
+      "label": "Transfer lock inner door",
+      "category": "door",
+      "zone_id": "transfer_lock",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LOCK-OUTER-DOOR-01",
+      "label": "Transfer lock outer portal door",
+      "category": "door",
+      "zone_id": "transfer_lock",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LOCK-FRAME-01",
+      "label": "Tunnel portal frame",
+      "category": "architecture",
+      "zone_id": "transfer_lock",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LOCK-PANEL-01",
+      "label": "Interlock control panel",
+      "category": "equipment",
+      "zone_id": "transfer_lock",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LOCK-WARNING-01",
+      "label": "Transfer lock warning beacons",
+      "category": "lighting",
+      "zone_id": "transfer_lock",
+      "quantity": 2,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LIGHTS-GENERAL-01",
+      "label": "Industrial linear lighting",
+      "category": "lighting",
+      "zone_id": "whole_floor",
+      "quantity": 18,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-LIGHTS-EMERGENCY-01",
+      "label": "Emergency path lighting",
+      "category": "lighting",
+      "zone_id": "whole_floor",
+      "quantity": 12,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-CABLE-TRAY-01",
+      "label": "Main overhead cable tray spine",
+      "category": "building_support",
+      "zone_id": "whole_floor",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-PIPE-SPINE-01",
+      "label": "Main overhead pipe spine",
+      "category": "building_support",
+      "zone_id": "whole_floor",
+      "quantity": 1,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-FLOOR-DRAINS-01",
+      "label": "Floor drains",
+      "category": "building_support",
+      "zone_id": "whole_floor",
+      "quantity": 8,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-EXIT-SIGNS-01",
+      "label": "Exit / Stair wayfinding",
+      "category": "life_safety",
+      "zone_id": "whole_floor",
+      "quantity": 4,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-EXTINGUISHERS-01",
+      "label": "Fire extinguisher cabinets",
+      "category": "life_safety",
+      "zone_id": "whole_floor",
+      "quantity": 4,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    },
+    {
+      "id": "B1-EMERGENCY-COMMS-01",
+      "label": "Emergency two-way communication points",
+      "category": "life_safety",
+      "zone_id": "whole_floor",
+      "quantity": 2,
+      "implementation_status": "required_b1_real_3d",
+      "authority_status": "current_pass"
+    }
+  ]
+}
