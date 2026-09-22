@@ -252,7 +252,7 @@ Architectural role:
 - Halo Globe = what is happening in the world around those decisions.
 
 Canonical coordination envelope:
-- plan center approximately **(22,22.5)**;
+- plan center approximately **(55,12)**;
 - radius **2.25 ft**;
 - center **8.25 ft AFF**;
 - bottom **6.0 ft AFF**;

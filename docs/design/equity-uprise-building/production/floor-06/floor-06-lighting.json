@@ -27,8 +27,8 @@
       "temperature_k": 5200,
       "intensity_relative": 0.18,
       "position_ft_local": {
-        "x": 22,
-        "y": 22.5,
+        "x": 55,
+        "y": 12,
         "z": 8.25
       },
       "rule": "Subtle only; must not turn Penthouse Command into a tactical command center."

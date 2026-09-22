@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 251,
+  "candidate_count": 253,
   "capability_source_count": 102,
-  "support_only_count": 149,
-  "checks_total": 904,
-  "checks_passed": 904,
+  "support_only_count": 151,
+  "checks_total": 912,
+  "checks_passed": 912,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -120,6 +120,7 @@
     "index.html",
     "inner-room.html",
     "js/chatfirst.js",
+    "js/control-registry.js",
     "js/crm.js",
     "js/equity-uprise-fellowship-live.js",
     "js/equity-uprise-institutional.js",
@@ -159,6 +160,7 @@
     "scripts/kb-build.mjs",
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
+    "scripts/test/control-surface.test.mjs",
     "scripts/test/signup-authority.test.mjs",
     "shots.html",
     "sitemap.xml",
@@ -265,7 +267,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "251 entries"
+      "detail": "253 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -2263,6 +2265,26 @@
       "detail": ""
     },
     {
+      "name": "js/control-registry.js capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "js/control-registry.js classified",
+      "passed": true,
+      "detail": "classification='shared_site_support'"
+    },
+    {
+      "name": "js/control-registry.js support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "js/control-registry.js support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "js/crm.js capability ids known",
       "passed": true,
       "detail": ""
@@ -2989,6 +3011,26 @@
     },
     {
       "name": "scripts/smoke.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/control-surface.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/control-surface.test.mjs classified",
+      "passed": true,
+      "detail": "classification='build_validation_support'"
+    },
+    {
+      "name": "scripts/test/control-surface.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/control-surface.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },

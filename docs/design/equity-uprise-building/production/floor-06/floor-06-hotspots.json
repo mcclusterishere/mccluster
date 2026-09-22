@@ -125,13 +125,13 @@
       "id": "hs_sphere_01",
       "label": "Halo Globe / Spatial Intelligence",
       "position_ft_local": {
-        "x": 22,
-        "y": 22.5,
+        "x": 55,
+        "y": 12,
         "z": 8.25
       },
       "position_ft_world": {
-        "x": 22,
-        "y": 22.5,
+        "x": 55,
+        "y": 12,
         "z": 75.75
       },
       "sphere_id": "sphere_01",

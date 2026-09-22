@@ -329,14 +329,14 @@
       "quantity": 1,
       "placement": {
         "center_ft": {
-          "x": 22,
-          "y": 22.5,
+          "x": 55,
+          "y": 12,
           "z": 8.25
         },
         "radius_ft": 2.25,
         "bottom_ft": 6,
         "top_ft": 10.5,
-        "clearance_intent": "isolated southwest open pocket immediately east of the Institutional Salon and north of the south review rooms; preserve clear breathing room around the full 2.25 ft radius envelope"
+        "clearance_intent": "open south-east plan pocket corresponding to the circled lower-left corner in the current Floor 6 viewer; preserve clear breathing room around the full 2.25 ft radius envelope and clear the south rooms, command furniture, roof terminal, fixed core and primary circulation"
       },
       "style": "restrained suspended luminous globe with gunmetal support/rings",
       "purpose": "Read-only sanitized spatial-intelligence instrument in public/member modes; protected handoff for owner/admin",
