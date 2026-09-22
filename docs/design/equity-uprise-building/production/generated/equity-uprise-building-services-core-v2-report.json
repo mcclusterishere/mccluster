@@ -1,11 +1,11 @@
 {
   "schema_version": "1.1.0",
   "asset": "equity-uprise-building-services-core-v2",
-  "status": "services-step4-floors-1-3-branches",
+  "status": "services-step5-floors-4-6-roof-branches",
   "not_for_construction": true,
-  "glb_bytes": 240072,
-  "sha256": "e5b6dbf2ecaf6e9c2e205012555b1f0255ff1c2191737161d3774d11995d2a04",
-  "mesh_count": 339,
+  "glb_bytes": 346088,
+  "sha256": "424553e20e8231daf74e54cd9676604b041cdd850519f5a390a3ad7820568886",
+  "mesh_count": 492,
   "system_risers": 9,
   "system_risers_modeled": 9,
   "riser_segments": 63,
@@ -32,6 +32,16 @@
     2,
     3
   ],
+  "step5_floor_branch_segments": 114,
+  "step5_floor_endpoints": 39,
+  "step5_levels": [
+    4,
+    5,
+    6,
+    7
+  ],
+  "floor_branch_segments": 206,
+  "floor_endpoints": 70,
   "shared_reservation_ft": {
     "x1": 50,
     "y1": 66,
@@ -111,17 +121,12 @@
     {
       "name": "substantial visible nervous-system geometry",
       "passed": true,
-      "detail": "339"
+      "detail": "492"
     },
     {
       "name": "Step 3 authority covers all nine backbone systems",
       "passed": true,
       "detail": "['BAS-CONTROLS', 'DATA-STRUCTURED', 'ELEC-EMERGENCY', 'ELEC-NORMAL', 'FIRE-PROTECTION', 'HVAC-AIR', 'SANITARY-VENT', 'STORM-DRAINAGE', 'WATER-DOMESTIC']"
-    },
-    {
-      "name": "Step 3 source equipment reuses authorized B1 inventory",
-      "passed": true,
-      "detail": "[]"
     },
     {
       "name": "required B1 source equipment families modeled",
@@ -146,7 +151,7 @@
     {
       "name": "B1 service geometry does not enter Stair A separation band",
       "passed": true,
-      "detail": "[]"
+      "detail": ""
     },
     {
       "name": "B1 distribution remains overhead of primary circulation",
@@ -184,32 +189,37 @@
       "detail": ""
     },
     {
-      "name": "Step 4 branches exist on Floors 1-3",
+      "name": "Step 4 branches remain on Floors 1-3",
       "passed": true,
       "detail": "[1, 2, 3]"
     },
     {
-      "name": "Step 4 endpoint inventory refs are explicit",
+      "name": "Step 5 branches exist on Floors 4-6 and L7",
+      "passed": true,
+      "detail": "[4, 5, 6, 7]"
+    },
+    {
+      "name": "Step 5 upper floors have power/data/AV",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "Step 4 forum table has power and data",
+      "name": "Step 5 Floor 6 Halo receives data and media",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "Step 4 Floor 3 interviews receive services",
+      "name": "Step 5 roof has power data BAS storm fire security",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "Step 4 restroom wet branches exist on F1-F3",
+      "name": "Step 5 restroom wet branches remain on F1-F6",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "Step 4 routes stay west of Stair A",
+      "name": "Step 5 routes stay west of Stair A",
       "passed": true,
       "detail": ""
     },
@@ -219,7 +229,7 @@
       "detail": ""
     },
     {
-      "name": "Services viewer exposes B1 source geometry",
+      "name": "Services viewer exposes per-floor service geometry",
       "passed": true,
       "detail": ""
     }
