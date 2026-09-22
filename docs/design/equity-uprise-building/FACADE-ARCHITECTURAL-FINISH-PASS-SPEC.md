@@ -435,3 +435,20 @@ Required material distinction:
 - emissive architectural lighting.
 
 This does not reopen geometry approved through Step 6.
+
+
+## 23. Step 8 device-clock solar environment
+
+The whole-building viewer must default to a solar environment synchronized to the viewer device's local date and wall-clock time.
+
+Required behavior:
+- local device time is authoritative for daily sun position;
+- local device date drives seasonal solar declination;
+- sun direction and shadow direction move east → south → west during the local day;
+- the sun falls below the horizon at local night;
+- sky/fog, directional sunlight, ambient fill, tone-mapping exposure and architectural-light emissive intensity transition together;
+- automatic state refreshes at least once per minute;
+- no precise browser geolocation is required for default operation;
+- manual Day/Night states are QA overrides only and Auto remains the default.
+
+The solar pass is presentation/visualization logic only and does not change facade geometry or construction authority.
