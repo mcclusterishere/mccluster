@@ -115,6 +115,16 @@
     <p class="bo__k">Owner only · the back office</p>
     <h1>The Back<br>Office</h1>
 
+    <!-- This office and crm.html are two rooms working the same leads table.
+         Control Room is the one that is being kept. -->
+    <p style="margin:0 0 1.2rem;padding:.7rem .9rem;border-radius:14px;line-height:1.5;
+              font-size:.82rem;border:1px solid rgba(229,56,59,.35);background:rgba(229,56,59,.1)">
+      <b>Legacy surface.</b> This page and the Front Desk both work the same
+      pipeline. New work goes to <a href="control.html" style="color:inherit">Control Room</a>,
+      which is the one being kept. Status changes here now go through the Worker
+      and are recorded; the reads on this page still go straight to the database.
+    </p>
+
     <!-- THE DOOR -->
     <section id="door">
       <p class="bo__sub">Everything the house took in, on one desk: print orders, bookings, the waitlist.
