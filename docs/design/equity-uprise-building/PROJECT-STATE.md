@@ -501,3 +501,20 @@ Verification:
 - live-site deployment: green.
 
 Step 8 is live. Remaining work is visual QA/refinement against the real rendered experience, not missing implementation.
+
+
+## Building services / nervous system — SERVICES STEP 1 COMPLETE
+
+The next whole-building implementation section is now active.
+
+Services Step 1 locked:
+- the fixed service reservation remains **X50–60 / Y66–72**;
+- nine conceptual system risers are allocated inside that reservation;
+- the east-side **X59–60** band remains a digital-twin separation/access buffer at the Stair A boundary;
+- B1 through L7 are covered by `production/services/floor-services-addenda.json`;
+- each level now has explicit served systems, representative endpoints and branch-routing intent;
+- no canonical room, protected stair, elevator, door or primary circulation has been moved.
+
+This is the coordination prerequisite for visible systems geometry.
+
+**Next: Services Step 2 — generate a real 3D services/backbone GLB and add a Services layer to the working building viewer.**
