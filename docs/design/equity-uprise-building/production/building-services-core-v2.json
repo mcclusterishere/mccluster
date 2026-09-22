@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-building-services-core-v2",
-  "status": "active-authority-backbone-coordination-started",
+  "status": "services-step2-visible-backbone-source-implemented-pending-verification",
   "not_for_construction": true,
   "building_id": "equity-uprise-building",
   "source_level": "basement-b1",
@@ -350,8 +350,11 @@
     "code-required ratings",
     "final equipment replacement paths"
   ],
-  "current_implementation_phase": "services-step-1-backbone-coordination",
+  "current_implementation_phase": "services-step-2-visible-vertical-backbone",
   "floor_addenda_root": "services/floor-addenda",
-  "visible_geometry_status": "Services Step 2 pending",
-  "floor_addenda_ref": "services/floor-services-addenda.json"
+  "visible_geometry_status": "builder + viewer layer implemented; deterministic verification pending",
+  "floor_addenda_ref": "services/floor-services-addenda.json",
+  "services_glb": "generated/equity-uprise-building-services-core-v2.glb",
+  "services_report": "generated/equity-uprise-building-services-core-v2-report.json",
+  "viewer_layer": "Services: Exposed"
 }
