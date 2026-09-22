@@ -405,4 +405,13 @@ Step 6 inventory scope: **14 records**. Cumulative facade architectural-finish s
 
 Level 7 remains open-air and this pass does not create a seventh enclosed floor.
 
-Deterministic verification is the current gate.
+Step 6 deterministic verification is **GREEN** at snapshot `65a0bd0f886b1dc2714a8dd4685d92fefc12be52`.
+
+Verified completion:
+- **14/14 Step 6 records modeled**;
+- **68/68 total facade architectural-finish records modeled**;
+- **0 finish records deferred**;
+- **40/40 deterministic facade checks passing**;
+- Level 7 remains open-air and the protected roof-door / vertical-service assumptions remain intact.
+
+The canonical architectural-finish scope is complete.

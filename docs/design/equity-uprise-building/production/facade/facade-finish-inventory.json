@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-facade-architectural-finish",
-  "status": "facade-finish-step6-crown-roof-edge-implemented-pending-generated-verification",
+  "status": "facade-architectural-finish-complete-verified",
   "not_for_construction": true,
   "units": "feet",
   "baseline": {
@@ -988,9 +988,10 @@
         "restrained_crown_sign_halo"
       ],
       "description": "Subtle night backlighting for crown mark.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-CROWN-BAND-FINISH-SOUTH-01",
@@ -1004,9 +1005,10 @@
         "deepened_crown_band"
       ],
       "description": "Strengthen south crown termination.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-CROWN-BAND-FINISH-EAST-01",
@@ -1020,9 +1022,10 @@
         "deepened_crown_band"
       ],
       "description": "Strengthen east crown termination.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-CROWN-BAND-FINISH-NORTH-01",
@@ -1036,9 +1039,10 @@
         "deepened_crown_band"
       ],
       "description": "Strengthen north crown/service termination.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-CROWN-BAND-FINISH-WEST-01",
@@ -1052,9 +1056,10 @@
         "deepened_crown_band"
       ],
       "description": "Strengthen west crown termination.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-PARAPET-CAP-SOUTH-01",
@@ -1068,9 +1073,10 @@
         "roof_edge_cap"
       ],
       "description": "Resolved south parapet cap without enclosing Level 7.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-PARAPET-CAP-EAST-01",
@@ -1084,9 +1090,10 @@
         "roof_edge_cap"
       ],
       "description": "Resolved east parapet cap.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-PARAPET-CAP-NORTH-01",
@@ -1100,9 +1107,10 @@
         "roof_edge_cap"
       ],
       "description": "Resolved north parapet cap coordinated with service screens.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-PARAPET-CAP-WEST-01",
@@ -1116,9 +1124,10 @@
         "roof_edge_cap"
       ],
       "description": "Resolved west parapet cap.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-CROWN-SCREEN-NORTH-01",
@@ -1133,9 +1142,10 @@
         "headhouse_integration"
       ],
       "description": "Unify north roof-service screens with crown language while keeping roof open-air.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-CROWN-HEADHOUSE-TRIM-A-01",
@@ -1149,9 +1159,10 @@
         "stair_A_headhouse_trim"
       ],
       "description": "Integrate Stair A headhouse into crown.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-CROWN-HEADHOUSE-TRIM-B-01",
@@ -1165,9 +1176,10 @@
         "stair_B_headhouse_trim"
       ],
       "description": "Integrate Stair B headhouse into crown.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-CROWN-ELEVATOR-TRIM-01",
@@ -1181,9 +1193,10 @@
         "elevator_overrun_service_trim"
       ],
       "description": "Integrate elevator-overrun/service enclosure without claiming roof passenger service.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-EXTERIOR-LIGHT-ENTRY-GRAZE-01",
@@ -1231,9 +1244,10 @@
         "crown_service_screen_accents"
       ],
       "description": "Restrained crown/service-screen lighting.",
-      "implementation_status": "implemented_step_6_crown_pending_verification",
+      "implementation_status": "implemented_and_verified_step_6",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "1a824eb2be3609a75f2a0b13e64f8833ec281b86",
+      "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52"
     },
     {
       "id": "FAC-SITE-APRON-01",
@@ -1337,7 +1351,21 @@
       "existing Stair A/B roof doors remain unobstructed",
       "passenger elevator roof service remains unassumed",
       "no new roof enclosure is created"
-    ]
+    ],
+    "verification_status": "green",
+    "verification_snapshot": "65a0bd0f886b1dc2714a8dd4685d92fefc12be52",
+    "deterministic_report": {
+      "glb_bytes": 2492132,
+      "mesh_count": 3975,
+      "finish_inventory_records": 68,
+      "finish_step4_modeled": 32,
+      "finish_step5_modeled": 22,
+      "finish_step6_modeled": 14,
+      "finish_future_records_remaining": 0,
+      "finished_window_modules": 238,
+      "checks": "40/40",
+      "glb_sha256": "cffae5cf77f29c65b1273c4872241dca939b1c0ae31d6de6545b7e3f31c4ba31"
+    }
   },
   "brand_authority": {
     "canonical_asset": "assets/img/equity-uprise-logo.webp",

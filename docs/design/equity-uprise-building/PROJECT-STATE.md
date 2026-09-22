@@ -357,7 +357,25 @@ Step 6 source implementation is now active:
 - **14/14 remaining finish records** are now represented in source;
 - cumulative facade architectural-finish scope is **68/68 records** with nothing intentionally deferred.
 
-Current gate: deterministic Step 6 regeneration + full 68/68 finish verification.
+Step 6 deterministic verification: **GREEN**.
+
+Verified generated snapshot: `65a0bd0f886b1dc2714a8dd4685d92fefc12be52`
+
+- facade GLB: **3,975 meshes / 2,492,132 bytes**;
+- Step 4: **32/32 modeled**;
+- Step 5: **22/22 modeled**;
+- Step 6: **14/14 modeled**;
+- total architectural-finish inventory: **68/68 modeled**;
+- deferred finish records: **0**;
+- all **238/238 window-like modules** remain detailed;
+- facade checks: **40/40 passing**;
+- GLB SHA-256: `cffae5cf77f29c65b1273c4872241dca939b1c0ae31d6de6545b7e3f31c4ba31`;
+- Level 7 remains open-air;
+- Stair A/B roof-door openings remain preserved;
+- passenger-elevator roof service remains unassumed;
+- whole Core V2 CI passed.
+
+The **architectural facade finish inventory is now complete at 68/68**. Remaining exterior work, if any, is visual-review refinement rather than missing canonical finish scope.
 
 ## Exterior facade implementation — DETAILED CURRENT PASS ACTIVE / VISUAL APPROVAL PENDING
 
