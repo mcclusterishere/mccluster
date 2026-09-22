@@ -2,13 +2,54 @@
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-facade-core-v2",
   "not_for_construction": true,
-  "glb_bytes": 952416,
-  "sha256": "a65e62741a0271e034d9421379e83077f56bf0fe63869b38ba72aad78af8590e",
-  "mesh_count": 1578,
+  "glb_bytes": 2499212,
+  "sha256": "891192539b9d827f0060dea4b311c58f4df517023f7ef306d772d8055d2a8a6c",
+  "mesh_count": 3995,
   "inventory_modules": 288,
   "inventory_modules_modeled": 288,
   "inventory_features": 9,
   "inventory_features_modeled": 9,
+  "finish_inventory_records": 68,
+  "finish_step4_records": 32,
+  "finish_step4_modeled": 32,
+  "finish_step4_missing": [],
+  "finish_records_modeled_total": 32,
+  "finish_future_records_remaining": 36,
+  "finished_window_modules": 238,
+  "finish_geometry_counts": {
+    "FAC-WIN-JAMB-CLEAR-01": 304,
+    "FAC-WIN-HEAD-01": 238,
+    "FAC-WIN-SILL-01": 238,
+    "FAC-WIN-REVEAL-01": 476,
+    "FAC-WIN-GASKET-01": 476,
+    "FAC-WIN-ASSEMBLY-SOUTH-CLEAR-01": 47,
+    "FAC-WIN-ASSEMBLY-EAST-CLEAR-01": 54,
+    "FAC-WIN-JAMB-CORE-01": 132,
+    "FAC-WIN-ASSEMBLY-EAST-STAIR-01": 18,
+    "FAC-WIN-ASSEMBLY-NORTH-STAIR-01": 18,
+    "FAC-WIN-ASSEMBLY-NORTH-RESTROOM-CLERESTORY-01": 12,
+    "FAC-WIN-ASSEMBLY-NORTH-SUPPORT-CLERESTORY-01": 18,
+    "FAC-WIN-ASSEMBLY-WEST-CLEAR-01": 51,
+    "FAC-WIN-JAMB-PRIVACY-01": 40,
+    "FAC-WIN-ASSEMBLY-SOUTH-PRIVACY-01": 20,
+    "FAC-MULLION-SECONDARY-FINISH-01": 288,
+    "FAC-PRIMARY-FIN-FINISH-01": 20,
+    "FAC-SPANDREL-REVEAL-FINISH-01": 24,
+    "FAC-SERVICE-OPAQUE-NORTH-01": 18,
+    "FAC-SERVICE-OPAQUE-WEST-01": 18,
+    "FAC-ACOUSTIC-OPAQUE-SOUTH-F4-01": 3,
+    "FAC-ACOUSTIC-OPAQUE-WEST-F4-01": 3,
+    "FAC-SERVICE-LOUVER-FINISH-01": 12,
+    "FAC-CORNER-FINISH-SW-01": 1,
+    "FAC-CORNER-FINISH-SE-01": 1,
+    "FAC-CORNER-FINISH-NW-01": 1,
+    "FAC-CORNER-FINISH-NE-01": 1,
+    "FAC-BASE-PLINTH-SOUTH-01": 1,
+    "FAC-BASE-PLINTH-EAST-01": 1,
+    "FAC-BASE-PLINTH-NORTH-01": 1,
+    "FAC-BASE-PLINTH-WEST-01": 1,
+    "FAC-BASE-REVEAL-01": 4
+  },
   "classification_counts": {
     "clear_vision": 152,
     "entrance_door": 2,
@@ -22,18 +63,18 @@
   },
   "bounds_m": [
     [
-      -0.23164800000000002,
+      -0.24384000000000003,
       -1.755648,
       0.0
     ],
     [
-      22.177248000000002,
-      22.177248000000002,
+      22.18944,
+      22.18944,
       24.688800000000004
     ]
   ],
-  "checks_total": 15,
-  "checks_passed": 15,
+  "checks_total": 22,
+  "checks_passed": 22,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -108,9 +149,44 @@
       "detail": ""
     },
     {
+      "name": "finish inventory has 68 records",
+      "passed": true,
+      "detail": "68"
+    },
+    {
+      "name": "step 4 finish scope has 32 records",
+      "passed": true,
+      "detail": "32"
+    },
+    {
+      "name": "all step 4 finish records modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "238 window-like modules detailed",
+      "passed": true,
+      "detail": "238"
+    },
+    {
+      "name": "all four finish corners resolved",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all four base plinths + reveal modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "entry/crown finish intentionally deferred",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
       "name": "substantial real geometry",
       "passed": true,
-      "detail": "1578"
+      "detail": "3995"
     }
   ]
 }
