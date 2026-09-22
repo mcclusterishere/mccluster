@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-level-07",
+  "floor_identity": "Roof / Mobility Portal",
+  "status": "canonical_level7_inventory",
+  "not_for_construction": true,
+  "authority_refs": [
+    "../../FLOOR-07-PROGRAM-RECONCILIATION.md",
+    "../../FLOOR-07-V1-V2-PRESERVATION-MAP.md",
+    "../../FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md",
+    "../../FLOOR-07-SCHEMATIC-PLAN-BASIS.md",
+    "../../FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md",
+    "../building-core-v2.json",
+    "../equity-uprise-capability-map-v2.json"
+  ],
+  "capability_ids": ["ecosystem-routing", "roof-mobility", "uprise-world"],
+  "objects": [
+    {"id":"F7-ROOF-DECK-01","label":"Roof walking deck","category":"architecture","zone_id":"roof","quantity":1,"placement":{"bounds_ft":[0,0,72,72],"z_ft":0},"purpose":"Continuous open-air roof walking plane with shared core openings preserved","implementation_status":"required_level7_3d"},
+    {"id":"F7-PARAPET-N-01","label":"North parapet","category":"life_safety","zone_id":"roof_edge","quantity":1,"placement":{"bounds_ft":[0,71.5,72,72]},"purpose":"Conceptual guarded roof edge","implementation_status":"required_level7_3d"},
+    {"id":"F7-PARAPET-S-01","label":"South parapet / overlook edge","category":"life_safety","zone_id":"city_overlook","quantity":1,"placement":{"bounds_ft":[0,0,72,0.5]},"purpose":"Conceptual guarded roof edge","implementation_status":"required_level7_3d"},
+    {"id":"F7-PARAPET-W-01","label":"West parapet","category":"life_safety","zone_id":"roof_edge","quantity":1,"placement":{"bounds_ft":[0,0,0.5,72]},"purpose":"Conceptual guarded roof edge","implementation_status":"required_level7_3d"},
+    {"id":"F7-PARAPET-E-01","label":"East parapet","category":"life_safety","zone_id":"roof_edge","quantity":1,"placement":{"bounds_ft":[71.5,0,72,72]},"purpose":"Conceptual guarded roof edge","implementation_status":"required_level7_3d"},
+
+    {"id":"F7-STAIR-A-HEADHOUSE-01","label":"Stair A roof headhouse","category":"vertical_circulation","zone_id":"roof_access","quantity":1,"placement":{"bounds_ft":[60,54,72,72],"door_opening_x_ft":[61.5,64.5]},"purpose":"Protected Stair A reaches roof walking plane through a real south-facing doorway","implementation_status":"required_level7_3d"},
+    {"id":"F7-STAIR-B-HEADHOUSE-01","label":"Stair B roof headhouse","category":"vertical_circulation","zone_id":"roof_access","quantity":1,"placement":{"bounds_ft":[8,54,18,72],"door_opening_x_ft":[14,17]},"purpose":"Protected Stair B reaches roof walking plane through a real south-facing doorway","implementation_status":"required_level7_3d"},
+    {"id":"F7-STAIR-A-TRANSITION-01","label":"Floor 6 to roof Stair A transition","category":"vertical_circulation","zone_id":"roof_access","quantity":1,"placement":{"base_z_ft":-13.5,"top_z_ft":0,"flight_width_ft":5},"purpose":"Human-scale walkable stair transition from Floor 6 FFE +67.5 to roof +81","implementation_status":"required_level7_3d"},
+    {"id":"F7-STAIR-B-TRANSITION-01","label":"Floor 6 to roof Stair B transition","category":"vertical_circulation","zone_id":"roof_access","quantity":1,"placement":{"base_z_ft":-13.5,"top_z_ft":0,"flight_width_ft":4},"purpose":"Human-scale walkable stair transition from Floor 6 FFE +67.5 to roof +81","implementation_status":"required_level7_3d"},
+    {"id":"F7-STAIR-A-DOOR-01","label":"Stair A roof door","category":"door","zone_id":"roof_access","quantity":1,"placement":{"x_ft":61.5,"y_ft":54,"width_ft":3,"height_ft":7.5,"state":"modeled_open"},"purpose":"Unobstructed walking transition onto roof","implementation_status":"required_level7_3d"},
+    {"id":"F7-STAIR-B-DOOR-01","label":"Stair B roof door","category":"door","zone_id":"roof_access","quantity":1,"placement":{"x_ft":14,"y_ft":54,"width_ft":3,"height_ft":7.5,"state":"modeled_open"},"purpose":"Unobstructed walking transition onto roof","implementation_status":"required_level7_3d"},
+    {"id":"F7-STAIR-A-EXIT-SIGN-01","label":"Stair A roof exit sign","category":"signage","zone_id":"roof_access","quantity":1,"placement":{"center_ft":[63,53.7,8]},"purpose":"Life-safety wayfinding concept","implementation_status":"required_level7_3d"},
+    {"id":"F7-STAIR-B-EXIT-SIGN-01","label":"Stair B roof exit sign","category":"signage","zone_id":"roof_access","quantity":1,"placement":{"center_ft":[15.5,53.7,8]},"purpose":"Life-safety wayfinding concept","implementation_status":"required_level7_3d"},
+    {"id":"F7-PASSENGER-OVERRUN-01","label":"Passenger elevator overrun / service enclosure","category":"vertical_service","zone_id":"roof_access","quantity":1,"placement":{"bounds_ft":[54,34,62,44],"height_ft":8},"purpose":"Preserve passenger shaft continuity without asserting a Level 7 passenger stop","implementation_status":"required_level7_3d"},
+    {"id":"F7-FREIGHT-OVERRUN-01","label":"Freight/service shaft roof reservation","category":"vertical_service","zone_id":"west_service","quantity":1,"placement":{"bounds_ft":[0,60,8,72],"height_ft":8},"purpose":"Preserve service shaft continuity; roof stop unresolved","implementation_status":"required_level7_3d"},
+    {"id":"F7-MEP-SCREEN-01","label":"MEP / roof-services screen","category":"service","zone_id":"service_band","quantity":1,"placement":{"bounds_ft":[50,66,60,72],"height_ft":6},"purpose":"Protect continuous MEP reservation","implementation_status":"required_level7_3d"},
+
+    {"id":"F7-PATH-A-01","label":"Stair A arrival path","category":"circulation","zone_id":"roof_access","quantity":1,"placement":{"bounds_ft":[62,24,68,54]},"purpose":"Approx. 6 ft clear route from Stair A to routing interface","implementation_status":"required_level7_3d"},
+    {"id":"F7-PATH-B-01","label":"Stair B arrival path","category":"circulation","zone_id":"roof_access","quantity":1,"placement":{"bounds_ft":[12,48,50,54]},"purpose":"Approx. 6 ft clear route from Stair B toward routing interface","implementation_status":"required_level7_3d"},
+    {"id":"F7-PATH-B-02","label":"Stair B connector path","category":"circulation","zone_id":"roof_access","quantity":1,"placement":{"bounds_ft":[44,30,50,54]},"purpose":"Connect north roof path to routing interface without crossing fixed core","implementation_status":"required_level7_3d"},
+    {"id":"F7-PATH-OVERLOOK-01","label":"Routing-to-overlook path","category":"circulation","zone_id":"city_overlook","quantity":1,"placement":{"bounds_ft":[48,6,54,30]},"purpose":"Approx. 6 ft clear path to south overlook along mobility-zone edge","implementation_status":"required_level7_3d"},
+
+    {"id":"F7-ECOSYSTEM-BEACON-01","label":"Ecosystem Routing Beacon","category":"terminal","zone_id":"ecosystem_routing","quantity":1,"placement":{"center_ft":[48,27,3.5],"footprint_ft":[2.5,5]},"purpose":"Data-driven ecosystem destination selection; no destinations baked into geometry","capability_id":"ecosystem-routing","implementation_status":"required_level7_3d"},
+    {"id":"F7-ECOSYSTEM-DISPLAY-01","label":"Destination / route display","category":"display","zone_id":"ecosystem_routing","quantity":1,"placement":{"center_ft":[48,26.7,5.2]},"purpose":"Show current and selected destination state","capability_id":"ecosystem-routing","implementation_status":"required_level7_3d"},
+    {"id":"F7-RETURN-HOME-01","label":"Return / Building state control","category":"terminal","zone_id":"ecosystem_routing","quantity":1,"placement":{"center_ft":[46.7,28.5,3.2]},"purpose":"Return to Equity Uprise building state","capability_id":"ecosystem-routing","implementation_status":"required_level7_3d"},
+    {"id":"F7-ROUTE-ACCESS-STATE-01","label":"Restricted / unavailable destination state","category":"display","zone_id":"ecosystem_routing","quantity":1,"placement":{"center_ft":[49.2,28.5,3.2]},"purpose":"Explain unavailable or restricted routes without arbitrary redirects","capability_id":"ecosystem-routing","implementation_status":"required_level7_3d"},
+    {"id":"F7-UPRISE-WORLD-PORTAL-01","label":"Uprise World optional portal node","category":"terminal","zone_id":"ecosystem_routing","quantity":1,"placement":{"center_ft":[47.2,24.8,2.2]},"purpose":"Optional route-only handoff to experimental Uprise World; does not dictate roof art or geometry","capability_id":"uprise-world","implementation_status":"required_level7_3d"},
+
+    {"id":"F7-MOBILITY-FIELD-01","label":"Candidate Mobility Zone field","category":"mobility_reservation","zone_id":"mobility","quantity":1,"placement":{"bounds_ft":[10,8,48,46]},"purpose":"Conceptual vertical-lift reservation only; not an approved helipad","capability_id":"roof-mobility","implementation_status":"required_level7_3d"},
+    {"id":"F7-MOBILITY-RING-01","label":"Mobility reservation ring","category":"wayfinding","zone_id":"mobility","quantity":1,"placement":{"center_ft":[29,27,0.05],"radius_ft":13.5},"purpose":"Non-regulatory soft visual boundary; no H/TLOF/FATO markings","capability_id":"roof-mobility","implementation_status":"required_level7_3d"},
+    {"id":"F7-MOBILITY-BOLLARDS-01","label":"Mobility perimeter low markers","category":"wayfinding","zone_id":"mobility","quantity":12,"placement":{"pattern":"perimeter_of_reserved_field"},"purpose":"Low-profile conceptual boundary, not aviation certification lighting","implementation_status":"required_level7_3d"},
+
+    {"id":"F7-OVERLOOK-DECK-01","label":"South city overlook deck","category":"feature","zone_id":"city_overlook","quantity":1,"placement":{"bounds_ft":[12,0.75,46,6]},"purpose":"Protected exterior orientation point","implementation_status":"required_level7_3d"},
+    {"id":"F7-OVERLOOK-BENCH-01","label":"Overlook bench west","category":"furniture","zone_id":"city_overlook","quantity":1,"placement":{"center_ft":[20,3.4,1.2],"dimensions_ft":[6,1.8,1.5]},"purpose":"Minimal roof seating","implementation_status":"required_level7_3d"},
+    {"id":"F7-OVERLOOK-BENCH-02","label":"Overlook bench east","category":"furniture","zone_id":"city_overlook","quantity":1,"placement":{"center_ft":[38,3.4,1.2],"dimensions_ft":[6,1.8,1.5]},"purpose":"Minimal roof seating","implementation_status":"required_level7_3d"},
+    {"id":"F7-OVERLOOK-RAIL-01","label":"South overlook upper guard rail","category":"life_safety","zone_id":"city_overlook","quantity":1,"placement":{"span_ft":[12,46],"y_ft":0.7,"height_ft":4},"purpose":"Conceptual guard above parapet","implementation_status":"required_level7_3d"},
+
+    {"id":"F7-SERVICE-SCREEN-01","label":"North service screen","category":"service","zone_id":"service_band","quantity":1,"placement":{"bounds_ft":[34,60,50,60.4],"height_ft":6},"purpose":"Visually screen rooftop mechanical equipment while preserving access","implementation_status":"required_level7_3d"},
+    {"id":"F7-MECH-UNIT-01","label":"Mechanical unit 1","category":"equipment","zone_id":"service_band","quantity":1,"placement":{"bounds_ft":[35,62,40,68],"height_ft":4},"purpose":"Plausible rooftop service equipment","implementation_status":"required_level7_3d"},
+    {"id":"F7-MECH-UNIT-02","label":"Mechanical unit 2","category":"equipment","zone_id":"service_band","quantity":1,"placement":{"bounds_ft":[41,62,46,68],"height_ft":4},"purpose":"Plausible rooftop service equipment","implementation_status":"required_level7_3d"},
+    {"id":"F7-MECH-UNIT-03","label":"Mechanical unit 3","category":"equipment","zone_id":"service_band","quantity":1,"placement":{"bounds_ft":[47,61,50,65],"height_ft":3.5},"purpose":"Plausible rooftop service equipment","implementation_status":"required_level7_3d"},
+    {"id":"F7-SERVICE-WALK-01","label":"North service walkway","category":"circulation","zone_id":"service_band","quantity":1,"placement":{"bounds_ft":[18,54,60,60]},"purpose":"Service/egress access band kept clear","implementation_status":"required_level7_3d"},
+
+    {"id":"F7-PATH-LIGHTS-01","label":"Low-level roof path lights","category":"lighting","zone_id":"roof","quantity":14,"placement":{"pattern":"primary_public_paths"},"purpose":"Warm-white low-level navigation lighting","implementation_status":"required_level7_3d"},
+    {"id":"F7-STAIR-SCONCES-01","label":"Stair headhouse exterior sconces","category":"lighting","zone_id":"roof_access","quantity":4,"placement":{"pattern":"two_per_stair_door"},"purpose":"Roof door illumination","implementation_status":"required_level7_3d"},
+    {"id":"F7-BEACON-LIGHT-01","label":"Ecosystem beacon soft light","category":"lighting","zone_id":"ecosystem_routing","quantity":1,"placement":{"center_ft":[48,27,6.5]},"purpose":"Restrained routing-interface illumination","implementation_status":"required_level7_3d"},
+    {"id":"F7-DRAINS-01","label":"Roof drain set","category":"building_support","zone_id":"roof","quantity":6,"placement":{"pattern":"distributed_low_points"},"purpose":"Plausible roof drainage representation","implementation_status":"required_level7_3d"},
+    {"id":"F7-LIGHTNING-RODS-01","label":"Lightning protection terminals","category":"building_support","zone_id":"roof_edge","quantity":4,"placement":{"pattern":"corners"},"purpose":"Conceptual lightning-protection presence","implementation_status":"required_level7_3d"},
+    {"id":"F7-EMERGENCY-CALL-01","label":"Roof emergency call / intercom","category":"life_safety","zone_id":"roof_access","quantity":2,"placement":{"pattern":"adjacent_to_stair_doors"},"purpose":"Conceptual emergency communication","implementation_status":"required_level7_3d"},
+    {"id":"F7-FIRE-CABINET-01","label":"Roof fire-extinguisher cabinets","category":"life_safety","zone_id":"roof_access","quantity":2,"placement":{"pattern":"adjacent_to_stair_doors"},"purpose":"Conceptual life-safety equipment","implementation_status":"required_level7_3d"},
+    {"id":"F7-WAYFINDING-01","label":"Roof wayfinding to both protected stairs","category":"signage","zone_id":"roof_access","quantity":2,"placement":{"pattern":"routing_interface_and_overlook"},"purpose":"Keep both protected stair paths legible","implementation_status":"required_level7_3d"}
+  ]
+}
