@@ -50,4 +50,4 @@ Require vertical continuity B1→L7, no core/circulation clashes, traceability f
 
 ## Current stop point
 
-Services Step 1 is complete. **Services Step 2 is implemented and verified:** a dedicated real 3D backbone GLB plus a Services viewer layer, with 9/9 risers, 63 story segments, 63/63 authorized floor handoff stubs and 12/12 checks passing. Next is Services Step 3: B1 source/plant connections.
+Services Steps 1–2 are complete and verified. **Services Step 3 source/plant connections are implemented:** the existing B1 plant/equipment is reused as the visible source and deterministic ducts, pipes, busway/conduit, cable tray and controls pathways connect all nine authorized backbone systems without moving architecture or inventing external utility geometry. Branch-side preflight is 28/28 checks passing. Next after green CI/merge is Services Step 4: Floors 1–3 branches.
