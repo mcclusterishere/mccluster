@@ -1,11 +1,11 @@
 # Equity Uprise Building — Floor 06: Penthouse Command
 
-> Status: **WORKING PRE-ITERATIVE FLOOR 6 PROGRAM REFERENCE — CORE V2 CHASSIS RETAINED**  
-> Program note: this floor has **not** yet received the activity/space reconciliation completed for Floor 1. Preserve useful repo-derived requirements, but do not treat the current room program or working identity as final.  
+> Status: **CANONICAL FLOOR 6 PROGRAM — CORE V2 — PROGRAM RECONCILED / REAL 3D ACTIVE**  
+> Program note: Floor 6 activity/space reconciliation is complete for the present iterative pass. The real 3D builder/viewer is active; visual approval remains iterative.  
 > Building: compact Equity Uprise headquarters / civic institute  
 > Floor identity: **Penthouse Command**  
 > This is the final enclosed occupied level before **Level 7 — Roof / Mobility Portal**.  
-> This file is a **working pre-iterative program reference**. Shared Core V2 geometry remains authoritative; final room/activity semantics must be rewritten during this floor's iterative pass.
+> This file is the active Floor 6 program authority beneath shared Core V2 geometry.
 
 
 > **Core V2 chassis authority:** `BUILDING-CORE-V2-SPEC.md` + `production/building-core-v2.json`.
@@ -807,3 +807,20 @@ The building metaphor must preserve the source product's public/private and appr
 Enterprise Development is represented as a program pathway, not as a pricing billboard; commercial terms remain external program data. Detailed Equity Uprise Mission Fund accounting remains quiet until its governance/custody/accounting/reporting state is publishable.
 
 This section describes repo/program fidelity. It does not alter the shared Core V2 geometry and is **not for construction**.
+
+
+---
+
+## Floor 6 reconciliation lock — 2026-09-22
+
+Floor 6 is program-reconciled for the present iterative pass.
+
+Required implementation references:
+- `FLOOR-06-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-06-V1-V2-PRESERVATION-MAP.md`;
+- `HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`;
+- `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`;
+- `production/floor-06/floor-06-object-inventory.json`;
+- `production/floor-06/build_equity_uprise_floor_06_v2.py`.
+
+The real 3D environment is an iterative visualization/simulation artifact and remains **NOT FOR CONSTRUCTION**.
