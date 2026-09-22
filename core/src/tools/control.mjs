@@ -6,7 +6,7 @@ import { coreResume } from './resume.mjs';
 import { previewConfigured } from '../preview-policy.mjs';
 import { computeTaskById } from '../compute/store.mjs';
 import { ONTOLOGY_TOOLS, callOntologyTool } from './ontology.mjs';
-import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';
+import { INGESTION_TOOLS, callIngestionTool } from './ingestion.mjs';\nimport { activeMeetingTools, callMeetingTool } from './meeting.mjs';
 
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PREVIEW_CONFIGURED = previewConfigured();
@@ -75,7 +75,7 @@ const BASE_TOOLS = [
   }
 ];
 
-BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS);
+BASE_TOOLS.push(...ONTOLOGY_TOOLS, ...INGESTION_TOOLS);\nBASE_TOOLS.push(...activeMeetingTools());
 
 if (PREVIEW_CONFIGURED) {
   BASE_TOOLS.push({
