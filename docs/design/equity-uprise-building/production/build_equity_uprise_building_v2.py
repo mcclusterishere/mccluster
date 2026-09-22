@@ -150,6 +150,8 @@ def stair_enclosure_with_doors(name,b,opening,levels,roof_z,color):
             add_box(f"{name}_{tag}_south_right",(dx2,y1,x2,y1+t),z0,h,color)
         if h>door_h:
             add_box(f"{name}_{tag}_south_lintel",(dx1,y1,dx2,y1+t),z0+door_h,h-door_h,color)
+    # Weather cap for the Level 7 stair headhouse.
+    add_box(f"{name}_L7_roof_cap",(x1,y1,x2,y2),top,.35,color)
 
 def stair_flights(stair_name,b,base_z,next_z,flight_w):
     x1,y1,x2,y2=b
