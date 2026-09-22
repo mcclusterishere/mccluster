@@ -255,6 +255,35 @@ Use these to recover design quality, not obsolete stair/core geometry.
 - inventing new floor identities without current program authority.
 
 
+## Exterior facade implementation — DETAILED CURRENT PASS ACTIVE / VISUAL APPROVAL PENDING
+
+The facade has moved from authority-only into deterministic 3D implementation.
+
+Current pass:
+- **288/288 canonical facade modules modeled** across Floors 1–6 and all four elevations;
+- **9/9 facade feature records modeled**;
+- deterministic builder preflight: **1,578 meshes / 15 of 15 checks passing**;
+- 6 ft facade module remains aligned to the 18 ft structural grid;
+- real mullion, transom, primary-fin, spandrel, glazing, privacy-glass, acoustic-opaque, service-opaque, stair-slot, clerestory and louver geometry exists;
+- Floor 1 south entry has a dimensional portal, paired glazed entry modules, projecting canopy, supports, **E = U** mark and **Equity Uprise** canopy wordmark;
+- one restrained south crown **E = U** mark and a continuous crown cap are modeled;
+- Floor 4 recording-room acoustic exception is physically represented;
+- north service/support facade is intentionally more opaque while retaining clerestory/stair/louver articulation;
+- facade exists as a coordinated independent shell GLB so approved floor interiors are preserved;
+- working-stack viewer now hides obsolete floor-local exterior placeholders in Stack mode, shows the new facade shell, restores floor-local perimeters during floor isolation, and provides facade-only isolation;
+- viewer now includes South / East / North / West / Entry / Crown review cameras plus Day / Night and Wireframe states;
+- B1 remains below grade and receives no fake exterior windows;
+- Level 7 remains open-air; the facade crown stops at the roof datum and does not create a fake enclosed seventh floor.
+
+Current deterministic preflight output:
+- GLB bytes: **952,416**;
+- meshes: **1,578**;
+- facade modules: **288/288**;
+- facade features: **9/9**;
+- checks: **15/15 passing**.
+
+Remaining gate: deterministic generated artifact commit, PR/main CI, live deployment, then direct visual review. The model remains not-for-construction.
+
 ## Exterior facade upgrade spec — DETAILED AUTHORITY LOCKED / GEOMETRY PENDING
 
 The exterior-facade design is now coordinated to the existing Core V2 math rather than remaining a generic future aspiration.

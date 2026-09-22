@@ -129,6 +129,8 @@ For any facade, glazing, exterior branding, interior-envelope, MEP, IT, plumbing
 - `FACADE-BRANDING-AND-SIGNAGE-SPEC.md`
 - `production/building-services-core-v2.json`
 - `production/facade-system-core-v2.json`
+- `production/facade/facade-module-inventory.json`
+- `production/facade/build_equity_uprise_facade_v2.py`
 - `production/vertical-risers-core-v2.json`
 - `production/interior-envelope-audit.json`
 

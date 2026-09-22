@@ -1,0 +1,4819 @@
+{
+  "schema_version": "1.0.0",
+  "scene_id": "equity-uprise-facade-core-v2",
+  "status": "current-pass-detailed-facade-inventory",
+  "not_for_construction": true,
+  "units": "feet",
+  "authority_refs": [
+    "../../EXTERIOR-FACADE-UPGRADE-SPEC.md",
+    "../facade-system-core-v2.json",
+    "../../FACADE-BRANDING-AND-SIGNAGE-SPEC.md",
+    "../building-core-v2.json"
+  ],
+  "coordinate_system": {
+    "origin": "southwest_exterior_corner_floor_01",
+    "x_positive": "east",
+    "y_positive": "north",
+    "z_positive": "up"
+  },
+  "module_system": {
+    "structural_grid_ft": [
+      0,
+      18,
+      36,
+      54,
+      72
+    ],
+    "secondary_module_ft": 6,
+    "module_lines_ft": [
+      0,
+      6,
+      12,
+      18,
+      24,
+      30,
+      36,
+      42,
+      48,
+      54,
+      60,
+      66,
+      72
+    ],
+    "modules_per_elevation_per_floor": 12
+  },
+  "levels": [
+    {
+      "level": 1,
+      "id": "F1",
+      "z0_ft": 0
+    },
+    {
+      "level": 2,
+      "id": "F2",
+      "z0_ft": 13.5
+    },
+    {
+      "level": 3,
+      "id": "F3",
+      "z0_ft": 27
+    },
+    {
+      "level": 4,
+      "id": "F4",
+      "z0_ft": 40.5
+    },
+    {
+      "level": 5,
+      "id": "F5",
+      "z0_ft": 54
+    },
+    {
+      "level": 6,
+      "id": "F6",
+      "z0_ft": 67.5
+    }
+  ],
+  "classifications": [
+    "clear_vision",
+    "privacy_vision",
+    "acoustic_opaque",
+    "service_opaque",
+    "stair_core_glazing",
+    "restroom_clerestory",
+    "support_clerestory",
+    "louver_service",
+    "entrance_door"
+  ],
+  "modules": [
+    {
+      "id": "FAC-SOUTH-F1-M01",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M02",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M03",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M04",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M05",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M06",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "entrance_door",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "paired public entry aligned to the existing south vestibule"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M07",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "entrance_door",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "paired public entry aligned to the existing south vestibule"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M08",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M09",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M10",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M11",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F1-M12",
+      "elevation": "south",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-EAST-F1-M01",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F1-M02",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F1-M03",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F1-M04",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F1-M05",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F1-M06",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F1-M07",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F1-M08",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F1-M09",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F1-M10",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F1-M11",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F1-M12",
+      "elevation": "east",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-NORTH-F1-M01",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight/service shaft zone"
+    },
+    {
+      "id": "FAC-NORTH-F1-M02",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight / Stair B transition zone"
+    },
+    {
+      "id": "FAC-NORTH-F1-M03",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair B controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F1-M04",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F1-M05",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F1-M06",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F1-M07",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F1-M08",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F1-M09",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "janitor / support / service zone"
+    },
+    {
+      "id": "FAC-NORTH-F1-M10",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "louver_service",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "MEP/service louver field; final airflow sizing unresolved"
+    },
+    {
+      "id": "FAC-NORTH-F1-M11",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F1-M12",
+      "elevation": "north",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-WEST-F1-M01",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F1-M02",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F1-M03",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F1-M04",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F1-M05",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F1-M06",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F1-M07",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F1-M08",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F1-M09",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F1-M10",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F1-M11",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F1-M12",
+      "elevation": "west",
+      "level": 1,
+      "level_id": "F1",
+      "z0_ft": 0,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M01",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M02",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M03",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M04",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M05",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M06",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M07",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M08",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M09",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M10",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M11",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F2-M12",
+      "elevation": "south",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-EAST-F2-M01",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F2-M02",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F2-M03",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F2-M04",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F2-M05",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F2-M06",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F2-M07",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F2-M08",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F2-M09",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F2-M10",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F2-M11",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F2-M12",
+      "elevation": "east",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-NORTH-F2-M01",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight/service shaft zone"
+    },
+    {
+      "id": "FAC-NORTH-F2-M02",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight / Stair B transition zone"
+    },
+    {
+      "id": "FAC-NORTH-F2-M03",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair B controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F2-M04",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F2-M05",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F2-M06",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F2-M07",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F2-M08",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F2-M09",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "janitor / support / service zone"
+    },
+    {
+      "id": "FAC-NORTH-F2-M10",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "louver_service",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "MEP/service louver field; final airflow sizing unresolved"
+    },
+    {
+      "id": "FAC-NORTH-F2-M11",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F2-M12",
+      "elevation": "north",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-WEST-F2-M01",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F2-M02",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F2-M03",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F2-M04",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F2-M05",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F2-M06",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F2-M07",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F2-M08",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F2-M09",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F2-M10",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F2-M11",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F2-M12",
+      "elevation": "west",
+      "level": 2,
+      "level_id": "F2",
+      "z0_ft": 13.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M01",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Fellowship interview/meeting privacy zone behind south facade"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M02",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Fellowship interview/meeting privacy zone behind south facade"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M03",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Fellowship interview/meeting privacy zone behind south facade"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M04",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Fellowship interview/meeting privacy zone behind south facade"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M05",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Fellowship interview/meeting privacy zone behind south facade"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M06",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M07",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M08",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M09",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M10",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M11",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F3-M12",
+      "elevation": "south",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-EAST-F3-M01",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F3-M02",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F3-M03",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F3-M04",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F3-M05",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F3-M06",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F3-M07",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F3-M08",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F3-M09",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F3-M10",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F3-M11",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F3-M12",
+      "elevation": "east",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-NORTH-F3-M01",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight/service shaft zone"
+    },
+    {
+      "id": "FAC-NORTH-F3-M02",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight / Stair B transition zone"
+    },
+    {
+      "id": "FAC-NORTH-F3-M03",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair B controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F3-M04",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F3-M05",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F3-M06",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F3-M07",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F3-M08",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F3-M09",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "janitor / support / service zone"
+    },
+    {
+      "id": "FAC-NORTH-F3-M10",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "louver_service",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "MEP/service louver field; final airflow sizing unresolved"
+    },
+    {
+      "id": "FAC-NORTH-F3-M11",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F3-M12",
+      "elevation": "north",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-WEST-F3-M01",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F3-M02",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F3-M03",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F3-M04",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F3-M05",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F3-M06",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F3-M07",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F3-M08",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F3-M09",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F3-M10",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F3-M11",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F3-M12",
+      "elevation": "west",
+      "level": 3,
+      "level_id": "F3",
+      "z0_ft": 27,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M01",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "acoustic_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "Creator Recording Room acoustic facade exception"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M02",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "acoustic_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "Creator Recording Room acoustic facade exception"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M03",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "acoustic_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "Creator Recording Room acoustic facade exception"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M04",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Edit / Review Suite controlled glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M05",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Edit / Review Suite controlled glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M06",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Edit / Review Suite controlled glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M07",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M08",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M09",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M10",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M11",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F4-M12",
+      "elevation": "south",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-EAST-F4-M01",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F4-M02",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F4-M03",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F4-M04",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F4-M05",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F4-M06",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F4-M07",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F4-M08",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F4-M09",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F4-M10",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F4-M11",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F4-M12",
+      "elevation": "east",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-NORTH-F4-M01",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight/service shaft zone"
+    },
+    {
+      "id": "FAC-NORTH-F4-M02",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight / Stair B transition zone"
+    },
+    {
+      "id": "FAC-NORTH-F4-M03",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair B controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F4-M04",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F4-M05",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F4-M06",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F4-M07",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F4-M08",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F4-M09",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "janitor / support / service zone"
+    },
+    {
+      "id": "FAC-NORTH-F4-M10",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "louver_service",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "MEP/service louver field; final airflow sizing unresolved"
+    },
+    {
+      "id": "FAC-NORTH-F4-M11",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F4-M12",
+      "elevation": "north",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-WEST-F4-M01",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "acoustic_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west side of Creator Recording Room acoustic envelope"
+    },
+    {
+      "id": "FAC-WEST-F4-M02",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "acoustic_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west side of Creator Recording Room acoustic envelope"
+    },
+    {
+      "id": "FAC-WEST-F4-M03",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "acoustic_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west side of Creator Recording Room acoustic envelope"
+    },
+    {
+      "id": "FAC-WEST-F4-M04",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F4-M05",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F4-M06",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F4-M07",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F4-M08",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F4-M09",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F4-M10",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F4-M11",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F4-M12",
+      "elevation": "west",
+      "level": 4,
+      "level_id": "F4",
+      "z0_ft": 40.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M01",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Policy review-room privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M02",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Policy review-room privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M03",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Policy review-room privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M04",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Policy review-room privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M05",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Policy review-room privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M06",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Policy review-room privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M07",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M08",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M09",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M10",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M11",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F5-M12",
+      "elevation": "south",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-EAST-F5-M01",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F5-M02",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F5-M03",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F5-M04",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F5-M05",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F5-M06",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F5-M07",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F5-M08",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F5-M09",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F5-M10",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F5-M11",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F5-M12",
+      "elevation": "east",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-NORTH-F5-M01",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight/service shaft zone"
+    },
+    {
+      "id": "FAC-NORTH-F5-M02",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight / Stair B transition zone"
+    },
+    {
+      "id": "FAC-NORTH-F5-M03",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair B controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F5-M04",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F5-M05",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F5-M06",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F5-M07",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F5-M08",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F5-M09",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "janitor / support / service zone"
+    },
+    {
+      "id": "FAC-NORTH-F5-M10",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "louver_service",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "MEP/service louver field; final airflow sizing unresolved"
+    },
+    {
+      "id": "FAC-NORTH-F5-M11",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F5-M12",
+      "elevation": "north",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-WEST-F5-M01",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F5-M02",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F5-M03",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F5-M04",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F5-M05",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F5-M06",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F5-M07",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F5-M08",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F5-M09",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F5-M10",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F5-M11",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F5-M12",
+      "elevation": "west",
+      "level": 5,
+      "level_id": "F5",
+      "z0_ft": 54,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M01",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Strategy / executive briefing privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M02",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Strategy / executive briefing privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M03",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Strategy / executive briefing privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M04",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Strategy / executive briefing privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M05",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Strategy / executive briefing privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M06",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "privacy_vision",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Strategy / executive briefing privacy treatment"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M07",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M08",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M09",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M10",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M11",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-SOUTH-F6-M12",
+      "elevation": "south",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "primary civic-facing sealed vision glazing"
+    },
+    {
+      "id": "FAC-EAST-F6-M01",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F6-M02",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F6-M03",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F6-M04",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F6-M05",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F6-M06",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F6-M07",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F6-M08",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F6-M09",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied east facade vision field"
+    },
+    {
+      "id": "FAC-EAST-F6-M10",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F6-M11",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-EAST-F6-M12",
+      "elevation": "east",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A / north core band with narrow controlled daylight"
+    },
+    {
+      "id": "FAC-NORTH-F6-M01",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight/service shaft zone"
+    },
+    {
+      "id": "FAC-NORTH-F6-M02",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "freight / Stair B transition zone"
+    },
+    {
+      "id": "FAC-NORTH-F6-M03",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair B controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F6-M04",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F6-M05",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "restroom_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "restroom/support clerestory daylight"
+    },
+    {
+      "id": "FAC-NORTH-F6-M06",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F6-M07",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F6-M08",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "support_clerestory",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "north support-band clerestory"
+    },
+    {
+      "id": "FAC-NORTH-F6-M09",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "janitor / support / service zone"
+    },
+    {
+      "id": "FAC-NORTH-F6-M10",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "louver_service",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "MEP/service louver field; final airflow sizing unresolved"
+    },
+    {
+      "id": "FAC-NORTH-F6-M11",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-NORTH-F6-M12",
+      "elevation": "north",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "stair_core_glazing",
+      "material_id": "FAC-GLASS-02",
+      "rationale": "Stair A controlled daylight slot"
+    },
+    {
+      "id": "FAC-WEST-F6-M01",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 1,
+      "span_ft": [
+        0,
+        6
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F6-M02",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 2,
+      "span_ft": [
+        6,
+        12
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F6-M03",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 3,
+      "span_ft": [
+        12,
+        18
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F6-M04",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 4,
+      "span_ft": [
+        18,
+        24
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F6-M05",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 5,
+      "span_ft": [
+        24,
+        30
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F6-M06",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 6,
+      "span_ft": [
+        30,
+        36
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F6-M07",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 7,
+      "span_ft": [
+        36,
+        42
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F6-M08",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 8,
+      "span_ft": [
+        42,
+        48
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F6-M09",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 9,
+      "span_ft": [
+        48,
+        54
+      ],
+      "classification": "clear_vision",
+      "material_id": "FAC-GLASS-01",
+      "rationale": "occupied west facade vision field"
+    },
+    {
+      "id": "FAC-WEST-F6-M10",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 10,
+      "span_ft": [
+        54,
+        60
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F6-M11",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 11,
+      "span_ft": [
+        60,
+        66
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    },
+    {
+      "id": "FAC-WEST-F6-M12",
+      "elevation": "west",
+      "level": 6,
+      "level_id": "F6",
+      "z0_ft": 67.5,
+      "story_height_ft": 13.5,
+      "module_index": 12,
+      "span_ft": [
+        66,
+        72
+      ],
+      "classification": "service_opaque",
+      "material_id": "FAC-OPAQUE-01",
+      "rationale": "west freight / Stair B service-core expression"
+    }
+  ],
+  "features": [
+    {
+      "id": "FAC-ENTRY-PORTAL-01",
+      "kind": "entry_portal",
+      "elevation": "south",
+      "x_ft": [
+        24,
+        48
+      ],
+      "y_ft": [
+        -0.55,
+        0.2
+      ],
+      "z_ft": [
+        0,
+        13.5
+      ],
+      "material_id": "FAC-MINERAL-01"
+    },
+    {
+      "id": "FAC-ENTRY-CANOPY-01",
+      "kind": "canopy",
+      "elevation": "south",
+      "x_ft": [
+        24,
+        48
+      ],
+      "y_ft": [
+        -5.5,
+        0
+      ],
+      "z_ft": [
+        9.45,
+        10.15
+      ],
+      "material_id": "FAC-WARM-01"
+    },
+    {
+      "id": "FAC-ENTRY-CANOPY-SUPPORT-W",
+      "kind": "canopy_support",
+      "elevation": "south",
+      "x_ft": [
+        24.4,
+        25
+      ],
+      "y_ft": [
+        -5,
+        -4.4
+      ],
+      "z_ft": [
+        0,
+        9.45
+      ],
+      "material_id": "FAC-METAL-01"
+    },
+    {
+      "id": "FAC-ENTRY-CANOPY-SUPPORT-E",
+      "kind": "canopy_support",
+      "elevation": "south",
+      "x_ft": [
+        47,
+        47.6
+      ],
+      "y_ft": [
+        -5,
+        -4.4
+      ],
+      "z_ft": [
+        0,
+        9.45
+      ],
+      "material_id": "FAC-METAL-01"
+    },
+    {
+      "id": "FAC-BRAND-ENTRY-01",
+      "kind": "architectural_mark",
+      "text": "E=U",
+      "elevation": "south",
+      "center_x_ft": 36,
+      "base_z_ft": 11.15,
+      "material_id": "FAC-SIGN-01"
+    },
+    {
+      "id": "FAC-WORDMARK-ENTRY-01",
+      "kind": "architectural_wordmark",
+      "text": "EQUITY UPRISE",
+      "elevation": "south_canopy_fascia",
+      "center_x_ft": 36,
+      "base_z_ft": 9.48,
+      "material_id": "FAC-SIGN-01"
+    },
+    {
+      "id": "FAC-BRAND-CROWN-01",
+      "kind": "architectural_mark",
+      "text": "E=U",
+      "elevation": "south",
+      "center_x_ft": 36,
+      "base_z_ft": 78.25,
+      "material_id": "FAC-SIGN-01"
+    },
+    {
+      "id": "FAC-CROWN-CAP-01",
+      "kind": "crown_cap",
+      "z_ft": [
+        80.55,
+        81
+      ],
+      "material_id": "FAC-METAL-01"
+    },
+    {
+      "id": "FAC-CORNER-PIERS-01",
+      "kind": "corner_pier_family",
+      "z_ft": [
+        0,
+        81
+      ],
+      "material_id": "FAC-METAL-01"
+    }
+  ],
+  "expected_module_count": 288,
+  "implementation_boundary": "Inventory defines facade module intent and stable IDs. Exact engineered wall assemblies, glazing performance, structural attachment, fire ratings, energy performance and drainage details remain professional-design tasks."
+}
