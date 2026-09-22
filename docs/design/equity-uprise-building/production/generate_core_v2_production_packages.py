@@ -352,7 +352,7 @@ for level in programs["levels"]:
       {"id":"program_focus","type":"soft_area","temperature_k":3000,"intensity_relative":0.62,"position_ft_local":{"x":36,"y":40,"z":10.5}}
     ]
     if n==6:
-        fixtures.append({"id":"halo_globe_soft_emission","type":"object_emission","temperature_k":5200,"intensity_relative":0.18,"position_ft_local":{"x":24.5,"y":34.5,"z":8.25},"rule":"Subtle only; must not turn Penthouse Command into a tactical command center."})
+        fixtures.append({"id":"halo_globe_soft_emission","type":"object_emission","temperature_k":5200,"intensity_relative":0.18,"position_ft_local":{"x":41,"y":22,"z":8.25},"rule":"Subtle only; must not turn Penthouse Command into a tactical command center."})
     lighting={"schema_version":"2.0.0","scene_id":scene_id,"color_temperature_default_k":3000,
       "fixtures":fixtures,
       "rules":["Warm-white practical light is primary.","Red remains a restrained state/wayfinding accent.","Halo emission on Floor 6 remains subordinate to architectural lighting."]
@@ -444,7 +444,7 @@ The floor may define program zones and interaction modes but may not move these 
 
 Declared interaction modes are semantic/UI states on existing rooms, walls, terminals and instruments; they do not create additional rooms or floor area.
 
-Floor 6 additionally reserves one suspended Halo Globe / Spatial Intelligence sphere at (24.5,34.5), radius 2.25 ft, center 8.25 ft AFF. Its footprint is coordination-only and may not obstruct circulation or the fixed core.
+Floor 6 additionally reserves one suspended Halo Globe / Spatial Intelligence sphere at (41,22), radius 2.25 ft, center 8.25 ft AFF. Its footprint is coordination-only and may not obstruct circulation or the fixed core.
 
 Both stairs are modeled as continuous full-rise systems in the combined building generator. A per-floor isolated viewer is never vertical-continuity authority.
 
