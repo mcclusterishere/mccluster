@@ -1,6 +1,6 @@
 # Equity Uprise — Repository-to-Building Reconciliation Audit
 
-> Audit date: **2026-09-21**  
+> Audit date: **2026-09-22**  
 > Audit scope: current repository tree  
 > Repository: `mcclusterishere/mccluster`  
 > Scope: Equity Uprise public surfaces, platform rooms, data model, Policy OS, research/publication stack, media/music stack, outreach/integration/control systems, building authority, floor programs, routing/hotspots and Core V2 generated architecture.  
@@ -477,6 +477,9 @@ Program reconciliation does not change the already approved Core V2 physical sta
 - revised Stair B X8–18 / Y54–72;
 - Stair A X60–72 / Y54–72;
 - continuous 13'-6" schematic stair transitions;
+- canonical 3 ft south-facing protected-stair access openings at every served level;
+- Stair A roof door X61.5–64.5 / Y54 and Stair B roof door X14–17 / Y54;
+- both protected-stair upper landings meet the +81 ft roof walking plane exactly;
 - coordinated slab openings;
 - Floor 1 only ground-level public entrance.
 
@@ -513,17 +516,19 @@ For deciding **what Equity Uprise contains and which floor represents it**, auth
 
 For **geometry**, `BUILDING-CORE-V2-SPEC.md` and `production/building-core-v2.json` remain above floor-local artifacts.
 
-## Validation evidence — 2026-09-21
+## Validation evidence — 2026-09-22
 
-The reconciliation is backed by four separate deterministic checks:
+The current reconciliation is backed by deterministic repo, program, plan, geometry, and walking-plane gates:
 
 | Layer | Result | What it proves |
 |---|---:|---|
-| Repo-source classification | **251 sources classified** | Current source ledger contains 102 capability sources and 149 explicitly support/development-authority sources. The exact discovered-set gate remains enforced by `verify_equity_uprise_repo_sources.py`. |
-| Repo-source validator | **904 / 904 passed** | The discovered source set, classifications and support/capability accounting all match the current repository state. |
-| Capability / floor / routing coverage | **464 / 464 passed** | All 56 canonical capabilities are assigned to their primary and declared secondary floors; interaction-mode and zone routes resolve; private/high-risk routes remain non-public; Halo public mode is read-only with owner-authenticated operational handoff; Level 7 does not imply passenger-elevator service. |
-| Generated plan semantics | **437 / 437 passed** | Active Core V2 SVG/DXF/PNG sets exist for B1 and Floors 1–7; generated vector/CAD labels include the Halo Globe and match the canonical floor program; stale semantic labels are absent; only the Core V2 triplets remain active. |
-| Combined stacked geometry | **41 / 41 passed** | Eight physical elevations from B1 through roof, all 14 protected-stair level transitions and the single suspended Floor 6 Halo Globe remain valid in the combined GLB; the Halo envelope clears the fixed core and circulation height constraints. |
+| Repo-source classification | **253 sources classified** | Current source ledger contains 102 capability sources and 151 explicitly support/development-authority sources. The exact discovered-set gate remains enforced by `verify_equity_uprise_repo_sources.py`. |
+| Repo-source validator | **912 / 912 passed** | The discovered source set, classifications and support/capability accounting match the current repository state. |
+| Capability / floor / routing coverage | **466 / 466 passed** | All 56 canonical capabilities are assigned to their primary and declared secondary floors; interaction-mode and zone routes resolve; private/high-risk routes remain non-public; Halo public mode is read-only with owner-authenticated operational handoff; Level 7 does not imply passenger-elevator service. |
+| Generated plan semantics | **488 / 488 passed** | Active Core V2 SVG/DXF/PNG sets exist for B1 and Floors 1–7 and remain machine-checked against canonical labels/program semantics. |
+| Level 7 detailed roof | **45 / 45 inventory records; 15 / 15 build checks passed** | The current Level 7 builder represents the complete reconciled roof inventory and visual-completeness requirements. |
+| B1→Level 7 walkability | **44 / 44 checks passed** | Exact elevations/rises, 22-riser stair math, access openings, slab openings, roof-door state, roof walking-plane connection, Level 7 capability set, and passenger-elevator exclusion are coherent. |
+| Combined stacked geometry | **840 meshes / 41 / 41 checks passed** | The combined GLB must prove eight physical elevations, all protected-stair transitions, real served-level stair openings, vertical shafts, Level 7 headhouse caps, and the Floor 6 Halo envelope. |
 
 Canonical audit support files:
 - `production/equity-uprise-repo-source-map-v2.json`
@@ -534,10 +539,7 @@ Canonical audit support files:
 - `production/generated/equity-uprise-core-v2-plan-semantics-report.json`
 - `production/generated/equity-uprise-building-core-v2-report.json`
 
-Current combined GLB report:
-- meshes: **784**
-- deterministic geometry checks: **41 / 41**
-- GLB SHA-256: `2698349a3c9073cfd04de6db232672c7b8c26e3101c7a57bb656def3bf5427c0`
+Current combined deterministic chassis: **840 meshes**, **41/41 checks passing**, SHA-256 `afebd08c811d083b6ae957677cedbff51d4c629e36a19341eddc385b3e8e28c7`. The Level 7 detailed roof is **283 meshes**, **45/45 inventory records**, **15/15 checks passing**. These exact values remain independently recorded in generated reports and must stay current in CI.
 
 These checks establish current repo/building consistency. They do **not** establish building-code compliance, permit readiness, structural adequacy, accessibility compliance, fire/life-safety compliance, or operational aviation feasibility.
 

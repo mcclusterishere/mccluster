@@ -1,0 +1,252 @@
+{
+  "schema_version": "1.0.0",
+  "scope": "B1 through Level 7 schematic human-walkable vertical circulation",
+  "not_for_construction": true,
+  "levels": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "elevations_ft": [
+    -13.5,
+    0,
+    13.5,
+    27,
+    40.5,
+    54,
+    67.5,
+    81
+  ],
+  "floor_to_floor_ft": 13.5,
+  "checks_total": 44,
+  "checks_passed": 44,
+  "checks_failed": 0,
+  "passed": true,
+  "checks": [
+    {
+      "name": "levels B1 through 7 are present",
+      "passed": true,
+      "detail": "[0, 1, 2, 3, 4, 5, 6, 7]"
+    },
+    {
+      "name": "finished-floor elevations are exact",
+      "passed": true,
+      "detail": "[-13.5, 0, 13.5, 27, 40.5, 54, 67.5, 81]"
+    },
+    {
+      "name": "every adjacent floor rise is 13.5 ft",
+      "passed": true,
+      "detail": "[13.5, 13.5, 13.5, 13.5, 13.5, 13.5, 13.5]"
+    },
+    {
+      "name": "Stair A serves B1 through Level 7",
+      "passed": true,
+      "detail": "[0, 1, 2, 3, 4, 5, 6, 7]"
+    },
+    {
+      "name": "Stair A rise per level is 13.5 ft",
+      "passed": true,
+      "detail": "13.5"
+    },
+    {
+      "name": "Stair A has 22 conceptual risers",
+      "passed": true,
+      "detail": "22"
+    },
+    {
+      "name": "Stair A riser math closes exactly",
+      "passed": true,
+      "detail": "0.6136363636 ft"
+    },
+    {
+      "name": "Stair A conceptual tread is 11 in",
+      "passed": true,
+      "detail": "11 in"
+    },
+    {
+      "name": "Stair A south access is on enclosure face",
+      "passed": true,
+      "detail": "door y=54 enclosure y1=54"
+    },
+    {
+      "name": "Stair A roof/floor door clear width is 3 ft",
+      "passed": true,
+      "detail": "3"
+    },
+    {
+      "name": "Stair A door lies inside enclosure",
+      "passed": true,
+      "detail": "{'facade_y': 54, 'x1': 61.5, 'x2': 64.5, 'clear_width_ft': 3}"
+    },
+    {
+      "name": "Stair A slab opening lies inside enclosure",
+      "passed": true,
+      "detail": "{'x1': 60.75, 'y1': 58.25, 'x2': 71.25, 'y2': 71.25}"
+    },
+    {
+      "name": "Stair A southern landing meets slab opening edge",
+      "passed": true,
+      "detail": "opening y1=58.25"
+    },
+    {
+      "name": "Stair A top transition lands exactly at roof",
+      "passed": true,
+      "detail": "67.5 + 13.5 = 81"
+    },
+    {
+      "name": "Stair B serves B1 through Level 7",
+      "passed": true,
+      "detail": "[0, 1, 2, 3, 4, 5, 6, 7]"
+    },
+    {
+      "name": "Stair B rise per level is 13.5 ft",
+      "passed": true,
+      "detail": "13.5"
+    },
+    {
+      "name": "Stair B has 22 conceptual risers",
+      "passed": true,
+      "detail": "22"
+    },
+    {
+      "name": "Stair B riser math closes exactly",
+      "passed": true,
+      "detail": "0.6136363636 ft"
+    },
+    {
+      "name": "Stair B conceptual tread is 11 in",
+      "passed": true,
+      "detail": "11 in"
+    },
+    {
+      "name": "Stair B south access is on enclosure face",
+      "passed": true,
+      "detail": "door y=54 enclosure y1=54"
+    },
+    {
+      "name": "Stair B roof/floor door clear width is 3 ft",
+      "passed": true,
+      "detail": "3"
+    },
+    {
+      "name": "Stair B door lies inside enclosure",
+      "passed": true,
+      "detail": "{'facade_y': 54, 'x1': 14, 'x2': 17, 'clear_width_ft': 3}"
+    },
+    {
+      "name": "Stair B slab opening lies inside enclosure",
+      "passed": true,
+      "detail": "{'x1': 8.75, 'y1': 58.25, 'x2': 17.25, 'y2': 71.25}"
+    },
+    {
+      "name": "Stair B southern landing meets slab opening edge",
+      "passed": true,
+      "detail": "opening y1=58.25"
+    },
+    {
+      "name": "Stair B top transition lands exactly at roof",
+      "passed": true,
+      "detail": "67.5 + 13.5 = 81"
+    },
+    {
+      "name": "combined builder has level-by-level stair-door logic",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "combined builder consumes canonical access opening coordinates",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "combined builder no longer uses sealed stair shaft walls",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "F7-STAIR-A-DOOR-01 exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "F7-STAIR-A-DOOR-01 is modeled open",
+      "passed": true,
+      "detail": "modeled_open"
+    },
+    {
+      "name": "F7-STAIR-B-DOOR-01 exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "F7-STAIR-B-DOOR-01 is modeled open",
+      "passed": true,
+      "detail": "modeled_open"
+    },
+    {
+      "name": "F7-PATH-A-01 circulation path exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "F7-PATH-B-01 circulation path exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "F7-PATH-B-02 circulation path exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "F7-PATH-OVERLOOK-01 circulation path exists",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Level 7 owns exactly three audited capabilities",
+      "passed": true,
+      "detail": "['ecosystem-routing', 'roof-mobility', 'uprise-world']"
+    },
+    {
+      "name": "Level 7 is reconciled",
+      "passed": true,
+      "detail": "reconciled-current-iterative-pass"
+    },
+    {
+      "name": "passenger elevator selector excludes Level 7",
+      "passed": true,
+      "detail": "[1, 2, 3, 4, 5, 6]"
+    },
+    {
+      "name": "Level 7 has building-return route",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Level 7 ecosystem route remains public navigation",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Uprise World route state is represented",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Uprise World route state remains disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Uprise World route state remains read-only",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

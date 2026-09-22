@@ -16,6 +16,20 @@
       "id": "after_hours",
       "label": "After Hours",
       "lighting_multiplier": 0.45
+    },
+    {
+      "id": "ecosystem_navigation",
+      "label": "Ecosystem Navigation",
+      "route_key": "ecosystem_routes",
+      "access": "public",
+      "read_only": true
+    },
+    {
+      "id": "uprise_world_optional",
+      "label": "Uprise World Optional Route",
+      "route_key": "uprise_world_optional",
+      "access": "public-preview-disabled",
+      "read_only": true
     }
   ]
 }

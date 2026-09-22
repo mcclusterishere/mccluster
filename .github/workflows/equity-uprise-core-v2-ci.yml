@@ -55,6 +55,12 @@ jobs:
       - name: Generate restricted B1 production package in workspace
         run: python docs/design/equity-uprise-building/production/generate_b1_production_package.py
 
+      - name: Build detailed Level 7 roof in workspace
+        run: python docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py
+
+      - name: Verify B1-to-roof human walkability
+        run: python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
+
       - name: Verify active Equity Uprise authority hygiene
         run: python docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py
 
@@ -128,6 +134,8 @@ jobs:
           python docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
           python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
           python docs/design/equity-uprise-building/production/generate_b1_production_package.py
+          python docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py
+          python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
           python docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py
           python docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py
           python docs/design/equity-uprise-building/production/generate_core_v2_plans.py
@@ -135,6 +143,14 @@ jobs:
           python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
           python docs/design/equity-uprise-building/production/verify_equity_uprise_building_v2.py
           python docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py
+
+      - name: Refresh building file index after generation
+        run: |
+          # Stage newly-created generated paths first so git ls-files sees them
+          # when the exhaustive building index is regenerated.
+          git add -f docs/design/equity-uprise-building/production/generated
+          python docs/design/equity-uprise-building/production/audit_building_context.py --write
+          python docs/design/equity-uprise-building/production/audit_building_context.py
 
       - name: Commit one deterministic generated-output snapshot
         run: |
@@ -149,6 +165,7 @@ jobs:
           git add docs/design/equity-uprise-building/production/floor-05
           git add docs/design/equity-uprise-building/production/floor-06
           git add docs/design/equity-uprise-building/production/floor-07
+          git add docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json
           git add -f docs/design/equity-uprise-building/production/generated
           if git diff --cached --quiet; then
             echo "Generated building artifacts already current."

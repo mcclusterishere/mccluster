@@ -9,28 +9,20 @@ Legacy-compatible filename; semantic identity is **Arrival / Orientation / Intak
 > **Mandatory spatial authority:** `docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md`
 > Canonical Floor 1 interior plan assets: `docs/design/equity-uprise-building/references/floor-01/`  
 > Canonical Floor 1 site/egress plan assets: `docs/design/equity-uprise-building/references/floor-01-site/`
-> Provisional Floor 2 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md`
-> Floor 2 Core V2 chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-02-SCHEMATIC-PLAN-BASIS.md`
-> Floor 2 generated chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-02/`
-> Provisional Floor 3 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md`
-> Floor 3 Core V2 chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-03-SCHEMATIC-PLAN-BASIS.md`
-> Floor 3 generated chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-03/`
-> Provisional Floor 4 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md`
-> Floor 4 Core V2 chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-04-SCHEMATIC-PLAN-BASIS.md`
-> Floor 4 generated chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-04/`
-> Provisional Floor 5 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
-> Floor 5 Core V2 chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md`
-> Floor 5 generated chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-05/`
-> Provisional Floor 6 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
-> Floor 6 Core V2 chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md`
-> Floor 6 generated chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-06/`
-> Provisional Level 7 legacy-program reference: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
-> Level 7 Core V2 roof-chassis plan basis (program provisional): `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
-> Level 7 ecosystem-routing contract (active routing boundary): `docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
-> Level 7 generated roof-chassis/program-snapshot assets (not final program authority): `docs/design/equity-uprise-building/references/floor-07/`
-> Level 7 origin/pre-program: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`
+> Floors 2–6 are reconciled current-pass program authorities with active real-3D implementations and floor-specific preservation/inventory packages.
+> Floor 2: `docs/design/equity-uprise-building/FLOOR-02-PUBLIC-FORUM-360-SPEC.md` + `FLOOR-02-PROGRAM-RECONCILIATION.md`
+> Floor 3: `docs/design/equity-uprise-building/FLOOR-03-FELLOWSHIP-NETWORK-360-SPEC.md` + `FLOOR-03-PROGRAM-RECONCILIATION.md`
+> Floor 4: `docs/design/equity-uprise-building/FLOOR-04-MEDIA-CULTURE-360-SPEC.md` + `FLOOR-04-PROGRAM-RECONCILIATION.md`
+> Floor 5: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md` + `FLOOR-05-PROGRAM-RECONCILIATION.md`
+> Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md` + `FLOOR-06-PROGRAM-RECONCILIATION.md`
+> Level 7 current program authority: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md` + `FLOOR-07-PROGRAM-RECONCILIATION.md`
+> Level 7 preservation map: `docs/design/equity-uprise-building/FLOOR-07-V1-V2-PRESERVATION-MAP.md`
+> Level 7 Core V2 plan basis: `docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md`
+> Level 7 ecosystem-routing contract: `docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
+> Level 7 inventory / real-3D builder: `docs/design/equity-uprise-building/production/floor-07/floor-07-object-inventory.json` + `build_equity_uprise_floor_07_v2.py`
+> Level 7 origin/pre-program remains historical context only: `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`
 
-> **Program maturity boundary:** Only Floor 1 is program-reconciled for the current iterative pass. Floors 2–6 and Level 7 retain valid shared Core V2 chassis geometry, but their detailed room/activity programs and generated labels remain provisional snapshots pending floor-by-floor redesign.
+> **Program maturity boundary:** Floors 1–7 are reconciled for the current iterative pass. B1 remains a restricted technical/support level. Generated assets remain derived and must match deterministic regeneration; visual approval is still distinct from machine validation.
 
 ## Core V2 vertical-circulation authority
 
@@ -127,17 +119,19 @@ Any future feature that materially changes Equity Uprise must:
 
 ### Reconciliation proof status
 
-As of the 2026-09-21 repo-wide reconciliation:
+As of the 2026-09-22 roof/whole-building reconciliation:
 
-- **251** Equity Uprise source/support files are currently classified in the source ledger;
+- **253** Equity Uprise source/support files are classified in the source ledger;
 - **102** are directly tied to one or more building capabilities;
-- **149** are support/development-authority sources (presentation, runtime plumbing, tests/build support, Lifetime Development authority, digital-twin program authority, and the unified build-validation workflow) and intentionally do not create additional rooms/floors;
+- **151** are support/development-authority sources and intentionally do not create additional rooms/floors;
 - **56** canonical Equity Uprise capabilities are represented in the building;
 - repo-source exact-set classification is enforced by `production/verify_equity_uprise_repo_sources.py`;
-- repo-source exact-set audit: **904 / 904 passed**;
-- capability/floor/routing audit: **464 / 464 passed**;
-- generated plan semantic/artifact audit: **437 / 437 passed**;
-- combined B1-to-roof geometry audit: **41 / 41 passed** with **784 meshes**.
+- repo-source exact-set audit baseline: **912 / 912 passed**;
+- capability/floor/routing audit: **466 / 466 passed**;
+- generated plan semantic/artifact audit: **488 / 488 passed**;
+- Level 7 detailed roof: **45 / 45 inventory records**, **15 / 15 build/visual-completeness checks passed**;
+- B1→Level 7 schematic human-walkability audit: **44 / 44 passed**;
+- combined B1-to-roof deterministic chassis: **840 meshes / 41 / 41 checks passed**; exact SHA remains in `production/generated/equity-uprise-building-core-v2-report.json`.
 
 The source classification ledger is:
 `docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json`.
@@ -344,13 +338,13 @@ The building is intentionally compact: **six enclosed occupied floors plus a sev
 
 | Level | Current working identity | Real Equity Uprise functions compressed into the level | Iterative status |
 |---|---|---|---|
-| 7 | Roof / Mobility Portal | Rooftop overlook, vertical arrival, ecosystem-plane navigation/departure/arrival, candidate mobility zone pending operational feasibility | **CHASSIS PRESENT / PRE-ITERATIVE PROGRAM REWRITE** |
-| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy, permissioned Halo spatial-intelligence viewport, transition/access to roof | **CORE + HALO PRESENT / PRE-ITERATIVE PROGRAM REWRITE** |
-| 5 | Policy + Proof | initiatives, research workspace, sources/claims/evidence, Docket 516R, manuscripts, publications, filings, monitors, citations/impact | **PRE-ITERATIVE PROGRAM REWRITE** |
-| 4 | Media + Culture | event media, music/catalogue, artists, civic anthems, recording/editing, release/rights/DDEX, cultural storytelling | **PRE-ITERATIVE PROGRAM REWRITE** |
-| 3 | Fellowship + Network | Policy Fellowship, directory/matching, profiles, stakeholders, relationships, meetings/commitments, partner network | **PRE-ITERATIVE PROGRAM REWRITE** |
-| 2 | Public Forum | topics, perspectives, neutral listening/conversations, member dashboard context, discussion/activity | **PRE-ITERATIVE PROGRAM REWRITE** |
-| 1 | Arrival / Orientation / Intake | arrival, orientation, Development Passport, verification/intake, next-action routing, building safety and first-stage competency work | **RECONCILED — CURRENT ITERATIVE PASS** |
+| 7 | Roof / Mobility Portal | protected-stair arrival, ecosystem-plane navigation/departure/arrival, city overlook, conceptual candidate mobility zone, optional Uprise World route | **RECONCILED / REAL 3D ACTIVE** |
+| 6 | Penthouse Command | Institutional overview, current live work, direction / high-level strategy, permissioned Halo spatial-intelligence viewport, transition/access to roof | **RECONCILED / REAL 3D ACTIVE** |
+| 5 | Policy + Proof | initiatives, research workspace, sources/claims/evidence, Docket 516R, manuscripts, publications, filings, monitors, citations/impact | **RECONCILED / REAL 3D ACTIVE** |
+| 4 | Media + Culture | event media, music/catalogue, artists, civic anthems, recording/editing, release/rights/DDEX, cultural storytelling | **RECONCILED / REAL 3D ACTIVE** |
+| 3 | Fellowship + Network | Policy Fellowship, directory/matching, profiles, stakeholders, relationships, meetings/commitments, partner network | **RECONCILED / REAL 3D ACTIVE** |
+| 2 | Public Forum | topics, perspectives, neutral listening/conversations, member dashboard context, discussion/activity | **RECONCILED / REAL 3D ACTIVE** |
+| 1 | Arrival / Orientation / Intake | arrival, orientation, Development Passport, verification/intake, next-action routing, building safety and first-stage competency work | **RECONCILED / REAL 3D ACTIVE** |
 
 Do not add extra enclosed floors merely because a separate web page exists. Level 7 is the intentionally approved roof level.
 
@@ -668,13 +662,13 @@ Canonical authority:
 
 "Complete" here means the current activity/space program, B1 relationship, access model, life-safety/site simulation, and shared-core integration are reconciled. It does **not** mean final art direction, final architectural engineering, or production-quality 3D is finished.
 
-**Floors 2–6 — PRE-ITERATIVE PROGRAM REWRITE**
+**Floors 2–6 — RECONCILED CURRENT PASS / REAL 3D ACTIVE**
 
-Their Core V2 chassis coordinates remain usable, but their room/program semantics are working placeholders until each floor receives the same activity/space reconciliation completed for Floor 1.
+Each floor has completed program reconciliation, historical-preservation review, inventory-backed 3D work, stack integration and current machine coverage. Direct visual approval remains an iterative human gate.
 
-**Level 7 — PRE-ITERATIVE PROGRAM REWRITE / ROOF FEASIBILITY CONSTRAINTS RETAINED**
+**Level 7 — RECONCILED CURRENT PASS / REAL 3D ACTIVE**
 
-The roof/core geometry and ecosystem-routing constraints remain useful. The developmental/launch program and any operational mobility use remain unresolved until the Level 7 iterative pass.
+The roof program is reconciled around exactly three repo-backed capabilities: ecosystem routing, conceptual roof mobility, and optional-route-only Uprise World. Both protected stairs must physically reach the +81 ft roof walking plane through real roof-door openings. Direct passenger-elevator roof service remains unassumed, and the mobility reservation remains non-operational pending real feasibility.
 
 Generated plans, production packages, contact sheets and GLB/reports are **derived-only** and must be regenerated from current authority. A derived artifact that differs after deterministic regeneration is stale even if an older validation report said it passed.
 

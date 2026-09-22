@@ -1,8 +1,10 @@
 # Equity Uprise Building — Level 07 Roof / Mobility Portal Schematic Plan Basis
 
-> Status: **CORE V2 ROOF CHASSIS / ECOSYSTEM-ROUTING COORDINATION REFERENCE**
-> Program note: roof/core geometry constraints remain current; final developmental activity/space programming is pre-iterative.  
+> Status: **CORE V2 LEVEL 7 COORDINATION BASIS — PROGRAM RECONCILED / REAL 3D ACTIVE**
+> Program note: roof/core geometry remains current and the present Level 7 activity/space program is reconciled around the three repo-backed Level 7 capabilities.  
 > Companion to: `FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`  
+> Reconciliation: `FLOOR-07-PROGRAM-RECONCILIATION.md`  
+> Preservation map: `FLOOR-07-V1-V2-PRESERVATION-MAP.md`  
 > Ecosystem semantics: `FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`  
 > Origin/pre-program: `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`  
 > **Not for construction or aviation approval.**
@@ -47,16 +49,20 @@ Level 7 roof walking datum is **+81'-0"** above Floor 1 finished floor.
 - revised inherited enclosure **X8–18 / Y54–72**
 - protected stair continuity reaches the roof level
 - shared opening approximately **X8.75–17.25 / Y58.25–71.25**
+- south roof-door opening **X14–17 / Y54**, 3 ft conceptual clear width
+- upper landing meets the +81 ft roof walking plane and the south landing band remains continuous to the door
 
 ### Stair A
 - inherited enclosure **X60–72 / Y54–72**
 - protected stair continuity reaches the roof level
 - shared opening approximately **X60.75–71.25 / Y58.25–71.25**
+- south roof-door opening **X61.5–64.5 / Y54**, 3 ft conceptual clear width
+- upper landing meets the +81 ft roof walking plane and the south landing band remains continuous to the door
 
 ### MEP / roof services
 - inherited reservation approximately **X50–60 / Y66–72**
 
-No roof feature may relocate or cover these systems.
+No roof feature may relocate or cover these systems. The detailed Level 7 model must preserve real walkable openings at both stair doors; the shared stair enclosure may not be modeled as a solid south wall across a served level.
 
 ## 3. Roof-access / core enclosure
 
@@ -280,7 +286,12 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] revised Stair B at X 8–18 / Y 54–72
 - [ ] Stair A at X 60–72 / Y 54–72
 - [ ] both stairs physically reach +81'-0" roof datum
+- [ ] Stair A south roof door X61.5–64.5 is physically open
+- [ ] Stair B south roof door X14–17 is physically open
+- [ ] Floor 6→roof upper landings meet the +81'-0" walking plane exactly
+- [ ] primary roof paths connect both protected stair doors to the routing interface without crossing fixed core geometry
 - [ ] roof slab openings remain coordinated
+- [ ] Level 7 inventory + visual-completeness gate passes
 
 ## Repo capability authority
 

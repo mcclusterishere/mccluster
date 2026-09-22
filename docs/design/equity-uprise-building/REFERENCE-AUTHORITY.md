@@ -92,7 +92,7 @@ Read program and geometry authority in this order:
      - Floor 5: `docs/design/equity-uprise-building/FLOOR-05-POLICY-PROOF-360-SPEC.md`
      - Floor 6: `docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
    - Floor 6 Halo instrument remains separately authoritative for the Halo boundary: `docs/design/equity-uprise-building/HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`.
-   - **Level 7 — provisional program reference only:** `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`; roof chassis/vertical-access constraints remain active while launch/culmination programming awaits iterative rewrite.
+   - **Level 7 — reconciled current program authority:** `docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`, read with `FLOOR-07-PROGRAM-RECONCILIATION.md` and `FLOOR-07-V1-V2-PRESERVATION-MAP.md`. Level 7 is an open-air roof with real protected-stair arrival, data-driven ecosystem routing, a conceptual/non-operational mobility reservation, and an optional Uprise World route node.
 
 7. Floor-specific schematic-plan basis.
 
@@ -105,8 +105,11 @@ Read program and geometry authority in this order:
 ### Level 7 additional authority
 
 Before Floor 6 roof-interface, rooftop, exterior-master, cross-site mobility, destination-building or ecosystem-navigation work also read:
+- `FLOOR-07-PROGRAM-RECONCILIATION.md`
+- `FLOOR-07-V1-V2-PRESERVATION-MAP.md`
 - `FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
 - `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md` as origin/context only.
+- `production/audit_vertical_circulation_walkability.py` for the B1→Level 7 schematic walking-plane gate.
 
 Program authority and geometry authority are complementary: the capability map controls **what the building represents**; Core V2 controls **where the shared building systems physically are**.
 
@@ -150,6 +153,10 @@ Floor 6 Core V2 production package:
 Floor 7 Core V2 production package:
 - `docs/design/equity-uprise-building/production/floor-07/README.md`
 - `docs/design/equity-uprise-building/production/floor-07/floor-07-scene-manifest.json`
+- `docs/design/equity-uprise-building/production/floor-07/floor-07-object-inventory.json`
+- `docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py`
+- generated detailed roof GLB/report under `production/generated/`
+- building-wide vertical-circulation audit: `production/audit_vertical_circulation_walkability.py`
 
 Core V2 authority order is:
 **BUILDING-CORE-V2-SPEC.md → building-core-v2.json → floor written spec → floor schematic basis → DXF → SVG → floor deterministic production package → generated 3D/render/web output**.

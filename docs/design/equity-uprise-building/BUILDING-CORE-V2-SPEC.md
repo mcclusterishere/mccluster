@@ -117,7 +117,21 @@ Stair B conceptual flight width: 4'.
 
 These dimensions prove vertical connection and fit inside the reserved envelopes. They are **not code-approved stair dimensions**.
 
-No future browser model may substitute a short decorative flight that stops below the next finished floor.
+### 6.1 Human walking-plane / stair-door continuity
+
+A mathematically continuous stair is not sufficient if the enclosure is modeled as a sealed wall. Every served level must also have a real access opening from the stair landing to that level's walking plane.
+
+Canonical south-facing access openings:
+- Stair A: enclosure face **Y54**, conceptual clear opening **X61.5–64.5**, 3 ft;
+- Stair B: enclosure face **Y54**, conceptual clear opening **X14–17**, 3 ft.
+
+For every B1→Level 7 transition:
+- the upper landing must meet the next finished-floor elevation exactly;
+- the slab opening must preserve the stairwell while leaving the south landing/door band walkable;
+- the south enclosure wall must be segmented around the access opening rather than modeled continuously through the door;
+- Level 7 uses the same rule: both protected stairs terminate at the **+81 ft** roof walking plane through real roof-door openings and weather-protected headhouses.
+
+No future browser model may substitute a short decorative flight that stops below the next finished floor, or a sealed enclosure wall that makes a geometrically correct stair impossible to walk out of.
 
 ## 7. Slab openings
 

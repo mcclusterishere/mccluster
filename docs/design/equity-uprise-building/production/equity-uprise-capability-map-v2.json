@@ -258,16 +258,20 @@
       ],
       "secondary_feature_ids": [],
       "public_surfaces": [
+        "Protected Stair A/B roof arrival",
         "Ecosystem Routing Interface",
         "City Overlook",
-        "Candidate Mobility Zone"
+        "Candidate Mobility Zone (conceptual only)",
+        "Optional Uprise World route node"
       ],
       "private_surfaces": [
-        "Service / Equipment Band"
+        "Service / Equipment Band",
+        "MEP / roof-service reservation",
+        "Freight/service roof reservation"
       ],
-      "rule": "Passenger-elevator roof service is not assumed. Mobility remains a candidate reservation pending real-world feasibility.",
-      "program_status": "working-pre-iterative-program",
-      "render_readiness": "chassis-only-not-final-program"
+      "rule": "Level 7 is a real open-air roof reached by both protected stairs. Ecosystem routing is public navigation; mobility remains a non-operational reservation pending real-world feasibility; Uprise World is optional route-only and does not control roof geometry. Passenger-elevator roof service is not assumed.",
+      "program_status": "reconciled-current-iterative-pass",
+      "render_readiness": "basic-render-ready"
     }
   ],
   "capabilities": [
@@ -1001,7 +1005,7 @@
         "_unfinished/uprise-world/uprise-npc.js",
         "docs/uprise-world/AUDIT-REPORT.md"
       ],
-      "expression": "May be a Level 7 destination route later; must not dictate building geometry or branding."
+      "expression": "Represented on Level 7 as a disabled, read-only optional route node; must not dictate building geometry or branding and must not launch until explicitly enabled."
     },
     {
       "id": "program-support-funding",

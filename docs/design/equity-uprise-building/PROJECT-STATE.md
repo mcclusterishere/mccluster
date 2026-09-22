@@ -24,16 +24,21 @@ Core V2 is the active geometry authority:
 - Stair A X60–72 / Y54–72;
 - MEP/riser approximately X50–60 / Y66–72.
 
-## Whole-building assembly — DONE as continuity chassis, NOT finished as designed interiors
+## Whole-building assembly — CONTINUITY VALIDATED / DETAILED F1–F7 STACK ACTIVE
 
-Current combined B1→roof model:
+Current combined B1→roof chassis:
 - source: `production/build_equity_uprise_building_v2.py`
 - GLB: `production/generated/equity-uprise-building-core-v2.glb`
 - current report: `production/generated/equity-uprise-building-core-v2-report.json`
-- current committed report: **792 meshes, 41/41 checks passing**
-- includes B1, site/egress context, both stair systems, passenger core, freight/service core, Halo Globe, and roof continuity.
+- current committed chassis report: **840 meshes, 41/41 checks passing**
+- SHA-256: `afebd08c811d083b6ae957677cedbff51d4c629e36a19341eddc385b3e8e28c7`
+- both protected stairs now have real served-level access openings rather than sealed south walls;
+- both stair systems close mathematically and physically from B1 through the +81 ft roof datum;
+- detailed Floors 1–7 are loaded into the working stack; B1 remains the future cinematic/detail refinement layer.
 
-This proves the stack. It is **not** the final visual/interior building.
+Dedicated B1→roof human-walkability report: **44/44 checks passing**.
+
+This proves the current physical stack and walking-plane logic. It remains a digital-twin/simulation artifact, not a construction document.
 
 ## Historical fully assembled reference — PRESERVE
 
@@ -44,59 +49,34 @@ Earlier assembled Core V2 reference:
 - historical report: **667 meshes, 27/27 continuity checks**
 - useful for stacking, floor isolation, cutaway/core views, elevations, and whole-building behavior.
 
-## Floor 1 — authority locked; visual hybrid rebuild is CURRENT WORK
+## Floor 1 — ARRIVAL / ORIENTATION / INTAKE — APPROVED CURRENT PASS / STACKED
 
-Canonical identity: **Arrival / Orientation / Intake**.
-
-Done:
-- Core V2 program / schematic / digital-twin / site-egress authority reconciled.
-- active plan triplets regenerated.
-- B1 interface and restricted access semantics validated.
-- Floor 1 completion lock exists for program/schematic authority.
-- standalone V2 volumetric scaffold exists in the deploy pipeline.
-
-Current standalone scaffold:
-- builder: `production/floor-01/build_equity_uprise_floor_01_v2.py`
-- deployed build has **189 meshes and 13/13 geometry sanity checks**
-- it is a technical scaffold, **not the accepted aesthetic target**.
-
-Accepted visual direction:
-- the original V1 Floor 1 looked/felt better;
-- preserve its dark premium interior language, glass, lighting, reception composition, lounge, furniture feel, warm wood, rugs/greenery, and human-scale camera experience;
-- apply current V2 geometry/program research to that design rather than replacing it.
+- detailed inventory-backed real 3D floor active at **FFE 0 ft**;
+- V1 premium interior/navigation feel preserved while Core V2 geometry and Stair B/service corrections remain authoritative;
+- vestibule, reception, orientation lounge, intake, Development Passport, Journey Wall, directory/elevator relationship, support and life-safety systems modeled;
+- true floor isolation and whole-stack integration active;
+- shared protected-stair access openings remain aligned with the combined building.
 
 Required references:
-- `FLOOR-01-V1-V2-MERGE-MAP.md`
-- `FLOOR-01-V1-V2-PRESERVATION-MAP.md`
-- `production/floor-01/floor-01-object-inventory.json`
+- `FLOOR-01-V1-V2-MERGE-MAP.md`;
+- `FLOOR-01-V1-V2-PRESERVATION-MAP.md`;
+- `production/floor-01/floor-01-object-inventory.json`;
+- `production/floor-01/build_equity_uprise_floor_01_v2.py`.
 
-Inventory / preservation checkpoint:
-- **COMPLETE** — formal Floor 1 object inventory now exists with stable IDs, placement/function/style metadata and V1/V2 heritage decisions.
-- **COMPLETE** — detailed V1→V2 preservation map records what survives, what is corrected, and what is newly added.
+## Floor 2 — PUBLIC FORUM — APPROVED CURRENT PASS / STACKED
 
-Hybrid builder implementation checkpoint:
-- builder requires all 67 inventory records to be represented in 3D or validation fails;
-- V1-style lounge, reception/Journey Wall, intake, warm lighting, glass entry, human-scale views and ceiling/cutaway behavior are restored as the design baseline;
-- Development Passport Studio, life-safety/support equipment, freight core and corrected Stair B are integrated into the same environment;
-- shared Core V2 geometry remains unchanged.
-
-## Floor 2 — PROGRAM RECONCILED / V1 AUDITED / INVENTORY READY
-
-Canonical identity: **Public Forum**.
-
-Preparation complete:
-- program reconciliation locked;
-- historical V1 deterministic viewer audited at commit `7c7726289781f270da25eef70789b704b63b30bd`;
-- V1→V2 preservation map created;
-- machine inventory created with **48 stable records / 72 total object instances**;
-- current Core V2 west service/freight + Stair B corrections retained.
-
-Floor 2 now has an inventory-driven real 3D builder and standalone GLB/viewer. Visual approval is still pending.
+- detailed inventory-backed real 3D floor active at **FFE +13.5 ft**;
+- central ~12 ft / max-8-seat forum table;
+- CURRENT ISSUES / PERSPECTIVES / OPPORTUNITIES wall;
+- west listening lounge and elevator-side member check-in;
+- politically neutral civic discussion program preserved;
+- true isolation and whole-stack integration active.
 
 Required references:
 - `FLOOR-02-PROGRAM-RECONCILIATION.md`;
 - `FLOOR-02-V1-V2-PRESERVATION-MAP.md`;
-- `production/floor-02/floor-02-object-inventory.json`.
+- `production/floor-02/floor-02-object-inventory.json`;
+- `production/floor-02/build_equity_uprise_floor_02_v2.py`.
 
 ## Working full-building stack — ACTIVE NOW
 
@@ -108,23 +88,20 @@ The working viewer now treats the building as one continuous object from B1 thro
 - detailed Floor 4 is inserted at FFE +40.5 ft;
 - detailed Floor 5 is inserted at FFE +54 ft;
 - detailed Floor 6 is inserted at FFE +67.5 ft;
-- Level 7 roof remains visible as a chassis placeholder at +81 ft;
-- each future floor pass replaces/improves its level **inside this stack**, not as an isolated experiment.
+- detailed Level 7 Roof / Mobility Portal is inserted at FFE +81 ft;
+- the combined Core V2 chassis supplies continuous B1→roof protected stair geometry, while Level 7 isolation includes the actual Floor 6→roof stair transition and roof-door arrival condition;
+- each future refinement occurs **inside this stack**, not as an isolated experiment.
 
 Public working-stack viewer: `equity-uprise-building-core-v2-3d.html`.
 
-## Floor 3 — RECONCILED / REAL 3D ACTIVE / STACKED
+## Floor 3 — FELLOWSHIP + NETWORK — APPROVED CURRENT PASS / STACKED
 
-Canonical identity: **Fellowship + Network**.
-
-Current state:
-- program reconciliation complete;
-- historical locked Floor 3 architecture audited;
-- preservation map complete;
-- machine inventory: **63 stable records / 85 total instances**;
-- inventory-driven GLB builder active;
-- reliable standalone viewer active;
-- inserted into the working building at **FFE +27 ft**.
+- detailed inventory-backed real 3D floor active at **FFE +27 ft**;
+- Opportunity Exchange and MATCH / PEOPLE / APPLICATIONS wall;
+- west People/Network lounge;
+- two south interview/mentorship rooms;
+- elevator-side member/interview check-in;
+- true isolation and whole-stack integration active.
 
 Required references:
 - `FLOOR-03-PROGRAM-RECONCILIATION.md`;
@@ -132,24 +109,15 @@ Required references:
 - `production/floor-03/floor-03-object-inventory.json`;
 - `production/floor-03/build_equity_uprise_floor_03_v2.py`.
 
-## Floor 4 — RECONCILED / REAL 3D ACTIVE / STACKED
+## Floor 4 — MEDIA + CULTURE — APPROVED CURRENT PASS / STACKED
 
-Canonical identity: **Media + Culture**.
-
-Current state:
-- program reconciliation complete;
-- historical locked Floor 4 spec/schematic audited;
-- preservation map complete;
-- machine inventory: **68 stable records / 96 total instances**;
-- inventory-driven GLB builder active;
-- reliable standalone viewer active;
-- inserted into the working building at **FFE +40.5 ft**;
-- building-level Floor 4 control now **truly isolates Floor 4** rather than only moving the camera;
-- visual-completeness pass adds room enclosure detail, support-room doors, restroom fixtures, equipped media storage/IT, and completed ceiling fields;
-- builder now requires both inventory coverage and a dedicated visual-completeness gate;
-- public media surfaces are constrained to real/approved public Equity Uprise content; private masters, rights, DDEX, payment and approval state remain non-public.
-
-Floor 4 is **visually reviewable, not user-approved complete**. Final approval depends on direct visual review in the isolated viewer.
+- detailed inventory-backed real 3D floor active at **FFE +40.5 ft**;
+- central listening area and LISTEN / WATCH / ARCHIVE wall;
+- Culture Archive / Rally Gallery;
+- Creator Recording Room and Edit / Review Suite;
+- media storage + media/IT support;
+- enclosure/support-room/ceiling visual-completeness gate active;
+- true isolation and whole-stack integration active.
 
 Required references:
 - `FLOOR-04-PROGRAM-RECONCILIATION.md`;
@@ -157,23 +125,16 @@ Required references:
 - `production/floor-04/floor-04-object-inventory.json`;
 - `production/floor-04/build_equity_uprise_floor_04_v2.py`.
 
-Visual approval remains iterative.
+## Floor 5 — POLICY + PROOF — APPROVED CURRENT PASS / STACKED
 
-## Floor 5 — RECONCILED / REAL 3D ACTIVE / STACKED
-
-Canonical identity: **Policy + Proof**.
-
-Current state:
-- program reconciliation complete;
-- historical Floor 5 spec/schematic audited;
-- preservation map complete;
-- machine inventory: **80 stable records / 106 total instances**;
-- inventory-driven GLB builder active;
-- standalone viewer active;
-- inserted into the working building at **FFE +54 ft**;
-- building-level Floor 5 control truly isolates the detailed Floor 5 model;
-- builder requires both inventory coverage and a dedicated visual-completeness gate;
-- public surfaces are limited to public/source-backed records, while drafts, sensitive notes, private review state, approval tokens and submission credentials remain authenticated/private.
+- detailed real 3D floor active at **FFE +54 ft**;
+- **431 meshes**;
+- **80/80 inventory records** represented;
+- **22/22 checks passing**;
+- Policy Lab, RESEARCH / EVIDENCE / RECORD wall, Evidence + Proof Archive, Source Review, Publication / Submission Review and Research / Publication Navigator;
+- visual-completeness gate and true isolation active;
+- checkpoint: `ce23d6eb8c0b036f963ce4864254a5510995459c`;
+- recovery branch: `checkpoint/equity-uprise-floor5-final`.
 
 Required references:
 - `FLOOR-05-PROGRAM-RECONCILIATION.md`;
@@ -181,46 +142,58 @@ Required references:
 - `production/floor-05/floor-05-object-inventory.json`;
 - `production/floor-05/build_equity_uprise_floor_05_v2.py`.
 
-Floor 5 is **visually reviewable, not user-approved complete**. Final approval depends on direct visual review in the isolated viewer.
+## Floor 6 — PENTHOUSE COMMAND — APPROVED CURRENT PASS / STACKED
 
-## Floor 6 — RECONCILED / REAL 3D ACTIVE / STACKED
-
-Canonical identity: **Penthouse Command**.
-
-Current state:
-- program reconciliation complete;
-- historical Floor 6 spec/schematic audited;
-- Halo boundary and Level 7 transition reviewed;
-- preservation map complete;
-- machine inventory: **74 stable records / 96 total instances**;
-- inventory-driven GLB builder active;
-- standalone viewer active;
-- inserted into the working building at **FFE +67.5 ft**;
-- building-level Floor 6 control truly isolates the detailed penthouse model;
-- protected Stair A and Stair B continuity to Level 7 is preserved;
-- passenger-elevator direct Level 7 service remains unassumed;
-- Halo remains one restrained suspended read-only instrument in public/member/staff modes;
-- requested Halo Globe placement correction is now authoritative at **(55,12) ft local, 8.25 ft AFF, radius 2.25 ft** — the open south-east plan pocket that reads as the user's circled lower-left corner in the current Floor 6 viewer;
-- the old **(24.5,34.5)** checkpoint placement and the interim **(22,22.5)** placement are superseded;
-- authoritative inventory, builder-driven 3D placement, generated manifest/hotspot/lighting data, plan assets and standalone Halo camera/light targeting are synchronized to the corrected location;
-- no other approved Floor 6 layout is to move as part of this correction;
-- builder requires both inventory coverage and a dedicated visual-completeness gate.
+- detailed real 3D penthouse active at **FFE +67.5 ft**;
+- **436 meshes**;
+- **74/74 inventory records** represented;
+- **24/24 checks passing**;
+- central six-seat command table, NOW / PAST WORK / JOIN wall, Institutional Salon, Strategy Review, Partner / Executive Briefing and Roof Access / Mobility Transition terminal;
+- Stair A and Stair B remain physically continuous toward Level 7; passenger-elevator direct roof service remains unassumed;
+- Halo Globe remains one restrained suspended instrument, now permanently corrected to **(55,12) ft local / 8.25 ft AFF / radius 2.25 ft** in the user-selected open corner;
+- true isolation, visual-completeness gate and whole-stack integration active;
+- original Floor 6 checkpoint: `85447f7b0191f568cbb7e4a58fe525afa92d475f`;
+- corrected Halo checkpoint branch: `checkpoint/equity-uprise-floor6-globe-final`.
 
 Required references:
 - `FLOOR-06-PROGRAM-RECONCILIATION.md`;
 - `FLOOR-06-V1-V2-PRESERVATION-MAP.md`;
 - `HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`;
-- `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`;
 - `production/floor-06/floor-06-object-inventory.json`;
 - `production/floor-06/build_equity_uprise_floor_06_v2.py`.
 
-Floor 6 is **visually reviewable with the requested Halo placement correction committed**. Final visual confirmation should verify the globe appears in the circled open corner; no further Floor 6 redesign is authorized unless that preview reveals a collision or placement error.
+## Level 7 — RECONCILED / REAL 3D ACTIVE / STACK-INTEGRATED
 
-## Level 7 — geometry/program chassis exists; iterative roof redesign NOT COMPLETE
+Canonical identity: **Roof / Mobility Portal**.
 
-Current `core-v2-floor-programs.json` still treats Level 7 as pre-iterative roof/mobility work.
+Current state:
+- current-pass program reconciliation complete;
+- historical/origin roof intent preserved without restoring obsolete geometry;
+- machine inventory: **45 stable records**;
+- deterministic detailed roof builder active;
+- standalone Level 7 viewer is a real 3D roof viewer rather than a redirect to the chassis;
+- working-stack viewer loads the detailed roof at **FFE +81 ft** and truly isolates it;
+- exactly three repo-backed Level 7 capabilities are represented: **ecosystem-routing**, **roof-mobility**, and optional-route-only **uprise-world**;
+- Uprise World is represented as a **disabled, read-only optional route state** and cannot launch until explicitly enabled; it does not control roof geometry or branding;
+- candidate mobility geometry remains explicitly conceptual/non-operational — no runway, no certified helipad/TLOF/FATO claim;
+- passenger-elevator direct Level 7 service remains unassumed;
+- Stair A and Stair B each preserve the complete **13.5 ft Floor 6→roof rise**, 22-riser conceptual geometry, upper landing at +81 ft, and a real 3 ft south-facing roof-door opening;
+- the combined building stair enclosures are now segmented around canonical access openings on every served level instead of visually sealing the south stair wall;
+- a dedicated B1→Level 7 walkability audit is part of CI;
+- legacy validators that formerly required Level 7 to remain provisional have been promoted to require the reconciled Level 7 state;
+- inventory coverage and visual-completeness gates are required before user visual approval.
 
-Do not interpret generated plan/program plates as a finished rooftop environment.
+Required references:
+- `FLOOR-07-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-07-V1-V2-PRESERVATION-MAP.md`;
+- `FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`;
+- `FLOOR-07-SCHEMATIC-PLAN-BASIS.md`;
+- `FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`;
+- `production/floor-07/floor-07-object-inventory.json`;
+- `production/floor-07/build_equity_uprise_floor_07_v2.py`;
+- `production/audit_vertical_circulation_walkability.py`.
+
+Level 7 is **implementation-complete for the current review pass but still awaits direct user visual approval**. Real construction/aviation feasibility is explicitly outside this digital-twin approval.
 
 ## B1 — program/geometry integrated; final designed environment still future work
 
@@ -247,7 +220,9 @@ Use these to recover design quality, not obsolete stair/core geometry.
 8. **DONE:** Floor 4 — Media + Culture — reconciliation → inventory → real 3D → working-stack integration.
 9. **DONE:** Floor 5 — Policy + Proof — reconciliation → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration.
 10. **DONE:** Floor 6 — Penthouse Command — reconciliation → Halo/roof boundary → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration → requested Halo relocation to (55,12) with synchronized authority/generated artifacts.
-11. **NEXT:** Level 7 — Roof / Mobility Portal — reconcile roof program, preserve historical roof intent, inventory, build real rooftop environment, then complete the B1→roof stack.
+11. **DONE FOR REVIEW:** Level 7 — Roof / Mobility Portal — reconciliation → historical preservation → inventory → real rooftop environment → human-walkable Stair A/B roof arrivals → true isolation → working-stack integration.
+12. **CURRENT GATE:** deterministic regeneration + whole-repo/source/program/authority/plan/building/walkability CI, then direct visual approval of isolated Level 7 and the complete stacked building.
+13. **AFTER ROOF VISUAL APPROVAL:** final exterior/crown/context pass and later B1 cinematic/detail refinement; do not reopen approved floor programs without a new repo capability or explicit design correction.
 
 ## Do not waste time on
 

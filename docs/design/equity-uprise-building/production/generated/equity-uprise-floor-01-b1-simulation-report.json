@@ -378,9 +378,9 @@
       "detail": "reconciled-current-iterative-pass"
     },
     {
-      "name": "Level 7 remains explicitly provisional",
+      "name": "Level 7 maturity reconciled",
       "passed": true,
-      "detail": "[(7, 'pre-iterative-program-rewrite')]"
+      "detail": "reconciled-current-iterative-pass"
     },
     {
       "name": "Floor 1 site ref",

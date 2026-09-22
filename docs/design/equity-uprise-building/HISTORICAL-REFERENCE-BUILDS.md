@@ -141,6 +141,31 @@ Do **not** preserve obsolete west Stair B/service-core coordinates.
 
 See `FLOOR-06-V1-V2-PRESERVATION-MAP.md`.
 
+## Reference A7 — historical Level 7 Roof / Mobility Portal intent
+
+Historical/origin authority is preserved in:
+- `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`;
+- earlier Level 7 schematic/program references under repository history.
+
+Preserve:
+- open-air roof identity;
+- rooftop overlook / orientation moment;
+- ecosystem departure/arrival role;
+- data-driven destinations rather than a permanent website map;
+- helicopter / vertical-lift transition metaphor;
+- candidate mobility reservation rather than a runway or certified helipad;
+- quiet dark-mineral / gunmetal exterior language.
+
+Correct with current Core V2:
+- both protected stairs physically terminate at the +81 ft roof walking plane;
+- south-facing Stair A/B roof doors are real openings, not sealed enclosure walls;
+- passenger-elevator direct roof service remains unassumed;
+- service/MEP reservations stay fixed;
+- mobility graphics remain non-regulatory and non-operational;
+- Level 7 owns only `ecosystem-routing`, `roof-mobility`, and optional-route-only `uprise-world`.
+
+See `FLOOR-07-V1-V2-PRESERVATION-MAP.md` and `FLOOR-07-PROGRAM-RECONCILIATION.md`.
+
 ## Reference B — fully assembled Core V2 building
 
 ### Combined generator

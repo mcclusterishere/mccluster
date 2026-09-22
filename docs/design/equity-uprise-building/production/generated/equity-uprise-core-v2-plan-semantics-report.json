@@ -1765,17 +1765,17 @@
     {
       "name": "L7 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 07 \u2014 Roof / Mobility Portal \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGe"
+      "detail": "# Floor 07 \u2014 Roof / Mobility Portal \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production"
     },
     {
-      "name": "L7 README provisional program status",
+      "name": "L7 README active current-pass status",
       "passed": true,
-      "detail": "# Floor 07 \u2014 Roof / Mobility Portal \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `produc"
+      "detail": "# Floor 07 \u2014 Roof / Mobility Portal \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/core-v2-floor-programs"
     },
     {
       "name": "L7 README design maturity",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass"
     },
     {
       "name": "L7 .svg exists",
@@ -2155,12 +2155,12 @@
     {
       "name": "L7 manifest maturity matches authority",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass != reconciled-current-iterative-pass"
     },
     {
       "name": "L7 manifest render readiness matches authority",
       "passed": true,
-      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
+      "detail": "basic-render-ready != basic-render-ready"
     },
     {
       "name": "L7 manifest DXF points at Core V2",

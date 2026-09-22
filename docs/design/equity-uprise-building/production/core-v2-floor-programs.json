@@ -1068,8 +1068,30 @@
         "uprise-world"
       ],
       "capability_map_ref": "equity-uprise-capability-map-v2.json",
-      "design_maturity": "pre-iterative-program-rewrite",
-      "render_readiness": "chassis-only-not-final-program"
+      "design_maturity": "reconciled-current-iterative-pass",
+      "render_readiness": "basic-render-ready",
+      "working_development_stage": "ecosystem-departure-arrival-overlook",
+      "program_reconciliation_ref": "../FLOOR-07-PROGRAM-RECONCILIATION.md",
+      "object_inventory_ref": "floor-07/floor-07-object-inventory.json",
+      "preservation_map_ref": "../FLOOR-07-V1-V2-PRESERVATION-MAP.md",
+      "interaction_modes": [
+        {
+          "id": "ecosystem_navigation",
+          "label": "Ecosystem Navigation",
+          "route_key": "ecosystem_routes",
+          "access": "public",
+          "read_only": true
+        },
+        {
+          "id": "uprise_world_optional",
+          "label": "Uprise World Optional Route",
+          "route_key": "uprise_world_optional",
+          "access": "public-preview-disabled",
+          "read_only": true,
+          "enabled": false,
+          "note": "Experimental separate destination. Visible as an optional route node only; it does not control roof geometry and does not launch until explicitly enabled."
+        }
+      ]
     }
   ],
   "capability_map_ref": "equity-uprise-capability-map-v2.json",

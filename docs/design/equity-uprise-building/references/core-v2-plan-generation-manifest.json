@@ -87,8 +87,8 @@
     "level": 7,
     "title": "Roof / Mobility Portal",
     "elevation_ft": 81,
-    "design_maturity": "pre-iterative-program-rewrite",
-    "render_readiness": "chassis-only-not-final-program",
+    "design_maturity": "reconciled-current-iterative-pass",
+    "render_readiness": "basic-render-ready",
     "files": {
       "png": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.png",
       "svg": "references/floor-07/equity-uprise-level-07-roof-mobility-portal-core-v2-schematic-v1.svg",

@@ -209,7 +209,12 @@ def route_config(n):
 
       # Roof / ecosystem.
       "roof_transition":{"type":"scene","scene_id":"equity-uprise-level-07","access":"via-protected-stairs-unless-later-elevator-design"},
-      "ecosystem_routes":{"type":"ui_state","target":"ecosystem_routes","access":"public"}
+      "ecosystem_routes":{"type":"ui_state","target":"ecosystem_routes","access":"public","read_only":True},
+      "uprise_world_optional":{
+        "type":"ui_state","target":"uprise_world_optional",
+        "access":"public-preview-disabled","read_only":True,"enabled":False,
+        "note":"Experimental separate destination. No arbitrary redirect or launch is enabled by the building contract."
+      }
     }
     return {
       "schema_version":"2.1.0",
@@ -301,6 +306,12 @@ for level in programs["levels"]:
         manifest["digital_twin_program_ref"]=f"floor-{n:02d}-digital-twin-program.json"
     if level.get("digital_twin_spec_ref"):
         manifest["authority"]["activity_simulation_authority"]=[f"../../FLOOR-{n:02d}-DIGITAL-TWIN-PROGRAM.md" if n==1 else level["digital_twin_spec_ref"],f"floor-{n:02d}-digital-twin-program.json"]
+    if n==7:
+        manifest["object_inventory_ref"]="floor-07-object-inventory.json"
+        manifest["preservation_map_ref"]="../../FLOOR-07-V1-V2-PRESERVATION-MAP.md"
+        manifest["program_reconciliation_ref"]="../../FLOOR-07-PROGRAM-RECONCILIATION.md"
+        manifest["ecosystem_routing_contract_ref"]="../../FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md"
+        manifest["not_for_aviation_approval"]=True
     if n==6:
         manifest["object_inventory_ref"]="floor-06-object-inventory.json"
         manifest["preservation_map_ref"]="../../FLOOR-06-V1-V2-PRESERVATION-MAP.md"
@@ -424,6 +435,11 @@ for level in programs["levels"]:
         state_list.append(state)
     states={"schema_version":"2.3.0","scene_id":scene_id,"default_state":"idle","states":state_list}
 
+    special_note=""
+    if n==6:
+        special_note="\nFloor 6 additionally reserves one suspended Halo Globe / Spatial Intelligence sphere at (55,12), radius 2.25 ft, center 8.25 ft AFF. Its footprint is coordination-only and may not obstruct circulation or the fixed core.\n"
+    elif n==7:
+        special_note="\nLevel 7 is open-air. Both protected stairs must physically reach the +81 ft roof walking plane through real south-facing roof-door openings. Passenger-elevator roof service remains unassumed; the mobility zone remains conceptual and non-operational.\n"
     notes=f"""# Level {n:02d} — Core V2 Deterministic Geometry Notes
 
 Shared source of truth:
@@ -443,9 +459,7 @@ Inherited vertical systems:
 The floor may define program zones and interaction modes but may not move these systems or cover shared slab openings.
 
 Declared interaction modes are semantic/UI states on existing rooms, walls, terminals and instruments; they do not create additional rooms or floor area.
-
-Floor 6 additionally reserves one suspended Halo Globe / Spatial Intelligence sphere at (55,12), radius 2.25 ft, center 8.25 ft AFF. Its footprint is coordination-only and may not obstruct circulation or the fixed core.
-
+{special_note}
 Both stairs are modeled as continuous full-rise systems in the combined building generator. A per-floor isolated viewer is never vertical-continuity authority.
 
 **NOT FOR CONSTRUCTION.**
@@ -479,6 +493,16 @@ Render readiness: **{level.get('render_readiness','unspecified')}**.
 Floor 1 is the public Arrival / Orientation / Intake layer and the modeled level of exit discharge.
 
 Live B1 / tunnel access is not part of ordinary Floor 1 navigation. Learner/instructor building-systems work launches a sandboxed clone; live underground access remains restricted to McCluster house-owner or explicitly delegated underground-operations-admin authority.
+"""
+    if n==7:
+        readme += """
+Level 7 is the open-air Roof / Mobility Portal. Both protected stairs physically reach the roof walking plane. Direct passenger-elevator roof service is not assumed. The candidate mobility zone is conceptual only and is not an operational or approved helipad/vertiport.
+
+Detailed real-3D authority:
+- `floor-07-object-inventory.json`
+- `../../FLOOR-07-PROGRAM-RECONCILIATION.md`
+- `../../FLOOR-07-V1-V2-PRESERVATION-MAP.md`
+- `build_equity_uprise_floor_07_v2.py`
 """
 
     simulation_objects=None

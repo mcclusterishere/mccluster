@@ -34,6 +34,10 @@ These two external documents remain where they are because current capability pr
 - Floor 5: `FLOOR-05-POLICY-PROOF-360-SPEC.md`
 - Floor 6: `FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md`
 - Level 7: `FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`
+  - reconciliation: `FLOOR-07-PROGRAM-RECONCILIATION.md`
+  - preservation map: `FLOOR-07-V1-V2-PRESERVATION-MAP.md`
+  - ecosystem routing: `FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md`
+  - inventory/builder: `production/floor-07/floor-07-object-inventory.json`, `production/floor-07/build_equity_uprise_floor_07_v2.py`
 
 Each floor has a companion schematic basis and a production package under `production/floor-XX/`.
 
@@ -87,6 +91,8 @@ Primary validators/generators live under `production/`:
 - combined building generation + verification
 - Floor 1 / B1 simulation boundary
 - building context/index audit
+- B1→Level 7 vertical-circulation walkability audit (`production/audit_vertical_circulation_walkability.py`)
+- detailed Level 7 inventory / visual-completeness build gate
 
 CI entrypoint:
 - `.github/workflows/equity-uprise-core-v2-ci.yml`

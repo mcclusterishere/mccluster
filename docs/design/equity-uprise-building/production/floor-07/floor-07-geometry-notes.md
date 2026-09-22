@@ -18,7 +18,7 @@ The floor may define program zones and interaction modes but may not move these 
 
 Declared interaction modes are semantic/UI states on existing rooms, walls, terminals and instruments; they do not create additional rooms or floor area.
 
-Floor 6 additionally reserves one suspended Halo Globe / Spatial Intelligence sphere at (55,12), radius 2.25 ft, center 8.25 ft AFF. Its footprint is coordination-only and may not obstruct circulation or the fixed core.
+Level 7 is open-air. Both protected stairs must physically reach the +81 ft roof walking plane through real south-facing roof-door openings. Passenger-elevator roof service remains unassumed; the mobility zone remains conceptual and non-operational.
 
 Both stairs are modeled as continuous full-rise systems in the combined building generator. A per-floor isolated viewer is never vertical-continuity authority.
 

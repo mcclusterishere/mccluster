@@ -168,19 +168,26 @@ Before Floor 6 is approved, verify:
 - [ ] Level 7 transition is part of Floor 6's navigation logic
 - [ ] exterior/window/crown decisions remain compatible with the future roof scene
 
-## 10. Level 7 production status / remaining deliverables
+## 10. Level 7 current status / remaining future work
 
-Level 7 now has its canonical written spec, schematic basis, ecosystem-routing contract, and DXF/SVG/PNG references. Remaining future work includes:
+This file is origin context. The current Level 7 program has now been reconciled in:
+- `FLOOR-07-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-07-V1-V2-PRESERVATION-MAP.md`;
+- `FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md`;
+- `FLOOR-07-SCHEMATIC-PLAN-BASIS.md`;
+- `production/floor-07/floor-07-object-inventory.json`.
 
-1. site/aircraft/helipad feasibility decision;
-2. roof program spec;
-3. roof schematic-plan basis;
-4. roof DXF/SVG/PNG;
-5. exterior building master coordinated to all seven navigable levels;
-6. rooftop 360 environment;
-7. helicopter/aircraft asset(s);
-8. destination registry / cross-site navigation manifest;
-9. departure/arrival transition sequences;
-10. audit against geometry and website routing authority.
+A deterministic detailed rooftop builder and standalone/stacked viewers now exist. Both protected stairs are required to terminate at the +81 ft roof walking plane through real roof-door openings.
 
-**NOT FOR CONSTRUCTION.**
+Remaining future work is deliberately narrower:
+
+1. real site/aircraft/helipad/vertiport feasibility, if physical aviation use is ever pursued;
+2. licensed structural/code/MEP/roofing/fire/life-safety design for any real building;
+3. final exterior building master and contextual skyline;
+4. production destination registry content and transition assets as ecosystem sites are approved;
+5. optional aircraft/transition assets only after the intended digital experience is defined;
+6. later cinematic polish after the real roof geometry is visually approved.
+
+The mobility reservation remains conceptual and must not be described as an approved or operational helipad/vertiport.
+
+**NOT FOR CONSTRUCTION / NOT FOR AVIATION APPROVAL.**

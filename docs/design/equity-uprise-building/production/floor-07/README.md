@@ -1,6 +1,6 @@
 # Level 07 — Roof / Mobility Portal — Core V2 Production Package
 
-Status: **PROVISIONAL CORE V2 DERIVED PACKAGE — PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**
+Status: **ACTIVE CORE V2 DERIVED PACKAGE / NOT FOR CONSTRUCTION**
 
 This package inherits the shared building/program authority from:
 - `../building-core-v2.json`
@@ -18,5 +18,13 @@ This package may operationalize floor program, cameras, hotspots, lighting, rout
 
 Per-floor scenes are derived views. The combined stacked building is the vertical-continuity authority.
 
-Design maturity: **pre-iterative-program-rewrite**.  
-Render readiness: **chassis-only-not-final-program**.
+Design maturity: **reconciled-current-iterative-pass**.  
+Render readiness: **basic-render-ready**.
+
+Level 7 is the open-air Roof / Mobility Portal. Both protected stairs physically reach the roof walking plane. Direct passenger-elevator roof service is not assumed. The candidate mobility zone is conceptual only and is not an operational or approved helipad/vertiport.
+
+Detailed real-3D authority:
+- `floor-07-object-inventory.json`
+- `../../FLOOR-07-PROGRAM-RECONCILIATION.md`
+- `../../FLOOR-07-V1-V2-PRESERVATION-MAP.md`
+- `build_equity_uprise_floor_07_v2.py`
