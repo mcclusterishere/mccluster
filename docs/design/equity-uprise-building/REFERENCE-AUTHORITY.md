@@ -117,6 +117,25 @@ Before Floor 6 roof-interface, rooftop, exterior-master, cross-site mobility, de
 
 Program authority and geometry authority are complementary: the capability map controls **what the building represents**; Core V2 controls **where the shared building systems physically are**.
 
+## Whole-building facade, interior-envelope and services authority
+
+For any facade, glazing, exterior branding, interior-envelope, MEP, IT, plumbing, fire/life-safety, security, building-control, ceiling/service-detail or systems-visualization work, read these **after Core V2 shared geometry and before floor-local implementation**:
+
+- `BUILDING-SYSTEMS-AND-FACADE-CORE-RULES.md`
+- `EXTERIOR-FACADE-UPGRADE-SPEC.md`
+- `INTERIOR-ENVELOPE-AND-GEOMETRY-UPGRADE-SPEC.md`
+- `BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md`
+- `VERTICAL-DISTRIBUTION-AND-RISER-SPEC.md`
+- `FACADE-BRANDING-AND-SIGNAGE-SPEC.md`
+- `production/building-services-core-v2.json`
+- `production/facade-system-core-v2.json`
+- `production/vertical-risers-core-v2.json`
+- `production/interior-envelope-audit.json`
+
+These authorities **do not move the existing Core V2 shell/core**. They establish the next-pass requirement that the building function as a coordinated architectural envelope + services network rather than a set of visually implied systems.
+
+Current boundary: authority only. Detailed facade, riser sub-allocation, floor services addenda and geometry implementation remain pending.
+
 ## Deterministic production packages
 
 Derived scene packages are generated from the active machine authorities. They are **generated-only** implementation artifacts and may not override the source JSON/specs above.

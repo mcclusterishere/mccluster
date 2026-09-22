@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0.0",
+  "authority_id": "equity-uprise-vertical-risers-core-v2",
+  "status": "active-conceptual-authority-subriser-geometry-pending",
+  "not_for_construction": true,
+  "building_id": "equity-uprise-building",
+  "shared_reservation_ft": {
+    "x1": 50,
+    "y1": 66,
+    "x2": 60,
+    "y2": 72
+  },
+  "levels_served": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "riser_families": [
+    {
+      "id": "R-ELEC-NORMAL",
+      "system_id": "ELEC-NORMAL",
+      "exact_sub_envelope": "pending"
+    },
+    {
+      "id": "R-ELEC-EMERGENCY",
+      "system_id": "ELEC-EMERGENCY",
+      "exact_sub_envelope": "pending"
+    },
+    {
+      "id": "R-DATA",
+      "system_id": "DATA-STRUCTURED",
+      "exact_sub_envelope": "pending"
+    },
+    {
+      "id": "R-CONTROLS",
+      "system_id": "BAS-CONTROLS",
+      "exact_sub_envelope": "pending"
+    },
+    {
+      "id": "R-HVAC",
+      "system_id": "HVAC-AIR",
+      "exact_sub_envelope": "pending"
+    },
+    {
+      "id": "R-WATER",
+      "system_id": "WATER-DOMESTIC",
+      "exact_sub_envelope": "pending"
+    },
+    {
+      "id": "R-SANITARY-VENT",
+      "system_id": "SANITARY-VENT",
+      "exact_sub_envelope": "pending"
+    },
+    {
+      "id": "R-STORM",
+      "system_id": "STORM-DRAINAGE",
+      "exact_sub_envelope": "pending"
+    },
+    {
+      "id": "R-FIRE",
+      "system_id": "FIRE-PROTECTION",
+      "exact_sub_envelope": "pending"
+    }
+  ],
+  "coordination_rules": [
+    "Exact sub-riser allocation must be clash-checked before geometry is added.",
+    "Risers may not obstruct protected stairs, elevators, doors, primary circulation or the roof walking plane.",
+    "Per-floor branches require later floor services addenda.",
+    "Core V2 shared geometry remains controlling."
+  ]
+}

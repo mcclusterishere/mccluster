@@ -130,3 +130,20 @@ B1 now follows the same hardened floor workflow:
 - standalone review viewer: `equity-uprise-basement-b1-3d.html`
 
 The combined Core V2 chassis remains vertical-continuity authority; the detailed B1 asset is the visual/interior implementation at -13.5 ft.
+
+
+## Whole-building facade + systems authority
+
+The next building-wide realism pass is now governed by:
+- `BUILDING-SYSTEMS-AND-FACADE-CORE-RULES.md`
+- `EXTERIOR-FACADE-UPGRADE-SPEC.md`
+- `INTERIOR-ENVELOPE-AND-GEOMETRY-UPGRADE-SPEC.md`
+- `BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md`
+- `VERTICAL-DISTRIBUTION-AND-RISER-SPEC.md`
+- `FACADE-BRANDING-AND-SIGNAGE-SPEC.md`
+- `production/building-services-core-v2.json`
+- `production/facade-system-core-v2.json`
+- `production/vertical-risers-core-v2.json`
+- `production/interior-envelope-audit.json`
+
+This snapshot defines authority only. No facade, riser or interior geometry is considered implemented by the presence of these files.
