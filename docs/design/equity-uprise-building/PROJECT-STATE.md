@@ -640,3 +640,24 @@ Generated artifacts:
 - `production/asset-registry/generated/equity-uprise-asset-registry-step2-report.json`
 
 **NEXT:** Step 3 builds the upstream/downstream/dependency relationship graph across these canonical asset identities.
+
+
+## Digital-to-Physical Asset Registry — STEP 3A B1 OPERATIONAL GRAPH IMPLEMENTED
+
+Step 3A turns the populated registry into a causal B1 nervous-system graph using existing service authority only.
+
+It materializes:
+- every authority-backed B1 source asset instance → service-family `feeds` edge;
+- all nine source-connected service families → their dedicated riser `routes_through` edge;
+- every declared inter-system `depends_on` edge across the 14 service families;
+- per-asset upstream/downstream/dependency fields for direct runtime queries;
+- source → system → riser trace paths suitable for first lab-scenario derivation.
+
+Expanded Step 2 source records are resolved to their individual instance IDs. No new physical equipment, capacities, utility boundaries, protocol addresses or LIVE controls are invented.
+
+Canonical Step 3A files:
+- `production/asset-registry/build_asset_registry_step3a.py`
+- `production/asset-registry/verify_asset_registry_step3a.py`
+- `production/asset-registry/generated/equity-uprise-asset-registry-step3a-report.json`
+
+**NEXT:** Step 3B connects service/riser semantics to floor branches and representative endpoints and begins resolving the highest-value placement gaps.

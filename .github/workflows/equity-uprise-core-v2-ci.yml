@@ -52,6 +52,12 @@ jobs:
       - name: Verify Digital-to-Physical Asset Registry Step 2
         run: python docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step2.py
 
+      - name: Build Digital-to-Physical Asset Registry Step 3A
+        run: python docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_step3a.py
+
+      - name: Verify Digital-to-Physical Asset Registry Step 3A
+        run: python docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step3a.py
+
       - name: Verify Halo projection owner boundary
         run: node --test workers/mccluster/test/halo-projection.test.mjs
 
@@ -153,6 +159,8 @@ jobs:
         run: |
           python docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_v1.py
           python docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step2.py
+          python docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_step3a.py
+          python docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step3a.py
           python docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
           python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
           python docs/design/equity-uprise-building/production/generate_b1_production_package.py
