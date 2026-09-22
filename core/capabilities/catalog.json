@@ -1404,7 +1404,83 @@
       ],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "required": [
+          "org_id",
+          "scheduled_start",
+          "scheduled_end",
+          "transcription_authorized"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "calendar_event_id": {
+            "type": "string"
+          },
+          "scheduled_start": {
+            "type": "string"
+          },
+          "scheduled_end": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "notes",
+              "delegate",
+              "observe"
+            ]
+          },
+          "principal_name": {
+            "type": "string"
+          },
+          "brief": {
+            "type": "object"
+          },
+          "transcription_authorized": {
+            "type": "boolean"
+          },
+          "recording_enabled": {
+            "type": "boolean"
+          },
+          "recording_authorized": {
+            "type": "boolean"
+          },
+          "allow_chat": {
+            "type": "boolean"
+          },
+          "allow_speaking": {
+            "type": "boolean"
+          },
+          "join_lead_seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 900
+          },
+          "collect_delay_seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3600
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "google_meet",
+              "teams",
+              "zoom",
+              "jitsi"
+            ]
+          },
+          "meeting_url": {
+            "type": "string"
+          },
+          "native_meeting_id": {
+            "type": "string"
+          },
+          "passcode": {
+            "type": "string"
+          }
+        }
       },
       "outputSchema": {
         "type": "object"
@@ -1431,7 +1507,55 @@
       ],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "required": [
+          "transcription_authorized"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "notes",
+              "delegate",
+              "observe"
+            ]
+          },
+          "principal_name": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "transcribe_enabled": {
+            "type": "boolean"
+          },
+          "transcription_authorized": {
+            "type": "boolean"
+          },
+          "recording_enabled": {
+            "type": "boolean"
+          },
+          "recording_authorized": {
+            "type": "boolean"
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "google_meet",
+              "teams",
+              "zoom",
+              "jitsi"
+            ]
+          },
+          "meeting_url": {
+            "type": "string"
+          },
+          "native_meeting_id": {
+            "type": "string"
+          },
+          "passcode": {
+            "type": "string"
+          }
+        }
       },
       "outputSchema": {
         "type": "object"
@@ -1458,7 +1582,26 @@
       ],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "google_meet",
+              "teams",
+              "zoom",
+              "jitsi"
+            ]
+          },
+          "meeting_url": {
+            "type": "string"
+          },
+          "native_meeting_id": {
+            "type": "string"
+          },
+          "passcode": {
+            "type": "string"
+          }
+        }
       },
       "outputSchema": {
         "type": "object"
@@ -1485,7 +1628,26 @@
       ],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "google_meet",
+              "teams",
+              "zoom",
+              "jitsi"
+            ]
+          },
+          "meeting_url": {
+            "type": "string"
+          },
+          "native_meeting_id": {
+            "type": "string"
+          },
+          "passcode": {
+            "type": "string"
+          }
+        }
       },
       "outputSchema": {
         "type": "object"
@@ -1512,7 +1674,26 @@
       ],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "google_meet",
+              "teams",
+              "zoom",
+              "jitsi"
+            ]
+          },
+          "meeting_url": {
+            "type": "string"
+          },
+          "native_meeting_id": {
+            "type": "string"
+          },
+          "passcode": {
+            "type": "string"
+          }
+        }
       },
       "outputSchema": {
         "type": "object"
@@ -1539,7 +1720,18 @@
       ],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "required": [
+          "org_id",
+          "session_id"
+        ],
+        "properties": {
+          "org_id": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          }
+        }
       },
       "outputSchema": {
         "type": "object"
@@ -1566,7 +1758,26 @@
       ],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "google_meet",
+              "teams",
+              "zoom",
+              "jitsi"
+            ]
+          },
+          "meeting_url": {
+            "type": "string"
+          },
+          "native_meeting_id": {
+            "type": "string"
+          },
+          "passcode": {
+            "type": "string"
+          }
+        }
       },
       "outputSchema": {
         "type": "object"
@@ -1593,7 +1804,32 @@
       ],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "google_meet",
+              "teams",
+              "zoom",
+              "jitsi"
+            ]
+          },
+          "meeting_url": {
+            "type": "string"
+          },
+          "native_meeting_id": {
+            "type": "string"
+          },
+          "passcode": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
       },
       "outputSchema": {
         "type": "object"
@@ -1620,7 +1856,32 @@
       ],
       "inputSchema": {
         "type": "object",
-        "properties": {}
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "google_meet",
+              "teams",
+              "zoom",
+              "jitsi"
+            ]
+          },
+          "meeting_url": {
+            "type": "string"
+          },
+          "native_meeting_id": {
+            "type": "string"
+          },
+          "passcode": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
       },
       "outputSchema": {
         "type": "object"
@@ -2353,4 +2614,4 @@
       }
     }
   ]
-}\n
+}
