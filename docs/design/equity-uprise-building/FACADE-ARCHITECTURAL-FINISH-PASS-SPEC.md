@@ -415,3 +415,23 @@ Verified completion:
 - Level 7 remains open-air and the protected roof-door / vertical-service assumptions remain intact.
 
 The canonical architectural-finish scope is complete.
+
+
+## 22. Step 7 material pass
+
+Step 7 is an actual model/render implementation pass.
+
+The generated facade GLB must embed PBR material definitions for all facade color/material roles instead of relying only on vertex/face color. The working building viewer must provide a neutral reflection environment, soft shadows, glass transparency handling and real emissive response for the architectural-light material.
+
+Required material distinction:
+- clear glass;
+- privacy/frit glass;
+- dark metal;
+- opaque/service panel;
+- mineral/plinth;
+- warm entrance accent;
+- dimensional identity/signage;
+- paving/site edge;
+- emissive architectural lighting.
+
+This does not reopen geometry approved through Step 6.
