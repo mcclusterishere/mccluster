@@ -41,10 +41,10 @@ function syncServicesVisibility(){
    services.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(currentFocus==='stack'||currentFocus==='facade'){o.visible=true;return}
      const level=+currentFocus;
      const take=n.match(/::L(\d+)$/),seg=n.match(/SEG-L(\d+)-L(\d+)$/),band=n.match(/SVC-LEVEL-BAND::L(\d+)$/);
-     o.visible=(take&&+take[1]===level)||(seg&&(+seg[1]===level||+seg[2]===level))||(band&&+band[1]===level)||/SVC-SEPARATION/.test(n);
+     o.visible=(take&&+take[1]===level)||(seg&&(+seg[1]===level||+seg[2]===level))||(band&&+band[1]===level)||(level===0&&/SVC-B1-(?:CONNECTION|SOURCE-DROP)/.test(n))||/SVC-SEPARATION/.test(n);
    });
    setArchitectureGhost(true);
-   serviceStatus.textContent='Services layer · EXPOSED · power · data · controls · HVAC · water · drainage · fire';
+   serviceStatus.textContent='Services layer · EXPOSED · B1 plant connected → risers → floor handoffs · power · data · controls · HVAC · water · drainage · fire';
  }else{
    setArchitectureGhost(false);
    serviceStatus.textContent='Services layer · hidden';
