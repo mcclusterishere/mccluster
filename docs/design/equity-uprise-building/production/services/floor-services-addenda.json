@@ -36,7 +36,9 @@
         "FIRE-PROTECTION",
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
-      ]
+      ],
+      "connection_manifest_ref": "b1-services-source-connections.json",
+      "branch_geometry_status": "Services Step 3 plant-to-riser source connections implemented; verification pending"
     },
     "F1": {
       "display": "F1",
