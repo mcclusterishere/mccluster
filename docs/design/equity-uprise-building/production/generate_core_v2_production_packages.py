@@ -209,7 +209,12 @@ def route_config(n):
 
       # Roof / ecosystem.
       "roof_transition":{"type":"scene","scene_id":"equity-uprise-level-07","access":"via-protected-stairs-unless-later-elevator-design"},
-      "ecosystem_routes":{"type":"ui_state","target":"ecosystem_routes","access":"public"}
+      "ecosystem_routes":{"type":"ui_state","target":"ecosystem_routes","access":"public","read_only":True},
+      "uprise_world_optional":{
+        "type":"ui_state","target":"uprise_world_optional",
+        "access":"public-preview-disabled","read_only":True,"enabled":False,
+        "note":"Experimental separate destination. No arbitrary redirect or launch is enabled by the building contract."
+      }
     }
     return {
       "schema_version":"2.1.0",
