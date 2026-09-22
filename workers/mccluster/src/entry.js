@@ -15,8 +15,9 @@ import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
 import { handleAnalyticsRequest } from './analytics/router.js';
-import { resolveWorkspaces } from './workspaces.js';
+import { requireMembership, resolveWorkspaces } from './workspaces.js';
 import { setLeadStatus } from './leads.js';
+import { recentAudit } from './lib/audit.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -281,6 +282,21 @@ export default {
         return reply(request, env, await resolveWorkspaces(env, user));
       } catch (error) {
         return fail(request, env, error.message || 'Workspace lookup failed', error.status || 500, error.detail);
+      }
+    }
+
+    /* The ledger, read back. Scoped to one org and membership-checked, so
+       a tenant never reads another tenant's history. */
+    if (path === '/v1/audit/recent' && request.method === 'GET') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        const orgId = url.searchParams.get('org_id');
+        await requireMembership(env, user, orgId);
+        const events = await recentAudit(env, orgId, url.searchParams.get('limit'));
+        return reply(request, env, { events });
+      } catch (error) {
+        return fail(request, env, error.message || 'Audit read failed', error.status || 500, error.detail);
       }
     }
 
