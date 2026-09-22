@@ -8,7 +8,7 @@ set -euo pipefail
 # deploy production services.
 
 UPSTREAM_URL="${MCCLUSTER_MEETING_UPSTREAM_URL:-https://github.com/Vexa-ai/vexa-core.git}"
-UPSTREAM_REF="${MCCLUSTER_MEETING_UPSTREAM_REF:-v0.12.25}"
+UPSTREAM_REF="${MCCLUSTER_MEETING_UPSTREAM_REF:-37a920cd05116d6919186b0b9b4d564247d0e929}"
 VENDOR_ROOT="${MCCLUSTER_VENDOR_ROOT:-/srv/mccluster/vendor}"
 DEST="${MCCLUSTER_MEETING_ENGINE_ROOT:-$VENDOR_ROOT/vexa-core}"
 OWNED_BRANCH="${MCCLUSTER_MEETING_OWNED_BRANCH:-mccluster-owned}"
@@ -31,7 +31,9 @@ fi
 
 git fetch upstream --tags --prune
 
-if git rev-parse --verify "refs/tags/$UPSTREAM_REF" >/dev/null 2>&1; then
+if git cat-file -e "$UPSTREAM_REF^{commit}" >/dev/null 2>&1; then
+  BASE="$UPSTREAM_REF"
+elif git rev-parse --verify "refs/tags/$UPSTREAM_REF" >/dev/null 2>&1; then
   BASE="refs/tags/$UPSTREAM_REF"
 else
   BASE="upstream/$UPSTREAM_REF"
