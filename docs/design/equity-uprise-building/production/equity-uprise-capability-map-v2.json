@@ -244,8 +244,8 @@
         "Halo owner/admin operational mode"
       ],
       "rule": "Private control/admin/outreach/funding functions remain access-controlled. The Halo Globe is visible to all, but public/member/staff layers are read-only and entitlement-scoped; only protected owner/admin mode may enter operational Halo controls.",
-      "program_status": "working-pre-iterative-program",
-      "render_readiness": "chassis-only-not-final-program"
+      "program_status": "reconciled-current-iterative-pass",
+      "render_readiness": "basic-render-ready"
     },
     {
       "level": 7,
