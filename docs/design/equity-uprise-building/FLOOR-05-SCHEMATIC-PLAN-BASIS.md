@@ -1,7 +1,7 @@
 # Equity Uprise Building — Floor 05 Schematic Plan Basis
 
-> Status: **CORE V2 CHASSIS / COORDINATION REFERENCE — FLOOR 5 PROGRAM PRE-ITERATIVE**  
-> Geometry note: preserve the shared shell, vertical systems, elevations and coordination constraints. Floor-specific room/program geometry remains subject to the future iterative rewrite.  
+> Status: **CORE V2 FLOOR 5 COORDINATION BASIS — PROGRAM RECONCILED / REAL 3D ACTIVE**  
+> Geometry note: preserve the shared shell, vertical systems, elevations and coordination constraints. Floor 5 program geometry is reconciled for the present iterative pass; visual detailing remains iterative.  
 > Companion to: `FLOOR-05-POLICY-PROOF-360-SPEC.md`  
 > Floor 5 stacks on the shared Core V2 building datum; lower-floor program semantics are not implied to be final.  
 > **Not for construction.**
