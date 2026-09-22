@@ -41,7 +41,7 @@ scene.add(new THREE.HemisphereLight(0xf3eee5,0x151719,1.7));
 const d=new THREE.DirectionalLight(0xfff2dd,2.2);d.position.set(ft(15),ft(30),ft(-8));scene.add(d);
 const commandLight=new THREE.PointLight(0xffdfb4,56,ft(34),2);commandLight.position.set(ft(36),ft(8.6),ft(-41));scene.add(commandLight);
 const salonLight=new THREE.PointLight(0xffd8ab,30,ft(24),2);salonLight.position.set(ft(10),ft(7.5),ft(-29));scene.add(salonLight);
-const haloLight=new THREE.PointLight(0xb9d7e3,28,ft(18),2);haloLight.position.set(ft(41),ft(8.4),ft(-22));scene.add(haloLight);
+const haloLight=new THREE.PointLight(0xb9d7e3,28,ft(18),2);haloLight.position.set(ft(22),ft(8.4),ft(-22.5));scene.add(haloLight);
 
 let model,ceil=[],wire=false;
 function frameLoadedModel(){
@@ -62,7 +62,7 @@ new GLTFLoader().load('/equity-uprise-preview/equity-uprise-floor-06-core-v2.glb
 const V={
  command:{p:[36,6.5,22],t:[36,4.0,41]},
  wall:{p:[36,5.8,35],t:[36,4.8,52]},
- halo:{p:[48,6.6,30],t:[41,8.0,22]},
+ halo:{p:[33,6.6,31],t:[22,8.0,22.5]},
  salon:{p:[25,5.8,29],t:[10,3.8,29]},
  strategy:{p:[9,5.4,23],t:[8,3.5,10]},
  briefing:{p:[24,5.4,23],t:[24.5,3.5,10]},
