@@ -2,8 +2,8 @@
   "schema_version": "1.0.0",
   "not_for_construction": true,
   "scope": "Floor 1 + B1 digital-twin simulation authority",
-  "checks_total": 113,
-  "checks_passed": 113,
+  "checks_total": 114,
+  "checks_passed": 114,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -368,9 +368,14 @@
       "detail": "reconciled-current-iterative-pass"
     },
     {
-      "name": "Floors 5-7 remain explicitly provisional",
+      "name": "Floor 5 maturity reconciled",
       "passed": true,
-      "detail": "[(5, 'pre-iterative-program-rewrite'), (6, 'pre-iterative-program-rewrite'), (7, 'pre-iterative-program-rewrite')]"
+      "detail": "reconciled-current-iterative-pass"
+    },
+    {
+      "name": "Floors 6-7 remain explicitly provisional",
+      "passed": true,
+      "detail": "[(6, 'pre-iterative-program-rewrite'), (7, 'pre-iterative-program-rewrite')]"
     },
     {
       "name": "Floor 1 site ref",

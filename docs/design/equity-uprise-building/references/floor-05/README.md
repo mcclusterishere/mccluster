@@ -1,6 +1,6 @@
 # Floor 05 — Policy + Proof — Core V2 Plan References
 
-> Status: **PROVISIONAL CORE V2 CHASSIS PLAN — PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**
+> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**
 
 Generated from:
 - `production/building-core-v2.json`
@@ -18,4 +18,4 @@ These files are **generated-only**. Do not hand-edit them or treat this README a
 
 The machine-readable source files above control title, level identity, program zones, shared vertical systems, and regeneration.
 
-Design maturity: **pre-iterative-program-rewrite**.
+Design maturity: **reconciled-current-iterative-pass**.
