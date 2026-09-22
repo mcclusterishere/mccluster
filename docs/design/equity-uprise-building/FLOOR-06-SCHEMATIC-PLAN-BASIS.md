@@ -109,7 +109,7 @@ Maintain clear circulation around the table.
 Floor 6 includes one suspended spatial-intelligence instrument governed by `HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`.
 
 Conceptual coordination envelope:
-- plan center: **(22, 22.5)**;
+- plan center: **(55, 12)**;
 - radius: **2.25 ft**;
 - diameter: **4.5 ft**;
 - center height: **8.25 ft AFF**;
@@ -377,8 +377,8 @@ The shared Core V2 files control all vertical systems. Generated imagery is neve
 - [ ] no exterior public door
 - [ ] no balcony/terrace
 - [ ] 16' × 5' command table
-- [ ] one suspended Halo Globe at (22,22.5), radius 2.25 ft, center 8.25 ft AFF
-- [ ] Halo Globe coordination envelope occupies the open southwest pocket and clears briefing-room fronts, command furniture, roof terminal, fixed core and primary circulation
+- [ ] one suspended Halo Globe at (55,12), radius 2.25 ft, center 8.25 ft AFF
+- [ ] Halo Globe coordination envelope occupies the open south-east plan pocket corresponding to the circled lower-left viewer corner and clears briefing-room fronts, command furniture, roof terminal, fixed core and primary circulation
 - [ ] NOW / PAST WORK / JOIN wall
 - [ ] Institutional Salon west
 - [ ] Strategy Review south
