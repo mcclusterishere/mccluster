@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 243,
+  "tracked_count": 246,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -133,8 +133,11 @@
       "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-core-v2-plan-semantics-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-b1-simulation-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-floor-07-core-v2-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-floor-07-core-v2.glb",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-program-coverage-report.json",
-      "docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json"
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-repo-source-coverage-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-vertical-circulation-walkability-report.json"
     ],
     "historical_references": [
       "docs/design/equity-uprise-building/references/archive/core-v1/README.md",
