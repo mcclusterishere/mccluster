@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1.0",
-  "registry_version": "step2-deterministic-ingestion-v1",
+  "registry_version": "step3a-b1-operational-graph-v1",
   "registry_id": "equity-uprise-digital-physical-asset-registry",
   "building_id": "equity-uprise-core-v2",
   "source_revision": "sha256:b9e635661a121473eb2ebabe23478f710f45d62056aa4cfabcc20958039d1aa2",
@@ -581,10 +581,16 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "ELEC-EMERGENCY",
+          "ELEC-NORMAL"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "ELEC-EMERGENCY",
+          "ELEC-NORMAL"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -884,10 +890,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "ELEC-NORMAL"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "ELEC-NORMAL"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -1038,10 +1048,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "ELEC-EMERGENCY"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "ELEC-EMERGENCY"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -1192,10 +1206,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "ELEC-EMERGENCY"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "ELEC-EMERGENCY"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -2876,10 +2894,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "FIRE-PROTECTION"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "FIRE-PROTECTION"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -3030,10 +3052,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "FIRE-PROTECTION"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "FIRE-PROTECTION"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -3333,10 +3359,16 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "FIRE-PROTECTION",
+          "WATER-DOMESTIC"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "FIRE-PROTECTION",
+          "WATER-DOMESTIC"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -3487,10 +3519,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "STORM-DRAINAGE"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "STORM-DRAINAGE"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -3641,10 +3677,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "STORM-DRAINAGE"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "STORM-DRAINAGE"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -3944,10 +3984,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "STORM-DRAINAGE"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "STORM-DRAINAGE"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -4098,10 +4142,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "STORM-DRAINAGE"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "STORM-DRAINAGE"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -4252,10 +4300,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "STORM-DRAINAGE"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "STORM-DRAINAGE"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -4406,10 +4458,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "SANITARY-VENT"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "SANITARY-VENT"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -4560,10 +4616,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "SANITARY-VENT"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "SANITARY-VENT"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -4714,10 +4774,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "SANITARY-VENT"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "SANITARY-VENT"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -4868,10 +4932,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "SANITARY-VENT"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "SANITARY-VENT"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -5022,10 +5090,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "SANITARY-VENT"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "SANITARY-VENT"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -5176,10 +5248,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "SANITARY-VENT"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "SANITARY-VENT"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -5330,10 +5406,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "SANITARY-VENT"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "SANITARY-VENT"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -5484,10 +5564,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "SANITARY-VENT"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "SANITARY-VENT"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -5935,10 +6019,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "BAS-CONTROLS"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "BAS-CONTROLS"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -9754,10 +9842,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "HVAC-AIR"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "HVAC-AIR"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -9908,10 +10000,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "HVAC-AIR"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "HVAC-AIR"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -10062,10 +10158,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "BAS-CONTROLS"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "BAS-CONTROLS"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -10216,10 +10316,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "HVAC-AIR"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "HVAC-AIR"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -10370,10 +10474,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "HVAC-AIR"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "HVAC-AIR"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -10524,10 +10632,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "HVAC-AIR"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "HVAC-AIR"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -10678,10 +10790,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "HVAC-AIR"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "HVAC-AIR"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -12488,10 +12604,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "SANITARY-VENT"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "SANITARY-VENT"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -14285,10 +14405,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "DATA-STRUCTURED"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "DATA-STRUCTURED"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -14439,10 +14563,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "DATA-STRUCTURED"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "DATA-STRUCTURED"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -14593,10 +14721,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "DATA-STRUCTURED"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "DATA-STRUCTURED"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -14747,10 +14879,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "DATA-STRUCTURED"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "DATA-STRUCTURED"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -15050,10 +15186,14 @@
         "other_bindings": []
       },
       "systems": {
-        "system_families": [],
+        "system_families": [
+          "DATA-STRUCTURED"
+        ],
         "capability_ids": [],
         "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "downstream_asset_ids": [
+          "DATA-STRUCTURED"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -15983,8 +16123,13 @@
           "BAS-CONTROLS"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "B1-LAB-CONSOLE-01",
+          "B1-MECH-BAS-01"
+        ],
+        "downstream_asset_ids": [
+          "R-CONTROLS"
+        ],
         "dependency_asset_ids": [
           "DATA-STRUCTURED",
           "ELEC-EMERGENCY"
@@ -16164,11 +16309,19 @@
           "DATA-STRUCTURED"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "B1-TELECOM-RACKS-01-I001",
+          "B1-TELECOM-RACKS-01-I002",
+          "B1-TELECOM-RACKS-01-I003",
+          "B1-TELECOM-RACKS-01-I004",
+          "B1-TELECOM-TRAY-01"
+        ],
+        "downstream_asset_ids": [
+          "R-DATA"
+        ],
         "dependency_asset_ids": [
-          "ELEC-NORMAL",
-          "ELEC-EMERGENCY"
+          "ELEC-EMERGENCY",
+          "ELEC-NORMAL"
         ]
       },
       "state_model": {
@@ -16342,8 +16495,14 @@
           "ELEC-EMERGENCY"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "B1-ELEC-METER-01",
+          "B1-ELEC-UPS-01-I001",
+          "B1-ELEC-UPS-01-I002"
+        ],
+        "downstream_asset_ids": [
+          "R-ELEC-EMERGENCY"
+        ],
         "dependency_asset_ids": [
           "ELEC-NORMAL"
         ]
@@ -16518,8 +16677,13 @@
           "ELEC-NORMAL"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "B1-ELEC-METER-01",
+          "B1-ELEC-SWITCHGEAR-01"
+        ],
+        "downstream_asset_ids": [
+          "R-ELEC-NORMAL"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -157462,8 +157626,14 @@
           "FIRE-PROTECTION"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "B1-FIRE-PUMP-01",
+          "B1-FIRE-RISER-01",
+          "B1-FIRE-WATER-01"
+        ],
+        "downstream_asset_ids": [
+          "R-FIRE"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -157640,11 +157810,20 @@
           "HVAC-AIR"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "B1-MECH-AHU-01-I001",
+          "B1-MECH-AHU-01-I002",
+          "B1-MECH-PIPE-RACK-01",
+          "B1-MECH-PUMP-01-I001",
+          "B1-MECH-PUMP-01-I002",
+          "B1-MECH-PUMP-01-I003"
+        ],
+        "downstream_asset_ids": [
+          "R-HVAC"
+        ],
         "dependency_asset_ids": [
-          "ELEC-NORMAL",
-          "BAS-CONTROLS"
+          "BAS-CONTROLS",
+          "ELEC-NORMAL"
         ]
       },
       "state_model": {
@@ -157824,9 +158003,9 @@
         "upstream_asset_ids": [],
         "downstream_asset_ids": [],
         "dependency_asset_ids": [
-          "ELEC-NORMAL",
+          "BAS-CONTROLS",
           "ELEC-EMERGENCY",
-          "BAS-CONTROLS"
+          "ELEC-NORMAL"
         ]
       },
       "state_model": {
@@ -157992,7 +158171,9 @@
           "BAS-CONTROLS"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "BAS-CONTROLS"
+        ],
         "downstream_asset_ids": [],
         "dependency_asset_ids": []
       },
@@ -158157,7 +158338,9 @@
           "DATA-STRUCTURED"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "DATA-STRUCTURED"
+        ],
         "downstream_asset_ids": [],
         "dependency_asset_ids": []
       },
@@ -158322,7 +158505,9 @@
           "ELEC-EMERGENCY"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "ELEC-EMERGENCY"
+        ],
         "downstream_asset_ids": [],
         "dependency_asset_ids": []
       },
@@ -158487,7 +158672,9 @@
           "ELEC-NORMAL"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "ELEC-NORMAL"
+        ],
         "downstream_asset_ids": [],
         "dependency_asset_ids": []
       },
@@ -158652,7 +158839,9 @@
           "FIRE-PROTECTION"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "FIRE-PROTECTION"
+        ],
         "downstream_asset_ids": [],
         "dependency_asset_ids": []
       },
@@ -158817,7 +159006,9 @@
           "HVAC-AIR"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "HVAC-AIR"
+        ],
         "downstream_asset_ids": [],
         "dependency_asset_ids": []
       },
@@ -158982,7 +159173,9 @@
           "SANITARY-VENT"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "SANITARY-VENT"
+        ],
         "downstream_asset_ids": [],
         "dependency_asset_ids": []
       },
@@ -159310,7 +159503,9 @@
           "STORM-DRAINAGE"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "STORM-DRAINAGE"
+        ],
         "downstream_asset_ids": [],
         "dependency_asset_ids": []
       },
@@ -159475,7 +159670,9 @@
           "WATER-DOMESTIC"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "WATER-DOMESTIC"
+        ],
         "downstream_asset_ids": [],
         "dependency_asset_ids": []
       },
@@ -159645,8 +159842,20 @@
           "SANITARY-VENT"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "B1-FLOOR-DRAINS-01-I001",
+          "B1-FLOOR-DRAINS-01-I002",
+          "B1-FLOOR-DRAINS-01-I003",
+          "B1-FLOOR-DRAINS-01-I004",
+          "B1-FLOOR-DRAINS-01-I005",
+          "B1-FLOOR-DRAINS-01-I006",
+          "B1-FLOOR-DRAINS-01-I007",
+          "B1-FLOOR-DRAINS-01-I008",
+          "B1-PIPE-SPINE-01"
+        ],
+        "downstream_asset_ids": [
+          "R-SANITARY-VENT"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -160167,8 +160376,16 @@
           "STORM-DRAINAGE"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "B1-FLOOD-PUMP-01-I001",
+          "B1-FLOOD-PUMP-01-I002",
+          "B1-FLOOD-SENSOR-01",
+          "B1-FLOOD-SUMP-01-I001",
+          "B1-FLOOD-SUMP-01-I002"
+        ],
+        "downstream_asset_ids": [
+          "R-STORM"
+        ],
         "dependency_asset_ids": [
           "BAS-CONTROLS"
         ]
@@ -160341,8 +160558,12 @@
           "WATER-DOMESTIC"
         ],
         "capability_ids": [],
-        "upstream_asset_ids": [],
-        "downstream_asset_ids": [],
+        "upstream_asset_ids": [
+          "B1-FIRE-WATER-01"
+        ],
+        "downstream_asset_ids": [
+          "R-WATER"
+        ],
         "dependency_asset_ids": []
       },
       "state_model": {
@@ -170259,9 +170480,787 @@
       }
     }
   ],
-  "relationships": [],
+  "relationships": [
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::AV-MEDIA::DATA-STRUCTURED",
+      "type": "depends_on",
+      "from_asset_id": "AV-MEDIA",
+      "to_asset_id": "DATA-STRUCTURED",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: AV-MEDIA depends on DATA-STRUCTURED."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::AV-MEDIA::ELEC-NORMAL",
+      "type": "depends_on",
+      "from_asset_id": "AV-MEDIA",
+      "to_asset_id": "ELEC-NORMAL",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: AV-MEDIA depends on ELEC-NORMAL."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::BAS-CONTROLS::DATA-STRUCTURED",
+      "type": "depends_on",
+      "from_asset_id": "BAS-CONTROLS",
+      "to_asset_id": "DATA-STRUCTURED",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: BAS-CONTROLS depends on DATA-STRUCTURED."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::BAS-CONTROLS::ELEC-EMERGENCY",
+      "type": "depends_on",
+      "from_asset_id": "BAS-CONTROLS",
+      "to_asset_id": "ELEC-EMERGENCY",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: BAS-CONTROLS depends on ELEC-EMERGENCY."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::DATA-STRUCTURED::ELEC-EMERGENCY",
+      "type": "depends_on",
+      "from_asset_id": "DATA-STRUCTURED",
+      "to_asset_id": "ELEC-EMERGENCY",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: DATA-STRUCTURED depends on ELEC-EMERGENCY."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::DATA-STRUCTURED::ELEC-NORMAL",
+      "type": "depends_on",
+      "from_asset_id": "DATA-STRUCTURED",
+      "to_asset_id": "ELEC-NORMAL",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: DATA-STRUCTURED depends on ELEC-NORMAL."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::ELEC-EMERGENCY::ELEC-NORMAL",
+      "type": "depends_on",
+      "from_asset_id": "ELEC-EMERGENCY",
+      "to_asset_id": "ELEC-NORMAL",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: ELEC-EMERGENCY depends on ELEC-NORMAL."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::FIRE-ALARM::ELEC-EMERGENCY",
+      "type": "depends_on",
+      "from_asset_id": "FIRE-ALARM",
+      "to_asset_id": "ELEC-EMERGENCY",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: FIRE-ALARM depends on ELEC-EMERGENCY."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::HVAC-AIR::BAS-CONTROLS",
+      "type": "depends_on",
+      "from_asset_id": "HVAC-AIR",
+      "to_asset_id": "BAS-CONTROLS",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: HVAC-AIR depends on BAS-CONTROLS."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::HVAC-AIR::ELEC-NORMAL",
+      "type": "depends_on",
+      "from_asset_id": "HVAC-AIR",
+      "to_asset_id": "ELEC-NORMAL",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: HVAC-AIR depends on ELEC-NORMAL."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::LIGHTING-CONTROLS::BAS-CONTROLS",
+      "type": "depends_on",
+      "from_asset_id": "LIGHTING-CONTROLS",
+      "to_asset_id": "BAS-CONTROLS",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: LIGHTING-CONTROLS depends on BAS-CONTROLS."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::LIGHTING-CONTROLS::ELEC-EMERGENCY",
+      "type": "depends_on",
+      "from_asset_id": "LIGHTING-CONTROLS",
+      "to_asset_id": "ELEC-EMERGENCY",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: LIGHTING-CONTROLS depends on ELEC-EMERGENCY."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::LIGHTING-CONTROLS::ELEC-NORMAL",
+      "type": "depends_on",
+      "from_asset_id": "LIGHTING-CONTROLS",
+      "to_asset_id": "ELEC-NORMAL",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: LIGHTING-CONTROLS depends on ELEC-NORMAL."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::SECURITY-ACCESS::DATA-STRUCTURED",
+      "type": "depends_on",
+      "from_asset_id": "SECURITY-ACCESS",
+      "to_asset_id": "DATA-STRUCTURED",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: SECURITY-ACCESS depends on DATA-STRUCTURED."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::SECURITY-ACCESS::ELEC-EMERGENCY",
+      "type": "depends_on",
+      "from_asset_id": "SECURITY-ACCESS",
+      "to_asset_id": "ELEC-EMERGENCY",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: SECURITY-ACCESS depends on ELEC-EMERGENCY."
+    },
+    {
+      "relationship_id": "REL::STEP3A::DEPENDS-ON::STORM-DRAINAGE::BAS-CONTROLS",
+      "type": "depends_on",
+      "from_asset_id": "STORM-DRAINAGE",
+      "to_asset_id": "BAS-CONTROLS",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Declared service-family dependency from building-services authority: STORM-DRAINAGE depends on BAS-CONTROLS."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-ELEC-METER-01::ELEC-EMERGENCY",
+      "type": "feeds",
+      "from_asset_id": "B1-ELEC-METER-01",
+      "to_asset_id": "ELEC-EMERGENCY",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for ELEC-EMERGENCY; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-ELEC-METER-01::ELEC-NORMAL",
+      "type": "feeds",
+      "from_asset_id": "B1-ELEC-METER-01",
+      "to_asset_id": "ELEC-NORMAL",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for ELEC-NORMAL; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-ELEC-SWITCHGEAR-01::ELEC-NORMAL",
+      "type": "feeds",
+      "from_asset_id": "B1-ELEC-SWITCHGEAR-01",
+      "to_asset_id": "ELEC-NORMAL",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for ELEC-NORMAL; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-ELEC-UPS-01-I001::ELEC-EMERGENCY",
+      "type": "feeds",
+      "from_asset_id": "B1-ELEC-UPS-01-I001",
+      "to_asset_id": "ELEC-EMERGENCY",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for ELEC-EMERGENCY; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-ELEC-UPS-01-I002::ELEC-EMERGENCY",
+      "type": "feeds",
+      "from_asset_id": "B1-ELEC-UPS-01-I002",
+      "to_asset_id": "ELEC-EMERGENCY",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for ELEC-EMERGENCY; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FIRE-PUMP-01::FIRE-PROTECTION",
+      "type": "feeds",
+      "from_asset_id": "B1-FIRE-PUMP-01",
+      "to_asset_id": "FIRE-PROTECTION",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for FIRE-PROTECTION; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FIRE-RISER-01::FIRE-PROTECTION",
+      "type": "feeds",
+      "from_asset_id": "B1-FIRE-RISER-01",
+      "to_asset_id": "FIRE-PROTECTION",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for FIRE-PROTECTION; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FIRE-WATER-01::FIRE-PROTECTION",
+      "type": "feeds",
+      "from_asset_id": "B1-FIRE-WATER-01",
+      "to_asset_id": "FIRE-PROTECTION",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for FIRE-PROTECTION; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FIRE-WATER-01::WATER-DOMESTIC",
+      "type": "feeds",
+      "from_asset_id": "B1-FIRE-WATER-01",
+      "to_asset_id": "WATER-DOMESTIC",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for WATER-DOMESTIC; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOD-PUMP-01-I001::STORM-DRAINAGE",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOD-PUMP-01-I001",
+      "to_asset_id": "STORM-DRAINAGE",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for STORM-DRAINAGE; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOD-PUMP-01-I002::STORM-DRAINAGE",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOD-PUMP-01-I002",
+      "to_asset_id": "STORM-DRAINAGE",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for STORM-DRAINAGE; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOD-SENSOR-01::STORM-DRAINAGE",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOD-SENSOR-01",
+      "to_asset_id": "STORM-DRAINAGE",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for STORM-DRAINAGE; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOD-SUMP-01-I001::STORM-DRAINAGE",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOD-SUMP-01-I001",
+      "to_asset_id": "STORM-DRAINAGE",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for STORM-DRAINAGE; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOD-SUMP-01-I002::STORM-DRAINAGE",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOD-SUMP-01-I002",
+      "to_asset_id": "STORM-DRAINAGE",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for STORM-DRAINAGE; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOR-DRAINS-01-I001::SANITARY-VENT",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOR-DRAINS-01-I001",
+      "to_asset_id": "SANITARY-VENT",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for SANITARY-VENT; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOR-DRAINS-01-I002::SANITARY-VENT",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOR-DRAINS-01-I002",
+      "to_asset_id": "SANITARY-VENT",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for SANITARY-VENT; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOR-DRAINS-01-I003::SANITARY-VENT",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOR-DRAINS-01-I003",
+      "to_asset_id": "SANITARY-VENT",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for SANITARY-VENT; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOR-DRAINS-01-I004::SANITARY-VENT",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOR-DRAINS-01-I004",
+      "to_asset_id": "SANITARY-VENT",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for SANITARY-VENT; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOR-DRAINS-01-I005::SANITARY-VENT",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOR-DRAINS-01-I005",
+      "to_asset_id": "SANITARY-VENT",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for SANITARY-VENT; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOR-DRAINS-01-I006::SANITARY-VENT",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOR-DRAINS-01-I006",
+      "to_asset_id": "SANITARY-VENT",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for SANITARY-VENT; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOR-DRAINS-01-I007::SANITARY-VENT",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOR-DRAINS-01-I007",
+      "to_asset_id": "SANITARY-VENT",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for SANITARY-VENT; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-FLOOR-DRAINS-01-I008::SANITARY-VENT",
+      "type": "feeds",
+      "from_asset_id": "B1-FLOOR-DRAINS-01-I008",
+      "to_asset_id": "SANITARY-VENT",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for SANITARY-VENT; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-LAB-CONSOLE-01::BAS-CONTROLS",
+      "type": "feeds",
+      "from_asset_id": "B1-LAB-CONSOLE-01",
+      "to_asset_id": "BAS-CONTROLS",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for BAS-CONTROLS; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-MECH-AHU-01-I001::HVAC-AIR",
+      "type": "feeds",
+      "from_asset_id": "B1-MECH-AHU-01-I001",
+      "to_asset_id": "HVAC-AIR",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for HVAC-AIR; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-MECH-AHU-01-I002::HVAC-AIR",
+      "type": "feeds",
+      "from_asset_id": "B1-MECH-AHU-01-I002",
+      "to_asset_id": "HVAC-AIR",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for HVAC-AIR; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-MECH-BAS-01::BAS-CONTROLS",
+      "type": "feeds",
+      "from_asset_id": "B1-MECH-BAS-01",
+      "to_asset_id": "BAS-CONTROLS",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for BAS-CONTROLS; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-MECH-PIPE-RACK-01::HVAC-AIR",
+      "type": "feeds",
+      "from_asset_id": "B1-MECH-PIPE-RACK-01",
+      "to_asset_id": "HVAC-AIR",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for HVAC-AIR; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-MECH-PUMP-01-I001::HVAC-AIR",
+      "type": "feeds",
+      "from_asset_id": "B1-MECH-PUMP-01-I001",
+      "to_asset_id": "HVAC-AIR",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for HVAC-AIR; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-MECH-PUMP-01-I002::HVAC-AIR",
+      "type": "feeds",
+      "from_asset_id": "B1-MECH-PUMP-01-I002",
+      "to_asset_id": "HVAC-AIR",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for HVAC-AIR; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-MECH-PUMP-01-I003::HVAC-AIR",
+      "type": "feeds",
+      "from_asset_id": "B1-MECH-PUMP-01-I003",
+      "to_asset_id": "HVAC-AIR",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for HVAC-AIR; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-PIPE-SPINE-01::SANITARY-VENT",
+      "type": "feeds",
+      "from_asset_id": "B1-PIPE-SPINE-01",
+      "to_asset_id": "SANITARY-VENT",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for SANITARY-VENT; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-TELECOM-RACKS-01-I001::DATA-STRUCTURED",
+      "type": "feeds",
+      "from_asset_id": "B1-TELECOM-RACKS-01-I001",
+      "to_asset_id": "DATA-STRUCTURED",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for DATA-STRUCTURED; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-TELECOM-RACKS-01-I002::DATA-STRUCTURED",
+      "type": "feeds",
+      "from_asset_id": "B1-TELECOM-RACKS-01-I002",
+      "to_asset_id": "DATA-STRUCTURED",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for DATA-STRUCTURED; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-TELECOM-RACKS-01-I003::DATA-STRUCTURED",
+      "type": "feeds",
+      "from_asset_id": "B1-TELECOM-RACKS-01-I003",
+      "to_asset_id": "DATA-STRUCTURED",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for DATA-STRUCTURED; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-TELECOM-RACKS-01-I004::DATA-STRUCTURED",
+      "type": "feeds",
+      "from_asset_id": "B1-TELECOM-RACKS-01-I004",
+      "to_asset_id": "DATA-STRUCTURED",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for DATA-STRUCTURED; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::FEEDS::B1-TELECOM-TRAY-01::DATA-STRUCTURED",
+      "type": "feeds",
+      "from_asset_id": "B1-TELECOM-TRAY-01",
+      "to_asset_id": "DATA-STRUCTURED",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json"
+      ],
+      "notes": "Authority-backed B1 source for DATA-STRUCTURED; physical capacities and external utility boundaries remain unmodeled."
+    },
+    {
+      "relationship_id": "REL::STEP3A::ROUTES-THROUGH::BAS-CONTROLS::R-CONTROLS",
+      "type": "routes_through",
+      "from_asset_id": "BAS-CONTROLS",
+      "to_asset_id": "R-CONTROLS",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json",
+        "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
+      ],
+      "notes": "BAS-CONTROLS uses the dedicated conceptual digital-twin riser allocation R-CONTROLS; this is not construction shaft sizing."
+    },
+    {
+      "relationship_id": "REL::STEP3A::ROUTES-THROUGH::DATA-STRUCTURED::R-DATA",
+      "type": "routes_through",
+      "from_asset_id": "DATA-STRUCTURED",
+      "to_asset_id": "R-DATA",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json",
+        "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
+      ],
+      "notes": "DATA-STRUCTURED uses the dedicated conceptual digital-twin riser allocation R-DATA; this is not construction shaft sizing."
+    },
+    {
+      "relationship_id": "REL::STEP3A::ROUTES-THROUGH::ELEC-EMERGENCY::R-ELEC-EMERGENCY",
+      "type": "routes_through",
+      "from_asset_id": "ELEC-EMERGENCY",
+      "to_asset_id": "R-ELEC-EMERGENCY",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json",
+        "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
+      ],
+      "notes": "ELEC-EMERGENCY uses the dedicated conceptual digital-twin riser allocation R-ELEC-EMERGENCY; this is not construction shaft sizing."
+    },
+    {
+      "relationship_id": "REL::STEP3A::ROUTES-THROUGH::ELEC-NORMAL::R-ELEC-NORMAL",
+      "type": "routes_through",
+      "from_asset_id": "ELEC-NORMAL",
+      "to_asset_id": "R-ELEC-NORMAL",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json",
+        "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
+      ],
+      "notes": "ELEC-NORMAL uses the dedicated conceptual digital-twin riser allocation R-ELEC-NORMAL; this is not construction shaft sizing."
+    },
+    {
+      "relationship_id": "REL::STEP3A::ROUTES-THROUGH::FIRE-PROTECTION::R-FIRE",
+      "type": "routes_through",
+      "from_asset_id": "FIRE-PROTECTION",
+      "to_asset_id": "R-FIRE",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json",
+        "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
+      ],
+      "notes": "FIRE-PROTECTION uses the dedicated conceptual digital-twin riser allocation R-FIRE; this is not construction shaft sizing."
+    },
+    {
+      "relationship_id": "REL::STEP3A::ROUTES-THROUGH::HVAC-AIR::R-HVAC",
+      "type": "routes_through",
+      "from_asset_id": "HVAC-AIR",
+      "to_asset_id": "R-HVAC",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json",
+        "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
+      ],
+      "notes": "HVAC-AIR uses the dedicated conceptual digital-twin riser allocation R-HVAC; this is not construction shaft sizing."
+    },
+    {
+      "relationship_id": "REL::STEP3A::ROUTES-THROUGH::SANITARY-VENT::R-SANITARY-VENT",
+      "type": "routes_through",
+      "from_asset_id": "SANITARY-VENT",
+      "to_asset_id": "R-SANITARY-VENT",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json",
+        "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
+      ],
+      "notes": "SANITARY-VENT uses the dedicated conceptual digital-twin riser allocation R-SANITARY-VENT; this is not construction shaft sizing."
+    },
+    {
+      "relationship_id": "REL::STEP3A::ROUTES-THROUGH::STORM-DRAINAGE::R-STORM",
+      "type": "routes_through",
+      "from_asset_id": "STORM-DRAINAGE",
+      "to_asset_id": "R-STORM",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json",
+        "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
+      ],
+      "notes": "STORM-DRAINAGE uses the dedicated conceptual digital-twin riser allocation R-STORM; this is not construction shaft sizing."
+    },
+    {
+      "relationship_id": "REL::STEP3A::ROUTES-THROUGH::WATER-DOMESTIC::R-WATER",
+      "type": "routes_through",
+      "from_asset_id": "WATER-DOMESTIC",
+      "to_asset_id": "R-WATER",
+      "direction": "directed",
+      "criticality": "operational",
+      "source_refs": [
+        "docs/design/equity-uprise-building/production/building-services-core-v2.json",
+        "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
+      ],
+      "notes": "WATER-DOMESTIC uses the dedicated conceptual digital-twin riser allocation R-WATER; this is not construction shaft sizing."
+    }
+  ],
   "metadata": {
-    "status": "step2-deterministic-registry-ingestion",
+    "status": "step3a-b1-operational-graph",
     "source_record_count": 956,
     "asset_count": 1019,
     "role_counts": {
@@ -170319,6 +171318,32 @@
     },
     "expanded_source_records": 20,
     "unlocated_physicalizable_assets": 343,
-    "stateful_assets": 4
+    "stateful_assets": 4,
+    "step3a": {
+      "relationships_total": 61,
+      "feed_relationships": 36,
+      "riser_relationships": 9,
+      "dependency_relationships": 16,
+      "source_connected_systems": [
+        "BAS-CONTROLS",
+        "DATA-STRUCTURED",
+        "ELEC-EMERGENCY",
+        "ELEC-NORMAL",
+        "FIRE-PROTECTION",
+        "HVAC-AIR",
+        "SANITARY-VENT",
+        "STORM-DRAINAGE",
+        "WATER-DOMESTIC"
+      ],
+      "systems_without_dedicated_b1_source": [
+        "AV-MEDIA",
+        "FIRE-ALARM",
+        "LIGHTING-CONTROLS",
+        "SECURITY-ACCESS",
+        "SERVICE-HOUSEKEEPING"
+      ],
+      "trace_paths_total": 36,
+      "unresolved_relationships": 0
+    }
   }
 }
