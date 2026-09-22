@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-building-services-core-v2",
-  "status": "active-authority-implementation-pending",
+  "status": "active-authority-backbone-coordination-started",
   "not_for_construction": true,
   "building_id": "equity-uprise-building",
   "source_level": "basement-b1",
@@ -349,5 +349,8 @@
     "final pressure/flow calculations",
     "code-required ratings",
     "final equipment replacement paths"
-  ]
+  ],
+  "current_implementation_phase": "services-step-1-backbone-coordination",
+  "floor_addenda_root": "services/floor-addenda",
+  "visible_geometry_status": "Services Step 2 pending"
 }
