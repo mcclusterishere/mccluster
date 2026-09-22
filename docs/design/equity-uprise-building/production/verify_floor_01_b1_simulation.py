@@ -149,7 +149,7 @@ check("old B1 authority is compatibility stub",old_b1.exists() and "DEPRECATED C
 
 # Restricted B1 derived package is required for future render/admin operation.
 b1_required=[
- "README.md","basement-b1-scene-manifest.json","basement-b1-materials.json",
+ "README.md","basement-b1-scene-manifest.json","basement-b1-object-inventory.json","build_equity_uprise_basement_b1_v2.py","basement-b1-materials.json",
  "basement-b1-lighting.json","basement-b1-camera.json","basement-b1-hotspots.json",
  "basement-b1-routing.json","basement-b1-states.json","basement-b1-geometry-notes.md"
 ]
@@ -161,12 +161,23 @@ if (B1_DIR/"basement-b1-scene-manifest.json").exists():
     check("B1 scene title current",b1m.get("scene_name")==f"Equity Uprise B1 — {B1['title']}",str(b1m.get("scene_name")))
     check("B1 scene hidden from public navigation",b1m.get("public_navigation") is False,str(b1m.get("public_navigation")))
     check("B1 scene tunnel authority ref",b1m.get("tunnel_network_ref")=="../underground-tunnel-network.json",str(b1m.get("tunnel_network_ref")))
+    check("B1 scene maturity reconciled",b1m.get("design_maturity")=="reconciled-current-iterative-pass",str(b1m.get("design_maturity")))
+    check("B1 scene detailed render ready",b1m.get("render_readiness")=="detailed-real-3d",str(b1m.get("render_readiness")))
+    check("B1 scene inventory ref",b1m.get("object_inventory_ref")=="basement-b1-object-inventory.json",str(b1m.get("object_inventory_ref")))
 if (B1_DIR/"basement-b1-routing.json").exists():
     b1r=json.loads((B1_DIR/"basement-b1-routing.json").read_text())
     routes=b1r.get("routes",{})
     check("B1 sandbox cannot reach live B1",routes.get("building_systems_training_sandbox",{}).get("live_b1_access") is False,str(routes.get("building_systems_training_sandbox")))
     check("B1 sandbox cannot reach live tunnel",routes.get("building_systems_training_sandbox",{}).get("live_tunnel_access") is False,str(routes.get("building_systems_training_sandbox")))
     check("B1 ordinary EU admin insufficient",b1r.get("security",{}).get("ordinary_equity_uprise_admin_sufficient") is False,str(b1r.get("security")))
+
+b1_detail_report=HERE/"generated"/"equity-uprise-basement-b1-core-v2-report.json"
+check("detailed B1 report exists",b1_detail_report.exists(),str(b1_detail_report))
+if b1_detail_report.exists():
+    b1d=json.loads(b1_detail_report.read_text())
+    check("detailed B1 builder passes",b1d.get("passed") is True,str(b1d.get("passed")))
+    check("detailed B1 inventory fully modeled",b1d.get("inventory_records")==b1d.get("inventory_modeled"),str((b1d.get("inventory_records"),b1d.get("inventory_modeled"))))
+    check("detailed B1 visual gates pass",b1d.get("checks_failed")==0,str(b1d.get("checks_failed")))
 
 resolved={x["id"]:x.get("status") for x in F1.get("resolved_geometry_requirements",[])}
 for rid in ("f1-stair-a-exit-discharge","f1-stair-b-exit-discharge","f1-secure-service-entrance","f1-exterior-assembly-area","f1-basement-discharge-direction-controls"):
