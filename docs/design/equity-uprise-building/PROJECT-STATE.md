@@ -235,6 +235,7 @@ Current state:
 - Stair A and Stair B each preserve the complete **13.5 ft Floor 6→roof rise**, 22-riser conceptual geometry, upper landing at +81 ft, and a real 3 ft south-facing roof-door opening;
 - the combined building stair enclosures are now segmented around canonical access openings on every served level instead of visually sealing the south stair wall;
 - a dedicated B1→Level 7 walkability audit is part of CI;
+- legacy validators that formerly required Level 7 to remain provisional have been promoted to require the reconciled Level 7 state;
 - inventory coverage and visual-completeness gates are required before user visual approval.
 
 Required references:
