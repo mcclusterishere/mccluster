@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 257,
+  "candidate_count": 258,
   "capability_source_count": 102,
-  "support_only_count": 155,
-  "checks_total": 928,
-  "checks_passed": 928,
+  "support_only_count": 156,
+  "checks_total": 932,
+  "checks_passed": 932,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -162,6 +162,7 @@
     "scripts/kb-build.mjs",
     "scripts/sites-buy-smoke.mjs",
     "scripts/smoke.mjs",
+    "scripts/test/appbar-consistency.test.mjs",
     "scripts/test/control-surface.test.mjs",
     "scripts/test/signup-authority.test.mjs",
     "shots.html",
@@ -271,7 +272,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "257 entries"
+      "detail": "258 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -3055,6 +3056,26 @@
     },
     {
       "name": "scripts/smoke.mjs support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/appbar-consistency.test.mjs capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "scripts/test/appbar-consistency.test.mjs classified",
+      "passed": true,
+      "detail": "classification='runtime_support'"
+    },
+    {
+      "name": "scripts/test/appbar-consistency.test.mjs support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "scripts/test/appbar-consistency.test.mjs support rationale present",
       "passed": true,
       "detail": ""
     },
