@@ -127,16 +127,19 @@ For any facade, glazing, exterior branding, interior-envelope, MEP, IT, plumbing
 - `BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md`
 - `VERTICAL-DISTRIBUTION-AND-RISER-SPEC.md`
 - `FACADE-BRANDING-AND-SIGNAGE-SPEC.md`
+- `FACADE-ARCHITECTURAL-FINISH-PASS-SPEC.md`
 - `production/building-services-core-v2.json`
 - `production/facade-system-core-v2.json`
 - `production/facade/facade-module-inventory.json`
+- `production/facade/facade-finish-inventory.json`
+- `production/facade/equity-uprise-logo-vector.json` — exact approved repo logo geometry for 3D facade signage; sourced from `assets/img/equity-uprise-logo.webp` and the matching inline SVG.
 - `production/facade/build_equity_uprise_facade_v2.py`
 - `production/vertical-risers-core-v2.json`
 - `production/interior-envelope-audit.json`
 
 These authorities **do not move the existing Core V2 shell/core**. They establish the next-pass requirement that the building function as a coordinated architectural envelope + services network rather than a set of visually implied systems.
 
-Current boundary: authority only. Detailed facade, riser sub-allocation, floor services addenda and geometry implementation remain pending.
+Current facade boundary: the Facade V1 structural shell is implemented and checkpointed; the architectural finish pass is active but not yet geometrically implemented. Riser sub-allocation, floor services addenda and interior systems implementation remain pending.
 
 ## Deterministic production packages
 

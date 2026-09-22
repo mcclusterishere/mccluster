@@ -2,13 +2,117 @@
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-facade-core-v2",
   "not_for_construction": true,
-  "glb_bytes": 952416,
-  "sha256": "a65e62741a0271e034d9421379e83077f56bf0fe63869b38ba72aad78af8590e",
-  "mesh_count": 1578,
+  "glb_bytes": 2490740,
+  "sha256": "6a186e78f0e3ce5d5378394ae367dd6f3ca4451f62d9b7d8e558a89020878e67",
+  "mesh_count": 3975,
   "inventory_modules": 288,
   "inventory_modules_modeled": 288,
   "inventory_features": 9,
   "inventory_features_modeled": 9,
+  "finish_inventory_records": 68,
+  "finish_step4_records": 32,
+  "finish_step4_modeled": 32,
+  "finish_step4_missing": [],
+  "finish_step5_records": 22,
+  "finish_step5_modeled": 22,
+  "finish_step5_missing": [],
+  "finish_step6_records": 14,
+  "finish_step6_modeled": 14,
+  "finish_step6_missing": [],
+  "canonical_logo_asset": "assets/img/equity-uprise-logo.webp",
+  "canonical_logo_sha256": "3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f",
+  "finish_records_modeled_total": 68,
+  "finish_future_records_remaining": 0,
+  "finished_window_modules": 238,
+  "material_system_version": "pbr-v1",
+  "pbr_materials_embedded": 15,
+  "pbr_material_roles": [
+    "FAC-GLASS-01",
+    "FAC-GLASS-02",
+    "FAC-LOGO-NAVY",
+    "FAC-LOUVER-01",
+    "FAC-METAL-01",
+    "FAC-MINERAL-01",
+    "FAC-OPAQUE-01",
+    "FAC-PAVER-01",
+    "FAC-PAVER-02",
+    "FAC-SHADOW-01",
+    "FAC-SIGN-01",
+    "FAC-SIGN-PLATE",
+    "FAC-SITE-EDGE",
+    "FAC-WARM-01",
+    "LIGHT-WARM-ARCH"
+  ],
+  "finish_geometry_counts": {
+    "FAC-WIN-JAMB-CLEAR-01": 304,
+    "FAC-WIN-HEAD-01": 238,
+    "FAC-WIN-SILL-01": 238,
+    "FAC-WIN-REVEAL-01": 476,
+    "FAC-WIN-GASKET-01": 476,
+    "FAC-WIN-ASSEMBLY-SOUTH-CLEAR-01": 47,
+    "FAC-WIN-ASSEMBLY-EAST-CLEAR-01": 54,
+    "FAC-WIN-JAMB-CORE-01": 132,
+    "FAC-WIN-ASSEMBLY-EAST-STAIR-01": 18,
+    "FAC-WIN-ASSEMBLY-NORTH-STAIR-01": 18,
+    "FAC-WIN-ASSEMBLY-NORTH-RESTROOM-CLERESTORY-01": 12,
+    "FAC-WIN-ASSEMBLY-NORTH-SUPPORT-CLERESTORY-01": 18,
+    "FAC-WIN-ASSEMBLY-WEST-CLEAR-01": 51,
+    "FAC-WIN-JAMB-PRIVACY-01": 40,
+    "FAC-WIN-ASSEMBLY-SOUTH-PRIVACY-01": 20,
+    "FAC-MULLION-SECONDARY-FINISH-01": 288,
+    "FAC-PRIMARY-FIN-FINISH-01": 20,
+    "FAC-SPANDREL-REVEAL-FINISH-01": 24,
+    "FAC-SERVICE-OPAQUE-NORTH-01": 18,
+    "FAC-SERVICE-OPAQUE-WEST-01": 18,
+    "FAC-ACOUSTIC-OPAQUE-SOUTH-F4-01": 3,
+    "FAC-ACOUSTIC-OPAQUE-WEST-F4-01": 3,
+    "FAC-SERVICE-LOUVER-FINISH-01": 12,
+    "FAC-CORNER-FINISH-SW-01": 1,
+    "FAC-CORNER-FINISH-SE-01": 1,
+    "FAC-CORNER-FINISH-NW-01": 1,
+    "FAC-CORNER-FINISH-NE-01": 1,
+    "FAC-BASE-PLINTH-SOUTH-01": 1,
+    "FAC-BASE-PLINTH-EAST-01": 1,
+    "FAC-BASE-PLINTH-NORTH-01": 1,
+    "FAC-BASE-PLINTH-WEST-01": 1,
+    "FAC-BASE-REVEAL-01": 4,
+    "FAC-ENTRY-PORTAL-FINISH-01": 1,
+    "FAC-DOOR-LEAF-01": 2,
+    "FAC-DOOR-FRAME-01": 2,
+    "FAC-DOOR-HARDWARE-01": 2,
+    "FAC-ENTRY-SIDELIGHT-W-01": 1,
+    "FAC-ENTRY-SIDELIGHT-E-01": 1,
+    "FAC-ENTRY-TRANSOM-01": 1,
+    "FAC-ENTRY-THRESHOLD-01": 1,
+    "FAC-ENTRY-SOFFIT-01": 1,
+    "FAC-ENTRY-FASCIA-01": 1,
+    "FAC-ENTRY-DOWNLIGHT-01": 6,
+    "FAC-SIGN-HALO-ENTRY-01": 1,
+    "FAC-SIGN-BACKER-ENTRY-01": 1,
+    "FAC-SIGN-LOGO-ENTRY-01": 1,
+    "FAC-SIGN-LETTER-WORDMARK-ENTRY-01": 1,
+    "FAC-SIGN-BACKER-CROWN-01": 1,
+    "FAC-SIGN-LOGO-CROWN-01": 1,
+    "FAC-EXTERIOR-LIGHT-ENTRY-GRAZE-01": 4,
+    "FAC-EXTERIOR-LIGHT-BASE-01": 4,
+    "FAC-SITE-APRON-01": 1,
+    "FAC-SITE-APRON-EDGE-01": 2,
+    "FAC-SITE-THRESHOLD-PAVING-01": 1,
+    "FAC-CROWN-BAND-FINISH-SOUTH-01": 1,
+    "FAC-CROWN-BAND-FINISH-EAST-01": 1,
+    "FAC-CROWN-BAND-FINISH-NORTH-01": 1,
+    "FAC-CROWN-BAND-FINISH-WEST-01": 1,
+    "FAC-PARAPET-CAP-SOUTH-01": 1,
+    "FAC-PARAPET-CAP-NORTH-01": 1,
+    "FAC-PARAPET-CAP-WEST-01": 1,
+    "FAC-PARAPET-CAP-EAST-01": 1,
+    "FAC-CROWN-SCREEN-NORTH-01": 1,
+    "FAC-CROWN-HEADHOUSE-TRIM-A-01": 1,
+    "FAC-CROWN-HEADHOUSE-TRIM-B-01": 1,
+    "FAC-CROWN-ELEVATOR-TRIM-01": 1,
+    "FAC-SIGN-HALO-CROWN-01": 1,
+    "FAC-EXTERIOR-LIGHT-CROWN-01": 6
+  },
   "classification_counts": {
     "clear_vision": 152,
     "entrance_door": 2,
@@ -22,18 +126,18 @@
   },
   "bounds_m": [
     [
-      -0.23164800000000002,
-      -1.755648,
-      0.0
+      -0.24384000000000003,
+      -4.2672,
+      -0.054864
     ],
     [
-      22.177248000000002,
-      22.177248000000002,
-      24.688800000000004
+      22.18944,
+      22.207728000000003,
+      27.139392
     ]
   ],
-  "checks_total": 15,
-  "checks_passed": 15,
+  "checks_total": 44,
+  "checks_passed": 44,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -108,9 +212,154 @@
       "detail": ""
     },
     {
-      "name": "substantial real geometry",
+      "name": "finish inventory has 68 records",
       "passed": true,
-      "detail": "1578"
+      "detail": "68"
+    },
+    {
+      "name": "step 4 finish scope has 32 records",
+      "passed": true,
+      "detail": "32"
+    },
+    {
+      "name": "all step 4 finish records modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "238 window-like modules detailed",
+      "passed": true,
+      "detail": "238"
+    },
+    {
+      "name": "all four finish corners resolved",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all four base plinths + reveal modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "step 5 entrance/logo scope has 22 records",
+      "passed": true,
+      "detail": "22"
+    },
+    {
+      "name": "all step 5 entrance/logo records modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "canonical logo asset bound",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "canonical logo hash bound",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "literal E=U substitution prohibited",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "complete south entry assembly",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "canopy soffit fascia downlights complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "exact approved entry logo + wordmark modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "false crown E=U replaced by approved logo",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "entry ground contact complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "step 6 crown scope has 14 records",
+      "passed": true,
+      "detail": "14"
+    },
+    {
+      "name": "all step 6 crown records modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all 68 architectural finish records modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "four deepened crown bands complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "four roof-edge parapet caps complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "roof service/headhouse integration complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "crown lighting complete",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Level 7 remains open-air",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "no finish records remain deferred",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "Step 7 PBR library covers every facade color role",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "clear and privacy glass use alpha blend",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "metal and mineral material response differentiated",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "architectural light material is emissive",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "substantial finished facade geometry",
+      "passed": true,
+      "detail": "3975"
     }
   ]
 }
