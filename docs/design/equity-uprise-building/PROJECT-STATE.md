@@ -344,7 +344,20 @@ Verified generated snapshot: `39305ef8b27a5c521aa7c8de68e1dac73691dc3b`
 - GLB SHA-256: `fc414f4609173b7c572830ef605c11db711440b7de69ff109ba5d17ec899cab3`;
 - whole Core V2 CI passed.
 
-Step 5 is now a stable checkpoint. The next exterior stage is the remaining crown / parapet / service-screen / crown-lighting completion pass.
+Step 5 is now a stable checkpoint and remains unchanged.
+
+Step 6 source implementation is now active:
+- all four Floor 6 crown bands are deepened and tied to the existing 6 ft facade rhythm;
+- all four Level 7 roof edges receive resolved parapet-cap geometry;
+- north MEP/service screens are refined as open slatted architectural screens rather than a fake enclosed story;
+- Stair A and Stair B roof headhouses receive crown trim while preserving their modeled-open roof doors;
+- the passenger-elevator overrun receives trim/cap integration without asserting a passenger roof stop;
+- the approved crown logo receives restrained halo treatment;
+- six crown/service-screen light fixtures are modeled;
+- **14/14 remaining finish records** are now represented in source;
+- cumulative facade architectural-finish scope is **68/68 records** with nothing intentionally deferred.
+
+Current gate: deterministic Step 6 regeneration + full 68/68 finish verification.
 
 ## Exterior facade implementation — DETAILED CURRENT PASS ACTIVE / VISUAL APPROVAL PENDING
 
