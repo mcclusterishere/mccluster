@@ -2,6 +2,7 @@ import {
   getMeetingTranscript,
   leaveMeeting,
 } from '../meeting/engine.mjs';
+import { openMeetingTarget } from '../meeting/target-crypto.mjs';
 import {
   addMeetingSessionEvent,
   updateMeetingSession,
@@ -30,23 +31,29 @@ function transcriptSegments(payload) {
 function transcriptText(payload, maxChars = 90_000) {
   const segments = transcriptSegments(payload);
   const lines = [];
+  let size = 0;
+
   for (const segment of segments) {
     const speaker = clean(segment?.speaker || segment?.speaker_name || segment?.name || 'Speaker', 200);
     const text = clean(segment?.text || segment?.content || segment?.transcript || '', 8000);
     if (!text) continue;
     const stamp = clean(segment?.time || segment?.timestamp || segment?.start || '', 100);
-    lines.push(`${stamp ? `[${stamp}] ` : ''}${speaker}: ${text}`);
-    if (lines.join('\n').length >= maxChars) break;
+    const line = `${stamp ? `[${stamp}] ` : ''}${speaker}: ${text}`;
+    if (size + line.length + 1 > maxChars) break;
+    lines.push(line);
+    size += line.length + 1;
   }
-  return clean(lines.join('\n'), maxChars);
+
+  return lines.join('\n');
 }
 
 function parseModelJson(text) {
   const raw = clean(text, 80_000);
   if (!raw) throw new Error('Ollama returned an empty meeting debrief');
   const unfenced = raw.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '');
-  try { return JSON.parse(unfenced); }
-  catch {
+  try {
+    return JSON.parse(unfenced);
+  } catch {
     return {
       executive_summary: raw,
       decisions: [],
@@ -99,6 +106,7 @@ async function summarizeMeeting({ transcript, brief, mode }) {
 
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(data?.error || `Ollama returned ${response.status}`);
+
   return {
     model: MODEL,
     debrief: parseModelJson(data?.message?.content || ''),
@@ -114,7 +122,10 @@ export async function meetingDelegateCollect(job) {
   const orgId = job.org_id;
   const input = job.input || {};
   const sessionId = clean(input.session_id, 100);
-  if (!orgId || !sessionId) throw new Error('meeting_delegate_collect requires org_id and input.session_id');\n  const target = openMeetingTarget(input.sealed_target);
+  if (!orgId || !sessionId) {
+    throw new Error('meeting_delegate_collect requires org_id and input.session_id');
+  }
+  const target = openMeetingTarget(input.sealed_target);
 
   await updateMeetingSession({
     orgId,
@@ -126,7 +137,7 @@ export async function meetingDelegateCollect(job) {
     orgId,
     sessionId,
     eventType: 'collection_started',
-    payload: { worker_job_id: job.id },
+    payload: { worker_job_id: job.id, platform: target.platform },
   });
 
   try {
@@ -146,37 +157,36 @@ export async function meetingDelegateCollect(job) {
 
     let leaveResult = null;
     try {
-      leaveResult = await leaveMeeting(target);
+      const left = await leaveMeeting(target);
+      leaveResult = { ok: true, provider: left.provider };
     } catch (error) {
       leaveResult = { ok: false, error: clean(error.message, 1000), status: error.status || null };
     }
 
-    let analysis = null;
-    if (transcript) {
-      analysis = await summarizeMeeting({
-        transcript,
-        brief: input.brief || {},
-        mode: input.mode || 'notes',
-      });
-    } else {
-      analysis = {
-        model: null,
-        debrief: {
-          executive_summary: 'No transcript was requested for this meeting.',
-          decisions: [],
-          commitments_by_others: [],
-          requested_from_matthew: [],
-          open_questions: [],
-          next_actions: [],
-          risks: [],
-          followup_draft: null,
-        },
-        usage: null,
-      };
-    }
+    const analysis = transcript
+      ? await summarizeMeeting({
+          transcript,
+          brief: input.brief || {},
+          mode: input.mode || 'notes',
+        })
+      : {
+          model: null,
+          debrief: {
+            executive_summary: 'No transcript was requested for this meeting.',
+            decisions: [],
+            commitments_by_others: [],
+            requested_from_matthew: [],
+            open_questions: [],
+            next_actions: [],
+            risks: [],
+            followup_draft: null,
+          },
+          usage: null,
+        };
 
     const now = new Date().toISOString();
     const transcriptForStorage = transcriptPayload?.result ?? transcriptPayload ?? null;
+
     const completed = await updateMeetingSession({
       orgId,
       sessionId,
@@ -215,13 +225,21 @@ export async function meetingDelegateCollect(job) {
     await updateMeetingSession({
       orgId,
       sessionId,
-      patch: { status: error.code === 'TRANSCRIPT_NOT_READY' ? 'collecting' : 'failed', last_error: clean(error.message, 4000) },
+      patch: {
+        status: error.code === 'TRANSCRIPT_NOT_READY' ? 'collecting' : 'failed',
+        last_error: clean(error.message, 4000),
+      },
     }).catch(() => null);
+
     await addMeetingSessionEvent({
       orgId,
       sessionId,
       eventType: 'collection_failed',
-      payload: { error: clean(error.message, 4000), code: error.code || null, status: error.status || null },
+      payload: {
+        error: clean(error.message, 4000),
+        code: error.code || null,
+        status: error.status || null,
+      },
     }).catch(() => null);
     throw error;
   }
