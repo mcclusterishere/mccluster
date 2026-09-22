@@ -530,7 +530,7 @@ ck("exact approved entry logo + wordmark modeled",all(x in finish_modeled for x 
 ck("false crown E=U replaced by approved logo",all(x in finish_modeled for x in ("FAC-SIGN-BACKER-CROWN-01","FAC-SIGN-LOGO-CROWN-01")))
 ck("entry ground contact complete",all(x in finish_modeled for x in ("FAC-SITE-APRON-01","FAC-SITE-APRON-EDGE-01","FAC-SITE-THRESHOLD-PAVING-01")))
 ck("remaining crown structural finish intentionally deferred",not any(x in finish_modeled for x in future_finish),str(sorted(finish_modeled & future_finish)))
-ck("substantial real geometry",len(scene.geometry)>=4000,str(len(scene.geometry)))
+ck("substantial real geometry after replacing pixel-sign mesh spam",len(scene.geometry)>=3800,str(len(scene.geometry)))
 
 scene.metadata.update({
  "scene_id":"equity-uprise-facade-core-v2",
