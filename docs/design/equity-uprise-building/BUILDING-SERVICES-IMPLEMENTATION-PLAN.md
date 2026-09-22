@@ -50,4 +50,4 @@ Require vertical continuity B1→L7, no core/circulation clashes, traceability f
 
 ## Current stop point
 
-Services Step 1 is coordination only. **Next is real 3D vertical-backbone geometry and a Services viewer layer.**
+Services Step 1 is complete. **Services Step 2 source is implemented:** a dedicated real 3D backbone GLB plus a Services viewer layer. Deterministic generation/CI is the current gate.
