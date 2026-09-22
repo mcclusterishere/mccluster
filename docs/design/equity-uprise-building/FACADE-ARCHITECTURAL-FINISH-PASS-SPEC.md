@@ -29,7 +29,7 @@ The V1 shell is intentionally preserved as a rollback/checkpoint baseline. It su
 - sealed Floors 2–6 exterior logic;
 - Floor 4 acoustic facade exception;
 - base / middle / crown composition;
-- E = U / Equity Uprise identity placement;
+- approved Equity Uprise logo / Equity Uprise identity placement;
 - Level 7 open-air roof boundary.
 
 This finish pass does **not** restart or redesign the facade from scratch.
@@ -147,7 +147,7 @@ The entrance must no longer read as a framed opening plus a slab.
 
 ## 8. Architectural branding finish
 
-The E = U mark and Equity Uprise wordmark must be upgraded from procedural/block lettering into architectural signage.
+The exact approved Equity Uprise logo from `assets/img/equity-uprise-logo.webp` and the Equity Uprise wordmark must replace the procedural/block entrance identity. Literal `E=U` text is not the approved logo.
 
 The finished sign system should use:
 - dimensional letter/mark depth;
@@ -159,7 +159,7 @@ The finished sign system should use:
 
 Primary identity remains at the south entrance.
 
-A single restrained crown E = U mark remains allowed. It must not become billboard-scale.
+A single restrained crown use of the same approved Equity Uprise logo remains allowed. It must not become billboard-scale.
 
 ## 9. Canopy finish
 
@@ -294,6 +294,7 @@ The following naming families are reserved for the implementation inventory:
 - `FAC-ENTRY-SIDELIGHT-*`
 - `FAC-ENTRY-SOFFIT-*`
 - `FAC-ENTRY-DOWNLIGHT-*`
+- `FAC-SIGN-LOGO-*`
 - `FAC-SIGN-LETTER-*`
 - `FAC-SIGN-BACKER-*`
 - `FAC-CROWN-BAND-FINISH-*`
