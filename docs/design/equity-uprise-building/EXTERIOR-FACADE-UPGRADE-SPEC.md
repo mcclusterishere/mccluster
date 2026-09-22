@@ -135,7 +135,7 @@ Required expression:
 - grounded mineral/stone-like base material;
 - stronger entrance frame;
 - weather canopy;
-- E = U / Equity Uprise identity integrated with the entry composition;
+- exact approved Equity Uprise logo / Equity Uprise identity integrated with the entry composition;
 - transparent public-facing bays balanced by opaque structural/service areas.
 
 ### Middle — Floors 2–5
@@ -155,7 +155,7 @@ The crown should:
 - integrate the roof parapet, stair headhouses and service screens;
 - conceal rooftop clutter from normal street views where feasible;
 - preserve the Level 7 program and protected stair arrivals;
-- carry one optional secondary E = U architectural mark.
+- carry one optional secondary approved Equity Uprise logo mark.
 
 ## 6. South elevation — primary civic face
 
@@ -291,7 +291,7 @@ Required later geometry:
 - canopy supports or credible cantilever expression;
 - threshold / base material transition;
 - architectural lighting;
-- E = U identity;
+- exact approved Equity Uprise logo mark;
 - Equity Uprise wordmark;
 - building directory/wayfinding adjacency.
 
@@ -369,11 +369,11 @@ For facade coordination, lock:
 - south elevation;
 - centered around building/entry axis near **X36**;
 - integrated with the entrance frame/canopy/spandrel;
-- E = U principal mark;
+- exact approved Equity Uprise logo mark from `assets/img/equity-uprise-logo.webp`;
 - Equity Uprise institutional wordmark.
 
 ### Secondary crown mark
-One restrained secondary **E = U** may be integrated into the south crown/Floor 6 upper band, centered approximately on the primary building axis.
+One restrained secondary **approved Equity Uprise logo mark** may be integrated into the south crown/Floor 6 upper band, centered approximately on the primary building axis.
 
 It must:
 - fit within the facade module;
@@ -501,7 +501,7 @@ The exterior implementation cannot be marked complete until:
 - mullions/spandrels/panel depth are real geometry;
 - base / middle / crown are clearly legible;
 - roof/service equipment is screened but Level 7 remains open-air;
-- E = U / Equity Uprise identity is integrated;
+- exact approved Equity Uprise logo / Equity Uprise identity is integrated;
 - facade does not clash with core, interior walls, ceilings or MEP;
 - day/night review passes;
 - whole-building stack, floor isolation and stair continuity remain intact.
