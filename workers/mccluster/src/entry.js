@@ -15,6 +15,7 @@ import { handleAiRequest } from './ai/router.js';
 import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
 import { handleAnalyticsRequest } from './analytics/router.js';
+import { resolveWorkspaces } from './workspaces.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -265,6 +266,20 @@ export default {
         return reply(request, env, body, status);
       } catch (error) {
         return fail(request, env, error.message || 'Core status request failed', error.status || 500, error.detail);
+      }
+    }
+
+    /* WHICH WORKSPACES THIS TOKEN MAY OPEN. Ahead of every module route
+       on purpose: a page calls this first and hands the chosen org_id to
+       whatever it opens next. It never authorizes a write on its own —
+       the module still checks membership where the write happens. */
+    if (path === '/v1/workspaces/me' && request.method === 'GET') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        return reply(request, env, await resolveWorkspaces(env, user));
+      } catch (error) {
+        return fail(request, env, error.message || 'Workspace lookup failed', error.status || 500, error.detail);
       }
     }
 
