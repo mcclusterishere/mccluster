@@ -137,6 +137,7 @@ For any facade, glazing, exterior branding, interior-envelope, MEP, IT, plumbing
 - `production/facade/build_equity_uprise_facade_v2.py`
 - `production/vertical-risers-core-v2.json`
 - `production/services/floor-services-addenda.json`
+- `production/services/b1-services-source-connections.json`
 - `production/interior-envelope-audit.json`
 
 These authorities **do not move the existing Core V2 shell/core**. They establish the next-pass requirement that the building function as a coordinated architectural envelope + services network rather than a set of visually implied systems.
