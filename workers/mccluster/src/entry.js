@@ -16,6 +16,7 @@ import { handleCommsRequest } from './comms/router.js';
 import { handleRelayEnrollment } from './comms/enrollment.js';
 import { handleAnalyticsRequest } from './analytics/router.js';
 import { resolveWorkspaces } from './workspaces.js';
+import { setLeadStatus } from './leads.js';
 
 async function authUser(req, env) {
   const authorization = req.headers.get('authorization') || '';
@@ -280,6 +281,19 @@ export default {
         return reply(request, env, await resolveWorkspaces(env, user));
       } catch (error) {
         return fail(request, env, error.message || 'Workspace lookup failed', error.status || 500, error.detail);
+      }
+    }
+
+    /* Working the pipeline. This used to be a browser PATCH straight at
+       public.leads behind an RLS policy comparing the JWT email to one
+       literal address — see src/leads.js for why that had to move. */
+    if (path === '/v1/leads/status' && request.method === 'POST') {
+      try {
+        const user = await authUser(request, env);
+        if (!user) return fail(request, env, 'Authentication required', 401);
+        return reply(request, env, await setLeadStatus(request, env, user));
+      } catch (error) {
+        return fail(request, env, error.message || 'Lead update failed', error.status || 500, error.detail);
       }
     }
 
