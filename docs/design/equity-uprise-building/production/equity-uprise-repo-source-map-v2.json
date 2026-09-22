@@ -711,6 +711,13 @@
       "rationale": "Repo-wide content audit found direct Equity Uprise program semantics in this source."
     },
     {
+      "path": "equity-uprise-basement-b1-3d.html",
+      "classification": "building_preview_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Public static B1 digital-twin review viewer for the restricted basement program; it contains no live B1/tunnel operational data and adds no separate product capability."
+    },
+    {
       "path": "equity-uprise-fellowship.html",
       "classification": "capability_source",
       "capability_ids": [
