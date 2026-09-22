@@ -552,3 +552,23 @@ Verified generated snapshot: `768a6270fa945dd5fb4c6c572bb72c2caade5d9d`
 - full Equity Uprise Core V2 CI passed.
 
 Services Step 2 is a stable checkpoint. Next is **Services Step 3 — connect the real B1 plant/electrical/telecom/fire/sump/BAS equipment to this backbone.**
+
+
+## Building services / nervous system — SERVICES STEP 3 SOURCE IMPLEMENTED
+
+B1 is now connected to the vertical nervous-system backbone with real 3D route geometry.
+
+Connected source families:
+- Mechanical Plant AHUs → HVAC riser;
+- main switchgear → normal-power riser;
+- UPS/emergency distribution → emergency-power riser;
+- telecom racks/cable tray → data riser;
+- mechanical BAS panel + flood sensor/alarm → controls riser;
+- fire pump/sprinkler assembly → fire-protection riser;
+- water/backflow assembly → domestic-water riser;
+- B1 collection/pipe spine → sanitary/vent riser;
+- sump/flood-management pumps → storm/drainage riser.
+
+The new routes are overhead digital-twin coordination geometry tied to existing B1 equipment IDs. They do not move the canonical B1 rooms, cores, stairs, elevators, tunnel interface or circulation.
+
+Current gate: deterministic regeneration and full Core V2 CI.
