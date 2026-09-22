@@ -144,7 +144,7 @@ for sid in sorted(service_ids): dfs(sid,[sid])
 
 source_connections=services.get("b1_source_connections",[])
 source_connected_systems=sorted({x["system_id"] for x in source_connections})
-dedicated_riser_systems=sorted({r["system_id"] for r in relationships if r["type"]=="routes_through"})
+dedicated_riser_systems=sorted({r["from_asset_id"] for r in relationships if r["type"]=="routes_through"})
 all_systems=sorted(service_ids)
 systems_without_dedicated_b1_source=sorted(service_ids-set(source_connected_systems))
 feed_edges=[r for r in relationships if r["type"]=="feeds"]
