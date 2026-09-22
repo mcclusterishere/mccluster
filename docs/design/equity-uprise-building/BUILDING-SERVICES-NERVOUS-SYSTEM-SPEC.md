@@ -1,6 +1,6 @@
 # Equity Uprise — Building Services / Nervous System Spec
 
-> Status: **ACTIVE WHOLE-BUILDING SERVICES AUTHORITY — IMPLEMENTATION PENDING**
+> Status: **ACTIVE WHOLE-BUILDING SERVICES AUTHORITY — SERVICES STEP 3 IMPLEMENTED**
 >
 > Machine companion: `production/building-services-core-v2.json`.
 >
