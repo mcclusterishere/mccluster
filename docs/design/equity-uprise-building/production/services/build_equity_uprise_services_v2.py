@@ -8,6 +8,8 @@ paths. Services Step 4 extends real branch geometry and endpoint drops across
 Floors 1-3. Services Step 5 extends those branch routes through Floors 4-6 and
 adds representative Level 7 handoffs. Services Step 6 completes the detailed
 Level 7 roof terminations, service routes, devices and lightning concept.
+Services Step 7 adds representative interior device, ceiling and service-access
+realism across Floors 1-6 without changing approved program geometry.
 
 This is conceptual digital-twin coordination, not construction engineering.
 No final duct, pipe, conductor, breaker, pump, pressure, flow or code sizing is
@@ -337,6 +339,69 @@ for idx,(cx,cy,length,axis) in enumerate(((36,2,68,"x"),(36,70,68,"x"),(2,36,68,
     add_step6_cylinder(f"SVC-F7-DEVICE::LIGHTNING-PROTECTION::PERIMETER-{idx}",cx,cy,LEVEL_Z[7]+4.2,.045,length,"LIGHTNING-PROTECTION","roof_lightning_conductor","F7-LIGHTNING-RODS-01",sections=10,axis=axis)
     lightning_conductor_records.append(records[-1])
 
+# Step 7: representative interior device / ceiling / service-access realism.
+# This augments existing floor branches without moving rooms, cores, stairs,
+# elevators or approved architectural floor programs.
+step7_records=[]
+def add_step7_box(level,name,bounds,z0,h,system_id,kind):
+    add_box(f"SVC-F{level}-DEVICE::{system_id}::{name}",bounds,z0,h,system_id,kind,level,{"step":7})
+    step7_records.append(records[-1])
+
+def add_step7_cylinder(level,name,cx,cy,z0,radius,h,system_id,kind,sections=14,axis="z"):
+    add_cylinder(f"SVC-F{level}-DEVICE::{system_id}::{name}",cx,cy,z0,radius,h,system_id,kind,level,sections,axis,{"step":7})
+    step7_records.append(records[-1])
+
+def first_branch_anchor(level,system_id,fallback):
+    for x in floor_branch_records:
+        if x["level"]==level and x["system_id"]==system_id and x.get("step")!=6:
+            return x["points"][-1]
+    return fallback
+
+for level in range(1,7):
+    z=LEVEL_Z[level]
+    power_anchor=first_branch_anchor(level,"ELEC-NORMAL",(36,40))
+    data_anchor=first_branch_anchor(level,"DATA-STRUCTURED",(36,42))
+
+    add_step7_box(level,"PANEL",(47.0,61.8,48.4,63.8),z+2.8,4.8,"ELEC-NORMAL","interior_electrical_panel")
+    add_step7_box(level,"DATA-RACK",(44.0,61.6,46.0,64.0),z+.15,6.4,"DATA-STRUCTURED","interior_data_rack")
+    add_step7_box(level,"TRAY-A",(40.0,60.95,48.0,61.25),z+10.2,.22,"DATA-STRUCTURED","interior_cable_tray")
+    add_step7_box(level,"TRAY-B",(39.85,51.0,40.15,61.1),z+10.2,.22,"DATA-STRUCTURED","interior_cable_tray")
+    add_step7_cylinder(level,"POWER-DROP-1",power_anchor[0]-.45,power_anchor[1],z+1.0,.07,7.9,"ELEC-NORMAL","interior_conduit_drop")
+    add_step7_cylinder(level,"DATA-DROP-1",data_anchor[0]+.45,data_anchor[1],z+1.0,.06,7.9,"DATA-STRUCTURED","interior_conduit_drop")
+
+    for idx,(x,y) in enumerate(((22,30),(34,30),(22,45),(34,45)),1):
+        add_step7_box(level,f"DIFFUSER-{idx}",(x-.55,y-.55,x+.55,y+.55),z+10.45,.12,"HVAC-AIR","interior_diffuser")
+    for idx,(x,y) in enumerate(((42,30),(42,45)),1):
+        add_step7_box(level,f"RETURN-{idx}",(x-.75,y-.45,x+.75,y+.45),z+10.38,.16,"HVAC-AIR","interior_return_grille")
+
+    for idx,(x,y) in enumerate(((24,26),(38,26),(24,48),(38,48)),1):
+        add_step7_cylinder(level,f"DETECTOR-{idx}",x,y,z+10.56,.18,.12,"FIRE-ALARM","interior_detector",sections=16)
+    for idx,(x,y) in enumerate(((20,20),(48,50)),1):
+        add_step7_box(level,f"STROBE-{idx}",(x-.20,y-.12,x+.20,y+.12),z+6.6,.48,"FIRE-ALARM","interior_strobe")
+    for idx,(x,y) in enumerate(((19.5,53.0),(58.0,53.0)),1):
+        add_step7_cylinder(level,f"EXTINGUISHER-{idx}",x,y,z+.55,.18,2.0,"FIRE-PROTECTION","interior_extinguisher",sections=16)
+
+    add_step7_box(level,"ACCESS-READER",(49.65,26.8,49.95,27.2),z+3.5,1.0,"SECURITY-ACCESS","interior_access_reader")
+    add_step7_box(level,"INTERCOM",(50.15,27.0,50.55,27.45),z+3.35,1.25,"SECURITY-ACCESS","interior_intercom")
+    for idx,(x,y) in enumerate(((48.0,24.0),(48.0,50.0)),1):
+        add_step7_cylinder(level,f"CAMERA-{idx}",x,y,z+8.8,.16,.6,"SECURITY-ACCESS","interior_camera",sections=14)
+
+    px,py=power_anchor
+    for idx,(dx,dy) in enumerate(((-2,-1),(2,-1),(-2,1),(2,1)),1):
+        x,y=px+dx,py+dy
+        add_step7_box(level,f"RECEPTACLE-{idx}",(x-.14,y-.08,x+.14,y+.08),z+1.3,.48,"ELEC-NORMAL","interior_receptacle")
+    for idx,(dx,dy) in enumerate(((-1.1,0),(1.1,0)),1):
+        x,y=px+dx,py+dy
+        add_step7_box(level,f"FLOOR-BOX-{idx}",(x-.25,y-.25,x+.25,y+.25),z+.04,.10,"ELEC-NORMAL","interior_floor_box")
+
+    add_step7_cylinder(level,"DOMESTIC-VALVE",29.0,63.5,z+2.5,.14,.8,"WATER-DOMESTIC","interior_valve",sections=16)
+    add_step7_cylinder(level,"FIRE-VALVE",32.0,54.0,z+2.5,.14,.8,"FIRE-PROTECTION","interior_valve",sections=16)
+    add_step7_box(level,"HVAC-ACCESS-1",(35.4,47.6,36.6,48.4),z+9.95,.10,"HVAC-AIR","interior_access_panel")
+    add_step7_box(level,"HVAC-ACCESS-2",(41.4,47.6,42.6,48.4),z+9.95,.10,"HVAC-AIR","interior_access_panel")
+    add_step7_box(level,"SERVICE-ACCESS",(42.0,61.0,43.2,62.2),z+8.8,.10,"SERVICE-HOUSEKEEPING","interior_access_panel")
+    add_step7_cylinder(level,"RESTROOM-WATER-CONNECTION",29.0,64.0,z+.08,.11,1.0,"WATER-DOMESTIC","interior_plumbing_connection",sections=14)
+    add_step7_cylinder(level,"RESTROOM-WASTE-CONNECTION",29.0,69.0,z+.08,.15,1.0,"SANITARY-VENT","interior_plumbing_connection",sections=14)
+
 checks=[]
 def ck(name,ok,detail=""):
     checks.append({"name":name,"passed":bool(ok),"detail":str(detail)})
@@ -416,13 +481,35 @@ for x in step6_branch_records:
 ck("Step 6 routed services keep mobility field clear",not step6_clashes,step6_clashes[:12])
 ck("Step 6 detailed roof terminations are substantial",len(step6_records)>=100,len(step6_records))
 
+step7_kinds={}
+for r in step7_records:
+    step7_kinds[r["kind"]]=step7_kinds.get(r["kind"],0)+1
+ck("Step 7 devices cover Floors 1-6",{r["level"] for r in step7_records}=={1,2,3,4,5,6},sorted({r["level"] for r in step7_records}))
+ck("Step 7 electrical panels modeled",step7_kinds.get("interior_electrical_panel")==6,step7_kinds.get("interior_electrical_panel"))
+ck("Step 7 data racks modeled",step7_kinds.get("interior_data_rack")==6,step7_kinds.get("interior_data_rack"))
+ck("Step 7 cable trays modeled",step7_kinds.get("interior_cable_tray")==12,step7_kinds.get("interior_cable_tray"))
+ck("Step 7 conduit drops modeled",step7_kinds.get("interior_conduit_drop")==12,step7_kinds.get("interior_conduit_drop"))
+ck("Step 7 HVAC ceiling devices modeled",step7_kinds.get("interior_diffuser")==24 and step7_kinds.get("interior_return_grille")==12,step7_kinds)
+ck("Step 7 fire alarm devices modeled",step7_kinds.get("interior_detector")==24 and step7_kinds.get("interior_strobe")==12,step7_kinds)
+ck("Step 7 extinguishers modeled",step7_kinds.get("interior_extinguisher")==12,step7_kinds.get("interior_extinguisher"))
+ck("Step 7 access/comms devices modeled",step7_kinds.get("interior_access_reader")==6 and step7_kinds.get("interior_intercom")==6 and step7_kinds.get("interior_camera")==12,step7_kinds)
+ck("Step 7 receptacles and floor boxes modeled",step7_kinds.get("interior_receptacle")==24 and step7_kinds.get("interior_floor_box")==12,step7_kinds)
+ck("Step 7 valves and access panels modeled",step7_kinds.get("interior_valve")==12 and step7_kinds.get("interior_access_panel")==18,step7_kinds)
+ck("Step 7 plumbing service connections modeled",step7_kinds.get("interior_plumbing_connection")==12,step7_kinds.get("interior_plumbing_connection"))
+step7_clashes=[]
+for r in step7_records:
+    for label,bb in forbidden.items():
+        if bounds_overlap(r["bounds_ft"],bb): step7_clashes.append((r["name"],label))
+ck("Step 7 devices avoid protected stair/elevator zones",not step7_clashes,step7_clashes[:20])
+ck("Step 7 adds substantial interior service realism",len(step7_records)>=220,len(step7_records))
+
 viewer=HERE.parents[4]/"equity-uprise-building-core-v2-3d.html"
 if viewer.exists():
     vt=viewer.read_text()
     ck("Services viewer still loads canonical asset","equity-uprise-building-services-core-v2.glb" in vt)
     ck("Services viewer exposes per-floor service geometry","SVC-F" in vt and "requestedServices" in vt)
 
-scene.metadata.update({"asset":"equity-uprise-building-services-core-v2","version":"services-step6-level7-terminations-v1","not_for_construction":True,"shared_service_reservation_ft":SHARED,"systems":sorted(modeled_systems),"b1_source_systems":sorted(modeled_source_systems),"viewer_layer":"Services"})
+scene.metadata.update({"asset":"equity-uprise-building-services-core-v2","version":"services-step7-interior-device-ceiling-realism-v1","not_for_construction":True,"shared_service_reservation_ft":SHARED,"systems":sorted(modeled_systems),"b1_source_systems":sorted(modeled_source_systems),"viewer_layer":"Services"})
 glb=scene.export(file_type="glb")
 OUT.write_bytes(glb)
 sha=hashlib.sha256(glb).hexdigest()
@@ -431,7 +518,7 @@ endpoints=sum(1 for r in records if r["kind"]=="floor_endpoint")
 report={
     "schema_version":"1.1.0",
     "asset":"equity-uprise-building-services-core-v2",
-    "status":"services-step6-level7-terminations",
+    "status":"services-step7-interior-device-ceiling-realism",
     "not_for_construction":True,
     "glb_bytes":len(glb),
     "sha256":sha,
@@ -464,6 +551,26 @@ report={
     "step6_lightning_conductor_segments":len(lightning_conductor_records),
     "step6_service_screen_routes":len(service_route_records),
     "step6_level":7,
+    "step7_device_meshes":len(step7_records),
+    "step7_levels":[1,2,3,4,5,6],
+    "step7_device_kinds":step7_kinds,
+    "step7_electrical_panels":step7_kinds.get("interior_electrical_panel",0),
+    "step7_data_racks":step7_kinds.get("interior_data_rack",0),
+    "step7_cable_trays":step7_kinds.get("interior_cable_tray",0),
+    "step7_conduit_drops":step7_kinds.get("interior_conduit_drop",0),
+    "step7_diffusers":step7_kinds.get("interior_diffuser",0),
+    "step7_return_grilles":step7_kinds.get("interior_return_grille",0),
+    "step7_detectors":step7_kinds.get("interior_detector",0),
+    "step7_strobes":step7_kinds.get("interior_strobe",0),
+    "step7_extinguishers":step7_kinds.get("interior_extinguisher",0),
+    "step7_access_readers":step7_kinds.get("interior_access_reader",0),
+    "step7_intercoms":step7_kinds.get("interior_intercom",0),
+    "step7_cameras":step7_kinds.get("interior_camera",0),
+    "step7_receptacles":step7_kinds.get("interior_receptacle",0),
+    "step7_floor_boxes":step7_kinds.get("interior_floor_box",0),
+    "step7_valves":step7_kinds.get("interior_valve",0),
+    "step7_access_panels":step7_kinds.get("interior_access_panel",0),
+    "step7_plumbing_connections":step7_kinds.get("interior_plumbing_connection",0),
     "floor_branch_segments":branch_segments,
     "floor_endpoints":endpoints,
     "shared_reservation_ft":SHARED,
@@ -475,6 +582,6 @@ report={
 }
 report["passed"]=report["checks_failed"]==0
 REPORT.write_text(json.dumps(report,indent=2)+"\n")
-print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","system_risers","riser_segments","floor_handoff_stubs","b1_source_equipment_meshes","b1_distribution_segments","b1_riser_connections","step5_floor_branch_segments","step5_floor_endpoints","step6_roof_branch_segments","step6_roof_endpoints","step6_roof_termination_devices","checks_total","checks_passed","checks_failed","passed")},indent=2))
+print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","system_risers","riser_segments","floor_handoff_stubs","b1_source_equipment_meshes","b1_distribution_segments","b1_riser_connections","step5_floor_branch_segments","step5_floor_endpoints","step6_roof_branch_segments","step6_roof_endpoints","step6_roof_termination_devices","step7_device_meshes","checks_total","checks_passed","checks_failed","passed")},indent=2))
 if not report["passed"]:
-    raise SystemExit("building services Step 6 verification failed")
+    raise SystemExit("building services Step 7 verification failed")

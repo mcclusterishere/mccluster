@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-floor-services-addenda",
-  "status": "active-coordination-addenda-services-step6-level7-terminations",
+  "status": "active-coordination-addenda-services-step7-interior-device-ceiling-realism",
   "not_for_construction": true,
   "riser_source_ref": "../vertical-risers-core-v2.json",
   "services_core_ref": "../building-services-core-v2.json",
@@ -72,7 +72,7 @@
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
       ],
-      "implementation_status": "services-step4-branches-endpoints-modeled"
+      "implementation_status": "services-step7-interior-devices-ceiling-realism-modeled"
     },
     "F2": {
       "display": "F2",
@@ -104,7 +104,7 @@
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
       ],
-      "implementation_status": "services-step4-branches-endpoints-modeled"
+      "implementation_status": "services-step7-interior-devices-ceiling-realism-modeled"
     },
     "F3": {
       "display": "F3",
@@ -135,7 +135,7 @@
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
       ],
-      "implementation_status": "services-step4-branches-endpoints-modeled"
+      "implementation_status": "services-step7-interior-devices-ceiling-realism-modeled"
     },
     "F4": {
       "display": "F4",
@@ -167,7 +167,7 @@
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
       ],
-      "implementation_status": "services-step5-branches-endpoints-modeled"
+      "implementation_status": "services-step7-interior-devices-ceiling-realism-modeled"
     },
     "F5": {
       "display": "F5",
@@ -200,7 +200,7 @@
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
       ],
-      "implementation_status": "services-step5-branches-endpoints-modeled"
+      "implementation_status": "services-step7-interior-devices-ceiling-realism-modeled"
     },
     "F6": {
       "display": "F6",
@@ -232,7 +232,7 @@
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
       ],
-      "implementation_status": "services-step5-branches-endpoints-modeled"
+      "implementation_status": "services-step7-interior-devices-ceiling-realism-modeled"
     },
     "L7": {
       "display": "L7",

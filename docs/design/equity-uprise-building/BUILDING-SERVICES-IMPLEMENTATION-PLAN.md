@@ -46,9 +46,9 @@ The representative Step 5 roof handoffs are now completed with explicit service 
 
 Verified Step 6 snapshot: **608 meshes / 425,284 bytes / 57 Step 6 roof branch segments / 21 Step 6 endpoints / 38 detailed roof devices / 45 of 45 checks passing / SHA-256 `a6c3aaf47d2d8e30950306dad7b0e260e7b50967a973d4eedad39e1aebe77f81`**.
 
-## Services Step 7 — interior device / ceiling realism
+## Services Step 7 — interior device / ceiling realism — ACTIVE SOURCE IMPLEMENTATION
 
-Coordinate panels, racks, trays, conduits, ducts/diffusers/grilles, valves/pipes, access panels, detectors/strobes, extinguishers, readers/intercoms/cameras, receptacles/floor boxes and authorized plumbing/service fixtures.
+Add a representative device/service layer across Floors 1–6: electrical panels, data racks, cable trays, conduit drops, diffusers/return grilles, fire detectors/strobes, extinguishers, access readers/intercoms/cameras, receptacles/floor boxes, wet/fire valves, access panels and restroom service connections. Preserve approved floor architecture and use the existing Services overlay rather than modifying floor identity.
 
 ## Services Step 8 — whole-building verification
 
@@ -56,4 +56,4 @@ Require vertical continuity B1→L7, no core/circulation clashes, traceability f
 
 ## Current stop point
 
-Services Steps 1–6 are complete and verified on the Step 6 branch. The nervous-system model now traces B1 source/plant through the nine vertical risers, Floors 1–6 representative distribution and detailed Level 7 terminations. **Next is Services Step 7: interior device / ceiling realism.**
+Services Steps 1–6 are complete, verified and live. The nervous-system model traces B1 source/plant through the nine vertical risers, Floors 1–6 distribution and detailed Level 7 terminations. **Current work is Services Step 7: interior device / ceiling realism across Floors 1–6.** After Step 7, the final services implementation gate is Step 8 whole-building verification and source-to-endpoint traceability.
