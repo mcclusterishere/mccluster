@@ -1,0 +1,40 @@
+[Unit]
+Description=McCluster API (the Worker, hosted on our own metal)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mccluster
+Group=mccluster
+WorkingDirectory=/opt/mccluster/workers/mccluster
+# Secrets live here, not in the unit: a unit file is world-readable and
+# `systemctl cat` prints it. 0600, owned by root.
+EnvironmentFile=/etc/mccluster/api.env
+ExecStart=/usr/bin/node --import ./host/register.mjs host/server.mjs
+Restart=always
+RestartSec=2
+
+# The Worker had no filesystem and no ambient authority. Getting that
+# back is most of what these lines are for: a bug that was harmless in a
+# Cloudflare isolate should stay harmless here.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+# The only paths it may write: Durable Object state and the R2 archive.
+ReadWritePaths=/var/lib/mccluster
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mccluster-api
+
+[Install]
+WantedBy=multi-user.target
