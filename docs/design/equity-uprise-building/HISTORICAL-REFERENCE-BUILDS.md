@@ -94,6 +94,29 @@ Do **not** preserve obsolete west Stair B/service-core coordinates.
 
 See `FLOOR-04-V1-V2-PRESERVATION-MAP.md`.
 
+## Reference A5 — historical Floor 5 Policy + Proof
+
+Historical architecture references:
+- canonical Floor 5 program/spec commit `06eaae3221f91c4d2c418a24df964af0a6db98af`;
+- locked Floor 5 schematic geometry commit `73016c8f98120088db87975f7128cc43429e6935`.
+
+Preserve:
+- central Policy Lab;
+- 16' × 5' / eight-seat maximum research table;
+- POLICY + PROOF wall with RESEARCH / EVIDENCE / RECORD hierarchy;
+- west Evidence + Proof Archive;
+- Source Review Room;
+- Publication / Submission Review Room;
+- elevator-side Research / Publication Navigator;
+- quiet research-institute character;
+- dark/gunmetal/warm-wood/charcoal material family.
+
+There was no comparable standalone historical Floor 5 3D viewer in repo history. Do not invent one as precedent.
+
+Do **not** preserve obsolete west Stair B/service-core coordinates.
+
+See `FLOOR-05-V1-V2-PRESERVATION-MAP.md`.
+
 ## Reference B — fully assembled Core V2 building
 
 ### Combined generator
