@@ -357,6 +357,6 @@ It does not:
 - add finish geometry;
 - change existing floor geometry.
 
-The canonical `production/facade/facade-finish-inventory.json` now assigns stable finish-component IDs before modeling.
+The canonical `production/facade/facade-finish-inventory.json` assigns stable finish-component IDs before modeling.
 
-Next step: upgrade the facade generator beginning with **window assembly depth + base/corner finish**, using the inventory as the completeness contract.
+**Step 4 source implementation is now active:** window assembly depth + frame/reveal detail + opaque/service finish + base/plinth + four resolved corners. Entry/canopy/branding/crown/lighting/site-contact finish remain intentionally deferred until Step 4 deterministic verification passes.
