@@ -114,7 +114,7 @@ export async function meetingDelegateCollect(job) {
   const orgId = job.org_id;
   const input = job.input || {};
   const sessionId = clean(input.session_id, 100);
-  if (!orgId || !sessionId) throw new Error('meeting_delegate_collect requires org_id and input.session_id');
+  if (!orgId || !sessionId) throw new Error('meeting_delegate_collect requires org_id and input.session_id');\n  const target = openMeetingTarget(input.sealed_target);
 
   await updateMeetingSession({
     orgId,
@@ -134,7 +134,7 @@ export async function meetingDelegateCollect(job) {
     let transcript = '';
 
     if (input.transcribe_enabled === true) {
-      transcriptPayload = await getMeetingTranscript(input.target || {});
+      transcriptPayload = await getMeetingTranscript(target);
       transcript = transcriptText(transcriptPayload);
       if (!transcript) {
         throw Object.assign(new Error('Meeting transcript is not available yet'), {
@@ -146,7 +146,7 @@ export async function meetingDelegateCollect(job) {
 
     let leaveResult = null;
     try {
-      leaveResult = await leaveMeeting(input.target || {});
+      leaveResult = await leaveMeeting(target);
     } catch (error) {
       leaveResult = { ok: false, error: clean(error.message, 1000), status: error.status || null };
     }
