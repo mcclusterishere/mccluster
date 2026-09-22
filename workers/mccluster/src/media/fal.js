@@ -1,5 +1,3 @@
-import { fal } from '@fal-ai/client';
-
 const FAL_JWKS_URL = 'https://rest.fal.ai/.well-known/jwks.json';
 const FAL_BILLING_EVENTS_URL = 'https://api.fal.ai/v1/models/billing-events';
 const FAL_WEBHOOK_MAX_AGE_SECONDS = 300;
@@ -10,9 +8,28 @@ function configured(env) {
   return Boolean(env.FAL_KEY);
 }
 
-function setup(env) {
+// Only submit/status/result reach the vendor SDK. Webhook verification, billing
+// lookups and asset parsing are plain fetch + WebCrypto, so a static import
+// would make the whole media module graph unlinkable — and those paths
+// untestable — on any checkout where the optional package is not installed.
+let falClient = null;
+
+async function loadFal() {
+  if (!falClient) {
+    try {
+      ({ fal: falClient } = await import('@fal-ai/client'));
+    } catch {
+      throw Object.assign(new Error('fal gateway client is not installed'), { status: 503 });
+    }
+  }
+  return falClient;
+}
+
+async function setup(env) {
   if (!configured(env)) throw Object.assign(new Error('fal gateway is not configured'), { status: 503 });
+  const fal = await loadFal();
   fal.config({ credentials: env.FAL_KEY });
+  return fal;
 }
 
 function bytesToHex(bytes) {
@@ -46,7 +63,7 @@ async function falJwks() {
 }
 
 export async function submitFal(env, modelId, input, options = {}) {
-  setup(env);
+  const fal = await setup(env);
   const submitOptions = { input };
   if (options.webhookUrl) submitOptions.webhookUrl = options.webhookUrl;
   const result = await fal.queue.submit(modelId, submitOptions);
@@ -54,12 +71,12 @@ export async function submitFal(env, modelId, input, options = {}) {
 }
 
 export async function statusFal(env, modelId, requestId) {
-  setup(env);
+  const fal = await setup(env);
   return fal.queue.status(modelId, { requestId, logs: true });
 }
 
 export async function resultFal(env, modelId, requestId) {
-  setup(env);
+  const fal = await setup(env);
   const result = await fal.queue.result(modelId, { requestId });
   return { data: result.data, request_id: result.requestId || requestId };
 }
