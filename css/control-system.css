@@ -127,8 +127,18 @@
 
 .cmdk__empty { padding: 1.4rem .95rem; color: var(--cs-faint); font: 400 .9rem var(--cs-body); }
 
-/* Keyboard legend is desktop-only; on a phone it is three lies. */
+/* The legend is hidden until a key is actually used, then shown --
+   see js/control-palette.js. Tying it to screen size was wrong: a
+   tablet with a keyboard attached is a phone-sized screen where the
+   arrows work, and it was hiding the legend on exactly the device the
+   owner uses most. Capability, not width. */
 .cmdk__foot { display: none; }
+.cmdk.has-keyboard .cmdk__foot { display: flex; gap: 1rem; flex-wrap: wrap;
+  border-top: 1px solid var(--cs-edge); padding: .6rem .95rem;
+  font: 500 .7rem var(--cs-ui); color: var(--cs-faint); }
+.cmdk.has-keyboard .cmdk__foot kbd { font: 700 .7rem var(--cs-ui); color: var(--cs-dim);
+  background: var(--cs-2); border-radius: 4px; padding: .16rem .34rem;
+  box-shadow: inset 0 0 0 1px var(--cs-edge); }
 
 /* ---------- the way in ----------
    The bottom-right corner is contended: the app bar owns the bottom
@@ -164,12 +174,6 @@ body.has-appbar .cmdk-hint { bottom: calc(7.9rem + env(safe-area-inset-bottom, 0
   .cmdk__blurb { flex: 1; min-width: 0; overflow: hidden;
     text-overflow: ellipsis; white-space: nowrap; }
   .cmdk__tag { align-self: auto; margin-top: 0; }
-  .cmdk__foot { display: flex; gap: 1rem; flex-wrap: wrap;
-    border-top: 1px solid var(--cs-edge); padding: .6rem .95rem;
-    font: 500 .7rem var(--cs-ui); color: var(--cs-faint); }
-  .cmdk__foot kbd { font: 700 .7rem var(--cs-ui); color: var(--cs-dim);
-    background: var(--cs-2); border-radius: 4px; padding: .16rem .34rem;
-    box-shadow: inset 0 0 0 1px var(--cs-edge); }
   .cmdk-hint kbd { display: inline; font: 700 .7rem var(--cs-ui);
     color: var(--cs-dim); background: var(--cs-1); border-radius: 4px;
     padding: .16rem .34rem; box-shadow: inset 0 0 0 1px var(--cs-edge); }

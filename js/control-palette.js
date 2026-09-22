@@ -162,12 +162,28 @@
     if (node) location.href = node.getAttribute("href");
   }
 
+  /* PARITY, stated properly: every device gets the same features. The
+     phone is not a cut-down laptop and the laptop is not a phone with
+     extras -- tapping and typing both work everywhere, and the only
+     thing that changes is which affordances are WORTH showing.
+
+     So the keyboard legend appears the moment a key is used, on any
+     device. A tablet with a keyboard gets it; a laptop before you touch
+     the keys does not need it. Capability, observed -- not guessed from
+     screen width. */
+  function keyboardSeen() {
+    el.classList.add("has-keyboard");
+    try { localStorage.setItem("mcc_kbd", "1"); } catch (e) {}
+  }
+  try { if (localStorage.getItem("mcc_kbd")) el.classList.add("has-keyboard"); } catch (e) {}
+
   hint.addEventListener("click", open);
   input.addEventListener("input", function () { paint(input.value); });
 
   el.addEventListener("click", function (e) { if (e.target === el) close(); });
 
   el.addEventListener("keydown", function (e) {
+    if (e.key.length === 1 || e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter") keyboardSeen();
     if (e.key === "Escape") { e.preventDefault(); close(); }
     else if (e.key === "ArrowDown") { e.preventDefault(); cursor = Math.min(cursor + 1, items().length - 1); mark(); }
     else if (e.key === "ArrowUp")   { e.preventDefault(); cursor = Math.max(cursor - 1, 0); mark(); }
