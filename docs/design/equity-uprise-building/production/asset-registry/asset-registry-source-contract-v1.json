@@ -1,0 +1,216 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "equity-uprise-asset-registry-source-contract-v1",
+  "status": "step1-schema-authority-complete",
+  "building_id": "equity-uprise-core-v2",
+  "source_revision": "8afb66b0768bc32283984d8ced8346c0bcd96696",
+  "not_for_construction": true,
+  "purpose": "Defines all current canonical source classes that later registry ingestion must reconcile without inventing physical equipment or renaming stable IDs.",
+  "canonical_identity_policy": {
+    "reuse_existing_stable_id": true,
+    "source_record_id_is_preserved": true,
+    "quantity_one_asset_id": "asset_id equals stable source record ID unless authority explicitly establishes another canonical ID",
+    "quantity_expansion": "instance-level identity uses <source_record_id>-I### only when tagging, independent state, telemetry, commissioning, maintenance or lab scoring requires individual instances",
+    "physical_tag_encodes_canonical_asset_id": true,
+    "no_parallel_physical_identifier_namespace": true
+  },
+  "operating_mode_policy": {
+    "modes": [
+      "SIMULATION",
+      "SHADOW",
+      "LIVE"
+    ],
+    "SIMULATION": "synthetic state/fault injection only; commands remain sandboxed",
+    "SHADOW": "authorized physical telemetry may be read; writes are prohibited",
+    "LIVE": "physical command path is deny-by-default and requires explicit asset-level authorization, role checks, confirmation where required and audit logging",
+    "shadow_writes_allowed": false,
+    "live_control_default": "deny"
+  },
+  "source_sets": {
+    "floor_object_inventories": [
+      {
+        "level_id": "B1",
+        "level_number": 0,
+        "path": "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
+        "expected_records": 67
+      },
+      {
+        "level_id": "F1",
+        "level_number": 1,
+        "path": "docs/design/equity-uprise-building/production/floor-01/floor-01-object-inventory.json",
+        "expected_records": 67
+      },
+      {
+        "level_id": "F2",
+        "level_number": 2,
+        "path": "docs/design/equity-uprise-building/production/floor-02/floor-02-object-inventory.json",
+        "expected_records": 48
+      },
+      {
+        "level_id": "F3",
+        "level_number": 3,
+        "path": "docs/design/equity-uprise-building/production/floor-03/floor-03-object-inventory.json",
+        "expected_records": 63
+      },
+      {
+        "level_id": "F4",
+        "level_number": 4,
+        "path": "docs/design/equity-uprise-building/production/floor-04/floor-04-object-inventory.json",
+        "expected_records": 68
+      },
+      {
+        "level_id": "F5",
+        "level_number": 5,
+        "path": "docs/design/equity-uprise-building/production/floor-05/floor-05-object-inventory.json",
+        "expected_records": 80
+      },
+      {
+        "level_id": "F6",
+        "level_number": 6,
+        "path": "docs/design/equity-uprise-building/production/floor-06/floor-06-object-inventory.json",
+        "expected_records": 74
+      },
+      {
+        "level_id": "L7",
+        "level_number": 7,
+        "path": "docs/design/equity-uprise-building/production/floor-07/floor-07-object-inventory.json",
+        "expected_records": 45
+      }
+    ],
+    "floor_object_inventory_total": 512,
+    "facade_modules": {
+      "path": "docs/design/equity-uprise-building/production/facade/facade-module-inventory.json",
+      "key": "modules",
+      "expected_records": 288,
+      "default_asset_class": "envelope"
+    },
+    "facade_finish_records": {
+      "path": "docs/design/equity-uprise-building/production/facade/facade-finish-inventory.json",
+      "key": "records",
+      "expected_records": 68,
+      "default_asset_class": "envelope"
+    },
+    "service_families": {
+      "path": "docs/design/equity-uprise-building/production/building-services-core-v2.json",
+      "key": "system_families",
+      "expected_records": 14,
+      "ids": [
+        "ELEC-NORMAL",
+        "ELEC-EMERGENCY",
+        "LIGHTING-CONTROLS",
+        "DATA-STRUCTURED",
+        "AV-MEDIA",
+        "BAS-CONTROLS",
+        "SECURITY-ACCESS",
+        "HVAC-AIR",
+        "WATER-DOMESTIC",
+        "SANITARY-VENT",
+        "STORM-DRAINAGE",
+        "FIRE-PROTECTION",
+        "FIRE-ALARM",
+        "SERVICE-HOUSEKEEPING"
+      ]
+    },
+    "vertical_riser_allocations": {
+      "path": "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json",
+      "key": "sub_riser_envelopes_ft",
+      "expected_records": 10
+    },
+    "building_core_levels": {
+      "path": "docs/design/equity-uprise-building/production/building-core-v2.json",
+      "key": "levels",
+      "expected_records": 8
+    },
+    "capability_map": {
+      "path": "docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json",
+      "key": "capabilities",
+      "expected_records": 56
+    }
+  },
+  "source_field_map": {
+    "id": "asset_id / identity.source_record_id",
+    "label": "label",
+    "category": "classification.source_category + normalized classification.asset_class",
+    "zone_id": "location.zone_id",
+    "quantity": "identity.instance_count and later quantity-expansion policy",
+    "placement": "location center/bounds/elevation + digital representation",
+    "purpose": "asset type/function/training context as appropriate",
+    "style": "digital appearance metadata only; never verified physical manufacturer/model",
+    "authority_status": "authority.authority_status",
+    "implementation_status": "authority.implementation_status / lifecycle.design_status",
+    "heritage_decision": "authority.heritage_decision",
+    "source_refs": "authority.source_refs / operations.documentation_refs",
+    "stateful_ref": "training/scenario reference only; does not imply live telemetry",
+    "capability_id": "systems.capability_ids"
+  },
+  "normalized_asset_classes": [
+    "architecture",
+    "envelope",
+    "circulation",
+    "vertical_transport",
+    "building_system",
+    "equipment",
+    "device",
+    "fixture",
+    "furniture",
+    "display_terminal",
+    "life_safety",
+    "security",
+    "lighting",
+    "signage_wayfinding",
+    "service_support",
+    "digital_capability",
+    "reservation_zone",
+    "decor",
+    "other"
+  ],
+  "point_types": [
+    "sensor",
+    "actuator",
+    "command",
+    "setpoint",
+    "status",
+    "alarm",
+    "trend",
+    "meter",
+    "calculated"
+  ],
+  "relationship_types": [
+    "feeds",
+    "served_by",
+    "depends_on",
+    "contains",
+    "located_in",
+    "connects_to",
+    "monitors",
+    "controls",
+    "protects",
+    "routes_through",
+    "mounted_on",
+    "adjacent_to",
+    "upstream_of",
+    "downstream_of",
+    "part_of",
+    "represents_capability",
+    "accessed_via",
+    "commissioned_against"
+  ],
+  "physicalization_policy": {
+    "equipment_device_life_safety_security_vertical_transport": "required or deferred pending real installation",
+    "furniture_decor_signage": "optional unless training, commissioning, maintenance or inspection requires instance identity",
+    "architecture_envelope": "registry identity when useful for inspection/training/maintenance; physical tag optional",
+    "digital_capability": "not_applicable unless backed by a physical terminal/device"
+  },
+  "external_semantics_policy": {
+    "ifc": "IFC entity/GlobalId fields remain null until exported or verified from a real BIM model",
+    "bacnet": "BACnet device/object fields remain null until an authorized BAS exposes them",
+    "other_protocols": "Modbus/OPC UA/MQTT/HTTP addresses remain unverified until bound to an authorized real source"
+  },
+  "step_sequence": {
+    "step1": "schema and whole-building source contract",
+    "step2": "deterministic registry ingestion and digital-only vs future-physicalizable classification",
+    "step3": "upstream/downstream/dependency graph",
+    "step4": "future physical tag records without installation claims",
+    "later": "telemetry, commissioning, as-built verification, training runtime and authorized physical bindings"
+  }
+}

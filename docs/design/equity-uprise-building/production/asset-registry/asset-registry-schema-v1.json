@@ -1,0 +1,1190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mccluster.org/schemas/equity-uprise/asset-registry-v1.schema.json",
+  "title": "Equity Uprise Digital-to-Physical Asset Registry v1",
+  "description": "Canonical schema for shared identity across the digital twin, future physical tags, training, telemetry, commissioning, operations and maintenance. Not for construction or engineering approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "registry_version",
+    "registry_id",
+    "building_id",
+    "source_revision",
+    "not_for_construction",
+    "safety_policy",
+    "assets",
+    "relationships"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "registry_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registry_id": {
+      "const": "equity-uprise-digital-physical-asset-registry"
+    },
+    "building_id": {
+      "const": "equity-uprise-core-v2"
+    },
+    "source_revision": {
+      "type": "string",
+      "minLength": 7
+    },
+    "not_for_construction": {
+      "const": true
+    },
+    "safety_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supported_modes",
+        "shadow_writes_allowed",
+        "live_control_default",
+        "live_requires_explicit_authorization",
+        "simulation_isolated_from_physical_control"
+      ],
+      "properties": {
+        "supported_modes": {
+          "type": "array",
+          "const": [
+            "SIMULATION",
+            "SHADOW",
+            "LIVE"
+          ]
+        },
+        "shadow_writes_allowed": {
+          "const": false
+        },
+        "live_control_default": {
+          "const": "deny"
+        },
+        "live_requires_explicit_authorization": {
+          "const": true
+        },
+        "simulation_isolated_from_physical_control": {
+          "const": true
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/asset"
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relationship"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "operatingMode": {
+      "type": "string",
+      "enum": [
+        "SIMULATION",
+        "SHADOW",
+        "LIVE"
+      ]
+    },
+    "levelId": {
+      "type": "string",
+      "enum": [
+        "B1",
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "L7",
+        "BUILDING",
+        "SITE"
+      ]
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "label",
+        "identity",
+        "classification",
+        "location",
+        "authority",
+        "digital_representation",
+        "physical_representation",
+        "external_semantics",
+        "systems",
+        "state_model",
+        "points",
+        "training",
+        "security",
+        "lifecycle",
+        "operations"
+      ],
+      "properties": {
+        "asset_id": {
+          "type": "string",
+          "minLength": 2,
+          "description": "Canonical stable ID. Reuse an existing stable inventory ID where one exists. Quantity-expanded physical instances use <source_record_id>-I###."
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_record_id",
+            "instance_index",
+            "instance_count",
+            "physical_tag"
+          ],
+          "properties": {
+            "source_record_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "instance_index": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            },
+            "instance_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "physical_tag": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "status",
+                "encoded_asset_id",
+                "qr_uri",
+                "nfc_uri",
+                "deep_link_uri",
+                "label_text"
+              ],
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "not_applicable",
+                    "unassigned",
+                    "reserved",
+                    "printed",
+                    "installed",
+                    "verified",
+                    "retired"
+                  ]
+                },
+                "encoded_asset_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "qr_uri": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "nfc_uri": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "deep_link_uri": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "label_text": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "classification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "asset_class",
+            "source_category",
+            "asset_type",
+            "physicalization"
+          ],
+          "properties": {
+            "asset_class": {
+              "type": "string",
+              "enum": [
+                "architecture",
+                "envelope",
+                "circulation",
+                "vertical_transport",
+                "building_system",
+                "equipment",
+                "device",
+                "fixture",
+                "furniture",
+                "display_terminal",
+                "life_safety",
+                "security",
+                "lighting",
+                "signage_wayfinding",
+                "service_support",
+                "digital_capability",
+                "reservation_zone",
+                "decor",
+                "other"
+              ]
+            },
+            "source_category": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "asset_type": {
+              "type": "string",
+              "minLength": 1
+            },
+            "subtype": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "physicalization": {
+              "type": "string",
+              "enum": [
+                "required",
+                "optional",
+                "not_applicable",
+                "deferred"
+              ]
+            }
+          }
+        },
+        "location": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "level_id",
+            "level_number",
+            "zone_id",
+            "coordinate_frame",
+            "placement_authority"
+          ],
+          "properties": {
+            "level_id": {
+              "$ref": "#/$defs/levelId"
+            },
+            "level_number": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 7
+            },
+            "zone_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "coordinate_frame": {
+              "type": "string",
+              "enum": [
+                "core-v2-local-ft",
+                "world-m",
+                "site",
+                "non-spatial"
+              ]
+            },
+            "placement_authority": {
+              "type": "string",
+              "enum": [
+                "inventory",
+                "core",
+                "facade",
+                "services",
+                "capability",
+                "as_built",
+                "manual_verified",
+                "unknown"
+              ]
+            },
+            "center_ft": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "minItems": 2,
+              "maxItems": 3,
+              "items": {
+                "type": "number"
+              }
+            },
+            "bounds_ft": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "minItems": 4,
+              "maxItems": 6,
+              "items": {
+                "type": "number"
+              }
+            },
+            "elevation_ft": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "access_path_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "source_path",
+            "source_revision",
+            "authority_status",
+            "implementation_status",
+            "source_refs",
+            "not_for_construction"
+          ],
+          "properties": {
+            "source_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_revision": {
+              "type": "string",
+              "minLength": 7
+            },
+            "authority_status": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "implementation_status": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "heritage_decision": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source_refs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "provenance_notes": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "not_for_construction": {
+              "const": true
+            }
+          }
+        },
+        "digital_representation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scene_id",
+            "geometry_status",
+            "model_paths",
+            "model_node_ids"
+          ],
+          "properties": {
+            "scene_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "geometry_status": {
+              "type": "string",
+              "enum": [
+                "not_modeled",
+                "conceptual",
+                "modeled",
+                "verified",
+                "derived",
+                "non_geometric"
+              ]
+            },
+            "model_paths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "model_node_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "viewer_uri": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "viewer_floor_focus": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "physical_representation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "physical_status",
+            "manufacturer",
+            "model",
+            "serial_number",
+            "asset_number",
+            "as_built_location",
+            "commissioning_status"
+          ],
+          "properties": {
+            "physical_status": {
+              "type": "string",
+              "enum": [
+                "not_applicable",
+                "unassigned",
+                "planned",
+                "specified",
+                "procured",
+                "installed",
+                "commissioned",
+                "out_of_service",
+                "retired"
+              ]
+            },
+            "manufacturer": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "model": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "serial_number": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "asset_number": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "as_built_location": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "commissioning_status": {
+              "type": "string",
+              "enum": [
+                "not_applicable",
+                "not_started",
+                "in_progress",
+                "passed",
+                "failed",
+                "recommission_required"
+              ]
+            }
+          }
+        },
+        "external_semantics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ifc",
+            "bacnet",
+            "other_bindings"
+          ],
+          "properties": {
+            "ifc": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "entity_type",
+                "global_id",
+                "verified"
+              ],
+              "properties": {
+                "entity_type": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "global_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "verified": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "bacnet": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "device_id",
+                "object_type",
+                "object_instance",
+                "object_name",
+                "verified"
+              ],
+              "properties": {
+                "device_id": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "object_type": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "object_instance": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "object_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "verified": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "other_bindings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/protocolBinding"
+              }
+            }
+          }
+        },
+        "systems": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "system_families",
+            "capability_ids",
+            "upstream_asset_ids",
+            "downstream_asset_ids",
+            "dependency_asset_ids"
+          ],
+          "properties": {
+            "system_families": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "capability_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "upstream_asset_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "downstream_asset_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dependency_asset_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "state_model": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "availability_states",
+            "normal_state",
+            "operating_modes",
+            "fault_states",
+            "alarm_states",
+            "state_variables"
+          ],
+          "properties": {
+            "availability_states": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "normal_state": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "operating_modes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fault_states": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "alarm_states": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "state_variables": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/stateVariable"
+              }
+            }
+          }
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/point"
+          }
+        },
+        "training": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "lab_eligible",
+            "observable",
+            "controllable_modes",
+            "scenario_refs",
+            "learning_objectives",
+            "inspection_steps",
+            "failure_modes",
+            "reset_behavior"
+          ],
+          "properties": {
+            "lab_eligible": {
+              "type": "boolean"
+            },
+            "observable": {
+              "type": "boolean"
+            },
+            "controllable_modes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/operatingMode"
+              },
+              "uniqueItems": true
+            },
+            "scenario_refs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "learning_objectives": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "inspection_steps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "failure_modes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "reset_behavior": {
+              "type": "string",
+              "enum": [
+                "not_applicable",
+                "automatic",
+                "scenario_reset",
+                "manual_instructor",
+                "physical_procedure_required"
+              ]
+            }
+          }
+        },
+        "security": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "data_classification",
+            "visibility",
+            "read_roles",
+            "command_roles",
+            "live_control_allowed",
+            "requires_human_confirmation",
+            "audit_required"
+          ],
+          "properties": {
+            "data_classification": {
+              "type": "string",
+              "enum": [
+                "public",
+                "internal",
+                "restricted",
+                "sensitive"
+              ]
+            },
+            "visibility": {
+              "type": "string",
+              "enum": [
+                "public",
+                "member",
+                "instructor",
+                "operator",
+                "admin",
+                "owner",
+                "restricted"
+              ]
+            },
+            "read_roles": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "command_roles": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "live_control_allowed": {
+              "type": "boolean",
+              "default": false
+            },
+            "requires_human_confirmation": {
+              "type": "boolean",
+              "default": true
+            },
+            "audit_required": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "lifecycle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "design_status",
+            "physical_status",
+            "as_built_verified",
+            "commissioning_status",
+            "last_verified_revision"
+          ],
+          "properties": {
+            "design_status": {
+              "type": "string",
+              "enum": [
+                "conceptual",
+                "modeled",
+                "verified",
+                "superseded",
+                "retired"
+              ]
+            },
+            "physical_status": {
+              "type": "string",
+              "enum": [
+                "not_applicable",
+                "unassigned",
+                "planned",
+                "specified",
+                "procured",
+                "installed",
+                "commissioned",
+                "out_of_service",
+                "retired"
+              ]
+            },
+            "as_built_verified": {
+              "type": "boolean"
+            },
+            "commissioning_status": {
+              "type": "string",
+              "enum": [
+                "not_applicable",
+                "not_started",
+                "in_progress",
+                "passed",
+                "failed",
+                "recommission_required"
+              ]
+            },
+            "last_verified_revision": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "operations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "service_access_required",
+            "service_access_refs",
+            "maintenance_procedure_refs",
+            "documentation_refs",
+            "replacement_route_refs"
+          ],
+          "properties": {
+            "service_access_required": {
+              "type": "boolean"
+            },
+            "service_access_refs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "maintenance_procedure_refs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "documentation_refs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "replacement_route_refs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "stateVariable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "value_type",
+        "units",
+        "observable"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_type": {
+          "type": "string",
+          "enum": [
+            "boolean",
+            "number",
+            "string",
+            "enum",
+            "json"
+          ]
+        },
+        "units": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "point_id",
+        "point_type",
+        "semantic_name",
+        "value_type",
+        "units",
+        "writable_modes",
+        "bindings",
+        "alarmable",
+        "trendable"
+      ],
+      "properties": {
+        "point_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "point_type": {
+          "type": "string",
+          "enum": [
+            "sensor",
+            "actuator",
+            "command",
+            "setpoint",
+            "status",
+            "alarm",
+            "trend",
+            "meter",
+            "calculated"
+          ]
+        },
+        "semantic_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_type": {
+          "type": "string",
+          "enum": [
+            "boolean",
+            "number",
+            "string",
+            "enum",
+            "json"
+          ]
+        },
+        "units": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "normal_value": {},
+        "writable_modes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/operatingMode"
+          },
+          "uniqueItems": true
+        },
+        "alarmable": {
+          "type": "boolean"
+        },
+        "trendable": {
+          "type": "boolean"
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/protocolBinding"
+          }
+        }
+      }
+    },
+    "protocolBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_type",
+        "address",
+        "read_only",
+        "verified"
+      ],
+      "properties": {
+        "binding_type": {
+          "type": "string",
+          "enum": [
+            "simulation",
+            "bacnet",
+            "modbus",
+            "opcua",
+            "mqtt",
+            "http",
+            "manual",
+            "none"
+          ]
+        },
+        "address": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "read_only": {
+          "type": "boolean"
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relationship_id",
+        "type",
+        "from_asset_id",
+        "to_asset_id",
+        "direction",
+        "criticality",
+        "source_refs"
+      ],
+      "properties": {
+        "relationship_id": {
+          "type": "string",
+          "minLength": 3
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "feeds",
+            "served_by",
+            "depends_on",
+            "contains",
+            "located_in",
+            "connects_to",
+            "monitors",
+            "controls",
+            "protects",
+            "routes_through",
+            "mounted_on",
+            "adjacent_to",
+            "upstream_of",
+            "downstream_of",
+            "part_of",
+            "represents_capability",
+            "accessed_via",
+            "commissioned_against"
+          ]
+        },
+        "from_asset_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "to_asset_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "directed",
+            "undirected"
+          ]
+        },
+        "criticality": {
+          "type": "string",
+          "enum": [
+            "informational",
+            "operational",
+            "safety_related",
+            "training_only"
+          ]
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}
