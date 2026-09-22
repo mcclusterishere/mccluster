@@ -24,9 +24,11 @@ Every system must trace:
 
 Generate a dedicated services GLB for normal power, emergency power, data, controls, HVAC, domestic water, sanitary/vent, storm and fire protection. Add a viewer layer toggle so the nervous system can actually be exposed/hidden.
 
-## Services Step 3 — B1 plant connections
+## Services Step 3 — B1 plant connections — SOURCE IMPLEMENTED
 
 Connect the modeled mechanical plant, electrical/emergency room, telecom core, fire/water room, sump/flood management and BAS observation to the vertical backbone.
+
+Implementation source: `production/services/b1-services-source-connections.json`. The services builder now generates the plant-to-riser routes and source drops directly into the shared Services GLB.
 
 ## Services Step 4 — Floors 1–3 branches
 
