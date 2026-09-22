@@ -128,18 +128,40 @@ window.MCC_DESK = (function () {
     sending = true;
     push({ direction: "in", body: text });
     typing(true);
+
+    var slowTimeout = null;
+    var slowBubble = null;
+
     call("say", { body: text })
       .then(function (r) {
+        if (slowTimeout) clearTimeout(slowTimeout);
+        if (slowBubble) slowBubble.remove();
         typing(false);
         (r.replies || []).forEach(function (rep, i) {
           setTimeout(function () { push({ direction: "out", body: rep.body }); }, i * 550);
         });
       })
       .catch(function () {
+        if (slowTimeout) clearTimeout(slowTimeout);
+        if (slowBubble) slowBubble.remove();
         typing(false);
         push({ direction: "out", body: "That did not send. Email matthew@mccluster.org and it will reach him directly." });
       })
-      .then(function () { sending = false; });
+      .then(function () {
+        sending = false;
+        if (slowTimeout) clearTimeout(slowTimeout);
+        if (slowBubble) slowBubble.remove();
+      });
+
+    slowTimeout = setTimeout(function () {
+      if (list && sending) {
+        slowBubble = document.createElement("div");
+        slowBubble.className = "dsk__m dsk__m--them dsk__slow";
+        slowBubble.innerHTML = "Hold on, getting our agent to speak with you. This may take up to 60 seconds.";
+        list.appendChild(slowBubble);
+        list.scrollTop = list.scrollHeight;
+      }
+    }, 3000);
   }
 
   function chatHref() {
