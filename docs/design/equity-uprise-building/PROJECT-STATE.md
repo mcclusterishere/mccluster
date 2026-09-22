@@ -551,4 +551,22 @@ Verified generated snapshot: `768a6270fa945dd5fb4c6c572bb72c2caade5d9d`
 - GLB SHA-256: `4fa994486889fa135d9dae163df3b8d9dabb81eef692520b642f53ad8dc3d1ef`;
 - full Equity Uprise Core V2 CI passed.
 
-Services Step 2 is a stable checkpoint. Next is **Services Step 3 — connect the real B1 plant/electrical/telecom/fire/sump/BAS equipment to this backbone.**
+Services Step 2 remains a stable checkpoint.
+
+## Building services / nervous system — SERVICES STEP 3 SOURCE IMPLEMENTED
+
+Services Step 3 connects the already-modeled B1 technical equipment to the Step 2 backbone with real representative geometry rather than duplicating the plant.
+
+Implemented on the Step 3 branch:
+- machine-readable B1 source/connection authority: `production/services/b1-source-connections.json`;
+- existing B1 AHUs/pumps, switchgear, UPS/emergency distribution, telecom racks/tray, BAS controls, fire/water equipment, sump/flood equipment, floor-drain/pipe-spine concepts are reused as source equipment;
+- representative paired HVAC ducts, normal-power busway, distinct emergency conduit bundle, ladder cable tray, controls conduit/gateway, fire/domestic-water headers + valves, sump/storm path and internal sanitary header are modeled;
+- no generator, municipal/site drainage connection or external storm discharge geometry is invented;
+- routes preserve protected stairs, elevators, tunnel operations circulation, transfer lock and the X59–60 Stair A separation band;
+- Services exposure keeps the actual B1 source equipment solid while ghosting surrounding architecture;
+- direct B1 inspection remains supported through `?floor=0&services=1`;
+- Core V2 CI and Pages deployment now build/publish the Step 3 services layer and B1 connection authority.
+
+Branch-side deterministic preflight: **294 meshes / 233,372 bytes**, including **159 B1 distribution meshes**, **9/9 B1 source connections**, **63 riser segments**, **63 handoff stubs**, and **28/28 Step 3 checks passing**.
+
+Step 3 still requires repository CI/generated-artifact publication and merge verification before it becomes a main/live checkpoint.
