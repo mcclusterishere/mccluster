@@ -1,0 +1,186 @@
+{
+  "schema_version": "1.0.0",
+  "asset_id": "equity-uprise-services-step3-b1-source-connections",
+  "status": "services-step3-b1-source-connections",
+  "not_for_construction": true,
+  "level": "B1",
+  "source_ffe_ft": -13.5,
+  "principle": "existing modeled B1 plant/source equipment remains the visible source; this inventory adds deterministic conceptual distribution interfaces from those sources to the authorized Step 2 backbone",
+  "no_external_site_connections": true,
+  "source_zones_ft": {
+    "mechanical": [2, 4, 30, 26],
+    "electrical": [32, 4, 52, 20],
+    "fire_water": [54, 4, 70, 20],
+    "telecom": [32, 22, 52, 34],
+    "flood": [54, 22, 70, 32],
+    "systems_lab": [18, 36, 52, 54]
+  },
+  "protected_plan_zones_ft": [
+    {"id": "STAIR-A", "bounds": [60, 54, 72, 72]},
+    {"id": "STAIR-B", "bounds": [8, 54, 18, 72]},
+    {"id": "PASSENGER-ELEVATOR", "bounds": [54, 34, 62, 44]},
+    {"id": "FREIGHT-SERVICE", "bounds": [0, 60, 8, 72]},
+    {"id": "TUNNEL-OPS-CIRCULATION", "bounds": [20, 54, 48, 64]},
+    {"id": "TRANSFER-LOCK", "bounds": [24, 64, 44, 72]}
+  ],
+  "connections": [
+    {
+      "system_id": "HVAC-AIR",
+      "riser_id": "R-HVAC",
+      "source_zone": "mechanical",
+      "source_equipment_ids": ["B1-MECH-AHU-01", "B1-MECH-PUMP-01", "B1-MECH-PIPE-RACK-01", "B1-MECH-BAS-01"],
+      "strategy": "AHU supply/return interface rises to an overhead paired-duct route and reaches the Step 2 B1 HVAC handoff; existing pumps and BAS panel remain visible as plant equipment without implying final hydronic sizing",
+      "handoff_mode": "step2_floor_handoff",
+      "paths": [
+        {
+          "id": "SUPPLY",
+          "geometry": "duct",
+          "section_ft": [0.9, 0.65],
+          "points_ft": [[24, 13.2, 4.0], [29.4, 13.2, 4.0], [29.4, 34.6, 9.7], [49.15, 34.6, 9.7], [49.15, 69.0, 10.9]]
+        },
+        {
+          "id": "RETURN",
+          "geometry": "duct",
+          "section_ft": [0.8, 0.6],
+          "points_ft": [[24, 11.8, 4.0], [30.7, 11.8, 4.0], [30.7, 35.5, 10.25], [49.15, 35.5, 10.25], [49.15, 69.0, 11.35], [49.15, 69.0, 10.9]]
+        }
+      ],
+      "service_clearances_ft": [[5, 14.4, 13, 17.2], [16, 14.4, 24, 17.2]]
+    },
+    {
+      "system_id": "ELEC-NORMAL",
+      "riser_id": "R-ELEC-NORMAL",
+      "source_zone": "electrical",
+      "source_equipment_ids": ["B1-ELEC-SWITCHGEAR-01"],
+      "strategy": "main switchgear feeds a representative overhead busway to the Step 2 normal-power B1 handoff",
+      "handoff_mode": "step2_floor_handoff",
+      "paths": [
+        {
+          "id": "BUSWAY",
+          "geometry": "busway",
+          "section_ft": [0.55, 0.45],
+          "points_ft": [[49.0, 8.1, 7.45], [52.6, 8.1, 7.45], [52.6, 34.8, 9.55], [48.4, 34.8, 9.55], [48.4, 67.5, 10.9], [49.15, 67.5, 10.9]]
+        }
+      ]
+    },
+    {
+      "system_id": "ELEC-EMERGENCY",
+      "riser_id": "R-ELEC-EMERGENCY",
+      "source_zone": "electrical",
+      "source_equipment_ids": ["B1-ELEC-UPS-01", "B1-ELEC-METER-01"],
+      "strategy": "UPS/emergency distribution cabinets feed a distinct representative conduit bundle to the Step 2 emergency-power B1 handoff; no generator is assumed",
+      "handoff_mode": "step2_floor_handoff",
+      "paths": [
+        {
+          "id": "UPS-CONDUIT",
+          "geometry": "conduit_bundle",
+          "radius_ft": 0.065,
+          "count": 3,
+          "spacing_ft": 0.18,
+          "points_ft": [[49.0, 15.7, 6.45], [53.0, 15.7, 6.45], [53.0, 33.8, 9.0], [48.8, 33.8, 9.0], [48.8, 70.5, 10.9], [49.15, 70.5, 10.9]]
+        }
+      ]
+    },
+    {
+      "system_id": "DATA-STRUCTURED",
+      "riser_id": "R-DATA",
+      "source_zone": "telecom",
+      "source_equipment_ids": ["B1-TELECOM-RACKS-01", "B1-TELECOM-TRAY-01", "B1-TELECOM-CONSOLE-01"],
+      "strategy": "the existing rack row and overhead tray feed a representative ladder cable tray to the Step 2 data B1 handoff",
+      "handoff_mode": "step2_floor_handoff",
+      "paths": [
+        {
+          "id": "FIBER-BACKBONE-TRAY",
+          "geometry": "cable_tray",
+          "width_ft": 0.7,
+          "rail_ft": 0.08,
+          "points_ft": [[51.0, 30.9, 8.9], [52.8, 30.9, 8.9], [52.8, 34.2, 9.6], [49.0, 34.2, 9.6], [49.0, 67.5, 10.9], [49.15, 67.5, 10.9]]
+        }
+      ]
+    },
+    {
+      "system_id": "BAS-CONTROLS",
+      "riser_id": "R-CONTROLS",
+      "source_zone": "systems_lab",
+      "source_equipment_ids": ["B1-LAB-CONSOLE-01", "B1-MECH-BAS-01", "B1-FLOOD-SENSOR-01"],
+      "strategy": "the systems-lab monitoring console is linked through a representative BAS gateway/interface and controls pathway to the Step 2 controls B1 handoff; plant/flood devices remain monitored source nodes",
+      "handoff_mode": "step2_floor_handoff",
+      "gateway_panel_ft": {"bounds": [50.4, 48.0, 51.6, 50.0], "z0_ft": 3.2, "height_ft": 2.4},
+      "paths": [
+        {
+          "id": "CONTROL-BACKBONE",
+          "geometry": "control_conduit",
+          "radius_ft": 0.07,
+          "points_ft": [[49.0, 40.3, 5.5], [51.5, 40.3, 5.5], [51.5, 53.7, 9.8], [49.0, 53.7, 9.8], [49.0, 70.5, 10.9], [49.15, 70.5, 10.9]]
+        }
+      ]
+    },
+    {
+      "system_id": "FIRE-PROTECTION",
+      "riser_id": "R-FIRE",
+      "source_zone": "fire_water",
+      "source_equipment_ids": ["B1-FIRE-PUMP-01", "B1-FIRE-RISER-01"],
+      "strategy": "the existing fire pump/status equipment feeds a representative fire-water header with visible valve points to the Step 2 fire-protection B1 handoff",
+      "handoff_mode": "step2_floor_handoff",
+      "paths": [
+        {
+          "id": "FIRE-HEADER",
+          "geometry": "pipe",
+          "radius_ft": 0.2,
+          "points_ft": [[59.0, 11.0, 3.0], [59.0, 19.0, 3.0], [52.7, 19.0, 3.0], [52.7, 19.0, 8.8], [52.7, 64.8, 8.8], [48.0, 64.8, 8.8], [48.0, 67.5, 8.8], [48.0, 67.5, 10.9], [49.15, 67.5, 10.9]]
+        }
+      ],
+      "valves_ft": [[56.0, 19.0, 8.8], [54.0, 19.0, 8.8]]
+    },
+    {
+      "system_id": "WATER-DOMESTIC",
+      "riser_id": "R-WATER",
+      "source_zone": "fire_water",
+      "source_equipment_ids": ["B1-FIRE-WATER-01"],
+      "strategy": "the existing water/backflow equipment feeds a separate representative domestic-water header with visible valve points to the Step 2 domestic-water B1 handoff",
+      "handoff_mode": "step2_floor_handoff",
+      "paths": [
+        {
+          "id": "DOMESTIC-HEADER",
+          "geometry": "pipe",
+          "radius_ft": 0.14,
+          "points_ft": [[66.0, 11.0, 4.0], [66.0, 19.0, 4.0], [53.0, 19.0, 4.0], [53.0, 19.0, 8.45], [53.0, 64.4, 8.45], [47.6, 64.4, 8.45], [47.6, 70.5, 8.45], [47.6, 70.5, 10.9], [49.15, 70.5, 10.9]]
+        }
+      ],
+      "valves_ft": [[61.5, 19.0, 8.45], [58.5, 19.0, 8.45]]
+    },
+    {
+      "system_id": "STORM-DRAINAGE",
+      "riser_id": "R-STORM",
+      "source_zone": "flood",
+      "source_equipment_ids": ["B1-FLOOD-SUMP-01", "B1-FLOOD-PUMP-01", "B1-FLOOD-SENSOR-01"],
+      "strategy": "the existing sump pumps/flood monitoring feed a representative pumped drainage header to the Step 2 storm B1 handoff; no external discharge geometry is invented",
+      "handoff_mode": "step2_floor_handoff",
+      "paths": [
+        {
+          "id": "SUMP-DISCHARGE",
+          "geometry": "pipe",
+          "radius_ft": 0.16,
+          "points_ft": [[58.0, 27.0, 2.3], [58.0, 32.6, 2.3], [52.8, 32.6, 2.3], [52.8, 32.6, 8.2], [52.8, 65.0, 8.2], [49.15, 65.0, 8.2], [49.15, 70.5, 8.2], [49.15, 70.5, 10.9]]
+        }
+      ]
+    },
+    {
+      "system_id": "SANITARY-VENT",
+      "riser_id": "R-SANITARY-VENT",
+      "source_zone": "whole_floor",
+      "source_equipment_ids": ["B1-FLOOR-DRAINS-01", "B1-PIPE-SPINE-01"],
+      "strategy": "a representative B1 below-slab drainage header connects the existing floor-drain concept directly to the base of the sanitary/vent stack; municipal/site connection geometry remains outside authority",
+      "handoff_mode": "stack_base",
+      "paths": [
+        {
+          "id": "B1-DRAIN-HEADER",
+          "geometry": "pipe",
+          "radius_ft": 0.16,
+          "below_slab": true,
+          "points_ft": [[52.0, 33.0, -0.28], [53.2, 33.0, -0.28], [53.2, 64.8, -0.28], [49.0, 64.8, -0.28], [49.0, 67.5, -0.28], [55.75, 67.5, -0.28], [55.75, 67.5, 0.2]]
+        }
+      ]
+    }
+  ]
+}
