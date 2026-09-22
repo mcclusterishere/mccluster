@@ -1,12 +1,12 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-store"><meta name="equity-uprise-build" content="__STAMP__"><title>Equity Uprise — Working Building Stack</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
-<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101214;color:#fff;font-family:Inter,system-ui,sans-serif}#app{position:fixed;inset:0}.hud{position:fixed;z-index:5;left:12px;top:12px;max-width:min(660px,calc(100vw - 24px));background:#0b0d10df;border:1px solid #444;border-radius:14px;padding:12px}.hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#ccc;margin:0 0 8px}.c{display:flex;gap:5px;flex-wrap:wrap}button{border:1px solid #555;border-radius:999px;background:#232629;color:#fff;padding:6px 9px;font:700 10px system-ui}button.active{background:#851a1d}.s{position:fixed;right:12px;bottom:12px;background:#0b0d10df;border:1px solid #444;border-radius:10px;padding:8px 10px;font-size:10px}</style>  <script src="js/live-content.js?v=__STAMP__"></script>\n</head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now with the detailed architectural facade active. Tap a floor to isolate it, Facade to inspect the shell, or use the elevation/street views. B1 and F1–F7 remain physically continuous through both protected stairs.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="facade">Facade</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button data-v="south">South</button><button data-v="east">East</button><button data-v="north">North</button><button data-v="west">West</button><button data-v="entry">Entry</button><button data-v="crown">Crown</button><button id="night">Night</button><button id="wire">Wireframe</button></div></div><div class="s" id="status">Loading working stack…</div>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101214;color:#fff;font-family:Inter,system-ui,sans-serif}#app{position:fixed;inset:0}.hud{position:fixed;z-index:5;left:12px;top:12px;max-width:min(660px,calc(100vw - 24px));background:#0b0d10df;border:1px solid #444;border-radius:14px;padding:12px}.hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#ccc;margin:0 0 8px}.c{display:flex;gap:5px;flex-wrap:wrap}button{border:1px solid #555;border-radius:999px;background:#232629;color:#fff;padding:6px 9px;font:700 10px system-ui}button.active{background:#851a1d}.solar{margin-top:8px;font-size:10px;color:#d6dde4}.s{position:fixed;right:12px;bottom:12px;background:#0b0d10df;border:1px solid #444;border-radius:10px;padding:8px 10px;font-size:10px}</style>  <script src="js/live-content.js?v=__STAMP__"></script>\n</head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now with the detailed architectural facade active. Tap a floor to isolate it, Facade to inspect the shell, or use the elevation/street views. B1 and F1–F7 remain physically continuous through both protected stairs.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="facade">Facade</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button data-v="south">South</button><button data-v="east">East</button><button data-v="north">North</button><button data-v="west">West</button><button data-v="entry">Entry</button><button data-v="crown">Crown</button><button id="sunmode">Sun: Auto</button><button id="wire">Wireframe</button></div><div class="solar" id="solarStatus">Solar environment · syncing to device clock…</div></div><div class="s" id="status">Loading working stack…</div>
 <script type="module">
 import * as THREE from'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';import{GLTFLoader}from'three/addons/loaders/GLTFLoader.js';import{RoomEnvironment}from'three/addons/environments/RoomEnvironment.js';
-const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status');const scene=new THREE.Scene();scene.background=new THREE.Color(0xb9c6cf);scene.fog=new THREE.Fog(0xb9c6cf,ft(120),ft(260));
+const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status'),solarStatus=document.getElementById('solarStatus');const scene=new THREE.Scene();scene.background=new THREE.Color(0xb9c6cf);scene.fog=new THREE.Fog(0xb9c6cf,ft(120),ft(260));
 const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;app.appendChild(ren.domElement);const pmrem=new THREE.PMREMGenerator(ren);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);
-const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
-const loader=new GLTFLoader();let base,facade,b1,f1,f2,f3,f4,f5,f6,f7,wire=false,night=false,loaded=0;
+const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;const sunTarget=new THREE.Object3D();sunTarget.position.set(ft(36),ft(42),ft(-36));scene.add(sunTarget);dl.target=sunTarget;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
+const loader=new GLTFLoader();let base,facade,b1,f1,f2,f3,f4,f5,f6,f7,wire=false,loaded=0,solarMode='auto';
 function makeReliable(root){
  root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.side=THREE.DoubleSide;m.needsUpdate=true})}});
 }
@@ -24,7 +24,7 @@ function frameStack(){
  const box=new THREE.Box3().setFromObject(scene),size=new THREE.Vector3(),center=new THREE.Vector3();box.getSize(size);box.getCenter(center);
  const span=Math.max(size.x,size.z,size.y);cam.position.set(center.x+span*.7,center.y+span*.48,center.z+span*.85);ctl.target.copy(center);cam.far=Math.max(ft(420),span*8);cam.updateProjectionMatrix();ctl.update();
 }
-const params=new URLSearchParams(location.search),requestedFloor=params.get('floor'),requestedView=params.get('view');
+const params=new URLSearchParams(location.search),requestedFloor=params.get('floor'),requestedView=params.get('view'),requestedCamera=params.get('camera');
 function setF7StackDupVisibility(show){
  if(!f7)return;
  f7.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^F7-(?:STAIR-[AB]-(?:TRANSITION|HEADHOUSE)|PASSENGER-OVERRUN|FREIGHT-OVERRUN)/.test(n))o.visible=show});
@@ -39,7 +39,7 @@ function setDetailedPerimeterVisibility(show){
   if(/^(?:north_exterior_wall|west_exterior_wall|east_exterior_wall|south_exterior_(?:left|right)|north_wall|west_wall|east_wall|south_mullion_)/i.test(n)||/^F[2-6]-SOUTH-GLAZING-01::pane-/i.test(n))o.visible=show;
  }));
 }
-function done(){loaded++;if(loaded===10){status.textContent='Working stack loaded · detailed facade + B1–F7 · protected stairs B1→roof';setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);facade.visible=true;if(requestedView==='facade')focus('facade');else if(requestedFloor&&/^[0-7]$/.test(requestedFloor))focus(requestedFloor);else frameStack()}}
+function done(){loaded++;if(loaded===10){status.textContent='Working stack loaded · detailed facade + B1–F7 · protected stairs B1→roof';setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);facade.visible=true;if(requestedView==='facade'){focus('facade');if(requestedCamera)setView(requestedCamera)}else if(requestedFloor&&/^[0-7]$/.test(requestedFloor))focus(requestedFloor);else{frameStack();if(requestedView&&requestedView!=='stack')setView(requestedView)}}}
 loader.load('/equity-uprise-preview/equity-uprise-building-core-v2.glb?v=__STAMP__',g=>{base=g.scene;base.rotation.x=-Math.PI/2;base.updateMatrixWorld(true);scene.add(base);makeReliable(base);base.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^L0_(slab|north_wall|west_wall|east_wall|program|circle|support|zone)/.test(n)||/^B1_(south_wall|program)/.test(n)||/^L[123456]_(program|circle|support|slab|north_wall|south_|west_wall|east_wall)/.test(n)||/^L7_(program|circle|support|slab|parapet|zone)/.test(n))o.visible=false});done()});
 loader.load('/equity-uprise-preview/equity-uprise-facade-core-v2.glb?v=__STAMP__',g=>{facade=g.scene;facade.rotation.x=-Math.PI/2;facade.updateMatrixWorld(true);scene.add(facade);makeFacadeReliable(facade);done()});
 loader.load('/equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb?v=__STAMP__',g=>{b1=g.scene;b1.rotation.x=-Math.PI/2;b1.position.y=ft(-13.5);b1.updateMatrixWorld(true);scene.add(b1);makeReliable(b1);done()});
@@ -118,9 +118,54 @@ function setView(v){
  cam.position.set(ft(V.p[0]),ft(V.p[1]),ft(V.p[2]));ctl.target.set(ft(V.t[0]),ft(V.t[1]),ft(V.t[2]));cam.updateProjectionMatrix();ctl.update();
  status.textContent='Facade review view · '+v;
 }
+const BUILDING_SOLAR_LAT=41.3;
+const RAD=Math.PI/180,DEG=180/Math.PI;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const smoothstep=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)};
+function dayOfYear(d){const start=new Date(d.getFullYear(),0,0);return Math.floor((d-start)/86400000)}
+function deviceClockSolar(d){
+  // Local-clock solar model: the viewer's local wall clock is authoritative.
+  // Seasonal declination uses the device date; longitude/geolocation are intentionally not required.
+  const n=dayOfYear(d);
+  const decl=-23.44*Math.cos((360/365)*(n+10)*RAD);
+  const localHour=d.getHours()+d.getMinutes()/60+d.getSeconds()/3600;
+  const hourAngle=(localHour-12)*15;
+  const lat=BUILDING_SOLAR_LAT*RAD,dec=decl*RAD,h=hourAngle*RAD;
+  const sinAlt=Math.sin(lat)*Math.sin(dec)+Math.cos(lat)*Math.cos(dec)*Math.cos(h);
+  const alt=Math.asin(clamp(sinAlt,-1,1));
+  const az=Math.atan2(Math.sin(h),Math.cos(h)*Math.sin(lat)-Math.tan(dec)*Math.cos(lat))+Math.PI;
+  return{alt,az,localHour,decl};
+}
+function applySolarEnvironment(forceMode=solarMode){
+  const now=new Date(),sol=deviceClockSolar(now),altDeg=sol.alt*DEG,azDeg=((sol.az*DEG)%360+360)%360;
+  let daylight=smoothstep(-6,7,altDeg),effectiveAlt=sol.alt,effectiveAz=sol.az;
+  if(forceMode==='day'){daylight=1;effectiveAlt=42*RAD;effectiveAz=155*RAD}
+  if(forceMode==='night'){daylight=0;effectiveAlt=-18*RAD;effectiveAz=0}
+  const cosAlt=Math.cos(effectiveAlt),dir=new THREE.Vector3(
+    Math.sin(effectiveAz)*cosAlt,
+    Math.sin(effectiveAlt),
+    -Math.cos(effectiveAz)*cosAlt
+  ).normalize();
+  dl.position.copy(sunTarget.position).addScaledVector(dir,ft(190));
+  dl.color.copy(new THREE.Color(0xffa56a)).lerp(new THREE.Color(0xfff4df),smoothstep(2,28,altDeg));
+  dl.intensity=forceMode==='night'?0:(forceMode==='day'?3.0:3.2*Math.pow(clamp(Math.sin(sol.alt),0,1),.42));
+  dl.visible=forceMode!=='night'&&(forceMode==='day'||altDeg>-5.5);
+  hemi.intensity=.22+1.33*daylight;
+  warm.intensity=.30*(1-daylight);
+  ren.toneMappingExposure=.76+.29*daylight;
+  const nightSky=new THREE.Color(0x080b10),twilightSky=new THREE.Color(0x51677c),daySky=new THREE.Color(0xb9c6cf);
+  const sky=daylight<.35?nightSky.clone().lerp(twilightSky,daylight/.35):twilightSky.clone().lerp(daySky,(daylight-.35)/.65);
+  scene.background.copy(sky);scene.fog.color.copy(sky);
+  facadeLightMaterials.forEach(m=>{m.emissiveIntensity=.10+3.1*Math.pow(1-daylight,1.45);m.needsUpdate=true});
+  const label=forceMode==='auto'?'Auto':forceMode==='day'?'Day override':'Night override';
+  const phase=altDeg>6?'daylight':altDeg>-6?'twilight':'night';
+  solarStatus.textContent=`Solar environment · ${label} · ${now.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · ${phase} · sun ${altDeg.toFixed(0)}°`;
+}
+applySolarEnvironment();
+setInterval(()=>{if(solarMode==='auto')applySolarEnvironment('auto')},60000);
 document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>focus(b.dataset.f));
 document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>setView(b.dataset.v));
-document.getElementById('night').onclick=e=>{night=!night;scene.background.setHex(night?0x080b10:0xb9c6cf);scene.fog.color.setHex(night?0x080b10:0xb9c6cf);hemi.intensity=night?.55:1.55;dl.intensity=night?.45:3.0;warm.intensity=night?.32:0;ren.toneMappingExposure=night?.82:1.05;facadeLightMaterials.forEach(m=>{m.emissiveIntensity=night?3.0:.10;m.needsUpdate=true});e.target.textContent=night?'Day':'Night'};
+document.getElementById('sunmode').onclick=e=>{solarMode=solarMode==='auto'?'day':solarMode==='day'?'night':'auto';applySolarEnvironment(solarMode);e.target.textContent=solarMode==='auto'?'Sun: Auto':solarMode==='day'?'Sun: Day':'Sun: Night'};
 document.getElementById('wire').onclick=e=>{wire=!wire;scene.traverse(o=>{if(o.isMesh){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}})}});e.target.textContent=wire?'Solid':'Wireframe'};
 addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});ren.setAnimationLoop(()=>{ctl.update();ren.render(scene,cam)});
 </script></body></html>
