@@ -21,7 +21,7 @@
       ".github/copilot-instructions.md"
     ]
   },
-  "tracked_count": 234,
+  "tracked_count": 238,
   "categories": {
     "agent_entrypoints": [
       ".cursorrules",
@@ -76,7 +76,9 @@
       "docs/design/equity-uprise-building/FLOOR-05-SCHEMATIC-PLAN-BASIS.md",
       "docs/design/equity-uprise-building/FLOOR-05-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/FLOOR-06-PENTHOUSE-COMMAND-360-SPEC.md",
+      "docs/design/equity-uprise-building/FLOOR-06-PROGRAM-RECONCILIATION.md",
       "docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md",
+      "docs/design/equity-uprise-building/FLOOR-06-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md",
       "docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md",
@@ -163,11 +165,13 @@
       "docs/design/equity-uprise-building/production/floor-05/floor-05-scene-manifest.json",
       "docs/design/equity-uprise-building/production/floor-05/floor-05-states.json",
       "docs/design/equity-uprise-building/production/floor-06/README.md",
+      "docs/design/equity-uprise-building/production/floor-06/build_equity_uprise_floor_06_v2.py",
       "docs/design/equity-uprise-building/production/floor-06/floor-06-camera.json",
       "docs/design/equity-uprise-building/production/floor-06/floor-06-geometry-notes.md",
       "docs/design/equity-uprise-building/production/floor-06/floor-06-hotspots.json",
       "docs/design/equity-uprise-building/production/floor-06/floor-06-lighting.json",
       "docs/design/equity-uprise-building/production/floor-06/floor-06-materials.json",
+      "docs/design/equity-uprise-building/production/floor-06/floor-06-object-inventory.json",
       "docs/design/equity-uprise-building/production/floor-06/floor-06-routing.json",
       "docs/design/equity-uprise-building/production/floor-06/floor-06-scene-manifest.json",
       "docs/design/equity-uprise-building/production/floor-06/floor-06-states.json",
@@ -326,6 +330,14 @@
     {
       "sha": "73016c8f98120088db87975f7128cc43429e6935",
       "role": "Historical Floor 5 Policy + Proof locked schematic geometry"
+    },
+    {
+      "sha": "663c24579ff7643433e0becf98379cd4cc7625b0",
+      "role": "Historical Floor 6 Penthouse Command canonical program/spec"
+    },
+    {
+      "sha": "8ac6de5c8fa8d9c623061ec8fbcabaab2be26f65",
+      "role": "Historical Floor 6 Penthouse Command locked schematic geometry"
     }
   ]
 }
