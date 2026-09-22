@@ -186,5 +186,6 @@ Active implementation sequence:
 - `production/building-services-core-v2.json`
 - `production/vertical-risers-core-v2.json`
 - `production/services/floor-services-addenda.json`
+- `production/services/b1-source-connections.json`
 
-Services Step 1 is complete: the digital-twin sub-riser allocation and B1→L7 service requirements are locked. Services Step 2 is the first visible geometry pass.
+Services Steps 1–2 are complete and the visible B1→L7 backbone remains active. Services Step 3 now adds deterministic B1 plant/source interfaces and distribution geometry from existing mechanical, electrical/emergency, telecom, BAS, fire/water, sump/storm and sanitary concepts into the authorized nine-system backbone.
