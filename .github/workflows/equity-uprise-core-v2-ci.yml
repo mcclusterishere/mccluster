@@ -64,7 +64,7 @@ jobs:
       - name: Build detailed exterior facade in workspace
         run: python docs/design/equity-uprise-building/production/facade/build_equity_uprise_facade_v2.py
 
-      - name: Build building services backbone in workspace
+      - name: Build building services backbone + B1 plant connections in workspace
         run: python docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py
 
       - name: Verify B1-to-roof human walkability
