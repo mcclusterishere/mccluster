@@ -161,3 +161,17 @@ Current-pass facade implementation is coordinated by:
 - combined review viewer: `equity-uprise-building-core-v2-3d.html` with `?view=facade`
 
 The facade uses the existing 18 ft structural grid with a 6 ft secondary module and is a separate coordinated shell layer so approved floor interiors/core geometry are not destructively rebuilt.
+
+
+## Facade architectural finish pass
+
+The existing facade implementation is now classified as **Facade V1 structural shell complete** and is preserved at:
+- branch: `checkpoint/equity-uprise-facade-v1-structural-shell`
+- starting SHA: `2fe78f264237c905cd002365de747b3da071ea5b`
+
+Architectural-finish authority:
+- `FACADE-ARCHITECTURAL-FINISH-PASS-SPEC.md`
+
+The finish pass governs window assembly depth, corners, base/plinth, completed entrance/doors/canopy, architectural signage, crown/service-screen integration, material realism, exterior lighting and building-to-ground contact.
+
+No finish geometry is implemented by this authority commit. The next deterministic source is the pending `production/facade/facade-finish-inventory.json`.

@@ -255,6 +255,38 @@ Use these to recover design quality, not obsolete stair/core geometry.
 - inventing new floor identities without current program authority.
 
 
+## Facade V1 structural shell checkpoint / architectural finish pass — ACTIVE AUTHORITY / NO FINISH GEOMETRY YET
+
+User visual review determined that the current facade is structurally coherent but not architecturally finished.
+
+Canonical status is now:
+
+**Facade V1 structural shell complete — architectural finish pass active.**
+
+Checkpoint:
+- `checkpoint/equity-uprise-facade-v1-structural-shell`
+- SHA `2fe78f264237c905cd002365de747b3da071ea5b`
+
+New authority:
+- `FACADE-ARCHITECTURAL-FINISH-PASS-SPEC.md`
+
+The finish pass must add/resolve:
+- recessed glazing and window jamb/head/sill/reveal depth;
+- resolved corners;
+- deeper mineral base/plinth;
+- completed south entry portal, door leaves, frames, hardware, transom/sidelights and threshold;
+- canopy fascia, soffit and recessed lighting;
+- architectural E = U / Equity Uprise signage;
+- stronger Floor 6 crown / parapet / roof-service screen integration;
+- intentional north/service-facade finish;
+- material realism for glass, metal, opaque panels, mineral base and entrance accents;
+- exterior lighting;
+- building-to-ground contact.
+
+**No finish geometry, builder changes, viewer changes or generated GLB changes are included in this authority step.**
+
+Next gate: create `production/facade/facade-finish-inventory.json` with stable component IDs before modeling.
+
 ## Exterior facade implementation — DETAILED CURRENT PASS ACTIVE / VISUAL APPROVAL PENDING
 
 The facade has moved from authority-only into deterministic 3D implementation.

@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 268,
+  "tracked_count": 269,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -82,6 +82,7 @@
       "docs/design/equity-uprise-building/BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md",
       "docs/design/equity-uprise-building/BUILDING-SYSTEMS-AND-FACADE-CORE-RULES.md",
       "docs/design/equity-uprise-building/EXTERIOR-FACADE-UPGRADE-SPEC.md",
+      "docs/design/equity-uprise-building/FACADE-ARCHITECTURAL-FINISH-PASS-SPEC.md",
       "docs/design/equity-uprise-building/FACADE-BRANDING-AND-SIGNAGE-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
