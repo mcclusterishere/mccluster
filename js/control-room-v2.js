@@ -33,6 +33,11 @@
     coreResume: null,
     commandResult: null,
     org: null,
+    /* The membership row behind state.org — which workspace this operator
+       is in and as what. Null means the server named none, which is not
+       the same as the console failing to ask. */
+    workspace: null,
+    audit: [],
     threads: [],
     leads: [],
     siteRequests: [],
@@ -1160,6 +1165,16 @@
   function serviceRows() {
     var s = state.status || {};
     return [
+      {
+        key: "workspace",
+        title: "Workspace",
+        sub: state.workspace ? state.workspace.name + " · " + state.workspace.slug
+          : state.sources.workspace && state.sources.workspace.ok ? "No workspace on this account"
+          : "Workspace not resolved",
+        value: state.workspace ? titleCase(state.workspace.role)
+          : state.sources.workspace && state.sources.workspace.ok ? "None" : "Check",
+        kind: state.workspace ? "ok" : (state.sources.workspace && state.sources.workspace.ok ? "warn" : "bad")
+      },
       { key: "api", title: "Cloudflare / API", sub: "api.mccluster.org", value: state.health && state.health.ok ? "Healthy" : "Check", kind: state.health && state.health.ok ? "ok" : "bad" },
       { key: "db", title: "Supabase", sub: "Canonical data plane", value: s.database && s.database.reachable ? "Healthy" : "Check", kind: s.database && s.database.reachable ? "ok" : "warn" },
       {
@@ -1183,7 +1198,7 @@
   }
   function renderSystemOverview() {
     var services = serviceRows();
-    return sourceStates([["Edge health", state.sources.health], ["Core bridge", state.sources.coreBridge], ["Durable resume", state.sources.coreResume], ["Operator status", state.sources.status], ["Core", state.sources.ai], ["Host health", state.sources.aiHealth]]) +
+    return sourceStates([["Workspace", state.sources.workspace], ["Edge health", state.sources.health], ["Core bridge", state.sources.coreBridge], ["Durable resume", state.sources.coreResume], ["Operator status", state.sources.status], ["Core", state.sources.ai], ["Host health", state.sources.aiHealth], ["Audit ledger", state.sources.audit]]) +
       '<div class="cr-kpis">' + kpi("API", state.health && state.health.ok ? "UP" : "—", "edge") + kpi("Database", state.status && state.status.database && state.status.database.reachable ? "UP" : "—", "truth") + kpi("Jobs", String(state.jobs.filter(function (x) { return ["queued", "running"].indexOf(x.status) >= 0; }).length), "active") + kpi("Failures", String(state.jobs.filter(function (x) { return x.status === "failed"; }).length), "workload") + '</div>' +
       '<div class="cr-grid">' + panel("Live topology", "click a resource", '<div class="cr-panel__body">' + renderTopology() + '</div>', "cr-span-7") +
       panel("Services", "canonical status", '<div class="cr-list">' + services.map(function (s) { return row(s.title, s.sub, s.value, s.kind, "inspect-service", { key: s.key, badge: s.kind === "ai" ? "AI" : s.kind }); }).join("") + '</div>', "cr-span-5") + '</div>';
@@ -1231,6 +1246,22 @@
       events.push({ id: p.id, action: "inspect-publish", severity: "ERROR", source: "Social", message: text(p.last_error, "Publish job failed"), time: p.updated_at || p.scheduled_at, kind: "bad" });
     });
     if (state.aiHealth && state.aiHealth.stale) events.push({ id: "host", action: "inspect-service", severity: "WARN", source: "OVH", message: "Host health result is stale", time: state.aiHealth.checked_at, kind: "warn" });
+    /* The ledger. Observability had only ever shown things that BROKE, so a
+       privileged change that worked — somebody moving a lead, spending on
+       media — left no trace on this screen at all. control_audit is the
+       record of what was deliberately done, and it belongs next to the
+       record of what failed. */
+    state.audit.forEach(function (a) {
+      var who = a.actor_kind === "user" ? "operator" : (a.actor_kind || "system");
+      var what = a.resource_type ? a.resource_type + " " + text(a.resource_id, "") : "";
+      var from = a.detail && a.detail.from, to = a.detail && a.detail.to;
+      events.push({
+        id: String(a.id), action: "inspect-audit", severity: "INFO", source: "Ledger",
+        message: a.event + (what ? " · " + what : "") +
+          (from && to ? " (" + from + " → " + to + ")" : "") + " · by " + who,
+        time: a.at, kind: "info"
+      });
+    });
     Object.keys(state.sources).forEach(function (key) {
       var s = state.sources[key];
       /* A source the console could not read is itself an observable event —
@@ -2243,7 +2274,30 @@
     if (state.search) filterCurrentView(state.search);
   }
 
-  function discoverOrg() { return src(supa("orgs?slug=eq.mccluster&select=id,slug,name&limit=1")).then(function (r) { return rowsOf(r)[0] || null; }); }
+  /* Which workspace this console is operating on, answered by the server.
+
+     This was supa("orgs?slug=eq.mccluster&select=id,slug,name&limit=1") —
+     a hardcoded slug, so Control Room could only ever open the house.
+     A second tenant's operator got a console with no org, every scoped
+     read silently empty, and nothing on screen saying why. */
+  function discoverWorkspace() {
+    return src(request("/v1/workspaces/me")).then(function (result) {
+      var data = dataOf(result);
+      var list = (data && data.workspaces) || [];
+      var chosen = null;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].org_id === data.default_org_id) { chosen = list[i]; break; }
+      }
+      if (!chosen) {
+        chosen = list.filter(function (w) { return w.enabled; })[0] || null;
+      }
+      return {
+        source: result,
+        membership: chosen,
+        org: chosen ? { id: chosen.org_id, slug: chosen.slug, name: chosen.name } : null
+      };
+    });
+  }
   function loadCreative(org) {
     var orgId = org && org.id;
     var scope = orgId ? "&org_id=eq." + encodeURIComponent(orgId) : "";
@@ -2268,7 +2322,12 @@
     }));
     var authed = token().then(function (t) {
       if (!t) return { signedOut: true };
-      return discoverOrg().then(function (org) {
+      return discoverWorkspace().then(function (ws) {
+        var org = ws.org;
+        /* No workspace is a state to render, not an exception to throw.
+           The old code reached straight for org.id and died on a
+           TypeError, which surfaced as a generic console error. */
+        if (!org) return { workspace: ws, org: null };
         return Promise.all([
           src(request("/v1/core")),
           src(coreMcp("tools/list")),
@@ -2279,13 +2338,15 @@
           src(supa("site_requests?select=*&order=created_at.desc&limit=100")),
           src(supa("ops_agent_jobs?select=*&order=created_at.desc&limit=200")),
           src(supa("ops_ai_threads?select=*&org_id=eq." + encodeURIComponent(org.id) + "&status=eq.active&order=last_message_at.desc&limit=100")),
-          loadCreative(org)
+          loadCreative(org),
+          src(request("/v1/audit/recent?limit=25&org_id=" + encodeURIComponent(org.id)))
         ]).then(function (r) {
           return {
-            org: org,
+            org: org, workspace: ws,
             coreBridge: r[0], coreTools: r[1], coreResume: r[2],
             status: r[3], apps: r[4], ai: r[5], aiHealth: r[6], decisions: r[7],
-            threads: r[8], leads: r[9], siteRequests: r[10], jobs: r[11], aiThreads: r[12], creative: r[13]
+            threads: r[8], leads: r[9], siteRequests: r[10], jobs: r[11], aiThreads: r[12], creative: r[13],
+            audit: r[14]
           };
         });
       });
@@ -2298,10 +2359,14 @@
         status: a.status || signedOut, apps: a.apps || signedOut, ai: a.ai || signedOut, aiHealth: a.aiHealth || signedOut,
         decisions: a.decisions || signedOut, threads: a.threads || signedOut, leads: a.leads || signedOut, siteRequests: a.siteRequests || signedOut, jobs: a.jobs || signedOut,
         aiThreads: a.aiThreads || signedOut,
+        workspace: (a.workspace && a.workspace.source) || signedOut,
+        audit: a.audit || signedOut,
         mediaAssets: c.mediaAssets || signedOut, mediaJobs: c.mediaJobs || signedOut, campaigns: c.campaigns || signedOut,
         variants: c.variants || signedOut, publishJobs: c.publishJobs || signedOut, posts: c.posts || signedOut
       };
       state.health = dataOf(state.sources.health); state.org = a.org || null;
+      state.workspace = (a.workspace && a.workspace.membership) || null;
+      state.audit = pickRows(state.sources.audit, "events");
       state.coreBridge = dataOf(state.sources.coreBridge);
       var coreToolsPayload = dataOf(state.sources.coreTools);
       state.coreTools = coreToolsPayload && Array.isArray(coreToolsPayload.tools) ? coreToolsPayload.tools : [];
