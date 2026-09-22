@@ -65,6 +65,10 @@ dest=[x.get("level") for x in pe.get("levels",[]) if x.get("enabled")]
 ck("passenger elevator selector excludes Level 7",7 not in dest,str(dest))
 ck("Level 7 has building-return route",ROUTING.get("routes",{}).get("building_return",{}).get("scene_id")=="equity-uprise-building-core-v2")
 ck("Level 7 ecosystem route remains public navigation",ROUTING.get("routes",{}).get("ecosystem_routes",{}).get("access")=="public")
+uw=ROUTING.get("routes",{}).get("uprise_world_optional",{})
+ck("Uprise World route state is represented",uw.get("type")=="ui_state")
+ck("Uprise World route state remains disabled",uw.get("enabled") is False)
+ck("Uprise World route state remains read-only",uw.get("read_only") is True)
 
 failed=[x for x in checks if not x["passed"]]
 report={
