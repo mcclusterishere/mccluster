@@ -1596,6 +1596,13 @@
       "rationale": "Mnet profile-save/admin migration references the existing Equity Uprise role helper as an authority precedent; it does not define a separate Equity Uprise capability."
     },
     {
+      "path": "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql",
+      "classification": "runtime_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Analytics/event-taxonomy and funnel-correction migration references Equity Uprise telemetry among broader runtime analytics events; it does not define a distinct Equity Uprise building capability."
+    },
+    {
       "path": "supabase/production-ledger.json",
       "classification": "runtime_support",
       "capability_ids": [],
