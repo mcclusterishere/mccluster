@@ -1,0 +1,399 @@
+{
+  "schema_version": "1.0.0",
+  "authority_id": "equity-uprise-b1-services-source-connections",
+  "status": "services-step3-source-connection-authority",
+  "not_for_construction": true,
+  "coordinate_system": "building-local feet; Z values are AFF unless explicitly stated",
+  "route_rule": "Routes are conceptual overhead digital-twin service paths. They preserve canonical B1 rooms/circulation and terminate at the locked vertical riser envelopes; they are not construction routing or sizing.",
+  "overhead_aff_ft": 9.9,
+  "connections": [
+    {
+      "id": "B1-CONN-HVAC-01",
+      "system_id": "HVAC-AIR",
+      "source_ref": "B1-MECH-AHU-01",
+      "source_label": "Mechanical Plant AHUs",
+      "source_point_ft": [
+        24,
+        11
+      ],
+      "source_top_aff_ft": 4.5,
+      "target_riser_id": "R-HVAC",
+      "waypoints_ft": [
+        [
+          24,
+          11
+        ],
+        [
+          30,
+          11
+        ],
+        [
+          30,
+          35
+        ],
+        [
+          48,
+          35
+        ],
+        [
+          48,
+          64
+        ],
+        [
+          51.75,
+          64
+        ],
+        [
+          51.75,
+          69
+        ]
+      ]
+    },
+    {
+      "id": "B1-CONN-ELEC-NORMAL-01",
+      "system_id": "ELEC-NORMAL",
+      "source_ref": "B1-ELEC-SWITCHGEAR-01",
+      "source_label": "Main switchgear lineup",
+      "source_point_ft": [
+        49,
+        8
+      ],
+      "source_top_aff_ft": 7.1,
+      "target_riser_id": "R-ELEC-NORMAL",
+      "waypoints_ft": [
+        [
+          49,
+          8
+        ],
+        [
+          49,
+          55
+        ],
+        [
+          57.25,
+          55
+        ],
+        [
+          57.25,
+          67.5
+        ]
+      ]
+    },
+    {
+      "id": "B1-CONN-ELEC-EMERGENCY-01",
+      "system_id": "ELEC-EMERGENCY",
+      "source_ref": "B1-ELEC-UPS-01",
+      "source_label": "UPS / emergency distribution",
+      "source_point_ft": [
+        44,
+        15.5
+      ],
+      "source_top_aff_ft": 5.7,
+      "target_riser_id": "R-ELEC-EMERGENCY",
+      "waypoints_ft": [
+        [
+          44,
+          15.5
+        ],
+        [
+          49,
+          15.5
+        ],
+        [
+          49,
+          55
+        ],
+        [
+          57.25,
+          55
+        ],
+        [
+          57.25,
+          70.5
+        ]
+      ]
+    },
+    {
+      "id": "B1-CONN-DATA-01",
+      "system_id": "DATA-STRUCTURED",
+      "source_ref": "B1-TELECOM-RACKS-01",
+      "source_label": "Network / Telecom Core racks",
+      "source_point_ft": [
+        49,
+        30.9
+      ],
+      "source_top_aff_ft": 8.9,
+      "target_riser_id": "R-DATA",
+      "waypoints_ft": [
+        [
+          49,
+          30.9
+        ],
+        [
+          49,
+          55
+        ],
+        [
+          58.5,
+          55
+        ],
+        [
+          58.5,
+          67.5
+        ]
+      ]
+    },
+    {
+      "id": "B1-CONN-BAS-01",
+      "system_id": "BAS-CONTROLS",
+      "source_ref": "B1-MECH-BAS-01",
+      "source_label": "Mechanical plant BAS panel",
+      "source_point_ft": [
+        28.2,
+        16
+      ],
+      "source_top_aff_ft": 6.8,
+      "target_riser_id": "R-CONTROLS",
+      "waypoints_ft": [
+        [
+          28.2,
+          16
+        ],
+        [
+          30,
+          16
+        ],
+        [
+          30,
+          35
+        ],
+        [
+          49,
+          35
+        ],
+        [
+          49,
+          55
+        ],
+        [
+          58.5,
+          55
+        ],
+        [
+          58.5,
+          70.5
+        ]
+      ]
+    },
+    {
+      "id": "B1-CONN-BAS-FLOOD-01",
+      "system_id": "BAS-CONTROLS",
+      "source_ref": "B1-FLOOD-SENSOR-01",
+      "source_label": "Flood sensor / alarm panel",
+      "source_point_ft": [
+        56.6,
+        30.8
+      ],
+      "source_top_aff_ft": 5.9,
+      "target_riser_id": "R-CONTROLS",
+      "waypoints_ft": [
+        [
+          56.6,
+          30.8
+        ],
+        [
+          53,
+          30.8
+        ],
+        [
+          53,
+          35
+        ],
+        [
+          49,
+          35
+        ],
+        [
+          49,
+          55
+        ],
+        [
+          58.5,
+          55
+        ],
+        [
+          58.5,
+          70.5
+        ]
+      ]
+    },
+    {
+      "id": "B1-CONN-FIRE-01",
+      "system_id": "FIRE-PROTECTION",
+      "source_ref": "B1-FIRE-PUMP-01",
+      "source_label": "Fire pump / sprinkler riser assembly",
+      "source_point_ft": [
+        68,
+        17
+      ],
+      "source_top_aff_ft": 8.9,
+      "target_riser_id": "R-FIRE",
+      "waypoints_ft": [
+        [
+          68,
+          17
+        ],
+        [
+          68,
+          35
+        ],
+        [
+          61,
+          35
+        ],
+        [
+          61,
+          50
+        ],
+        [
+          49,
+          50
+        ],
+        [
+          49,
+          55
+        ],
+        [
+          54.25,
+          55
+        ],
+        [
+          54.25,
+          67.5
+        ]
+      ]
+    },
+    {
+      "id": "B1-CONN-WATER-01",
+      "system_id": "WATER-DOMESTIC",
+      "source_ref": "B1-FIRE-WATER-01",
+      "source_label": "Water / backflow assembly",
+      "source_point_ft": [
+        66,
+        11
+      ],
+      "source_top_aff_ft": 6.7,
+      "target_riser_id": "R-WATER",
+      "waypoints_ft": [
+        [
+          66,
+          11
+        ],
+        [
+          66,
+          35
+        ],
+        [
+          61,
+          35
+        ],
+        [
+          61,
+          50
+        ],
+        [
+          49,
+          50
+        ],
+        [
+          49,
+          55
+        ],
+        [
+          54.25,
+          55
+        ],
+        [
+          54.25,
+          70.5
+        ]
+      ]
+    },
+    {
+      "id": "B1-CONN-SANITARY-01",
+      "system_id": "SANITARY-VENT",
+      "source_ref": "B1-PIPE-SPINE-01",
+      "source_label": "B1 sanitary/vent collection spine",
+      "source_point_ft": [
+        52,
+        2
+      ],
+      "source_top_aff_ft": 10.4,
+      "target_riser_id": "R-SANITARY-VENT",
+      "waypoints_ft": [
+        [
+          52,
+          2
+        ],
+        [
+          52,
+          35
+        ],
+        [
+          49,
+          35
+        ],
+        [
+          49,
+          55
+        ],
+        [
+          55.75,
+          55
+        ],
+        [
+          55.75,
+          67.5
+        ]
+      ]
+    },
+    {
+      "id": "B1-CONN-STORM-01",
+      "system_id": "STORM-DRAINAGE",
+      "source_ref": "B1-FLOOD-PUMP-01",
+      "source_label": "Sump / flood-management pumps",
+      "source_point_ft": [
+        58,
+        27
+      ],
+      "source_top_aff_ft": 2.4,
+      "target_riser_id": "R-STORM",
+      "waypoints_ft": [
+        [
+          58,
+          27
+        ],
+        [
+          58,
+          35
+        ],
+        [
+          49,
+          35
+        ],
+        [
+          49,
+          55
+        ],
+        [
+          55.75,
+          55
+        ],
+        [
+          55.75,
+          70.5
+        ]
+      ]
+    }
+  ]
+}
