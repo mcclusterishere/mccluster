@@ -292,7 +292,18 @@ Finish inventory gate: **COMPLETE**.
 - inventory covers all 238 window-like modules plus frame hierarchy, acoustic/service panels, four corners, all-side base/plinth, complete entry/canopy/branding, crown/parapet/headhouse integration, exterior lighting and entry ground contact.
 - existing Facade V1 geometry remains unchanged.
 
-Next gate: implement **window assembly depth + base/corner finish** in the facade generator against this inventory, then regenerate/verify before touching the entrance/crown.
+Step 4 geometry is now implemented in source on the architectural-finish branch:
+- all **238 window-like modules** receive recessed installed-assembly treatment;
+- jamb/head/sill returns and perimeter reveal/gasket shadow geometry are generated;
+- secondary mullion caps, 18 ft primary-fin finish and story-band/spandrel reveals are added;
+- Floor 4 acoustic and north/west service panels receive deeper finish geometry;
+- genuine north service louvers receive finished frames/blades;
+- all four corners are resolved as distinct south-light / north-heavy assemblies;
+- mineral plinth/base treatment now grounds all four elevations with a continuous shadow reveal;
+- **32 of 68 finish-inventory records** are in Step 4 scope;
+- entry, canopy, branding, crown, exterior-lighting and site-contact finish records remain deliberately deferred.
+
+Current gate: deterministic regeneration + Step 4 report/CI verification. Do **not** start entrance/crown finish until this checkpoint is green.
 
 ## Exterior facade implementation — DETAILED CURRENT PASS ACTIVE / VISUAL APPROVAL PENDING
 
