@@ -46,6 +46,7 @@ jobs:
       - name: Build detailed Equity Uprise floors
         run: |
           python -m pip install --disable-pip-version-check numpy scipy trimesh
+          python docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py
           python docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01_v2.py
           python docs/design/equity-uprise-building/production/floor-02/build_equity_uprise_floor_02_v2.py
           python docs/design/equity-uprise-building/production/floor-03/build_equity_uprise_floor_03_v2.py
@@ -62,6 +63,8 @@ jobs:
           cp docs/design/equity-uprise-building/production/building-core-v2.json equity-uprise-preview/building-core-v2.json
           cp docs/design/equity-uprise-building/production/core-v2-floor-programs.json equity-uprise-preview/core-v2-floor-programs.json
           cp docs/design/equity-uprise-building/production/basement-b1-program.json equity-uprise-preview/basement-b1-program.json
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2.glb equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2-report.json equity-uprise-preview/equity-uprise-basement-b1-core-v2-report.json
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb equity-uprise-preview/equity-uprise-building-core-v2.glb
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-core-v2.glb equity-uprise-preview/equity-uprise-floor-01-core-v2.glb
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-01-core-v2-report.json equity-uprise-preview/equity-uprise-floor-01-core-v2-report.json
