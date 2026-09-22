@@ -372,7 +372,7 @@ Floor 6 preserves the building datum and the Level 7 roof interface:
 - Stair B: **X 8–18 / Y 54–72**, with vertical continuity reserved;
 - MEP / roof-service reservation: **X 50–60 / Y 66–72**;
 - Penthouse Command table: **16' × 5'**, centered near **(36,41)**, six seats maximum;
-- Halo Globe / Spatial Intelligence: suspended sphere centered approximately **(41,22)**, radius **2.25 ft**, center **8.25 ft AFF**;
+- Halo Globe / Spatial Intelligence: suspended sphere centered approximately **(22,22.5)**, radius **2.25 ft**, center **8.25 ft AFF**;
 - Institutional Salon / Join Lounge: **X 2–18 / Y 18–38**;
 - Strategy Review Room: **X 2–15 / Y 4–16**;
 - Partner / Executive Briefing Room: **X 17–32 / Y 4–16**;
