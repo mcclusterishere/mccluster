@@ -127,11 +127,11 @@ As of the 2026-09-22 roof/whole-building reconciliation:
 - **56** canonical Equity Uprise capabilities are represented in the building;
 - repo-source exact-set classification is enforced by `production/verify_equity_uprise_repo_sources.py`;
 - repo-source exact-set audit baseline: **912 / 912 passed**;
-- capability/floor/routing audit baseline: **464 / 464 passed** and reruns on every program change;
-- generated plan semantic/artifact audit baseline: **437 / 437 passed** and reruns deterministically;
+- capability/floor/routing audit: **466 / 466 passed**;
+- generated plan semantic/artifact audit: **488 / 488 passed**;
 - Level 7 detailed roof: **45 / 45 inventory records**, **15 / 15 build/visual-completeness checks passed**;
-- B1→Level 7 schematic human-walkability audit: **41 / 41 passed**;
-- combined B1-to-roof geometry remains a mandatory deterministic CI gate; exact current mesh count/SHA live in `production/generated/equity-uprise-building-core-v2-report.json` rather than being duplicated here.
+- B1→Level 7 schematic human-walkability audit: **44 / 44 passed**;
+- combined B1-to-roof deterministic chassis: **840 meshes / 41 / 41 checks passed**; exact SHA remains in `production/generated/equity-uprise-building-core-v2-report.json`.
 
 The source classification ledger is:
 `docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json`.
