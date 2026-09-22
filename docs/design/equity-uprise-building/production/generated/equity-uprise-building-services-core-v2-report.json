@@ -1,15 +1,15 @@
 {
   "schema_version": "1.1.0",
   "asset": "equity-uprise-building-services-core-v2",
-  "status": "services-step7-interior-device-ceiling-realism",
+  "status": "services-step8-whole-building-verified",
   "not_for_construction": true,
-  "glb_bytes": 594088,
-  "sha256": "ff667d1c84006251a221d109446c519985e1e82a32943158c002daf3131d641c",
-  "mesh_count": 830,
+  "glb_bytes": 652132,
+  "sha256": "290982cd89da5ec994adfb871dcfbf6331a664c418e56162ec5e24835d200dd0",
+  "mesh_count": 921,
   "system_risers": 9,
   "system_risers_modeled": 9,
   "riser_segments": 63,
-  "floor_handoff_stubs": 63,
+  "floor_handoff_stubs": 64,
   "levels_marked": 8,
   "b1_source_systems": [
     "BAS-CONTROLS",
@@ -32,7 +32,7 @@
     2,
     3
   ],
-  "step5_floor_branch_segments": 114,
+  "step5_floor_branch_segments": 115,
   "step5_floor_endpoints": 39,
   "step5_levels": [
     4,
@@ -98,8 +98,447 @@
   "step7_valves": 12,
   "step7_access_panels": 18,
   "step7_plumbing_connections": 12,
-  "floor_branch_segments": 263,
-  "floor_endpoints": 91,
+  "step8_branch_records": 24,
+  "step8_branch_segments": 65,
+  "step8_endpoints": 24,
+  "step8_traceability_systems_total": 14,
+  "step8_traceability_systems_passing": 14,
+  "step8_traceability_complete": true,
+  "step8_traceability_matrix": {
+    "ELEC-NORMAL": {
+      "origin": "B1 electrical / emergency power",
+      "vertical_route": "MEP service spine",
+      "dependencies": [],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "endpoint_count": 11,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "ELEC-EMERGENCY": {
+      "origin": "B1 electrical / emergency power",
+      "vertical_route": "MEP service spine",
+      "dependencies": [
+        "ELEC-NORMAL"
+      ],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "endpoint_count": 8,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "LIGHTING-CONTROLS": {
+      "origin": "floor distribution + control backbone",
+      "vertical_route": "electrical/control spine",
+      "dependencies": [
+        "ELEC-NORMAL",
+        "ELEC-EMERGENCY",
+        "BAS-CONTROLS"
+      ],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "endpoint_count": 7,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "DATA-STRUCTURED": {
+      "origin": "B1 Network / Telecom Core",
+      "vertical_route": "data riser",
+      "dependencies": [
+        "ELEC-NORMAL",
+        "ELEC-EMERGENCY"
+      ],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "endpoint_count": 14,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "AV-MEDIA": {
+      "origin": "floor-local AV support backed by structured data",
+      "vertical_route": "data/AV backbone as required",
+      "dependencies": [
+        "DATA-STRUCTURED",
+        "ELEC-NORMAL"
+      ],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "endpoint_count": 7,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "BAS-CONTROLS": {
+      "origin": "B1 Building Systems Lab / plant controls",
+      "vertical_route": "controls backbone",
+      "dependencies": [
+        "DATA-STRUCTURED",
+        "ELEC-EMERGENCY"
+      ],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "endpoint_count": 10,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "SECURITY-ACCESS": {
+      "origin": "authorized building-security/control infrastructure",
+      "vertical_route": "data/control backbone",
+      "dependencies": [
+        "DATA-STRUCTURED",
+        "ELEC-EMERGENCY"
+      ],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "endpoint_count": 7,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "HVAC-AIR": {
+      "origin": "B1 Mechanical Plant concept",
+      "vertical_route": "HVAC riser family",
+      "dependencies": [
+        "ELEC-NORMAL",
+        "BAS-CONTROLS"
+      ],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "endpoint_count": 9,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "WATER-DOMESTIC": {
+      "origin": "B1 Fire Protection / Water service boundary concept",
+      "vertical_route": "domestic-water riser",
+      "dependencies": [],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "endpoint_count": 6,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "SANITARY-VENT": {
+      "origin": "building plumbing boundary concept",
+      "vertical_route": "sanitary/vent stack",
+      "dependencies": [],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "endpoint_count": 6,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "STORM-DRAINAGE": {
+      "origin": "Level 7 roof drainage collection + B1 flood/sump management",
+      "vertical_route": "storm drainage stack",
+      "dependencies": [
+        "BAS-CONTROLS"
+      ],
+      "served_levels": [
+        7
+      ],
+      "branch_levels": [
+        7
+      ],
+      "endpoint_count": 7,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "FIRE-PROTECTION": {
+      "origin": "B1 Fire Protection / Water",
+      "vertical_route": "fire-protection riser",
+      "dependencies": [],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "endpoint_count": 9,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "FIRE-ALARM": {
+      "origin": "building life-safety control concept",
+      "vertical_route": "life-safety/data pathway",
+      "dependencies": [
+        "ELEC-EMERGENCY"
+      ],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "endpoint_count": 7,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    },
+    "SERVICE-HOUSEKEEPING": {
+      "origin": "B1 Facilities Workshop / Storage + floor support",
+      "vertical_route": "freight/service circulation",
+      "dependencies": [],
+      "served_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "branch_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "endpoint_count": 7,
+      "source_ok": true,
+      "vertical_route_ok": true,
+      "branch_coverage_ok": true,
+      "endpoint_ok": true,
+      "monitoring_or_service_access_ok": true,
+      "passed": true
+    }
+  },
+  "step8_whole_route_core_clashes": 0,
+  "step8_viewer_status_current": true,
+  "final_services_gate": true,
+  "system_families_total": 14,
+  "floor_branch_segments": 329,
+  "floor_endpoints": 115,
   "shared_reservation_ft": {
     "x1": 50,
     "y1": 66,
@@ -117,8 +556,8 @@
     "STORM-DRAINAGE",
     "WATER-DOMESTIC"
   ],
-  "checks_total": 59,
-  "checks_passed": 59,
+  "checks_total": 68,
+  "checks_passed": 68,
   "checks_failed": 0,
   "checks": [
     {
@@ -159,7 +598,7 @@
     {
       "name": "all authorized floor handoff stubs modeled",
       "passed": true,
-      "detail": "63/63"
+      "detail": "64/64"
     },
     {
       "name": "B1 to roof level markers modeled",
@@ -179,7 +618,7 @@
     {
       "name": "substantial visible nervous-system geometry",
       "passed": true,
-      "detail": "830"
+      "detail": "921"
     },
     {
       "name": "Step 3 authority covers all nine backbone systems",
@@ -407,12 +846,57 @@
       "detail": "222"
     },
     {
+      "name": "Step 8 all 14 system families have end-to-end traceability",
+      "passed": true,
+      "detail": "{'ELEC-NORMAL': True, 'ELEC-EMERGENCY': True, 'LIGHTING-CONTROLS': True, 'DATA-STRUCTURED': True, 'AV-MEDIA': True, 'BAS-CONTROLS': True, 'SECURITY-ACCESS': True, 'HVAC-AIR': True, 'WATER-DOMESTIC': True, 'SANITARY-VENT': True, 'STORM-DRAINAGE': True, 'FIRE-PROTECTION': True, 'FIRE-ALARM': True, 'SERVICE-HOUSEKEEPING': True}"
+    },
+    {
+      "name": "Step 8 all served above-B1 levels have branch coverage",
+      "passed": true,
+      "detail": "{'ELEC-NORMAL': [1, 2, 3, 4, 5, 6, 7], 'ELEC-EMERGENCY': [1, 2, 3, 4, 5, 6, 7], 'LIGHTING-CONTROLS': [1, 2, 3, 4, 5, 6, 7], 'DATA-STRUCTURED': [1, 2, 3, 4, 5, 6, 7], 'AV-MEDIA': [1, 2, 3, 4, 5, 6], 'BAS-CONTROLS': [1, 2, 3, 4, 5, 6, 7], 'SECURITY-ACCESS': [1, 2, 3, 4, 5, 6, 7], 'HVAC-AIR': [1, 2, 3, 4, 5, 6, 7], 'WATER-DOMESTIC': [1, 2, 3, 4, 5, 6], 'SANITARY-VENT': [1, 2, 3, 4, 5, 6], 'STORM-DRAINAGE': [7], 'FIRE-PROTECTION': [1, 2, 3, 4, 5, 6, 7], 'FIRE-ALARM': [1, 2, 3, 4, 5, 6, 7], 'SERVICE-HOUSEKEEPING': [1, 2, 3, 4, 5, 6, 7]}"
+    },
+    {
+      "name": "Step 8 every system has representative endpoints",
+      "passed": true,
+      "detail": "{'ELEC-NORMAL': 11, 'ELEC-EMERGENCY': 8, 'LIGHTING-CONTROLS': 7, 'DATA-STRUCTURED': 14, 'AV-MEDIA': 7, 'BAS-CONTROLS': 10, 'SECURITY-ACCESS': 7, 'HVAC-AIR': 9, 'WATER-DOMESTIC': 6, 'SANITARY-VENT': 6, 'STORM-DRAINAGE': 7, 'FIRE-PROTECTION': 9, 'FIRE-ALARM': 7, 'SERVICE-HOUSEKEEPING': 7}"
+    },
+    {
+      "name": "Step 8 every system has monitoring/service-access evidence",
+      "passed": true,
+      "detail": "{'ELEC-NORMAL': True, 'ELEC-EMERGENCY': True, 'LIGHTING-CONTROLS': True, 'DATA-STRUCTURED': True, 'AV-MEDIA': True, 'BAS-CONTROLS': True, 'SECURITY-ACCESS': True, 'HVAC-AIR': True, 'WATER-DOMESTIC': True, 'SANITARY-VENT': True, 'STORM-DRAINAGE': True, 'FIRE-PROTECTION': True, 'FIRE-ALARM': True, 'SERVICE-HOUSEKEEPING': True}"
+    },
+    {
+      "name": "Step 8 floor routes avoid protected stair/elevator zones",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "Step 8 closes secondary shared-path branches",
+      "passed": true,
+      "detail": "24"
+    },
+    {
       "name": "Services viewer still loads canonical asset",
       "passed": true,
       "detail": ""
     },
     {
       "name": "Services viewer exposes per-floor service geometry",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Services viewer has architecture/services exposure controls",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Services viewer floor isolation spans B1 through L7",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Services viewer status reflects Step 8",
       "passed": true,
       "detail": ""
     }

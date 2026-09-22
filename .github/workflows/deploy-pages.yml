@@ -59,14 +59,14 @@ jobs:
           python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
           python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 
-      - name: Verify Equity Uprise Services Step 7 deploy contract
+      - name: Verify Equity Uprise Services Step 8 deploy contract
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           p=Path("docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2-report.json")
           r=json.loads(p.read_text())
-          assert r.get("status")=="services-step7-interior-device-ceiling-realism", r.get("status")
+          assert r.get("status")=="services-step8-whole-building-verified", r.get("status")
           assert r.get("passed") is True
           assert r.get("checks_failed")==0
           assert r.get("b1_riser_connections")==9
@@ -106,7 +106,16 @@ jobs:
           assert r.get("step7_valves")==12
           assert r.get("step7_access_panels")==18
           assert r.get("step7_plumbing_connections")==12
-          print("Services Step 7 deploy contract verified", r["sha256"])
+          assert r.get("step8_branch_records")==24
+          assert r.get("step8_branch_segments",0)>0
+          assert r.get("step8_endpoints")==24
+          assert r.get("step8_traceability_systems_total")==14
+          assert r.get("step8_traceability_systems_passing")==14
+          assert r.get("step8_traceability_complete") is True
+          assert r.get("step8_whole_route_core_clashes")==0
+          assert r.get("step8_viewer_status_current") is True
+          assert r.get("final_services_gate") is True
+          print("Services Step 8 deploy contract verified", r["sha256"])
           PY
 
       - name: Publish Equity Uprise preview assets

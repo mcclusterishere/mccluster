@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-building-services-core-v2",
-  "status": "services-step3-b1-source-connected-verified",
+  "status": "services-step8-whole-building-verified",
   "not_for_construction": true,
   "building_id": "equity-uprise-building",
   "source_level": "basement-b1",
@@ -197,13 +197,15 @@
         3,
         4,
         5,
-        6
+        6,
+        7
       ],
       "representative_endpoints": [
         "supply terminals",
         "returns",
         "exhaust terminals",
-        "equipment/media environmental support"
+        "equipment/media environmental support",
+        "roof mechanical/service terminations"
       ],
       "dependencies": [
         "ELEC-NORMAL",
@@ -350,9 +352,9 @@
     "code-required ratings",
     "final equipment replacement paths"
   ],
-  "current_implementation_phase": "services-step-3-complete",
+  "current_implementation_phase": "services-step-8-complete",
   "floor_addenda_root": "services/floor-addenda",
-  "visible_geometry_status": "verified Step 2 vertical backbone + Step 3 B1 source/plant and source-to-riser geometry in working Services viewer layer",
+  "visible_geometry_status": "verified Step 2 vertical backbone + Step 3 B1 source/plant + Step 4 Floors 1-3 + Step 5 Floors 4-6/roof handoffs + Step 6 detailed Level 7 + Step 7 interior devices + Step 8 all-system traceability",
   "floor_addenda_ref": "services/floor-services-addenda.json",
   "services_glb": "generated/equity-uprise-building-services-core-v2.glb",
   "services_report": "generated/equity-uprise-building-services-core-v2-report.json",
@@ -488,5 +490,11 @@
     "b1_riser_connections": "9/9",
     "checks": "28/28",
     "sha256": "1c1772aaac2410dbe8b8c9e601a969ab715215df30f596dbdf8bea436cec5e91"
+  },
+  "step8_verification": {
+    "report_ref": "generated/equity-uprise-building-services-core-v2-report.json",
+    "required_status": "services-step8-whole-building-verified",
+    "system_families": 14,
+    "rule": "All system families must show authority-backed source, vertical route, served-level branch coverage, representative endpoints, monitoring/service-access evidence, no protected-core route clashes, and working viewer floor/services controls."
   }
 }

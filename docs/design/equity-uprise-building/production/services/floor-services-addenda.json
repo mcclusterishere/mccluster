@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-floor-services-addenda",
-  "status": "active-coordination-addenda-services-step7-interior-device-ceiling-realism",
+  "status": "active-coordination-addenda-services-step8-whole-building-verified",
   "not_for_construction": true,
   "riser_source_ref": "../vertical-risers-core-v2.json",
   "services_core_ref": "../building-services-core-v2.json",

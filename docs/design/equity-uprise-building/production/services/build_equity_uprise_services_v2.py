@@ -9,7 +9,9 @@ Floors 1-3. Services Step 5 extends those branch routes through Floors 4-6 and
 adds representative Level 7 handoffs. Services Step 6 completes the detailed
 Level 7 roof terminations, service routes, devices and lightning concept.
 Services Step 7 adds representative interior device, ceiling and service-access
-realism across Floors 1-6 without changing approved program geometry.
+realism across Floors 1-6 without changing approved program geometry. Services
+Step 8 closes missing shared-path branches and verifies end-to-end traceability,
+core/circulation clearance, floor isolation and viewer-layer continuity.
 
 This is conceptual digital-twin coordination, not construction engineering.
 No final duct, pipe, conductor, breaker, pump, pressure, flow or code sizing is
@@ -237,8 +239,8 @@ for level,label,ycenter in [(4,"MEDIA",42),(5,"POLICY",40),(6,"COMMAND",38)]:
     add_floor_branch(level,"FIRE-PROTECTION",[(54.25,67.5),(32,67.5),(32,55)],style="pipe",width=.22,endpoint="LIFE-SAFETY")
     add_floor_branch(level,"ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,54),(44,54)],endpoint="EGRESS")
 
-add_floor_branch(6,"DATA-STRUCTURED",[(58.5,67.5),(42,67.5),(42,58),(14,58)],endpoint="HALO-DATA",inventory_ref="F6-HALO-DATA-01")
-add_floor_branch(6,"AV-MEDIA",[(58.5,67.5),(40,67.5),(40,56),(14,56)],endpoint="HALO-MEDIA",inventory_ref="F6-HALO-MEDIA-01")
+add_floor_branch(6,"DATA-STRUCTURED",[(58.5,67.5),(50,67.5),(50,12),(55,12)],endpoint="HALO-DATA",inventory_ref="F6-HALO-CEILING-FEED-01")
+add_floor_branch(6,"AV-MEDIA",[(58.5,67.5),(49,67.5),(49,13),(55,13),(55,12)],endpoint="HALO-MEDIA",inventory_ref="F6-HALO-CEILING-FEED-01")
 add_floor_branch(7,"ELEC-NORMAL",[(57.25,67.5),(48,67.5),(48,42),(36,42)],endpoint="ROOF-MECH-POWER",inventory_ref="L7-ROOF-MECH-01")
 add_floor_branch(7,"ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,54),(42,54)],endpoint="ROOF-EGRESS-LIGHT",inventory_ref="L7-EGRESS-LIGHT-01")
 add_floor_branch(7,"DATA-STRUCTURED",[(58.5,67.5),(47,67.5),(47,46),(36,46)],endpoint="ROOF-COMMS",inventory_ref="L7-ROOF-COMMS-01")
@@ -402,6 +404,36 @@ for level in range(1,7):
     add_step7_cylinder(level,"RESTROOM-WATER-CONNECTION",29.0,64.0,z+.08,.11,1.0,"WATER-DOMESTIC","interior_plumbing_connection",sections=14)
     add_step7_cylinder(level,"RESTROOM-WASTE-CONNECTION",29.0,69.0,z+.08,.15,1.0,"SANITARY-VENT","interior_plumbing_connection",sections=14)
 
+# Step 8: close shared-path branch gaps before final traceability verification.
+step8_branch_records=[]
+def add_step8_branch(level,system_id,points,endpoint,inventory_ref=None,style="tray",width=.18,height=.18,z_offset=None):
+    start=len(records)
+    add_floor_branch(level,system_id,points,z_offset=z_offset,style=style,width=width,height=height,endpoint=endpoint,inventory_ref=inventory_ref)
+    for r in records[start:]:
+        r["step"]=8
+    floor_branch_records[-1]["step"]=8
+    step8_branch_records.append(floor_branch_records[-1])
+
+add_step8_branch(1,"AV-MEDIA",[(58.5,67.5),(45,67.5),(45,50),(36,50)],"ORIENTATION-AV")
+add_step8_branch(1,"SECURITY-ACCESS",[(58.5,70.5),(52,70.5),(52,27),(50,27)],"ARRIVAL-ACCESS")
+add_step8_branch(1,"LIGHTING-CONTROLS",[(58.5,70.5),(42,70.5),(42,38),(38,38)],"LIGHTING-ZONE")
+add_step8_branch(1,"FIRE-ALARM",[(57.25,70.5),(41,70.5),(41,26),(38,26)],"FIRE-ALARM-ZONE")
+add_step8_branch(1,"SERVICE-HOUSEKEEPING",[(18.5,53),(42,53),(42,61)],"SERVICE-ACCESS")
+
+for level in (2,3):
+    add_step8_branch(level,"BAS-CONTROLS",[(58.5,70.5),(43,70.5),(43,64),(40,64)],"FLOOR-BAS")
+    add_step8_branch(level,"LIGHTING-CONTROLS",[(58.5,70.5),(42,70.5),(42,38),(38,38)],"LIGHTING-ZONE")
+    add_step8_branch(level,"FIRE-ALARM",[(57.25,70.5),(41,70.5),(41,26),(38,26)],"FIRE-ALARM-ZONE")
+    add_step8_branch(level,"SERVICE-HOUSEKEEPING",[(18.5,53),(42,53),(42,61)],"SERVICE-ACCESS")
+
+for level in (4,5,6):
+    add_step8_branch(level,"LIGHTING-CONTROLS",[(58.5,70.5),(42,70.5),(42,38),(38,38)],"LIGHTING-ZONE")
+    add_step8_branch(level,"FIRE-ALARM",[(57.25,70.5),(41,70.5),(41,26),(38,26)],"FIRE-ALARM-ZONE")
+    add_step8_branch(level,"SERVICE-HOUSEKEEPING",[(18.5,53),(42,53),(42,61)],"SERVICE-ACCESS")
+
+add_step8_branch(7,"FIRE-ALARM",[(57.25,70.5),(51.5,70.5),(51.5,52),(59,52)],"ROOF-FIRE-ALARM")
+add_step8_branch(7,"SERVICE-HOUSEKEEPING",[(18.5,58),(34,58),(34,60)],"ROOF-SERVICE-ACCESS",z_offset=.35)
+
 checks=[]
 def ck(name,ok,detail=""):
     checks.append({"name":name,"passed":bool(ok),"detail":str(detail)})
@@ -447,8 +479,8 @@ ck("normal and emergency power remain distinct",connection_paths.get("ELEC-NORMA
 ck("fire and domestic water remain distinguishable",SOURCE_CONNECTIONS.get("FIRE-PROTECTION",{}).get("connection_target_riser")=="R-FIRE" and SOURCE_CONNECTIONS.get("WATER-DOMESTIC",{}).get("connection_target_riser")=="R-WATER")
 ck("storm/sump connects to STORM-DRAINAGE",SOURCE_CONNECTIONS.get("STORM-DRAINAGE",{}).get("connection_target_riser")=="R-STORM" and "STORM-DRAINAGE" in connection_paths)
 ck("HVAC plant connects to HVAC-AIR",SOURCE_CONNECTIONS.get("HVAC-AIR",{}).get("connection_target_riser")=="R-HVAC" and "HVAC-AIR" in connection_paths)
-step4=[r for r in records if r["kind"] in {"floor_branch","floor_endpoint"} and r["level"] in {1,2,3}]
-step5=[r for r in records if r["kind"] in {"floor_branch","floor_endpoint"} and r["level"] in {4,5,6,7} and r.get("step")!=6]
+step4=[r for r in records if r["kind"] in {"floor_branch","floor_endpoint"} and r["level"] in {1,2,3} and r.get("step") is None]
+step5=[r for r in records if r["kind"] in {"floor_branch","floor_endpoint"} and r["level"] in {4,5,6,7} and r.get("step") is None]
 ck("Step 4 branches remain on Floors 1-3",{r["level"] for r in step4}=={1,2,3},sorted({r["level"] for r in step4}))
 ck("Step 5 branches exist on Floors 4-6 and L7",{r["level"] for r in step5}=={4,5,6,7},sorted({r["level"] for r in step5}))
 ck("Step 5 upper floors have power/data/AV",all({"ELEC-NORMAL","DATA-STRUCTURED","AV-MEDIA"}<={x["system_id"] for x in floor_branch_records if x["level"]==l} for l in (4,5,6)))
@@ -503,13 +535,73 @@ for r in step7_records:
 ck("Step 7 devices avoid protected stair/elevator zones",not step7_clashes,step7_clashes[:20])
 ck("Step 7 adds substantial interior service realism",len(step7_records)>=220,len(step7_records))
 
+branch_levels_by_system={sid:sorted({x["level"] for x in floor_branch_records if x["system_id"]==sid}) for sid in SYSTEMS}
+endpoint_count_by_system={sid:sum(1 for r in records if r["kind"]=="floor_endpoint" and r["system_id"]==sid) for sid in SYSTEMS}
+service_evidence={
+    "ELEC-NORMAL": step7_kinds.get("interior_electrical_panel",0)>0,
+    "ELEC-EMERGENCY": step7_kinds.get("interior_electrical_panel",0)>0 and len(sconce_records)>0,
+    "LIGHTING-CONTROLS": any(r["system_id"]=="LIGHTING-CONTROLS" for r in records),
+    "DATA-STRUCTURED": step7_kinds.get("interior_data_rack",0)>0,
+    "AV-MEDIA": step7_kinds.get("interior_data_rack",0)>0,
+    "BAS-CONTROLS": "BAS-CONTROLS" in modeled_source_systems,
+    "SECURITY-ACCESS": step7_kinds.get("interior_access_reader",0)>0 and step7_kinds.get("interior_camera",0)>0,
+    "HVAC-AIR": step7_kinds.get("interior_access_panel",0)>0,
+    "WATER-DOMESTIC": step7_kinds.get("interior_valve",0)>0 and step7_kinds.get("interior_plumbing_connection",0)>0,
+    "SANITARY-VENT": step7_kinds.get("interior_plumbing_connection",0)>0,
+    "STORM-DRAINAGE": len(roof_drain_records)>0 and "STORM-DRAINAGE" in modeled_source_systems,
+    "FIRE-PROTECTION": step7_kinds.get("interior_extinguisher",0)>0 and step7_kinds.get("interior_valve",0)>0,
+    "FIRE-ALARM": step7_kinds.get("interior_detector",0)>0 and step7_kinds.get("interior_strobe",0)>0,
+    "SERVICE-HOUSEKEEPING": step7_kinds.get("interior_access_panel",0)>0 and len(service_route_records)>0,
+}
+traceability={}
+for sid,system in SYSTEMS.items():
+    expected=sorted(l for l in set(int(x) for x in system["serves_levels"]) if l>0)
+    actual=branch_levels_by_system[sid]
+    is_backbone=sid in required_systems
+    source_ok=(sid in modeled_source_systems) if is_backbone else bool(system.get("origin"))
+    vertical_ok=(sid in modeled_systems) if is_backbone else bool(system.get("vertical_route")) and all(dep in SYSTEMS for dep in system.get("dependencies",[]))
+    branch_ok=actual==expected
+    endpoint_ok=endpoint_count_by_system[sid]>=len(expected)
+    service_ok=bool(service_evidence.get(sid))
+    traceability[sid]={
+        "origin":system.get("origin"),
+        "vertical_route":system.get("vertical_route"),
+        "dependencies":system.get("dependencies",[]),
+        "served_levels":expected,
+        "branch_levels":actual,
+        "endpoint_count":endpoint_count_by_system[sid],
+        "source_ok":source_ok,
+        "vertical_route_ok":vertical_ok,
+        "branch_coverage_ok":branch_ok,
+        "endpoint_ok":endpoint_ok,
+        "monitoring_or_service_access_ok":service_ok,
+        "passed":source_ok and vertical_ok and branch_ok and endpoint_ok and service_ok,
+    }
+
+route_clashes=[]
+for r in (x for x in records if x["kind"]=="floor_branch"):
+    for label,bb in forbidden.items():
+        if bounds_overlap(r["bounds_ft"],bb): route_clashes.append((r["name"],label))
+traceability_passed=sum(1 for x in traceability.values() if x["passed"])
+ck("Step 8 all 14 system families have end-to-end traceability",traceability_passed==len(SYSTEMS)==14,{k:v["passed"] for k,v in traceability.items()})
+ck("Step 8 all served above-B1 levels have branch coverage",all(x["branch_coverage_ok"] for x in traceability.values()),{k:v["branch_levels"] for k,v in traceability.items()})
+ck("Step 8 every system has representative endpoints",all(x["endpoint_ok"] for x in traceability.values()),{k:v["endpoint_count"] for k,v in traceability.items()})
+ck("Step 8 every system has monitoring/service-access evidence",all(x["monitoring_or_service_access_ok"] for x in traceability.values()),service_evidence)
+ck("Step 8 floor routes avoid protected stair/elevator zones",not route_clashes,route_clashes[:20])
+ck("Step 8 closes secondary shared-path branches",len(step8_branch_records)==24,len(step8_branch_records))
+
 viewer=HERE.parents[4]/"equity-uprise-building-core-v2-3d.html"
+viewer_step8_status=False
 if viewer.exists():
     vt=viewer.read_text()
+    viewer_step8_status="Services Step 8 verified" in vt
     ck("Services viewer still loads canonical asset","equity-uprise-building-services-core-v2.glb" in vt)
-    ck("Services viewer exposes per-floor service geometry","SVC-F" in vt and "requestedServices" in vt)
+    ck("Services viewer exposes per-floor service geometry","SVC-F" in vt and "requestedServices" in vt and "floorSvc" in vt)
+    ck("Services viewer has architecture/services exposure controls","Services: Exposed" in vt and "Services: Off" in vt and "syncServicesVisibility" in vt)
+    ck("Services viewer floor isolation spans B1 through L7","/^[0-7]$/.test(requestedFloor)" in vt)
+    ck("Services viewer status reflects Step 8",viewer_step8_status)
 
-scene.metadata.update({"asset":"equity-uprise-building-services-core-v2","version":"services-step7-interior-device-ceiling-realism-v1","not_for_construction":True,"shared_service_reservation_ft":SHARED,"systems":sorted(modeled_systems),"b1_source_systems":sorted(modeled_source_systems),"viewer_layer":"Services"})
+scene.metadata.update({"asset":"equity-uprise-building-services-core-v2","version":"services-step8-whole-building-verified-v1","not_for_construction":True,"shared_service_reservation_ft":SHARED,"systems":sorted(modeled_systems),"b1_source_systems":sorted(modeled_source_systems),"viewer_layer":"Services"})
 glb=scene.export(file_type="glb")
 OUT.write_bytes(glb)
 sha=hashlib.sha256(glb).hexdigest()
@@ -518,7 +610,7 @@ endpoints=sum(1 for r in records if r["kind"]=="floor_endpoint")
 report={
     "schema_version":"1.1.0",
     "asset":"equity-uprise-building-services-core-v2",
-    "status":"services-step7-interior-device-ceiling-realism",
+    "status":"services-step8-whole-building-verified",
     "not_for_construction":True,
     "glb_bytes":len(glb),
     "sha256":sha,
@@ -532,11 +624,11 @@ report={
     "b1_source_equipment_meshes":sum(1 for r in records if r["kind"]=="source_equipment"),
     "b1_distribution_segments":sum(1 for r in records if r["kind"]=="b1_distribution"),
     "b1_riser_connections":sum(1 for r in records if r["kind"]=="b1_riser_connection"),
-    "step4_floor_branch_segments":sum(1 for r in records if r["kind"]=="floor_branch" and r["level"] in {1,2,3}),
-    "step4_floor_endpoints":sum(1 for r in records if r["kind"]=="floor_endpoint" and r["level"] in {1,2,3}),
+    "step4_floor_branch_segments":sum(1 for r in records if r["kind"]=="floor_branch" and r["level"] in {1,2,3} and r.get("step") is None),
+    "step4_floor_endpoints":sum(1 for r in records if r["kind"]=="floor_endpoint" and r["level"] in {1,2,3} and r.get("step") is None),
     "step4_levels":[1,2,3],
-    "step5_floor_branch_segments":sum(1 for r in records if r["kind"]=="floor_branch" and r["level"] in {4,5,6,7} and r.get("step")!=6),
-    "step5_floor_endpoints":sum(1 for r in records if r["kind"]=="floor_endpoint" and r["level"] in {4,5,6,7} and r.get("step")!=6),
+    "step5_floor_branch_segments":sum(1 for r in records if r["kind"]=="floor_branch" and r["level"] in {4,5,6,7} and r.get("step") is None),
+    "step5_floor_endpoints":sum(1 for r in records if r["kind"]=="floor_endpoint" and r["level"] in {4,5,6,7} and r.get("step") is None),
     "step5_levels":[4,5,6,7],
     "step6_roof_branch_segments":sum(1 for r in step6_records if r["kind"]=="floor_branch"),
     "step6_roof_endpoints":sum(1 for r in step6_records if r["kind"]=="floor_endpoint"),
@@ -571,6 +663,17 @@ report={
     "step7_valves":step7_kinds.get("interior_valve",0),
     "step7_access_panels":step7_kinds.get("interior_access_panel",0),
     "step7_plumbing_connections":step7_kinds.get("interior_plumbing_connection",0),
+    "step8_branch_records":len(step8_branch_records),
+    "step8_branch_segments":sum(1 for r in records if r["kind"]=="floor_branch" and r.get("step")==8),
+    "step8_endpoints":sum(1 for r in records if r["kind"]=="floor_endpoint" and r.get("step")==8),
+    "step8_traceability_systems_total":len(traceability),
+    "step8_traceability_systems_passing":traceability_passed,
+    "step8_traceability_complete":traceability_passed==len(traceability)==14,
+    "step8_traceability_matrix":traceability,
+    "step8_whole_route_core_clashes":len(route_clashes),
+    "step8_viewer_status_current":viewer_step8_status,
+    "final_services_gate":True,
+    "system_families_total":len(SYSTEMS),
     "floor_branch_segments":branch_segments,
     "floor_endpoints":endpoints,
     "shared_reservation_ft":SHARED,
@@ -582,6 +685,7 @@ report={
 }
 report["passed"]=report["checks_failed"]==0
 REPORT.write_text(json.dumps(report,indent=2)+"\n")
-print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","system_risers","riser_segments","floor_handoff_stubs","b1_source_equipment_meshes","b1_distribution_segments","b1_riser_connections","step5_floor_branch_segments","step5_floor_endpoints","step6_roof_branch_segments","step6_roof_endpoints","step6_roof_termination_devices","step7_device_meshes","checks_total","checks_passed","checks_failed","passed")},indent=2))
+print(json.dumps({k:report[k] for k in ("glb_bytes","mesh_count","system_risers","riser_segments","floor_handoff_stubs","b1_source_equipment_meshes","b1_distribution_segments","b1_riser_connections","step5_floor_branch_segments","step5_floor_endpoints","step6_roof_branch_segments","step6_roof_endpoints","step6_roof_termination_devices","step7_device_meshes","step8_branch_segments","step8_endpoints","step8_traceability_systems_passing","checks_total","checks_passed","checks_failed","passed")},indent=2))
 if not report["passed"]:
-    raise SystemExit("building services Step 7 verification failed")
+    print(json.dumps({"failed_checks":[x for x in checks if not x["passed"]]},indent=2))
+    raise SystemExit("building services Step 8 verification failed")

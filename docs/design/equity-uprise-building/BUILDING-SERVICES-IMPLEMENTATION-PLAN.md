@@ -46,14 +46,16 @@ The representative Step 5 roof handoffs are now completed with explicit service 
 
 Verified Step 6 snapshot: **608 meshes / 425,284 bytes / 57 Step 6 roof branch segments / 21 Step 6 endpoints / 38 detailed roof devices / 45 of 45 checks passing / SHA-256 `a6c3aaf47d2d8e30950306dad7b0e260e7b50967a973d4eedad39e1aebe77f81`**.
 
-## Services Step 7 — interior device / ceiling realism — ACTIVE SOURCE IMPLEMENTATION
+## Services Step 7 — interior device / ceiling realism — COMPLETE
 
-Add a representative device/service layer across Floors 1–6: electrical panels, data racks, cable trays, conduit drops, diffusers/return grilles, fire detectors/strobes, extinguishers, access readers/intercoms/cameras, receptacles/floor boxes, wet/fire valves, access panels and restroom service connections. Preserve approved floor architecture and use the existing Services overlay rather than modifying floor identity.
+The Services layer now includes representative device/service realism across Floors 1–6: electrical panels, data racks, cable trays, conduit drops, diffusers/return grilles, fire detectors/strobes, extinguishers, access readers/intercoms/cameras, receptacles/floor boxes, wet/fire valves, access panels and restroom service connections.
 
-## Services Step 8 — whole-building verification
+Verified Step 7 snapshot: **830 meshes / 594,088 bytes / 222 Step 7 device meshes / 59 of 59 checks passing / SHA-256 `ff667d1c84006251a221d109446c519985e1e82a32943158c002daf3131d641c`**.
 
-Require vertical continuity B1→L7, no core/circulation clashes, traceability from source to endpoints, working floor isolation and viewer layers for Architecture vs Services.
+## Services Step 8 — whole-building verification — FINAL GATE SOURCE IMPLEMENTED
+
+Close any remaining shared-path floor-branch gaps, then require end-to-end traceability for all 14 system families: authority-backed source, vertical route, complete served-level branch coverage, representative endpoints, monitoring/service-access evidence, no protected-core route clashes, B1→L7 floor isolation and working Architecture/Services viewer controls.
 
 ## Current stop point
 
-Services Steps 1–6 are complete, verified and live. The nervous-system model traces B1 source/plant through the nine vertical risers, Floors 1–6 distribution and detailed Level 7 terminations. **Current work is Services Step 7: interior device / ceiling realism across Floors 1–6.** After Step 7, the final services implementation gate is Step 8 whole-building verification and source-to-endpoint traceability.
+Services Steps 1–7 are complete, verified and live. **Step 8 is the final services gate:** close shared-path gaps and prove all-system source-to-endpoint traceability, protected-core clearance, floor isolation and viewer-layer continuity. The generated Step 8 report is the authoritative completion proof.
