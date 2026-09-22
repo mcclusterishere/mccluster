@@ -13,6 +13,7 @@ import {
   sendMeetingChat,
   speakInMeeting,
 } from '../meeting/engine.mjs';
+import { sealMeetingTarget } from '../meeting/target-crypto.mjs';
 import {
   createMeetingSession,
   meetingSessionById,
@@ -150,7 +151,11 @@ export const MEETING_TOOLS = Object.freeze([
     name: 'core.meeting.session.get',
     title: 'Read meeting delegate session',
     description: 'Read one durable McCluster meeting delegate session from the canonical control plane.',
-    inputSchema: { type: 'object', required: ['org_id', 'session_id'], properties: { org_id: { type: 'string' }, session_id: { type: 'string' } } },
+    inputSchema: {
+      type: 'object',
+      required: ['org_id', 'session_id'],
+      properties: { org_id: { type: 'string' }, session_id: { type: 'string' } },
+    },
   },
 ]);
 
@@ -164,9 +169,14 @@ export async function scheduleMeetingDelegate(args = {}) {
   const mode = normalizeMeetingMode(args.mode);
   const start = iso(args.scheduled_start, 'scheduled_start');
   const end = iso(args.scheduled_end, 'scheduled_end');
-  if (new Date(end) <= new Date(start)) throw Object.assign(new Error('scheduled_end must be after scheduled_start'), { status: 400 });
+  if (new Date(end) <= new Date(start)) {
+    throw Object.assign(new Error('scheduled_end must be after scheduled_start'), { status: 400 });
+  }
 
-  const principalName = clean(args.principal_name || process.env.MCCLUSTER_MEETING_PRINCIPAL_NAME || 'Matthew McCluster', 200);
+  const principalName = clean(
+    args.principal_name || process.env.MCCLUSTER_MEETING_PRINCIPAL_NAME || 'Matthew McCluster',
+    200,
+  );
   const botDisplayName = delegateDisplayName(mode, principalName);
   const brief = args.brief && typeof args.brief === 'object' ? args.brief : {};
   const policy = policyFromArgs(args, mode);
@@ -188,8 +198,10 @@ export async function scheduleMeetingDelegate(args = {}) {
     orgId,
     calendarEventId: clean(args.calendar_event_id, 1000) || null,
     platform: target.platform,
-    meetingUrlHash: target.meeting_url ? crypto.createHash('sha256').update(target.meeting_url).digest('hex') : null,
-    nativeMeetingId: target.native_meeting_id,
+    meetingUrlHash: target.meeting_url
+      ? crypto.createHash('sha256').update(target.meeting_url).digest('hex')
+      : null,
+    nativeMeetingId: null,
     mode,
     botDisplayName,
     scheduledStart: start,
@@ -198,7 +210,8 @@ export async function scheduleMeetingDelegate(args = {}) {
     policy,
   });
 
-  const sealedTarget = sealMeetingTarget(target);\n  const key = clean(args.calendar_event_id, 1000) || targetKey(target, start);
+  const sealedTarget = sealMeetingTarget(target);
+  const key = clean(args.calendar_event_id, 1000) || targetKey(target, start);
   const joinLead = Math.min(900, Math.max(0, Number(args.join_lead_seconds ?? 120)));
   const collectDelay = Math.min(3600, Math.max(0, Number(args.collect_delay_seconds ?? 300)));
   const joinAtMs = Math.max(Date.now(), new Date(start).getTime() - joinLead * 1000);
@@ -206,7 +219,8 @@ export async function scheduleMeetingDelegate(args = {}) {
 
   const commonInput = {
     session_id: session.id,
-    target,
+    sealed_target: sealedTarget,
+    target_platform: target.platform,
     mode,
     principal_name: principalName,
     brief,
