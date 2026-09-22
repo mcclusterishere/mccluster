@@ -39,7 +39,7 @@ The building never becomes the spatial data source of truth.
 ## 3. Core V2 placement reservation
 
 Conceptual globe envelope:
-- plan center: **(41, 22) ft**;
+- plan center: **(22, 22.5) ft**;
 - sphere radius: **2.25 ft**;
 - sphere diameter: **4.5 ft**;
 - center height: **8.25 ft AFF**;
