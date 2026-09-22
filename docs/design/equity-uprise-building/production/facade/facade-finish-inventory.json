@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-facade-architectural-finish",
-  "status": "facade-finish-step4-window-base-corners-verified",
+  "status": "facade-finish-step5-entry-logo-ground-contact-implemented-pending-generated-verification",
   "not_for_construction": true,
   "units": "feet",
   "baseline": {
@@ -694,8 +694,9 @@
         "real_mounting_plane"
       ],
       "description": "Finish existing entry portal without moving the vestibule.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-DOOR-LEAF-01",
@@ -709,8 +710,9 @@
         "paired_public_entry_leaves"
       ],
       "description": "Two primary public door leaves within the existing entry composition.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-DOOR-FRAME-01",
@@ -724,8 +726,9 @@
         "paired_door_frames"
       ],
       "description": "Frame each public entry leaf.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-DOOR-HARDWARE-01",
@@ -739,8 +742,9 @@
         "pull_handle_sets"
       ],
       "description": "Visible institutional pull hardware for the paired public entry.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-ENTRY-TRANSOM-01",
@@ -754,8 +758,9 @@
         "entry_transom"
       ],
       "description": "Resolve glazed transom above the door pair.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-ENTRY-SIDELIGHT-W-01",
@@ -769,8 +774,9 @@
         "west_sidelight"
       ],
       "description": "West sidelight / vestibule glazing.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-ENTRY-SIDELIGHT-E-01",
@@ -784,8 +790,9 @@
         "east_sidelight"
       ],
       "description": "East sidelight / vestibule glazing.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-ENTRY-THRESHOLD-01",
@@ -799,8 +806,9 @@
         "entry_threshold_transition"
       ],
       "description": "Give the front door a visible threshold and base transition.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-ENTRY-SOFFIT-01",
@@ -814,8 +822,9 @@
         "canopy_soffit"
       ],
       "description": "Finished underside of existing entry canopy.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-ENTRY-FASCIA-01",
@@ -830,8 +839,9 @@
         "edge_return"
       ],
       "description": "Give the canopy a finished edge and real thickness.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-ENTRY-DOWNLIGHT-01",
@@ -845,8 +855,9 @@
         "recessed_canopy_downlights"
       ],
       "description": "Six restrained recessed canopy downlights.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-SIGN-BACKER-ENTRY-01",
@@ -860,8 +871,9 @@
         "entry_sign_mounting_plane"
       ],
       "description": "Real backing/mounting plane for entry identity.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-SIGN-LOGO-ENTRY-01",
@@ -877,8 +889,9 @@
         "pale_mounting_plate"
       ],
       "description": "Use the exact approved repo Equity Uprise logo geometry at the main entrance; literal E=U substitution is prohibited.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-SIGN-LETTER-WORDMARK-ENTRY-01",
@@ -892,8 +905,9 @@
         "dimensional_Equity_Uprise_wordmark"
       ],
       "description": "Replace block wordmark with architectural lettering.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-SIGN-HALO-ENTRY-01",
@@ -907,8 +921,9 @@
         "restrained_entry_sign_halo"
       ],
       "description": "Subtle night identity lighting.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-SIGN-BACKER-CROWN-01",
@@ -922,8 +937,9 @@
         "crown_sign_mounting_plane"
       ],
       "description": "Mounting plane for the single allowed crown E = U mark.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-SIGN-LOGO-CROWN-01",
@@ -939,8 +955,9 @@
         "restrained_crown_scale"
       ],
       "description": "Future crown identity must use the same exact approved repo Equity Uprise logo geometry; literal E=U substitution is prohibited.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-SIGN-HALO-CROWN-01",
@@ -1150,8 +1167,9 @@
         "entry_vertical_grazers"
       ],
       "description": "Restrained entry/portal grazing.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-EXTERIOR-LIGHT-BASE-01",
@@ -1165,8 +1183,9 @@
         "base_wash_points"
       ],
       "description": "Limited base lighting, not a continuous outline.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-EXTERIOR-LIGHT-CROWN-01",
@@ -1195,8 +1214,9 @@
         "entry_apron"
       ],
       "description": "Simple architectural apron connecting the entrance to the ground plane.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-SITE-APRON-EDGE-01",
@@ -1210,8 +1230,9 @@
         "east_west_apron_edges"
       ],
       "description": "Subtle entry-apron edge definition compatible with site/egress authority.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     },
     {
       "id": "FAC-SITE-THRESHOLD-PAVING-01",
@@ -1225,8 +1246,9 @@
         "threshold_paving_differentiation"
       ],
       "description": "Paving/material transition immediately at the main entry.",
-      "implementation_status": "required_finish_geometry",
-      "authority_status": "locked_for_next_modeling_pass"
+      "implementation_status": "implemented_step_5_entry_logo_pending_verification",
+      "authority_status": "locked_for_next_modeling_pass",
+      "implementation_commit": "pending_publish_generated_commit"
     }
   ],
   "completion_contract": {
@@ -1260,38 +1282,34 @@
     "machine_gate": "future builder/report must prove every record implemented before facade finish can be marked complete"
   },
   "current_step": {
-    "id": "step_4_window_base_corners",
-    "records_in_scope": 32,
-    "records_deferred": 36,
+    "id": "step_5_completed_south_entry_approved_logo",
+    "records_in_scope": 22,
+    "cumulative_records_in_scope": 54,
+    "records_deferred": 14,
     "geometry_scope": [
-      "window assembly depth",
-      "jamb/head/sill/reveal/gasket geometry",
-      "secondary/primary frame finish",
-      "spandrel reveals",
-      "acoustic/service panel depth",
-      "service louver finish",
-      "four resolved corners",
-      "four-side base/plinth + reveal"
+      "finished portal wraps and inner reveals",
+      "paired public door leaves and frames",
+      "pull hardware",
+      "sidelights and transom",
+      "threshold",
+      "canopy soffit/fascia/edge returns",
+      "six canopy downlights",
+      "exact approved Equity Uprise repo logo at entrance",
+      "architectural Equity Uprise wordmark",
+      "corrected approved crown logo identity",
+      "entry grazing/base light fixtures",
+      "entry apron and threshold paving"
     ],
+    "canonical_logo_asset": "assets/img/equity-uprise-logo.webp",
+    "canonical_logo_vector": "equity-uprise-logo-vector.json",
     "explicitly_deferred": [
-      "entry finish",
-      "canopy finish",
-      "branding finish",
-      "crown finish",
-      "exterior lighting",
-      "site contact"
-    ],
-    "verification_status": "green",
-    "verification_snapshot": "0c9ed33abcd679d2efc316ca82e998d3524e7ffe",
-    "deterministic_report": {
-      "mesh_count": 3995,
-      "glb_bytes": 2499212,
-      "finish_records_modeled": 32,
-      "finish_records_deferred": 36,
-      "finished_window_modules": 238,
-      "checks": "22/22",
-      "sha256": "891192539b9d827f0060dea4b311c58f4df517023f7ef306d772d8055d2a8a6c"
-    }
+      "crown band finish",
+      "parapet caps",
+      "roof-service screen finish",
+      "headhouse/elevator trim",
+      "crown halo lighting",
+      "crown/service-screen exterior lighting"
+    ]
   },
   "brand_authority": {
     "canonical_asset": "assets/img/equity-uprise-logo.webp",
