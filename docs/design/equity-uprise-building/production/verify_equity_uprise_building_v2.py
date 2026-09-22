@@ -62,6 +62,8 @@ for level in range(0,8):
             if node not in names: errors.append(f"missing protected-stair door geometry {node}")
 for sealed in ["stair_a_enclosure_south","stair_b_enclosure_south"]:
     if sealed in names: errors.append(f"sealed stair south wall returned: {sealed}")
+for cap in ["stair_a_enclosure_L7_roof_cap","stair_b_enclosure_L7_roof_cap"]:
+    if cap not in names: errors.append(f"missing protected-stair roof cap {cap}")
 
 # B1 / site proof.
 if CORE.get("level_of_exit_discharge") != 1:
