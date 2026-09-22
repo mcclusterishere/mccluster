@@ -501,3 +501,54 @@ Verification:
 - live-site deployment: green.
 
 Step 8 is live. Remaining work is visual QA/refinement against the real rendered experience, not missing implementation.
+
+
+## Building services / nervous system — SERVICES STEP 1 COMPLETE
+
+The next whole-building implementation section is now active.
+
+Services Step 1 locked:
+- the fixed service reservation remains **X50–60 / Y66–72**;
+- nine conceptual system risers are allocated inside that reservation;
+- the east-side **X59–60** band remains a digital-twin separation/access buffer at the Stair A boundary;
+- B1 through L7 are covered by `production/services/floor-services-addenda.json`;
+- each level now has explicit served systems, representative endpoints and branch-routing intent;
+- no canonical room, protected stair, elevator, door or primary circulation has been moved.
+
+This is the coordination prerequisite for visible systems geometry.
+
+**Next: Services Step 2 — generate a real 3D services/backbone GLB and add a Services layer to the working building viewer.**
+
+
+## Building services / nervous system — SERVICES STEP 2 SOURCE IMPLEMENTED
+
+Services Step 2 now creates **real 3D building-services geometry**, not only documents.
+
+Implemented:
+- dedicated deterministic services builder: `production/services/build_equity_uprise_services_v2.py`;
+- dedicated generated GLB/report: `equity-uprise-building-services-core-v2.glb` / report;
+- nine color/material-coded service risers from B1 through Level 7;
+- story-by-story riser segmentation so floor isolation remains meaningful;
+- floor handoff stubs only at levels actually served by each system;
+- protected X59–60 separation/access buffer at the Stair A boundary;
+- working-stack viewer **Services: Off / Services: Exposed** control;
+- exposed-services mode ghosts the architecture so the internal backbone can be inspected;
+- floor isolation filters the services overlay to the relevant story/adjacent riser segments;
+- deploy pipeline publishes the services GLB/report.
+
+Services Step 2 deterministic verification: **GREEN**.
+
+Verified generated snapshot: `768a6270fa945dd5fb4c6c572bb72c2caade5d9d`
+
+- dedicated services GLB: **135 meshes / 86,488 bytes**;
+- **9/9 system risers modeled**;
+- **63 story riser segments**;
+- **63/63 authorized floor handoff stubs modeled**;
+- **8 level markers** from B1 through L7;
+- shared reservation remains X50–60 / Y66–72;
+- Stair A separation band remains X59–60 / Y66–72;
+- services checks: **12/12 passing**;
+- GLB SHA-256: `4fa994486889fa135d9dae163df3b8d9dabb81eef692520b642f53ad8dc3d1ef`;
+- full Equity Uprise Core V2 CI passed.
+
+Services Step 2 is a stable checkpoint. Next is **Services Step 3 — connect the real B1 plant/electrical/telecom/fire/sump/BAS equipment to this backbone.**

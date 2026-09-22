@@ -125,6 +125,7 @@ For any facade, glazing, exterior branding, interior-envelope, MEP, IT, plumbing
 - `EXTERIOR-FACADE-UPGRADE-SPEC.md`
 - `INTERIOR-ENVELOPE-AND-GEOMETRY-UPGRADE-SPEC.md`
 - `BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md`
+- `BUILDING-SERVICES-IMPLEMENTATION-PLAN.md`
 - `VERTICAL-DISTRIBUTION-AND-RISER-SPEC.md`
 - `FACADE-BRANDING-AND-SIGNAGE-SPEC.md`
 - `FACADE-ARCHITECTURAL-FINISH-PASS-SPEC.md`
@@ -135,6 +136,7 @@ For any facade, glazing, exterior branding, interior-envelope, MEP, IT, plumbing
 - `production/facade/equity-uprise-logo-vector.json` — exact approved repo logo geometry for 3D facade signage; sourced from `assets/img/equity-uprise-logo.webp` and the matching inline SVG.
 - `production/facade/build_equity_uprise_facade_v2.py`
 - `production/vertical-risers-core-v2.json`
+- `production/services/floor-services-addenda.json`
 - `production/interior-envelope-audit.json`
 
 These authorities **do not move the existing Core V2 shell/core**. They establish the next-pass requirement that the building function as a coordinated architectural envelope + services network rather than a set of visually implied systems.

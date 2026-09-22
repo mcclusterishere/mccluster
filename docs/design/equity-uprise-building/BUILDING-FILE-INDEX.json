@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 271,
+  "tracked_count": 276,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -79,6 +79,7 @@
       "docs/design/equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md",
       "docs/design/equity-uprise-building/BASEMENT-B1-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md",
+      "docs/design/equity-uprise-building/BUILDING-SERVICES-IMPLEMENTATION-PLAN.md",
       "docs/design/equity-uprise-building/BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md",
       "docs/design/equity-uprise-building/BUILDING-SYSTEMS-AND-FACADE-CORE-RULES.md",
       "docs/design/equity-uprise-building/EXTERIOR-FACADE-UPGRADE-SPEC.md",
@@ -143,6 +144,8 @@
       "docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2.glb",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2.glb",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-core-v2-plan-semantics-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2.glb",
@@ -290,6 +293,8 @@
       "docs/design/equity-uprise-building/production/generate_core_v2_plans.py",
       "docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py",
       "docs/design/equity-uprise-building/production/interior-envelope-audit.json",
+      "docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py",
+      "docs/design/equity-uprise-building/production/services/floor-services-addenda.json",
       "docs/design/equity-uprise-building/production/underground-tunnel-network.json",
       "docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py",
       "docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py",
