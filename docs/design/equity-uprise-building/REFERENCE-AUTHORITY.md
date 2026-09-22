@@ -75,7 +75,11 @@ Read program and geometry authority in this order:
      - `docs/design/equity-uprise-building/production/floor-01/floor-01-site-egress.json`
    - B1 support-level authority:
      - `docs/design/equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md`
+     - `docs/design/equity-uprise-building/BASEMENT-B1-PROGRAM-RECONCILIATION.md`
+     - `docs/design/equity-uprise-building/BASEMENT-B1-V1-V2-PRESERVATION-MAP.md`
+     - `docs/design/equity-uprise-building/BASEMENT-B1-SCHEMATIC-PLAN-BASIS.md`
      - `docs/design/equity-uprise-building/production/basement-b1-program.json`
+     - `docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json`
    - Underground-network authority:
      - `docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
      - `docs/design/equity-uprise-building/production/underground-tunnel-network.json`
