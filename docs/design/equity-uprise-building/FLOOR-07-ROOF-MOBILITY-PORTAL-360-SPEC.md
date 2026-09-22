@@ -533,7 +533,7 @@ The current capability authority contains **56 canonical building capabilities**
 ### Primary capabilities
 - **Cross-site ecosystem routing/departure/arrival layer** (`ecosystem-routing`, built_as_building_contract) — Ecosystem Routing Interface.
 - **Candidate rooftop mobility reservation** (`roof-mobility`, schematic_future_feasibility) — Candidate Mobility Zone only; no operational aviation claim.
-- **Uprise World experimental visual system** (`uprise-world`, experimental_separate) — May be a Level 7 destination route later; must not dictate building geometry or branding.
+- **Uprise World experimental visual system** (`uprise-world`, experimental_separate) — represented as a disabled, read-only optional Level 7 route node; it does not launch until explicitly enabled and must not dictate building geometry or branding.
 
 ### Secondary / cross-floor capabilities
 - None.
