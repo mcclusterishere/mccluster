@@ -15,9 +15,9 @@
       "Equity Uprise building CI/viewer artifacts"
     ]
   },
-  "candidate_count": 251,
+  "candidate_count": 253,
   "capability_source_count": 102,
-  "support_only_count": 149,
+  "support_only_count": 151,
   "entries": [
     {
       "path": "_unfinished/README.md",
@@ -877,6 +877,13 @@
       "rationale": "Shared frontend/navigation code references Equity Uprise but does not add a distinct program capability beyond mapped program code."
     },
     {
+      "path": "js/control-registry.js",
+      "classification": "shared_site_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Shared owner/operator navigation registry used across back-office surfaces; it references Equity Uprise routing but does not define an independent Equity Uprise program capability."
+    },
+    {
       "path": "js/crm.js",
       "classification": "capability_source",
       "capability_ids": [
@@ -1210,6 +1217,13 @@
       "capability_ids": [],
       "support_only": true,
       "rationale": "Test/verification file exercises Equity Uprise surfaces but is not itself a program capability."
+    },
+    {
+      "path": "scripts/test/control-surface.test.mjs",
+      "classification": "build_validation_support",
+      "capability_ids": [],
+      "support_only": true,
+      "rationale": "Regression test for shared operator-surface discoverability and access boundaries; validation support only, not an independent Equity Uprise program capability."
     },
     {
       "path": "scripts/test/signup-authority.test.mjs",
