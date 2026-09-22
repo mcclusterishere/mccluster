@@ -107,7 +107,8 @@ The working viewer now treats the building as one continuous object from B1 thro
 - detailed Floor 3 is inserted at FFE +27 ft;
 - detailed Floor 4 is inserted at FFE +40.5 ft;
 - detailed Floor 5 is inserted at FFE +54 ft;
-- Floors 6–7 remain visible as chassis placeholders at their real elevations;
+- detailed Floor 6 is inserted at FFE +67.5 ft;
+- Level 7 roof remains visible as a chassis placeholder at +81 ft;
 - each future floor pass replaces/improves its level **inside this stack**, not as an isolated experiment.
 
 Public working-stack viewer: `equity-uprise-building-core-v2-3d.html`.
@@ -182,11 +183,40 @@ Required references:
 
 Floor 5 is **visually reviewable, not user-approved complete**. Final approval depends on direct visual review in the isolated viewer.
 
-## Floors 6–7 — geometry/program chassis exists; iterative interior redesign NOT COMPLETE
+## Floor 6 — RECONCILED / REAL 3D ACTIVE / STACKED
 
-Current `core-v2-floor-programs.json` still treats Floors 6–7 as pre-iterative program/interior work.
+Canonical identity: **Penthouse Command**.
 
-Do not interpret generated plan/program plates as finished 3D floors.
+Current state:
+- program reconciliation complete;
+- historical Floor 6 spec/schematic audited;
+- Halo boundary and Level 7 transition reviewed;
+- preservation map complete;
+- machine inventory: **74 stable records / 96 total instances**;
+- inventory-driven GLB builder active;
+- standalone viewer active;
+- inserted into the working building at **FFE +67.5 ft**;
+- building-level Floor 6 control truly isolates the detailed penthouse model;
+- protected Stair A and Stair B continuity to Level 7 is preserved;
+- passenger-elevator direct Level 7 service remains unassumed;
+- Halo remains one restrained suspended read-only instrument in public/member/staff modes;
+- builder requires both inventory coverage and a dedicated visual-completeness gate.
+
+Required references:
+- `FLOOR-06-PROGRAM-RECONCILIATION.md`;
+- `FLOOR-06-V1-V2-PRESERVATION-MAP.md`;
+- `HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md`;
+- `FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md`;
+- `production/floor-06/floor-06-object-inventory.json`;
+- `production/floor-06/build_equity_uprise_floor_06_v2.py`.
+
+Floor 6 is **visually reviewable, not user-approved complete**. Final approval depends on direct visual review in the isolated viewer.
+
+## Level 7 — geometry/program chassis exists; iterative roof redesign NOT COMPLETE
+
+Current `core-v2-floor-programs.json` still treats Level 7 as pre-iterative roof/mobility work.
+
+Do not interpret generated plan/program plates as a finished rooftop environment.
 
 ## B1 — program/geometry integrated; final designed environment still future work
 
@@ -212,7 +242,8 @@ Use these to recover design quality, not obsolete stair/core geometry.
 7. **DONE:** Floor 3 reconciliation → inventory → real 3D → working-stack integration.
 8. **DONE:** Floor 4 — Media + Culture — reconciliation → inventory → real 3D → working-stack integration.
 9. **DONE:** Floor 5 — Policy + Proof — reconciliation → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration.
-10. **NEXT:** Floor 6 — institutional command / penthouse — reconciliation, preservation map, inventory, real 3D, then stack at +67.5 ft.
+10. **DONE:** Floor 6 — Penthouse Command — reconciliation → Halo/roof boundary → inventory → real 3D → visual-completeness gate → true isolation → working-stack integration.
+11. **NEXT:** Level 7 — Roof / Mobility Portal — reconcile roof program, preserve historical roof intent, inventory, build real rooftop environment, then complete the B1→roof stack.
 
 ## Do not waste time on
 
