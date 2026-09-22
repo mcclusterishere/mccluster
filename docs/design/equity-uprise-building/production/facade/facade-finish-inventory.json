@@ -864,7 +864,7 @@
       "authority_status": "locked_for_next_modeling_pass"
     },
     {
-      "id": "FAC-SIGN-LETTER-EU-ENTRY-01",
+      "id": "FAC-SIGN-LOGO-ENTRY-01",
       "category": "branding_finish",
       "location": "south",
       "levels": "F1",
@@ -872,9 +872,11 @@
       "module_classification": null,
       "material_id": "FAC-METAL-01",
       "required_geometry": [
-        "dimensional_E_equals_U_mark"
+        "approved_repo_logo_geometry",
+        "canonical_navy",
+        "pale_mounting_plate"
       ],
-      "description": "Replace procedural/pixel entry mark with dimensional E = U geometry.",
+      "description": "Use the exact approved repo Equity Uprise logo geometry at the main entrance; literal E=U substitution is prohibited.",
       "implementation_status": "required_finish_geometry",
       "authority_status": "locked_for_next_modeling_pass"
     },
@@ -924,7 +926,7 @@
       "authority_status": "locked_for_next_modeling_pass"
     },
     {
-      "id": "FAC-SIGN-LETTER-EU-CROWN-01",
+      "id": "FAC-SIGN-LOGO-CROWN-01",
       "category": "branding_finish",
       "location": "south",
       "levels": "F6",
@@ -932,9 +934,11 @@
       "module_classification": null,
       "material_id": "FAC-METAL-01",
       "required_geometry": [
-        "dimensional_crown_E_equals_U"
+        "approved_repo_logo_geometry",
+        "canonical_navy",
+        "restrained_crown_scale"
       ],
-      "description": "Refined restrained crown mark.",
+      "description": "Future crown identity must use the same exact approved repo Equity Uprise logo geometry; literal E=U substitution is prohibited.",
       "implementation_status": "required_finish_geometry",
       "authority_status": "locked_for_next_modeling_pass"
     },
@@ -1288,5 +1292,19 @@
       "checks": "22/22",
       "sha256": "891192539b9d827f0060dea4b311c58f4df517023f7ef306d772d8055d2a8a6c"
     }
+  },
+  "brand_authority": {
+    "canonical_asset": "assets/img/equity-uprise-logo.webp",
+    "asset_git_blob_sha": "53b9a07ee14c107e45cb13b871bd1637db7bebe6",
+    "asset_sha256": "3dd74068b984173a3c88bfd124f150653cdf04e35657006df2cf8961e57ce29f",
+    "vector_source": "equity-uprise.html::.appbar__eq",
+    "machine_vector_ref": "equity-uprise-logo-vector.json",
+    "canonical_rgb": [
+      4,
+      45,
+      82
+    ],
+    "recolor_allowed": false,
+    "literal_e_equals_u_substitution_allowed": false
   }
 }
