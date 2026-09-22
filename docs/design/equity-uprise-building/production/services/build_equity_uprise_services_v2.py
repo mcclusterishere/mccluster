@@ -239,8 +239,8 @@ for level,label,ycenter in [(4,"MEDIA",42),(5,"POLICY",40),(6,"COMMAND",38)]:
     add_floor_branch(level,"FIRE-PROTECTION",[(54.25,67.5),(32,67.5),(32,55)],style="pipe",width=.22,endpoint="LIFE-SAFETY")
     add_floor_branch(level,"ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,54),(44,54)],endpoint="EGRESS")
 
-add_floor_branch(6,"DATA-STRUCTURED",[(58.5,67.5),(42,67.5),(42,58),(14,58)],endpoint="HALO-DATA",inventory_ref="F6-HALO-DATA-01")
-add_floor_branch(6,"AV-MEDIA",[(58.5,67.5),(40,67.5),(40,56),(14,56)],endpoint="HALO-MEDIA",inventory_ref="F6-HALO-MEDIA-01")
+add_floor_branch(6,"DATA-STRUCTURED",[(58.5,67.5),(50,67.5),(50,12),(55,12)],endpoint="HALO-DATA",inventory_ref="F6-HALO-CEILING-FEED-01")
+add_floor_branch(6,"AV-MEDIA",[(58.5,67.5),(49,67.5),(49,13),(55,13),(55,12)],endpoint="HALO-MEDIA",inventory_ref="F6-HALO-CEILING-FEED-01")
 add_floor_branch(7,"ELEC-NORMAL",[(57.25,67.5),(48,67.5),(48,42),(36,42)],endpoint="ROOF-MECH-POWER",inventory_ref="L7-ROOF-MECH-01")
 add_floor_branch(7,"ELEC-EMERGENCY",[(57.25,70.5),(50,70.5),(50,54),(42,54)],endpoint="ROOF-EGRESS-LIGHT",inventory_ref="L7-EGRESS-LIGHT-01")
 add_floor_branch(7,"DATA-STRUCTURED",[(58.5,67.5),(47,67.5),(47,46),(36,46)],endpoint="ROOF-COMMS",inventory_ref="L7-ROOF-COMMS-01")
