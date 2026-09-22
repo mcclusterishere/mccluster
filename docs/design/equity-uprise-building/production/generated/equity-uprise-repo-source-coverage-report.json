@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 255,
+  "candidate_count": 257,
   "capability_source_count": 102,
-  "support_only_count": 153,
-  "checks_total": 920,
-  "checks_passed": 920,
+  "support_only_count": 155,
+  "checks_total": 928,
+  "checks_passed": 928,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -88,6 +88,7 @@
     "docs/here-inventory.md",
     "docs/here-url-migration-map.csv",
     "docs/inbox.md",
+    "docs/legal/EXPOSURE-AUDIT.md",
     "docs/music-platform.md",
     "docs/pay-now.md",
     "docs/sales-redesign/BRANCH-HARVEST-REPORT.md",
@@ -210,6 +211,7 @@
     "supabase/migrations/20260919120233_public_projection_invoker_boundaries.sql",
     "supabase/migrations/20260921050000_mnet_profile_save_autofollow_admin.sql",
     "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql",
+    "supabase/migrations/20260922094512_harden_anonymous_lead_intake.sql",
     "supabase/production-ledger.json",
     "supabase/replay_migrations/0007_offerings.sql",
     "supabase/replay_migrations/0009_offer_configurations.sql",
@@ -269,7 +271,7 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "255 entries"
+      "detail": "257 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
@@ -1658,6 +1660,26 @@
     },
     {
       "name": "docs/inbox.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/legal/EXPOSURE-AUDIT.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/legal/EXPOSURE-AUDIT.md classified",
+      "passed": true,
+      "detail": "classification='documentation_support'"
+    },
+    {
+      "name": "docs/legal/EXPOSURE-AUDIT.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/legal/EXPOSURE-AUDIT.md support rationale present",
       "passed": true,
       "detail": ""
     },
@@ -3913,6 +3935,26 @@
     },
     {
       "name": "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20260922094512_harden_anonymous_lead_intake.sql capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "supabase/migrations/20260922094512_harden_anonymous_lead_intake.sql classified",
+      "passed": true,
+      "detail": "classification='runtime_security_support'"
+    },
+    {
+      "name": "supabase/migrations/20260922094512_harden_anonymous_lead_intake.sql support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "supabase/migrations/20260922094512_harden_anonymous_lead_intake.sql support rationale present",
       "passed": true,
       "detail": ""
     },
