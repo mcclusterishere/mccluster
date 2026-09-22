@@ -21,7 +21,7 @@
       ".github/copilot-instructions.md"
     ]
   },
-  "tracked_count": 238,
+  "tracked_count": 243,
   "categories": {
     "agent_entrypoints": [
       ".cursorrules",
@@ -80,9 +80,11 @@
       "docs/design/equity-uprise-building/FLOOR-06-SCHEMATIC-PLAN-BASIS.md",
       "docs/design/equity-uprise-building/FLOOR-06-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/FLOOR-07-ECOSYSTEM-ROUTING-CONTRACT.md",
+      "docs/design/equity-uprise-building/FLOOR-07-PROGRAM-RECONCILIATION.md",
       "docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-360-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-07-ROOF-MOBILITY-PORTAL-PREPROGRAM.md",
       "docs/design/equity-uprise-building/FLOOR-07-SCHEMATIC-PLAN-BASIS.md",
+      "docs/design/equity-uprise-building/FLOOR-07-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md",
       "docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md",
       "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
@@ -90,6 +92,7 @@
     ],
     "production_source": [
       "docs/design/equity-uprise-building/production/audit_building_context.py",
+      "docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py",
       "docs/design/equity-uprise-building/production/basement-b1-program.json",
       "docs/design/equity-uprise-building/production/basement-b1/README.md",
       "docs/design/equity-uprise-building/production/basement-b1/basement-b1-camera.json",
@@ -176,11 +179,13 @@
       "docs/design/equity-uprise-building/production/floor-06/floor-06-scene-manifest.json",
       "docs/design/equity-uprise-building/production/floor-06/floor-06-states.json",
       "docs/design/equity-uprise-building/production/floor-07/README.md",
+      "docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py",
       "docs/design/equity-uprise-building/production/floor-07/floor-07-camera.json",
       "docs/design/equity-uprise-building/production/floor-07/floor-07-geometry-notes.md",
       "docs/design/equity-uprise-building/production/floor-07/floor-07-hotspots.json",
       "docs/design/equity-uprise-building/production/floor-07/floor-07-lighting.json",
       "docs/design/equity-uprise-building/production/floor-07/floor-07-materials.json",
+      "docs/design/equity-uprise-building/production/floor-07/floor-07-object-inventory.json",
       "docs/design/equity-uprise-building/production/floor-07/floor-07-routing.json",
       "docs/design/equity-uprise-building/production/floor-07/floor-07-scene-manifest.json",
       "docs/design/equity-uprise-building/production/floor-07/floor-07-states.json",
