@@ -14,6 +14,9 @@
 # pass on a mail server is not a pass; it is mail going missing.
 #
 # Run on the VPS (all checks) or anywhere (DNS checks only).
+#
+#   MAIL_MODE=send-only  (default) the box sends; mail is received elsewhere
+#   MAIL_MODE=full       the box sends AND receives; MX should point here
 # ============================================================
 set -uo pipefail
 
@@ -98,15 +101,56 @@ else
   bad "no DMARC record. Gmail and Yahoo require one from bulk senders."
 fi
 
-head_ "3. The inbox guard"
-# The one irreversible mistake available here. Said out loud every run.
-MX="$(dns "${MAIL_DOMAIN}" MX | tr '[:upper:]' '[:lower:]')"
-if [[ "${MX}" == *"google.com"* ]]; then
-  ok "MX still points at Google Workspace -- the owner's inbox is untouched"
-elif [[ "${MX}" == *"${MAIL_HOST}"* ]]; then
-  bad "MX points at ${MAIL_HOST}. This box does NOT receive mail. Incoming mail to ${MAIL_DOMAIN} is being lost right now."
+head_ "3. Where does incoming mail go?"
+# What is correct here depends entirely on which half is built, and
+# getting it backwards costs the owner their inbox either way. So the
+# mode is explicit rather than guessed:
+#
+#   send-only  the box sends but cannot receive; MX must stay elsewhere.
+#   full       the box receives too; MX must point here and a mailbox
+#              must actually exist to catch what arrives.
+#
+# Default is send-only because that is the safe assumption: asserting a
+# host receives mail when it does not is how mail disappears.
+MAIL_MODE="${MAIL_MODE:-send-only}"
+# Flattened to one line: a domain with five MX hosts otherwise smears a
+# single PASS across five lines and stops being readable at a glance.
+MX="$(dns "${MAIL_DOMAIN}" MX | tr '[:upper:]' '[:lower:]' | awk '{print $NF}' | sed 's/\.$//' | paste -sd' ' -)"
+echo "  mode: ${MAIL_MODE}"
+
+if [[ "${MAIL_MODE}" == "full" ]]; then
+  if [[ "${MX}" == *"${MAIL_HOST}"* ]]; then
+    ok "MX points at ${MAIL_HOST}"
+  elif [[ -z "${MX}" ]]; then
+    bad "${MAIL_DOMAIN} has no MX record. Mail to the domain is bouncing."
+  else
+    warn "MX is '${MX}', not ${MAIL_HOST}. Mail still goes elsewhere -- correct if you have not cut over yet."
+  fi
+  # In full mode the receiving side has to be real, not just pointed at.
+  if command -v postconf >/dev/null; then
+    if postconf -h virtual_mailbox_domains 2>/dev/null | grep -qi "${MAIL_DOMAIN}"; then
+      ok "postfix accepts mail for ${MAIL_DOMAIN}"
+    else
+      bad "MX says mail comes here but postfix does not accept ${MAIL_DOMAIN}. Every message will be rejected."
+    fi
+    if systemctl is-active --quiet dovecot 2>/dev/null; then ok "dovecot is running"
+    else bad "dovecot is not running -- accepted mail has nowhere to be delivered"; fi
+  fi
+  # IMAP has to be reachable and encrypted, or the mailbox cannot be read
+  # without handing the password to the internet.
+  if [[ -n "${A_REC}" ]] && timeout 8 bash -c ">/dev/tcp/${MAIL_HOST}/993" 2>/dev/null; then
+    ok "IMAPS reachable on ${MAIL_HOST}:993"
+  else
+    warn "could not reach ${MAIL_HOST}:993 from here (firewall, or not up yet)"
+  fi
 else
-  warn "MX is '${MX:-none}' -- not Google and not this host. Confirm that is intended."
+  if [[ "${MX}" == *"${MAIL_HOST}"* ]]; then
+    bad "MX points at ${MAIL_HOST} but this is a SEND-ONLY server. Incoming mail to ${MAIL_DOMAIN} is being discarded right now. Either run bootstrap-mailbox.sh or point the MX back."
+  elif [[ -n "${MX}" ]]; then
+    ok "MX points elsewhere (${MX}) -- correct for a send-only relay"
+  else
+    bad "${MAIL_DOMAIN} has no MX record. Mail to the domain is bouncing."
+  fi
 fi
 
 head_ "4. Can anything actually leave?"
