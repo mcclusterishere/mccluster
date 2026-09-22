@@ -276,7 +276,7 @@ The finish pass must add/resolve:
 - deeper mineral base/plinth;
 - completed south entry portal, door leaves, frames, hardware, transom/sidelights and threshold;
 - canopy fascia, soffit and recessed lighting;
-- architectural E = U / Equity Uprise signage;
+- exact approved Equity Uprise repo logo + Equity Uprise institutional wordmark;
 - stronger Floor 6 crown / parapet / roof-service screen integration;
 - intentional north/service-facade finish;
 - material realism for glass, metal, opaque panels, mineral base and entrance accents;
@@ -315,7 +315,20 @@ Verified generated snapshot: `0c9ed33abcd679d2efc316ca82e998d3524e7ffe`
 - GLB SHA-256: `891192539b9d827f0060dea4b311c58f4df517023f7ef306d772d8055d2a8a6c`;
 - whole Core V2 CI run passed.
 
-Step 4 is now a stable checkpoint. Next geometry stage may proceed to the completed **south entrance/base portal pass** without reopening the verified window/base/corner system.
+Step 4 is now a stable checkpoint and remains unchanged.
+
+Step 5 source implementation is now active on the architectural-finish branch:
+- the south entrance has finished portal wraps, paired door leaves, real frames, pull hardware, sidelights, transom and threshold;
+- canopy fascia, soffit, edge returns and six recessed downlight fixtures are modeled;
+- the entrance uses the **actual approved repo logo** from `assets/img/equity-uprise-logo.webp` via `production/facade/equity-uprise-logo-vector.json`;
+- literal `E=U` substitution has been removed from the entrance;
+- the same approved logo replaces the stale literal `E=U` crown identity while the crown's structural finish remains deferred;
+- the Equity Uprise canopy wordmark is now stroke-based architectural geometry rather than pixel-block text;
+- entry grazing/base fixtures and a simple entry apron/threshold-paving contact zone are modeled;
+- **22 additional finish records** are in Step 5 scope, bringing cumulative implemented scope to **54 of 68**;
+- **14 records remain deliberately deferred** for crown/parapet/service-screen and crown-lighting finish.
+
+Current gate: deterministic regeneration + Step 5 report/CI verification before proceeding to crown completion.
 
 ## Exterior facade implementation — DETAILED CURRENT PASS ACTIVE / VISUAL APPROVAL PENDING
 
@@ -327,8 +340,8 @@ Current pass:
 - deterministic builder preflight: **1,578 meshes / 15 of 15 checks passing**;
 - 6 ft facade module remains aligned to the 18 ft structural grid;
 - real mullion, transom, primary-fin, spandrel, glazing, privacy-glass, acoustic-opaque, service-opaque, stair-slot, clerestory and louver geometry exists;
-- Floor 1 south entry has a dimensional portal, paired glazed entry modules, projecting canopy, supports, **E = U** mark and **Equity Uprise** canopy wordmark;
-- one restrained south crown **E = U** mark and a continuous crown cap are modeled;
+- Floor 1 south entry has a dimensional portal, paired glazed entry modules, projecting canopy and supports; the active architectural-finish branch supersedes its old E=U placeholder with the exact approved Equity Uprise repo logo;
+- the active architectural-finish branch replaces the old south crown E=U placeholder with the exact approved Equity Uprise repo logo; full crown finish remains pending;
 - Floor 4 recording-room acoustic exception is physically represented;
 - north service/support facade is intentionally more opaque while retaining clerestory/stair/louver articulation;
 - facade exists as a coordinated independent shell GLB so approved floor interiors are preserved;
