@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "catalogVersion": "2026-09-19.3",
+  "catalogVersion": "2026-09-22.1",
   "capabilities": [
     {
       "id": "core.resume",
@@ -1387,6 +1387,249 @@
         "provenance",
         "conflicts"
       ]
+    },
+    {
+      "id": "meeting.delegate.schedule",
+      "title": "Schedule AI meeting delegate",
+      "description": "Queue disclosed AI attendance before a future meeting and local transcript/debrief collection after it.",
+      "domain": "meeting",
+      "lifecycle": "active",
+      "execution": "async",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "meeting",
+        "delegate",
+        "owned"
+      ]
+    },
+    {
+      "id": "meeting.delegate.join",
+      "title": "Join meeting with AI delegate",
+      "description": "Immediately dispatch a transparently named McCluster AI attendee through the configured owned meeting engine.",
+      "domain": "meeting",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "meeting",
+        "delegate",
+        "owned"
+      ]
+    },
+    {
+      "id": "meeting.delegate.cancel",
+      "title": "Remove AI meeting delegate",
+      "description": "Remove the McCluster AI attendee from an active meeting.",
+      "domain": "meeting",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "meeting",
+        "delegate",
+        "owned"
+      ]
+    },
+    {
+      "id": "meeting.delegate.status",
+      "title": "Read AI meeting status",
+      "description": "Read live owned meeting-bot status.",
+      "domain": "meeting",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "meeting",
+        "delegate",
+        "owned"
+      ]
+    },
+    {
+      "id": "meeting.delegate.transcript",
+      "title": "Read meeting transcript",
+      "description": "Read a speaker-attributed transcript from the owned meeting engine.",
+      "domain": "meeting",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "meeting",
+        "delegate",
+        "owned"
+      ]
+    },
+    {
+      "id": "meeting.delegate.session.get",
+      "title": "Read delegate session",
+      "description": "Read durable meeting delegate session state from the canonical control plane.",
+      "domain": "meeting",
+      "lifecycle": "active",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "meeting",
+        "delegate",
+        "owned"
+      ]
+    },
+    {
+      "id": "meeting.delegate.chat.read",
+      "title": "Read meeting chat",
+      "description": "Read live meeting chat after the deployed owned engine passes interactive-control validation.",
+      "domain": "meeting",
+      "lifecycle": "planned",
+      "execution": "sync",
+      "risk": "read",
+      "approval": "none",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "meeting",
+        "delegate",
+        "owned"
+      ]
+    },
+    {
+      "id": "meeting.delegate.chat.send",
+      "title": "Send meeting chat",
+      "description": "Send a clearly attributable AI-delegate chat message after interactive-control validation.",
+      "domain": "meeting",
+      "lifecycle": "planned",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "meeting",
+        "delegate",
+        "owned"
+      ]
+    },
+    {
+      "id": "meeting.delegate.speak",
+      "title": "Speak in meeting",
+      "description": "Speak through the disclosed AI delegate only after the deployed owned engine passes live audio validation.",
+      "domain": "meeting",
+      "lifecycle": "planned",
+      "execution": "sync",
+      "risk": "write",
+      "approval": "owner-policy-gated",
+      "interfaces": [
+        "http",
+        "mcp",
+        "agent"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object"
+      },
+      "tags": [
+        "meeting",
+        "delegate",
+        "owned"
+      ]
     }
   ],
   "bindings": [
@@ -1946,6 +2189,168 @@
         "governed": true,
         "provenance": true
       }
+    },
+    {
+      "id": "core.meeting-schedule",
+      "capability": "meeting.delegate.schedule",
+      "provider": "mccluster-meeting-engine",
+      "tool": "core.meeting.schedule",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 250,
+      "economics": {
+        "hosting": "self-hosted",
+        "billing": "compute"
+      },
+      "features": {
+        "owned_data": true,
+        "transparent_identity": true,
+        "provider_neutral": true
+      }
+    },
+    {
+      "id": "core.meeting-join",
+      "capability": "meeting.delegate.join",
+      "provider": "mccluster-meeting-engine",
+      "tool": "core.meeting.join",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 250,
+      "economics": {
+        "hosting": "self-hosted",
+        "billing": "compute"
+      },
+      "features": {
+        "owned_data": true,
+        "transparent_identity": true,
+        "provider_neutral": true
+      }
+    },
+    {
+      "id": "core.meeting-cancel",
+      "capability": "meeting.delegate.cancel",
+      "provider": "mccluster-meeting-engine",
+      "tool": "core.meeting.cancel",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 250,
+      "economics": {
+        "hosting": "self-hosted",
+        "billing": "compute"
+      },
+      "features": {
+        "owned_data": true,
+        "transparent_identity": true,
+        "provider_neutral": true
+      }
+    },
+    {
+      "id": "core.meeting-status",
+      "capability": "meeting.delegate.status",
+      "provider": "mccluster-meeting-engine",
+      "tool": "core.meeting.status",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 250,
+      "economics": {
+        "hosting": "self-hosted",
+        "billing": "compute"
+      },
+      "features": {
+        "owned_data": true,
+        "transparent_identity": true,
+        "provider_neutral": true
+      }
+    },
+    {
+      "id": "core.meeting-transcript",
+      "capability": "meeting.delegate.transcript",
+      "provider": "mccluster-meeting-engine",
+      "tool": "core.meeting.transcript",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 250,
+      "economics": {
+        "hosting": "self-hosted",
+        "billing": "compute"
+      },
+      "features": {
+        "owned_data": true,
+        "transparent_identity": true,
+        "provider_neutral": true
+      }
+    },
+    {
+      "id": "core.meeting-session-get",
+      "capability": "meeting.delegate.session.get",
+      "provider": "mccluster-meeting-engine",
+      "tool": "core.meeting.session.get",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 250,
+      "economics": {
+        "hosting": "self-hosted",
+        "billing": "compute"
+      },
+      "features": {
+        "owned_data": true,
+        "transparent_identity": true,
+        "provider_neutral": true
+      }
+    },
+    {
+      "id": "core.meeting-chat-read",
+      "capability": "meeting.delegate.chat.read",
+      "provider": "mccluster-meeting-engine",
+      "tool": "core.meeting.chat.read",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 250,
+      "economics": {
+        "hosting": "self-hosted",
+        "billing": "compute"
+      },
+      "features": {
+        "owned_data": true,
+        "transparent_identity": true,
+        "provider_neutral": true
+      }
+    },
+    {
+      "id": "core.meeting-chat-send",
+      "capability": "meeting.delegate.chat.send",
+      "provider": "mccluster-meeting-engine",
+      "tool": "core.meeting.chat.send",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 250,
+      "economics": {
+        "hosting": "self-hosted",
+        "billing": "compute"
+      },
+      "features": {
+        "owned_data": true,
+        "transparent_identity": true,
+        "provider_neutral": true
+      }
+    },
+    {
+      "id": "core.meeting-speak",
+      "capability": "meeting.delegate.speak",
+      "provider": "mccluster-meeting-engine",
+      "tool": "core.meeting.speak",
+      "transport": "local-control",
+      "status": "active",
+      "priority": 250,
+      "economics": {
+        "hosting": "self-hosted",
+        "billing": "compute"
+      },
+      "features": {
+        "owned_data": true,
+        "transparent_identity": true,
+        "provider_neutral": true
+      }
     }
   ]
-}
+}\n
