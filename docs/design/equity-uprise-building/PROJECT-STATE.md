@@ -551,4 +551,37 @@ Verified generated snapshot: `768a6270fa945dd5fb4c6c572bb72c2caade5d9d`
 - GLB SHA-256: `4fa994486889fa135d9dae163df3b8d9dabb81eef692520b642f53ad8dc3d1ef`;
 - full Equity Uprise Core V2 CI passed.
 
-Services Step 2 is a stable checkpoint. Next is **Services Step 3 — connect the real B1 plant/electrical/telecom/fire/sump/BAS equipment to this backbone.**
+Services Step 2 is a stable checkpoint.
+
+## Building services / nervous system — SERVICES STEP 3 COMPLETE / VERIFIED
+
+Services Step 3 now closes the first two links of the building-services trace:
+
+**B1 source / plant → B1 distribution → vertical riser**
+
+Implemented in the existing Services layer:
+- mechanical AHUs/pumps and a representative overhead HVAC route to **R-HVAC**;
+- main switchgear/distribution and a distinct normal-power busway route to **R-ELEC-NORMAL**;
+- UPS-backed emergency distribution and a distinct emergency feeder route to **R-ELEC-EMERGENCY** — **no generator was invented**;
+- telecom racks + ladder-tray/backbone pathway to **R-DATA**;
+- Building Systems Lab / plant BAS panel and controls raceway to **R-CONTROLS**;
+- authorized fire pump / water equipment with distinguishable fire and domestic-water headers to **R-FIRE** and **R-WATER**;
+- internal sanitary/vent B1 header to **R-SANITARY-VENT**, with no municipal/site connection invented;
+- sump pumps / flood sensor interface and drainage route to **R-STORM**, with no external discharge geometry invented;
+- nine source-to-riser connection collars that make the handoff into the Step 2 backbone visually legible;
+- B1 isolation + Services shows the B1 source/distribution geometry, including direct deep link **`?floor=0&services=1`**.
+
+Canonical generated Step 3 snapshot:
+- branch checkpoint: `51ca8b1b5dbc269390c7a1fd0b376eda3f19e309`;
+- services GLB: **216 meshes / 151,760 bytes**;
+- **38** B1 source-equipment meshes;
+- **34** B1 distribution segments;
+- **9/9** source-to-riser connections;
+- existing **9 risers / 63 story segments / 63 floor handoff stubs** retained;
+- Step 3 verification: **28/28 checks passing**;
+- GLB SHA-256: `1c1772aaac2410dbe8b8c9e601a969ab715215df30f596dbdf8bea436cec5e91`;
+- full Equity Uprise Core V2 validation and deterministic generated-artifact publication passed.
+
+The work remains conceptual digital-twin coordination and **not for construction**.
+
+**Next: Services Step 4 — Floors 1–3 representative branches/endpoints.**

@@ -24,9 +24,11 @@ Every system must trace:
 
 Generate a dedicated services GLB for normal power, emergency power, data, controls, HVAC, domestic water, sanitary/vent, storm and fire protection. Add a viewer layer toggle so the nervous system can actually be exposed/hidden.
 
-## Services Step 3 — B1 plant connections
+## Services Step 3 — B1 plant connections — COMPLETE
 
-Connect the modeled mechanical plant, electrical/emergency room, telecom core, fire/water room, sump/flood management and BAS observation to the vertical backbone.
+The existing modeled B1 source equipment is now connected through representative B1 distribution geometry to all nine vertical backbone risers. Normal/emergency power remain distinct; fire/domestic water remain distinguishable; HVAC, DATA, BAS and storm/sump have explicit source-to-riser continuity; sanitary/vent remains an internal building-boundary concept only. No generator, municipal connection or external storm discharge was invented.
+
+Verified generated snapshot: **216 meshes / 151,760 bytes / 28 of 28 checks passing / SHA-256 `1c1772aaac2410dbe8b8c9e601a969ab715215df30f596dbdf8bea436cec5e91`**.
 
 ## Services Step 4 — Floors 1–3 branches
 
@@ -50,4 +52,4 @@ Require vertical continuity B1→L7, no core/circulation clashes, traceability f
 
 ## Current stop point
 
-Services Step 1 is complete. **Services Step 2 is implemented and verified:** a dedicated real 3D backbone GLB plus a Services viewer layer, with 9/9 risers, 63 story segments, 63/63 authorized floor handoff stubs and 12/12 checks passing. Next is Services Step 3: B1 source/plant connections.
+Services Steps 1–3 are complete and verified. Step 3 connects the authorized B1 plant/source equipment through 34 representative B1 distribution segments into all nine existing risers, with 28/28 checks passing. **Next is Services Step 4: Floors 1–3 representative branch/endpoints.**

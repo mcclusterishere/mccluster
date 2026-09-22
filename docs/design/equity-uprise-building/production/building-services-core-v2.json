@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-building-services-core-v2",
-  "status": "services-step3-b1-source-connections-authorized",
+  "status": "services-step3-b1-source-connected-verified",
   "not_for_construction": true,
   "building_id": "equity-uprise-building",
   "source_level": "basement-b1",
@@ -350,9 +350,9 @@
     "code-required ratings",
     "final equipment replacement paths"
   ],
-  "current_implementation_phase": "services-step-3-b1-source-connections",
+  "current_implementation_phase": "services-step-3-complete",
   "floor_addenda_root": "services/floor-addenda",
-  "visible_geometry_status": "Step 2 vertical backbone retained; Step 3 B1 source/plant and source-to-riser geometry implemented by deterministic builder",
+  "visible_geometry_status": "verified Step 2 vertical backbone + Step 3 B1 source/plant and source-to-riser geometry in working Services viewer layer",
   "floor_addenda_ref": "services/floor-services-addenda.json",
   "services_glb": "generated/equity-uprise-building-services-core-v2.glb",
   "services_report": "generated/equity-uprise-building-services-core-v2-report.json",
@@ -473,6 +473,20 @@
   "step3_verification": {
     "report_ref": "generated/equity-uprise-building-services-core-v2-report.json",
     "required_status": "services-step3-b1-source-connected",
-    "rule": "Generated report is authoritative for mesh count, GLB hash and deterministic pass/fail state."
+    "rule": "Generated report is authoritative for mesh count, GLB hash and deterministic pass/fail state.",
+    "verified_snapshot": "51ca8b1b5dbc269390c7a1fd0b376eda3f19e309"
+  },
+  "verification": {
+    "snapshot": "51ca8b1b5dbc269390c7a1fd0b376eda3f19e309",
+    "glb_bytes": 151760,
+    "mesh_count": 216,
+    "system_risers": "9/9",
+    "riser_segments": 63,
+    "floor_handoff_stubs": "63/63",
+    "b1_source_equipment_meshes": 38,
+    "b1_distribution_segments": 34,
+    "b1_riser_connections": "9/9",
+    "checks": "28/28",
+    "sha256": "1c1772aaac2410dbe8b8c9e601a969ab715215df30f596dbdf8bea436cec5e91"
   }
 }

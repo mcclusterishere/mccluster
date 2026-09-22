@@ -1,8 +1,10 @@
 # Equity Uprise — Building Services / Nervous System Spec
 
-> Status: **ACTIVE WHOLE-BUILDING SERVICES AUTHORITY — IMPLEMENTATION PENDING**
+> Status: **ACTIVE WHOLE-BUILDING SERVICES AUTHORITY — SERVICES STEP 3 IMPLEMENTED / CONTINUING**
 >
 > Machine companion: `production/building-services-core-v2.json`.
+>
+> Current visible implementation: Step 2 vertical backbone + Step 3 B1 source/plant distribution are real deterministic geometry in the canonical Services GLB/viewer layer. Floor branch/endpoints remain later implementation steps.
 >
 > **Not for construction or engineering approval.**
 

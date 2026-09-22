@@ -187,4 +187,4 @@ Active implementation sequence:
 - `production/vertical-risers-core-v2.json`
 - `production/services/floor-services-addenda.json`
 
-Services Step 1 is complete: the digital-twin sub-riser allocation and B1→L7 service requirements are locked. Services Step 2 is the first visible geometry pass.
+Services Steps 1–3 are complete through the B1 source-to-riser layer: the digital-twin sub-riser allocation and B1→L7 requirements are locked; the real vertical services GLB/viewer layer exists; and authorized B1 plant/source equipment now connects through representative B1 distribution geometry to all nine risers. Next is Services Step 4: Floors 1–3 representative branches/endpoints.
