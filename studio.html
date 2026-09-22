@@ -78,6 +78,7 @@
       <div class="lamps">
         <div class="lamp"><b>API</b><em><i class="dot" id="dApi"></i><span id="vApi">—</span></em></div>
         <div class="lamp"><b>Factory</b><em><i class="dot" id="dFal"></i><span id="vFal">fal</span></em></div>
+        <div class="lamp"><b>Workspace</b><em><i class="dot" id="dOrg"></i><span id="vOrg">—</span></em></div>
         <div class="lamp"><b>Director</b><em id="vDir">—</em></div>
         <div class="lamp"><b>Session</b><em id="vJobs">0</em></div>
       </div>
@@ -128,12 +129,16 @@
     </main>
   </div>
   <script src="js/backend.js?v=__STAMP__"></script>
+  <script src="js/workspace.js?v=__STAMP__"></script>
   <script>
   (function () {
     "use strict";
     var API = "https://api.mccluster.org";
     var KIND = "generate", CAM = "locked-off", DUR = "5s", RATIO = "16:9", MODEL = null, MODELS = [];
-    var ORG = localStorage.getItem("mcc_org_id") || "";
+    /* Filled by the workspace bootstrap in load(), never read out of
+       localStorage: a media job charges real money to a real tenant, so
+       which tenant it is has to be something the server agreed to. */
+    var ORG = "";
     var START = "", END = "", CLIP = "";
     var JOBS = [];
     try { JOBS = JSON.parse(sessionStorage.getItem("mcc_studio_jobs") || "[]"); } catch (e) {}
@@ -329,24 +334,28 @@
       fetch(API + "/healthz", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (h) {
         setLamp("dApi", !!(h && h.ok)); $("vApi").textContent = h && h.ok ? "up" : "down";
       }).catch(function () { setLamp("dApi", false); $("vApi").textContent = "down"; });
-      return token().then(function (t) {
-        if (!t) return;
-        var uid = window.MCC_SUPA.uid && MCC_SUPA.uid();
-        var q = "org_members?select=org_id,role,orgs(id,slug)&profile_id=eq." + encodeURIComponent(uid || "");
-        return fetch(window.MCC_SUPA.url + "/rest/v1/" + q, {
-          headers: { apikey: window.MCC_SUPA.key, authorization: "Bearer " + t }
-        }).then(function (r) { return r.ok ? r.json() : []; }).then(function (rows) {
-          var house = (rows || []).find(function (r) { return r.orgs && r.orgs.slug === "mccluster"; }) || (rows || [])[0];
-          if (house && house.org_id) { ORG = house.org_id; localStorage.setItem("mcc_org_id", ORG); }
-        }).catch(function () {}).then(function () {
-          return api("/v1/media/models").then(function (d) {
-            MODELS = d.models || [];
-            setLamp("dFal", MODELS.length > 0);
-            $("vFal").textContent = MODELS.length ? "ready" : "list empty";
-            drawModels();
-          }).catch(function (e) {
-            setLamp("dFal", false); $("models").innerHTML = '<p class="empty">' + e.message + "</p>";
-          });
+      /* The workspace is resolved once, by the server, from the token —
+         this used to be a hand-rolled org_members query that hardcoded
+         the slug "mccluster" and cached the answer in localStorage,
+         which is why Studio went dead whenever that key was empty. */
+      return window.MCC_WORKSPACE.ready().then(function (ws) {
+        ORG = ws.orgId || "";
+        setLamp("dOrg", !!ORG);
+        var vOrg = $("vOrg");
+        if (vOrg) {
+          var picked = ws.workspaces.filter(function (w) { return w.org_id === ORG; })[0];
+          vOrg.textContent = picked ? picked.name + " · " + picked.role
+            : ws.signedIn ? "no workspace" : "signed out";
+        }
+        return null;
+      }).then(function () {
+        return api("/v1/media/models").then(function (d) {
+          MODELS = d.models || [];
+          setLamp("dFal", MODELS.length > 0);
+          $("vFal").textContent = MODELS.length ? "ready" : "list empty";
+          drawModels();
+        }).catch(function (e) {
+          setLamp("dFal", false); $("models").innerHTML = '<p class="empty">' + e.message + "</p>";
         });
       }).then(function () {
         JOBS.forEach(function (j) { if (j.id && j.status !== "completed" && j.status !== "failed") poll(j.id); });
@@ -361,7 +370,13 @@
       var clip = CLIP || ((KIND === "modify" || KIND === "extend" || KIND === "reframe") ? ($("urlA").value || "").trim() : "");
       var hint = $("makeHint");
       if (KIND !== "reframe" && KIND !== "extend" && !prompt) { hint.textContent = "Write what happens."; return; }
-      if (!ORG) { hint.textContent = "No org on this account."; return; }
+      if (!ORG) {
+        var ws = window.MCC_WORKSPACE.current();
+        hint.textContent = !ws.signedIn ? "Sign in to make anything here."
+          : ws.workspaces.length ? "That workspace is switched off."
+          : "This account is not a member of any workspace yet.";
+        return;
+      }
       if (!MODEL) { hint.textContent = "No model enabled for this verb."; return; }
       if ((KIND === "modify" || KIND === "extend" || KIND === "reframe") && !clip) { hint.textContent = "This verb needs a source clip from the phone or a take."; return; }
       if (KIND === "twoframe" && (!start || !end)) { hint.textContent = "Two-frame needs a start still and an end still."; return; }
