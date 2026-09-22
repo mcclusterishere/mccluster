@@ -1740,12 +1740,12 @@
     {
       "name": "L6 PNG signature",
       "passed": true,
-      "detail": "bytes=80732"
+      "detail": "bytes=80438"
     },
     {
       "name": "L6 PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=80732"
+      "detail": "bytes=80438"
     },
     {
       "name": "L6 active plan triplet only",
@@ -2445,7 +2445,7 @@
     {
       "name": "contact sheet nontrivial size",
       "passed": true,
-      "detail": "bytes=135276"
+      "detail": "bytes=135291"
     }
   ]
 }
