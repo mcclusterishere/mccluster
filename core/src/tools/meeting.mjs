@@ -198,7 +198,7 @@ export async function scheduleMeetingDelegate(args = {}) {
     policy,
   });
 
-  const key = clean(args.calendar_event_id, 1000) || targetKey(target, start);
+  const sealedTarget = sealMeetingTarget(target);\n  const key = clean(args.calendar_event_id, 1000) || targetKey(target, start);
   const joinLead = Math.min(900, Math.max(0, Number(args.join_lead_seconds ?? 120)));
   const collectDelay = Math.min(3600, Math.max(0, Number(args.collect_delay_seconds ?? 300)));
   const joinAtMs = Math.max(Date.now(), new Date(start).getTime() - joinLead * 1000);
