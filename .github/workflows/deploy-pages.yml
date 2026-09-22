@@ -59,6 +59,21 @@ jobs:
           python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
           python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 
+      - name: Verify Equity Uprise Services Step 3 deploy contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2-report.json")
+          r=json.loads(p.read_text())
+          assert r.get("status")=="services-step3-b1-source-connected", r.get("status")
+          assert r.get("passed") is True
+          assert r.get("checks_failed")==0
+          assert r.get("b1_riser_connections")==9
+          assert r.get("b1_distribution_segments",0)>0
+          print("Services Step 3 deploy contract verified", r["sha256"])
+          PY
+
       - name: Publish Equity Uprise preview assets
         run: |
           mkdir -p equity-uprise-preview

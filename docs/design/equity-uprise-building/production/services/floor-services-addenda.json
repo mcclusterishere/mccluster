@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-floor-services-addenda",
-  "status": "active-coordination-addenda-visible-geometry-pending",
+  "status": "active-coordination-addenda-services-step3-b1-connected",
   "not_for_construction": true,
   "riser_source_ref": "../vertical-risers-core-v2.json",
   "services_core_ref": "../building-services-core-v2.json",
@@ -11,7 +11,7 @@
       "display": "B1",
       "ffe_ft": -13.5,
       "role": "service origin / plant",
-      "branch_route": "overhead service spine to shared MEP riser",
+      "branch_route": "modeled source equipment -> overhead B1 distribution -> shared MEP riser; canonical rooms/core/circulation remain fixed",
       "endpoints": [
         "mechanical plant AHU/pumps",
         "main switchgear",
@@ -36,7 +36,9 @@
         "FIRE-PROTECTION",
         "FIRE-ALARM",
         "SERVICE-HOUSEKEEPING"
-      ]
+      ],
+      "implementation_status": "services-step3-source-connected",
+      "source_connection_authority_ref": "../building-services-core-v2.json#b1_source_connections"
     },
     "F1": {
       "display": "F1",
