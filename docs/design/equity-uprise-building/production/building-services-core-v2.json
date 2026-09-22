@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-building-services-core-v2",
-  "status": "services-step2-visible-backbone-source-implemented-pending-verification",
+  "status": "services-step2-visible-backbone-verified",
   "not_for_construction": true,
   "building_id": "equity-uprise-building",
   "source_level": "basement-b1",
@@ -350,11 +350,21 @@
     "code-required ratings",
     "final equipment replacement paths"
   ],
-  "current_implementation_phase": "services-step-2-visible-vertical-backbone",
+  "current_implementation_phase": "services-step-2-complete",
   "floor_addenda_root": "services/floor-addenda",
-  "visible_geometry_status": "builder + viewer layer implemented; deterministic verification pending",
+  "visible_geometry_status": "verified real 3D services backbone + working viewer layer",
   "floor_addenda_ref": "services/floor-services-addenda.json",
   "services_glb": "generated/equity-uprise-building-services-core-v2.glb",
   "services_report": "generated/equity-uprise-building-services-core-v2-report.json",
-  "viewer_layer": "Services: Exposed"
+  "viewer_layer": "Services: Exposed",
+  "verification": {
+    "snapshot": "768a6270fa945dd5fb4c6c572bb72c2caade5d9d",
+    "glb_bytes": 86488,
+    "mesh_count": 135,
+    "system_risers": "9/9",
+    "riser_segments": 63,
+    "floor_handoff_stubs": "63/63",
+    "checks": "12/12",
+    "sha256": "4fa994486889fa135d9dae163df3b8d9dabb81eef692520b642f53ad8dc3d1ef"
+  }
 }
