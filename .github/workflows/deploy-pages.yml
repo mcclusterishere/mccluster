@@ -71,6 +71,7 @@ jobs:
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2-report.json equity-uprise-preview/equity-uprise-facade-core-v2-report.json
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2.glb equity-uprise-preview/equity-uprise-building-services-core-v2.glb
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2-report.json equity-uprise-preview/equity-uprise-building-services-core-v2-report.json
+          cp docs/design/equity-uprise-building/production/services/b1-source-connections.json equity-uprise-preview/b1-source-connections.json
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2.glb equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2-report.json equity-uprise-preview/equity-uprise-basement-b1-core-v2-report.json
           cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb equity-uprise-preview/equity-uprise-building-core-v2.glb
