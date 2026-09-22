@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 273,
+  "tracked_count": 274,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -291,6 +291,7 @@
       "docs/design/equity-uprise-building/production/generate_core_v2_plans.py",
       "docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py",
       "docs/design/equity-uprise-building/production/interior-envelope-audit.json",
+      "docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py",
       "docs/design/equity-uprise-building/production/services/floor-services-addenda.json",
       "docs/design/equity-uprise-building/production/underground-tunnel-network.json",
       "docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py",
