@@ -30,17 +30,21 @@ The existing modeled B1 source equipment is now connected through representative
 
 Verified generated snapshot: **216 meshes / 151,760 bytes / 28 of 28 checks passing / SHA-256 `1c1772aaac2410dbe8b8c9e601a969ab715215df30f596dbdf8bea436cec5e91`**.
 
-## Services Step 4 — Floors 1–3 branches
+## Services Step 4 — Floors 1–3 branches — COMPLETE
 
-Route representative branches/endpoints for arrival/security, forum AV/table power-data, fellowship/interview/network, restrooms, HVAC and life safety.
+Representative branches/endpoints are modeled for arrival/security, forum AV/table power-data, fellowship/interview/network, restrooms, HVAC and life safety. The current Services asset retains **92 Step 4 branch segments and 31 Step 4 endpoints**.
 
-## Services Step 5 — Floors 4–6 branches
+## Services Step 5 — Floors 4–6 branches — COMPLETE
 
-Add higher-density distribution for media/recording/editing, policy/archive/review and command/Halo/briefing systems.
+Higher-density distribution is modeled for media/recording/editing, policy/archive/review and command/Halo/briefing systems. Step 5 also established representative Level 7 handoffs so the roof was not disconnected while the detailed termination pass remained pending.
 
-## Services Step 6 — Level 7 terminations
+Verified Step 5 snapshot: **492 meshes / 346,088 bytes / 114 Step 5 branch segments / 39 Step 5 endpoints / 34 of 34 checks passing / SHA-256 `424553e20e8231daf74e54cd9676604b041cdd850519f5a390a3ad7820568886`**.
 
-Coordinate roof mechanical equipment, roof drains, path lighting, emergency communications, fire support, lightning-protection concept and service-screen routes.
+## Services Step 6 — Level 7 terminations — COMPLETE
+
+The representative Step 5 roof handoffs are now completed with explicit service geometry for all three canonical roof mechanical units, six roof drains, path/stair lighting, two emergency communication points, two fire-support points, four lightning-protection terminals plus perimeter conductor, and north service-screen/service-walk routes. The open-air roof, mobility reservation and both protected-stair arrivals remain preserved.
+
+Verified Step 6 snapshot: **608 meshes / 425,284 bytes / 57 Step 6 roof branch segments / 21 Step 6 endpoints / 38 detailed roof devices / 45 of 45 checks passing / SHA-256 `a6c3aaf47d2d8e30950306dad7b0e260e7b50967a973d4eedad39e1aebe77f81`**.
 
 ## Services Step 7 — interior device / ceiling realism
 
@@ -52,4 +56,4 @@ Require vertical continuity B1→L7, no core/circulation clashes, traceability f
 
 ## Current stop point
 
-Services Steps 1–3 are complete and verified. Step 3 connects the authorized B1 plant/source equipment through 34 representative B1 distribution segments into all nine existing risers, with 28/28 checks passing. **Next is Services Step 4: Floors 1–3 representative branch/endpoints.**
+Services Steps 1–6 are complete and verified on the Step 6 branch. The nervous-system model now traces B1 source/plant through the nine vertical risers, Floors 1–6 representative distribution and detailed Level 7 terminations. **Next is Services Step 7: interior device / ceiling realism.**
