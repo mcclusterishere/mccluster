@@ -229,6 +229,7 @@ Current state:
 - standalone Level 7 viewer is a real 3D roof viewer rather than a redirect to the chassis;
 - working-stack viewer loads the detailed roof at **FFE +81 ft** and truly isolates it;
 - exactly three repo-backed Level 7 capabilities are represented: **ecosystem-routing**, **roof-mobility**, and optional-route-only **uprise-world**;
+- Uprise World is represented as a **disabled, read-only optional route state** and cannot launch until explicitly enabled; it does not control roof geometry or branding;
 - candidate mobility geometry remains explicitly conceptual/non-operational — no runway, no certified helipad/TLOF/FATO claim;
 - passenger-elevator direct Level 7 service remains unassumed;
 - Stair A and Stair B each preserve the complete **13.5 ft Floor 6→roof rise**, 22-riser conceptual geometry, upper landing at +81 ft, and a real 3 ft south-facing roof-door opening;
