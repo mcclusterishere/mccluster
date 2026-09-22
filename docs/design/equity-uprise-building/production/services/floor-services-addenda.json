@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "authority_id": "equity-uprise-floor-services-addenda",
-  "status": "active-coordination-addenda-services-step4-floors-1-3",
+  "status": "active-coordination-addenda-services-step5-floors-4-6-roof",
   "not_for_construction": true,
   "riser_source_ref": "../vertical-risers-core-v2.json",
   "services_core_ref": "../building-services-core-v2.json",
@@ -12,31 +12,8 @@
       "ffe_ft": -13.5,
       "role": "service origin / plant",
       "branch_route": "modeled source equipment -> overhead B1 distribution -> shared MEP riser; canonical rooms/core/circulation remain fixed",
-      "endpoints": [
-        "mechanical plant AHU/pumps",
-        "main switchgear",
-        "UPS/emergency distribution",
-        "telecom racks",
-        "BAS panel",
-        "fire pump/water/backflow",
-        "sprinkler riser/status",
-        "sump pumps/flood sensors",
-        "workshop/service support"
-      ],
-      "systems": [
-        "ELEC-NORMAL",
-        "ELEC-EMERGENCY",
-        "DATA-STRUCTURED",
-        "BAS-CONTROLS",
-        "SECURITY-ACCESS",
-        "HVAC-AIR",
-        "WATER-DOMESTIC",
-        "SANITARY-VENT",
-        "STORM-DRAINAGE",
-        "FIRE-PROTECTION",
-        "FIRE-ALARM",
-        "SERVICE-HOUSEKEEPING"
-      ],
+      "endpoints": ["mechanical plant AHU/pumps", "main switchgear", "UPS/emergency distribution", "telecom racks", "BAS panel", "fire pump/water/backflow", "sprinkler riser/status", "sump pumps/flood sensors", "workshop/service support"],
+      "systems": ["ELEC-NORMAL", "ELEC-EMERGENCY", "DATA-STRUCTURED", "BAS-CONTROLS", "SECURITY-ACCESS", "HVAC-AIR", "WATER-DOMESTIC", "SANITARY-VENT", "STORM-DRAINAGE", "FIRE-PROTECTION", "FIRE-ALARM", "SERVICE-HOUSEKEEPING"],
       "implementation_status": "services-step3-source-connected",
       "source_connection_authority_ref": "../building-services-core-v2.json#b1_source_connections"
     },
@@ -45,33 +22,8 @@
       "ffe_ft": 0,
       "role": "arrival / orientation / intake",
       "branch_route": "north service band / concealed ceiling branches from MEP spine",
-      "endpoints": [
-        "reception workstation",
-        "concierge/security interface",
-        "building operations status panel",
-        "IT/network rack",
-        "elevator/service controls",
-        "restroom fixtures",
-        "janitor support",
-        "architectural/egress lighting",
-        "access control",
-        "life-safety devices"
-      ],
-      "systems": [
-        "ELEC-NORMAL",
-        "ELEC-EMERGENCY",
-        "LIGHTING-CONTROLS",
-        "DATA-STRUCTURED",
-        "AV-MEDIA",
-        "BAS-CONTROLS",
-        "SECURITY-ACCESS",
-        "HVAC-AIR",
-        "WATER-DOMESTIC",
-        "SANITARY-VENT",
-        "FIRE-PROTECTION",
-        "FIRE-ALARM",
-        "SERVICE-HOUSEKEEPING"
-      ],
+      "endpoints": ["reception workstation", "concierge/security interface", "building operations status panel", "IT/network rack", "elevator/service controls", "restroom fixtures", "janitor support", "architectural/egress lighting", "access control", "life-safety devices"],
+      "systems": ["ELEC-NORMAL", "ELEC-EMERGENCY", "LIGHTING-CONTROLS", "DATA-STRUCTURED", "AV-MEDIA", "BAS-CONTROLS", "SECURITY-ACCESS", "HVAC-AIR", "WATER-DOMESTIC", "SANITARY-VENT", "FIRE-PROTECTION", "FIRE-ALARM", "SERVICE-HOUSEKEEPING"],
       "implementation_status": "services-step4-branches-endpoints-modeled"
     },
     "F2": {
@@ -79,31 +31,8 @@
       "ffe_ft": 13.5,
       "role": "public forum",
       "branch_route": "north service band with concealed branch to central forum table and AV/IT room",
-      "endpoints": [
-        "forum table power/data",
-        "feature-wall AV",
-        "AV/IT rack",
-        "member check-in",
-        "restroom fixtures",
-        "janitor support",
-        "forum lighting/control",
-        "life-safety devices"
-      ],
-      "systems": [
-        "ELEC-NORMAL",
-        "ELEC-EMERGENCY",
-        "LIGHTING-CONTROLS",
-        "DATA-STRUCTURED",
-        "AV-MEDIA",
-        "BAS-CONTROLS",
-        "SECURITY-ACCESS",
-        "HVAC-AIR",
-        "WATER-DOMESTIC",
-        "SANITARY-VENT",
-        "FIRE-PROTECTION",
-        "FIRE-ALARM",
-        "SERVICE-HOUSEKEEPING"
-      ],
+      "endpoints": ["forum table power/data", "feature-wall AV", "AV/IT rack", "member check-in", "restroom fixtures", "janitor support", "forum lighting/control", "life-safety devices"],
+      "systems": ["ELEC-NORMAL", "ELEC-EMERGENCY", "LIGHTING-CONTROLS", "DATA-STRUCTURED", "AV-MEDIA", "BAS-CONTROLS", "SECURITY-ACCESS", "HVAC-AIR", "WATER-DOMESTIC", "SANITARY-VENT", "FIRE-PROTECTION", "FIRE-ALARM", "SERVICE-HOUSEKEEPING"],
       "implementation_status": "services-step4-branches-endpoints-modeled"
     },
     "F3": {
@@ -111,153 +40,45 @@
       "ffe_ft": 27,
       "role": "fellowship + network",
       "branch_route": "north service band with local concealed branches to interview rooms, exchange wall and member check-in",
-      "endpoints": [
-        "opportunity exchange displays",
-        "network/lounge power-data",
-        "interview/mentorship rooms",
-        "member check-in",
-        "local AV/IT support",
-        "restroom fixtures",
-        "lighting/HVAC/life-safety"
-      ],
-      "systems": [
-        "ELEC-NORMAL",
-        "ELEC-EMERGENCY",
-        "LIGHTING-CONTROLS",
-        "DATA-STRUCTURED",
-        "AV-MEDIA",
-        "BAS-CONTROLS",
-        "SECURITY-ACCESS",
-        "HVAC-AIR",
-        "WATER-DOMESTIC",
-        "SANITARY-VENT",
-        "FIRE-PROTECTION",
-        "FIRE-ALARM",
-        "SERVICE-HOUSEKEEPING"
-      ],
+      "endpoints": ["opportunity exchange displays", "network/lounge power-data", "interview/mentorship rooms", "member check-in", "local AV/IT support", "restroom fixtures", "lighting/HVAC/life-safety"],
+      "systems": ["ELEC-NORMAL", "ELEC-EMERGENCY", "LIGHTING-CONTROLS", "DATA-STRUCTURED", "AV-MEDIA", "BAS-CONTROLS", "SECURITY-ACCESS", "HVAC-AIR", "WATER-DOMESTIC", "SANITARY-VENT", "FIRE-PROTECTION", "FIRE-ALARM", "SERVICE-HOUSEKEEPING"],
       "implementation_status": "services-step4-branches-endpoints-modeled"
     },
     "F4": {
       "display": "F4",
       "ffe_ft": 40.5,
       "role": "media + culture",
-      "branch_route": "north service band plus highest-density technical ceiling/tray branches to recording/edit/media support",
-      "endpoints": [
-        "creator recording room",
-        "edit/review suite",
-        "media archive/playback",
-        "AV/IT racks",
-        "dedicated environmental support",
-        "acoustic-room power/data",
-        "restroom fixtures",
-        "lighting/HVAC/life-safety"
-      ],
-      "systems": [
-        "ELEC-NORMAL",
-        "ELEC-EMERGENCY",
-        "LIGHTING-CONTROLS",
-        "DATA-STRUCTURED",
-        "AV-MEDIA",
-        "BAS-CONTROLS",
-        "SECURITY-ACCESS",
-        "HVAC-AIR",
-        "WATER-DOMESTIC",
-        "SANITARY-VENT",
-        "FIRE-PROTECTION",
-        "FIRE-ALARM",
-        "SERVICE-HOUSEKEEPING"
-      ]
+      "branch_route": "north service band plus technical ceiling/tray branches to recording, edit, archive, AV and environmental support zones",
+      "endpoints": ["creator recording room", "edit/review suite", "media archive/playback", "AV/IT racks", "dedicated environmental support", "acoustic-room power/data", "restroom fixtures", "lighting/HVAC/life-safety"],
+      "systems": ["ELEC-NORMAL", "ELEC-EMERGENCY", "LIGHTING-CONTROLS", "DATA-STRUCTURED", "AV-MEDIA", "BAS-CONTROLS", "SECURITY-ACCESS", "HVAC-AIR", "WATER-DOMESTIC", "SANITARY-VENT", "FIRE-PROTECTION", "FIRE-ALARM", "SERVICE-HOUSEKEEPING"],
+      "implementation_status": "services-step5-branches-endpoints-modeled"
     },
     "F5": {
       "display": "F5",
       "ffe_ft": 54,
       "role": "policy + proof",
-      "branch_route": "north service band with concealed branches to research, archive and review spaces",
-      "endpoints": [
-        "policy lab workpoints",
-        "research/evidence wall",
-        "evidence archive",
-        "source review",
-        "publication/submission review",
-        "navigator workstation",
-        "secure records/support",
-        "restroom fixtures",
-        "lighting/HVAC/life-safety"
-      ],
-      "systems": [
-        "ELEC-NORMAL",
-        "ELEC-EMERGENCY",
-        "LIGHTING-CONTROLS",
-        "DATA-STRUCTURED",
-        "AV-MEDIA",
-        "BAS-CONTROLS",
-        "SECURITY-ACCESS",
-        "HVAC-AIR",
-        "WATER-DOMESTIC",
-        "SANITARY-VENT",
-        "FIRE-PROTECTION",
-        "FIRE-ALARM",
-        "SERVICE-HOUSEKEEPING"
-      ]
+      "branch_route": "north service band with concealed branches to research, evidence, archive, review and navigator support spaces",
+      "endpoints": ["policy lab workpoints", "research/evidence wall", "evidence archive", "source review", "publication/submission review", "navigator workstation", "secure records/support", "restroom fixtures", "lighting/HVAC/life-safety"],
+      "systems": ["ELEC-NORMAL", "ELEC-EMERGENCY", "LIGHTING-CONTROLS", "DATA-STRUCTURED", "AV-MEDIA", "BAS-CONTROLS", "SECURITY-ACCESS", "HVAC-AIR", "WATER-DOMESTIC", "SANITARY-VENT", "FIRE-PROTECTION", "FIRE-ALARM", "SERVICE-HOUSEKEEPING"],
+      "implementation_status": "services-step5-branches-endpoints-modeled"
     },
     "F6": {
       "display": "F6",
       "ffe_ft": 67.5,
       "role": "penthouse command",
-      "branch_route": "north service band with concealed floor/ceiling branches to command table, displays, briefing rooms and Halo",
-      "endpoints": [
-        "command table power/data",
-        "NOW/PAST WORK/JOIN displays",
-        "systems rack",
-        "strategy/briefing AV",
-        "Halo ceiling suspension/data feed",
-        "roof-transition terminal",
-        "restroom fixtures",
-        "lighting/HVAC/life-safety"
-      ],
-      "systems": [
-        "ELEC-NORMAL",
-        "ELEC-EMERGENCY",
-        "LIGHTING-CONTROLS",
-        "DATA-STRUCTURED",
-        "AV-MEDIA",
-        "BAS-CONTROLS",
-        "SECURITY-ACCESS",
-        "HVAC-AIR",
-        "WATER-DOMESTIC",
-        "SANITARY-VENT",
-        "FIRE-PROTECTION",
-        "FIRE-ALARM",
-        "SERVICE-HOUSEKEEPING"
-      ]
+      "branch_route": "north service band with concealed branches to command table, displays, briefing rooms, Halo media/data, and roof-transition controls",
+      "endpoints": ["command table power/data", "NOW/PAST WORK/JOIN displays", "systems rack", "strategy/briefing AV", "Halo ceiling suspension/data feed", "roof-transition terminal", "restroom fixtures", "lighting/HVAC/life-safety"],
+      "systems": ["ELEC-NORMAL", "ELEC-EMERGENCY", "LIGHTING-CONTROLS", "DATA-STRUCTURED", "AV-MEDIA", "BAS-CONTROLS", "SECURITY-ACCESS", "HVAC-AIR", "WATER-DOMESTIC", "SANITARY-VENT", "FIRE-PROTECTION", "FIRE-ALARM", "SERVICE-HOUSEKEEPING"],
+      "implementation_status": "services-step5-branches-endpoints-modeled"
     },
     "L7": {
       "display": "L7",
       "ffe_ft": 81,
       "role": "roof / mobility portal",
       "branch_route": "north service screen / roof service walkway; keep mobility field and protected stair arrivals clear",
-      "endpoints": [
-        "roof mechanical units",
-        "roof drains",
-        "path lights",
-        "stair sconces",
-        "emergency call/intercom",
-        "fire cabinets",
-        "BAS/weather/service sensors",
-        "lightning-protection concept"
-      ],
-      "systems": [
-        "ELEC-NORMAL",
-        "ELEC-EMERGENCY",
-        "LIGHTING-CONTROLS",
-        "DATA-STRUCTURED",
-        "BAS-CONTROLS",
-        "SECURITY-ACCESS",
-        "STORM-DRAINAGE",
-        "FIRE-PROTECTION",
-        "FIRE-ALARM",
-        "SERVICE-HOUSEKEEPING"
-      ]
+      "endpoints": ["roof mechanical units", "roof drains", "path lights", "stair sconces", "emergency call/intercom", "fire cabinets", "BAS/weather/service sensors", "lightning-protection concept"],
+      "systems": ["ELEC-NORMAL", "ELEC-EMERGENCY", "LIGHTING-CONTROLS", "DATA-STRUCTURED", "BAS-CONTROLS", "SECURITY-ACCESS", "STORM-DRAINAGE", "FIRE-PROTECTION", "FIRE-ALARM", "SERVICE-HOUSEKEEPING"],
+      "implementation_status": "services-step5-roof-terminations-modeled"
     }
   }
 }
