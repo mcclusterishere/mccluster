@@ -383,7 +383,7 @@ ck("fire and domestic water remain distinguishable",SOURCE_CONNECTIONS.get("FIRE
 ck("storm/sump connects to STORM-DRAINAGE",SOURCE_CONNECTIONS.get("STORM-DRAINAGE",{}).get("connection_target_riser")=="R-STORM" and "STORM-DRAINAGE" in connection_paths)
 ck("HVAC plant connects to HVAC-AIR",SOURCE_CONNECTIONS.get("HVAC-AIR",{}).get("connection_target_riser")=="R-HVAC" and "HVAC-AIR" in connection_paths)
 step4=[r for r in records if r["kind"] in {"floor_branch","floor_endpoint"} and r["level"] in {1,2,3}]
-step5=[r for r in records if r["kind"] in {"floor_branch","floor_endpoint"} and r["level"] in {4,5,6,7}]
+step5=[r for r in records if r["kind"] in {"floor_branch","floor_endpoint"} and r["level"] in {4,5,6,7} and r.get("step")!=6]
 ck("Step 4 branches remain on Floors 1-3",{r["level"] for r in step4}=={1,2,3},sorted({r["level"] for r in step4}))
 ck("Step 5 branches exist on Floors 4-6 and L7",{r["level"] for r in step5}=={4,5,6,7},sorted({r["level"] for r in step5}))
 ck("Step 5 upper floors have power/data/AV",all({"ELEC-NORMAL","DATA-STRUCTURED","AV-MEDIA"}<={x["system_id"] for x in floor_branch_records if x["level"]==l} for l in (4,5,6)))
@@ -448,8 +448,8 @@ report={
     "step4_floor_branch_segments":sum(1 for r in records if r["kind"]=="floor_branch" and r["level"] in {1,2,3}),
     "step4_floor_endpoints":sum(1 for r in records if r["kind"]=="floor_endpoint" and r["level"] in {1,2,3}),
     "step4_levels":[1,2,3],
-    "step5_floor_branch_segments":sum(1 for r in records if r["kind"]=="floor_branch" and r["level"] in {4,5,6,7}),
-    "step5_floor_endpoints":sum(1 for r in records if r["kind"]=="floor_endpoint" and r["level"] in {4,5,6,7}),
+    "step5_floor_branch_segments":sum(1 for r in records if r["kind"]=="floor_branch" and r["level"] in {4,5,6,7} and r.get("step")!=6),
+    "step5_floor_endpoints":sum(1 for r in records if r["kind"]=="floor_endpoint" and r["level"] in {4,5,6,7} and r.get("step")!=6),
     "step5_levels":[4,5,6,7],
     "step6_roof_branch_segments":sum(1 for r in step6_records if r["kind"]=="floor_branch"),
     "step6_roof_endpoints":sum(1 for r in step6_records if r["kind"]=="floor_endpoint"),
