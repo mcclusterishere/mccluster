@@ -238,4 +238,4 @@
     "builder": "docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_v1.py",
     "verifier": "docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step2.py"
   }
-}\n
+}
