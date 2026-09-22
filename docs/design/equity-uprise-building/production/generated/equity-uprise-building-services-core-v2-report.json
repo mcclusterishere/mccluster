@@ -539,6 +539,3510 @@
   "system_families_total": 14,
   "floor_branch_segments": 329,
   "floor_endpoints": 115,
+  "floor_branch_records_total": 115,
+  "floor_branch_records": [
+    {
+      "branch_id": "BRANCH::F1::ELEC-NORMAL::RECEPTION::01",
+      "handoff_id": "HANDOFF::F1::ELEC-NORMAL",
+      "level": 1,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "RECEPTION",
+      "inventory_ref": "F1-RECEPTION-MONITOR-01",
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          46.0
+        ],
+        [
+          36.0,
+          46.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        46.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F1::DATA-STRUCTURED::RECEPTION-DATA::01",
+      "handoff_id": "HANDOFF::F1::DATA-STRUCTURED",
+      "level": 1,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "RECEPTION-DATA",
+      "inventory_ref": "F1-RECEPTION-SECURITY-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          46.0,
+          67.5
+        ],
+        [
+          46.0,
+          46.0
+        ],
+        [
+          36.0,
+          46.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        46.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F1::BAS-CONTROLS::OPS-PANEL::01",
+      "handoff_id": "HANDOFF::F1::BAS-CONTROLS",
+      "level": 1,
+      "system_id": "BAS-CONTROLS",
+      "endpoint": "OPS-PANEL",
+      "inventory_ref": "F1-OPS-PANEL-01",
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          40.0,
+          70.5
+        ],
+        [
+          40.0,
+          65.0
+        ],
+        [
+          38.0,
+          65.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        65.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F1::DATA-STRUCTURED::IT-RACK::01",
+      "handoff_id": "HANDOFF::F1::DATA-STRUCTURED",
+      "level": 1,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "IT-RACK",
+      "inventory_ref": "F1-IT-RACK-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          47.0,
+          67.5
+        ],
+        [
+          47.0,
+          65.0
+        ],
+        [
+          46.0,
+          65.0
+        ]
+      ],
+      "connection_xy_ft": [
+        46.0,
+        65.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F1::WATER-DOMESTIC::RESTROOM-WATER::01",
+      "handoff_id": "HANDOFF::F1::WATER-DOMESTIC",
+      "level": 1,
+      "system_id": "WATER-DOMESTIC",
+      "endpoint": "RESTROOM-WATER",
+      "inventory_ref": "F1-RR-B-VANITY-01",
+      "points_ft": [
+        [
+          54.25,
+          70.5
+        ],
+        [
+          30.0,
+          70.5
+        ],
+        [
+          30.0,
+          64.0
+        ],
+        [
+          29.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        64.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F1::SANITARY-VENT::RESTROOM-SANITARY::01",
+      "handoff_id": "HANDOFF::F1::SANITARY-VENT",
+      "level": 1,
+      "system_id": "SANITARY-VENT",
+      "endpoint": "RESTROOM-SANITARY",
+      "inventory_ref": "F1-RR-B-FIXTURE-01",
+      "points_ft": [
+        [
+          55.75,
+          67.5
+        ],
+        [
+          28.0,
+          67.5
+        ],
+        [
+          28.0,
+          69.0
+        ],
+        [
+          29.0,
+          69.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        69.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F1::HVAC-AIR::ARRIVAL-HVAC::01",
+      "handoff_id": "HANDOFF::F1::HVAC-AIR",
+      "level": 1,
+      "system_id": "HVAC-AIR",
+      "endpoint": "ARRIVAL-HVAC",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          51.75,
+          67.5
+        ],
+        [
+          44.0,
+          67.5
+        ],
+        [
+          44.0,
+          50.0
+        ],
+        [
+          36.0,
+          50.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        50.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F1::FIRE-PROTECTION::LIFE-SAFETY::01",
+      "handoff_id": "HANDOFF::F1::FIRE-PROTECTION",
+      "level": 1,
+      "system_id": "FIRE-PROTECTION",
+      "endpoint": "LIFE-SAFETY",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          54.25,
+          67.5
+        ],
+        [
+          32.0,
+          67.5
+        ],
+        [
+          32.0,
+          55.0
+        ]
+      ],
+      "connection_xy_ft": [
+        32.0,
+        55.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F1::ELEC-EMERGENCY::EGRESS::01",
+      "handoff_id": "HANDOFF::F1::ELEC-EMERGENCY",
+      "level": 1,
+      "system_id": "ELEC-EMERGENCY",
+      "endpoint": "EGRESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          50.0,
+          70.5
+        ],
+        [
+          50.0,
+          54.0
+        ],
+        [
+          44.0,
+          54.0
+        ]
+      ],
+      "connection_xy_ft": [
+        44.0,
+        54.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F2::ELEC-NORMAL::FORUM-TABLE::01",
+      "handoff_id": "HANDOFF::F2::ELEC-NORMAL",
+      "level": 2,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "FORUM-TABLE",
+      "inventory_ref": "F2-FORUM-POWER-01",
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          39.0
+        ],
+        [
+          36.0,
+          39.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        39.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F2::DATA-STRUCTURED::FORUM-DATA::01",
+      "handoff_id": "HANDOFF::F2::DATA-STRUCTURED",
+      "level": 2,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "FORUM-DATA",
+      "inventory_ref": "F2-FORUM-POWER-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          46.0,
+          67.5
+        ],
+        [
+          46.0,
+          39.0
+        ],
+        [
+          36.0,
+          39.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        39.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F2::AV-MEDIA::FEATURE-WALL::01",
+      "handoff_id": "HANDOFF::F2::AV-MEDIA",
+      "level": 2,
+      "system_id": "AV-MEDIA",
+      "endpoint": "FEATURE-WALL",
+      "inventory_ref": "F2-DISPLAY-PERSPECTIVES",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          52.0
+        ],
+        [
+          36.0,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        52.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F2::DATA-STRUCTURED::AVIT-RACK::01",
+      "handoff_id": "HANDOFF::F2::DATA-STRUCTURED",
+      "level": 2,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "AVIT-RACK",
+      "inventory_ref": "F2-AVIT-RACK-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          47.0,
+          67.5
+        ],
+        [
+          47.0,
+          64.0
+        ],
+        [
+          46.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        46.0,
+        64.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F2::SECURITY-ACCESS::MEMBER-CHECKIN::01",
+      "handoff_id": "HANDOFF::F2::SECURITY-ACCESS",
+      "level": 2,
+      "system_id": "SECURITY-ACCESS",
+      "endpoint": "MEMBER-CHECKIN",
+      "inventory_ref": "F2-MEMBER-CHECKIN-01",
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          52.0,
+          70.5
+        ],
+        [
+          52.0,
+          27.0
+        ],
+        [
+          50.0,
+          27.0
+        ]
+      ],
+      "connection_xy_ft": [
+        50.0,
+        27.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F2::WATER-DOMESTIC::RESTROOM-WATER::01",
+      "handoff_id": "HANDOFF::F2::WATER-DOMESTIC",
+      "level": 2,
+      "system_id": "WATER-DOMESTIC",
+      "endpoint": "RESTROOM-WATER",
+      "inventory_ref": "F2-RR-B-VANITY-01",
+      "points_ft": [
+        [
+          54.25,
+          70.5
+        ],
+        [
+          30.0,
+          70.5
+        ],
+        [
+          30.0,
+          64.0
+        ],
+        [
+          29.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        64.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F2::SANITARY-VENT::RESTROOM-SANITARY::01",
+      "handoff_id": "HANDOFF::F2::SANITARY-VENT",
+      "level": 2,
+      "system_id": "SANITARY-VENT",
+      "endpoint": "RESTROOM-SANITARY",
+      "inventory_ref": "F2-RR-B-WC-01",
+      "points_ft": [
+        [
+          55.75,
+          67.5
+        ],
+        [
+          28.0,
+          67.5
+        ],
+        [
+          28.0,
+          69.0
+        ],
+        [
+          29.0,
+          69.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        69.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F2::HVAC-AIR::FORUM-HVAC::01",
+      "handoff_id": "HANDOFF::F2::HVAC-AIR",
+      "level": 2,
+      "system_id": "HVAC-AIR",
+      "endpoint": "FORUM-HVAC",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          51.75,
+          67.5
+        ],
+        [
+          44.0,
+          67.5
+        ],
+        [
+          44.0,
+          48.0
+        ],
+        [
+          36.0,
+          48.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        48.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F2::FIRE-PROTECTION::LIFE-SAFETY::01",
+      "handoff_id": "HANDOFF::F2::FIRE-PROTECTION",
+      "level": 2,
+      "system_id": "FIRE-PROTECTION",
+      "endpoint": "LIFE-SAFETY",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          54.25,
+          67.5
+        ],
+        [
+          32.0,
+          67.5
+        ],
+        [
+          32.0,
+          55.0
+        ]
+      ],
+      "connection_xy_ft": [
+        32.0,
+        55.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F2::ELEC-EMERGENCY::EGRESS::01",
+      "handoff_id": "HANDOFF::F2::ELEC-EMERGENCY",
+      "level": 2,
+      "system_id": "ELEC-EMERGENCY",
+      "endpoint": "EGRESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          50.0,
+          70.5
+        ],
+        [
+          50.0,
+          54.0
+        ],
+        [
+          44.0,
+          54.0
+        ]
+      ],
+      "connection_xy_ft": [
+        44.0,
+        54.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::ELEC-NORMAL::OPPORTUNITY-TABLE::01",
+      "handoff_id": "HANDOFF::F3::ELEC-NORMAL",
+      "level": 3,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "OPPORTUNITY-TABLE",
+      "inventory_ref": "F3-OPPORTUNITY-POWER-01",
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          41.0
+        ],
+        [
+          36.0,
+          41.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        41.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::DATA-STRUCTURED::OPPORTUNITY-DATA::01",
+      "handoff_id": "HANDOFF::F3::DATA-STRUCTURED",
+      "level": 3,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "OPPORTUNITY-DATA",
+      "inventory_ref": "F3-OPPORTUNITY-POWER-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          46.0,
+          67.5
+        ],
+        [
+          46.0,
+          41.0
+        ],
+        [
+          36.0,
+          41.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        41.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::AV-MEDIA::OPPORTUNITY-DISPLAYS::01",
+      "handoff_id": "HANDOFF::F3::AV-MEDIA",
+      "level": 3,
+      "system_id": "AV-MEDIA",
+      "endpoint": "OPPORTUNITY-DISPLAYS",
+      "inventory_ref": "F3-DISPLAY-PEOPLE",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          52.0
+        ],
+        [
+          36.0,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        52.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::DATA-STRUCTURED::NETWORK-IT::01",
+      "handoff_id": "HANDOFF::F3::DATA-STRUCTURED",
+      "level": 3,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "NETWORK-IT",
+      "inventory_ref": "F3-NETWORK-IT-RACK-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          47.0,
+          67.5
+        ],
+        [
+          47.0,
+          64.0
+        ],
+        [
+          46.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        46.0,
+        64.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::SECURITY-ACCESS::MEMBER-CHECKIN::01",
+      "handoff_id": "HANDOFF::F3::SECURITY-ACCESS",
+      "level": 3,
+      "system_id": "SECURITY-ACCESS",
+      "endpoint": "MEMBER-CHECKIN",
+      "inventory_ref": "F3-MEMBER-CHECKIN-01",
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          52.0,
+          70.5
+        ],
+        [
+          52.0,
+          27.0
+        ],
+        [
+          50.0,
+          27.0
+        ]
+      ],
+      "connection_xy_ft": [
+        50.0,
+        27.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::DATA-STRUCTURED::INTERVIEW-B::01",
+      "handoff_id": "HANDOFF::F3::DATA-STRUCTURED",
+      "level": 3,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "INTERVIEW-B",
+      "inventory_ref": "F3-INTERVIEW-B-DISPLAY-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          45.0,
+          67.5
+        ],
+        [
+          45.0,
+          18.0
+        ],
+        [
+          22.0,
+          18.0
+        ],
+        [
+          22.0,
+          16.0
+        ]
+      ],
+      "connection_xy_ft": [
+        22.0,
+        16.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::ELEC-NORMAL::INTERVIEW-A::01",
+      "handoff_id": "HANDOFF::F3::ELEC-NORMAL",
+      "level": 3,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "INTERVIEW-A",
+      "inventory_ref": "F3-INTERVIEW-A-DISPLAY-01",
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          43.0,
+          67.5
+        ],
+        [
+          43.0,
+          18.0
+        ],
+        [
+          8.0,
+          18.0
+        ],
+        [
+          8.0,
+          16.0
+        ]
+      ],
+      "connection_xy_ft": [
+        8.0,
+        16.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::WATER-DOMESTIC::RESTROOM-WATER::01",
+      "handoff_id": "HANDOFF::F3::WATER-DOMESTIC",
+      "level": 3,
+      "system_id": "WATER-DOMESTIC",
+      "endpoint": "RESTROOM-WATER",
+      "inventory_ref": "F3-RR-B-VANITY-01",
+      "points_ft": [
+        [
+          54.25,
+          70.5
+        ],
+        [
+          30.0,
+          70.5
+        ],
+        [
+          30.0,
+          64.0
+        ],
+        [
+          29.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        64.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::SANITARY-VENT::RESTROOM-SANITARY::01",
+      "handoff_id": "HANDOFF::F3::SANITARY-VENT",
+      "level": 3,
+      "system_id": "SANITARY-VENT",
+      "endpoint": "RESTROOM-SANITARY",
+      "inventory_ref": "F3-RR-B-WC-01",
+      "points_ft": [
+        [
+          55.75,
+          67.5
+        ],
+        [
+          28.0,
+          67.5
+        ],
+        [
+          28.0,
+          69.0
+        ],
+        [
+          29.0,
+          69.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        69.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::HVAC-AIR::FELLOWSHIP-HVAC::01",
+      "handoff_id": "HANDOFF::F3::HVAC-AIR",
+      "level": 3,
+      "system_id": "HVAC-AIR",
+      "endpoint": "FELLOWSHIP-HVAC",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          51.75,
+          67.5
+        ],
+        [
+          44.0,
+          67.5
+        ],
+        [
+          44.0,
+          48.0
+        ],
+        [
+          36.0,
+          48.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        48.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::FIRE-PROTECTION::LIFE-SAFETY::01",
+      "handoff_id": "HANDOFF::F3::FIRE-PROTECTION",
+      "level": 3,
+      "system_id": "FIRE-PROTECTION",
+      "endpoint": "LIFE-SAFETY",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          54.25,
+          67.5
+        ],
+        [
+          32.0,
+          67.5
+        ],
+        [
+          32.0,
+          55.0
+        ]
+      ],
+      "connection_xy_ft": [
+        32.0,
+        55.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F3::ELEC-EMERGENCY::EGRESS::01",
+      "handoff_id": "HANDOFF::F3::ELEC-EMERGENCY",
+      "level": 3,
+      "system_id": "ELEC-EMERGENCY",
+      "endpoint": "EGRESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          50.0,
+          70.5
+        ],
+        [
+          50.0,
+          54.0
+        ],
+        [
+          44.0,
+          54.0
+        ]
+      ],
+      "connection_xy_ft": [
+        44.0,
+        54.0
+      ],
+      "services_step": 4
+    },
+    {
+      "branch_id": "BRANCH::F4::ELEC-NORMAL::MEDIA-POWER::01",
+      "handoff_id": "HANDOFF::F4::ELEC-NORMAL",
+      "level": 4,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "MEDIA-POWER",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          42.0
+        ],
+        [
+          35.0,
+          42.0
+        ]
+      ],
+      "connection_xy_ft": [
+        35.0,
+        42.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F4::DATA-STRUCTURED::MEDIA-DATA::01",
+      "handoff_id": "HANDOFF::F4::DATA-STRUCTURED",
+      "level": 4,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "MEDIA-DATA",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          46.0,
+          67.5
+        ],
+        [
+          46.0,
+          42.0
+        ],
+        [
+          35.0,
+          42.0
+        ]
+      ],
+      "connection_xy_ft": [
+        35.0,
+        42.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F4::AV-MEDIA::MEDIA-AV::01",
+      "handoff_id": "HANDOFF::F4::AV-MEDIA",
+      "level": 4,
+      "system_id": "AV-MEDIA",
+      "endpoint": "MEDIA-AV",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          52.0
+        ],
+        [
+          35.0,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        35.0,
+        52.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F4::SECURITY-ACCESS::MEDIA-CHECKIN::01",
+      "handoff_id": "HANDOFF::F4::SECURITY-ACCESS",
+      "level": 4,
+      "system_id": "SECURITY-ACCESS",
+      "endpoint": "MEDIA-CHECKIN",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          52.0,
+          70.5
+        ],
+        [
+          52.0,
+          27.0
+        ],
+        [
+          50.0,
+          27.0
+        ]
+      ],
+      "connection_xy_ft": [
+        50.0,
+        27.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F4::BAS-CONTROLS::MEDIA-BAS::01",
+      "handoff_id": "HANDOFF::F4::BAS-CONTROLS",
+      "level": 4,
+      "system_id": "BAS-CONTROLS",
+      "endpoint": "MEDIA-BAS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          43.0,
+          70.5
+        ],
+        [
+          43.0,
+          64.0
+        ],
+        [
+          40.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        40.0,
+        64.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F4::WATER-DOMESTIC::RESTROOM-WATER::01",
+      "handoff_id": "HANDOFF::F4::WATER-DOMESTIC",
+      "level": 4,
+      "system_id": "WATER-DOMESTIC",
+      "endpoint": "RESTROOM-WATER",
+      "inventory_ref": "F4-RR-B-VANITY-01",
+      "points_ft": [
+        [
+          54.25,
+          70.5
+        ],
+        [
+          30.0,
+          70.5
+        ],
+        [
+          30.0,
+          64.0
+        ],
+        [
+          29.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        64.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F4::SANITARY-VENT::RESTROOM-SANITARY::01",
+      "handoff_id": "HANDOFF::F4::SANITARY-VENT",
+      "level": 4,
+      "system_id": "SANITARY-VENT",
+      "endpoint": "RESTROOM-SANITARY",
+      "inventory_ref": "F4-RR-B-WC-01",
+      "points_ft": [
+        [
+          55.75,
+          67.5
+        ],
+        [
+          28.0,
+          67.5
+        ],
+        [
+          28.0,
+          69.0
+        ],
+        [
+          29.0,
+          69.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        69.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F4::HVAC-AIR::MEDIA-HVAC::01",
+      "handoff_id": "HANDOFF::F4::HVAC-AIR",
+      "level": 4,
+      "system_id": "HVAC-AIR",
+      "endpoint": "MEDIA-HVAC",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          51.75,
+          67.5
+        ],
+        [
+          44.0,
+          67.5
+        ],
+        [
+          44.0,
+          48.0
+        ],
+        [
+          36.0,
+          48.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        48.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F4::FIRE-PROTECTION::LIFE-SAFETY::01",
+      "handoff_id": "HANDOFF::F4::FIRE-PROTECTION",
+      "level": 4,
+      "system_id": "FIRE-PROTECTION",
+      "endpoint": "LIFE-SAFETY",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          54.25,
+          67.5
+        ],
+        [
+          32.0,
+          67.5
+        ],
+        [
+          32.0,
+          55.0
+        ]
+      ],
+      "connection_xy_ft": [
+        32.0,
+        55.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F4::ELEC-EMERGENCY::EGRESS::01",
+      "handoff_id": "HANDOFF::F4::ELEC-EMERGENCY",
+      "level": 4,
+      "system_id": "ELEC-EMERGENCY",
+      "endpoint": "EGRESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          50.0,
+          70.5
+        ],
+        [
+          50.0,
+          54.0
+        ],
+        [
+          44.0,
+          54.0
+        ]
+      ],
+      "connection_xy_ft": [
+        44.0,
+        54.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F5::ELEC-NORMAL::POLICY-POWER::01",
+      "handoff_id": "HANDOFF::F5::ELEC-NORMAL",
+      "level": 5,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "POLICY-POWER",
+      "inventory_ref": "F5-POLICY-POWER-01",
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          40.0
+        ],
+        [
+          35.0,
+          40.0
+        ]
+      ],
+      "connection_xy_ft": [
+        35.0,
+        40.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F5::DATA-STRUCTURED::POLICY-DATA::01",
+      "handoff_id": "HANDOFF::F5::DATA-STRUCTURED",
+      "level": 5,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "POLICY-DATA",
+      "inventory_ref": "F5-POLICY-POWER-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          46.0,
+          67.5
+        ],
+        [
+          46.0,
+          40.0
+        ],
+        [
+          35.0,
+          40.0
+        ]
+      ],
+      "connection_xy_ft": [
+        35.0,
+        40.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F5::AV-MEDIA::POLICY-AV::01",
+      "handoff_id": "HANDOFF::F5::AV-MEDIA",
+      "level": 5,
+      "system_id": "AV-MEDIA",
+      "endpoint": "POLICY-AV",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          52.0
+        ],
+        [
+          35.0,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        35.0,
+        52.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F5::SECURITY-ACCESS::POLICY-CHECKIN::01",
+      "handoff_id": "HANDOFF::F5::SECURITY-ACCESS",
+      "level": 5,
+      "system_id": "SECURITY-ACCESS",
+      "endpoint": "POLICY-CHECKIN",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          52.0,
+          70.5
+        ],
+        [
+          52.0,
+          27.0
+        ],
+        [
+          50.0,
+          27.0
+        ]
+      ],
+      "connection_xy_ft": [
+        50.0,
+        27.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F5::BAS-CONTROLS::POLICY-BAS::01",
+      "handoff_id": "HANDOFF::F5::BAS-CONTROLS",
+      "level": 5,
+      "system_id": "BAS-CONTROLS",
+      "endpoint": "POLICY-BAS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          43.0,
+          70.5
+        ],
+        [
+          43.0,
+          64.0
+        ],
+        [
+          40.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        40.0,
+        64.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F5::WATER-DOMESTIC::RESTROOM-WATER::01",
+      "handoff_id": "HANDOFF::F5::WATER-DOMESTIC",
+      "level": 5,
+      "system_id": "WATER-DOMESTIC",
+      "endpoint": "RESTROOM-WATER",
+      "inventory_ref": "F5-RR-B-VANITY-01",
+      "points_ft": [
+        [
+          54.25,
+          70.5
+        ],
+        [
+          30.0,
+          70.5
+        ],
+        [
+          30.0,
+          64.0
+        ],
+        [
+          29.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        64.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F5::SANITARY-VENT::RESTROOM-SANITARY::01",
+      "handoff_id": "HANDOFF::F5::SANITARY-VENT",
+      "level": 5,
+      "system_id": "SANITARY-VENT",
+      "endpoint": "RESTROOM-SANITARY",
+      "inventory_ref": "F5-RR-B-WC-01",
+      "points_ft": [
+        [
+          55.75,
+          67.5
+        ],
+        [
+          28.0,
+          67.5
+        ],
+        [
+          28.0,
+          69.0
+        ],
+        [
+          29.0,
+          69.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        69.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F5::HVAC-AIR::POLICY-HVAC::01",
+      "handoff_id": "HANDOFF::F5::HVAC-AIR",
+      "level": 5,
+      "system_id": "HVAC-AIR",
+      "endpoint": "POLICY-HVAC",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          51.75,
+          67.5
+        ],
+        [
+          44.0,
+          67.5
+        ],
+        [
+          44.0,
+          48.0
+        ],
+        [
+          36.0,
+          48.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        48.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F5::FIRE-PROTECTION::LIFE-SAFETY::01",
+      "handoff_id": "HANDOFF::F5::FIRE-PROTECTION",
+      "level": 5,
+      "system_id": "FIRE-PROTECTION",
+      "endpoint": "LIFE-SAFETY",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          54.25,
+          67.5
+        ],
+        [
+          32.0,
+          67.5
+        ],
+        [
+          32.0,
+          55.0
+        ]
+      ],
+      "connection_xy_ft": [
+        32.0,
+        55.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F5::ELEC-EMERGENCY::EGRESS::01",
+      "handoff_id": "HANDOFF::F5::ELEC-EMERGENCY",
+      "level": 5,
+      "system_id": "ELEC-EMERGENCY",
+      "endpoint": "EGRESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          50.0,
+          70.5
+        ],
+        [
+          50.0,
+          54.0
+        ],
+        [
+          44.0,
+          54.0
+        ]
+      ],
+      "connection_xy_ft": [
+        44.0,
+        54.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::ELEC-NORMAL::COMMAND-POWER::01",
+      "handoff_id": "HANDOFF::F6::ELEC-NORMAL",
+      "level": 6,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "COMMAND-POWER",
+      "inventory_ref": "F6-COMMAND-POWER-01",
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          38.0
+        ],
+        [
+          35.0,
+          38.0
+        ]
+      ],
+      "connection_xy_ft": [
+        35.0,
+        38.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::DATA-STRUCTURED::COMMAND-DATA::01",
+      "handoff_id": "HANDOFF::F6::DATA-STRUCTURED",
+      "level": 6,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "COMMAND-DATA",
+      "inventory_ref": "F6-COMMAND-POWER-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          46.0,
+          67.5
+        ],
+        [
+          46.0,
+          38.0
+        ],
+        [
+          35.0,
+          38.0
+        ]
+      ],
+      "connection_xy_ft": [
+        35.0,
+        38.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::AV-MEDIA::COMMAND-AV::01",
+      "handoff_id": "HANDOFF::F6::AV-MEDIA",
+      "level": 6,
+      "system_id": "AV-MEDIA",
+      "endpoint": "COMMAND-AV",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          52.0
+        ],
+        [
+          35.0,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        35.0,
+        52.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::SECURITY-ACCESS::COMMAND-CHECKIN::01",
+      "handoff_id": "HANDOFF::F6::SECURITY-ACCESS",
+      "level": 6,
+      "system_id": "SECURITY-ACCESS",
+      "endpoint": "COMMAND-CHECKIN",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          52.0,
+          70.5
+        ],
+        [
+          52.0,
+          27.0
+        ],
+        [
+          50.0,
+          27.0
+        ]
+      ],
+      "connection_xy_ft": [
+        50.0,
+        27.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::BAS-CONTROLS::COMMAND-BAS::01",
+      "handoff_id": "HANDOFF::F6::BAS-CONTROLS",
+      "level": 6,
+      "system_id": "BAS-CONTROLS",
+      "endpoint": "COMMAND-BAS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          43.0,
+          70.5
+        ],
+        [
+          43.0,
+          64.0
+        ],
+        [
+          40.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        40.0,
+        64.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::WATER-DOMESTIC::RESTROOM-WATER::01",
+      "handoff_id": "HANDOFF::F6::WATER-DOMESTIC",
+      "level": 6,
+      "system_id": "WATER-DOMESTIC",
+      "endpoint": "RESTROOM-WATER",
+      "inventory_ref": "F6-RR-B-VANITY-01",
+      "points_ft": [
+        [
+          54.25,
+          70.5
+        ],
+        [
+          30.0,
+          70.5
+        ],
+        [
+          30.0,
+          64.0
+        ],
+        [
+          29.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        64.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::SANITARY-VENT::RESTROOM-SANITARY::01",
+      "handoff_id": "HANDOFF::F6::SANITARY-VENT",
+      "level": 6,
+      "system_id": "SANITARY-VENT",
+      "endpoint": "RESTROOM-SANITARY",
+      "inventory_ref": "F6-RR-B-WC-01",
+      "points_ft": [
+        [
+          55.75,
+          67.5
+        ],
+        [
+          28.0,
+          67.5
+        ],
+        [
+          28.0,
+          69.0
+        ],
+        [
+          29.0,
+          69.0
+        ]
+      ],
+      "connection_xy_ft": [
+        29.0,
+        69.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::HVAC-AIR::COMMAND-HVAC::01",
+      "handoff_id": "HANDOFF::F6::HVAC-AIR",
+      "level": 6,
+      "system_id": "HVAC-AIR",
+      "endpoint": "COMMAND-HVAC",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          51.75,
+          67.5
+        ],
+        [
+          44.0,
+          67.5
+        ],
+        [
+          44.0,
+          48.0
+        ],
+        [
+          36.0,
+          48.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        48.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::FIRE-PROTECTION::LIFE-SAFETY::01",
+      "handoff_id": "HANDOFF::F6::FIRE-PROTECTION",
+      "level": 6,
+      "system_id": "FIRE-PROTECTION",
+      "endpoint": "LIFE-SAFETY",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          54.25,
+          67.5
+        ],
+        [
+          32.0,
+          67.5
+        ],
+        [
+          32.0,
+          55.0
+        ]
+      ],
+      "connection_xy_ft": [
+        32.0,
+        55.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::ELEC-EMERGENCY::EGRESS::01",
+      "handoff_id": "HANDOFF::F6::ELEC-EMERGENCY",
+      "level": 6,
+      "system_id": "ELEC-EMERGENCY",
+      "endpoint": "EGRESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          50.0,
+          70.5
+        ],
+        [
+          50.0,
+          54.0
+        ],
+        [
+          44.0,
+          54.0
+        ]
+      ],
+      "connection_xy_ft": [
+        44.0,
+        54.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::DATA-STRUCTURED::HALO-DATA::01",
+      "handoff_id": "HANDOFF::F6::DATA-STRUCTURED",
+      "level": 6,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "HALO-DATA",
+      "inventory_ref": "F6-HALO-CEILING-FEED-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          50.0,
+          67.5
+        ],
+        [
+          50.0,
+          12.0
+        ],
+        [
+          55.0,
+          12.0
+        ]
+      ],
+      "connection_xy_ft": [
+        55.0,
+        12.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F6::AV-MEDIA::HALO-MEDIA::01",
+      "handoff_id": "HANDOFF::F6::AV-MEDIA",
+      "level": 6,
+      "system_id": "AV-MEDIA",
+      "endpoint": "HALO-MEDIA",
+      "inventory_ref": "F6-HALO-CEILING-FEED-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          49.0,
+          67.5
+        ],
+        [
+          49.0,
+          13.0
+        ],
+        [
+          55.0,
+          13.0
+        ],
+        [
+          55.0,
+          12.0
+        ]
+      ],
+      "connection_xy_ft": [
+        55.0,
+        12.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F7::ELEC-NORMAL::ROOF-MECH-POWER::01",
+      "handoff_id": "HANDOFF::F7::ELEC-NORMAL",
+      "level": 7,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "ROOF-MECH-POWER",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          48.0,
+          67.5
+        ],
+        [
+          48.0,
+          42.0
+        ],
+        [
+          36.0,
+          42.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        42.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F7::ELEC-EMERGENCY::ROOF-EGRESS-LIGHT::01",
+      "handoff_id": "HANDOFF::F7::ELEC-EMERGENCY",
+      "level": 7,
+      "system_id": "ELEC-EMERGENCY",
+      "endpoint": "ROOF-EGRESS-LIGHT",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          50.0,
+          70.5
+        ],
+        [
+          50.0,
+          54.0
+        ],
+        [
+          42.0,
+          54.0
+        ]
+      ],
+      "connection_xy_ft": [
+        42.0,
+        54.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F7::DATA-STRUCTURED::ROOF-COMMS::01",
+      "handoff_id": "HANDOFF::F7::DATA-STRUCTURED",
+      "level": 7,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "ROOF-COMMS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          47.0,
+          67.5
+        ],
+        [
+          47.0,
+          46.0
+        ],
+        [
+          36.0,
+          46.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        46.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F7::BAS-CONTROLS::ROOF-SENSORS::01",
+      "handoff_id": "HANDOFF::F7::BAS-CONTROLS",
+      "level": 7,
+      "system_id": "BAS-CONTROLS",
+      "endpoint": "ROOF-SENSORS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          44.0,
+          70.5
+        ],
+        [
+          44.0,
+          50.0
+        ],
+        [
+          36.0,
+          50.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        50.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F7::STORM-DRAINAGE::ROOF-DRAINAGE::01",
+      "handoff_id": "HANDOFF::F7::STORM-DRAINAGE",
+      "level": 7,
+      "system_id": "STORM-DRAINAGE",
+      "endpoint": "ROOF-DRAINAGE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          55.75,
+          70.5
+        ],
+        [
+          42.0,
+          70.5
+        ],
+        [
+          42.0,
+          60.0
+        ],
+        [
+          32.0,
+          60.0
+        ]
+      ],
+      "connection_xy_ft": [
+        32.0,
+        60.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F7::FIRE-PROTECTION::ROOF-FIRE-CABINET::01",
+      "handoff_id": "HANDOFF::F7::FIRE-PROTECTION",
+      "level": 7,
+      "system_id": "FIRE-PROTECTION",
+      "endpoint": "ROOF-FIRE-CABINET",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          54.25,
+          67.5
+        ],
+        [
+          38.0,
+          67.5
+        ],
+        [
+          38.0,
+          55.0
+        ],
+        [
+          32.0,
+          55.0
+        ]
+      ],
+      "connection_xy_ft": [
+        32.0,
+        55.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F7::SECURITY-ACCESS::ROOF-INTERCOM::01",
+      "handoff_id": "HANDOFF::F7::SECURITY-ACCESS",
+      "level": 7,
+      "system_id": "SECURITY-ACCESS",
+      "endpoint": "ROOF-INTERCOM",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          52.0,
+          70.5
+        ],
+        [
+          52.0,
+          38.0
+        ],
+        [
+          44.0,
+          38.0
+        ]
+      ],
+      "connection_xy_ft": [
+        44.0,
+        38.0
+      ],
+      "services_step": 5
+    },
+    {
+      "branch_id": "BRANCH::F7::ELEC-NORMAL::ROOF-MECH-1-POWER::01",
+      "handoff_id": "HANDOFF::F7::ELEC-NORMAL",
+      "level": 7,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "ROOF-MECH-1-POWER",
+      "inventory_ref": "F7-MECH-UNIT-01",
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          52.0,
+          67.5
+        ],
+        [
+          52.0,
+          65.0
+        ],
+        [
+          37.5,
+          65.0
+        ]
+      ],
+      "connection_xy_ft": [
+        37.5,
+        65.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::BAS-CONTROLS::ROOF-MECH-1-BAS::01",
+      "handoff_id": "HANDOFF::F7::BAS-CONTROLS",
+      "level": 7,
+      "system_id": "BAS-CONTROLS",
+      "endpoint": "ROOF-MECH-1-BAS",
+      "inventory_ref": "F7-MECH-UNIT-01",
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          53.0,
+          70.5
+        ],
+        [
+          53.0,
+          65.0
+        ],
+        [
+          37.5,
+          65.0
+        ]
+      ],
+      "connection_xy_ft": [
+        37.5,
+        65.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::HVAC-AIR::ROOF-MECH-1-AIR::01",
+      "handoff_id": "HANDOFF::F7::HVAC-AIR",
+      "level": 7,
+      "system_id": "HVAC-AIR",
+      "endpoint": "ROOF-MECH-1-AIR",
+      "inventory_ref": "F7-MECH-UNIT-01",
+      "points_ft": [
+        [
+          51.75,
+          69.0
+        ],
+        [
+          51.75,
+          65.0
+        ],
+        [
+          37.5,
+          65.0
+        ]
+      ],
+      "connection_xy_ft": [
+        37.5,
+        65.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::ELEC-NORMAL::ROOF-MECH-2-POWER::01",
+      "handoff_id": "HANDOFF::F7::ELEC-NORMAL",
+      "level": 7,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "ROOF-MECH-2-POWER",
+      "inventory_ref": "F7-MECH-UNIT-02",
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          52.0,
+          67.5
+        ],
+        [
+          52.0,
+          65.0
+        ],
+        [
+          43.5,
+          65.0
+        ]
+      ],
+      "connection_xy_ft": [
+        43.5,
+        65.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::BAS-CONTROLS::ROOF-MECH-2-BAS::01",
+      "handoff_id": "HANDOFF::F7::BAS-CONTROLS",
+      "level": 7,
+      "system_id": "BAS-CONTROLS",
+      "endpoint": "ROOF-MECH-2-BAS",
+      "inventory_ref": "F7-MECH-UNIT-02",
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          53.0,
+          70.5
+        ],
+        [
+          53.0,
+          65.0
+        ],
+        [
+          43.5,
+          65.0
+        ]
+      ],
+      "connection_xy_ft": [
+        43.5,
+        65.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::HVAC-AIR::ROOF-MECH-2-AIR::01",
+      "handoff_id": "HANDOFF::F7::HVAC-AIR",
+      "level": 7,
+      "system_id": "HVAC-AIR",
+      "endpoint": "ROOF-MECH-2-AIR",
+      "inventory_ref": "F7-MECH-UNIT-02",
+      "points_ft": [
+        [
+          51.75,
+          69.0
+        ],
+        [
+          51.75,
+          65.0
+        ],
+        [
+          43.5,
+          65.0
+        ]
+      ],
+      "connection_xy_ft": [
+        43.5,
+        65.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::ELEC-NORMAL::ROOF-MECH-3-POWER::01",
+      "handoff_id": "HANDOFF::F7::ELEC-NORMAL",
+      "level": 7,
+      "system_id": "ELEC-NORMAL",
+      "endpoint": "ROOF-MECH-3-POWER",
+      "inventory_ref": "F7-MECH-UNIT-03",
+      "points_ft": [
+        [
+          57.25,
+          67.5
+        ],
+        [
+          52.0,
+          67.5
+        ],
+        [
+          52.0,
+          63.0
+        ],
+        [
+          48.5,
+          63.0
+        ]
+      ],
+      "connection_xy_ft": [
+        48.5,
+        63.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::BAS-CONTROLS::ROOF-MECH-3-BAS::01",
+      "handoff_id": "HANDOFF::F7::BAS-CONTROLS",
+      "level": 7,
+      "system_id": "BAS-CONTROLS",
+      "endpoint": "ROOF-MECH-3-BAS",
+      "inventory_ref": "F7-MECH-UNIT-03",
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          53.0,
+          70.5
+        ],
+        [
+          53.0,
+          63.0
+        ],
+        [
+          48.5,
+          63.0
+        ]
+      ],
+      "connection_xy_ft": [
+        48.5,
+        63.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::HVAC-AIR::ROOF-MECH-3-AIR::01",
+      "handoff_id": "HANDOFF::F7::HVAC-AIR",
+      "level": 7,
+      "system_id": "HVAC-AIR",
+      "endpoint": "ROOF-MECH-3-AIR",
+      "inventory_ref": "F7-MECH-UNIT-03",
+      "points_ft": [
+        [
+          51.75,
+          69.0
+        ],
+        [
+          51.75,
+          63.0
+        ],
+        [
+          48.5,
+          63.0
+        ]
+      ],
+      "connection_xy_ft": [
+        48.5,
+        63.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::STORM-DRAINAGE::ROOF-DRAIN-1::01",
+      "handoff_id": "HANDOFF::F7::STORM-DRAINAGE",
+      "level": 7,
+      "system_id": "STORM-DRAINAGE",
+      "endpoint": "ROOF-DRAIN-1",
+      "inventory_ref": "F7-DRAINS-01",
+      "points_ft": [
+        [
+          55.75,
+          70.5
+        ],
+        [
+          48.0,
+          70.5
+        ],
+        [
+          48.0,
+          6.0
+        ],
+        [
+          4.0,
+          6.0
+        ]
+      ],
+      "connection_xy_ft": [
+        4.0,
+        6.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::STORM-DRAINAGE::ROOF-DRAIN-2::01",
+      "handoff_id": "HANDOFF::F7::STORM-DRAINAGE",
+      "level": 7,
+      "system_id": "STORM-DRAINAGE",
+      "endpoint": "ROOF-DRAIN-2",
+      "inventory_ref": "F7-DRAINS-01",
+      "points_ft": [
+        [
+          55.75,
+          70.5
+        ],
+        [
+          48.0,
+          70.5
+        ],
+        [
+          48.0,
+          6.0
+        ],
+        [
+          24.0,
+          6.0
+        ]
+      ],
+      "connection_xy_ft": [
+        24.0,
+        6.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::STORM-DRAINAGE::ROOF-DRAIN-3::01",
+      "handoff_id": "HANDOFF::F7::STORM-DRAINAGE",
+      "level": 7,
+      "system_id": "STORM-DRAINAGE",
+      "endpoint": "ROOF-DRAIN-3",
+      "inventory_ref": "F7-DRAINS-01",
+      "points_ft": [
+        [
+          55.75,
+          70.5
+        ],
+        [
+          48.0,
+          70.5
+        ],
+        [
+          48.0,
+          6.0
+        ]
+      ],
+      "connection_xy_ft": [
+        48.0,
+        6.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::STORM-DRAINAGE::ROOF-DRAIN-4::01",
+      "handoff_id": "HANDOFF::F7::STORM-DRAINAGE",
+      "level": 7,
+      "system_id": "STORM-DRAINAGE",
+      "endpoint": "ROOF-DRAIN-4",
+      "inventory_ref": "F7-DRAINS-01",
+      "points_ft": [
+        [
+          55.75,
+          70.5
+        ],
+        [
+          48.0,
+          70.5
+        ],
+        [
+          48.0,
+          48.0
+        ],
+        [
+          4.0,
+          48.0
+        ]
+      ],
+      "connection_xy_ft": [
+        4.0,
+        48.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::STORM-DRAINAGE::ROOF-DRAIN-5::01",
+      "handoff_id": "HANDOFF::F7::STORM-DRAINAGE",
+      "level": 7,
+      "system_id": "STORM-DRAINAGE",
+      "endpoint": "ROOF-DRAIN-5",
+      "inventory_ref": "F7-DRAINS-01",
+      "points_ft": [
+        [
+          55.75,
+          70.5
+        ],
+        [
+          48.0,
+          70.5
+        ],
+        [
+          48.0,
+          48.0
+        ],
+        [
+          24.0,
+          48.0
+        ]
+      ],
+      "connection_xy_ft": [
+        24.0,
+        48.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::STORM-DRAINAGE::ROOF-DRAIN-6::01",
+      "handoff_id": "HANDOFF::F7::STORM-DRAINAGE",
+      "level": 7,
+      "system_id": "STORM-DRAINAGE",
+      "endpoint": "ROOF-DRAIN-6",
+      "inventory_ref": "F7-DRAINS-01",
+      "points_ft": [
+        [
+          55.75,
+          70.5
+        ],
+        [
+          48.0,
+          70.5
+        ],
+        [
+          48.0,
+          60.0
+        ]
+      ],
+      "connection_xy_ft": [
+        48.0,
+        60.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::ELEC-EMERGENCY::ROOF-LIGHTING-POWER::01",
+      "handoff_id": "HANDOFF::F7::ELEC-EMERGENCY",
+      "level": 7,
+      "system_id": "ELEC-EMERGENCY",
+      "endpoint": "ROOF-LIGHTING-POWER",
+      "inventory_ref": "F7-PATH-LIGHTS-01",
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          50.0,
+          70.5
+        ],
+        [
+          50.0,
+          52.0
+        ],
+        [
+          20.0,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        20.0,
+        52.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::LIGHTING-CONTROLS::ROOF-PATH-LIGHTING-CONTROL::01",
+      "handoff_id": "HANDOFF::F7::LIGHTING-CONTROLS",
+      "level": 7,
+      "system_id": "LIGHTING-CONTROLS",
+      "endpoint": "ROOF-PATH-LIGHTING-CONTROL",
+      "inventory_ref": "F7-PATH-LIGHTS-01",
+      "points_ft": [
+        [
+          50.0,
+          52.0
+        ],
+        [
+          50.0,
+          6.0
+        ],
+        [
+          48.0,
+          6.0
+        ]
+      ],
+      "connection_xy_ft": [
+        48.0,
+        6.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::DATA-STRUCTURED::EMERGENCY-CALL-A::01",
+      "handoff_id": "HANDOFF::F7::DATA-STRUCTURED",
+      "level": 7,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "EMERGENCY-CALL-A",
+      "inventory_ref": "F7-EMERGENCY-CALL-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          51.0,
+          67.5
+        ],
+        [
+          51.0,
+          52.0
+        ],
+        [
+          59.0,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        59.0,
+        52.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::DATA-STRUCTURED::EMERGENCY-CALL-B::01",
+      "handoff_id": "HANDOFF::F7::DATA-STRUCTURED",
+      "level": 7,
+      "system_id": "DATA-STRUCTURED",
+      "endpoint": "EMERGENCY-CALL-B",
+      "inventory_ref": "F7-EMERGENCY-CALL-01",
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          51.0,
+          67.5
+        ],
+        [
+          51.0,
+          52.0
+        ],
+        [
+          18.5,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        18.5,
+        52.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::FIRE-PROTECTION::FIRE-CABINET-A::01",
+      "handoff_id": "HANDOFF::F7::FIRE-PROTECTION",
+      "level": 7,
+      "system_id": "FIRE-PROTECTION",
+      "endpoint": "FIRE-CABINET-A",
+      "inventory_ref": "F7-FIRE-CABINET-01",
+      "points_ft": [
+        [
+          54.25,
+          67.5
+        ],
+        [
+          50.0,
+          67.5
+        ],
+        [
+          50.0,
+          52.0
+        ],
+        [
+          58.2,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        58.2,
+        52.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F7::FIRE-PROTECTION::FIRE-CABINET-B::01",
+      "handoff_id": "HANDOFF::F7::FIRE-PROTECTION",
+      "level": 7,
+      "system_id": "FIRE-PROTECTION",
+      "endpoint": "FIRE-CABINET-B",
+      "inventory_ref": "F7-FIRE-CABINET-01",
+      "points_ft": [
+        [
+          54.25,
+          67.5
+        ],
+        [
+          50.0,
+          67.5
+        ],
+        [
+          50.0,
+          52.0
+        ],
+        [
+          19.5,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        19.5,
+        52.0
+      ],
+      "services_step": 6
+    },
+    {
+      "branch_id": "BRANCH::F1::AV-MEDIA::ORIENTATION-AV::01",
+      "handoff_id": "HANDOFF::F1::AV-MEDIA",
+      "level": 1,
+      "system_id": "AV-MEDIA",
+      "endpoint": "ORIENTATION-AV",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          67.5
+        ],
+        [
+          45.0,
+          67.5
+        ],
+        [
+          45.0,
+          50.0
+        ],
+        [
+          36.0,
+          50.0
+        ]
+      ],
+      "connection_xy_ft": [
+        36.0,
+        50.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F1::SECURITY-ACCESS::ARRIVAL-ACCESS::01",
+      "handoff_id": "HANDOFF::F1::SECURITY-ACCESS",
+      "level": 1,
+      "system_id": "SECURITY-ACCESS",
+      "endpoint": "ARRIVAL-ACCESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          52.0,
+          70.5
+        ],
+        [
+          52.0,
+          27.0
+        ],
+        [
+          50.0,
+          27.0
+        ]
+      ],
+      "connection_xy_ft": [
+        50.0,
+        27.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F1::LIGHTING-CONTROLS::LIGHTING-ZONE::01",
+      "handoff_id": "HANDOFF::F1::LIGHTING-CONTROLS",
+      "level": 1,
+      "system_id": "LIGHTING-CONTROLS",
+      "endpoint": "LIGHTING-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          42.0,
+          70.5
+        ],
+        [
+          42.0,
+          38.0
+        ],
+        [
+          38.0,
+          38.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        38.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F1::FIRE-ALARM::FIRE-ALARM-ZONE::01",
+      "handoff_id": "HANDOFF::F1::FIRE-ALARM",
+      "level": 1,
+      "system_id": "FIRE-ALARM",
+      "endpoint": "FIRE-ALARM-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          41.0,
+          70.5
+        ],
+        [
+          41.0,
+          26.0
+        ],
+        [
+          38.0,
+          26.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        26.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F1::SERVICE-HOUSEKEEPING::SERVICE-ACCESS::01",
+      "handoff_id": "HANDOFF::F1::SERVICE-HOUSEKEEPING",
+      "level": 1,
+      "system_id": "SERVICE-HOUSEKEEPING",
+      "endpoint": "SERVICE-ACCESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          18.5,
+          53.0
+        ],
+        [
+          42.0,
+          53.0
+        ],
+        [
+          42.0,
+          61.0
+        ]
+      ],
+      "connection_xy_ft": [
+        42.0,
+        61.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F2::BAS-CONTROLS::FLOOR-BAS::01",
+      "handoff_id": "HANDOFF::F2::BAS-CONTROLS",
+      "level": 2,
+      "system_id": "BAS-CONTROLS",
+      "endpoint": "FLOOR-BAS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          43.0,
+          70.5
+        ],
+        [
+          43.0,
+          64.0
+        ],
+        [
+          40.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        40.0,
+        64.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F2::LIGHTING-CONTROLS::LIGHTING-ZONE::01",
+      "handoff_id": "HANDOFF::F2::LIGHTING-CONTROLS",
+      "level": 2,
+      "system_id": "LIGHTING-CONTROLS",
+      "endpoint": "LIGHTING-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          42.0,
+          70.5
+        ],
+        [
+          42.0,
+          38.0
+        ],
+        [
+          38.0,
+          38.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        38.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F2::FIRE-ALARM::FIRE-ALARM-ZONE::01",
+      "handoff_id": "HANDOFF::F2::FIRE-ALARM",
+      "level": 2,
+      "system_id": "FIRE-ALARM",
+      "endpoint": "FIRE-ALARM-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          41.0,
+          70.5
+        ],
+        [
+          41.0,
+          26.0
+        ],
+        [
+          38.0,
+          26.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        26.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F2::SERVICE-HOUSEKEEPING::SERVICE-ACCESS::01",
+      "handoff_id": "HANDOFF::F2::SERVICE-HOUSEKEEPING",
+      "level": 2,
+      "system_id": "SERVICE-HOUSEKEEPING",
+      "endpoint": "SERVICE-ACCESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          18.5,
+          53.0
+        ],
+        [
+          42.0,
+          53.0
+        ],
+        [
+          42.0,
+          61.0
+        ]
+      ],
+      "connection_xy_ft": [
+        42.0,
+        61.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F3::BAS-CONTROLS::FLOOR-BAS::01",
+      "handoff_id": "HANDOFF::F3::BAS-CONTROLS",
+      "level": 3,
+      "system_id": "BAS-CONTROLS",
+      "endpoint": "FLOOR-BAS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          43.0,
+          70.5
+        ],
+        [
+          43.0,
+          64.0
+        ],
+        [
+          40.0,
+          64.0
+        ]
+      ],
+      "connection_xy_ft": [
+        40.0,
+        64.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F3::LIGHTING-CONTROLS::LIGHTING-ZONE::01",
+      "handoff_id": "HANDOFF::F3::LIGHTING-CONTROLS",
+      "level": 3,
+      "system_id": "LIGHTING-CONTROLS",
+      "endpoint": "LIGHTING-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          42.0,
+          70.5
+        ],
+        [
+          42.0,
+          38.0
+        ],
+        [
+          38.0,
+          38.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        38.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F3::FIRE-ALARM::FIRE-ALARM-ZONE::01",
+      "handoff_id": "HANDOFF::F3::FIRE-ALARM",
+      "level": 3,
+      "system_id": "FIRE-ALARM",
+      "endpoint": "FIRE-ALARM-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          41.0,
+          70.5
+        ],
+        [
+          41.0,
+          26.0
+        ],
+        [
+          38.0,
+          26.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        26.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F3::SERVICE-HOUSEKEEPING::SERVICE-ACCESS::01",
+      "handoff_id": "HANDOFF::F3::SERVICE-HOUSEKEEPING",
+      "level": 3,
+      "system_id": "SERVICE-HOUSEKEEPING",
+      "endpoint": "SERVICE-ACCESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          18.5,
+          53.0
+        ],
+        [
+          42.0,
+          53.0
+        ],
+        [
+          42.0,
+          61.0
+        ]
+      ],
+      "connection_xy_ft": [
+        42.0,
+        61.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F4::LIGHTING-CONTROLS::LIGHTING-ZONE::01",
+      "handoff_id": "HANDOFF::F4::LIGHTING-CONTROLS",
+      "level": 4,
+      "system_id": "LIGHTING-CONTROLS",
+      "endpoint": "LIGHTING-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          42.0,
+          70.5
+        ],
+        [
+          42.0,
+          38.0
+        ],
+        [
+          38.0,
+          38.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        38.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F4::FIRE-ALARM::FIRE-ALARM-ZONE::01",
+      "handoff_id": "HANDOFF::F4::FIRE-ALARM",
+      "level": 4,
+      "system_id": "FIRE-ALARM",
+      "endpoint": "FIRE-ALARM-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          41.0,
+          70.5
+        ],
+        [
+          41.0,
+          26.0
+        ],
+        [
+          38.0,
+          26.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        26.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F4::SERVICE-HOUSEKEEPING::SERVICE-ACCESS::01",
+      "handoff_id": "HANDOFF::F4::SERVICE-HOUSEKEEPING",
+      "level": 4,
+      "system_id": "SERVICE-HOUSEKEEPING",
+      "endpoint": "SERVICE-ACCESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          18.5,
+          53.0
+        ],
+        [
+          42.0,
+          53.0
+        ],
+        [
+          42.0,
+          61.0
+        ]
+      ],
+      "connection_xy_ft": [
+        42.0,
+        61.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F5::LIGHTING-CONTROLS::LIGHTING-ZONE::01",
+      "handoff_id": "HANDOFF::F5::LIGHTING-CONTROLS",
+      "level": 5,
+      "system_id": "LIGHTING-CONTROLS",
+      "endpoint": "LIGHTING-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          42.0,
+          70.5
+        ],
+        [
+          42.0,
+          38.0
+        ],
+        [
+          38.0,
+          38.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        38.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F5::FIRE-ALARM::FIRE-ALARM-ZONE::01",
+      "handoff_id": "HANDOFF::F5::FIRE-ALARM",
+      "level": 5,
+      "system_id": "FIRE-ALARM",
+      "endpoint": "FIRE-ALARM-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          41.0,
+          70.5
+        ],
+        [
+          41.0,
+          26.0
+        ],
+        [
+          38.0,
+          26.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        26.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F5::SERVICE-HOUSEKEEPING::SERVICE-ACCESS::01",
+      "handoff_id": "HANDOFF::F5::SERVICE-HOUSEKEEPING",
+      "level": 5,
+      "system_id": "SERVICE-HOUSEKEEPING",
+      "endpoint": "SERVICE-ACCESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          18.5,
+          53.0
+        ],
+        [
+          42.0,
+          53.0
+        ],
+        [
+          42.0,
+          61.0
+        ]
+      ],
+      "connection_xy_ft": [
+        42.0,
+        61.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F6::LIGHTING-CONTROLS::LIGHTING-ZONE::01",
+      "handoff_id": "HANDOFF::F6::LIGHTING-CONTROLS",
+      "level": 6,
+      "system_id": "LIGHTING-CONTROLS",
+      "endpoint": "LIGHTING-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          58.5,
+          70.5
+        ],
+        [
+          42.0,
+          70.5
+        ],
+        [
+          42.0,
+          38.0
+        ],
+        [
+          38.0,
+          38.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        38.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F6::FIRE-ALARM::FIRE-ALARM-ZONE::01",
+      "handoff_id": "HANDOFF::F6::FIRE-ALARM",
+      "level": 6,
+      "system_id": "FIRE-ALARM",
+      "endpoint": "FIRE-ALARM-ZONE",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          41.0,
+          70.5
+        ],
+        [
+          41.0,
+          26.0
+        ],
+        [
+          38.0,
+          26.0
+        ]
+      ],
+      "connection_xy_ft": [
+        38.0,
+        26.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F6::SERVICE-HOUSEKEEPING::SERVICE-ACCESS::01",
+      "handoff_id": "HANDOFF::F6::SERVICE-HOUSEKEEPING",
+      "level": 6,
+      "system_id": "SERVICE-HOUSEKEEPING",
+      "endpoint": "SERVICE-ACCESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          18.5,
+          53.0
+        ],
+        [
+          42.0,
+          53.0
+        ],
+        [
+          42.0,
+          61.0
+        ]
+      ],
+      "connection_xy_ft": [
+        42.0,
+        61.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F7::FIRE-ALARM::ROOF-FIRE-ALARM::01",
+      "handoff_id": "HANDOFF::F7::FIRE-ALARM",
+      "level": 7,
+      "system_id": "FIRE-ALARM",
+      "endpoint": "ROOF-FIRE-ALARM",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          57.25,
+          70.5
+        ],
+        [
+          51.5,
+          70.5
+        ],
+        [
+          51.5,
+          52.0
+        ],
+        [
+          59.0,
+          52.0
+        ]
+      ],
+      "connection_xy_ft": [
+        59.0,
+        52.0
+      ],
+      "services_step": 8
+    },
+    {
+      "branch_id": "BRANCH::F7::SERVICE-HOUSEKEEPING::ROOF-SERVICE-ACCESS::01",
+      "handoff_id": "HANDOFF::F7::SERVICE-HOUSEKEEPING",
+      "level": 7,
+      "system_id": "SERVICE-HOUSEKEEPING",
+      "endpoint": "ROOF-SERVICE-ACCESS",
+      "inventory_ref": null,
+      "points_ft": [
+        [
+          18.5,
+          58.0
+        ],
+        [
+          34.0,
+          58.0
+        ],
+        [
+          34.0,
+          60.0
+        ]
+      ],
+      "connection_xy_ft": [
+        34.0,
+        60.0
+      ],
+      "services_step": 8
+    }
+  ],
   "shared_reservation_ft": {
     "x1": 50,
     "y1": 66,

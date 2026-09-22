@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 289,
+  "tracked_count": 290,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -191,6 +191,7 @@
       "docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_v1.py",
       "docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-step2-report.json",
       "docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-step3a-report.json",
+      "docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-step3b-report.json",
       "docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-v1.json",
       "docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_schema.py",
       "docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step2.py",
