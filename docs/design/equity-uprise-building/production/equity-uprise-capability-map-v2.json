@@ -186,8 +186,8 @@
         "Research / Publication Systems"
       ],
       "rule": "This floor is the canonical research-to-record engine; approval authority for irreversible external acts remains on Floor 6.",
-      "program_status": "working-pre-iterative-program",
-      "render_readiness": "chassis-only-not-final-program"
+      "program_status": "reconciled-current-iterative-pass",
+      "render_readiness": "basic-render-ready"
     },
     {
       "level": 6,
