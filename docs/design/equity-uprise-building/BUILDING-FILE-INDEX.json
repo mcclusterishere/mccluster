@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 246,
+  "tracked_count": 252,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -73,8 +73,11 @@
       "GEMINI.md"
     ],
     "authority": [
+      "docs/design/equity-uprise-building/BASEMENT-B1-PROGRAM-RECONCILIATION.md",
+      "docs/design/equity-uprise-building/BASEMENT-B1-SCHEMATIC-PLAN-BASIS.md",
       "docs/design/equity-uprise-building/BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "docs/design/equity-uprise-building/BASEMENT-B1-UNDERGROUND-OPERATIONS-PROGRAM.md",
+      "docs/design/equity-uprise-building/BASEMENT-B1-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/BUILDING-CORE-V2-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
@@ -175,9 +178,11 @@
       "docs/design/equity-uprise-building/production/basement-b1/basement-b1-hotspots.json",
       "docs/design/equity-uprise-building/production/basement-b1/basement-b1-lighting.json",
       "docs/design/equity-uprise-building/production/basement-b1/basement-b1-materials.json",
+      "docs/design/equity-uprise-building/production/basement-b1/basement-b1-object-inventory.json",
       "docs/design/equity-uprise-building/production/basement-b1/basement-b1-routing.json",
       "docs/design/equity-uprise-building/production/basement-b1/basement-b1-scene-manifest.json",
       "docs/design/equity-uprise-building/production/basement-b1/basement-b1-states.json",
+      "docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py",
       "docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py",
       "docs/design/equity-uprise-building/production/building-core-v2.json",
       "docs/design/equity-uprise-building/production/building-v2-validation.json",
@@ -276,6 +281,7 @@
       "docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py"
     ],
     "public_viewers": [
+      "equity-uprise-basement-b1-3d.html",
       "equity-uprise-building-core-v2-3d.html",
       "equity-uprise-floor-01-3d.html",
       "equity-uprise-floor-02-3d.html",
