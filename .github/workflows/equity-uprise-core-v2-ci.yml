@@ -146,6 +146,9 @@ jobs:
 
       - name: Refresh building file index after generation
         run: |
+          # Stage newly-created generated paths first so git ls-files sees them
+          # when the exhaustive building index is regenerated.
+          git add -f docs/design/equity-uprise-building/production/generated
           python docs/design/equity-uprise-building/production/audit_building_context.py --write
           python docs/design/equity-uprise-building/production/audit_building_context.py
 
