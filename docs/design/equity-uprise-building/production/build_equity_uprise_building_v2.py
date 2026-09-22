@@ -123,6 +123,34 @@ def shaft_walls(name,b,z0,z1,color,door_side=None):
     add_box(name+"_west",(x1,y1,x1+t,y2),z0,h,color)
     add_box(name+"_south",(x1,y1,x2,y1+t),z0,h,color)
 
+def stair_enclosure_with_doors(name,b,opening,levels,roof_z,color):
+    """Continuous protected enclosure with a real south door at every served level.
+
+    The prior chassis used one solid south wall from B1 through the roof, which
+    visually sealed the stair from the walking plane. Keep the other three
+    enclosure walls continuous, but segment the south wall level-by-level around
+    the canonical 3 ft access opening. Level 7 receives a 9 ft headhouse.
+    """
+    x1,y1,x2,y2=b;t=.5
+    top=roof_z+9.0
+    base=levels[0]["finished_floor_elevation_ft"]
+    add_box(name+"_north",(x1,y2-t,x2,y2),base,top-base,color)
+    add_box(name+"_east",(x2-t,y1,x2,y2),base,top-base,color)
+    add_box(name+"_west",(x1,y1,x1+t,y2),base,top-base,color)
+    dx1,dx2=opening["x1"],opening["x2"]
+    door_h=7.5
+    for i,lvl in enumerate(levels):
+        z0=lvl["finished_floor_elevation_ft"]
+        z1=levels[i+1]["finished_floor_elevation_ft"] if i+1<len(levels) else top
+        h=z1-z0
+        tag=f"L{lvl['level']}"
+        if dx1>x1:
+            add_box(f"{name}_{tag}_south_left",(x1,y1,dx1,y1+t),z0,h,color)
+        if dx2<x2:
+            add_box(f"{name}_{tag}_south_right",(dx2,y1,x2,y1+t),z0,h,color)
+        if h>door_h:
+            add_box(f"{name}_{tag}_south_lintel",(dx1,y1,dx2,y1+t),z0+door_h,h-door_h,color)
+
 def stair_flights(stair_name,b,base_z,next_z,flight_w):
     x1,y1,x2,y2=b
     margin=.75;gap=.5
@@ -177,9 +205,11 @@ roof_z=levels[-1]["finished_floor_elevation_ft"]
 shaft_walls("passenger_elevator_shaft",passenger,base_z,roof_z+8,COL["core"])
 shaft_walls("freight_elevator_shaft",freight,base_z,roof_z+8,COL["freight"])
 
-# Stair enclosure boundary walls as continuous vertical reservations.
-shaft_walls("stair_a_enclosure",stairA,base_z,roof_z+4,COL["core"])
-shaft_walls("stair_b_enclosure",stairB,base_z,roof_z+4,COL["core"])
+# Protected stair enclosure walls with real access openings at every served level.
+# The roof headhouses extend 9 ft above Level 7; the passenger elevator remains
+# a separate overrun/service condition and does not gain a public roof stop.
+stair_enclosure_with_doors("stair_a_enclosure",stairA,vs["stair_a"]["access_opening_concept_ft"],levels,roof_z,COL["core"])
+stair_enclosure_with_doors("stair_b_enclosure",stairB,vs["stair_b"]["access_opening_concept_ft"],levels,roof_z,COL["core"])
 
 # Continuous stairs between each level.
 stair_reports=[]
