@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-facade-architectural-finish",
-  "status": "facade-finish-step4-window-base-corners-implemented-pending-generated-verification",
+  "status": "facade-finish-step4-window-base-corners-verified",
   "not_for_construction": true,
   "units": "feet",
   "baseline": {
@@ -139,9 +139,9 @@
         "gasket_shadow_joint"
       ],
       "description": "Finish all south clear-vision modules as recessed installed glazing assemblies.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-ASSEMBLY-EAST-CLEAR-01",
@@ -160,9 +160,9 @@
         "gasket_shadow_joint"
       ],
       "description": "Finish all east clear-vision modules as recessed installed glazing assemblies.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-ASSEMBLY-WEST-CLEAR-01",
@@ -181,9 +181,9 @@
         "gasket_shadow_joint"
       ],
       "description": "Finish all west clear-vision modules as recessed installed glazing assemblies.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-ASSEMBLY-SOUTH-PRIVACY-01",
@@ -202,9 +202,9 @@
         "privacy_layer"
       ],
       "description": "Finish privacy glazing using the same assembly depth as clear vision glass.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-ASSEMBLY-EAST-STAIR-01",
@@ -222,9 +222,9 @@
         "opaque_surround"
       ],
       "description": "Refine controlled Stair A daylight slots without weakening the protected-core expression.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-ASSEMBLY-NORTH-STAIR-01",
@@ -242,9 +242,9 @@
         "opaque_surround"
       ],
       "description": "Refine north stair daylight slots as intentional protected-core openings.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-ASSEMBLY-NORTH-RESTROOM-CLERESTORY-01",
@@ -262,9 +262,9 @@
         "privacy_layer"
       ],
       "description": "Give restroom clerestories real depth and privacy.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-ASSEMBLY-NORTH-SUPPORT-CLERESTORY-01",
@@ -282,9 +282,9 @@
         "privacy_layer"
       ],
       "description": "Give support clerestories real depth while preserving the service-face rhythm.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-JAMB-CLEAR-01",
@@ -298,9 +298,9 @@
         "paired_jambs_for_152_clear_modules"
       ],
       "description": "Stable jamb family for all clear-vision modules.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-JAMB-PRIVACY-01",
@@ -314,9 +314,9 @@
         "paired_jambs_for_20_privacy_modules"
       ],
       "description": "Stable jamb family for privacy modules.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-JAMB-CORE-01",
@@ -330,9 +330,9 @@
         "paired_jambs_for_66_stair_and_clerestory_modules"
       ],
       "description": "Stable jamb family for stair/core and clerestory openings.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-HEAD-01",
@@ -346,9 +346,9 @@
         "one_head_per_glazed_or_clerestory_module"
       ],
       "description": "Head geometry for all 238 glazed/stair/clerestory modules.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-SILL-01",
@@ -362,9 +362,9 @@
         "one_sill_per_glazed_or_clerestory_module"
       ],
       "description": "Sill geometry for all 238 glazed/stair/clerestory modules.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-REVEAL-01",
@@ -378,9 +378,9 @@
         "perimeter_shadow_reveal"
       ],
       "description": "Perimeter reveal family establishing visible glass setback.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-WIN-GASKET-01",
@@ -394,9 +394,9 @@
         "controlled_gasket_shadow_joint"
       ],
       "description": "Subordinate gasket/shadow-joint family; must not read as decorative striping.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-MULLION-SECONDARY-FINISH-01",
@@ -410,9 +410,9 @@
         "secondary_mullion_finish"
       ],
       "description": "Refine secondary mullions without changing the 6 ft module.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-PRIMARY-FIN-FINISH-01",
@@ -426,9 +426,9 @@
         "18ft_grid_vertical_emphasis"
       ],
       "description": "Five primary grid lines per elevation, four elevations, with finished light-catching depth.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-SPANDREL-REVEAL-FINISH-01",
@@ -442,9 +442,9 @@
         "continuous_story_band_by_elevation"
       ],
       "description": "Four elevations × six occupied floors receive resolved slab-edge/spandrel shadow geometry.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-ACOUSTIC-OPAQUE-SOUTH-F4-01",
@@ -459,9 +459,9 @@
         "acoustic_shadow_joint"
       ],
       "description": "Preserve Floor 4 recording-room acoustic exception while giving panels installed depth.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-ACOUSTIC-OPAQUE-WEST-F4-01",
@@ -476,9 +476,9 @@
         "acoustic_shadow_joint"
       ],
       "description": "Preserve Floor 4 west acoustic exception with resolved panel joints.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-SERVICE-OPAQUE-NORTH-01",
@@ -493,9 +493,9 @@
         "service_reveal"
       ],
       "description": "Finish north service opaque modules.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-SERVICE-OPAQUE-WEST-01",
@@ -510,9 +510,9 @@
         "service_reveal"
       ],
       "description": "Finish west service/core opaque modules.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-SERVICE-LOUVER-FINISH-01",
@@ -528,9 +528,9 @@
         "opaque_backing"
       ],
       "description": "One genuine service-louver module per floor; must remain tied to service/MEP logic.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-CORNER-FINISH-SW-01",
@@ -545,9 +545,9 @@
         "wraparound_spandrel"
       ],
       "description": "Resolve southwest corner without overlapping facade planes.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-CORNER-FINISH-SE-01",
@@ -562,9 +562,9 @@
         "wraparound_spandrel"
       ],
       "description": "Resolve southeast corner as a lighter public-facing condition.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-CORNER-FINISH-NW-01",
@@ -579,9 +579,9 @@
         "wraparound_spandrel"
       ],
       "description": "Resolve northwest service/core corner.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-CORNER-FINISH-NE-01",
@@ -596,9 +596,9 @@
         "wraparound_spandrel"
       ],
       "description": "Resolve northeast service/core corner.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-BASE-PLINTH-SOUTH-01",
@@ -612,9 +612,9 @@
         "continuous_plinth_with_entry_break"
       ],
       "description": "Ground south elevation with a mineral plinth interrupted only by the authorized entry.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-BASE-PLINTH-EAST-01",
@@ -628,9 +628,9 @@
         "continuous_plinth"
       ],
       "description": "Ground east elevation.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-BASE-PLINTH-NORTH-01",
@@ -644,9 +644,9 @@
         "continuous_plinth"
       ],
       "description": "Ground north service elevation.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-BASE-PLINTH-WEST-01",
@@ -660,9 +660,9 @@
         "continuous_plinth"
       ],
       "description": "Ground west elevation.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-BASE-REVEAL-01",
@@ -676,9 +676,9 @@
         "continuous_base_shadow_line"
       ],
       "description": "Create a consistent shadow transition between plinth and upper facade.",
-      "implementation_status": "implemented_step_4_window_base_corner",
+      "implementation_status": "implemented_and_verified_step_4",
       "authority_status": "locked_for_next_modeling_pass",
-      "implementation_commit": "pending_publish_generated_commit"
+      "implementation_commit": "86a46a19b8d7aca3ff11bc1f36de13ec89cf0139"
     },
     {
       "id": "FAC-ENTRY-PORTAL-FINISH-01",
@@ -1276,6 +1276,17 @@
       "crown finish",
       "exterior lighting",
       "site contact"
-    ]
+    ],
+    "verification_status": "green",
+    "verification_snapshot": "0c9ed33abcd679d2efc316ca82e998d3524e7ffe",
+    "deterministic_report": {
+      "mesh_count": 3995,
+      "glb_bytes": 2499212,
+      "finish_records_modeled": 32,
+      "finish_records_deferred": 36,
+      "finished_window_modules": 238,
+      "checks": "22/22",
+      "sha256": "891192539b9d827f0060dea4b311c58f4df517023f7ef306d772d8055d2a8a6c"
+    }
   }
 }

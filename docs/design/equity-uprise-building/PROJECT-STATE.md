@@ -303,7 +303,19 @@ Step 4 geometry is now implemented in source on the architectural-finish branch:
 - **32 of 68 finish-inventory records** are in Step 4 scope;
 - entry, canopy, branding, crown, exterior-lighting and site-contact finish records remain deliberately deferred.
 
-Current gate: deterministic regeneration + Step 4 report/CI verification. Do **not** start entrance/crown finish until this checkpoint is green.
+Step 4 deterministic verification: **GREEN**.
+
+Verified generated snapshot: `0c9ed33abcd679d2efc316ca82e998d3524e7ffe`
+
+- facade GLB: **3,995 meshes / 2,499,212 bytes**;
+- **238/238 window-like modules** receive finish assemblies;
+- **32/32 Step 4 finish records modeled**;
+- **36 finish records intentionally deferred** to later entry/canopy/branding/crown/lighting/site passes;
+- facade checks: **22/22 passing**;
+- GLB SHA-256: `891192539b9d827f0060dea4b311c58f4df517023f7ef306d772d8055d2a8a6c`;
+- whole Core V2 CI run passed.
+
+Step 4 is now a stable checkpoint. Next geometry stage may proceed to the completed **south entrance/base portal pass** without reopening the verified window/base/corner system.
 
 ## Exterior facade implementation — DETAILED CURRENT PASS ACTIVE / VISUAL APPROVAL PENDING
 

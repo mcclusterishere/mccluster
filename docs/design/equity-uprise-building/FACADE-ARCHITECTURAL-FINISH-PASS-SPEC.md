@@ -359,4 +359,4 @@ It does not:
 
 The canonical `production/facade/facade-finish-inventory.json` assigns stable finish-component IDs before modeling.
 
-**Step 4 source implementation is now active:** window assembly depth + frame/reveal detail + opaque/service finish + base/plinth + four resolved corners. Entry/canopy/branding/crown/lighting/site-contact finish remain intentionally deferred until Step 4 deterministic verification passes.
+**Step 4 is implemented and deterministically verified:** window assembly depth + frame/reveal detail + opaque/service finish + base/plinth + four resolved corners are locked at verified snapshot `0c9ed33abcd679d2efc316ca82e998d3524e7ffe` with **22/22 checks passing**. Entry/canopy/branding/crown/lighting/site-contact finish remain intentionally deferred to subsequent steps.
