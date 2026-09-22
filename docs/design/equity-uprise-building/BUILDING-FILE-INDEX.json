@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 294,
+  "tracked_count": 299,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -219,6 +219,11 @@
       "docs/design/equity-uprise-building/production/core-v2-floor-programs.json",
       "docs/design/equity-uprise-building/production/electronics/build_equity_uprise_electronics_v1.py",
       "docs/design/equity-uprise-building/production/electronics/electronics-population-policy-v1.json",
+      "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-connections-v1.json",
+      "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb",
+      "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-manifest-v1.json",
+      "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-step4a-report.json",
+      "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-it-lab-catalog-v1.json",
       "docs/design/equity-uprise-building/production/electronics/verify_equity_uprise_electronics_v1.py",
       "docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json",
       "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json",

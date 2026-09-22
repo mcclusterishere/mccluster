@@ -1,0 +1,982 @@
+{
+  "schema_version": "1.0.0",
+  "status": "step4a-it-lab-catalog",
+  "labs": [
+    {
+      "lab_id": "IT-LAB-001",
+      "tier": "FOUNDATION",
+      "title": "Cable Media Identification",
+      "skills": [
+        "identify copper/fiber/control/life-safety media"
+      ],
+      "fault_injection": [
+        "none"
+      ],
+      "target_selectors": [
+        "cable_type_catalog"
+      ],
+      "student_tasks": [
+        "classify representative links"
+      ],
+      "success_criteria": [
+        "all cable families correctly identified"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-002",
+      "tier": "FOUNDATION",
+      "title": "Patch Panel Trace",
+      "skills": [
+        "MDF/IDF",
+        "patching"
+      ],
+      "fault_injection": [
+        "wrong_patch"
+      ],
+      "target_selectors": [
+        "patch_panel",
+        "access_switch"
+      ],
+      "student_tasks": [
+        "trace endpoint to switch port"
+      ],
+      "success_criteria": [
+        "correct physical path and port"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-003",
+      "tier": "FOUNDATION",
+      "title": "Copper Wiremap Fault",
+      "skills": [
+        "wiremap",
+        "termination"
+      ],
+      "fault_injection": [
+        "open_pair",
+        "reversed_pair",
+        "split_pair"
+      ],
+      "target_selectors": [
+        "CAT6A-HORIZONTAL"
+      ],
+      "student_tasks": [
+        "diagnose wiremap"
+      ],
+      "success_criteria": [
+        "fault located and corrected"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-004",
+      "tier": "FOUNDATION",
+      "title": "Cat6A Certification",
+      "skills": [
+        "NEXT",
+        "return loss",
+        "length"
+      ],
+      "fault_injection": [
+        "marginal_termination"
+      ],
+      "target_selectors": [
+        "CAT6A-HORIZONTAL"
+      ],
+      "student_tasks": [
+        "interpret certification result"
+      ],
+      "success_criteria": [
+        "correct pass/fail reasoning"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-005",
+      "tier": "FOUNDATION",
+      "title": "Fiber Polarity",
+      "skills": [
+        "OS2",
+        "Tx/Rx"
+      ],
+      "fault_injection": [
+        "polarity_reversal"
+      ],
+      "target_selectors": [
+        "OS2-SM-DUPLEX"
+      ],
+      "student_tasks": [
+        "restore polarity"
+      ],
+      "success_criteria": [
+        "link restores"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-006",
+      "tier": "FOUNDATION",
+      "title": "Fiber OTDR Fault Location",
+      "skills": [
+        "OTDR",
+        "loss events"
+      ],
+      "fault_injection": [
+        "fiber_bend",
+        "connector_loss"
+      ],
+      "target_selectors": [
+        "OS2-SM-DUPLEX"
+      ],
+      "student_tasks": [
+        "locate event distance"
+      ],
+      "success_criteria": [
+        "correct segment identified"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-007",
+      "tier": "FOUNDATION",
+      "title": "PoE Endpoint Bring-Up",
+      "skills": [
+        "PoE",
+        "switch ports"
+      ],
+      "fault_injection": [
+        "poe_disabled"
+      ],
+      "target_selectors": [
+        "wireless_ap",
+        "ip_phone",
+        "camera"
+      ],
+      "student_tasks": [
+        "check PSE/PD state"
+      ],
+      "success_criteria": [
+        "endpoint powered without bypass"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-008",
+      "tier": "FOUNDATION",
+      "title": "Workstation Link Bring-Up",
+      "skills": [
+        "Layer 1",
+        "DHCP"
+      ],
+      "fault_injection": [
+        "port_shutdown"
+      ],
+      "target_selectors": [
+        "workstation"
+      ],
+      "student_tasks": [
+        "restore switch port and address"
+      ],
+      "success_criteria": [
+        "client online"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-009",
+      "tier": "TECHNICIAN",
+      "title": "Access VLAN Assignment",
+      "skills": [
+        "802.1Q",
+        "access VLAN"
+      ],
+      "fault_injection": [
+        "wrong_vlan"
+      ],
+      "target_selectors": [
+        "workstation"
+      ],
+      "student_tasks": [
+        "identify VLAN mismatch"
+      ],
+      "success_criteria": [
+        "correct VLAN restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-010",
+      "tier": "TECHNICIAN",
+      "title": "Trunk/Uplink Failure",
+      "skills": [
+        "802.1Q trunk",
+        "fiber uplink"
+      ],
+      "fault_injection": [
+        "uplink_down"
+      ],
+      "target_selectors": [
+        "access_switch"
+      ],
+      "student_tasks": [
+        "trace IDF to core"
+      ],
+      "success_criteria": [
+        "floor connectivity restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-011",
+      "tier": "TECHNICIAN",
+      "title": "Spanning-Tree Loop",
+      "skills": [
+        "STP/RSTP"
+      ],
+      "fault_injection": [
+        "layer2_loop"
+      ],
+      "target_selectors": [
+        "access_switch"
+      ],
+      "student_tasks": [
+        "identify loop and blocked path"
+      ],
+      "success_criteria": [
+        "stable topology"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-012",
+      "tier": "TECHNICIAN",
+      "title": "Dual-Uplink Failover",
+      "skills": [
+        "redundancy"
+      ],
+      "fault_injection": [
+        "core_uplink_a_down"
+      ],
+      "target_selectors": [
+        "access_switch",
+        "collapsed_core_switch"
+      ],
+      "student_tasks": [
+        "verify surviving path"
+      ],
+      "success_criteria": [
+        "connectivity retained"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-013",
+      "tier": "TECHNICIAN",
+      "title": "DHCP Failure",
+      "skills": [
+        "DHCP",
+        "relay"
+      ],
+      "fault_injection": [
+        "dhcp_service_down"
+      ],
+      "target_selectors": [
+        "LOGIC-SVC-DHCP"
+      ],
+      "student_tasks": [
+        "differentiate link from addressing"
+      ],
+      "success_criteria": [
+        "lease restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-014",
+      "tier": "TECHNICIAN",
+      "title": "DNS Failure",
+      "skills": [
+        "DNS"
+      ],
+      "fault_injection": [
+        "dns_service_down"
+      ],
+      "target_selectors": [
+        "LOGIC-SVC-DNS"
+      ],
+      "student_tasks": [
+        "test IP vs name resolution"
+      ],
+      "success_criteria": [
+        "name resolution restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-015",
+      "tier": "TECHNICIAN",
+      "title": "NTP Drift",
+      "skills": [
+        "NTP",
+        "logs"
+      ],
+      "fault_injection": [
+        "ntp_service_down"
+      ],
+      "target_selectors": [
+        "LOGIC-SVC-NTP"
+      ],
+      "student_tasks": [
+        "correlate time drift"
+      ],
+      "success_criteria": [
+        "time sync restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-016",
+      "tier": "TECHNICIAN",
+      "title": "IP Phone / Voice VLAN",
+      "skills": [
+        "SIP",
+        "voice VLAN",
+        "PoE"
+      ],
+      "fault_injection": [
+        "voice_vlan_wrong"
+      ],
+      "target_selectors": [
+        "ip_phone"
+      ],
+      "student_tasks": [
+        "restore phone registration"
+      ],
+      "success_criteria": [
+        "voice endpoint registered"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-017",
+      "tier": "TECHNICIAN",
+      "title": "Wi-Fi AP Offline",
+      "skills": [
+        "WLAN",
+        "PoE"
+      ],
+      "fault_injection": [
+        "ap_link_down"
+      ],
+      "target_selectors": [
+        "wireless_ap"
+      ],
+      "student_tasks": [
+        "trace AP to switch/power"
+      ],
+      "success_criteria": [
+        "AP returns"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-018",
+      "tier": "TECHNICIAN",
+      "title": "Wi-Fi Coverage / RF",
+      "skills": [
+        "site survey",
+        "6 GHz"
+      ],
+      "fault_injection": [
+        "rf_attenuation"
+      ],
+      "target_selectors": [
+        "wireless_ap"
+      ],
+      "student_tasks": [
+        "compare predicted vs observed RF"
+      ],
+      "success_criteria": [
+        "appropriate AP/channel recommendation"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-019",
+      "tier": "ADMIN",
+      "title": "802.1X / RADIUS Authentication",
+      "skills": [
+        "AAA",
+        "NAC"
+      ],
+      "fault_injection": [
+        "radius_policy_error"
+      ],
+      "target_selectors": [
+        "LOGIC-SVC-AAA-RADIUS"
+      ],
+      "student_tasks": [
+        "trace auth path"
+      ],
+      "success_criteria": [
+        "authorized endpoint succeeds"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-020",
+      "tier": "ADMIN",
+      "title": "Firewall ACL Block",
+      "skills": [
+        "firewall",
+        "segmentation"
+      ],
+      "fault_injection": [
+        "acl_deny_error"
+      ],
+      "target_selectors": [
+        "firewall"
+      ],
+      "student_tasks": [
+        "identify denied flow"
+      ],
+      "success_criteria": [
+        "least-privilege rule repaired"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-021",
+      "tier": "ADMIN",
+      "title": "Remote-Access VPN",
+      "skills": [
+        "VPN",
+        "MFA/AAA"
+      ],
+      "fault_injection": [
+        "vpn_auth_failure"
+      ],
+      "target_selectors": [
+        "LOGIC-SVC-VPN-REMOTE-ACCESS"
+      ],
+      "student_tasks": [
+        "trace VPN dependencies"
+      ],
+      "success_criteria": [
+        "secure tunnel established"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-022",
+      "tier": "ADMIN",
+      "title": "Virtualization Host Failure",
+      "skills": [
+        "hypervisor",
+        "service placement"
+      ],
+      "fault_injection": [
+        "host_down"
+      ],
+      "target_selectors": [
+        "virtualization_host"
+      ],
+      "student_tasks": [
+        "map hosted logical services"
+      ],
+      "success_criteria": [
+        "services recovered/migrated"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-023",
+      "tier": "ADMIN",
+      "title": "Storage / NAS Failure",
+      "skills": [
+        "storage",
+        "file service"
+      ],
+      "fault_injection": [
+        "nas_degraded"
+      ],
+      "target_selectors": [
+        "nas_storage"
+      ],
+      "student_tasks": [
+        "identify dependent services"
+      ],
+      "success_criteria": [
+        "storage healthy"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-024",
+      "tier": "ADMIN",
+      "title": "Backup Restore",
+      "skills": [
+        "backup",
+        "recovery"
+      ],
+      "fault_injection": [
+        "deleted_config"
+      ],
+      "target_selectors": [
+        "backup_appliance",
+        "LOGIC-SVC-CONFIG-BACKUP"
+      ],
+      "student_tasks": [
+        "restore known-good config"
+      ],
+      "success_criteria": [
+        "validated restore"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-025",
+      "tier": "ADMIN",
+      "title": "Camera / VMS Loss",
+      "skills": [
+        "CCTV",
+        "VMS"
+      ],
+      "fault_injection": [
+        "camera_link_down"
+      ],
+      "target_selectors": [
+        "camera",
+        "vms_nvr"
+      ],
+      "student_tasks": [
+        "trace PoE/network/storage"
+      ],
+      "success_criteria": [
+        "video restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-026",
+      "tier": "ADMIN",
+      "title": "Access Reader Failure",
+      "skills": [
+        "OSDP",
+        "access control"
+      ],
+      "fault_injection": [
+        "reader_bus_fault"
+      ],
+      "target_selectors": [
+        "access_reader",
+        "access_controller"
+      ],
+      "student_tasks": [
+        "differentiate reader bus vs IP uplink"
+      ],
+      "success_criteria": [
+        "reader state restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-027",
+      "tier": "ADVANCED",
+      "title": "BAS Controller Offline",
+      "skills": [
+        "BAS",
+        "OT segmentation"
+      ],
+      "fault_injection": [
+        "bas_controller_offline"
+      ],
+      "target_selectors": [
+        "bas_controller"
+      ],
+      "student_tasks": [
+        "trace power/IP/field bus"
+      ],
+      "success_criteria": [
+        "controller restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-028",
+      "tier": "ADVANCED",
+      "title": "BACnet Field-Bus Fault",
+      "skills": [
+        "BACnet MS/TP"
+      ],
+      "fault_injection": [
+        "mstp_open"
+      ],
+      "target_selectors": [
+        "environment_sensor"
+      ],
+      "student_tasks": [
+        "locate field-bus break"
+      ],
+      "success_criteria": [
+        "sensor chain restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-029",
+      "tier": "ADVANCED",
+      "title": "IT/OT Firewall Segmentation",
+      "skills": [
+        "OT security"
+      ],
+      "fault_injection": [
+        "overpermissive_rule"
+      ],
+      "target_selectors": [
+        "LOGIC-VLAN-BAS-OT",
+        "firewall"
+      ],
+      "student_tasks": [
+        "reduce lateral access"
+      ],
+      "success_criteria": [
+        "required BAS flows only"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-030",
+      "tier": "ADVANCED",
+      "title": "AV Multicast Flood",
+      "skills": [
+        "IGMP",
+        "multicast"
+      ],
+      "fault_injection": [
+        "igmp_snooping_off"
+      ],
+      "target_selectors": [
+        "av_controller",
+        "network_display_decoder"
+      ],
+      "student_tasks": [
+        "identify flooded multicast"
+      ],
+      "success_criteria": [
+        "multicast constrained"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-031",
+      "tier": "ADVANCED",
+      "title": "AV QoS Degradation",
+      "skills": [
+        "QoS",
+        "AV-over-IP"
+      ],
+      "fault_injection": [
+        "qos_removed"
+      ],
+      "target_selectors": [
+        "av_camera",
+        "network_display_decoder"
+      ],
+      "student_tasks": [
+        "correlate loss/jitter"
+      ],
+      "success_criteria": [
+        "AV restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-032",
+      "tier": "ADVANCED",
+      "title": "UPS / IDF Power Failure",
+      "skills": [
+        "UPS",
+        "PoE dependencies"
+      ],
+      "fault_injection": [
+        "idf_ups_failure"
+      ],
+      "target_selectors": [
+        "rack_ups",
+        "access_switch"
+      ],
+      "student_tasks": [
+        "trace affected endpoints"
+      ],
+      "success_criteria": [
+        "network safely restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-033",
+      "tier": "ADVANCED",
+      "title": "Backbone Fiber Cut",
+      "skills": [
+        "fiber",
+        "redundancy"
+      ],
+      "fault_injection": [
+        "uplink_a_cut"
+      ],
+      "target_selectors": [
+        "OS2-SM-DUPLEX"
+      ],
+      "student_tasks": [
+        "locate cut and validate alternate link"
+      ],
+      "success_criteria": [
+        "service restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-034",
+      "tier": "ADVANCED",
+      "title": "Whole-Floor Switch Failure",
+      "skills": [
+        "fault propagation"
+      ],
+      "fault_injection": [
+        "access_switch_failed"
+      ],
+      "target_selectors": [
+        "access_switch"
+      ],
+      "student_tasks": [
+        "enumerate affected wired/PoE clients"
+      ],
+      "success_criteria": [
+        "correct switch replaced/reset"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-035",
+      "tier": "EXPERT",
+      "title": "Firewall HA Failover",
+      "skills": [
+        "HA",
+        "state synchronization"
+      ],
+      "fault_injection": [
+        "firewall_primary_down"
+      ],
+      "target_selectors": [
+        "firewall"
+      ],
+      "student_tasks": [
+        "validate session/path behavior"
+      ],
+      "success_criteria": [
+        "secondary active and stable"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-036",
+      "tier": "EXPERT",
+      "title": "Certificate / Identity Expiry",
+      "skills": [
+        "PKI",
+        "WPA3-Enterprise",
+        "VPN"
+      ],
+      "fault_injection": [
+        "radius_cert_expired"
+      ],
+      "target_selectors": [
+        "LOGIC-SVC-AAA-RADIUS",
+        "LOGIC-SVC-VPN-REMOTE-ACCESS"
+      ],
+      "student_tasks": [
+        "identify certificate root cause"
+      ],
+      "success_criteria": [
+        "trusted auth restored"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-037",
+      "tier": "EXPERT",
+      "title": "Rogue Device / NAC",
+      "skills": [
+        "802.1X",
+        "incident response"
+      ],
+      "fault_injection": [
+        "unauthorized_endpoint"
+      ],
+      "target_selectors": [
+        "LOGIC-VLAN-LAB"
+      ],
+      "student_tasks": [
+        "quarantine endpoint"
+      ],
+      "success_criteria": [
+        "rogue isolated"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-038",
+      "tier": "EXPERT",
+      "title": "SIEM Correlation",
+      "skills": [
+        "syslog",
+        "SNMP",
+        "timeline"
+      ],
+      "fault_injection": [
+        "multi_device_alert"
+      ],
+      "target_selectors": [
+        "LOGIC-SVC-SYSLOG-SIEM"
+      ],
+      "student_tasks": [
+        "reconstruct incident"
+      ],
+      "success_criteria": [
+        "correct root cause/time sequence"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-039",
+      "tier": "EXPERT",
+      "title": "Cross-System Building Incident",
+      "skills": [
+        "IT/OT",
+        "power",
+        "network"
+      ],
+      "fault_injection": [
+        "normal_power_loss",
+        "core_link_degraded",
+        "bas_alarm"
+      ],
+      "target_selectors": [
+        "whole_building"
+      ],
+      "student_tasks": [
+        "separate primary from secondary effects"
+      ],
+      "success_criteria": [
+        "safe restoration order"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    },
+    {
+      "lab_id": "IT-LAB-040",
+      "tier": "EXPERT",
+      "title": "Commissioning / As-Built Audit",
+      "skills": [
+        "asset registry",
+        "cable certification",
+        "documentation"
+      ],
+      "fault_injection": [
+        "documentation_mismatch"
+      ],
+      "target_selectors": [
+        "whole_building"
+      ],
+      "student_tasks": [
+        "reconcile digital and physical evidence"
+      ],
+      "success_criteria": [
+        "registry/test records agree"
+      ],
+      "reset": "restore baseline",
+      "mode": "SIMULATION",
+      "live_control_allowed": false
+    }
+  ]
+}
