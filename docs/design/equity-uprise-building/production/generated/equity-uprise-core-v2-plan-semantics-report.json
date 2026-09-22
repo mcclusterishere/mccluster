@@ -1500,17 +1500,17 @@
     {
       "name": "L6 README generated-only warning",
       "passed": true,
-      "detail": "# Floor 06 \u2014 Penthouse Command \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerat"
+      "detail": "# Floor 06 \u2014 Penthouse Command \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/buil"
     },
     {
-      "name": "L6 README provisional program status",
+      "name": "L6 README active current-pass status",
       "passed": true,
-      "detail": "# Floor 06 \u2014 Penthouse Command \u2014 Core V2 Plan References\n\n> Status: **PROVISIONAL CORE V2 CHASSIS PLAN \u2014 PROGRAM PRE-ITERATIVE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/"
+      "detail": "# Floor 06 \u2014 Penthouse Command \u2014 Core V2 Plan References\n\n> Status: **ACTIVE CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n- `production/core-v2-floor-programs.json"
     },
     {
       "name": "L6 README design maturity",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass"
     },
     {
       "name": "L6 .svg exists",
@@ -2125,12 +2125,12 @@
     {
       "name": "L6 manifest maturity matches authority",
       "passed": true,
-      "detail": "pre-iterative-program-rewrite != pre-iterative-program-rewrite"
+      "detail": "reconciled-current-iterative-pass != reconciled-current-iterative-pass"
     },
     {
       "name": "L6 manifest render readiness matches authority",
       "passed": true,
-      "detail": "chassis-only-not-final-program != chassis-only-not-final-program"
+      "detail": "inventory-ready-hybrid-3d-next != inventory-ready-hybrid-3d-next"
     },
     {
       "name": "L6 manifest DXF points at Core V2",
