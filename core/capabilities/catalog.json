@@ -1747,7 +1747,7 @@
       "title": "Read meeting chat",
       "description": "Read live meeting chat after the deployed owned engine passes interactive-control validation.",
       "domain": "meeting",
-      "lifecycle": "planned",
+      "lifecycle": "active",
       "execution": "sync",
       "risk": "read",
       "approval": "none",
@@ -1785,7 +1785,8 @@
       "tags": [
         "meeting",
         "delegate",
-        "owned"
+        "owned",
+        "feature-gated"
       ]
     },
     {
@@ -1793,7 +1794,7 @@
       "title": "Send meeting chat",
       "description": "Send a clearly attributable AI-delegate chat message after interactive-control validation.",
       "domain": "meeting",
-      "lifecycle": "planned",
+      "lifecycle": "active",
       "execution": "sync",
       "risk": "write",
       "approval": "owner-policy-gated",
@@ -1837,7 +1838,8 @@
       "tags": [
         "meeting",
         "delegate",
-        "owned"
+        "owned",
+        "feature-gated"
       ]
     },
     {
@@ -1845,7 +1847,7 @@
       "title": "Speak in meeting",
       "description": "Speak through the disclosed AI delegate only after the deployed owned engine passes live audio validation.",
       "domain": "meeting",
-      "lifecycle": "planned",
+      "lifecycle": "active",
       "execution": "sync",
       "risk": "write",
       "approval": "owner-policy-gated",
@@ -1889,7 +1891,8 @@
       "tags": [
         "meeting",
         "delegate",
-        "owned"
+        "owned",
+        "feature-gated"
       ]
     }
   ],
