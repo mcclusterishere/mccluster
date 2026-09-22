@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 276,
+  "tracked_count": 280,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -82,6 +82,7 @@
       "docs/design/equity-uprise-building/BUILDING-SERVICES-IMPLEMENTATION-PLAN.md",
       "docs/design/equity-uprise-building/BUILDING-SERVICES-NERVOUS-SYSTEM-SPEC.md",
       "docs/design/equity-uprise-building/BUILDING-SYSTEMS-AND-FACADE-CORE-RULES.md",
+      "docs/design/equity-uprise-building/DIGITAL-PHYSICAL-ASSET-REGISTRY-SPEC.md",
       "docs/design/equity-uprise-building/EXTERIOR-FACADE-UPGRADE-SPEC.md",
       "docs/design/equity-uprise-building/FACADE-ARCHITECTURAL-FINISH-PASS-SPEC.md",
       "docs/design/equity-uprise-building/FACADE-BRANDING-AND-SIGNAGE-SPEC.md",
@@ -183,6 +184,9 @@
       "docs/design/equity-uprise-building/references/archive/core-v2-migration/CORE-V2-FILE-MIGRATION-MANIFEST.md"
     ],
     "production_source": [
+      "docs/design/equity-uprise-building/production/asset-registry/asset-registry-schema-v1.json",
+      "docs/design/equity-uprise-building/production/asset-registry/asset-registry-source-contract-v1.json",
+      "docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_schema.py",
       "docs/design/equity-uprise-building/production/audit_building_context.py",
       "docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py",
       "docs/design/equity-uprise-building/production/basement-b1-program.json",
