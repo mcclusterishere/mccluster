@@ -132,6 +132,7 @@ For any facade, glazing, exterior branding, interior-envelope, MEP, IT, plumbing
 - `production/facade-system-core-v2.json`
 - `production/facade/facade-module-inventory.json`
 - `production/facade/facade-finish-inventory.json`
+- `production/facade/equity-uprise-logo-vector.json` — exact approved repo logo geometry for 3D facade signage; sourced from `assets/img/equity-uprise-logo.webp` and the matching inline SVG.
 - `production/facade/build_equity_uprise_facade_v2.py`
 - `production/vertical-risers-core-v2.json`
 - `production/interior-envelope-audit.json`
