@@ -536,4 +536,19 @@ Implemented:
 - floor isolation filters the services overlay to the relevant story/adjacent riser segments;
 - deploy pipeline publishes the services GLB/report.
 
-Current gate: deterministic generation + services-backbone checks + full Core V2 CI.
+Services Step 2 deterministic verification: **GREEN**.
+
+Verified generated snapshot: `768a6270fa945dd5fb4c6c572bb72c2caade5d9d`
+
+- dedicated services GLB: **135 meshes / 86,488 bytes**;
+- **9/9 system risers modeled**;
+- **63 story riser segments**;
+- **63/63 authorized floor handoff stubs modeled**;
+- **8 level markers** from B1 through L7;
+- shared reservation remains X50–60 / Y66–72;
+- Stair A separation band remains X59–60 / Y66–72;
+- services checks: **12/12 passing**;
+- GLB SHA-256: `4fa994486889fa135d9dae163df3b8d9dabb81eef692520b642f53ad8dc3d1ef`;
+- full Equity Uprise Core V2 CI passed.
+
+Services Step 2 is a stable checkpoint. Next is **Services Step 3 — connect the real B1 plant/electrical/telecom/fire/sump/BAS equipment to this backbone.**
