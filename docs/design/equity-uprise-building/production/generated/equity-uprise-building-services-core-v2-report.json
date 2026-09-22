@@ -1,16 +1,39 @@
 {
   "schema_version": "1.0.0",
   "asset": "equity-uprise-building-services-core-v2",
-  "status": "services-step2-visible-backbone",
+  "status": "services-step3-b1-plant-connections",
   "not_for_construction": true,
-  "glb_bytes": 86488,
-  "sha256": "4fa994486889fa135d9dae163df3b8d9dabb81eef692520b642f53ad8dc3d1ef",
-  "mesh_count": 135,
+  "glb_bytes": 233340,
+  "sha256": "28d774da3a23c099068dc6f2481446dbfa2612b12f0290c90749002efdb18d8e",
+  "mesh_count": 294,
   "system_risers": 9,
   "system_risers_modeled": 9,
   "riser_segments": 63,
   "floor_handoff_stubs": 63,
   "levels_marked": 8,
+  "b1_source_connections": 9,
+  "b1_distribution_meshes": 159,
+  "source_equipment_ids": [
+    "B1-ELEC-METER-01",
+    "B1-ELEC-SWITCHGEAR-01",
+    "B1-ELEC-UPS-01",
+    "B1-FIRE-PUMP-01",
+    "B1-FIRE-RISER-01",
+    "B1-FIRE-WATER-01",
+    "B1-FLOOD-PUMP-01",
+    "B1-FLOOD-SENSOR-01",
+    "B1-FLOOD-SUMP-01",
+    "B1-FLOOR-DRAINS-01",
+    "B1-LAB-CONSOLE-01",
+    "B1-MECH-AHU-01",
+    "B1-MECH-BAS-01",
+    "B1-MECH-PIPE-RACK-01",
+    "B1-MECH-PUMP-01",
+    "B1-PIPE-SPINE-01",
+    "B1-TELECOM-CONSOLE-01",
+    "B1-TELECOM-RACKS-01",
+    "B1-TELECOM-TRAY-01"
+  ],
   "shared_reservation_ft": {
     "x1": 50,
     "y1": 66,
@@ -28,8 +51,8 @@
     "STORM-DRAINAGE",
     "WATER-DOMESTIC"
   ],
-  "checks_total": 12,
-  "checks_passed": 12,
+  "checks_total": 28,
+  "checks_passed": 28,
   "checks_failed": 0,
   "checks": [
     {
@@ -58,7 +81,7 @@
       "detail": "{'x1': 59, 'y1': 66, 'x2': 60, 'y2': 72}"
     },
     {
-      "name": "service geometry stays west of Stair A boundary",
+      "name": "vertical service geometry stays west of Stair A boundary",
       "passed": true,
       "detail": ""
     },
@@ -88,9 +111,89 @@
       "detail": ""
     },
     {
+      "name": "nine B1 source/connection strategies modeled",
+      "passed": true,
+      "detail": "['BAS-CONTROLS', 'DATA-STRUCTURED', 'ELEC-EMERGENCY', 'ELEC-NORMAL', 'FIRE-PROTECTION', 'HVAC-AIR', 'SANITARY-VENT', 'STORM-DRAINAGE', 'WATER-DOMESTIC']"
+    },
+    {
+      "name": "all Step 3 source equipment IDs exist in B1 inventory",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "source-to-riser connection continuity",
+      "passed": true,
+      "detail": "9/9"
+    },
+    {
+      "name": "no Step 3 geometry enters Stair A separation band",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "no Step 3 geometry blocks protected stair/elevator/tunnel circulation zones",
+      "passed": true,
+      "detail": "[]"
+    },
+    {
+      "name": "telecom equipment connects to DATA",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "BAS source connects to BAS-CONTROLS",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "normal and emergency power remain distinct",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fire and domestic water remain distinguishable",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "storm/sump connects to STORM-DRAINAGE",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "HVAC plant connects to HVAC-AIR",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "sanitary remains an internal boundary-only stack connection",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Step 3 adds substantial B1 distribution geometry",
+      "passed": true,
+      "detail": "159"
+    },
+    {
       "name": "substantial visible nervous-system geometry",
       "passed": true,
-      "detail": "135"
+      "detail": "294"
+    },
+    {
+      "name": "Services viewer still loads services GLB",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Services viewer preserves B1 source equipment during ghost mode",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "direct B1 + Services query remains supported",
+      "passed": true,
+      "detail": ""
     }
   ],
   "passed": true
