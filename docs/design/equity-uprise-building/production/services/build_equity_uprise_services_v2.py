@@ -310,6 +310,7 @@ ck("Step 3 adds substantial B1 distribution geometry",len(step3_records)>=70,len
 ck("substantial visible nervous-system geometry",len(scene.geometry)>=200,len(scene.geometry))
 viewer_text=VIEWER.read_text() if VIEWER.exists() else ""
 ck("Services viewer still loads services GLB","equity-uprise-building-services-core-v2.glb" in viewer_text)
+ck("Services viewer preserves B1 source equipment during ghost mode","markB1ServiceSources(b1)" in viewer_text and "o.userData.serviceSource" in viewer_text)
 ck("direct B1 + Services query remains supported","requestedServices=params.get('services')==='1'" in viewer_text and "requestedFloor=params.get('floor')" in viewer_text)
 
 scene.metadata.update({
