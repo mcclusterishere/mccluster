@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 274,
+  "tracked_count": 276,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -144,6 +144,8 @@
       "docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2.glb",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2-report.json",
+      "docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2.glb",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-core-v2-plan-semantics-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2-report.json",
       "docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2.glb",

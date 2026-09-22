@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0.0",
+  "asset": "equity-uprise-building-services-core-v2",
+  "status": "services-step2-visible-backbone",
+  "not_for_construction": true,
+  "glb_bytes": 86488,
+  "sha256": "4fa994486889fa135d9dae163df3b8d9dabb81eef692520b642f53ad8dc3d1ef",
+  "mesh_count": 135,
+  "system_risers": 9,
+  "system_risers_modeled": 9,
+  "riser_segments": 63,
+  "floor_handoff_stubs": 63,
+  "levels_marked": 8,
+  "shared_reservation_ft": {
+    "x1": 50,
+    "y1": 66,
+    "x2": 60,
+    "y2": 72
+  },
+  "systems": [
+    "BAS-CONTROLS",
+    "DATA-STRUCTURED",
+    "ELEC-EMERGENCY",
+    "ELEC-NORMAL",
+    "FIRE-PROTECTION",
+    "HVAC-AIR",
+    "SANITARY-VENT",
+    "STORM-DRAINAGE",
+    "WATER-DOMESTIC"
+  ],
+  "checks_total": 12,
+  "checks_passed": 12,
+  "checks_failed": 0,
+  "checks": [
+    {
+      "name": "nine system risers allocated",
+      "passed": true,
+      "detail": "9"
+    },
+    {
+      "name": "all system risers modeled",
+      "passed": true,
+      "detail": "['BAS-CONTROLS', 'DATA-STRUCTURED', 'ELEC-EMERGENCY', 'ELEC-NORMAL', 'FIRE-PROTECTION', 'HVAC-AIR', 'SANITARY-VENT', 'STORM-DRAINAGE', 'WATER-DOMESTIC']"
+    },
+    {
+      "name": "all allocations inside shared reservation",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "system riser envelopes do not overlap",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Stair A separation band preserved",
+      "passed": true,
+      "detail": "{'x1': 59, 'y1': 66, 'x2': 60, 'y2': 72}"
+    },
+    {
+      "name": "service geometry stays west of Stair A boundary",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "seven story segments per system",
+      "passed": true,
+      "detail": "63"
+    },
+    {
+      "name": "all authorized floor handoff stubs modeled",
+      "passed": true,
+      "detail": "63/63"
+    },
+    {
+      "name": "B1 to roof level markers modeled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "floor addenda cover B1 through L7",
+      "passed": true,
+      "detail": "['B1', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'L7']"
+    },
+    {
+      "name": "source/route/endpoints authority retained",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "substantial visible nervous-system geometry",
+      "passed": true,
+      "detail": "135"
+    }
+  ],
+  "passed": true
+}
