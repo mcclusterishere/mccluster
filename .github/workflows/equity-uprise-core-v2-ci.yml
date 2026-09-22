@@ -55,6 +55,9 @@ jobs:
       - name: Generate restricted B1 production package in workspace
         run: python docs/design/equity-uprise-building/production/generate_b1_production_package.py
 
+      - name: Build detailed B1 in workspace
+        run: python docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py
+
       - name: Build detailed Level 7 roof in workspace
         run: python docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py
 
@@ -134,6 +137,7 @@ jobs:
           python docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
           python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
           python docs/design/equity-uprise-building/production/generate_b1_production_package.py
+          python docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py
           python docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py
           python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
           python docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py
