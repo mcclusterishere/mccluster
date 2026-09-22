@@ -46,6 +46,12 @@ jobs:
       - name: Verify Digital-to-Physical Asset Registry Step 1 schema
         run: python docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_schema.py
 
+      - name: Build Digital-to-Physical Asset Registry Step 2
+        run: python docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_v1.py
+
+      - name: Verify Digital-to-Physical Asset Registry Step 2
+        run: python docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step2.py
+
       - name: Verify Halo projection owner boundary
         run: node --test workers/mccluster/test/halo-projection.test.mjs
 
@@ -111,6 +117,7 @@ jobs:
             docs/design/equity-uprise-building/production/floor-07
             docs/design/equity-uprise-building/production/facade
             docs/design/equity-uprise-building/production/generated
+            docs/design/equity-uprise-building/production/asset-registry/generated
           )
           dirty="$(git status --short -- "${paths[@]}")"
           if [ -n "$dirty" ]; then
@@ -144,6 +151,8 @@ jobs:
 
       - name: Regenerate all derived building outputs
         run: |
+          python docs/design/equity-uprise-building/production/asset-registry/build_asset_registry_v1.py
+          python docs/design/equity-uprise-building/production/asset-registry/verify_asset_registry_step2.py
           python docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py
           python docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py
           python docs/design/equity-uprise-building/production/generate_b1_production_package.py
@@ -165,6 +174,7 @@ jobs:
           # Stage newly-created generated paths first so git ls-files sees them
           # when the exhaustive building index is regenerated.
           git add -f docs/design/equity-uprise-building/production/generated
+          git add -f docs/design/equity-uprise-building/production/asset-registry/generated
           python docs/design/equity-uprise-building/production/audit_building_context.py --write
           python docs/design/equity-uprise-building/production/audit_building_context.py
 
@@ -184,6 +194,7 @@ jobs:
           git add docs/design/equity-uprise-building/production/facade
           git add docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json
           git add -f docs/design/equity-uprise-building/production/generated
+          git add -f docs/design/equity-uprise-building/production/asset-registry/generated
           if git diff --cached --quiet; then
             echo "Generated building artifacts already current."
             exit 0
