@@ -17,7 +17,7 @@ import { gameReleaseDecision } from './executors/game-release-decision.mjs';
 import { previewDeploy } from './executors/preview-deploy.mjs';
 import { hostHealth } from './executors/host-health.mjs';
 import { smsAssistantTurn } from './executors/sms-assistant-turn.mjs';
-import { leadRescore } from './executors/lead-rescore.mjs';
+import { leadRescore } from './executors/lead-rescore.mjs';\nimport { meetingDelegateDispatch } from './executors/meeting-delegate-dispatch.mjs';\nimport { meetingDelegateCollect } from './executors/meeting-delegate-collect.mjs';
 
 const executors = new Map([
   ['repo_health', repoHealth],
@@ -38,7 +38,7 @@ const executors = new Map([
   ['preview_deploy', previewDeploy],
   ['host_health', hostHealth],
   ['sms_assistant_turn', smsAssistantTurn],
-  ['lead_rescore', leadRescore],
+  ['lead_rescore', leadRescore],\n  ['meeting_delegate_dispatch', meetingDelegateDispatch],\n  ['meeting_delegate_collect', meetingDelegateCollect],
 ]);
 
 const pollMs = Math.max(2000, Number(process.env.MCCLUSTER_POLL_MS || 15_000));
