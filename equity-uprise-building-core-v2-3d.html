@@ -49,7 +49,8 @@ function enhanceFloor1Interior(root){
    if('envMapIntensity'in m)m.envMapIntensity=.9;
    if(/SCREEN|DISPLAY|MONITOR|KIOSK|DIRECTORY/.test(n)){m.roughness=.22;m.metalness=.08;if(m.emissive){m.emissive.copy(m.color).multiplyScalar(.22);m.emissiveIntensity=.65}}
    else if(/GLASS|VISION|SIDELIGHT|TRANSOM/.test(n)){m.roughness=.08;m.metalness=0;m.transparent=true;m.opacity=Math.min(m.opacity??1,.42);m.depthWrite=false;if('envMapIntensity'in m)m.envMapIntensity=1.35}
-   else if(/CORE|METAL|ELEV|FREIGHT|STAIR|RECEPTION-ACCESS|PEDESTAL|BASE/.test(n)){m.roughness=.34;m.metalness=.58;if('envMapIntensity'in m)m.envMapIntensity=1.18}
+   else if(/RECEPTION-DESK|JOURNEY-WALL/.test(n)){m.roughness=.58;m.metalness=.03;if('envMapIntensity'in m)m.envMapIntensity=.72}
+   else if(/CORE|METAL|ELEV|FREIGHT|STAIR|RECEPTION-ACCESS|PEDESTAL/.test(n)){m.roughness=.34;m.metalness=.58;if('envMapIntensity'in m)m.envMapIntensity=1.18}
    else if(/WOOD|TABLE|CREDENZA/.test(n)){m.roughness=.5;m.metalness=.02}
    else if(/SEAT|SOFA|CHAIR|RUG/.test(n)){m.roughness=.92;m.metalness=0;if('envMapIntensity'in m)m.envMapIntensity=.45}
    else if(/FLOOR|SLAB/.test(n)){m.roughness=.48;m.metalness=.03;if('envMapIntensity'in m)m.envMapIntensity=.82}
@@ -465,8 +466,9 @@ function projectedRoomTarget(ndcX,ndcY,maxDistance=.16){
  for(const id of roomTargetIds()){const p=findCanonicalCenter(id);if(!p)continue;const q=p.clone().project(cam);if(q.z<-1||q.z>1)continue;const d=Math.hypot(q.x-ndcX,q.y-ndcY);if(d<bestD){best=id;bestD=d}}
  return best
 }
+let roomLastSelectAt=0;
 async function selectRoomAt(clientX,clientY){
- if(!roomMode||roomTweening)return;const rect=ren.domElement.getBoundingClientRect(),nx=((clientX-rect.left)/rect.width)*2-1,ny=-((clientY-rect.top)/rect.height)*2+1;
+ if(!roomMode||roomTweening)return;const now=performance.now();if(now-roomLastSelectAt<260)return;roomLastSelectAt=now;const rect=ren.domElement.getBoundingClientRect(),nx=((clientX-rect.left)/rect.width)*2-1,ny=-((clientY-rect.top)/rect.height)*2+1;
  labPointer.set(nx,ny);labRaycaster.setFromCamera(labPointer,cam);const hits=labRaycaster.intersectObjects([f1].filter(Boolean),true);
  for(const hit of hits){const id=roomFindTargetFromHit(hit);if(id){await approachRoomObject(id);return}}
  const nearTap=projectedRoomTarget(nx,ny,.18),nearReticle=projectedRoomTarget(0,0,.14),id=nearTap||nearReticle;if(id){await approachRoomObject(id);return}
@@ -476,6 +478,7 @@ let roomPointer=null;
 ren.domElement.addEventListener('pointerdown',ev=>{if(!roomMode||roomTweening)return;roomPointer={x:ev.clientX,y:ev.clientY,lastX:ev.clientX,lastY:ev.clientY,moved:0};ren.domElement.setPointerCapture?.(ev.pointerId)});
 ren.domElement.addEventListener('pointermove',ev=>{if(!roomMode||!roomPointer||roomTweening)return;const dx=ev.clientX-roomPointer.lastX,dy=ev.clientY-roomPointer.lastY;roomPointer.lastX=ev.clientX;roomPointer.lastY=ev.clientY;roomPointer.moved+=Math.abs(dx)+Math.abs(dy);if(roomMotionActive)return;roomManualYaw-=dx*.0042;roomManualPitch=clamp(roomManualPitch-dy*.0036,-1.18,1.18);const yaw=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),roomManualYaw),pitch=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),roomManualPitch);cam.quaternion.copy(yaw).multiply(roomBaseQuaternion).multiply(pitch)});
 ren.domElement.addEventListener('pointerup',async ev=>{if(!roomPointer)return;const tap=roomPointer.moved<=10,px=ev.clientX,py=ev.clientY;roomPointer=null;ren.domElement.releasePointerCapture?.(ev.pointerId);if(tap)await selectRoomAt(px,py)});
+ren.domElement.addEventListener('click',async ev=>{if(roomMode&&!roomTweening)await selectRoomAt(ev.clientX,ev.clientY)});
 
 document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>focus(b.dataset.f));
 document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>setView(b.dataset.v));
