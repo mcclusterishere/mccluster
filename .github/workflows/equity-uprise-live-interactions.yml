@@ -1,0 +1,32 @@
+name: Equity Uprise Live Interaction Acceptance
+
+on:
+  push:
+    branches:
+      - audit/equity-uprise-live-interactions
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run live interaction acceptance
+        run: node scripts/equity-uprise-live-interactions.mjs
+      - name: Upload acceptance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: equity-uprise-live-interactions
+          path: interaction-artifacts/
+          retention-days: 7
