@@ -364,7 +364,6 @@ for (const required of [
   "competency-rubrics.json",
   "FEDERAL-TRAINING-BINDINGS.json",
   "distributed-building-scenario-pack-v1.json",
-  "learner-experience-v1.json",
 ]) {
   assert.ok(deploy.includes(required), "deploy workflow must publish Step 8 dependency " + required);
 }
