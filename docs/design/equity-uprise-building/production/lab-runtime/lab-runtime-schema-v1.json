@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mccluster.org/schemas/equity-uprise/lab-runtime-schema-v1.json",
+  "title": "Equity Uprise Lab Runtime Step 1 Contract",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "runtime_version",
+    "scenario_id",
+    "source_lab_id",
+    "title",
+    "tier",
+    "mode",
+    "execution_target",
+    "live_control_allowed",
+    "target_selectors",
+    "fault_injection",
+    "tasks",
+    "success_criteria",
+    "reset_contract"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "runtime_version": {
+      "const": "1.0.0"
+    },
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^EU-LAB::IT-LAB-[0-9]{3}::V1$"
+    },
+    "source_lab_id": {
+      "type": "string",
+      "pattern": "^IT-LAB-[0-9]{3}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tier": {
+      "enum": [
+        "FOUNDATION",
+        "TECHNICIAN",
+        "ADMIN",
+        "ADVANCED",
+        "EXPERT"
+      ]
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "mode": {
+      "const": "SIMULATION"
+    },
+    "execution_target": {
+      "const": "SANDBOX"
+    },
+    "live_control_allowed": {
+      "const": false
+    },
+    "target_selectors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fault_injection": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "fault_id",
+          "active"
+        ],
+        "properties": {
+          "fault_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "task_id",
+          "description"
+        ],
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "pattern": "^TASK-[0-9]{3}$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "success_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "criterion_id",
+          "description",
+          "required"
+        ],
+        "properties": {
+          "criterion_id": {
+            "type": "string",
+            "pattern": "^CRIT-[0-9]{3}$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required": {
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "reset_contract": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

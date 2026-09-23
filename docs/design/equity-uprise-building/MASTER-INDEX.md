@@ -253,3 +253,16 @@ The canonical external training/evidence layer that binds federal programs to th
 - `../equity-uprise-development/verify_federal_training_catalog.py`
 
 These files are included in the building context gate as external authority. Credentials remain separate from competency mastery and all learner B1/OT activity remains sandboxed.
+
+## Lab Runtime — Step 1 execution foundation
+
+Canonical authority/runtime:
+- `LAB-RUNTIME-SPEC.md`
+- `production/lab-runtime/lab-runtime-schema-v1.json`
+- `production/lab-runtime/equity-uprise-lab-runtime.mjs`
+- `production/lab-runtime/verify_lab_runtime_v1.mjs`
+
+Step 1 converts the existing 40 Step 4A lab definitions into deterministic sandbox sessions with lifecycle control, abstract fault activation, learner inspection/action events, success-criterion evidence, completion gating, reset and replayable evidence export. The runtime is browser-compatible and dependency-free so later viewer integration can consume the same engine.
+
+LIVE execution is explicitly forbidden. Step 2 is the electronics/asset-state binding layer.
+

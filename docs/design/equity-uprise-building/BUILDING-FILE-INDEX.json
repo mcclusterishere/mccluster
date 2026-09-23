@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 303,
+  "tracked_count": 307,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -126,6 +126,7 @@
       "docs/design/equity-uprise-building/FLOOR-07-V1-V2-PRESERVATION-MAP.md",
       "docs/design/equity-uprise-building/HALO-GLOBE-SPATIAL-INTELLIGENCE-SPEC.md",
       "docs/design/equity-uprise-building/INTERIOR-ENVELOPE-AND-GEOMETRY-UPGRADE-SPEC.md",
+      "docs/design/equity-uprise-building/LAB-RUNTIME-SPEC.md",
       "docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md",
       "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
       "docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md",
@@ -324,6 +325,9 @@
       "docs/design/equity-uprise-building/production/generate_core_v2_plans.py",
       "docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py",
       "docs/design/equity-uprise-building/production/interior-envelope-audit.json",
+      "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-lab-runtime.mjs",
+      "docs/design/equity-uprise-building/production/lab-runtime/lab-runtime-schema-v1.json",
+      "docs/design/equity-uprise-building/production/lab-runtime/verify_lab_runtime_v1.mjs",
       "docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py",
       "docs/design/equity-uprise-building/production/services/floor-services-addenda.json",
       "docs/design/equity-uprise-building/production/underground-tunnel-network.json",
