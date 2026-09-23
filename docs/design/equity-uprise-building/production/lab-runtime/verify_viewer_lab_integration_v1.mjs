@@ -220,6 +220,10 @@ for (const required of [
   "rebuildEngineeringMarkers",
   "visible room-bound devices",
   "0 canonical device anchors resolved",
+  "engineeringRequestId",
+  "requestId!==engineeringRequestId",
+  "engineeringOverlay.remove(o)",
+  "if(engineeringMode&&!roomMode)syncEngineeringView()",
 ]) {
   assert.ok(viewer.includes(required), "electronics spatial integration guard missing: "+required);
 }
