@@ -293,3 +293,10 @@ Step 4 executes the eight existing Floor 1 building-operations scenarios with ca
 
 Step 5 turns the existing `privacy_error_intake` scenario into three executable synthetic-case labs spanning IRS VITA/TCE workflow discipline, OHRP participant-centered consent/privacy handling, and cross-program intake privacy containment. The runtime uses existing Floor 1 reception/intake objects and rejects real-PII fixtures.
 
+### Step 6 assessment / evidence layer
+- `production/lab-runtime/equity-uprise-assessment-runtime.mjs`
+- `production/lab-runtime/assessment-policy-v1.json`
+- `production/lab-runtime/verify_assessment_runtime_v1.mjs`
+
+Step 6 provides one bounded Level 1 assessment layer for the executable lab families. It records action sequence, errors, blocked actions, hints, timing, safety violations, evidence metadata/hashes, AI-assistance declarations, and rubric-linked competency evidence. Automation is capped below human `Verified` authority and simulation cannot become `Applied` evidence merely through runtime completion.
+

@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 318,
+  "tracked_count": 321,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -325,7 +325,9 @@
       "docs/design/equity-uprise-building/production/generate_core_v2_plans.py",
       "docs/design/equity-uprise-building/production/generate_core_v2_production_packages.py",
       "docs/design/equity-uprise-building/production/interior-envelope-audit.json",
+      "docs/design/equity-uprise-building/production/lab-runtime/assessment-policy-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/cisa-itot-scenario-pack-v1.json",
+      "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-assessment-runtime.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-building-ops-runtime.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-electronics-sandbox.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-guided-scenarios.mjs",
@@ -334,6 +336,7 @@
       "docs/design/equity-uprise-building/production/lab-runtime/fema-building-ops-scenario-pack-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/lab-runtime-schema-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/public-service-scenario-pack-v1.json",
+      "docs/design/equity-uprise-building/production/lab-runtime/verify_assessment_runtime_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_cisa_itot_scenarios_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_electronics_sandbox_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_fema_building_ops_scenarios_v1.mjs",
