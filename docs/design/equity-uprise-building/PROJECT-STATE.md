@@ -1016,3 +1016,30 @@ Canonical Step 8 files:
 Boundary: Step 8 is presentation/interaction over SANDBOX state only. It creates no live building control, does not convert electronics design intent into as-built truth, does not expose real public-service PII, and does not award Verified / Applied / Mentor competency states.
 
 **CURRENT 1–8 LAB RUNTIME SEQUENCE: COMPLETE.**
+
+## Lab Runtime — STEP 9 DISTRIBUTED WHOLE-BUILDING PRACTICAL LABS ACTIVE
+
+The practical technical lab architecture is no longer B1-centric.
+
+Implemented in the first distributed pass:
+- floor-scoped electronics selectors for B1, F1–F6 and L7;
+- ten guided practical scenarios spanning B1, every above-grade floor, the roof, and two cross-floor backbone/uplink incidents;
+- scenario-specific target-selector overrides so a source catalog lab can operate on one floor without mutating the canonical 40-lab catalog;
+- direct binding to canonical competency rubric IDs;
+- viewer metadata for floor scope, preferred camera/floor focus and Engineering/X-Ray presentation;
+- automatic viewer focus + X-Ray activation when a distributed technical lab starts;
+- explicit generated-roof `L7-` electronics recognition in spatial binding;
+- deterministic verification that each distributed scenario starts, materializes a fault, stays within its declared floor scope, completes its canonical verification path and remains SANDBOX-only.
+
+Initial floor-native lab coverage:
+- B1 — rack/IDF power;
+- F1 — workstation/check-in link;
+- F2 — public-forum AV multicast;
+- F3 — voice VLAN;
+- F4 — media-production AV QoS;
+- F5 — research-workstation VLAN;
+- F6 — command camera/VMS;
+- L7 — roof BAS;
+- cross-floor — F4 uplink→B1 core and F6 fiber→B1 core.
+
+This is the distributed-lab foundation, not the final curriculum ceiling. Later scenario expansion should deepen each floor's native program workflows while preserving one shared runtime, one asset registry, and one canonical viewer.
