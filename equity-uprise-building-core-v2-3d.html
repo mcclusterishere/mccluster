@@ -266,7 +266,7 @@ async function ensureLabRuntime(){
  if(!labDatasets)labDatasets=await labModule.loadViewerLabDatasets('/equity-uprise-preview');
  if(!labSelect.options.length){
    const choices=[
-     ...(labDatasets.distributedPack.scenarios||[]).map(x=>[x.source_lab_id,'BUILDING LAB · '+x.title]),
+     ...(labDatasets.distributedPack.scenarios||[]).map(x=>[x.scenario_id,'BUILDING LAB · '+(x.home_floor||'CROSS-FLOOR')+' · '+x.title]),
      ...(labDatasets.cisaPack.scenarios||[]).map(x=>[x.source_lab_id,x.source_lab_id+' · '+x.title]),
      ...(labDatasets.opsPack.scenarios||[]).map(x=>[x.canonical_scenario_id,'OPS · '+x.title]),
      ...(labDatasets.publicServicePack.scenarios||[]).map(x=>[x.scenario_id,'PUBLIC SERVICE · '+x.title])
