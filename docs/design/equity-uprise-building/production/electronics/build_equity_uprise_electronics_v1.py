@@ -183,8 +183,27 @@ def default_pos(n,kind,i=0,count=1):
         return pos(n,45.0+(i%2)*.9,62.8+(i//2)*.55,1.2+0.65*(i%8))
     if kind=="electrical_panel": return pos(n,47.7+(i%2)*1.3,62.8,5.0)
     if kind=="wap": return anchored_pos(n,"ceiling",i,10.2,(24,24))
-    if kind=="camera": return anchored_pos(n,"security",i,8.8,(48,24))
-    if kind in {"reader","intercom"}: return anchored_pos(n,"security",i,4.2,(50,27))
+    if kind=="camera":
+        if 1<=n<=6:
+            x,y=((48.0,24.0),(48.0,50.0))[i%2]
+            return pos(n,x,y,8.8)
+        return anchored_pos(n,"security",i,8.8,(48,24))
+    if kind=="reader":
+        if 1<=n<=6:return pos(n,49.8,27.0,4.0)
+        return anchored_pos(n,"security",i,4.2,(50,27))
+    if kind=="intercom":
+        if 1<=n<=6:return pos(n,50.35,27.225,4.0)
+        return anchored_pos(n,"security",i,4.2,(50,27))
+    if kind=="fire_detector":
+        if 1<=n<=6:
+            x,y=((24,26),(38,26),(24,48),(38,48))[i%4]
+            return pos(n,x,y,10.56)
+        return anchored_pos(n,"ceiling",i,9.7,(38,26))
+    if kind=="fire_notification":
+        if 1<=n<=6:
+            x,y=((20,20),(48,50))[i%2]
+            return pos(n,x,y,6.6)
+        return anchored_pos(n,"fire",i,6.6,(38,26))
     if kind=="sensor": return anchored_pos(n,"ceiling",i,7.8,(36,39))
     if kind in {"workstation","phone","monitor"}:
         return anchored_pos(n,"work",i,3.15 if kind!="monitor" else 4.25,(36,40))
@@ -601,7 +620,7 @@ for n in range(0,8):
         strobe_count=2
         for i in range(det_count):
             aid=f"{lev}-FIRE-DET-{i+1:02d}"
-            add_asset(make_asset(aid,f"{lev} Addressable Fire Detector {i+1}","fire_detector",n,default_pos(n,"sensor",i),["FIRE-ALARM"],False,"floor_wide",security="restricted"))
+            add_asset(make_asset(aid,f"{lev} Addressable Fire Detector {i+1}","fire_detector",n,default_pos(n,"fire_detector",i),["FIRE-ALARM"],False,"floor_wide",security="restricted"))
             fire_slc.append((facp,aid))
         for i in range(strobe_count):
             aid=f"{lev}-FIRE-STROBE-{i+1:02d}"
