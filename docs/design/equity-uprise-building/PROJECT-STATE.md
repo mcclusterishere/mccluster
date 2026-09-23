@@ -125,6 +125,7 @@ The X-Ray control is now a true visible engineering view rather than a state-onl
 - Room Mode suppresses X-Ray markers, and leaving Room Mode restores the engineering view if it was previously active.
 - The HUD reports visible bound-device count, total bound devices, and unresolved-hidden devices. Zero resolved anchors is treated as an explicit X-Ray error state.
 - The full cable graph remains hidden; scenario-specific traces still render only between canonical rebound endpoints.
+- X-Ray lifecycle hardening keeps the engineering view active across lab visual clears/resets, rejects stale async activation work after rapid toggles, and detaches/disposes engineering markers before rebuilding them.
 
 ### Play / Engineering spatial separation — ACTIVE
 
