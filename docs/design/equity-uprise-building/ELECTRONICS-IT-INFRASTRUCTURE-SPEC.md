@@ -43,7 +43,7 @@ https://test.bicsi.org/education-certification/certification/cabling-installatio
 https://www.flukenetworks.com/expertise/learn-about/cable-testing
 https://www.flukenetworks.com/expertise/learn-about/otdr
 
-## Step 4A topology
+## Step 4B physical-installation topology
 
 ### B1 MDF / core
 The B1 telecom area becomes the main distribution frame and electronic core:
@@ -84,7 +84,23 @@ L7 electronics are served from the F6 IDF. The roof has outdoor-design-intent WA
 
 ## Cabling
 
-The generated connection graph models every connection with a medium/cable type and dependency semantics.
+The generated connection graph models every physical connection with a medium/cable type, explicit endpoint ports, deterministic route geometry, pathway classification, design-intent length and dependency semantics.
+
+Step 4B is the physical-installation reconciliation pass. It converts the earlier connection graph from “device A is connected to device B” into an inspectable installed plant:
+- B1/F1–F6 normal and emergency panelboards;
+- riser-to-panel feeder paths;
+- panel-to-receptacle/floor-box branch circuits;
+- receptacle-to-equipment power cords;
+- patch-panel-to-work-area/ceiling Cat6A permanent links;
+- explicit data-jack termination assets;
+- jack-to-endpoint patch cords with PoE where applicable;
+- OS2 fiber riser/backbone paths;
+- BAS field bus plus modeled Class 2 sensor power;
+- OSDP reader buses;
+- fire-alarm SLC/NAC segregation;
+- AV, speaker and local display cabling.
+
+The routing geometry reuses the locked Services/riser envelopes and floor support zones. It does not invent a second building-services backbone.
 
 ### Building backbone
 - OS2 single-mode fiber duplex circuits from B1 MDF to each floor access layer;
@@ -172,10 +188,18 @@ The generated lab catalog progresses through:
 
 ## Truth boundary
 
-Every Step 4A device is one of:
+Every Step 4B device/termination is one of:
 - **existing canonical asset** — already present in the building inventory/registry;
 - **design-intent planned asset** — populated for realistic digital-twin/training behavior but not claimed installed;
 - **logical object** — non-physical network/service configuration;
 - **transient client profile** — load/behavior model, not a permanent asset.
 
-Exact equipment models, rack elevations, port counts beyond deterministic design sizing, cable routing lengths, fire-alarm conductor gauges, breaker sizes, UPS runtime, AP final coordinates, IP subnets, retention periods and provider circuits remain subject to real design/commissioning inputs.
+The digital twin now carries deterministic modeled route lengths and port identities for training, but these remain coordination values rather than field-certified as-builts. Exact equipment SKUs, conductor gauges, breaker/feeder sizing, conduit fill, bend radius, firestopping, cable support spacing, grounding/bonding, rack elevations, RF validation, cable certification results, UPS runtime, final IP addressing, retention periods and provider circuits remain subject to licensed engineering / installer / commissioning inputs.
+
+### Physical-lab rule
+
+A learner must be able to follow the same chain a real technician would follow. For a typical wired endpoint the inspectable path is:
+
+`device → patch/power cord → jack or receptacle → horizontal/branch cable → patch panel or panelboard → access switch / electrical distribution → riser/backbone → B1 core/source`.
+
+For PoE equipment the electrical dependency is intentionally carried over the Ethernet path rather than represented as a fake local AC cable. For fire alarm and other life-safety systems, training remains read-only/simulated and the model preserves dedicated signaling circuits instead of treating field devices as general LAN endpoints.
