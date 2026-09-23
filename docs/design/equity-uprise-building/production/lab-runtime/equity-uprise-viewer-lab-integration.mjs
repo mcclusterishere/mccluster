@@ -42,8 +42,17 @@ function availabilityVisual(state) {
 }
 
 function classifyFamily(lab, datasets) {
-  const distributed = (datasets.distributedPack?.scenarios || []).find((scenario) => scenario.source_lab_id === lab);
-  if (distributed) return { family: "DISTRIBUTED_TECHNICAL", definition: distributed, canonical_id: lab };
+  const distributedScenarios = datasets.distributedPack?.scenarios || [];
+  const distributedById = distributedScenarios.find((scenario) => scenario.scenario_id === lab);
+  if (distributedById) return { family: "DISTRIBUTED_TECHNICAL", definition: distributedById, canonical_id: distributedById.scenario_id };
+
+  const distributedBySource = distributedScenarios.filter((scenario) => scenario.source_lab_id === lab);
+  if (distributedBySource.length === 1) {
+    return { family: "DISTRIBUTED_TECHNICAL", definition: distributedBySource[0], canonical_id: distributedBySource[0].scenario_id };
+  }
+  if (distributedBySource.length > 1) {
+    throw new LabRuntimeError("VIEWER_DISTRIBUTED_SCENARIO_AMBIGUOUS", "multiple building labs use source lab " + lab + "; use a distributed scenario_id");
+  }
 
   const guided = (datasets.cisaPack.scenarios || []).find((scenario) => scenario.source_lab_id === lab);
   if (guided) return { family: "CISA_ITOT", definition: guided, canonical_id: lab };
@@ -278,7 +287,9 @@ export class ViewerLabController {
       exercise = createGuidedScenarioFromPack({
         pack: guidedPack,
         labCatalog: this.datasets.labCatalog,
-        labId: this.lab,
+        ...(this.classified.family === "DISTRIBUTED_TECHNICAL"
+          ? { scenarioId: this.classified.definition.scenario_id }
+          : { labId: this.lab }),
         electronics: {
           registry: this.datasets.registry,
           connections: this.datasets.connections,

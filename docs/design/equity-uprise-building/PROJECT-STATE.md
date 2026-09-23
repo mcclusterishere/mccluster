@@ -1042,4 +1042,27 @@ Initial floor-native lab coverage:
 - L7 — roof BAS;
 - cross-floor — F4 uplink→B1 core and F6 fiber→B1 core.
 
-This is the distributed-lab foundation, not the final curriculum ceiling. Later scenario expansion should deepen each floor's native program workflows while preserving one shared runtime, one asset registry, and one canonical viewer.
+This distributed-lab foundation has now been deepened into Step 10 floor-native curriculum coverage.
+
+## Lab Runtime — STEP 10 FLOOR-NATIVE CURRICULUM DEPTH ACTIVE
+
+The canonical distributed pack now exposes **26 executable scenarios**:
+- **24 floor-native technical labs** — three on each of B1, F1, F2, F3, F4, F5, F6, and L7;
+- **2 cross-floor incidents** retained from Step 9.
+
+Scenario identity is now independent from source-lab identity: the viewer and runtime address distributed exercises by stable `scenario_id`, while `source_lab_id` remains provenance. This allows a canonical skill such as Wi-Fi AP recovery to be reused on more than one floor without silently selecting the wrong environment.
+
+Each floor now has a minimum three-lab technical progression aligned to its program purpose, and canonical federal-training IDs are attached where the existing federal binding authority already maps that source lab. No new course equivalence is inferred.
+
+Verification now requires:
+- 26 distributed scenarios total;
+- at least three home-floor labs on every level;
+- unique scenario IDs even when source labs repeat;
+- valid competency rubric IDs;
+- exact agreement with canonical federal-training bindings;
+- visible simulated fault materialization;
+- declared floor-scope containment;
+- full verification-path completion;
+- SANDBOX-only execution and critical-safety clearance.
+
+The next curriculum layer should add non-electronics program workflows per floor (media production deliverables, research/proof artifacts, fellowship/career exercises, civic-facilitation work, Halo decision-support drills) while reusing the same assessment/evidence spine.
