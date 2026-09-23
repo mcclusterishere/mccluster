@@ -663,6 +663,253 @@ for sf in range(0,7):
         add_conn(panel,target,"CAT6A-WAP-SPARE","data",["reserved Ethernet/PoE"],from_port=f"PORT-{port:02d}",to_port="SPARE-JACK",route=route,
                  metadata={"not_patched_to_switch":True,"future_wap_capacity":True})
 
+# Step 4B physical installation: turn the logical endpoint graph into a
+# lab-able structured-cabling and electrical distribution plant.
+#
+# Passive terminations are explicit assets. Physical routes use the same locked
+# service/riser coordinates as the Services authority. Exact conductor gauge,
+# breaker sizing, conduit fill and stamped construction routing remain deferred.
+def asset_type(aid):
+    return by_id.get(aid,{}).get("classification",{}).get("asset_type")
+
+def asset_level(aid):
+    n=by_id.get(aid,{}).get("location",{}).get("level_number")
+    return None if n is None else int(n)
+
+def route_length_ft(points):
+    total=0.0
+    for a,b in zip(points[:-1],points[1:]):
+        total+=math.sqrt(sum((float(b[i])-float(a[i]))**2 for i in range(3)))
+    return round(total,3)
+
+ROUTE=policy["physical_routing"]
+R=ROUTE["riser_centers_ft"]
+SUP=ROUTE["floor_support_points_ft"]
+H=ROUTE["pathway_heights_aff_ft"]
+
+def endpoint_outlet_position(aid):
+    p=positions.get(aid)
+    if not p:return None
+    t=asset_type(aid)
+    n=asset_level(aid)
+    if n is None:return None
+    # Desk/table loads use a floor-box style service point; wall/rack/display
+    # loads use a local receptacle close to the equipment.
+    if t in {"workstation","monitor"}:
+        return [p[0]+.22,p[1]+.18,ffe(n)+.12]
+    if t in {"network_display_decoder"}:
+        return [p[0]+.18,p[1],max(ffe(n)+1.3,p[2]-.55)]
+    if t in {"mfp"}:
+        return [p[0]-.25,p[1],ffe(n)+1.3]
+    if t in {"rack_ups","access_controller","bas_controller","av_controller","av_dsp"}:
+        return [p[0]-.28,p[1],ffe(n)+1.5]
+    return [p[0]+.18,p[1],ffe(n)+1.3]
+
+def endpoint_jack_position(aid):
+    p=positions.get(aid)
+    if not p:return None
+    t=asset_type(aid); n=asset_level(aid)
+    if n is None:return None
+    if t in {"wireless_ap","camera","av_camera","av_microphone"}:
+        return [p[0]-.18,p[1],min(ffe(n)+10.0,p[2])]
+    if t in {"intercom","access_controller","bas_controller"}:
+        return [p[0]-.18,p[1],max(ffe(n)+1.4,min(p[2],ffe(n)+4.2))]
+    return [p[0]-.22,p[1],ffe(n)+1.4]
+
+# Physical floor panelboards align with the Services Step 7 panel zone. L7 is
+# intentionally served from F6, matching the existing building-services authority.
+power_panels={}
+for n in range(0,7):
+    lev=lid(n)
+    normal=f"{lev}-ELEC-PANEL-N-01"
+    emergency=f"{lev}-ELEC-PANEL-E-01"
+    add_asset(make_asset(normal,f"{lev} Normal Power Panelboard","electrical_panel",n,default_pos(n,"electrical_panel",0),["ELEC-NORMAL"],False,"support_b",security="restricted"))
+    add_asset(make_asset(emergency,f"{lev} Emergency / Critical Power Panelboard","electrical_panel",n,default_pos(n,"electrical_panel",1),["ELEC-EMERGENCY"],False,"support_b",security="restricted"))
+    power_panels[n]={"normal":normal,"emergency":emergency}
+power_panels[7]=power_panels[6]
+
+# Feed every physical floor panel from the correct locked riser family.
+for n in range(0,7):
+    for mode,src in (("normal","ELEC-NORMAL"),("emergency","ELEC-EMERGENCY")):
+        add_conn(src,power_panels[n][mode],"208Y120V-FEEDER","power",["AC distribution"],
+                 metadata={"distribution_role":"floor_panel_feeder","served_level":lid(n),"engineering_required":True})
+
+# Split Cat6A permanent links at explicit work-area/ceiling jacks and split
+# plug-connected power at explicit receptacle/floor-box assets.
+JACK_TARGET_TYPES={
+    "wireless_ap","workstation","mfp","camera","access_controller","intercom",
+    "bas_controller","av_controller","av_dsp","av_camera","av_microphone",
+    "network_display_decoder","ip_phone"
+}
+initial_connections=list(connections)
+for conn in initial_connections:
+    target=conn["to_asset_id"]
+    t=asset_type(target)
+    n=asset_level(target)
+
+    if conn["cable_type"]=="CAT6A-HORIZONTAL" and t in JACK_TARGET_TYPES and n is not None and not target.endswith("::DATA-JACK"):
+        jp=endpoint_jack_position(target)
+        if jp:
+            jack=target+"::DATA-JACK"
+            add_asset(make_asset(jack,by_id[target]["label"]+" Data Jack","data_jack",n,jp,["DATA-STRUCTURED"],False,"work_area"))
+            old_to_port=conn.get("to_port") or "ETH0"
+            conn["to_asset_id"]=jack
+            conn["to_port"]="RJ45"
+            conn.setdefault("metadata",{})["termination_asset_id"]=jack
+            conn["metadata"]["work_area_endpoint_id"]=target
+            add_conn(jack,target,"CAT6A-PATCH","data",conn.get("protocols") or ["Ethernet/IP"],
+                     from_port="RJ45",to_port=old_to_port,power_transport=conn.get("power_transport"),
+                     metadata={"work_area_patch":True,"vlan":conn.get("metadata",{}).get("vlan")})
+
+    if conn["cable_type"]=="120VAC-BRANCH" and n is not None and target in by_id:
+        op=endpoint_outlet_position(target)
+        if op:
+            outlet=target+"::PWR-OUTLET"
+            add_asset(make_asset(outlet,by_id[target]["label"]+" Power Outlet","receptacle",n,op,["ELEC-NORMAL"],False,"work_area"))
+            original_source=conn["from_asset_id"]
+            mode="emergency" if original_source=="ELEC-EMERGENCY" else "normal"
+            panel_level=6 if n==7 else n
+            panel=power_panels[panel_level][mode]
+            conn["from_asset_id"]=panel
+            conn["to_asset_id"]=outlet
+            conn["from_port"]=None
+            conn["to_port"]="LINE"
+            conn.setdefault("metadata",{})["original_distribution_source"]=original_source
+            conn["metadata"]["load_asset_id"]=target
+            conn["metadata"]["branch_circuit_role"]="panel_to_receptacle"
+            add_conn(outlet,target,"NEMA5-15-POWER-CORD","power",["120VAC"],
+                     from_port="NEMA-5-15R",to_port="AC-IN",
+                     metadata={"plug_connected_load":True,"served_by_panel":panel})
+
+# The original add_conn calls generated connects_to relationships before the
+# passive terminations above existed. Rebuild only the Step 4A/B physical
+# connects_to edges from the final connection graph, then recompute upstream /
+# downstream arrays from the complete relationship set.
+relationships[:]=[x for x in relationships if not (x.get("type")=="connects_to" and str(x.get("relationship_id","")).startswith("REL::STEP4A::"))]
+new_relationships[:]=[x for x in new_relationships if x.get("type")!="connects_to"]
+for conn in connections:
+    add_rel("connects_to",conn["from_asset_id"],conn["to_asset_id"],"operational",
+            f"Physical/logical connection {conn['connection_id']} over {conn['cable_type']}")
+for a in assets:
+    a["systems"]["upstream_asset_ids"]=[]
+    a["systems"]["downstream_asset_ids"]=[]
+for rel in relationships:
+    src,dst=rel.get("from_asset_id"),rel.get("to_asset_id")
+    if src in by_id and dst in by_id:
+        by_id[src]["systems"]["downstream_asset_ids"]=uniq(by_id[src]["systems"].get("downstream_asset_ids",[])+[dst])
+        by_id[dst]["systems"]["upstream_asset_ids"]=uniq(by_id[dst]["systems"].get("upstream_asset_ids",[])+[src])
+
+def same_floor_route(start,end,n,height_aff,pathway):
+    if not start or not end:return []
+    z=ffe(n)+height_aff
+    # Route from support zone into the established north tray, then along the
+    # central ceiling spine before the final drop to the endpoint.
+    pts=[start,[SUP["tray_turn"][0],SUP["tray_turn"][1],z],[40.0,end[1],z],[end[0],end[1],z],end]
+    # Remove consecutive duplicate/near-duplicate points.
+    out=[]
+    for p in pts:
+        q=[round(float(v),4) for v in p]
+        if not out or math.sqrt(sum((q[k]-out[-1][k])**2 for k in range(3)))>.03:out.append(q)
+    return out
+
+def cross_floor_route(start,end,src_level,dst_level,riser_xy,height_aff):
+    if not start or not end:return []
+    sx,sy=riser_xy
+    z1=ffe(src_level)+height_aff
+    z2=ffe(dst_level)+height_aff
+    pts=[start,[sx,sy,z1],[sx,sy,z2],[40.0,61.1,z2],[40.0,end[1],z2],[end[0],end[1],z2],end]
+    out=[]
+    for p in pts:
+        q=[round(float(v),4) for v in p]
+        if not out or math.sqrt(sum((q[k]-out[-1][k])**2 for k in range(3)))>.03:out.append(q)
+    return out
+
+def feeder_route(conn,dst,n,mode):
+    xy=R["emergency_power"] if mode=="emergency" else R["normal_power"]
+    z0=ffe(0)+8.6
+    zn=ffe(n)+H["power_branch"]
+    return [[xy[0],xy[1],z0],[xy[0],xy[1],zn],[SUP["normal_panel"][0] if mode=="normal" else SUP["emergency_panel"][0],SUP["normal_panel"][1],zn],dst]
+
+def route_for_connection(conn):
+    src,dst=conn["from_asset_id"],conn["to_asset_id"]
+    a,b=positions.get(src),positions.get(dst)
+    sa,sb=asset_level(src),asset_level(dst)
+    ctype=conn["cable_type"]
+
+    if ctype=="208Y120V-FEEDER" and b is not None and sb is not None:
+        return feeder_route(conn,b,sb,"emergency" if src=="ELEC-EMERGENCY" else "normal")
+    if a is None or b is None:return conn.get("route") or []
+
+    if ctype in {"10G-DAC","IEC-POWER","NEMA5-15-POWER-CORD","CAT6A-PATCH","HDMI","DISPLAYPORT"}:
+        return [[round(float(v),4) for v in a],[round(float(v),4) for v in b]]
+
+    if ctype=="OS2-SM-DUPLEX":
+        if sa is not None and sb is not None and sa!=sb:
+            return cross_floor_route(a,b,sa,sb,R["data"],H["data_tray"])
+        return same_floor_route(a,b,sa or sb or 0,H["data_tray"],"data")
+
+    if ctype in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE"}:
+        n=sb if sb is not None else sa
+        return same_floor_route(a,b,n,H["data_tray"],"data")
+
+    if ctype in {"BACNET-MSTP-STP","OSDP-RS485-STP","24VDC-CLASS2"}:
+        if sa is not None and sb is not None and sa!=sb:
+            return cross_floor_route(a,b,sa,sb,R["controls"],H["controls_tray"])
+        return same_floor_route(a,b,sb if sb is not None else sa,H["controls_tray"],"controls")
+
+    if ctype in {"FIRE-ALARM-SLC","FIRE-ALARM-NAC"}:
+        if sa is not None and sb is not None and sa!=sb:
+            return cross_floor_route(a,b,sa,sb,R["fire"],H["fire_alarm"])
+        return same_floor_route(a,b,sb if sb is not None else sa,H["fire_alarm"],"fire_alarm")
+
+    if ctype=="120VAC-BRANCH":
+        if sa is not None and sb is not None and sa!=sb:
+            mode="emergency" if "PANEL-E-" in src else "normal"
+            riser=R["emergency_power"] if mode=="emergency" else R["normal_power"]
+            return cross_floor_route(a,b,sa,sb,riser,H["power_branch"])
+        return same_floor_route(a,b,sb if sb is not None else sa,H["power_branch"],"power")
+
+    if ctype=="SPEAKER-PAIR":
+        return same_floor_route(a,b,sb if sb is not None else sa,9.2,"av")
+
+    return [[round(float(v),4) for v in a],[round(float(v),4) for v in b]]
+
+def port_prefix(ctype):
+    if "CAT6A" in ctype:return "RJ45"
+    if "OS2" in ctype:return "LC"
+    if "DAC" in ctype:return "SFP+"
+    if "HDMI" in ctype:return "HDMI"
+    if "DISPLAYPORT" in ctype:return "DP"
+    if "POWER" in ctype or "VAC" in ctype:return "PWR"
+    if "BACNET" in ctype:return "MSTP"
+    if "OSDP" in ctype:return "OSDP"
+    if "FIRE-ALARM" in ctype:return "FIRE"
+    if "SPEAKER" in ctype:return "SPKR"
+    return "PORT"
+
+from_counts=defaultdict(int); to_counts=defaultdict(int)
+for conn in connections:
+    ctype=conn["cable_type"]
+    route=route_for_connection(conn)
+    conn["route"]=route
+    conn.setdefault("metadata",{})["route_length_ft"]=route_length_ft(route) if len(route)>=2 else 0.0
+    conn["metadata"]["pathway_class"]=(
+        "data_riser_and_ceiling_pathway" if ctype in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE","OS2-SM-DUPLEX"}
+        else "power_riser_and_branch_raceway" if ctype in {"208Y120V-FEEDER","120VAC-BRANCH"}
+        else "controls_pathway" if ctype in {"BACNET-MSTP-STP","OSDP-RS485-STP","24VDC-CLASS2"}
+        else "life_safety_pathway" if ctype.startswith("FIRE-ALARM")
+        else "local_equipment_patch"
+    )
+    conn["metadata"]["concealment"]="concealed_above_ceiling_or_in_raceway" if ctype not in {"CAT6A-PATCH","HDMI","DISPLAYPORT","IEC-POWER","NEMA5-15-POWER-CORD","10G-DAC"} else "local_visible_or_equipment_internal"
+    conn["metadata"]["lab_traceable"]=True
+    pref=port_prefix(ctype)
+    if not conn.get("from_port"):
+        from_counts[(conn["from_asset_id"],pref)]+=1
+        conn["from_port"]=f"{pref}-OUT-{from_counts[(conn['from_asset_id'],pref)]:02d}"
+    if not conn.get("to_port"):
+        to_counts[(conn["to_asset_id"],pref)]+=1
+        conn["to_port"]=f"{pref}-IN-{to_counts[(conn['to_asset_id'],pref)]:02d}"
+
 # wireless relationships: client pools to all APs on level
 for profile in transient_profiles:
     n=profile["level_number"]; lev=profile["level_id"]
