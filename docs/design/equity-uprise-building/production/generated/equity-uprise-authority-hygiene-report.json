@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
   "scope": "Equity Uprise active authority hygiene",
-  "checks_total": 449,
-  "checks_passed": 449,
+  "checks_total": 451,
+  "checks_passed": 451,
   "checks_failed": 0,
   "passed": true,
   "checks": [
@@ -1993,6 +1993,16 @@
     },
     {
       "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/lab-runtime/difficulty-progression-policy-v1.json :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
+      "passed": true,
+      "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/lab-runtime/distributed-building-scenario-pack-v1.json :: FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
+      "passed": true,
+      "detail": "FLOOR-01-LOBBY-INTAKE-360-SPEC.md"
+    },
+    {
+      "name": "no deprecated authority ref: docs/design/equity-uprise-building/production/lab-runtime/distributed-building-scenario-pack-v1.json :: BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md",
       "passed": true,
       "detail": "BASEMENT-B1-TECHNICAL-SERVICE-PROGRAM.md"
     },
