@@ -272,3 +272,13 @@ LIVE execution is explicitly forbidden. Step 2 is the electronics/asset-state bi
 
 Step 2 binds the session engine to canonical Step 4A assets and typed connections. Fault injection now changes independent SANDBOX asset/link/service state with deterministic propagation and exact-ID evidence. Reset restores baseline; LIVE control remains forbidden.
 
+## Lab Runtime — Step 2 electronics state binding
+
+Canonical runtime additions:
+- `production/lab-runtime/equity-uprise-electronics-sandbox.mjs`
+- `production/lab-runtime/verify_electronics_sandbox_v1.mjs`
+
+Step 2 resolves every current Step 4A lab target selector against canonical electronics authority and applies faults to deterministic in-memory asset/connection state. Representative causal propagation now covers network endpoints/uplinks, hosted services, BAS MS/TP, OSDP reader buses, IDF power domains, fiber uplinks, security-state faults and cross-system incidents.
+
+The source registry and generated electronics authority are never mutated by the runtime. The engine remains SANDBOX-only and rejects LIVE execution.
+

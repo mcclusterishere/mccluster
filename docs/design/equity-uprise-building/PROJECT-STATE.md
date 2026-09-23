@@ -784,3 +784,29 @@ Boundary: this is a training sandbox bound to the design-intent digital twin. It
 
 **NEXT:** Step 3 builds the first richer CISA-aligned IT/OT executable incident scenarios on this state engine.
 
+## Lab Runtime — STEP 2 ELECTRONICS STATE BINDING IMPLEMENTED
+
+Step 2 binds the Step 1 Lab Runtime to the canonical Step 4A electronics/IT fabric without creating a parallel asset model.
+
+Implemented:
+- canonical selector resolution across all 40 current labs;
+- in-memory SANDBOX state for assets and typed connections;
+- concrete fault injection across devices, logical services, VLANs and cable/link families;
+- deterministic propagation across representative network, BAS, access-control, power and fiber paths;
+- selector-based runtime inspection;
+- electronics state included in exported evidence;
+- reset-to-baseline across simulated state;
+- deterministic replay;
+- complete current fault-vocabulary coverage;
+- LIVE control remains hard-disabled.
+
+Canonical Step 2 files:
+- `production/lab-runtime/equity-uprise-electronics-sandbox.mjs`
+- `production/lab-runtime/verify_electronics_sandbox_v1.mjs`
+
+The Core V2 CI now verifies both the Step 1 lifecycle foundation and Step 2 electronics-state binding.
+
+Boundary: Step 2 does not yet add the richer task-specific CISA/IT-OT scenario logic, learner hints, scoring, or 3D viewer visualization planned for later steps.
+
+**NEXT:** Step 3 promotes the first serious CISA/IT-OT labs into richer executable scenarios on top of the Step 2 state engine.
+
