@@ -787,7 +787,7 @@
         }
       ],
       "strong_qualifying_evidence": [
-        "VITA or comparable supervised service",
+        "IRS-VITA-BASIC-2025 / IRS-VITA-ADVANCED-2025 plus supervised service evidence",
         "event/program operation",
         "service record"
       ],
@@ -827,7 +827,7 @@
         }
       ],
       "strong_qualifying_evidence": [
-        "FEMA or related training",
+        "FEMA-IS-100-C / FEMA-IS-200-C or other catalog-resolved FEMA training",
         "tabletop exercise",
         "full simulation"
       ],
@@ -1584,7 +1584,7 @@
         }
       ],
       "strong_qualifying_evidence": [
-        "CISA or comparable federal training",
+        "CISA-ICS-300 / CISA-ICS-401 or comparable catalog-resolved federal training",
         "security scenario",
         "secure workflow demonstration"
       ],
@@ -1625,7 +1625,7 @@
       ],
       "strong_qualifying_evidence": [
         "GIS or Halo project",
-        "NOAA/NASA or comparable training",
+        "NOAA-DIGITAL-COAST-ACADEMY / NASA-ARSET or comparable catalog-resolved training",
         "spatial analysis"
       ],
       "verified_minimum": "Independently produces a defensible spatial interpretation from authorized data.",
@@ -1664,7 +1664,7 @@
         }
       ],
       "strong_qualifying_evidence": [
-        "DOE/EPA or comparable work",
+        "DOE-FEMP-TRAINING-CATALOG / EPA-ENERGYSTAR-PM-TRAINING or comparable applied evidence",
         "infrastructure map",
         "systems brief"
       ],
