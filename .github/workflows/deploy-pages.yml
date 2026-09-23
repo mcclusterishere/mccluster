@@ -166,6 +166,7 @@ jobs:
           cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-difficulty-runtime.mjs equity-uprise-preview/lab-runtime/
           cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-viewer-lab-integration.mjs equity-uprise-preview/lab-runtime/
           cp docs/design/equity-uprise-building/production/lab-runtime/cisa-itot-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/distributed-building-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
           cp docs/design/equity-uprise-building/production/lab-runtime/fema-building-ops-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
           cp docs/design/equity-uprise-building/production/lab-runtime/public-service-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
           cp docs/design/equity-uprise-building/production/lab-runtime/difficulty-progression-policy-v1.json equity-uprise-preview/lab-runtime/
