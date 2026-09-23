@@ -21,7 +21,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 299,
+  "tracked_count": 302,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -87,6 +87,7 @@
       "docs/design/equity-uprise-building/EXTERIOR-FACADE-UPGRADE-SPEC.md",
       "docs/design/equity-uprise-building/FACADE-ARCHITECTURAL-FINISH-PASS-SPEC.md",
       "docs/design/equity-uprise-building/FACADE-BRANDING-AND-SIGNAGE-SPEC.md",
+      "docs/design/equity-uprise-building/FEDERAL-TRAINING-BUILDING-BINDINGS.md",
       "docs/design/equity-uprise-building/FLOOR-01-ARRIVAL-ORIENTATION-INTAKE-360-SPEC.md",
       "docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md",
       "docs/design/equity-uprise-building/FLOOR-01-LOBBY-INTAKE-360-SPEC.md",
@@ -318,6 +319,8 @@
       "docs/design/equity-uprise-building/production/interior-envelope-audit.json",
       "docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py",
       "docs/design/equity-uprise-building/production/services/floor-services-addenda.json",
+      "docs/design/equity-uprise-building/production/training/federal-training-building-bindings-v1.json",
+      "docs/design/equity-uprise-building/production/training/verify_federal_training_bindings.py",
       "docs/design/equity-uprise-building/production/underground-tunnel-network.json",
       "docs/design/equity-uprise-building/production/verify_core_v2_plan_semantics.py",
       "docs/design/equity-uprise-building/production/verify_equity_uprise_authority_hygiene.py",

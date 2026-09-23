@@ -94,6 +94,9 @@ jobs:
       - name: Verify Whole-Building Electronics Fabric Step 4A
         run: python docs/design/equity-uprise-building/production/electronics/verify_equity_uprise_electronics_v1.py
 
+      - name: Verify Federal Training Catalog and Building Bindings
+        run: python docs/design/equity-uprise-building/production/training/verify_federal_training_bindings.py
+
       - name: Verify B1-to-roof human walkability
         run: python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 
