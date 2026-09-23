@@ -37,8 +37,9 @@ if [[ "$mode" = "start" ]]; then
     log="$TMP/supabase-start-$attempt.log"
     if supabase start "$@" 2>&1 | tee "$log"; then
       break
+    else
+      status=$?
     fi
-    status=$?
     if ! grep -Eqi 'toomanyrequests|failed to pull docker image|error pulling image configuration' "$log"; then
       exit "$status"
     fi
