@@ -299,7 +299,7 @@
       "engineering_view": true,
       "target_selectors": [
         "level:F2:type:av_controller",
-        "level:F2:type:network_display_decoder"
+        "level:F2:type:av_camera"
       ],
       "mode": "SIMULATION",
       "execution_target": "SANDBOX",
@@ -344,12 +344,12 @@
         {
           "action_id": "f2-av-multicast-inspect-2",
           "action_type": "inspect",
-          "target_selector": "level:F2:type:network_display_decoder",
+          "target_selector": "level:F2:type:av_camera",
           "requires_action_ids": [
             "f2-av-multicast-inspect-1"
           ],
           "observation": {
-            "simulated_signal": "Inspect level:F2:type:network_display_decoder within F2 scope."
+            "simulated_signal": "Inspect level:F2:type:av_camera within F2 scope."
           },
           "live_control_allowed": false
         },
@@ -570,7 +570,7 @@
       "engineering_view": true,
       "target_selectors": [
         "level:F4:type:av_camera",
-        "level:F4:type:network_display_decoder"
+        "level:F4:type:av_controller"
       ],
       "mode": "SIMULATION",
       "execution_target": "SANDBOX",
@@ -615,12 +615,12 @@
         {
           "action_id": "f4-av-qos-inspect-2",
           "action_type": "inspect",
-          "target_selector": "level:F4:type:network_display_decoder",
+          "target_selector": "level:F4:type:av_controller",
           "requires_action_ids": [
             "f4-av-qos-inspect-1"
           ],
           "observation": {
-            "simulated_signal": "Inspect level:F4:type:network_display_decoder within F4 scope."
+            "simulated_signal": "Inspect level:F4:type:av_controller within F4 scope."
           },
           "live_control_allowed": false
         },
