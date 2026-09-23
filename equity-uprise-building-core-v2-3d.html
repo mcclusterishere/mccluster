@@ -265,9 +265,10 @@ function makeElectronicsReliable(root){
  makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.transparent=true;m.opacity=.10;m.depthWrite=false;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
 }
 function electronicsBindingWorld(binding){
- const anchor=binding.anchor_id?findCanonicalCenter(binding.anchor_id):null;
- const xy=binding.fallback_xy_ft||[36,36];
- const world=anchor?anchor.clone():floorWorld(binding.level,xy[0],xy[1],binding.aff_ft);
+ if(!binding?.anchor_id)return null;
+ const anchor=findCanonicalCenter(binding.anchor_id);
+ if(!anchor)return null;
+ const world=anchor.clone();
  world.y=ft((elev[binding.level]||0)+binding.aff_ft);
  const off=binding.offset_ft||[0,0];world.x+=ft(off[0]||0);world.z-=ft(off[1]||0);
  return world
@@ -322,7 +323,7 @@ function areaOverlay(area){
  mat.dispose()
 }
 function findCanonicalCenter(id){
- for(const root of [b1,f1,f2,f3,f4,f5,f6,f7,base].filter(Boolean)){let found=null;root.traverse(o=>{if(found||!o.isMesh)return;const n=o.name||'';if(n===id||n.startsWith(id+'::'))found=o});if(found){const box=new THREE.Box3().setFromObject(found),v=new THREE.Vector3();box.getCenter(v);return v}}
+ for(const root of [b1,f1,f2,f3,f4,f5,f6,f7,base].filter(Boolean)){let found=null;root.traverse(o=>{if(found||!o.isMesh)return;const n=o.name||'';if(n===id||n.startsWith(id+'::')||n.startsWith(id+'-I'))found=o});if(found){const box=new THREE.Box3().setFromObject(found),v=new THREE.Vector3();box.getCenter(v);return v}}
  return null
 }
 function spatialConnectionOverlay(connection){
