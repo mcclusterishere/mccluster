@@ -90,7 +90,7 @@ try {
     await (await fetch("equity-uprise-building-core-v2-3d.html", { cache: "no-cache" })).text());
   check("building viewer: Step 8 controls", [
     'id="services"', 'id="wire"', 'id="labs"', "deviceClockSolar",
-    "requestedLab=params.get('lab')", "LAB_MODULE_URL", "labController.execute", "labController.reset"
+    "requestedLab=params.get('lab')", "LAB_MODULE_URL", "labController.execute", "labController.reset", "await labVisualRootsReady"
   ].every((token) => viewerSource.includes(token)));
   check("building viewer: normal mode remains default",
     viewerSource.includes("requestedLab=params.get('lab')") && viewerSource.includes("labPanel.hidden"));
