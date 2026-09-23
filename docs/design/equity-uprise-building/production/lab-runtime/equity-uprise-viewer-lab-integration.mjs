@@ -118,7 +118,7 @@ function learnerExperienceView({ learner, runtime, classified, datasets }) {
       action_type: type,
       label: level === "EXPERT" ? id : (ticket.action_labels?.[id] || genericActionLabel(definition, datasets)),
       target_label: learnerFirst && target ? friendlyTarget(target, datasets) : null,
-      decision_choices: level === "FOUNDATION" ? clone(configuredChoices) : [],
+      decision_choices: learnerFirst ? clone(configuredChoices) : [],
       input_required: Boolean(definition?.expected_input),
       technical_target: learnerFirst ? null : (target || null),
     };
@@ -511,7 +511,7 @@ export class ViewerLabController {
       const target = action.target_selector || action.target;
       if (actionType !== "inspect" || !target) continue;
       if (target === canonicalId) return actionId;
-      if (this.classified.family === "CISA_ITOT" && this.exercise?.sandbox?.resolveSelector) {
+      if ((this.classified.family === "CISA_ITOT" || this.classified.family === "DISTRIBUTED_TECHNICAL") && this.exercise?.sandbox?.resolveSelector) {
         const resolved = this.exercise.sandbox.resolveSelector(target);
         if ((resolved.asset_ids || []).includes(canonicalId) || (resolved.connection_ids || []).includes(canonicalId)) return actionId;
       }
