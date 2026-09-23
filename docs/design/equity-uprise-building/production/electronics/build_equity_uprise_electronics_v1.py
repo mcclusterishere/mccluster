@@ -197,17 +197,37 @@ def default_pos(n,kind,i=0,count=1):
 
 def existing_position(a):
     loc=a.get("location",{})
+    n=loc.get("level_number")
+    if n is None:
+        lid_=loc.get("level_id")
+        if lid_=="B1": n=0
+        elif isinstance(lid_,str) and lid_.startswith(("F","L")):
+            try:n=int(lid_[1:])
+            except ValueError:n=None
+    n=0 if n is None else int(n)
     c=loc.get("center_ft")
     if c:
-        z=ffe(loc.get("level_number") or 0)+4.0
-        if len(c)>=3: z=ffe(loc.get("level_number") or 0)+float(c[2])
+        z=ffe(n)+4.0
+        if len(c)>=3: z=ffe(n)+float(c[2])
         return [float(c[0]),float(c[1]),z]
     b=loc.get("bounds_ft")
     if b and len(b)>=4:
-        return [0.5*(float(b[0])+float(b[2])),0.5*(float(b[1])+float(b[3])),ffe(loc.get("level_number") or 0)+4.0]
+        return [0.5*(float(b[0])+float(b[2])),0.5*(float(b[1])+float(b[3])),ffe(n)+4.0]
     aid=a["asset_id"]
+    # Reconcile registry assets back to their approved floor-inventory geometry.
+    obj=next((o for o in floor_objects.get(n,[]) if (o.get("id") or o.get("object_id"))==aid),None)
+    xy=placement_xy(obj) if obj else None
+    if xy:return [xy[0],xy[1],ffe(n)+4.2]
+    # Some older canonical display/terminal records carry only semantic placement
+    # rules. Bind them to another verified object in the same room/program group
+    # rather than inventing a whole-floor fallback coordinate.
+    label=(a.get("label","")+" "+a.get("classification",{}).get("asset_type","")).lower()
+    group="av" if any(k in label for k in ("display","monitor","dashboard","globe")) else ("work" if any(k in label for k in ("terminal","kiosk","console","workstation")) else None)
+    if group:
+        idx=max(0,sum(ord(ch) for ch in aid)%max(1,len(ANCHOR_IDS.get(n,{}).get(group,[]))))
+        xy=inventory_anchor(n,group,idx)
+        if xy:return [xy[0],xy[1],ffe(n)+4.2]
     if aid in trace_xy:
-        n=loc.get("level_number") or 0
         return [trace_xy[aid][0],trace_xy[aid][1],ffe(n)+4.0]
     return None
 
@@ -1225,4 +1245,12 @@ print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))
 print(" checks:",report["checks_passed"],"/",report["checks_total"])
-if not passed: raise SystemExit("Step 4B electronics physical-installation verification failed")
+if not passed:
+    print(" failed checks:")
+    for item in checks:
+        if not item["passed"]:print("  -",item["name"],"::",item.get("detail",""))
+    unrouted=[x for x in physical_connections if len(x.get("route") or [])<2]
+    if unrouted:
+        print(" unrouted examples:")
+        for x in unrouted[:40]:print("  -",x["connection_id"],x["cable_type"],x["from_asset_id"],"->",x["to_asset_id"])
+    raise SystemExit("Step 4B electronics physical-installation verification failed")
