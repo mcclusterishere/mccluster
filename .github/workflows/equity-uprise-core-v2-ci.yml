@@ -100,6 +100,9 @@ jobs:
       - name: Verify Lab Runtime Step 1 foundation
         run: node docs/design/equity-uprise-building/production/lab-runtime/verify_lab_runtime_v1.mjs
 
+      - name: Verify Lab Runtime Step 2 electronics binding
+        run: node docs/design/equity-uprise-building/production/lab-runtime/verify_electronics_sandbox_v1.mjs
+
       - name: Verify B1-to-roof human walkability
         run: python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 

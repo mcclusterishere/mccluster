@@ -83,7 +83,7 @@ export function adaptCatalogLab(lab) {
 }
 
 export class LabRuntimeSession {
-  constructor({ scenario, session_id, actor_id = "learner", execution_target = "SANDBOX" }) {
+  constructor({ scenario, session_id, actor_id = "learner", execution_target = "SANDBOX", sandbox = null }) {
     requireValue(scenario && typeof scenario === "object", "INVALID_SCENARIO", "scenario is required");
     requireString(session_id, "INVALID_SESSION_ID", "session_id");
     requireString(actor_id, "INVALID_ACTOR_ID", "actor_id");
@@ -95,6 +95,15 @@ export class LabRuntimeSession {
     this.session_id = session_id;
     this.actor_id = actor_id;
     this.execution_target = "SANDBOX";
+    this.sandbox = sandbox;
+    if (this.sandbox) {
+      requireValue(typeof this.sandbox.bindScenario === "function", "INVALID_SANDBOX", "sandbox.bindScenario() is required");
+      requireValue(typeof this.sandbox.injectFault === "function", "INVALID_SANDBOX", "sandbox.injectFault() is required");
+      requireValue(typeof this.sandbox.inspect === "function", "INVALID_SANDBOX", "sandbox.inspect() is required");
+      requireValue(typeof this.sandbox.reset === "function", "INVALID_SANDBOX", "sandbox.reset() is required");
+      requireValue(typeof this.sandbox.summary === "function", "INVALID_SANDBOX", "sandbox.summary() is required");
+      this.sandbox.bindScenario(this.scenario);
+    }
     this.phase = SESSION_STATES.CREATED;
     this.event_seq = 0;
     this.events = [];
@@ -140,7 +149,14 @@ export class LabRuntimeSession {
     });
     for (const fault of this.faults) {
       fault.active = true;
-      this.#record("FAULT_INJECTED", { fault_id: fault.fault_id, abstract_only: true });
+      const binding = this.sandbox
+        ? this.sandbox.injectFault(fault.fault_id, { target_selectors: this.scenario.target_selectors })
+        : null;
+      this.#record("FAULT_INJECTED", {
+        fault_id: fault.fault_id,
+        abstract_only: !this.sandbox,
+        binding,
+      });
     }
     return this.snapshot();
   }
@@ -148,7 +164,12 @@ export class LabRuntimeSession {
   inspect(target, detail = "") {
     this.#requireRunning();
     requireString(target, "INVALID_TARGET", "target");
-    return this.#record("INSPECTION_RECORDED", { target, detail: String(detail || "") });
+    const sandbox_observation = this.sandbox ? this.sandbox.inspect(target) : null;
+    return this.#record("INSPECTION_RECORDED", {
+      target,
+      detail: String(detail || ""),
+      sandbox_observation,
+    });
   }
 
   perform(action, { target = null, detail = "", live_control_requested = false } = {}) {
@@ -206,6 +227,7 @@ export class LabRuntimeSession {
       "INVALID_SESSION_TRANSITION",
       `cannot reset from ${this.phase}`
     );
+    const sandbox_reset = this.sandbox ? this.sandbox.reset() : null;
     for (const fault of this.faults) fault.active = false;
     for (const criterion of this.criteria) {
       criterion.satisfied = false;
@@ -215,6 +237,7 @@ export class LabRuntimeSession {
     this.#record("SESSION_RESET", {
       reset_contract: this.scenario.reset_contract,
       baseline_restored: true,
+      sandbox_reset,
     });
     return this.snapshot();
   }
@@ -232,6 +255,7 @@ export class LabRuntimeSession {
       faults: clone(this.faults),
       criteria: clone(this.criteria),
       evaluation: this.evaluate(),
+      sandbox_summary: this.sandbox ? this.sandbox.summary() : null,
       event_count: this.events.length,
     };
   }
@@ -239,6 +263,9 @@ export class LabRuntimeSession {
   exportEvidence() {
     return {
       ...this.snapshot(),
+      sandbox_state: this.sandbox && typeof this.sandbox.snapshot === "function"
+        ? this.sandbox.snapshot({ changed_only: true })
+        : null,
       events: clone(this.events),
     };
   }
@@ -248,11 +275,13 @@ export function createSessionFromCatalogLab(lab, {
   session_id = `SIM::${lab?.lab_id || "UNKNOWN"}::001`,
   actor_id = "learner",
   execution_target = "SANDBOX",
+  sandbox = null,
 } = {}) {
   return new LabRuntimeSession({
     scenario: adaptCatalogLab(lab),
     session_id,
     actor_id,
     execution_target,
+    sandbox,
   });
 }
