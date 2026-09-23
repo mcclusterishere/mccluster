@@ -1021,25 +1021,37 @@ Boundary: Step 8 is presentation/interaction over SANDBOX state only. It creates
 
 The practical technical lab architecture is no longer B1-centric.
 
-Implemented in the first distributed pass:
+Implemented in the distributed pass:
 - floor-scoped electronics selectors for B1, F1–F6 and L7;
-- ten guided practical scenarios spanning B1, every above-grade floor, the roof, and two cross-floor backbone/uplink incidents;
+- **eleven** guided practical scenarios spanning B1, every above-grade floor, the roof, two cross-floor backbone/uplink incidents, and a dedicated Floor 2 Wi-Fi outage;
 - scenario-specific target-selector overrides so a source catalog lab can operate on one floor without mutating the canonical 40-lab catalog;
 - direct binding to canonical competency rubric IDs;
-- viewer metadata for floor scope, preferred camera/floor focus and Engineering/X-Ray presentation;
-- automatic viewer focus + X-Ray activation when a distributed technical lab starts;
+- viewer metadata for floor scope and preferred camera/floor focus;
 - explicit generated-roof `L7-` electronics recognition in spatial binding;
 - deterministic verification that each distributed scenario starts, materializes a fault, stays within its declared floor scope, completes its canonical verification path and remains SANDBOX-only.
 
-Initial floor-native lab coverage:
-- B1 — rack/IDF power;
-- F1 — workstation/check-in link;
-- F2 — public-forum AV multicast;
-- F3 — voice VLAN;
-- F4 — media-production AV QoS;
-- F5 — research-workstation VLAN;
-- F6 — command camera/VMS;
-- L7 — roof BAS;
+### Learner-first diagnostic sandbox V1 — ACTIVE
+
+The canonical viewer now separates the **learner doorway** from the engineering/debug doorway:
+- Foundation and Technician sessions start from a plain-language support ticket and an observable user symptom rather than a lab ID or known fault;
+- the learner loop is **OBSERVE → HYPOTHESIZE → TEST → FIX → VERIFY**;
+- raw action IDs, target selectors, JSON action input and assessment internals live under an Instructor / technical details disclosure;
+- beginner sessions no longer force Engineering/X-Ray on startup;
+- only scenario-relevant, spatially bound learner markers are exposed while the full electronics topology remains hidden;
+- plain-language diagnosis choices dispatch into the same canonical deterministic runtime, so the presentation layer does not bypass fault logic, prerequisites, evidence or safety boundaries;
+- incorrect hypotheses remain valid learner actions and return feedback rather than exposing the answer;
+- distributed selector-to-canonical-ID picking now works across all floors, not only the prior CISA family;
+- the first PRIM3 reinforcement binding is `IT-LAB-017`, **The Wi-Fi on Floor 2 stopped working**; after successful completion the viewer surfaces **Got WiFi?** as a refresher, never as primary instruction or competency proof.
+
+Current learner-facing floor-native coverage:
+- B1 — “The network closet suddenly went dark”;
+- F1 — “The check-in computer has no internet”;
+- F2 — “The Wi-Fi on Floor 2 stopped working” plus public-forum AV multicast;
+- F3 — “The interview-room phone will not connect”;
+- F4 — media-production quality and floor-uplink failures;
+- F5 — research-workstation network mismatch;
+- F6 — command camera/video-system loss;
+- L7 — rooftop-controls telemetry loss;
 - cross-floor — F4 uplink→B1 core and F6 fiber→B1 core.
 
-This is the distributed-lab foundation, not the final curriculum ceiling. Later scenario expansion should deepen each floor's native program workflows while preserving one shared runtime, one asset registry, and one canonical viewer.
+This is the first usable layman diagnostic layer, not the final embodied simulation ceiling. Remaining learner-experience work is room-by-room camera/inspection coverage beyond Floor 1, richer synthetic people/report interactions, and visible physical consequences (for example lights, displays, connectivity and environmental behavior) driven by the existing sandbox state. One shared runtime, asset registry and canonical viewer remain authoritative.

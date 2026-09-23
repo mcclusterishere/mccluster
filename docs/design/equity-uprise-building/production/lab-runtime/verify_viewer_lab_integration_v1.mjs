@@ -20,6 +20,7 @@ const datasets = {
   opsPack: load("./fema-building-ops-scenario-pack-v1.json"),
   publicServicePack: load("./public-service-scenario-pack-v1.json"),
   difficultyPolicy: load("./difficulty-progression-policy-v1.json"),
+  learnerExperience: load("./learner-experience-v1.json"),
   rubrics: load("../../../equity-uprise-development/competency-rubrics.json"),
   federalBindings: load("../../../equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json"),
   labCatalog: load("../electronics/generated/equity-uprise-it-lab-catalog-v1.json"),
@@ -31,7 +32,7 @@ const datasets = {
   objectInventory: load("../floor-01/floor-01-object-inventory.json"),
 };
 
-assert.equal(VIEWER_LAB_INTEGRATION_VERSION, "1.0.0");
+assert.equal(VIEWER_LAB_INTEGRATION_VERSION, "1.1.0");
 assert.equal(VIEWER_LAB_EXECUTION_TARGET, "SANDBOX");
 
 const integrationText = text("./equity-uprise-viewer-lab-integration.mjs");
@@ -131,7 +132,33 @@ assert.equal(completed.assessment.critical_safety_clear, true);
 assert.match(completed.assessment.automated_evidence_signal, /evidence|insufficient|practicing/i);
 
 const distributedScenarios = datasets.distributedPack.scenarios || [];
-assert.equal(distributedScenarios.length, 10, "distributed practical-lab pack must expose the first 10 floor/cross-floor scenarios");
+const wifiScenario = distributedScenarios.find((scenario) => scenario.source_lab_id === "IT-LAB-017");
+assert.ok(wifiScenario, "distributed pack must include the Floor 2 Wi-Fi scenario");
+assert.equal(wifiScenario.viewer_focus, "2");
+assert.deepEqual(wifiScenario.floor_scope, ["F2"]);
+assert.ok((wifiScenario.actions || []).some((action) => action.action_id === "f2-wifi-diagnose"));
+
+const beginnerTicket = controller("IT-LAB-008", "FOUNDATION", 19500).start();
+assert.equal(beginnerTicket.learner_experience.learner_first, true);
+assert.equal(beginnerTicket.learner_experience.title, "The check-in computer has no internet");
+assert.equal(beginnerTicket.learner_experience.diagnostic_stage, "OBSERVE");
+assert.ok(beginnerTicket.learner_experience.available_actions.every((action) => !/IT-LAB|f1-workstation-link/i.test(action.label)),
+  "Foundation action labels must be human-readable instead of raw action IDs");
+const beginnerDiagnosis = beginnerTicket.learner_experience.available_actions.find((action) => action.action_id === "f1-workstation-link-diagnose");
+assert.ok(beginnerDiagnosis);
+assert.equal(beginnerDiagnosis.decision_choices.length, 3);
+assert.ok(beginnerDiagnosis.decision_choices.every((choice) => choice.label && choice.input),
+  "Foundation diagnosis must expose plain-language choices with runtime inputs");
+assert.equal(beginnerTicket.learner_experience.engineering_default, false,
+  "Foundation learner presentation must not force engineering X-Ray");
+
+const wifiTicket = controller("IT-LAB-017", "FOUNDATION", 19600).start();
+assert.equal(wifiTicket.learner_experience.title, "The Wi-Fi on Floor 2 stopped working");
+assert.equal(wifiTicket.learner_experience.reinforcement.title, "Got WiFi?");
+assert.match(wifiTicket.learner_experience.reinforcement.url, /album\.html\?album=prim3/);
+assert.ok(wifiTicket.visuals.assets.some((asset) => asset.asset_type === "wireless_ap"),
+  "Wi-Fi ticket must materialize a wireless access-point fault");
+assert.equal(distributedScenarios.length, 11, "distributed practical-lab pack must expose 11 floor/cross-floor scenarios including a beginner Wi-Fi ticket");
 assert.equal(new Set(distributedScenarios.map((scenario) => scenario.source_lab_id)).size, distributedScenarios.length,
   "distributed source labs must be unique in the viewer selector");
 const representedFloors = new Set(distributedScenarios.flatMap((scenario) => scenario.floor_scope || []));
@@ -282,10 +309,15 @@ assert.ok(viewer.includes("electronics.visible=false"), "Room/Play Mode must kee
 for (const required of [
   'id="xray"', "setEngineeringMode", "setEngineeringElectronics", "engineeringMeshIsCable",
   "electronics.traverse(o=>{if(o.isMesh)o.visible=false})",
-  "Placeholder electronics geometry is Engineering/X-Ray only",
+  "Play mode keeps the full electronics topology hidden. Learners see only symptom-relevant markers.",
   "view.visuals.assets.forEach(x=>styleCanonical(f1",
   "Gyroscope live · left/right = yaw · up/down = pitch",
   "roomSensorMode='motion-primary'",
+  "DIAGNOSTIC SANDBOX · TRAINING ONLY",
+  "OBSERVE",
+  "Instructor / technical details",
+  "learnerAssetOverlay",
+  "if(exp.learner_first&&engineeringMode)await setEngineeringMode(false)",
 ]) {
   assert.ok(viewer.includes(required), "Play/X-Ray spatial integration guard missing: " + required);
 }
@@ -333,6 +365,7 @@ for (const required of [
   "equity-uprise-electronics-spatial-bindings-v1.mjs",
   "equity-uprise-viewer-lab-integration.mjs",
   "difficulty-progression-policy-v1.json",
+  "learner-experience-v1.json",
   "competency-rubrics.json",
   "FEDERAL-TRAINING-BINDINGS.json",
   "distributed-building-scenario-pack-v1.json",

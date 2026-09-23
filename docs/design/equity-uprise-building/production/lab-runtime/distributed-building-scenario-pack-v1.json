@@ -281,6 +281,149 @@
       ]
     },
     {
+      "scenario_id": "EU-DIST-F2-WIFI-OFFLINE-V1",
+      "source_lab_id": "IT-LAB-017",
+      "title": "Floor 2 Wireless Access Point Offline",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-05",
+        "OPS-01",
+        "OPS-02",
+        "OPS-05"
+      ],
+      "viewer_focus": "2",
+      "floor_scope": [
+        "F2"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:F2:type:wireless_ap"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "People in the Floor 2 forum have lost Wi-Fi while the room's wired systems remain available. Inspect the local access point and its serving path, identify the simulated link/PoE failure, restore the sandbox connection, and verify wireless service returns.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-F2-WIFI-DIAGNOSE",
+          "description": "Inspect the local wireless path and diagnose the simulated outage.",
+          "required_action_ids": [
+            "f2-wifi-inspect-1",
+            "f2-wifi-inspect-2",
+            "f2-wifi-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F2-WIFI-RESTORE",
+          "description": "Restore the affected sandbox access-point path.",
+          "required_action_ids": [
+            "f2-wifi-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F2-WIFI-VALIDATE",
+          "description": "Validate wireless service after restoration.",
+          "required_action_ids": [
+            "f2-wifi-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "f2-wifi-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:F2:type:wireless_ap",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect the Floor 2 wireless access point and its current availability."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f2-wifi-inspect-2",
+          "action_type": "inspect",
+          "target_selector": "level:F2:type:wireless_ap",
+          "requires_action_ids": [
+            "f2-wifi-inspect-1"
+          ],
+          "observation": {
+            "simulated_signal": "Trace the access point's modeled network/PoE dependency rather than treating the symptom as a password problem."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f2-wifi-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:F2:type:wireless_ap",
+          "requires_action_ids": [
+            "f2-wifi-inspect-1",
+            "f2-wifi-inspect-2"
+          ],
+          "expected_input": {
+            "finding": "ap_link_down"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is ap_link_down."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f2-wifi-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:F2:type:wireless_ap",
+          "requires_action_ids": [
+            "f2-wifi-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "ap_link_down"
+          ],
+          "observation": {
+            "simulated_change": "ap_link_down cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f2-wifi-validate",
+          "action_type": "validate",
+          "target_selector": "level:F2:type:wireless_ap",
+          "requires_action_ids": [
+            "f2-wifi-restore"
+          ],
+          "requires_faults_absent": [
+            "ap_link_down"
+          ],
+          "observation": {
+            "validation": "The Floor 2 wireless access point returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "f2-wifi-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "f2-wifi-inspect-2",
+          "input": {}
+        },
+        {
+          "action_id": "f2-wifi-diagnose",
+          "input": {
+            "finding": "ap_link_down"
+          }
+        },
+        {
+          "action_id": "f2-wifi-restore",
+          "input": {}
+        },
+        {
+          "action_id": "f2-wifi-validate",
+          "input": {}
+        }
+      ]
+    },
+    {
       "scenario_id": "EU-DIST-F2-AV-MULTICAST-V1",
       "source_lab_id": "IT-LAB-030",
       "title": "Floor 2 Public Forum AV Multicast Flood",
