@@ -6,7 +6,7 @@
 <script type="module">
 import * as THREE from'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';import{GLTFLoader}from'three/addons/loaders/GLTFLoader.js';import{RoomEnvironment}from'three/addons/environments/RoomEnvironment.js';
 const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status'),solarStatus=document.getElementById('solarStatus'),serviceStatus=document.getElementById('serviceStatus');const scene=new THREE.Scene();scene.background=new THREE.Color(0xb9c6cf);scene.fog=new THREE.Fog(0xb9c6cf,ft(120),ft(260));
-const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;app.appendChild(ren.domElement);const pmrem=new THREE.PMREMGenerator(ren);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);
+const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;app.appendChild(ren.domElement);const pmrem=new THREE.PMREMGenerator(ren);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);let renderDirty=true;const invalidate=()=>{renderDirty=true};ctl.addEventListener('change',invalidate);
 const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;const sunTarget=new THREE.Object3D();sunTarget.position.set(ft(36),ft(42),ft(-36));scene.add(sunTarget);dl.target=sunTarget;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
 const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,loaded=0,solarMode='auto',servicesOn=false,currentFocus='stack';
 const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
@@ -66,6 +66,7 @@ function syncServicesVisibility(){
    setArchitectureGhost(false);
    serviceStatus.textContent='Services layer · hidden';
  }
+ invalidate();
 }
 let stackFrameCache=null;const frameObjectCache=new WeakMap();
 function frameMetrics(root){
@@ -212,6 +213,7 @@ function applySolarEnvironment(forceMode=solarMode){
   const label=forceMode==='auto'?'Auto':forceMode==='day'?'Day override':'Night override';
   const phase=altDeg>6?'daylight':altDeg>-6?'twilight':'night';
   solarStatus.textContent=`Solar environment · ${label} · ${now.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})} · ${phase} · sun ${altDeg.toFixed(0)}°`;
+  invalidate();
 }
 applySolarEnvironment();
 setInterval(()=>{if(solarMode==='auto')applySolarEnvironment('auto')},60000);
@@ -246,6 +248,7 @@ function clearLabVisuals(){
  labStyledMeshes.forEach((s,o)=>{o.material=s.material;o.visible=s.visible});labStyledMeshes.clear();
  while(labOverlay.children.length){const o=labOverlay.children.pop();o.geometry?.dispose?.();const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>m.dispose?.())}
  if(electronics)electronics.visible=false;
+ invalidate();
 }
 function labColor(state){return state==='unavailable'?0xff2d2d:state==='faulted'?0xff6a2d:state==='degraded'?0xffb42d:state==='at_risk'?0xd85cff:0x5fd2ff}
 function styleCanonical(root,id,state){
@@ -284,7 +287,7 @@ async function applyLabView(view){
  if((view.visuals.assets.length||view.visuals.connections.length)){const e=await ensureElectronicsLayer();e.visible=true;view.visuals.assets.forEach(x=>styleCanonical(e,x.canonical_id,x.visual_state));view.visuals.connections.forEach(x=>styleCanonical(e,x.connection_id,x.visual_state))}
  view.visuals.objects.forEach(x=>styleCanonical(f1,x.canonical_id,x.visual_state)||styleCanonical(base,x.canonical_id,x.visual_state));
  view.visuals.areas.forEach(x=>{if(!styleCanonical(f1,x.canonical_id,x.visual_state)&&!styleCanonical(base,x.canonical_id,x.visual_state))areaOverlay(x)});
- view.visuals.occupants.forEach(occupantOverlay);renderLabHud(view);
+ view.visuals.occupants.forEach(occupantOverlay);renderLabHud(view);invalidate();
 }
 function parseLabInput(){const raw=labInput.value.trim();if(!raw)return{};return JSON.parse(raw)}
 async function runLabAction(id){
@@ -309,6 +312,6 @@ document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>focus(b.dataset.f
 document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>setView(b.dataset.v));
 document.getElementById('services').onclick=e=>{servicesOn=!servicesOn;syncServicesVisibility();e.target.textContent=servicesOn?'Services: Exposed':'Services: Off';e.target.classList.toggle('active',servicesOn)};
 document.getElementById('sunmode').onclick=e=>{solarMode=solarMode==='auto'?'day':solarMode==='day'?'night':'auto';applySolarEnvironment(solarMode);e.target.textContent=solarMode==='auto'?'Sun: Auto':solarMode==='day'?'Sun: Day':'Sun: Night'};
-document.getElementById('wire').onclick=e=>{wire=!wire;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}});e.target.textContent=wire?'Solid':'Wireframe'};
-addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});ren.setAnimationLoop(()=>{ctl.update();ren.render(scene,cam)});
+document.getElementById('wire').onclick=e=>{wire=!wire;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}});e.target.textContent=wire?'Solid':'Wireframe';invalidate()};
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight);invalidate()});ren.setAnimationLoop(()=>{const controlsChanged=ctl.update();if(controlsChanged||renderDirty){renderDirty=false;ren.render(scene,cam)}});
 </script></body></html>
