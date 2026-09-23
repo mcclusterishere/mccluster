@@ -94,7 +94,9 @@ try {
   ].every((token) => viewerSource.includes(token)));
   check("building viewer: Room Mode controls", [
     'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',
-    "DeviceOrientationEvent.requestPermission", "deviceorientation", "approachRoomObject", "tweenRoomCamera",
+    "DeviceOrientationEvent.requestPermission", "DeviceMotionEvent.requestPermission", "deviceorientation", "devicemotion",
+    "approachRoomObject", "tweenRoomCamera", "selectRoomAt", "projectedRoomTarget",
+    "enhanceFloor1Interior", "buildRoomLightRig",
     "services.visible=servicesOn&&!roomMode", "e.visible=!roomMode", "requestedRoom=params.get('room')==='1'"
   ].every((token) => viewerSource.includes(token)));
   check("building viewer: Room Mode stays human-scale",
