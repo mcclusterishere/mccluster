@@ -124,6 +124,42 @@ for (const lab of labs) {
   assert.equal(session.phase, SESSION_STATES.RUNNING);
 }
 
+function deterministicSnapshot(labId) {
+  const lab = labs.find((entry) => entry.lab_id === labId);
+  assert.ok(lab, labId + " must exist");
+  const { sandbox, session } = createElectronicsBoundSessionFromCatalogLab(
+    lab,
+    { registry, connections, manifest },
+    { session_id: "DETERMINISM::" + labId, actor_id: "ci-verifier" }
+  );
+  session.start();
+  return JSON.stringify(sandbox.snapshot());
+}
+
+for (const labId of ["IT-LAB-017", "IT-LAB-027", "IT-LAB-029", "IT-LAB-034", "IT-LAB-039"]) {
+  assert.equal(
+    deterministicSnapshot(labId),
+    deterministicSnapshot(labId),
+    labId + " must produce a deterministic electronics-state snapshot"
+  );
+}
+
+{
+  const lab = labs.find((entry) => entry.lab_id === "IT-LAB-017");
+  const { session } = createElectronicsBoundSessionFromCatalogLab(
+    lab,
+    { registry, connections, manifest },
+    { session_id: "INSPECT::IT-LAB-017", actor_id: "ci-verifier" }
+  );
+  session.start();
+  const event = session.inspect("wireless_ap", "verify state-backed inspection");
+  assert.ok(event.sandbox_observation);
+  assert.equal(event.sandbox_observation.resolved, true);
+  assert.ok(event.sandbox_observation.asset_states.some(
+    (state) => state.asset_type === "wireless_ap" && state.availability === "unavailable"
+  ));
+}
+
 // Representative physical/logical propagation checks.
 
 {
@@ -304,5 +340,7 @@ console.log(JSON.stringify({
     "it_ot_security_posture"
   ],
   live_control_allowed: false,
-  execution_target: "SANDBOX"
+  execution_target: "SANDBOX",
+  deterministic_replay: true,
+  state_backed_inspection: true
 }, null, 2));
