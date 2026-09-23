@@ -175,6 +175,20 @@ for (const required of [
 assert.ok(viewer.includes("services.visible=servicesOn&&!roomMode"), "Room Mode must hide raw building-services overlay");
 assert.ok(viewer.includes("e.visible=!roomMode"), "Room Mode must hide raw electronics topology overlay");
 for (const required of [
+  'id="xray"', "setEngineeringMode", "setEngineeringElectronics", "engineeringMeshIsCable",
+  "electronics.traverse(o=>{if(o.isMesh)o.visible=false})",
+  "Placeholder electronics geometry is Engineering/X-Ray only",
+  "view.visuals.assets.forEach(x=>styleCanonical(f1",
+  "Gyroscope live · left/right = yaw · up/down = pitch",
+  "roomSensorMode='motion-primary'",
+]) {
+  assert.ok(viewer.includes(required), "Play/X-Ray spatial integration guard missing: " + required);
+}
+assert.ok(viewer.includes("if(roomMotionEvents>0||performance.now()-roomMotionEnabledAt<700)return"),
+  "rotation-rate gyro must take priority over absolute orientation on iPad");
+assert.equal(viewer.includes("if(roomSensorMode==='orientation')return"), false,
+  "absolute orientation must not suppress motion-rate gyro events");
+for (const required of [
   "DeviceMotionEvent.requestPermission()", "DeviceOrientationEvent.requestPermission()",
   "window.addEventListener('devicemotion',onRoomMotion,true)",
   "roomSensorMode='motion-fallback'", "0 sensor events",
