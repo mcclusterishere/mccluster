@@ -383,3 +383,41 @@ Declared `substantial_generation` or `automated_workflow` AI assistance triggers
 
 **Next:** Step 7 introduces difficulty-level behavior and policy across Foundation, Technician, Admin, Advanced, and Expert labs.
 
+## Step 7 — Difficulty Progression
+
+Step 7 adds a deterministic presentation/qualification layer above the Step 6 assessed exercise without changing canonical scenario logic.
+
+Canonical Step 7 files:
+- `production/lab-runtime/difficulty-progression-policy-v1.json`
+- `production/lab-runtime/equity-uprise-difficulty-runtime.mjs`
+- `production/lab-runtime/verify_difficulty_progression_v1.mjs`
+
+The five ordered difficulty levels are:
+
+1. **FOUNDATION** — obvious symptoms, full objective/action/target/prerequisite visibility, named faults, and the largest hint budget.
+2. **TECHNICIAN** — reduced procedure guidance, target visibility retained, fault identity hidden behind a count, supported hints only.
+3. **ADMIN** — system-level response with targets hidden from the learner-facing action view, one learner artifact required, one supported hint available.
+4. **ADVANCED** — symptom-led work with fault identity hidden, action IDs only, one learner artifact required, minimal guidance.
+5. **EXPERT** — cascading multi-system work with incomplete information, hidden objectives/faults, action IDs only, no hints, two learner artifacts, and a minimum of two initial faults.
+
+### Invariants
+
+Difficulty does not alter:
+- canonical fault truth;
+- canonical action correctness;
+- safety controls;
+- success criteria;
+- Step 6 competency rubrics;
+- the SANDBOX-only execution boundary;
+- the prohibition on automated `Verified`, `Applied`, or `Mentor` awards.
+
+The layer changes learner-facing disclosure, hint availability, evidence expectation, and scenario-complexity qualification only.
+
+### Qualification
+
+A scenario can complete successfully without necessarily qualifying for the requested difficulty tier. Example: a perfect one-fault run cannot qualify as `EXPERT`; Expert requires a genuine multi-fault scenario plus two learner artifacts and zero hint availability.
+
+Step 7 is therefore a progression contract, not a replacement scoring system. Step 6 remains the canonical evidence/assessment layer.
+
+**Next:** Step 8 integrates executable lab state, assessment, and difficulty progression into the 3D viewer so failed equipment, affected areas, paths, service state, and learner tasks are visible in the digital twin.
+

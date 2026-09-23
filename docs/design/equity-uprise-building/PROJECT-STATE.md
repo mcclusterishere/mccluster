@@ -902,3 +902,32 @@ The verifier covers:
 
 **NEXT:** Step 7 adds difficulty-level policy/behavior across Foundation → Technician → Admin → Advanced → Expert.
 
+## Lab Runtime — STEP 7 DIFFICULTY PROGRESSION IMPLEMENTED
+
+Step 7 adds the five-level progression layer over Step 6 assessed exercises:
+
+- FOUNDATION
+- TECHNICIAN
+- ADMIN
+- ADVANCED
+- EXPERT
+
+Implemented:
+- progressively reduced learner-facing action/objective/fault disclosure;
+- per-tier hint budgets and allowed hint levels;
+- per-tier learner artifact expectations;
+- deterministic presentation contracts;
+- explicit difficulty qualification separate from exercise completion;
+- Expert multi-fault complexity gate;
+- preservation of Step 6 evidence, safety, provenance, and human-review boundaries;
+- verification across Step 3 CISA/IT-OT, Step 4 building operations, and Step 5 public-service runtime families.
+
+Canonical Step 7 files:
+- `production/lab-runtime/difficulty-progression-policy-v1.json`
+- `production/lab-runtime/equity-uprise-difficulty-runtime.mjs`
+- `production/lab-runtime/verify_difficulty_progression_v1.mjs`
+
+Boundary: Step 7 does not modify canonical scenario truth or convert difficulty qualification into a human `Verified` competency award.
+
+**NEXT:** Step 8 integrates executable lab state, assessment, and difficulty into the 3D viewer.
+

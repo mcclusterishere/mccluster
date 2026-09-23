@@ -300,3 +300,10 @@ Step 5 turns the existing `privacy_error_intake` scenario into three executable 
 
 Step 6 provides one bounded Level 1 assessment layer for the executable lab families. It records action sequence, errors, blocked actions, hints, timing, safety violations, evidence metadata/hashes, AI-assistance declarations, and rubric-linked competency evidence. Automation is capped below human `Verified` authority and simulation cannot become `Applied` evidence merely through runtime completion.
 
+### Step 7 difficulty progression
+- `production/lab-runtime/difficulty-progression-policy-v1.json`
+- `production/lab-runtime/equity-uprise-difficulty-runtime.mjs`
+- `production/lab-runtime/verify_difficulty_progression_v1.mjs`
+
+Step 7 adds Foundation → Technician → Admin → Advanced → Expert progression above the Step 6 assessment layer. Guidance, fault disclosure, hints, artifact expectations and scenario-complexity qualification become progressively stricter while canonical scenario logic and competency rubrics remain unchanged.
+
