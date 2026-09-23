@@ -1017,17 +1017,43 @@ def color_for_type(t):
     for k,c in device_colors.items():
         if k in t:return c
     return device_colors["default"]
+def physical_mesh_for_asset(a):
+    p=positions.get(a["asset_id"])
+    if not p:return None
+    t=a["classification"]["asset_type"]
+    color=color_for_type(t)
+    if t in {"wireless_ap","fire_detector","environment_sensor"}:
+        radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
+        height=.14 if t=="wireless_ap" else .18
+        m=trimesh.creation.cylinder(radius=radius,height=height,sections=18)
+    elif t in {"camera","av_camera"}:
+        m=trimesh.creation.cylinder(radius=.24,height=.34,sections=16)
+    elif t=="speaker":
+        m=trimesh.creation.cylinder(radius=.32,height=.28,sections=16)
+    else:
+        size=[.8,.8,.5]
+        if t in {"rack","rack_ups"}: size=[2.0,2.2,6.2]
+        elif t in {"access_switch","collapsed_core_switch","firewall","edge_router","carrier_cpe","virtualization_host","nas_storage","backup_appliance","vms_nvr","patch_panel","fiber_panel","pdu","av_controller","av_dsp"}: size=[1.5,.8,.45]
+        elif t=="workstation": size=[.75,1.2,1.7]
+        elif t=="monitor": size=[1.8,.20,1.15]
+        elif t=="ip_phone": size=[.72,.48,.22]
+        elif t=="mfp": size=[1.55,1.45,2.9]
+        elif t in {"access_reader","intercom","data_jack","receptacle","wap_spare_jack"}: size=[.32,.18,.55 if t=="intercom" else .32]
+        elif t=="electrical_panel": size=[1.35,.36,3.8]
+        elif t=="network_display_decoder": size=[.55,.28,.18]
+        elif t=="av_microphone": size=[.22,.22,.55]
+        elif t in {"fire_notification"}: size=[.42,.18,.48]
+        elif t in {"access_controller","bas_controller","fire_alarm_control_panel","fire_alarm_read_only_gateway"}: size=[1.25,.42,2.4]
+        m=trimesh.creation.box(extents=size)
+    m.apply_translation(p)
+    m.visual.face_colors=color
+    m.metadata={"asset_id":a["asset_id"],"asset_type":t,"installation_status":"step4b_physical_design_intent"}
+    return m
+
 for a in new_assets:
     if a["classification"]["registry_role"]=="capability_semantic": continue
-    p=positions.get(a["asset_id"])
-    if not p: continue
-    t=a["classification"]["asset_type"]
-    size=[0.8,0.8,0.5]
-    if t in {"rack","access_switch","collapsed_core_switch","firewall","virtualization_host","nas_storage","backup_appliance","vms_nvr","patch_panel","fiber_panel","pdu","rack_ups"}: size=[1.5,0.8,0.5]
-    if t=="wireless_ap": size=[1.0,1.0,0.15]
-    mesh=trimesh.creation.box(extents=size)
-    mesh.apply_translation(p)
-    mesh.visual.face_colors=color_for_type(t)
+    mesh=physical_mesh_for_asset(a)
+    if mesh is None: continue
     scene.add_geometry(mesh,node_name=a["asset_id"],geom_name=a["asset_id"])
 
 cable_colors={
@@ -1035,7 +1061,8 @@ cable_colors={
  "10G-DAC":[120,120,120,200],"BACNET-MSTP-STP":[40,220,80,180],"OSDP-RS485-STP":[255,170,40,180],
  "FIRE-ALARM-SLC":[255,40,40,210],"FIRE-ALARM-NAC":[255,80,40,210],"120VAC-BRANCH":[255,210,50,150],
  "SPEAKER-PAIR":[80,220,220,180],"HDMI":[80,80,80,180],"DISPLAYPORT":[80,80,80,180],"IEC-POWER":[255,210,50,120],
- "CAT6A-PATCH":[40,120,255,100]
+ "CAT6A-PATCH":[40,120,255,100],"24VDC-CLASS2":[255,145,40,170],
+ "208Y120V-FEEDER":[255,220,60,190],"NEMA5-15-POWER-CORD":[255,210,50,110]
 }
 def cyl_between(a,b,radius,color):
     # Quantize the design-intent cable primitive so identical authority inputs
@@ -1075,7 +1102,8 @@ for c in connections:
         if a and b: route=[a,b]
     if len(route)<2: continue
     for i in range(len(route)-1):
-        m=cyl_between(route[i],route[i+1],0.035 if "OS2" not in ctype else 0.045,cable_colors[ctype])
+        radius=.055 if ctype=="208Y120V-FEEDER" else (.045 if "OS2" in ctype else (.025 if ctype in {"CAT6A-PATCH","NEMA5-15-POWER-CORD","DISPLAYPORT","HDMI"} else .035))
+        m=cyl_between(route[i],route[i+1],radius,cable_colors[ctype])
         if m is not None: scene.add_geometry(m,node_name=f"{c['connection_id']}::{i}")
 
 OUT.mkdir(parents=True,exist_ok=True)
