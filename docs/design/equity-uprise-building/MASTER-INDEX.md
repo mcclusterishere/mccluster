@@ -324,3 +324,11 @@ Step 8 completes the original Lab Runtime sequence by adapting canonical runtime
 - `production/lab-runtime/verify_viewer_lab_integration_v1.mjs`
 
 Step 9 adds floor-scoped asset/cable selectors, executable labs on B1 and every occupied level through the roof, and cross-floor incidents that traverse upper-floor access/backbone infrastructure toward B1. Technical labs carry viewer focus metadata so the canonical viewer opens the relevant floor or stack and enables Engineering/X-Ray before fault presentation.
+
+### Step 10 floor-native curriculum depth
+- `production/lab-runtime/distributed-building-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-guided-scenarios.mjs`
+- `production/lab-runtime/equity-uprise-viewer-lab-integration.mjs`
+- `production/lab-runtime/verify_viewer_lab_integration_v1.mjs`
+
+Step 10 promotes distributed labs from one-per-floor proof to a 24-lab floor-native curriculum plus cross-floor incidents. Distributed scenarios are keyed by stable scenario IDs so one canonical source skill can safely be reused on multiple floors; canonical federal-training bindings are inherited only where they already exist.
