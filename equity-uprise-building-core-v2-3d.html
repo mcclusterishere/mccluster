@@ -3,13 +3,13 @@
 <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101214;color:#fff;font-family:Inter,system-ui,sans-serif}#app{position:fixed;inset:0}.hud{position:fixed;z-index:5;left:12px;top:12px;max-width:min(660px,calc(100vw - 24px));background:#0b0d10df;border:1px solid #444;border-radius:14px;padding:12px}.hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#ccc;margin:0 0 8px}.c{display:flex;gap:5px;flex-wrap:wrap}button{border:1px solid #555;border-radius:999px;background:#232629;color:#fff;padding:6px 9px;font:700 10px system-ui}button.active{background:#851a1d}.solar{margin-top:8px;font-size:10px;color:#d6dde4}.s{position:fixed;right:12px;bottom:12px;background:#0b0d10df;border:1px solid #444;border-radius:10px;padding:8px 10px;font-size:10px}.labpanel{position:fixed;z-index:6;right:12px;top:12px;width:min(390px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;background:#080a0def;border:1px solid #555;border-radius:14px;padding:12px;box-sizing:border-box}.labpanel[hidden]{display:none}.labpanel h2{font-size:13px;margin:0 0 8px}.labgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.labpanel select,.labpanel input{width:100%;box-sizing:border-box;background:#171a1d;color:#fff;border:1px solid #555;border-radius:8px;padding:6px;font:11px system-ui}.labrow{margin-top:8px;padding-top:8px;border-top:1px solid #333;font-size:10px;color:#d6dde4}.labrow strong{color:#fff}.labtasks{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.labtasks button{border-radius:8px;text-align:left}.labmsg{white-space:pre-wrap;word-break:break-word;color:#bfc8d0}.labwarn{color:#ffcc80}.labok{color:#9fe0b5}.ticketcard{margin-top:9px;padding:11px;border:1px solid #3d4650;border-radius:12px;background:#11161be8}.ticketeyebrow{font:800 9px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#9fb0bf}.tickettitle{font:800 15px/1.2 system-ui;margin-top:3px}.ticketreport{font:11px/1.45 system-ui;color:#eef3f7;margin-top:7px}.ticketknown{font:10px/1.45 system-ui;color:#c6d0d8;margin-top:7px}.diagloop{display:flex;gap:4px;flex-wrap:wrap}.diagstep{border:1px solid #3f4851;border-radius:999px;padding:4px 7px;font:800 9px system-ui;opacity:.5}.diagstep.done{opacity:.78}.diagstep.now{opacity:1;border-color:#c8d4de;background:#29333c}.choicegrid{display:grid;grid-template-columns:1fr;gap:5px;margin-top:7px}.choicegrid button{white-space:normal}.labtech{margin-top:9px;border-top:1px solid #333;padding-top:8px;font:10px system-ui;color:#adb9c3}.labtech summary{cursor:pointer;font-weight:800;color:#dbe4eb}.labtech .labrow{font-size:9px}.labsystem{display:flex;justify-content:space-between;gap:8px}.labsystem span:last-child{font-weight:800}.reinforce{margin-top:7px;padding:7px;border:1px dashed #52606b;border-radius:8px}.reinforce a{color:inherit;font-weight:800}@media(max-width:760px){.labpanel{top:auto;bottom:12px;max-height:48vh}.hud{max-width:calc(100vw - 24px)}}
 .roomhud{position:fixed;z-index:9;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(720px,calc(100vw - 24px));box-sizing:border-box;background:#080a0de8;border:1px solid #555;border-radius:16px;padding:10px 12px;backdrop-filter:blur(12px)}.roomhud[hidden]{display:none}.roomtop{display:flex;justify-content:space-between;gap:10px;align-items:center}.roomtitle{font:800 11px system-ui}.roomnote{margin-top:4px;font:10px system-ui;color:#cbd4dc}.roomcontrols{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.roomselection{margin-top:7px;padding-top:7px;border-top:1px solid #333;font:10px system-ui;color:#dce4eb}.roomreticle{position:fixed;z-index:8;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none}.roomreticle[hidden]{display:none}.roomreticle:before,.roomreticle:after{content:"";position:absolute;background:#fff9;box-shadow:0 0 8px #000}.roomreticle:before{width:18px;height:1px;left:0;top:8px}.roomreticle:after{width:1px;height:18px;left:8px;top:0}.room-active>.hud{display:none}.room-active>.s{opacity:.3}.room-active canvas{touch-action:none}
 </style>  <script src="js/live-content.js?v=__STAMP__"></script>
-</head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now with the detailed architectural facade active. Tap a floor to isolate it, Facade to inspect the shell, or expose the building-services nervous system. B1 and F1–F7 remain physically continuous through both protected stairs.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="facade">Facade</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button data-v="south">South</button><button data-v="east">East</button><button data-v="north">North</button><button data-v="west">West</button><button data-v="entry">Entry</button><button data-v="crown">Crown</button><button id="xray">X-Ray: Off</button><button id="services">Services: Off</button><button id="sunmode">Sun: Auto</button><button id="wire">Wireframe</button><button id="labs">Work Tickets</button><button id="roommode">Room Mode</button></div><div class="solar" id="serviceStatus">Services layer · hidden</div><div class="solar" id="solarStatus">Solar environment · syncing to device clock…</div></div><div class="labpanel" id="labPanel" hidden><h2>DIAGNOSTIC SANDBOX · TRAINING ONLY</h2><div class="labgrid"><select id="labSelect" aria-label="Support ticket"></select><select id="labDifficulty" aria-label="Difficulty"></select></div><div class="labtasks"><button id="labStart">Accept Ticket</button><button id="labReset">Restart</button><button id="labHint">Ask for a hint</button><button id="labComplete">Close Ticket</button></div><div class="ticketcard"><div class="ticketeyebrow" id="labRole">Choose a support ticket</div><div class="tickettitle" id="labTicket">A building user needs help.</div><div class="ticketreport" id="labReport">Start from the symptom, not the answer.</div><div class="ticketknown" id="labKnown"></div></div><div class="labrow diagloop" id="labLoop"></div><div class="labrow" id="labGuidance"></div><div class="labrow"><strong>What can you do next?</strong><div class="labtasks" id="labActions"></div><div class="choicegrid" id="labChoices"></div></div><div class="labrow" id="labSystems"></div><div class="labrow labmsg" id="labMessage">Training simulation only · observe → hypothesize → test → fix → verify.</div><details class="labtech" id="labTechnical"><summary>Instructor / technical details</summary><div class="labrow" id="labScenario">Choose a lab.</div><div class="labrow" id="labAssessment"></div><div class="labrow"><input id="labInput" aria-label="Action JSON input" placeholder='Advanced action input JSON, e.g. {"finding":"..."}'></div><div class="labtasks"><button id="labEvidence">Attach Evidence</button></div></details></div><div class="roomhud" id="roomHud" hidden><div class="roomtop"><div class="roomtitle" id="roomTitle">ROOM MODE · FLOOR 1</div><button id="roomExit">Exit Room</button></div><div class="roomnote" id="roomMessage">Center-room view. Drag to look or enable device motion.</div><div class="roomcontrols"><button id="roomMotion">Enable Motion</button><button id="roomRecenter">Recenter</button><button id="roomBack" disabled>Step Back</button><button id="roomInspect" disabled>Inspect</button></div><div class="roomselection" id="roomSelection">Look around and tap a highlighted object.</div></div><div class="roomreticle" id="roomReticle" hidden></div><div class="s" id="status">Loading working stack…</div>
+</head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now with the detailed architectural facade active. Tap a floor to isolate it, Facade to inspect the shell, or expose the building-services nervous system. B1 and F1–F7 remain physically continuous through both protected stairs.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="facade">Facade</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button data-v="south">South</button><button data-v="east">East</button><button data-v="north">North</button><button data-v="west">West</button><button data-v="entry">Entry</button><button data-v="crown">Crown</button><button id="xray">X-Ray: Off</button><button id="plant">Physical Plant: Off</button><button id="cabling">Cabling: Off</button><button id="services">Services: Off</button><button id="sunmode">Sun: Auto</button><button id="wire">Wireframe</button><button id="labs">Work Tickets</button><button id="roommode">Room Mode</button></div><div class="solar" id="serviceStatus">Services layer · hidden</div><div class="solar" id="solarStatus">Solar environment · syncing to device clock…</div></div><div class="labpanel" id="labPanel" hidden><h2>DIAGNOSTIC SANDBOX · TRAINING ONLY</h2><div class="labgrid"><select id="labSelect" aria-label="Support ticket"></select><select id="labDifficulty" aria-label="Difficulty"></select></div><div class="labtasks"><button id="labStart">Accept Ticket</button><button id="labReset">Restart</button><button id="labHint">Ask for a hint</button><button id="labComplete">Close Ticket</button></div><div class="ticketcard"><div class="ticketeyebrow" id="labRole">Choose a support ticket</div><div class="tickettitle" id="labTicket">A building user needs help.</div><div class="ticketreport" id="labReport">Start from the symptom, not the answer.</div><div class="ticketknown" id="labKnown"></div></div><div class="labrow diagloop" id="labLoop"></div><div class="labrow" id="labGuidance"></div><div class="labrow"><strong>What can you do next?</strong><div class="labtasks" id="labActions"></div><div class="choicegrid" id="labChoices"></div></div><div class="labrow" id="labSystems"></div><div class="labrow labmsg" id="labMessage">Training simulation only · observe → hypothesize → test → fix → verify.</div><details class="labtech" id="labTechnical"><summary>Instructor / technical details</summary><div class="labrow" id="labScenario">Choose a lab.</div><div class="labrow" id="labAssessment"></div><div class="labrow"><input id="labInput" aria-label="Action JSON input" placeholder='Advanced action input JSON, e.g. {"finding":"..."}'></div><div class="labtasks"><button id="labEvidence">Attach Evidence</button></div></details></div><div class="roomhud" id="roomHud" hidden><div class="roomtop"><div class="roomtitle" id="roomTitle">ROOM MODE · FLOOR 1</div><button id="roomExit">Exit Room</button></div><div class="roomnote" id="roomMessage">Center-room view. Drag to look or enable device motion.</div><div class="roomcontrols"><button id="roomMotion">Enable Motion</button><button id="roomRecenter">Recenter</button><button id="roomBack" disabled>Step Back</button><button id="roomInspect" disabled>Inspect</button></div><div class="roomselection" id="roomSelection">Look around and tap a highlighted object.</div></div><div class="roomreticle" id="roomReticle" hidden></div><div class="s" id="status">Loading working stack…</div>
 <script type="module">
 import * as THREE from'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';import{GLTFLoader}from'three/addons/loaders/GLTFLoader.js';import{RoomEnvironment}from'three/addons/environments/RoomEnvironment.js';
 const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status'),solarStatus=document.getElementById('solarStatus'),serviceStatus=document.getElementById('serviceStatus');const scene=new THREE.Scene();scene.background=new THREE.Color(0xb9c6cf);scene.fog=new THREE.Fog(0xb9c6cf,ft(120),ft(260));
 const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;app.appendChild(ren.domElement);const pmrem=new THREE.PMREMGenerator(ren);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);
 const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;const sunTarget=new THREE.Object3D();sunTarget.position.set(ft(36),ft(42),ft(-36));scene.add(sunTarget);dl.target=sunTarget;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
-const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,loaded=0,solarMode='auto',servicesOn=false,engineeringMode=false,currentFocus='stack';
+const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,loaded=0,solarMode='auto',servicesOn=false,engineeringMode=false,plantMode=false,cablingMode=false,currentFocus='stack';
 let resolveBuildingLoaded=null;const buildingLoaded=new Promise(resolve=>{resolveBuildingLoaded=resolve});
 const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
 const engineeringOverlay=new THREE.Group();engineeringOverlay.name='ENGINEERING-XRAY-OVERLAY';engineeringOverlay.visible=false;scene.add(engineeringOverlay);
@@ -81,21 +81,18 @@ function setArchitectureGhost(on){
  architectureGhosted=on;
 }
 function syncServicesVisibility(){
- if(!services)return;
- services.visible=servicesOn&&!roomMode;
- if(servicesOn&&!roomMode){
+ if(services){
+  services.visible=servicesOn&&!roomMode;
+  if(servicesOn&&!roomMode){
    services.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(currentFocus==='stack'||currentFocus==='facade'){o.visible=true;return}
      const level=+currentFocus,b1Source=/^SVC-B1-/.test(n),floorSvc=new RegExp('^SVC-F'+level+'-').test(n);
      const take=n.match(/::L(\d+)$/),seg=n.match(/SEG-L(\d+)-L(\d+)$/),band=n.match(/SVC-LEVEL-BAND::L(\d+)$/);
      o.visible=(level===0&&b1Source)||floorSvc||(take&&+take[1]===level)||(seg&&(+seg[1]===level||+seg[2]===level))||(band&&+band[1]===level)||/SVC-SEPARATION/.test(n);
-   });
-   setArchitectureGhost(true);
-   serviceStatus.textContent='Services layer · EXPOSED · B1 plant/backbone + F1–F3 branches/endpoints · power · data · controls · HVAC · water · fire';
- }else{
-   setArchitectureGhost(engineeringMode&&!roomMode);
-   if(engineeringMode&&!roomMode){const n=electronics?setEngineeringElectronics(true):0;updateEngineeringStatus(n)}
-   else serviceStatus.textContent=roomMode?'Services layer · hidden in Room Mode':'Services layer · hidden';
+   })
+  }
  }
+ setArchitectureGhost((servicesOn||engineeringMode)&&!roomMode);
+ const counts=electronics?syncElectronicsVisibility():{devices:0,cables:0};infrastructureStatus(counts)
 }
 let stackFrameCache=null;const frameObjectCache=new WeakMap();
 function frameMetrics(root){
@@ -287,11 +284,14 @@ function engineeringClassColor(cls){
  return {support:0xffa640,work:0x56d7ff,security:0xff5ad9,ceiling:0x68f7a0,av:0x7b8cff,fire:0xff4d4d}[cls]||0x8de7ff
 }
 function makeElectronicsReliable(root){
- makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.transparent=true;m.opacity=.10;m.depthWrite=false;m.depthTest=true;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
+ makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.userData=m.userData||{};if(m.color&&!m.userData.step4bNativeColor)m.userData.step4bNativeColor=m.color.getHex();m.transparent=true;m.opacity=.10;m.depthWrite=false;m.depthTest=true;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
 }
-function styleEngineeringMesh(o,on){
- const binding=o.userData.spatialBinding,color=engineeringClassColor(binding?.class),ms=Array.isArray(o.material)?o.material:[o.material];
- ms.filter(Boolean).forEach(m=>{m.transparent=true;m.opacity=on?.92:.10;m.depthWrite=false;m.depthTest=!on;if(on&&m.color)m.color.setHex(color);if(m.emissive){m.emissive.setHex(on?color:0x000000);m.emissiveIntensity=on?.85:0}m.needsUpdate=true});o.renderOrder=on?90:0
+function physicalLevelFromId(id){
+ if(/^B1-/.test(id))return 0;if(/^L7-|^F7-/.test(id))return 7;const m=/^F([1-6])-/.exec(id);return m?Number(m[1]):null
+}
+function stylePhysicalMesh(o,mode){
+ const b=o.userData.spatialBinding,color=engineeringClassColor(b?.class),ms=Array.isArray(o.material)?o.material:[o.material];
+ ms.filter(Boolean).forEach(m=>{const native=m.userData?.step4bNativeColor;if(m.color)m.color.setHex(mode==='xray'?color:(native??0xb9c2c8));m.transparent=true;m.opacity=mode==='xray'?.94:mode==='plant'?.96:.10;m.depthWrite=mode==='plant';m.depthTest=mode!=='xray';if(m.emissive){m.emissive.setHex(mode==='xray'?color:0x000000);m.emissiveIntensity=mode==='xray'?.85:0}m.needsUpdate=true});o.renderOrder=mode==='xray'?90:mode==='plant'?12:0
 }
 function clearEngineeringMarkers(){
  while(engineeringOverlay.children.length){const o=engineeringOverlay.children[engineeringOverlay.children.length-1];engineeringOverlay.remove(o);o.material?.dispose?.()}
@@ -301,29 +301,18 @@ function rebuildEngineeringMarkers(){
  const focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null;let count=0;
  electronics.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o)||o.userData.spatialBound!==true)return;const b=o.userData.spatialBinding;if(focusLevel!==null&&b?.level!==focusLevel)return;
   const p=electronicsBoundWorld.get(o.name);if(!p)return;const mat=new THREE.SpriteMaterial({color:engineeringClassColor(b?.class),transparent:true,opacity:.92,depthTest:false,depthWrite:false});
-  const marker=new THREE.Sprite(mat);marker.position.copy(p);marker.scale.setScalar(ft(1.65));marker.renderOrder=95;marker.name='XRAY-MARKER::'+o.name;marker.userData.assetId=o.name;engineeringOverlay.add(marker);count++
+  const marker=new THREE.Sprite(mat);marker.position.copy(p);marker.scale.setScalar(ft(1.25));marker.renderOrder=95;marker.name='XRAY-MARKER::'+o.name;marker.userData.assetId=o.name;engineeringOverlay.add(marker);count++
  });
  engineeringOverlay.visible=true;return count
 }
-function electronicsBindingWorld(binding){
- if(!binding?.anchor_id)return null;
- const anchor=findCanonicalCenter(binding.anchor_id);
- if(!anchor)return null;
- const world=anchor.clone();
- world.y=ft((elev[binding.level]||0)+binding.aff_ft);
- const off=binding.offset_ft||[0,0];world.x+=ft(off[0]||0);world.z-=ft(off[1]||0);
- return world
-}
-function bindElectronicsMesh(o,binding){
- if(!o.geometry||!binding)return false;
- const world=electronicsBindingWorld(binding);if(!world)return false;
- o.geometry.computeBoundingBox();const center=o.geometry.boundingBox?.getCenter(new THREE.Vector3())||new THREE.Vector3();
- o.parent?.updateMatrixWorld?.(true);const local=o.parent?o.parent.worldToLocal(world.clone()):world.clone();
- o.position.copy(local).sub(center);o.userData.spatialBound=true;o.userData.spatialBinding=binding;electronicsBoundWorld.set(o.name,world.clone());return true
+function registerNativeElectronicsMesh(o,binding){
+ if(!o.geometry)return false;o.geometry.computeBoundingBox();const local=o.geometry.boundingBox?.getCenter(new THREE.Vector3())||new THREE.Vector3();o.updateWorldMatrix(true,false);const world=local.applyMatrix4(o.matrixWorld);
+ const level=binding?.level??physicalLevelFromId(o.name||'');if(level===null)return false;
+ o.userData.spatialBound=true;o.userData.spatialBinding={...(binding||{}),level,placement_mode:'native_generator_coordinates',authority:'step4b_native_physical_installation'};electronicsBoundWorld.set(o.name,world.clone());return true
 }
 async function applyElectronicsSpatialBindings(root){
  const mod=await ensureElectronicsSpatialModule();electronicsBoundWorld.clear();electronicsBoundCount=0;electronicsUnboundCount=0;root.updateMatrixWorld(true);
- root.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o))return;const binding=mod.resolveElectronicsSpatialBinding(o.name||'');if(binding&&bindElectronicsMesh(o,binding)){electronicsBoundCount++}else{o.userData.spatialBound=false;o.visible=false;electronicsUnboundCount++}});
+ root.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o))return;const binding=mod.resolveElectronicsSpatialBinding(o.name||'');if(registerNativeElectronicsMesh(o,binding)){electronicsBoundCount++}else{o.userData.spatialBound=false;o.visible=false;electronicsUnboundCount++}});
  root.updateMatrixWorld(true)
 }
 async function ensureElectronicsLayer(){
@@ -332,40 +321,62 @@ async function ensureElectronicsLayer(){
  return labElectronicsPromise;
 }
 function engineeringMeshIsCable(o){return /^CABLE::/.test(o?.name||'')}
-function setEngineeringElectronics(on){
- if(!electronics){engineeringOverlay.visible=false;return 0}
- const enabled=!!on&&!roomMode,focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null;let visibleCount=0;
- electronics.visible=enabled;
- electronics.traverse(o=>{if(!o.isMesh)return;const b=o.userData.spatialBinding,show=enabled&&!engineeringMeshIsCable(o)&&o.userData.spatialBound===true&&(focusLevel===null||b?.level===focusLevel);o.visible=show;styleEngineeringMesh(o,show);if(show)visibleCount++});
- if(enabled)rebuildEngineeringMarkers();else{clearEngineeringMarkers();engineeringOverlay.visible=false}
- return visibleCount
+function cableMatchesFocus(o){
+ if(!/^[0-7]$/.test(currentFocus))return true;const level=Number(currentFocus),lo=ft(elev[level]-.5),hi=ft((elev[level]||0)+13.5);
+ const box=new THREE.Box3().setFromObject(o);return box.max.y>=lo&&box.min.y<=hi
 }
-function updateEngineeringStatus(visibleCount){
- const scope=/^[0-7]$/.test(currentFocus)?('Level '+currentFocus):'whole building';
- serviceStatus.textContent='Engineering X-Ray · '+visibleCount+' visible room-bound devices · '+electronicsBoundCount+' bound total · '+electronicsUnboundCount+' unresolved hidden · '+scope+' · Services toggle adds MEP routes';
- document.getElementById('xray').textContent='X-Ray: On ('+visibleCount+')'
+function syncElectronicsVisibility(){
+ if(!electronics){clearEngineeringMarkers();engineeringOverlay.visible=false;return{devices:0,cables:0}}
+ const focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null;
+ const allowPlant=plantMode,allowXray=engineeringMode&&!roomMode,allowCables=cablingMode&&!roomMode;let devices=0,cables=0;
+ electronics.visible=allowPlant||allowXray||allowCables;
+ electronics.traverse(o=>{if(!o.isMesh)return;
+   if(engineeringMeshIsCable(o)){const show=allowCables&&cableMatchesFocus(o);o.visible=show;if(show)cables++;return}
+   const b=o.userData.spatialBinding,scope=focusLevel===null||b?.level===focusLevel,show=(allowPlant||allowXray)&&o.userData.spatialBound===true&&scope;
+   o.visible=show;stylePhysicalMesh(o,show?(allowXray?'xray':'plant'):'hidden');if(show)devices++
+ });
+ if(allowXray)rebuildEngineeringMarkers();else{clearEngineeringMarkers();engineeringOverlay.visible=false}
+ return{devices,cables}
 }
+function setEngineeringElectronics(on){return syncElectronicsVisibility().devices}
+function infrastructureStatus(counts=syncElectronicsVisibility()){
+ const scope=/^[0-7]$/.test(currentFocus)?('Level '+currentFocus):'whole building',modes=[];
+ if(plantMode)modes.push('physical devices '+counts.devices);
+ if(cablingMode)modes.push('routed cables '+counts.cables);
+ if(engineeringMode)modes.push('X-Ray '+counts.devices);
+ if(servicesOn&&!roomMode)modes.push('MEP services');
+ serviceStatus.textContent=modes.length?'Infrastructure · '+modes.join(' · ')+' · '+scope:'Infrastructure layers · hidden';
+ document.getElementById('plant').textContent=plantMode?'Physical Plant: On ('+counts.devices+')':'Physical Plant: Off';
+ document.getElementById('cabling').textContent=cablingMode?'Cabling: On ('+counts.cables+')':'Cabling: Off';
+ if(engineeringMode)document.getElementById('xray').textContent='X-Ray: On ('+counts.devices+')'
+}
+function updateEngineeringStatus(visibleCount){infrastructureStatus({devices:visibleCount,cables:syncElectronicsVisibility().cables})}
 function syncEngineeringView(){
- if(!engineeringMode||roomMode)return;
- const visibleCount=setEngineeringElectronics(true);setArchitectureGhost(true);updateEngineeringStatus(visibleCount)
+ if(!engineeringMode||roomMode)return;const counts=syncElectronicsVisibility();setArchitectureGhost(true);infrastructureStatus(counts)
+}
+async function setPhysicalPlantMode(on){
+ plantMode=!!on;const b=document.getElementById('plant');b.classList.toggle('active',plantMode);
+ if(plantMode){await buildingLoaded;await ensureElectronicsLayer()}const counts=syncElectronicsVisibility();syncServicesVisibility();infrastructureStatus(counts)
+}
+async function setCablingMode(on){
+ cablingMode=!!on;const b=document.getElementById('cabling');b.classList.toggle('active',cablingMode);
+ if(cablingMode){await buildingLoaded;await ensureElectronicsLayer()}const counts=syncElectronicsVisibility();syncServicesVisibility();infrastructureStatus(counts)
 }
 async function setEngineeringMode(on){
  const requestId=++engineeringRequestId;engineeringMode=!!on;const button=document.getElementById('xray');button.classList.toggle('active',engineeringMode);
- if(!engineeringMode){
-   button.textContent='X-Ray: Off';if(electronics)setEngineeringElectronics(false);else{clearEngineeringMarkers();engineeringOverlay.visible=false}syncServicesVisibility();return
- }
- button.textContent='X-Ray: Loading…';serviceStatus.textContent='Engineering X-Ray · waiting for complete building geometry…';
+ if(!engineeringMode){button.textContent='X-Ray: Off';syncServicesVisibility();infrastructureStatus();return}
+ button.textContent='X-Ray: Loading…';serviceStatus.textContent='Engineering X-Ray · loading Step 4B physical installation…';
  await buildingLoaded;if(!engineeringMode||requestId!==engineeringRequestId)return;
  const e=await ensureElectronicsLayer();if(!engineeringMode||requestId!==engineeringRequestId)return;
  await applyElectronicsSpatialBindings(e);if(!engineeringMode||requestId!==engineeringRequestId)return;
  syncServicesVisibility();syncEngineeringView();
- if(electronicsBoundCount===0){button.textContent='X-Ray: 0';serviceStatus.textContent='Engineering X-Ray ERROR · 0 canonical device anchors resolved'}
+ if(electronicsBoundCount===0){button.textContent='X-Ray: 0';serviceStatus.textContent='Engineering X-Ray ERROR · 0 physical device coordinates resolved'}
 }
 function rememberLabMesh(o){if(!labStyledMeshes.has(o))labStyledMeshes.set(o,{material:o.material,visible:o.visible})}
 function clearLabVisuals(){
  labStyledMeshes.forEach((s,o)=>{o.material=s.material;o.visible=s.visible});labStyledMeshes.clear();
  while(labOverlay.children.length){const o=labOverlay.children.pop();o.geometry?.dispose?.();const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>m.dispose?.())}
- if(electronics){if(engineeringMode&&!roomMode)syncEngineeringView();else electronics.visible=false}
+ if(electronics){if(engineeringMode||plantMode||cablingMode)syncElectronicsVisibility();else electronics.visible=false}
 }
 function labColor(state){return state==='unavailable'?0xff2d2d:state==='faulted'?0xff6a2d:state==='degraded'?0xffb42d:state==='at_risk'?0xd85cff:0x5fd2ff}
 function styleCanonical(root,id,state){
@@ -383,12 +394,13 @@ function findCanonicalCenter(id){
  for(const root of [b1,f1,f2,f3,f4,f5,f6,f7,base].filter(Boolean)){let found=null;root.traverse(o=>{if(found||!o.isMesh)return;const n=o.name||'';if(n===id||n.startsWith(id+'::')||n.startsWith(id+'-I'))found=o});if(found){const box=new THREE.Box3().setFromObject(found),v=new THREE.Vector3();box.getCenter(v);return v}}
  return null
 }
+function routePointWorld(p){return new THREE.Vector3(ft(p[0]),ft(p[2]),-ft(p[1]))}
 function spatialConnectionOverlay(connection){
- const a=electronicsBoundWorld.get(connection.from_asset_id),b=electronicsBoundWorld.get(connection.to_asset_id);if(!a||!b)return false;
- const color=labColor(connection.visual_state),mat=new THREE.LineBasicMaterial({color,transparent:true,opacity:.92,depthWrite:false}),pts=[a.clone()];
- const ma=electronicsSpatialModule?.resolveElectronicsSpatialBinding?.(connection.from_asset_id),mb=electronicsSpatialModule?.resolveElectronicsSpatialBinding?.(connection.to_asset_id);
- if(ma&&mb&&ma.level!==mb.level){pts.push(floorWorld(ma.level,55,69,9),floorWorld(mb.level,55,69,9))}
- pts.push(b.clone());const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat);line.name='LAB-SPATIAL-CABLE::'+connection.connection_id;labOverlay.add(line);return true
+ const raw=(labDatasets?.connections?.connections||[]).find(x=>x.connection_id===connection.connection_id),route=raw?.route||[];
+ const color=labColor(connection.visual_state),mat=new THREE.LineBasicMaterial({color,transparent:true,opacity:.96,depthWrite:false});
+ let pts=route.length>=2?route.map(routePointWorld):[];
+ if(pts.length<2){const a=electronicsBoundWorld.get(connection.from_asset_id),b=electronicsBoundWorld.get(connection.to_asset_id);if(!a||!b){mat.dispose();return false}pts=[a.clone(),b.clone()]}
+ const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat);line.name='LAB-SPATIAL-CABLE::'+connection.connection_id;line.userData.physicalRoute=true;labOverlay.add(line);return true
 }
 
 // Room Mode v1: human-scale Floor 1 play before free-walk locomotion.
@@ -508,14 +520,14 @@ async function enterRoomMode(){
  if(roomMode)return;if(!f1||loaded<11){roomMessage.textContent='Building is still loading. Try Room Mode again when the stack finishes.';roomHud.hidden=false;return}
  roomPrevFocus=currentFocus;roomPrevServices=servicesOn;roomPrevWire=wire;roomMode=true;engineeringOverlay.visible=false;document.body.classList.add('room-active');roomHud.hidden=false;roomReticle.hidden=false;labPanel.hidden=true;ctl.enabled=false;roomLightRig.visible=true;
  if(wire){wire=false;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=false;m.needsUpdate=true}});document.getElementById('wire').textContent='Wireframe'}
- focus('1');if(electronics)electronics.visible=false;syncServicesVisibility();clearRoomHighlights();roomSelectedId=null;roomBackButton.disabled=true;roomInspectButton.disabled=true;
+ focus('1');if(electronics)syncElectronicsVisibility();syncServicesVisibility();clearRoomHighlights();roomSelectedId=null;roomBackButton.disabled=true;roomInspectButton.disabled=true;
  cam.position.copy(roomAnchorPosition());cam.lookAt(roomAnchorLook());roomBaseQuaternion=cam.quaternion.clone();roomSelection.textContent='Look around and tap a highlighted object.';refreshRoomHighlights();
  roomMessage.textContent=(typeof DeviceOrientationEvent!=='undefined')?'Tap Enable Motion, allow access, then physically move the device to look around. Drag-to-look also works.':'Drag to look around. Tap a highlighted object to approach it.'
 }
 function exitRoomMode(){
  if(!roomMode)return;disableRoomMotion();clearRoomHighlights();roomMode=false;roomLightRig.visible=false;document.body.classList.remove('room-active');roomHud.hidden=true;roomReticle.hidden=true;ctl.enabled=true;servicesOn=roomPrevServices;
  if(roomPrevWire&&!wire){wire=true;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=true;m.needsUpdate=true}});document.getElementById('wire').textContent='Solid'}
- focus(roomPrevFocus||'stack');syncServicesVisibility();if(engineeringMode)syncEngineeringView();if(labView)applyLabView(labView)
+ focus(roomPrevFocus||'stack');syncServicesVisibility();if(engineeringMode)syncEngineeringView();if(electronics&&(plantMode||cablingMode))syncElectronicsVisibility();if(labView)applyLabView(labView)
 }
 function occupantOverlay(marker){
  const p=findCanonicalCenter(marker.anchor_id);if(!p)return;const m=new THREE.Mesh(new THREE.SphereGeometry(ft(.65),14,10),new THREE.MeshBasicMaterial({color:0x7fd8ff,transparent:true,opacity:.8}));m.position.copy(p);m.position.y+=ft(3);m.name=marker.marker_id;labOverlay.add(m)
@@ -577,7 +589,7 @@ async function applyLabView(view){
 async function prepareLabPresentation(view){
  const scenario=view?.scenario||{},exp=view?.learner_experience||{},target=String(scenario.viewer_focus??'');
  if(roomMode&&target!=='1')exitRoomMode();
- if(exp.learner_first&&engineeringMode)await setEngineeringMode(false);
+ if(exp.learner_first&&engineeringMode)await setEngineeringMode(false);if(exp.learner_first&&!plantMode)await setPhysicalPlantMode(true);
  if(!exp.learner_first&&scenario.engineering_view===true&&roomMode)exitRoomMode();
  if(target==='stack'||/^[0-7]$/.test(target)){focus(target)}
  if(exp.engineering_default===true&&!engineeringMode)await setEngineeringMode(true);
@@ -601,6 +613,8 @@ async function openLabs(){
 }
 document.getElementById('labs').onclick=()=>labPanel.hidden?openLabs():(labPanel.hidden=true);
 document.getElementById('xray').onclick=()=>setEngineeringMode(!engineeringMode);
+document.getElementById('plant').onclick=()=>setPhysicalPlantMode(!plantMode);
+document.getElementById('cabling').onclick=()=>setCablingMode(!cablingMode);
 document.getElementById('roommode').onclick=()=>roomMode?exitRoomMode():enterRoomMode();
 document.getElementById('roomExit').onclick=exitRoomMode;
 roomMotionButton.onclick=enableRoomMotion;
