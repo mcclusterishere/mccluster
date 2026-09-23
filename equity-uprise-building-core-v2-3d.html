@@ -11,7 +11,7 @@ const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren
 const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;const sunTarget=new THREE.Object3D();sunTarget.position.set(ft(36),ft(42),ft(-36));scene.add(sunTarget);dl.target=sunTarget;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
 const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,loaded=0,solarMode='auto',servicesOn=false,engineeringMode=false,currentFocus='stack';
 const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
-let labModule=null,labDatasets=null,labController=null,labView=null,labElectronicsPromise=null,labPickingIds=[],labLastResult=null;const labStyledMeshes=new Map();
+let labModule=null,labDatasets=null,labController=null,labView=null,labElectronicsPromise=null,labPickingIds=[],labLastResult=null,electronicsSpatialModule=null,electronicsBoundCount=0,electronicsUnboundCount=0;const labStyledMeshes=new Map(),electronicsBoundWorld=new Map();
 let roomMode=false,roomMotionActive=false,roomTweening=false,roomSelectedId=null,roomSensorZero=null,roomSensorOffset=new THREE.Quaternion(),roomLastRawQuaternion=null,roomBaseQuaternion=new THREE.Quaternion(),roomManualYaw=0,roomManualPitch=0,roomPrevFocus='stack',roomPrevServices=false,roomPrevWire=false,roomSensorMode='none',roomOrientationEvents=0,roomMotionEvents=0,roomMotionEnabledAt=0,roomLastMotionAt=0,roomLastMotionStamp=0;const roomStyledMeshes=new Map(),roomPbrOriginals=new Map();const roomLightRig=new THREE.Group();roomLightRig.name='ROOM-MODE-V1-LIGHT-RIG';roomLightRig.visible=false;scene.add(roomLightRig);
 let resolveLabVisualRootsReady=null,labVisualRootsError=null,labVisualRootMask=0;
 const labVisualRootsReady=new Promise(resolve=>{resolveLabVisualRootsReady=resolve});
@@ -245,6 +245,8 @@ setInterval(()=>{if(solarMode==='auto')applySolarEnvironment('auto')},60000);
 const labPanel=document.getElementById('labPanel'),labSelect=document.getElementById('labSelect'),labDifficulty=document.getElementById('labDifficulty'),labScenario=document.getElementById('labScenario'),labSystems=document.getElementById('labSystems'),labGuidance=document.getElementById('labGuidance'),labActions=document.getElementById('labActions'),labAssessment=document.getElementById('labAssessment'),labMessage=document.getElementById('labMessage'),labInput=document.getElementById('labInput');
 const labRaycaster=new THREE.Raycaster(),labPointer=new THREE.Vector2();
 const LAB_MODULE_URL='/equity-uprise-preview/lab-runtime/equity-uprise-viewer-lab-integration.mjs?v=__STAMP__';
+const ELECTRONICS_SPATIAL_MODULE_URL='/equity-uprise-preview/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs?v=__STAMP__';
+async function ensureElectronicsSpatialModule(){if(!electronicsSpatialModule)electronicsSpatialModule=await import(ELECTRONICS_SPATIAL_MODULE_URL);return electronicsSpatialModule}
 async function ensureLabRuntime(){
  if(!labModule)labModule=await import(LAB_MODULE_URL);
  if(!labDatasets)labDatasets=await labModule.loadViewerLabDatasets('/equity-uprise-preview');
@@ -262,16 +264,36 @@ async function ensureLabRuntime(){
 function makeElectronicsReliable(root){
  makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.transparent=true;m.opacity=.10;m.depthWrite=false;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
 }
+function electronicsBindingWorld(binding){
+ const anchor=binding.anchor_id?findCanonicalCenter(binding.anchor_id):null;
+ const xy=binding.fallback_xy_ft||[36,36];
+ const world=anchor?anchor.clone():floorWorld(binding.level,xy[0],xy[1],binding.aff_ft);
+ world.y=ft((elev[binding.level]||0)+binding.aff_ft);
+ const off=binding.offset_ft||[0,0];world.x+=ft(off[0]||0);world.z-=ft(off[1]||0);
+ return world
+}
+function bindElectronicsMesh(o,binding){
+ if(!o.geometry||!binding)return false;
+ const world=electronicsBindingWorld(binding);if(!world)return false;
+ o.geometry.computeBoundingBox();const center=o.geometry.boundingBox?.getCenter(new THREE.Vector3())||new THREE.Vector3();
+ o.parent?.updateMatrixWorld?.(true);const local=o.parent?o.parent.worldToLocal(world.clone()):world.clone();
+ o.position.copy(local).sub(center);o.userData.spatialBound=true;o.userData.spatialBinding=binding;electronicsBoundWorld.set(o.name,world.clone());return true
+}
+async function applyElectronicsSpatialBindings(root){
+ const mod=await ensureElectronicsSpatialModule();electronicsBoundWorld.clear();electronicsBoundCount=0;electronicsUnboundCount=0;root.updateMatrixWorld(true);
+ root.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o))return;const binding=mod.resolveElectronicsSpatialBinding(o.name||'');if(binding&&bindElectronicsMesh(o,binding)){electronicsBoundCount++}else{o.userData.spatialBound=false;o.visible=false;electronicsUnboundCount++}});
+ root.updateMatrixWorld(true)
+}
 async function ensureElectronicsLayer(){
  if(electronics)return electronics;
- if(!labElectronicsPromise)labElectronicsPromise=new Promise((resolve,reject)=>loader.load('/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb?v=__STAMP__',g=>{electronics=g.scene;electronics.rotation.x=-Math.PI/2;electronics.updateMatrixWorld(true);scene.add(electronics);makeElectronicsReliable(electronics);electronics.visible=false;electronics.traverse(o=>{if(o.isMesh)o.visible=false});resolve(electronics)},undefined,reject));
+ if(!labElectronicsPromise)labElectronicsPromise=new Promise((resolve,reject)=>loader.load('/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb?v=__STAMP__',async g=>{try{electronics=g.scene;electronics.scale.setScalar(FT);electronics.rotation.x=-Math.PI/2;scene.add(electronics);electronics.updateMatrixWorld(true);makeElectronicsReliable(electronics);await applyElectronicsSpatialBindings(electronics);electronics.visible=false;electronics.traverse(o=>{if(o.isMesh)o.visible=false});resolve(electronics)}catch(err){reject(err)}},undefined,reject));
  return labElectronicsPromise;
 }
 function engineeringMeshIsCable(o){return /^CABLE::/.test(o?.name||'')}
 function setEngineeringElectronics(on){
  if(!electronics)return;
  electronics.visible=!!on&&!roomMode;
- electronics.traverse(o=>{if(!o.isMesh)return;o.visible=!!on&&!roomMode&&!engineeringMeshIsCable(o)});
+ electronics.traverse(o=>{if(!o.isMesh)return;o.visible=!!on&&!roomMode&&!engineeringMeshIsCable(o)&&o.userData.spatialBound===true});
 }
 async function setEngineeringMode(on){
  engineeringMode=!!on;
@@ -279,7 +301,7 @@ async function setEngineeringMode(on){
  document.getElementById('xray').classList.toggle('active',engineeringMode);
  if(!engineeringMode){servicesOn=false;document.getElementById('services').textContent='Services: Off';document.getElementById('services').classList.remove('active');if(electronics)electronics.visible=false;syncServicesVisibility();return}
  await ensureElectronicsLayer();setEngineeringElectronics(true);syncServicesVisibility();
- serviceStatus.textContent='Engineering X-Ray · conceptual electronics devices visible · cable graph hidden unless explicitly traced';
+ serviceStatus.textContent='Engineering X-Ray · '+electronicsBoundCount+' room-bound devices · '+electronicsUnboundCount+' unresolved devices hidden · cable graph hidden unless traced';
 }
 function rememberLabMesh(o){if(!labStyledMeshes.has(o))labStyledMeshes.set(o,{material:o.material,visible:o.visible})}
 function clearLabVisuals(){
@@ -289,7 +311,7 @@ function clearLabVisuals(){
 }
 function labColor(state){return state==='unavailable'?0xff2d2d:state==='faulted'?0xff6a2d:state==='degraded'?0xffb42d:state==='at_risk'?0xd85cff:0x5fd2ff}
 function styleCanonical(root,id,state){
- if(!root||!id)return false;let hit=false;root.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(n!==id&&!n.startsWith(id+'::'))return;rememberLabMesh(o);const original=Array.isArray(o.material)?o.material:[o.material];const cloned=original.map(m=>m.clone());cloned.forEach(m=>{wireMaterials.add(m);if(m.color)m.color.setHex(labColor(state));if(m.emissive){m.emissive.setHex(labColor(state));m.emissiveIntensity=.55}m.transparent=true;m.opacity=.94;m.depthWrite=false;m.needsUpdate=true});o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true;hit=true});return hit
+ if(!root||!id)return false;let hit=false;root.traverse(o=>{if(!o.isMesh)return;if(root===electronics&&o.userData.spatialBound!==true)return;const n=o.name||'';if(n!==id&&!n.startsWith(id+'::'))return;rememberLabMesh(o);const original=Array.isArray(o.material)?o.material:[o.material];const cloned=original.map(m=>m.clone());cloned.forEach(m=>{wireMaterials.add(m);if(m.color)m.color.setHex(labColor(state));if(m.emissive){m.emissive.setHex(labColor(state));m.emissiveIntensity=.55}m.transparent=true;m.opacity=.94;m.depthWrite=false;m.needsUpdate=true});o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true;hit=true});return hit
 }
 function sitePoint(x,y,h=.08){return new THREE.Vector3(ft(x),ft(h),-ft(y))}
 function areaOverlay(area){
@@ -300,8 +322,15 @@ function areaOverlay(area){
  mat.dispose()
 }
 function findCanonicalCenter(id){
- for(const root of [f1,base].filter(Boolean)){let found=null;root.traverse(o=>{if(found||!o.isMesh)return;const n=o.name||'';if(n===id||n.startsWith(id+'::'))found=o});if(found){const box=new THREE.Box3().setFromObject(found),v=new THREE.Vector3();box.getCenter(v);return v}}
+ for(const root of [b1,f1,f2,f3,f4,f5,f6,f7,base].filter(Boolean)){let found=null;root.traverse(o=>{if(found||!o.isMesh)return;const n=o.name||'';if(n===id||n.startsWith(id+'::'))found=o});if(found){const box=new THREE.Box3().setFromObject(found),v=new THREE.Vector3();box.getCenter(v);return v}}
  return null
+}
+function spatialConnectionOverlay(connection){
+ const a=electronicsBoundWorld.get(connection.from_asset_id),b=electronicsBoundWorld.get(connection.to_asset_id);if(!a||!b)return false;
+ const color=labColor(connection.visual_state),mat=new THREE.LineBasicMaterial({color,transparent:true,opacity:.92,depthWrite:false}),pts=[a.clone()];
+ const ma=electronicsSpatialModule?.resolveElectronicsSpatialBinding?.(connection.from_asset_id),mb=electronicsSpatialModule?.resolveElectronicsSpatialBinding?.(connection.to_asset_id);
+ if(ma&&mb&&ma.level!==mb.level){pts.push(floorWorld(ma.level,55,69,9),floorWorld(mb.level,55,69,9))}
+ pts.push(b.clone());const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat);line.name='LAB-SPATIAL-CABLE::'+connection.connection_id;labOverlay.add(line);return true
 }
 
 // Room Mode v1: human-scale Floor 1 play before free-walk locomotion.
@@ -454,8 +483,8 @@ async function applyLabView(view){
  if(engineeringMode&&!roomMode&&(view.visuals.assets.length||view.visuals.connections.length)){
    const e=await ensureElectronicsLayer();setEngineeringElectronics(true);
    view.visuals.assets.forEach(x=>styleCanonical(e,x.canonical_id,x.visual_state));
-   // Only the scenario-requested connection is revealed; the complete cable graph remains hidden.
-   view.visuals.connections.forEach(x=>styleCanonical(e,x.connection_id,x.visual_state))
+   // Only scenario-relevant traces are drawn, between room-bound endpoints. The old generic cable geometry stays hidden.
+   view.visuals.connections.forEach(x=>spatialConnectionOverlay(x))
  }
  view.visuals.objects.forEach(x=>styleCanonical(f1,x.canonical_id,x.visual_state)||styleCanonical(base,x.canonical_id,x.visual_state));
  view.visuals.areas.forEach(x=>{if(!styleCanonical(f1,x.canonical_id,x.visual_state)&&!styleCanonical(base,x.canonical_id,x.visual_state))areaOverlay(x)});
