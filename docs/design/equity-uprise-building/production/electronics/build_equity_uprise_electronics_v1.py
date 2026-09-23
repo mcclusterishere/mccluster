@@ -1112,23 +1112,33 @@ GLB.write_bytes(glb if isinstance(glb,(bytes,bytearray)) else bytes(glb))
 glb_sha=hashlib.sha256(GLB.read_bytes()).hexdigest()
 
 # update registry
-registry["registry_version"]="step4a-whole-building-electronics-fabric-v1"
+registry["registry_version"]="step4b-physical-installation-fabric-v1"
 registry["assets"]=sorted(assets,key=lambda x:x["asset_id"])
 registry["relationships"]=sorted(relationships,key=lambda x:x["relationship_id"])
-registry.setdefault("metadata",{})["status"]="step4a-whole-building-electronics-fabric"
-registry["metadata"]["step4a"]={"new_assets":len(new_assets),"new_relationships":len(new_relationships),"physical_connections":len(connections),
-                                "wireless_links":len(wireless_links),"lab_scenarios":len(labs),"overlay_glb":MODEL_REL}
+registry.setdefault("metadata",{})["status"]="step4b-physical-installation-fabric"
+registry["metadata"]["step4b"]={
+    "new_assets":len(new_assets),
+    "new_relationships":len(new_relationships),
+    "physical_connections":len(connections),
+    "routed_connections":sum(1 for x in connections if len(x.get("route") or [])>=2),
+    "port_complete_connections":sum(1 for x in connections if x.get("from_port") and x.get("to_port")),
+    "wireless_links":len(wireless_links),
+    "lab_scenarios":len(labs),
+    "overlay_glb":MODEL_REL,
+    "physical_routing_authority":"electronics-population-policy-v1.json::physical_routing",
+}
 write(REG,registry)
 
 manifest={
- "schema_version":"1.0.0","status":"step4a-whole-building-electronics-fabric","not_for_construction":True,
- "design_basis":policy["design_basis"],"floor_profiles":policy["floor_profiles"],"cable_type_catalog":policy["cable_types"],
+ "schema_version":"1.1.0","status":"step4b-physical-installation-fabric","not_for_construction":True,
+ "design_basis":policy["design_basis"],"physical_routing":policy["physical_routing"],
+ "floor_profiles":policy["floor_profiles"],"cable_type_catalog":policy["cable_types"],
  "new_asset_ids":sorted(a["asset_id"] for a in new_assets),"transient_client_profiles":transient_profiles,
  "vlans":policy["vlans"],"ssids":policy["ssids"],"logical_services":policy["logical_services"],
  "overlay_glb":MODEL_REL,"overlay_sha256":glb_sha
 }
 write(MANIFEST,manifest)
-write(CONNECTIONS,{"schema_version":"1.0.0","status":"step4a-electronics-connections","connections":connections,"wireless_links":wireless_links})
+write(CONNECTIONS,{"schema_version":"1.1.0","status":"step4b-physical-installation-connections","connections":connections,"wireless_links":wireless_links})
 write(LABS,{"schema_version":"1.0.0","status":"step4a-it-lab-catalog","labs":labs})
 
 asset_types=Counter(a["classification"]["asset_type"] for a in new_assets)
@@ -1137,25 +1147,67 @@ level_assets=Counter(a["location"]["level_id"] for a in new_assets if a["locatio
 checks=[]
 def ck(name,ok,detail=""):checks.append({"name":name,"passed":bool(ok),"detail":detail})
 allids={a["asset_id"] for a in assets}
+physical_connections=[x for x in connections if x["cable_type"] not in {"WIFI-6E-RF","CELLULAR-RF"}]
+routed=[x for x in physical_connections if len(x.get("route") or [])>=2]
+port_complete=[x for x in physical_connections if x.get("from_port") and x.get("to_port")]
+jacks=[a for a in new_assets if a["classification"]["asset_type"]=="data_jack"]
+outlets=[a for a in new_assets if a["classification"]["asset_type"]=="receptacle"]
+panelboards=[a for a in new_assets if a["classification"]["asset_type"]=="electrical_panel"]
+
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
 ck("approved cable types only",set(cable_types).issubset(policy["cable_types"]),sorted(cable_types))
-ck("all active WAPs have one horizontal data link",all(sum(1 for c in connections if c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="CAT6A-HORIZONTAL")==1 for a in new_assets if a["classification"]["asset_type"]=="wireless_ap"),"")
+ck("all modeled physical connections have deterministic route geometry",len(routed)==len(physical_connections),f"{len(routed)}/{len(physical_connections)}")
+ck("all modeled physical connections have endpoint port identifiers",len(port_complete)==len(physical_connections),f"{len(port_complete)}/{len(physical_connections)}")
+ck("all modeled routes expose pathway and length metadata",all(
+    c.get("metadata",{}).get("pathway_class") and c.get("metadata",{}).get("route_length_ft",0)>=0
+    for c in physical_connections
+), "")
+ck("all Cat6A permanent links remain within 90 m design limit",all(
+    c.get("metadata",{}).get("route_length_ft",0)<=295.276
+    for c in connections if c["cable_type"] in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE"}
+), max([c.get("metadata",{}).get("route_length_ft",0) for c in connections if c["cable_type"] in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE"}] or [0]))
+ck("all active WAPs terminate through jack plus PoE patch",all(
+    any(c["to_asset_id"]==a["asset_id"]+"::DATA-JACK" and c["cable_type"]=="CAT6A-HORIZONTAL" for c in connections)
+    and any(c["from_asset_id"]==a["asset_id"]+"::DATA-JACK" and c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="CAT6A-PATCH" and c.get("power_transport")=="PoE" for c in connections)
+    for a in new_assets if a["classification"]["asset_type"]=="wireless_ap"
+), "")
 ck("all WAPs have spare jack assets",sum(1 for a in new_assets if a["classification"]["asset_type"]=="wap_spare_jack")==sum(1 for a in new_assets if a["classification"]["asset_type"]=="wireless_ap"),"")
 ck("all access switches have two core uplinks",all(sum(1 for c in connections if c["from_asset_id"]==a["asset_id"] and c["to_asset_id"] in cores)>=2 for a in new_assets if a["classification"]["asset_type"]=="access_switch"),"")
+ck("all plug-connected 120V branches terminate at outlets",not any(
+    c["cable_type"]=="120VAC-BRANCH" and asset_type(c["to_asset_id"]) not in {"receptacle","electrical_panel"}
+    for c in connections
+), "")
+ck("every generated receptacle serves a physical load with power cord",all(
+    any(c["from_asset_id"]==a["asset_id"] and c["cable_type"]=="NEMA5-15-POWER-CORD" for c in connections)
+    for a in outlets
+), f"{len(outlets)} outlets")
+ck("floor panelboards receive riser feeders",all(
+    any(c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="208Y120V-FEEDER" for c in connections)
+    for a in panelboards
+), f"{len(panelboards)} panelboards")
 ck("fire-alarm field devices are not direct LAN endpoints",not any(c["cable_type"].startswith("CAT6A") and (by_id[c["to_asset_id"]]["classification"]["asset_type"] in {"fire_detector","fire_notification"}) for c in connections if c["to_asset_id"] in by_id),"")
-ck("BAS sensors use field bus",all(any(c["from_asset_id"].startswith(a["location"]["level_id"]+"-BAS-CTRL") and c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="BACNET-MSTP-STP" for c in connections) for a in new_assets if a["classification"]["asset_type"]=="environment_sensor"),"")
+ck("BAS sensors use field bus and Class 2 power",all(
+    any(c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="BACNET-MSTP-STP" for c in connections)
+    and any(c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="24VDC-CLASS2" for c in connections)
+    for a in new_assets if a["classification"]["asset_type"]=="environment_sensor"
+), "")
 ck("access readers use OSDP",all(any(c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="OSDP-RS485-STP" for c in connections) for a in new_assets if a["classification"]["asset_type"]=="access_reader"),"")
 ck("logical services are non-physical",all(a["physical_representation"]["physical_status"]=="not_applicable" for a in new_assets if a["classification"]["asset_type"] in {"logical_service","vlan","ssid"}),"")
 ck("LIVE control remains disabled",not any(a["security"].get("live_control_allowed") for a in assets),"")
+ck("all physical Step 4B assets have spatial positions",all(
+    a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
+), "")
 ck("all eight levels represented in electronics population",set(level_assets).issuperset({"B1","F1","F2","F3","F4","F5","F6","L7"}),sorted(level_assets))
 ck("lab ladder spans five tiers",set(x["tier"] for x in labs)==set(policy["lab_tiers"]),sorted(set(x["tier"] for x in labs)))
 ck("at least forty IT labs generated",len(labs)>=40,len(labs))
 ck("overlay GLB generated",GLB.exists() and GLB.stat().st_size>1000,GLB.stat().st_size if GLB.exists() else 0)
 passed=all(x["passed"] for x in checks)
 report={
- "schema_version":"1.0.0","status":"step4a-whole-building-electronics-fabric","registry_assets_total":len(assets),
- "step4a_new_assets":len(new_assets),"step4a_new_relationships":len(new_relationships),"physical_connections_total":len(connections),
+ "schema_version":"1.1.0","status":"step4b-physical-installation-fabric","registry_assets_total":len(assets),
+ "step4b_new_assets":len(new_assets),"step4b_new_relationships":len(new_relationships),"physical_connections_total":len(connections),
+ "routed_connections_total":len(routed),"port_complete_connections_total":len(port_complete),
+ "data_jacks_total":len(jacks),"receptacles_total":len(outlets),"electrical_panelboards_total":len(panelboards),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -1163,11 +1215,14 @@ report={
  "checks":checks,"passed":passed
 }
 write(REPORT,report)
-print("EQUITY UPRISE ELECTRONICS STEP 4A")
-print(" new assets:",len(new_assets))
+print("EQUITY UPRISE ELECTRONICS STEP 4B PHYSICAL INSTALLATION")
+print(" new/derived electronics assets:",len(new_assets))
 print(" physical connections:",len(connections))
+print(" routed connections:",len(routed))
+print(" port-complete connections:",len(port_complete))
+print(" data jacks:",len(jacks),"receptacles:",len(outlets),"panelboards:",len(panelboards))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))
 print(" checks:",report["checks_passed"],"/",report["checks_total"])
-if not passed: raise SystemExit("Step 4A electronics verification failed")
+if not passed: raise SystemExit("Step 4B electronics physical-installation verification failed")
