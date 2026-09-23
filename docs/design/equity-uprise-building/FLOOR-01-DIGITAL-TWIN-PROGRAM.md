@@ -329,3 +329,12 @@ See:
 - `production/basement-b1-program.json`
 
 These files are the machine-readable Floor 1/B1 activity, site, egress and simulation companions to this document.
+
+
+## Federal training binding
+
+Floor 1 external training references now resolve through:
+- `../equity-uprise-development/FEDERAL-TRAINING-CATALOG.json`
+- `../equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json`
+
+High-value Floor 1 pairings include FEMA incident/exercise courses for emergency scenarios, current-year IRS VITA/TCE training plus Practice Lab for public-service/intake workflows, HHS/OHRP training for consent/privacy/research ethics, and CISA/DOE/EPA building-systems training for the sandboxed Building Systems Lab. These bindings do not grant live B1, BAS, fire-alarm, access-control, security, electrical or network control.
