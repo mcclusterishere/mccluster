@@ -166,8 +166,8 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 628460,
-  "overlay_glb_sha256": "3198589c7a8137f8ddc3a9f0fcfafdb008f011149369885b4e17e3393613f8a5",
+  "overlay_glb_bytes": 621536,
+  "overlay_glb_sha256": "9002b92b65e3d7998de937915e4d833c72dad7a75bcbac30df73725a0756aa39",
   "checks_total": 15,
   "checks_passed": 15,
   "checks_failed": 0,
@@ -276,7 +276,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 628460
+      "detail": 621536
     }
   ],
   "passed": true
