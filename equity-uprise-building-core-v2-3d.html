@@ -10,7 +10,9 @@ const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.get
 const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;app.appendChild(ren.domElement);const pmrem=new THREE.PMREMGenerator(ren);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);
 const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;const sunTarget=new THREE.Object3D();sunTarget.position.set(ft(36),ft(42),ft(-36));scene.add(sunTarget);dl.target=sunTarget;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
 const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,loaded=0,solarMode='auto',servicesOn=false,engineeringMode=false,currentFocus='stack';
+let resolveBuildingLoaded=null;const buildingLoaded=new Promise(resolve=>{resolveBuildingLoaded=resolve});
 const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
+const engineeringOverlay=new THREE.Group();engineeringOverlay.name='ENGINEERING-XRAY-OVERLAY';engineeringOverlay.visible=false;scene.add(engineeringOverlay);
 let labModule=null,labDatasets=null,labController=null,labView=null,labElectronicsPromise=null,labPickingIds=[],labLastResult=null,electronicsSpatialModule=null,electronicsBoundCount=0,electronicsUnboundCount=0;const labStyledMeshes=new Map(),electronicsBoundWorld=new Map();
 let roomMode=false,roomMotionActive=false,roomTweening=false,roomSelectedId=null,roomSensorZero=null,roomSensorOffset=new THREE.Quaternion(),roomLastRawQuaternion=null,roomBaseQuaternion=new THREE.Quaternion(),roomManualYaw=0,roomManualPitch=0,roomPrevFocus='stack',roomPrevServices=false,roomPrevWire=false,roomSensorMode='none',roomOrientationEvents=0,roomMotionEvents=0,roomMotionEnabledAt=0,roomLastMotionAt=0,roomLastMotionStamp=0;const roomStyledMeshes=new Map(),roomPbrOriginals=new Map();const roomLightRig=new THREE.Group();roomLightRig.name='ROOM-MODE-V1-LIGHT-RIG';roomLightRig.visible=false;scene.add(roomLightRig);
 let resolveLabVisualRootsReady=null,labVisualRootsError=null,labVisualRootMask=0;
@@ -89,8 +91,9 @@ function syncServicesVisibility(){
    setArchitectureGhost(true);
    serviceStatus.textContent='Services layer · EXPOSED · B1 plant/backbone + F1–F3 branches/endpoints · power · data · controls · HVAC · water · fire';
  }else{
-   setArchitectureGhost(false);
-   serviceStatus.textContent=roomMode?'Services layer · hidden in Room Mode':'Services layer · hidden';
+   setArchitectureGhost(engineeringMode&&!roomMode);
+   if(engineeringMode&&!roomMode){const n=electronics?setEngineeringElectronics(true):0;updateEngineeringStatus(n)}
+   else serviceStatus.textContent=roomMode?'Services layer · hidden in Room Mode':'Services layer · hidden';
  }
 }
 let stackFrameCache=null;const frameObjectCache=new WeakMap();
@@ -118,7 +121,17 @@ function setDetailedPerimeterVisibility(show){
  if(!detailedPerimeterMeshes)detailedPerimeterMeshes=collectMeshes([f1,f2,f3,f4,f5,f6],n=>/^(?:north_exterior_wall|west_exterior_wall|east_exterior_wall|south_exterior_(?:left|right)|north_wall|west_wall|east_wall|south_mullion_)/i.test(n)||/^F[2-6]-SOUTH-GLAZING-01::pane-/i.test(n));
  detailedPerimeterMeshes.forEach(o=>{o.visible=show});
 }
-function done(){loaded++;if(loaded===11){status.textContent='Working stack loaded · detailed facade + B1–F7 + Services Step 8 verified · source-to-endpoint traceability · protected stairs B1→roof';servicesOn=requestedServices;document.getElementById('services').textContent=servicesOn?'Services: Exposed':'Services: Off';document.getElementById('services').classList.toggle('active',servicesOn);setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);facade.visible=true;if(requestedView==='facade'){focus('facade');if(requestedCamera)setView(requestedCamera)}else if(requestedFloor&&/^[0-7]$/.test(requestedFloor))focus(requestedFloor);else{syncServicesVisibility();frameStack();if(requestedView&&requestedView!=='stack')setView(requestedView)}}}
+function done(){
+ loaded++;
+ if(loaded!==11)return;
+ status.textContent='Working stack loaded · detailed facade + B1–F7 + Services Step 8 verified · source-to-endpoint traceability · protected stairs B1→roof';
+ servicesOn=requestedServices;document.getElementById('services').textContent=servicesOn?'Services: Exposed':'Services: Off';document.getElementById('services').classList.toggle('active',servicesOn);
+ setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);facade.visible=true;
+ if(requestedView==='facade'){focus('facade');if(requestedCamera)setView(requestedCamera)}
+ else if(requestedFloor&&/^[0-7]$/.test(requestedFloor))focus(requestedFloor);
+ else{syncServicesVisibility();frameStack();if(requestedView&&requestedView!=='stack')setView(requestedView)}
+ if(resolveBuildingLoaded){resolveBuildingLoaded();resolveBuildingLoaded=null}
+}
 loader.load('/equity-uprise-preview/equity-uprise-building-core-v2.glb?v=__STAMP__',g=>{base=g.scene;base.rotation.x=-Math.PI/2;base.updateMatrixWorld(true);scene.add(base);makeReliable(base);base.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^L0_(slab|north_wall|west_wall|east_wall|program|circle|support|zone)/.test(n)||/^B1_(south_wall|program)/.test(n)||/^L[123456]_(program|circle|support|slab|north_wall|south_|west_wall|east_wall)/.test(n)||/^L7_(program|circle|support|slab|parapet|zone)/.test(n))o.visible=false});markLabVisualRootReady(1);done()},undefined,e=>failLabVisualRoot('building core',e));
 loader.load('/equity-uprise-preview/equity-uprise-facade-core-v2.glb?v=__STAMP__',g=>{facade=g.scene;facade.rotation.x=-Math.PI/2;facade.updateMatrixWorld(true);scene.add(facade);makeFacadeReliable(facade);done()});
 loader.load('/equity-uprise-preview/equity-uprise-building-services-core-v2.glb?v=__STAMP__',g=>{services=g.scene;services.rotation.x=-Math.PI/2;services.updateMatrixWorld(true);scene.add(services);makeServicesReliable(services);services.visible=false;done()});
@@ -166,12 +179,12 @@ function focus(k){
     restoreBaseStackVisibility();
     setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);
     status.textContent='Stack view · detailed architectural facade + B1–F7 · protected stairs B1→roof';
-    syncServicesVisibility();frameStack();return;
+    syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameStack();return;
   }
   if(k==='facade'){
     roots.forEach(r=>r.visible=false);base.visible=false;setDetailedPerimeterVisibility(true);facade.visible=true;
     status.textContent='Facade isolation · complete architectural finish · approved Equity Uprise identity';
-    syncServicesVisibility();frameObject(facade);return;
+    syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(facade);return;
   }
   const level=+k;
   roots.forEach(r=>r.visible=false);facade.visible=false;setDetailedPerimeterVisibility(true);
@@ -181,11 +194,11 @@ function focus(k){
     if(level===0)setB1StackDupVisibility(true);
     if(level===7)setF7StackDupVisibility(true);
     status.textContent=level===0?'Isolated B1 · detailed underground operations + B1→Floor 1 stairs':(level===7?'Isolated Level 7 · detailed roof + protected stair arrivals':'Isolated Floor '+level+' · detailed model only');
-    syncServicesVisibility();frameObject(root);return;
+    syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(root);return;
   }
   isolateBaseLevel(level);
   status.textContent=level===0?'Isolated B1 chassis':'Isolated Floor '+level+' chassis';
-  syncServicesVisibility();frameObject(base);
+  syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(base);
 }
 function setView(v){
  const V={
@@ -261,8 +274,27 @@ async function ensureLabRuntime(){
  }
  return labModule;
 }
+function engineeringClassColor(cls){
+ return {support:0xffa640,work:0x56d7ff,security:0xff5ad9,ceiling:0x68f7a0,av:0x7b8cff,fire:0xff4d4d}[cls]||0x8de7ff
+}
 function makeElectronicsReliable(root){
- makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.transparent=true;m.opacity=.10;m.depthWrite=false;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
+ makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.transparent=true;m.opacity=.10;m.depthWrite=false;m.depthTest=true;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
+}
+function styleEngineeringMesh(o,on){
+ const binding=o.userData.spatialBinding,color=engineeringClassColor(binding?.class),ms=Array.isArray(o.material)?o.material:[o.material];
+ ms.filter(Boolean).forEach(m=>{m.transparent=true;m.opacity=on?.92:.10;m.depthWrite=false;m.depthTest=!on;if(on&&m.color)m.color.setHex(color);if(m.emissive){m.emissive.setHex(on?color:0x000000);m.emissiveIntensity=on?.85:0}m.needsUpdate=true});o.renderOrder=on?90:0
+}
+function clearEngineeringMarkers(){
+ while(engineeringOverlay.children.length){const o=engineeringOverlay.children.pop();o.material?.dispose?.()}
+}
+function rebuildEngineeringMarkers(){
+ clearEngineeringMarkers();if(!electronics||!engineeringMode||roomMode){engineeringOverlay.visible=false;return 0}
+ const focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null;let count=0;
+ electronics.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o)||o.userData.spatialBound!==true)return;const b=o.userData.spatialBinding;if(focusLevel!==null&&b?.level!==focusLevel)return;
+  const p=electronicsBoundWorld.get(o.name);if(!p)return;const mat=new THREE.SpriteMaterial({color:engineeringClassColor(b?.class),transparent:true,opacity:.92,depthTest:false,depthWrite:false});
+  const marker=new THREE.Sprite(mat);marker.position.copy(p);marker.scale.setScalar(ft(1.65));marker.renderOrder=95;marker.name='XRAY-MARKER::'+o.name;marker.userData.assetId=o.name;engineeringOverlay.add(marker);count++
+ });
+ engineeringOverlay.visible=true;return count
 }
 function electronicsBindingWorld(binding){
  if(!binding?.anchor_id)return null;
@@ -292,17 +324,33 @@ async function ensureElectronicsLayer(){
 }
 function engineeringMeshIsCable(o){return /^CABLE::/.test(o?.name||'')}
 function setEngineeringElectronics(on){
- if(!electronics)return;
- electronics.visible=!!on&&!roomMode;
- electronics.traverse(o=>{if(!o.isMesh)return;o.visible=!!on&&!roomMode&&!engineeringMeshIsCable(o)&&o.userData.spatialBound===true});
+ if(!electronics){engineeringOverlay.visible=false;return 0}
+ const enabled=!!on&&!roomMode,focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null;let visibleCount=0;
+ electronics.visible=enabled;
+ electronics.traverse(o=>{if(!o.isMesh)return;const b=o.userData.spatialBinding,show=enabled&&!engineeringMeshIsCable(o)&&o.userData.spatialBound===true&&(focusLevel===null||b?.level===focusLevel);o.visible=show;styleEngineeringMesh(o,show);if(show)visibleCount++});
+ if(enabled)rebuildEngineeringMarkers();else{clearEngineeringMarkers();engineeringOverlay.visible=false}
+ return visibleCount
+}
+function updateEngineeringStatus(visibleCount){
+ const scope=/^[0-7]$/.test(currentFocus)?('Level '+currentFocus):'whole building';
+ serviceStatus.textContent='Engineering X-Ray · '+visibleCount+' visible room-bound devices · '+electronicsBoundCount+' bound total · '+electronicsUnboundCount+' unresolved hidden · '+scope+' · Services toggle adds MEP routes';
+ document.getElementById('xray').textContent='X-Ray: On ('+visibleCount+')'
+}
+function syncEngineeringView(){
+ if(!engineeringMode||roomMode)return;
+ const visibleCount=setEngineeringElectronics(true);setArchitectureGhost(true);updateEngineeringStatus(visibleCount)
 }
 async function setEngineeringMode(on){
- engineeringMode=!!on;
- document.getElementById('xray').textContent=engineeringMode?'X-Ray: On':'X-Ray: Off';
- document.getElementById('xray').classList.toggle('active',engineeringMode);
- if(!engineeringMode){servicesOn=false;document.getElementById('services').textContent='Services: Off';document.getElementById('services').classList.remove('active');if(electronics)electronics.visible=false;syncServicesVisibility();return}
- await ensureElectronicsLayer();setEngineeringElectronics(true);syncServicesVisibility();
- serviceStatus.textContent='Engineering X-Ray · '+electronicsBoundCount+' room-bound devices · '+electronicsUnboundCount+' unresolved devices hidden · cable graph hidden unless traced';
+ engineeringMode=!!on;const button=document.getElementById('xray');button.classList.toggle('active',engineeringMode);
+ if(!engineeringMode){
+   button.textContent='X-Ray: Off';if(electronics)electronics.visible=false;clearEngineeringMarkers();engineeringOverlay.visible=false;syncServicesVisibility();return
+ }
+ button.textContent='X-Ray: Loading…';serviceStatus.textContent='Engineering X-Ray · waiting for complete building geometry…';
+ await buildingLoaded;if(!engineeringMode)return;
+ const e=await ensureElectronicsLayer();if(!engineeringMode)return;
+ await applyElectronicsSpatialBindings(e);if(!engineeringMode)return;
+ syncServicesVisibility();syncEngineeringView();
+ if(electronicsBoundCount===0){button.textContent='X-Ray: 0';serviceStatus.textContent='Engineering X-Ray ERROR · 0 canonical device anchors resolved'}
 }
 function rememberLabMesh(o){if(!labStyledMeshes.has(o))labStyledMeshes.set(o,{material:o.material,visible:o.visible})}
 function clearLabVisuals(){
@@ -449,7 +497,7 @@ async function enableRoomMotion(){
 function disableRoomMotion(){window.removeEventListener('deviceorientation',onRoomOrientation,true);window.removeEventListener('deviceorientationabsolute',onRoomOrientation,true);window.removeEventListener('devicemotion',onRoomMotion,true);roomMotionActive=false;roomSensorMode='none';roomSensorZero=null;roomLastRawQuaternion=null;roomMotionEnabledAt=0;roomLastMotionStamp=0;roomMotionButton.textContent='Enable Motion'}
 async function enterRoomMode(){
  if(roomMode)return;if(!f1||loaded<11){roomMessage.textContent='Building is still loading. Try Room Mode again when the stack finishes.';roomHud.hidden=false;return}
- roomPrevFocus=currentFocus;roomPrevServices=servicesOn;roomPrevWire=wire;roomMode=true;document.body.classList.add('room-active');roomHud.hidden=false;roomReticle.hidden=false;labPanel.hidden=true;ctl.enabled=false;roomLightRig.visible=true;
+ roomPrevFocus=currentFocus;roomPrevServices=servicesOn;roomPrevWire=wire;roomMode=true;engineeringOverlay.visible=false;document.body.classList.add('room-active');roomHud.hidden=false;roomReticle.hidden=false;labPanel.hidden=true;ctl.enabled=false;roomLightRig.visible=true;
  if(wire){wire=false;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=false;m.needsUpdate=true}});document.getElementById('wire').textContent='Wireframe'}
  focus('1');if(electronics)electronics.visible=false;syncServicesVisibility();clearRoomHighlights();roomSelectedId=null;roomBackButton.disabled=true;roomInspectButton.disabled=true;
  cam.position.copy(roomAnchorPosition());cam.lookAt(roomAnchorLook());roomBaseQuaternion=cam.quaternion.clone();roomSelection.textContent='Look around and tap a highlighted object.';refreshRoomHighlights();
@@ -458,7 +506,7 @@ async function enterRoomMode(){
 function exitRoomMode(){
  if(!roomMode)return;disableRoomMotion();clearRoomHighlights();roomMode=false;roomLightRig.visible=false;document.body.classList.remove('room-active');roomHud.hidden=true;roomReticle.hidden=true;ctl.enabled=true;servicesOn=roomPrevServices;
  if(roomPrevWire&&!wire){wire=true;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=true;m.needsUpdate=true}});document.getElementById('wire').textContent='Solid'}
- focus(roomPrevFocus||'stack');syncServicesVisibility();if(labView)applyLabView(labView)
+ focus(roomPrevFocus||'stack');syncServicesVisibility();if(engineeringMode)syncEngineeringView();if(labView)applyLabView(labView)
 }
 function occupantOverlay(marker){
  const p=findCanonicalCenter(marker.anchor_id);if(!p)return;const m=new THREE.Mesh(new THREE.SphereGeometry(ft(.65),14,10),new THREE.MeshBasicMaterial({color:0x7fd8ff,transparent:true,opacity:.8}));m.position.copy(p);m.position.y+=ft(3);m.name=marker.marker_id;labOverlay.add(m)

@@ -180,6 +180,23 @@ for (const [id,level] of [
   assert.equal(binding.authority, "canonical_floor_object_or_room_anchor");
 }
 assert.equal(resolveElectronicsSpatialBinding("LOGIC-SVC-DNS"), null, "logical services must never become physical meshes");
+const spatialBindings = manifestIds.map((id) => resolveElectronicsSpatialBinding(id)).filter(Boolean);
+assert.ok(spatialBindings.length >= 400, "X-Ray must have broad physical electronics coverage");
+const physicalAnchorIds = new Set();
+for (const path of [
+  "../basement-b1/basement-b1-object-inventory.json",
+  "../floor-01/floor-01-object-inventory.json",
+  "../floor-02/floor-02-object-inventory.json",
+  "../floor-03/floor-03-object-inventory.json",
+  "../floor-04/floor-04-object-inventory.json",
+  "../floor-05/floor-05-object-inventory.json",
+  "../floor-06/floor-06-object-inventory.json",
+  "../floor-07/floor-07-object-inventory.json",
+]) {
+  for (const object of load(path).objects || []) physicalAnchorIds.add(object.id);
+}
+assert.ok(spatialBindings.every((binding) => physicalAnchorIds.has(binding.anchor_id)),
+  "every X-Ray binding must resolve to a canonical inventory anchor");
 for (const required of [
   "ELECTRONICS_SPATIAL_MODULE_URL",
   "electronics.scale.setScalar(FT)",
@@ -189,10 +206,20 @@ for (const required of [
   "electronicsUnboundCount",
   "spatialConnectionOverlay",
   "room-bound devices",
-  "unresolved devices hidden",
+  "unresolved hidden",
   "if(!binding?.anchor_id)return null",
   "if(!anchor)return null",
   "n.startsWith(id+'-I')",
+  "ENGINEERING-XRAY-OVERLAY",
+  "await buildingLoaded",
+  "X-Ray: Loading",
+  "setArchitectureGhost(true)",
+  "SpriteMaterial",
+  "depthTest:false",
+  "m.depthTest=!on",
+  "rebuildEngineeringMarkers",
+  "visible room-bound devices",
+  "0 canonical device anchors resolved",
 ]) {
   assert.ok(viewer.includes(required), "electronics spatial integration guard missing: "+required);
 }

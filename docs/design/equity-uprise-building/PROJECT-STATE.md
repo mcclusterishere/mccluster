@@ -115,6 +115,17 @@ The canonical working-stack viewer now includes a human-scale **Room Mode** befo
 - Floor 1 receives a viewer-side PBR-response pass (roughness/metalness/transparency/emissive tuning by canonical mesh semantics) plus warm human-scale room lights for better depth/material readability.
 
 Current curated Floor 1 interaction targets include Reception Desk, Building Directory, Journey Wall, Development Passport Kiosk, Elevator Call Station, and Intake Display.
+### X-Ray engineering presentation — ACTIVE
+
+The X-Ray control is now a true visible engineering view rather than a state-only toggle:
+- X-Ray waits for the complete B1→F7 building geometry before binding devices, eliminating the prior early-load race that could resolve zero anchors.
+- Each activation re-runs canonical electronics spatial binding against the loaded building.
+- The architectural shell is ghosted while X-Ray is active, and bound electronics are rendered high-contrast with class-colored through-wall engineering markers.
+- Isolating a floor scopes X-Ray to that level; stack/facade views may show the whole-building device set.
+- Room Mode suppresses X-Ray markers, and leaving Room Mode restores the engineering view if it was previously active.
+- The HUD reports visible bound-device count, total bound devices, and unresolved-hidden devices. Zero resolved anchors is treated as an explicit X-Ray error state.
+- The full cable graph remains hidden; scenario-specific traces still render only between canonical rebound endpoints.
+
 ### Play / Engineering spatial separation — ACTIVE
 
 The canonical viewer now separates the finished player environment from unresolved engineering design intent:
