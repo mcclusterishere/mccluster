@@ -1507,5 +1507,6 @@
       "classification": "dataset-reference-not-course",
       "credential_awarded": false
     }
-  ]
+  ],
+  "credential_is_not_competency": true
 }
