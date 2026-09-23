@@ -91,7 +91,8 @@ try {
   check("building viewer: Step 8 controls", [
     'id="services"', 'id="wire"', 'id="labs"', "deviceClockSolar",
     "requestedLab=params.get('lab')", "LAB_MODULE_URL", "labController.execute", "labController.reset", "await labVisualRootsReady",
-    "distributedPack", "BUILDING LAB", "prepareLabPresentation", "scenario.engineering_view"
+    "distributedPack", "BUILDING LAB", "x.scenario_id", "x.home_floor||'CROSS-FLOOR'",
+    "prepareLabPresentation", "scenario.engineering_view"
   ].every((token) => viewerSource.includes(token)));
   check("building viewer: Room Mode controls", [
     'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',
