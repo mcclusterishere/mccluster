@@ -931,3 +931,36 @@ Boundary: Step 7 does not modify canonical scenario truth or convert difficulty 
 
 **NEXT:** Step 8 integrates executable lab state, assessment, and difficulty into the 3D viewer.
 
+
+
+## Lab Runtime — STEP 8 DEEP 3D VIEWER INTEGRATION IMPLEMENTED
+
+Step 8 completes the current 1–8 Lab Runtime sequence by connecting the existing executable runtime to the canonical `equity-uprise-building-core-v2-3d.html` viewer without making the viewer a second simulation authority.
+
+Implemented:
+- lazy Lab mode layered over the existing B1→Level 7 viewer;
+- `?lab=<id>&difficulty=<level>` startup using the existing query convention;
+- one canonical `equity-uprise-viewer-lab-integration.mjs` runtime/presentation adapter;
+- canonical Step 3 CISA/IT-OT, Step 4 building-operations, and Step 5 public-service exercise construction;
+- Step 6 assessment and Step 7 learner-presentation wrapping inside the same runtime chain;
+- direct visual binding to canonical electronics asset IDs and connection IDs from the generated electronics GLB;
+- failed/degraded/at-risk electronics highlighting plus typed connection/path highlighting;
+- canonical Floor 1 object/site overlays for blocked egress, alternate paths, assembly areas, service hazards, responder keep-clear, elevator/public-service objects and privacy/intake state;
+- runtime-derived system-state HUD;
+- difficulty-filtered learner tasks that do not expose hidden fault/objective/target/prerequisite data beyond Step 7 policy;
+- 3D double-click inspection routed through the existing runtime action API rather than direct state mutation;
+- bounded Step 6 assessment display with a `Demonstrated` automation ceiling and no automated human competency awards;
+- anonymous synthetic occupancy/context markers only where a scenario needs people-state context;
+- reset that reconstructs the sandbox session at canonical baseline and clears all viewer fault/path/area/occupancy overlays;
+- browser-safe deterministic SHA-256 provenance in Step 6 so the same assessment runtime can execute in the browser;
+- deploy publication of the canonical runtime/data/electronics bundle required by the viewer;
+- deterministic Step 8 verification plus coverage in the existing browser smoke suite.
+
+Canonical Step 8 files:
+- `production/lab-runtime/equity-uprise-viewer-lab-integration.mjs`
+- `production/lab-runtime/verify_viewer_lab_integration_v1.mjs`
+- `equity-uprise-building-core-v2-3d.html`
+
+Boundary: Step 8 is presentation/interaction over SANDBOX state only. It creates no live building control, does not convert electronics design intent into as-built truth, does not expose real public-service PII, and does not award Verified / Applied / Mentor competency states.
+
+**CURRENT 1–8 LAB RUNTIME SEQUENCE: COMPLETE.**

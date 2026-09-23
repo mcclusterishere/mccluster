@@ -1,12 +1,15 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-store"><meta name="equity-uprise-build" content="__STAMP__"><title>Equity Uprise — Working Building Stack</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
-<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101214;color:#fff;font-family:Inter,system-ui,sans-serif}#app{position:fixed;inset:0}.hud{position:fixed;z-index:5;left:12px;top:12px;max-width:min(660px,calc(100vw - 24px));background:#0b0d10df;border:1px solid #444;border-radius:14px;padding:12px}.hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#ccc;margin:0 0 8px}.c{display:flex;gap:5px;flex-wrap:wrap}button{border:1px solid #555;border-radius:999px;background:#232629;color:#fff;padding:6px 9px;font:700 10px system-ui}button.active{background:#851a1d}.solar{margin-top:8px;font-size:10px;color:#d6dde4}.s{position:fixed;right:12px;bottom:12px;background:#0b0d10df;border:1px solid #444;border-radius:10px;padding:8px 10px;font-size:10px}</style>  <script src="js/live-content.js?v=__STAMP__"></script>\n</head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now with the detailed architectural facade active. Tap a floor to isolate it, Facade to inspect the shell, or expose the building-services nervous system. B1 and F1–F7 remain physically continuous through both protected stairs.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="facade">Facade</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button data-v="south">South</button><button data-v="east">East</button><button data-v="north">North</button><button data-v="west">West</button><button data-v="entry">Entry</button><button data-v="crown">Crown</button><button id="services">Services: Off</button><button id="sunmode">Sun: Auto</button><button id="wire">Wireframe</button></div><div class="solar" id="serviceStatus">Services layer · hidden</div><div class="solar" id="solarStatus">Solar environment · syncing to device clock…</div></div><div class="s" id="status">Loading working stack…</div>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101214;color:#fff;font-family:Inter,system-ui,sans-serif}#app{position:fixed;inset:0}.hud{position:fixed;z-index:5;left:12px;top:12px;max-width:min(660px,calc(100vw - 24px));background:#0b0d10df;border:1px solid #444;border-radius:14px;padding:12px}.hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#ccc;margin:0 0 8px}.c{display:flex;gap:5px;flex-wrap:wrap}button{border:1px solid #555;border-radius:999px;background:#232629;color:#fff;padding:6px 9px;font:700 10px system-ui}button.active{background:#851a1d}.solar{margin-top:8px;font-size:10px;color:#d6dde4}.s{position:fixed;right:12px;bottom:12px;background:#0b0d10df;border:1px solid #444;border-radius:10px;padding:8px 10px;font-size:10px}.labpanel{position:fixed;z-index:6;right:12px;top:12px;width:min(390px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;background:#080a0def;border:1px solid #555;border-radius:14px;padding:12px;box-sizing:border-box}.labpanel[hidden]{display:none}.labpanel h2{font-size:13px;margin:0 0 8px}.labgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.labpanel select,.labpanel input{width:100%;box-sizing:border-box;background:#171a1d;color:#fff;border:1px solid #555;border-radius:8px;padding:6px;font:11px system-ui}.labrow{margin-top:8px;padding-top:8px;border-top:1px solid #333;font-size:10px;color:#d6dde4}.labrow strong{color:#fff}.labtasks{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.labtasks button{border-radius:8px;text-align:left}.labmsg{white-space:pre-wrap;word-break:break-word;color:#bfc8d0}.labwarn{color:#ffcc80}.labok{color:#9fe0b5}@media(max-width:760px){.labpanel{top:auto;bottom:12px;max-height:48vh}.hud{max-width:calc(100vw - 24px)}}
+</style>  <script src="js/live-content.js?v=__STAMP__"></script>\n</head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now with the detailed architectural facade active. Tap a floor to isolate it, Facade to inspect the shell, or expose the building-services nervous system. B1 and F1–F7 remain physically continuous through both protected stairs.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="facade">Facade</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button data-v="south">South</button><button data-v="east">East</button><button data-v="north">North</button><button data-v="west">West</button><button data-v="entry">Entry</button><button data-v="crown">Crown</button><button id="services">Services: Off</button><button id="sunmode">Sun: Auto</button><button id="wire">Wireframe</button><button id="labs">Labs</button></div><div class="solar" id="serviceStatus">Services layer · hidden</div><div class="solar" id="solarStatus">Solar environment · syncing to device clock…</div></div><div class="labpanel" id="labPanel" hidden><h2>EXECUTABLE LAB · SANDBOX</h2><div class="labgrid"><select id="labSelect" aria-label="Lab"></select><select id="labDifficulty" aria-label="Difficulty"></select></div><div class="labtasks"><button id="labStart">Start</button><button id="labReset">Reset</button><button id="labHint">Hint</button><button id="labEvidence">Evidence</button><button id="labComplete">Complete</button></div><div class="labrow"><input id="labInput" aria-label="Action JSON input" placeholder='Action input JSON, e.g. {"route":"..."}'></div><div class="labrow" id="labScenario">Choose a lab.</div><div class="labrow" id="labSystems"></div><div class="labrow" id="labGuidance"></div><div class="labrow"><strong>Tasks</strong><div class="labtasks" id="labActions"></div></div><div class="labrow" id="labAssessment"></div><div class="labrow labmsg" id="labMessage">Training simulation only · no LIVE building control.</div></div><div class="s" id="status">Loading working stack…</div>
 <script type="module">
 import * as THREE from'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';import{GLTFLoader}from'three/addons/loaders/GLTFLoader.js';import{RoomEnvironment}from'three/addons/environments/RoomEnvironment.js';
 const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status'),solarStatus=document.getElementById('solarStatus'),serviceStatus=document.getElementById('serviceStatus');const scene=new THREE.Scene();scene.background=new THREE.Color(0xb9c6cf);scene.fog=new THREE.Fog(0xb9c6cf,ft(120),ft(260));
 const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;app.appendChild(ren.domElement);const pmrem=new THREE.PMREMGenerator(ren);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);
 const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;const sunTarget=new THREE.Object3D();sunTarget.position.set(ft(36),ft(42),ft(-36));scene.add(sunTarget);dl.target=sunTarget;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
-const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,wire=false,loaded=0,solarMode='auto',servicesOn=false,currentFocus='stack';
+const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,loaded=0,solarMode='auto',servicesOn=false,currentFocus='stack';
+const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
+let labModule=null,labDatasets=null,labController=null,labView=null,labElectronicsPromise=null,labPickingIds=[],labLastResult=null;const labStyledMeshes=new Map();
 function makeReliable(root){
  root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.side=THREE.DoubleSide;m.needsUpdate=true})}});
 }
@@ -54,7 +57,7 @@ function frameStack(){
  const box=new THREE.Box3().setFromObject(scene),size=new THREE.Vector3(),center=new THREE.Vector3();box.getSize(size);box.getCenter(center);
  const span=Math.max(size.x,size.z,size.y);cam.position.set(center.x+span*.7,center.y+span*.48,center.z+span*.85);ctl.target.copy(center);cam.far=Math.max(ft(420),span*8);cam.updateProjectionMatrix();ctl.update();
 }
-const params=new URLSearchParams(location.search),requestedFloor=params.get('floor'),requestedView=params.get('view'),requestedCamera=params.get('camera'),requestedServices=params.get('services')==='1';
+const params=new URLSearchParams(location.search),requestedFloor=params.get('floor'),requestedView=params.get('view'),requestedCamera=params.get('camera'),requestedServices=params.get('services')==='1',requestedLab=params.get('lab'),requestedDifficulty=(params.get('difficulty')||'FOUNDATION').toUpperCase();
 function setF7StackDupVisibility(show){
  if(!f7)return;
  f7.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^F7-(?:STAIR-[AB]-(?:TRANSITION|HEADHOUSE)|PASSENGER-OVERRUN|FREIGHT-OVERRUN)/.test(n))o.visible=show});
@@ -195,6 +198,96 @@ function applySolarEnvironment(forceMode=solarMode){
 }
 applySolarEnvironment();
 setInterval(()=>{if(solarMode==='auto')applySolarEnvironment('auto')},60000);
+// Lab Runtime Step 8: presentation/interaction only. Canonical runtime remains authoritative.
+const labPanel=document.getElementById('labPanel'),labSelect=document.getElementById('labSelect'),labDifficulty=document.getElementById('labDifficulty'),labScenario=document.getElementById('labScenario'),labSystems=document.getElementById('labSystems'),labGuidance=document.getElementById('labGuidance'),labActions=document.getElementById('labActions'),labAssessment=document.getElementById('labAssessment'),labMessage=document.getElementById('labMessage'),labInput=document.getElementById('labInput');
+const labRaycaster=new THREE.Raycaster(),labPointer=new THREE.Vector2();
+const LAB_MODULE_URL='/equity-uprise-preview/lab-runtime/equity-uprise-viewer-lab-integration.mjs?v=__STAMP__';
+async function ensureLabRuntime(){
+ if(!labModule)labModule=await import(LAB_MODULE_URL);
+ if(!labDatasets)labDatasets=await labModule.loadViewerLabDatasets('/equity-uprise-preview');
+ if(!labSelect.options.length){
+   const choices=[
+     ...(labDatasets.cisaPack.scenarios||[]).map(x=>[x.source_lab_id,x.source_lab_id+' · '+x.title]),
+     ...(labDatasets.opsPack.scenarios||[]).map(x=>[x.canonical_scenario_id,'OPS · '+x.title]),
+     ...(labDatasets.publicServicePack.scenarios||[]).map(x=>[x.scenario_id,'PUBLIC SERVICE · '+x.title])
+   ];
+   choices.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;labSelect.appendChild(o)});
+   (labDatasets.difficultyPolicy.order||[]).forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;labDifficulty.appendChild(o)});
+ }
+ return labModule;
+}
+function makeElectronicsReliable(root){
+ makeReliable(root);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.forEach(m=>{m.transparent=true;m.opacity=.10;m.depthWrite=false;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
+}
+async function ensureElectronicsLayer(){
+ if(electronics)return electronics;
+ if(!labElectronicsPromise)labElectronicsPromise=new Promise((resolve,reject)=>loader.load('/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb?v=__STAMP__',g=>{electronics=g.scene;electronics.rotation.x=-Math.PI/2;electronics.updateMatrixWorld(true);scene.add(electronics);makeElectronicsReliable(electronics);electronics.visible=false;resolve(electronics)},undefined,reject));
+ return labElectronicsPromise;
+}
+function rememberLabMesh(o){if(!labStyledMeshes.has(o))labStyledMeshes.set(o,{material:o.material,visible:o.visible})}
+function clearLabVisuals(){
+ labStyledMeshes.forEach((s,o)=>{o.material=s.material;o.visible=s.visible});labStyledMeshes.clear();
+ while(labOverlay.children.length){const o=labOverlay.children.pop();o.geometry?.dispose?.();const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>m.dispose?.())}
+ if(electronics)electronics.visible=false;
+}
+function labColor(state){return state==='unavailable'?0xff2d2d:state==='faulted'?0xff6a2d:state==='degraded'?0xffb42d:state==='at_risk'?0xd85cff:0x5fd2ff}
+function styleCanonical(root,id,state){
+ if(!root||!id)return false;let hit=false;root.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(n!==id&&!n.startsWith(id+'::'))return;rememberLabMesh(o);const original=Array.isArray(o.material)?o.material:[o.material];const cloned=original.map(m=>m.clone());cloned.forEach(m=>{if(m.color)m.color.setHex(labColor(state));if(m.emissive){m.emissive.setHex(labColor(state));m.emissiveIntensity=.55}m.transparent=true;m.opacity=.94;m.depthWrite=false;m.needsUpdate=true});o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true;hit=true});return hit
+}
+function sitePoint(x,y,h=.08){return new THREE.Vector3(ft(x),ft(h),-ft(y))}
+function areaOverlay(area){
+ const g=area.geometry||{},color=labColor(area.visual_state),mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide});
+ if(g.bounds_ft){const b=g.bounds_ft,w=Math.abs(b.x2-b.x1),d=Math.abs(b.y2-b.y1),m=new THREE.Mesh(new THREE.BoxGeometry(ft(w),ft(.12),ft(d)),mat);m.position.copy(sitePoint((b.x1+b.x2)/2,(b.y1+b.y2)/2,.08));m.name='LAB-AREA::'+area.canonical_id;labOverlay.add(m);return}
+ if(g.polyline_ft){const pts=g.polyline_ft.map(p=>sitePoint(p[0],p[1],.12)),line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color,transparent:true,opacity:.9}));line.name='LAB-PATH::'+area.canonical_id;labOverlay.add(line);mat.dispose();return}
+ if(Number.isFinite(g.offset_from_building_ft)){const o=g.offset_from_building_ft,pts=[sitePoint(-o,-o,.12),sitePoint(72+o,-o,.12),sitePoint(72+o,72+o,.12),sitePoint(-o,72+o,.12),sitePoint(-o,-o,.12)],line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color,transparent:true,opacity:.9}));line.name='LAB-KEEP-CLEAR::'+area.canonical_id;labOverlay.add(line);mat.dispose();return}
+ mat.dispose()
+}
+function findCanonicalCenter(id){
+ for(const root of [f1,base].filter(Boolean)){let found=null;root.traverse(o=>{if(found||!o.isMesh)return;const n=o.name||'';if(n===id||n.startsWith(id+'::'))found=o});if(found){const box=new THREE.Box3().setFromObject(found),v=new THREE.Vector3();box.getCenter(v);return v}}
+ return null
+}
+function occupantOverlay(marker){
+ const p=findCanonicalCenter(marker.anchor_id);if(!p)return;const m=new THREE.Mesh(new THREE.SphereGeometry(ft(.65),14,10),new THREE.MeshBasicMaterial({color:0x7fd8ff,transparent:true,opacity:.8}));m.position.copy(p);m.position.y+=ft(3);m.name=marker.marker_id;labOverlay.add(m)
+}
+function escapeText(v){return String(v??'').replace(/[<>]/g,'')}
+function renderLabHud(view){
+ labScenario.innerHTML='<strong>'+escapeText(view.scenario.title)+'</strong><br>'+escapeText(view.scenario.family)+' · '+escapeText(view.learner.level)+' · '+escapeText(view.scenario.phase)+' · SANDBOX';
+ labSystems.innerHTML='<strong>System state</strong><br>'+((view.systems||[]).map(s=>escapeText(s.label)+' — '+escapeText(s.state)).join('<br>')||'Modeled systems at baseline');
+ const obj=view.learner.objective_view===null?'Hidden by difficulty':JSON.stringify(view.learner.objective_view);
+ const faults=view.learner.fault_view===null?'Hidden by difficulty':JSON.stringify(view.learner.fault_view);
+ labGuidance.innerHTML='<strong>Objectives</strong> '+escapeText(obj)+'<br><strong>Fault view</strong> '+escapeText(faults)+'<br><strong>Hints</strong> '+view.learner.hint_policy.remaining+'/'+view.learner.hint_policy.budget+' remaining';
+ labActions.innerHTML='';(view.learner.action_view||[]).forEach(a=>{const b=document.createElement('button');b.dataset.labAction=a.action_id;b.textContent=[a.action_id,a.action_type,a.target].filter(Boolean).join(' · ');b.onclick=()=>runLabAction(a.action_id);labActions.appendChild(b)});
+ const A=view.assessment;labAssessment.innerHTML='<strong>Assessment signal</strong><br>Actions '+A.actions.total+' · mistakes '+A.actions.mistakes+' · hints '+A.hints_used+' · evidence '+A.evidence_produced+'<br>Safety '+(A.critical_safety_clear?'clear':'critical event')+' · evidence signal '+escapeText(A.automated_evidence_signal)+' · difficulty qualification '+(A.difficulty_qualified?'met':'not yet met')+'<br>Automation ceiling: Demonstrated';
+ document.getElementById('labHint').disabled=view.learner.hint_policy.remaining<=0||view.scenario.phase!=='RUNNING';
+ document.getElementById('labComplete').disabled=view.scenario.phase!=='RUNNING';
+ document.getElementById('labStart').disabled=view.scenario.phase==='RUNNING'||view.scenario.phase==='COMPLETED';
+}
+async function applyLabView(view){
+ labView=view;clearLabVisuals();
+ if((view.visuals.assets.length||view.visuals.connections.length)){const e=await ensureElectronicsLayer();e.visible=true;view.visuals.assets.forEach(x=>styleCanonical(e,x.canonical_id,x.visual_state));view.visuals.connections.forEach(x=>styleCanonical(e,x.connection_id,x.visual_state))}
+ view.visuals.objects.forEach(x=>styleCanonical(f1,x.canonical_id,x.visual_state)||styleCanonical(base,x.canonical_id,x.visual_state));
+ view.visuals.areas.forEach(x=>{if(!styleCanonical(f1,x.canonical_id,x.visual_state)&&!styleCanonical(base,x.canonical_id,x.visual_state))areaOverlay(x)});
+ view.visuals.occupants.forEach(occupantOverlay);renderLabHud(view);
+}
+function parseLabInput(){const raw=labInput.value.trim();if(!raw)return{};return JSON.parse(raw)}
+async function runLabAction(id){
+ if(!labController)return;try{const out=labController.execute(id,parseLabInput());labLastResult=out.result;labMessage.textContent=JSON.stringify(out.result,null,2);labMessage.className='labrow labmsg '+(out.result.status==='success'?'labok':'labwarn');await applyLabView(out.view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}
+}
+async function startLab(lab=labSelect.value,difficulty=labDifficulty.value||'FOUNDATION'){
+ try{await ensureLabRuntime();labSelect.value=lab;labDifficulty.value=difficulty;labController=labModule.createViewerLabController({lab,difficulty, datasets:labDatasets});labPickingIds=labController.canonicalIdsForPicking();const view=labController.start();labPanel.hidden=false;labMessage.textContent='Lab running · double-click inspectable modeled equipment/objects or use the task controls.';labMessage.className='labrow labmsg';await applyLabView(view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn';labPanel.hidden=false}
+}
+async function openLabs(){
+ labPanel.hidden=false;try{await ensureLabRuntime();if(!labDifficulty.value)labDifficulty.value=requestedDifficulty;if(requestedLab)labSelect.value=requestedLab}catch(err){labMessage.textContent='LAB LOAD ERROR · '+err.message;labMessage.className='labrow labmsg labwarn'}
+}
+document.getElementById('labs').onclick=()=>labPanel.hidden?openLabs():(labPanel.hidden=true);
+document.getElementById('labStart').onclick=()=>startLab();
+document.getElementById('labReset').onclick=async()=>{if(!labController){clearLabVisuals();return}const view=labController.reset();labMessage.textContent='Reset complete · canonical simulated baseline restored.';labMessage.className='labrow labmsg labok';await applyLabView(view)};
+document.getElementById('labHint').onclick=async()=>{if(!labController)return;try{const out=labController.requestHint('supported');labMessage.textContent='Supported hint usage recorded. Continue from the learner-visible task context.';await applyLabView(out.view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}};
+document.getElementById('labEvidence').onclick=async()=>{if(!labController)return;const title=prompt('Learner artifact title');if(!title)return;const reference=prompt('Artifact reference (URL/URI/path)');if(!reference)return;try{const out=labController.submitArtifact({title,reference});labMessage.textContent='Learner artifact reference recorded.';await applyLabView(out.view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}};
+document.getElementById('labComplete').onclick=async()=>{if(!labController)return;try{const out=labController.complete();labMessage.textContent='Scenario complete · assessment evidence captured. Human competency review remains separate.';labMessage.className='labrow labmsg labok';await applyLabView(out.view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}};
+ren.domElement.addEventListener('dblclick',async ev=>{if(!labController||!labView||labView.scenario.phase!=='RUNNING')return;const rect=ren.domElement.getBoundingClientRect();labPointer.x=((ev.clientX-rect.left)/rect.width)*2-1;labPointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;labRaycaster.setFromCamera(labPointer,cam);const roots=[electronics,f1,base].filter(Boolean),hits=labRaycaster.intersectObjects(roots,true);for(const hit of hits){let o=hit.object;while(o){const n=o.name||'';const id=labPickingIds.find(x=>n===x||n.startsWith(x+'::'));if(id){const action=labController.actionForCanonicalId(id);if(action){await runLabAction(action);return}}o=o.parent}}});
+if(requestedLab){openLabs().then(()=>startLab(requestedLab,requestedDifficulty))}
+
 document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>focus(b.dataset.f));
 document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>setView(b.dataset.v));
 document.getElementById('services').onclick=e=>{servicesOn=!servicesOn;syncServicesVisibility();e.target.textContent=servicesOn?'Services: Exposed':'Services: Off';e.target.classList.toggle('active',servicesOn)};

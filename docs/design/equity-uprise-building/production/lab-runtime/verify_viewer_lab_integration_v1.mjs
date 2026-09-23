@@ -1,0 +1,196 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import {
+  VIEWER_LAB_INTEGRATION_VERSION,
+  VIEWER_LAB_EXECUTION_TARGET,
+  createViewerLabController,
+} from "./equity-uprise-viewer-lab-integration.mjs";
+
+const load = (relativePath) => JSON.parse(readFileSync(new URL(relativePath, import.meta.url), "utf8"));
+const text = (relativePath) => readFileSync(new URL(relativePath, import.meta.url), "utf8");
+function fakeClock(start = 1000, step = 100) {
+  let now = start;
+  return () => { const out = now; now += step; return out; };
+}
+
+const datasets = {
+  cisaPack: load("./cisa-itot-scenario-pack-v1.json"),
+  opsPack: load("./fema-building-ops-scenario-pack-v1.json"),
+  publicServicePack: load("./public-service-scenario-pack-v1.json"),
+  difficultyPolicy: load("./difficulty-progression-policy-v1.json"),
+  rubrics: load("../../../equity-uprise-development/competency-rubrics.json"),
+  federalBindings: load("../../../equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json"),
+  labCatalog: load("../electronics/generated/equity-uprise-it-lab-catalog-v1.json"),
+  registry: load("../asset-registry/generated/equity-uprise-asset-registry-v1.json"),
+  connections: load("../electronics/generated/equity-uprise-electronics-connections-v1.json"),
+  manifest: load("../electronics/generated/equity-uprise-electronics-manifest-v1.json"),
+  program: load("../floor-01/floor-01-digital-twin-program.json"),
+  simulationObjects: load("../floor-01/floor-01-simulation-objects.json"),
+  objectInventory: load("../floor-01/floor-01-object-inventory.json"),
+};
+
+assert.equal(VIEWER_LAB_INTEGRATION_VERSION, "1.0.0");
+assert.equal(VIEWER_LAB_EXECUTION_TARGET, "SANDBOX");
+
+const integrationText = text("./equity-uprise-viewer-lab-integration.mjs");
+for (const required of [
+  "./equity-uprise-guided-scenarios.mjs",
+  "./equity-uprise-building-ops-runtime.mjs",
+  "./equity-uprise-public-service-runtime.mjs",
+  "./equity-uprise-assessment-runtime.mjs",
+  "./equity-uprise-difficulty-runtime.mjs",
+]) {
+  assert.ok(integrationText.includes(required), "viewer integration must reference canonical runtime module " + required);
+}
+assert.ok(!integrationText.includes("live_control_allowed: true"));
+assert.ok(integrationText.includes("execution_target: \"SANDBOX\""));
+
+const registryIds = new Set((datasets.registry.assets || []).map((asset) => asset.asset_id));
+const manifestIds = datasets.manifest.new_asset_ids || [];
+const connectionIds = new Set((datasets.connections.connections || []).map((connection) => connection.connection_id));
+assert.equal(new Set(manifestIds).size, manifestIds.length, "manifest asset IDs must remain unique");
+assert.ok(manifestIds.every((id) => registryIds.has(id)), "every electronics manifest ID must resolve in canonical registry");
+for (const connection of datasets.connections.connections || []) {
+  assert.ok(registryIds.has(connection.from_asset_id), "connection source must resolve " + connection.connection_id);
+  assert.ok(registryIds.has(connection.to_asset_id), "connection destination must resolve " + connection.connection_id);
+}
+
+function controller(lab, difficulty, start = 1000) {
+  return createViewerLabController({
+    lab,
+    difficulty,
+    datasets,
+    actor_id: "step8-verifier",
+    clock: fakeClock(start, 100),
+  });
+}
+
+const expert = controller("IT-LAB-039", "EXPERT");
+let expertView = expert.start();
+assert.equal(expertView.execution_target, "SANDBOX");
+assert.equal(expertView.live_control_allowed, false);
+assert.equal(expertView.scenario.family, "CISA_ITOT");
+assert.equal(expertView.learner.objective_view, null, "Expert objectives must remain hidden");
+assert.equal(expertView.learner.fault_view, null, "Expert fault identity must remain hidden");
+assert.equal(expertView.learner.hint_policy.budget, 0, "Expert hint budget must be zero");
+assert.deepEqual(expertView.learner.hint_policy.allowed_levels, []);
+assert.ok(expertView.learner.action_view.every((item) => Object.keys(item).length === 1 && item.action_id), "Expert action view must be ID-only");
+assert.ok(expertView.visuals.assets.length > 0, "Expert incident must still create visible simulated equipment state");
+assert.ok(expertView.visuals.assets.every((item) => registryIds.has(item.canonical_id)), "visual equipment must use canonical registry IDs");
+assert.ok(expertView.visuals.connections.every((item) => connectionIds.has(item.connection_id)), "visual paths must use canonical connection IDs");
+assert.equal(new Set(expertView.visuals.assets.map((item) => item.canonical_id)).size, expertView.visuals.assets.length, "adapter may not invent duplicate asset records");
+assert.ok(expertView.systems.length > 0, "runtime-backed system state must be visible");
+assert.throws(() => expert.requestHint("supported"), (error) => error.code === "DIFFICULTY_HINT_BUDGET_EXHAUSTED");
+
+const forbiddenAwards = /\b(?:Verified|Applied|Mentor)\b/;
+assert.equal(forbiddenAwards.test(JSON.stringify(expertView.assessment)), false, "viewer assessment summary must not render human competency awards");
+assert.equal(expertView.assessment.maximum_automated_state, "Demonstrated");
+
+const resetView = expert.reset();
+assert.equal(resetView.scenario.phase, "CREATED");
+assert.deepEqual(resetView.visuals.assets, []);
+assert.deepEqual(resetView.visuals.connections, []);
+assert.deepEqual(resetView.visuals.objects, []);
+assert.deepEqual(resetView.visuals.areas, []);
+assert.deepEqual(resetView.visuals.occupants, []);
+assert.deepEqual(resetView.systems, []);
+
+const foundationA = controller("IT-LAB-039", "FOUNDATION", 5000);
+const foundationB = controller("IT-LAB-039", "FOUNDATION", 5000);
+const foundationViewA = foundationA.start();
+const foundationViewB = foundationB.start();
+assert.deepEqual(foundationViewA.visuals, foundationViewB.visuals, "fault-to-visual mapping must be deterministic");
+assert.deepEqual(foundationViewA.systems, foundationViewB.systems, "system-state mapping must be deterministic");
+assert.ok(foundationViewA.learner.objective_view !== null, "Foundation objectives must be visible");
+assert.deepEqual(foundationViewA.learner.fault_view.active_fault_ids, ["bas_alarm","core_link_degraded","normal_power_loss"]);
+assert.equal(foundationViewA.learner.hint_policy.budget, 3);
+assert.ok(foundationViewA.learner.action_view.every((item) =>
+  Object.prototype.hasOwnProperty.call(item, "target") &&
+  Object.prototype.hasOwnProperty.call(item, "requires") &&
+  Object.prototype.hasOwnProperty.call(item, "observation")
+), "Foundation action guidance must include target/prerequisite/observation detail");
+
+const fullRun = controller("IT-LAB-039", "FOUNDATION", 9000);
+fullRun.start();
+const definition039 = datasets.cisaPack.scenarios.find((scenario) => scenario.source_lab_id === "IT-LAB-039");
+for (const step of definition039.verification_path) {
+  const out = fullRun.execute(step.action_id, step.input || {});
+  assert.equal(out.result.status, "success", "Step 8 viewer must execute through canonical guided runtime");
+}
+let restored = fullRun.snapshot();
+assert.deepEqual(restored.visuals.assets, [], "successful remediation must clear equipment fault visuals");
+assert.deepEqual(restored.visuals.connections, [], "successful remediation must clear path fault visuals");
+const completed = fullRun.complete().view;
+assert.equal(completed.scenario.phase, "COMPLETED");
+assert.ok(completed.assessment.actions.total >= definition039.verification_path.length);
+assert.equal(completed.assessment.critical_safety_clear, true);
+assert.match(completed.assessment.automated_evidence_signal, /evidence|insufficient|practicing/i);
+
+const blocked = controller("blocked_stair_a", "FOUNDATION", 12000);
+const blockedView = blocked.start();
+const blockedAreaIds = new Set(blockedView.visuals.areas.map((item) => item.canonical_id));
+assert.ok(blockedAreaIds.has("F1-DOOR-STAIR-A-DISCHARGE"));
+assert.ok(blockedAreaIds.has("site-east-egress-walk"));
+assert.ok(blockedAreaIds.has("site-north-egress-walk"));
+const canonicalFloorIds = new Set([
+  ...(datasets.simulationObjects.objects || []).map((item) => item.object_id),
+  ...(datasets.objectInventory.objects || []).map((item) => item.id),
+]);
+assert.ok(blockedView.visuals.areas.every((item) => canonicalFloorIds.has(item.canonical_id)), "affected areas must reference canonical Floor 1/site IDs");
+
+const serviceIncident = controller("service_area_incident", "FOUNDATION", 15000);
+const serviceView = serviceIncident.start();
+const serviceAreaIds = new Set(serviceView.visuals.areas.map((item) => item.canonical_id));
+assert.ok(serviceAreaIds.has("site-service-apron-west"));
+assert.ok(serviceAreaIds.has("site-responder-keep-clear"));
+
+const publicService = controller("EU-PSC-VITA-INTAKE-V1", "FOUNDATION", 18000);
+const publicView = publicService.start();
+assert.equal(publicView.scenario.synthetic_case_only, true);
+assert.equal(publicView.safety.public_service_real_pii_forbidden, true);
+assert.ok(publicView.systems.some((item) => item.label === "Privacy" && item.state === "exposed"));
+const publicSerialized = JSON.stringify(publicView);
+assert.equal(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(publicSerialized), false, "public-service viewer state may not expose email-shaped PII");
+assert.equal(/\b\d{3}-\d{2}-\d{4}\b/.test(publicSerialized), false, "public-service viewer state may not expose SSN-shaped PII");
+assert.equal(/\b\d{3}[-.) ]\d{3}[- ]\d{4}\b/.test(publicSerialized), false, "public-service viewer state may not expose phone-shaped PII");
+assert.ok(publicView.visuals.occupants.every((item) => item.synthetic_only === true && /Anonymous synthetic/.test(item.label)));
+
+const viewer = text("../../../../../equity-uprise-building-core-v2-3d.html");
+for (const required of [
+  'data-f="stack"', 'data-f="facade"', 'id="services"', 'id="wire"', 'deviceClockSolar',
+  "requestedFloor", "syncServicesVisibility", "LAB_MODULE_URL", "requestedLab=params.get('lab')",
+  "labController.execute", "actionForCanonicalId", "labController.reset",
+]) {
+  assert.ok(viewer.includes(required), "canonical viewer lost required feature/Step 8 hook: " + required);
+}
+assert.ok(viewer.includes("/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb"));
+assert.ok(viewer.includes("double-click inspectable"));
+assert.ok(!viewer.includes("LIVE control enabled"));
+
+const assessmentRuntime = text("./equity-uprise-assessment-runtime.mjs");
+assert.equal(assessmentRuntime.includes("node:crypto"), false, "Step 6 assessment must remain browser-loadable for viewer integration");
+assert.ok(assessmentRuntime.includes("TextEncoder"), "portable SHA-256 implementation must be present");
+
+const deploy = text("../../../../../.github/workflows/deploy-pages.yml");
+for (const required of [
+  "equity-uprise-electronics-fabric-v1.glb",
+  "equity-uprise-viewer-lab-integration.mjs",
+  "difficulty-progression-policy-v1.json",
+  "competency-rubrics.json",
+  "FEDERAL-TRAINING-BINDINGS.json",
+]) {
+  assert.ok(deploy.includes(required), "deploy workflow must publish Step 8 dependency " + required);
+}
+
+const smoke = text("../../../../../scripts/smoke.mjs");
+assert.ok(smoke.includes("building viewer: Step 8 controls"), "existing browser smoke suite must cover canonical viewer controls");
+
+console.log("EQUITY UPRISE LAB RUNTIME STEP 8 VIEWER INTEGRATION: PASS");
+console.log(JSON.stringify({
+  viewer_lab_integration_version: VIEWER_LAB_INTEGRATION_VERSION,
+  expert_visual_assets: expertView.visuals.assets.length,
+  expert_visual_connections: expertView.visuals.connections.length,
+  blocked_area_ids: [...blockedAreaIds].sort(),
+  public_service_systems: publicView.systems,
+  sandbox_only: true,
+}, null, 2));
