@@ -173,7 +173,7 @@ for (const required of [
   assert.ok(viewer.includes(required), "Room Mode contract missing: " + required);
 }
 assert.ok(viewer.includes("services.visible=servicesOn&&!roomMode"), "Room Mode must hide raw building-services overlay");
-assert.ok(viewer.includes("e.visible=!roomMode"), "Room Mode must hide raw electronics topology overlay");
+assert.ok(viewer.includes("electronics.visible=false"), "Room/Play Mode must keep raw electronics topology hidden by default");
 for (const required of [
   'id="xray"', "setEngineeringMode", "setEngineeringElectronics", "engineeringMeshIsCable",
   "electronics.traverse(o=>{if(o.isMesh)o.visible=false})",
