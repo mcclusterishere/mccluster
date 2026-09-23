@@ -242,3 +242,14 @@ Generated electronics artifacts:
 - `production/electronics/generated/equity-uprise-electronics-fabric-v1.glb`
 
 The electronics layer extends, rather than replaces, the Digital-to-Physical Asset Registry and Step 3A/3B causal graph.
+
+
+## Federal training authority
+
+The canonical external training/evidence layer that binds federal programs to the building, competencies, Floor 1 scenarios and Step 4A labs is:
+- `../equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md`
+- `../equity-uprise-development/FEDERAL-TRAINING-CATALOG.json`
+- `../equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json`
+- `../equity-uprise-development/verify_federal_training_catalog.py`
+
+These files are included in the building context gate as external authority. Credentials remain separate from competency mastery and all learner B1/OT activity remains sandboxed.
