@@ -346,11 +346,10 @@ async function setEngineeringMode(on){
    button.textContent='X-Ray: Off';if(electronics)electronics.visible=false;clearEngineeringMarkers();engineeringOverlay.visible=false;syncServicesVisibility();return
  }
  button.textContent='X-Ray: Loading…';serviceStatus.textContent='Engineering X-Ray · waiting for complete building geometry…';
- await buildingLoaded;
- const e=await ensureElectronicsLayer();
- await applyElectronicsSpatialBindings(e);
- syncServicesVisibility();
- syncEngineeringView();
+ await buildingLoaded;if(!engineeringMode)return;
+ const e=await ensureElectronicsLayer();if(!engineeringMode)return;
+ await applyElectronicsSpatialBindings(e);if(!engineeringMode)return;
+ syncServicesVisibility();syncEngineeringView();
  if(electronicsBoundCount===0){button.textContent='X-Ray: 0';serviceStatus.textContent='Engineering X-Ray ERROR · 0 canonical device anchors resolved'}
 }
 function rememberLabMesh(o){if(!labStyledMeshes.has(o))labStyledMeshes.set(o,{material:o.material,visible:o.visible})}
@@ -498,7 +497,7 @@ async function enableRoomMotion(){
 function disableRoomMotion(){window.removeEventListener('deviceorientation',onRoomOrientation,true);window.removeEventListener('deviceorientationabsolute',onRoomOrientation,true);window.removeEventListener('devicemotion',onRoomMotion,true);roomMotionActive=false;roomSensorMode='none';roomSensorZero=null;roomLastRawQuaternion=null;roomMotionEnabledAt=0;roomLastMotionStamp=0;roomMotionButton.textContent='Enable Motion'}
 async function enterRoomMode(){
  if(roomMode)return;if(!f1||loaded<11){roomMessage.textContent='Building is still loading. Try Room Mode again when the stack finishes.';roomHud.hidden=false;return}
- roomPrevFocus=currentFocus;roomPrevServices=servicesOn;roomPrevWire=wire;roomMode=true;document.body.classList.add('room-active');roomHud.hidden=false;roomReticle.hidden=false;labPanel.hidden=true;ctl.enabled=false;roomLightRig.visible=true;
+ roomPrevFocus=currentFocus;roomPrevServices=servicesOn;roomPrevWire=wire;roomMode=true;engineeringOverlay.visible=false;document.body.classList.add('room-active');roomHud.hidden=false;roomReticle.hidden=false;labPanel.hidden=true;ctl.enabled=false;roomLightRig.visible=true;
  if(wire){wire=false;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=false;m.needsUpdate=true}});document.getElementById('wire').textContent='Wireframe'}
  focus('1');if(electronics)electronics.visible=false;syncServicesVisibility();clearRoomHighlights();roomSelectedId=null;roomBackButton.disabled=true;roomInspectButton.disabled=true;
  cam.position.copy(roomAnchorPosition());cam.lookAt(roomAnchorLook());roomBaseQuaternion=cam.quaternion.clone();roomSelection.textContent='Look around and tap a highlighted object.';refreshRoomHighlights();
@@ -507,7 +506,7 @@ async function enterRoomMode(){
 function exitRoomMode(){
  if(!roomMode)return;disableRoomMotion();clearRoomHighlights();roomMode=false;roomLightRig.visible=false;document.body.classList.remove('room-active');roomHud.hidden=true;roomReticle.hidden=true;ctl.enabled=true;servicesOn=roomPrevServices;
  if(roomPrevWire&&!wire){wire=true;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=true;m.needsUpdate=true}});document.getElementById('wire').textContent='Solid'}
- focus(roomPrevFocus||'stack');syncServicesVisibility();if(labView)applyLabView(labView)
+ focus(roomPrevFocus||'stack');syncServicesVisibility();if(engineeringMode)syncEngineeringView();if(labView)applyLabView(labView)
 }
 function occupantOverlay(marker){
  const p=findCanonicalCenter(marker.anchor_id);if(!p)return;const m=new THREE.Mesh(new THREE.SphereGeometry(ft(.65),14,10),new THREE.MeshBasicMaterial({color:0x7fd8ff,transparent:true,opacity:.8}));m.position.copy(p);m.position.y+=ft(3);m.name=marker.marker_id;labOverlay.add(m)
