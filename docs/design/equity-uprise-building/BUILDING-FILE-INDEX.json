@@ -5,7 +5,11 @@
     "building_root": "docs/design/equity-uprise-building/",
     "external_authority": [
       "docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md",
-      "docs/design/EQUITY-UPRISE-REPO-AUDIT.md"
+      "docs/design/EQUITY-UPRISE-REPO-AUDIT.md",
+      "docs/design/equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json",
+      "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md",
+      "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG.json",
+      "docs/design/equity-uprise-development/verify_federal_training_catalog.py"
     ],
     "public_viewer_regex": "^equity-uprise-(?:building-core-v2|floor-0[1-7]|basement-b1)-3d\\.html$",
     "workflows": [
@@ -21,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 299,
+  "tracked_count": 303,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -138,7 +142,11 @@
     ],
     "external_authority": [
       "docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md",
-      "docs/design/EQUITY-UPRISE-REPO-AUDIT.md"
+      "docs/design/EQUITY-UPRISE-REPO-AUDIT.md",
+      "docs/design/equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json",
+      "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md",
+      "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG.json",
+      "docs/design/equity-uprise-development/verify_federal_training_catalog.py"
     ],
     "generated_artifacts": [
       "docs/design/equity-uprise-building/production/generated/equity-uprise-authority-hygiene-report.json",
