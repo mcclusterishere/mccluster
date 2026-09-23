@@ -5,7 +5,7 @@ import { createPublicServiceExercise } from "./equity-uprise-public-service-runt
 import { createAssessedExercise } from "./equity-uprise-assessment-runtime.mjs";
 import { createDifficultyProgressionExercise } from "./equity-uprise-difficulty-runtime.mjs";
 
-export const VIEWER_LAB_INTEGRATION_VERSION = "1.0.0";
+export const VIEWER_LAB_INTEGRATION_VERSION = "1.1.0";
 export const VIEWER_LAB_EXECUTION_TARGET = "SANDBOX";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -30,6 +30,120 @@ const SERVICE_LABELS = Object.freeze({
   "ELEC-NORMAL": "Normal Power",
   "LOGIC-SVC-DIRECTORY-IDP": "Directory / Check-In",
 });
+
+const LEARNER_FIRST_LEVELS = new Set(["FOUNDATION", "TECHNICIAN"]);
+
+function actionId(action) {
+  return action?.action_id || action?.id || null;
+}
+
+function actionType(action) {
+  return action?.action_type || action?.type || null;
+}
+
+function actionTarget(action) {
+  return action?.target_selector || action?.target || null;
+}
+
+function targetType(target) {
+  const value = String(target || "");
+  const typeMatch = value.match(/:type:([^:]+)$/);
+  if (typeMatch) return typeMatch[1];
+  const cableMatch = value.match(/:cable:([^:]+)$/);
+  if (cableMatch) return cableMatch[1];
+  return value;
+}
+
+function humanizeToken(value) {
+  return String(value || "")
+    .replace(/^LOGIC-(?:SVC|VLAN)-/i, "")
+    .replace(/^RUNTIME-(?:OPS|PSC)-/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
+
+function friendlyTarget(target, datasets) {
+  const key = targetType(target);
+  const configured = datasets.learnerExperience?.target_labels?.[key];
+  return configured || humanizeToken(key || "system");
+}
+
+function successfulActionIds(runtime) {
+  const direct = runtime?.successful_action_ids || [];
+  const fromHistory = (runtime?.action_history || [])
+    .filter((item) => item.status === "success")
+    .map((item) => item.action_id)
+    .filter(Boolean);
+  return new Set([...direct, ...fromHistory]);
+}
+
+function diagnosticStage(definition, runtime) {
+  if (runtime?.phase === "COMPLETED") return "COMPLETE";
+  const successful = successfulActionIds(runtime);
+  const actions = definition?.actions || [];
+  const has = (type) => actions.some((item) => actionType(item) === type && successful.has(actionId(item)));
+  if (has("validate")) return "COMPLETE";
+  if (has("mitigate")) return "VERIFY";
+  if (has("decision")) return "FIX";
+  if (has("inspect")) return "HYPOTHESIZE";
+  return "OBSERVE";
+}
+
+function genericActionLabel(action, datasets) {
+  const type = actionType(action);
+  const target = friendlyTarget(actionTarget(action), datasets);
+  if (type === "inspect") return "Check " + target;
+  if (type === "decision") return "Choose the most likely cause";
+  if (type === "mitigate") return "Apply the safe repair";
+  if (type === "validate") return "Verify the fix";
+  if (type === "communicate") return "Communicate the next step";
+  return humanizeToken(actionId(action) || type || "Continue");
+}
+
+function learnerExperienceView({ learner, runtime, classified, datasets }) {
+  const key = runtime?.source_lab_id || classified.definition?.source_lab_id || classified.canonical_id;
+  const ticket = datasets.learnerExperience?.tickets?.[key] || {};
+  const definitionActions = classified.definition?.actions || [];
+  const byId = new Map(definitionActions.map((item) => [actionId(item), item]));
+  const level = String(learner?.level || "FOUNDATION").toUpperCase();
+  const learnerFirst = LEARNER_FIRST_LEVELS.has(level);
+  const actionItems = (learner?.action_view || []).map((visible) => {
+    const id = visible.action_id;
+    const definition = byId.get(id) || visible;
+    const type = visible.action_type || actionType(definition);
+    const target = visible.target || actionTarget(definition);
+    const configuredChoices = ticket.decision_choices?.[id] || [];
+    return {
+      action_id: id,
+      action_type: type,
+      label: level === "EXPERT" ? id : (ticket.action_labels?.[id] || genericActionLabel(definition, datasets)),
+      target_label: learnerFirst && target ? friendlyTarget(target, datasets) : null,
+      decision_choices: level === "FOUNDATION" ? clone(configuredChoices) : [],
+      input_required: Boolean(definition?.expected_input),
+      technical_target: learnerFirst ? null : (target || null),
+    };
+  });
+
+  return {
+    presentation_version: datasets.learnerExperience?.schema_version || "1.0.0",
+    ticket_key: key,
+    learner_first: learnerFirst,
+    difficulty_label: datasets.learnerExperience?.difficulty_labels?.[level] || humanizeToken(level),
+    diagnostic_loop: clone(datasets.learnerExperience?.diagnostic_loop || ["OBSERVE","HYPOTHESIZE","TEST","FIX","VERIFY"]),
+    diagnostic_stage: diagnosticStage(classified.definition, runtime),
+    title: ticket.title || runtime?.title || classified.definition?.title || "Building support ticket",
+    role: ticket.role || "You are the person responding to this simulated problem.",
+    reporter: ticket.reporter || null,
+    issue_report: ticket.issue_report || classified.definition?.learner_brief || runtime?.title || "A building user reported a problem.",
+    known: clone(ticket.known || []),
+    goal: ticket.goal || "Observe the symptom, form a hypothesis, test it, make the smallest safe repair, and verify the result.",
+    reinforcement: clone(ticket.reinforcement || null),
+    success_message: ticket.success_message || "The simulated issue is resolved and verified.",
+    available_actions: actionItems,
+    engineering_default: !learnerFirst && (runtime?.engineering_view === true || classified.definition?.engineering_view === true),
+    show_raw_controls: level === "ADVANCED" || level === "EXPERT",
+  };
+}
 
 function availabilityVisual(state) {
   if (!state) return "normal";
@@ -213,6 +327,7 @@ export function adaptRuntimeSnapshotToViewer({ difficulty, exercise, datasets, c
       engineering_view: runtime.engineering_view === true || classified.definition.engineering_view === true,
     },
     learner: clone(learner),
+    learner_experience: learnerExperienceView({ learner, runtime, classified, datasets }),
     visuals: {
       assets: assetStates.map((state) => ({
         canonical_id: state.asset_id,
@@ -437,7 +552,7 @@ async function fetchJson(url) {
 export async function loadViewerLabDatasets(root = "/equity-uprise-preview") {
   const r = root.replace(/\/$/, "");
   const [
-    distributedPack, cisaPack, opsPack, publicServicePack, difficultyPolicy, rubrics, federalBindings,
+    distributedPack, cisaPack, opsPack, publicServicePack, difficultyPolicy, learnerExperience, rubrics, federalBindings,
     labCatalog, registry, connections, manifest, program, simulationObjects, objectInventory,
   ] = await Promise.all([
     fetchJson(r + "/lab-runtime/distributed-building-scenario-pack-v1.json"),
@@ -445,6 +560,7 @@ export async function loadViewerLabDatasets(root = "/equity-uprise-preview") {
     fetchJson(r + "/lab-runtime/fema-building-ops-scenario-pack-v1.json"),
     fetchJson(r + "/lab-runtime/public-service-scenario-pack-v1.json"),
     fetchJson(r + "/lab-runtime/difficulty-progression-policy-v1.json"),
+    fetchJson(r + "/lab-runtime/learner-experience-v1.json"),
     fetchJson(r + "/competency-rubrics.json"),
     fetchJson(r + "/federal-training-bindings.json"),
     fetchJson(r + "/equity-uprise-it-lab-catalog-v1.json"),
@@ -456,7 +572,7 @@ export async function loadViewerLabDatasets(root = "/equity-uprise-preview") {
     fetchJson(r + "/floor-01-object-inventory.json"),
   ]);
   return {
-    distributedPack, cisaPack, opsPack, publicServicePack, difficultyPolicy, rubrics, federalBindings,
+    distributedPack, cisaPack, opsPack, publicServicePack, difficultyPolicy, learnerExperience, rubrics, federalBindings,
     labCatalog, registry, connections, manifest, program, simulationObjects, objectInventory,
   };
 }
