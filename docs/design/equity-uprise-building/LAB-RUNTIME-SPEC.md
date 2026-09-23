@@ -235,3 +235,31 @@ Incorrect decisions are recorded but do not advance objectives. Out-of-order res
 
 **Next:** Step 4 adds FEMA building-operations exercises on the same runtime.
 
+## Step 4 — Building-Operations Exercises
+
+Step 4 promotes the eight already-canonical Floor 1 operations scenarios into executable exercises on the same Lab Runtime:
+
+- `basic_evacuation`
+- `blocked_stair_a`
+- `passenger_elevator_outage`
+- `power_interruption`
+- `medical_incident_lobby`
+- `public_service_surge`
+- `network_checkin_outage`
+- `service_area_incident`
+
+Canonical Step 4 files:
+- `production/lab-runtime/fema-building-ops-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-building-ops-runtime.mjs`
+- `production/lab-runtime/verify_fema_building_ops_scenarios_v1.mjs`
+
+The runtime uses existing Floor 1 simulation/object inventory IDs and the canonical asset registry. Temporary incident, queue, accountability and communication states remain runtime-only semantic state and never become duplicate physical assets.
+
+Exercises include prerequisite gates, state-backed inspection, deterministic correct/incorrect decisions, simulation-only resolution, canonical evidence capture, federal-training binding verification and deterministic replay.
+
+The medical scenario is limited to recognition, emergency escalation, responder access, equipment location for trained responders, and handoff. It does not teach diagnosis or treatment.
+
+All Step 4 exercises remain SANDBOX-only. LIVE building control is rejected.
+
+**Next:** Step 5 adds Floor 1 public-service intake exercises, including IRS VITA/OHRP-aligned privacy, intake, scope, consent and escalation workflows.
+
