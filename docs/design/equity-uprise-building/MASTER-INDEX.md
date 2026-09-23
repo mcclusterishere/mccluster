@@ -318,9 +318,14 @@ Step 8 completes the original Lab Runtime sequence by adapting canonical runtime
 
 ### Step 9 distributed whole-building practical labs
 - `production/lab-runtime/distributed-building-scenario-pack-v1.json`
+- `production/lab-runtime/learner-experience-v1.json`
 - `production/lab-runtime/equity-uprise-electronics-sandbox.mjs`
 - `production/lab-runtime/equity-uprise-guided-scenarios.mjs`
 - `production/lab-runtime/equity-uprise-viewer-lab-integration.mjs`
 - `production/lab-runtime/verify_viewer_lab_integration_v1.mjs`
 
-Step 9 adds floor-scoped asset/cable selectors, executable labs on B1 and every occupied level through the roof, and cross-floor incidents that traverse upper-floor access/backbone infrastructure toward B1. Technical labs carry viewer focus metadata so the canonical viewer opens the relevant floor or stack and enables Engineering/X-Ray before fault presentation.
+Step 9 adds floor-scoped asset/cable selectors, executable labs on B1 and every occupied level through the roof, and cross-floor incidents that traverse upper-floor access/backbone infrastructure toward B1.
+
+The canonical learner presentation is now **symptom-first rather than engineering-first**. `learner-experience-v1.json` maps the existing deterministic scenarios into plain-language work tickets using the loop **OBSERVE → HYPOTHESIZE → TEST → FIX → VERIFY**. Foundation and Technician users begin with a human report, friendly action labels and bounded diagnosis choices; raw target selectors, JSON input and assessment internals are moved behind instructor/technical disclosure. Beginner sessions do **not** force Engineering/X-Ray on startup. Advanced/Admin/Expert use may still reveal engineering state according to difficulty and instructor intent.
+
+The first explicit PRIM3 reinforcement binding is the Floor 2 Wi-Fi outage (`IT-LAB-017`): after successful diagnosis and verification, the learner can open **Got WiFi?** as a post-lab refresher. This is reinforcement, not the primary lesson or proof of mastery.
