@@ -193,3 +193,21 @@ The tunnel environment may be used as a fictional exercise venue for these conce
 - Ventilation, drainage, fire/life safety, power, communications, lighting, access/security and controls are modeled as stateful tunnel subsystems.
 - Future branch destinations remain unnamed until their connected building authority exists.
 - Restricted visibility never removes emergency egress, accountability, incident reporting or audit requirements.
+
+
+## Canonical federal-training catalog binding
+
+The named FEMA Independent Study courses in this profile now resolve through:
+
+`../equity-uprise-development/federal-training-catalog.json`
+
+Canonical IDs:
+- `FEMA-IS-100-C`
+- `FEMA-IS-120-C`
+- `FEMA-IS-130-A`
+- `FEMA-IS-200-C`
+- `FEMA-IS-201-A`
+- `FEMA-IS-235-C`
+- `FEMA-IS-238`
+
+This profile remains a safety/code research reference. OSHA/FHWA materials remain reference-only and are not represented as course completions. Federal-course completion remains training evidence rather than proof of operational authorization or building-code compliance.

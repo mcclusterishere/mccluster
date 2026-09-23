@@ -320,6 +320,21 @@ Examples include:
 
 External credentials remain evidence toward competency. They are not automatically competency mastery.
 
+## 16A. Canonical federal-training bindings
+
+Floor 1 external-training integration now resolves through:
+- `../equity-uprise-development/federal-training-catalog.json`;
+- `production/training/federal-training-building-bindings-v1.json`.
+
+Active practical bindings include:
+- FEMA incident-command, exercise, evaluation, planning, and supply-chain courses;
+- IRS VITA/TCE Link & Learn Taxes, with annual tax-year revalidation and synthetic-data-only Equity Uprise practice unless operating through an authorized VITA/TCE site;
+- HHS/OHRP human-research-protection and participant-centered informed-consent training.
+
+CISA ICS, DOE/FEMP, NOAA, NASA, and other agency mentions remain proposed until a specific current course/version is approved in the catalog.
+
+External training never grants live B1, tunnel, life-safety, electrical, BAS/OT, security, or other consequential building-system authority.
+
 ## 17. Machine-readable authority
 
 See:

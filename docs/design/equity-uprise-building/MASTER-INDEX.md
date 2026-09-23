@@ -242,3 +242,17 @@ Generated electronics artifacts:
 - `production/electronics/generated/equity-uprise-electronics-fabric-v1.glb`
 
 The electronics layer extends, rather than replaces, the Digital-to-Physical Asset Registry and Step 3A/3B causal graph.
+
+
+## Federal training / practical-lab binding
+
+Canonical development authority:
+- `../equity-uprise-development/FEDERAL-TRAINING-CATALOG.md`
+- `../equity-uprise-development/federal-training-catalog.json`
+
+Canonical building authority:
+- `FEDERAL-TRAINING-BUILDING-BINDINGS.md`
+- `production/training/federal-training-building-bindings-v1.json`
+- `production/training/verify_federal_training_bindings.py`
+
+Purpose: ensure every active federal training record has exact provenance and a practical building/lab binding, while agency-only mentions and regulatory/manual references cannot masquerade as completed courses.

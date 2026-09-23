@@ -215,3 +215,14 @@ See:
 `production/underground-tunnel-network.json`
 
 **NOT FOR CONSTRUCTION / NOT A REAL INFRASTRUCTURE SECURITY PLAN.**
+
+
+### Federal training catalog binding
+
+Underground-training references now resolve through the canonical federal-training catalog and building-binding authority.
+
+Active FEMA bindings include `FEMA-IS-100-C`, `FEMA-IS-120-C`, `FEMA-IS-130-A`, `FEMA-IS-200-C`, `FEMA-IS-201-A`, `FEMA-IS-235-C`, and `FEMA-IS-238`.
+
+CISA industrial-control-system cybersecurity remains a **proposed** pathway until an exact current CISA course/version and learner access path are approved in `federal-training-catalog.json`.
+
+OSHA underground-construction rules and FHWA tunnel manuals remain reference authority only; they do not create course completion or credential records.

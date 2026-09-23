@@ -713,3 +713,26 @@ Canonical Step 4A source:
 - `production/electronics/verify_equity_uprise_electronics_v1.py`
 
 **NEXT:** load the generated electronics GLB/manifest into the viewer and turn the generated lab definitions into executable scenarios.
+
+
+## Federal Training Catalog / Building Bindings — V1 IMPLEMENTED
+
+Equity Uprise now has one canonical federal-training authority instead of scattered agency-name references.
+
+Implemented:
+- exact active FEMA Independent Study records for IS-100.C, IS-120.C, IS-130.A, IS-200.C, IS-201.A, IS-235.C and IS-238;
+- IRS VITA/TCE Link & Learn Taxes as an annual/versioned training path with mandatory cycle revalidation and IRS Practice Lab linkage;
+- HHS/OHRP foundational human-research-protection and participant-centered informed-consent training;
+- proposed-but-not-active records for CISA ICS, DOE/FEMP, NOAA and NASA pathways;
+- reference-only records for OSHA/FHWA material so regulations/manuals cannot be misrepresented as courses;
+- course → competency → floor/mode/scenario → Step 4A electronics-lab bindings;
+- deterministic verifier covering catalog IDs, prerequisites, competency IDs, Floor 1 modes/scenarios, Step 4A lab IDs, activation status and stale-reference cleanup.
+
+Canonical files:
+- `../equity-uprise-development/FEDERAL-TRAINING-CATALOG.md`
+- `../equity-uprise-development/federal-training-catalog.json`
+- `FEDERAL-TRAINING-BUILDING-BINDINGS.md`
+- `production/training/federal-training-building-bindings-v1.json`
+- `production/training/verify_federal_training_bindings.py`
+
+**NEXT:** build the executable lab runtime (state injection, event log, reset/replay, evaluator mode, evidence capture, grading) and then promote proposed federal pathways only after selecting exact current course versions.
