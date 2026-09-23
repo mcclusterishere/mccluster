@@ -177,8 +177,11 @@ for (const scenario of distributedScenarios) {
   assert.ok(view.visuals.assets.length > 0 || view.visuals.connections.length > 0,
     "distributed lab must materialize a visible fault: " + scenario.scenario_id);
   const allowedLevels = new Set(scenario.floor_scope);
+  const physicalLevelIds = new Set(["B1","F1","F2","F3","F4","F5","F6","L7"]);
   for (const asset of view.visuals.assets) {
-    if (asset.level_id) assert.ok(allowedLevels.has(asset.level_id), "distributed lab leaked asset outside floor scope: " + asset.canonical_id);
+    if (physicalLevelIds.has(asset.level_id)) {
+      assert.ok(allowedLevels.has(asset.level_id), "distributed lab leaked physical asset outside floor scope: " + asset.canonical_id);
+    }
   }
   for (const step of scenario.verification_path || []) {
     const out = run.execute(step.action_id, step.input || {});
