@@ -266,3 +266,9 @@ Step 1 converts the existing 40 Step 4A lab definitions into deterministic sandb
 
 LIVE execution is explicitly forbidden. Step 2 is the electronics/asset-state binding layer.
 
+### Step 2 electronics / asset-state binding
+- `production/lab-runtime/equity-uprise-electronics-sandbox.mjs`
+- `production/lab-runtime/verify_electronics_sandbox_v1.mjs`
+
+Step 2 binds the session engine to canonical Step 4A assets and typed connections. Fault injection now changes independent SANDBOX asset/link/service state with deterministic propagation and exact-ID evidence. Reset restores baseline; LIVE control remains forbidden.
+
