@@ -813,3 +813,30 @@ Boundary: Step 3 does not add live control, exploit tooling, secure proctoring, 
 
 **NEXT:** Step 4 adds FEMA building-operations exercises using the same runtime/evidence architecture.
 
+## Lab Runtime — STEP 4 BUILDING-OPERATIONS EXERCISES IMPLEMENTED
+
+The eight approved Floor 1 operations scenarios now have executable simulation flows on the Lab Runtime.
+
+Implemented:
+- evacuation + accountability;
+- blocked Stair A alternate routing;
+- passenger-elevator outage accessibility response;
+- power-interruption continuity response;
+- medical-incident escalation and responder handoff;
+- public-service surge / queue continuity;
+- network/check-in outage fallback;
+- service-area hazard boundary and responder-access control.
+
+The exercises reuse canonical Floor 1 objects such as Stair A/B discharge doors, egress walks, assembly areas, passenger-elevator interfaces, AED/two-way communication, service access, reception/directory objects, plus canonical `ELEC-NORMAL` and `LOGIC-SVC-DIRECTORY-IDP` identities.
+
+Wrong choices and out-of-order actions do not advance completion. Successful completion records the canonical Floor 1 scenario evidence fields through the same Step 1 evidence spine.
+
+Canonical Step 4 files:
+- `production/lab-runtime/fema-building-ops-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-building-ops-runtime.mjs`
+- `production/lab-runtime/verify_fema_building_ops_scenarios_v1.mjs`
+
+Boundary: no LIVE control, no code-compliance claim, no medical-treatment instruction, and no hazardous-area entry/cleanup instruction.
+
+**NEXT:** Step 5 builds the Floor 1 public-service intake labs.
+
