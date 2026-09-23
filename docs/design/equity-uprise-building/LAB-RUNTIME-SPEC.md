@@ -174,3 +174,64 @@ Step 2 models training consequences from current design-intent topology. It does
 
 **Step 3:** promote the first CISA-aligned IT/OT labs into richer executable incident scenarios with explicit learner actions/remediation, diagnostic observations and scenario-specific success evidence.
 
+## Step 3 — CISA / IT-OT Guided Incident Scenarios
+
+Step 3 promotes three existing Step 4A labs from generic definitions into task-specific executable incident exercises:
+
+- `IT-LAB-029` — IT/OT Firewall Segmentation;
+- `IT-LAB-038` — SIEM Correlation;
+- `IT-LAB-039` — Cross-System Building Incident.
+
+Canonical Step 3 source:
+- `production/lab-runtime/cisa-itot-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-guided-scenarios.mjs`
+- `production/lab-runtime/verify_cisa_itot_scenarios_v1.mjs`
+
+The scenario pack references only existing Step 4A lab IDs and existing federal-training bindings. It does not convert external course completion into Equity Uprise competency mastery.
+
+### Guided execution contract
+
+A guided scenario adds:
+- explicit learner objectives;
+- an allowlisted simulated action catalog;
+- prerequisite gates between actions;
+- bounded scenario observations;
+- deterministic decision validation;
+- simulation-only mitigation actions;
+- fault-specific remediation through Step 2 state recomposition;
+- final validation gates;
+- automatic evidence attachment to the source lab's canonical success criterion.
+
+Incorrect decisions are recorded but do not advance objectives. Out-of-order restoration actions are recorded as blocked and do not mutate sandbox state.
+
+### First three scenarios
+
+**IT-LAB-029 — IT/OT Firewall Segmentation**
+- inspect BAS-OT and firewall simulated state;
+- identify an overpermissive policy condition;
+- apply a simulation-only least-privilege correction;
+- validate that the modeled BAS-OT posture returns to baseline.
+
+**IT-LAB-038 — SIEM Cross-Domain Correlation**
+- collect SIEM, network, BAS and camera evidence;
+- reconstruct the deterministic simulated event sequence;
+- classify the event as one correlated multi-device incident;
+- close and validate the simulated alert condition.
+
+**IT-LAB-039 — Cross-System Building Incident Response**
+- inspect the whole-building, core-network and BAS domains;
+- separate the training scenario's primary power fault from secondary effects;
+- restore simulated power, then core connectivity, then BAS state;
+- validate that all three declared faults are cleared.
+
+### Safety / assessment boundary
+
+- execution remains `SANDBOX` only;
+- the action catalog contains no shell/device/protocol commands or credentials;
+- mitigation changes only in-memory simulation state;
+- LIVE execution remains rejected;
+- CISA bindings remain supporting training/evidence, not competency equivalence;
+- secure proctoring, scoring, timing, penalties and learner-facing hint policy remain later-step work.
+
+**Next:** Step 4 adds FEMA building-operations exercises on the same runtime.
+
