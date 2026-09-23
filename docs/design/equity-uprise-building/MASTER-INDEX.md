@@ -307,3 +307,11 @@ Step 6 provides one bounded Level 1 assessment layer for the executable lab fami
 
 Step 7 adds Foundation → Technician → Admin → Advanced → Expert progression above the Step 6 assessment layer. Guidance, fault disclosure, hints, artifact expectations and scenario-complexity qualification become progressively stricter while canonical scenario logic and competency rubrics remain unchanged.
 
+
+
+### Step 8 deep 3D viewer integration
+- `production/lab-runtime/equity-uprise-viewer-lab-integration.mjs`
+- `production/lab-runtime/verify_viewer_lab_integration_v1.mjs`
+- canonical viewer: `equity-uprise-building-core-v2-3d.html`
+
+Step 8 completes the current Lab Runtime sequence by adapting canonical runtime snapshots into digital-twin presentation state. The existing viewer remains the only building viewer: Lab mode overlays canonical electronics/object/path/area state, runtime-backed system status, difficulty-filtered learner tasks, bounded assessment feedback and anonymous synthetic people-state markers. Viewer interactions dispatch through the runtime and rerender from the resulting snapshot; they do not directly mutate the simulated building.

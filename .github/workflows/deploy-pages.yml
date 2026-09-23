@@ -118,6 +118,9 @@ jobs:
           print("Services Step 8 deploy contract verified", r["sha256"])
           PY
 
+      - name: Verify Equity Uprise Lab Runtime Step 8 viewer integration
+        run: node docs/design/equity-uprise-building/production/lab-runtime/verify_viewer_lab_integration_v1.mjs
+
       - name: Publish Equity Uprise preview assets
         run: |
           mkdir -p equity-uprise-preview
@@ -142,6 +145,29 @@ jobs:
           cp docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg equity-uprise-preview/floor-01-plan.svg
           cp docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png equity-uprise-preview/floor-01-site-egress.png
           cp docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg equity-uprise-preview/floor-01-site-egress.svg
+          mkdir -p equity-uprise-preview/lab-runtime
+          cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb
+          cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-manifest-v1.json equity-uprise-preview/equity-uprise-electronics-manifest-v1.json
+          cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-connections-v1.json equity-uprise-preview/equity-uprise-electronics-connections-v1.json
+          cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-it-lab-catalog-v1.json equity-uprise-preview/equity-uprise-it-lab-catalog-v1.json
+          cp docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-v1.json equity-uprise-preview/equity-uprise-asset-registry-v1.json
+          cp docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json equity-uprise-preview/floor-01-digital-twin-program.json
+          cp docs/design/equity-uprise-building/production/floor-01/floor-01-simulation-objects.json equity-uprise-preview/floor-01-simulation-objects.json
+          cp docs/design/equity-uprise-building/production/floor-01/floor-01-object-inventory.json equity-uprise-preview/floor-01-object-inventory.json
+          cp docs/design/equity-uprise-development/competency-rubrics.json equity-uprise-preview/competency-rubrics.json
+          cp docs/design/equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json equity-uprise-preview/federal-training-bindings.json
+          cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-lab-runtime.mjs equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-electronics-sandbox.mjs equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-guided-scenarios.mjs equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-building-ops-runtime.mjs equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-public-service-runtime.mjs equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-assessment-runtime.mjs equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-difficulty-runtime.mjs equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-viewer-lab-integration.mjs equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/cisa-itot-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/fema-building-ops-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/public-service-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/difficulty-progression-policy-v1.json equity-uprise-preview/lab-runtime/
 
       - name: Strip the internals out of the published tree
         run: |

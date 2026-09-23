@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 324,
+  "tracked_count": 326,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -335,6 +335,7 @@
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-guided-scenarios.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-lab-runtime.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-public-service-runtime.mjs",
+      "docs/design/equity-uprise-building/production/lab-runtime/equity-uprise-viewer-lab-integration.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/fema-building-ops-scenario-pack-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/lab-runtime-schema-v1.json",
       "docs/design/equity-uprise-building/production/lab-runtime/public-service-scenario-pack-v1.json",
@@ -345,6 +346,7 @@
       "docs/design/equity-uprise-building/production/lab-runtime/verify_fema_building_ops_scenarios_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_lab_runtime_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_public_service_scenarios_v1.mjs",
+      "docs/design/equity-uprise-building/production/lab-runtime/verify_viewer_lab_integration_v1.mjs",
       "docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py",
       "docs/design/equity-uprise-building/production/services/floor-services-addenda.json",
       "docs/design/equity-uprise-building/production/underground-tunnel-network.json",

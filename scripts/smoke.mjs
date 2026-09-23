@@ -84,6 +84,18 @@ try {
     ...(process.env.PW_CHROME ? { executablePath: process.env.PW_CHROME } : {}),
   });
 
+  const viewerProbe = await browser.newPage();
+  await viewerProbe.goto(B + "index.html", { waitUntil: "domcontentloaded" });
+  const viewerSource = await viewerProbe.evaluate(async () =>
+    await (await fetch("equity-uprise-building-core-v2-3d.html", { cache: "no-cache" })).text());
+  check("building viewer: Step 8 controls", [
+    'id="services"', 'id="wire"', 'id="labs"', "deviceClockSolar",
+    "requestedLab=params.get('lab')", "LAB_MODULE_URL", "labController.execute", "labController.reset"
+  ].every((token) => viewerSource.includes(token)));
+  check("building viewer: normal mode remains default",
+    viewerSource.includes("requestedLab=params.get('lab')") && viewerSource.includes("labPanel.hidden"));
+  await viewerProbe.close();
+
   const PAGES = [
     ["index.html", async (p) => {
       check("index: 5 bar tabs", await p.locator(".appbar > .appbar__tab").count() === 5);

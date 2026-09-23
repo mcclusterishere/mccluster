@@ -421,3 +421,47 @@ Step 7 is therefore a progression contract, not a replacement scoring system. St
 
 **Next:** Step 8 integrates executable lab state, assessment, and difficulty progression into the 3D viewer so failed equipment, affected areas, paths, service state, and learner tasks are visible in the digital twin.
 
+
+
+## Step 8 — Deep 3D Viewer Integration
+
+Step 8 is the presentation/interaction endpoint for the current runtime sequence.
+
+Canonical files:
+- `production/lab-runtime/equity-uprise-viewer-lab-integration.mjs`
+- `production/lab-runtime/verify_viewer_lab_integration_v1.mjs`
+- `equity-uprise-building-core-v2-3d.html`
+
+Architecture:
+
+```
+canonical Step 3/4/5 exercise
+→ Step 6 AssessedExercise
+→ Step 7 DifficultyProgressionExercise
+→ Step 8 viewer adapter
+→ canonical Three.js objects / HUD
+```
+
+The viewer never becomes simulation authority. It receives a sanitized learner-facing snapshot, renders canonical IDs, dispatches actions back through the difficulty/assessment/runtime stack, and then rerenders the new snapshot.
+
+### Visual bindings
+
+Electronics incidents use the canonical Step 4A electronics GLB, whose physical mesh/node identity is the canonical asset ID and whose path segments carry canonical connection IDs. The viewer may style those existing nodes when their sandbox state is unavailable, degraded, at risk or faulted. It must not fabricate coordinates for logical/non-geometric assets.
+
+Floor 1 operations/public-service visualization uses canonical `floor-01-simulation-objects.json` and `floor-01-object-inventory.json` identities. Site bounds/polylines/keep-clear offsets are drawn only from canonical geometry.
+
+### Difficulty / information boundary
+
+The HUD renders `learnerView()` from Step 7. It does not reconstruct hidden objectives, hidden faults, hidden targets, prerequisites or answer-shaped observations from the underlying scenario definition. Internal canonical IDs may still be used for rendering/picking, but they are not added to the learner task payload when Step 7 hides them.
+
+### Assessment boundary
+
+The viewer exposes action/mistake/hint/evidence counts, timing when available, critical-safety status, automated evidence signal and difficulty qualification. It explicitly caps automation at `Demonstrated` and never renders an automated human competency award.
+
+Step 6 SHA-256 provenance is implemented with a deterministic browser-safe synchronous SHA-256 routine so the exact shared assessment module is usable in both Node verification and the browser.
+
+### Reset / safety
+
+Reset restores a fresh canonical SANDBOX session and clears all Step 8 styling/overlays. LIVE execution remains impossible. Public-service exercises remain synthetic-only. Electronics and path visualization remain design-intent/training authority, not construction/as-built truth.
+
+The current 1–8 Lab Runtime implementation sequence is complete at Step 8.
