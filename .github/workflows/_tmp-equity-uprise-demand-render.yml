@@ -1,0 +1,68 @@
+name: TEMP Equity Uprise Demand Render Acceptance
+
+on:
+  push:
+    branches:
+      - fix/equity-uprise-viewer-demand-rendering
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Build canonical 3D assets
+        run: |
+          python -m pip install --disable-pip-version-check numpy scipy trimesh
+          python docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py
+          python docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01_v2.py
+          python docs/design/equity-uprise-building/production/floor-02/build_equity_uprise_floor_02_v2.py
+          python docs/design/equity-uprise-building/production/floor-03/build_equity_uprise_floor_03_v2.py
+          python docs/design/equity-uprise-building/production/floor-04/build_equity_uprise_floor_04_v2.py
+          python docs/design/equity-uprise-building/production/floor-05/build_equity_uprise_floor_05_v2.py
+          python docs/design/equity-uprise-building/production/floor-06/build_equity_uprise_floor_06_v2.py
+          python docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py
+          python docs/design/equity-uprise-building/production/facade/build_equity_uprise_facade_v2.py
+          python docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py
+          python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
+      - name: Stage preview
+        run: |
+          set -euo pipefail
+          mkdir -p equity-uprise-preview/lab-runtime
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-core-v2.glb equity-uprise-preview/
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-facade-core-v2.glb equity-uprise-preview/
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-building-services-core-v2.glb equity-uprise-preview/
+          cp docs/design/equity-uprise-building/production/generated/equity-uprise-basement-b1-core-v2.glb equity-uprise-preview/
+          for n in 01 02 03 04 05 06 07; do cp docs/design/equity-uprise-building/production/generated/equity-uprise-floor-${n}-core-v2.glb equity-uprise-preview/; done
+          cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb equity-uprise-preview/
+          cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-manifest-v1.json equity-uprise-preview/
+          cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-connections-v1.json equity-uprise-preview/
+          cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-it-lab-catalog-v1.json equity-uprise-preview/
+          cp docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-v1.json equity-uprise-preview/
+          cp docs/design/equity-uprise-building/production/floor-01/floor-01-digital-twin-program.json equity-uprise-preview/
+          cp docs/design/equity-uprise-building/production/floor-01/floor-01-simulation-objects.json equity-uprise-preview/
+          cp docs/design/equity-uprise-building/production/floor-01/floor-01-object-inventory.json equity-uprise-preview/
+          cp docs/design/equity-uprise-development/competency-rubrics.json equity-uprise-preview/
+          cp docs/design/equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json equity-uprise-preview/federal-training-bindings.json
+          cp docs/design/equity-uprise-building/production/lab-runtime/*.mjs equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/*-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/difficulty-progression-policy-v1.json equity-uprise-preview/lab-runtime/
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Pointer and screenshot acceptance
+        run: node scripts/_tmp_equity_uprise_demand_render_acceptance.mjs
+      - name: Upload screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demand-render-acceptance
+          path: acceptance-artifacts/
+          retention-days: 7
