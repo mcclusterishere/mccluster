@@ -286,3 +286,10 @@ Step 3 promotes IT-LAB-029, IT-LAB-038 and IT-LAB-039 into executable guided sce
 
 Step 4 executes the eight existing Floor 1 building-operations scenarios with canonical object state, prerequisite gates, deterministic decisions, simulation-only resolution and evidence capture. FEMA and other federal bindings remain instructional mappings only; LIVE building control remains disabled.
 
+### Step 5 Floor 1 public-service labs
+- `production/lab-runtime/public-service-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-public-service-runtime.mjs`
+- `production/lab-runtime/verify_public_service_scenarios_v1.mjs`
+
+Step 5 turns the existing `privacy_error_intake` scenario into three executable synthetic-case labs spanning IRS VITA/TCE workflow discipline, OHRP participant-centered consent/privacy handling, and cross-program intake privacy containment. The runtime uses existing Floor 1 reception/intake objects and rejects real-PII fixtures.
+
