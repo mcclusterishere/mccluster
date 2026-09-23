@@ -305,6 +305,10 @@ for (const required of [
   "Physical Plant: Off",
   "Cabling: Off",
   "routed cables",
+  "plantLegend",
+  "Cat6A data / PoE",
+  "OS2 fiber",
+  "208Y/120V feeder",
 ]) {
   assert.ok(viewer.includes(required), "electronics physical-installation viewer guard missing: "+required);
 }
@@ -323,7 +327,7 @@ assert.ok(viewer.includes("electronics.visible=false"), "electronics layer must 
 for (const required of [
   'id="xray"', "setEngineeringMode", "setEngineeringElectronics", "engineeringMeshIsCable",
   "electronics.traverse(o=>{if(o.isMesh)o.visible=false})",
-  "Foundation tickets should expose the installed devices, not X-Ray.",
+  "if(exp.learner_first&&!plantMode)await setPhysicalPlantMode(true);",
   "view.visuals.assets.forEach(x=>styleCanonical(f1",
   "Gyroscope live · left/right = yaw · up/down = pitch",
   "roomSensorMode='motion-primary'",
