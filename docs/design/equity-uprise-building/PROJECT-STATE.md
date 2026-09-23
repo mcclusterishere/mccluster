@@ -734,3 +734,29 @@ Implemented:
 Truth boundary remains unchanged: federal credential state is not competency mastery, and learner B1/OT activity remains sandboxed-clone-only with LIVE control disabled.
 
 **NEXT:** use the merged Step 4A electronics fabric plus these federal bindings to promote the highest-value generated labs into executable Lab Runtime scenarios, beginning with CISA-aligned IT/OT incident labs, FEMA exercise/evaluation scenarios, and IRS/OHRP Floor 1 service-intake simulations.
+
+## Lab Runtime — STEP 1 FOUNDATION IMPLEMENTED
+
+The generated Step 4A training catalog now has a real execution foundation instead of definition-only lab records.
+
+Step 1 adds a browser-compatible, dependency-free ES module that:
+- adapts all 40 canonical Step 4A labs into stable executable-scenario envelopes;
+- enforces the `CREATED -> RUNNING -> COMPLETED` lifecycle plus deterministic reset/restart;
+- activates catalog fault declarations as abstract sandbox state;
+- records inspections, simulated learner actions and criterion evidence in an append-only monotonic event ledger;
+- refuses completion until all required canonical success criteria have evidence;
+- exports a deterministic evidence bundle for later competency assessment;
+- hard-rejects LIVE execution at both session and action level.
+
+Canonical Step 1 files:
+- `LAB-RUNTIME-SPEC.md`
+- `production/lab-runtime/lab-runtime-schema-v1.json`
+- `production/lab-runtime/equity-uprise-lab-runtime.mjs`
+- `production/lab-runtime/verify_lab_runtime_v1.mjs`
+
+The Core V2 CI now executes the runtime verifier against the live 40-lab Step 4A catalog.
+
+Boundary: Step 1 does not yet change asset/link/service state. Faults remain abstract declarations until Step 2 binds target selectors to the electronics fabric and asset graph. B1/OT remains sandboxed-clone-only; LIVE control remains disabled.
+
+**NEXT:** Step 2 connects runtime target selectors + fault declarations to the Step 4A electronics manifest/connections and canonical asset identities so simulated devices, links and services actually respond to lab state.
+
