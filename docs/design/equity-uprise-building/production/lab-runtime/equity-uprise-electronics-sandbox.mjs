@@ -1010,11 +1010,14 @@ export class ElectronicsSandbox {
 
   reset() {
     const before = this.summary();
+    const scenarioBinding = clone(this.boundScenario);
     this._initializeState();
+    this.boundScenario = scenarioBinding;
     return {
       reset: true,
       baseline_restored: true,
       prior_active_fault_ids: before.active_fault_ids,
+      scenario_binding_preserved: Boolean(this.boundScenario),
       state_summary: this.summary(),
     };
   }
