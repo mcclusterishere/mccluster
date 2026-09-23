@@ -94,7 +94,7 @@ The working viewer now treats the building as one continuous object from B1 thro
 
 Public working-stack viewer: `equity-uprise-building-core-v2-3d.html`.
 
-## Room Mode v1 — ACTIVE PLAYABLE PROTOTYPE
+## Room Mode v2 — IPAD INPUT FIX + INTERIOR RESPONSE PASS
 
 The canonical working-stack viewer now includes a human-scale **Room Mode** before full free-walk locomotion:
 - initial playable room: **Floor 1 — Arrival / Orientation**;
@@ -109,8 +109,15 @@ The canonical working-stack viewer now includes a human-scale **Room Mode** befo
 - raw electronics-fabric geometry and the services/X-ray layer are hidden while Room Mode is active, so player view remains architectural rather than a topology/debug visualization;
 - Room Mode camera anchors are viewer viewpoints only and do **not** redefine building geometry or object placement authority;
 - direct prototype entry is supported with `?room=1`.
+- iPad input now requests both orientation and motion permission when required, uses absolute/relative device-orientation quaternions when delivered, and falls back to integrated rotation-rate motion when orientation events do not arrive;
+- the Room HUD explicitly reports when permission was granted but the browser delivered **0 sensor events**, instead of falsely claiming tracking is active;
+- touch selection no longer depends on a secondary browser click: pointer-up selects directly, with click fallback and center-reticle/near-target hit assistance;
+- Floor 1 receives a viewer-side PBR-response pass (roughness/metalness/transparency/emissive tuning by canonical mesh semantics) plus warm human-scale room lights for better depth/material readability.
 
 Current curated Floor 1 interaction targets include Reception Desk, Building Directory, Journey Wall, Development Passport Kiosk, Elevator Call Station, and Intake Display.
+### Floor 1 visual-realism truth
+
+The current Floor 1 GLB is still a deterministic inventory-backed architectural model, not a photoreal final environment. The active preservation map explicitly says the scaffold proves geometry but is not the aesthetic target. Room Mode v2 improves surface response and lighting without changing geometry, but the remaining realism gate is still to replace schematic furniture/casework with believable forms and finish the interior material/detail pass in the canonical Floor 1 builder.
 
 Next Room Mode work is to convert this Floor 1 proof into room-by-room canonical camera/inspection anchors and scenario-scoped interactions across the rest of the building before free-walk locomotion.
 

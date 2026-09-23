@@ -12,7 +12,7 @@ const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);con
 const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,loaded=0,solarMode='auto',servicesOn=false,currentFocus='stack';
 const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
 let labModule=null,labDatasets=null,labController=null,labView=null,labElectronicsPromise=null,labPickingIds=[],labLastResult=null;const labStyledMeshes=new Map();
-let roomMode=false,roomMotionActive=false,roomTweening=false,roomSelectedId=null,roomSensorZero=null,roomLastRawQuaternion=null,roomBaseQuaternion=new THREE.Quaternion(),roomManualYaw=0,roomManualPitch=0,roomPrevFocus='stack',roomPrevServices=false,roomPrevWire=false,roomSuppressClick=false;const roomStyledMeshes=new Map();
+let roomMode=false,roomMotionActive=false,roomTweening=false,roomSelectedId=null,roomSensorZero=null,roomSensorOffset=new THREE.Quaternion(),roomLastRawQuaternion=null,roomBaseQuaternion=new THREE.Quaternion(),roomManualYaw=0,roomManualPitch=0,roomPrevFocus='stack',roomPrevServices=false,roomPrevWire=false,roomSensorMode='none',roomOrientationEvents=0,roomMotionEvents=0,roomLastMotionAt=0,roomLastMotionStamp=0;const roomStyledMeshes=new Map(),roomPbrOriginals=new Map();const roomLightRig=new THREE.Group();roomLightRig.name='ROOM-MODE-V1-LIGHT-RIG';roomLightRig.visible=false;scene.add(roomLightRig);
 let resolveLabVisualRootsReady=null,labVisualRootsError=null,labVisualRootMask=0;
 const labVisualRootsReady=new Promise(resolve=>{resolveLabVisualRootsReady=resolve});
 function markLabVisualRootReady(bit){
@@ -40,6 +40,30 @@ function makeFacadeReliable(root){
 function makeServicesReliable(root){
  makeReliable(root,false);
  root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>{m.transparent=true;m.opacity=/SEPARATION/.test(m.name||'')?.16:.88;m.depthWrite=false;if('envMapIntensity'in m)m.envMapIntensity=.55;m.needsUpdate=true})});
+}
+function enhanceFloor1Interior(root){
+ root.traverse(o=>{
+  if(!o.isMesh||!o.material)return;const n=(o.name||'').toUpperCase(),src=Array.isArray(o.material)?o.material:[o.material];
+  const mats=src.map(m=>{const c=m.clone();roomPbrOriginals.set(c,{roughness:c.roughness,metalness:c.metalness,envMapIntensity:c.envMapIntensity,transparent:c.transparent,opacity:c.opacity,depthWrite:c.depthWrite,emissive:c.emissive?.clone?.(),emissiveIntensity:c.emissiveIntensity});return c});
+  mats.forEach(m=>{
+   if('envMapIntensity'in m)m.envMapIntensity=.9;
+   if(/SCREEN|DISPLAY|MONITOR|KIOSK|DIRECTORY/.test(n)){m.roughness=.22;m.metalness=.08;if(m.emissive){m.emissive.copy(m.color).multiplyScalar(.22);m.emissiveIntensity=.65}}
+   else if(/GLASS|VISION|SIDELIGHT|TRANSOM/.test(n)){m.roughness=.08;m.metalness=0;m.transparent=true;m.opacity=Math.min(m.opacity??1,.42);m.depthWrite=false;if('envMapIntensity'in m)m.envMapIntensity=1.35}
+   else if(/RECEPTION-DESK|JOURNEY-WALL/.test(n)){m.roughness=.58;m.metalness=.03;if('envMapIntensity'in m)m.envMapIntensity=.72}
+   else if(/CORE|METAL|ELEV|FREIGHT|STAIR|RECEPTION-ACCESS|PEDESTAL/.test(n)){m.roughness=.34;m.metalness=.58;if('envMapIntensity'in m)m.envMapIntensity=1.18}
+   else if(/WOOD|TABLE|CREDENZA/.test(n)){m.roughness=.5;m.metalness=.02}
+   else if(/SEAT|SOFA|CHAIR|RUG/.test(n)){m.roughness=.92;m.metalness=0;if('envMapIntensity'in m)m.envMapIntensity=.45}
+   else if(/FLOOR|SLAB/.test(n)){m.roughness=.48;m.metalness=.03;if('envMapIntensity'in m)m.envMapIntensity=.82}
+   else if(/WALL|STONE|PLINTH|PART/.test(n)){m.roughness=.76;m.metalness=.02}
+   m.needsUpdate=true
+  });
+  o.material=Array.isArray(o.material)?mats:mats[0]
+ })
+}
+function buildRoomLightRig(){
+ if(roomLightRig.children.length)return;
+ const defs=[[36,48,9.4,42],[17,30,8.8,34],[47,18,8.8,34],[50,35,8.8,30]];
+ defs.forEach(([x,y,z,intensity],i)=>{const l=new THREE.PointLight(0xffd7ad,intensity,ft(26),2);l.position.set(ft(x),ft(z),-ft(y));l.name='ROOM-LIGHT-'+(i+1);roomLightRig.add(l)});
 }
 function setArchitectureGhost(on){
  if(on===architectureGhosted)return;
@@ -99,7 +123,7 @@ loader.load('/equity-uprise-preview/equity-uprise-building-core-v2.glb?v=__STAMP
 loader.load('/equity-uprise-preview/equity-uprise-facade-core-v2.glb?v=__STAMP__',g=>{facade=g.scene;facade.rotation.x=-Math.PI/2;facade.updateMatrixWorld(true);scene.add(facade);makeFacadeReliable(facade);done()});
 loader.load('/equity-uprise-preview/equity-uprise-building-services-core-v2.glb?v=__STAMP__',g=>{services=g.scene;services.rotation.x=-Math.PI/2;services.updateMatrixWorld(true);scene.add(services);makeServicesReliable(services);services.visible=false;done()});
 loader.load('/equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb?v=__STAMP__',g=>{b1=g.scene;b1.rotation.x=-Math.PI/2;b1.position.y=ft(-13.5);b1.updateMatrixWorld(true);scene.add(b1);makeReliable(b1);done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{f1=g.scene;f1.rotation.x=-Math.PI/2;f1.updateMatrixWorld(true);scene.add(f1);makeReliable(f1);f1.traverse(o=>{if(o.isMesh&&/^(stair_|passenger_|freight_|mep)/i.test(o.name||''))o.visible=false});markLabVisualRootReady(2);done()},undefined,e=>failLabVisualRoot('floor 1',e));
+loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{f1=g.scene;f1.rotation.x=-Math.PI/2;f1.updateMatrixWorld(true);scene.add(f1);makeReliable(f1);enhanceFloor1Interior(f1);buildRoomLightRig();f1.traverse(o=>{if(o.isMesh&&/^(stair_|passenger_|freight_|mep)/i.test(o.name||''))o.visible=false});markLabVisualRootReady(2);done()},undefined,e=>failLabVisualRoot('floor 1',e));
 loader.load('/equity-uprise-preview/equity-uprise-floor-02-core-v2.glb?v=__STAMP__',g=>{f2=g.scene;f2.rotation.x=-Math.PI/2;f2.position.y=ft(13.5);f2.updateMatrixWorld(true);scene.add(f2);makeReliable(f2);f2.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
 loader.load('/equity-uprise-preview/equity-uprise-floor-03-core-v2.glb?v=__STAMP__',g=>{f3=g.scene;f3.rotation.x=-Math.PI/2;f3.position.y=ft(27);f3.updateMatrixWorld(true);scene.add(f3);makeReliable(f3);f3.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
 loader.load('/equity-uprise-preview/equity-uprise-floor-04-core-v2.glb?v=__STAMP__',g=>{f4=g.scene;f4.rotation.x=-Math.PI/2;f4.position.y=ft(40.5);f4.updateMatrixWorld(true);scene.add(f4);makeReliable(f4);f4.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
@@ -309,22 +333,39 @@ function roomFindTargetFromHit(hit){
  while(o){const n=o.name||'';const id=ids.find(x=>n===x||n.startsWith(x+'::'));if(id)return id;o=o.parent}
  return null
 }
+function roomScreenOrientationRad(){return THREE.MathUtils.degToRad(Number(screen.orientation?.angle??window.orientation??0)||0)}
 function roomRawQuaternion(ev){
- const alpha=THREE.MathUtils.degToRad(ev.alpha||0),beta=THREE.MathUtils.degToRad(ev.beta||0),gamma=THREE.MathUtils.degToRad(ev.gamma||0);
- const orient=THREE.MathUtils.degToRad(screen.orientation?.angle||window.orientation||0),e=new THREE.Euler(beta,alpha,-gamma,'YXZ');
- const q=new THREE.Quaternion().setFromEuler(e),q1=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5)),q0=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),-orient);
- return q.multiply(q1).multiply(q0)
+ const alpha=THREE.MathUtils.degToRad(ev.alpha??0),beta=THREE.MathUtils.degToRad(ev.beta??0),gamma=THREE.MathUtils.degToRad(ev.gamma??0);
+ const e=new THREE.Euler(beta,alpha,-gamma,'YXZ'),q=new THREE.Quaternion().setFromEuler(e),q1=new THREE.Quaternion(-Math.sqrt(.5),0,0,Math.sqrt(.5)),q0=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),-roomScreenOrientationRad());
+ return q.multiply(q1).multiply(q0).normalize()
+}
+function calibrateRoomSensor(raw){
+ roomSensorZero=raw.clone();roomBaseQuaternion=cam.quaternion.clone();roomSensorOffset.copy(roomBaseQuaternion).multiply(raw.clone().invert()).normalize()
 }
 function onRoomOrientation(ev){
- if(!roomMode||!roomMotionActive||roomTweening||ev.alpha==null)return;
- const raw=roomRawQuaternion(ev);roomLastRawQuaternion=raw.clone();
- if(!roomSensorZero){roomSensorZero=raw.clone();roomBaseQuaternion=cam.quaternion.clone()}
- const delta=roomSensorZero.clone().invert().multiply(raw);cam.quaternion.copy(roomBaseQuaternion).multiply(delta)
+ if(!roomMode||!roomMotionActive||roomTweening||ev.alpha==null||ev.beta==null||ev.gamma==null)return;
+ roomOrientationEvents++;roomSensorMode='orientation';const raw=roomRawQuaternion(ev);roomLastRawQuaternion=raw.clone();
+ if(!roomSensorZero)calibrateRoomSensor(raw);
+ cam.quaternion.copy(roomSensorOffset).multiply(raw).normalize()
+}
+function onRoomMotion(ev){
+ if(!roomMode||!roomMotionActive||roomTweening)return;const rr=ev.rotationRate;if(!rr)return;roomMotionEvents++;roomLastMotionAt=performance.now();
+ if(roomSensorMode==='orientation')return;
+ const stamp=ev.timeStamp||performance.now();if(!roomLastMotionStamp){roomLastMotionStamp=stamp;return}
+ const dt=clamp((stamp-roomLastMotionStamp)/1000,0,.05);roomLastMotionStamp=stamp;if(dt<=0)return;
+ roomSensorMode='motion-fallback';const angle=((Number(screen.orientation?.angle??window.orientation??0)||0)%360+360)%360;
+ let yawRate=0,pitchRate=0;
+ if(angle===90){yawRate=-(rr.beta??0);pitchRate=-(rr.gamma??0)}
+ else if(angle===270){yawRate=(rr.beta??0);pitchRate=(rr.gamma??0)}
+ else {yawRate=-(rr.gamma??0);pitchRate=-(rr.beta??0)}
+ const yaw=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),THREE.MathUtils.degToRad(yawRate)*dt);
+ const pitch=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),THREE.MathUtils.degToRad(pitchRate)*dt);
+ cam.quaternion.premultiply(yaw).multiply(pitch).normalize();roomBaseQuaternion.copy(cam.quaternion)
 }
 function resetRoomLookReference(){
- roomManualYaw=0;roomManualPitch=0;roomBaseQuaternion=cam.quaternion.clone();
- roomSensorZero=roomLastRawQuaternion?roomLastRawQuaternion.clone():null;
- roomMessage.textContent=roomMotionActive?'View recentered to the way you are holding the device.':'View recentered. Drag to look around or enable device motion.'
+ roomManualYaw=0;roomManualPitch=0;roomBaseQuaternion=cam.quaternion.clone();roomLastMotionStamp=0;
+ if(roomLastRawQuaternion)calibrateRoomSensor(roomLastRawQuaternion);else roomSensorZero=null;
+ roomMessage.textContent=roomMotionActive?'View recentered · current device direction is now forward.':'View recentered. Drag to look around or enable device motion.'
 }
 function tweenRoomCamera(position,look,duration=620){
  return new Promise(resolve=>{roomTweening=true;const p0=cam.position.clone(),q0=cam.quaternion.clone(),probe=cam.clone();probe.position.copy(position);probe.lookAt(look);const q1=probe.quaternion.clone(),start=performance.now();
@@ -346,22 +387,28 @@ async function stepBackRoom(){
 async function enableRoomMotion(){
  if(!roomMode)return;
  try{
-  if(typeof DeviceOrientationEvent==='undefined')throw new Error('Device orientation is not available in this browser.');
-  if(typeof DeviceOrientationEvent.requestPermission==='function'){const permission=await DeviceOrientationEvent.requestPermission();if(permission!=='granted')throw new Error('Motion permission was not granted.')}
-  roomMotionActive=true;roomSensorZero=null;roomLastRawQuaternion=null;roomMotionButton.textContent='Motion: On';window.addEventListener('deviceorientation',onRoomOrientation,true);roomMessage.textContent='Motion enabled. Hold the device naturally, then tap Recenter if needed.'
- }catch(err){roomMotionActive=false;roomMotionButton.textContent='Enable Motion';roomMessage.textContent=(err.message||String(err))+' Drag-to-look still works.'}
+  const asks=[];
+  if(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function')asks.push(DeviceMotionEvent.requestPermission());
+  if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function')asks.push(DeviceOrientationEvent.requestPermission());
+  if(!asks.length&&typeof DeviceOrientationEvent==='undefined'&&typeof DeviceMotionEvent==='undefined')throw new Error('Motion sensors are not available in this browser.');
+  const permissions=await Promise.all(asks);if(permissions.some(x=>x!=='granted'))throw new Error('Motion/orientation permission was not granted.');
+  roomMotionActive=true;roomSensorZero=null;roomLastRawQuaternion=null;roomLastMotionStamp=0;roomSensorMode='waiting';const o0=roomOrientationEvents,m0=roomMotionEvents;
+  roomMotionButton.textContent='Motion: On';window.addEventListener('deviceorientation',onRoomOrientation,true);window.addEventListener('deviceorientationabsolute',onRoomOrientation,true);window.addEventListener('devicemotion',onRoomMotion,true);
+  roomMessage.textContent='Permission granted · waiting for live iPad motion data…';
+  setTimeout(()=>{if(!roomMode||!roomMotionActive)return;const od=roomOrientationEvents-o0,md=roomMotionEvents-m0;if(od>0)roomMessage.textContent='iPad tracking live · move the device to look around. Tap Recenter anytime.';else if(md>0)roomMessage.textContent='Gyroscope fallback live · move the device to look around. Tap Recenter anytime.';else roomMessage.textContent='Permission was granted but this browser delivered 0 sensor events. Open this page directly in Safari (not an in-app/embedded browser), then enable Motion again.'},1100)
+ }catch(err){roomMotionActive=false;roomSensorMode='none';roomMotionButton.textContent='Enable Motion';roomMessage.textContent=(err.message||String(err))+' Drag-to-look still works.'}
 }
-function disableRoomMotion(){window.removeEventListener('deviceorientation',onRoomOrientation,true);roomMotionActive=false;roomSensorZero=null;roomLastRawQuaternion=null;roomMotionButton.textContent='Enable Motion'}
+function disableRoomMotion(){window.removeEventListener('deviceorientation',onRoomOrientation,true);window.removeEventListener('deviceorientationabsolute',onRoomOrientation,true);window.removeEventListener('devicemotion',onRoomMotion,true);roomMotionActive=false;roomSensorMode='none';roomSensorZero=null;roomLastRawQuaternion=null;roomLastMotionStamp=0;roomMotionButton.textContent='Enable Motion'}
 async function enterRoomMode(){
  if(roomMode)return;if(!f1||loaded<11){roomMessage.textContent='Building is still loading. Try Room Mode again when the stack finishes.';roomHud.hidden=false;return}
- roomPrevFocus=currentFocus;roomPrevServices=servicesOn;roomPrevWire=wire;roomMode=true;document.body.classList.add('room-active');roomHud.hidden=false;roomReticle.hidden=false;labPanel.hidden=true;ctl.enabled=false;
+ roomPrevFocus=currentFocus;roomPrevServices=servicesOn;roomPrevWire=wire;roomMode=true;document.body.classList.add('room-active');roomHud.hidden=false;roomReticle.hidden=false;labPanel.hidden=true;ctl.enabled=false;roomLightRig.visible=true;
  if(wire){wire=false;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=false;m.needsUpdate=true}});document.getElementById('wire').textContent='Wireframe'}
  focus('1');if(electronics)electronics.visible=false;syncServicesVisibility();clearRoomHighlights();roomSelectedId=null;roomBackButton.disabled=true;roomInspectButton.disabled=true;
  cam.position.copy(roomAnchorPosition());cam.lookAt(roomAnchorLook());roomBaseQuaternion=cam.quaternion.clone();roomSelection.textContent='Look around and tap a highlighted object.';refreshRoomHighlights();
  roomMessage.textContent=(typeof DeviceOrientationEvent!=='undefined')?'Tap Enable Motion, allow access, then physically move the device to look around. Drag-to-look also works.':'Drag to look around. Tap a highlighted object to approach it.'
 }
 function exitRoomMode(){
- if(!roomMode)return;disableRoomMotion();clearRoomHighlights();roomMode=false;document.body.classList.remove('room-active');roomHud.hidden=true;roomReticle.hidden=true;ctl.enabled=true;servicesOn=roomPrevServices;
+ if(!roomMode)return;disableRoomMotion();clearRoomHighlights();roomMode=false;roomLightRig.visible=false;document.body.classList.remove('room-active');roomHud.hidden=true;roomReticle.hidden=true;ctl.enabled=true;servicesOn=roomPrevServices;
  if(roomPrevWire&&!wire){wire=true;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=true;m.needsUpdate=true}});document.getElementById('wire').textContent='Solid'}
  focus(roomPrevFocus||'stack');syncServicesVisibility();if(labView)applyLabView(labView)
 }
@@ -414,11 +461,24 @@ ren.domElement.addEventListener('dblclick',async ev=>{if(!labController||!labVie
 if(requestedLab){openLabs().then(()=>startLab(requestedLab,requestedDifficulty))}
 if(requestedRoom){const roomBoot=setInterval(()=>{if(loaded===11){clearInterval(roomBoot);enterRoomMode()}},60)}
 
+function projectedRoomTarget(ndcX,ndcY,maxDistance=.16){
+ let best=null,bestD=maxDistance;
+ for(const id of roomTargetIds()){const p=findCanonicalCenter(id);if(!p)continue;const q=p.clone().project(cam);if(q.z<-1||q.z>1)continue;const d=Math.hypot(q.x-ndcX,q.y-ndcY);if(d<bestD){best=id;bestD=d}}
+ return best
+}
+let roomLastSelectAt=0;
+async function selectRoomAt(clientX,clientY){
+ if(!roomMode||roomTweening)return;const now=performance.now();if(now-roomLastSelectAt<260)return;roomLastSelectAt=now;const rect=ren.domElement.getBoundingClientRect(),nx=((clientX-rect.left)/rect.width)*2-1,ny=-((clientY-rect.top)/rect.height)*2+1;
+ labPointer.set(nx,ny);labRaycaster.setFromCamera(labPointer,cam);const hits=labRaycaster.intersectObjects([f1].filter(Boolean),true);
+ for(const hit of hits){const id=roomFindTargetFromHit(hit);if(id){await approachRoomObject(id);return}}
+ const nearTap=projectedRoomTarget(nx,ny,.18),nearReticle=projectedRoomTarget(0,0,.14),id=nearTap||nearReticle;if(id){await approachRoomObject(id);return}
+ roomMessage.textContent='No highlighted object selected. Aim the center reticle at one, then tap anywhere.'
+}
 let roomPointer=null;
-ren.domElement.addEventListener('pointerdown',ev=>{if(!roomMode||roomMotionActive||roomTweening)return;roomPointer={x:ev.clientX,y:ev.clientY,lastX:ev.clientX,lastY:ev.clientY,moved:0};ren.domElement.setPointerCapture?.(ev.pointerId)});
-ren.domElement.addEventListener('pointermove',ev=>{if(!roomMode||roomMotionActive||!roomPointer||roomTweening)return;const dx=ev.clientX-roomPointer.lastX,dy=ev.clientY-roomPointer.lastY;roomPointer.lastX=ev.clientX;roomPointer.lastY=ev.clientY;roomPointer.moved+=Math.abs(dx)+Math.abs(dy);roomManualYaw-=dx*.0042;roomManualPitch=clamp(roomManualPitch-dy*.0036,-1.18,1.18);const yaw=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),roomManualYaw),pitch=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),roomManualPitch);cam.quaternion.copy(yaw).multiply(roomBaseQuaternion).multiply(pitch)});
-ren.domElement.addEventListener('pointerup',ev=>{if(!roomPointer)return;roomSuppressClick=roomPointer.moved>8;roomPointer=null;ren.domElement.releasePointerCapture?.(ev.pointerId)});
-ren.domElement.addEventListener('click',async ev=>{if(!roomMode||roomTweening){roomSuppressClick=false;return}if(roomSuppressClick){roomSuppressClick=false;return}const rect=ren.domElement.getBoundingClientRect();labPointer.x=((ev.clientX-rect.left)/rect.width)*2-1;labPointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;labRaycaster.setFromCamera(labPointer,cam);const hits=labRaycaster.intersectObjects([f1].filter(Boolean),true);for(const hit of hits){const id=roomFindTargetFromHit(hit);if(id){await approachRoomObject(id);return}}roomMessage.textContent='No highlighted object selected. Keep looking around the room.'});
+ren.domElement.addEventListener('pointerdown',ev=>{if(!roomMode||roomTweening)return;roomPointer={x:ev.clientX,y:ev.clientY,lastX:ev.clientX,lastY:ev.clientY,moved:0};ren.domElement.setPointerCapture?.(ev.pointerId)});
+ren.domElement.addEventListener('pointermove',ev=>{if(!roomMode||!roomPointer||roomTweening)return;const dx=ev.clientX-roomPointer.lastX,dy=ev.clientY-roomPointer.lastY;roomPointer.lastX=ev.clientX;roomPointer.lastY=ev.clientY;roomPointer.moved+=Math.abs(dx)+Math.abs(dy);if(roomMotionActive)return;roomManualYaw-=dx*.0042;roomManualPitch=clamp(roomManualPitch-dy*.0036,-1.18,1.18);const yaw=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),roomManualYaw),pitch=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),roomManualPitch);cam.quaternion.copy(yaw).multiply(roomBaseQuaternion).multiply(pitch)});
+ren.domElement.addEventListener('pointerup',async ev=>{if(!roomPointer)return;const tap=roomPointer.moved<=10,px=ev.clientX,py=ev.clientY;roomPointer=null;ren.domElement.releasePointerCapture?.(ev.pointerId);if(tap)await selectRoomAt(px,py)});
+ren.domElement.addEventListener('click',async ev=>{if(roomMode&&!roomTweening)await selectRoomAt(ev.clientX,ev.clientY)});
 
 document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>focus(b.dataset.f));
 document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>setView(b.dataset.v));

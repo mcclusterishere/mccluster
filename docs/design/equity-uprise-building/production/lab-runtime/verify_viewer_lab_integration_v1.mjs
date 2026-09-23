@@ -174,6 +174,17 @@ for (const required of [
 }
 assert.ok(viewer.includes("services.visible=servicesOn&&!roomMode"), "Room Mode must hide raw building-services overlay");
 assert.ok(viewer.includes("e.visible=!roomMode"), "Room Mode must hide raw electronics topology overlay");
+for (const required of [
+  "DeviceMotionEvent.requestPermission()", "DeviceOrientationEvent.requestPermission()",
+  "window.addEventListener('devicemotion',onRoomMotion,true)",
+  "roomSensorMode='motion-fallback'", "0 sensor events",
+  "selectRoomAt", "projectedRoomTarget", "pointerup", "addEventListener('click'",
+  "enhanceFloor1Interior", "buildRoomLightRig", "roomLightRig.visible=true",
+]) {
+  assert.ok(viewer.includes(required), "Room Mode iPad/realism guard missing: " + required);
+}
+assert.equal(viewer.includes("pointerdown',ev=>{if(!roomMode||roomMotionActive"), false,
+  "Motion Mode must not disable the touch selection path");
 assert.ok(viewer.includes("F1-RECEPTION-DESK-01") && viewer.includes("F1-DIRECTORY-01") && viewer.includes("F1-JOURNEY-WALL-01"),
   "Room Mode must target canonical Floor 1 scene objects");
 assert.equal(viewer.includes("scene.traverse(o=>{if(roomMode"), false, "Room Mode may not brute-force the entire scene per interaction");
