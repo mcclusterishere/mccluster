@@ -760,3 +760,27 @@ Boundary: Step 1 does not yet change asset/link/service state. Faults remain abs
 
 **NEXT:** Step 2 connects runtime target selectors + fault declarations to the Step 4A electronics manifest/connections and canonical asset identities so simulated devices, links and services actually respond to lab state.
 
+## Lab Runtime — STEP 2 ELECTRONICS / ASSET-STATE BINDING IMPLEMENTED
+
+Step 2 connects the Step 1 session engine to the canonical Step 4A electronics fabric.
+
+Implemented:
+- deterministic resolution for all current Step 4A lab target selectors;
+- independent in-memory state for canonical registry assets and typed electronics connections;
+- explicit support for every current non-`none` Step 4A fault token;
+- physical/logical propagation across representative copper, fiber, PoE, access-switch, BAS, OSDP, UPS, hosted-service, identity, firewall-HA and whole-building incident paths;
+- runtime evidence containing exact changed canonical asset/connection IDs;
+- sandbox-aware inspection and changed-state evidence export;
+- deterministic reset to baseline with scenario binding preserved;
+- hard rejection of LIVE execution and any registry asset that enables live control.
+
+Canonical Step 2 files:
+- `production/lab-runtime/equity-uprise-electronics-sandbox.mjs`
+- `production/lab-runtime/verify_electronics_sandbox_v1.mjs`
+
+The Core V2 CI now verifies both the Step 1 runtime foundation and Step 2 electronics binding.
+
+Boundary: this is a training sandbox bound to the design-intent digital twin. It does not write to live systems and does not promote unverified design intent to as-built truth.
+
+**NEXT:** Step 3 builds the first richer CISA-aligned IT/OT executable incident scenarios on this state engine.
+
