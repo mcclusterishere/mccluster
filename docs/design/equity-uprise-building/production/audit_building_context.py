@@ -11,6 +11,10 @@ BROOT="docs/design/equity-uprise-building/"
 EXTERNAL_AUTHORITY={
     "docs/design/EQUITY-UPRISE-REPO-AUDIT.md",
     "docs/design/EQUITY-UPRISE-BUILDING-INVENTORY.md",
+    "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG.json",
+    "docs/design/equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json",
+    "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md",
+    "docs/design/equity-uprise-development/verify_federal_training_catalog.py",
 }
 WORKFLOWS={
     ".github/workflows/equity-uprise-core-v2-ci.yml",
