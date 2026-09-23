@@ -97,6 +97,7 @@ try {
     "DeviceOrientationEvent.requestPermission", "DeviceMotionEvent.requestPermission", "deviceorientation", "devicemotion",
     "approachRoomObject", "tweenRoomCamera", "selectRoomAt", "projectedRoomTarget",
     "enhanceFloor1Interior", "buildRoomLightRig", 'id="xray"', "setEngineeringMode",
+    "ELECTRONICS_SPATIAL_MODULE_URL", "electronics.scale.setScalar(FT)", "applyElectronicsSpatialBindings", "spatialConnectionOverlay",
     "roomSensorMode='motion-primary'", "Placeholder electronics geometry is Engineering/X-Ray only",
     "services.visible=servicesOn&&!roomMode", "electronics.visible=false", "requestedRoom=params.get('room')==='1'"
   ].every((token) => viewerSource.includes(token)));
