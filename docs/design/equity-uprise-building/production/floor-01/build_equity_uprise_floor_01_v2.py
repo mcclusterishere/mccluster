@@ -146,7 +146,7 @@ def cyl(name, xy, radius, height, z=0, color=None, inv_id=None, sections=32):
         radius=radius * FT, height=height * FT, sections=sections
     )
     mesh.apply_translation((xy[0] * FT, xy[1] * FT, (z + height / 2) * FT))
-    mesh.visual.face_colors = color or C["part"]
+    pbr_visual(mesh, color or C["part"])
     scene.add_geometry(mesh, node_name=name, geom_name=name)
     records.append(name)
     mark(inv_id)
