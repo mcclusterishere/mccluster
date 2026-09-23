@@ -472,18 +472,20 @@ Step 9 makes the building itself the practical lab environment instead of concen
 
 Canonical source:
 - `production/lab-runtime/distributed-building-scenario-pack-v1.json`
+- `production/lab-runtime/learner-experience-v1.json`
 - `production/lab-runtime/equity-uprise-electronics-sandbox.mjs`
 - `production/lab-runtime/equity-uprise-guided-scenarios.mjs`
 - `production/lab-runtime/equity-uprise-viewer-lab-integration.mjs`
 - canonical viewer: `equity-uprise-building-core-v2-3d.html`
 
-The Step 2 selector resolver now supports floor-scoped selectors:
+The Step 2 selector resolver supports floor-scoped selectors:
 - `level:<B1|F1-F6|L7>:type:<asset_type>`
 - `level:<B1|F1-F6|L7>:cable:<cable_type>`
 
-The first distributed pack contains ten executable guided scenarios:
+The distributed pack now contains eleven executable guided scenarios:
 - B1 rack/IDF power failure;
 - Floor 1 workstation-link failure;
+- Floor 2 Wi-Fi access-point/link failure;
 - Floor 2 public-forum AV multicast flood;
 - Floor 3 voice-VLAN failure;
 - Floor 4 media-production AV QoS degradation;
@@ -493,7 +495,24 @@ The first distributed pack contains ten executable guided scenarios:
 - F4-to-B1 access-switch uplink failure;
 - F6-to-B1 backbone-fiber cut.
 
-Every scenario remains simulation-only and carries direct canonical competency IDs. Scenario definitions may narrow a Step 4A catalog lab's generic target selectors to an exact floor without changing the source catalog. The viewer uses `viewer_focus`, `floor_scope`, and `engineering_view` metadata to move to the relevant floor/stack and enable Engineering/X-Ray before rendering the injected fault.
+Every scenario remains simulation-only and carries direct canonical competency IDs. Scenario definitions may narrow a Step 4A catalog lab's generic target selectors to an exact floor without changing the source catalog.
+
+### Learner presentation contract
+
+`learner-experience-v1.json` is the canonical human-facing adapter for the technical scenarios. It does not duplicate or replace the deterministic runtime. It translates runtime actions into support tickets and the diagnostic loop:
+
+`OBSERVE → HYPOTHESIZE → TEST → FIX → VERIFY`
+
+Foundation and Technician sessions:
+- start from a user-visible symptom rather than a fault name;
+- use friendly action labels and bounded diagnosis choices;
+- keep raw selectors, JSON action input and assessment internals behind instructor/technical disclosure;
+- keep full electronics topology and Engineering/X-Ray hidden by default;
+- may render only scenario-relevant spatial markers that resolve through canonical electronics bindings.
+
+Admin/Advanced/Expert sessions may progressively disclose engineering state according to difficulty and instructor intent.
+
+The first PRIM3 reinforcement binding is `IT-LAB-017`: once the learner successfully diagnoses and verifies the Floor 2 Wi-Fi outage, **Got WiFi?** may be surfaced as a post-lab refresher. Reinforcement never substitutes for the scenario, evidence, rubric or human competency review.
 
 Generated roof electronics use the `L7-` prefix. Spatial binding therefore explicitly recognizes both canonical `F7-` scene anchors and generated `L7-` electronics IDs as Level 7; no fallback coordinates are introduced.
 
