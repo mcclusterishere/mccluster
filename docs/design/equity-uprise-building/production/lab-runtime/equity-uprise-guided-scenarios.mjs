@@ -74,7 +74,7 @@ export class GuidedScenarioRunner {
     this.unresolvedFaultIds = new Set(this.initialFaultIds);
 
     const bound = createElectronicsBoundSessionFromCatalogLab(
-      sourceLab,
+      this.sourceLab,
       electronics,
       {
         session_id: session_id || "GUIDED::" + definition.scenario_id,
