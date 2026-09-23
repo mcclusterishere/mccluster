@@ -5,6 +5,7 @@ import {
   VIEWER_LAB_EXECUTION_TARGET,
   createViewerLabController,
 } from "./equity-uprise-viewer-lab-integration.mjs";
+import { resolveElectronicsSpatialBinding, ELECTRONICS_TO_METERS } from "../electronics/equity-uprise-electronics-spatial-bindings-v1.mjs";
 
 const load = (relativePath) => JSON.parse(readFileSync(new URL(relativePath, import.meta.url), "utf8"));
 const text = (relativePath) => readFileSync(new URL(relativePath, import.meta.url), "utf8");
@@ -164,6 +165,34 @@ for (const required of [
   assert.ok(viewer.includes(required), "canonical viewer lost required feature/Step 8 hook: " + required);
 }
 assert.ok(viewer.includes("/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb"));
+assert.equal(ELECTRONICS_TO_METERS, 0.3048, "electronics source units must convert feet to meters");
+for (const [id,level] of [
+  ["B1-NET-CORE-SW-01-I001",0],
+  ["F1-NET-WAP-01",1],
+  ["F4-USER-WS-01",4],
+  ["F6-AV-CAM-01",6],
+  ["F7-SEC-CAM-01",7],
+]) {
+  const binding=resolveElectronicsSpatialBinding(id);
+  assert.ok(binding, "physical electronics asset must resolve spatially: "+id);
+  assert.equal(binding.level, level);
+  assert.ok(binding.anchor_id, "spatial binding must name a canonical anchor: "+id);
+  assert.equal(binding.authority, "canonical_floor_object_or_room_anchor");
+}
+assert.equal(resolveElectronicsSpatialBinding("LOGIC-SVC-DNS"), null, "logical services must never become physical meshes");
+for (const required of [
+  "ELECTRONICS_SPATIAL_MODULE_URL",
+  "electronics.scale.setScalar(FT)",
+  "applyElectronicsSpatialBindings",
+  "electronicsBindingWorld",
+  "o.userData.spatialBound=true",
+  "electronicsUnboundCount",
+  "spatialConnectionOverlay",
+  "room-bound devices",
+  "unresolved devices hidden",
+]) {
+  assert.ok(viewer.includes(required), "electronics spatial integration guard missing: "+required);
+}
 assert.ok(viewer.includes("double-click inspectable"));
 for (const required of [
   'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',
@@ -225,6 +254,7 @@ assert.ok(assessmentRuntime.includes("TextEncoder"), "portable SHA-256 implement
 const deploy = text("../../../../../.github/workflows/deploy-pages.yml");
 for (const required of [
   "equity-uprise-electronics-fabric-v1.glb",
+  "equity-uprise-electronics-spatial-bindings-v1.mjs",
   "equity-uprise-viewer-lab-integration.mjs",
   "difficulty-progression-policy-v1.json",
   "competency-rubrics.json",

@@ -122,7 +122,10 @@ The canonical viewer now separates the finished player environment from unresolv
 - **Engineering / X-Ray Mode** is explicit and opt-in. It may expose conceptual electronics devices for inspection, but the complete cable graph is hidden by default.
 - executable labs reveal only scenario-relevant engineering connections when X-Ray is intentionally enabled.
 - placeholder device coordinates and direct graph-edge cable geometry are therefore no longer allowed to visually masquerade as a completed physical interior.
-- the electronics generator still contains design-intent placeholder coordinates for some planned assets; those remain a future spatial-authority task and must be rebound to canonical room/object anchors before becoming ordinary player-visible geometry.
+- **Spatial binding is now active:** the electronics overlay is authored in feet and the viewer explicitly converts it by **0.3048** to match the meter-authored building; this fixes the prior ~3.28× scale/offset error that pushed equipment outside the building.
+- generated physical electronics are rebound to canonical floor object/room anchors through `production/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs`; rack/network gear resolves to support/IT spaces, user endpoints to actual work surfaces, WAPs/sensors/fire devices to ceiling/room anchors, security to access/circulation anchors, and AV to actual media/display zones.
+- X-Ray renders only electronics with a valid spatial binding. Any unresolved design-intent device remains in the systems/data model but is hidden as physical geometry until it receives a canonical anchor.
+- scenario cable traces are drawn only between rebound physical endpoints; the legacy generic full-cable GLB remains hidden rather than masquerading as installed routing.
 - iPad Room Mode now prioritizes rotation-rate gyroscope input with explicit screen-orientation remapping so horizontal device rotation maps to camera yaw and vertical tilt maps to camera pitch; absolute device orientation is fallback-only.
 
 ### Floor 1 visual-realism truth

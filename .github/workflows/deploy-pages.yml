@@ -145,8 +145,9 @@ jobs:
           cp docs/design/equity-uprise-building/references/floor-01/equity-uprise-floor-01-core-v2-schematic-v1.svg equity-uprise-preview/floor-01-plan.svg
           cp docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.png equity-uprise-preview/floor-01-site-egress.png
           cp docs/design/equity-uprise-building/references/floor-01-site/equity-uprise-floor-01-site-egress-core-v2-schematic-v1.svg equity-uprise-preview/floor-01-site-egress.svg
-          mkdir -p equity-uprise-preview/lab-runtime
+          mkdir -p equity-uprise-preview/lab-runtime equity-uprise-preview/electronics
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb
+          cp docs/design/equity-uprise-building/production/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs equity-uprise-preview/electronics/
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-manifest-v1.json equity-uprise-preview/equity-uprise-electronics-manifest-v1.json
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-connections-v1.json equity-uprise-preview/equity-uprise-electronics-connections-v1.json
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-it-lab-catalog-v1.json equity-uprise-preview/equity-uprise-it-lab-catalog-v1.json
