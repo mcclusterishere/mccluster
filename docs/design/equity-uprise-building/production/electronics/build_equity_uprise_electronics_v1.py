@@ -195,6 +195,21 @@ def default_pos(n,kind,i=0,count=1):
     if kind=="weather": return pos(n,48,63,6.0)
     return anchored_pos(n,"work",i,3.5,(36,40))
 
+# B1 detailed builder is geometric authority for these current-pass objects even
+# though the B1 inventory records themselves are semantic and omit placement.
+# Coordinates are derived from the explicit boxes/racks in
+# basement-b1/build_equity_uprise_basement_b1_v2.py.
+B1_DETAILED_POSITIONS={
+    "B1-ELEC-UPS-01-I001":[36.5,15.5,2.85],
+    "B1-ELEC-UPS-01-I002":[42.5,15.5,2.85],
+    "B1-TELECOM-CONSOLE-01":[37.5,24.0,3.15],
+    "B1-LAB-CONSOLE-01":[47.5,39.25,3.2],
+    "B1-LAB-DASHBOARD-01":[35.0,52.325,5.7],
+    "B1-OPS-STATUS-01":[26.5,61.325,5.3],
+    "B1-OPS-OCCUPANCY-01":[36.5,61.325,5.3],
+    "B1-OPS-ROUTE-01":[44.25,58.7,3.25],
+}
+
 def existing_position(a):
     loc=a.get("location",{})
     n=loc.get("level_number")
@@ -214,6 +229,9 @@ def existing_position(a):
     if b and len(b)>=4:
         return [0.5*(float(b[0])+float(b[2])),0.5*(float(b[1])+float(b[3])),ffe(n)+4.0]
     aid=a["asset_id"]
+    if aid in B1_DETAILED_POSITIONS:
+        p=B1_DETAILED_POSITIONS[aid]
+        return [float(p[0]),float(p[1]),ffe(0)+float(p[2])]
     # Reconcile registry assets back to their approved floor-inventory geometry.
     obj=next((o for o in floor_objects.get(n,[]) if (o.get("id") or o.get("object_id"))==aid),None)
     xy=placement_xy(obj) if obj else None
