@@ -279,3 +279,10 @@ Step 2 binds the session engine to canonical Step 4A assets and typed connection
 
 Step 3 promotes IT-LAB-029, IT-LAB-038 and IT-LAB-039 into executable guided scenarios with objective gates, allowlisted simulated actions, decision validation, deterministic remediation, state-backed evidence and canonical criterion completion. CISA course bindings remain supporting evidence only; learner B1/OT work remains sandboxed.
 
+### Step 4 building-operations exercises
+- `production/lab-runtime/fema-building-ops-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-building-ops-runtime.mjs`
+- `production/lab-runtime/verify_fema_building_ops_scenarios_v1.mjs`
+
+Step 4 executes the eight existing Floor 1 building-operations scenarios with canonical object state, prerequisite gates, deterministic decisions, simulation-only resolution and evidence capture. FEMA and other federal bindings remain instructional mappings only; LIVE building control remains disabled.
+
