@@ -206,7 +206,7 @@ for (const required of [
   "electronicsUnboundCount",
   "spatialConnectionOverlay",
   "room-bound devices",
-  "unresolved devices hidden",
+  "unresolved hidden",
   "if(!binding?.anchor_id)return null",
   "if(!anchor)return null",
   "n.startsWith(id+'-I')",
