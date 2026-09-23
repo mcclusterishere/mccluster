@@ -99,6 +99,8 @@ try {
     "enhanceFloor1Interior", "buildRoomLightRig", 'id="xray"', "setEngineeringMode",
     "ENGINEERING-XRAY-OVERLAY", "await buildingLoaded", "X-Ray: Loading", "setArchitectureGhost(true)",
     "SpriteMaterial", "rebuildEngineeringMarkers", "visible room-bound devices",
+    "engineeringRequestId", "requestId!==engineeringRequestId", "engineeringOverlay.remove(o)",
+    "if(engineeringMode&&!roomMode)syncEngineeringView()",
     "ELECTRONICS_SPATIAL_MODULE_URL", "electronics.scale.setScalar(FT)", "applyElectronicsSpatialBindings", "spatialConnectionOverlay",
     "roomSensorMode='motion-primary'", "Placeholder electronics geometry is Engineering/X-Ray only",
     "services.visible=servicesOn&&!roomMode", "electronics.visible=false", "requestedRoom=params.get('room')==='1'"
