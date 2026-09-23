@@ -236,7 +236,7 @@ Credential state and competency state remain separate.
 
 Example:
 
-FEMA ICS-100
+FEMA IS-100.C
 - credential/training state: completed
 
 Emergency & Incident Coordination
@@ -373,3 +373,8 @@ training
 + recency
 
 not hours watched or quiz completion alone.
+
+
+## Federal training evidence resolution
+
+Federal courses/programs used as external evidence resolve through `FEDERAL-TRAINING-CATALOG.json` and `FEDERAL-TRAINING-BINDINGS.json`. Issuer completion/credential state remains separate from competency state; federal training can support a claim, but the applicable rubric, artifact quality, reviewer judgment and evidence-defense rules still control competency mastery.

@@ -167,11 +167,12 @@ These concepts drive the tunnel subsystem model. They do not create a claim that
 
 FEMA's Independent Study catalog currently includes:
 
-- IS-120.c — An Introduction to Exercises;
-- IS-130.a — How to be an Exercise Evaluator;
-- IS-200.c — Basic Incident Command System for Initial Response;
-- IS-201.a — Forms Used for the Development of the Incident Action Plan and Incident Management;
-- IS-235.c — Emergency Planning;
+- IS-100.C — Introduction to the Incident Command System, ICS 100;
+- IS-120.C — An Introduction to Exercises;
+- IS-130.A — How to be an Exercise Evaluator;
+- IS-200.C — Basic Incident Command System for Initial Response;
+- IS-201.A — Forms Used for the Development of the Incident Action Plan and Incident Management;
+- IS-235.C — Emergency Planning;
 - IS-238 — Critical Concepts of Supply Chain Flow and Resilience.
 
 References:
@@ -193,3 +194,8 @@ The tunnel environment may be used as a fictional exercise venue for these conce
 - Ventilation, drainage, fire/life safety, power, communications, lighting, access/security and controls are modeled as stateful tunnel subsystems.
 - Future branch destinations remain unnamed until their connected building authority exists.
 - Restricted visibility never removes emergency egress, accountability, incident reporting or audit requirements.
+
+
+### Federal training resolution
+
+The authoritative course titles/status/readiness and course-to-building bindings now live in `../equity-uprise-development/FEDERAL-TRAINING-CATALOG.json` and `../equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json`. OSHA regulations, FHWA manuals, NIST standards, NVD and CISA KEV remain reference material rather than course-completion claims.

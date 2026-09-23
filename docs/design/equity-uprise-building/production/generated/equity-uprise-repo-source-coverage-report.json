@@ -1,11 +1,11 @@
 {
   "schema_version": "2.0.0",
   "scope": "Repo-wide Equity Uprise source-to-building-capability coverage",
-  "candidate_count": 258,
+  "candidate_count": 262,
   "capability_source_count": 102,
-  "support_only_count": 156,
-  "checks_total": 932,
-  "checks_passed": 932,
+  "support_only_count": 160,
+  "checks_total": 948,
+  "checks_passed": 948,
   "checks_failed": 0,
   "passed": true,
   "discovered_paths": [
@@ -78,10 +78,14 @@
     "docs/design/equity-uprise-development/DESIGN-RATIONALE.md",
     "docs/design/equity-uprise-development/DEVELOPMENT-JOURNEY.md",
     "docs/design/equity-uprise-development/EVIDENCE-ASSESSMENT-ARCHITECTURE.md",
+    "docs/design/equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json",
+    "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md",
+    "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG.json",
     "docs/design/equity-uprise-development/README.md",
     "docs/design/equity-uprise-development/competency-catalog.json",
     "docs/design/equity-uprise-development/competency-rubrics.json",
     "docs/design/equity-uprise-development/stage-competency-map.json",
+    "docs/design/equity-uprise-development/verify_federal_training_catalog.py",
     "docs/design/redesign-before-after.html",
     "docs/equity-uprise-platform.md",
     "docs/gated-audio.md",
@@ -272,12 +276,12 @@
     {
       "name": "source-map paths unique",
       "passed": true,
-      "detail": "258 entries"
+      "detail": "262 entries"
     },
     {
       "name": "repo-wide discovered source set exactly classified",
       "passed": true,
-      "detail": "{\"missing_from_map\": [], \"stale_in_map\": []}"
+      "detail": "{\"missing_from_map\":[],\"stale_in_map\":[]}"
     },
     {
       "name": "_unfinished/README.md capability ids known",
@@ -287,7 +291,7 @@
     {
       "name": "_unfinished/README.md classified",
       "passed": true,
-      "detail": "classification='unrelated_experimental_support'"
+      "detail": "classification=\"unrelated_experimental_support\""
     },
     {
       "name": "_unfinished/README.md support-only semantics coherent",
@@ -307,7 +311,7 @@
     {
       "name": "_unfinished/shake-shop/shake-desk.html classified",
       "passed": true,
-      "detail": "classification='unrelated_experimental_support'"
+      "detail": "classification=\"unrelated_experimental_support\""
     },
     {
       "name": "_unfinished/shake-shop/shake-desk.html support-only semantics coherent",
@@ -327,7 +331,7 @@
     {
       "name": "_unfinished/shake-shop/shakes.css classified",
       "passed": true,
-      "detail": "classification='unrelated_experimental_support'"
+      "detail": "classification=\"unrelated_experimental_support\""
     },
     {
       "name": "_unfinished/shake-shop/shakes.css support-only semantics coherent",
@@ -347,7 +351,7 @@
     {
       "name": "_unfinished/shake-shop/shakes.html classified",
       "passed": true,
-      "detail": "classification='unrelated_experimental_support'"
+      "detail": "classification=\"unrelated_experimental_support\""
     },
     {
       "name": "_unfinished/shake-shop/shakes.html support-only semantics coherent",
@@ -367,7 +371,7 @@
     {
       "name": "_unfinished/shake-shop/shakes.js classified",
       "passed": true,
-      "detail": "classification='unrelated_experimental_support'"
+      "detail": "classification=\"unrelated_experimental_support\""
     },
     {
       "name": "_unfinished/shake-shop/shakes.js support-only semantics coherent",
@@ -387,7 +391,7 @@
     {
       "name": "_unfinished/uprise-world/uprise-npc.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "_unfinished/uprise-world/uprise-npc.js support-only semantics coherent",
@@ -402,7 +406,7 @@
     {
       "name": "_unfinished/uprise-world/uprise-world.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "_unfinished/uprise-world/uprise-world.html support-only semantics coherent",
@@ -417,7 +421,7 @@
     {
       "name": "_unfinished/uprise-world/uprise-world.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "_unfinished/uprise-world/uprise-world.js support-only semantics coherent",
@@ -432,7 +436,7 @@
     {
       "name": "_unfinished/uprise-world/uprise-world.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "_unfinished/uprise-world/uprise-world.json support-only semantics coherent",
@@ -447,7 +451,7 @@
     {
       "name": ".cursorrules classified",
       "passed": true,
-      "detail": "classification='governance_support'"
+      "detail": "classification=\"governance_support\""
     },
     {
       "name": ".cursorrules support-only semantics coherent",
@@ -467,7 +471,7 @@
     {
       "name": ".github/copilot-instructions.md classified",
       "passed": true,
-      "detail": "classification='governance_support'"
+      "detail": "classification=\"governance_support\""
     },
     {
       "name": ".github/copilot-instructions.md support-only semantics coherent",
@@ -487,7 +491,7 @@
     {
       "name": ".github/workflows/equity-uprise-core-v2-ci.yml classified",
       "passed": true,
-      "detail": "classification='build_validation_support'"
+      "detail": "classification=\"build_validation_support\""
     },
     {
       "name": ".github/workflows/equity-uprise-core-v2-ci.yml support-only semantics coherent",
@@ -507,7 +511,7 @@
     {
       "name": ".github/workflows/reconciliation-ci.yml classified",
       "passed": true,
-      "detail": "classification='workflow_support'"
+      "detail": "classification=\"workflow_support\""
     },
     {
       "name": ".github/workflows/reconciliation-ci.yml support-only semantics coherent",
@@ -527,7 +531,7 @@
     {
       "name": "admin.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "admin.html support-only semantics coherent",
@@ -547,7 +551,7 @@
     {
       "name": "AGENTS.md classified",
       "passed": true,
-      "detail": "classification='governance_support'"
+      "detail": "classification=\"governance_support\""
     },
     {
       "name": "AGENTS.md support-only semantics coherent",
@@ -567,7 +571,7 @@
     {
       "name": "album.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "album.html support-only semantics coherent",
@@ -582,7 +586,7 @@
     {
       "name": "assets/img/equity-uprise-logo.webp classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "assets/img/equity-uprise-logo.webp support-only semantics coherent",
@@ -602,7 +606,7 @@
     {
       "name": "assets/img/eu-favicon.png classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "assets/img/eu-favicon.png support-only semantics coherent",
@@ -622,7 +626,7 @@
     {
       "name": "audit/2026-09-13-p0-supabase-containment.md classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "audit/2026-09-13-p0-supabase-containment.md support-only semantics coherent",
@@ -642,7 +646,7 @@
     {
       "name": "card.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "card.html support-only semantics coherent",
@@ -662,7 +666,7 @@
     {
       "name": "catalogue.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "catalogue.html support-only semantics coherent",
@@ -677,7 +681,7 @@
     {
       "name": "CLAUDE.md classified",
       "passed": true,
-      "detail": "classification='governance_support'"
+      "detail": "classification=\"governance_support\""
     },
     {
       "name": "CLAUDE.md support-only semantics coherent",
@@ -697,7 +701,7 @@
     {
       "name": "closet/sent.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "closet/sent.html support-only semantics coherent",
@@ -717,7 +721,7 @@
     {
       "name": "CODEX.md classified",
       "passed": true,
-      "detail": "classification='governance_support'"
+      "detail": "classification=\"governance_support\""
     },
     {
       "name": "CODEX.md support-only semantics coherent",
@@ -737,7 +741,7 @@
     {
       "name": "console.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "console.html support-only semantics coherent",
@@ -757,7 +761,7 @@
     {
       "name": "crm.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "crm.html support-only semantics coherent",
@@ -777,7 +781,7 @@
     {
       "name": "css/equity-uprise-app.css classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "css/equity-uprise-app.css support-only semantics coherent",
@@ -797,7 +801,7 @@
     {
       "name": "css/equity-uprise-institutional.css classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "css/equity-uprise-institutional.css support-only semantics coherent",
@@ -817,7 +821,7 @@
     {
       "name": "css/music-director-base.css classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "css/music-director-base.css support-only semantics coherent",
@@ -837,7 +841,7 @@
     {
       "name": "css/music-director.css classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "css/music-director.css support-only semantics coherent",
@@ -857,7 +861,7 @@
     {
       "name": "css/offers.css classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "css/offers.css support-only semantics coherent",
@@ -877,7 +881,7 @@
     {
       "name": "css/onboard.css classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "css/onboard.css support-only semantics coherent",
@@ -897,7 +901,7 @@
     {
       "name": "css/style.css classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "css/style.css support-only semantics coherent",
@@ -917,7 +921,7 @@
     {
       "name": "dashboard.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "dashboard.html support-only semantics coherent",
@@ -932,7 +936,7 @@
     {
       "name": "data/albums.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/albums.json support-only semantics coherent",
@@ -947,7 +951,7 @@
     {
       "name": "data/archive.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/archive.json support-only semantics coherent",
@@ -962,7 +966,7 @@
     {
       "name": "data/brands.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/brands.json support-only semantics coherent",
@@ -977,7 +981,7 @@
     {
       "name": "data/catalogue.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/catalogue.json support-only semantics coherent",
@@ -992,7 +996,7 @@
     {
       "name": "data/cause.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/cause.json support-only semantics coherent",
@@ -1007,7 +1011,7 @@
     {
       "name": "data/ddex/identifiers.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/ddex/identifiers.json support-only semantics coherent",
@@ -1022,7 +1026,7 @@
     {
       "name": "data/domains.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/domains.json support-only semantics coherent",
@@ -1037,7 +1041,7 @@
     {
       "name": "data/dossier.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/dossier.json support-only semantics coherent",
@@ -1052,7 +1056,7 @@
     {
       "name": "data/eu-fellowships.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/eu-fellowships.json support-only semantics coherent",
@@ -1067,7 +1071,7 @@
     {
       "name": "data/eu-topics.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/eu-topics.json support-only semantics coherent",
@@ -1082,7 +1086,7 @@
     {
       "name": "data/fellows.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/fellows.json support-only semantics coherent",
@@ -1097,7 +1101,7 @@
     {
       "name": "data/gallery.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/gallery.json support-only semantics coherent",
@@ -1112,7 +1116,7 @@
     {
       "name": "data/merch.json classified",
       "passed": true,
-      "detail": "classification='shared_data_support'"
+      "detail": "classification=\"shared_data_support\""
     },
     {
       "name": "data/merch.json support-only semantics coherent",
@@ -1132,7 +1136,7 @@
     {
       "name": "data/offers.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/offers.json support-only semantics coherent",
@@ -1147,7 +1151,7 @@
     {
       "name": "data/playlists.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/playlists.json support-only semantics coherent",
@@ -1162,7 +1166,7 @@
     {
       "name": "data/portfolio.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/portfolio.json support-only semantics coherent",
@@ -1177,7 +1181,7 @@
     {
       "name": "data/prayer-closet.json classified",
       "passed": true,
-      "detail": "classification='shared_data_support'"
+      "detail": "classification=\"shared_data_support\""
     },
     {
       "name": "data/prayer-closet.json support-only semantics coherent",
@@ -1197,7 +1201,7 @@
     {
       "name": "data/roles.json classified",
       "passed": true,
-      "detail": "classification='shared_data_support'"
+      "detail": "classification=\"shared_data_support\""
     },
     {
       "name": "data/roles.json support-only semantics coherent",
@@ -1217,7 +1221,7 @@
     {
       "name": "data/sites.json classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "data/sites.json support-only semantics coherent",
@@ -1232,7 +1236,7 @@
     {
       "name": "demos/shiloh/data/impact.json classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "demos/shiloh/data/impact.json support-only semantics coherent",
@@ -1252,7 +1256,7 @@
     {
       "name": "docket-516.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "docket-516.html support-only semantics coherent",
@@ -1267,7 +1271,7 @@
     {
       "name": "docs/agent-web.md classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "docs/agent-web.md support-only semantics coherent",
@@ -1282,7 +1286,7 @@
     {
       "name": "docs/control-plane/GMAIL-CONNECT.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/control-plane/GMAIL-CONNECT.md support-only semantics coherent",
@@ -1302,7 +1306,7 @@
     {
       "name": "docs/control-plane/registry.json classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/control-plane/registry.json support-only semantics coherent",
@@ -1322,7 +1326,7 @@
     {
       "name": "docs/control-plane/SPATIAL-INTELLIGENCE.md classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "docs/control-plane/SPATIAL-INTELLIGENCE.md support-only semantics coherent",
@@ -1337,7 +1341,7 @@
     {
       "name": "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md classified",
       "passed": true,
-      "detail": "classification='development_program_authority_pre_building_rewrite'"
+      "detail": "classification=\"development_program_authority_pre_building_rewrite\""
     },
     {
       "name": "docs/design/equity-uprise-development/ASSESSMENT-RUBRIC-TEMPLATE.md support-only semantics coherent",
@@ -1357,7 +1361,7 @@
     {
       "name": "docs/design/equity-uprise-development/COMPETENCY-ARCHITECTURE.md classified",
       "passed": true,
-      "detail": "classification='development_program_authority_pre_building_rewrite'"
+      "detail": "classification=\"development_program_authority_pre_building_rewrite\""
     },
     {
       "name": "docs/design/equity-uprise-development/COMPETENCY-ARCHITECTURE.md support-only semantics coherent",
@@ -1377,7 +1381,7 @@
     {
       "name": "docs/design/equity-uprise-development/competency-catalog.json classified",
       "passed": true,
-      "detail": "classification='development_program_authority_pre_building_rewrite'"
+      "detail": "classification=\"development_program_authority_pre_building_rewrite\""
     },
     {
       "name": "docs/design/equity-uprise-development/competency-catalog.json support-only semantics coherent",
@@ -1397,7 +1401,7 @@
     {
       "name": "docs/design/equity-uprise-development/competency-rubrics.json classified",
       "passed": true,
-      "detail": "classification='development_program_authority_pre_building_rewrite'"
+      "detail": "classification=\"development_program_authority_pre_building_rewrite\""
     },
     {
       "name": "docs/design/equity-uprise-development/competency-rubrics.json support-only semantics coherent",
@@ -1417,7 +1421,7 @@
     {
       "name": "docs/design/equity-uprise-development/DESIGN-RATIONALE.md classified",
       "passed": true,
-      "detail": "classification='development_program_authority_pre_building_rewrite'"
+      "detail": "classification=\"development_program_authority_pre_building_rewrite\""
     },
     {
       "name": "docs/design/equity-uprise-development/DESIGN-RATIONALE.md support-only semantics coherent",
@@ -1437,7 +1441,7 @@
     {
       "name": "docs/design/equity-uprise-development/DEVELOPMENT-JOURNEY.md classified",
       "passed": true,
-      "detail": "classification='development_program_authority_pre_building_rewrite'"
+      "detail": "classification=\"development_program_authority_pre_building_rewrite\""
     },
     {
       "name": "docs/design/equity-uprise-development/DEVELOPMENT-JOURNEY.md support-only semantics coherent",
@@ -1457,7 +1461,7 @@
     {
       "name": "docs/design/equity-uprise-development/EVIDENCE-ASSESSMENT-ARCHITECTURE.md classified",
       "passed": true,
-      "detail": "classification='development_program_authority_pre_building_rewrite'"
+      "detail": "classification=\"development_program_authority_pre_building_rewrite\""
     },
     {
       "name": "docs/design/equity-uprise-development/EVIDENCE-ASSESSMENT-ARCHITECTURE.md support-only semantics coherent",
@@ -1470,6 +1474,66 @@
       "detail": ""
     },
     {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json classified",
+      "passed": true,
+      "detail": "classification=\"development_training_authority\""
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md classified",
+      "passed": true,
+      "detail": "classification=\"development_training_authority\""
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG-SPEC.md support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG.json capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG.json classified",
+      "passed": true,
+      "detail": "classification=\"development_training_authority\""
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG.json support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/design/equity-uprise-development/FEDERAL-TRAINING-CATALOG.json support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/design/equity-uprise-development/README.md capability ids known",
       "passed": true,
       "detail": ""
@@ -1477,7 +1541,7 @@
     {
       "name": "docs/design/equity-uprise-development/README.md classified",
       "passed": true,
-      "detail": "classification='development_program_authority_pre_building_rewrite'"
+      "detail": "classification=\"development_program_authority_pre_building_rewrite\""
     },
     {
       "name": "docs/design/equity-uprise-development/README.md support-only semantics coherent",
@@ -1497,7 +1561,7 @@
     {
       "name": "docs/design/equity-uprise-development/stage-competency-map.json classified",
       "passed": true,
-      "detail": "classification='development_program_authority_pre_building_rewrite'"
+      "detail": "classification=\"development_program_authority_pre_building_rewrite\""
     },
     {
       "name": "docs/design/equity-uprise-development/stage-competency-map.json support-only semantics coherent",
@@ -1510,6 +1574,26 @@
       "detail": ""
     },
     {
+      "name": "docs/design/equity-uprise-development/verify_federal_training_catalog.py capability ids known",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "docs/design/equity-uprise-development/verify_federal_training_catalog.py classified",
+      "passed": true,
+      "detail": "classification=\"development_training_authority\""
+    },
+    {
+      "name": "docs/design/equity-uprise-development/verify_federal_training_catalog.py support-only semantics coherent",
+      "passed": true,
+      "detail": "support-only sources must not also claim capability ownership"
+    },
+    {
+      "name": "docs/design/equity-uprise-development/verify_federal_training_catalog.py support rationale present",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "docs/design/HERE-BRAND-LIBRARY.md capability ids known",
       "passed": true,
       "detail": ""
@@ -1517,7 +1601,7 @@
     {
       "name": "docs/design/HERE-BRAND-LIBRARY.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/design/HERE-BRAND-LIBRARY.md support-only semantics coherent",
@@ -1537,7 +1621,7 @@
     {
       "name": "docs/design/HERE-CURRENT-STATE-AUDIT.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/design/HERE-CURRENT-STATE-AUDIT.md support-only semantics coherent",
@@ -1557,7 +1641,7 @@
     {
       "name": "docs/design/redesign-before-after.html classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/design/redesign-before-after.html support-only semantics coherent",
@@ -1577,7 +1661,7 @@
     {
       "name": "docs/equity-uprise-platform.md classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "docs/equity-uprise-platform.md support-only semantics coherent",
@@ -1592,7 +1676,7 @@
     {
       "name": "docs/gated-audio.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/gated-audio.md support-only semantics coherent",
@@ -1612,7 +1696,7 @@
     {
       "name": "docs/here-inventory.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/here-inventory.md support-only semantics coherent",
@@ -1632,7 +1716,7 @@
     {
       "name": "docs/here-url-migration-map.csv classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/here-url-migration-map.csv support-only semantics coherent",
@@ -1652,7 +1736,7 @@
     {
       "name": "docs/inbox.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/inbox.md support-only semantics coherent",
@@ -1672,7 +1756,7 @@
     {
       "name": "docs/legal/EXPOSURE-AUDIT.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/legal/EXPOSURE-AUDIT.md support-only semantics coherent",
@@ -1692,7 +1776,7 @@
     {
       "name": "docs/music-platform.md classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "docs/music-platform.md support-only semantics coherent",
@@ -1707,7 +1791,7 @@
     {
       "name": "docs/pay-now.md classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "docs/pay-now.md support-only semantics coherent",
@@ -1722,7 +1806,7 @@
     {
       "name": "docs/sales-redesign/BRANCH-HARVEST-REPORT.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/sales-redesign/BRANCH-HARVEST-REPORT.md support-only semantics coherent",
@@ -1742,7 +1826,7 @@
     {
       "name": "docs/sales-redesign/CRM-MIGRATION.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/sales-redesign/CRM-MIGRATION.md support-only semantics coherent",
@@ -1762,7 +1846,7 @@
     {
       "name": "docs/sales-redesign/MOBBIN-REFERENCES.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/sales-redesign/MOBBIN-REFERENCES.md support-only semantics coherent",
@@ -1782,7 +1866,7 @@
     {
       "name": "docs/seo-matthew-mccluster.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/seo-matthew-mccluster.md support-only semantics coherent",
@@ -1802,7 +1886,7 @@
     {
       "name": "docs/shake-delivery.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/shake-delivery.md support-only semantics coherent",
@@ -1822,7 +1906,7 @@
     {
       "name": "docs/social-desk-setup.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/social-desk-setup.md support-only semantics coherent",
@@ -1842,7 +1926,7 @@
     {
       "name": "docs/stocksy-shot-list.md classified",
       "passed": true,
-      "detail": "classification='documentation_support'"
+      "detail": "classification=\"documentation_support\""
     },
     {
       "name": "docs/stocksy-shot-list.md support-only semantics coherent",
@@ -1862,7 +1946,7 @@
     {
       "name": "docs/the-mission-fund.md classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "docs/the-mission-fund.md support-only semantics coherent",
@@ -1877,7 +1961,7 @@
     {
       "name": "docs/uprise-world/AUDIT-REPORT.md classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "docs/uprise-world/AUDIT-REPORT.md support-only semantics coherent",
@@ -1892,7 +1976,7 @@
     {
       "name": "ecosystem.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "ecosystem.html support-only semantics coherent",
@@ -1907,7 +1991,7 @@
     {
       "name": "equity-uprise-basement-b1-3d.html classified",
       "passed": true,
-      "detail": "classification='building_preview_support'"
+      "detail": "classification=\"building_preview_support\""
     },
     {
       "name": "equity-uprise-basement-b1-3d.html support-only semantics coherent",
@@ -1927,7 +2011,7 @@
     {
       "name": "equity-uprise-fellowship.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "equity-uprise-fellowship.html support-only semantics coherent",
@@ -1942,7 +2026,7 @@
     {
       "name": "equity-uprise-floor-01-3d.html classified",
       "passed": true,
-      "detail": "classification='building_projection_support'"
+      "detail": "classification=\"building_projection_support\""
     },
     {
       "name": "equity-uprise-floor-01-3d.html support-only semantics coherent",
@@ -1962,7 +2046,7 @@
     {
       "name": "equity-uprise-floor-02-3d.html classified",
       "passed": true,
-      "detail": "classification='building_projection_support'"
+      "detail": "classification=\"building_projection_support\""
     },
     {
       "name": "equity-uprise-floor-02-3d.html support-only semantics coherent",
@@ -1982,7 +2066,7 @@
     {
       "name": "equity-uprise-floor-03-3d.html classified",
       "passed": true,
-      "detail": "classification='building_projection_support'"
+      "detail": "classification=\"building_projection_support\""
     },
     {
       "name": "equity-uprise-floor-03-3d.html support-only semantics coherent",
@@ -2002,7 +2086,7 @@
     {
       "name": "equity-uprise-floor-04-3d.html classified",
       "passed": true,
-      "detail": "classification='building_projection_support'"
+      "detail": "classification=\"building_projection_support\""
     },
     {
       "name": "equity-uprise-floor-04-3d.html support-only semantics coherent",
@@ -2022,7 +2106,7 @@
     {
       "name": "equity-uprise-floor-05-3d.html classified",
       "passed": true,
-      "detail": "classification='building_projection_support'"
+      "detail": "classification=\"building_projection_support\""
     },
     {
       "name": "equity-uprise-floor-05-3d.html support-only semantics coherent",
@@ -2042,7 +2126,7 @@
     {
       "name": "equity-uprise-floor-06-3d.html classified",
       "passed": true,
-      "detail": "classification='building_projection_support'"
+      "detail": "classification=\"building_projection_support\""
     },
     {
       "name": "equity-uprise-floor-06-3d.html support-only semantics coherent",
@@ -2062,7 +2146,7 @@
     {
       "name": "equity-uprise-floor-07-3d.html classified",
       "passed": true,
-      "detail": "classification='building_projection_support'"
+      "detail": "classification=\"building_projection_support\""
     },
     {
       "name": "equity-uprise-floor-07-3d.html support-only semantics coherent",
@@ -2082,7 +2166,7 @@
     {
       "name": "equity-uprise.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "equity-uprise.html support-only semantics coherent",
@@ -2097,7 +2181,7 @@
     {
       "name": "feed.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "feed.html support-only semantics coherent",
@@ -2117,7 +2201,7 @@
     {
       "name": "fellowship.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "fellowship.html support-only semantics coherent",
@@ -2132,7 +2216,7 @@
     {
       "name": "fellowships.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "fellowships.html support-only semantics coherent",
@@ -2147,7 +2231,7 @@
     {
       "name": "films.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "films.html support-only semantics coherent",
@@ -2167,7 +2251,7 @@
     {
       "name": "gallery.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "gallery.html support-only semantics coherent",
@@ -2187,7 +2271,7 @@
     {
       "name": "GEMINI.md classified",
       "passed": true,
-      "detail": "classification='governance_support'"
+      "detail": "classification=\"governance_support\""
     },
     {
       "name": "GEMINI.md support-only semantics coherent",
@@ -2207,7 +2291,7 @@
     {
       "name": "give.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "give.html support-only semantics coherent",
@@ -2222,7 +2306,7 @@
     {
       "name": "hire.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "hire.html support-only semantics coherent",
@@ -2237,7 +2321,7 @@
     {
       "name": "hitman-facility.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "hitman-facility.html support-only semantics coherent",
@@ -2257,7 +2341,7 @@
     {
       "name": "index.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "index.html support-only semantics coherent",
@@ -2277,7 +2361,7 @@
     {
       "name": "inner-room.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "inner-room.html support-only semantics coherent",
@@ -2297,7 +2381,7 @@
     {
       "name": "js/chatfirst.js classified",
       "passed": true,
-      "detail": "classification='shared_frontend_support'"
+      "detail": "classification=\"shared_frontend_support\""
     },
     {
       "name": "js/chatfirst.js support-only semantics coherent",
@@ -2317,7 +2401,7 @@
     {
       "name": "js/control-registry.js classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "js/control-registry.js support-only semantics coherent",
@@ -2337,7 +2421,7 @@
     {
       "name": "js/crm.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "js/crm.js support-only semantics coherent",
@@ -2352,7 +2436,7 @@
     {
       "name": "js/equity-uprise-fellowship-live.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "js/equity-uprise-fellowship-live.js support-only semantics coherent",
@@ -2367,7 +2451,7 @@
     {
       "name": "js/equity-uprise-institutional.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "js/equity-uprise-institutional.js support-only semantics coherent",
@@ -2382,7 +2466,7 @@
     {
       "name": "js/eu-api.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "js/eu-api.js support-only semantics coherent",
@@ -2397,7 +2481,7 @@
     {
       "name": "js/fan-intake.js classified",
       "passed": true,
-      "detail": "classification='shared_frontend_support'"
+      "detail": "classification=\"shared_frontend_support\""
     },
     {
       "name": "js/fan-intake.js support-only semantics coherent",
@@ -2417,7 +2501,7 @@
     {
       "name": "js/here-material.js classified",
       "passed": true,
-      "detail": "classification='shared_frontend_support'"
+      "detail": "classification=\"shared_frontend_support\""
     },
     {
       "name": "js/here-material.js support-only semantics coherent",
@@ -2437,7 +2521,7 @@
     {
       "name": "js/hire-offers.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "js/hire-offers.js support-only semantics coherent",
@@ -2452,7 +2536,7 @@
     {
       "name": "js/lockroom.js classified",
       "passed": true,
-      "detail": "classification='shared_frontend_support'"
+      "detail": "classification=\"shared_frontend_support\""
     },
     {
       "name": "js/lockroom.js support-only semantics coherent",
@@ -2472,7 +2556,7 @@
     {
       "name": "js/masthead.js classified",
       "passed": true,
-      "detail": "classification='shared_frontend_support'"
+      "detail": "classification=\"shared_frontend_support\""
     },
     {
       "name": "js/masthead.js support-only semantics coherent",
@@ -2492,7 +2576,7 @@
     {
       "name": "js/offers.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "js/offers.js support-only semantics coherent",
@@ -2507,7 +2591,7 @@
     {
       "name": "js/onboard.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "js/onboard.js support-only semantics coherent",
@@ -2522,7 +2606,7 @@
     {
       "name": "js/payments.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "js/payments.js support-only semantics coherent",
@@ -2537,7 +2621,7 @@
     {
       "name": "js/tabbar.js classified",
       "passed": true,
-      "detail": "classification='shared_frontend_support'"
+      "detail": "classification=\"shared_frontend_support\""
     },
     {
       "name": "js/tabbar.js support-only semantics coherent",
@@ -2557,7 +2641,7 @@
     {
       "name": "LICENSE classified",
       "passed": true,
-      "detail": "classification='incidental_text_match'"
+      "detail": "classification=\"incidental_text_match\""
     },
     {
       "name": "LICENSE support-only semantics coherent",
@@ -2577,7 +2661,7 @@
     {
       "name": "license.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "license.html support-only semantics coherent",
@@ -2597,7 +2681,7 @@
     {
       "name": "listen.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "listen.html support-only semantics coherent",
@@ -2612,7 +2696,7 @@
     {
       "name": "llms.txt classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "llms.txt support-only semantics coherent",
@@ -2627,7 +2711,7 @@
     {
       "name": "management.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "management.html support-only semantics coherent",
@@ -2647,7 +2731,7 @@
     {
       "name": "matthew-mccluster.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "matthew-mccluster.html support-only semantics coherent",
@@ -2667,7 +2751,7 @@
     {
       "name": "native/app/(tabs)/_layout.tsx classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "native/app/(tabs)/_layout.tsx support-only semantics coherent",
@@ -2687,7 +2771,7 @@
     {
       "name": "native/app/(tabs)/desk.tsx classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "native/app/(tabs)/desk.tsx support-only semantics coherent",
@@ -2707,7 +2791,7 @@
     {
       "name": "native/app/(tabs)/uprise.tsx classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "native/app/(tabs)/uprise.tsx support-only semantics coherent",
@@ -2722,7 +2806,7 @@
     {
       "name": "native/src/AppBar.tsx classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "native/src/AppBar.tsx support-only semantics coherent",
@@ -2742,7 +2826,7 @@
     {
       "name": "native/src/content.ts classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "native/src/content.ts support-only semantics coherent",
@@ -2762,7 +2846,7 @@
     {
       "name": "native/src/RoomScreen.tsx classified",
       "passed": true,
-      "detail": "classification='presentation_support'"
+      "detail": "classification=\"presentation_support\""
     },
     {
       "name": "native/src/RoomScreen.tsx support-only semantics coherent",
@@ -2782,7 +2866,7 @@
     {
       "name": "platform/sql/001_init.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "platform/sql/001_init.sql support-only semantics coherent",
@@ -2797,7 +2881,7 @@
     {
       "name": "platform/src/server.mjs classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "platform/src/server.mjs support-only semantics coherent",
@@ -2812,7 +2896,7 @@
     {
       "name": "policy-memo-dna.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "policy-memo-dna.html support-only semantics coherent",
@@ -2827,7 +2911,7 @@
     {
       "name": "policy.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "policy.html support-only semantics coherent",
@@ -2842,7 +2926,7 @@
     {
       "name": "portfolio.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "portfolio.html support-only semantics coherent",
@@ -2862,7 +2946,7 @@
     {
       "name": "prayer-closet.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "prayer-closet.html support-only semantics coherent",
@@ -2882,7 +2966,7 @@
     {
       "name": "press.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "press.html support-only semantics coherent",
@@ -2897,7 +2981,7 @@
     {
       "name": "privacy.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "privacy.html support-only semantics coherent",
@@ -2917,7 +3001,7 @@
     {
       "name": "production.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "production.html support-only semantics coherent",
@@ -2937,7 +3021,7 @@
     {
       "name": "profile.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "profile.html support-only semantics coherent",
@@ -2952,7 +3036,7 @@
     {
       "name": "README.md classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "README.md support-only semantics coherent",
@@ -2972,7 +3056,7 @@
     {
       "name": "redirects/equity-uprise.html classified",
       "passed": true,
-      "detail": "classification='redirect_support'"
+      "detail": "classification=\"redirect_support\""
     },
     {
       "name": "redirects/equity-uprise.html support-only semantics coherent",
@@ -2992,7 +3076,7 @@
     {
       "name": "redirects/walls/eu-rally.html classified",
       "passed": true,
-      "detail": "classification='redirect_support'"
+      "detail": "classification=\"redirect_support\""
     },
     {
       "name": "redirects/walls/eu-rally.html support-only semantics coherent",
@@ -3012,7 +3096,7 @@
     {
       "name": "scripts/kb-build.mjs classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "scripts/kb-build.mjs support-only semantics coherent",
@@ -3027,7 +3111,7 @@
     {
       "name": "scripts/sites-buy-smoke.mjs classified",
       "passed": true,
-      "detail": "classification='test_support'"
+      "detail": "classification=\"test_support\""
     },
     {
       "name": "scripts/sites-buy-smoke.mjs support-only semantics coherent",
@@ -3047,7 +3131,7 @@
     {
       "name": "scripts/smoke.mjs classified",
       "passed": true,
-      "detail": "classification='test_support'"
+      "detail": "classification=\"test_support\""
     },
     {
       "name": "scripts/smoke.mjs support-only semantics coherent",
@@ -3067,7 +3151,7 @@
     {
       "name": "scripts/test/appbar-consistency.test.mjs classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "scripts/test/appbar-consistency.test.mjs support-only semantics coherent",
@@ -3087,7 +3171,7 @@
     {
       "name": "scripts/test/control-surface.test.mjs classified",
       "passed": true,
-      "detail": "classification='build_validation_support'"
+      "detail": "classification=\"build_validation_support\""
     },
     {
       "name": "scripts/test/control-surface.test.mjs support-only semantics coherent",
@@ -3107,7 +3191,7 @@
     {
       "name": "scripts/test/signup-authority.test.mjs classified",
       "passed": true,
-      "detail": "classification='test_support'"
+      "detail": "classification=\"test_support\""
     },
     {
       "name": "scripts/test/signup-authority.test.mjs support-only semantics coherent",
@@ -3127,7 +3211,7 @@
     {
       "name": "shots.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "shots.html support-only semantics coherent",
@@ -3147,7 +3231,7 @@
     {
       "name": "sitemap.xml classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "sitemap.xml support-only semantics coherent",
@@ -3167,7 +3251,7 @@
     {
       "name": "sites-details.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "sites-details.html support-only semantics coherent",
@@ -3182,7 +3266,7 @@
     {
       "name": "sites.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "sites.html support-only semantics coherent",
@@ -3197,7 +3281,7 @@
     {
       "name": "supabase/config.toml classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/config.toml support-only semantics coherent",
@@ -3217,7 +3301,7 @@
     {
       "name": "supabase/functions/_shared/eu-policy-os.ts classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/functions/_shared/eu-policy-os.ts support-only semantics coherent",
@@ -3237,7 +3321,7 @@
     {
       "name": "supabase/functions/collect/index.ts classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/functions/collect/index.ts support-only semantics coherent",
@@ -3257,7 +3341,7 @@
     {
       "name": "supabase/functions/eu-calendar/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-calendar/index.ts support-only semantics coherent",
@@ -3272,7 +3356,7 @@
     {
       "name": "supabase/functions/eu-control/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-control/index.ts support-only semantics coherent",
@@ -3287,7 +3371,7 @@
     {
       "name": "supabase/functions/eu-converse/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-converse/index.ts support-only semantics coherent",
@@ -3302,7 +3386,7 @@
     {
       "name": "supabase/functions/eu-crossref-callback/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-crossref-callback/index.ts support-only semantics coherent",
@@ -3317,7 +3401,7 @@
     {
       "name": "supabase/functions/eu-ddex-worker/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-ddex-worker/index.ts support-only semantics coherent",
@@ -3332,7 +3416,7 @@
     {
       "name": "supabase/functions/eu-derivatives/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-derivatives/index.ts support-only semantics coherent",
@@ -3347,7 +3431,7 @@
     {
       "name": "supabase/functions/eu-external-worker/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-external-worker/index.ts support-only semantics coherent",
@@ -3362,7 +3446,7 @@
     {
       "name": "supabase/functions/eu-google-workspace/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-google-workspace/index.ts support-only semantics coherent",
@@ -3377,7 +3461,7 @@
     {
       "name": "supabase/functions/eu-government/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-government/index.ts support-only semantics coherent",
@@ -3392,7 +3476,7 @@
     {
       "name": "supabase/functions/eu-intake/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-intake/index.ts support-only semantics coherent",
@@ -3407,7 +3491,7 @@
     {
       "name": "supabase/functions/eu-monitor/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-monitor/index.ts support-only semantics coherent",
@@ -3422,7 +3506,7 @@
     {
       "name": "supabase/functions/eu-music/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-music/index.ts support-only semantics coherent",
@@ -3437,7 +3521,7 @@
     {
       "name": "supabase/functions/eu-orcid-oauth/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-orcid-oauth/index.ts support-only semantics coherent",
@@ -3452,7 +3536,7 @@
     {
       "name": "supabase/functions/eu-publish/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-publish/index.ts support-only semantics coherent",
@@ -3467,7 +3551,7 @@
     {
       "name": "supabase/functions/eu-status/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-status/index.ts support-only semantics coherent",
@@ -3482,7 +3566,7 @@
     {
       "name": "supabase/functions/eu-worker/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-worker/index.ts support-only semantics coherent",
@@ -3497,7 +3581,7 @@
     {
       "name": "supabase/functions/eu-workspace/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/eu-workspace/index.ts support-only semantics coherent",
@@ -3512,7 +3596,7 @@
     {
       "name": "supabase/functions/pay-now/index.ts classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/functions/pay-now/index.ts support-only semantics coherent",
@@ -3527,7 +3611,7 @@
     {
       "name": "supabase/functions/shake-order/index.ts classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/functions/shake-order/index.ts support-only semantics coherent",
@@ -3547,7 +3631,7 @@
     {
       "name": "supabase/migrations/0017_equity_uprise_platform.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/0017_equity_uprise_platform.sql support-only semantics coherent",
@@ -3567,7 +3651,7 @@
     {
       "name": "supabase/migrations/0018_equity_uprise_seed.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/0018_equity_uprise_seed.sql support-only semantics coherent",
@@ -3587,7 +3671,7 @@
     {
       "name": "supabase/migrations/20260818001911_equity_uprise_platform.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260818001911_equity_uprise_platform.sql support-only semantics coherent",
@@ -3607,7 +3691,7 @@
     {
       "name": "supabase/migrations/20260818002042_equity_uprise_seed.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260818002042_equity_uprise_seed.sql support-only semantics coherent",
@@ -3627,7 +3711,7 @@
     {
       "name": "supabase/migrations/20260908233828_equity_uprise_policy_graph_tables.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260908233828_equity_uprise_policy_graph_tables.sql support-only semantics coherent",
@@ -3647,7 +3731,7 @@
     {
       "name": "supabase/migrations/20260908234055_equity_uprise_capabilities_and_rls_enable.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260908234055_equity_uprise_capabilities_and_rls_enable.sql support-only semantics coherent",
@@ -3667,7 +3751,7 @@
     {
       "name": "supabase/migrations/20260908234117_equity_uprise_research_rls_and_grants.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260908234117_equity_uprise_research_rls_and_grants.sql support-only semantics coherent",
@@ -3687,7 +3771,7 @@
     {
       "name": "supabase/migrations/20260908234300_equity_uprise_automation_tables.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260908234300_equity_uprise_automation_tables.sql support-only semantics coherent",
@@ -3707,7 +3791,7 @@
     {
       "name": "supabase/migrations/20260908234320_equity_uprise_automation_seed_and_rls.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260908234320_equity_uprise_automation_seed_and_rls.sql support-only semantics coherent",
@@ -3727,7 +3811,7 @@
     {
       "name": "supabase/migrations/20260908234352_equity_uprise_worker_rpc_and_booking_tokens.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260908234352_equity_uprise_worker_rpc_and_booking_tokens.sql support-only semantics coherent",
@@ -3747,7 +3831,7 @@
     {
       "name": "supabase/migrations/20260908234509_equity_uprise_publication_tables.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260908234509_equity_uprise_publication_tables.sql support-only semantics coherent",
@@ -3767,7 +3851,7 @@
     {
       "name": "supabase/migrations/20260908234531_equity_uprise_publication_rls_and_targets.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260908234531_equity_uprise_publication_rls_and_targets.sql support-only semantics coherent",
@@ -3787,7 +3871,7 @@
     {
       "name": "supabase/migrations/20260908234602_equity_uprise_outreach_bridge.sql classified",
       "passed": true,
-      "detail": "classification='migration_wrapper'"
+      "detail": "classification=\"migration_wrapper\""
     },
     {
       "name": "supabase/migrations/20260908234602_equity_uprise_outreach_bridge.sql support-only semantics coherent",
@@ -3807,7 +3891,7 @@
     {
       "name": "supabase/migrations/20260913034132_harden_security_definer_execution_surface.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/migrations/20260913034132_harden_security_definer_execution_surface.sql support-only semantics coherent",
@@ -3827,7 +3911,7 @@
     {
       "name": "supabase/migrations/20260913041323_security_definer_execute_hardening.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/migrations/20260913041323_security_definer_execute_hardening.sql support-only semantics coherent",
@@ -3847,7 +3931,7 @@
     {
       "name": "supabase/migrations/20260919042036_fan_profiles.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/migrations/20260919042036_fan_profiles.sql support-only semantics coherent",
@@ -3867,7 +3951,7 @@
     {
       "name": "supabase/migrations/20260919093553_native_telemetry_columns.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/migrations/20260919093553_native_telemetry_columns.sql support-only semantics coherent",
@@ -3887,7 +3971,7 @@
     {
       "name": "supabase/migrations/20260919094143_native_telemetry_views.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/migrations/20260919094143_native_telemetry_views.sql support-only semantics coherent",
@@ -3907,7 +3991,7 @@
     {
       "name": "supabase/migrations/20260919120233_public_projection_invoker_boundaries.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/migrations/20260919120233_public_projection_invoker_boundaries.sql support-only semantics coherent",
@@ -3927,7 +4011,7 @@
     {
       "name": "supabase/migrations/20260921050000_mnet_profile_save_autofollow_admin.sql classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/migrations/20260921050000_mnet_profile_save_autofollow_admin.sql support-only semantics coherent",
@@ -3947,7 +4031,7 @@
     {
       "name": "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/migrations/20260922092006_event_taxonomy_correction_v2.sql support-only semantics coherent",
@@ -3967,7 +4051,7 @@
     {
       "name": "supabase/migrations/20260922094512_harden_anonymous_lead_intake.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/migrations/20260922094512_harden_anonymous_lead_intake.sql support-only semantics coherent",
@@ -3987,7 +4071,7 @@
     {
       "name": "supabase/production-ledger.json classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/production-ledger.json support-only semantics coherent",
@@ -4007,7 +4091,7 @@
     {
       "name": "supabase/replay_migrations/0007_offerings.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/0007_offerings.sql support-only semantics coherent",
@@ -4022,7 +4106,7 @@
     {
       "name": "supabase/replay_migrations/0009_offer_configurations.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/0009_offer_configurations.sql support-only semantics coherent",
@@ -4037,7 +4121,7 @@
     {
       "name": "supabase/replay_migrations/0012_management_upgrade_offerings.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/0012_management_upgrade_offerings.sql support-only semantics coherent",
@@ -4052,7 +4136,7 @@
     {
       "name": "supabase/replay_migrations/0017_equity_uprise_platform.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/0017_equity_uprise_platform.sql support-only semantics coherent",
@@ -4067,7 +4151,7 @@
     {
       "name": "supabase/replay_migrations/0018_equity_uprise_seed.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/0018_equity_uprise_seed.sql support-only semantics coherent",
@@ -4082,7 +4166,7 @@
     {
       "name": "supabase/replay_migrations/0019_shake_delivery.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/0019_shake_delivery.sql support-only semantics coherent",
@@ -4102,7 +4186,7 @@
     {
       "name": "supabase/replay_migrations/0020_harden_function_surface.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/0020_harden_function_surface.sql support-only semantics coherent",
@@ -4122,7 +4206,7 @@
     {
       "name": "supabase/replay_migrations/0021_inbox.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/0021_inbox.sql support-only semantics coherent",
@@ -4142,7 +4226,7 @@
     {
       "name": "supabase/replay_migrations/0026_tenancy.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/0026_tenancy.sql support-only semantics coherent",
@@ -4162,7 +4246,7 @@
     {
       "name": "supabase/replay_migrations/0031_org_helpers_out_of_the_api.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/0031_org_helpers_out_of_the_api.sql support-only semantics coherent",
@@ -4182,7 +4266,7 @@
     {
       "name": "supabase/replay_migrations/0033_knowledge_base.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/0033_knowledge_base.sql support-only semantics coherent",
@@ -4197,7 +4281,7 @@
     {
       "name": "supabase/replay_migrations/0061_close_anonymous_rpc_holes.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/0061_close_anonymous_rpc_holes.sql support-only semantics coherent",
@@ -4217,7 +4301,7 @@
     {
       "name": "supabase/replay_migrations/0065_outreach_engine_core.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/0065_outreach_engine_core.sql support-only semantics coherent",
@@ -4232,7 +4316,7 @@
     {
       "name": "supabase/replay_migrations/0066_control_authority_v2.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/0066_control_authority_v2.sql support-only semantics coherent",
@@ -4247,7 +4331,7 @@
     {
       "name": "supabase/replay_migrations/0067_equity_uprise_runtime_extensions.sql classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/replay_migrations/0067_equity_uprise_runtime_extensions.sql support-only semantics coherent",
@@ -4267,7 +4351,7 @@
     {
       "name": "supabase/replay_migrations/0072_org_helper_replay_foundation.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/0072_org_helper_replay_foundation.sql support-only semantics coherent",
@@ -4287,7 +4371,7 @@
     {
       "name": "supabase/replay_migrations/0073_legacy_rpc_replay_foundation.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/0073_legacy_rpc_replay_foundation.sql support-only semantics coherent",
@@ -4307,7 +4391,7 @@
     {
       "name": "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260908213000_equity_uprise_policy_graph.sql support-only semantics coherent",
@@ -4322,7 +4406,7 @@
     {
       "name": "supabase/replay_migrations/20260908213100_equity_uprise_automation.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260908213100_equity_uprise_automation.sql support-only semantics coherent",
@@ -4337,7 +4421,7 @@
     {
       "name": "supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260908213200_equity_uprise_publication_distribution.sql support-only semantics coherent",
@@ -4352,7 +4436,7 @@
     {
       "name": "supabase/replay_migrations/20260908213300_equity_uprise_worker_rpc.sql classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/replay_migrations/20260908213300_equity_uprise_worker_rpc.sql support-only semantics coherent",
@@ -4372,7 +4456,7 @@
     {
       "name": "supabase/replay_migrations/20260908213350_equity_uprise_booking_tokens.sql classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/replay_migrations/20260908213350_equity_uprise_booking_tokens.sql support-only semantics coherent",
@@ -4392,7 +4476,7 @@
     {
       "name": "supabase/replay_migrations/20260908213400_equity_uprise_publication_sequences.sql classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/replay_migrations/20260908213400_equity_uprise_publication_sequences.sql support-only semantics coherent",
@@ -4412,7 +4496,7 @@
     {
       "name": "supabase/replay_migrations/20260908213500_equity_uprise_storage.sql classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/replay_migrations/20260908213500_equity_uprise_storage.sql support-only semantics coherent",
@@ -4432,7 +4516,7 @@
     {
       "name": "supabase/replay_migrations/20260908213600_equity_uprise_outreach_bridge.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260908213600_equity_uprise_outreach_bridge.sql support-only semantics coherent",
@@ -4447,7 +4531,7 @@
     {
       "name": "supabase/replay_migrations/20260908213700_equity_uprise_worker_partition.sql classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/replay_migrations/20260908213700_equity_uprise_worker_partition.sql support-only semantics coherent",
@@ -4467,7 +4551,7 @@
     {
       "name": "supabase/replay_migrations/20260908213800_equity_uprise_oauth_runtime.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260908213800_equity_uprise_oauth_runtime.sql support-only semantics coherent",
@@ -4482,7 +4566,7 @@
     {
       "name": "supabase/replay_migrations/20260908213900_equity_uprise_event_dispatch.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260908213900_equity_uprise_event_dispatch.sql support-only semantics coherent",
@@ -4497,7 +4581,7 @@
     {
       "name": "supabase/replay_migrations/20260908214000_equity_uprise_monitor_runtime.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260908214000_equity_uprise_monitor_runtime.sql support-only semantics coherent",
@@ -4512,7 +4596,7 @@
     {
       "name": "supabase/replay_migrations/20260908214100_equity_uprise_government_metadata.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260908214100_equity_uprise_government_metadata.sql support-only semantics coherent",
@@ -4527,7 +4611,7 @@
     {
       "name": "supabase/replay_migrations/20260908214200_equity_uprise_cron.sql classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "supabase/replay_migrations/20260908214200_equity_uprise_cron.sql support-only semantics coherent",
@@ -4547,7 +4631,7 @@
     {
       "name": "supabase/replay_migrations/20260908214300_equity_uprise_outbound_communications.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260908214300_equity_uprise_outbound_communications.sql support-only semantics coherent",
@@ -4562,7 +4646,7 @@
     {
       "name": "supabase/replay_migrations/20260908214400_equity_uprise_ddex_worker.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260908214400_equity_uprise_ddex_worker.sql support-only semantics coherent",
@@ -4577,7 +4661,7 @@
     {
       "name": "supabase/replay_migrations/20260908234500_revoke_anon_writes_on_legacy_eu_tables.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/20260908234500_revoke_anon_writes_on_legacy_eu_tables.sql support-only semantics coherent",
@@ -4597,7 +4681,7 @@
     {
       "name": "supabase/replay_migrations/20260908235000_close_view_rls_bypass.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/20260908235000_close_view_rls_bypass.sql support-only semantics coherent",
@@ -4617,7 +4701,7 @@
     {
       "name": "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "supabase/replay_migrations/20260909020000_equity_uprise_initial_initiatives.sql support-only semantics coherent",
@@ -4632,7 +4716,7 @@
     {
       "name": "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql classified",
       "passed": true,
-      "detail": "classification='runtime_security_support'"
+      "detail": "classification=\"runtime_security_support\""
     },
     {
       "name": "supabase/replay_migrations/20260913174500_p0_control_plane_containment.sql support-only semantics coherent",
@@ -4652,7 +4736,7 @@
     {
       "name": "supabase/tests/eu_platform_test.sql classified",
       "passed": true,
-      "detail": "classification='test_support'"
+      "detail": "classification=\"test_support\""
     },
     {
       "name": "supabase/tests/eu_platform_test.sql support-only semantics coherent",
@@ -4672,7 +4756,7 @@
     {
       "name": "supabase/tests/run-eu-tests.sh classified",
       "passed": true,
-      "detail": "classification='test_support'"
+      "detail": "classification=\"test_support\""
     },
     {
       "name": "supabase/tests/run-eu-tests.sh support-only semantics coherent",
@@ -4692,7 +4776,7 @@
     {
       "name": "tools/eu-export-seed.sh classified",
       "passed": true,
-      "detail": "classification='build_support'"
+      "detail": "classification=\"build_support\""
     },
     {
       "name": "tools/eu-export-seed.sh support-only semantics coherent",
@@ -4712,7 +4796,7 @@
     {
       "name": "tools/verify-llms.py classified",
       "passed": true,
-      "detail": "classification='test_support'"
+      "detail": "classification=\"test_support\""
     },
     {
       "name": "tools/verify-llms.py support-only semantics coherent",
@@ -4732,7 +4816,7 @@
     {
       "name": "topics.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "topics.html support-only semantics coherent",
@@ -4747,7 +4831,7 @@
     {
       "name": "uprise-admin.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "uprise-admin.html support-only semantics coherent",
@@ -4762,7 +4846,7 @@
     {
       "name": "verify.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "verify.html support-only semantics coherent",
@@ -4777,7 +4861,7 @@
     {
       "name": "walls/eu-rally.html classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "walls/eu-rally.html support-only semantics coherent",
@@ -4792,7 +4876,7 @@
     {
       "name": "whip.html classified",
       "passed": true,
-      "detail": "classification='shared_site_support'"
+      "detail": "classification=\"shared_site_support\""
     },
     {
       "name": "whip.html support-only semantics coherent",
@@ -4812,7 +4896,7 @@
     {
       "name": "workers/mccluster/src/ai/envelope.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "workers/mccluster/src/ai/envelope.js support-only semantics coherent",
@@ -4827,7 +4911,7 @@
     {
       "name": "workers/mccluster/src/entry.js classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "workers/mccluster/src/entry.js support-only semantics coherent",
@@ -4847,7 +4931,7 @@
     {
       "name": "workers/mccluster/src/index.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "workers/mccluster/src/index.js support-only semantics coherent",
@@ -4862,7 +4946,7 @@
     {
       "name": "workers/mccluster/src/seek-first/catalogs.js classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "workers/mccluster/src/seek-first/catalogs.js support-only semantics coherent",
@@ -4882,7 +4966,7 @@
     {
       "name": "workers/mccluster/src/seek-first/equity-uprise-halo.js classified",
       "passed": true,
-      "detail": "classification='capability_source'"
+      "detail": "classification=\"capability_source\""
     },
     {
       "name": "workers/mccluster/src/seek-first/equity-uprise-halo.js support-only semantics coherent",
@@ -4897,7 +4981,7 @@
     {
       "name": "workers/mccluster/test/halo-projection.test.mjs classified",
       "passed": true,
-      "detail": "classification='test_support'"
+      "detail": "classification=\"test_support\""
     },
     {
       "name": "workers/mccluster/test/halo-projection.test.mjs support-only semantics coherent",
@@ -4917,7 +5001,7 @@
     {
       "name": "workers/mccluster/test/seek-first-catalogs.test.mjs classified",
       "passed": true,
-      "detail": "classification='runtime_support'"
+      "detail": "classification=\"runtime_support\""
     },
     {
       "name": "workers/mccluster/test/seek-first-catalogs.test.mjs support-only semantics coherent",

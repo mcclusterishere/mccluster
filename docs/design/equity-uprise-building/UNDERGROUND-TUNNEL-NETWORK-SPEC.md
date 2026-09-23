@@ -186,9 +186,9 @@ Potential competency evidence includes:
 The simulation may draw from real-world concepts found in:
 - OSHA underground-construction requirements and underground accountability;
 - OSHA permit-required confined-space concepts where a modeled space actually meets the scenario definition;
-- FEMA ICS/NIMS and exercise-design/evaluation practices;
+- FEMA IS-100.C / IS-120.C / IS-130.A / IS-200.C / IS-201.A / IS-235.C / IS-238 concepts as selected for the exercise;
 - FHWA tunnel inspection, operations, ventilation, fire/life-safety and drainage concepts;
-- CISA cyber-physical / critical-infrastructure exercise concepts.
+- CISA ICS 300 / 401 concepts in the sandboxed OT environment; CISA ICS 301 is a later external in-person Red/Blue range experience, not a live-B1 exercise.
 
 These references do not automatically create certifications.
 
@@ -215,3 +215,6 @@ See:
 `production/underground-tunnel-network.json`
 
 **NOT FOR CONSTRUCTION / NOT A REAL INFRASTRUCTURE SECURITY PLAN.**
+
+
+Federal course/program resolution and exact instructional bindings are controlled by `../equity-uprise-development/FEDERAL-TRAINING-CATALOG.json` and `../equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json`. The live B1 boundary is unchanged: learner exercises remain sandboxed-clone-only.
