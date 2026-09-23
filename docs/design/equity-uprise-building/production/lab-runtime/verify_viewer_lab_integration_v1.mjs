@@ -172,10 +172,14 @@ for (const performanceGuard of [
   "frameObjectCache",
   "stackFrameCache",
   "wireMaterials.forEach",
+  "renderDirty",
+  "const controlsChanged=ctl.update()",
+  "if(controlsChanged||renderDirty)",
 ]) {
   assert.ok(viewer.includes(performanceGuard), "viewer interaction performance guard missing: " + performanceGuard);
 }
 assert.equal(viewer.includes("wire=!wire;scene.traverse"), false, "wireframe toggle must not traverse the full scene");
+assert.equal(viewer.includes("ctl.update();ren.render(scene,cam)"), false, "static viewer must not continuously render the full scene");
 const rootWait = viewer.indexOf("await labVisualRootsReady");
 const controllerCreate = viewer.indexOf("labController=labModule.createViewerLabController");
 assert.ok(rootWait >= 0 && controllerCreate > rootWait, "deep-linked labs must wait for modeled visual roots before first render");
