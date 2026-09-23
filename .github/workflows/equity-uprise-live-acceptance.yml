@@ -1,0 +1,36 @@
+name: Equity Uprise Live Acceptance Audit
+
+on:
+  push:
+    branches:
+      - audit/equity-uprise-live-acceptance-step8
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  live-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      LIVE_VIEWER_URL: https://matthew.mccluster.org/equity-uprise-building-core-v2-3d.html
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run live viewer acceptance
+        run: node scripts/equity-uprise-live-acceptance.mjs
+      - name: Upload acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: equity-uprise-live-acceptance
+          path: acceptance-artifacts/
+          if-no-files-found: warn
+          retention-days: 7
