@@ -84,7 +84,7 @@ function syncServicesVisibility(){
  if(services){
   services.visible=servicesOn&&!roomMode;
   if(servicesOn&&!roomMode){
-   services.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(currentFocus==='stack'||currentFocus==='facade'){o.visible=true;return}
+   services.traverse(o=>{if(!o.isMesh)return;const n=o.name||'',duplicateInstalled=plantMode&&/SVC-F[1-6]-DEVICE::(?:ELEC-NORMAL::PANEL|DATA-STRUCTURED::DATA-RACK|FIRE-ALARM::(?:DETECTOR|STROBE)-|SECURITY-ACCESS::(?:ACCESS-READER|INTERCOM|CAMERA-)|ELEC-NORMAL::(?:RECEPTACLE|FLOOR-BOX)-)/.test(n);if(duplicateInstalled){o.visible=false;return}if(currentFocus==='stack'||currentFocus==='facade'){o.visible=true;return}
      const level=+currentFocus,b1Source=/^SVC-B1-/.test(n),floorSvc=new RegExp('^SVC-F'+level+'-').test(n);
      const take=n.match(/::L(\d+)$/),seg=n.match(/SEG-L(\d+)-L(\d+)$/),band=n.match(/SVC-LEVEL-BAND::L(\d+)$/);
      o.visible=(level===0&&b1Source)||floorSvc||(take&&+take[1]===level)||(seg&&(+seg[1]===level||+seg[2]===level))||(band&&+band[1]===level)||/SVC-SEPARATION/.test(n);
