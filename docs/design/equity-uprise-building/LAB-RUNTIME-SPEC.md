@@ -325,3 +325,61 @@ All Step 5 evidence remains separate from federal credential completion. Externa
 
 **Next:** Step 6 adds the richer assessment/evidence layer: action sequencing, incorrect-action history, hints, timing, safety violations, produced evidence and competency-level evaluation.
 
+## Step 6 — Assessment, Evidence, Timing, and Competency Signals
+
+Step 6 adds a common assessment wrapper across the executable Step 3, Step 4, and Step 5 runtimes.
+
+Canonical Step 6 files:
+- `production/lab-runtime/equity-uprise-assessment-runtime.mjs`
+- `production/lab-runtime/assessment-policy-v1.json`
+- `production/lab-runtime/verify_assessment_runtime_v1.mjs`
+
+The assessment wrapper records:
+- ordered learner actions;
+- correct, incorrect, blocked, and runtime-error outcomes;
+- per-action start/end/duration timing;
+- time to first successful diagnostic/decision action;
+- time to restoration of all declared scenario faults;
+- hint requests and resulting assistance level;
+- safety violations, including critical violations that block a positive automated evidence signal;
+- learner-produced evidence metadata and SHA-256 provenance;
+- a deterministic runtime-performance evidence record;
+- AI-assistance declaration;
+- competency IDs, rubric IDs, rubric versions, and critical-criterion names.
+
+### Competency-assessment boundary
+
+Step 6 implements a **Level 1 automated verifier**, not a human competency reviewer.
+
+The machine may:
+- validate that an exercise completed;
+- verify deterministic evidence/provenance;
+- summarize assistance, errors, timing and safety events;
+- produce `practicing_evidence` or `demonstrated_evidence_candidate` signals.
+
+The machine may **not**:
+- assign criterion scores on behalf of a qualified reviewer;
+- award `Verified`;
+- award `Applied` from simulation;
+- award `Mentor`;
+- average away a critical safety, privacy, ethics, consent, security or authority violation.
+
+The automated competency-state ceiling is `Demonstrated`, and even that is emitted as an evidence candidate rather than a final human award.
+
+### Evidence rules
+
+Automated exercise submission may record training, artifact, and performance evidence metadata. Simulation evidence cannot be labeled `Applied`. The automated verifier cannot fabricate `Reviewer` evidence.
+
+A completed runtime automatically receives a hashed performance-evidence record referencing the full runtime ledger. Artifact submissions may additionally carry an explicit content SHA-256.
+
+### Assistance / AI
+
+Hint use maps to the canonical assistance model:
+- no hints → `independent`;
+- supported hint → `supported`;
+- directed hint → `directed`.
+
+Declared `substantial_generation` or `automated_workflow` AI assistance triggers an Evidence Defense recommendation; it does not automatically invalidate the evidence.
+
+**Next:** Step 7 introduces difficulty-level behavior and policy across Foundation, Technician, Admin, Advanced, and Expert labs.
+

@@ -378,3 +378,28 @@ not hours watched or quiz completion alone.
 ## Federal training evidence resolution
 
 Federal courses/programs used as external evidence resolve through `FEDERAL-TRAINING-CATALOG.json` and `FEDERAL-TRAINING-BINDINGS.json`. Issuer completion/credential state remains separate from competency state; federal training can support a claim, but the applicable rubric, artifact quality, reviewer judgment and evidence-defense rules still control competency mastery.
+
+## 20. Lab Runtime Step 6 implementation
+
+The executable Equity Uprise lab runtime implements this authority through a bounded Level 1 automated assessment layer.
+
+Canonical implementation:
+- `../equity-uprise-building/production/lab-runtime/equity-uprise-assessment-runtime.mjs`
+- `../equity-uprise-building/production/lab-runtime/assessment-policy-v1.json`
+- `../equity-uprise-building/production/lab-runtime/verify_assessment_runtime_v1.mjs`
+
+The runtime records:
+- action sequence and outcomes;
+- timing, including diagnosis/restoration milestones;
+- hints and assistance level;
+- safety violations;
+- produced evidence references and hashes;
+- AI-assistance declaration;
+- competency/rubric provenance.
+
+Machine output is intentionally bounded. It may emit `practicing_evidence` or `demonstrated_evidence_candidate` signals, but it does not assign rubric criterion scores or award `Verified`, `Applied`, or `Mentor`.
+
+Critical safety/privacy/ethics/consent/security/authority violations are explicit gates and cannot be averaged away by otherwise successful actions.
+
+Simulation evidence remains simulation evidence. `Applied` still requires authentic context, and `Verified` still requires an authorized qualified reviewer under the governing policy above.
+

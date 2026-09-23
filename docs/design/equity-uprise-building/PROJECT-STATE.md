@@ -866,3 +866,39 @@ Boundary: Step 5 does not provide tax advice, authorize VITA/TCE service, provid
 
 **NEXT:** Step 6 adds full assessment/evidence capture and competency evaluation across the executable lab runtime.
 
+## Lab Runtime — STEP 6 ASSESSMENT / EVIDENCE LAYER IMPLEMENTED
+
+Step 6 adds a common assessment wrapper across the Step 3 CISA/IT-OT, Step 4 building-operations, and Step 5 public-service executable runtimes.
+
+Implemented:
+- ordered action ledger;
+- correct / incorrect / blocked / runtime-error counts;
+- deterministic per-action timing through an injectable clock;
+- diagnosis and restoration elapsed-time milestones;
+- hint history and canonical assistance-level derivation;
+- safety-violation records with a critical-safety gate;
+- learner-produced artifact/training/performance evidence metadata;
+- SHA-256 evidence and assessment provenance;
+- AI-assistance declaration and Evidence Defense recommendation;
+- competency-to-rubric/version mapping against all 42 canonical rubrics;
+- bounded Level 1 machine evidence signals;
+- hard prevention of automated Verified / Applied / Mentor awards;
+- rejection of simulation evidence mislabeled as Applied;
+- rejection of fabricated automated Reviewer evidence.
+
+Canonical Step 6 files:
+- `production/lab-runtime/equity-uprise-assessment-runtime.mjs`
+- `production/lab-runtime/assessment-policy-v1.json`
+- `production/lab-runtime/verify_assessment_runtime_v1.mjs`
+
+The verifier covers:
+- a clean independent CISA/IT-OT run;
+- a building-operations run with blocked/incorrect actions plus a hint;
+- a public-service run with a critical safety/privacy-boundary violation;
+- deterministic replay;
+- evidence hashing;
+- rubric mapping;
+- human-review boundaries.
+
+**NEXT:** Step 7 adds difficulty-level policy/behavior across Foundation → Technician → Admin → Advanced → Expert.
+
