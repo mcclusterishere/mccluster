@@ -4,7 +4,7 @@ import {
   createSessionFromCatalogLab,
 } from "./equity-uprise-lab-runtime.mjs";
 
-export const ELECTRONICS_SANDBOX_VERSION = "1.0.0";
+export const ELECTRONICS_SANDBOX_VERSION = "1.1.0";
 
 const REQUIRED_FAULT_IDS = Object.freeze([
   "access_switch_failed",
@@ -454,6 +454,90 @@ export class ElectronicsSandbox {
     }
   }
 
+  _impactStructuredEndpointPath(assetId, faultId, changedAssets, changedConnections, condition = faultId) {
+    const endpointIncoming = (this.incomingConnectionIds.get(assetId) || [])
+      .map((id) => this.connectionsById.get(id))
+      .filter(Boolean)
+      .sort((a, b) => a.connection_id.localeCompare(b.connection_id));
+
+    const patch = endpointIncoming.find((connection) => connection.cable_type === "CAT6A-PATCH");
+    const direct = endpointIncoming.find((connection) => connection.cable_type === "CAT6A-HORIZONTAL");
+
+    if (patch) {
+      this._recordChangedConnection(changedConnections, patch.connection_id, faultId, {
+        availability: "unavailable",
+        condition,
+      });
+      const jackId = patch.from_asset_id;
+      if (this.assetStates.has(jackId)) {
+        this._recordChangedAsset(changedAssets, jackId, faultId, {
+          availability: "unavailable",
+          condition: "link_" + condition,
+        });
+      }
+      const permanent = (this.incomingConnectionIds.get(jackId) || [])
+        .map((id) => this.connectionsById.get(id))
+        .filter((connection) => connection && connection.cable_type === "CAT6A-HORIZONTAL")
+        .sort((a, b) => a.connection_id.localeCompare(b.connection_id))[0];
+      if (permanent) {
+        this._recordChangedConnection(changedConnections, permanent.connection_id, faultId, {
+          availability: "unavailable",
+          condition,
+        });
+      }
+      return;
+    }
+
+    if (direct) {
+      this._recordChangedConnection(changedConnections, direct.connection_id, faultId, {
+        availability: "unavailable",
+        condition,
+      });
+    }
+  }
+
+  _propagatePowerFrom(sourceId, faultId, changedAssets, changedConnections, condition, maxDepth = 7) {
+    const allowed = new Set([
+      "208Y120V-FEEDER",
+      "120VAC-BRANCH",
+      "NEMA5-15-POWER-CORD",
+      "IEC-POWER",
+      "24VDC-CLASS2",
+    ]);
+    const seenAssets = new Set([sourceId]);
+    const seenConnections = new Set();
+    let frontier = [sourceId];
+
+    for (let depth = 0; depth < maxDepth && frontier.length; depth += 1) {
+      const next = [];
+      for (const current of frontier) {
+        const outgoing = (this.outgoingConnectionIds.get(current) || [])
+          .map((id) => this.connectionsById.get(id))
+          .filter((connection) => connection && connection.layer === "power" && allowed.has(connection.cable_type))
+          .sort((a, b) => a.connection_id.localeCompare(b.connection_id));
+
+        for (const connection of outgoing) {
+          if (!seenConnections.has(connection.connection_id)) {
+            seenConnections.add(connection.connection_id);
+            this._recordChangedConnection(changedConnections, connection.connection_id, faultId, {
+              availability: "unavailable",
+              condition,
+            });
+          }
+          const targetId = connection.to_asset_id;
+          if (!targetId || seenAssets.has(targetId)) continue;
+          seenAssets.add(targetId);
+          this._recordChangedAsset(changedAssets, targetId, faultId, {
+            availability: "unavailable",
+            condition,
+          });
+          next.push(targetId);
+        }
+      }
+      frontier = next;
+    }
+  }
+
   _impactEndpointsBehindAccessSwitch(switchId, faultId, changedAssets, changedConnections) {
     const outgoing = this.outgoingConnectionIds.get(switchId) || [];
     const patchPanels = [];
@@ -483,10 +567,24 @@ export class ElectronicsSandbox {
           availability: "unavailable",
           condition: "upstream_switch_unavailable",
         });
-        this._recordChangedAsset(changedAssets, connection.to_asset_id, faultId, {
+        const jackId = connection.to_asset_id;
+        this._recordChangedAsset(changedAssets, jackId, faultId, {
           availability: "unavailable",
           condition: "upstream_switch_unavailable",
         });
+
+        for (const patchId of this.outgoingConnectionIds.get(jackId) || []) {
+          const patch = this.connectionsById.get(patchId);
+          if (!patch || patch.cable_type !== "CAT6A-PATCH") continue;
+          this._recordChangedConnection(changedConnections, patchId, faultId, {
+            availability: "unavailable",
+            condition: "upstream_switch_unavailable",
+          });
+          this._recordChangedAsset(changedAssets, patch.to_asset_id, faultId, {
+            availability: "unavailable",
+            condition: "upstream_switch_unavailable",
+          });
+        }
       }
     }
   }
@@ -494,7 +592,7 @@ export class ElectronicsSandbox {
   _impactBasSensors(controllerId, faultId, changedAssets, changedConnections) {
     for (const connectionId of this.outgoingConnectionIds.get(controllerId) || []) {
       const connection = this.connectionsById.get(connectionId);
-      if (!connection || connection.cable_type !== "BACNET-MSTP-STP") continue;
+      if (!connection || !["BACNET-MSTP-STP", "24VDC-CLASS2"].includes(connection.cable_type)) continue;
       this._recordChangedConnection(changedConnections, connectionId, faultId, {
         availability: "unavailable",
         condition: "controller_offline",
@@ -563,41 +661,13 @@ export class ElectronicsSandbox {
         condition: "normal_power_loss",
       });
     }
-
-    const normalFeedIds = this.connectionsSource.connections
-      .filter((connection) => connection.from_asset_id === "ELEC-NORMAL" && connection.layer === "power")
-      .map((connection) => connection.connection_id)
-      .sort();
-
-    for (const connectionId of normalFeedIds) {
-      const connection = this.connectionsById.get(connectionId);
-      this._recordChangedConnection(changedConnections, connectionId, faultId, {
-        availability: "unavailable",
-        condition: "normal_power_loss",
-      });
-      if (connection && this.assetStates.has(connection.to_asset_id)) {
-        this._recordChangedAsset(changedAssets, connection.to_asset_id, faultId, {
-          availability: "unavailable",
-          condition: "normal_power_loss",
-        });
-      }
-    }
-
-    if (normalFeedIds.length === 0) {
-      const representative = this.manifestAssetIds
-        .filter((id) => {
-          const asset = this.assetsById.get(id);
-          const families = asset && asset.systems ? asset.systems.system_families || [] : [];
-          return families.includes("ELEC-NORMAL");
-        })
-        .slice(0, 12);
-      for (const id of representative) {
-        this._recordChangedAsset(changedAssets, id, faultId, {
-          availability: "unavailable",
-          condition: "normal_power_loss",
-        });
-      }
-    }
+    this._propagatePowerFrom(
+      "ELEC-NORMAL",
+      faultId,
+      changedAssets,
+      changedConnections,
+      "normal_power_loss"
+    );
   }
 
   _impactCoreLink(faultId, changedAssets, changedConnections) {
@@ -673,16 +743,7 @@ export class ElectronicsSandbox {
 
       if (faultId === "poe_disabled" || faultId === "ap_link_down" || faultId === "camera_link_down") {
         for (const assetId of selectedAssets) {
-          const incoming = (this.incomingConnectionIds.get(assetId) || [])
-            .map((id) => this.connectionsById.get(id))
-            .filter((connection) => connection && connection.cable_type === "CAT6A-HORIZONTAL")
-            .sort((a, b) => a.connection_id.localeCompare(b.connection_id));
-          if (incoming[0]) {
-            this._recordChangedConnection(changedConnections, incoming[0].connection_id, faultId, {
-              availability: "unavailable",
-              condition: faultId,
-            });
-          }
+          this._impactStructuredEndpointPath(assetId, faultId, changedAssets, changedConnections, faultId);
         }
       }
 
