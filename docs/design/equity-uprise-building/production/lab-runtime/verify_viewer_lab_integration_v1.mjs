@@ -190,9 +190,13 @@ for (const required of [
   "spatialConnectionOverlay",
   "room-bound devices",
   "unresolved devices hidden",
+  "if(!binding?.anchor_id)return null",
+  "if(!anchor)return null",
+  "n.startsWith(id+'-I')",
 ]) {
   assert.ok(viewer.includes(required), "electronics spatial integration guard missing: "+required);
 }
+assert.equal(viewer.includes("anchor?anchor.clone():floorWorld"), false, "unresolved electronics may not fall back to generic physical coordinates");
 assert.ok(viewer.includes("double-click inspectable"));
 for (const required of [
   'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',
