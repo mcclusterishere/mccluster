@@ -1,0 +1,70 @@
+name: Equity Uprise Live Fast Diagnostic
+
+on:
+  push:
+    branches:
+      - audit/equity-uprise-live-diagnostic
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Probe deployed critical files
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://matthew.mccluster.org"
+          urls=(
+            "/equity-uprise-building-core-v2-3d.html"
+            "/equity-uprise-preview/equity-uprise-building-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-facade-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-building-services-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-floor-02-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-floor-03-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-floor-04-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-floor-05-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-floor-06-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-floor-07-core-v2.glb"
+            "/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb"
+            "/equity-uprise-preview/lab-runtime/equity-uprise-viewer-lab-integration.mjs"
+            "/equity-uprise-preview/lab-runtime/equity-uprise-lab-runtime.mjs"
+            "/equity-uprise-preview/lab-runtime/equity-uprise-assessment-runtime.mjs"
+            "/equity-uprise-preview/lab-runtime/equity-uprise-difficulty-runtime.mjs"
+            "/equity-uprise-preview/lab-runtime/cisa-itot-scenario-pack-v1.json"
+            "/equity-uprise-preview/lab-runtime/fema-building-ops-scenario-pack-v1.json"
+            "/equity-uprise-preview/lab-runtime/public-service-scenario-pack-v1.json"
+            "/equity-uprise-preview/equity-uprise-electronics-manifest-v1.json"
+            "/equity-uprise-preview/equity-uprise-electronics-connections-v1.json"
+            "/equity-uprise-preview/equity-uprise-asset-registry-v1.json"
+          )
+          : > probe.txt
+          for u in "${urls[@]}"; do
+            code=$(curl -sS -L -o /dev/null --max-time 30 -w "%{http_code}" "$base$u" || true)
+            printf "%s %s\n" "$code" "$u" | tee -a probe.txt
+            test "$code" = "200"
+          done
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run one-page live diagnostic
+        run: node scripts/equity-uprise-live-diagnostic.mjs
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: equity-uprise-live-diagnostic
+          path: |
+            probe.txt
+            diagnostic-artifacts/
+          retention-days: 7
