@@ -1,0 +1,662 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-step4-building-ops-v1",
+  "mode": "SIMULATION",
+  "execution_target": "SANDBOX",
+  "live_control_allowed": false,
+  "credential_is_not_competency": true,
+  "semantic_baselines": {
+    "RUNTIME-OPS-ALARM": {
+      "state": "normal"
+    },
+    "RUNTIME-OPS-MUSTER": {
+      "state": "inactive"
+    },
+    "RUNTIME-OPS-MEDICAL": {
+      "state": "inactive"
+    },
+    "RUNTIME-OPS-QUEUE": {
+      "state": "normal"
+    },
+    "RUNTIME-OPS-SERVICE-HAZARD": {
+      "state": "clear"
+    },
+    "RUNTIME-OPS-COMMS": {
+      "state": "normal"
+    }
+  },
+  "scenarios": [
+    {
+      "scenario_id": "EU-OPS-BASIC-EVAC-V1",
+      "canonical_scenario_id": "basic_evacuation",
+      "title": "Basic Evacuation and Accountability",
+      "federal_training_ids": [
+        "FEMA-IS-100-C",
+        "FEMA-IS-120-C",
+        "FEMA-IS-235-C",
+        "CDC-EHTER-AWARENESS"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "CORE-03"
+      ],
+      "fault_id": "alarm_active",
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-ALARM",
+          "state": "active"
+        },
+        {
+          "target": "RUNTIME-OPS-MUSTER",
+          "state": "required"
+        },
+        {
+          "target": "F1-EGRESS-MAP-01",
+          "condition": "egress_guidance_active"
+        },
+        {
+          "target": "F1-BARRIER-STAIR-A-DOWN",
+          "state": "evacuation_barrier_active"
+        },
+        {
+          "target": "F1-BARRIER-STAIR-B-DOWN",
+          "state": "evacuation_barrier_active"
+        }
+      ],
+      "actions": [
+        {
+          "id": "evac-inspect",
+          "type": "inspect",
+          "target": "F1-EGRESS-MAP-01"
+        },
+        {
+          "id": "evac-route",
+          "type": "decision",
+          "target": "site-east-egress-walk",
+          "requires": [
+            "evac-inspect"
+          ],
+          "expected": {
+            "route": "site-east-egress-walk"
+          }
+        },
+        {
+          "id": "evac-assembly",
+          "type": "decision",
+          "target": "site-primary-assembly",
+          "requires": [
+            "evac-route"
+          ],
+          "expected": {
+            "assembly": "site-primary-assembly"
+          }
+        },
+        {
+          "id": "evac-account",
+          "type": "decision",
+          "target": "RUNTIME-OPS-MUSTER",
+          "requires": [
+            "evac-assembly"
+          ],
+          "expected": {
+            "accounted": true
+          }
+        },
+        {
+          "id": "evac-close",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-ALARM",
+          "requires": [
+            "evac-account"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-OPS-BLOCKED-STAIR-V1",
+      "canonical_scenario_id": "blocked_stair_a",
+      "title": "Blocked Stair A / Alternate Egress",
+      "federal_training_ids": [
+        "FEMA-IS-120-C",
+        "FEMA-IS-130-A",
+        "FEMA-IS-235-C"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "CORE-05",
+        "PSC-05"
+      ],
+      "fault_id": "stair_a_blocked",
+      "effects": [
+        {
+          "target": "F1-DOOR-STAIR-A-DISCHARGE",
+          "state": "blocked",
+          "availability": "unavailable"
+        },
+        {
+          "target": "site-east-egress-walk",
+          "state": "blocked",
+          "availability": "unavailable"
+        },
+        {
+          "target": "site-north-egress-walk",
+          "condition": "alternate_route_candidate"
+        }
+      ],
+      "actions": [
+        {
+          "id": "stair-inspect-a",
+          "type": "inspect",
+          "target": "F1-DOOR-STAIR-A-DISCHARGE"
+        },
+        {
+          "id": "stair-inspect-b",
+          "type": "inspect",
+          "target": "F1-DOOR-STAIR-B-DISCHARGE",
+          "requires": [
+            "stair-inspect-a"
+          ]
+        },
+        {
+          "id": "stair-route",
+          "type": "decision",
+          "target": "site-north-egress-walk",
+          "requires": [
+            "stair-inspect-b"
+          ],
+          "expected": {
+            "route": "site-north-egress-walk"
+          }
+        },
+        {
+          "id": "stair-assembly",
+          "type": "decision",
+          "target": "site-alternate-assembly",
+          "requires": [
+            "stair-route"
+          ],
+          "expected": {
+            "assembly": "site-alternate-assembly"
+          }
+        },
+        {
+          "id": "stair-close",
+          "type": "resolve",
+          "target": "F1-DOOR-STAIR-A-DISCHARGE",
+          "requires": [
+            "stair-assembly"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-OPS-ELEVATOR-OUTAGE-V1",
+      "canonical_scenario_id": "passenger_elevator_outage",
+      "title": "Passenger Elevator Outage / Accessibility Response",
+      "federal_training_ids": [
+        "FEMA-IS-235-C"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "SHR-06"
+      ],
+      "fault_id": "passenger_elevator_unavailable",
+      "effects": [
+        {
+          "target": "F1-PASS-ELEV-DOOR-01",
+          "state": "unavailable",
+          "availability": "unavailable"
+        },
+        {
+          "target": "F1-PASS-ELEV-CALL-01",
+          "state": "unavailable",
+          "availability": "unavailable"
+        },
+        {
+          "target": "F1-TWOWAY-01",
+          "condition": "accessibility_communication_available"
+        }
+      ],
+      "actions": [
+        {
+          "id": "elev-inspect",
+          "type": "inspect",
+          "target": "F1-PASS-ELEV-CALL-01"
+        },
+        {
+          "id": "elev-comms",
+          "type": "inspect",
+          "target": "F1-TWOWAY-01",
+          "requires": [
+            "elev-inspect"
+          ]
+        },
+        {
+          "id": "elev-plan",
+          "type": "decision",
+          "target": "F1-EGRESS-MAP-01",
+          "requires": [
+            "elev-comms"
+          ],
+          "expected": {
+            "response": "accessibility_assistance_and_authorized_alternate_route"
+          }
+        },
+        {
+          "id": "elev-close",
+          "type": "resolve",
+          "target": "F1-PASS-ELEV-DOOR-01",
+          "requires": [
+            "elev-plan"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-OPS-POWER-V1",
+      "canonical_scenario_id": "power_interruption",
+      "title": "Power Interruption / Continuity Response",
+      "federal_training_ids": [
+        "FEMA-IS-120-C",
+        "FEMA-IS-235-C",
+        "CISA-ICS-300",
+        "CISA-ICS-401",
+        "DOE-FEMP-TRAINING-CATALOG",
+        "CDC-EHTER-AWARENESS"
+      ],
+      "competency_ids": [
+        "CORE-05",
+        "CORE-08",
+        "OPS-01",
+        "OPS-04"
+      ],
+      "fault_id": "normal_power_degraded",
+      "effects": [
+        {
+          "target": "ELEC-NORMAL",
+          "state": "degraded",
+          "availability": "degraded"
+        },
+        {
+          "target": "F1-DIRECTORY-01",
+          "state": "offline",
+          "availability": "unavailable"
+        },
+        {
+          "target": "F1-RECEPTION-MONITOR-01",
+          "state": "continuity_mode",
+          "availability": "degraded"
+        },
+        {
+          "target": "F1-TWOWAY-01",
+          "condition": "emergency_communication_preserved"
+        }
+      ],
+      "actions": [
+        {
+          "id": "power-inspect",
+          "type": "inspect",
+          "target": "ELEC-NORMAL"
+        },
+        {
+          "id": "power-interface",
+          "type": "inspect",
+          "target": "F1-DIRECTORY-01",
+          "requires": [
+            "power-inspect"
+          ]
+        },
+        {
+          "id": "power-plan",
+          "type": "decision",
+          "target": "F1-TWOWAY-01",
+          "requires": [
+            "power-interface"
+          ],
+          "expected": {
+            "response": "preserve_life_safety_comms_and_manual_fallback"
+          }
+        },
+        {
+          "id": "power-restore",
+          "type": "resolve",
+          "target": "ELEC-NORMAL",
+          "requires": [
+            "power-plan"
+          ]
+        },
+        {
+          "id": "power-validate",
+          "type": "validate",
+          "target": "F1-DIRECTORY-01",
+          "requires": [
+            "power-restore"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-OPS-MEDICAL-V1",
+      "canonical_scenario_id": "medical_incident_lobby",
+      "title": "Medical Incident / Escalation and Handoff",
+      "federal_training_ids": [
+        "FEMA-IS-200-C"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "CORE-02",
+        "CORE-07"
+      ],
+      "fault_id": "medical_incident_active",
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-MEDICAL",
+          "state": "active"
+        },
+        {
+          "target": "F1-AED-01",
+          "condition": "available_for_trained_responder"
+        },
+        {
+          "target": "F1-FIRST-AID-01",
+          "condition": "available_for_trained_responder"
+        },
+        {
+          "target": "site-responder-keep-clear",
+          "condition": "responder_access_required"
+        },
+        {
+          "target": "F1-RECEPTION-SECURITY-01",
+          "condition": "incident_communication_active"
+        }
+      ],
+      "actions": [
+        {
+          "id": "med-inspect",
+          "type": "inspect",
+          "target": "RUNTIME-OPS-MEDICAL"
+        },
+        {
+          "id": "med-escalate",
+          "type": "decision",
+          "target": "F1-RECEPTION-SECURITY-01",
+          "requires": [
+            "med-inspect"
+          ],
+          "expected": {
+            "response": "activate_emergency_services_and_incident_lead"
+          }
+        },
+        {
+          "id": "med-clear",
+          "type": "decision",
+          "target": "site-responder-keep-clear",
+          "requires": [
+            "med-escalate"
+          ],
+          "expected": {
+            "keep_clear": true
+          }
+        },
+        {
+          "id": "med-aed",
+          "type": "inspect",
+          "target": "F1-AED-01",
+          "requires": [
+            "med-clear"
+          ]
+        },
+        {
+          "id": "med-handoff",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-MEDICAL",
+          "requires": [
+            "med-aed"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-OPS-SURGE-V1",
+      "canonical_scenario_id": "public_service_surge",
+      "title": "Public-Service Surge / Queue Continuity",
+      "federal_training_ids": [
+        "IRS-VITA-BASIC-2025",
+        "IRS-VITA-ADVANCED-2025",
+        "FEMA-IS-238"
+      ],
+      "competency_ids": [
+        "CORE-02",
+        "CORE-03",
+        "PSC-04"
+      ],
+      "fault_id": "arrival_queue_elevated",
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-QUEUE",
+          "state": "surge"
+        },
+        {
+          "target": "F1-RECEPTION-DESK-01",
+          "state": "capacity_constrained",
+          "availability": "degraded"
+        },
+        {
+          "target": "F1-RECEPTION-ACCESS-01",
+          "condition": "accessible_position_preserved"
+        }
+      ],
+      "actions": [
+        {
+          "id": "surge-inspect",
+          "type": "inspect",
+          "target": "RUNTIME-OPS-QUEUE"
+        },
+        {
+          "id": "surge-plan",
+          "type": "decision",
+          "target": "F1-RECEPTION-DESK-01",
+          "requires": [
+            "surge-inspect"
+          ],
+          "expected": {
+            "response": "overflow_queue_preserve_accessible_position"
+          }
+        },
+        {
+          "id": "surge-comms",
+          "type": "decision",
+          "target": "F1-RECEPTION-ACCESS-01",
+          "requires": [
+            "surge-plan"
+          ],
+          "expected": {
+            "status": "capacity_constrained_wait_extended"
+          }
+        },
+        {
+          "id": "surge-close",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-QUEUE",
+          "requires": [
+            "surge-comms"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-OPS-CHECKIN-OUTAGE-V1",
+      "canonical_scenario_id": "network_checkin_outage",
+      "title": "Network / Check-In Outage Fallback",
+      "federal_training_ids": [
+        "CISA-ICS-300",
+        "CISA-ICS-401"
+      ],
+      "competency_ids": [
+        "CORE-05",
+        "CORE-07",
+        "OPS-06"
+      ],
+      "fault_id": "directory_checkin_unavailable",
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-COMMS",
+          "state": "fallback_required"
+        },
+        {
+          "target": "F1-DIRECTORY-01",
+          "state": "offline",
+          "availability": "unavailable"
+        },
+        {
+          "target": "LOGIC-SVC-DIRECTORY-IDP",
+          "state": "unavailable",
+          "availability": "unavailable"
+        },
+        {
+          "target": "F1-RECEPTION-SECURITY-01",
+          "state": "manual_checkin",
+          "availability": "degraded"
+        }
+      ],
+      "actions": [
+        {
+          "id": "checkin-terminal",
+          "type": "inspect",
+          "target": "F1-DIRECTORY-01"
+        },
+        {
+          "id": "checkin-service",
+          "type": "inspect",
+          "target": "LOGIC-SVC-DIRECTORY-IDP",
+          "requires": [
+            "checkin-terminal"
+          ]
+        },
+        {
+          "id": "checkin-fallback",
+          "type": "decision",
+          "target": "F1-RECEPTION-SECURITY-01",
+          "requires": [
+            "checkin-service"
+          ],
+          "expected": {
+            "response": "manual_checkin_minimum_required_information"
+          }
+        },
+        {
+          "id": "checkin-doc",
+          "type": "decision",
+          "target": "RUNTIME-OPS-COMMS",
+          "requires": [
+            "checkin-fallback"
+          ],
+          "expected": {
+            "documented": true
+          }
+        },
+        {
+          "id": "checkin-restore",
+          "type": "resolve",
+          "target": "LOGIC-SVC-DIRECTORY-IDP",
+          "requires": [
+            "checkin-doc"
+          ]
+        },
+        {
+          "id": "checkin-validate",
+          "type": "validate",
+          "target": "F1-DIRECTORY-01",
+          "requires": [
+            "checkin-restore"
+          ]
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-OPS-SERVICE-INCIDENT-V1",
+      "canonical_scenario_id": "service_area_incident",
+      "title": "Service-Area Incident / Hazard Boundary",
+      "federal_training_ids": [
+        "FEMA-IS-100-C",
+        "FEMA-IS-200-C",
+        "FEMA-IS-238",
+        "CDC-EHTER-AWARENESS",
+        "ATSDR-PHAT"
+      ],
+      "competency_ids": [
+        "CORE-08",
+        "OPS-01"
+      ],
+      "fault_id": "service_area_hazard",
+      "effects": [
+        {
+          "target": "RUNTIME-OPS-SERVICE-HAZARD",
+          "state": "active"
+        },
+        {
+          "target": "site-service-apron-west",
+          "state": "restricted",
+          "availability": "unavailable"
+        },
+        {
+          "target": "F1-DOOR-SERVICE-WEST",
+          "state": "restricted",
+          "availability": "unavailable"
+        },
+        {
+          "target": "site-responder-keep-clear",
+          "condition": "responder_access_required"
+        }
+      ],
+      "actions": [
+        {
+          "id": "service-inspect",
+          "type": "inspect",
+          "target": "RUNTIME-OPS-SERVICE-HAZARD"
+        },
+        {
+          "id": "service-restrict",
+          "type": "decision",
+          "target": "F1-DOOR-SERVICE-WEST",
+          "requires": [
+            "service-inspect"
+          ],
+          "expected": {
+            "access": "restricted"
+          }
+        },
+        {
+          "id": "service-report",
+          "type": "decision",
+          "target": "site-service-apron-west",
+          "requires": [
+            "service-restrict"
+          ],
+          "expected": {
+            "response": "report_and_do_not_enter"
+          }
+        },
+        {
+          "id": "service-clear",
+          "type": "decision",
+          "target": "site-responder-keep-clear",
+          "requires": [
+            "service-report"
+          ],
+          "expected": {
+            "keep_clear": true
+          }
+        },
+        {
+          "id": "service-close",
+          "type": "resolve",
+          "target": "RUNTIME-OPS-SERVICE-HAZARD",
+          "requires": [
+            "service-clear"
+          ]
+        }
+      ]
+    }
+  ]
+}
