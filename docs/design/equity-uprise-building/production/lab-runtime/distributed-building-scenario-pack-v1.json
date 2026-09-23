@@ -1,0 +1,1352 @@
+{
+  "schema_version": "1.0.0",
+  "status": "distributed-building-practical-labs-v1",
+  "mode": "SIMULATION",
+  "execution_target": "SANDBOX",
+  "live_control_allowed": false,
+  "credential_is_not_competency": true,
+  "purpose": "Floor-native and cross-floor practical technical labs that use the canonical Equity Uprise building as the training environment.",
+  "selector_contract": "level:<B1|F1-F6|L7>:type:<asset_type> and level:<B1|F1-F6|L7>:cable:<cable_type>",
+  "scenarios": [
+    {
+      "scenario_id": "EU-DIST-B1-IDF-POWER-V1",
+      "source_lab_id": "IT-LAB-032",
+      "title": "B1 Core / IDF Power Failure",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-05",
+        "CORE-08",
+        "OPS-01",
+        "OPS-02",
+        "OPS-04",
+        "OPS-05"
+      ],
+      "viewer_focus": "0",
+      "floor_scope": [
+        "B1"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:B1:type:rack_ups",
+        "level:B1:type:access_switch"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "A simulated B1 rack-power failure has taken network infrastructure offline. Trace the UPS-to-switch dependency, identify the affected domain, restore the sandbox power path, and validate endpoint recovery.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-B1-IDF-POWER-DIAGNOSE",
+          "description": "Inspect the scoped building equipment and diagnose the simulated fault.",
+          "required_action_ids": [
+            "b1-idf-power-inspect-1",
+            "b1-idf-power-inspect-2",
+            "b1-idf-power-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-B1-IDF-POWER-RESTORE",
+          "description": "Restore the affected sandbox equipment/path.",
+          "required_action_ids": [
+            "b1-idf-power-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-B1-IDF-POWER-VALIDATE",
+          "description": "Validate the scoped system after restoration.",
+          "required_action_ids": [
+            "b1-idf-power-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "b1-idf-power-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:B1:type:rack_ups",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect level:B1:type:rack_ups within B1 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "b1-idf-power-inspect-2",
+          "action_type": "inspect",
+          "target_selector": "level:B1:type:access_switch",
+          "requires_action_ids": [
+            "b1-idf-power-inspect-1"
+          ],
+          "observation": {
+            "simulated_signal": "Inspect level:B1:type:access_switch within B1 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "b1-idf-power-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:B1:type:rack_ups",
+          "requires_action_ids": [
+            "b1-idf-power-inspect-1",
+            "b1-idf-power-inspect-2"
+          ],
+          "expected_input": {
+            "finding": "idf_ups_failure"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is idf_ups_failure."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "b1-idf-power-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:B1:type:rack_ups",
+          "requires_action_ids": [
+            "b1-idf-power-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "idf_ups_failure"
+          ],
+          "observation": {
+            "simulated_change": "idf_ups_failure cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "b1-idf-power-validate",
+          "action_type": "validate",
+          "target_selector": "level:B1:type:rack_ups",
+          "requires_action_ids": [
+            "b1-idf-power-restore"
+          ],
+          "requires_faults_absent": [
+            "idf_ups_failure"
+          ],
+          "observation": {
+            "validation": "Scoped equipment/path returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "b1-idf-power-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "b1-idf-power-inspect-2",
+          "input": {}
+        },
+        {
+          "action_id": "b1-idf-power-diagnose",
+          "input": {
+            "finding": "idf_ups_failure"
+          }
+        },
+        {
+          "action_id": "b1-idf-power-restore",
+          "input": {}
+        },
+        {
+          "action_id": "b1-idf-power-validate",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-DIST-F1-WORKSTATION-LINK-V1",
+      "source_lab_id": "IT-LAB-008",
+      "title": "Floor 1 Check-In Workstation Link Failure",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-05",
+        "OPS-01",
+        "OPS-02",
+        "ENT-05",
+        "PSC-04"
+      ],
+      "viewer_focus": "1",
+      "floor_scope": [
+        "F1"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:F1:type:workstation"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "A Floor 1 intake/check-in workstation has lost network service. Diagnose the local link state, restore the simulated switch-port path, and verify the client returns without bypassing controls.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-F1-WORKSTATION-LINK-DIAGNOSE",
+          "description": "Inspect the scoped building equipment and diagnose the simulated fault.",
+          "required_action_ids": [
+            "f1-workstation-link-inspect-1",
+            "f1-workstation-link-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F1-WORKSTATION-LINK-RESTORE",
+          "description": "Restore the affected sandbox equipment/path.",
+          "required_action_ids": [
+            "f1-workstation-link-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F1-WORKSTATION-LINK-VALIDATE",
+          "description": "Validate the scoped system after restoration.",
+          "required_action_ids": [
+            "f1-workstation-link-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "f1-workstation-link-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:F1:type:workstation",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect level:F1:type:workstation within F1 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f1-workstation-link-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:F1:type:workstation",
+          "requires_action_ids": [
+            "f1-workstation-link-inspect-1"
+          ],
+          "expected_input": {
+            "finding": "port_shutdown"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is port_shutdown."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f1-workstation-link-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:F1:type:workstation",
+          "requires_action_ids": [
+            "f1-workstation-link-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "port_shutdown"
+          ],
+          "observation": {
+            "simulated_change": "port_shutdown cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f1-workstation-link-validate",
+          "action_type": "validate",
+          "target_selector": "level:F1:type:workstation",
+          "requires_action_ids": [
+            "f1-workstation-link-restore"
+          ],
+          "requires_faults_absent": [
+            "port_shutdown"
+          ],
+          "observation": {
+            "validation": "Scoped equipment/path returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "f1-workstation-link-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "f1-workstation-link-diagnose",
+          "input": {
+            "finding": "port_shutdown"
+          }
+        },
+        {
+          "action_id": "f1-workstation-link-restore",
+          "input": {}
+        },
+        {
+          "action_id": "f1-workstation-link-validate",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-DIST-F2-AV-MULTICAST-V1",
+      "source_lab_id": "IT-LAB-030",
+      "title": "Floor 2 Public Forum AV Multicast Flood",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-05",
+        "MED-02",
+        "OPS-01",
+        "OPS-02",
+        "OPS-06"
+      ],
+      "viewer_focus": "2",
+      "floor_scope": [
+        "F2"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:F2:type:av_controller",
+        "level:F2:type:network_display_decoder"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "The Floor 2 public forum is experiencing simulated AV multicast flooding. Inspect the AV control and display path, identify the multicast-control failure, restore the sandbox configuration, and validate constrained delivery.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-F2-AV-MULTICAST-DIAGNOSE",
+          "description": "Inspect the scoped building equipment and diagnose the simulated fault.",
+          "required_action_ids": [
+            "f2-av-multicast-inspect-1",
+            "f2-av-multicast-inspect-2",
+            "f2-av-multicast-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F2-AV-MULTICAST-RESTORE",
+          "description": "Restore the affected sandbox equipment/path.",
+          "required_action_ids": [
+            "f2-av-multicast-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F2-AV-MULTICAST-VALIDATE",
+          "description": "Validate the scoped system after restoration.",
+          "required_action_ids": [
+            "f2-av-multicast-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "f2-av-multicast-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:F2:type:av_controller",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect level:F2:type:av_controller within F2 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f2-av-multicast-inspect-2",
+          "action_type": "inspect",
+          "target_selector": "level:F2:type:network_display_decoder",
+          "requires_action_ids": [
+            "f2-av-multicast-inspect-1"
+          ],
+          "observation": {
+            "simulated_signal": "Inspect level:F2:type:network_display_decoder within F2 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f2-av-multicast-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:F2:type:av_controller",
+          "requires_action_ids": [
+            "f2-av-multicast-inspect-1",
+            "f2-av-multicast-inspect-2"
+          ],
+          "expected_input": {
+            "finding": "igmp_snooping_off"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is igmp_snooping_off."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f2-av-multicast-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:F2:type:av_controller",
+          "requires_action_ids": [
+            "f2-av-multicast-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "igmp_snooping_off"
+          ],
+          "observation": {
+            "simulated_change": "igmp_snooping_off cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f2-av-multicast-validate",
+          "action_type": "validate",
+          "target_selector": "level:F2:type:av_controller",
+          "requires_action_ids": [
+            "f2-av-multicast-restore"
+          ],
+          "requires_faults_absent": [
+            "igmp_snooping_off"
+          ],
+          "observation": {
+            "validation": "Scoped equipment/path returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "f2-av-multicast-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "f2-av-multicast-inspect-2",
+          "input": {}
+        },
+        {
+          "action_id": "f2-av-multicast-diagnose",
+          "input": {
+            "finding": "igmp_snooping_off"
+          }
+        },
+        {
+          "action_id": "f2-av-multicast-restore",
+          "input": {}
+        },
+        {
+          "action_id": "f2-av-multicast-validate",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-DIST-F3-VOICE-VLAN-V1",
+      "source_lab_id": "IT-LAB-016",
+      "title": "Floor 3 Fellowship Voice VLAN Failure",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-05",
+        "CORE-02",
+        "OPS-01",
+        "OPS-02",
+        "ENT-06"
+      ],
+      "viewer_focus": "3",
+      "floor_scope": [
+        "F3"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:F3:type:ip_phone"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "A Floor 3 fellowship/interview phone cannot register because its simulated voice-network assignment is wrong. Trace the endpoint state, correct the sandbox VLAN condition, and validate registration.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-F3-VOICE-VLAN-DIAGNOSE",
+          "description": "Inspect the scoped building equipment and diagnose the simulated fault.",
+          "required_action_ids": [
+            "f3-voice-vlan-inspect-1",
+            "f3-voice-vlan-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F3-VOICE-VLAN-RESTORE",
+          "description": "Restore the affected sandbox equipment/path.",
+          "required_action_ids": [
+            "f3-voice-vlan-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F3-VOICE-VLAN-VALIDATE",
+          "description": "Validate the scoped system after restoration.",
+          "required_action_ids": [
+            "f3-voice-vlan-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "f3-voice-vlan-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:F3:type:ip_phone",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect level:F3:type:ip_phone within F3 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f3-voice-vlan-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:F3:type:ip_phone",
+          "requires_action_ids": [
+            "f3-voice-vlan-inspect-1"
+          ],
+          "expected_input": {
+            "finding": "voice_vlan_wrong"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is voice_vlan_wrong."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f3-voice-vlan-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:F3:type:ip_phone",
+          "requires_action_ids": [
+            "f3-voice-vlan-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "voice_vlan_wrong"
+          ],
+          "observation": {
+            "simulated_change": "voice_vlan_wrong cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f3-voice-vlan-validate",
+          "action_type": "validate",
+          "target_selector": "level:F3:type:ip_phone",
+          "requires_action_ids": [
+            "f3-voice-vlan-restore"
+          ],
+          "requires_faults_absent": [
+            "voice_vlan_wrong"
+          ],
+          "observation": {
+            "validation": "Scoped equipment/path returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "f3-voice-vlan-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "f3-voice-vlan-diagnose",
+          "input": {
+            "finding": "voice_vlan_wrong"
+          }
+        },
+        {
+          "action_id": "f3-voice-vlan-restore",
+          "input": {}
+        },
+        {
+          "action_id": "f3-voice-vlan-validate",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-DIST-F4-AV-QOS-V1",
+      "source_lab_id": "IT-LAB-031",
+      "title": "Floor 4 Media Production AV QoS Degradation",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-05",
+        "MED-02",
+        "MED-03",
+        "OPS-01",
+        "OPS-02"
+      ],
+      "viewer_focus": "4",
+      "floor_scope": [
+        "F4"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:F4:type:av_camera",
+        "level:F4:type:network_display_decoder"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "The Floor 4 media-production chain is showing simulated loss and jitter after QoS protection was removed. Inspect capture and display endpoints, restore the sandbox QoS condition, and validate the media path.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-F4-AV-QOS-DIAGNOSE",
+          "description": "Inspect the scoped building equipment and diagnose the simulated fault.",
+          "required_action_ids": [
+            "f4-av-qos-inspect-1",
+            "f4-av-qos-inspect-2",
+            "f4-av-qos-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F4-AV-QOS-RESTORE",
+          "description": "Restore the affected sandbox equipment/path.",
+          "required_action_ids": [
+            "f4-av-qos-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F4-AV-QOS-VALIDATE",
+          "description": "Validate the scoped system after restoration.",
+          "required_action_ids": [
+            "f4-av-qos-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "f4-av-qos-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:F4:type:av_camera",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect level:F4:type:av_camera within F4 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f4-av-qos-inspect-2",
+          "action_type": "inspect",
+          "target_selector": "level:F4:type:network_display_decoder",
+          "requires_action_ids": [
+            "f4-av-qos-inspect-1"
+          ],
+          "observation": {
+            "simulated_signal": "Inspect level:F4:type:network_display_decoder within F4 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f4-av-qos-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:F4:type:av_camera",
+          "requires_action_ids": [
+            "f4-av-qos-inspect-1",
+            "f4-av-qos-inspect-2"
+          ],
+          "expected_input": {
+            "finding": "qos_removed"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is qos_removed."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f4-av-qos-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:F4:type:av_camera",
+          "requires_action_ids": [
+            "f4-av-qos-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "qos_removed"
+          ],
+          "observation": {
+            "simulated_change": "qos_removed cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f4-av-qos-validate",
+          "action_type": "validate",
+          "target_selector": "level:F4:type:av_camera",
+          "requires_action_ids": [
+            "f4-av-qos-restore"
+          ],
+          "requires_faults_absent": [
+            "qos_removed"
+          ],
+          "observation": {
+            "validation": "Scoped equipment/path returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "f4-av-qos-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "f4-av-qos-inspect-2",
+          "input": {}
+        },
+        {
+          "action_id": "f4-av-qos-diagnose",
+          "input": {
+            "finding": "qos_removed"
+          }
+        },
+        {
+          "action_id": "f4-av-qos-restore",
+          "input": {}
+        },
+        {
+          "action_id": "f4-av-qos-validate",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-DIST-F5-WORKSTATION-VLAN-V1",
+      "source_lab_id": "IT-LAB-009",
+      "title": "Floor 5 Research Workstation VLAN Mismatch",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-05",
+        "RSP-04",
+        "SHR-03",
+        "OPS-01",
+        "OPS-02"
+      ],
+      "viewer_focus": "5",
+      "floor_scope": [
+        "F5"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:F5:type:workstation"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "A Floor 5 research/policy workstation is attached to the wrong simulated network segment. Diagnose the mismatch, restore the intended sandbox VLAN, and validate access without broadening privileges.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-F5-WORKSTATION-VLAN-DIAGNOSE",
+          "description": "Inspect the scoped building equipment and diagnose the simulated fault.",
+          "required_action_ids": [
+            "f5-workstation-vlan-inspect-1",
+            "f5-workstation-vlan-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F5-WORKSTATION-VLAN-RESTORE",
+          "description": "Restore the affected sandbox equipment/path.",
+          "required_action_ids": [
+            "f5-workstation-vlan-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F5-WORKSTATION-VLAN-VALIDATE",
+          "description": "Validate the scoped system after restoration.",
+          "required_action_ids": [
+            "f5-workstation-vlan-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "f5-workstation-vlan-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:F5:type:workstation",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect level:F5:type:workstation within F5 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f5-workstation-vlan-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:F5:type:workstation",
+          "requires_action_ids": [
+            "f5-workstation-vlan-inspect-1"
+          ],
+          "expected_input": {
+            "finding": "wrong_vlan"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is wrong_vlan."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f5-workstation-vlan-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:F5:type:workstation",
+          "requires_action_ids": [
+            "f5-workstation-vlan-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "wrong_vlan"
+          ],
+          "observation": {
+            "simulated_change": "wrong_vlan cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f5-workstation-vlan-validate",
+          "action_type": "validate",
+          "target_selector": "level:F5:type:workstation",
+          "requires_action_ids": [
+            "f5-workstation-vlan-restore"
+          ],
+          "requires_faults_absent": [
+            "wrong_vlan"
+          ],
+          "observation": {
+            "validation": "Scoped equipment/path returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "f5-workstation-vlan-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "f5-workstation-vlan-diagnose",
+          "input": {
+            "finding": "wrong_vlan"
+          }
+        },
+        {
+          "action_id": "f5-workstation-vlan-restore",
+          "input": {}
+        },
+        {
+          "action_id": "f5-workstation-vlan-validate",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-DIST-F6-CAMERA-VMS-V1",
+      "source_lab_id": "IT-LAB-025",
+      "title": "Floor 6 Command Camera / VMS Loss",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-05",
+        "OPS-01",
+        "OPS-02",
+        "OPS-05",
+        "SHR-03"
+      ],
+      "viewer_focus": "6",
+      "floor_scope": [
+        "F6",
+        "B1"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:F6:type:camera",
+        "vms_nvr"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "A Floor 6 command-area camera has lost its simulated path to the building video system. Inspect the command-floor endpoint and B1 VMS dependency, restore the sandbox link, and validate video-system recovery.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-F6-CAMERA-VMS-DIAGNOSE",
+          "description": "Inspect the scoped building equipment and diagnose the simulated fault.",
+          "required_action_ids": [
+            "f6-camera-vms-inspect-1",
+            "f6-camera-vms-inspect-2",
+            "f6-camera-vms-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F6-CAMERA-VMS-RESTORE",
+          "description": "Restore the affected sandbox equipment/path.",
+          "required_action_ids": [
+            "f6-camera-vms-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F6-CAMERA-VMS-VALIDATE",
+          "description": "Validate the scoped system after restoration.",
+          "required_action_ids": [
+            "f6-camera-vms-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "f6-camera-vms-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:F6:type:camera",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect level:F6:type:camera within F6 / B1 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f6-camera-vms-inspect-2",
+          "action_type": "inspect",
+          "target_selector": "vms_nvr",
+          "requires_action_ids": [
+            "f6-camera-vms-inspect-1"
+          ],
+          "observation": {
+            "simulated_signal": "Inspect vms_nvr within F6 / B1 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f6-camera-vms-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:F6:type:camera",
+          "requires_action_ids": [
+            "f6-camera-vms-inspect-1",
+            "f6-camera-vms-inspect-2"
+          ],
+          "expected_input": {
+            "finding": "camera_link_down"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is camera_link_down."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f6-camera-vms-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:F6:type:camera",
+          "requires_action_ids": [
+            "f6-camera-vms-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "camera_link_down"
+          ],
+          "observation": {
+            "simulated_change": "camera_link_down cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f6-camera-vms-validate",
+          "action_type": "validate",
+          "target_selector": "level:F6:type:camera",
+          "requires_action_ids": [
+            "f6-camera-vms-restore"
+          ],
+          "requires_faults_absent": [
+            "camera_link_down"
+          ],
+          "observation": {
+            "validation": "Scoped equipment/path returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "f6-camera-vms-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "f6-camera-vms-inspect-2",
+          "input": {}
+        },
+        {
+          "action_id": "f6-camera-vms-diagnose",
+          "input": {
+            "finding": "camera_link_down"
+          }
+        },
+        {
+          "action_id": "f6-camera-vms-restore",
+          "input": {}
+        },
+        {
+          "action_id": "f6-camera-vms-validate",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-DIST-F7-BAS-V1",
+      "source_lab_id": "IT-LAB-027",
+      "title": "Level 7 Roof BAS Controller Offline",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-02",
+        "OPS-04",
+        "OPS-05"
+      ],
+      "viewer_focus": "7",
+      "floor_scope": [
+        "L7"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:L7:type:bas_controller"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "The roof BAS controller is offline in the simulator, taking its rooftop sensor chain with it. Trace controller and field-bus impact, restore the sandbox controller, and validate rooftop telemetry.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-F7-BAS-DIAGNOSE",
+          "description": "Inspect the scoped building equipment and diagnose the simulated fault.",
+          "required_action_ids": [
+            "f7-bas-inspect-1",
+            "f7-bas-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F7-BAS-RESTORE",
+          "description": "Restore the affected sandbox equipment/path.",
+          "required_action_ids": [
+            "f7-bas-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-F7-BAS-VALIDATE",
+          "description": "Validate the scoped system after restoration.",
+          "required_action_ids": [
+            "f7-bas-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "f7-bas-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:L7:type:bas_controller",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect level:L7:type:bas_controller within L7 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f7-bas-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:L7:type:bas_controller",
+          "requires_action_ids": [
+            "f7-bas-inspect-1"
+          ],
+          "expected_input": {
+            "finding": "bas_controller_offline"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is bas_controller_offline."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f7-bas-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:L7:type:bas_controller",
+          "requires_action_ids": [
+            "f7-bas-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "bas_controller_offline"
+          ],
+          "observation": {
+            "simulated_change": "bas_controller_offline cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "f7-bas-validate",
+          "action_type": "validate",
+          "target_selector": "level:L7:type:bas_controller",
+          "requires_action_ids": [
+            "f7-bas-restore"
+          ],
+          "requires_faults_absent": [
+            "bas_controller_offline"
+          ],
+          "observation": {
+            "validation": "Scoped equipment/path returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "f7-bas-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "f7-bas-diagnose",
+          "input": {
+            "finding": "bas_controller_offline"
+          }
+        },
+        {
+          "action_id": "f7-bas-restore",
+          "input": {}
+        },
+        {
+          "action_id": "f7-bas-validate",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-DIST-XF-F4-UPLINK-V1",
+      "source_lab_id": "IT-LAB-010",
+      "title": "F4-to-B1 Network Uplink Failure",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-05",
+        "CORE-08",
+        "OPS-01",
+        "OPS-02",
+        "OPS-03"
+      ],
+      "viewer_focus": "stack",
+      "floor_scope": [
+        "F4",
+        "B1"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:F4:type:access_switch"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "Floor 4 has lost a simulated uplink toward the B1 collapsed core. Diagnose the floor access-switch state, trace the vertical dependency, restore the sandbox uplink, and verify floor service.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-XF-F4-UPLINK-DIAGNOSE",
+          "description": "Inspect the scoped building equipment and diagnose the simulated fault.",
+          "required_action_ids": [
+            "xf-f4-uplink-inspect-1",
+            "xf-f4-uplink-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-XF-F4-UPLINK-RESTORE",
+          "description": "Restore the affected sandbox equipment/path.",
+          "required_action_ids": [
+            "xf-f4-uplink-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-XF-F4-UPLINK-VALIDATE",
+          "description": "Validate the scoped system after restoration.",
+          "required_action_ids": [
+            "xf-f4-uplink-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "xf-f4-uplink-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:F4:type:access_switch",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect level:F4:type:access_switch within F4 / B1 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "xf-f4-uplink-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:F4:type:access_switch",
+          "requires_action_ids": [
+            "xf-f4-uplink-inspect-1"
+          ],
+          "expected_input": {
+            "finding": "uplink_down"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is uplink_down."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "xf-f4-uplink-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:F4:type:access_switch",
+          "requires_action_ids": [
+            "xf-f4-uplink-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "uplink_down"
+          ],
+          "observation": {
+            "simulated_change": "uplink_down cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "xf-f4-uplink-validate",
+          "action_type": "validate",
+          "target_selector": "level:F4:type:access_switch",
+          "requires_action_ids": [
+            "xf-f4-uplink-restore"
+          ],
+          "requires_faults_absent": [
+            "uplink_down"
+          ],
+          "observation": {
+            "validation": "Scoped equipment/path returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "xf-f4-uplink-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "xf-f4-uplink-diagnose",
+          "input": {
+            "finding": "uplink_down"
+          }
+        },
+        {
+          "action_id": "xf-f4-uplink-restore",
+          "input": {}
+        },
+        {
+          "action_id": "xf-f4-uplink-validate",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-DIST-XF-F6-FIBER-V1",
+      "source_lab_id": "IT-LAB-033",
+      "title": "F6-to-B1 Backbone Fiber Cut",
+      "federal_training_ids": [],
+      "competency_ids": [
+        "CORE-08",
+        "OPS-01",
+        "OPS-02",
+        "OPS-03",
+        "OPS-04"
+      ],
+      "viewer_focus": "stack",
+      "floor_scope": [
+        "F6",
+        "B1"
+      ],
+      "engineering_view": true,
+      "target_selectors": [
+        "level:F6:cable:OS2-SM-DUPLEX"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "A simulated F6 backbone fiber path has been cut between the upper building and the B1 core. Identify the affected backbone segment, confirm redundant service behavior, restore the sandbox path, and validate recovery.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-XF-F6-FIBER-DIAGNOSE",
+          "description": "Inspect the scoped building equipment and diagnose the simulated fault.",
+          "required_action_ids": [
+            "xf-f6-fiber-inspect-1",
+            "xf-f6-fiber-diagnose"
+          ]
+        },
+        {
+          "objective_id": "OBJ-XF-F6-FIBER-RESTORE",
+          "description": "Restore the affected sandbox equipment/path.",
+          "required_action_ids": [
+            "xf-f6-fiber-restore"
+          ]
+        },
+        {
+          "objective_id": "OBJ-XF-F6-FIBER-VALIDATE",
+          "description": "Validate the scoped system after restoration.",
+          "required_action_ids": [
+            "xf-f6-fiber-validate"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "xf-f6-fiber-inspect-1",
+          "action_type": "inspect",
+          "target_selector": "level:F6:cable:OS2-SM-DUPLEX",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Inspect level:F6:cable:OS2-SM-DUPLEX within F6 / B1 scope."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "xf-f6-fiber-diagnose",
+          "action_type": "decision",
+          "target_selector": "level:F6:cable:OS2-SM-DUPLEX",
+          "requires_action_ids": [
+            "xf-f6-fiber-inspect-1"
+          ],
+          "expected_input": {
+            "finding": "uplink_a_cut"
+          },
+          "observation": {
+            "accepted_finding": "The active simulated fault is uplink_a_cut."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "xf-f6-fiber-restore",
+          "action_type": "mitigate",
+          "target_selector": "level:F6:cable:OS2-SM-DUPLEX",
+          "requires_action_ids": [
+            "xf-f6-fiber-diagnose"
+          ],
+          "resolve_fault_ids": [
+            "uplink_a_cut"
+          ],
+          "observation": {
+            "simulated_change": "uplink_a_cut cleared in the sandbox; no live building control is permitted."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "xf-f6-fiber-validate",
+          "action_type": "validate",
+          "target_selector": "level:F6:cable:OS2-SM-DUPLEX",
+          "requires_action_ids": [
+            "xf-f6-fiber-restore"
+          ],
+          "requires_faults_absent": [
+            "uplink_a_cut"
+          ],
+          "observation": {
+            "validation": "Scoped equipment/path returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "xf-f6-fiber-inspect-1",
+          "input": {}
+        },
+        {
+          "action_id": "xf-f6-fiber-diagnose",
+          "input": {
+            "finding": "uplink_a_cut"
+          }
+        },
+        {
+          "action_id": "xf-f6-fiber-restore",
+          "input": {}
+        },
+        {
+          "action_id": "xf-f6-fiber-validate",
+          "input": {}
+        }
+      ]
+    }
+  ]
+}
