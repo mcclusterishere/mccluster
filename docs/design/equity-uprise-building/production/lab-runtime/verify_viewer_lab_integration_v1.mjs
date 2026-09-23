@@ -191,7 +191,7 @@ assert.equal(viewer.includes("if(roomSensorMode==='orientation')return"), false,
 for (const required of [
   "DeviceMotionEvent.requestPermission()", "DeviceOrientationEvent.requestPermission()",
   "window.addEventListener('devicemotion',onRoomMotion,true)",
-  "roomSensorMode='motion-fallback'", "0 sensor events",
+  "roomSensorMode='motion-primary'", "0 sensor events",
   "selectRoomAt", "projectedRoomTarget", "pointerup", "addEventListener('click'",
   "enhanceFloor1Interior", "buildRoomLightRig", "roomLightRig.visible=true",
 ]) {
