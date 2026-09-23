@@ -92,8 +92,21 @@ try {
     'id="services"', 'id="wire"', 'id="labs"', "deviceClockSolar",
     "requestedLab=params.get('lab')", "LAB_MODULE_URL", "labController.execute", "labController.reset", "await labVisualRootsReady"
   ].every((token) => viewerSource.includes(token)));
+  check("building viewer: Room Mode controls", [
+    'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',
+    "DeviceOrientationEvent.requestPermission", "deviceorientation", "approachRoomObject", "tweenRoomCamera",
+    "services.visible=servicesOn&&!roomMode", "e.visible=!roomMode", "requestedRoom=params.get('room')==='1'"
+  ].every((token) => viewerSource.includes(token)));
+  check("building viewer: Room Mode stays human-scale",
+    viewerSource.includes("F1-ROOM-ARRIVAL-CENTER") &&
+    viewerSource.includes("F1-RECEPTION-DESK-01") &&
+    viewerSource.includes("F1-DIRECTORY-01") &&
+    viewerSource.includes("F1-JOURNEY-WALL-01") &&
+    viewerSource.includes("F1-PASS-ELEV-CALL-01"));
   check("building viewer: normal mode remains default",
-    viewerSource.includes("requestedLab=params.get('lab')") && viewerSource.includes("labPanel.hidden"));
+    viewerSource.includes("requestedLab=params.get('lab')") &&
+    viewerSource.includes("labPanel.hidden") &&
+    viewerSource.includes("requestedRoom=params.get('room')==='1'"));
   await viewerProbe.close();
 
   const PAGES = [
