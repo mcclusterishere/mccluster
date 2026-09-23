@@ -59,6 +59,9 @@ export class GuidedScenarioRunner {
 
     this.definition = clone(definition);
     this.sourceLab = clone(sourceLab);
+    if (Array.isArray(this.definition.target_selectors) && this.definition.target_selectors.length > 0) {
+      this.sourceLab.target_selectors = clone(this.definition.target_selectors);
+    }
     this.actionById = new Map(this.definition.actions.map((action) => [action.action_id, action]));
     this.successfulActionIds = new Set();
     this.actionHistory = [];
@@ -71,7 +74,7 @@ export class GuidedScenarioRunner {
     this.unresolvedFaultIds = new Set(this.initialFaultIds);
 
     const bound = createElectronicsBoundSessionFromCatalogLab(
-      sourceLab,
+      this.sourceLab,
       electronics,
       {
         session_id: session_id || "GUIDED::" + definition.scenario_id,
@@ -243,6 +246,10 @@ export class GuidedScenarioRunner {
       live_control_allowed: false,
       federal_training_ids: clone(this.definition.federal_training_ids || []),
       credential_is_not_competency: true,
+      competency_ids: clone(this.definition.competency_ids || []),
+      viewer_focus: this.definition.viewer_focus || null,
+      floor_scope: clone(this.definition.floor_scope || []),
+      engineering_view: this.definition.engineering_view === true,
       phase: this.session.phase,
       objectives: clone(this.objectives),
       successful_action_ids: [...this.successfulActionIds].sort(),

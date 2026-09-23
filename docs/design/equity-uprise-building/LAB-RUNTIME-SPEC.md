@@ -465,3 +465,36 @@ Step 6 SHA-256 provenance is implemented with a deterministic browser-safe synch
 Reset restores a fresh canonical SANDBOX session and clears all Step 8 styling/overlays. LIVE execution remains impossible. Public-service exercises remain synthetic-only. Electronics and path visualization remain design-intent/training authority, not construction/as-built truth.
 
 The current 1–8 Lab Runtime implementation sequence is complete at Step 8.
+
+## Step 9 — Distributed Whole-Building Practical Labs
+
+Step 9 makes the building itself the practical lab environment instead of concentrating technical exercises in B1.
+
+Canonical source:
+- `production/lab-runtime/distributed-building-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-electronics-sandbox.mjs`
+- `production/lab-runtime/equity-uprise-guided-scenarios.mjs`
+- `production/lab-runtime/equity-uprise-viewer-lab-integration.mjs`
+- canonical viewer: `equity-uprise-building-core-v2-3d.html`
+
+The Step 2 selector resolver now supports floor-scoped selectors:
+- `level:<B1|F1-F6|L7>:type:<asset_type>`
+- `level:<B1|F1-F6|L7>:cable:<cable_type>`
+
+The first distributed pack contains ten executable guided scenarios:
+- B1 rack/IDF power failure;
+- Floor 1 workstation-link failure;
+- Floor 2 public-forum AV multicast flood;
+- Floor 3 voice-VLAN failure;
+- Floor 4 media-production AV QoS degradation;
+- Floor 5 research-workstation VLAN mismatch;
+- Floor 6 command camera/VMS loss;
+- Level 7 roof BAS controller outage;
+- F4-to-B1 access-switch uplink failure;
+- F6-to-B1 backbone-fiber cut.
+
+Every scenario remains simulation-only and carries direct canonical competency IDs. Scenario definitions may narrow a Step 4A catalog lab's generic target selectors to an exact floor without changing the source catalog. The viewer uses `viewer_focus`, `floor_scope`, and `engineering_view` metadata to move to the relevant floor/stack and enable Engineering/X-Ray before rendering the injected fault.
+
+Generated roof electronics use the `L7-` prefix. Spatial binding therefore explicitly recognizes both canonical `F7-` scene anchors and generated `L7-` electronics IDs as Level 7; no fallback coordinates are introduced.
+
+Boundary: Step 9 adds no live device control, no construction/as-built claims, and no automatic human competency awards. Cross-floor traces remain scenario-scoped rather than exposing the complete cable graph.

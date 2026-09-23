@@ -15,6 +15,7 @@ function fakeClock(start = 1000, step = 100) {
 }
 
 const datasets = {
+  distributedPack: load("./distributed-building-scenario-pack-v1.json"),
   cisaPack: load("./cisa-itot-scenario-pack-v1.json"),
   opsPack: load("./fema-building-ops-scenario-pack-v1.json"),
   publicServicePack: load("./public-service-scenario-pack-v1.json"),
@@ -36,6 +37,8 @@ assert.equal(VIEWER_LAB_EXECUTION_TARGET, "SANDBOX");
 const integrationText = text("./equity-uprise-viewer-lab-integration.mjs");
 for (const required of [
   "./equity-uprise-guided-scenarios.mjs",
+  "distributedPack",
+  "DISTRIBUTED_TECHNICAL",
   "./equity-uprise-building-ops-runtime.mjs",
   "./equity-uprise-public-service-runtime.mjs",
   "./equity-uprise-assessment-runtime.mjs",
@@ -127,7 +130,43 @@ assert.ok(completed.assessment.actions.total >= definition039.verification_path.
 assert.equal(completed.assessment.critical_safety_clear, true);
 assert.match(completed.assessment.automated_evidence_signal, /evidence|insufficient|practicing/i);
 
-const blocked = controller("blocked_stair_a", "FOUNDATION", 12000);
+const distributedScenarios = datasets.distributedPack.scenarios || [];
+assert.equal(distributedScenarios.length, 10, "distributed practical-lab pack must expose the first 10 floor/cross-floor scenarios");
+assert.equal(new Set(distributedScenarios.map((scenario) => scenario.source_lab_id)).size, distributedScenarios.length,
+  "distributed source labs must be unique in the viewer selector");
+const representedFloors = new Set(distributedScenarios.flatMap((scenario) => scenario.floor_scope || []));
+for (const levelId of ["B1","F1","F2","F3","F4","F5","F6","L7"]) {
+  assert.ok(representedFloors.has(levelId), "distributed lab pack must cover " + levelId);
+}
+const rubricIds = new Set((datasets.rubrics.rubrics || []).map((rubric) => rubric.competency_id));
+for (const scenario of distributedScenarios) {
+  assert.equal(scenario.engineering_view, true);
+  assert.ok((scenario.competency_ids || []).length > 0, "distributed lab must bind competency IDs: " + scenario.scenario_id);
+  assert.ok((scenario.competency_ids || []).every((id) => rubricIds.has(id)), "distributed competency must resolve: " + scenario.scenario_id);
+  assert.ok((scenario.target_selectors || []).every((selector) => selector.startsWith("level:") || selector === "vms_nvr"),
+    "distributed lab selectors must remain floor-scoped or explicit dependency IDs: " + scenario.scenario_id);
+  const run = controller(scenario.source_lab_id, "FOUNDATION", 20000);
+  const view = run.start();
+  assert.equal(view.scenario.family, "DISTRIBUTED_TECHNICAL");
+  assert.equal(view.scenario.engineering_view, true);
+  assert.equal(view.scenario.viewer_focus, scenario.viewer_focus);
+  assert.deepEqual(view.scenario.floor_scope, scenario.floor_scope);
+  assert.ok(view.visuals.assets.length > 0 || view.visuals.connections.length > 0,
+    "distributed lab must materialize a visible fault: " + scenario.scenario_id);
+  const allowedLevels = new Set(scenario.floor_scope);
+  for (const asset of view.visuals.assets) {
+    if (asset.level_id) assert.ok(allowedLevels.has(asset.level_id), "distributed lab leaked asset outside floor scope: " + asset.canonical_id);
+  }
+  for (const step of scenario.verification_path || []) {
+    const out = run.execute(step.action_id, step.input || {});
+    assert.equal(out.result.status, "success", "distributed verification path failed: " + scenario.scenario_id + " / " + step.action_id);
+  }
+  const done = run.complete().view;
+  assert.equal(done.scenario.phase, "COMPLETED");
+  assert.equal(done.assessment.critical_safety_clear, true);
+}
+
+const blocked = controller("blocked_stair_a", "FOUNDATION", 32000);
 const blockedView = blocked.start();
 const blockedAreaIds = new Set(blockedView.visuals.areas.map((item) => item.canonical_id));
 assert.ok(blockedAreaIds.has("F1-DOOR-STAIR-A-DISCHARGE"));
@@ -172,6 +211,8 @@ for (const [id,level] of [
   ["F4-USER-WS-01",4],
   ["F6-AV-CAM-01",6],
   ["F7-SEC-CAM-01",7],
+  ["L7-BAS-CTRL-01",7],
+  ["L7-NET-WAP-01",7],
 ]) {
   const binding=resolveElectronicsSpatialBinding(id);
   assert.ok(binding, "physical electronics asset must resolve spatially: "+id);
@@ -294,6 +335,7 @@ for (const required of [
   "difficulty-progression-policy-v1.json",
   "competency-rubrics.json",
   "FEDERAL-TRAINING-BINDINGS.json",
+  "distributed-building-scenario-pack-v1.json",
 ]) {
   assert.ok(deploy.includes(required), "deploy workflow must publish Step 8 dependency " + required);
 }

@@ -90,7 +90,8 @@ try {
     await (await fetch("equity-uprise-building-core-v2-3d.html", { cache: "no-cache" })).text());
   check("building viewer: Step 8 controls", [
     'id="services"', 'id="wire"', 'id="labs"', "deviceClockSolar",
-    "requestedLab=params.get('lab')", "LAB_MODULE_URL", "labController.execute", "labController.reset", "await labVisualRootsReady"
+    "requestedLab=params.get('lab')", "LAB_MODULE_URL", "labController.execute", "labController.reset", "await labVisualRootsReady",
+    "distributedPack", "BUILDING LAB", "prepareLabPresentation", "scenario.engineering_view"
   ].every((token) => viewerSource.includes(token)));
   check("building viewer: Room Mode controls", [
     'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',

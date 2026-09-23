@@ -84,6 +84,7 @@ const OFFSETS = [[0,0],[0.8,0],[-0.8,0],[0,0.8],[0,-0.8],[0.8,0.8],[-0.8,0.8],[0
 
 function levelOf(id){
   if(/^B1-/.test(id)) return 0;
+  if(/^L7-/.test(id)) return 7;
   const m=/^F([1-7])-/.exec(id);
   return m ? Number(m[1]) : null;
 }

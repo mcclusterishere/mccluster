@@ -314,4 +314,13 @@ Step 7 adds Foundation → Technician → Admin → Advanced → Expert progress
 - `production/lab-runtime/verify_viewer_lab_integration_v1.mjs`
 - canonical viewer: `equity-uprise-building-core-v2-3d.html`
 
-Step 8 completes the current Lab Runtime sequence by adapting canonical runtime snapshots into digital-twin presentation state. The existing viewer remains the only building viewer: Lab mode overlays canonical electronics/object/path/area state, runtime-backed system status, difficulty-filtered learner tasks, bounded assessment feedback and anonymous synthetic people-state markers. Viewer interactions dispatch through the runtime and rerender from the resulting snapshot; they do not directly mutate the simulated building.
+Step 8 completes the original Lab Runtime sequence by adapting canonical runtime snapshots into digital-twin presentation state. The existing viewer remains the only building viewer: Lab mode overlays canonical electronics/object/path/area state, runtime-backed system status, difficulty-filtered learner tasks, bounded assessment feedback and anonymous synthetic people-state markers. Viewer interactions dispatch through the runtime and rerender from the resulting snapshot; they do not directly mutate the simulated building.
+
+### Step 9 distributed whole-building practical labs
+- `production/lab-runtime/distributed-building-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-electronics-sandbox.mjs`
+- `production/lab-runtime/equity-uprise-guided-scenarios.mjs`
+- `production/lab-runtime/equity-uprise-viewer-lab-integration.mjs`
+- `production/lab-runtime/verify_viewer_lab_integration_v1.mjs`
+
+Step 9 adds floor-scoped asset/cable selectors, executable labs on B1 and every occupied level through the roof, and cross-floor incidents that traverse upper-floor access/backbone infrastructure toward B1. Technical labs carry viewer focus metadata so the canonical viewer opens the relevant floor or stack and enables Engineering/X-Ray before fault presentation.

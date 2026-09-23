@@ -266,6 +266,7 @@ async function ensureLabRuntime(){
  if(!labDatasets)labDatasets=await labModule.loadViewerLabDatasets('/equity-uprise-preview');
  if(!labSelect.options.length){
    const choices=[
+     ...(labDatasets.distributedPack.scenarios||[]).map(x=>[x.source_lab_id,'BUILDING LAB · '+x.title]),
      ...(labDatasets.cisaPack.scenarios||[]).map(x=>[x.source_lab_id,x.source_lab_id+' · '+x.title]),
      ...(labDatasets.opsPack.scenarios||[]).map(x=>[x.canonical_scenario_id,'OPS · '+x.title]),
      ...(labDatasets.publicServicePack.scenarios||[]).map(x=>[x.scenario_id,'PUBLIC SERVICE · '+x.title])
@@ -514,7 +515,8 @@ function occupantOverlay(marker){
 }
 function escapeText(v){return String(v??'').replace(/[<>]/g,'')}
 function renderLabHud(view){
- labScenario.innerHTML='<strong>'+escapeText(view.scenario.title)+'</strong><br>'+escapeText(view.scenario.family)+' · '+escapeText(view.learner.level)+' · '+escapeText(view.scenario.phase)+' · SANDBOX';
+ const floorLabel=(view.scenario.floor_scope||[]).length?(' · '+view.scenario.floor_scope.map(escapeText).join(' → ')):'';
+ labScenario.innerHTML='<strong>'+escapeText(view.scenario.title)+'</strong><br>'+escapeText(view.scenario.family)+floorLabel+' · '+escapeText(view.learner.level)+' · '+escapeText(view.scenario.phase)+' · SANDBOX';
  labSystems.innerHTML='<strong>System state</strong><br>'+((view.systems||[]).map(s=>escapeText(s.label)+' — '+escapeText(s.state)).join('<br>')||'Modeled systems at baseline');
  const obj=view.learner.objective_view===null?'Hidden by difficulty':JSON.stringify(view.learner.objective_view);
  const faults=view.learner.fault_view===null?'Hidden by difficulty':JSON.stringify(view.learner.fault_view);
@@ -540,12 +542,19 @@ async function applyLabView(view){
  view.visuals.areas.forEach(x=>{if(!styleCanonical(f1,x.canonical_id,x.visual_state)&&!styleCanonical(base,x.canonical_id,x.visual_state))areaOverlay(x)});
  view.visuals.occupants.forEach(occupantOverlay);renderLabHud(view);if(roomMode){if(electronics)electronics.visible=false;refreshRoomHighlights();roomSelection.textContent=(view.scenario?.title||'Active lab')+' · Room Mode'}
 }
+async function prepareLabPresentation(view){
+ const scenario=view?.scenario||{};
+ if(scenario.engineering_view===true&&roomMode)exitRoomMode();
+ const target=String(scenario.viewer_focus??'');
+ if(target==='stack'||/^[0-7]$/.test(target)){focus(target)}
+ if(scenario.engineering_view===true&&!engineeringMode)await setEngineeringMode(true);
+}
 function parseLabInput(){const raw=labInput.value.trim();if(!raw)return{};return JSON.parse(raw)}
 async function runLabAction(id){
  if(!labController)return;try{const out=labController.execute(id,parseLabInput());labLastResult=out.result;labMessage.textContent=JSON.stringify(out.result,null,2);labMessage.className='labrow labmsg '+(out.result.status==='success'?'labok':'labwarn');await applyLabView(out.view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}
 }
 async function startLab(lab=labSelect.value,difficulty=labDifficulty.value||'FOUNDATION'){
- try{await ensureLabRuntime();await labVisualRootsReady;if(labVisualRootsError)throw labVisualRootsError;labSelect.value=lab;labDifficulty.value=difficulty;labController=labModule.createViewerLabController({lab,difficulty, datasets:labDatasets});labPickingIds=labController.canonicalIdsForPicking();const view=labController.start();labPanel.hidden=false;labMessage.textContent='Lab running · double-click inspectable modeled equipment/objects or use the task controls.';labMessage.className='labrow labmsg';await applyLabView(view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn';labPanel.hidden=false}
+ try{await ensureLabRuntime();await labVisualRootsReady;if(labVisualRootsError)throw labVisualRootsError;labSelect.value=lab;labDifficulty.value=difficulty;labController=labModule.createViewerLabController({lab,difficulty, datasets:labDatasets});labPickingIds=labController.canonicalIdsForPicking();const view=labController.start();labPanel.hidden=false;labMessage.textContent='Lab running · loading the relevant building floor/equipment…';labMessage.className='labrow labmsg';await prepareLabPresentation(view);await applyLabView(view);labMessage.textContent='Lab running · double-click inspectable highlighted engineering equipment or use the task controls.'}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn';labPanel.hidden=false}
 }
 async function openLabs(){
  labPanel.hidden=false;try{await ensureLabRuntime();if(!labDifficulty.value)labDifficulty.value=requestedDifficulty;if(requestedLab)labSelect.value=requestedLab}catch(err){labMessage.textContent='LAB LOAD ERROR · '+err.message;labMessage.className='labrow labmsg labwarn'}
