@@ -79,31 +79,121 @@ for n,path in FLOOR_INVENTORIES.items():
 
 def ffe(n): return float(levels[n]["finished_floor_elevation_ft"])
 def pos(n,x,y,z=4.0): return [float(x),float(y),ffe(n)+float(z)]
+
+# Step 4B installation anchors. These reference the approved floor inventories;
+# no device may use an arbitrary whole-floor fallback when a real room/object
+# anchor with geometry is available.
+ANCHOR_IDS={
+  0:{
+    "work":["B1-TELECOM-CONSOLE-01","B1-LAB-TABLE-01","B1-OPS-DESK-01"],
+    "security":["B1-OPS-GATE-01","B1-LOCK-PANEL-01","B1-EMERGENCY-COMMS-01"],
+    "ceiling":["B1-TELECOM-ROOM-01","B1-LAB-ZONE-01","B1-OPS-ZONE-01","B1-STAGING-ZONE-01"],
+    "av":["B1-LAB-DASHBOARD-01","B1-OPS-STATUS-01","B1-OPS-OCCUPANCY-01"],
+    "fire":["B1-FIRE-RISER-01","B1-FIRE-PUMP-01"],
+  },
+  1:{
+    "work":["F1-RECEPTION-MONITOR-01","F1-PASSPORT-TABLE-01","F1-PASSPORT-TABLE-02","F1-INTAKE-TABLE-01"],
+    "security":["F1-ENTRY-DOOR-INNER","F1-RECEPTION-DESK-01","F1-PASS-ELEV-CALL-01","F1-STAIR-A-BARRIER-DOWN","F1-STAIR-B-BARRIER-DOWN"],
+    "ceiling":["F1-ARRIVAL-INSET-01","F1-LOUNGE-RUG-01","F1-INTAKE-TABLE-01","F1-PASSPORT-TABLE-01"],
+    "av":["F1-JOURNEY-DISPLAY-01","F1-JOURNEY-DISPLAY-02","F1-JOURNEY-DISPLAY-03","F1-JOURNEY-DISPLAY-04","F1-INTAKE-DISPLAY-01","F1-LOUNGE-DISPLAY-01"],
+    "fire":["F1-FE-01","F1-FE-02"],
+  },
+  2:{
+    "work":["F2-FORUM-TABLE-01","F2-MEMBER-CHECKIN-01","F2-LOUNGE-TABLE-01"],
+    "security":["F2-MEMBER-CHECKIN-01","F2-FREIGHT-CONTROL-01"],
+    "ceiling":["F2-FORUM-TABLE-01","F2-LOUNGE-RUG-01","F2-MEMBER-CHECKIN-01"],
+    "av":["F2-DISPLAY-CURRENT-ISSUES","F2-DISPLAY-PERSPECTIVES","F2-DISPLAY-OPPORTUNITIES","F2-TALK-INTERFACE-01"],
+    "fire":["F2-FE-WEST-01","F2-FE-EAST-01"],
+  },
+  3:{
+    "work":["F3-OPPORTUNITY-TABLE-01","F3-INTERVIEW-A-TABLE-01","F3-INTERVIEW-B-TABLE-01","F3-MEMBER-CHECKIN-01"],
+    "security":["F3-MEMBER-CHECKIN-01","F3-INTERVIEW-A-DOOR-01","F3-INTERVIEW-B-DOOR-01","F3-FREIGHT-CONTROL-01"],
+    "ceiling":["F3-OPPORTUNITY-TABLE-01","F3-LOUNGE-RUG-01","F3-INTERVIEW-A-TABLE-01","F3-INTERVIEW-B-TABLE-01"],
+    "av":["F3-DISPLAY-MATCH","F3-DISPLAY-PEOPLE","F3-DISPLAY-APPLICATIONS","F3-PEOPLE-DISPLAY-01","F3-INTERVIEW-A-DISPLAY-01","F3-INTERVIEW-B-DISPLAY-01"],
+    "fire":["F3-FE-WEST-01","F3-FE-EAST-01"],
+  },
+  4:{
+    "work":["F4-EDIT-DESK-01","F4-RECORDING-WORKSURFACE-01","F4-LISTENING-TABLE-01","F4-FLOOR-CONTROL-01"],
+    "security":["F4-RECORDING-DOOR-01","F4-EDIT-DOOR-01","F4-FLOOR-CONTROL-01","F4-FREIGHT-CONTROL-01"],
+    "ceiling":["F4-LISTENING-TABLE-01","F4-RECORDING-WORKSURFACE-01","F4-EDIT-DESK-01","F4-GALLERY-TABLE-01"],
+    "av":["F4-DISPLAY-LISTEN","F4-DISPLAY-WATCH","F4-DISPLAY-ARCHIVE","F4-RECORDING-MONITOR-01","F4-EDIT-DISPLAY-01","F4-MIC-STAND-01"],
+    "fire":["F4-FE-WEST-01","F4-FE-EAST-01"],
+  },
+  5:{
+    "work":["F5-POLICY-TABLE-01","F5-SOURCE-TABLE-01","F5-PUB-TABLE-01","F5-PUB-WORKSTATION-01","F5-ARCHIVE-TABLE-01"],
+    "security":["F5-SOURCE-DOOR-01","F5-PUB-DOOR-01","F5-NAVIGATOR-01","F5-FREIGHT-CONTROL-01"],
+    "ceiling":["F5-POLICY-TABLE-01","F5-SOURCE-TABLE-01","F5-PUB-TABLE-01","F5-ARCHIVE-TABLE-01"],
+    "av":["F5-DISPLAY-RESEARCH","F5-DISPLAY-EVIDENCE","F5-DISPLAY-RECORD","F5-SOURCE-DISPLAY-01","F5-PUB-DISPLAY-01","F5-ARCHIVE-SEARCH-01"],
+    "fire":["F5-FE-WEST-01","F5-FE-EAST-01"],
+  },
+  6:{
+    "work":["F6-COMMAND-TABLE-01","F6-STRATEGY-TABLE-01","F6-BRIEFING-TABLE-01","F6-ROOF-TRANSITION-01"],
+    "security":["F6-STRATEGY-DOOR-01","F6-BRIEFING-DOOR-01","F6-ROOF-TRANSITION-01","F6-FREIGHT-CONTROL-01"],
+    "ceiling":["F6-COMMAND-TABLE-01","F6-STRATEGY-TABLE-01","F6-BRIEFING-TABLE-01","F6-SALON-TABLE-01"],
+    "av":["F6-DISPLAY-NOW","F6-DISPLAY-PAST","F6-DISPLAY-JOIN","F6-STRATEGY-DISPLAY-01","F6-BRIEFING-DISPLAY-01","F6-HALO-GLOBE-01"],
+    "fire":["F6-FE-WEST-01","F6-FE-EAST-01"],
+  },
+  7:{
+    "work":["F7-ECOSYSTEM-BEACON-01","F7-RETURN-HOME-01","F7-UPRISE-WORLD-PORTAL-01"],
+    "security":["F7-STAIR-A-DOOR-01","F7-STAIR-B-DOOR-01","F7-PASSENGER-OVERRUN-01"],
+    "ceiling":["F7-ROOF-DECK-01","F7-MEP-SCREEN-01","F7-MOBILITY-FIELD-01"],
+    "av":["F7-ECOSYSTEM-DISPLAY-01","F7-ROUTE-ACCESS-STATE-01"],
+    "fire":["F7-STAIR-A-HEADHOUSE-01","F7-STAIR-B-HEADHOUSE-01"],
+  },
+}
+ANCHOR_OFFSETS=[(0,0),(1.2,0),(-1.2,0),(0,1.2),(0,-1.2),(1.2,1.2),(-1.2,1.2),(1.2,-1.2),(-1.2,-1.2)]
+
+def placement_xy(obj):
+    p=obj.get("placement",{}) or {}
+    for key in ("center_ft","center"):
+        v=p.get(key)
+        if isinstance(v,dict) and "x" in v and "y" in v:return float(v["x"]),float(v["y"])
+        if isinstance(v,(list,tuple)) and len(v)>=2:return float(v[0]),float(v[1])
+    for key in ("bounds_ft","room_bounds_ft","band_ft"):
+        b=p.get(key)
+        if isinstance(b,dict) and all(k in b for k in ("x1","y1","x2","y2")):
+            return .5*(float(b["x1"])+float(b["x2"])),.5*(float(b["y1"])+float(b["y2"]))
+        if isinstance(b,(list,tuple)) and len(b)>=4:
+            return .5*(float(b[0])+float(b[2])),.5*(float(b[1])+float(b[3]))
+    if "x_ft" in p and "y_ft" in p:return float(p["x_ft"]),float(p["y_ft"])
+    return None
+
+def inventory_anchor(n,group,i=0):
+    ids=ANCHOR_IDS.get(n,{}).get(group,[])
+    if not ids:return None
+    objs={o.get("id") or o.get("object_id"):o for o in floor_objects.get(n,[])}
+    # Prefer the requested anchor, then any anchor in the same semantic group that
+    # has actual geometric placement in the approved floor inventory.
+    ordered=ids[i%len(ids):]+ids[:i%len(ids)]
+    for aid in ordered:
+        o=objs.get(aid)
+        xy=placement_xy(o) if o else None
+        if xy:return xy
+    return None
+
+def anchored_pos(n,group,i,z_aff,fallback_xy):
+    xy=inventory_anchor(n,group,i)
+    if not xy:xy=fallback_xy
+    dx,dy=ANCHOR_OFFSETS[i%len(ANCHOR_OFFSETS)]
+    return pos(n,xy[0]+dx,xy[1]+dy,z_aff)
+
 def default_pos(n,kind,i=0,count=1):
+    # Support equipment aligns with the Services Step 7 rack/panel zone.
     if kind in {"rack","switch","patch_panel","fiber_panel","ups","pdu","bas_controller","access_controller"}:
-        return pos(n,46.0+(i%2)*1.1,66.0+(i//2)*0.8,2.0+0.7*(i%8))
-    if kind=="wap":
-        arr=[(24,24),(48,48),(24,48),(48,24)]
-        x,y=arr[i%len(arr)]; return pos(n,x,y,10.2)
-    if kind=="camera":
-        arr=[(8,8),(64,8),(8,64),(64,64)]
-        x,y=arr[i%4]; return pos(n,x,y,9.5)
-    if kind in {"reader","intercom"}:
-        arr=[(52,34),(59,55),(18,55),(49,30)]
-        x,y=arr[i%len(arr)]; return pos(n,x,y,4.0)
-    if kind=="sensor":
-        arr=[(18,18),(54,18),(18,54),(54,54)]
-        x,y=arr[i%len(arr)]; return pos(n,x,y,7.0)
+        return pos(n,45.0+(i%2)*.9,62.8+(i//2)*.55,1.2+0.65*(i%8))
+    if kind=="electrical_panel": return pos(n,47.7+(i%2)*1.3,62.8,5.0)
+    if kind=="wap": return anchored_pos(n,"ceiling",i,10.2,(24,24))
+    if kind=="camera": return anchored_pos(n,"security",i,8.8,(48,24))
+    if kind in {"reader","intercom"}: return anchored_pos(n,"security",i,4.2,(50,27))
+    if kind=="sensor": return anchored_pos(n,"ceiling",i,7.8,(36,39))
     if kind in {"workstation","phone","monitor"}:
-        cols=max(1,int(math.ceil(math.sqrt(max(count,1)))))
-        row=i//cols; col=i%cols
-        return pos(n,27+col*5.0,34+row*5.0,3.1 if kind!="monitor" else 4.2)
-    if kind=="mfp": return pos(n,20,58,3.0)
+        return anchored_pos(n,"work",i,3.15 if kind!="monitor" else 4.25,(36,40))
+    if kind=="mfp": return anchored_pos(n,"work",i,3.0,(42,52))
     if kind in {"av_camera","av_mic","speaker"}:
-        arr=[(24,28),(48,28),(24,48),(48,48),(36,28),(36,48),(28,38),(44,38)]
-        x,y=arr[i%len(arr)]; return pos(n,x,y,8.5 if kind!="speaker" else 8.0)
-    if kind=="weather": return pos(n,36,42,6.0)
-    return pos(n,36+(i%5)*2,40+(i//5)*2,3.5)
+        return anchored_pos(n,"av",i,7.4 if kind=="av_camera" else (4.6 if kind=="av_mic" else 8.5),(36,50))
+    if kind=="fire": return anchored_pos(n,"fire",i,9.7,(38,26))
+    if kind=="weather": return pos(n,48,63,6.0)
+    return anchored_pos(n,"work",i,3.5,(36,40))
 
 def existing_position(a):
     loc=a.get("location",{})
