@@ -236,7 +236,7 @@ Credential state and competency state remain separate.
 
 Example:
 
-FEMA ICS-100
+FEMA IS-100.C — Introduction to the Incident Command System, ICS 100
 - credential/training state: completed
 
 Emergency & Incident Coordination
@@ -373,3 +373,10 @@ training
 + recency
 
 not hours watched or quiz completion alone.
+
+
+## 20. Federal training catalog
+
+Federal/external training evidence must resolve to `federal-training-catalog.json`.
+
+An agency name, regulatory reference, manual, dataset, or provider catalog is not itself a completed course. Annual/versioned programs must preserve the exact cycle used. Historical completion evidence remains historical even when a later course version becomes current.

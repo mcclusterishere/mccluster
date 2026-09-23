@@ -88,3 +88,14 @@ This package is canonical for the development-program architecture but remains v
 
 No physical building files should be rewritten merely because this package exists. The next architectural phase must explicitly reconcile this program against the current Core V2 building chassis before changing geometry.
 
+
+
+## Federal training authority
+
+9. FEDERAL-TRAINING-CATALOG.md
+   - Canonical rules for federal/external training records.
+   - Separates active course records, annual/versioned programs, candidate providers, and reference-only material.
+
+10. federal-training-catalog.json
+   - Machine-readable federal training authority.
+   - Exact provider/title/code/URL, award semantics, prerequisites, verification date, and annual revalidation policy.

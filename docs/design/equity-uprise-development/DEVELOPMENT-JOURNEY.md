@@ -311,7 +311,11 @@ then:
 
 authentic real-world use → Applied
 
-Examples may include FEMA, IRS VITA, EPA, HHS/OHRP, NIH, ATSDR/CDC, CISA, DOE, NOAA, NASA, or other validated programs. Each external program must be recorded accurately according to what the issuer actually awards.
+Federal/external training must resolve through `federal-training-catalog.json`. A federal agency name by itself is not a course.
+
+Current active catalog records include specific FEMA Independent Study courses, IRS VITA/TCE Link & Learn Taxes under an annual revalidation rule, and HHS/OHRP human-research-protection training. CISA, DOE/FEMP, NOAA, NASA and other agencies remain candidates until an exact current course/version is selected and verified.
+
+Each external program must be recorded accurately according to what the issuer actually awards.
 
 ## 7. Cohorts
 

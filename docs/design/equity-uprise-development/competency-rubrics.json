@@ -827,7 +827,7 @@
         }
       ],
       "strong_qualifying_evidence": [
-        "FEMA or related training",
+        "approved federal training catalog record mapped to emergency/incident coordination",
         "tabletop exercise",
         "full simulation"
       ],
@@ -1584,7 +1584,7 @@
         }
       ],
       "strong_qualifying_evidence": [
-        "CISA or comparable federal training",
+        "approved federal training catalog record mapped to OPS-02",
         "security scenario",
         "secure workflow demonstration"
       ],
@@ -1625,7 +1625,7 @@
       ],
       "strong_qualifying_evidence": [
         "GIS or Halo project",
-        "NOAA/NASA or comparable training",
+        "approved federal training catalog record mapped to OPS-03",
         "spatial analysis"
       ],
       "verified_minimum": "Independently produces a defensible spatial interpretation from authorized data.",
@@ -1664,7 +1664,7 @@
         }
       ],
       "strong_qualifying_evidence": [
-        "DOE/EPA or comparable work",
+        "approved federal training/catalog record or comparable evidence mapped to OPS-04",
         "infrastructure map",
         "systems brief"
       ],
