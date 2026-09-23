@@ -55,6 +55,28 @@ assert.ok(selectorCoverage.find((entry) => entry.selector === "LOGIC-SVC-DHCP")?
 assert.ok(selectorCoverage.find((entry) => entry.selector === "firewall")?.asset_ids.length >= 2);
 assert.ok(selectorCoverage.find((entry) => entry.selector === "whole_building")?.asset_ids.length === manifest.new_asset_ids.length);
 
+const registryById = new Map((registry.assets || []).map((asset) => [asset.asset_id, asset]));
+for (const [selector, levelId] of [
+  ["level:F1:type:workstation","F1"],
+  ["level:F2:type:av_controller","F2"],
+  ["level:F4:type:av_camera","F4"],
+  ["level:F6:type:camera","F6"],
+  ["level:L7:type:bas_controller","L7"],
+]) {
+  const resolved = selectorProbe.resolveSelector(selector);
+  assert.equal(resolved.resolved, true, "floor-scoped selector must resolve: " + selector);
+  assert.ok(resolved.asset_ids.length > 0);
+  assert.ok(resolved.asset_ids.every((id) => registryById.get(id)?.location?.level_id === levelId),
+    "floor-scoped selector leaked outside " + levelId + ": " + selector);
+}
+const f6Fiber = selectorProbe.resolveSelector("level:F6:cable:OS2-SM-DUPLEX");
+assert.equal(f6Fiber.resolved, true);
+assert.ok(f6Fiber.connection_ids.length > 0);
+assert.ok(f6Fiber.connection_ids.every((id) => {
+  const connection = (connections.connections || []).find((item) => item.connection_id === id);
+  return [connection?.from_asset_id, connection?.to_asset_id].some((assetId) => registryById.get(assetId)?.location?.level_id === "F6");
+}), "floor-scoped fiber selector must touch F6");
+
 let boundLabs = 0;
 let injectedFaults = 0;
 
