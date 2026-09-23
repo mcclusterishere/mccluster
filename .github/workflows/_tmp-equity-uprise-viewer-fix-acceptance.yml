@@ -19,6 +19,7 @@ jobs:
           node-version: "22"
       - name: Build canonical 3D assets
         run: |
+          python -m pip install --disable-pip-version-check numpy scipy trimesh
           python docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py
           python docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01_v2.py
           python docs/design/equity-uprise-building/production/floor-02/build_equity_uprise_floor_02_v2.py
