@@ -167,7 +167,7 @@
     }
   ],
   "overlay_glb_bytes": 628460,
-  "overlay_glb_sha256": "198347ed093bc6982457c925faefb881796d963962223946325bd05b57b78666",
+  "overlay_glb_sha256": "3198589c7a8137f8ddc3a9f0fcfafdb008f011149369885b4e17e3393613f8a5",
   "checks_total": 15,
   "checks_passed": 15,
   "checks_failed": 0,

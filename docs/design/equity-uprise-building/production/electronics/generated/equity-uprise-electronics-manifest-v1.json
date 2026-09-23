@@ -995,5 +995,5 @@
     "BACKUP-SERVICE"
   ],
   "overlay_glb": "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb",
-  "overlay_sha256": "198347ed093bc6982457c925faefb881796d963962223946325bd05b57b78666"
+  "overlay_sha256": "3198589c7a8137f8ddc3a9f0fcfafdb008f011149369885b4e17e3393613f8a5"
 }
