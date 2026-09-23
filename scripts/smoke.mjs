@@ -96,7 +96,8 @@ try {
     'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',
     "DeviceOrientationEvent.requestPermission", "DeviceMotionEvent.requestPermission", "deviceorientation", "devicemotion",
     "approachRoomObject", "tweenRoomCamera", "selectRoomAt", "projectedRoomTarget",
-    "enhanceFloor1Interior", "buildRoomLightRig",
+    "enhanceFloor1Interior", "buildRoomLightRig", 'id="xray"', "setEngineeringMode",
+    "roomSensorMode='motion-primary'", "Placeholder electronics geometry is Engineering/X-Ray only",
     "services.visible=servicesOn&&!roomMode", "e.visible=!roomMode", "requestedRoom=params.get('room')==='1'"
   ].every((token) => viewerSource.includes(token)));
   check("building viewer: Room Mode stays human-scale",
