@@ -713,3 +713,24 @@ Canonical Step 4A source:
 - `production/electronics/verify_equity_uprise_electronics_v1.py`
 
 **NEXT:** load the generated electronics GLB/manifest into the viewer and turn the generated lab definitions into executable scenarios.
+
+
+## Federal Training Catalog — V1 IMPLEMENTED
+
+The repository now has one canonical, issuer-grounded federal training layer instead of mixing exact FEMA IDs with unresolved agency names.
+
+Implemented:
+- exact FEMA IS-100.C, IS-120.C, IS-130.A, IS-200.C, IS-201.A, IS-235.C and IS-238 records;
+- current-year IRS VITA/TCE Basic/Advanced, Volunteer Standards of Conduct and Intake/Interview + Quality Review records with Practice Lab boundaries;
+- HHS/OHRP human-subjects and participant-centered informed-consent training;
+- CISA ICS 300/401 virtual and ICS 301 later in-person Red/Blue pathways;
+- DOE/FEMP, EPA ENERGY STAR, NOAA Digital Coast and NASA ARSET dynamic-program records;
+- CDC EHTER Awareness/Operations and ATSDR PHAT;
+- explicit non-course classification for OSHA/FHWA/NIST/NVD/CISA KEV references;
+- exact competency, floor, Floor 1 scenario, Step 4A lab and verified asset bindings where applicable;
+- CI validation that catalog IDs resolve against current competency, scenario, lab and asset authority;
+- federal authority files included in the building context index.
+
+Truth boundary remains unchanged: federal credential state is not competency mastery, and learner B1/OT activity remains sandboxed-clone-only with LIVE control disabled.
+
+**NEXT:** use the merged Step 4A electronics fabric plus these federal bindings to promote the highest-value generated labs into executable Lab Runtime scenarios, beginning with CISA-aligned IT/OT incident labs, FEMA exercise/evaluation scenarios, and IRS/OHRP Floor 1 service-intake simulations.
