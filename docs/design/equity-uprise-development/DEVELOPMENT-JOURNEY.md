@@ -311,7 +311,7 @@ then:
 
 authentic real-world use → Applied
 
-Examples may include FEMA, IRS VITA, EPA, HHS/OHRP, NIH, ATSDR/CDC, CISA, DOE, NOAA, NASA, or other validated programs. Each external program must be recorded accurately according to what the issuer actually awards.
+Examples may include FEMA, IRS VITA, EPA, HHS/OHRP, NIH, ATSDR/CDC, CISA, DOE, NOAA, NASA, or other validated programs. Each external program must be recorded accurately according to what the issuer actually awards. Named federal training evidence resolves through `FEDERAL-TRAINING-CATALOG.json`; generic agency references remain broad only when the issuer maintains a dynamic catalog or no stable course has been selected.
 
 ## 7. Cohorts
 
