@@ -1,0 +1,479 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-step5-floor1-public-service-v1",
+  "mode": "SIMULATION",
+  "execution_target": "SANDBOX",
+  "live_control_allowed": false,
+  "synthetic_case_only": true,
+  "credential_is_not_competency": true,
+  "privacy_rule": "No real taxpayer, client, participant, volunteer, or visitor PII may enter Step 5 scenario definitions, runtime state, evidence, or fixtures.",
+  "semantic_baselines": {
+    "RUNTIME-PSC-PRIVACY": {
+      "state": "protected"
+    },
+    "RUNTIME-PSC-CASE": {
+      "state": "synthetic_case_loaded"
+    },
+    "RUNTIME-PSC-SCOPE": {
+      "state": "pending"
+    },
+    "RUNTIME-PSC-QUALITY": {
+      "state": "not_required"
+    },
+    "RUNTIME-PSC-CONSENT": {
+      "state": "not_applicable"
+    },
+    "RUNTIME-PSC-INCIDENT": {
+      "state": "none"
+    }
+  },
+  "scenarios": [
+    {
+      "scenario_id": "EU-PSC-VITA-INTAKE-V1",
+      "canonical_scenario_id": "privacy_error_intake",
+      "title": "VITA/TCE Intake, Privacy, Scope, and Quality Review",
+      "federal_training_ids": [
+        "IRS-VITA-VSC-2025",
+        "IRS-VITA-IIQR-2025",
+        "IRS-VITA-BASIC-2025",
+        "IRS-VITA-ADVANCED-2025"
+      ],
+      "competency_ids": [
+        "SHR-02",
+        "CORE-07"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "synthetic_case": {
+        "case_id": "SYN-VITA-001",
+        "synthetic_only": true,
+        "contains_real_pii": false,
+        "service_context": "VITA_TCE_WORKFLOW",
+        "packet_state": "incomplete",
+        "scope_marker": "requires_site_coordinator",
+        "quality_review_required": true,
+        "privacy_contained": false,
+        "intake_location": "public_context",
+        "scope_status": "pending",
+        "review_status": "pending"
+      },
+      "faults": [
+        {
+          "fault_id": "privacy_exposure_active",
+          "effects": [
+            {
+              "target": "RUNTIME-PSC-PRIVACY",
+              "state": "exposed",
+              "condition": "synthetic_sensitive_case_visible_in_public_context"
+            },
+            {
+              "target": "F1-RECEPTION-MONITOR-01",
+              "state": "privacy_error",
+              "condition": "synthetic_case_visible_from_public_context"
+            },
+            {
+              "target": "F1-RECEPTION-DESK-01",
+              "condition": "synthetic_documents_need_secure_handling"
+            }
+          ]
+        },
+        {
+          "fault_id": "intake_scope_exception",
+          "effects": [
+            {
+              "target": "RUNTIME-PSC-SCOPE",
+              "state": "requires_escalation",
+              "condition": "site_coordinator_review_required"
+            }
+          ]
+        },
+        {
+          "fault_id": "quality_review_pending",
+          "effects": [
+            {
+              "target": "RUNTIME-PSC-QUALITY",
+              "state": "pending",
+              "condition": "independent_quality_review_required"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "vita-detect-exposure",
+          "type": "inspect",
+          "target": "F1-RECEPTION-MONITOR-01",
+          "requires": []
+        },
+        {
+          "id": "vita-contain-exposure",
+          "type": "decision",
+          "target": "F1-INTAKE-CREDENZA-01",
+          "requires": [
+            "vita-detect-exposure"
+          ],
+          "expected": {
+            "response": "move_synthetic_materials_to_private_intake_and_secure_temporary_documents"
+          },
+          "resolve_fault_ids": [
+            "privacy_exposure_active"
+          ],
+          "progress_updates": {
+            "privacy_contained": true
+          }
+        },
+        {
+          "id": "vita-route-private",
+          "type": "decision",
+          "target": "F1-INTAKE-TABLE-01",
+          "requires": [
+            "vita-contain-exposure"
+          ],
+          "expected": {
+            "location": "f1-intake-room"
+          },
+          "progress_updates": {
+            "intake_location": "f1-intake-room"
+          }
+        },
+        {
+          "id": "vita-check-packet",
+          "type": "inspect",
+          "target": "RUNTIME-PSC-CASE",
+          "requires": [
+            "vita-route-private"
+          ]
+        },
+        {
+          "id": "vita-scope-decision",
+          "type": "decision",
+          "target": "RUNTIME-PSC-SCOPE",
+          "requires": [
+            "vita-check-packet"
+          ],
+          "expected": {
+            "response": "escalate_to_certified_site_coordinator"
+          },
+          "resolve_fault_ids": [
+            "intake_scope_exception"
+          ],
+          "progress_updates": {
+            "scope_status": "escalated_to_site_coordinator"
+          }
+        },
+        {
+          "id": "vita-quality-handoff",
+          "type": "decision",
+          "target": "RUNTIME-PSC-QUALITY",
+          "requires": [
+            "vita-scope-decision"
+          ],
+          "expected": {
+            "response": "require_independent_quality_review_before_completion"
+          },
+          "resolve_fault_ids": [
+            "quality_review_pending"
+          ],
+          "progress_updates": {
+            "review_status": "ready_for_independent_review"
+          }
+        },
+        {
+          "id": "vita-validate",
+          "type": "validate",
+          "target": "RUNTIME-PSC-PRIVACY",
+          "requires": [
+            "vita-quality-handoff"
+          ],
+          "requires_faults_absent": [
+            "privacy_exposure_active",
+            "intake_scope_exception",
+            "quality_review_pending"
+          ],
+          "progress_updates": {
+            "workflow_status": "simulation_complete"
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-PSC-OHRP-CONSENT-V1",
+      "canonical_scenario_id": "privacy_error_intake",
+      "title": "Participant-Centered Consent and Privacy Recovery",
+      "federal_training_ids": [
+        "HHS-OHRP-HRPF",
+        "HHS-OHRP-PCIC"
+      ],
+      "competency_ids": [
+        "SHR-02",
+        "CORE-07"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "synthetic_case": {
+        "case_id": "SYN-OHRP-001",
+        "synthetic_only": true,
+        "contains_real_pii": false,
+        "service_context": "RESEARCH_CONSENT_WORKFLOW",
+        "privacy_contained": false,
+        "intake_location": "public_context",
+        "consent_status": "incomplete",
+        "protocol_status": "authorized_materials_required"
+      },
+      "faults": [
+        {
+          "fault_id": "privacy_exposure_active",
+          "effects": [
+            {
+              "target": "RUNTIME-PSC-PRIVACY",
+              "state": "exposed",
+              "condition": "synthetic_participant_details_visible_in_public_context"
+            },
+            {
+              "target": "F1-RECEPTION-MONITOR-01",
+              "state": "privacy_error",
+              "condition": "synthetic_case_visible_from_public_context"
+            }
+          ]
+        },
+        {
+          "fault_id": "consent_process_incomplete",
+          "effects": [
+            {
+              "target": "RUNTIME-PSC-CONSENT",
+              "state": "incomplete",
+              "condition": "participant_centered_consent_process_required"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "ohrp-detect-exposure",
+          "type": "inspect",
+          "target": "F1-RECEPTION-MONITOR-01",
+          "requires": []
+        },
+        {
+          "id": "ohrp-contain-exposure",
+          "type": "decision",
+          "target": "F1-INTAKE-CREDENZA-01",
+          "requires": [
+            "ohrp-detect-exposure"
+          ],
+          "expected": {
+            "response": "secure_synthetic_materials_and_move_interaction_to_private_intake"
+          },
+          "resolve_fault_ids": [
+            "privacy_exposure_active"
+          ],
+          "progress_updates": {
+            "privacy_contained": true,
+            "intake_location": "f1-intake-room"
+          }
+        },
+        {
+          "id": "ohrp-inspect-consent",
+          "type": "inspect",
+          "target": "RUNTIME-PSC-CONSENT",
+          "requires": [
+            "ohrp-contain-exposure"
+          ]
+        },
+        {
+          "id": "ohrp-participant-centered-response",
+          "type": "decision",
+          "target": "F1-INTAKE-TABLE-01",
+          "requires": [
+            "ohrp-inspect-consent"
+          ],
+          "expected": {
+            "response": "pause_interaction_explain_voluntary_choice_and_use_authorized_protocol_materials"
+          },
+          "progress_updates": {
+            "consent_status": "participant_choice_reconfirmed"
+          }
+        },
+        {
+          "id": "ohrp-protocol-escalation",
+          "type": "decision",
+          "target": "RUNTIME-PSC-CONSENT",
+          "requires": [
+            "ohrp-participant-centered-response"
+          ],
+          "expected": {
+            "response": "refer_protocol_deviation_or_uncertainty_to_authorized_research_lead"
+          },
+          "resolve_fault_ids": [
+            "consent_process_incomplete"
+          ],
+          "progress_updates": {
+            "protocol_status": "escalated_to_authorized_research_lead"
+          }
+        },
+        {
+          "id": "ohrp-validate",
+          "type": "validate",
+          "target": "RUNTIME-PSC-PRIVACY",
+          "requires": [
+            "ohrp-protocol-escalation"
+          ],
+          "requires_faults_absent": [
+            "privacy_exposure_active",
+            "consent_process_incomplete"
+          ],
+          "progress_updates": {
+            "workflow_status": "simulation_complete"
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-PSC-PRIVACY-RECOVERY-V1",
+      "canonical_scenario_id": "privacy_error_intake",
+      "title": "Cross-Program Intake Privacy Containment",
+      "federal_training_ids": [
+        "IRS-VITA-VSC-2025",
+        "IRS-VITA-IIQR-2025",
+        "HHS-OHRP-HRPF",
+        "HHS-OHRP-PCIC"
+      ],
+      "competency_ids": [
+        "SHR-02",
+        "CORE-07"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "synthetic_case": {
+        "case_id": "SYN-PRIVACY-001",
+        "synthetic_only": true,
+        "contains_real_pii": false,
+        "service_context": "GENERIC_PUBLIC_SERVICE_INTAKE",
+        "privacy_contained": false,
+        "intake_location": "public_context",
+        "minimum_information_mode": false,
+        "incident_documented": false
+      },
+      "faults": [
+        {
+          "fault_id": "privacy_exposure_active",
+          "effects": [
+            {
+              "target": "RUNTIME-PSC-PRIVACY",
+              "state": "exposed",
+              "condition": "synthetic_sensitive_case_visible_in_public_context"
+            },
+            {
+              "target": "RUNTIME-PSC-INCIDENT",
+              "state": "open",
+              "condition": "privacy_incident_requires_containment"
+            },
+            {
+              "target": "F1-RECEPTION-MONITOR-01",
+              "state": "privacy_error",
+              "condition": "synthetic_case_visible_from_public_context"
+            }
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "id": "privacy-detect",
+          "type": "inspect",
+          "target": "F1-RECEPTION-MONITOR-01",
+          "requires": []
+        },
+        {
+          "id": "privacy-stop-public-view",
+          "type": "decision",
+          "target": "F1-RECEPTION-MONITOR-01",
+          "requires": [
+            "privacy-detect"
+          ],
+          "expected": {
+            "response": "remove_synthetic_sensitive_view_from_public_context"
+          },
+          "progress_updates": {
+            "public_view_stopped": true
+          }
+        },
+        {
+          "id": "privacy-secure-materials",
+          "type": "decision",
+          "target": "F1-INTAKE-CREDENZA-01",
+          "requires": [
+            "privacy-stop-public-view"
+          ],
+          "expected": {
+            "response": "secure_synthetic_materials"
+          },
+          "progress_updates": {
+            "privacy_contained": true
+          }
+        },
+        {
+          "id": "privacy-minimum-checkin",
+          "type": "decision",
+          "target": "F1-RECEPTION-SECURITY-01",
+          "requires": [
+            "privacy-secure-materials"
+          ],
+          "expected": {
+            "response": "use_minimum_required_synthetic_checkin_information"
+          },
+          "progress_updates": {
+            "minimum_information_mode": true
+          }
+        },
+        {
+          "id": "privacy-route-private",
+          "type": "decision",
+          "target": "F1-INTAKE-TABLE-01",
+          "requires": [
+            "privacy-minimum-checkin"
+          ],
+          "expected": {
+            "location": "f1-intake-room"
+          },
+          "progress_updates": {
+            "intake_location": "f1-intake-room"
+          }
+        },
+        {
+          "id": "privacy-document-incident",
+          "type": "decision",
+          "target": "RUNTIME-PSC-INCIDENT",
+          "requires": [
+            "privacy-route-private"
+          ],
+          "expected": {
+            "documented": true
+          },
+          "resolve_fault_ids": [
+            "privacy_exposure_active"
+          ],
+          "progress_updates": {
+            "incident_documented": true
+          }
+        },
+        {
+          "id": "privacy-validate",
+          "type": "validate",
+          "target": "RUNTIME-PSC-PRIVACY",
+          "requires": [
+            "privacy-document-incident"
+          ],
+          "requires_faults_absent": [
+            "privacy_exposure_active"
+          ],
+          "progress_updates": {
+            "workflow_status": "simulation_complete"
+          }
+        }
+      ]
+    }
+  ]
+}

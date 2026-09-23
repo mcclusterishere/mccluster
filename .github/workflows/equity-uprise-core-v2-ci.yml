@@ -109,6 +109,9 @@ jobs:
       - name: Verify Lab Runtime Step 4 building-operations exercises
         run: node docs/design/equity-uprise-building/production/lab-runtime/verify_fema_building_ops_scenarios_v1.mjs
 
+      - name: Verify Lab Runtime Step 5 Floor 1 public-service exercises
+        run: node docs/design/equity-uprise-building/production/lab-runtime/verify_public_service_scenarios_v1.mjs
+
       - name: Verify B1-to-roof human walkability
         run: python docs/design/equity-uprise-building/production/audit_vertical_circulation_walkability.py
 

@@ -840,3 +840,29 @@ Boundary: no LIVE control, no code-compliance claim, no medical-treatment instru
 
 **NEXT:** Step 5 builds the Floor 1 public-service intake labs.
 
+## Lab Runtime — STEP 5 FLOOR 1 PUBLIC-SERVICE LABS IMPLEMENTED
+
+Step 5 extends the runtime into the existing Floor 1 intake/service environment using the canonical `privacy_error_intake` scenario.
+
+Implemented:
+- VITA/TCE intake/privacy/scope/quality-review synthetic workflow;
+- OHRP participant-centered consent/privacy synthetic workflow;
+- cross-program intake privacy-containment workflow;
+- existing IRS VITA and OHRP federal-training binding verification;
+- canonical Floor 1 reception/intake object binding;
+- prerequisite gates and deterministic wrong-answer handling;
+- fault-specific privacy/scope/review/consent remediation;
+- automatic evidence capture against canonical `privacy_error_intake` evidence;
+- hard rejection of non-synthetic case fixtures;
+- fixture checks preventing SSN/email/phone-shaped data and direct PII field keys;
+- continued SANDBOX-only / LIVE-disabled enforcement.
+
+Canonical Step 5 files:
+- `production/lab-runtime/public-service-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-public-service-runtime.mjs`
+- `production/lab-runtime/verify_public_service_scenarios_v1.mjs`
+
+Boundary: Step 5 does not provide tax advice, authorize VITA/TCE service, provide IRB/protocol authority, or handle real client/taxpayer/research-participant data.
+
+**NEXT:** Step 6 adds full assessment/evidence capture and competency evaluation across the executable lab runtime.
+

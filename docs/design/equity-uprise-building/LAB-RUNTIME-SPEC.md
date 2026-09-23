@@ -263,3 +263,65 @@ All Step 4 exercises remain SANDBOX-only. LIVE building control is rejected.
 
 **Next:** Step 5 adds Floor 1 public-service intake exercises, including IRS VITA/OHRP-aligned privacy, intake, scope, consent and escalation workflows.
 
+## Step 5 — Floor 1 Public-Service Intake Labs
+
+Step 5 promotes the existing canonical `privacy_error_intake` scenario into three executable Floor 1 public-service variants:
+
+- `EU-PSC-VITA-INTAKE-V1` — VITA/TCE intake, privacy, scope and quality-review workflow;
+- `EU-PSC-OHRP-CONSENT-V1` — participant-centered consent and privacy recovery;
+- `EU-PSC-PRIVACY-RECOVERY-V1` — cross-program intake privacy containment.
+
+Canonical Step 5 files:
+- `production/lab-runtime/public-service-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-public-service-runtime.mjs`
+- `production/lab-runtime/verify_public_service_scenarios_v1.mjs`
+
+The runtime binds to existing Floor 1 public-service objects such as the reception workstation, reception/security interface, private intake table, secure intake credenza and private intake display. Temporary case, privacy, consent, scope, quality-review and incident states are runtime-only semantic state, not new physical building authority.
+
+### Synthetic-data boundary
+
+Step 5 is intentionally synthetic-only:
+- no real taxpayer PII;
+- no real research-participant PII;
+- no real visitor/client records;
+- no SSNs, TINs, EINs, DOBs, email addresses, phone numbers or street addresses in scenario fixtures;
+- any scenario whose `synthetic_only` flag is false is rejected.
+
+### VITA/TCE workflow
+
+The VITA/TCE variant uses existing IRS VITA bindings for Volunteer Standards of Conduct, Intake/Interview and Quality Review, Basic, and Advanced paths. The Equity Uprise lab exercises workflow discipline rather than tax-law determination:
+- identify and contain a synthetic privacy exposure;
+- move work to the private intake setting;
+- inspect the synthetic packet state;
+- escalate a scope exception to the certified site coordinator;
+- require independent quality review before completion;
+- validate that all simulated faults are cleared.
+
+It does not authorize real taxpayer service or replace current-year IRS certification/site supervision.
+
+### OHRP workflow
+
+The OHRP variant uses existing Human Research Protection Foundational Training and Participant-Centered Informed Consent bindings:
+- identify and contain a synthetic privacy exposure;
+- pause the interaction;
+- preserve voluntary participant choice;
+- use authorized protocol materials;
+- escalate protocol deviation/uncertainty to an authorized research lead;
+- validate recovery.
+
+It does not create IRB authority, approve a protocol, or authorize real human-subjects research.
+
+### Cross-program privacy recovery
+
+The generic privacy variant proves the common Floor 1 intake control pattern:
+- remove a synthetic sensitive view from public context;
+- secure synthetic materials;
+- use minimum-required synthetic check-in information;
+- route the interaction to private intake;
+- document the simulated incident;
+- validate containment.
+
+All Step 5 evidence remains separate from federal credential completion. External course completion may support learning but never equals Equity Uprise competency mastery.
+
+**Next:** Step 6 adds the richer assessment/evidence layer: action sequencing, incorrect-action history, hints, timing, safety violations, produced evidence and competency-level evaluation.
+
