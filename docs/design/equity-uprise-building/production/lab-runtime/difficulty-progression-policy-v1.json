@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-step7-difficulty-progression-v1",
+  "runtime_version": "1.0.0",
+  "order": [
+    "FOUNDATION",
+    "TECHNICIAN",
+    "ADMIN",
+    "ADVANCED",
+    "EXPERT"
+  ],
+  "invariants": {
+    "mode": "SIMULATION",
+    "execution_target": "SANDBOX",
+    "live_control_allowed": false,
+    "canonical_scenario_logic_unchanged": true,
+    "canonical_success_criteria_unchanged": true,
+    "competency_rubrics_unchanged": true,
+    "difficulty_does_not_award_verified": true
+  },
+  "profiles": {
+    "FOUNDATION": {
+      "ordinal": 1,
+      "intent": "Obvious symptoms and highly guided procedure.",
+      "objective_visibility": "full",
+      "action_visibility": "full",
+      "fault_visibility": "names",
+      "result_visibility": "full",
+      "hint_budget": 3,
+      "allowed_hint_levels": [
+        "supported",
+        "directed"
+      ],
+      "minimum_learner_artifacts": 0,
+      "minimum_initial_faults": 1,
+      "expert_cascade_required": false
+    },
+    "TECHNICIAN": {
+      "ordinal": 2,
+      "intent": "Diagnose a known problem domain with reduced procedural guidance.",
+      "objective_visibility": "summary",
+      "action_visibility": "targeted",
+      "fault_visibility": "count",
+      "result_visibility": "standard",
+      "hint_budget": 2,
+      "allowed_hint_levels": [
+        "supported"
+      ],
+      "minimum_learner_artifacts": 0,
+      "minimum_initial_faults": 1,
+      "expert_cascade_required": false
+    },
+    "ADMIN": {
+      "ordinal": 3,
+      "intent": "Coordinate system-level response without step ordering or answer-shaped observations.",
+      "objective_visibility": "count",
+      "action_visibility": "typed",
+      "fault_visibility": "count",
+      "result_visibility": "reduced",
+      "hint_budget": 1,
+      "allowed_hint_levels": [
+        "supported"
+      ],
+      "minimum_learner_artifacts": 1,
+      "minimum_initial_faults": 1,
+      "expert_cascade_required": false
+    },
+    "ADVANCED": {
+      "ordinal": 4,
+      "intent": "Work from symptoms with ambiguous cause and minimal target guidance.",
+      "objective_visibility": "count",
+      "action_visibility": "ids",
+      "fault_visibility": "hidden",
+      "result_visibility": "reduced",
+      "hint_budget": 1,
+      "allowed_hint_levels": [
+        "supported"
+      ],
+      "minimum_learner_artifacts": 1,
+      "minimum_initial_faults": 1,
+      "expert_cascade_required": false
+    },
+    "EXPERT": {
+      "ordinal": 5,
+      "intent": "Resolve a cascading multi-system incident from incomplete information without hints.",
+      "objective_visibility": "hidden",
+      "action_visibility": "ids",
+      "fault_visibility": "hidden",
+      "result_visibility": "minimal",
+      "hint_budget": 0,
+      "allowed_hint_levels": [],
+      "minimum_learner_artifacts": 2,
+      "minimum_initial_faults": 2,
+      "expert_cascade_required": true
+    }
+  }
+}
