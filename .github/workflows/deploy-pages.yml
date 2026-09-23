@@ -170,6 +170,7 @@ jobs:
           cp docs/design/equity-uprise-building/production/lab-runtime/fema-building-ops-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
           cp docs/design/equity-uprise-building/production/lab-runtime/public-service-scenario-pack-v1.json equity-uprise-preview/lab-runtime/
           cp docs/design/equity-uprise-building/production/lab-runtime/difficulty-progression-policy-v1.json equity-uprise-preview/lab-runtime/
+          cp docs/design/equity-uprise-building/production/lab-runtime/learner-experience-v1.json equity-uprise-preview/lab-runtime/
 
       - name: Strip the internals out of the published tree
         run: |
