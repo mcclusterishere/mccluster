@@ -165,6 +165,17 @@ for (const required of [
 }
 assert.ok(viewer.includes("/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb"));
 assert.ok(viewer.includes("double-click inspectable"));
+for (const performanceGuard of [
+  "architectureGhosted",
+  "if(on===architectureGhosted)return",
+  "detailedPerimeterMeshes",
+  "frameObjectCache",
+  "stackFrameCache",
+  "wireMaterials.forEach",
+]) {
+  assert.ok(viewer.includes(performanceGuard), "viewer interaction performance guard missing: " + performanceGuard);
+}
+assert.equal(viewer.includes("wire=!wire;scene.traverse"), false, "wireframe toggle must not traverse the full scene");
 const rootWait = viewer.indexOf("await labVisualRootsReady");
 const controllerCreate = viewer.indexOf("labController=labModule.createViewerLabController");
 assert.ok(rootWait >= 0 && controllerCreate > rootWait, "deep-linked labs must wait for modeled visual roots before first render");
