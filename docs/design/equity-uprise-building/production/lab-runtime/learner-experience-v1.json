@@ -1,0 +1,494 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-learner-experience-v1",
+  "mode": "SIMULATION",
+  "execution_target": "SANDBOX",
+  "live_control_allowed": false,
+  "purpose": "Human-first presentation layer for the canonical Equity Uprise lab runtime. Learners begin from observable symptoms and work through diagnosis before engineering detail is progressively disclosed.",
+  "diagnostic_loop": [
+    "OBSERVE",
+    "HYPOTHESIZE",
+    "TEST",
+    "FIX",
+    "VERIFY"
+  ],
+  "difficulty_labels": {
+    "FOUNDATION": "Guided beginner",
+    "TECHNICIAN": "Technician",
+    "ADMIN": "Systems operator",
+    "ADVANCED": "Advanced",
+    "EXPERT": "Expert"
+  },
+  "featured_ticket_ids": [
+    "IT-LAB-008",
+    "IT-LAB-017",
+    "IT-LAB-016",
+    "IT-LAB-030",
+    "IT-LAB-010"
+  ],
+  "target_labels": {
+    "rack_ups": "network closet backup power",
+    "access_switch": "floor network switch",
+    "workstation": "computer",
+    "wireless_ap": "Wi-Fi access point",
+    "av_controller": "AV control system",
+    "av_camera": "camera / video endpoint",
+    "ip_phone": "desk phone",
+    "camera": "security camera",
+    "vms_nvr": "video recording system",
+    "bas_controller": "building controls",
+    "OS2-SM-DUPLEX": "backbone fiber link"
+  },
+  "tickets": {
+    "IT-LAB-008": {
+      "title": "The check-in computer has no internet",
+      "role": "You are the junior IT technician on duty.",
+      "reporter": "Reception",
+      "issue_report": "The check-in computer was working earlier. Now it says it has no network connection.",
+      "known": [
+        "The problem was reported from one workstation.",
+        "Do not change unrelated systems just to make the symptom disappear."
+      ],
+      "goal": "Find the smallest cause, make the safest repair, and prove the computer is back online.",
+      "action_labels": {
+        "f1-workstation-link-inspect-1": "Check the affected computer",
+        "f1-workstation-link-diagnose": "Choose the most likely cause",
+        "f1-workstation-link-restore": "Restore the computer's network path",
+        "f1-workstation-link-validate": "Confirm the computer is back online"
+      },
+      "decision_choices": {
+        "f1-workstation-link-diagnose": [
+          {
+            "label": "The computer's network port is disabled",
+            "input": {
+              "finding": "port_shutdown"
+            }
+          },
+          {
+            "label": "The entire building lost internet service",
+            "input": {
+              "finding": "building_internet_down"
+            }
+          },
+          {
+            "label": "The Wi-Fi password changed",
+            "input": {
+              "finding": "wifi_password_changed"
+            }
+          }
+        ]
+      },
+      "success_message": "Reception can use the check-in computer again, and you verified the fix instead of stopping at the first green light."
+    },
+    "IT-LAB-017": {
+      "title": "The Wi-Fi on Floor 2 stopped working",
+      "role": "You are the junior IT technician responding to a user report.",
+      "reporter": "Public Forum staff",
+      "issue_report": "People in the forum suddenly cannot connect to Wi-Fi. Wired systems in the room are still expected to work.",
+      "known": [
+        "Start with what users can observe before opening an engineering view.",
+        "A wireless access point needs both a network link and power."
+      ],
+      "goal": "Determine why the local Wi-Fi disappeared, restore it safely, and verify clients can reconnect.",
+      "reinforcement": {
+        "title": "Got WiFi?",
+        "url": "https://matthew.mccluster.org/album.html?album=prim3&t=Got%20WiFi%3F",
+        "purpose": "Use after the ticket as a PRIM3 refresher for wireless, RF, encryption and Layer 1/2 concepts."
+      },
+      "action_labels": {
+        "f2-wifi-inspect-1": "Check the nearby Wi-Fi access point",
+        "f2-wifi-inspect-2": "Check whether the access point still has a network path",
+        "f2-wifi-diagnose": "Choose the most likely cause",
+        "f2-wifi-restore": "Restore the access point connection",
+        "f2-wifi-validate": "Confirm Wi-Fi service is back"
+      },
+      "decision_choices": {
+        "f2-wifi-diagnose": [
+          {
+            "label": "The access point lost its network / PoE link",
+            "input": {
+              "finding": "ap_link_down"
+            }
+          },
+          {
+            "label": "The DNS service failed for the whole building",
+            "input": {
+              "finding": "dns_service_down"
+            }
+          },
+          {
+            "label": "A user typed the wrong password",
+            "input": {
+              "finding": "user_password_error"
+            }
+          }
+        ]
+      },
+      "success_message": "Floor 2 Wi-Fi is available again. The repair addressed the access point path without changing unrelated network services."
+    },
+    "IT-LAB-016": {
+      "title": "The interview-room phone will not connect",
+      "role": "You are supporting a staff member before an interview.",
+      "reporter": "Fellowship floor",
+      "issue_report": "The desk phone has power, but it will not register for calls.",
+      "known": [
+        "Power alone does not prove the phone is on the correct voice network.",
+        "Avoid broad network changes when one endpoint is affected."
+      ],
+      "goal": "Find why the phone cannot register, repair the assignment, and verify calling service returns.",
+      "action_labels": {
+        "f3-voice-vlan-inspect-1": "Check the affected phone",
+        "f3-voice-vlan-diagnose": "Choose the most likely cause",
+        "f3-voice-vlan-restore": "Correct the phone's network assignment",
+        "f3-voice-vlan-validate": "Confirm the phone registers"
+      },
+      "decision_choices": {
+        "f3-voice-vlan-diagnose": [
+          {
+            "label": "The phone is assigned to the wrong voice network",
+            "input": {
+              "finding": "voice_vlan_wrong"
+            }
+          },
+          {
+            "label": "The building lost normal power",
+            "input": {
+              "finding": "normal_power_loss"
+            }
+          },
+          {
+            "label": "The camera system is offline",
+            "input": {
+              "finding": "camera_link_down"
+            }
+          }
+        ]
+      },
+      "success_message": "The phone registers again and the change stayed limited to the affected voice path."
+    },
+    "IT-LAB-030": {
+      "title": "The forum video is flooding the network",
+      "role": "You are helping the event team stabilize the room before a live session.",
+      "reporter": "Public Forum",
+      "issue_report": "Video traffic is spilling across the room network and other devices are becoming unreliable.",
+      "known": [
+        "The cameras and AV controller are still present.",
+        "The problem affects how multicast traffic is being handled."
+      ],
+      "goal": "Inspect the AV path, identify the network-control problem, correct it, and verify delivery is constrained again.",
+      "action_labels": {
+        "f2-av-multicast-inspect-1": "Check the AV controller",
+        "f2-av-multicast-inspect-2": "Check the room camera path",
+        "f2-av-multicast-diagnose": "Choose the most likely cause",
+        "f2-av-multicast-restore": "Restore multicast control",
+        "f2-av-multicast-validate": "Confirm video traffic is constrained"
+      },
+      "decision_choices": {
+        "f2-av-multicast-diagnose": [
+          {
+            "label": "Multicast control is disabled",
+            "input": {
+              "finding": "igmp_snooping_off"
+            }
+          },
+          {
+            "label": "The camera lens is blocked",
+            "input": {
+              "finding": "camera_lens_blocked"
+            }
+          },
+          {
+            "label": "A workstation port is disabled",
+            "input": {
+              "finding": "port_shutdown"
+            }
+          }
+        ]
+      },
+      "success_message": "The forum AV traffic is constrained again and unrelated devices are no longer being flooded."
+    },
+    "IT-LAB-031": {
+      "title": "The media floor video is choppy",
+      "role": "You are supporting a media-production session.",
+      "reporter": "Creator suite",
+      "issue_report": "The video path is showing loss and jitter even though the endpoints are still online.",
+      "known": [
+        "This is a quality problem, not a total outage.",
+        "Compare the capture and control path before changing anything."
+      ],
+      "goal": "Find why real-time media lost priority, restore the expected treatment, and verify smooth delivery.",
+      "action_labels": {
+        "f4-av-qos-inspect-1": "Check the camera stream",
+        "f4-av-qos-inspect-2": "Check the AV control path",
+        "f4-av-qos-diagnose": "Choose the most likely cause",
+        "f4-av-qos-restore": "Restore real-time traffic priority",
+        "f4-av-qos-validate": "Confirm the media path is stable"
+      },
+      "decision_choices": {
+        "f4-av-qos-diagnose": [
+          {
+            "label": "Real-time traffic lost its QoS protection",
+            "input": {
+              "finding": "qos_removed"
+            }
+          },
+          {
+            "label": "The building lost all network power",
+            "input": {
+              "finding": "idf_ups_failure"
+            }
+          },
+          {
+            "label": "The phone is on the wrong VLAN",
+            "input": {
+              "finding": "voice_vlan_wrong"
+            }
+          }
+        ]
+      },
+      "success_message": "The production path is stable again and the fix targeted traffic handling rather than masking the symptom."
+    },
+    "IT-LAB-009": {
+      "title": "A research computer is on the wrong network",
+      "role": "You are supporting a policy/research workstation.",
+      "reporter": "Policy + Proof floor",
+      "issue_report": "The computer is connected, but it is reaching the wrong network resources.",
+      "known": [
+        "Connectivity by itself is not proof of correct segmentation.",
+        "Do not broaden access as a shortcut."
+      ],
+      "goal": "Identify the assignment mismatch, restore the intended network, and verify appropriate access.",
+      "action_labels": {
+        "f5-workstation-vlan-inspect-1": "Check the affected computer's network assignment",
+        "f5-workstation-vlan-diagnose": "Choose the most likely cause",
+        "f5-workstation-vlan-restore": "Restore the intended network assignment",
+        "f5-workstation-vlan-validate": "Confirm appropriate access"
+      },
+      "decision_choices": {
+        "f5-workstation-vlan-diagnose": [
+          {
+            "label": "The computer is assigned to the wrong VLAN",
+            "input": {
+              "finding": "wrong_vlan"
+            }
+          },
+          {
+            "label": "The camera recorder is offline",
+            "input": {
+              "finding": "camera_link_down"
+            }
+          },
+          {
+            "label": "The roof controls are offline",
+            "input": {
+              "finding": "bas_controller_offline"
+            }
+          }
+        ]
+      },
+      "success_message": "The research workstation is back on the intended network without broadening permissions."
+    },
+    "IT-LAB-025": {
+      "title": "A command-floor camera stopped sending video",
+      "role": "You are troubleshooting a building security video problem.",
+      "reporter": "Command floor",
+      "issue_report": "One camera no longer reaches the video system.",
+      "known": [
+        "A camera depends on power, network connectivity and the recording service.",
+        "Start at the symptom and follow the dependency chain."
+      ],
+      "goal": "Trace the broken path, restore the simulated link, and verify video reaches the recorder again.",
+      "action_labels": {
+        "f6-camera-vms-inspect-1": "Check the affected camera",
+        "f6-camera-vms-inspect-2": "Check the video recording system",
+        "f6-camera-vms-diagnose": "Choose the most likely cause",
+        "f6-camera-vms-restore": "Restore the camera path",
+        "f6-camera-vms-validate": "Confirm video is recording again"
+      },
+      "decision_choices": {
+        "f6-camera-vms-diagnose": [
+          {
+            "label": "The camera's network path is down",
+            "input": {
+              "finding": "camera_link_down"
+            }
+          },
+          {
+            "label": "The phone VLAN is wrong",
+            "input": {
+              "finding": "voice_vlan_wrong"
+            }
+          },
+          {
+            "label": "The AV system is flooding multicast",
+            "input": {
+              "finding": "igmp_snooping_off"
+            }
+          }
+        ]
+      },
+      "success_message": "The camera feed is restored to the video system and the dependency path has been verified."
+    },
+    "IT-LAB-027": {
+      "title": "The rooftop controls stopped reporting",
+      "role": "You are supporting building operations in a training sandbox.",
+      "reporter": "Facilities",
+      "issue_report": "Roof equipment is still physically present, but its building-control telemetry disappeared.",
+      "known": [
+        "The controller and its sensor chain are related.",
+        "This is a simulation; never infer permission to operate a real BAS from this lab."
+      ],
+      "goal": "Trace the control problem, restore the simulated controller, and verify telemetry returns.",
+      "action_labels": {
+        "f7-bas-inspect-1": "Check the rooftop building controller",
+        "f7-bas-diagnose": "Choose the most likely cause",
+        "f7-bas-restore": "Restore the simulated controller",
+        "f7-bas-validate": "Confirm rooftop telemetry returns"
+      },
+      "decision_choices": {
+        "f7-bas-diagnose": [
+          {
+            "label": "The BAS controller is offline",
+            "input": {
+              "finding": "bas_controller_offline"
+            }
+          },
+          {
+            "label": "A research workstation is on the wrong VLAN",
+            "input": {
+              "finding": "wrong_vlan"
+            }
+          },
+          {
+            "label": "The camera recorder is full",
+            "input": {
+              "finding": "vms_storage_full"
+            }
+          }
+        ]
+      },
+      "success_message": "Rooftop telemetry is back in the sandbox and the repair stayed inside the building-control simulation."
+    },
+    "IT-LAB-032": {
+      "title": "The network closet suddenly went dark",
+      "role": "You are responding to a building-wide support escalation.",
+      "reporter": "IT operations",
+      "issue_report": "Equipment served by a basement network closet dropped offline at the same time.",
+      "known": [
+        "Several devices failing together can point to a shared dependency.",
+        "Check power before treating each endpoint as an unrelated failure."
+      ],
+      "goal": "Trace the shared power dependency, restore the simulated path, and verify network equipment recovers.",
+      "action_labels": {
+        "b1-idf-power-inspect-1": "Check the network closet backup power",
+        "b1-idf-power-inspect-2": "Check the switch it serves",
+        "b1-idf-power-diagnose": "Choose the most likely cause",
+        "b1-idf-power-restore": "Restore the simulated power path",
+        "b1-idf-power-validate": "Confirm network equipment recovers"
+      },
+      "decision_choices": {
+        "b1-idf-power-diagnose": [
+          {
+            "label": "The network closet UPS failed",
+            "input": {
+              "finding": "idf_ups_failure"
+            }
+          },
+          {
+            "label": "One user entered the wrong password",
+            "input": {
+              "finding": "user_password_error"
+            }
+          },
+          {
+            "label": "A camera lost its lens cover",
+            "input": {
+              "finding": "camera_lens_blocked"
+            }
+          }
+        ]
+      },
+      "success_message": "The shared network equipment is back because you repaired the common power dependency instead of treating every endpoint separately."
+    },
+    "IT-LAB-010": {
+      "title": "Everyone on the media floor lost network access",
+      "role": "You are the technician handling a floor-wide outage.",
+      "reporter": "Media + Culture floor",
+      "issue_report": "Multiple devices on Floor 4 lost connectivity at the same time.",
+      "known": [
+        "A floor-wide symptom usually deserves a shared-path check before endpoint-by-endpoint repair.",
+        "The basement core is a dependency of the floor access network."
+      ],
+      "goal": "Identify the broken uplink, restore the simulated path, and verify floor service returns.",
+      "action_labels": {
+        "xf-f4-uplink-inspect-1": "Check the Floor 4 network switch",
+        "xf-f4-uplink-diagnose": "Choose the most likely cause",
+        "xf-f4-uplink-restore": "Restore the floor uplink",
+        "xf-f4-uplink-validate": "Confirm Floor 4 service returns"
+      },
+      "decision_choices": {
+        "xf-f4-uplink-diagnose": [
+          {
+            "label": "The floor's uplink to the core is down",
+            "input": {
+              "finding": "uplink_down"
+            }
+          },
+          {
+            "label": "One desk phone is on the wrong VLAN",
+            "input": {
+              "finding": "voice_vlan_wrong"
+            }
+          },
+          {
+            "label": "A single camera link failed",
+            "input": {
+              "finding": "camera_link_down"
+            }
+          }
+        ]
+      },
+      "success_message": "Floor 4 connectivity is back and the evidence points to the repaired shared uplink."
+    },
+    "IT-LAB-033": {
+      "title": "An upper-floor backbone link was cut",
+      "role": "You are investigating a building backbone incident.",
+      "reporter": "Network operations",
+      "issue_report": "The upper building is showing a backbone-path failure, but redundancy may still be carrying some traffic.",
+      "known": [
+        "Do not assume an outage is total just because one path failed.",
+        "Verify alternate-path behavior before and after restoration."
+      ],
+      "goal": "Locate the affected fiber path, restore it in the sandbox, and verify normal redundancy returns.",
+      "action_labels": {
+        "xf-f6-fiber-inspect-1": "Inspect the affected backbone fiber",
+        "xf-f6-fiber-diagnose": "Choose the most likely cause",
+        "xf-f6-fiber-restore": "Restore the simulated fiber path",
+        "xf-f6-fiber-validate": "Confirm normal backbone service"
+      },
+      "decision_choices": {
+        "xf-f6-fiber-diagnose": [
+          {
+            "label": "One backbone fiber uplink was cut",
+            "input": {
+              "finding": "uplink_a_cut"
+            }
+          },
+          {
+            "label": "The DNS service is down",
+            "input": {
+              "finding": "dns_service_down"
+            }
+          },
+          {
+            "label": "The AV camera lost QoS",
+            "input": {
+              "finding": "qos_removed"
+            }
+          }
+        ]
+      },
+      "success_message": "The backbone path is restored and redundancy is back to the modeled baseline."
+    }
+  }
+}
