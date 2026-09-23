@@ -734,6 +734,18 @@ for n in range(0,7):
         add_conn(src,power_panels[n][mode],"208Y120V-FEEDER","power",["AC distribution"],
                  metadata={"distribution_role":"floor_panel_feeder","served_level":lid(n),"engineering_required":True})
 
+# Close power gaps that were acceptable in the Step 4A logical fabric but are
+# not acceptable in a physical-installation model.
+for aid in sorted(a["asset_id"] for a in new_assets if a["classification"]["asset_type"] in {"av_controller","av_dsp"}):
+    if not any(x["to_asset_id"]==aid and x["cable_type"] in {"120VAC-BRANCH","IEC-POWER"} for x in connections):
+        add_conn("ELEC-NORMAL",aid,"120VAC-BRANCH","power",["AC"],metadata={"receptacle_required":True,"step4b_power_completion":True})
+for aid in (facp,firegw):
+    if not any(x["to_asset_id"]==aid and x["cable_type"] in {"120VAC-BRANCH","IEC-POWER"} for x in connections):
+        add_conn("ELEC-EMERGENCY",aid,"120VAC-BRANCH","power",["AC"],metadata={"dedicated_life_safety_power_design_intent":True,"step4b_power_completion":True})
+for ctrl,sensor in bas_sensor_bus:
+    add_conn(ctrl,sensor,"24VDC-CLASS2","power",["Class 2 low-voltage power"],
+             from_port="24V-OUT",to_port="24V-IN",metadata={"controller_selection_must_verify_voltage":True})
+
 # Split Cat6A permanent links at explicit work-area/ceiling jacks and split
 # plug-connected power at explicit receptacle/floor-box assets.
 JACK_TARGET_TYPES={
