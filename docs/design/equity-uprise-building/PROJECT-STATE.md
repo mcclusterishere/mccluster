@@ -784,3 +784,32 @@ Boundary: this is a training sandbox bound to the design-intent digital twin. It
 
 **NEXT:** Step 3 builds the first richer CISA-aligned IT/OT executable incident scenarios on this state engine.
 
+## Lab Runtime — STEP 3 CISA / IT-OT GUIDED INCIDENT SCENARIOS IMPLEMENTED
+
+The Step 2 electronics state engine now drives the first three task-specific executable IT/OT incident labs:
+
+- `IT-LAB-029` — IT/OT Firewall Segmentation;
+- `IT-LAB-038` — SIEM Cross-Domain Correlation;
+- `IT-LAB-039` — Cross-System Building Incident Response.
+
+Implemented:
+- explicit learner objectives and allowlisted simulated actions;
+- prerequisite/order gates;
+- deterministic correct/incorrect decision handling;
+- state-backed inspections plus scenario-specific observations;
+- simulation-only mitigation that clears only the intended fault and recomposes the remaining sandbox state;
+- safe restoration-order enforcement for the cross-system incident;
+- automatic canonical criterion evidence when guided objectives are complete;
+- deterministic replay;
+- verification that every referenced CISA federal binding actually includes the source lab;
+- continued SANDBOX-only / LIVE-disabled enforcement.
+
+Canonical Step 3 files:
+- `production/lab-runtime/cisa-itot-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-guided-scenarios.mjs`
+- `production/lab-runtime/verify_cisa_itot_scenarios_v1.mjs`
+
+Boundary: Step 3 does not add live control, exploit tooling, secure proctoring, numeric scoring, timing penalties, or 3D failure visualization.
+
+**NEXT:** Step 4 adds FEMA building-operations exercises using the same runtime/evidence architecture.
+

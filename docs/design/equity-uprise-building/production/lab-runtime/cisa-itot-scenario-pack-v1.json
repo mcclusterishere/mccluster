@@ -1,0 +1,554 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-step3-cisa-itot-v1",
+  "mode": "SIMULATION",
+  "execution_target": "SANDBOX",
+  "live_control_allowed": false,
+  "credential_is_not_competency": true,
+  "purpose": "First task-specific executable CISA/IT-OT incident scenarios on the Equity Uprise Lab Runtime.",
+  "scenarios": [
+    {
+      "scenario_id": "EU-CISA-ITOT-029-V1",
+      "source_lab_id": "IT-LAB-029",
+      "title": "IT/OT Firewall Segmentation Incident",
+      "federal_training_ids": [
+        "CISA-ICS-300",
+        "CISA-ICS-401",
+        "CISA-ICS-301"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "The simulated BAS-OT segment is exposed by an overpermissive policy. Diagnose the condition, reduce lateral access, preserve required BAS traffic, and validate the sandbox posture.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-029-DIAGNOSE",
+          "description": "Diagnose the simulated IT/OT segmentation exposure.",
+          "required_action_ids": [
+            "029-inspect-ot-vlan",
+            "029-inspect-firewall",
+            "029-submit-risk"
+          ]
+        },
+        {
+          "objective_id": "OBJ-029-MITIGATE",
+          "description": "Apply a simulation-only least-privilege correction.",
+          "required_action_ids": [
+            "029-apply-least-privilege"
+          ]
+        },
+        {
+          "objective_id": "OBJ-029-VALIDATE",
+          "description": "Validate the BAS-OT segment after mitigation.",
+          "required_action_ids": [
+            "029-validate-posture"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "029-inspect-ot-vlan",
+          "action_type": "inspect",
+          "target_selector": "LOGIC-VLAN-BAS-OT",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "BAS-OT security state is at_risk while service availability remains present."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "029-inspect-firewall",
+          "action_type": "inspect",
+          "target_selector": "firewall",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_signal": "Firewall state shows an overpermissive-rule condition rather than a hardware outage."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "029-submit-risk",
+          "action_type": "decision",
+          "target_selector": "LOGIC-VLAN-BAS-OT",
+          "requires_action_ids": [
+            "029-inspect-ot-vlan",
+            "029-inspect-firewall"
+          ],
+          "expected_input": {
+            "finding": "overpermissive_rule"
+          },
+          "observation": {
+            "accepted_finding": "The exposure is policy scope, not loss of BAS service."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "029-apply-least-privilege",
+          "action_type": "mitigate",
+          "target_selector": "firewall",
+          "requires_action_ids": [
+            "029-submit-risk"
+          ],
+          "resolve_fault_ids": [
+            "overpermissive_rule"
+          ],
+          "observation": {
+            "simulated_change": "Policy narrowed to required BAS-OT flows in the sandbox only."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "029-validate-posture",
+          "action_type": "validate",
+          "target_selector": "LOGIC-VLAN-BAS-OT",
+          "requires_action_ids": [
+            "029-apply-least-privilege"
+          ],
+          "requires_faults_absent": [
+            "overpermissive_rule"
+          ],
+          "observation": {
+            "validation": "BAS-OT security posture returned to baseline with no simulated fault active."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "029-inspect-ot-vlan",
+          "input": {}
+        },
+        {
+          "action_id": "029-inspect-firewall",
+          "input": {}
+        },
+        {
+          "action_id": "029-submit-risk",
+          "input": {
+            "finding": "overpermissive_rule"
+          }
+        },
+        {
+          "action_id": "029-apply-least-privilege",
+          "input": {}
+        },
+        {
+          "action_id": "029-validate-posture",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-CISA-ITOT-038-V1",
+      "source_lab_id": "IT-LAB-038",
+      "title": "SIEM Cross-Domain Correlation",
+      "federal_training_ids": [
+        "CISA-ICS-300",
+        "CISA-ICS-401",
+        "CISA-ICS-301"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "Multiple simulated infrastructure domains are alerting. Collect the evidence, reconstruct the event order, classify the incident, and close the correlated alert condition.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-038-COLLECT",
+          "description": "Collect SIEM, network, BAS, and camera evidence.",
+          "required_action_ids": [
+            "038-inspect-siem",
+            "038-inspect-network",
+            "038-inspect-bas",
+            "038-inspect-camera"
+          ]
+        },
+        {
+          "objective_id": "OBJ-038-CORRELATE",
+          "description": "Reconstruct the simulated sequence and classify the incident.",
+          "required_action_ids": [
+            "038-submit-timeline",
+            "038-submit-classification"
+          ]
+        },
+        {
+          "objective_id": "OBJ-038-CLOSE",
+          "description": "Close and validate the simulated correlated incident.",
+          "required_action_ids": [
+            "038-close-incident",
+            "038-validate-siem"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "038-inspect-siem",
+          "action_type": "inspect",
+          "target_selector": "LOGIC-SVC-SYSLOG-SIEM",
+          "requires_action_ids": [],
+          "observation": {
+            "incident_id": "SIM-INC-038",
+            "alert_count": 3
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "038-inspect-network",
+          "action_type": "inspect",
+          "target_selector": "access_switch",
+          "requires_action_ids": [
+            "038-inspect-siem"
+          ],
+          "observation": {
+            "event_index": 1,
+            "event_domain": "network",
+            "simulated_signal": "infrastructure alert"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "038-inspect-bas",
+          "action_type": "inspect",
+          "target_selector": "bas_controller",
+          "requires_action_ids": [
+            "038-inspect-siem"
+          ],
+          "observation": {
+            "event_index": 2,
+            "event_domain": "bas",
+            "simulated_signal": "control-system alert"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "038-inspect-camera",
+          "action_type": "inspect",
+          "target_selector": "camera",
+          "requires_action_ids": [
+            "038-inspect-siem"
+          ],
+          "observation": {
+            "event_index": 3,
+            "event_domain": "camera",
+            "simulated_signal": "video-system alert"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "038-submit-timeline",
+          "action_type": "decision",
+          "target_selector": "LOGIC-SVC-SYSLOG-SIEM",
+          "requires_action_ids": [
+            "038-inspect-network",
+            "038-inspect-bas",
+            "038-inspect-camera"
+          ],
+          "expected_input": {
+            "timeline": [
+              "network",
+              "bas",
+              "camera"
+            ]
+          },
+          "observation": {
+            "accepted_timeline": [
+              "network",
+              "bas",
+              "camera"
+            ]
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "038-submit-classification",
+          "action_type": "decision",
+          "target_selector": "LOGIC-SVC-SYSLOG-SIEM",
+          "requires_action_ids": [
+            "038-submit-timeline"
+          ],
+          "expected_input": {
+            "classification": "correlated_multi_device_incident"
+          },
+          "observation": {
+            "accepted_classification": "correlated_multi_device_incident"
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "038-close-incident",
+          "action_type": "mitigate",
+          "target_selector": "LOGIC-SVC-SYSLOG-SIEM",
+          "requires_action_ids": [
+            "038-submit-classification"
+          ],
+          "resolve_fault_ids": [
+            "multi_device_alert"
+          ],
+          "observation": {
+            "simulated_change": "Correlated alert condition closed in the sandbox."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "038-validate-siem",
+          "action_type": "validate",
+          "target_selector": "LOGIC-SVC-SYSLOG-SIEM",
+          "requires_action_ids": [
+            "038-close-incident"
+          ],
+          "requires_faults_absent": [
+            "multi_device_alert"
+          ],
+          "observation": {
+            "validation": "No active simulated multi-device alert remains."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "038-inspect-siem",
+          "input": {}
+        },
+        {
+          "action_id": "038-inspect-network",
+          "input": {}
+        },
+        {
+          "action_id": "038-inspect-bas",
+          "input": {}
+        },
+        {
+          "action_id": "038-inspect-camera",
+          "input": {}
+        },
+        {
+          "action_id": "038-submit-timeline",
+          "input": {
+            "timeline": [
+              "network",
+              "bas",
+              "camera"
+            ]
+          }
+        },
+        {
+          "action_id": "038-submit-classification",
+          "input": {
+            "classification": "correlated_multi_device_incident"
+          }
+        },
+        {
+          "action_id": "038-close-incident",
+          "input": {}
+        },
+        {
+          "action_id": "038-validate-siem",
+          "input": {}
+        }
+      ]
+    },
+    {
+      "scenario_id": "EU-CISA-ITOT-039-V1",
+      "source_lab_id": "IT-LAB-039",
+      "title": "Cross-System Building Incident Response",
+      "federal_training_ids": [
+        "CISA-ICS-300",
+        "CISA-ICS-301"
+      ],
+      "mode": "SIMULATION",
+      "execution_target": "SANDBOX",
+      "live_control_allowed": false,
+      "learner_brief": "The simulated building has normal-power loss, a degraded core link, and a BAS alarm. Separate primary from secondary effects and restore the sandbox in a safe dependency-aware order.",
+      "objectives": [
+        {
+          "objective_id": "OBJ-039-ASSESS",
+          "description": "Inspect the affected building, network, and BAS domains.",
+          "required_action_ids": [
+            "039-inspect-building",
+            "039-inspect-core",
+            "039-inspect-bas",
+            "039-submit-causality"
+          ]
+        },
+        {
+          "objective_id": "OBJ-039-RESTORE",
+          "description": "Restore simulated power, network, then BAS state in dependency order.",
+          "required_action_ids": [
+            "039-stabilize-power",
+            "039-restore-core",
+            "039-clear-bas-alarm"
+          ]
+        },
+        {
+          "objective_id": "OBJ-039-VALIDATE",
+          "description": "Validate the whole-building sandbox after restoration.",
+          "required_action_ids": [
+            "039-validate-building"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "action_id": "039-inspect-building",
+          "action_type": "inspect",
+          "target_selector": "whole_building",
+          "requires_action_ids": [],
+          "observation": {
+            "simulated_fault_domains": [
+              "normal_power",
+              "core_network",
+              "bas"
+            ]
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "039-inspect-core",
+          "action_type": "inspect",
+          "target_selector": "collapsed_core_switch",
+          "requires_action_ids": [
+            "039-inspect-building"
+          ],
+          "observation": {
+            "simulated_signal": "Core connectivity is degraded, not fully unavailable."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "039-inspect-bas",
+          "action_type": "inspect",
+          "target_selector": "bas_controller",
+          "requires_action_ids": [
+            "039-inspect-building"
+          ],
+          "observation": {
+            "simulated_signal": "BAS alarm is present during the cross-system incident."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "039-submit-causality",
+          "action_type": "decision",
+          "target_selector": "whole_building",
+          "requires_action_ids": [
+            "039-inspect-core",
+            "039-inspect-bas"
+          ],
+          "expected_input": {
+            "primary_fault": "normal_power_loss",
+            "secondary_effects": [
+              "core_link_degraded",
+              "bas_alarm"
+            ]
+          },
+          "observation": {
+            "accepted_causality": "Treat normal power as the primary restoration dependency for this training scenario."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "039-stabilize-power",
+          "action_type": "mitigate",
+          "target_selector": "whole_building",
+          "requires_action_ids": [
+            "039-submit-causality"
+          ],
+          "resolve_fault_ids": [
+            "normal_power_loss"
+          ],
+          "observation": {
+            "simulated_change": "Normal-power fault cleared in sandbox; remaining faults preserved for diagnosis."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "039-restore-core",
+          "action_type": "mitigate",
+          "target_selector": "collapsed_core_switch",
+          "requires_action_ids": [
+            "039-stabilize-power"
+          ],
+          "resolve_fault_ids": [
+            "core_link_degraded"
+          ],
+          "observation": {
+            "simulated_change": "Core-link degradation cleared after the power dependency was addressed."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "039-clear-bas-alarm",
+          "action_type": "mitigate",
+          "target_selector": "bas_controller",
+          "requires_action_ids": [
+            "039-restore-core"
+          ],
+          "resolve_fault_ids": [
+            "bas_alarm"
+          ],
+          "observation": {
+            "simulated_change": "BAS alarm cleared after upstream restoration checks."
+          },
+          "live_control_allowed": false
+        },
+        {
+          "action_id": "039-validate-building",
+          "action_type": "validate",
+          "target_selector": "whole_building",
+          "requires_action_ids": [
+            "039-clear-bas-alarm"
+          ],
+          "requires_faults_absent": [
+            "normal_power_loss",
+            "core_link_degraded",
+            "bas_alarm"
+          ],
+          "observation": {
+            "validation": "Whole-building sandbox has returned to the modeled baseline."
+          },
+          "live_control_allowed": false
+        }
+      ],
+      "verification_path": [
+        {
+          "action_id": "039-inspect-building",
+          "input": {}
+        },
+        {
+          "action_id": "039-inspect-core",
+          "input": {}
+        },
+        {
+          "action_id": "039-inspect-bas",
+          "input": {}
+        },
+        {
+          "action_id": "039-submit-causality",
+          "input": {
+            "primary_fault": "normal_power_loss",
+            "secondary_effects": [
+              "core_link_degraded",
+              "bas_alarm"
+            ]
+          }
+        },
+        {
+          "action_id": "039-stabilize-power",
+          "input": {}
+        },
+        {
+          "action_id": "039-restore-core",
+          "input": {}
+        },
+        {
+          "action_id": "039-clear-bas-alarm",
+          "input": {}
+        },
+        {
+          "action_id": "039-validate-building",
+          "input": {}
+        }
+      ]
+    }
+  ]
+}

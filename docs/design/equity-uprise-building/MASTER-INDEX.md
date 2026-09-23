@@ -272,3 +272,10 @@ LIVE execution is explicitly forbidden. Step 2 is the electronics/asset-state bi
 
 Step 2 binds the session engine to canonical Step 4A assets and typed connections. Fault injection now changes independent SANDBOX asset/link/service state with deterministic propagation and exact-ID evidence. Reset restores baseline; LIVE control remains forbidden.
 
+### Step 3 CISA / IT-OT guided incident scenarios
+- `production/lab-runtime/cisa-itot-scenario-pack-v1.json`
+- `production/lab-runtime/equity-uprise-guided-scenarios.mjs`
+- `production/lab-runtime/verify_cisa_itot_scenarios_v1.mjs`
+
+Step 3 promotes IT-LAB-029, IT-LAB-038 and IT-LAB-039 into executable guided scenarios with objective gates, allowlisted simulated actions, decision validation, deterministic remediation, state-backed evidence and canonical criterion completion. CISA course bindings remain supporting evidence only; learner B1/OT work remains sandboxed.
+
