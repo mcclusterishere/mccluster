@@ -309,10 +309,15 @@ assert.ok(viewer.includes("electronics.visible=false"), "Room/Play Mode must kee
 for (const required of [
   'id="xray"', "setEngineeringMode", "setEngineeringElectronics", "engineeringMeshIsCable",
   "electronics.traverse(o=>{if(o.isMesh)o.visible=false})",
-  "Placeholder electronics geometry is Engineering/X-Ray only",
+  "Play mode keeps the full electronics topology hidden. Learners see only symptom-relevant markers.",
   "view.visuals.assets.forEach(x=>styleCanonical(f1",
   "Gyroscope live · left/right = yaw · up/down = pitch",
   "roomSensorMode='motion-primary'",
+  "DIAGNOSTIC SANDBOX · TRAINING ONLY",
+  "OBSERVE",
+  "Instructor / technical details",
+  "learnerAssetOverlay",
+  "if(exp.learner_first&&engineeringMode)await setEngineeringMode(false)",
 ]) {
   assert.ok(viewer.includes(required), "Play/X-Ray spatial integration guard missing: " + required);
 }
