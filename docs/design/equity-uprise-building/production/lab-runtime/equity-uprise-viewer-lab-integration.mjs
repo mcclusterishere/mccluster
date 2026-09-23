@@ -42,6 +42,9 @@ function availabilityVisual(state) {
 }
 
 function classifyFamily(lab, datasets) {
+  const distributed = (datasets.distributedPack?.scenarios || []).find((scenario) => scenario.source_lab_id === lab);
+  if (distributed) return { family: "DISTRIBUTED_TECHNICAL", definition: distributed, canonical_id: lab };
+
   const guided = (datasets.cisaPack.scenarios || []).find((scenario) => scenario.source_lab_id === lab);
   if (guided) return { family: "CISA_ITOT", definition: guided, canonical_id: lab };
 
@@ -205,6 +208,9 @@ export function adaptRuntimeSnapshotToViewer({ difficulty, exercise, datasets, c
       title: runtime.title || classified.definition.title || null,
       phase: runtime.phase || "CREATED",
       synthetic_case_only: classified.family === "PUBLIC_SERVICE",
+      viewer_focus: runtime.viewer_focus || classified.definition.viewer_focus || null,
+      floor_scope: clone(runtime.floor_scope || classified.definition.floor_scope || []),
+      engineering_view: runtime.engineering_view === true || classified.definition.engineering_view === true,
     },
     learner: clone(learner),
     visuals: {
@@ -267,9 +273,10 @@ export class ViewerLabController {
     let exercise;
     let competencyIds = [];
 
-    if (this.classified.family === "CISA_ITOT") {
+    if (this.classified.family === "CISA_ITOT" || this.classified.family === "DISTRIBUTED_TECHNICAL") {
+      const guidedPack = this.classified.family === "DISTRIBUTED_TECHNICAL" ? this.datasets.distributedPack : this.datasets.cisaPack;
       exercise = createGuidedScenarioFromPack({
-        pack: this.datasets.cisaPack,
+        pack: guidedPack,
         labCatalog: this.datasets.labCatalog,
         labId: this.lab,
         electronics: {
@@ -281,8 +288,13 @@ export class ViewerLabController {
         actor_id: this.actorId,
         execution_target: "SANDBOX",
       });
-      competencyIds = cisaCompetencyIds(this.datasets.federalBindings, this.lab);
-      requireValue(competencyIds.length > 0, "VIEWER_CISA_COMPETENCY_BINDING_MISSING", "no canonical competency binding for " + this.lab);
+      if (this.classified.family === "DISTRIBUTED_TECHNICAL") {
+        competencyIds = uniq(this.classified.definition.competency_ids || []);
+        requireValue(competencyIds.length > 0, "VIEWER_DISTRIBUTED_COMPETENCY_BINDING_MISSING", "no competency binding for distributed lab " + this.lab);
+      } else {
+        competencyIds = cisaCompetencyIds(this.datasets.federalBindings, this.lab);
+        requireValue(competencyIds.length > 0, "VIEWER_CISA_COMPETENCY_BINDING_MISSING", "no canonical competency binding for " + this.lab);
+      }
     } else if (this.classified.family === "BUILDING_OPS") {
       exercise = createBuildingOperationsExercise({
         pack: this.datasets.opsPack,
@@ -425,9 +437,10 @@ async function fetchJson(url) {
 export async function loadViewerLabDatasets(root = "/equity-uprise-preview") {
   const r = root.replace(/\/$/, "");
   const [
-    cisaPack, opsPack, publicServicePack, difficultyPolicy, rubrics, federalBindings,
+    distributedPack, cisaPack, opsPack, publicServicePack, difficultyPolicy, rubrics, federalBindings,
     labCatalog, registry, connections, manifest, program, simulationObjects, objectInventory,
   ] = await Promise.all([
+    fetchJson(r + "/lab-runtime/distributed-building-scenario-pack-v1.json"),
     fetchJson(r + "/lab-runtime/cisa-itot-scenario-pack-v1.json"),
     fetchJson(r + "/lab-runtime/fema-building-ops-scenario-pack-v1.json"),
     fetchJson(r + "/lab-runtime/public-service-scenario-pack-v1.json"),
@@ -443,7 +456,7 @@ export async function loadViewerLabDatasets(root = "/equity-uprise-preview") {
     fetchJson(r + "/floor-01-object-inventory.json"),
   ]);
   return {
-    cisaPack, opsPack, publicServicePack, difficultyPolicy, rubrics, federalBindings,
+    distributedPack, cisaPack, opsPack, publicServicePack, difficultyPolicy, rubrics, federalBindings,
     labCatalog, registry, connections, manifest, program, simulationObjects, objectInventory,
   };
 }
