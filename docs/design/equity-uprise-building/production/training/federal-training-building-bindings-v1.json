@@ -1,0 +1,479 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-federal-training-building-bindings-v1",
+  "catalog_ref": "../../equity-uprise-development/federal-training-catalog.json",
+  "policy": {
+    "activation_rule": "Only canonical_active or canonical_annual_revalidation catalog records may have active bindings.",
+    "simulation_rule": "Practical work defaults to digital/sandboxed simulation unless the federal program itself provides an external practice environment or an authorized real-world program placement.",
+    "live_rule": "Training never grants LIVE building-system authority."
+  },
+  "bindings": [
+    {
+      "course_id": "FEMA-IS-100-C",
+      "activation_state": "active",
+      "readiness": "usable_now_facilitated",
+      "competency_ids": [
+        "CORE-08",
+        "PSC-05",
+        "OPS-01"
+      ],
+      "floor_ids": [
+        "F1",
+        "B1"
+      ],
+      "floor1_operating_modes": [
+        "emergency_exercise"
+      ],
+      "floor1_scenario_ids": [
+        "basic_evacuation",
+        "blocked_stair_a",
+        "power_interruption"
+      ],
+      "electronics_lab_ids": [],
+      "evidence_outputs": [
+        "incident role assignment",
+        "command structure explanation",
+        "decision log"
+      ],
+      "missing_dependencies": [
+        "instructor role assignment UI for automated delivery"
+      ],
+      "safety_boundary": "simulation/facilitated exercise; no live emergency-system control"
+    },
+    {
+      "course_id": "FEMA-IS-120-C",
+      "activation_state": "active",
+      "readiness": "usable_now",
+      "competency_ids": [
+        "CORE-08",
+        "PSC-05",
+        "SHR-01"
+      ],
+      "floor_ids": [
+        "F1",
+        "B1"
+      ],
+      "floor1_operating_modes": [
+        "emergency_exercise",
+        "building_systems_lab"
+      ],
+      "floor1_scenario_ids": [
+        "basic_evacuation",
+        "blocked_stair_a",
+        "network_checkin_outage"
+      ],
+      "electronics_lab_ids": [
+        "IT-LAB-039"
+      ],
+      "evidence_outputs": [
+        "exercise objective set",
+        "scenario design",
+        "evaluation plan"
+      ],
+      "missing_dependencies": [
+        "scenario-authoring UI"
+      ],
+      "safety_boundary": "sandbox scenario design only"
+    },
+    {
+      "course_id": "FEMA-IS-130-A",
+      "activation_state": "active",
+      "readiness": "usable_now_facilitated",
+      "competency_ids": [
+        "PSC-05",
+        "SHR-04",
+        "OPS-05"
+      ],
+      "floor_ids": [
+        "F1",
+        "B1"
+      ],
+      "floor1_operating_modes": [
+        "emergency_exercise",
+        "building_systems_lab"
+      ],
+      "floor1_scenario_ids": [
+        "blocked_stair_a",
+        "power_interruption",
+        "network_checkin_outage"
+      ],
+      "electronics_lab_ids": [
+        "IT-LAB-039",
+        "IT-LAB-040"
+      ],
+      "evidence_outputs": [
+        "evaluator notes",
+        "observed-action log",
+        "after-action findings"
+      ],
+      "missing_dependencies": [
+        "event log",
+        "replay timeline",
+        "evaluator scoring UI"
+      ],
+      "safety_boundary": "simulation evaluation only"
+    },
+    {
+      "course_id": "FEMA-IS-200-C",
+      "activation_state": "active",
+      "readiness": "usable_now_facilitated",
+      "competency_ids": [
+        "PSC-05",
+        "CORE-03",
+        "OPS-05"
+      ],
+      "floor_ids": [
+        "F1",
+        "B1",
+        "F6"
+      ],
+      "floor1_operating_modes": [
+        "emergency_exercise"
+      ],
+      "floor1_scenario_ids": [
+        "power_interruption",
+        "medical_incident_lobby",
+        "service_area_incident"
+      ],
+      "electronics_lab_ids": [
+        "IT-LAB-039"
+      ],
+      "evidence_outputs": [
+        "incident objectives",
+        "briefing",
+        "transfer-of-command record"
+      ],
+      "missing_dependencies": [
+        "multi-role incident runtime"
+      ],
+      "safety_boundary": "simulation only; not an operational incident-command qualification"
+    },
+    {
+      "course_id": "FEMA-IS-201-A",
+      "activation_state": "active",
+      "readiness": "usable_now",
+      "competency_ids": [
+        "PSC-05",
+        "SHR-04",
+        "OPS-05"
+      ],
+      "floor_ids": [
+        "F1",
+        "B1",
+        "F6"
+      ],
+      "floor1_operating_modes": [
+        "emergency_exercise"
+      ],
+      "floor1_scenario_ids": [
+        "power_interruption",
+        "public_service_surge",
+        "service_area_incident"
+      ],
+      "electronics_lab_ids": [
+        "IT-LAB-039"
+      ],
+      "evidence_outputs": [
+        "ICS forms",
+        "incident action plan",
+        "resource/status tracking"
+      ],
+      "missing_dependencies": [
+        "fillable canonical exercise-form packet"
+      ],
+      "safety_boundary": "fictional/sandbox incident planning"
+    },
+    {
+      "course_id": "FEMA-IS-235-C",
+      "activation_state": "active",
+      "readiness": "usable_now",
+      "competency_ids": [
+        "CORE-08",
+        "PSC-05",
+        "OPS-01"
+      ],
+      "floor_ids": [
+        "F1",
+        "B1",
+        "L7"
+      ],
+      "floor1_operating_modes": [
+        "emergency_exercise"
+      ],
+      "floor1_scenario_ids": [
+        "basic_evacuation",
+        "passenger_elevator_outage",
+        "power_interruption"
+      ],
+      "electronics_lab_ids": [
+        "IT-LAB-032",
+        "IT-LAB-039"
+      ],
+      "evidence_outputs": [
+        "emergency plan",
+        "hazard assumptions",
+        "continuity actions"
+      ],
+      "missing_dependencies": [
+        "versioned emergency-plan template"
+      ],
+      "safety_boundary": "planning exercise; no claim of code/AHJ approval"
+    },
+    {
+      "course_id": "FEMA-IS-238",
+      "activation_state": "active",
+      "readiness": "usable_now_facilitated",
+      "competency_ids": [
+        "OPS-01",
+        "OPS-05",
+        "ENT-04",
+        "PSC-03"
+      ],
+      "floor_ids": [
+        "F1",
+        "B1"
+      ],
+      "floor1_operating_modes": [
+        "public_service_clinic",
+        "emergency_exercise"
+      ],
+      "floor1_scenario_ids": [
+        "public_service_surge",
+        "service_area_incident"
+      ],
+      "electronics_lab_ids": [
+        "IT-LAB-039"
+      ],
+      "evidence_outputs": [
+        "supply-chain map",
+        "bottleneck analysis",
+        "resource-priority decision"
+      ],
+      "missing_dependencies": [
+        "logistics inventory/queue simulator"
+      ],
+      "safety_boundary": "simulated logistics only"
+    },
+    {
+      "course_id": "IRS-VITA-LINK-LEARN-2025",
+      "activation_state": "active",
+      "readiness": "usable_now_external_practice_lab",
+      "competency_ids": [
+        "SHR-02",
+        "PSC-02",
+        "PSC-04",
+        "CORE-07"
+      ],
+      "floor_ids": [
+        "F1"
+      ],
+      "floor1_operating_modes": [
+        "public_service_clinic"
+      ],
+      "floor1_scenario_ids": [
+        "privacy_error_intake",
+        "public_service_surge",
+        "network_checkin_outage"
+      ],
+      "electronics_lab_ids": [],
+      "evidence_outputs": [
+        "synthetic intake record",
+        "Practice Lab return exercise",
+        "quality-review checklist"
+      ],
+      "missing_dependencies": [
+        "annual tax-year revalidation",
+        "synthetic taxpayer case pack",
+        "VITA/TCE partner/site relationship for authentic service"
+      ],
+      "safety_boundary": "use synthetic data in Equity Uprise; real taxpayer service only through authorized VITA/TCE program/site"
+    },
+    {
+      "course_id": "HHS-OHRP-HRP-FOUNDATIONAL",
+      "activation_state": "active",
+      "readiness": "usable_now_with_content_pack",
+      "competency_ids": [
+        "SHR-02",
+        "RSP-01",
+        "RSP-03",
+        "CORE-04"
+      ],
+      "floor_ids": [
+        "F1",
+        "F5"
+      ],
+      "floor1_operating_modes": [
+        "public_service_clinic"
+      ],
+      "floor1_scenario_ids": [
+        "privacy_error_intake"
+      ],
+      "electronics_lab_ids": [],
+      "evidence_outputs": [
+        "mock protocol classification",
+        "risk/privacy analysis",
+        "completion certificates"
+      ],
+      "missing_dependencies": [
+        "synthetic protocol/case packet",
+        "review rubric"
+      ],
+      "safety_boundary": "training/synthetic research review; not an IRB determination"
+    },
+    {
+      "course_id": "HHS-OHRP-INFORMED-CONSENT",
+      "activation_state": "active",
+      "readiness": "usable_now_with_content_pack",
+      "competency_ids": [
+        "SHR-02",
+        "RSP-03",
+        "CORE-02"
+      ],
+      "floor_ids": [
+        "F1",
+        "F5"
+      ],
+      "floor1_operating_modes": [
+        "public_service_clinic"
+      ],
+      "floor1_scenario_ids": [
+        "privacy_error_intake"
+      ],
+      "electronics_lab_ids": [],
+      "evidence_outputs": [
+        "revised consent form",
+        "consent conversation simulation",
+        "privacy checklist"
+      ],
+      "missing_dependencies": [
+        "synthetic consent packet",
+        "participant-role simulator"
+      ],
+      "safety_boundary": "simulated consent practice; no enrollment of real research participants"
+    },
+    {
+      "course_id": "CISA-ICS-101-CANDIDATE",
+      "activation_state": "proposed",
+      "readiness": "selection_required",
+      "competency_ids": [
+        "OPS-02",
+        "OPS-01",
+        "OPS-04"
+      ],
+      "floor_ids": [
+        "B1",
+        "F6"
+      ],
+      "floor1_operating_modes": [
+        "building_systems_lab"
+      ],
+      "floor1_scenario_ids": [
+        "network_checkin_outage",
+        "power_interruption"
+      ],
+      "electronics_lab_ids": [
+        "IT-LAB-027",
+        "IT-LAB-028",
+        "IT-LAB-029",
+        "IT-LAB-032",
+        "IT-LAB-033",
+        "IT-LAB-039"
+      ],
+      "evidence_outputs": [
+        "proposed OT network map",
+        "segmentation analysis",
+        "fault trace"
+      ],
+      "missing_dependencies": [
+        "verify current CISA course access/eligibility",
+        "approve exact course version"
+      ],
+      "safety_boundary": "isolated simulation only; never test against live OT/building systems"
+    },
+    {
+      "course_id": "DOE-FEMP-CATALOG-CANDIDATE",
+      "activation_state": "proposed",
+      "readiness": "selection_required",
+      "competency_ids": [
+        "OPS-04",
+        "OPS-01",
+        "OPS-05"
+      ],
+      "floor_ids": [
+        "B1",
+        "F6",
+        "L7"
+      ],
+      "floor1_operating_modes": [
+        "building_systems_lab"
+      ],
+      "floor1_scenario_ids": [
+        "power_interruption"
+      ],
+      "electronics_lab_ids": [
+        "IT-LAB-027",
+        "IT-LAB-032",
+        "IT-LAB-039"
+      ],
+      "evidence_outputs": [
+        "proposed energy/O&M analysis"
+      ],
+      "missing_dependencies": [
+        "select exact FEMP course",
+        "bind metering/energy telemetry"
+      ],
+      "safety_boundary": "simulation until physical energy systems are commissioned and authorized"
+    },
+    {
+      "course_id": "NOAA-CLIMATE-101-CANDIDATE",
+      "activation_state": "proposed",
+      "readiness": "selection_required",
+      "competency_ids": [
+        "OPS-03",
+        "OPS-04",
+        "RSP-04"
+      ],
+      "floor_ids": [
+        "F5",
+        "L7"
+      ],
+      "floor1_operating_modes": [],
+      "floor1_scenario_ids": [],
+      "electronics_lab_ids": [],
+      "evidence_outputs": [
+        "proposed climate/resilience analysis"
+      ],
+      "missing_dependencies": [
+        "formal course approval",
+        "weather-data lab recipe"
+      ],
+      "safety_boundary": "data-analysis/simulation"
+    },
+    {
+      "course_id": "NASA-ARSET-CANDIDATE",
+      "activation_state": "proposed",
+      "readiness": "selection_required",
+      "competency_ids": [
+        "OPS-03",
+        "SHR-03",
+        "RSP-04"
+      ],
+      "floor_ids": [
+        "F5",
+        "F6",
+        "L7"
+      ],
+      "floor1_operating_modes": [],
+      "floor1_scenario_ids": [],
+      "electronics_lab_ids": [],
+      "evidence_outputs": [
+        "proposed remote-sensing analysis"
+      ],
+      "missing_dependencies": [
+        "select exact current ARSET course",
+        "dataset/tool-specific lab recipe"
+      ],
+      "safety_boundary": "data-analysis/simulation"
+    }
+  ]
+}

@@ -1,0 +1,374 @@
+{
+  "schema_version": "1.0.0",
+  "status": "canonical-federal-training-catalog-v1",
+  "last_verified": "2026-09-22",
+  "policy": {
+    "rule": "Only records with an exact federal provider, title/code where applicable, official federal URL, award semantics, and current verification may be activated as Equity Uprise federal training.",
+    "credential_boundary": "Federal/external training is evidence toward competency and never automatic mastery.",
+    "annual_rule": "Annual/versioned programs must be reverified before learner enrollment for the new cycle.",
+    "candidate_rule": "Agency or provider mentions without a selected exact course remain candidates and may not be represented as completed training.",
+    "reference_rule": "Regulations, manuals, datasets, and guidance are reference material, not courses or credentials."
+  },
+  "records": [
+    {
+      "course_id": "FEMA-IS-100-C",
+      "provider": "FEMA / NDEMU",
+      "agency": "FEMA",
+      "record_type": "course",
+      "status": "canonical_active",
+      "course_code": "IS-100.C",
+      "title": "Introduction to the Incident Command System, ICS 100",
+      "official_url": "https://training.fema.gov/programs/independent-study/courseoverview.aspx?code=IS-100.c&lang=en",
+      "free_status": "free",
+      "delivery": "interactive web-based independent study",
+      "award_type": "FEMA Independent Study completion record/certificate",
+      "prerequisites": [],
+      "estimated_hours": 2,
+      "ceu": 0.2,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-development/EVIDENCE-ASSESSMENT-ARCHITECTURE.md",
+        "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md"
+      ]
+    },
+    {
+      "course_id": "FEMA-IS-120-C",
+      "provider": "FEMA / NDEMU",
+      "agency": "FEMA",
+      "record_type": "course",
+      "status": "canonical_active",
+      "course_code": "IS-120.C",
+      "title": "An Introduction to Exercises",
+      "official_url": "https://training.fema.gov/programs/independent-study/courseoverview.aspx?code=IS-120.c&lang=en",
+      "free_status": "free",
+      "delivery": "interactive web-based independent study",
+      "award_type": "FEMA Independent Study completion record/certificate",
+      "prerequisites": [],
+      "estimated_hours": 3,
+      "ceu": 0.3,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md"
+      ]
+    },
+    {
+      "course_id": "FEMA-IS-130-A",
+      "provider": "FEMA / NDEMU",
+      "agency": "FEMA",
+      "record_type": "course",
+      "status": "canonical_active",
+      "course_code": "IS-130.A",
+      "title": "How to be an Exercise Evaluator",
+      "official_url": "https://training.fema.gov/programs/independent-study/courseoverview.aspx?code=IS-130.a&lang=en",
+      "free_status": "free",
+      "delivery": "interactive web-based independent study",
+      "award_type": "FEMA Independent Study completion record/certificate",
+      "prerequisites": [
+        "FEMA-IS-120-C"
+      ],
+      "estimated_hours": 2.75,
+      "ceu": 0.3,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md"
+      ]
+    },
+    {
+      "course_id": "FEMA-IS-200-C",
+      "provider": "FEMA / NDEMU",
+      "agency": "FEMA",
+      "record_type": "course",
+      "status": "canonical_active",
+      "course_code": "IS-200.C",
+      "title": "Basic Incident Command System for Initial Response, ICS-200",
+      "official_url": "https://training.fema.gov/programs/independent-study/courseoverview.aspx?code=IS-200.c&lang=en",
+      "free_status": "free",
+      "delivery": "interactive web-based independent study",
+      "award_type": "FEMA Independent Study completion record/certificate",
+      "prerequisites": [
+        "FEMA-IS-100-C"
+      ],
+      "estimated_hours": 4,
+      "ceu": 0.4,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md"
+      ]
+    },
+    {
+      "course_id": "FEMA-IS-201-A",
+      "provider": "FEMA / NDEMU",
+      "agency": "FEMA",
+      "record_type": "course",
+      "status": "canonical_active",
+      "course_code": "IS-201.A",
+      "title": "Forms Used for the Development of the Incident Action Plan and Incident Management",
+      "official_url": "https://training.fema.gov/programs/independent-study/courseoverview.aspx?code=IS-201.a&lang=en",
+      "free_status": "free",
+      "delivery": "interactive web-based independent study",
+      "award_type": "FEMA Independent Study completion record/certificate",
+      "prerequisites": [],
+      "estimated_hours": 3.8,
+      "ceu": 0.4,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md"
+      ]
+    },
+    {
+      "course_id": "FEMA-IS-235-C",
+      "provider": "FEMA / NDEMU",
+      "agency": "FEMA",
+      "record_type": "course",
+      "status": "canonical_active",
+      "course_code": "IS-235.C",
+      "title": "Emergency Planning",
+      "official_url": "https://training.fema.gov/programs/independent-study/courseoverview.aspx?code=IS-235.c&lang=en",
+      "free_status": "free",
+      "delivery": "interactive web-based independent study",
+      "award_type": "FEMA Independent Study completion record/certificate",
+      "prerequisites": [],
+      "estimated_hours": null,
+      "ceu": 0.5,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md"
+      ]
+    },
+    {
+      "course_id": "FEMA-IS-238",
+      "provider": "FEMA / NDEMU",
+      "agency": "FEMA",
+      "record_type": "course",
+      "status": "canonical_active",
+      "course_code": "IS-238",
+      "title": "Critical Concepts of Supply Chain Flow and Resilience",
+      "official_url": "https://training.fema.gov/programs/independent-study/courseoverview.aspx?code=IS-238&lang=en",
+      "free_status": "free",
+      "delivery": "interactive web-based independent study",
+      "award_type": "FEMA Independent Study completion record/certificate",
+      "prerequisites": [],
+      "estimated_hours": 2,
+      "ceu": 0.2,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md"
+      ]
+    },
+    {
+      "course_id": "IRS-VITA-LINK-LEARN-2025",
+      "provider": "Internal Revenue Service",
+      "agency": "IRS",
+      "record_type": "annual_program",
+      "status": "canonical_annual_revalidation",
+      "course_code": "VITA/TCE Link & Learn Taxes — 2025 training cycle",
+      "title": "Link & Learn Taxes",
+      "official_url": "https://apps.irs.gov/app/vita/",
+      "free_status": "free",
+      "delivery": "self-paced e-learning plus certification tests and TaxSlayer Practice Lab",
+      "award_type": "VITA/TCE certification path result; authentic volunteer assignment remains partner/site controlled",
+      "prerequisites": [],
+      "estimated_hours": null,
+      "ceu": null,
+      "last_verified": "2026-09-22",
+      "current_cycle": "2025",
+      "revalidation_cadence": "annual",
+      "reverify_before_enrollment": true,
+      "hands_on_resource_url": "https://apps.irs.gov/app/vita/content/00/00_02_005.jsp",
+      "repo_origin": [
+        "docs/design/equity-uprise-development/DEVELOPMENT-JOURNEY.md",
+        "docs/design/equity-uprise-building/FLOOR-01-DIGITAL-TWIN-PROGRAM.md"
+      ]
+    },
+    {
+      "course_id": "HHS-OHRP-HRP-FOUNDATIONAL",
+      "provider": "HHS Office for Human Research Protections",
+      "agency": "HHS/OHRP",
+      "record_type": "course",
+      "status": "canonical_active",
+      "course_code": null,
+      "title": "Human Research Protection Foundational Training",
+      "official_url": "https://www.hhs.gov/ohrp/education-and-outreach/human-research-protection-training/human-research-protection-foundational-training/index.html",
+      "free_status": "free",
+      "delivery": "five online lessons",
+      "award_type": "printable completion certificate for each lesson",
+      "prerequisites": [],
+      "estimated_hours": null,
+      "ceu": null,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-development/DEVELOPMENT-JOURNEY.md"
+      ]
+    },
+    {
+      "course_id": "HHS-OHRP-INFORMED-CONSENT",
+      "provider": "HHS Office for Human Research Protections",
+      "agency": "HHS/OHRP",
+      "record_type": "course",
+      "status": "canonical_active",
+      "course_code": null,
+      "title": "Participant-Centered Informed Consent Training",
+      "official_url": "https://www.hhs.gov/ohrp/education-and-outreach/human-research-protection-training/participant-centered-informed-consent-training/index.html",
+      "free_status": "free",
+      "delivery": "interactive online training",
+      "award_type": "printable completion certificate",
+      "prerequisites": [],
+      "estimated_hours": 1.58,
+      "ceu": null,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-development/DEVELOPMENT-JOURNEY.md"
+      ]
+    },
+    {
+      "course_id": "CISA-ICS-101-CANDIDATE",
+      "provider": "Cybersecurity and Infrastructure Security Agency",
+      "agency": "CISA",
+      "record_type": "candidate_course",
+      "status": "candidate_selection_required",
+      "course_code": "101",
+      "title": "Introduction to Control Systems Cybersecurity",
+      "official_url": "https://www.cisa.gov/resources-tools/programs/ics-training-available-through-cisa",
+      "free_status": "federal training; current access/eligibility must be verified before enrollment",
+      "delivery": "CISA ICS training pathway",
+      "award_type": null,
+      "prerequisites": [],
+      "estimated_hours": null,
+      "ceu": null,
+      "last_verified": "2026-09-22",
+      "selection_note": "Repo references CISA generically. Exact current delivery/access must be confirmed before this course becomes active Equity Uprise training.",
+      "repo_origin": [
+        "docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md",
+        "docs/design/equity-uprise-development/competency-rubrics.json"
+      ]
+    },
+    {
+      "course_id": "DOE-FEMP-CATALOG-CANDIDATE",
+      "provider": "Department of Energy Federal Energy Management Program",
+      "agency": "DOE/FEMP",
+      "record_type": "provider_catalog",
+      "status": "candidate_selection_required",
+      "course_code": null,
+      "title": "Federal Energy Management Program Training",
+      "official_url": "https://www.energy.gov/cmei/femp/about-federal-energy-management-program-training",
+      "free_status": "catalog includes federal training offerings; course-level cost/access must be verified",
+      "delivery": "on-demand, webinar, and onsite catalog",
+      "award_type": "select courses may award IACET CEUs",
+      "prerequisites": [],
+      "estimated_hours": null,
+      "ceu": null,
+      "last_verified": "2026-09-22",
+      "selection_note": "Select exact building-operations/energy course before activation.",
+      "repo_origin": [
+        "docs/design/equity-uprise-development/DEVELOPMENT-JOURNEY.md",
+        "docs/design/equity-uprise-development/competency-rubrics.json"
+      ]
+    },
+    {
+      "course_id": "NOAA-CLIMATE-101-CANDIDATE",
+      "provider": "NOAA Digital Coast",
+      "agency": "NOAA",
+      "record_type": "candidate_course",
+      "status": "candidate_selection_required",
+      "course_code": null,
+      "title": "Climate 101: Science, Impacts, and Society",
+      "official_url": "https://www.coast.noaa.gov/digitalcoast/training/climate-101.html",
+      "free_status": "free",
+      "delivery": "asynchronous interactive modules",
+      "award_type": null,
+      "prerequisites": [],
+      "estimated_hours": 1.5,
+      "ceu": null,
+      "last_verified": "2026-09-22",
+      "selection_note": "Verified current NOAA course; not yet approved as a canonical Equity Uprise credential path.",
+      "repo_origin": [
+        "docs/design/equity-uprise-development/DEVELOPMENT-JOURNEY.md",
+        "docs/design/equity-uprise-development/competency-rubrics.json"
+      ]
+    },
+    {
+      "course_id": "NASA-ARSET-CANDIDATE",
+      "provider": "NASA Applied Remote Sensing Training Program",
+      "agency": "NASA",
+      "record_type": "provider_catalog",
+      "status": "candidate_selection_required",
+      "course_code": null,
+      "title": "NASA ARSET training program",
+      "official_url": "https://www.earthdata.nasa.gov/learn/trainings",
+      "free_status": "no-cost/open trainings are regularly offered",
+      "delivery": "online training series with hands-on exercises depending on course",
+      "award_type": "some course offerings provide certificates when attendance/homework requirements are met",
+      "prerequisites": [],
+      "estimated_hours": null,
+      "ceu": null,
+      "last_verified": "2026-09-22",
+      "selection_note": "Choose a specific current ARSET course before activation.",
+      "repo_origin": [
+        "docs/design/equity-uprise-development/DEVELOPMENT-JOURNEY.md",
+        "docs/design/equity-uprise-development/competency-rubrics.json"
+      ]
+    },
+    {
+      "course_id": "OSHA-1910-38-REFERENCE",
+      "provider": "Occupational Safety and Health Administration",
+      "agency": "OSHA",
+      "record_type": "reference",
+      "status": "reference_only",
+      "course_code": "29 CFR 1910.38",
+      "title": "Emergency Action Plans",
+      "official_url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.38",
+      "free_status": "public regulatory reference",
+      "delivery": "regulation/guidance",
+      "award_type": null,
+      "prerequisites": [],
+      "estimated_hours": null,
+      "ceu": null,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md"
+      ]
+    },
+    {
+      "course_id": "OSHA-1926-800-REFERENCE",
+      "provider": "Occupational Safety and Health Administration",
+      "agency": "OSHA",
+      "record_type": "reference",
+      "status": "reference_only",
+      "course_code": "29 CFR 1926.800",
+      "title": "Underground Construction",
+      "official_url": "https://www.osha.gov/laws-regs/regulations/standardnumber/1926/1926.800",
+      "free_status": "public regulatory reference",
+      "delivery": "regulation/guidance",
+      "award_type": null,
+      "prerequisites": [],
+      "estimated_hours": null,
+      "ceu": null,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
+        "docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md"
+      ]
+    },
+    {
+      "course_id": "FHWA-TOMIE-REFERENCE",
+      "provider": "Federal Highway Administration",
+      "agency": "FHWA",
+      "record_type": "reference",
+      "status": "reference_only",
+      "course_code": null,
+      "title": "Tunnel Operations, Maintenance, Inspection, and Evaluation (TOMIE) Manual",
+      "official_url": "https://www.fhwa.dot.gov/bridge/inspection/tunnel/tomie/hif15005.pdf",
+      "free_status": "public technical reference",
+      "delivery": "manual",
+      "award_type": null,
+      "prerequisites": [],
+      "estimated_hours": null,
+      "ceu": null,
+      "last_verified": "2026-09-22",
+      "repo_origin": [
+        "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
+        "docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md"
+      ]
+    }
+  ]
+}
