@@ -165,6 +165,18 @@ for (const required of [
 }
 assert.ok(viewer.includes("/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb"));
 assert.ok(viewer.includes("double-click inspectable"));
+for (const required of [
+  'id="roommode"', 'id="roomMotion"', 'id="roomRecenter"', 'id="roomBack"', 'id="roomInspect"',
+  "F1-ROOM-ARRIVAL-CENTER", "DeviceOrientationEvent.requestPermission", "deviceorientation",
+  "approachRoomObject", "tweenRoomCamera", "requestedRoom=params.get('room')==='1'",
+]) {
+  assert.ok(viewer.includes(required), "Room Mode contract missing: " + required);
+}
+assert.ok(viewer.includes("services.visible=servicesOn&&!roomMode"), "Room Mode must hide raw building-services overlay");
+assert.ok(viewer.includes("e.visible=!roomMode"), "Room Mode must hide raw electronics topology overlay");
+assert.ok(viewer.includes("F1-RECEPTION-DESK-01") && viewer.includes("F1-DIRECTORY-01") && viewer.includes("F1-JOURNEY-WALL-01"),
+  "Room Mode must target canonical Floor 1 scene objects");
+assert.equal(viewer.includes("scene.traverse(o=>{if(roomMode"), false, "Room Mode may not brute-force the entire scene per interaction");
 for (const performanceGuard of [
   "architectureGhosted",
   "if(on===architectureGhosted)return",
@@ -198,6 +210,7 @@ for (const required of [
 
 const smoke = text("../../../../../scripts/smoke.mjs");
 assert.ok(smoke.includes("building viewer: Step 8 controls"), "existing browser smoke suite must cover canonical viewer controls");
+assert.ok(smoke.includes("building viewer: Room Mode controls"), "browser smoke suite must cover Room Mode controls");
 
 console.log("EQUITY UPRISE LAB RUNTIME STEP 8 VIEWER INTEGRATION: PASS");
 console.log(JSON.stringify({

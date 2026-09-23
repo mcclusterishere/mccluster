@@ -94,6 +94,26 @@ The working viewer now treats the building as one continuous object from B1 thro
 
 Public working-stack viewer: `equity-uprise-building-core-v2-3d.html`.
 
+## Room Mode v1 — ACTIVE PLAYABLE PROTOTYPE
+
+The canonical working-stack viewer now includes a human-scale **Room Mode** before full free-walk locomotion:
+- initial playable room: **Floor 1 — Arrival / Orientation**;
+- camera starts from a room-center human-eye viewpoint rather than an exterior/orbit-debug view;
+- mobile/tablet users can tap **Enable Motion** and, where the browser requires it, approve device-orientation access from that direct user gesture;
+- device orientation is treated relatively: the current holding direction becomes forward and **Recenter** establishes a new zero heading;
+- mouse/touch drag remains the non-sensor fallback;
+- canonical Floor 1 objects are subtly highlighted and selected by raycast;
+- tapping a highlighted object smoothly moves the camera to a nearby inspection position;
+- **Step Back** returns along the interaction loop to the room-center anchor;
+- an active matching lab can reuse the same canonical object interaction path;
+- raw electronics-fabric geometry and the services/X-ray layer are hidden while Room Mode is active, so player view remains architectural rather than a topology/debug visualization;
+- Room Mode camera anchors are viewer viewpoints only and do **not** redefine building geometry or object placement authority;
+- direct prototype entry is supported with `?room=1`.
+
+Current curated Floor 1 interaction targets include Reception Desk, Building Directory, Journey Wall, Development Passport Kiosk, Elevator Call Station, and Intake Display.
+
+Next Room Mode work is to convert this Floor 1 proof into room-by-room canonical camera/inspection anchors and scenario-scoped interactions across the rest of the building before free-walk locomotion.
+
 ## Floor 3 — FELLOWSHIP + NETWORK — APPROVED CURRENT PASS / STACKED
 
 - detailed inventory-backed real 3D floor active at **FFE +27 ft**;
