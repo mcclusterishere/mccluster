@@ -21,8 +21,9 @@ function failLabVisualRoot(label,error){
  if(!labVisualRootsError)labVisualRootsError=new Error('LAB VISUAL ROOT LOAD FAILED · '+label+(error?.message?' · '+error.message:''));
  if(resolveLabVisualRootsReady){resolveLabVisualRootsReady();resolveLabVisualRootsReady=null}
 }
-function makeReliable(root){
- root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.side=THREE.DoubleSide;m.needsUpdate=true})}});
+const archMaterials=new Set(),wireMaterials=new Set(),archMaterialState=new Map();let architectureGhosted=false;
+function makeReliable(root,trackArchitecture=true){
+ root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>{wireMaterials.add(m);if(trackArchitecture)archMaterials.add(m);m.side=THREE.DoubleSide;m.needsUpdate=true})}});
 }
 const facadeLightMaterials=new Set();
 function makeFacadeReliable(root){
@@ -35,18 +36,20 @@ function makeFacadeReliable(root){
  })});
 }
 function makeServicesReliable(root){
- makeReliable(root);
- root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{m.transparent=true;m.opacity=/SEPARATION/.test(m.name||'')?.16:.88;m.depthWrite=false;if('envMapIntensity'in m)m.envMapIntensity=.55;m.needsUpdate=true})});
+ makeReliable(root,false);
+ root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>{m.transparent=true;m.opacity=/SEPARATION/.test(m.name||'')?.16:.88;m.depthWrite=false;if('envMapIntensity'in m)m.envMapIntensity=.55;m.needsUpdate=true})});
 }
-const archMaterialState=new Map();
 function setArchitectureGhost(on){
- [base,facade,b1,f1,f2,f3,f4,f5,f6,f7].filter(Boolean).forEach(root=>root.traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{
-   if(!archMaterialState.has(m))archMaterialState.set(m,{transparent:m.transparent,opacity:m.opacity,depthWrite:m.depthWrite});
-   const s=archMaterialState.get(m);
-   if(on){m.transparent=true;m.opacity=Math.min(s.opacity??1,.20);m.depthWrite=false}
-   else{m.transparent=s.transparent;m.opacity=s.opacity;m.depthWrite=s.depthWrite}
-   m.needsUpdate=true;
- })}));
+ if(on===architectureGhosted)return;
+ if(on){
+   archMaterials.forEach(m=>{
+     if(!archMaterialState.has(m))archMaterialState.set(m,{transparent:m.transparent,opacity:m.opacity,depthWrite:m.depthWrite});
+     const state=archMaterialState.get(m);m.transparent=true;m.opacity=Math.min(state.opacity??1,.20);m.depthWrite=false;m.needsUpdate=true;
+   });
+ }else{
+   archMaterialState.forEach((state,m)=>{m.transparent=state.transparent;m.opacity=state.opacity;m.depthWrite=state.depthWrite;m.needsUpdate=true});
+ }
+ architectureGhosted=on;
 }
 function syncServicesVisibility(){
  if(!services)return;
@@ -64,24 +67,30 @@ function syncServicesVisibility(){
    serviceStatus.textContent='Services layer · hidden';
  }
 }
+let stackFrameCache=null;const frameObjectCache=new WeakMap();
+function frameMetrics(root){
+ let cached=frameObjectCache.get(root);if(cached)return cached;
+ root.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(root),size=new THREE.Vector3(),center=new THREE.Vector3();box.getSize(size);box.getCenter(center);
+ cached={center:center.clone(),size:size.clone(),span:Math.max(size.x,size.z,size.y)};frameObjectCache.set(root,cached);return cached;
+}
 function frameStack(){
- const box=new THREE.Box3().setFromObject(scene),size=new THREE.Vector3(),center=new THREE.Vector3();box.getSize(size);box.getCenter(center);
- const span=Math.max(size.x,size.z,size.y);cam.position.set(center.x+span*.7,center.y+span*.48,center.z+span*.85);ctl.target.copy(center);cam.far=Math.max(ft(420),span*8);cam.updateProjectionMatrix();ctl.update();
+ if(!stackFrameCache){const box=new THREE.Box3().setFromObject(scene),size=new THREE.Vector3(),center=new THREE.Vector3();box.getSize(size);box.getCenter(center);stackFrameCache={center:center.clone(),span:Math.max(size.x,size.z,size.y)}}
+ const {center,span}=stackFrameCache;cam.position.set(center.x+span*.7,center.y+span*.48,center.z+span*.85);ctl.target.copy(center);cam.far=Math.max(ft(420),span*8);cam.updateProjectionMatrix();ctl.update();
 }
 const params=new URLSearchParams(location.search),requestedFloor=params.get('floor'),requestedView=params.get('view'),requestedCamera=params.get('camera'),requestedServices=params.get('services')==='1',requestedLab=params.get('lab'),requestedDifficulty=(params.get('difficulty')||'FOUNDATION').toUpperCase();
+let f7StackDupMeshes=null,b1StackDupMeshes=null,detailedPerimeterMeshes=null;
+function collectMeshes(roots,predicate){const out=[];roots.filter(Boolean).forEach(root=>root.traverse(o=>{if(o.isMesh&&predicate(o.name||''))out.push(o)}));return out}
 function setF7StackDupVisibility(show){
- if(!f7)return;
- f7.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^F7-(?:STAIR-[AB]-(?:TRANSITION|HEADHOUSE)|PASSENGER-OVERRUN|FREIGHT-OVERRUN)/.test(n))o.visible=show});
+ if(!f7)return;if(!f7StackDupMeshes)f7StackDupMeshes=collectMeshes([f7],n=>/^F7-(?:STAIR-[AB]-(?:TRANSITION|HEADHOUSE)|PASSENGER-OVERRUN|FREIGHT-OVERRUN)/.test(n));
+ f7StackDupMeshes.forEach(o=>{o.visible=show});
 }
 function setB1StackDupVisibility(show){
- if(!b1)return;
- b1.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^B1-(?:STAIR-[AB]-(?:TRANSITION|ENCLOSURE)|PASSENGER-CORE|FREIGHT-CORE|MEP-RISER)/.test(n))o.visible=show});
+ if(!b1)return;if(!b1StackDupMeshes)b1StackDupMeshes=collectMeshes([b1],n=>/^B1-(?:STAIR-[AB]-(?:TRANSITION|ENCLOSURE)|PASSENGER-CORE|FREIGHT-CORE|MEP-RISER)/.test(n));
+ b1StackDupMeshes.forEach(o=>{o.visible=show});
 }
 function setDetailedPerimeterVisibility(show){
- [f1,f2,f3,f4,f5,f6].filter(Boolean).forEach(r=>r.traverse(o=>{
-  if(!o.isMesh)return;const n=o.name||'';
-  if(/^(?:north_exterior_wall|west_exterior_wall|east_exterior_wall|south_exterior_(?:left|right)|north_wall|west_wall|east_wall|south_mullion_)/i.test(n)||/^F[2-6]-SOUTH-GLAZING-01::pane-/i.test(n))o.visible=show;
- }));
+ if(!detailedPerimeterMeshes)detailedPerimeterMeshes=collectMeshes([f1,f2,f3,f4,f5,f6],n=>/^(?:north_exterior_wall|west_exterior_wall|east_exterior_wall|south_exterior_(?:left|right)|north_wall|west_wall|east_wall|south_mullion_)/i.test(n)||/^F[2-6]-SOUTH-GLAZING-01::pane-/i.test(n));
+ detailedPerimeterMeshes.forEach(o=>{o.visible=show});
 }
 function done(){loaded++;if(loaded===11){status.textContent='Working stack loaded · detailed facade + B1–F7 + Services Step 8 verified · source-to-endpoint traceability · protected stairs B1→roof';servicesOn=requestedServices;document.getElementById('services').textContent=servicesOn?'Services: Exposed':'Services: Off';document.getElementById('services').classList.toggle('active',servicesOn);setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);facade.visible=true;if(requestedView==='facade'){focus('facade');if(requestedCamera)setView(requestedCamera)}else if(requestedFloor&&/^[0-7]$/.test(requestedFloor))focus(requestedFloor);else{syncServicesVisibility();frameStack();if(requestedView&&requestedView!=='stack')setView(requestedView)}}}
 loader.load('/equity-uprise-preview/equity-uprise-building-core-v2.glb?v=__STAMP__',g=>{base=g.scene;base.rotation.x=-Math.PI/2;base.updateMatrixWorld(true);scene.add(base);makeReliable(base);base.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^L0_(slab|north_wall|west_wall|east_wall|program|circle|support|zone)/.test(n)||/^B1_(south_wall|program)/.test(n)||/^L[123456]_(program|circle|support|slab|north_wall|south_|west_wall|east_wall)/.test(n)||/^L7_(program|circle|support|slab|parapet|zone)/.test(n))o.visible=false});markLabVisualRootReady(1);done()},undefined,e=>failLabVisualRoot('building core',e));
@@ -98,10 +107,7 @@ loader.load('/equity-uprise-preview/equity-uprise-floor-07-core-v2.glb?v=__STAMP
 const elev={0:-13.5,1:0,2:13.5,3:27,4:40.5,5:54,6:67.5,7:81};
 const detailed={0:()=>b1,1:()=>f1,2:()=>f2,3:()=>f3,4:()=>f4,5:()=>f5,6:()=>f6,7:()=>f7};
 function frameObject(root,pad=1.35){
-  root.updateMatrixWorld(true);
-  const box=new THREE.Box3().setFromObject(root),size=new THREE.Vector3(),center=new THREE.Vector3();
-  box.getSize(size);box.getCenter(center);
-  const span=Math.max(size.x,size.z,size.y);
+  const {center,size,span}=frameMetrics(root);
   cam.position.set(center.x+span*.72,center.y+Math.max(size.y*.85,ft(16)),center.z+span*.82);
   ctl.target.copy(center);cam.near=.02;cam.far=Math.max(ft(420),span*8);cam.updateProjectionMatrix();ctl.update();
 }
@@ -228,7 +234,7 @@ async function ensureLabRuntime(){
  return labModule;
 }
 function makeElectronicsReliable(root){
- makeReliable(root);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.forEach(m=>{m.transparent=true;m.opacity=.10;m.depthWrite=false;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
+ makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.transparent=true;m.opacity=.10;m.depthWrite=false;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
 }
 async function ensureElectronicsLayer(){
  if(electronics)return electronics;
@@ -243,7 +249,7 @@ function clearLabVisuals(){
 }
 function labColor(state){return state==='unavailable'?0xff2d2d:state==='faulted'?0xff6a2d:state==='degraded'?0xffb42d:state==='at_risk'?0xd85cff:0x5fd2ff}
 function styleCanonical(root,id,state){
- if(!root||!id)return false;let hit=false;root.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(n!==id&&!n.startsWith(id+'::'))return;rememberLabMesh(o);const original=Array.isArray(o.material)?o.material:[o.material];const cloned=original.map(m=>m.clone());cloned.forEach(m=>{if(m.color)m.color.setHex(labColor(state));if(m.emissive){m.emissive.setHex(labColor(state));m.emissiveIntensity=.55}m.transparent=true;m.opacity=.94;m.depthWrite=false;m.needsUpdate=true});o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true;hit=true});return hit
+ if(!root||!id)return false;let hit=false;root.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(n!==id&&!n.startsWith(id+'::'))return;rememberLabMesh(o);const original=Array.isArray(o.material)?o.material:[o.material];const cloned=original.map(m=>m.clone());cloned.forEach(m=>{wireMaterials.add(m);if(m.color)m.color.setHex(labColor(state));if(m.emissive){m.emissive.setHex(labColor(state));m.emissiveIntensity=.55}m.transparent=true;m.opacity=.94;m.depthWrite=false;m.needsUpdate=true});o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true;hit=true});return hit
 }
 function sitePoint(x,y,h=.08){return new THREE.Vector3(ft(x),ft(h),-ft(y))}
 function areaOverlay(area){
@@ -303,6 +309,6 @@ document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>focus(b.dataset.f
 document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>setView(b.dataset.v));
 document.getElementById('services').onclick=e=>{servicesOn=!servicesOn;syncServicesVisibility();e.target.textContent=servicesOn?'Services: Exposed':'Services: Off';e.target.classList.toggle('active',servicesOn)};
 document.getElementById('sunmode').onclick=e=>{solarMode=solarMode==='auto'?'day':solarMode==='day'?'night':'auto';applySolarEnvironment(solarMode);e.target.textContent=solarMode==='auto'?'Sun: Auto':solarMode==='day'?'Sun: Day':'Sun: Night'};
-document.getElementById('wire').onclick=e=>{wire=!wire;scene.traverse(o=>{if(o.isMesh){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}})}});e.target.textContent=wire?'Solid':'Wireframe'};
+document.getElementById('wire').onclick=e=>{wire=!wire;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}});e.target.textContent=wire?'Solid':'Wireframe'};
 addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});ren.setAnimationLoop(()=>{ctl.update();ren.render(scene,cam)});
 </script></body></html>
