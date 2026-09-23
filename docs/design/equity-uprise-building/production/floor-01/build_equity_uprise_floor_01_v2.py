@@ -10,7 +10,6 @@ from pathlib import Path
 import hashlib
 import json
 import math
-import numpy as np
 import trimesh
 
 FT = 0.3048
@@ -57,61 +56,6 @@ C = {
     "black": [24, 25, 26, 255],
 }
 
-PBR = {
-    "floor": ("floor_honed_gray", 0.02, 0.46, None),
-    "floor_alt": ("floor_honed_gray_alt", 0.02, 0.52, None),
-    "wall": ("wall_charcoal_mineral", 0.00, 0.86, None),
-    "part": ("partition_charcoal", 0.00, 0.78, None),
-    "core": ("metal_gunmetal_brushed", 0.72, 0.36, None),
-    "freight": ("metal_service_gunmetal", 0.62, 0.42, None),
-    "stair": ("metal_stair", 0.48, 0.46, None),
-    "stone": ("reception_stone_dark", 0.01, 0.56, None),
-    "stone_top": ("stone_honed_top", 0.01, 0.42, None),
-    "glass": ("glass_clear_arch", 0.00, 0.08, None),
-    "wood": ("wood_warm_muted", 0.00, 0.58, None),
-    "wood_light": ("wood_warm_light", 0.00, 0.52, None),
-    "seat": ("upholstery_charcoal", 0.00, 0.92, None),
-    "seat_alt": ("upholstery_charcoal_alt", 0.00, 0.88, None),
-    "red": ("accent_red_navigation", 0.04, 0.50, [0.18, 0.01, 0.015]),
-    "screen": ("screen_dark", 0.06, 0.20, [0.025, 0.045, 0.055]),
-    "screen_glow": ("screen_active", 0.04, 0.18, [0.10, 0.22, 0.28]),
-    "light": ("light_warm_diffuser", 0.00, 0.34, [0.72, 0.56, 0.34]),
-    "light_warm": ("light_warm_emissive", 0.00, 0.28, [1.0, 0.62, 0.28]),
-    "plant": ("plant_dark", 0.00, 0.94, None),
-    "plant_light": ("plant_light", 0.00, 0.90, None),
-    "rug": ("rug_charcoal", 0.00, 0.98, None),
-    "white": ("paint_warm_white", 0.00, 0.78, None),
-    "safety": ("safety_red", 0.04, 0.54, None),
-    "black": ("black_matte", 0.08, 0.72, None),
-}
-_COLOR_PROFILE = {tuple(C[key]): (key, *PBR[key]) for key in PBR}
-_MATERIAL_CACHE = {}
-
-
-def pbr_visual(mesh, color):
-    rgba = [int(v) for v in (color or C["part"])]
-    profile = _COLOR_PROFILE.get(tuple(rgba), ("part", "partition_charcoal", 0.0, 0.78, None))
-    key, name, metallic, roughness, emissive = profile
-    cache_key = (key, tuple(rgba))
-    material = _MATERIAL_CACHE.get(cache_key)
-    if material is None:
-        alpha = rgba[3] if len(rgba) > 3 else 255
-        material = trimesh.visual.material.PBRMaterial(
-            name=name,
-            baseColorFactor=np.asarray(rgba, dtype=np.uint8),
-            metallicFactor=float(metallic),
-            roughnessFactor=float(roughness),
-            emissiveFactor=emissive,
-            alphaMode="BLEND" if alpha < 255 else "OPAQUE",
-            doubleSided=alpha < 255,
-        )
-        _MATERIAL_CACHE[cache_key] = material
-    mesh.visual = trimesh.visual.TextureVisuals(
-        uv=np.zeros((len(mesh.vertices), 2), dtype=float),
-        material=material,
-    )
-    return mesh
-
 inventory = json.loads(INVENTORY_PATH.read_text())
 INV = {o["id"]: o for o in inventory["objects"]}
 scene = trimesh.Scene()
@@ -134,7 +78,7 @@ def box(name, bounds, height, z=0, color=None, inv_id=None):
     mesh.apply_translation(
         (((x1 + x2) / 2) * FT, ((y1 + y2) / 2) * FT, (z + height / 2) * FT)
     )
-    pbr_visual(mesh, color or C["part"])
+    mesh.visual.face_colors = color or C["part"]
     scene.add_geometry(mesh, node_name=name, geom_name=name)
     records.append(name)
     mark(inv_id)
@@ -146,7 +90,7 @@ def cyl(name, xy, radius, height, z=0, color=None, inv_id=None, sections=32):
         radius=radius * FT, height=height * FT, sections=sections
     )
     mesh.apply_translation((xy[0] * FT, xy[1] * FT, (z + height / 2) * FT))
-    pbr_visual(mesh, color or C["part"])
+    mesh.visual.face_colors = color or C["part"]
     scene.add_geometry(mesh, node_name=name, geom_name=name)
     records.append(name)
     mark(inv_id)
