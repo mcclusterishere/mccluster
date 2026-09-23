@@ -159,12 +159,15 @@ const viewer = text("../../../../../equity-uprise-building-core-v2-3d.html");
 for (const required of [
   'data-f="stack"', 'data-f="facade"', 'id="services"', 'id="wire"', 'deviceClockSolar',
   "requestedFloor", "syncServicesVisibility", "LAB_MODULE_URL", "requestedLab=params.get('lab')",
-  "labController.execute", "actionForCanonicalId", "labController.reset",
+  "labController.execute", "actionForCanonicalId", "labController.reset", "labVisualRootsReady", "await labVisualRootsReady",
 ]) {
   assert.ok(viewer.includes(required), "canonical viewer lost required feature/Step 8 hook: " + required);
 }
 assert.ok(viewer.includes("/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb"));
 assert.ok(viewer.includes("double-click inspectable"));
+const rootWait = viewer.indexOf("await labVisualRootsReady");
+const controllerCreate = viewer.indexOf("labController=labModule.createViewerLabController");
+assert.ok(rootWait >= 0 && controllerCreate > rootWait, "deep-linked labs must wait for modeled visual roots before first render");
 assert.ok(!viewer.includes("LIVE control enabled"));
 
 const assessmentRuntime = text("./equity-uprise-assessment-runtime.mjs");
