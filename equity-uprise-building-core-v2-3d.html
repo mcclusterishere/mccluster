@@ -13,6 +13,7 @@ const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,e
 let resolveBuildingLoaded=null;const buildingLoaded=new Promise(resolve=>{resolveBuildingLoaded=resolve});
 const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
 const engineeringOverlay=new THREE.Group();engineeringOverlay.name='ENGINEERING-XRAY-OVERLAY';engineeringOverlay.visible=false;scene.add(engineeringOverlay);
+let engineeringRequestId=0;
 let labModule=null,labDatasets=null,labController=null,labView=null,labElectronicsPromise=null,labPickingIds=[],labLastResult=null,electronicsSpatialModule=null,electronicsBoundCount=0,electronicsUnboundCount=0;const labStyledMeshes=new Map(),electronicsBoundWorld=new Map();
 let roomMode=false,roomMotionActive=false,roomTweening=false,roomSelectedId=null,roomSensorZero=null,roomSensorOffset=new THREE.Quaternion(),roomLastRawQuaternion=null,roomBaseQuaternion=new THREE.Quaternion(),roomManualYaw=0,roomManualPitch=0,roomPrevFocus='stack',roomPrevServices=false,roomPrevWire=false,roomSensorMode='none',roomOrientationEvents=0,roomMotionEvents=0,roomMotionEnabledAt=0,roomLastMotionAt=0,roomLastMotionStamp=0;const roomStyledMeshes=new Map(),roomPbrOriginals=new Map();const roomLightRig=new THREE.Group();roomLightRig.name='ROOM-MODE-V1-LIGHT-RIG';roomLightRig.visible=false;scene.add(roomLightRig);
 let resolveLabVisualRootsReady=null,labVisualRootsError=null,labVisualRootMask=0;
@@ -285,7 +286,7 @@ function styleEngineeringMesh(o,on){
  ms.filter(Boolean).forEach(m=>{m.transparent=true;m.opacity=on?.92:.10;m.depthWrite=false;m.depthTest=!on;if(on&&m.color)m.color.setHex(color);if(m.emissive){m.emissive.setHex(on?color:0x000000);m.emissiveIntensity=on?.85:0}m.needsUpdate=true});o.renderOrder=on?90:0
 }
 function clearEngineeringMarkers(){
- while(engineeringOverlay.children.length){const o=engineeringOverlay.children.pop();o.material?.dispose?.()}
+ while(engineeringOverlay.children.length){const o=engineeringOverlay.children[engineeringOverlay.children.length-1];engineeringOverlay.remove(o);o.material?.dispose?.()}
 }
 function rebuildEngineeringMarkers(){
  clearEngineeringMarkers();if(!electronics||!engineeringMode||roomMode){engineeringOverlay.visible=false;return 0}
@@ -341,14 +342,14 @@ function syncEngineeringView(){
  const visibleCount=setEngineeringElectronics(true);setArchitectureGhost(true);updateEngineeringStatus(visibleCount)
 }
 async function setEngineeringMode(on){
- engineeringMode=!!on;const button=document.getElementById('xray');button.classList.toggle('active',engineeringMode);
+ const requestId=++engineeringRequestId;engineeringMode=!!on;const button=document.getElementById('xray');button.classList.toggle('active',engineeringMode);
  if(!engineeringMode){
-   button.textContent='X-Ray: Off';if(electronics)electronics.visible=false;clearEngineeringMarkers();engineeringOverlay.visible=false;syncServicesVisibility();return
+   button.textContent='X-Ray: Off';if(electronics)setEngineeringElectronics(false);else{clearEngineeringMarkers();engineeringOverlay.visible=false}syncServicesVisibility();return
  }
  button.textContent='X-Ray: Loading…';serviceStatus.textContent='Engineering X-Ray · waiting for complete building geometry…';
- await buildingLoaded;if(!engineeringMode)return;
- const e=await ensureElectronicsLayer();if(!engineeringMode)return;
- await applyElectronicsSpatialBindings(e);if(!engineeringMode)return;
+ await buildingLoaded;if(!engineeringMode||requestId!==engineeringRequestId)return;
+ const e=await ensureElectronicsLayer();if(!engineeringMode||requestId!==engineeringRequestId)return;
+ await applyElectronicsSpatialBindings(e);if(!engineeringMode||requestId!==engineeringRequestId)return;
  syncServicesVisibility();syncEngineeringView();
  if(electronicsBoundCount===0){button.textContent='X-Ray: 0';serviceStatus.textContent='Engineering X-Ray ERROR · 0 canonical device anchors resolved'}
 }
@@ -356,7 +357,7 @@ function rememberLabMesh(o){if(!labStyledMeshes.has(o))labStyledMeshes.set(o,{ma
 function clearLabVisuals(){
  labStyledMeshes.forEach((s,o)=>{o.material=s.material;o.visible=s.visible});labStyledMeshes.clear();
  while(labOverlay.children.length){const o=labOverlay.children.pop();o.geometry?.dispose?.();const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>m.dispose?.())}
- if(electronics)electronics.visible=false;
+ if(electronics){if(engineeringMode&&!roomMode)syncEngineeringView();else electronics.visible=false}
 }
 function labColor(state){return state==='unavailable'?0xff2d2d:state==='faulted'?0xff6a2d:state==='degraded'?0xffb42d:state==='at_risk'?0xd85cff:0x5fd2ff}
 function styleCanonical(root,id,state){
