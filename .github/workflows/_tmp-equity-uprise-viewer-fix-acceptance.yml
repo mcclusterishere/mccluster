@@ -17,6 +17,19 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "22"
+      - name: Build canonical 3D assets
+        run: |
+          python docs/design/equity-uprise-building/production/basement-b1/build_equity_uprise_basement_b1_v2.py
+          python docs/design/equity-uprise-building/production/floor-01/build_equity_uprise_floor_01_v2.py
+          python docs/design/equity-uprise-building/production/floor-02/build_equity_uprise_floor_02_v2.py
+          python docs/design/equity-uprise-building/production/floor-03/build_equity_uprise_floor_03_v2.py
+          python docs/design/equity-uprise-building/production/floor-04/build_equity_uprise_floor_04_v2.py
+          python docs/design/equity-uprise-building/production/floor-05/build_equity_uprise_floor_05_v2.py
+          python docs/design/equity-uprise-building/production/floor-06/build_equity_uprise_floor_06_v2.py
+          python docs/design/equity-uprise-building/production/floor-07/build_equity_uprise_floor_07_v2.py
+          python docs/design/equity-uprise-building/production/facade/build_equity_uprise_facade_v2.py
+          python docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py
+          python docs/design/equity-uprise-building/production/build_equity_uprise_building_v2.py
       - name: Stage canonical preview assets
         run: |
           set -euo pipefail
