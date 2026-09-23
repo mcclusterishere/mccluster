@@ -115,6 +115,16 @@ The canonical working-stack viewer now includes a human-scale **Room Mode** befo
 - Floor 1 receives a viewer-side PBR-response pass (roughness/metalness/transparency/emissive tuning by canonical mesh semantics) plus warm human-scale room lights for better depth/material readability.
 
 Current curated Floor 1 interaction targets include Reception Desk, Building Directory, Journey Wall, Development Passport Kiosk, Elevator Call Station, and Intake Display.
+### Play / Engineering spatial separation — ACTIVE
+
+The canonical viewer now separates the finished player environment from unresolved engineering design intent:
+- **Play / Room Mode** renders the canonical building and only canonical building-resolved interactables; the conceptual electronics-fabric GLB is not treated as finished physical installation.
+- **Engineering / X-Ray Mode** is explicit and opt-in. It may expose conceptual electronics devices for inspection, but the complete cable graph is hidden by default.
+- executable labs reveal only scenario-relevant engineering connections when X-Ray is intentionally enabled.
+- placeholder device coordinates and direct graph-edge cable geometry are therefore no longer allowed to visually masquerade as a completed physical interior.
+- the electronics generator still contains design-intent placeholder coordinates for some planned assets; those remain a future spatial-authority task and must be rebound to canonical room/object anchors before becoming ordinary player-visible geometry.
+- iPad Room Mode now prioritizes rotation-rate gyroscope input with explicit screen-orientation remapping so horizontal device rotation maps to camera yaw and vertical tilt maps to camera pitch; absolute device orientation is fallback-only.
+
 ### Floor 1 visual-realism truth
 
 The current Floor 1 GLB is still a deterministic inventory-backed architectural model, not a photoreal final environment. The active preservation map explicitly says the scaffold proves geometry but is not the aesthetic target. Room Mode v2 improves surface response and lighting without changing geometry, but the remaining realism gate is still to replace schematic furniture/casework with believable forms and finish the interior material/detail pass in the canonical Floor 1 builder.
