@@ -680,18 +680,32 @@ cable_colors={
  "CAT6A-PATCH":[40,120,255,100]
 }
 def cyl_between(a,b,radius,color):
-    a=np.array(a,float); b=np.array(b,float); v=b-a; L=float(np.linalg.norm(v))
+    # Quantize the design-intent cable primitive so identical authority inputs
+    # export byte-identical GLBs across runner CPUs/BLAS implementations.
+    a=np.array([round(float(x),6) for x in a],dtype=float)
+    b=np.array([round(float(x),6) for x in b],dtype=float)
+    v=b-a
+    L=round(math.sqrt(sum(float(x)*float(x) for x in v)),9)
     if L<0.05:return None
-    z=np.array([0.,0.,1.]); direction=v/L
-    axis=np.cross(z,direction); axis_norm=np.linalg.norm(axis)
+    z=np.array([0.,0.,1.],dtype=float)
+    direction=np.array([round(float(x)/L,12) for x in v],dtype=float)
+    axis=np.cross(z,direction)
+    axis_norm=round(math.sqrt(sum(float(x)*float(x) for x in axis)),12)
     if axis_norm<1e-8:
         T=np.eye(4)
-        if np.dot(z,direction)<0: T[:3,:3]=trimesh.transformations.rotation_matrix(math.pi,[1,0,0])[:3,:3]
+        if round(float(np.dot(z,direction)),12)<0:
+            T[:3,:3]=trimesh.transformations.rotation_matrix(math.pi,[1,0,0])[:3,:3]
     else:
-        axis=axis/axis_norm; angle=math.acos(clamp(float(np.dot(z,direction)),-1,1))
+        axis=np.array([round(float(x)/axis_norm,12) for x in axis],dtype=float)
+        dot=clamp(round(float(np.dot(z,direction)),12),-1,1)
+        angle=round(math.acos(dot),12)
         T=trimesh.transformations.rotation_matrix(angle,axis)
-    T[:3,3]=(a+b)/2
-    m=trimesh.creation.cylinder(radius=radius,height=L,sections=8,transform=T)
+    T=np.round(T,12)
+    T[:3,3]=np.round((a+b)/2,6)
+    m=trimesh.creation.cylinder(radius=round(float(radius),6),height=L,sections=8,transform=T)
+    m.vertices=np.round(m.vertices,6)
+    # trimesh exports primitive metadata as GLTF extras; pin it too.
+    m.metadata={"shape":"cylinder","height":L,"radius":round(float(radius),6),"sections":8}
     m.visual.face_colors=color
     return m
 for c in connections:
