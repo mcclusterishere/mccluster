@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 from __future__ import annotations
+import os, sys
+
+# trimesh's GLB exporter traverses hash-backed scene structures. Pin the
+# interpreter hash seed before importing/building the scene so generated GLB
+# JSON ordering is reproducible across CI/local processes.
+if os.environ.get("PYTHONHASHSEED") != "0":
+    os.environ["PYTHONHASHSEED"] = "0"
+    os.execv(sys.executable, [sys.executable, *sys.argv])
+
 import hashlib,json,math
 from collections import Counter,defaultdict
 from pathlib import Path
