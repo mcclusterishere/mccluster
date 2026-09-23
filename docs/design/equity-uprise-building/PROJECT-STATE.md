@@ -685,3 +685,31 @@ Canonical files:
 - `production/asset-registry/generated/equity-uprise-asset-registry-step3b-report.json`
 
 **NEXT:** generate the first lab scenario set from causal source → system → riser → branch → endpoint traces.
+
+
+## Whole-Building Electronics / IT Fabric — STEP 4A IMPLEMENTED
+
+The current Step 3B registry now has a deterministic whole-building electronics overlay.
+
+Step 4A generates:
+- a B1 MDF/edge/core/server/security/fire-gateway design-intent stack;
+- per-floor IDF/access switching sized from modeled endpoint demand;
+- WAPs plus spare WAP Cat6A drops;
+- workstations, monitors, IP phones, MFPs, cameras, access control, intercom, BAS controllers/sensors and AV electronics;
+- logical VLANs, SSIDs and building services including DHCP, DNS, NTP, AAA/RADIUS, VPN, monitoring, VMS, BAS and AV control;
+- typed physical connection objects for copper, fiber, local AV, BAS field bus, access reader bus, fire alarm circuits and power;
+- transient Wi-Fi/cellular client profiles rather than pretending personal phones are permanent building assets;
+- a five-tier / 40-lab IT training catalog;
+- a GLB electronics/wiring overlay for later viewer integration.
+
+Important boundary:
+- this is a research-grounded **design-intent/training model**, not a construction, code, RF, fire-alarm or stamped engineering design;
+- physical diversity, exact AP placement, exact circuit sizes/capacities, IP addressing, carrier services and as-built rack/port assignments remain verification/commissioning work.
+
+Canonical Step 4A source:
+- `ELECTRONICS-IT-INFRASTRUCTURE-SPEC.md`
+- `production/electronics/electronics-population-policy-v1.json`
+- `production/electronics/build_equity_uprise_electronics_v1.py`
+- `production/electronics/verify_equity_uprise_electronics_v1.py`
+
+**NEXT:** load the generated electronics GLB/manifest into the viewer and turn the generated lab definitions into executable scenarios.

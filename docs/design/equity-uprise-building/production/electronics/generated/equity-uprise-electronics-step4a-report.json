@@ -1,0 +1,283 @@
+{
+  "schema_version": "1.0.0",
+  "status": "step4a-whole-building-electronics-fabric",
+  "registry_assets_total": 1492,
+  "step4a_new_assets": 473,
+  "step4a_new_relationships": 933,
+  "physical_connections_total": 894,
+  "wireless_links_total": 30,
+  "lab_scenarios_total": 40,
+  "new_asset_type_counts": {
+    "access_controller": 8,
+    "access_reader": 10,
+    "access_switch": 8,
+    "av_camera": 13,
+    "av_controller": 7,
+    "av_dsp": 7,
+    "av_microphone": 26,
+    "backup_appliance": 1,
+    "bas_controller": 8,
+    "camera": 18,
+    "carrier_cpe": 1,
+    "carrier_handoff": 1,
+    "carrier_handoff_reserved": 1,
+    "collapsed_core_switch": 2,
+    "edge_router": 1,
+    "environment_sensor": 29,
+    "fiber_panel": 7,
+    "fire_alarm_control_panel": 1,
+    "fire_alarm_read_only_gateway": 1,
+    "fire_detector": 28,
+    "fire_notification": 14,
+    "firewall": 2,
+    "intercom": 9,
+    "ip_phone": 16,
+    "logical_service": 15,
+    "mfp": 7,
+    "monitor": 62,
+    "nas_storage": 1,
+    "network_display_decoder": 20,
+    "patch_panel": 8,
+    "pdu": 22,
+    "rack_ups": 7,
+    "speaker": 26,
+    "ssid": 3,
+    "virtualization_host": 3,
+    "vlan": 13,
+    "vms_nvr": 1,
+    "wap_spare_jack": 15,
+    "wireless_ap": 15,
+    "workstation": 36
+  },
+  "cable_type_counts": {
+    "10G-DAC": 20,
+    "120VAC-BRANCH": 171,
+    "BACNET-MSTP-STP": 29,
+    "CAT6A-HORIZONTAL": 215,
+    "CAT6A-PATCH": 214,
+    "CAT6A-WAP-SPARE": 15,
+    "DISPLAYPORT": 62,
+    "FIRE-ALARM-NAC": 14,
+    "FIRE-ALARM-SLC": 28,
+    "HDMI": 20,
+    "IEC-POWER": 54,
+    "OS2-SM-DUPLEX": 16,
+    "OSDP-RS485-STP": 10,
+    "SPEAKER-PAIR": 26
+  },
+  "new_assets_by_level": {
+    "B1": 74,
+    "BUILDING": 31,
+    "F1": 52,
+    "F2": 45,
+    "F3": 51,
+    "F4": 75,
+    "F5": 68,
+    "F6": 65,
+    "L7": 12
+  },
+  "transient_client_profiles": [
+    {
+      "level_id": "B1",
+      "level_number": 0,
+      "tablets_building_owned": 2,
+      "estimated_concurrent_mobile_clients": 10,
+      "connection_modes": [
+        "WIFI-6E-RF",
+        "CELLULAR-RF"
+      ],
+      "status": "training_load_profile_not_fixed_asset"
+    },
+    {
+      "level_id": "F1",
+      "level_number": 1,
+      "tablets_building_owned": 4,
+      "estimated_concurrent_mobile_clients": 25,
+      "connection_modes": [
+        "WIFI-6E-RF",
+        "CELLULAR-RF"
+      ],
+      "status": "training_load_profile_not_fixed_asset"
+    },
+    {
+      "level_id": "F2",
+      "level_number": 2,
+      "tablets_building_owned": 4,
+      "estimated_concurrent_mobile_clients": 30,
+      "connection_modes": [
+        "WIFI-6E-RF",
+        "CELLULAR-RF"
+      ],
+      "status": "training_load_profile_not_fixed_asset"
+    },
+    {
+      "level_id": "F3",
+      "level_number": 3,
+      "tablets_building_owned": 4,
+      "estimated_concurrent_mobile_clients": 30,
+      "connection_modes": [
+        "WIFI-6E-RF",
+        "CELLULAR-RF"
+      ],
+      "status": "training_load_profile_not_fixed_asset"
+    },
+    {
+      "level_id": "F4",
+      "level_number": 4,
+      "tablets_building_owned": 6,
+      "estimated_concurrent_mobile_clients": 20,
+      "connection_modes": [
+        "WIFI-6E-RF",
+        "CELLULAR-RF"
+      ],
+      "status": "training_load_profile_not_fixed_asset"
+    },
+    {
+      "level_id": "F5",
+      "level_number": 5,
+      "tablets_building_owned": 6,
+      "estimated_concurrent_mobile_clients": 20,
+      "connection_modes": [
+        "WIFI-6E-RF",
+        "CELLULAR-RF"
+      ],
+      "status": "training_load_profile_not_fixed_asset"
+    },
+    {
+      "level_id": "F6",
+      "level_number": 6,
+      "tablets_building_owned": 4,
+      "estimated_concurrent_mobile_clients": 15,
+      "connection_modes": [
+        "WIFI-6E-RF",
+        "CELLULAR-RF"
+      ],
+      "status": "training_load_profile_not_fixed_asset"
+    },
+    {
+      "level_id": "L7",
+      "level_number": 7,
+      "tablets_building_owned": 2,
+      "estimated_concurrent_mobile_clients": 10,
+      "connection_modes": [
+        "WIFI-6E-RF",
+        "CELLULAR-RF"
+      ],
+      "status": "training_load_profile_not_fixed_asset"
+    }
+  ],
+  "overlay_glb_bytes": 628460,
+  "overlay_glb_sha256": "3198589c7a8137f8ddc3a9f0fcfafdb008f011149369885b4e17e3393613f8a5",
+  "checks_total": 15,
+  "checks_passed": 15,
+  "checks_failed": 0,
+  "checks": [
+    {
+      "name": "new asset IDs unique",
+      "passed": true,
+      "detail": 473
+    },
+    {
+      "name": "all physical connection endpoints exist",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "approved cable types only",
+      "passed": true,
+      "detail": [
+        "10G-DAC",
+        "120VAC-BRANCH",
+        "BACNET-MSTP-STP",
+        "CAT6A-HORIZONTAL",
+        "CAT6A-PATCH",
+        "CAT6A-WAP-SPARE",
+        "DISPLAYPORT",
+        "FIRE-ALARM-NAC",
+        "FIRE-ALARM-SLC",
+        "HDMI",
+        "IEC-POWER",
+        "OS2-SM-DUPLEX",
+        "OSDP-RS485-STP",
+        "SPEAKER-PAIR"
+      ]
+    },
+    {
+      "name": "all active WAPs have one horizontal data link",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all WAPs have spare jack assets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all access switches have two core uplinks",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fire-alarm field devices are not direct LAN endpoints",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "BAS sensors use field bus",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "access readers use OSDP",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "logical services are non-physical",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "LIVE control remains disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all eight levels represented in electronics population",
+      "passed": true,
+      "detail": [
+        "B1",
+        "BUILDING",
+        "F1",
+        "F2",
+        "F3",
+        "F4",
+        "F5",
+        "F6",
+        "L7"
+      ]
+    },
+    {
+      "name": "lab ladder spans five tiers",
+      "passed": true,
+      "detail": [
+        "ADMIN",
+        "ADVANCED",
+        "EXPERT",
+        "FOUNDATION",
+        "TECHNICIAN"
+      ]
+    },
+    {
+      "name": "at least forty IT labs generated",
+      "passed": true,
+      "detail": 40
+    },
+    {
+      "name": "overlay GLB generated",
+      "passed": true,
+      "detail": 628460
+    }
+  ],
+  "passed": true
+}

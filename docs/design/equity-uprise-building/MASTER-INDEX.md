@@ -224,3 +224,21 @@ Step 3A materializes B1 source→service→riser relationships and all declared 
 - `production/asset-registry/generated/equity-uprise-asset-registry-step3b-report.json`
 
 Step 3B consumes the deterministic services branch topology after the services build and links verified canonical endpoints into the same registry while preserving semantic-only branches for lab traceability.
+
+
+## Electronics / IT infrastructure
+
+Canonical Step 4A authority/source:
+- `ELECTRONICS-IT-INFRASTRUCTURE-SPEC.md`
+- `production/electronics/electronics-population-policy-v1.json`
+- `production/electronics/build_equity_uprise_electronics_v1.py`
+- `production/electronics/verify_equity_uprise_electronics_v1.py`
+
+Generated electronics artifacts:
+- `production/electronics/generated/equity-uprise-electronics-manifest-v1.json`
+- `production/electronics/generated/equity-uprise-electronics-connections-v1.json`
+- `production/electronics/generated/equity-uprise-it-lab-catalog-v1.json`
+- `production/electronics/generated/equity-uprise-electronics-step4a-report.json`
+- `production/electronics/generated/equity-uprise-electronics-fabric-v1.glb`
+
+The electronics layer extends, rather than replaces, the Digital-to-Physical Asset Registry and Step 3A/3B causal graph.
