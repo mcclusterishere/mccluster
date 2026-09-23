@@ -571,7 +571,9 @@
   "training_binding_policy": {
     "rule": "Any external training or credential concept represented on Floor 1 must bind to the actual physical/systems concepts it teaches where spatial simulation is meaningful.",
     "credential_is_not_competency": true,
-    "evidence_policy_ref": "../../equity-uprise-development/EVIDENCE-ASSESSMENT-ARCHITECTURE.md"
+    "evidence_policy_ref": "../../equity-uprise-development/EVIDENCE-ASSESSMENT-ARCHITECTURE.md",
+    "federal_catalog_required": true,
+    "live_control_from_training": false
   },
   "code_reference_profile_ref": "../../SIMULATION-CODE-REFERENCE-PROFILE.md",
   "site_egress_ref": "floor-01-site-egress.json",
@@ -654,5 +656,56 @@
       "destination": "sandboxed B1/tunnel clone",
       "live_systems": false
     }
+  },
+  "federal_training_catalog_ref": "../../../equity-uprise-development/FEDERAL-TRAINING-CATALOG.json",
+  "federal_training_bindings_ref": "../../../equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json",
+  "federal_training_scenario_bindings": {
+    "basic_evacuation": [
+      "FEMA-IS-100-C",
+      "FEMA-IS-120-C",
+      "FEMA-IS-235-C",
+      "CDC-EHTER-AWARENESS"
+    ],
+    "blocked_stair_a": [
+      "FEMA-IS-120-C",
+      "FEMA-IS-130-A",
+      "FEMA-IS-235-C"
+    ],
+    "passenger_elevator_outage": [
+      "FEMA-IS-235-C"
+    ],
+    "power_interruption": [
+      "FEMA-IS-120-C",
+      "FEMA-IS-235-C",
+      "CISA-ICS-300",
+      "CISA-ICS-401",
+      "DOE-FEMP-TRAINING-CATALOG",
+      "CDC-EHTER-AWARENESS"
+    ],
+    "medical_incident_lobby": [
+      "FEMA-IS-200-C"
+    ],
+    "privacy_error_intake": [
+      "IRS-VITA-VSC-2025",
+      "IRS-VITA-IIQR-2025",
+      "HHS-OHRP-HRPF",
+      "HHS-OHRP-PCIC"
+    ],
+    "public_service_surge": [
+      "IRS-VITA-BASIC-2025",
+      "IRS-VITA-ADVANCED-2025",
+      "FEMA-IS-238"
+    ],
+    "network_checkin_outage": [
+      "CISA-ICS-300",
+      "CISA-ICS-401"
+    ],
+    "service_area_incident": [
+      "FEMA-IS-100-C",
+      "FEMA-IS-200-C",
+      "FEMA-IS-238",
+      "CDC-EHTER-AWARENESS",
+      "ATSDR-PHAT"
+    ]
   }
 }
