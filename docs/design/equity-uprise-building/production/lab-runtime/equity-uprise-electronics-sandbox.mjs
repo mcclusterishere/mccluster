@@ -246,6 +246,46 @@ export class ElectronicsSandbox {
       };
     }
 
+    const levelType = /^level:(B1|F[1-6]|L7):type:(.+)$/.exec(selector);
+    if (levelType) {
+      const [, levelId, assetType] = levelType;
+      const ids = (this.assetIdsByType.get(assetType) || []).filter((id) => {
+        const asset = this.assetsById.get(id);
+        return asset && asset.location && asset.location.level_id === levelId;
+      }).sort();
+      return {
+        selector,
+        kind: "level_asset_type",
+        resolved: ids.length > 0,
+        asset_ids: ids,
+        connection_ids: [],
+        catalog_ids: [],
+        level_id: levelId,
+      };
+    }
+
+    const levelCable = /^level:(B1|F[1-6]|L7):cable:(.+)$/.exec(selector);
+    if (levelCable) {
+      const [, levelId, cableType] = levelCable;
+      const onLevel = (assetId) => {
+        const asset = this.assetsById.get(assetId);
+        return asset && asset.location && asset.location.level_id === levelId;
+      };
+      const ids = (this.connectionIdsByCableType.get(cableType) || []).filter((id) => {
+        const connection = this.connectionsById.get(id);
+        return connection && (onLevel(connection.from_asset_id) || onLevel(connection.to_asset_id));
+      }).sort();
+      return {
+        selector,
+        kind: "level_cable_type",
+        resolved: ids.length > 0,
+        asset_ids: [],
+        connection_ids: ids,
+        catalog_ids: [],
+        level_id: levelId,
+      };
+    }
+
     if (this.assetsById.has(selector)) {
       return {
         selector,
