@@ -498,3 +498,29 @@ Every scenario remains simulation-only and carries direct canonical competency I
 Generated roof electronics use the `L7-` prefix. Spatial binding therefore explicitly recognizes both canonical `F7-` scene anchors and generated `L7-` electronics IDs as Level 7; no fallback coordinates are introduced.
 
 Boundary: Step 9 adds no live device control, no construction/as-built claims, and no automatic human competency awards. Cross-floor traces remain scenario-scoped rather than exposing the complete cable graph.
+
+## Step 10 — Floor-Native Curriculum Depth
+
+Step 10 scales distributed labs from proof-of-distribution into a reusable floor curriculum.
+
+Implemented:
+- distributed scenarios are addressed by stable `scenario_id` rather than assuming one scenario per `source_lab_id`;
+- the same canonical Step 4A skill may now be reused on multiple floors while preserving source-lab provenance;
+- legacy source-lab lookup remains valid only when exactly one distributed scenario uses that source lab; ambiguous source-lab lookup fails closed;
+- the distributed pack now contains **26 scenarios**: **24 floor-native labs (3 each on B1, F1–F6, and L7)** plus **2 cross-floor incidents**;
+- every floor-native scenario declares `home_floor`, `program_context`, `viewer_focus`, `floor_scope`, canonical target selectors, competency IDs, and SANDBOX-only execution;
+- canonical federal-training IDs are copied into distributed scenarios only when `FEDERAL-TRAINING-BINDINGS.json` already binds that source lab;
+- viewer selection uses scenario IDs, displays each lab's home floor, auto-focuses the relevant floor/stack, and preserves Engineering/X-Ray presentation;
+- verification executes every distributed scenario end-to-end, requires at least three labs per level, validates competency/federal bindings, and rejects arbitrary selection when a reused source lab is ambiguous.
+
+Current floor-native technical coverage:
+- **B1:** IDF power, patch-panel trace, virtualization-host failure;
+- **F1:** check-in workstation link, intake Wi-Fi PoE, access-reader bus;
+- **F2:** public-forum AV multicast, AP offline, RF attenuation;
+- **F3:** voice VLAN, Layer-2 loop, RADIUS authentication;
+- **F4:** media AV QoS, uplink failover, media-archive NAS failure;
+- **F5:** workstation VLAN, whole-floor switch failure, Cat6A certification;
+- **F6:** camera/VMS loss, fiber polarity, OTDR fault location;
+- **L7:** BAS controller outage, BACnet field-bus fault, roof AP offline.
+
+Boundary: these exercises remain training simulations. They do not certify real cabling, RF coverage, BAS commissioning, aviation readiness, or live operational authority.
