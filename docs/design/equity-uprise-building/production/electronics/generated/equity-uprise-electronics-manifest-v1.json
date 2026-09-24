@@ -1462,6 +1462,9 @@
     "FILE-SHARE",
     "BACKUP-SERVICE"
   ],
+  "device_archetype_authority": "docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
+  "device_component_catalog": "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-device-components-v1.json",
+  "step4c_componentized_devices_total": 18,
   "overlay_glb": "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb",
-  "overlay_sha256": "50d2a955c6a93b137645a8275127eb3d350876539e6401c6b81f5d81a7dd7633"
+  "overlay_sha256": "a210e8bc062701691ecaec848382727c50730d7c19c8570cb4ccd9d45cf66876"
 }

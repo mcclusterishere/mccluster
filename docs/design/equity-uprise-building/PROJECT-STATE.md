@@ -780,6 +780,46 @@ Truth boundary:
 
 Derived Step 4B artifacts are published through the repository's deterministic generated-output workflow; a source-only green build is not considered demo-ready until that generated snapshot is committed and freshness CI is green. Freshness revalidation must run again on the bot-published snapshot before merge.
 
+### Step 4C componentized working devices — CAMERA TYPE ACTIVE
+
+Step 4B proved where devices live and how they are physically wired. Step 4C raises the device-realism standard: **a registry node or generic primitive is not considered a finished device model.**
+
+A Step 4C-complete device type must provide all of the following on the same canonical asset:
+- recognizable device-specific geometry rather than a generic box/dot/cylinder;
+- separately modeled functional components where a learner would realistically inspect them;
+- explicit physical ports/connectors that agree with the Step 4B connection graph;
+- visible operational state driven by the sandbox/runtime;
+- inspectable wiring/termination path;
+- at least one lab behavior that changes the visible/functional device state;
+- component and behavior metadata consumable by the canonical viewer.
+
+The first completed archetype is the **PoE IP security camera**. Each generated security camera is now decomposed into:
+- mount plate;
+- bracket arm;
+- camera housing;
+- lens barrel;
+- lens glass;
+- IR illuminator ring;
+- status LED;
+- RJ45/PoE port;
+- cable-entry point.
+
+Camera behavior is tied to the same physical asset used by the labs. The viewer can inspect the camera assembly, list its modeled parts, trace its actual Cat6A/PoE path, expose a training field-of-view frustum, and show video/status behavior from the runtime state. A link/power fault therefore changes the modeled camera itself rather than relying on a separate red-dot indicator.
+
+Canonical Step 4C authority/source:
+- `production/electronics/device-archetypes-v1.json`;
+- `production/electronics/build_equity_uprise_electronics_v1.py`;
+- `production/electronics/generated/equity-uprise-device-components-v1.json`;
+- canonical viewer: `equity-uprise-building-core-v2-3d.html`.
+
+Current archetype maturity:
+- security camera — **lab_complete**;
+- AV camera — componentized next;
+- wireless AP, workstation, monitor, IP phone, MFP, electrical panel, environmental sensor, access reader, intercom — recognizable/current placeholders awaiting Step 4C promotion;
+- switches, patch panels and rack equipment — physical/wired but still schematic, awaiting port-face/rack-level modeling.
+
+**OCTOBER 7 DEVICE-REALISM GATE:** prioritize device types directly visible in the CfAL demo path: camera → wireless AP → workstation/monitor → IP phone → printer/MFP → switch/patch panel → electrical panel/receptacle → BAS/environment sensor → AV equipment. Each type must graduate through the same component/port/state/lab contract rather than receiving one-off cosmetic geometry.
+
 ## Federal Training Catalog — V1 IMPLEMENTED
 
 The repository now has one canonical, issuer-grounded federal training layer instead of mixing exact FEMA IDs with unresolved agency names.

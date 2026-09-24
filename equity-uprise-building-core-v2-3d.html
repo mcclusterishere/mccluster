@@ -1,20 +1,22 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-store"><meta name="equity-uprise-build" content="__STAMP__"><title>Equity Uprise — Working Building Stack</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101214;color:#fff;font-family:Inter,system-ui,sans-serif}#app{position:fixed;inset:0}.hud{position:fixed;z-index:5;left:12px;top:12px;max-width:min(660px,calc(100vw - 24px));background:#0b0d10df;border:1px solid #444;border-radius:14px;padding:12px}.hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#ccc;margin:0 0 8px}.c{display:flex;gap:5px;flex-wrap:wrap}button{border:1px solid #555;border-radius:999px;background:#232629;color:#fff;padding:6px 9px;font:700 10px system-ui}button.active{background:#851a1d}.solar{margin-top:8px;font-size:10px;color:#d6dde4}.plantlegend{display:none;margin-top:8px;padding-top:8px;border-top:1px solid #394047;font-size:9px;color:#d8e0e6}.plantlegend.on{display:flex;gap:5px 10px;flex-wrap:wrap}.plantkey{display:flex;align-items:center;gap:4px}.plantkey i{display:inline-block;width:16px;height:3px;border-radius:3px}.s{position:fixed;right:12px;bottom:12px;background:#0b0d10df;border:1px solid #444;border-radius:10px;padding:8px 10px;font-size:10px}.labpanel{position:fixed;z-index:6;right:12px;top:12px;width:min(390px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;background:#080a0def;border:1px solid #555;border-radius:14px;padding:12px;box-sizing:border-box}.labpanel[hidden]{display:none}.labpanel h2{font-size:13px;margin:0 0 8px}.labgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.labpanel select,.labpanel input{width:100%;box-sizing:border-box;background:#171a1d;color:#fff;border:1px solid #555;border-radius:8px;padding:6px;font:11px system-ui}.labrow{margin-top:8px;padding-top:8px;border-top:1px solid #333;font-size:10px;color:#d6dde4}.labrow strong{color:#fff}.labtasks{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.labtasks button{border-radius:8px;text-align:left}.labmsg{white-space:pre-wrap;word-break:break-word;color:#bfc8d0}.labwarn{color:#ffcc80}.labok{color:#9fe0b5}.ticketcard{margin-top:9px;padding:11px;border:1px solid #3d4650;border-radius:12px;background:#11161be8}.ticketeyebrow{font:800 9px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#9fb0bf}.tickettitle{font:800 15px/1.2 system-ui;margin-top:3px}.ticketreport{font:11px/1.45 system-ui;color:#eef3f7;margin-top:7px}.ticketknown{font:10px/1.45 system-ui;color:#c6d0d8;margin-top:7px}.diagloop{display:flex;gap:4px;flex-wrap:wrap}.diagstep{border:1px solid #3f4851;border-radius:999px;padding:4px 7px;font:800 9px system-ui;opacity:.5}.diagstep.done{opacity:.78}.diagstep.now{opacity:1;border-color:#c8d4de;background:#29333c}.choicegrid{display:grid;grid-template-columns:1fr;gap:5px;margin-top:7px}.choicegrid button{white-space:normal}.labtech{margin-top:9px;border-top:1px solid #333;padding-top:8px;font:10px system-ui;color:#adb9c3}.labtech summary{cursor:pointer;font-weight:800;color:#dbe4eb}.labtech .labrow{font-size:9px}.labsystem{display:flex;justify-content:space-between;gap:8px}.labsystem span:last-child{font-weight:800}.reinforce{margin-top:7px;padding:7px;border:1px dashed #52606b;border-radius:8px}.reinforce a{color:inherit;font-weight:800}@media(max-width:760px){.labpanel{top:auto;bottom:12px;max-height:48vh}.hud{max-width:calc(100vw - 24px)}}
-.roomhud{position:fixed;z-index:9;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(720px,calc(100vw - 24px));box-sizing:border-box;background:#080a0de8;border:1px solid #555;border-radius:16px;padding:10px 12px;backdrop-filter:blur(12px)}.roomhud[hidden]{display:none}.roomtop{display:flex;justify-content:space-between;gap:10px;align-items:center}.roomtitle{font:800 11px system-ui}.roomnote{margin-top:4px;font:10px system-ui;color:#cbd4dc}.roomcontrols{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.roomselection{margin-top:7px;padding-top:7px;border-top:1px solid #333;font:10px system-ui;color:#dce4eb}.roomreticle{position:fixed;z-index:8;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none}.roomreticle[hidden]{display:none}.roomreticle:before,.roomreticle:after{content:"";position:absolute;background:#fff9;box-shadow:0 0 8px #000}.roomreticle:before{width:18px;height:1px;left:0;top:8px}.roomreticle:after{width:1px;height:18px;left:8px;top:0}.room-active>.hud{display:none}.room-active>.s{opacity:.3}.room-active canvas{touch-action:none}
+.devicehud{position:fixed;z-index:8;right:12px;bottom:12px;width:min(360px,calc(100vw - 24px));max-height:50vh;overflow:auto;background:#080a0def;border:1px solid #58616b;border-radius:14px;padding:12px;box-sizing:border-box;backdrop-filter:blur(12px)}.devicehud[hidden]{display:none}.devicehud h3{font:800 13px system-ui;margin:0 0 4px}.devicekind{font:800 9px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#9fb0bf}.devicestatus{margin-top:7px;padding:7px;border:1px solid #35404a;border-radius:9px;font:10px/1.4 system-ui}.devicerow{display:flex;justify-content:space-between;gap:10px;margin-top:5px;font:10px system-ui}.devicerow span:first-child{color:#aeb9c2}.deviceparts{margin-top:8px;padding-top:8px;border-top:1px solid #333;font:9px/1.5 system-ui;color:#cbd5dc}.deviceactions{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.devicefeed{position:relative;margin-top:8px;height:120px;border-radius:9px;border:1px solid #343d46;background:linear-gradient(135deg,#17232b,#080b0d);overflow:hidden;font:800 10px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#9fe0b5}.devicefeed canvas{width:100%;height:100%;display:block}.devicefeedlabel{position:absolute;left:7px;bottom:6px;padding:3px 5px;border-radius:5px;background:#000a;color:inherit;pointer-events:none}.devicefeed.offline{color:#ff9c9c;background:linear-gradient(135deg,#271717,#090909)}.devicefeed.offline canvas{opacity:.08;filter:grayscale(1) contrast(.7)}.devicefeed.degraded{color:#ffd28a}.devicecomponent{display:inline-block;margin:2px 4px 2px 0;padding:2px 5px;border-radius:999px;border:1px solid #47525c}.roomhud{position:fixed;z-index:9;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(720px,calc(100vw - 24px));box-sizing:border-box;background:#080a0de8;border:1px solid #555;border-radius:16px;padding:10px 12px;backdrop-filter:blur(12px)}.roomhud[hidden]{display:none}.roomtop{display:flex;justify-content:space-between;gap:10px;align-items:center}.roomtitle{font:800 11px system-ui}.roomnote{margin-top:4px;font:10px system-ui;color:#cbd4dc}.roomcontrols{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.roomselection{margin-top:7px;padding-top:7px;border-top:1px solid #333;font:10px system-ui;color:#dce4eb}.roomreticle{position:fixed;z-index:8;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none}.roomreticle[hidden]{display:none}.roomreticle:before,.roomreticle:after{content:"";position:absolute;background:#fff9;box-shadow:0 0 8px #000}.roomreticle:before{width:18px;height:1px;left:0;top:8px}.roomreticle:after{width:1px;height:18px;left:8px;top:0}.room-active>.hud{display:none}.room-active>.s{opacity:.3}.room-active canvas{touch-action:none}
 </style>  <script src="js/live-content.js?v=__STAMP__"></script>
-</head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now with the detailed architectural facade active. Tap a floor to isolate it, Facade to inspect the shell, or expose the building-services nervous system. B1 and F1–F7 remain physically continuous through both protected stairs.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="facade">Facade</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button data-v="south">South</button><button data-v="east">East</button><button data-v="north">North</button><button data-v="west">West</button><button data-v="entry">Entry</button><button data-v="crown">Crown</button><button id="xray">X-Ray: Off</button><button id="plant">Physical Plant: Off</button><button id="cabling">Cabling: Off</button><button id="services">Services: Off</button><button id="sunmode">Sun: Auto</button><button id="wire">Wireframe</button><button id="labs">Work Tickets</button><button id="roommode">Room Mode</button></div><div class="solar" id="serviceStatus">Services layer · hidden</div><div class="plantlegend" id="plantLegend"><span class="plantkey"><i style="background:rgb(40,120,255)"></i>Cat6A data / PoE</span><span class="plantkey"><i style="background:rgb(220,80,255)"></i>OS2 fiber</span><span class="plantkey"><i style="background:rgb(255,220,60)"></i>208Y/120V feeder</span><span class="plantkey"><i style="background:rgb(255,210,50)"></i>120V branch / equipment power</span><span class="plantkey"><i style="background:rgb(40,220,80)"></i>BACnet MS/TP</span><span class="plantkey"><i style="background:rgb(255,145,40)"></i>24V Class 2 / OSDP</span><span class="plantkey"><i style="background:rgb(255,40,40)"></i>Fire alarm</span><span class="plantkey"><i style="background:rgb(80,220,220)"></i>Speaker</span></div><div class="solar" id="solarStatus">Solar environment · syncing to device clock…</div></div><div class="labpanel" id="labPanel" hidden><h2>DIAGNOSTIC SANDBOX · TRAINING ONLY</h2><div class="labgrid"><select id="labSelect" aria-label="Support ticket"></select><select id="labDifficulty" aria-label="Difficulty"></select></div><div class="labtasks"><button id="labStart">Accept Ticket</button><button id="labReset">Restart</button><button id="labHint">Ask for a hint</button><button id="labComplete">Close Ticket</button></div><div class="ticketcard"><div class="ticketeyebrow" id="labRole">Choose a support ticket</div><div class="tickettitle" id="labTicket">A building user needs help.</div><div class="ticketreport" id="labReport">Start from the symptom, not the answer.</div><div class="ticketknown" id="labKnown"></div></div><div class="labrow diagloop" id="labLoop"></div><div class="labrow" id="labGuidance"></div><div class="labrow"><strong>What can you do next?</strong><div class="labtasks" id="labActions"></div><div class="choicegrid" id="labChoices"></div></div><div class="labrow" id="labSystems"></div><div class="labrow labmsg" id="labMessage">Training simulation only · observe → hypothesize → test → fix → verify.</div><details class="labtech" id="labTechnical"><summary>Instructor / technical details</summary><div class="labrow" id="labScenario">Choose a lab.</div><div class="labrow" id="labAssessment"></div><div class="labrow"><input id="labInput" aria-label="Action JSON input" placeholder='Advanced action input JSON, e.g. {"finding":"..."}'></div><div class="labtasks"><button id="labEvidence">Attach Evidence</button></div></details></div><div class="roomhud" id="roomHud" hidden><div class="roomtop"><div class="roomtitle" id="roomTitle">ROOM MODE · FLOOR 1</div><button id="roomExit">Exit Room</button></div><div class="roomnote" id="roomMessage">Center-room view. Drag to look or enable device motion.</div><div class="roomcontrols"><button id="roomMotion">Enable Motion</button><button id="roomRecenter">Recenter</button><button id="roomBack" disabled>Step Back</button><button id="roomInspect" disabled>Inspect</button></div><div class="roomselection" id="roomSelection">Look around and tap a highlighted object.</div></div><div class="roomreticle" id="roomReticle" hidden></div><div class="s" id="status">Loading working stack…</div>
+</head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now with the detailed architectural facade active. Tap a floor to isolate it, Facade to inspect the shell, or expose the building-services nervous system. B1 and F1–F7 remain physically continuous through both protected stairs.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="facade">Facade</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button data-v="south">South</button><button data-v="east">East</button><button data-v="north">North</button><button data-v="west">West</button><button data-v="entry">Entry</button><button data-v="crown">Crown</button><button id="xray">X-Ray: Off</button><button id="plant">Physical Plant: Off</button><button id="cabling">Cabling: Off</button><button id="services">Services: Off</button><button id="sunmode">Sun: Auto</button><button id="wire">Wireframe</button><button id="labs">Work Tickets</button><button id="roommode">Room Mode</button></div><div class="solar" id="serviceStatus">Services layer · hidden</div><div class="plantlegend" id="plantLegend"><span class="plantkey"><i style="background:rgb(40,120,255)"></i>Cat6A data / PoE</span><span class="plantkey"><i style="background:rgb(220,80,255)"></i>OS2 fiber</span><span class="plantkey"><i style="background:rgb(255,220,60)"></i>208Y/120V feeder</span><span class="plantkey"><i style="background:rgb(255,210,50)"></i>120V branch / equipment power</span><span class="plantkey"><i style="background:rgb(40,220,80)"></i>BACnet MS/TP</span><span class="plantkey"><i style="background:rgb(255,145,40)"></i>24V Class 2 / OSDP</span><span class="plantkey"><i style="background:rgb(255,40,40)"></i>Fire alarm</span><span class="plantkey"><i style="background:rgb(80,220,220)"></i>Speaker</span></div><div class="solar" id="solarStatus">Solar environment · syncing to device clock…</div></div><div class="labpanel" id="labPanel" hidden><h2>DIAGNOSTIC SANDBOX · TRAINING ONLY</h2><div class="labgrid"><select id="labSelect" aria-label="Support ticket"></select><select id="labDifficulty" aria-label="Difficulty"></select></div><div class="labtasks"><button id="labStart">Accept Ticket</button><button id="labReset">Restart</button><button id="labHint">Ask for a hint</button><button id="labComplete">Close Ticket</button></div><div class="ticketcard"><div class="ticketeyebrow" id="labRole">Choose a support ticket</div><div class="tickettitle" id="labTicket">A building user needs help.</div><div class="ticketreport" id="labReport">Start from the symptom, not the answer.</div><div class="ticketknown" id="labKnown"></div></div><div class="labrow diagloop" id="labLoop"></div><div class="labrow" id="labGuidance"></div><div class="labrow"><strong>What can you do next?</strong><div class="labtasks" id="labActions"></div><div class="choicegrid" id="labChoices"></div></div><div class="labrow" id="labSystems"></div><div class="labrow labmsg" id="labMessage">Training simulation only · observe → hypothesize → test → fix → verify.</div><details class="labtech" id="labTechnical"><summary>Instructor / technical details</summary><div class="labrow" id="labScenario">Choose a lab.</div><div class="labrow" id="labAssessment"></div><div class="labrow"><input id="labInput" aria-label="Action JSON input" placeholder='Advanced action input JSON, e.g. {"finding":"..."}'></div><div class="labtasks"><button id="labEvidence">Attach Evidence</button></div></details></div><div class="devicehud" id="deviceHud" hidden><div class="devicekind" id="deviceKind">Physical device</div><h3 id="deviceTitle">Device</h3><div class="devicestatus" id="deviceStatus">Select a modeled device.</div><div id="deviceDetails"></div><div class="devicefeed" id="deviceFeed" hidden><canvas id="deviceFeedCanvas" width="320" height="180"></canvas><span class="devicefeedlabel" id="deviceFeedLabel">VIDEO STREAM · ONLINE</span></div><div class="deviceparts" id="deviceParts"></div><div class="deviceactions"><button id="deviceFov" hidden>Show camera coverage</button><button id="deviceClose">Close</button></div></div><div class="roomhud" id="roomHud" hidden><div class="roomtop"><div class="roomtitle" id="roomTitle">ROOM MODE · FLOOR 1</div><button id="roomExit">Exit Room</button></div><div class="roomnote" id="roomMessage">Center-room view. Drag to look or enable device motion.</div><div class="roomcontrols"><button id="roomMotion">Enable Motion</button><button id="roomRecenter">Recenter</button><button id="roomBack" disabled>Step Back</button><button id="roomInspect" disabled>Inspect</button></div><div class="roomselection" id="roomSelection">Look around and tap a highlighted object.</div></div><div class="roomreticle" id="roomReticle" hidden></div><div class="s" id="status">Loading working stack…</div>
 <script type="module">
 import * as THREE from'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';import{GLTFLoader}from'three/addons/loaders/GLTFLoader.js';import{RoomEnvironment}from'three/addons/environments/RoomEnvironment.js';
-const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status'),solarStatus=document.getElementById('solarStatus'),serviceStatus=document.getElementById('serviceStatus'),plantLegend=document.getElementById('plantLegend');const scene=new THREE.Scene();scene.background=new THREE.Color(0xb9c6cf);scene.fog=new THREE.Fog(0xb9c6cf,ft(120),ft(260));
+const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status'),solarStatus=document.getElementById('solarStatus'),serviceStatus=document.getElementById('serviceStatus'),plantLegend=document.getElementById('plantLegend'),deviceHud=document.getElementById('deviceHud'),deviceKind=document.getElementById('deviceKind'),deviceTitle=document.getElementById('deviceTitle'),deviceStatus=document.getElementById('deviceStatus'),deviceDetails=document.getElementById('deviceDetails'),deviceFeed=document.getElementById('deviceFeed'),deviceFeedCanvas=document.getElementById('deviceFeedCanvas'),deviceFeedLabel=document.getElementById('deviceFeedLabel'),deviceParts=document.getElementById('deviceParts'),deviceFovButton=document.getElementById('deviceFov');const scene=new THREE.Scene();scene.background=new THREE.Color(0xb9c6cf);scene.fog=new THREE.Fog(0xb9c6cf,ft(120),ft(260));
 const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;app.appendChild(ren.domElement);const pmrem=new THREE.PMREMGenerator(ren);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);
 const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;const sunTarget=new THREE.Object3D();sunTarget.position.set(ft(36),ft(42),ft(-36));scene.add(sunTarget);dl.target=sunTarget;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
 const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,loaded=0,solarMode='auto',servicesOn=false,engineeringMode=false,plantMode=false,cablingMode=false,currentFocus='stack';
 let resolveBuildingLoaded=null;const buildingLoaded=new Promise(resolve=>{resolveBuildingLoaded=resolve});
 const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
 const engineeringOverlay=new THREE.Group();engineeringOverlay.name='ENGINEERING-XRAY-OVERLAY';engineeringOverlay.visible=false;scene.add(engineeringOverlay);
+const deviceOverlay=new THREE.Group();deviceOverlay.name='DEVICE-INTERACTION-OVERLAY';scene.add(deviceOverlay);
 let engineeringRequestId=0;
 let labModule=null,labDatasets=null,labController=null,labView=null,labElectronicsPromise=null,labPickingIds=[],labLastResult=null,electronicsSpatialModule=null,electronicsBoundCount=0,electronicsUnboundCount=0;const labStyledMeshes=new Map(),electronicsBoundWorld=new Map();
+let deviceCatalog=null,deviceCatalogPromise=null,deviceConnections=null,inspectedDeviceId=null,deviceFovVisible=false,deviceFeedRenderer=null,deviceFeedCamera=null,deviceFeedLastRender=0;const deviceRecordById=new Map();
 let roomMode=false,roomMotionActive=false,roomTweening=false,roomSelectedId=null,roomSensorZero=null,roomSensorOffset=new THREE.Quaternion(),roomLastRawQuaternion=null,roomBaseQuaternion=new THREE.Quaternion(),roomManualYaw=0,roomManualPitch=0,roomPrevFocus='stack',roomPrevServices=false,roomPrevWire=false,roomSensorMode='none',roomOrientationEvents=0,roomMotionEvents=0,roomMotionEnabledAt=0,roomLastMotionAt=0,roomLastMotionStamp=0;const roomStyledMeshes=new Map(),roomPbrOriginals=new Map();const roomLightRig=new THREE.Group();roomLightRig.name='ROOM-MODE-V1-LIGHT-RIG';roomLightRig.visible=false;scene.add(roomLightRig);
 let resolveLabVisualRootsReady=null,labVisualRootsError=null,labVisualRootMask=0;
 const labVisualRootsReady=new Promise(resolve=>{resolveLabVisualRootsReady=resolve});
@@ -258,6 +260,24 @@ const labRaycaster=new THREE.Raycaster(),labPointer=new THREE.Vector2();
 const LAB_MODULE_URL='/equity-uprise-preview/lab-runtime/equity-uprise-viewer-lab-integration.mjs?v=__STAMP__';
 const ELECTRONICS_SPATIAL_MODULE_URL='/equity-uprise-preview/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs?v=__STAMP__';
 async function ensureElectronicsSpatialModule(){if(!electronicsSpatialModule)electronicsSpatialModule=await import(ELECTRONICS_SPATIAL_MODULE_URL);return electronicsSpatialModule}
+async function ensureDeviceCatalog(){
+ if(deviceCatalog)return deviceCatalog;
+ if(!deviceCatalogPromise)deviceCatalogPromise=Promise.all([
+   fetch('/equity-uprise-preview/equity-uprise-device-components-v1.json?v=__STAMP__').then(r=>{if(!r.ok)throw new Error('device component catalog '+r.status);return r.json()}),
+   fetch('/equity-uprise-preview/equity-uprise-electronics-connections-v1.json?v=__STAMP__').then(r=>{if(!r.ok)throw new Error('connection graph '+r.status);return r.json()})
+ ]).then(([catalog,connections])=>{deviceCatalog=catalog;deviceConnections=connections;deviceRecordById.clear();(catalog.devices||[]).forEach(d=>deviceRecordById.set(d.asset_id,d));return catalog});
+ return deviceCatalogPromise
+}
+function electronicsAssetIdFromName(name){
+ const n=String(name||'');
+ const part=n.indexOf('::PART::');
+ return part>=0?n.slice(0,part):n
+}
+function electronicsComponentIdFromName(name){
+ const n=String(name||''),part=n.indexOf('::PART::');
+ if(part>=0)return n.slice(part+8);
+ const record=deviceRecordById.get(n);return record?.archetype==='camera'?'HOUSING':'BODY'
+}
 async function ensureLabRuntime(){
  if(!labModule)labModule=await import(LAB_MODULE_URL);
  if(!labDatasets)labDatasets=await labModule.loadViewerLabDatasets('/equity-uprise-preview');
@@ -287,7 +307,7 @@ function makeElectronicsReliable(root){
  makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.userData=m.userData||{};if(m.color&&!m.userData.step4bNativeColor)m.userData.step4bNativeColor=m.color.getHex();m.transparent=true;m.opacity=.10;m.depthWrite=false;m.depthTest=true;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
 }
 function physicalLevelFromId(id){
- if(/^B1-/.test(id))return 0;if(/^L7-|^F7-/.test(id))return 7;const m=/^F([1-6])-/.exec(id);return m?Number(m[1]):null
+ const key=electronicsAssetIdFromName(id);if(/^B1-/.test(key))return 0;if(/^L7-|^F7-/.test(key))return 7;const m=/^F([1-6])-/.exec(key);return m?Number(m[1]):null
 }
 function stylePhysicalMesh(o,mode){
  const b=o.userData.spatialBinding,color=engineeringClassColor(b?.class),ms=Array.isArray(o.material)?o.material:[o.material];
@@ -298,26 +318,28 @@ function clearEngineeringMarkers(){
 }
 function rebuildEngineeringMarkers(){
  clearEngineeringMarkers();if(!electronics||!engineeringMode||roomMode){engineeringOverlay.visible=false;return 0}
- const focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null;let count=0;
- electronics.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o)||o.userData.spatialBound!==true)return;const b=o.userData.spatialBinding;if(focusLevel!==null&&b?.level!==focusLevel)return;
-  const p=electronicsBoundWorld.get(o.name);if(!p)return;const mat=new THREE.SpriteMaterial({color:engineeringClassColor(b?.class),transparent:true,opacity:.92,depthTest:false,depthWrite:false});
-  const marker=new THREE.Sprite(mat);marker.position.copy(p);marker.scale.setScalar(ft(1.25));marker.renderOrder=95;marker.name='XRAY-MARKER::'+o.name;marker.userData.assetId=o.name;engineeringOverlay.add(marker);count++
+ const focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null,seen=new Set();let count=0;
+ electronics.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o)||o.userData.spatialBound!==true)return;const assetId=o.userData.assetId||electronicsAssetIdFromName(o.name);if(seen.has(assetId))return;const b=o.userData.spatialBinding;if(focusLevel!==null&&b?.level!==focusLevel)return;
+  const p=electronicsBoundWorld.get(assetId);if(!p)return;seen.add(assetId);const mat=new THREE.SpriteMaterial({color:engineeringClassColor(b?.class),transparent:true,opacity:.92,depthTest:false,depthWrite:false});
+  const marker=new THREE.Sprite(mat);marker.position.copy(p);marker.scale.setScalar(ft(1.25));marker.renderOrder=95;marker.name='XRAY-MARKER::'+assetId;marker.userData.assetId=assetId;engineeringOverlay.add(marker);count++
  });
  engineeringOverlay.visible=true;return count
 }
-function registerNativeElectronicsMesh(o,binding){
+function registerNativeElectronicsMesh(o,binding,assetId){
  if(!o.geometry)return false;o.geometry.computeBoundingBox();const local=o.geometry.boundingBox?.getCenter(new THREE.Vector3())||new THREE.Vector3();o.updateWorldMatrix(true,false);const world=local.applyMatrix4(o.matrixWorld);
- const level=binding?.level??physicalLevelFromId(o.name||'');if(level===null)return false;
- o.userData.spatialBound=true;o.userData.spatialBinding={...(binding||{}),level,placement_mode:'native_generator_coordinates',authority:'step4b_native_physical_installation'};electronicsBoundWorld.set(o.name,world.clone());return true
+ const level=binding?.level??physicalLevelFromId(assetId);if(level===null)return false;
+ const componentId=electronicsComponentIdFromName(o.name);
+ o.userData.assetId=assetId;o.userData.componentId=componentId;o.userData.spatialBound=true;o.userData.spatialBinding={...(binding||{}),level,placement_mode:'native_generator_coordinates',authority:'step4c_componentized_physical_device'};
+ if(!electronicsBoundWorld.has(assetId)||o.name===assetId||componentId==='HOUSING')electronicsBoundWorld.set(assetId,world.clone());return true
 }
 async function applyElectronicsSpatialBindings(root){
- const mod=await ensureElectronicsSpatialModule();electronicsBoundWorld.clear();electronicsBoundCount=0;electronicsUnboundCount=0;root.updateMatrixWorld(true);
- root.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o))return;const binding=mod.resolveElectronicsSpatialBinding(o.name||'');if(registerNativeElectronicsMesh(o,binding)){electronicsBoundCount++}else{o.userData.spatialBound=false;o.visible=false;electronicsUnboundCount++}});
- root.updateMatrixWorld(true)
+ const mod=await ensureElectronicsSpatialModule();await ensureDeviceCatalog();electronicsBoundWorld.clear();electronicsBoundCount=0;electronicsUnboundCount=0;root.updateMatrixWorld(true);const boundAssets=new Set();
+ root.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o))return;const assetId=electronicsAssetIdFromName(o.name||''),binding=mod.resolveElectronicsSpatialBinding(assetId);if(registerNativeElectronicsMesh(o,binding,assetId)){boundAssets.add(assetId)}else{o.userData.spatialBound=false;o.visible=false;electronicsUnboundCount++}});
+ electronicsBoundCount=boundAssets.size;root.updateMatrixWorld(true)
 }
 async function ensureElectronicsLayer(){
  if(electronics)return electronics;
- if(!labElectronicsPromise)labElectronicsPromise=new Promise((resolve,reject)=>loader.load('/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb?v=__STAMP__',async g=>{try{electronics=g.scene;electronics.scale.setScalar(FT);electronics.rotation.x=-Math.PI/2;scene.add(electronics);electronics.updateMatrixWorld(true);makeElectronicsReliable(electronics);await applyElectronicsSpatialBindings(electronics);electronics.visible=false;electronics.traverse(o=>{if(o.isMesh)o.visible=false});resolve(electronics)}catch(err){reject(err)}},undefined,reject));
+ if(!labElectronicsPromise)labElectronicsPromise=new Promise((resolve,reject)=>loader.load('/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb?v=__STAMP__',async g=>{try{await ensureDeviceCatalog();electronics=g.scene;electronics.scale.setScalar(FT);electronics.rotation.x=-Math.PI/2;scene.add(electronics);electronics.updateMatrixWorld(true);makeElectronicsReliable(electronics);await applyElectronicsSpatialBindings(electronics);electronics.visible=false;electronics.traverse(o=>{if(o.isMesh)o.visible=false});resolve(electronics)}catch(err){reject(err)}},undefined,reject));
  return labElectronicsPromise;
 }
 function engineeringMeshIsCable(o){return /^CABLE::/.test(o?.name||'')}
@@ -328,15 +350,15 @@ function cableMatchesFocus(o){
 function syncElectronicsVisibility(){
  if(!electronics){clearEngineeringMarkers();engineeringOverlay.visible=false;return{devices:0,cables:0}}
  const focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null;
- const allowPlant=plantMode,allowXray=engineeringMode&&!roomMode,allowCables=cablingMode&&!roomMode;let devices=0,cables=0;
+ const allowPlant=plantMode,allowXray=engineeringMode&&!roomMode,allowCables=cablingMode&&!roomMode,visibleAssets=new Set();let cables=0;
  electronics.visible=allowPlant||allowXray||allowCables;
  electronics.traverse(o=>{if(!o.isMesh)return;
    if(engineeringMeshIsCable(o)){const show=allowCables&&cableMatchesFocus(o);o.visible=show;if(show)cables++;return}
    const b=o.userData.spatialBinding,scope=focusLevel===null||b?.level===focusLevel,show=(allowPlant||allowXray)&&o.userData.spatialBound===true&&scope;
-   o.visible=show;stylePhysicalMesh(o,show?(allowXray?'xray':'plant'):'hidden');if(show)devices++
+   o.visible=show;stylePhysicalMesh(o,show?(allowXray?'xray':'plant'):'hidden');if(show)visibleAssets.add(o.userData.assetId||electronicsAssetIdFromName(o.name))
  });
  if(allowXray)rebuildEngineeringMarkers();else{clearEngineeringMarkers();engineeringOverlay.visible=false}
- return{devices,cables}
+ return{devices:visibleAssets.size,cables}
 }
 function setEngineeringElectronics(on){return syncElectronicsVisibility().devices}
 function infrastructureStatus(counts=syncElectronicsVisibility()){
@@ -357,7 +379,7 @@ function syncEngineeringView(){
 }
 async function setPhysicalPlantMode(on){
  plantMode=!!on;const b=document.getElementById('plant');b.classList.toggle('active',plantMode);
- if(plantMode){await buildingLoaded;await ensureElectronicsLayer()}const counts=syncElectronicsVisibility();syncServicesVisibility();infrastructureStatus(counts)
+ if(plantMode){await buildingLoaded;await ensureElectronicsLayer()}else{deviceHud.hidden=true;inspectedDeviceId=null;clearDeviceInteractionOverlay()}const counts=syncElectronicsVisibility();syncServicesVisibility();infrastructureStatus(counts)
 }
 async function setCablingMode(on){
  cablingMode=!!on;const b=document.getElementById('cabling');b.classList.toggle('active',cablingMode);
@@ -380,8 +402,26 @@ function clearLabVisuals(){
  if(electronics){if(engineeringMode||plantMode||cablingMode)syncElectronicsVisibility();else electronics.visible=false}
 }
 function labColor(state){return state==='unavailable'?0xff2d2d:state==='faulted'?0xff6a2d:state==='degraded'?0xffb42d:state==='at_risk'?0xd85cff:0x5fd2ff}
+function applyComponentVisualState(o,state){
+ const component=o.userData.componentId||electronicsComponentIdFromName(o.name),source=Array.isArray(o.material)?o.material:[o.material],cloned=source.map(m=>m.clone());
+ cloned.filter(Boolean).forEach(m=>{
+  wireMaterials.add(m);const native=m.userData?.step4bNativeColor;
+  if(component==='STATUS_LED'){
+    const led=state==='unavailable'?0x151719:state==='faulted'?0xff3030:state==='degraded'||state==='at_risk'?0xffb52d:0x28dc60;
+    if(m.color)m.color.setHex(led);if(m.emissive){m.emissive.setHex(led);m.emissiveIntensity=state==='unavailable'?0:.95}
+  }else{
+    if(m.color&&native!==undefined)m.color.setHex(native);if(m.emissive){m.emissive.setHex(0x000000);m.emissiveIntensity=0}
+    if(component==='LENS_GLASS'&&state==='unavailable'&&m.color)m.color.setHex(0x050607)
+  }
+  m.transparent=true;m.opacity=component==='LENS_GLASS'?.92:.97;m.depthWrite=true;m.needsUpdate=true
+ });
+ o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true
+}
 function styleCanonical(root,id,state){
- if(!root||!id)return false;let hit=false;root.traverse(o=>{if(!o.isMesh)return;if(root===electronics&&o.userData.spatialBound!==true)return;const n=o.name||'';if(n!==id&&!n.startsWith(id+'::'))return;rememberLabMesh(o);const original=Array.isArray(o.material)?o.material:[o.material];const cloned=original.map(m=>m.clone());cloned.forEach(m=>{wireMaterials.add(m);if(m.color)m.color.setHex(labColor(state));if(m.emissive){m.emissive.setHex(labColor(state));m.emissiveIntensity=.55}m.transparent=true;m.opacity=.94;m.depthWrite=false;m.needsUpdate=true});o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true;hit=true});return hit
+ if(!root||!id)return false;let hit=false;root.traverse(o=>{if(!o.isMesh)return;if(root===electronics&&o.userData.spatialBound!==true)return;const n=o.name||'',assetId=o.userData.assetId||electronicsAssetIdFromName(n);if(assetId!==id&&n!==id&&!n.startsWith(id+'::'))return;rememberLabMesh(o);
+  if(root===electronics&&deviceRecordById.has(id)){applyComponentVisualState(o,state);hit=true;return}
+  const original=Array.isArray(o.material)?o.material:[o.material],cloned=original.map(m=>m.clone());cloned.forEach(m=>{wireMaterials.add(m);if(m.color)m.color.setHex(labColor(state));if(m.emissive){m.emissive.setHex(labColor(state));m.emissiveIntensity=.55}m.transparent=true;m.opacity=.94;m.depthWrite=false;m.needsUpdate=true});o.material=Array.isArray(o.material)?cloned:cloned[0];o.visible=true;hit=true
+ });return hit
 }
 function sitePoint(x,y,h=.08){return new THREE.Vector3(ft(x),ft(h),-ft(y))}
 function areaOverlay(area){
@@ -539,6 +579,61 @@ function learnerAssetOverlay(asset){
  m.position.copy(p);m.position.y+=ft(.7);m.name=asset.canonical_id;m.renderOrder=42;m.userData.learnerMarker=true;labOverlay.add(m);return true
 }
 function escapeText(v){return String(v??'').replace(/[<>]/g,'')}
+function clearDeviceInteractionOverlay(){
+ while(deviceOverlay.children.length){const o=deviceOverlay.children.pop();o.geometry?.dispose?.();const mats=Array.isArray(o.material)?o.material:[o.material];mats.filter(Boolean).forEach(m=>m.dispose?.())}
+ deviceFovVisible=false;if(deviceFovButton){deviceFovButton.textContent='Show camera coverage'}
+}
+function deviceStateFor(assetId){
+ const state=(labView?.visuals?.assets||[]).find(x=>x.canonical_id===assetId);return state?.visual_state||'normal'
+}
+function deviceConnectionChain(assetId){
+ const all=deviceConnections?.connections||[],result=[],seen=new Set();let frontier=[assetId];
+ for(let depth=0;depth<4&&frontier.length;depth++){const next=[];
+  for(const current of frontier){const incoming=all.filter(x=>x.to_asset_id===current).sort((a,b)=>String(a.connection_id).localeCompare(String(b.connection_id)));
+   for(const x of incoming){if(seen.has(x.connection_id))continue;seen.add(x.connection_id);result.push(x);next.push(x.from_asset_id)}
+  }frontier=[...new Set(next)]
+ }
+ return result.slice(0,10)
+}
+function ensureDeviceFeedRenderer(){
+ if(deviceFeedRenderer)return deviceFeedRenderer;
+ deviceFeedRenderer=new THREE.WebGLRenderer({canvas:deviceFeedCanvas,antialias:true,alpha:false});
+ deviceFeedRenderer.setPixelRatio(1);deviceFeedRenderer.setSize(320,180,false);deviceFeedRenderer.outputColorSpace=THREE.SRGBColorSpace;deviceFeedRenderer.toneMapping=THREE.ACESFilmicToneMapping;deviceFeedRenderer.toneMappingExposure=1.0;
+ deviceFeedCamera=new THREE.PerspectiveCamera(50,16/9,.03,ft(100));return deviceFeedRenderer
+}
+function renderDeviceCameraFeed(now=performance.now()){
+ if(deviceHud.hidden||!inspectedDeviceId||now-deviceFeedLastRender<180)return;const record=deviceRecordById.get(inspectedDeviceId);if(!record||record.archetype!=='camera')return;
+ const state=deviceStateFor(inspectedDeviceId);if(state==='unavailable'||state==='faulted')return;
+ ensureDeviceFeedRenderer();deviceFeedLastRender=now;deviceFeedCamera.fov=record.optics?.vertical_fov_deg||50;deviceFeedCamera.updateProjectionMatrix();
+ const p=record.position_ft||[0,0,0],a=record.aim_vector||[-1,0,0],origin=new THREE.Vector3(ft(p[0]),ft(p[2]),-ft(p[1])),aim=new THREE.Vector3(a[0],a[2]||0,-a[1]).normalize();
+ deviceFeedCamera.position.copy(origin).addScaledVector(aim,ft(.62));deviceFeedCamera.lookAt(deviceFeedCamera.position.clone().addScaledVector(aim,ft(20)));
+ const hidden=[labOverlay,engineeringOverlay,deviceOverlay],vis=hidden.map(x=>x.visible);hidden.forEach(x=>x.visible=false);
+ const environment=scene.environment;scene.environment=null;deviceFeedRenderer.render(scene,deviceFeedCamera);scene.environment=environment;hidden.forEach((x,i)=>x.visible=vis[i])
+}
+function cameraCoverage(record){
+ clearDeviceInteractionOverlay();const origin=electronicsBoundWorld.get(record.asset_id);if(!origin)return false;
+ const a=record.aim_vector||[-1,0,0],aim=new THREE.Vector3(a[0],a[2]||0,-a[1]).normalize(),worldUp=new THREE.Vector3(0,1,0),side=new THREE.Vector3().crossVectors(aim,worldUp).normalize(),up=new THREE.Vector3().crossVectors(side,aim).normalize();
+ const range=ft(record.optics?.training_range_ft||24),hw=range*Math.tan(THREE.MathUtils.degToRad((record.optics?.horizontal_fov_deg||80)/2)),hh=range*Math.tan(THREE.MathUtils.degToRad((record.optics?.vertical_fov_deg||45)/2)),center=origin.clone().addScaledVector(aim,range);
+ const corners=[center.clone().addScaledVector(side,hw).addScaledVector(up,hh),center.clone().addScaledVector(side,-hw).addScaledVector(up,hh),center.clone().addScaledVector(side,-hw).addScaledVector(up,-hh),center.clone().addScaledVector(side,hw).addScaledVector(up,-hh)];
+ const pts=[];corners.forEach(p=>pts.push(origin.clone(),p));for(let i=0;i<4;i++)pts.push(corners[i],corners[(i+1)%4]);
+ const line=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x62ddff,transparent:true,opacity:.72,depthWrite:false}));line.name='DEVICE-FOV::'+record.asset_id;line.renderOrder=70;deviceOverlay.add(line);deviceFovVisible=true;deviceFovButton.textContent='Hide camera coverage';return true
+}
+function renderDeviceInspector(assetId){
+ const record=deviceRecordById.get(assetId);if(!record){deviceHud.hidden=true;return}
+ inspectedDeviceId=assetId;const state=deviceStateFor(assetId),links=deviceConnectionChain(assetId);
+ deviceKind.textContent=(record.archetype||record.asset_type)+' · '+(record.maturity||'modeled');
+ deviceTitle.textContent=record.label||assetId;
+ const feedState=state==='unavailable'?'offline':state==='faulted'?'faulted':state==='degraded'||state==='at_risk'?'degraded':'online';
+ deviceStatus.innerHTML='<strong>Current state</strong> · '+escapeText(state)+'<br><span>'+escapeText(assetId)+'</span>';
+ const portText=(record.ports||[]).map(p=>escapeText(p.id)+' · '+escapeText(p.connector)+' · '+escapeText((p.services||[]).join(' + '))).join('<br>');
+ const linkText=links.map(x=>escapeText(x.cable_type)+' · '+escapeText(x.from_asset_id)+' → '+escapeText(x.to_asset_id)+'<br><small>'+escapeText(x.from_port||'')+' → '+escapeText(x.to_port||'')+'</small>').join('<br>');
+ deviceDetails.innerHTML='<div class="devicerow"><span>Port</span><span>'+ (portText||'—') +'</span></div><div class="deviceparts"><strong>Physical connection path</strong><br>'+(linkText||'No routed connection found')+'</div>';
+ deviceParts.innerHTML='<strong>Modeled parts</strong><br>'+(record.components||[]).map(x=>'<span class="devicecomponent">'+escapeText(x.component_id)+'</span>').join('');
+ if(record.archetype==='camera'){deviceFeed.hidden=false;deviceFeed.className='devicefeed '+(feedState==='offline'||feedState==='faulted'?'offline':feedState==='degraded'?'degraded':'');deviceFeedLabel.textContent='VIDEO STREAM · '+feedState.toUpperCase();deviceFovButton.hidden=false;if(feedState!=='offline'&&feedState!=='faulted')renderDeviceCameraFeed();deviceFovButton.disabled=feedState==='offline'||feedState==='faulted';if(deviceFovButton.disabled&&deviceFovVisible)clearDeviceInteractionOverlay()}else{deviceFeed.hidden=true;deviceFovButton.hidden=true}
+ deviceHud.hidden=false
+}
+function refreshInspectedDevice(){if(inspectedDeviceId&&!deviceHud.hidden)renderDeviceInspector(inspectedDeviceId)}
+function findPhysicalDeviceFromHit(hit){let o=hit?.object;while(o){const id=o.userData?.assetId||electronicsAssetIdFromName(o.name||'');if(id&&deviceRecordById.has(id))return id;o=o.parent}return null}
 function plainSystemState(v){return {normal:'Normal',changed:'Changed',at_risk:'Needs attention',degraded:'Unstable',faulted:'Problem detected',unavailable:'Not working',available:'Available'}[String(v||'').toLowerCase()]||escapeText(v||'Observed')}
 function renderDiagnosticLoop(exp){
  const steps=exp.diagnostic_loop||['OBSERVE','HYPOTHESIZE','TEST','FIX','VERIFY'],stage=exp.diagnostic_stage||'OBSERVE',order=[...steps,'COMPLETE'],at=Math.max(0,order.indexOf(stage));
@@ -575,7 +670,8 @@ async function applyLabView(view){
  // Play mode keeps the full electronics topology hidden. Learners see only symptom-relevant markers.
  view.visuals.assets.forEach(x=>styleCanonical(f1,x.canonical_id,x.visual_state)||styleCanonical(base,x.canonical_id,x.visual_state));
  if(view.learner_experience?.learner_first&&!engineeringMode&&view.visuals.assets.length){
-   await ensureElectronicsLayer();setEngineeringElectronics(false);view.visuals.assets.forEach(learnerAssetOverlay)
+   const e=await ensureElectronicsLayer();setEngineeringElectronics(false);
+   view.visuals.assets.forEach(x=>{if(deviceRecordById.has(x.canonical_id))styleCanonical(e,x.canonical_id,x.visual_state);else learnerAssetOverlay(x)})
  }
  if(engineeringMode&&!roomMode&&(view.visuals.assets.length||view.visuals.connections.length)){
    const e=await ensureElectronicsLayer();setEngineeringElectronics(true);
@@ -585,7 +681,7 @@ async function applyLabView(view){
  }
  view.visuals.objects.forEach(x=>styleCanonical(f1,x.canonical_id,x.visual_state)||styleCanonical(base,x.canonical_id,x.visual_state));
  view.visuals.areas.forEach(x=>{if(!styleCanonical(f1,x.canonical_id,x.visual_state)&&!styleCanonical(base,x.canonical_id,x.visual_state))areaOverlay(x)});
- view.visuals.occupants.forEach(occupantOverlay);renderLabHud(view);if(roomMode){if(electronics)electronics.visible=false;refreshRoomHighlights();roomSelection.textContent=(view.learner_experience?.title||view.scenario?.title||'Active ticket')+' · Room Mode'}
+ view.visuals.occupants.forEach(occupantOverlay);renderLabHud(view);refreshInspectedDevice();if(roomMode){if(electronics)electronics.visible=false;refreshRoomHighlights();roomSelection.textContent=(view.learner_experience?.title||view.scenario?.title||'Active ticket')+' · Room Mode'}
 }
 async function prepareLabPresentation(view){
  const scenario=view?.scenario||{},exp=view?.learner_experience||{},target=String(scenario.viewer_focus??'');
@@ -628,6 +724,13 @@ document.getElementById('labHint').onclick=async()=>{if(!labController)return;tr
 document.getElementById('labEvidence').onclick=async()=>{if(!labController)return;const title=prompt('Learner artifact title');if(!title)return;const reference=prompt('Artifact reference (URL/URI/path)');if(!reference)return;try{const out=labController.submitArtifact({title,reference});labMessage.textContent='Learner artifact reference recorded.';await applyLabView(out.view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}};
 document.getElementById('labComplete').onclick=async()=>{if(!labController)return;try{const out=labController.complete();labMessage.textContent=out.view?.learner_experience?.success_message||'Ticket closed · the simulated problem was repaired and verified.';labMessage.className='labrow labmsg labok';await applyLabView(out.view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}};
 ren.domElement.addEventListener('dblclick',async ev=>{if(!labController||!labView||labView.scenario.phase!=='RUNNING')return;const rect=ren.domElement.getBoundingClientRect();labPointer.x=((ev.clientX-rect.left)/rect.width)*2-1;labPointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;labRaycaster.setFromCamera(labPointer,cam);const roots=[labOverlay,electronics,b1,f1,f2,f3,f4,f5,f6,f7,base].filter(Boolean),hits=labRaycaster.intersectObjects(roots,true);for(const hit of hits){let o=hit.object;while(o){const n=o.name||'';const id=labPickingIds.find(x=>n===x||n.startsWith(x+'::'));if(id){const action=labController.actionForCanonicalId(id);if(action){await runLabAction(action);return}}o=o.parent}}});
+ren.domElement.addEventListener('dblclick',async ev=>{
+ if(!plantMode||roomMode)return;await ensureElectronicsLayer();const rect=ren.domElement.getBoundingClientRect();labPointer.x=((ev.clientX-rect.left)/rect.width)*2-1;labPointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;labRaycaster.setFromCamera(labPointer,cam);
+ const hits=labRaycaster.intersectObjects([electronics].filter(Boolean),true);for(const hit of hits){if(engineeringMeshIsCable(hit.object))continue;const id=findPhysicalDeviceFromHit(hit);if(id){clearDeviceInteractionOverlay();renderDeviceInspector(id);return}}
+});
+deviceFovButton.onclick=()=>{if(!inspectedDeviceId)return;const record=deviceRecordById.get(inspectedDeviceId);if(!record||record.archetype!=='camera')return;if(deviceFovVisible)clearDeviceInteractionOverlay();else cameraCoverage(record)};
+document.getElementById('deviceClose').onclick=()=>{deviceHud.hidden=true;inspectedDeviceId=null;clearDeviceInteractionOverlay()};
+
 if(requestedLab){openLabs().then(()=>startLab(requestedLab,requestedDifficulty))}
 if(requestedRoom){const roomBoot=setInterval(()=>{if(loaded===11){clearInterval(roomBoot);enterRoomMode()}},60)}
 
@@ -655,5 +758,5 @@ document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>setView(b.dataset
 document.getElementById('services').onclick=async e=>{if(!engineeringMode)await setEngineeringMode(true);servicesOn=!servicesOn;syncServicesVisibility();e.target.textContent=servicesOn?'Services: Exposed':'Services: Off';e.target.classList.toggle('active',servicesOn)};
 document.getElementById('sunmode').onclick=e=>{solarMode=solarMode==='auto'?'day':solarMode==='day'?'night':'auto';applySolarEnvironment(solarMode);e.target.textContent=solarMode==='auto'?'Sun: Auto':solarMode==='day'?'Sun: Day':'Sun: Night'};
 document.getElementById('wire').onclick=e=>{wire=!wire;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}});e.target.textContent=wire?'Solid':'Wireframe'};
-addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});ren.setAnimationLoop(()=>{if(!roomMode)ctl.update();ren.render(scene,cam)});
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});ren.setAnimationLoop(t=>{if(!roomMode)ctl.update();ren.render(scene,cam);renderDeviceCameraFeed(t)});
 </script></body></html>

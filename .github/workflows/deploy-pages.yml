@@ -149,6 +149,8 @@ jobs:
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb
           cp docs/design/equity-uprise-building/production/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs equity-uprise-preview/electronics/
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-manifest-v1.json equity-uprise-preview/equity-uprise-electronics-manifest-v1.json
+          cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-device-components-v1.json equity-uprise-preview/equity-uprise-device-components-v1.json
+          cp docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json equity-uprise-preview/electronics/device-archetypes-v1.json
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-connections-v1.json equity-uprise-preview/equity-uprise-electronics-connections-v1.json
           cp docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-it-lab-catalog-v1.json equity-uprise-preview/equity-uprise-it-lab-catalog-v1.json
           cp docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-v1.json equity-uprise-preview/equity-uprise-asset-registry-v1.json

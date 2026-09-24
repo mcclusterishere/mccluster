@@ -1,0 +1,2077 @@
+{
+  "schema_version": "1.0.0",
+  "status": "step4c-device-components",
+  "archetype_authority": "docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
+  "devices": [
+    {
+      "asset_id": "B1-SEC-CAM-01",
+      "label": "B1 IP Camera 1",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        24.0,
+        -4.7
+      ],
+      "aim_vector": [
+        -0.707107,
+        0.707107,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "B1-SEC-CAM-01::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "B1-SEC-CAM-01::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "B1-SEC-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "B1-SEC-CAM-01::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "B1-SEC-CAM-01::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "B1-SEC-CAM-01::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-SEC-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "B1-SEC-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "B1-SEC-CAM-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "B1-SEC-CAM-02",
+      "label": "B1 IP Camera 2",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        49.2,
+        24.0,
+        -4.7
+      ],
+      "aim_vector": [
+        -0.73994,
+        0.672673,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "B1-SEC-CAM-02::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "B1-SEC-CAM-02::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "B1-SEC-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "B1-SEC-CAM-02::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "B1-SEC-CAM-02::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "B1-SEC-CAM-02::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-SEC-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "B1-SEC-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "B1-SEC-CAM-02::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "B1-SEC-CAM-03",
+      "label": "B1 IP Camera 3",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        46.8,
+        24.0,
+        -4.7
+      ],
+      "aim_vector": [
+        -0.668965,
+        0.743294,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "B1-SEC-CAM-03::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "B1-SEC-CAM-03::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "B1-SEC-CAM-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "B1-SEC-CAM-03::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "B1-SEC-CAM-03::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "B1-SEC-CAM-03::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-SEC-CAM-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "B1-SEC-CAM-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "B1-SEC-CAM-03::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "B1-SEC-CAM-04",
+      "label": "B1 IP Camera 4",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        25.2,
+        -4.7
+      ],
+      "aim_vector": [
+        -0.743294,
+        0.668965,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "B1-SEC-CAM-04::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "B1-SEC-CAM-04::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "B1-SEC-CAM-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "B1-SEC-CAM-04::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "B1-SEC-CAM-04::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "B1-SEC-CAM-04::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-SEC-CAM-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "B1-SEC-CAM-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "B1-SEC-CAM-04::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F1-SEC-CAM-01",
+      "label": "F1 IP Camera 1",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        24.0,
+        8.8
+      ],
+      "aim_vector": [
+        -0.707107,
+        0.707107,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F1-SEC-CAM-01::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F1-SEC-CAM-01::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F1-SEC-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F1-SEC-CAM-01::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F1-SEC-CAM-01::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F1-SEC-CAM-01::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-SEC-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-SEC-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F1-SEC-CAM-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F1-SEC-CAM-02",
+      "label": "F1 IP Camera 2",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        50.0,
+        8.8
+      ],
+      "aim_vector": [
+        -0.650791,
+        -0.759257,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F1-SEC-CAM-02::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F1-SEC-CAM-02::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F1-SEC-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F1-SEC-CAM-02::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F1-SEC-CAM-02::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F1-SEC-CAM-02::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-SEC-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-SEC-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F1-SEC-CAM-02::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F2-SEC-CAM-01",
+      "label": "F2 IP Camera 1",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        24.0,
+        22.3
+      ],
+      "aim_vector": [
+        -0.707107,
+        0.707107,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F2-SEC-CAM-01::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F2-SEC-CAM-01::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F2-SEC-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F2-SEC-CAM-01::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F2-SEC-CAM-01::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F2-SEC-CAM-01::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-SEC-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-SEC-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F2-SEC-CAM-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F2-SEC-CAM-02",
+      "label": "F2 IP Camera 2",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        50.0,
+        22.3
+      ],
+      "aim_vector": [
+        -0.650791,
+        -0.759257,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F2-SEC-CAM-02::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F2-SEC-CAM-02::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F2-SEC-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F2-SEC-CAM-02::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F2-SEC-CAM-02::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F2-SEC-CAM-02::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-SEC-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-SEC-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F2-SEC-CAM-02::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F3-SEC-CAM-01",
+      "label": "F3 IP Camera 1",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        24.0,
+        35.8
+      ],
+      "aim_vector": [
+        -0.707107,
+        0.707107,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F3-SEC-CAM-01::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F3-SEC-CAM-01::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F3-SEC-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F3-SEC-CAM-01::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F3-SEC-CAM-01::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F3-SEC-CAM-01::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-SEC-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-SEC-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F3-SEC-CAM-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F3-SEC-CAM-02",
+      "label": "F3 IP Camera 2",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        50.0,
+        35.8
+      ],
+      "aim_vector": [
+        -0.650791,
+        -0.759257,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F3-SEC-CAM-02::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F3-SEC-CAM-02::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F3-SEC-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F3-SEC-CAM-02::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F3-SEC-CAM-02::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F3-SEC-CAM-02::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-SEC-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-SEC-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F3-SEC-CAM-02::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F4-SEC-CAM-01",
+      "label": "F4 IP Camera 1",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        24.0,
+        49.3
+      ],
+      "aim_vector": [
+        -0.707107,
+        0.707107,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F4-SEC-CAM-01::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F4-SEC-CAM-01::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F4-SEC-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F4-SEC-CAM-01::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F4-SEC-CAM-01::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F4-SEC-CAM-01::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-SEC-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-SEC-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F4-SEC-CAM-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F4-SEC-CAM-02",
+      "label": "F4 IP Camera 2",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        50.0,
+        49.3
+      ],
+      "aim_vector": [
+        -0.650791,
+        -0.759257,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F4-SEC-CAM-02::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F4-SEC-CAM-02::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F4-SEC-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F4-SEC-CAM-02::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F4-SEC-CAM-02::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F4-SEC-CAM-02::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-SEC-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-SEC-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F4-SEC-CAM-02::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F5-SEC-CAM-01",
+      "label": "F5 IP Camera 1",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        24.0,
+        62.8
+      ],
+      "aim_vector": [
+        -0.707107,
+        0.707107,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F5-SEC-CAM-01::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F5-SEC-CAM-01::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F5-SEC-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F5-SEC-CAM-01::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F5-SEC-CAM-01::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F5-SEC-CAM-01::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-SEC-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-SEC-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F5-SEC-CAM-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F5-SEC-CAM-02",
+      "label": "F5 IP Camera 2",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        50.0,
+        62.8
+      ],
+      "aim_vector": [
+        -0.650791,
+        -0.759257,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F5-SEC-CAM-02::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F5-SEC-CAM-02::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F5-SEC-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F5-SEC-CAM-02::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F5-SEC-CAM-02::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F5-SEC-CAM-02::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-SEC-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-SEC-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F5-SEC-CAM-02::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F6-SEC-CAM-01",
+      "label": "F6 IP Camera 1",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        24.0,
+        76.3
+      ],
+      "aim_vector": [
+        -0.707107,
+        0.707107,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F6-SEC-CAM-01::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F6-SEC-CAM-01::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F6-SEC-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F6-SEC-CAM-01::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F6-SEC-CAM-01::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F6-SEC-CAM-01::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-SEC-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-SEC-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F6-SEC-CAM-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F6-SEC-CAM-02",
+      "label": "F6 IP Camera 2",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        48.0,
+        50.0,
+        76.3
+      ],
+      "aim_vector": [
+        -0.650791,
+        -0.759257,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "F6-SEC-CAM-02::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "F6-SEC-CAM-02::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F6-SEC-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "F6-SEC-CAM-02::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "F6-SEC-CAM-02::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "F6-SEC-CAM-02::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-SEC-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-SEC-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "F6-SEC-CAM-02::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "L7-SEC-CAM-01",
+      "label": "L7 IP Camera 1",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        61.5,
+        54.0,
+        89.8
+      ],
+      "aim_vector": [
+        -0.816968,
+        -0.576683,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "L7-SEC-CAM-01::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "L7-SEC-CAM-01::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "L7-SEC-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "L7-SEC-CAM-01::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "L7-SEC-CAM-01::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "L7-SEC-CAM-01::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "L7-SEC-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "L7-SEC-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "L7-SEC-CAM-01::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "L7-SEC-CAM-02",
+      "label": "L7 IP Camera 2",
+      "asset_type": "camera",
+      "archetype": "camera",
+      "maturity": "lab_complete",
+      "position_ft": [
+        15.2,
+        54.0,
+        89.8
+      ],
+      "aim_vector": [
+        0.756169,
+        -0.654377,
+        0.0
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT_PLATE",
+          "mesh_name": "L7-SEC-CAM-02::PART::MOUNT_PLATE",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRACKET_ARM",
+          "mesh_name": "L7-SEC-CAM-02::PART::BRACKET_ARM",
+          "inspectable": true
+        },
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "L7-SEC-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_BARREL",
+          "mesh_name": "L7-SEC-CAM-02::PART::LENS_BARREL",
+          "inspectable": true
+        },
+        {
+          "component_id": "IR_LED_RING",
+          "mesh_name": "L7-SEC-CAM-02::PART::IR_LED_RING",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS_GLASS",
+          "mesh_name": "L7-SEC-CAM-02::PART::LENS_GLASS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "L7-SEC-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "L7-SEC-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_ENTRY",
+          "mesh_name": "L7-SEC-CAM-02::PART::CABLE_ENTRY",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "motion_event",
+        "field_of_view",
+        "poe_power",
+        "status_indicator"
+      ],
+      "state_rules": {
+        "normal": {
+          "status_led": "green",
+          "video_stream": "online",
+          "fov_visible_on_inspect": true
+        },
+        "unavailable": {
+          "status_led": "off",
+          "video_stream": "offline",
+          "fov_visible_on_inspect": false
+        },
+        "degraded": {
+          "status_led": "amber",
+          "video_stream": "degraded",
+          "fov_visible_on_inspect": true
+        },
+        "faulted": {
+          "status_led": "red",
+          "video_stream": "faulted",
+          "fov_visible_on_inspect": true
+        }
+      },
+      "optics": {
+        "horizontal_fov_deg": 92,
+        "vertical_fov_deg": 50,
+        "training_range_ft": 32
+      },
+      "lab_behaviors": [
+        "camera_link_down",
+        "poe_disabled"
+      ]
+    }
+  ]
+}

@@ -196,6 +196,22 @@ Every Step 4B device/termination is one of:
 
 The digital twin now carries deterministic modeled route lengths and port identities for training, but these remain coordination values rather than field-certified as-builts. Exact equipment SKUs, conductor gauges, breaker/feeder sizing, conduit fill, bend radius, firestopping, cable support spacing, grounding/bonding, rack elevations, RF validation, cable certification results, UPS runtime, final IP addressing, retention periods and provider circuits remain subject to licensed engineering / installer / commissioning inputs.
 
+## Step 4C device archetype / component contract
+
+Step 4C separates **physical placement** from **device realism**. Step 4B remains the wiring/topology authority; Step 4C defines what a learner can actually see, inspect and operate at an endpoint.
+
+Device maturity is tracked as:
+
+`placeholder → recognizable → componentized → interactive → lab_complete`
+
+A device may not be called `lab_complete` unless its modeled assembly contains the ports and components referenced by its physical wiring and its visible state is driven by the same sandbox asset state used for diagnosis.
+
+The first Step 4C archetype is the fixed PoE IP security camera. Its visible assembly includes mount, bracket, housing, optics, IR illumination, status indication, RJ45/PoE termination and cable entry. The camera inspector exposes its exact modeled connection chain and a training-only field-of-view overlay. Runtime states such as camera-link/PoE loss change the componentized camera presentation rather than coloring the whole object as a generic fault marker.
+
+The archetype authority is `production/electronics/device-archetypes-v1.json`. Per-instance generated component records are published as `production/electronics/generated/equity-uprise-device-components-v1.json`.
+
+The same pattern must be reused for APs, workstations, monitors, phones, MFPs, switches, patch panels, panelboards, sensors, access-control devices and AV hardware; cosmetic one-off mesh replacement is not sufficient.
+
 ### Physical-lab rule
 
 A learner must be able to follow the same chain a real technician would follow. For a typical wired endpoint the inspectable path is:
