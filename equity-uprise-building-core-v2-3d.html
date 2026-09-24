@@ -260,6 +260,24 @@ const labRaycaster=new THREE.Raycaster(),labPointer=new THREE.Vector2();
 const LAB_MODULE_URL='/equity-uprise-preview/lab-runtime/equity-uprise-viewer-lab-integration.mjs?v=__STAMP__';
 const ELECTRONICS_SPATIAL_MODULE_URL='/equity-uprise-preview/electronics/equity-uprise-electronics-spatial-bindings-v1.mjs?v=__STAMP__';
 async function ensureElectronicsSpatialModule(){if(!electronicsSpatialModule)electronicsSpatialModule=await import(ELECTRONICS_SPATIAL_MODULE_URL);return electronicsSpatialModule}
+async function ensureDeviceCatalog(){
+ if(deviceCatalog)return deviceCatalog;
+ if(!deviceCatalogPromise)deviceCatalogPromise=Promise.all([
+   fetch('/equity-uprise-preview/equity-uprise-device-components-v1.json?v=__STAMP__').then(r=>{if(!r.ok)throw new Error('device component catalog '+r.status);return r.json()}),
+   fetch('/equity-uprise-preview/equity-uprise-electronics-connections-v1.json?v=__STAMP__').then(r=>{if(!r.ok)throw new Error('connection graph '+r.status);return r.json()})
+ ]).then(([catalog,connections])=>{deviceCatalog=catalog;deviceConnections=connections;deviceRecordById.clear();(catalog.devices||[]).forEach(d=>deviceRecordById.set(d.asset_id,d));return catalog});
+ return deviceCatalogPromise
+}
+function electronicsAssetIdFromName(name){
+ const n=String(name||'');
+ const part=n.indexOf('::PART::');
+ return part>=0?n.slice(0,part):n
+}
+function electronicsComponentIdFromName(name){
+ const n=String(name||''),part=n.indexOf('::PART::');
+ if(part>=0)return n.slice(part+8);
+ const record=deviceRecordById.get(n);return record?.archetype==='camera'?'HOUSING':'BODY'
+}
 async function ensureLabRuntime(){
  if(!labModule)labModule=await import(LAB_MODULE_URL);
  if(!labDatasets)labDatasets=await labModule.loadViewerLabDatasets('/equity-uprise-preview');
@@ -289,7 +307,7 @@ function makeElectronicsReliable(root){
  makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.userData=m.userData||{};if(m.color&&!m.userData.step4bNativeColor)m.userData.step4bNativeColor=m.color.getHex();m.transparent=true;m.opacity=.10;m.depthWrite=false;m.depthTest=true;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
 }
 function physicalLevelFromId(id){
- if(/^B1-/.test(id))return 0;if(/^L7-|^F7-/.test(id))return 7;const m=/^F([1-6])-/.exec(id);return m?Number(m[1]):null
+ const key=electronicsAssetIdFromName(id);if(/^B1-/.test(key))return 0;if(/^L7-|^F7-/.test(key))return 7;const m=/^F([1-6])-/.exec(key);return m?Number(m[1]):null
 }
 function stylePhysicalMesh(o,mode){
  const b=o.userData.spatialBinding,color=engineeringClassColor(b?.class),ms=Array.isArray(o.material)?o.material:[o.material];
@@ -300,26 +318,28 @@ function clearEngineeringMarkers(){
 }
 function rebuildEngineeringMarkers(){
  clearEngineeringMarkers();if(!electronics||!engineeringMode||roomMode){engineeringOverlay.visible=false;return 0}
- const focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null;let count=0;
- electronics.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o)||o.userData.spatialBound!==true)return;const b=o.userData.spatialBinding;if(focusLevel!==null&&b?.level!==focusLevel)return;
-  const p=electronicsBoundWorld.get(o.name);if(!p)return;const mat=new THREE.SpriteMaterial({color:engineeringClassColor(b?.class),transparent:true,opacity:.92,depthTest:false,depthWrite:false});
-  const marker=new THREE.Sprite(mat);marker.position.copy(p);marker.scale.setScalar(ft(1.25));marker.renderOrder=95;marker.name='XRAY-MARKER::'+o.name;marker.userData.assetId=o.name;engineeringOverlay.add(marker);count++
+ const focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null,seen=new Set();let count=0;
+ electronics.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o)||o.userData.spatialBound!==true)return;const assetId=o.userData.assetId||electronicsAssetIdFromName(o.name);if(seen.has(assetId))return;const b=o.userData.spatialBinding;if(focusLevel!==null&&b?.level!==focusLevel)return;
+  const p=electronicsBoundWorld.get(assetId);if(!p)return;seen.add(assetId);const mat=new THREE.SpriteMaterial({color:engineeringClassColor(b?.class),transparent:true,opacity:.92,depthTest:false,depthWrite:false});
+  const marker=new THREE.Sprite(mat);marker.position.copy(p);marker.scale.setScalar(ft(1.25));marker.renderOrder=95;marker.name='XRAY-MARKER::'+assetId;marker.userData.assetId=assetId;engineeringOverlay.add(marker);count++
  });
  engineeringOverlay.visible=true;return count
 }
-function registerNativeElectronicsMesh(o,binding){
+function registerNativeElectronicsMesh(o,binding,assetId){
  if(!o.geometry)return false;o.geometry.computeBoundingBox();const local=o.geometry.boundingBox?.getCenter(new THREE.Vector3())||new THREE.Vector3();o.updateWorldMatrix(true,false);const world=local.applyMatrix4(o.matrixWorld);
- const level=binding?.level??physicalLevelFromId(o.name||'');if(level===null)return false;
- o.userData.spatialBound=true;o.userData.spatialBinding={...(binding||{}),level,placement_mode:'native_generator_coordinates',authority:'step4b_native_physical_installation'};electronicsBoundWorld.set(o.name,world.clone());return true
+ const level=binding?.level??physicalLevelFromId(assetId);if(level===null)return false;
+ const componentId=electronicsComponentIdFromName(o.name);
+ o.userData.assetId=assetId;o.userData.componentId=componentId;o.userData.spatialBound=true;o.userData.spatialBinding={...(binding||{}),level,placement_mode:'native_generator_coordinates',authority:'step4c_componentized_physical_device'};
+ if(!electronicsBoundWorld.has(assetId)||o.name===assetId||componentId==='HOUSING')electronicsBoundWorld.set(assetId,world.clone());return true
 }
 async function applyElectronicsSpatialBindings(root){
- const mod=await ensureElectronicsSpatialModule();electronicsBoundWorld.clear();electronicsBoundCount=0;electronicsUnboundCount=0;root.updateMatrixWorld(true);
- root.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o))return;const binding=mod.resolveElectronicsSpatialBinding(o.name||'');if(registerNativeElectronicsMesh(o,binding)){electronicsBoundCount++}else{o.userData.spatialBound=false;o.visible=false;electronicsUnboundCount++}});
- root.updateMatrixWorld(true)
+ const mod=await ensureElectronicsSpatialModule();await ensureDeviceCatalog();electronicsBoundWorld.clear();electronicsBoundCount=0;electronicsUnboundCount=0;root.updateMatrixWorld(true);const boundAssets=new Set();
+ root.traverse(o=>{if(!o.isMesh||engineeringMeshIsCable(o))return;const assetId=electronicsAssetIdFromName(o.name||''),binding=mod.resolveElectronicsSpatialBinding(assetId);if(registerNativeElectronicsMesh(o,binding,assetId)){boundAssets.add(assetId)}else{o.userData.spatialBound=false;o.visible=false;electronicsUnboundCount++}});
+ electronicsBoundCount=boundAssets.size;root.updateMatrixWorld(true)
 }
 async function ensureElectronicsLayer(){
  if(electronics)return electronics;
- if(!labElectronicsPromise)labElectronicsPromise=new Promise((resolve,reject)=>loader.load('/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb?v=__STAMP__',async g=>{try{electronics=g.scene;electronics.scale.setScalar(FT);electronics.rotation.x=-Math.PI/2;scene.add(electronics);electronics.updateMatrixWorld(true);makeElectronicsReliable(electronics);await applyElectronicsSpatialBindings(electronics);electronics.visible=false;electronics.traverse(o=>{if(o.isMesh)o.visible=false});resolve(electronics)}catch(err){reject(err)}},undefined,reject));
+ if(!labElectronicsPromise)labElectronicsPromise=new Promise((resolve,reject)=>loader.load('/equity-uprise-preview/equity-uprise-electronics-fabric-v1.glb?v=__STAMP__',async g=>{try{await ensureDeviceCatalog();electronics=g.scene;electronics.scale.setScalar(FT);electronics.rotation.x=-Math.PI/2;scene.add(electronics);electronics.updateMatrixWorld(true);makeElectronicsReliable(electronics);await applyElectronicsSpatialBindings(electronics);electronics.visible=false;electronics.traverse(o=>{if(o.isMesh)o.visible=false});resolve(electronics)}catch(err){reject(err)}},undefined,reject));
  return labElectronicsPromise;
 }
 function engineeringMeshIsCable(o){return /^CABLE::/.test(o?.name||'')}
@@ -330,15 +350,15 @@ function cableMatchesFocus(o){
 function syncElectronicsVisibility(){
  if(!electronics){clearEngineeringMarkers();engineeringOverlay.visible=false;return{devices:0,cables:0}}
  const focusLevel=/^[0-7]$/.test(currentFocus)?Number(currentFocus):null;
- const allowPlant=plantMode,allowXray=engineeringMode&&!roomMode,allowCables=cablingMode&&!roomMode;let devices=0,cables=0;
+ const allowPlant=plantMode,allowXray=engineeringMode&&!roomMode,allowCables=cablingMode&&!roomMode,visibleAssets=new Set();let cables=0;
  electronics.visible=allowPlant||allowXray||allowCables;
  electronics.traverse(o=>{if(!o.isMesh)return;
    if(engineeringMeshIsCable(o)){const show=allowCables&&cableMatchesFocus(o);o.visible=show;if(show)cables++;return}
    const b=o.userData.spatialBinding,scope=focusLevel===null||b?.level===focusLevel,show=(allowPlant||allowXray)&&o.userData.spatialBound===true&&scope;
-   o.visible=show;stylePhysicalMesh(o,show?(allowXray?'xray':'plant'):'hidden');if(show)devices++
+   o.visible=show;stylePhysicalMesh(o,show?(allowXray?'xray':'plant'):'hidden');if(show)visibleAssets.add(o.userData.assetId||electronicsAssetIdFromName(o.name))
  });
  if(allowXray)rebuildEngineeringMarkers();else{clearEngineeringMarkers();engineeringOverlay.visible=false}
- return{devices,cables}
+ return{devices:visibleAssets.size,cables}
 }
 function setEngineeringElectronics(on){return syncElectronicsVisibility().devices}
 function infrastructureStatus(counts=syncElectronicsVisibility()){
