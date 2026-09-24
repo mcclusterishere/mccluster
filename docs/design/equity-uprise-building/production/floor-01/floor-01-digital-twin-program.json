@@ -622,6 +622,7 @@
   "tunnel_network_ref": "../underground-tunnel-network.json",
   "underground_access_model": {
     "normal_floor_selector": [
+      "B1",
       "1",
       "2",
       "3",
@@ -630,21 +631,19 @@
       "6",
       "↑"
     ],
-    "b1_selector_visibility": "mccluster-house-owner-or-underground-operations-admin-only",
-    "ordinary_equity_uprise_admin_can_see_b1": false,
+    "b1_selector_visibility": "visible-controlled-technical-floor",
+    "ordinary_equity_uprise_admin_can_see_b1": true,
     "journey_wall_shows_b1": false,
-    "public_directory_shows_b1": false,
+    "public_directory_shows_b1": true,
+    "directory_label": "B1 · Technical Operations / Infrastructure",
     "passenger_elevator": {
       "physical_b1_stop": true,
-      "b1_control_hidden_by_default": true,
-      "authorized_reveal": [
-        "mccluster_house_owner",
-        "underground_operations_admin"
-      ]
+      "b1_control_hidden_by_default": false,
+      "access": "staff-or-authorized-participant"
     },
     "stairs": {
       "physical_b1_connection": true,
-      "floor1_downward_access": "access-controlled-restricted",
+      "floor1_downward_access": "controlled-technical-floor",
       "b1_to_floor1_egress": "preserved"
     },
     "freight_elevator": {
@@ -652,9 +651,10 @@
       "access": "restricted-operational"
     },
     "training": {
-      "entry": "Building Systems Lab simulation launcher",
-      "destination": "sandboxed B1/tunnel clone",
-      "live_systems": false
+      "entry": "Building Systems Lab / B1 workplace",
+      "destination": "canonical B1/tunnel SANDBOX geometry",
+      "live_systems": false,
+      "separate_secret_clone": false
     }
   },
   "federal_training_catalog_ref": "../../../equity-uprise-development/FEDERAL-TRAINING-CATALOG.json",

@@ -1,51 +1,51 @@
 # Equity Uprise — Underground Tunnel Network Authority
 
-> Status: **CANONICAL UNDERGROUND-BACKBONE AUTHORITY v0.1**
+> Status: **CANONICAL UNDERGROUND-BACKBONE AUTHORITY v0.2**
 >
 > Scope: B1 tunnel interface + future inter-building underground network.
 >
-> The tunnel network is **not** an E-Q-U-I-T-Y developmental floor and is **not** a public navigation destination.
+> The tunnel network is **not** an E-Q-U-I-T-Y developmental floor. It is known operational infrastructure connected to the staffed B1 workplace; specific sectors remain role/safety controlled.
 
 ## 1. Purpose
 
-The underground network is the restricted physical/digital backbone connecting Equity Uprise headquarters to future ecosystem buildings.
+The underground network is the known physical/digital backbone connecting Equity Uprise headquarters to future ecosystem buildings.
 
 Architectural metaphor:
 
 - **↑ Roof** = outward/public ecosystem gateway and launch layer.
 - **E-Q-U-I-T-Y floors** = participant development journey.
-- **B1** = restricted infrastructure and underground-operations hub.
-- **↓ Tunnel network** = private inter-building infrastructure, logistics and transportation backbone.
+- **B1** = staffed technical operations / infrastructure / underground-operations workplace.
+- **↓ Tunnel network** = known inter-building infrastructure, logistics and transportation backbone with controlled sectors.
 
 The network is modeled as industrial campus infrastructure, not as a decorative secret passage.
 
 ## 2. Access authority
 
-Live B1/tunnel access is restricted to:
+B1 and the existence of the tunnel network are not secret.
 
-- McCluster house owner; and
-- a dedicated `underground_operations_admin` authority explicitly delegated by the house owner.
+Authorized operational access may be granted to:
+- Equity Uprise security;
+- facilities;
+- mobility/tunnel operations;
+- Field-T / technical staff;
+- instructors/supervisors for approved training;
+- supervised learners in scenario-appropriate areas.
 
-Ordinary Equity Uprise roles — including member, host, editor, client, staff and ordinary Equity Uprise admin — do **not** gain live B1/tunnel access.
+General public and unsupervised visitors do not receive automatic tunnel-sector access.
 
-The live B1 level and tunnel network are omitted from normal:
-- elevator selectors;
-- building directories;
-- Journey Wall navigation;
-- participant wayfinding;
-- public presence maps.
+Room/sector authorization remains auditable and may depend on safety qualification, active maintenance restrictions and incident state.
 
 ### Training access
 
-Learners/instructors may use a **sandboxed training clone** of B1/tunnel geometry.
+The canonical virtual B1/tunnel geometry may be used directly in SANDBOX training.
 
-Training access:
-- does not unlock the live B1;
-- does not reveal live tunnel occupancy, infrastructure state, route status or connected-building operational data;
-- cannot operate live doors, vehicles, utilities, controls or security systems;
-- may simulate incidents and generate competency evidence.
+Training:
+- never enables LIVE real-world doors, vehicles, utilities or controls;
+- does not expose real-world occupancy or operational data;
+- may simulate incidents and produce competency evidence;
+- uses the same canonical geometry so story, training and game continuity stay aligned.
 
-Competency never substitutes for operational authorization.
+Competency never substitutes for role/safety authorization.
 
 ## 3. B1 physical interface
 
@@ -198,7 +198,7 @@ External credentials/training remain separate evidence records in the Developmen
 
 Do not market the tunnel as a hidden bypass around institutional security.
 
-The network may be visually discreet and unavailable to ordinary users, but its operational model must preserve:
+The network is known infrastructure; individual sectors may be controlled, and its operational model must preserve:
 - auditable identity/access;
 - emergency accountability;
 - safe egress;
@@ -217,4 +217,4 @@ See:
 **NOT FOR CONSTRUCTION / NOT A REAL INFRASTRUCTURE SECURITY PLAN.**
 
 
-Federal course/program resolution and exact instructional bindings are controlled by `../equity-uprise-development/FEDERAL-TRAINING-CATALOG.json` and `../equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json`. The live B1 boundary is unchanged: learner exercises remain sandboxed-clone-only.
+Federal course/program resolution and exact instructional bindings are controlled by `../equity-uprise-development/FEDERAL-TRAINING-CATALOG.json` and `../equity-uprise-development/FEDERAL-TRAINING-BINDINGS.json`. B1 is now a known staffed workplace floor. Learner exercises remain SANDBOX-only, but use the canonical B1 geometry rather than a separate secret-clone concept.

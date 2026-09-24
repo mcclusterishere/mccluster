@@ -29,7 +29,7 @@
     {
       "level": 0,
       "id": "basement-b1",
-      "name": "Underground Operations / Technical Service Basement",
+      "name": "Technical Operations / Infrastructure / Underground Operations",
       "finished_floor_elevation_ft": -13.5,
       "below_grade": true,
       "open_air": false

@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-basement-b1",
-  "scene_name": "Equity Uprise B1 \u2014 Underground Operations / Technical Service Basement",
-  "status": "core-v2-active-restricted",
+  "scene_name": "Equity Uprise B1 — Technical Operations / Infrastructure / Underground Operations",
+  "status": "core-v2-active-controlled",
   "not_for_construction": true,
-  "public_navigation": false,
+  "public_navigation": true,
   "shared_core_ref": "../building-core-v2.json",
   "basement_program_ref": "../basement-b1-program.json",
   "tunnel_network_ref": "../underground-tunnel-network.json",
@@ -62,7 +62,7 @@
       ],
       "level_7_service": "not_assumed",
       "shaft_continuity": "continuous_through_served_stack",
-      "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
+      "note": "Serves B1 and Floors 1–6. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
       "b1_access_policy": {
         "physical_stop": true,
         "visible_in_normal_floor_selector": false,
@@ -103,7 +103,7 @@
       "level_7_service": "reserved_for_future_resolution",
       "shaft_continuity": "continuous_reservation_to_roof",
       "pit_overhead_machine_strategy": "unresolved",
-      "note": "Serves B1 and Floors 1\u20136; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts.",
+      "note": "Serves B1 and Floors 1–6; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts.",
       "b1_access_policy": {
         "physical_stop": true,
         "access": "restricted-operational"
@@ -459,5 +459,7 @@
   "lighting_ref": "basement-b1-lighting.json",
   "hotspots_ref": "basement-b1-hotspots.json",
   "routing_ref": "basement-b1-routing.json",
-  "states_ref": "basement-b1-states.json"
+  "states_ref": "basement-b1-states.json",
+  "access_model": "known-floor-controlled-compartments",
+  "sandbox_only": true
 }

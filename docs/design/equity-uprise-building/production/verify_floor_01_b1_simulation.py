@@ -33,11 +33,11 @@ check("B1 is not developmental",B1.get("developmental_stage") is None,str(B1.get
 check("B1 normal public access false",B1.get("normal_public_access") is False,str(B1.get("normal_public_access")))
 check("B1 title matches shared core",levels.get(0,{}).get("name")==B1.get("title"),f"{levels.get(0,{}).get('name')} != {B1.get('title')}")
 check("canonical maps are branch-agnostic","branch" not in CAPABILITY_MAP and "branch" not in SOURCE_MAP,str({"capability_branch":CAPABILITY_MAP.get("branch"),"source_branch":SOURCE_MAP.get("branch")}))
-check("B1 live access is restricted",B1.get("access")=="mccluster-house-owner-or-underground-operations-admin",str(B1.get("access")))
-check("B1 training is sandbox only",B1.get("training_access",{}).get("mode")=="sandboxed_clone_only",str(B1.get("training_access")))
-check("ordinary EU admin cannot unlock live B1",B1.get("live_access",{}).get("ordinary_equity_uprise_admin_sufficient") is False,str(B1.get("live_access")))
+check("B1 access uses role/safety authorization",B1.get("access")=="role-and-safety-authorized",str(B1.get("access")))
+check("B1 training uses canonical sandbox geometry",B1.get("training_access",{}).get("mode")=="canonical_sandbox_same_geometry" and B1.get("training_access",{}).get("live_controls_available") is False,str(B1.get("training_access")))
+check("B1 floor is known with room-level restrictions",B1.get("live_access",{}).get("floor_hidden") is False and B1.get("live_access",{}).get("room_level_restrictions") is True,str(B1.get("live_access")))
 check("tunnel is not publicly visible",TUNNEL.get("public_visibility") is False,str(TUNNEL.get("public_visibility")))
-check("tunnel training clone has no live access",TUNNEL.get("training_access",{}).get("live_tunnel_access") is False,str(TUNNEL.get("training_access")))
+check("tunnel training uses sandbox geometry without real-world control",TUNNEL.get("training_access",{}).get("mode")=="canonical_sandbox_same_geometry" and TUNNEL.get("training_access",{}).get("real_world_controls_available") is False,str(TUNNEL.get("training_access")))
 check("tunnel has future reserved branches only",all(x.get("destination") is None for x in TUNNEL.get("backbone",{}).get("future_connections",[])),str(TUNNEL.get("backbone",{}).get("future_connections")))
 
 for key in ("passenger_elevator","service_freight_elevator","stair_a","stair_b","mep_riser"):
@@ -121,9 +121,9 @@ check("Level 7 maturity reconciled",f7_program.get("design_maturity")=="reconcil
 check("Floor 1 site ref",F1.get("site_egress_ref")=="floor-01-site-egress.json",str(F1.get("site_egress_ref")))
 check("Floor 1 basement ref",F1.get("basement_ref")=="../basement-b1-program.json",str(F1.get("basement_ref")))
 check("no unresolved geometry requirements","unresolved_geometry_requirements" not in F1,str(F1.get("unresolved_geometry_requirements")))
-check("Floor 1 hides B1 from normal navigation",F1.get("underground_access_model",{}).get("public_directory_shows_b1") is False,str(F1.get("underground_access_model")))
-check("Floor 1 ordinary EU admin cannot see B1",F1.get("underground_access_model",{}).get("ordinary_equity_uprise_admin_can_see_b1") is False,str(F1.get("underground_access_model")))
-check("Floor 1 training goes to sandbox clone",F1.get("underground_access_model",{}).get("training",{}).get("destination")=="sandboxed B1/tunnel clone",str(F1.get("underground_access_model",{}).get("training")))
+check("Floor 1 directory shows known B1",F1.get("underground_access_model",{}).get("public_directory_shows_b1") is True,str(F1.get("underground_access_model")))
+check("Floor 1 authorized admins can see B1",F1.get("underground_access_model",{}).get("ordinary_equity_uprise_admin_can_see_b1") is True,str(F1.get("underground_access_model")))
+check("Floor 1 training uses canonical B1 sandbox",F1.get("underground_access_model",{}).get("training",{}).get("destination")=="canonical B1/tunnel SANDBOX geometry" and F1.get("underground_access_model",{}).get("training",{}).get("separate_secret_clone") is False,str(F1.get("underground_access_model",{}).get("training")))
 # Derived Floor 1 package must match current authority, not stale migration metadata.
 check("Floor 1 manifest active",F1_MANIFEST.get("status")=="core-v2-active",str(F1_MANIFEST.get("status")))
 check("Floor 1 manifest current name",F1_MANIFEST.get("scene_name")=="Equity Uprise Level 01 — Arrival / Orientation / Intake",str(F1_MANIFEST.get("scene_name")))
@@ -132,8 +132,8 @@ activity_refs=F1_MANIFEST.get("authority",{}).get("activity_simulation_authority
 check("Floor 1 manifest activity refs resolve",activity_refs==["../../FLOOR-01-DIGITAL-TWIN-PROGRAM.md","floor-01-digital-twin-program.json"],str(activity_refs))
 lab=F1_ROUTING.get("routes",{}).get("building_systems_lab",{})
 underground=F1_ROUTING.get("routes",{}).get("underground_operations",{})
-check("Floor 1 building systems route sandbox only",lab.get("live_b1_access") is False,str(lab))
-check("Floor 1 underground route hidden live access",underground.get("hidden_from_normal_navigation") is True and underground.get("live_b1_access") is True,str(underground))
+check("Floor 1 building systems route uses canonical sandbox",lab.get("simulation") is True and lab.get("canonical_b1_geometry") is True and lab.get("live_real_world_control") is False,str(lab))
+check("Floor 1 underground route is visible controlled sandbox",underground.get("hidden_from_normal_navigation") is False and underground.get("known_floor") is True and underground.get("live_real_world_control") is False,str(underground))
 state_ids={x.get("id") for x in F1_STATES.get("states",[])}
 check("Floor 1 states include underground access","underground_operations_access" in state_ids,str(sorted(state_ids)))
 floor_focus=next((x for x in F1_STATES.get("states",[]) if x.get("id")=="floor_focus"),{})
@@ -157,9 +157,9 @@ for name in b1_required:
     check(f"B1 package file exists: {name}",(B1_DIR/name).exists(),str(B1_DIR/name))
 if (B1_DIR/"basement-b1-scene-manifest.json").exists():
     b1m=json.loads((B1_DIR/"basement-b1-scene-manifest.json").read_text())
-    check("B1 scene manifest active restricted",b1m.get("status")=="core-v2-active-restricted",str(b1m.get("status")))
+    check("B1 scene manifest active controlled",b1m.get("status")=="core-v2-active-controlled",str(b1m.get("status")))
     check("B1 scene title current",b1m.get("scene_name")==f"Equity Uprise B1 — {B1['title']}",str(b1m.get("scene_name")))
-    check("B1 scene hidden from public navigation",b1m.get("public_navigation") is False,str(b1m.get("public_navigation")))
+    check("B1 scene appears in navigation",b1m.get("public_navigation") is True,str(b1m.get("public_navigation")))
     check("B1 scene tunnel authority ref",b1m.get("tunnel_network_ref")=="../underground-tunnel-network.json",str(b1m.get("tunnel_network_ref")))
     check("B1 scene maturity reconciled",b1m.get("design_maturity")=="reconciled-current-iterative-pass",str(b1m.get("design_maturity")))
     check("B1 scene detailed render ready",b1m.get("render_readiness")=="detailed-real-3d",str(b1m.get("render_readiness")))
@@ -167,9 +167,9 @@ if (B1_DIR/"basement-b1-scene-manifest.json").exists():
 if (B1_DIR/"basement-b1-routing.json").exists():
     b1r=json.loads((B1_DIR/"basement-b1-routing.json").read_text())
     routes=b1r.get("routes",{})
-    check("B1 sandbox cannot reach live B1",routes.get("building_systems_training_sandbox",{}).get("live_b1_access") is False,str(routes.get("building_systems_training_sandbox")))
-    check("B1 sandbox cannot reach live tunnel",routes.get("building_systems_training_sandbox",{}).get("live_tunnel_access") is False,str(routes.get("building_systems_training_sandbox")))
-    check("B1 ordinary EU admin insufficient",b1r.get("security",{}).get("ordinary_equity_uprise_admin_sufficient") is False,str(b1r.get("security")))
+    check("B1 training route uses canonical geometry",routes.get("building_systems_training_sandbox",{}).get("canonical_geometry") is True and routes.get("building_systems_training_sandbox",{}).get("live_real_world_control") is False,str(routes.get("building_systems_training_sandbox")))
+    check("B1 training route has no real-world control",routes.get("building_systems_training_sandbox",{}).get("live_real_world_control") is False,str(routes.get("building_systems_training_sandbox")))
+    check("B1 general floor not hidden and hazardous compartments controlled",b1r.get("security",{}).get("floor_hidden") is False and b1r.get("security",{}).get("hazardous_compartments_role_controlled") is True,str(b1r.get("security")))
 
 b1_detail_report=HERE/"generated"/"equity-uprise-basement-b1-core-v2-report.json"
 check("detailed B1 report exists",b1_detail_report.exists(),str(b1_detail_report))

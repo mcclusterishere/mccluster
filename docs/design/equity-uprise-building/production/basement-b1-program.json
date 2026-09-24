@@ -1,16 +1,16 @@
 {
-  "schema_version": "0.2.0",
-  "status": "canonical-b1-underground-operations-and-technical-service-program",
+  "schema_version": "0.3.0",
+  "status": "canonical-b1-staffed-workplace-underground-operations-program",
   "id": "basement-b1",
   "level": 0,
   "display_level": "B1",
-  "title": "Underground Operations / Technical Service Basement",
+  "title": "Technical Operations / Infrastructure / Underground Operations",
   "elevation_ft": -13.5,
   "developmental_stage": null,
   "acronym_role": "none-supporting-infrastructure-only",
   "normal_public_access": false,
-  "access": "mccluster-house-owner-or-underground-operations-admin",
-  "purpose": "House the virtual headquarters technical backbone and serve as the restricted operational gateway to the future inter-building underground network, while exposing only sandboxed clones for learner/instructor training.",
+  "access": "role-and-safety-authorized",
+  "purpose": "Serve as the staffed Equity Uprise technical-operations, infrastructure, security and hands-on lab floor while providing the operational interface to the known underground logistics/tunnel network.",
   "code_model": {
     "level_of_exit_discharge": 1,
     "below_grade": true,
@@ -46,8 +46,8 @@
         "OPS-04"
       ],
       "hazard_class": "controlled-technical",
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only"
+      "live_access": "qualified-staff-or-supervised-training",
+      "training_mode": "canonical_sandbox"
     },
     {
       "id": "b1-electrical-emergency",
@@ -71,8 +71,8 @@
         "OPS-04"
       ],
       "hazard_class": "restricted-electrical",
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only"
+      "live_access": "qualified-staff-or-supervised-training",
+      "training_mode": "canonical_sandbox"
     },
     {
       "id": "b1-fire-water",
@@ -95,8 +95,8 @@
         "OPS-04"
       ],
       "hazard_class": "controlled-technical",
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only"
+      "live_access": "qualified-staff-or-supervised-training",
+      "training_mode": "canonical_sandbox"
     },
     {
       "id": "b1-telecom-core",
@@ -120,8 +120,8 @@
         "OPS-06"
       ],
       "hazard_class": "restricted-digital",
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only"
+      "live_access": "qualified-staff-or-supervised-training",
+      "training_mode": "canonical_sandbox"
     },
     {
       "id": "b1-water-flood",
@@ -144,8 +144,8 @@
         "OPS-04"
       ],
       "hazard_class": "controlled-technical",
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only"
+      "live_access": "qualified-staff-or-supervised-training",
+      "training_mode": "canonical_sandbox"
     },
     {
       "id": "b1-facilities-workshop",
@@ -167,8 +167,8 @@
         "CORE-08"
       ],
       "hazard_class": "service",
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only"
+      "live_access": "role-authorized-staff-or-supervised-learner",
+      "training_mode": "canonical_sandbox"
     },
     {
       "id": "b1-systems-lab",
@@ -195,8 +195,8 @@
         "OPS-06"
       ],
       "hazard_class": "instructional",
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only"
+      "live_access": "equity-uprise-staff-instructor-supervised-learner",
+      "training_mode": "canonical_sandbox"
     },
     {
       "id": "b1-service-staging",
@@ -217,8 +217,8 @@
         "CORE-08"
       ],
       "hazard_class": "service",
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only"
+      "live_access": "role-authorized-staff-or-supervised-learner",
+      "training_mode": "canonical_sandbox"
     },
     {
       "id": "b1-tunnel-ops-concourse",
@@ -244,9 +244,9 @@
         "OPS-03",
         "OPS-05"
       ],
-      "training_mode": "sandboxed_clone_only",
+      "training_mode": "canonical_sandbox",
       "hazard_class": "restricted-underground-operations",
-      "live_access": "mccluster-house-owner-or-underground-operations-admin"
+      "live_access": "role-authorized-staff-or-supervised-learner"
     },
     {
       "id": "b1-tunnel-transfer-lock",
@@ -269,9 +269,9 @@
         "OPS-01",
         "OPS-05"
       ],
-      "training_mode": "sandboxed_clone_only",
+      "training_mode": "canonical_sandbox",
       "hazard_class": "restricted-underground-transfer",
-      "live_access": "mccluster-house-owner-or-underground-operations-admin"
+      "live_access": "mobility-ops-security-qualified-staff"
     }
   ],
   "scenario_catalog": [
@@ -410,34 +410,42 @@
   ],
   "simulation_rules": [
     "B1 is not a seventh/eighth developmental curriculum floor.",
-    "B1 is omitted from the normal public/member floor selector, Journey Wall navigation and ordinary building directory.",
-    "Live B1 access requires McCluster house-owner or explicitly delegated underground_operations_admin authority.",
-    "Ordinary Equity Uprise admin/staff roles and competency status do not grant live B1 or tunnel access.",
-    "Learners and instructors use a sandboxed training clone of B1/tunnel geometry; training cannot operate or reveal the live underground network.",
-    "Protected stairs and the passenger elevator physically connect B1 to Floor 1 in the combined model for authorized operation and safe egress.",
-    "Freight/service elevator physically serves B1 but remains restricted operational infrastructure.",
+    "B1 is a known, staffed Equity Uprise workplace floor and is included in staff wayfinding and authorized participant navigation.",
+    "The floor itself is not secret; room-level hazards and operational functions retain role/safety access controls.",
+    "Learners and instructors may use the canonical virtual B1 geometry in SANDBOX mode when the activity is appropriate; a separate secret-clone concept is not required.",
+    "The tunnel/logistics network is known infrastructure. Specific sectors, controls and transfer functions may remain restricted.",
+    "Protected stairs and the passenger elevator physically connect B1 to Floor 1 for normal authorized movement and safe egress.",
+    "Freight/service elevator physically serves B1 as operational infrastructure.",
     "Future tunnel branches remain unlabeled reserved connections until a destination building has canonical authority.",
-    "The model must preserve a clear distinction between training simulation, live operations and real-world professional engineering authority."
+    "No B1 access state grants LIVE real-world infrastructure control; this remains a digital-twin/training/story environment."
   ],
   "basement": true,
   "south_condition": "below-grade perimeter wall",
   "tunnel_network_ref": "underground-tunnel-network.json",
   "live_access": {
     "allowed": [
-      "mccluster_house_owner",
-      "underground_operations_admin"
+      "equity_uprise_staff",
+      "equity_uprise_instructor",
+      "equity_uprise_security",
+      "equity_uprise_facilities",
+      "field_t",
+      "mobility_operations",
+      "supervised_equity_uprise_learner"
     ],
-    "delegated_by": "mccluster_house_owner",
-    "ordinary_equity_uprise_admin_sufficient": false,
-    "competency_sufficient": false,
+    "floor_hidden": false,
+    "room_level_restrictions": true,
+    "competency_alone_sufficient": false,
     "audit_required": true
   },
   "training_access": {
-    "mode": "sandboxed_clone_only",
-    "live_b1_access": false,
-    "live_tunnel_access": false,
+    "mode": "canonical_sandbox_same_geometry",
+    "b1_access": true,
+    "tunnel_training_access": "scenario-and-role-controlled",
     "live_controls_available": false,
-    "live_occupancy_visible": false,
+    "real_world_operational_data_available": false,
     "competency_evidence_allowed": true
-  }
+  },
+  "normal_staff_access": true,
+  "learner_instructor_access": true,
+  "directory_visibility": "staff-and-authorized-participant"
 }

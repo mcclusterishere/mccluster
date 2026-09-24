@@ -1,51 +1,72 @@
-# Equity Uprise — B1 Underground Operations / Technical Service Basement
+# Equity Uprise — B1 Technical Operations / Infrastructure / Underground Operations
 
-> Status: **CANONICAL SUPPORT + UNDERGROUND-OPERATIONS PROGRAM v0.2**
+> Status: **CANONICAL STAFFED-WORKPLACE PROGRAM v0.3**
 >
 > B1 is **not** part of the E-Q-U-I-T-Y developmental floor sequence.
+>
+> B1 **is** a known, staffed Equity Uprise workplace floor.
 
 ## Purpose
 
-B1 is the restricted infrastructure layer beneath Equity Uprise.
+B1 is the building's technical-operations and infrastructure floor.
 
-It performs two linked jobs:
+It performs four linked jobs:
 
-1. houses the hypothetical headquarters technical backbone; and
-2. serves as the controlled operational gateway to the future inter-building tunnel network.
+1. houses the building's technical backbone;
+2. provides hands-on infrastructure/lab space;
+3. gives security, facilities and technical staff a persistent workplace; and
+4. serves as the operational interface to the known inter-building tunnel/logistics network.
 
 Architectural metaphor:
 
-- **↑ Roof** = outward/public ecosystem gateway.
+- **↑ Roof** = outward ecosystem / mobility gateway.
 - **E-Q-U-I-T-Y floors** = participant-development journey.
-- **B1** = restricted infrastructure / underground-operations hub.
-- **↓ tunnels** = private inter-building transport, logistics and utility backbone.
+- **B1** = technical operations / infrastructure / security / hands-on lab.
+- **↓ tunnels** = known inter-building transport, logistics and utility backbone.
 
-B1 is not a public program floor and is not shown in normal participant navigation.
+B1 is not hidden from staff or story continuity.
 
 ## Access authority
 
-### Live B1
+The floor itself is not secret.
 
-Live access requires either:
+Normal authorized use includes:
 
-- McCluster house-owner authority; or
-- explicitly delegated `underground_operations_admin` authority.
+- Equity Uprise staff;
+- instructors;
+- security;
+- facilities;
+- Field-T / technical personnel;
+- mobility/tunnel operations;
+- supervised learners when an activity is appropriate.
 
-Ordinary Equity Uprise roles — including member, host, editor, client, staff and ordinary Equity Uprise admin — do **not** unlock B1.
+Individual rooms retain role/safety restrictions where necessary.
 
-Competency level does not unlock B1.
+Examples:
 
-### Training
+- Electrical / Emergency Power remains a controlled technical room.
+- Fire / Water plant remains controlled.
+- Network / Telecom Core remains role-authorized.
+- Tunnel Transfer Lock remains mobility/security controlled.
+- Building Systems Lab and appropriate workshop areas may be used for supervised training.
 
-Learners and instructors use a **sandboxed clone** of B1/tunnel geometry.
+Competency alone never grants unrestricted access to hazardous or operational spaces.
 
-The training environment may reproduce rooms, tunnel sectors, vehicles, utility states, alarms, failures and emergency scenarios, but it cannot:
+The digital twin remains SANDBOX-only and does not provide LIVE real-world infrastructure control.
 
-- open live B1/tunnel doors;
-- expose live underground occupancy;
-- show live tunnel route/security state;
-- operate live utilities/vehicles/controls;
-- reveal live connected-building operational data.
+## Navigation
+
+B1 is included in:
+
+- staff floor navigation;
+- staff building directories;
+- authorized participant wayfinding;
+- story/game workplace maps;
+- elevator/stair continuity.
+
+Public visitors do not automatically receive unrestricted B1 access.
+
+The distinction is **known floor vs. controlled rooms**, not **visible floor vs. secret floor**.
 
 ## Level
 
@@ -70,14 +91,32 @@ The training environment may reproduce rooms, tunnel sectors, vehicles, utility 
 
 Shared vertical-core geometry remains authoritative.
 
+## Recurring workplace occupants
+
+Canonical named workspaces are governed by:
+
+- WORKPLACE-OCCUPANCY-AUTHORITY.md
+- production/workplace-occupancy-v1.json
+
+B1 recurring staff include:
+
+- Hassan Raza — Tech-Zone Security Station;
+- Dmitri Volkov — Building Security / Infrastructure Guard Station;
+- Emre Yıldız — Physical Systems / Facilities Desk;
+- Jonas Weber — Pylon Systems Liaison Console;
+- Minh Tran — Hardware / Firmware Bench;
+- Pylon — primary human-service operations interface.
+
+Background populations include facilities/electrical technicians, network/IDF technicians, Defense-03 security, Field-T technicians, infrastructure instructors and tunnel/mobility maintenance.
+
 ## Tunnel Operations Concourse / Security Gate
 
-This is the operational interface between the building and the underground network.
+This is the staffed interface between the building and the underground network.
 
-Live functions may include:
+Functions may include:
 
 - identity/access control;
-- exact underground occupancy accountability;
+- underground occupancy accountability;
 - transport/shuttle dispatch;
 - route/sector authorization;
 - incident status;
@@ -85,9 +124,11 @@ Live functions may include:
 - maintenance restrictions;
 - emergency closures.
 
-The live system must be able to answer:
+The system must be able to answer:
 
 **Who is underground, where are they, and which route can they safely use?**
+
+Knowing the tunnel exists is not secret. Operating a sector remains role-controlled.
 
 ## Tunnel Portal / Transfer Lock
 
@@ -104,49 +145,28 @@ It represents:
 
 The tunnel extends outside the current 72' × 72' building shell and belongs to the future campus/ecosystem masterplan.
 
-## Why B1 exists
+## Training / simulation value
 
-B1 enables simulations involving:
+B1 supports scenarios involving building power, mechanical systems, automation, network/core failures, flooding, fire-protection state, maintenance, accessibility, infrastructure interdependency, tunnel accountability, transport, ventilation and cyber-physical incidents.
 
-- building power loss and emergency transfer;
-- mechanical failure;
-- building automation;
-- network/core failures;
-- water intrusion/flooding;
-- fire-protection system state;
-- service/maintenance incidents;
-- accessibility and evacuation from below grade;
-- critical-operations shutdown;
-- infrastructure interdependency;
-- underground occupancy/accountability;
-- transport/shuttle failure;
-- tunnel fire/smoke;
-- ventilation failure;
-- tunnel flooding;
-- cyber-physical tunnel incidents;
-- connected-building isolation and rerouting.
+The canonical virtual B1 itself is the training geometry. A separate "secret clone" is not required.
 
 ## Egress / accessibility concept
 
 Protected Stair A and Stair B continue from B1 to Floor 1.
 
-Passenger elevator serves B1 as an authorized operational/accessibility route in the model, but emergency use depends on the selected simulation profile and scenario authority.
+Passenger elevator serves B1 as an authorized operational/accessibility route in the model. Emergency use depends on the selected simulation profile and scenario authority.
 
-Floor 1 includes barriers/wayfinding that prevent unauthorized or accidental descent to B1 while preserving safe egress from B1 upward to the level of exit discharge.
+Floor 1 wayfinding should identify B1 as a controlled technical floor rather than concealing it.
 
 ## Underground-network authority
 
-See:
-
-- `UNDERGROUND-TUNNEL-NETWORK-SPEC.md`
-- `production/underground-tunnel-network.json`
+See UNDERGROUND-TUNNEL-NETWORK-SPEC.md and production/underground-tunnel-network.json.
 
 Future tunnel branches may not be assigned destination names until the destination building has its own canonical authority.
 
 ## Machine-readable authority
 
-See:
-
-`production/basement-b1-program.json`
+See production/basement-b1-program.json.
 
 **NOT FOR CONSTRUCTION / NOT A REAL INFRASTRUCTURE SECURITY PLAN.**
