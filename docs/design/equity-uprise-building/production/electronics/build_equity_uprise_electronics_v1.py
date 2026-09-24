@@ -1302,6 +1302,9 @@ manifest={
  "floor_profiles":policy["floor_profiles"],"cable_type_catalog":policy["cable_types"],
  "new_asset_ids":sorted(a["asset_id"] for a in new_assets),"transient_client_profiles":transient_profiles,
  "vlans":policy["vlans"],"ssids":policy["ssids"],"logical_services":policy["logical_services"],
+ "device_archetype_authority":"docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
+ "device_component_catalog":"docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-device-components-v1.json",
+ "step4c_componentized_devices_total":len(device_component_records),
  "overlay_glb":MODEL_REL,"overlay_sha256":glb_sha
 }
 write(MANIFEST,manifest)
