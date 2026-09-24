@@ -587,9 +587,13 @@ function deviceStateFor(assetId){
  const state=(labView?.visuals?.assets||[]).find(x=>x.canonical_id===assetId);return state?.visual_state||'normal'
 }
 function deviceConnectionChain(assetId){
- const all=deviceConnections?.connections||[],direct=all.filter(x=>x.from_asset_id===assetId||x.to_asset_id===assetId),extra=[];
- direct.forEach(x=>{const other=x.from_asset_id===assetId?x.to_asset_id:x.from_asset_id;if(/::DATA-JACK$/.test(other))all.filter(y=>y.from_asset_id===other||y.to_asset_id===other).forEach(y=>{if(!direct.includes(y))extra.push(y)})});
- return [...direct,...extra].slice(0,8)
+ const all=deviceConnections?.connections||[],result=[],seen=new Set();let frontier=[assetId];
+ for(let depth=0;depth<4&&frontier.length;depth++){const next=[];
+  for(const current of frontier){const incoming=all.filter(x=>x.to_asset_id===current).sort((a,b)=>String(a.connection_id).localeCompare(String(b.connection_id)));
+   for(const x of incoming){if(seen.has(x.connection_id))continue;seen.add(x.connection_id);result.push(x);next.push(x.from_asset_id)}
+  }frontier=[...new Set(next)]
+ }
+ return result.slice(0,10)
 }
 function cameraCoverage(record){
  clearDeviceInteractionOverlay();const origin=electronicsBoundWorld.get(record.asset_id);if(!origin)return false;
@@ -651,7 +655,8 @@ async function applyLabView(view){
  // Play mode keeps the full electronics topology hidden. Learners see only symptom-relevant markers.
  view.visuals.assets.forEach(x=>styleCanonical(f1,x.canonical_id,x.visual_state)||styleCanonical(base,x.canonical_id,x.visual_state));
  if(view.learner_experience?.learner_first&&!engineeringMode&&view.visuals.assets.length){
-   await ensureElectronicsLayer();setEngineeringElectronics(false);view.visuals.assets.forEach(learnerAssetOverlay)
+   const e=await ensureElectronicsLayer();setEngineeringElectronics(false);
+   view.visuals.assets.forEach(x=>{if(deviceRecordById.has(x.canonical_id))styleCanonical(e,x.canonical_id,x.visual_state);else learnerAssetOverlay(x)})
  }
  if(engineeringMode&&!roomMode&&(view.visuals.assets.length||view.visuals.connections.length)){
    const e=await ensureElectronicsLayer();setEngineeringElectronics(true);
