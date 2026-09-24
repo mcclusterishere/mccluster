@@ -306,6 +306,42 @@ if rep.get("step4c_componentized_access_reader_total")!=len(access_reader_record
 if rep.get("step4c_componentized_intercom_total")!=len(intercom_records):fail("Step 4C intercom count mismatch")
 if rep.get("step4c_componentized_access_controller_total")!=len(access_controller_records):fail("Step 4C access-controller count mismatch")
 
+electrical_panel_records=[x for x in component_records if x.get("archetype")=="electrical_panel"]
+bas_controller_records=[x for x in component_records if x.get("archetype")=="bas_controller"]
+environment_sensor_records=[x for x in component_records if x.get("archetype")=="environment_sensor"]
+modeled_electrical_panels=[a for a in assets.values() if a["classification"].get("asset_type")=="electrical_panel" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_bas_controllers=[a for a in assets.values() if a["classification"].get("asset_type")=="bas_controller" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_environment_sensors=[a for a in assets.values() if a["classification"].get("asset_type")=="environment_sensor" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+
+if len(electrical_panel_records)!=len(modeled_electrical_panels):fail(f"Step 4C electrical-panel coverage mismatch {len(electrical_panel_records)}/{len(modeled_electrical_panels)}")
+for record in electrical_panel_records:
+    required={"ENCLOSURE","DEADFRONT","MAIN_BREAKER","BRANCH_BREAKERS","CIRCUIT_DIRECTORY","NEUTRAL_GROUND_BARS"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing electrical-panel component(s): {sorted(required-parts)}")
+    if not {"FEEDER_INPUT","BRANCH_CIRCUIT_OUTPUTS"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing panel feeder/branch ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} electrical panel archetype not componentized")
+
+if len(bas_controller_records)!=len(modeled_bas_controllers):fail(f"Step 4C BAS-controller coverage mismatch {len(bas_controller_records)}/{len(modeled_bas_controllers)}")
+for record in bas_controller_records:
+    required={"ENCLOSURE","CONTROLLER_BOARD","ETHERNET_PORT","BACNET_TERMINALS","POWER_INPUT","STATUS_LEDS"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing BAS-controller component(s): {sorted(required-parts)}")
+    if not {"AC_IN","RJ45_ETH","BACNET_MSTP"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing BAS power/network/field-bus ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} BAS controller archetype not componentized")
+
+if len(environment_sensor_records)!=len(modeled_environment_sensors):fail(f"Step 4C environment-sensor coverage mismatch {len(environment_sensor_records)}/{len(modeled_environment_sensors)}")
+for record in environment_sensor_records:
+    required={"HOUSING","SENSOR_VENTS","STATUS_INDICATOR","BACNET_TERMINAL","24V_TERMINAL"}
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required.issubset(parts):fail(f"{record.get('asset_id')} missing environment-sensor component(s): {sorted(required-parts)}")
+    if not {"BACNET_MSTP","24VDC_CLASS2"}.issubset({p.get("id") for p in record.get("ports",[])}):fail(f"{record.get('asset_id')} missing sensor BACnet/Class-2 ports")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} environment sensor archetype not componentized")
+
+if rep.get("step4c_componentized_electrical_panel_total")!=len(electrical_panel_records):fail("Step 4C electrical-panel count mismatch")
+if rep.get("step4c_componentized_bas_controller_total")!=len(bas_controller_records):fail("Step 4C BAS-controller count mismatch")
+if rep.get("step4c_componentized_environment_sensor_total")!=len(environment_sensor_records):fail("Step 4C environment-sensor count mismatch")
+
+
 
 
 
@@ -314,7 +350,7 @@ if rep.get("step4c_componentized_access_controller_total")!=len(access_controlle
 # reference family must have its named assembly parts in the generated GLB.
 scene=trimesh.load(GLB,force="scene",process=False)
 node_names=set(scene.graph.nodes_geometry)
-for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records+wireless_ap_records+workstation_records+monitor_records+ip_phone_records+mfp_records+access_reader_records+intercom_records+access_controller_records:
+for record in camera_records+access_switch_records+patch_panel_records+rack_ups_records+pdu_records+fiber_panel_records+data_jack_records+receptacle_records+wap_spare_jack_records+wireless_ap_records+workstation_records+monitor_records+ip_phone_records+mfp_records+access_reader_records+intercom_records+access_controller_records+electrical_panel_records+bas_controller_records+environment_sensor_records:
     for part in record.get("components",[]):
         mesh_name=part.get("mesh_name")
         if mesh_name not in node_names:
