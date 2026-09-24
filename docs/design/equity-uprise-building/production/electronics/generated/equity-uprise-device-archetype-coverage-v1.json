@@ -648,8 +648,8 @@
       "instance_count": 8,
       "display_name": "Managed Access Switch",
       "family": "network_compute",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "RACK_CHASSIS",
@@ -1017,8 +1017,8 @@
       "instance_count": 8,
       "display_name": "Patch Panel",
       "family": "network_compute",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "RACK_FRAME",

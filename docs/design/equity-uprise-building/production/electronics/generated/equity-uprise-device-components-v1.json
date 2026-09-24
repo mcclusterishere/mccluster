@@ -4,6 +4,171 @@
   "archetype_authority": "docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
   "devices": [
     {
+      "asset_id": "B1-NET-ACCESS-SW-01",
+      "label": "B1 48-Port PoE Access Switch 1",
+      "asset_type": "access_switch",
+      "archetype": "access_switch",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        -12.3
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "B1-NET-ACCESS-SW-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_PORT_BANK",
+          "mesh_name": "B1-NET-ACCESS-SW-01::PART::RJ45_PORT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "UPLINK_CAGES",
+          "mesh_name": "B1-NET-ACCESS-SW-01::PART::UPLINK_CAGES",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "B1-NET-ACCESS-SW-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FAN_BANK",
+          "mesh_name": "B1-NET-ACCESS-SW-01::PART::FAN_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "B1-NET-ACCESS-SW-01::PART::STATUS_LEDS",
+          "inspectable": true
+        },
+        {
+          "component_id": "PORT_LABELS",
+          "mesh_name": "B1-NET-ACCESS-SW-01::PART::PORT_LABELS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_POE",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        },
+        {
+          "id": "2x_UPLINK",
+          "connector": "2 x SFP/SFP+ cage",
+          "medium": "10G-DAC or OS2 single-mode fiber",
+          "services": [
+            "10GbE",
+            "802.1Q"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "rack_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "port_state_telemetry",
+        "poe_delivery",
+        "dual_uplink_trace",
+        "vlan_role"
+      ],
+      "planned_behaviors": [
+        "access_port_link_down",
+        "poe_port_disabled",
+        "uplink_degraded",
+        "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "B1-NET-PATCH-PANEL-01",
+      "label": "B1 48-Port Cat6A Patch Panel 1",
+      "asset_type": "patch_panel",
+      "archetype": "patch_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        -12.3
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "B1-NET-PATCH-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "48x_FRONT_JACKS",
+          "mesh_name": "B1-NET-PATCH-PANEL-01::PART::48x_FRONT_JACKS",
+          "inspectable": true
+        },
+        {
+          "component_id": "REAR_TERMINATIONS",
+          "mesh_name": "B1-NET-PATCH-PANEL-01::PART::REAR_TERMINATIONS",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "B1-NET-PATCH-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_MANAGEMENT",
+          "mesh_name": "B1-NET-PATCH-PANEL-01::PART::CABLE_MANAGEMENT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_FRONT",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        },
+        {
+          "id": "48x_REAR_TERMINATION",
+          "connector": "48 x Cat6A IDC/keystone rear terminations",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "front_port_identity",
+        "rear_termination_identity",
+        "patch_path_trace",
+        "permanent_link_trace"
+      ],
+      "planned_behaviors": [
+        "mispatch_detection",
+        "open_permanent_link",
+        "wrong_patch_target"
+      ]
+    },
+    {
       "asset_id": "B1-SEC-CAM-01",
       "label": "B1 IP Camera 1",
       "asset_type": "camera",
@@ -464,6 +629,171 @@
       ]
     },
     {
+      "asset_id": "F1-NET-ACCESS-SW-01",
+      "label": "F1 48-Port PoE Access Switch 1",
+      "asset_type": "access_switch",
+      "archetype": "access_switch",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        1.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F1-NET-ACCESS-SW-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_PORT_BANK",
+          "mesh_name": "F1-NET-ACCESS-SW-01::PART::RJ45_PORT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "UPLINK_CAGES",
+          "mesh_name": "F1-NET-ACCESS-SW-01::PART::UPLINK_CAGES",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F1-NET-ACCESS-SW-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FAN_BANK",
+          "mesh_name": "F1-NET-ACCESS-SW-01::PART::FAN_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F1-NET-ACCESS-SW-01::PART::STATUS_LEDS",
+          "inspectable": true
+        },
+        {
+          "component_id": "PORT_LABELS",
+          "mesh_name": "F1-NET-ACCESS-SW-01::PART::PORT_LABELS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_POE",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        },
+        {
+          "id": "2x_UPLINK",
+          "connector": "2 x SFP/SFP+ cage",
+          "medium": "10G-DAC or OS2 single-mode fiber",
+          "services": [
+            "10GbE",
+            "802.1Q"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "rack_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "port_state_telemetry",
+        "poe_delivery",
+        "dual_uplink_trace",
+        "vlan_role"
+      ],
+      "planned_behaviors": [
+        "access_port_link_down",
+        "poe_port_disabled",
+        "uplink_degraded",
+        "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F1-NET-PATCH-PANEL-01",
+      "label": "F1 48-Port Cat6A Patch Panel 1",
+      "asset_type": "patch_panel",
+      "archetype": "patch_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        1.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F1-NET-PATCH-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "48x_FRONT_JACKS",
+          "mesh_name": "F1-NET-PATCH-PANEL-01::PART::48x_FRONT_JACKS",
+          "inspectable": true
+        },
+        {
+          "component_id": "REAR_TERMINATIONS",
+          "mesh_name": "F1-NET-PATCH-PANEL-01::PART::REAR_TERMINATIONS",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F1-NET-PATCH-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_MANAGEMENT",
+          "mesh_name": "F1-NET-PATCH-PANEL-01::PART::CABLE_MANAGEMENT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_FRONT",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        },
+        {
+          "id": "48x_REAR_TERMINATION",
+          "connector": "48 x Cat6A IDC/keystone rear terminations",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "front_port_identity",
+        "rear_termination_identity",
+        "patch_path_trace",
+        "permanent_link_trace"
+      ],
+      "planned_behaviors": [
+        "mispatch_detection",
+        "open_permanent_link",
+        "wrong_patch_target"
+      ]
+    },
+    {
       "asset_id": "F1-SEC-CAM-01",
       "label": "F1 IP Camera 1",
       "asset_type": "camera",
@@ -691,6 +1021,171 @@
       "lab_behaviors": [
         "camera_link_down",
         "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F2-NET-ACCESS-SW-01",
+      "label": "F2 48-Port PoE Access Switch 1",
+      "asset_type": "access_switch",
+      "archetype": "access_switch",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        14.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F2-NET-ACCESS-SW-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_PORT_BANK",
+          "mesh_name": "F2-NET-ACCESS-SW-01::PART::RJ45_PORT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "UPLINK_CAGES",
+          "mesh_name": "F2-NET-ACCESS-SW-01::PART::UPLINK_CAGES",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F2-NET-ACCESS-SW-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FAN_BANK",
+          "mesh_name": "F2-NET-ACCESS-SW-01::PART::FAN_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F2-NET-ACCESS-SW-01::PART::STATUS_LEDS",
+          "inspectable": true
+        },
+        {
+          "component_id": "PORT_LABELS",
+          "mesh_name": "F2-NET-ACCESS-SW-01::PART::PORT_LABELS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_POE",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        },
+        {
+          "id": "2x_UPLINK",
+          "connector": "2 x SFP/SFP+ cage",
+          "medium": "10G-DAC or OS2 single-mode fiber",
+          "services": [
+            "10GbE",
+            "802.1Q"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "rack_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "port_state_telemetry",
+        "poe_delivery",
+        "dual_uplink_trace",
+        "vlan_role"
+      ],
+      "planned_behaviors": [
+        "access_port_link_down",
+        "poe_port_disabled",
+        "uplink_degraded",
+        "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F2-NET-PATCH-PANEL-01",
+      "label": "F2 48-Port Cat6A Patch Panel 1",
+      "asset_type": "patch_panel",
+      "archetype": "patch_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        14.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F2-NET-PATCH-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "48x_FRONT_JACKS",
+          "mesh_name": "F2-NET-PATCH-PANEL-01::PART::48x_FRONT_JACKS",
+          "inspectable": true
+        },
+        {
+          "component_id": "REAR_TERMINATIONS",
+          "mesh_name": "F2-NET-PATCH-PANEL-01::PART::REAR_TERMINATIONS",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F2-NET-PATCH-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_MANAGEMENT",
+          "mesh_name": "F2-NET-PATCH-PANEL-01::PART::CABLE_MANAGEMENT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_FRONT",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        },
+        {
+          "id": "48x_REAR_TERMINATION",
+          "connector": "48 x Cat6A IDC/keystone rear terminations",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "front_port_identity",
+        "rear_termination_identity",
+        "patch_path_trace",
+        "permanent_link_trace"
+      ],
+      "planned_behaviors": [
+        "mispatch_detection",
+        "open_permanent_link",
+        "wrong_patch_target"
       ]
     },
     {
@@ -924,6 +1419,171 @@
       ]
     },
     {
+      "asset_id": "F3-NET-ACCESS-SW-01",
+      "label": "F3 48-Port PoE Access Switch 1",
+      "asset_type": "access_switch",
+      "archetype": "access_switch",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        28.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F3-NET-ACCESS-SW-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_PORT_BANK",
+          "mesh_name": "F3-NET-ACCESS-SW-01::PART::RJ45_PORT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "UPLINK_CAGES",
+          "mesh_name": "F3-NET-ACCESS-SW-01::PART::UPLINK_CAGES",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F3-NET-ACCESS-SW-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FAN_BANK",
+          "mesh_name": "F3-NET-ACCESS-SW-01::PART::FAN_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F3-NET-ACCESS-SW-01::PART::STATUS_LEDS",
+          "inspectable": true
+        },
+        {
+          "component_id": "PORT_LABELS",
+          "mesh_name": "F3-NET-ACCESS-SW-01::PART::PORT_LABELS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_POE",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        },
+        {
+          "id": "2x_UPLINK",
+          "connector": "2 x SFP/SFP+ cage",
+          "medium": "10G-DAC or OS2 single-mode fiber",
+          "services": [
+            "10GbE",
+            "802.1Q"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "rack_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "port_state_telemetry",
+        "poe_delivery",
+        "dual_uplink_trace",
+        "vlan_role"
+      ],
+      "planned_behaviors": [
+        "access_port_link_down",
+        "poe_port_disabled",
+        "uplink_degraded",
+        "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F3-NET-PATCH-PANEL-01",
+      "label": "F3 48-Port Cat6A Patch Panel 1",
+      "asset_type": "patch_panel",
+      "archetype": "patch_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        28.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F3-NET-PATCH-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "48x_FRONT_JACKS",
+          "mesh_name": "F3-NET-PATCH-PANEL-01::PART::48x_FRONT_JACKS",
+          "inspectable": true
+        },
+        {
+          "component_id": "REAR_TERMINATIONS",
+          "mesh_name": "F3-NET-PATCH-PANEL-01::PART::REAR_TERMINATIONS",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F3-NET-PATCH-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_MANAGEMENT",
+          "mesh_name": "F3-NET-PATCH-PANEL-01::PART::CABLE_MANAGEMENT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_FRONT",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        },
+        {
+          "id": "48x_REAR_TERMINATION",
+          "connector": "48 x Cat6A IDC/keystone rear terminations",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "front_port_identity",
+        "rear_termination_identity",
+        "patch_path_trace",
+        "permanent_link_trace"
+      ],
+      "planned_behaviors": [
+        "mispatch_detection",
+        "open_permanent_link",
+        "wrong_patch_target"
+      ]
+    },
+    {
       "asset_id": "F3-SEC-CAM-01",
       "label": "F3 IP Camera 1",
       "asset_type": "camera",
@@ -1151,6 +1811,171 @@
       "lab_behaviors": [
         "camera_link_down",
         "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F4-NET-ACCESS-SW-01",
+      "label": "F4 48-Port PoE Access Switch 1",
+      "asset_type": "access_switch",
+      "archetype": "access_switch",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        41.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F4-NET-ACCESS-SW-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_PORT_BANK",
+          "mesh_name": "F4-NET-ACCESS-SW-01::PART::RJ45_PORT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "UPLINK_CAGES",
+          "mesh_name": "F4-NET-ACCESS-SW-01::PART::UPLINK_CAGES",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F4-NET-ACCESS-SW-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FAN_BANK",
+          "mesh_name": "F4-NET-ACCESS-SW-01::PART::FAN_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F4-NET-ACCESS-SW-01::PART::STATUS_LEDS",
+          "inspectable": true
+        },
+        {
+          "component_id": "PORT_LABELS",
+          "mesh_name": "F4-NET-ACCESS-SW-01::PART::PORT_LABELS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_POE",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        },
+        {
+          "id": "2x_UPLINK",
+          "connector": "2 x SFP/SFP+ cage",
+          "medium": "10G-DAC or OS2 single-mode fiber",
+          "services": [
+            "10GbE",
+            "802.1Q"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "rack_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "port_state_telemetry",
+        "poe_delivery",
+        "dual_uplink_trace",
+        "vlan_role"
+      ],
+      "planned_behaviors": [
+        "access_port_link_down",
+        "poe_port_disabled",
+        "uplink_degraded",
+        "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F4-NET-PATCH-PANEL-01",
+      "label": "F4 48-Port Cat6A Patch Panel 1",
+      "asset_type": "patch_panel",
+      "archetype": "patch_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        41.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F4-NET-PATCH-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "48x_FRONT_JACKS",
+          "mesh_name": "F4-NET-PATCH-PANEL-01::PART::48x_FRONT_JACKS",
+          "inspectable": true
+        },
+        {
+          "component_id": "REAR_TERMINATIONS",
+          "mesh_name": "F4-NET-PATCH-PANEL-01::PART::REAR_TERMINATIONS",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F4-NET-PATCH-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_MANAGEMENT",
+          "mesh_name": "F4-NET-PATCH-PANEL-01::PART::CABLE_MANAGEMENT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_FRONT",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        },
+        {
+          "id": "48x_REAR_TERMINATION",
+          "connector": "48 x Cat6A IDC/keystone rear terminations",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "front_port_identity",
+        "rear_termination_identity",
+        "patch_path_trace",
+        "permanent_link_trace"
+      ],
+      "planned_behaviors": [
+        "mispatch_detection",
+        "open_permanent_link",
+        "wrong_patch_target"
       ]
     },
     {
@@ -1384,6 +2209,171 @@
       ]
     },
     {
+      "asset_id": "F5-NET-ACCESS-SW-01",
+      "label": "F5 48-Port PoE Access Switch 1",
+      "asset_type": "access_switch",
+      "archetype": "access_switch",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        55.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F5-NET-ACCESS-SW-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_PORT_BANK",
+          "mesh_name": "F5-NET-ACCESS-SW-01::PART::RJ45_PORT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "UPLINK_CAGES",
+          "mesh_name": "F5-NET-ACCESS-SW-01::PART::UPLINK_CAGES",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F5-NET-ACCESS-SW-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FAN_BANK",
+          "mesh_name": "F5-NET-ACCESS-SW-01::PART::FAN_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F5-NET-ACCESS-SW-01::PART::STATUS_LEDS",
+          "inspectable": true
+        },
+        {
+          "component_id": "PORT_LABELS",
+          "mesh_name": "F5-NET-ACCESS-SW-01::PART::PORT_LABELS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_POE",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        },
+        {
+          "id": "2x_UPLINK",
+          "connector": "2 x SFP/SFP+ cage",
+          "medium": "10G-DAC or OS2 single-mode fiber",
+          "services": [
+            "10GbE",
+            "802.1Q"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "rack_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "port_state_telemetry",
+        "poe_delivery",
+        "dual_uplink_trace",
+        "vlan_role"
+      ],
+      "planned_behaviors": [
+        "access_port_link_down",
+        "poe_port_disabled",
+        "uplink_degraded",
+        "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F5-NET-PATCH-PANEL-01",
+      "label": "F5 48-Port Cat6A Patch Panel 1",
+      "asset_type": "patch_panel",
+      "archetype": "patch_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        55.2
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F5-NET-PATCH-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "48x_FRONT_JACKS",
+          "mesh_name": "F5-NET-PATCH-PANEL-01::PART::48x_FRONT_JACKS",
+          "inspectable": true
+        },
+        {
+          "component_id": "REAR_TERMINATIONS",
+          "mesh_name": "F5-NET-PATCH-PANEL-01::PART::REAR_TERMINATIONS",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F5-NET-PATCH-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_MANAGEMENT",
+          "mesh_name": "F5-NET-PATCH-PANEL-01::PART::CABLE_MANAGEMENT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_FRONT",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        },
+        {
+          "id": "48x_REAR_TERMINATION",
+          "connector": "48 x Cat6A IDC/keystone rear terminations",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "front_port_identity",
+        "rear_termination_identity",
+        "patch_path_trace",
+        "permanent_link_trace"
+      ],
+      "planned_behaviors": [
+        "mispatch_detection",
+        "open_permanent_link",
+        "wrong_patch_target"
+      ]
+    },
+    {
       "asset_id": "F5-SEC-CAM-01",
       "label": "F5 IP Camera 1",
       "asset_type": "camera",
@@ -1611,6 +2601,336 @@
       "lab_behaviors": [
         "camera_link_down",
         "poe_disabled"
+      ]
+    },
+    {
+      "asset_id": "F6-NET-ACCESS-SW-01",
+      "label": "F6 48-Port PoE Access Switch 1",
+      "asset_type": "access_switch",
+      "archetype": "access_switch",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        68.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F6-NET-ACCESS-SW-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_PORT_BANK",
+          "mesh_name": "F6-NET-ACCESS-SW-01::PART::RJ45_PORT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "UPLINK_CAGES",
+          "mesh_name": "F6-NET-ACCESS-SW-01::PART::UPLINK_CAGES",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F6-NET-ACCESS-SW-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FAN_BANK",
+          "mesh_name": "F6-NET-ACCESS-SW-01::PART::FAN_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F6-NET-ACCESS-SW-01::PART::STATUS_LEDS",
+          "inspectable": true
+        },
+        {
+          "component_id": "PORT_LABELS",
+          "mesh_name": "F6-NET-ACCESS-SW-01::PART::PORT_LABELS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_POE",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        },
+        {
+          "id": "2x_UPLINK",
+          "connector": "2 x SFP/SFP+ cage",
+          "medium": "10G-DAC or OS2 single-mode fiber",
+          "services": [
+            "10GbE",
+            "802.1Q"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "rack_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "port_state_telemetry",
+        "poe_delivery",
+        "dual_uplink_trace",
+        "vlan_role"
+      ],
+      "planned_behaviors": [
+        "access_port_link_down",
+        "poe_port_disabled",
+        "uplink_degraded",
+        "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F6-NET-ACCESS-SW-02",
+      "label": "F6 48-Port PoE Access Switch 2",
+      "asset_type": "access_switch",
+      "archetype": "access_switch",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        62.8,
+        69.35
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F6-NET-ACCESS-SW-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_PORT_BANK",
+          "mesh_name": "F6-NET-ACCESS-SW-02::PART::RJ45_PORT_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "UPLINK_CAGES",
+          "mesh_name": "F6-NET-ACCESS-SW-02::PART::UPLINK_CAGES",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F6-NET-ACCESS-SW-02::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "FAN_BANK",
+          "mesh_name": "F6-NET-ACCESS-SW-02::PART::FAN_BANK",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F6-NET-ACCESS-SW-02::PART::STATUS_LEDS",
+          "inspectable": true
+        },
+        {
+          "component_id": "PORT_LABELS",
+          "mesh_name": "F6-NET-ACCESS-SW-02::PART::PORT_LABELS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_POE",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A",
+          "services": [
+            "Ethernet/IP",
+            "PoE"
+          ],
+          "required": true
+        },
+        {
+          "id": "2x_UPLINK",
+          "connector": "2 x SFP/SFP+ cage",
+          "medium": "10G-DAC or OS2 single-mode fiber",
+          "services": [
+            "10GbE",
+            "802.1Q"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "rack_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "port_state_telemetry",
+        "poe_delivery",
+        "dual_uplink_trace",
+        "vlan_role"
+      ],
+      "planned_behaviors": [
+        "access_port_link_down",
+        "poe_port_disabled",
+        "uplink_degraded",
+        "vlan_assignment_inspection"
+      ]
+    },
+    {
+      "asset_id": "F6-NET-PATCH-PANEL-01",
+      "label": "F6 48-Port Cat6A Patch Panel 1",
+      "asset_type": "patch_panel",
+      "archetype": "patch_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        68.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F6-NET-PATCH-PANEL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "48x_FRONT_JACKS",
+          "mesh_name": "F6-NET-PATCH-PANEL-01::PART::48x_FRONT_JACKS",
+          "inspectable": true
+        },
+        {
+          "component_id": "REAR_TERMINATIONS",
+          "mesh_name": "F6-NET-PATCH-PANEL-01::PART::REAR_TERMINATIONS",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F6-NET-PATCH-PANEL-01::PART::LABEL_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_MANAGEMENT",
+          "mesh_name": "F6-NET-PATCH-PANEL-01::PART::CABLE_MANAGEMENT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_FRONT",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        },
+        {
+          "id": "48x_REAR_TERMINATION",
+          "connector": "48 x Cat6A IDC/keystone rear terminations",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "front_port_identity",
+        "rear_termination_identity",
+        "patch_path_trace",
+        "permanent_link_trace"
+      ],
+      "planned_behaviors": [
+        "mispatch_detection",
+        "open_permanent_link",
+        "wrong_patch_target"
+      ]
+    },
+    {
+      "asset_id": "F6-NET-PATCH-PANEL-02",
+      "label": "F6 48-Port Cat6A Patch Panel 2",
+      "asset_type": "patch_panel",
+      "archetype": "patch_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        62.8,
+        69.35
+      ],
+      "components": [
+        {
+          "component_id": "RACK_FRAME",
+          "mesh_name": "F6-NET-PATCH-PANEL-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "48x_FRONT_JACKS",
+          "mesh_name": "F6-NET-PATCH-PANEL-02::PART::48x_FRONT_JACKS",
+          "inspectable": true
+        },
+        {
+          "component_id": "REAR_TERMINATIONS",
+          "mesh_name": "F6-NET-PATCH-PANEL-02::PART::REAR_TERMINATIONS",
+          "inspectable": true
+        },
+        {
+          "component_id": "LABEL_STRIP",
+          "mesh_name": "F6-NET-PATCH-PANEL-02::PART::LABEL_STRIP",
+          "inspectable": true
+        },
+        {
+          "component_id": "CABLE_MANAGEMENT",
+          "mesh_name": "F6-NET-PATCH-PANEL-02::PART::CABLE_MANAGEMENT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "48x_RJ45_FRONT",
+          "connector": "48 x 8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        },
+        {
+          "id": "48x_REAR_TERMINATION",
+          "connector": "48 x Cat6A IDC/keystone rear terminations",
+          "medium": "Cat6A permanent link",
+          "services": [
+            "Ethernet",
+            "PoE pass-through"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "front_port_identity",
+        "rear_termination_identity",
+        "patch_path_trace",
+        "permanent_link_trace"
+      ],
+      "planned_behaviors": [
+        "mispatch_detection",
+        "open_permanent_link",
+        "wrong_patch_target"
       ]
     },
     {
