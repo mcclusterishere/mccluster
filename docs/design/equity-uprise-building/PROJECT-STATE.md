@@ -778,6 +778,8 @@ Truth boundary:
 
 **OCTOBER 7 DEMO READINESS GATE:** the viewer must be able to expose the installed physical plant, isolate a floor, show real routed cable families, inspect endpoint/network/power dependencies, and execute learner faults against that same topology.
 
+Derived Step 4B artifacts are published through the repository's deterministic generated-output workflow; a source-only green build is not considered demo-ready until that generated snapshot is committed and freshness CI is green.
+
 ## Federal Training Catalog — V1 IMPLEMENTED
 
 The repository now has one canonical, issuer-grounded federal training layer instead of mixing exact FEMA IDs with unresolved agency names.
