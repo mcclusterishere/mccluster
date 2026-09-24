@@ -409,6 +409,26 @@ for (const performanceGuard of [
   assert.ok(viewer.includes(performanceGuard), "viewer interaction performance guard missing: " + performanceGuard);
 }
 assert.equal(viewer.includes("wire=!wire;scene.traverse"), false, "wireframe toggle must not traverse the full scene");
+for (const performanceGuard of [
+  "loadGltfWithRetry",
+  "ensureBaseRoot",
+  "ensureFacadeRoot",
+  "ensureServicesLayer",
+  "ensureDetailedFloor",
+  "floorLoadPromises",
+  "FLOOR_LOAD_CONFIG",
+  "Building shell ready",
+  "streaming detailed model",
+  "ensureB1F1Continuity",
+  "await ensureDetailedFloor(1)",
+  "buildingLoaded.then(()=>enterRoomMode())",
+]) {
+  assert.ok(viewer.includes(performanceGuard), "progressive building shell guard missing: " + performanceGuard);
+}
+assert.equal(viewer.includes("if(loaded!==11)return"), false, "viewer may not wait for all 11 visual roots before becoming usable");
+assert.equal(viewer.includes("loaded===11"), false, "Room Mode may not poll the old all-root completion counter");
+assert.equal(viewer.includes("loaded<11"), false, "Room Mode may not require every detailed floor");
+
 const rootWait = viewer.indexOf("await labVisualRootsReady");
 const controllerCreate = viewer.indexOf("labController=labModule.createViewerLabController");
 assert.ok(rootWait >= 0 && controllerCreate > rootWait, "deep-linked labs must wait for modeled visual roots before first render");

@@ -9,7 +9,7 @@ import * as THREE from'three';import{OrbitControls}from'three/addons/controls/Or
 const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status'),solarStatus=document.getElementById('solarStatus'),serviceStatus=document.getElementById('serviceStatus'),plantLegend=document.getElementById('plantLegend'),deviceHud=document.getElementById('deviceHud'),deviceKind=document.getElementById('deviceKind'),deviceTitle=document.getElementById('deviceTitle'),deviceStatus=document.getElementById('deviceStatus'),deviceDetails=document.getElementById('deviceDetails'),deviceFeed=document.getElementById('deviceFeed'),deviceFeedCanvas=document.getElementById('deviceFeedCanvas'),deviceFeedLabel=document.getElementById('deviceFeedLabel'),deviceParts=document.getElementById('deviceParts'),deviceFovButton=document.getElementById('deviceFov');const scene=new THREE.Scene();scene.background=new THREE.Color(0xb9c6cf);scene.fog=new THREE.Fog(0xb9c6cf,ft(120),ft(260));
 const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;app.appendChild(ren.domElement);const pmrem=new THREE.PMREMGenerator(ren);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);
 const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;const sunTarget=new THREE.Object3D();sunTarget.position.set(ft(36),ft(42),ft(-36));scene.add(sunTarget);dl.target=sunTarget;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
-const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,loaded=0,solarMode='auto',servicesOn=false,engineeringMode=false,plantMode=false,cablingMode=false,currentFocus='stack';
+const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,solarMode='auto',servicesOn=false,engineeringMode=false,plantMode=false,cablingMode=false,currentFocus='stack';
 let resolveBuildingLoaded=null;const buildingLoaded=new Promise(resolve=>{resolveBuildingLoaded=resolve});
 const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
 const engineeringOverlay=new THREE.Group();engineeringOverlay.name='ENGINEERING-XRAY-OVERLAY';engineeringOverlay.visible=false;scene.add(engineeringOverlay);
@@ -121,28 +121,83 @@ function setDetailedPerimeterVisibility(show){
  if(!detailedPerimeterMeshes)detailedPerimeterMeshes=collectMeshes([f1,f2,f3,f4,f5,f6],n=>/^(?:north_exterior_wall|west_exterior_wall|east_exterior_wall|south_exterior_(?:left|right)|north_wall|west_wall|east_wall|south_mullion_)/i.test(n)||/^F[2-6]-SOUTH-GLAZING-01::pane-/i.test(n));
  detailedPerimeterMeshes.forEach(o=>{o.visible=show});
 }
-function done(){
- loaded++;
- if(loaded!==11)return;
- status.textContent='Working stack loaded · detailed facade + B1–F7 + Services Step 8 verified · source-to-endpoint traceability · protected stairs B1→roof';
- servicesOn=requestedServices;document.getElementById('services').textContent=servicesOn?'Services: Exposed':'Services: Off';document.getElementById('services').classList.toggle('active',servicesOn);
- setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);facade.visible=true;
- if(requestedView==='facade'){focus('facade');if(requestedCamera)setView(requestedCamera)}
- else if(requestedFloor&&/^[0-7]$/.test(requestedFloor))focus(requestedFloor);
- else{syncServicesVisibility();frameStack();if(requestedView&&requestedView!=='stack')setView(requestedView)}
- if(resolveBuildingLoaded){resolveBuildingLoaded();resolveBuildingLoaded=null}
+const floorLoadPromises=new Map(),floorLoadErrors=new Map();let baseLoadPromise=null,facadeLoadPromise=null,servicesLoadPromise=null;
+function loadGltfWithRetry(url,label,retries=2,attempt=0){
+ const requestUrl=attempt?url+'&retry='+attempt:url;
+ return new Promise((resolve,reject)=>loader.load(requestUrl,resolve,undefined,reject)).catch(err=>{
+  if(attempt>=retries)throw new Error(label+' failed after '+(attempt+1)+' attempts · '+(err?.message||err));
+  return new Promise(resolve=>setTimeout(resolve,250*Math.pow(2,attempt))).then(()=>loadGltfWithRetry(url,label,retries,attempt+1))
+ })
 }
-loader.load('/equity-uprise-preview/equity-uprise-building-core-v2.glb?v=__STAMP__',g=>{base=g.scene;base.rotation.x=-Math.PI/2;base.updateMatrixWorld(true);scene.add(base);makeReliable(base);base.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^L0_(slab|north_wall|west_wall|east_wall|program|circle|support|zone)/.test(n)||/^B1_(south_wall|program)/.test(n)||/^L[123456]_(program|circle|support|slab|north_wall|south_|west_wall|east_wall)/.test(n)||/^L7_(program|circle|support|slab|parapet|zone)/.test(n))o.visible=false});markLabVisualRootReady(1);done()},undefined,e=>failLabVisualRoot('building core',e));
-loader.load('/equity-uprise-preview/equity-uprise-facade-core-v2.glb?v=__STAMP__',g=>{facade=g.scene;facade.rotation.x=-Math.PI/2;facade.updateMatrixWorld(true);scene.add(facade);makeFacadeReliable(facade);done()});
-loader.load('/equity-uprise-preview/equity-uprise-building-services-core-v2.glb?v=__STAMP__',g=>{services=g.scene;services.rotation.x=-Math.PI/2;services.updateMatrixWorld(true);scene.add(services);makeServicesReliable(services);services.visible=false;done()});
-loader.load('/equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb?v=__STAMP__',g=>{b1=g.scene;b1.rotation.x=-Math.PI/2;b1.position.y=ft(-13.5);b1.updateMatrixWorld(true);scene.add(b1);makeReliable(b1);done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{f1=g.scene;f1.rotation.x=-Math.PI/2;f1.updateMatrixWorld(true);scene.add(f1);makeReliable(f1);enhanceFloor1Interior(f1);buildRoomLightRig();f1.traverse(o=>{if(o.isMesh&&/^(stair_|passenger_|freight_|mep)/i.test(o.name||''))o.visible=false});markLabVisualRootReady(2);done()},undefined,e=>failLabVisualRoot('floor 1',e));
-loader.load('/equity-uprise-preview/equity-uprise-floor-02-core-v2.glb?v=__STAMP__',g=>{f2=g.scene;f2.rotation.x=-Math.PI/2;f2.position.y=ft(13.5);f2.updateMatrixWorld(true);scene.add(f2);makeReliable(f2);f2.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-03-core-v2.glb?v=__STAMP__',g=>{f3=g.scene;f3.rotation.x=-Math.PI/2;f3.position.y=ft(27);f3.updateMatrixWorld(true);scene.add(f3);makeReliable(f3);f3.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-04-core-v2.glb?v=__STAMP__',g=>{f4=g.scene;f4.rotation.x=-Math.PI/2;f4.position.y=ft(40.5);f4.updateMatrixWorld(true);scene.add(f4);makeReliable(f4);f4.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-05-core-v2.glb?v=__STAMP__',g=>{f5=g.scene;f5.rotation.x=-Math.PI/2;f5.position.y=ft(54);f5.updateMatrixWorld(true);scene.add(f5);makeReliable(f5);f5.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-06-core-v2.glb?v=__STAMP__',g=>{f6=g.scene;f6.rotation.x=-Math.PI/2;f6.position.y=ft(67.5);f6.updateMatrixWorld(true);scene.add(f6);makeReliable(f6);f6.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-07-core-v2.glb?v=__STAMP__',g=>{f7=g.scene;f7.rotation.x=-Math.PI/2;f7.position.y=ft(81);f7.updateMatrixWorld(true);scene.add(f7);makeReliable(f7);done()});
+function refreshArchitectureGhostAfterLoad(){
+ if(!architectureGhosted)return;architectureGhosted=false;setArchitectureGhost(true)
+}
+function configureBaseRoot(g){
+ base=g.scene;base.rotation.x=-Math.PI/2;base.updateMatrixWorld(true);scene.add(base);makeReliable(base);
+ base.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^L0_(slab|north_wall|west_wall|east_wall|program|circle|support|zone)/.test(n)||/^B1_(south_wall|program)/.test(n)||/^L[123456]_(program|circle|support|slab|north_wall|south_|west_wall|east_wall)/.test(n)||/^L7_(program|circle|support|slab|parapet|zone)/.test(n))o.visible=false});
+ markLabVisualRootReady(1);stackFrameCache=null;refreshArchitectureGhostAfterLoad();return base
+}
+function ensureBaseRoot(){
+ if(base)return Promise.resolve(base);if(baseLoadPromise)return baseLoadPromise;
+ baseLoadPromise=loadGltfWithRetry('/equity-uprise-preview/equity-uprise-building-core-v2.glb?v=__STAMP__','building core').then(configureBaseRoot).catch(err=>{baseLoadPromise=null;throw err});return baseLoadPromise
+}
+function ensureFacadeRoot(){
+ if(facade)return Promise.resolve(facade);if(facadeLoadPromise)return facadeLoadPromise;
+ facadeLoadPromise=loadGltfWithRetry('/equity-uprise-preview/equity-uprise-facade-core-v2.glb?v=__STAMP__','building facade').then(g=>{facade=g.scene;facade.rotation.x=-Math.PI/2;facade.updateMatrixWorld(true);scene.add(facade);makeFacadeReliable(facade);stackFrameCache=null;refreshArchitectureGhostAfterLoad();return facade}).catch(err=>{facadeLoadPromise=null;throw err});return facadeLoadPromise
+}
+function ensureServicesLayer(){
+ if(services)return Promise.resolve(services);if(servicesLoadPromise)return servicesLoadPromise;
+ servicesLoadPromise=loadGltfWithRetry('/equity-uprise-preview/equity-uprise-building-services-core-v2.glb?v=__STAMP__','building services').then(g=>{services=g.scene;services.rotation.x=-Math.PI/2;services.updateMatrixWorld(true);scene.add(services);makeServicesReliable(services);services.visible=false;return services}).catch(err=>{servicesLoadPromise=null;throw err});return servicesLoadPromise
+}
+function loadedFloorRoot(level){return [b1,f1,f2,f3,f4,f5,f6,f7][Number(level)]||null}
+function hideDetailedCoreDuplicates(root,level){
+ const re=level===1?/^(stair_|passenger_|freight_|mep)/i:/^(stair_|pass_|freight_|mep)/i;
+ if(level>=1&&level<=6)root.traverse(o=>{if(o.isMesh&&re.test(o.name||''))o.visible=false})
+}
+const FLOOR_LOAD_CONFIG={
+ 0:{url:'/equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb?v=__STAMP__',y:-13.5,assign:r=>b1=r},
+ 1:{url:'/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',y:0,assign:r=>f1=r},
+ 2:{url:'/equity-uprise-preview/equity-uprise-floor-02-core-v2.glb?v=__STAMP__',y:13.5,assign:r=>f2=r},
+ 3:{url:'/equity-uprise-preview/equity-uprise-floor-03-core-v2.glb?v=__STAMP__',y:27,assign:r=>f3=r},
+ 4:{url:'/equity-uprise-preview/equity-uprise-floor-04-core-v2.glb?v=__STAMP__',y:40.5,assign:r=>f4=r},
+ 5:{url:'/equity-uprise-preview/equity-uprise-floor-05-core-v2.glb?v=__STAMP__',y:54,assign:r=>f5=r},
+ 6:{url:'/equity-uprise-preview/equity-uprise-floor-06-core-v2.glb?v=__STAMP__',y:67.5,assign:r=>f6=r},
+ 7:{url:'/equity-uprise-preview/equity-uprise-floor-07-core-v2.glb?v=__STAMP__',y:81,assign:r=>f7=r}
+};
+function ensureDetailedFloor(level){
+ level=Number(level);const existing=loadedFloorRoot(level);if(existing)return Promise.resolve(existing);
+ if(floorLoadPromises.has(level))return floorLoadPromises.get(level);
+ const cfg=FLOOR_LOAD_CONFIG[level];if(!cfg)return Promise.reject(new Error('Unknown floor '+level));
+ floorLoadErrors.delete(level);status.textContent=(level===0?'B1':'Floor '+level)+' · loading detailed model…';
+ const p=loadGltfWithRetry(cfg.url,(level===0?'B1':'Floor '+level)+' detailed model').then(g=>{
+  const root=g.scene;root.rotation.x=-Math.PI/2;if(cfg.y)root.position.y=ft(cfg.y);root.updateMatrixWorld(true);scene.add(root);makeReliable(root);cfg.assign(root);hideDetailedCoreDuplicates(root,level);
+  if(level===1){enhanceFloor1Interior(root);buildRoomLightRig();markLabVisualRootReady(2)}
+  detailedPerimeterMeshes=null;if(level===0)b1StackDupMeshes=null;if(level===7)f7StackDupMeshes=null;stackFrameCache=null;refreshArchitectureGhostAfterLoad();floorLoadErrors.delete(level);return root
+ }).catch(err=>{floorLoadPromises.delete(level);floorLoadErrors.set(level,err);throw err});
+ floorLoadPromises.set(level,p);return p
+}
+function ensureB1F1Continuity(level){
+ if(level!==0&&level!==1)return;const neighbor=level===0?1:0;
+ ensureDetailedFloor(neighbor).then(()=>{if(currentFocus==='stack')focus('stack')}).catch(()=>{})
+}
+async function bootstrapViewer(){
+ status.textContent='Loading canonical building shell…';
+ try{
+  await ensureBaseRoot();
+  if(resolveBuildingLoaded){resolveBuildingLoaded();resolveBuildingLoaded=null}
+  status.textContent='Building shell ready · choose a floor to stream its detailed model';
+  const facadePending=ensureFacadeRoot().then(()=>{if(currentFocus==='stack'||currentFocus==='facade')focus(currentFocus)}).catch(err=>{console.warn(err);return null});
+  if(requestedServices){
+   try{await ensureServicesLayer();servicesOn=true;document.getElementById('services').textContent='Services: Exposed';document.getElementById('services').classList.add('active')}catch(err){console.warn(err)}
+  }
+  if(requestedView==='facade'){await facadePending;if(facade)await focus('facade');else await focus('stack');if(requestedCamera)setView(requestedCamera)}
+  else if(requestedFloor&&/^[0-7]$/.test(requestedFloor)){const level=Number(requestedFloor);await ensureDetailedFloor(level);await focus(String(level));ensureB1F1Continuity(level)}
+  else{await focus('stack');if(requestedView&&requestedView!=='stack')setView(requestedView)}
+ }catch(err){
+  status.textContent='Building shell load failed · retrying the failed asset on the next request';console.error(err)
+ }
+}
+bootstrapViewer();
 const elev={0:-13.5,1:0,2:13.5,3:27,4:40.5,5:54,6:67.5,7:81};
 const detailed={0:()=>b1,1:()=>f1,2:()=>f2,3:()=>f3,4:()=>f4,5:()=>f5,6:()=>f6,7:()=>f7};
 function frameObject(root,pad=1.35){
@@ -170,35 +225,36 @@ function isolateBaseLevel(level){
     o.visible=isLevel;
   });
 }
-function focus(k){
-  currentFocus=String(k);
-  document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('active',b.dataset.f===String(k)));
-  const roots=[b1,f1,f2,f3,f4,f5,f6,f7].filter(Boolean);
-  if(k==='stack'){
-    roots.forEach(r=>r.visible=true);facade.visible=true;
-    restoreBaseStackVisibility();
-    setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);
-    status.textContent='Stack view · detailed architectural facade + B1–F7 · protected stairs B1→roof';
-    syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameStack();return;
-  }
-  if(k==='facade'){
-    roots.forEach(r=>r.visible=false);base.visible=false;setDetailedPerimeterVisibility(true);facade.visible=true;
-    status.textContent='Facade isolation · complete architectural finish · approved Equity Uprise identity';
-    syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(facade);return;
-  }
-  const level=+k;
-  roots.forEach(r=>r.visible=false);facade.visible=false;setDetailedPerimeterVisibility(true);
-  if(detailed[level]&&detailed[level]()){
-    base.visible=false;
-    const root=detailed[level]();root.visible=true;
-    if(level===0)setB1StackDupVisibility(true);
-    if(level===7)setF7StackDupVisibility(true);
-    status.textContent=level===0?'Isolated B1 · detailed underground operations + B1→Floor 1 stairs':(level===7?'Isolated Level 7 · detailed roof + protected stair arrivals':'Isolated Floor '+level+' · detailed model only');
-    syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(root);return;
-  }
-  isolateBaseLevel(level);
-  status.textContent=level===0?'Isolated B1 chassis':'Isolated Floor '+level+' chassis';
-  syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(base);
+async function focus(k){
+ currentFocus=String(k);
+ document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('active',b.dataset.f===String(k)));
+ let roots=[b1,f1,f2,f3,f4,f5,f6,f7].filter(Boolean);
+ if(k==='stack'){
+  roots.forEach(r=>r.visible=true);if(facade)facade.visible=true;
+  if(base)restoreBaseStackVisibility();
+  setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);
+  status.textContent='Stack view · shell ready · '+roots.length+'/8 detailed floors currently resident';
+  syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameStack();return
+ }
+ if(k==='facade'){
+  roots.forEach(r=>r.visible=false);if(base)base.visible=false;setDetailedPerimeterVisibility(true);
+  if(!facade){status.textContent='Facade · loading detailed shell…';try{await ensureFacadeRoot()}catch(err){status.textContent='Facade load failed · tap Facade to retry';return}}
+  if(currentFocus!=='facade')return;facade.visible=true;
+  status.textContent='Facade isolation · complete architectural finish · approved Equity Uprise identity';
+  syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(facade);return
+ }
+ const level=+k;
+ let root=loadedFloorRoot(level);
+ if(!root){
+  if(base){isolateBaseLevel(level);if(facade)facade.visible=false}
+  syncServicesVisibility();status.textContent=(level===0?'B1':'Floor '+level)+' · streaming detailed model…';
+  try{root=await ensureDetailedFloor(level)}catch(err){status.textContent=(level===0?'B1':'Floor '+level)+' detail failed · tap floor to retry';console.error(err);return}
+  if(currentFocus!==String(k))return
+ }
+ roots=[b1,f1,f2,f3,f4,f5,f6,f7].filter(Boolean);roots.forEach(r=>r.visible=false);if(facade)facade.visible=false;setDetailedPerimeterVisibility(true);if(base)base.visible=false;root.visible=true;
+ if(level===0)setB1StackDupVisibility(true);if(level===7)setF7StackDupVisibility(true);
+ status.textContent=level===0?'Isolated B1 · detailed underground operations + B1→Floor 1 stairs':(level===7?'Isolated Level 7 · detailed roof + protected stair arrivals':'Isolated Floor '+level+' · detailed model');
+ syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(root);ensureB1F1Continuity(level)
 }
 function setView(v){
  const V={
@@ -558,7 +614,8 @@ async function enableRoomMotion(){
 }
 function disableRoomMotion(){window.removeEventListener('deviceorientation',onRoomOrientation,true);window.removeEventListener('deviceorientationabsolute',onRoomOrientation,true);window.removeEventListener('devicemotion',onRoomMotion,true);roomMotionActive=false;roomSensorMode='none';roomSensorZero=null;roomLastRawQuaternion=null;roomMotionEnabledAt=0;roomLastMotionStamp=0;roomMotionButton.textContent='Enable Motion'}
 async function enterRoomMode(){
- if(roomMode)return;if(!f1||loaded<11){roomMessage.textContent='Building is still loading. Try Room Mode again when the stack finishes.';roomHud.hidden=false;return}
+ if(roomMode)return;roomHud.hidden=false;roomMessage.textContent='Loading Floor 1 room…';
+ try{await buildingLoaded;await ensureDetailedFloor(1)}catch(err){roomMessage.textContent='Floor 1 failed to load · try Room Mode again to retry that floor.';return}
  roomPrevFocus=currentFocus;roomPrevServices=servicesOn;roomPrevWire=wire;roomMode=true;engineeringOverlay.visible=false;document.body.classList.add('room-active');roomHud.hidden=false;roomReticle.hidden=false;labPanel.hidden=true;ctl.enabled=false;roomLightRig.visible=true;
  if(wire){wire=false;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=false;m.needsUpdate=true}});document.getElementById('wire').textContent='Wireframe'}
  focus('1');if(electronics)syncElectronicsVisibility();syncServicesVisibility();clearRoomHighlights();roomSelectedId=null;roomBackButton.disabled=true;roomInspectButton.disabled=true;
@@ -688,7 +745,7 @@ async function prepareLabPresentation(view){
  if(roomMode&&target!=='1')exitRoomMode();
  if(exp.learner_first&&engineeringMode)await setEngineeringMode(false);if(exp.learner_first&&!plantMode)await setPhysicalPlantMode(true);
  if(!exp.learner_first&&scenario.engineering_view===true&&roomMode)exitRoomMode();
- if(target==='stack'||/^[0-7]$/.test(target)){focus(target)}
+ if(target==='stack'||/^[0-7]$/.test(target)){await focus(target)}
  if(exp.engineering_default===true&&!engineeringMode)await setEngineeringMode(true);
 }
 function parseLabInput(){const raw=labInput.value.trim();if(!raw)return{};return JSON.parse(raw)}
@@ -703,7 +760,7 @@ async function runLabAction(id,inputOverride=null){
  }catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}
 }
 async function startLab(lab=labSelect.value,difficulty=labDifficulty.value||'FOUNDATION'){
- try{await ensureLabRuntime();await labVisualRootsReady;if(labVisualRootsError)throw labVisualRootsError;labSelect.value=lab;labDifficulty.value=difficulty;labController=labModule.createViewerLabController({lab,difficulty, datasets:labDatasets});labPickingIds=labController.canonicalIdsForPicking();const view=labController.start();labPanel.hidden=false;labMessage.textContent='Ticket accepted · loading the affected part of the building…';labMessage.className='labrow labmsg';await prepareLabPresentation(view);await applyLabView(view);labMessage.textContent='Start with the reported symptom. Inspect before you change anything. You can also double-click inspectable learner markers in the 3D scene.'}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn';labPanel.hidden=false}
+ try{await ensureLabRuntime();await buildingLoaded;await ensureDetailedFloor(1);await labVisualRootsReady;if(labVisualRootsError)throw labVisualRootsError;labSelect.value=lab;labDifficulty.value=difficulty;labController=labModule.createViewerLabController({lab,difficulty, datasets:labDatasets});labPickingIds=labController.canonicalIdsForPicking();const view=labController.start();labPanel.hidden=false;labMessage.textContent='Ticket accepted · loading the affected part of the building…';labMessage.className='labrow labmsg';await prepareLabPresentation(view);await applyLabView(view);labMessage.textContent='Start with the reported symptom. Inspect before you change anything. You can also double-click inspectable learner markers in the 3D scene.'}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn';labPanel.hidden=false}
 }
 async function openLabs(){
  labPanel.hidden=false;try{await ensureLabRuntime();if(!labDifficulty.value)labDifficulty.value=requestedDifficulty;if(requestedLab)labSelect.value=requestedLab}catch(err){labMessage.textContent='LAB LOAD ERROR · '+err.message;labMessage.className='labrow labmsg labwarn'}
@@ -732,7 +789,7 @@ deviceFovButton.onclick=()=>{if(!inspectedDeviceId)return;const record=deviceRec
 document.getElementById('deviceClose').onclick=()=>{deviceHud.hidden=true;inspectedDeviceId=null;clearDeviceInteractionOverlay()};
 
 if(requestedLab){openLabs().then(()=>startLab(requestedLab,requestedDifficulty))}
-if(requestedRoom){const roomBoot=setInterval(()=>{if(loaded===11){clearInterval(roomBoot);enterRoomMode()}},60)}
+if(requestedRoom){buildingLoaded.then(()=>enterRoomMode())}
 
 function projectedRoomTarget(ndcX,ndcY,maxDistance=.16){
  let best=null,bestD=maxDistance;
@@ -755,7 +812,7 @@ ren.domElement.addEventListener('click',async ev=>{if(roomMode&&!roomTweening)aw
 
 document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>focus(b.dataset.f));
 document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>setView(b.dataset.v));
-document.getElementById('services').onclick=async e=>{if(!engineeringMode)await setEngineeringMode(true);servicesOn=!servicesOn;syncServicesVisibility();e.target.textContent=servicesOn?'Services: Exposed':'Services: Off';e.target.classList.toggle('active',servicesOn)};
+document.getElementById('services').onclick=async e=>{if(!servicesOn)await ensureServicesLayer();if(!engineeringMode)await setEngineeringMode(true);servicesOn=!servicesOn;syncServicesVisibility();e.target.textContent=servicesOn?'Services: Exposed':'Services: Off';e.target.classList.toggle('active',servicesOn)};
 document.getElementById('sunmode').onclick=e=>{solarMode=solarMode==='auto'?'day':solarMode==='day'?'night':'auto';applySolarEnvironment(solarMode);e.target.textContent=solarMode==='auto'?'Sun: Auto':solarMode==='day'?'Sun: Day':'Sun: Night'};
 document.getElementById('wire').onclick=e=>{wire=!wire;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}});e.target.textContent=wire?'Solid':'Wireframe'};
 addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});ren.setAnimationLoop(t=>{if(!roomMode)ctl.update();ren.render(scene,cam);renderDeviceCameraFeed(t)});
