@@ -929,10 +929,10 @@
       ]
     },
     "electrical_panel": {
-      "maturity": "recognizable",
+      "maturity": "componentized",
       "display_name": "Electrical Panelboard",
       "next_pass": true,
-      "minimum_ci_maturity": "recognizable",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "building_ot_life_safety",
       "expected_components": [
@@ -959,13 +959,79 @@
         "trace_branch_circuit",
         "inspect_circuit_directory"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "wall_mounted_branch_circuit_panelboard",
+      "components": [
+        {
+          "id": "ENCLOSURE",
+          "role": "panelboard_enclosure",
+          "inspectable": true
+        },
+        {
+          "id": "DEADFRONT",
+          "role": "protective_deadfront",
+          "inspectable": true
+        },
+        {
+          "id": "MAIN_BREAKER",
+          "role": "main_overcurrent_device",
+          "inspectable": true
+        },
+        {
+          "id": "BRANCH_BREAKERS",
+          "role": "branch_overcurrent_devices",
+          "inspectable": true
+        },
+        {
+          "id": "CIRCUIT_DIRECTORY",
+          "role": "circuit_labeling",
+          "inspectable": true
+        },
+        {
+          "id": "NEUTRAL_GROUND_BARS",
+          "role": "neutral_ground_bars",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
+      ]
     },
     "environment_sensor": {
-      "maturity": "recognizable",
+      "maturity": "componentized",
       "display_name": "Environmental Sensor",
       "next_pass": true,
-      "minimum_ci_maturity": "recognizable",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "building_ot_life_safety",
       "expected_components": [
@@ -991,7 +1057,66 @@
         "trace_control_bus",
         "trace_power"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "wall_or_ceiling_mounted_environment_sensor",
+      "components": [
+        {
+          "id": "HOUSING",
+          "role": "sensor_housing",
+          "inspectable": true
+        },
+        {
+          "id": "SENSOR_VENTS",
+          "role": "air_sampling_vents",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_INDICATOR",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "BACNET_TERMINAL",
+          "role": "field_bus_terminal",
+          "inspectable": true
+        },
+        {
+          "id": "24V_TERMINAL",
+          "role": "class2_power_terminal",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
     },
     "access_reader": {
       "maturity": "componentized",
@@ -1412,8 +1537,8 @@
       "october_demo_required": false
     },
     "bas_controller": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "building_ot_life_safety",
       "display_name": "BAS Floor Controller",
@@ -1443,7 +1568,82 @@
         "trace_power",
         "open_bas_sandbox"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "wall_mounted_building_automation_controller",
+      "components": [
+        {
+          "id": "ENCLOSURE",
+          "role": "controller_enclosure",
+          "inspectable": true
+        },
+        {
+          "id": "CONTROLLER_BOARD",
+          "role": "bas_logic_board",
+          "inspectable": true
+        },
+        {
+          "id": "ETHERNET_PORT",
+          "role": "network_port",
+          "inspectable": true
+        },
+        {
+          "id": "BACNET_TERMINALS",
+          "role": "field_bus_terminals",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_INPUT",
+          "role": "power_input",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LEDS",
+          "role": "indicators",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled controller power input",
+          "medium": "120VAC",
+          "services": [
+            "controller_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "BACnet/IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal block",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "controller_state",
+        "network_state",
+        "field_bus_state",
+        "bas_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "field_bus_fault",
+        "controller_degraded"
+      ]
     },
     "carrier_cpe": {
       "maturity": "placeholder",

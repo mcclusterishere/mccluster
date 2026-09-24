@@ -1221,6 +1221,9 @@ PRIMARY_COMPONENT_BY_ARCHETYPE={
     "access_reader":"FACEPLATE",
     "intercom":"FACEPLATE",
     "access_controller":"ENCLOSURE",
+    "electrical_panel":"ENCLOSURE",
+    "bas_controller":"ENCLOSURE",
+    "environment_sensor":"HOUSING",
 }
 def _is_primary_component(archetype_key,component_id):
     return component_id==PRIMARY_COMPONENT_BY_ARCHETYPE.get(archetype_key)
@@ -1890,6 +1893,126 @@ def access_controller_component_meshes(a):
     _record_componentized_device(a,"access_controller",parts)
     return parts
 
+
+def electrical_panel_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.20
+    rear_y=p[1]+.20
+
+    enclosure=trimesh.creation.box(extents=[1.34,.36,3.72])
+    parts.append(_component_mesh(aid,"ENCLOSURE",_place(enclosure,p),[110,112,114,255],"panelboard_enclosure","electrical_panel"))
+
+    deadfront=trimesh.creation.box(extents=[1.18,.045,3.48])
+    parts.append(_component_mesh(aid,"DEADFRONT",_place(deadfront,[p[0],front_y-.025,p[2]]),[178,178,172,255],"protective_deadfront","electrical_panel"))
+
+    main=trimesh.creation.box(extents=[.42,.055,.34])
+    parts.append(_component_mesh(aid,"MAIN_BREAKER",_place(main,[p[0],front_y-.055,p[2]+1.35]),[52,56,60,255],"main_overcurrent_device","electrical_panel",{
+        "port_id":"FEEDER_INPUT","state_driven":True
+    }))
+
+    breaker_centers=[]
+    for row in range(10):
+        breaker_centers.append([p[0]-.29,front_y-.055,p[2]+.92-row*.19])
+        breaker_centers.append([p[0]+.29,front_y-.055,p[2]+.92-row*.19])
+    breakers=_box_group([.22,.055,.12],breaker_centers)
+    parts.append(_component_mesh(aid,"BRANCH_BREAKERS",breakers,[58,62,66,255],"branch_overcurrent_devices","electrical_panel",{
+        "modeled_breaker_count":20,"port_id":"BRANCH_CIRCUIT_OUTPUTS","state_driven":True
+    }))
+
+    directory=trimesh.creation.box(extents=[.42,.035,.88])
+    parts.append(_component_mesh(aid,"CIRCUIT_DIRECTORY",_place(directory,[p[0]+.37,front_y-.055,p[2]-1.25]),[232,230,218,255],"circuit_labeling","electrical_panel",{
+        "sandbox_directory":True
+    }))
+
+    bars=_box_group([.08,.035,1.45],[
+        [p[0]-.47,rear_y+.025,p[2]-.35],
+        [p[0]+.47,rear_y+.025,p[2]-.35],
+    ])
+    parts.append(_component_mesh(aid,"NEUTRAL_GROUND_BARS",bars,[180,150,70,255],"neutral_ground_bars","electrical_panel",{
+        "training_representation":True
+    }))
+
+    _record_componentized_device(a,"electrical_panel",parts)
+    return parts
+
+def bas_controller_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.24
+    rear_y=p[1]+.24
+
+    enclosure=trimesh.creation.box(extents=[1.18,.42,2.18])
+    parts.append(_component_mesh(aid,"ENCLOSURE",_place(enclosure,p),[88,92,96,255],"controller_enclosure","bas_controller"))
+
+    board=trimesh.creation.box(extents=[.82,.07,1.16])
+    parts.append(_component_mesh(aid,"CONTROLLER_BOARD",_place(board,[p[0],front_y-.045,p[2]+.12]),[42,98,68,255],"bas_logic_board","bas_controller",{
+        "sandbox_only":True
+    }))
+
+    eth=trimesh.creation.box(extents=[.12,.035,.075])
+    parts.append(_component_mesh(aid,"ETHERNET_PORT",_place(eth,[p[0]-.30,front_y-.085,p[2]-.42]),[28,34,40,255],"network_port","bas_controller",{
+        "port_id":"RJ45_ETH"
+    }))
+
+    terminals=_box_group([.08,.035,.065],[
+        [p[0]-.14+i*.095,front_y-.085,p[2]-.62] for i in range(4)
+    ])
+    parts.append(_component_mesh(aid,"BACNET_TERMINALS",terminals,[70,105,75,255],"field_bus_terminals","bas_controller",{
+        "port_id":"BACNET_MSTP"
+    }))
+
+    power=trimesh.creation.box(extents=[.14,.035,.09])
+    parts.append(_component_mesh(aid,"POWER_INPUT",_place(power,[p[0]+.32,rear_y+.020,p[2]-.68]),[28,30,34,255],"power_input","bas_controller",{
+        "port_id":"AC_IN"
+    }))
+
+    leds=_sphere_group(.021,[
+        [p[0]+.33,front_y-.085,p[2]+.52],
+        [p[0]+.33,front_y-.085,p[2]+.44],
+        [p[0]+.33,front_y-.085,p[2]+.36],
+    ])
+    parts.append(_component_mesh(aid,"STATUS_LEDS",leds,[55,215,105,255],"indicators","bas_controller",{
+        "state_driven":True,"indicators":["controller","network","field_bus"]
+    }))
+
+    _record_componentized_device(a,"bas_controller",parts)
+    return parts
+
+def environment_sensor_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.11
+    rear_y=p[1]+.11
+
+    housing=trimesh.creation.box(extents=[.34,.18,.34])
+    parts.append(_component_mesh(aid,"HOUSING",_place(housing,p),[224,224,218,255],"sensor_housing","environment_sensor"))
+
+    vent_centers=[]
+    for row in range(3):
+        for col in range(4):
+            vent_centers.append([p[0]-.09+col*.06,front_y-.020,p[2]+.07-row*.06])
+    vents=_cylinder_group(.012,.020,vent_centers,[0,1,0])
+    parts.append(_component_mesh(aid,"SENSOR_VENTS",vents,[70,74,78,255],"air_sampling_vents","environment_sensor"))
+
+    status=trimesh.creation.icosphere(subdivisions=1,radius=.018)
+    parts.append(_component_mesh(aid,"STATUS_INDICATOR",_place(status,[p[0]+.12,front_y-.025,p[2]+.12]),[55,215,105,255],"indicator","environment_sensor",{
+        "state_driven":True
+    }))
+
+    bacnet=trimesh.creation.box(extents=[.10,.035,.06])
+    parts.append(_component_mesh(aid,"BACNET_TERMINAL",_place(bacnet,[p[0]-.08,rear_y+.018,p[2]-.10]),[70,105,75,255],"field_bus_terminal","environment_sensor",{
+        "port_id":"BACNET_MSTP"
+    }))
+
+    power=trimesh.creation.box(extents=[.10,.035,.06])
+    parts.append(_component_mesh(aid,"24V_TERMINAL",_place(power,[p[0]+.08,rear_y+.018,p[2]-.10]),[130,85,55,255],"class2_power_terminal","environment_sensor",{
+        "port_id":"24VDC_CLASS2"
+    }))
+
+    _record_componentized_device(a,"environment_sensor",parts)
+    return parts
+
 def physical_meshes_for_asset(a):
     p=positions.get(a["asset_id"])
     if not p:return []
@@ -1929,6 +2052,12 @@ def physical_meshes_for_asset(a):
         return intercom_component_meshes(a)
     if t=="access_controller":
         return access_controller_component_meshes(a)
+    if t=="electrical_panel":
+        return electrical_panel_component_meshes(a)
+    if t=="bas_controller":
+        return bas_controller_component_meshes(a)
+    if t=="environment_sensor":
+        return environment_sensor_component_meshes(a)
     if t in {"wireless_ap","fire_detector","environment_sensor"}:
         radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
         height=.14 if t=="wireless_ap" else .18
@@ -2103,6 +2232,12 @@ modeled_access_controllers=[a for a in new_assets if a["classification"]["asset_
 access_reader_component_records=[x for x in device_component_records if x.get("archetype")=="access_reader"]
 intercom_component_records=[x for x in device_component_records if x.get("archetype")=="intercom"]
 access_controller_component_records=[x for x in device_component_records if x.get("archetype")=="access_controller"]
+modeled_electrical_panels=[a for a in new_assets if a["classification"]["asset_type"]=="electrical_panel"]
+modeled_bas_controllers=[a for a in new_assets if a["classification"]["asset_type"]=="bas_controller"]
+modeled_environment_sensors=[a for a in new_assets if a["classification"]["asset_type"]=="environment_sensor"]
+electrical_panel_component_records=[x for x in device_component_records if x.get("archetype")=="electrical_panel"]
+bas_controller_component_records=[x for x in device_component_records if x.get("archetype")=="bas_controller"]
+environment_sensor_component_records=[x for x in device_component_records if x.get("archetype")=="environment_sensor"]
 
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
@@ -2259,6 +2394,24 @@ ck("access controller assemblies expose enclosure, board, Ethernet, OSDP, power,
     and record.get("maturity")=="componentized"
     for record in access_controller_component_records
 ), "")
+ck("all electrical panels use Step 4C component assemblies",len(electrical_panel_component_records)==len(modeled_electrical_panels),f"{len(electrical_panel_component_records)}/{len(modeled_electrical_panels)}")
+ck("electrical panel assemblies expose enclosure, deadfront, main, branches, directory, and bars",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"ENCLOSURE","DEADFRONT","MAIN_BREAKER","BRANCH_BREAKERS","CIRCUIT_DIRECTORY","NEUTRAL_GROUND_BARS"})
+    and record.get("maturity")=="componentized"
+    for record in electrical_panel_component_records
+), "")
+ck("all BAS controllers use Step 4C component assemblies",len(bas_controller_component_records)==len(modeled_bas_controllers),f"{len(bas_controller_component_records)}/{len(modeled_bas_controllers)}")
+ck("BAS controller assemblies expose enclosure, board, Ethernet, BACnet, power, and status",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"ENCLOSURE","CONTROLLER_BOARD","ETHERNET_PORT","BACNET_TERMINALS","POWER_INPUT","STATUS_LEDS"})
+    and record.get("maturity")=="componentized"
+    for record in bas_controller_component_records
+), "")
+ck("all environment sensors use Step 4C component assemblies",len(environment_sensor_component_records)==len(modeled_environment_sensors),f"{len(environment_sensor_component_records)}/{len(modeled_environment_sensors)}")
+ck("environment sensor assemblies expose housing, vents, status, BACnet, and Class 2 power",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"HOUSING","SENSOR_VENTS","STATUS_INDICATOR","BACNET_TERMINAL","24V_TERMINAL"})
+    and record.get("maturity")=="componentized"
+    for record in environment_sensor_component_records
+), "")
 ck("all physical Step 4B assets have spatial positions",all(
     a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
 ), "")
@@ -2283,6 +2436,8 @@ report={
  "step4c_componentized_mfp_total":len(mfp_component_records),
  "step4c_componentized_access_reader_total":len(access_reader_component_records),"step4c_componentized_intercom_total":len(intercom_component_records),
  "step4c_componentized_access_controller_total":len(access_controller_component_records),
+ "step4c_componentized_electrical_panel_total":len(electrical_panel_component_records),"step4c_componentized_bas_controller_total":len(bas_controller_component_records),
+ "step4c_componentized_environment_sensor_total":len(environment_sensor_component_records),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -2302,6 +2457,7 @@ print("  rack UPS:",len(rack_ups_component_records),"PDUs:",len(pdu_component_re
 print("  data jacks:",len(data_jack_component_records),"receptacles:",len(receptacle_component_records),"WAP spare jacks:",len(wap_spare_jack_component_records))
 print("  APs:",len(wireless_ap_component_records),"workstations:",len(workstation_component_records),"monitors:",len(monitor_component_records),"IP phones:",len(ip_phone_component_records),"MFPs:",len(mfp_component_records))
 print("  access readers:",len(access_reader_component_records),"intercoms:",len(intercom_component_records),"access controllers:",len(access_controller_component_records))
+print("  electrical panels:",len(electrical_panel_component_records),"BAS controllers:",len(bas_controller_component_records),"environment sensors:",len(environment_sensor_component_records))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))
