@@ -264,6 +264,92 @@
       ]
     },
     {
+      "asset_id": "B1-BAS-CTRL-01",
+      "label": "B1 BAS Floor Controller 1",
+      "asset_type": "bas_controller",
+      "archetype": "bas_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        -12.3
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "B1-BAS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "B1-BAS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "B1-BAS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINALS",
+          "mesh_name": "B1-BAS-CTRL-01::PART::BACNET_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "B1-BAS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "B1-BAS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled controller power input",
+          "medium": "120VAC",
+          "services": [
+            "controller_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "BACnet/IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal block",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "controller_state",
+        "network_state",
+        "field_bus_state",
+        "bas_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "field_bus_fault",
+        "controller_degraded"
+      ]
+    },
+    {
       "asset_id": "B1-BAS-CTRL-01::DATA-JACK",
       "label": "B1 BAS Floor Controller 1 Data Jack",
       "asset_type": "data_jack",
@@ -391,6 +477,440 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "B1-BAS-ENV-01",
+      "label": "B1 Environment Sensor 1",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        39.0,
+        -5.7
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "B1-BAS-ENV-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "B1-BAS-ENV-01::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-BAS-ENV-01::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "B1-BAS-ENV-01::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "B1-BAS-ENV-01::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "B1-BAS-ENV-02",
+      "label": "B1 Environment Sensor 2",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        39.0,
+        -5.7
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "B1-BAS-ENV-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "B1-BAS-ENV-02::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-BAS-ENV-02::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "B1-BAS-ENV-02::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "B1-BAS-ENV-02::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "B1-BAS-ENV-03",
+      "label": "B1 Environment Sensor 3",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        34.8,
+        39.0,
+        -5.7
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "B1-BAS-ENV-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "B1-BAS-ENV-03::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-BAS-ENV-03::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "B1-BAS-ENV-03::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "B1-BAS-ENV-03::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "B1-BAS-ENV-04",
+      "label": "B1 Environment Sensor 4",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        40.2,
+        -5.7
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "B1-BAS-ENV-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "B1-BAS-ENV-04::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "B1-BAS-ENV-04::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "B1-BAS-ENV-04::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "B1-BAS-ENV-04::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "B1-ELEC-PANEL-E-01",
+      "label": "B1 Emergency / Critical Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        49.0,
+        62.8,
+        -8.5
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "B1-ELEC-PANEL-E-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "B1-ELEC-PANEL-E-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "B1-ELEC-PANEL-E-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "B1-ELEC-PANEL-E-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "B1-ELEC-PANEL-E-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "B1-ELEC-PANEL-E-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "B1-ELEC-PANEL-N-01",
+      "label": "B1 Normal Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        47.7,
+        62.8,
+        -8.5
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "B1-ELEC-PANEL-N-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "B1-ELEC-PANEL-N-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "B1-ELEC-PANEL-N-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "B1-ELEC-PANEL-N-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "B1-ELEC-PANEL-N-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "B1-ELEC-PANEL-N-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
       ]
     },
     {
@@ -6644,6 +7164,92 @@
       ]
     },
     {
+      "asset_id": "F1-BAS-CTRL-01",
+      "label": "F1 BAS Floor Controller 1",
+      "asset_type": "bas_controller",
+      "archetype": "bas_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        1.2
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F1-BAS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F1-BAS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F1-BAS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINALS",
+          "mesh_name": "F1-BAS-CTRL-01::PART::BACNET_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F1-BAS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F1-BAS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled controller power input",
+          "medium": "120VAC",
+          "services": [
+            "controller_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "BACnet/IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal block",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "controller_state",
+        "network_state",
+        "field_bus_state",
+        "bas_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "field_bus_fault",
+        "controller_degraded"
+      ]
+    },
+    {
       "asset_id": "F1-BAS-CTRL-01::DATA-JACK",
       "label": "F1 BAS Floor Controller 1 Data Jack",
       "asset_type": "data_jack",
@@ -6774,6 +7380,286 @@
       ]
     },
     {
+      "asset_id": "F1-BAS-ENV-01",
+      "label": "F1 Environment Sensor 1",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        20.0,
+        7.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F1-BAS-ENV-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F1-BAS-ENV-01::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F1-BAS-ENV-01::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F1-BAS-ENV-01::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F1-BAS-ENV-01::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F1-BAS-ENV-02",
+      "label": "F1 Environment Sensor 2",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        11.05,
+        19.95,
+        7.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F1-BAS-ENV-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F1-BAS-ENV-02::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F1-BAS-ENV-02::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F1-BAS-ENV-02::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F1-BAS-ENV-02::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F1-BAS-ENV-03",
+      "label": "F1 Environment Sensor 3",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        7.8,
+        38.0,
+        7.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F1-BAS-ENV-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F1-BAS-ENV-03::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F1-BAS-ENV-03::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F1-BAS-ENV-03::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F1-BAS-ENV-03::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F1-BAS-ENV-04",
+      "label": "F1 Environment Sensor 4",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        26.75,
+        36.8,
+        7.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F1-BAS-ENV-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F1-BAS-ENV-04::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F1-BAS-ENV-04::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F1-BAS-ENV-04::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F1-BAS-ENV-04::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
       "asset_id": "F1-DIRECTORY-01::PWR-OUTLET",
       "label": "Next Action / Building Directory Power Outlet",
       "asset_type": "receptacle",
@@ -6835,6 +7721,160 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F1-ELEC-PANEL-E-01",
+      "label": "F1 Emergency / Critical Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        49.0,
+        62.8,
+        5.0
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F1-ELEC-PANEL-E-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F1-ELEC-PANEL-E-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F1-ELEC-PANEL-E-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F1-ELEC-PANEL-E-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F1-ELEC-PANEL-E-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F1-ELEC-PANEL-E-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F1-ELEC-PANEL-N-01",
+      "label": "F1 Normal Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        47.7,
+        62.8,
+        5.0
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F1-ELEC-PANEL-N-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F1-ELEC-PANEL-N-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F1-ELEC-PANEL-N-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F1-ELEC-PANEL-N-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F1-ELEC-PANEL-N-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F1-ELEC-PANEL-N-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
       ]
     },
     {
@@ -12360,6 +13400,92 @@
       ]
     },
     {
+      "asset_id": "F2-BAS-CTRL-01",
+      "label": "F2 BAS Floor Controller 1",
+      "asset_type": "bas_controller",
+      "archetype": "bas_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        14.7
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F2-BAS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F2-BAS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F2-BAS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINALS",
+          "mesh_name": "F2-BAS-CTRL-01::PART::BACNET_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F2-BAS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F2-BAS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled controller power input",
+          "medium": "120VAC",
+          "services": [
+            "controller_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "BACnet/IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal block",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "controller_state",
+        "network_state",
+        "field_bus_state",
+        "bas_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "field_bus_fault",
+        "controller_degraded"
+      ]
+    },
+    {
       "asset_id": "F2-BAS-CTRL-01::DATA-JACK",
       "label": "F2 BAS Floor Controller 1 Data Jack",
       "asset_type": "data_jack",
@@ -12487,6 +13613,440 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F2-BAS-ENV-01",
+      "label": "F2 Environment Sensor 1",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        39.0,
+        21.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F2-BAS-ENV-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F2-BAS-ENV-01::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F2-BAS-ENV-01::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F2-BAS-ENV-01::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F2-BAS-ENV-01::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F2-BAS-ENV-02",
+      "label": "F2 Environment Sensor 2",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        11.05,
+        21.75,
+        21.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F2-BAS-ENV-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F2-BAS-ENV-02::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F2-BAS-ENV-02::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F2-BAS-ENV-02::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F2-BAS-ENV-02::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F2-BAS-ENV-03",
+      "label": "F2 Environment Sensor 3",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        48.8,
+        26.5,
+        21.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F2-BAS-ENV-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F2-BAS-ENV-03::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F2-BAS-ENV-03::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F2-BAS-ENV-03::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F2-BAS-ENV-03::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F2-BAS-ENV-04",
+      "label": "F2 Environment Sensor 4",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        40.2,
+        21.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F2-BAS-ENV-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F2-BAS-ENV-04::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F2-BAS-ENV-04::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F2-BAS-ENV-04::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F2-BAS-ENV-04::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F2-ELEC-PANEL-E-01",
+      "label": "F2 Emergency / Critical Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        49.0,
+        62.8,
+        18.5
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F2-ELEC-PANEL-E-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F2-ELEC-PANEL-E-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F2-ELEC-PANEL-E-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F2-ELEC-PANEL-E-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F2-ELEC-PANEL-E-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F2-ELEC-PANEL-E-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F2-ELEC-PANEL-N-01",
+      "label": "F2 Normal Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        47.7,
+        62.8,
+        18.5
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F2-ELEC-PANEL-N-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F2-ELEC-PANEL-N-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F2-ELEC-PANEL-N-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F2-ELEC-PANEL-N-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F2-ELEC-PANEL-N-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F2-ELEC-PANEL-N-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
       ]
     },
     {
@@ -16174,6 +17734,92 @@
       ]
     },
     {
+      "asset_id": "F3-BAS-CTRL-01",
+      "label": "F3 BAS Floor Controller 1",
+      "asset_type": "bas_controller",
+      "archetype": "bas_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        28.2
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F3-BAS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F3-BAS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F3-BAS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINALS",
+          "mesh_name": "F3-BAS-CTRL-01::PART::BACNET_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F3-BAS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F3-BAS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled controller power input",
+          "medium": "120VAC",
+          "services": [
+            "controller_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "BACnet/IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal block",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "controller_state",
+        "network_state",
+        "field_bus_state",
+        "bas_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "field_bus_fault",
+        "controller_degraded"
+      ]
+    },
+    {
       "asset_id": "F3-BAS-CTRL-01::DATA-JACK",
       "label": "F3 BAS Floor Controller 1 Data Jack",
       "asset_type": "data_jack",
@@ -16301,6 +17947,440 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F3-BAS-ENV-01",
+      "label": "F3 Environment Sensor 1",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        41.0,
+        34.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F3-BAS-ENV-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F3-BAS-ENV-01::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F3-BAS-ENV-01::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F3-BAS-ENV-01::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F3-BAS-ENV-01::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F3-BAS-ENV-02",
+      "label": "F3 Environment Sensor 2",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        11.05,
+        26.0,
+        34.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F3-BAS-ENV-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F3-BAS-ENV-02::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F3-BAS-ENV-02::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F3-BAS-ENV-02::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F3-BAS-ENV-02::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F3-BAS-ENV-03",
+      "label": "F3 Environment Sensor 3",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        6.8,
+        10.0,
+        34.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F3-BAS-ENV-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F3-BAS-ENV-03::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F3-BAS-ENV-03::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F3-BAS-ENV-03::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F3-BAS-ENV-03::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F3-BAS-ENV-04",
+      "label": "F3 Environment Sensor 4",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        22.0,
+        11.2,
+        34.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F3-BAS-ENV-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F3-BAS-ENV-04::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F3-BAS-ENV-04::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F3-BAS-ENV-04::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F3-BAS-ENV-04::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F3-ELEC-PANEL-E-01",
+      "label": "F3 Emergency / Critical Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        49.0,
+        62.8,
+        32.0
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F3-ELEC-PANEL-E-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F3-ELEC-PANEL-E-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F3-ELEC-PANEL-E-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F3-ELEC-PANEL-E-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F3-ELEC-PANEL-E-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F3-ELEC-PANEL-E-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F3-ELEC-PANEL-N-01",
+      "label": "F3 Normal Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        47.7,
+        62.8,
+        32.0
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F3-ELEC-PANEL-N-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F3-ELEC-PANEL-N-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F3-ELEC-PANEL-N-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F3-ELEC-PANEL-N-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F3-ELEC-PANEL-N-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F3-ELEC-PANEL-N-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
       ]
     },
     {
@@ -21296,6 +23376,92 @@
       ]
     },
     {
+      "asset_id": "F4-BAS-CTRL-01",
+      "label": "F4 BAS Floor Controller 1",
+      "asset_type": "bas_controller",
+      "archetype": "bas_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        41.7
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F4-BAS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F4-BAS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F4-BAS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINALS",
+          "mesh_name": "F4-BAS-CTRL-01::PART::BACNET_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F4-BAS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F4-BAS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled controller power input",
+          "medium": "120VAC",
+          "services": [
+            "controller_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "BACnet/IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal block",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "controller_state",
+        "network_state",
+        "field_bus_state",
+        "bas_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "field_bus_fault",
+        "controller_degraded"
+      ]
+    },
+    {
       "asset_id": "F4-BAS-CTRL-01::DATA-JACK",
       "label": "F4 BAS Floor Controller 1 Data Jack",
       "asset_type": "data_jack",
@@ -21426,6 +23592,286 @@
       ]
     },
     {
+      "asset_id": "F4-BAS-ENV-01",
+      "label": "F4 Environment Sensor 1",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        43.0,
+        48.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F4-BAS-ENV-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F4-BAS-ENV-01::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F4-BAS-ENV-01::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F4-BAS-ENV-01::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F4-BAS-ENV-01::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F4-BAS-ENV-02",
+      "label": "F4 Environment Sensor 2",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        7.7,
+        7.0,
+        48.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F4-BAS-ENV-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F4-BAS-ENV-02::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F4-BAS-ENV-02::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F4-BAS-ENV-02::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F4-BAS-ENV-02::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F4-BAS-ENV-03",
+      "label": "F4 Environment Sensor 3",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        21.8,
+        8.5,
+        48.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F4-BAS-ENV-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F4-BAS-ENV-03::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F4-BAS-ENV-03::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F4-BAS-ENV-03::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F4-BAS-ENV-03::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F4-BAS-ENV-04",
+      "label": "F4 Environment Sensor 4",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        9.5,
+        31.2,
+        48.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F4-BAS-ENV-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F4-BAS-ENV-04::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F4-BAS-ENV-04::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F4-BAS-ENV-04::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F4-BAS-ENV-04::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
       "asset_id": "F4-EDIT-DISPLAY-01::AV-DECODER::DATA-JACK",
       "label": "Edit / Review Calibrated Display AV-over-IP Decoder Data Jack",
       "asset_type": "data_jack",
@@ -21553,6 +23999,160 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F4-ELEC-PANEL-E-01",
+      "label": "F4 Emergency / Critical Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        49.0,
+        62.8,
+        45.5
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F4-ELEC-PANEL-E-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F4-ELEC-PANEL-E-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F4-ELEC-PANEL-E-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F4-ELEC-PANEL-E-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F4-ELEC-PANEL-E-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F4-ELEC-PANEL-E-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F4-ELEC-PANEL-N-01",
+      "label": "F4 Normal Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        47.7,
+        62.8,
+        45.5
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F4-ELEC-PANEL-N-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F4-ELEC-PANEL-N-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F4-ELEC-PANEL-N-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F4-ELEC-PANEL-N-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F4-ELEC-PANEL-N-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F4-ELEC-PANEL-N-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
       ]
     },
     {
@@ -28688,6 +31288,92 @@
       ]
     },
     {
+      "asset_id": "F5-BAS-CTRL-01",
+      "label": "F5 BAS Floor Controller 1",
+      "asset_type": "bas_controller",
+      "archetype": "bas_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        55.2
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F5-BAS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F5-BAS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F5-BAS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINALS",
+          "mesh_name": "F5-BAS-CTRL-01::PART::BACNET_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F5-BAS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F5-BAS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled controller power input",
+          "medium": "120VAC",
+          "services": [
+            "controller_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "BACnet/IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal block",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "controller_state",
+        "network_state",
+        "field_bus_state",
+        "bas_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "field_bus_fault",
+        "controller_degraded"
+      ]
+    },
+    {
       "asset_id": "F5-BAS-CTRL-01::DATA-JACK",
       "label": "F5 BAS Floor Controller 1 Data Jack",
       "asset_type": "data_jack",
@@ -28815,6 +31501,440 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F5-BAS-ENV-01",
+      "label": "F5 Environment Sensor 1",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        41.0,
+        61.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F5-BAS-ENV-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F5-BAS-ENV-01::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F5-BAS-ENV-01::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F5-BAS-ENV-01::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F5-BAS-ENV-01::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F5-BAS-ENV-02",
+      "label": "F5 Environment Sensor 2",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        8.7,
+        10.0,
+        61.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F5-BAS-ENV-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F5-BAS-ENV-02::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F5-BAS-ENV-02::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F5-BAS-ENV-02::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F5-BAS-ENV-02::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F5-BAS-ENV-03",
+      "label": "F5 Environment Sensor 3",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        22.3,
+        10.0,
+        61.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F5-BAS-ENV-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F5-BAS-ENV-03::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F5-BAS-ENV-03::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F5-BAS-ENV-03::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F5-BAS-ENV-03::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F5-BAS-ENV-04",
+      "label": "F5 Environment Sensor 4",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        12.0,
+        33.2,
+        61.8
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F5-BAS-ENV-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F5-BAS-ENV-04::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F5-BAS-ENV-04::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F5-BAS-ENV-04::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F5-BAS-ENV-04::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F5-ELEC-PANEL-E-01",
+      "label": "F5 Emergency / Critical Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        49.0,
+        62.8,
+        59.0
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F5-ELEC-PANEL-E-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F5-ELEC-PANEL-E-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F5-ELEC-PANEL-E-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F5-ELEC-PANEL-E-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F5-ELEC-PANEL-E-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F5-ELEC-PANEL-E-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F5-ELEC-PANEL-N-01",
+      "label": "F5 Normal Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        47.7,
+        62.8,
+        59.0
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F5-ELEC-PANEL-N-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F5-ELEC-PANEL-N-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F5-ELEC-PANEL-N-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F5-ELEC-PANEL-N-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F5-ELEC-PANEL-N-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F5-ELEC-PANEL-N-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
       ]
     },
     {
@@ -36014,6 +39134,92 @@
       ]
     },
     {
+      "asset_id": "F6-BAS-CTRL-01",
+      "label": "F6 BAS Floor Controller 1",
+      "asset_type": "bas_controller",
+      "archetype": "bas_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        68.7
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F6-BAS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "F6-BAS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "F6-BAS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINALS",
+          "mesh_name": "F6-BAS-CTRL-01::PART::BACNET_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F6-BAS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "F6-BAS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled controller power input",
+          "medium": "120VAC",
+          "services": [
+            "controller_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "BACnet/IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal block",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "controller_state",
+        "network_state",
+        "field_bus_state",
+        "bas_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "field_bus_fault",
+        "controller_degraded"
+      ]
+    },
+    {
       "asset_id": "F6-BAS-CTRL-01::DATA-JACK",
       "label": "F6 BAS Floor Controller 1 Data Jack",
       "asset_type": "data_jack",
@@ -36144,6 +39350,286 @@
       ]
     },
     {
+      "asset_id": "F6-BAS-ENV-01",
+      "label": "F6 Environment Sensor 1",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        41.0,
+        75.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F6-BAS-ENV-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F6-BAS-ENV-01::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F6-BAS-ENV-01::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F6-BAS-ENV-01::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F6-BAS-ENV-01::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F6-BAS-ENV-02",
+      "label": "F6 Environment Sensor 2",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        8.7,
+        10.0,
+        75.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F6-BAS-ENV-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F6-BAS-ENV-02::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F6-BAS-ENV-02::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F6-BAS-ENV-02::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F6-BAS-ENV-02::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F6-BAS-ENV-03",
+      "label": "F6 Environment Sensor 3",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        22.3,
+        10.0,
+        75.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F6-BAS-ENV-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F6-BAS-ENV-03::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F6-BAS-ENV-03::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F6-BAS-ENV-03::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F6-BAS-ENV-03::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F6-BAS-ENV-04",
+      "label": "F6 Environment Sensor 4",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        9.5,
+        30.2,
+        75.3
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F6-BAS-ENV-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "F6-BAS-ENV-04::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "F6-BAS-ENV-04::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "F6-BAS-ENV-04::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "F6-BAS-ENV-04::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
+      ]
+    },
+    {
       "asset_id": "F6-BRIEFING-DISPLAY-01::AV-DECODER::DATA-JACK",
       "label": "Partner Briefing Display AV-over-IP Decoder Data Jack",
       "asset_type": "data_jack",
@@ -36271,6 +39757,160 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F6-ELEC-PANEL-E-01",
+      "label": "F6 Emergency / Critical Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        49.0,
+        62.8,
+        72.5
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F6-ELEC-PANEL-E-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F6-ELEC-PANEL-E-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F6-ELEC-PANEL-E-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F6-ELEC-PANEL-E-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F6-ELEC-PANEL-E-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F6-ELEC-PANEL-E-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F6-ELEC-PANEL-N-01",
+      "label": "F6 Normal Power Panelboard",
+      "asset_type": "electrical_panel",
+      "archetype": "electrical_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        47.7,
+        62.8,
+        72.5
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "F6-ELEC-PANEL-N-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DEADFRONT",
+          "mesh_name": "F6-ELEC-PANEL-N-01::PART::DEADFRONT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MAIN_BREAKER",
+          "mesh_name": "F6-ELEC-PANEL-N-01::PART::MAIN_BREAKER",
+          "inspectable": true
+        },
+        {
+          "component_id": "BRANCH_BREAKERS",
+          "mesh_name": "F6-ELEC-PANEL-N-01::PART::BRANCH_BREAKERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "CIRCUIT_DIRECTORY",
+          "mesh_name": "F6-ELEC-PANEL-N-01::PART::CIRCUIT_DIRECTORY",
+          "inspectable": true
+        },
+        {
+          "component_id": "NEUTRAL_GROUND_BARS",
+          "mesh_name": "F6-ELEC-PANEL-N-01::PART::NEUTRAL_GROUND_BARS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FEEDER_INPUT",
+          "connector": "modeled panel feeder lugs",
+          "medium": "208Y/120VAC feeder",
+          "services": [
+            "panel_feeder"
+          ],
+          "required": true
+        },
+        {
+          "id": "BRANCH_CIRCUIT_OUTPUTS",
+          "connector": "branch breaker outputs",
+          "medium": "120VAC branch circuits",
+          "services": [
+            "branch_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "main_state",
+        "branch_breaker_state",
+        "circuit_directory",
+        "feeder_trace",
+        "branch_trace"
+      ],
+      "planned_behaviors": [
+        "main_trip",
+        "branch_trip",
+        "feeder_loss",
+        "directory_mismatch"
       ]
     },
     {
@@ -42713,6 +46353,92 @@
       ]
     },
     {
+      "asset_id": "L7-BAS-CTRL-01",
+      "label": "L7 BAS Floor Controller 1",
+      "asset_type": "bas_controller",
+      "archetype": "bas_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        62.8,
+        82.2
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "L7-BAS-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROLLER_BOARD",
+          "mesh_name": "L7-BAS-CTRL-01::PART::CONTROLLER_BOARD",
+          "inspectable": true
+        },
+        {
+          "component_id": "ETHERNET_PORT",
+          "mesh_name": "L7-BAS-CTRL-01::PART::ETHERNET_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINALS",
+          "mesh_name": "L7-BAS-CTRL-01::PART::BACNET_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "L7-BAS-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "L7-BAS-CTRL-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled controller power input",
+          "medium": "120VAC",
+          "services": [
+            "controller_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "BACnet/IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal block",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "controller_state",
+        "network_state",
+        "field_bus_state",
+        "bas_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "field_bus_fault",
+        "controller_degraded"
+      ]
+    },
+    {
       "asset_id": "L7-BAS-CTRL-01::DATA-JACK",
       "label": "L7 BAS Floor Controller 1 Data Jack",
       "asset_type": "data_jack",
@@ -42840,6 +46566,76 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "L7-BAS-ENV-01",
+      "label": "L7 Environment Sensor 1",
+      "asset_type": "environment_sensor",
+      "archetype": "environment_sensor",
+      "maturity": "componentized",
+      "position_ft": [
+        48.0,
+        63.0,
+        87.0
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "L7-BAS-ENV-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSOR_VENTS",
+          "mesh_name": "L7-BAS-ENV-01::PART::SENSOR_VENTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_INDICATOR",
+          "mesh_name": "L7-BAS-ENV-01::PART::STATUS_INDICATOR",
+          "inspectable": true
+        },
+        {
+          "component_id": "BACNET_TERMINAL",
+          "mesh_name": "L7-BAS-ENV-01::PART::BACNET_TERMINAL",
+          "inspectable": true
+        },
+        {
+          "component_id": "24V_TERMINAL",
+          "mesh_name": "L7-BAS-ENV-01::PART::24V_TERMINAL",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "BACNET_MSTP",
+          "connector": "RS-485 terminal",
+          "medium": "BACNET-MSTP-STP",
+          "services": [
+            "BACnet MS/TP"
+          ],
+          "required": true
+        },
+        {
+          "id": "24VDC_CLASS2",
+          "connector": "Class 2 low-voltage terminal",
+          "medium": "24VDC-CLASS2",
+          "services": [
+            "sensor_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "sensor_reading",
+        "field_bus_state",
+        "power_state"
+      ],
+      "planned_behaviors": [
+        "sensor_out_of_range",
+        "field_bus_loss",
+        "class2_power_loss",
+        "sensor_fault"
       ]
     },
     {

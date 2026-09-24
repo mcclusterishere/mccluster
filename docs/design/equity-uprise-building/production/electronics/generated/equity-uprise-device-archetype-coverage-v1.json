@@ -386,8 +386,8 @@
       "instance_count": 8,
       "display_name": "BAS Floor Controller",
       "family": "building_ot_life_safety",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "ENCLOSURE",
@@ -426,8 +426,8 @@
       "instance_count": 14,
       "display_name": "Electrical Panelboard",
       "family": "building_ot_life_safety",
-      "current_maturity": "recognizable",
-      "minimum_ci_maturity": "recognizable",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "ENCLOSURE",
@@ -464,8 +464,8 @@
       "instance_count": 29,
       "display_name": "Environmental Sensor",
       "family": "building_ot_life_safety",
-      "current_maturity": "recognizable",
-      "minimum_ci_maturity": "recognizable",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "HOUSING",
