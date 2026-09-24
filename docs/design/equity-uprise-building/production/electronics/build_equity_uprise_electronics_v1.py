@@ -18,6 +18,7 @@ import trimesh
 ROOT=Path(__file__).resolve().parents[5]
 HERE=Path(__file__).resolve().parent
 POLICY=HERE/"electronics-population-policy-v1.json"
+DEVICE_ARCHETYPES=HERE/"device-archetypes-v1.json"
 OUT=HERE/"generated"
 REG=ROOT/"docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-v1.json"
 STEP3B=ROOT/"docs/design/equity-uprise-building/production/asset-registry/generated/equity-uprise-asset-registry-step3b-report.json"
@@ -27,6 +28,7 @@ CONNECTIONS=OUT/"equity-uprise-electronics-connections-v1.json"
 LABS=OUT/"equity-uprise-it-lab-catalog-v1.json"
 REPORT=OUT/"equity-uprise-electronics-step4a-report.json"
 GLB=OUT/"equity-uprise-electronics-fabric-v1.glb"
+DEVICE_COMPONENTS=OUT/"equity-uprise-device-components-v1.json"
 SOURCE_REL="docs/design/equity-uprise-building/production/electronics/electronics-population-policy-v1.json"
 MODEL_REL="docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-fabric-v1.glb"
 FLOOR_INVENTORIES={
@@ -48,6 +50,7 @@ def viewer(n): return f"equity-uprise-building-core-v2-3d.html?floor={n}&service
 def clamp(v,a,b): return max(a,min(b,v))
 
 policy=load(POLICY)
+device_archetypes=load(DEVICE_ARCHETYPES)
 registry=load(REG)
 if registry.get("registry_version")!="step3b-floor-branch-endpoint-graph-v1":
     raise SystemExit("Step 4A requires the Step 3B registry")
@@ -64,6 +67,7 @@ connections=[]
 wireless_links=[]
 transient_profiles=[]
 positions={}
+device_component_records=[]
 connection_counter=0
 rel_counter=0
 
@@ -1074,16 +1078,122 @@ def color_for_type(t):
     for k,c in device_colors.items():
         if k in t:return c
     return device_colors["default"]
-def physical_mesh_for_asset(a):
+def _align_z_to(direction):
+    d=np.array(direction,dtype=float)
+    norm=float(np.linalg.norm(d))
+    if norm<1e-9:return np.eye(4)
+    d=d/norm
+    z=np.array([0.,0.,1.],dtype=float)
+    axis=np.cross(z,d)
+    axis_norm=float(np.linalg.norm(axis))
+    if axis_norm<1e-9:
+        if float(np.dot(z,d))<0:return trimesh.transformations.rotation_matrix(math.pi,[1,0,0])
+        return np.eye(4)
+    axis=axis/axis_norm
+    angle=math.acos(clamp(float(np.dot(z,d)),-1,1))
+    return trimesh.transformations.rotation_matrix(angle,axis)
+
+def _place(mesh,center,direction=None):
+    T=np.eye(4)
+    if direction is not None:T=_align_z_to(direction)
+    T[:3,3]=np.array(center,dtype=float)
+    mesh.apply_transform(T)
+    return mesh
+
+def _component_mesh(asset_id,component_id,mesh,color,role,asset_type,metadata=None):
+    mesh.visual.face_colors=color
+    mesh.metadata={
+        "asset_id":asset_id,
+        "component_id":component_id,
+        "component_role":role,
+        "asset_type":asset_type,
+        "installation_status":"step4c_device_component",
+        **(metadata or {}),
+    }
+    return (component_id,mesh)
+
+def camera_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    # Aim fixed cameras toward the occupied center of the floor. This is a
+    # training orientation, not a security-design coverage certification.
+    toward=np.array([36.0-p[0],36.0-p[1],0.0],dtype=float)
+    if float(np.linalg.norm(toward))<1e-6:toward=np.array([-1.,0.,0.])
+    toward=toward/float(np.linalg.norm(toward))
+    side=np.array([-toward[1],toward[0],0.0],dtype=float)
+    up=np.array([0.,0.,1.],dtype=float)
+
+    body_center=p+toward*.14
+    rear=body_center-toward*.42
+    front=body_center+toward*.42
+    mount_center=rear-toward*.28
+    parts=[]
+
+    mount=trimesh.creation.box(extents=[.42,.14,.52])
+    parts.append(_component_mesh(aid,"MOUNT_PLATE",_place(mount,mount_center),[105,110,116,255],"mount","camera"))
+
+    arm_start=mount_center+toward*.06
+    arm_end=rear+toward*.05
+    arm_vec=arm_end-arm_start
+    arm=trimesh.creation.cylinder(radius=.075,height=float(np.linalg.norm(arm_vec)),sections=18)
+    parts.append(_component_mesh(aid,"BRACKET_ARM",_place(arm,(arm_start+arm_end)/2,arm_vec),[95,100,106,255],"mount","camera"))
+
+    housing=trimesh.creation.cylinder(radius=.235,height=.84,sections=28)
+    parts.append(_component_mesh(aid,"HOUSING",_place(housing,body_center,toward),[224,228,232,255],"chassis","camera"))
+
+    barrel_center=front+toward*.075
+    barrel=trimesh.creation.cylinder(radius=.178,height=.18,sections=28)
+    parts.append(_component_mesh(aid,"LENS_BARREL",_place(barrel,barrel_center,toward),[48,52,56,255],"optics","camera"))
+
+    ir_center=front+toward*.175
+    ir=trimesh.creation.cylinder(radius=.185,height=.022,sections=32)
+    parts.append(_component_mesh(aid,"IR_LED_RING",_place(ir,ir_center,toward),[82,24,24,255],"illuminator","camera"))
+
+    glass_center=front+toward*.19
+    glass=trimesh.creation.cylinder(radius=.118,height=.028,sections=32)
+    parts.append(_component_mesh(aid,"LENS_GLASS",_place(glass,glass_center,toward),[18,26,34,245],"optics","camera"))
+
+    led_center=body_center+side*.205+up*.145
+    led=trimesh.creation.icosphere(subdivisions=2,radius=.035)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,led_center),[40,220,95,255],"indicator","camera",{"state_driven":True}))
+
+    port_center=rear-toward*.015-up*.125
+    port=trimesh.creation.box(extents=[.15,.10,.11])
+    parts.append(_component_mesh(aid,"RJ45_POE_PORT",_place(port,port_center),[35,105,175,255],"port","camera",{"connector":"8P8C/RJ45","services":["Ethernet/IP","PoE"]}))
+
+    entry_center=mount_center-toward*.085-up*.12
+    entry=trimesh.creation.cylinder(radius=.075,height=.10,sections=18)
+    parts.append(_component_mesh(aid,"CABLE_ENTRY",_place(entry,entry_center,toward),[35,38,42,255],"cable_entry","camera"))
+
+    archetype=device_archetypes["archetypes"]["camera"]
+    device_component_records.append({
+        "asset_id":aid,
+        "label":a["label"],
+        "asset_type":"camera",
+        "archetype":"camera",
+        "maturity":archetype["maturity"],
+        "position_ft":[round(float(x),4) for x in p],
+        "aim_vector":[round(float(x),6) for x in toward],
+        "components":[{"component_id":cid,"mesh_name":aid if cid=="HOUSING" else f"{aid}::PART::{cid}","inspectable":True} for cid,_ in parts],
+        "ports":archetype["ports"],
+        "simulated_capabilities":archetype["simulated_capabilities"],
+        "state_rules":archetype["state_rules"],
+        "optics":archetype["optics"],
+        "lab_behaviors":archetype["lab_behaviors"],
+    })
+    return parts
+
+def physical_meshes_for_asset(a):
     p=positions.get(a["asset_id"])
-    if not p:return None
+    if not p:return []
     t=a["classification"]["asset_type"]
     color=color_for_type(t)
+    if t=="camera":
+        return camera_component_meshes(a)
     if t in {"wireless_ap","fire_detector","environment_sensor"}:
         radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
         height=.14 if t=="wireless_ap" else .18
         m=trimesh.creation.cylinder(radius=radius,height=height,sections=18)
-    elif t in {"camera","av_camera"}:
+    elif t=="av_camera":
         m=trimesh.creation.cylinder(radius=.24,height=.34,sections=16)
     elif t=="speaker":
         m=trimesh.creation.cylinder(radius=.32,height=.28,sections=16)
@@ -1105,13 +1215,13 @@ def physical_mesh_for_asset(a):
     m.apply_translation(p)
     m.visual.face_colors=color
     m.metadata={"asset_id":a["asset_id"],"asset_type":t,"installation_status":"step4b_physical_design_intent"}
-    return m
+    return [("BODY",m)]
 
 for a in new_assets:
     if a["classification"]["registry_role"]=="capability_semantic": continue
-    mesh=physical_mesh_for_asset(a)
-    if mesh is None: continue
-    scene.add_geometry(mesh,node_name=a["asset_id"],geom_name=a["asset_id"])
+    for component_id,mesh in physical_meshes_for_asset(a):
+        name=a["asset_id"] if component_id in {"BODY","HOUSING"} else f"{a['asset_id']}::PART::{component_id}"
+        scene.add_geometry(mesh,node_name=name,geom_name=name)
 
 cable_colors={
  "CAT6A-HORIZONTAL":[40,120,255,180],"CAT6A-WAP-SPARE":[80,150,255,130],"OS2-SM-DUPLEX":[220,80,255,210],
@@ -1197,6 +1307,12 @@ manifest={
 write(MANIFEST,manifest)
 write(CONNECTIONS,{"schema_version":"1.1.0","status":"step4b-physical-installation-connections","connections":connections,"wireless_links":wireless_links})
 write(LABS,{"schema_version":"1.0.0","status":"step4a-it-lab-catalog","labs":labs})
+write(DEVICE_COMPONENTS,{
+ "schema_version":"1.0.0",
+ "status":"step4c-device-components",
+ "archetype_authority":"docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
+ "devices":sorted(device_component_records,key=lambda x:x["asset_id"]),
+})
 
 asset_types=Counter(a["classification"]["asset_type"] for a in new_assets)
 cable_types=Counter(c["cable_type"] for c in connections)
@@ -1210,6 +1326,7 @@ port_complete=[x for x in physical_connections if x.get("from_port") and x.get("
 jacks=[a for a in new_assets if a["classification"]["asset_type"]=="data_jack"]
 outlets=[a for a in new_assets if a["classification"]["asset_type"]=="receptacle"]
 panelboards=[a for a in new_assets if a["classification"]["asset_type"]=="electrical_panel"]
+modeled_cameras=[a for a in new_assets if a["classification"]["asset_type"]=="camera"]
 
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
@@ -1252,6 +1369,16 @@ ck("BAS sensors use field bus and Class 2 power",all(
 ck("access readers use OSDP",all(any(c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="OSDP-RS485-STP" for c in connections) for a in new_assets if a["classification"]["asset_type"]=="access_reader"),"")
 ck("logical services are non-physical",all(a["physical_representation"]["physical_status"]=="not_applicable" for a in new_assets if a["classification"]["asset_type"] in {"logical_service","vlan","ssid"}),"")
 ck("LIVE control remains disabled",not any(a["security"].get("live_control_allowed") for a in assets),"")
+ck("all security cameras use Step 4C component assemblies",len(device_component_records)==len(modeled_cameras),f"{len(device_component_records)}/{len(modeled_cameras)}")
+ck("camera assemblies expose functional components",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"MOUNT_PLATE","BRACKET_ARM","HOUSING","LENS_BARREL","LENS_GLASS","IR_LED_RING","STATUS_LED","RJ45_POE_PORT","CABLE_ENTRY"})
+    for record in device_component_records
+), "")
+ck("camera archetype exposes PoE/Ethernet port and state rules",all(
+    any("PoE" in port.get("services",[]) and "Ethernet/IP" in port.get("services",[]) for port in record.get("ports",[]))
+    and "unavailable" in record.get("state_rules",{})
+    for record in device_component_records
+), "")
 ck("all physical Step 4B assets have spatial positions",all(
     a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
 ), "")
@@ -1265,6 +1392,7 @@ report={
  "step4b_new_assets":len(new_assets),"step4b_new_relationships":len(new_relationships),"physical_connections_total":len(connections),
  "routed_connections_total":len(routed),"port_complete_connections_total":len(port_complete),
  "data_jacks_total":len(jacks),"receptacles_total":len(outlets),"electrical_panelboards_total":len(panelboards),
+ "step4c_componentized_devices_total":len(device_component_records),"step4c_componentized_camera_total":len(modeled_cameras),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -1278,6 +1406,7 @@ print(" physical connections:",len(connections))
 print(" routed connections:",len(routed))
 print(" port-complete connections:",len(port_complete))
 print(" data jacks:",len(jacks),"receptacles:",len(outlets),"panelboards:",len(panelboards))
+print(" Step 4C componentized cameras:",len(device_component_records))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))
