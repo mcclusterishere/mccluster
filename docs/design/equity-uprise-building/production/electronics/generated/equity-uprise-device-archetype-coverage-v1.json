@@ -907,8 +907,8 @@
       "instance_count": 7,
       "display_name": "Fiber Termination Panel",
       "family": "network_compute",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "RACK_FRAME",
@@ -1054,8 +1054,8 @@
       "instance_count": 22,
       "display_name": "Rack Power Distribution Unit",
       "family": "network_compute",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "RACK_STRIP",
@@ -1090,8 +1090,8 @@
       "instance_count": 7,
       "display_name": "Rack UPS",
       "family": "network_compute",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "RACK_CHASSIS",

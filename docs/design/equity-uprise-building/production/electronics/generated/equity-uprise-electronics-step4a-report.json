@@ -10,10 +10,13 @@
   "data_jacks_total": 190,
   "receptacles_total": 187,
   "electrical_panelboards_total": 14,
-  "step4c_componentized_devices_total": 34,
+  "step4c_componentized_devices_total": 70,
   "step4c_componentized_camera_total": 18,
   "step4c_componentized_access_switch_total": 8,
   "step4c_componentized_patch_panel_total": 8,
+  "step4c_componentized_rack_ups_total": 7,
+  "step4c_componentized_pdu_total": 22,
+  "step4c_componentized_fiber_panel_total": 7,
   "wireless_links_total": 45,
   "lab_scenarios_total": 40,
   "new_asset_type_counts": {
@@ -181,10 +184,10 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 2441060,
-  "overlay_glb_sha256": "091f5d5ca7c991148edb733564d1c1d87cb4463c233b56a53b62b6d7511b08f0",
-  "checks_total": 32,
-  "checks_passed": 32,
+  "overlay_glb_bytes": 2626760,
+  "overlay_glb_sha256": "6dc2d14f34886a553104132de37f2a95cfe7071bce1a4bab790705b99bd9ab62",
+  "checks_total": 38,
+  "checks_passed": 38,
   "checks_failed": 0,
   "checks": [
     {
@@ -341,6 +344,36 @@
       "detail": ""
     },
     {
+      "name": "all rack UPS assets use Step 4C component assemblies",
+      "passed": true,
+      "detail": "7/7"
+    },
+    {
+      "name": "rack UPS assemblies expose chassis, display, battery, input, outputs, and status",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all rack PDUs use Step 4C component assemblies",
+      "passed": true,
+      "detail": "22/22"
+    },
+    {
+      "name": "rack PDU assemblies expose strip, inlet, outlet bank, protection, and status",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all fiber panels use Step 4C component assemblies",
+      "passed": true,
+      "detail": "7/7"
+    },
+    {
+      "name": "fiber panel assemblies expose frame, LC adapters, splice tray, cable entry, and labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all physical Step 4B assets have spatial positions",
       "passed": true,
       "detail": ""
@@ -379,7 +412,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 2441060
+      "detail": 2626760
     }
   ],
   "passed": true
