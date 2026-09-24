@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "status": "step4c-device-archetype-authority",
   "not_for_construction": true,
   "purpose": "Defines visible, inspectable, stateful device assemblies for the Equity Uprise digital-twin. Step 4B connection topology remains authoritative for wiring; Step 4C decomposes selected assets into recognizable functional components.",
@@ -123,7 +123,38 @@
           "video_stream": "obstructed",
           "fov_visible_on_inspect": true
         }
-      }
+      },
+      "minimum_ci_maturity": "lab_complete",
+      "target_maturity": "lab_complete",
+      "family": "wireless_security",
+      "expected_components": [
+        "MOUNT_PLATE",
+        "BRACKET_ARM",
+        "HOUSING",
+        "LENS_BARREL",
+        "LENS_GLASS",
+        "IR_LED_RING",
+        "STATUS_LED",
+        "RJ45_POE_PORT",
+        "CABLE_ENTRY"
+      ],
+      "expected_ports": [
+        "RJ45_POE_PORT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_components",
+        "inspect_status",
+        "trace_network_and_poe",
+        "open_simulated_feed",
+        "show_training_fov"
+      ],
+      "october_demo_required": true
     },
     "av_camera": {
       "maturity": "componentized",
@@ -155,62 +186,1363 @@
       ],
       "lab_behaviors": [
         "camera_link_down"
-      ]
+      ],
+      "minimum_ci_maturity": "componentized",
+      "target_maturity": "lab_complete",
+      "family": "av_media",
+      "expected_components": [
+        "MOUNT",
+        "BODY",
+        "LENS",
+        "STATUS_LED",
+        "RJ45_POE_PORT"
+      ],
+      "expected_ports": [
+        "RJ45_POE_PORT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_components",
+        "inspect_status",
+        "trace_network_and_poe",
+        "open_simulated_preview"
+      ],
+      "october_demo_required": true
     },
     "wireless_ap": {
       "maturity": "recognizable",
       "display_name": "Ceiling Wi-Fi Access Point",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "wireless_security",
+      "expected_components": [
+        "MOUNT",
+        "RADOME_HOUSING",
+        "STATUS_LED",
+        "RJ45_POE_PORT",
+        "CABLE_ENTRY"
+      ],
+      "expected_ports": [
+        "RJ45_POE_PORT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network_and_poe",
+        "show_simulated_service_volume",
+        "inspect_associations"
+      ],
+      "october_demo_required": true
     },
     "workstation": {
       "maturity": "recognizable",
       "display_name": "Desktop Workstation",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "user_endpoints",
+      "expected_components": [
+        "CHASSIS",
+        "FRONT_IO",
+        "REAR_IO",
+        "POWER_SUPPLY",
+        "NIC_PORT",
+        "DISPLAY_OUTPUTS",
+        "STATUS_INDICATOR"
+      ],
+      "expected_ports": [
+        "AC_IN",
+        "RJ45_ETH",
+        "DISPLAY_OUT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_ports",
+        "trace_power",
+        "trace_network",
+        "open_building_os"
+      ],
+      "october_demo_required": true
     },
     "monitor": {
       "maturity": "recognizable",
       "display_name": "Display Monitor",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "user_endpoints",
+      "expected_components": [
+        "DISPLAY_PANEL",
+        "BEZEL",
+        "STAND_OR_MOUNT",
+        "POWER_INPUT",
+        "VIDEO_INPUT",
+        "STATUS_LED"
+      ],
+      "expected_ports": [
+        "AC_IN",
+        "DISPLAYPORT_IN"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_ports",
+        "trace_power",
+        "trace_video",
+        "inspect_display_state"
+      ],
+      "october_demo_required": true
     },
     "ip_phone": {
       "maturity": "recognizable",
       "display_name": "PoE IP Phone",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "user_endpoints",
+      "expected_components": [
+        "BASE",
+        "HANDSET",
+        "KEYPAD",
+        "DISPLAY",
+        "STATUS_LED",
+        "RJ45_LAN",
+        "RJ45_PC"
+      ],
+      "expected_ports": [
+        "RJ45_LAN",
+        "RJ45_PC"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_ports",
+        "trace_network_and_poe",
+        "inspect_voice_state",
+        "open_phone_interface"
+      ],
+      "october_demo_required": true
     },
     "mfp": {
       "maturity": "recognizable",
       "display_name": "Managed Multifunction Printer",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "user_endpoints",
+      "expected_components": [
+        "CHASSIS",
+        "ADF",
+        "SCANNER_BED",
+        "OUTPUT_TRAY",
+        "CONTROL_PANEL",
+        "RJ45_PORT",
+        "POWER_INLET"
+      ],
+      "expected_ports": [
+        "AC_IN",
+        "RJ45_ETH"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_ports",
+        "trace_power",
+        "trace_network",
+        "open_printer_status"
+      ],
+      "october_demo_required": true
     },
     "access_switch": {
       "maturity": "placeholder",
       "display_name": "Managed Access Switch",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "RJ45_PORT_BANK",
+        "UPLINK_CAGES",
+        "POWER_INPUT",
+        "FAN_BANK",
+        "STATUS_LEDS",
+        "PORT_LABELS"
+      ],
+      "expected_ports": [
+        "48x_RJ45_POE",
+        "2x_UPLINK"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_port_state",
+        "trace_patch_path",
+        "trace_uplink",
+        "trace_power",
+        "inspect_vlan_role"
+      ],
+      "october_demo_required": true
     },
     "patch_panel": {
       "maturity": "placeholder",
       "display_name": "Patch Panel",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "expected_components": [
+        "RACK_FRAME",
+        "48x_FRONT_JACKS",
+        "REAR_TERMINATIONS",
+        "LABEL_STRIP",
+        "CABLE_MANAGEMENT"
+      ],
+      "expected_ports": [
+        "48x_RJ45_FRONT",
+        "48x_REAR_TERMINATION"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_port_label",
+        "trace_front_patch",
+        "trace_permanent_link",
+        "identify_mispatch"
+      ],
+      "october_demo_required": true
     },
     "electrical_panel": {
       "maturity": "recognizable",
       "display_name": "Electrical Panelboard",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "building_ot_life_safety",
+      "expected_components": [
+        "ENCLOSURE",
+        "DEADFRONT",
+        "MAIN_BREAKER",
+        "BRANCH_BREAKERS",
+        "CIRCUIT_DIRECTORY",
+        "NEUTRAL_GROUND_BARS"
+      ],
+      "expected_ports": [
+        "FEEDER_INPUT",
+        "BRANCH_CIRCUIT_OUTPUTS"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_breaker_state",
+        "trace_feeder",
+        "trace_branch_circuit",
+        "inspect_circuit_directory"
+      ],
+      "october_demo_required": true
     },
     "environment_sensor": {
       "maturity": "recognizable",
       "display_name": "Environmental Sensor",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "building_ot_life_safety",
+      "expected_components": [
+        "HOUSING",
+        "SENSOR_VENTS",
+        "STATUS_INDICATOR",
+        "BACNET_TERMINAL",
+        "24V_TERMINAL"
+      ],
+      "expected_ports": [
+        "BACNET_MSTP",
+        "24VDC_CLASS2"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_reading",
+        "inspect_status",
+        "trace_control_bus",
+        "trace_power"
+      ],
+      "october_demo_required": true
     },
     "access_reader": {
       "maturity": "recognizable",
       "display_name": "OSDP Access Reader",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "wireless_security",
+      "expected_components": [
+        "FACEPLATE",
+        "READER_ZONE",
+        "STATUS_LED",
+        "BEEPER",
+        "OSDP_TERMINAL",
+        "MOUNT"
+      ],
+      "expected_ports": [
+        "OSDP_RS485"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_reader_bus",
+        "inspect_access_event_sandbox"
+      ],
+      "october_demo_required": true
     },
     "intercom": {
       "maturity": "recognizable",
       "display_name": "IP Intercom",
-      "next_pass": true
+      "next_pass": true,
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "wireless_security",
+      "expected_components": [
+        "FACEPLATE",
+        "CALL_BUTTON",
+        "MICROPHONE",
+        "SPEAKER",
+        "STATUS_LED",
+        "RJ45_POE_PORT"
+      ],
+      "expected_ports": [
+        "RJ45_POE_PORT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network_and_poe",
+        "open_intercom_interface"
+      ],
+      "october_demo_required": true
+    },
+    "access_controller": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "wireless_security",
+      "display_name": "Access Control Panel",
+      "expected_components": [
+        "ENCLOSURE",
+        "CONTROLLER_BOARD",
+        "ETHERNET_PORT",
+        "OSDP_TERMINALS",
+        "POWER_INPUT",
+        "BATTERY_ZONE",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "AC_IN",
+        "RJ45_ETH",
+        "OSDP_BUSES"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_panel",
+        "trace_network",
+        "trace_reader_bus",
+        "trace_power",
+        "inspect_sandbox_access_state"
+      ],
+      "october_demo_required": true
+    },
+    "av_controller": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "av_media",
+      "display_name": "AV Control Processor",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "FRONT_STATUS",
+        "NETWORK_PORT",
+        "POWER_INPUT",
+        "CONTROL_IO"
+      ],
+      "expected_ports": [
+        "AC_IN",
+        "RJ45_ETH",
+        "CONTROL_IO"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network",
+        "trace_power",
+        "open_av_control_sandbox"
+      ],
+      "october_demo_required": true
+    },
+    "av_dsp": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "av_media",
+      "display_name": "AV DSP / Amplifier",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "FRONT_METERS",
+        "NETWORK_PORT",
+        "AUDIO_IO",
+        "SPEAKER_OUTPUTS",
+        "POWER_INPUT"
+      ],
+      "expected_ports": [
+        "AC_IN",
+        "RJ45_ETH",
+        "AUDIO_IO",
+        "SPEAKER_OUT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network",
+        "trace_speaker_path",
+        "trace_power"
+      ],
+      "october_demo_required": true
+    },
+    "av_microphone": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "av_media",
+      "display_name": "Network AV Microphone",
+      "expected_components": [
+        "BODY",
+        "CAPSULE_OR_ARRAY",
+        "STATUS_LED",
+        "RJ45_POE_PORT",
+        "MOUNT"
+      ],
+      "expected_ports": [
+        "RJ45_POE_PORT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network_and_poe",
+        "inspect_audio_state"
+      ],
+      "october_demo_required": true
+    },
+    "backup_appliance": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Backup Appliance",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "DRIVE_BAYS",
+        "NETWORK_PORTS",
+        "POWER_INPUTS",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "AC_IN_A_B",
+        "NETWORK_UPLINKS"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network",
+        "trace_power",
+        "inspect_backup_service_sandbox"
+      ],
+      "october_demo_required": false
+    },
+    "bas_controller": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "building_ot_life_safety",
+      "display_name": "BAS Floor Controller",
+      "expected_components": [
+        "ENCLOSURE",
+        "CONTROLLER_BOARD",
+        "ETHERNET_PORT",
+        "BACNET_TERMINALS",
+        "POWER_INPUT",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "AC_IN",
+        "RJ45_ETH",
+        "BACNET_MSTP"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network",
+        "trace_field_bus",
+        "trace_power",
+        "open_bas_sandbox"
+      ],
+      "october_demo_required": true
+    },
+    "carrier_cpe": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Carrier CPE",
+      "expected_components": [
+        "CHASSIS",
+        "WAN_PORT",
+        "LAN_PORT",
+        "POWER_INPUT",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "PROVIDER_WAN",
+        "LAN_HANDOFF",
+        "AC_IN"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_provider_path",
+        "trace_edge_path",
+        "trace_power"
+      ],
+      "october_demo_required": false
+    },
+    "carrier_handoff": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Carrier Handoff",
+      "expected_components": [
+        "HANDOFF_ENCLOSURE",
+        "SERVICE_TERMINATION",
+        "LABEL",
+        "DEMARCATION"
+      ],
+      "expected_ports": [
+        "PROVIDER_SERVICE",
+        "CUSTOMER_HANDOFF"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_handoff",
+        "trace_provider_boundary"
+      ],
+      "october_demo_required": false
+    },
+    "carrier_handoff_reserved": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Reserved Carrier Handoff Position",
+      "expected_components": [
+        "RESERVED_ENCLOSURE_POSITION",
+        "LABEL",
+        "TERMINATION_RESERVATION"
+      ],
+      "expected_ports": [
+        "RESERVED_PROVIDER_SERVICE",
+        "RESERVED_CUSTOMER_HANDOFF"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_reservation",
+        "identify_not_in_service"
+      ],
+      "october_demo_required": false
+    },
+    "collapsed_core_switch": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Collapsed Core Switch",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "ACCESS_UPLINK_PORTS",
+        "CORE_PORTS",
+        "POWER_INPUTS",
+        "FANS",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "ACCESS_UPLINKS",
+        "10G_CORE_PORTS",
+        "AC_IN_A_B"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_port_state",
+        "trace_floor_uplinks",
+        "trace_firewall_path",
+        "trace_power"
+      ],
+      "october_demo_required": true
+    },
+    "data_jack": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "physical_terminations",
+      "display_name": "Cat6A Data Jack",
+      "expected_components": [
+        "FACEPLATE",
+        "KEYSTONE_JACK",
+        "LABEL",
+        "REAR_TERMINATION"
+      ],
+      "expected_ports": [
+        "RJ45_FRONT",
+        "CAT6A_REAR"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_label",
+        "trace_patch_cord",
+        "trace_permanent_link"
+      ],
+      "october_demo_required": true
+    },
+    "edge_router": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Edge Router",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "WAN_PORTS",
+        "LAN_PORTS",
+        "POWER_INPUTS",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "WAN",
+        "LAN",
+        "AC_IN_A_B"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_carrier_path",
+        "trace_firewall_path",
+        "trace_power"
+      ],
+      "october_demo_required": true
+    },
+    "fiber_panel": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Fiber Termination Panel",
+      "expected_components": [
+        "RACK_FRAME",
+        "LC_ADAPTERS",
+        "SPLICE_TRAY",
+        "CABLE_ENTRY",
+        "LABEL_STRIP"
+      ],
+      "expected_ports": [
+        "OS2_LC_DUPLEX_ADAPTERS"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_adapter",
+        "trace_backbone_fiber",
+        "inspect_label"
+      ],
+      "october_demo_required": true
+    },
+    "fire_alarm_control_panel": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "building_ot_life_safety",
+      "display_name": "Fire Alarm Control Panel",
+      "expected_components": [
+        "ENCLOSURE",
+        "DISPLAY",
+        "KEYPAD",
+        "STATUS_LEDS",
+        "SLC_TERMINALS",
+        "NAC_TERMINALS",
+        "POWER_SECTION"
+      ],
+      "expected_ports": [
+        "AC_IN",
+        "SLC",
+        "NAC",
+        "READ_ONLY_GATEWAY_LINK"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status_read_only",
+        "trace_slc",
+        "trace_nac",
+        "trace_power",
+        "open_training_panel"
+      ],
+      "october_demo_required": true
+    },
+    "fire_alarm_read_only_gateway": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "building_ot_life_safety",
+      "display_name": "Fire Alarm Read-Only Gateway",
+      "expected_components": [
+        "ENCLOSURE",
+        "FIRE_INTERFACE",
+        "RJ45_PORT",
+        "POWER_INPUT",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "FIRE_INTERFACE",
+        "RJ45_ETH",
+        "AC_IN"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_fire_interface",
+        "trace_read_only_network_path"
+      ],
+      "october_demo_required": true
+    },
+    "fire_detector": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "building_ot_life_safety",
+      "display_name": "Addressable Fire Detector",
+      "expected_components": [
+        "BASE",
+        "SENSING_CHAMBER",
+        "STATUS_LED",
+        "SLC_TERMINALS"
+      ],
+      "expected_ports": [
+        "FIRE_ALARM_SLC"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status_read_only",
+        "trace_slc",
+        "inspect_training_alarm_state"
+      ],
+      "october_demo_required": true
+    },
+    "fire_notification": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "building_ot_life_safety",
+      "display_name": "Fire Notification Appliance",
+      "expected_components": [
+        "HOUSING",
+        "STROBE",
+        "SOUNDER",
+        "NAC_TERMINALS"
+      ],
+      "expected_ports": [
+        "FIRE_ALARM_NAC"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status_read_only",
+        "trace_nac",
+        "inspect_training_notification_state"
+      ],
+      "october_demo_required": true
+    },
+    "firewall": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Network Firewall",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "WAN_LAN_PORTS",
+        "HA_PORT",
+        "POWER_INPUTS",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "WAN_LAN",
+        "HA_SYNC",
+        "AC_IN_A_B"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_edge_path",
+        "trace_core_path",
+        "inspect_sandbox_policy"
+      ],
+      "october_demo_required": true
+    },
+    "nas_storage": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Network Attached Storage",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "DRIVE_BAYS",
+        "NETWORK_PORTS",
+        "POWER_INPUTS",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "NETWORK_UPLINKS",
+        "AC_IN_A_B"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network",
+        "trace_power",
+        "inspect_storage_service_sandbox"
+      ],
+      "october_demo_required": false
+    },
+    "network_display_decoder": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "av_media",
+      "display_name": "Network Display Decoder",
+      "expected_components": [
+        "DECODER_CHASSIS",
+        "RJ45_POE_PORT",
+        "HDMI_OUTPUT",
+        "STATUS_LED"
+      ],
+      "expected_ports": [
+        "RJ45_POE_PORT",
+        "HDMI_OUT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network_and_poe",
+        "trace_hdmi_display_path"
+      ],
+      "october_demo_required": true
+    },
+    "pdu": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Rack Power Distribution Unit",
+      "expected_components": [
+        "RACK_STRIP",
+        "POWER_INLET",
+        "OUTLET_BANK",
+        "BREAKER_OR_PROTECTION",
+        "STATUS_INDICATOR"
+      ],
+      "expected_ports": [
+        "IEC_POWER_IN",
+        "IEC_OUTLETS"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_upstream_ups",
+        "trace_power_load"
+      ],
+      "october_demo_required": true
+    },
+    "rack_ups": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Rack UPS",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "DISPLAY",
+        "BATTERY_MODULE",
+        "AC_INPUT",
+        "OUTPUT_BANK",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "AC_IN",
+        "UPS_OUTPUTS"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_upstream_power",
+        "trace_protected_loads",
+        "inspect_runtime_sandbox"
+      ],
+      "october_demo_required": true
+    },
+    "receptacle": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "physical_terminations",
+      "display_name": "120V Receptacle",
+      "expected_components": [
+        "FACEPLATE",
+        "DUPLEX_RECEPTACLE",
+        "GROUND_CONTACT",
+        "REAR_BRANCH_TERMINATION"
+      ],
+      "expected_ports": [
+        "NEMA_5_15_OUTLETS",
+        "BRANCH_CIRCUIT_REAR"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_circuit_label",
+        "trace_branch_circuit",
+        "trace_equipment_cord"
+      ],
+      "october_demo_required": true
+    },
+    "speaker": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "av_media",
+      "display_name": "Installed AV Speaker",
+      "expected_components": [
+        "GRILLE_OR_CABINET",
+        "DRIVER",
+        "MOUNT",
+        "SPEAKER_TERMINALS"
+      ],
+      "expected_ports": [
+        "SPEAKER_PAIR"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_speaker_pair",
+        "inspect_audio_zone"
+      ],
+      "october_demo_required": true
+    },
+    "virtualization_host": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "Virtualization Host",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "DRIVE_BAYS",
+        "NETWORK_PORTS",
+        "POWER_INPUTS",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "NETWORK_UPLINKS",
+        "AC_IN_A_B"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network",
+        "trace_power",
+        "inspect_hosted_services_sandbox"
+      ],
+      "october_demo_required": true
+    },
+    "vms_nvr": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "network_compute",
+      "display_name": "VMS / NVR",
+      "expected_components": [
+        "RACK_CHASSIS",
+        "STORAGE_BAYS",
+        "NETWORK_PORTS",
+        "POWER_INPUTS",
+        "STATUS_LEDS"
+      ],
+      "expected_ports": [
+        "NETWORK_UPLINKS",
+        "AC_IN_A_B"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_status",
+        "trace_network",
+        "trace_power",
+        "inspect_camera_service_sandbox"
+      ],
+      "october_demo_required": true
+    },
+    "wap_spare_jack": {
+      "maturity": "placeholder",
+      "minimum_ci_maturity": "placeholder",
+      "target_maturity": "lab_complete",
+      "family": "physical_terminations",
+      "display_name": "Reserved WAP Cat6A Jack",
+      "expected_components": [
+        "FACEPLATE_OR_CEILING_JACK",
+        "KEYSTONE",
+        "LABEL",
+        "REAR_TERMINATION"
+      ],
+      "expected_ports": [
+        "RJ45_FRONT",
+        "CAT6A_REAR"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_label",
+        "trace_reserved_permanent_link",
+        "identify_unpatched_state"
+      ],
+      "october_demo_required": true
+    },
+    "interactive_terminal_surface": {
+      "maturity": "recognizable",
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "user_endpoints",
+      "display_name": "Canonical Intake / Check-In / Directory Terminal",
+      "expected_components": [
+        "ENCLOSURE_OR_STAND",
+        "DISPLAY_SURFACE",
+        "INPUT_SURFACE",
+        "POWER_TERMINATION",
+        "NETWORK_TERMINATION",
+        "ASSET_LABEL"
+      ],
+      "expected_ports": [
+        "CANONICAL_NETWORK_PORT",
+        "CANONICAL_POWER_PORT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_device",
+        "trace_power",
+        "trace_network",
+        "open_building_os"
+      ],
+      "october_demo_required": true
+    },
+    "staff_console_surface": {
+      "maturity": "recognizable",
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "user_endpoints",
+      "display_name": "Canonical Staff Console / Work Surface",
+      "expected_components": [
+        "WORK_SURFACE_OR_CONSOLE",
+        "DISPLAY_SURFACE",
+        "INPUT_CONTROLS",
+        "POWER_TERMINATION",
+        "NETWORK_TERMINATION",
+        "ASSET_LABEL"
+      ],
+      "expected_ports": [
+        "CANONICAL_NETWORK_PORT",
+        "CANONICAL_POWER_PORT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_device",
+        "trace_power",
+        "trace_network",
+        "open_role_scoped_console"
+      ],
+      "october_demo_required": true
+    },
+    "display_surface": {
+      "maturity": "recognizable",
+      "minimum_ci_maturity": "recognizable",
+      "target_maturity": "lab_complete",
+      "family": "av_media",
+      "display_name": "Canonical Building Display Surface",
+      "expected_components": [
+        "DISPLAY_PANEL",
+        "BEZEL_OR_MOUNT",
+        "POWER_TERMINATION",
+        "AV_INPUT",
+        "ASSET_LABEL"
+      ],
+      "expected_ports": [
+        "CANONICAL_POWER_PORT",
+        "CANONICAL_AV_INPUT"
+      ],
+      "expected_state_behaviors": [
+        "normal",
+        "degraded",
+        "faulted",
+        "unavailable"
+      ],
+      "expected_interactions": [
+        "inspect_device",
+        "trace_power",
+        "trace_av_path",
+        "inspect_display_state"
+      ],
+      "october_demo_required": true
+    }
+  },
+  "coverage_contract": {
+    "scope": "Every Step 4B installed physical electronics asset type plus canonical pre-existing device surfaces that participate in the Step 4B physical connection graph.",
+    "source_count_authority": "generated/equity-uprise-electronics-step4a-report.json::new_asset_type_counts",
+    "connection_authority": "generated/equity-uprise-electronics-connections-v1.json",
+    "maturity_order": [
+      "placeholder",
+      "recognizable",
+      "componentized",
+      "interactive",
+      "lab_complete"
+    ],
+    "target_maturity": "lab_complete",
+    "excluded_nonphysical_asset_types": [
+      "logical_service",
+      "ssid",
+      "vlan"
+    ],
+    "canonical_surface_source_categories": [
+      "interactive_terminal",
+      "terminal",
+      "display",
+      "equipment",
+      "instrument",
+      "furniture"
+    ],
+    "canonical_surface_archetypes": [
+      "interactive_terminal_surface",
+      "staff_console_surface",
+      "display_surface"
+    ],
+    "required_expectation_fields": [
+      "expected_components",
+      "expected_ports",
+      "expected_state_behaviors",
+      "expected_interactions"
+    ],
+    "ci_policy": {
+      "fail_on_untracked_installed_physical_type": true,
+      "fail_on_missing_expectations": true,
+      "fail_on_maturity_regression": true,
+      "allow_tracked_incomplete_types": true,
+      "note": "CI enforces exhaustive truthful coverage now; target completion is promoted type-by-type without falsely declaring placeholder geometry complete."
     }
   }
 }

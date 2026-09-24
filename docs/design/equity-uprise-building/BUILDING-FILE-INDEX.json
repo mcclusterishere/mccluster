@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 335,
+  "tracked_count": 337,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -228,6 +228,7 @@
       "docs/design/equity-uprise-building/production/building-services-core-v2.json",
       "docs/design/equity-uprise-building/production/building-v2-validation.json",
       "docs/design/equity-uprise-building/production/core-v2-floor-programs.json",
+      "docs/design/equity-uprise-building/production/electronics/build_device_archetype_coverage_v1.py",
       "docs/design/equity-uprise-building/production/electronics/build_equity_uprise_electronics_v1.py",
       "docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
       "docs/design/equity-uprise-building/production/electronics/electronics-population-policy-v1.json",
@@ -238,6 +239,7 @@
       "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-manifest-v1.json",
       "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-electronics-step4a-report.json",
       "docs/design/equity-uprise-building/production/electronics/generated/equity-uprise-it-lab-catalog-v1.json",
+      "docs/design/equity-uprise-building/production/electronics/verify_device_archetype_coverage_v1.py",
       "docs/design/equity-uprise-building/production/electronics/verify_equity_uprise_electronics_v1.py",
       "docs/design/equity-uprise-building/production/equity-uprise-capability-map-v2.json",
       "docs/design/equity-uprise-building/production/equity-uprise-repo-source-map-v2.json",
