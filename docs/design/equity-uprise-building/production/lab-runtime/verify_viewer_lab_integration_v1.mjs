@@ -253,6 +253,10 @@ assert.equal(/\b\d{3}[-.) ]\d{3}[- ]\d{4}\b/.test(publicSerialized), false, "pub
 assert.ok(publicView.visuals.occupants.every((item) => item.synthetic_only === true && /Anonymous synthetic/.test(item.label)));
 
 const viewer = text("../../../../../equity-uprise-building-core-v2-3d.html");
+const viewerModuleMatch = viewer.match(/<script type="module">([\s\S]*?)<\/script>/);
+assert.ok(viewerModuleMatch, "canonical viewer must expose one module script");
+const viewerSyntaxSource = viewerModuleMatch[1].trimStart().replace(/^(?:import[^;\n]+;\s*)+/, "");
+assert.doesNotThrow(() => new Function(viewerSyntaxSource), "canonical viewer module must remain syntactically valid");
 for (const required of [
   'data-f="stack"', 'data-f="facade"', 'id="services"', 'id="wire"', 'deviceClockSolar',
   "requestedFloor", "syncServicesVisibility", "LAB_MODULE_URL", "requestedLab=params.get('lab')",
@@ -409,6 +413,55 @@ for (const performanceGuard of [
   assert.ok(viewer.includes(performanceGuard), "viewer interaction performance guard missing: " + performanceGuard);
 }
 assert.equal(viewer.includes("wire=!wire;scene.traverse"), false, "wireframe toggle must not traverse the full scene");
+for (const performanceGuard of [
+  "loadGltfWithRetry",
+  "ensureBaseRoot",
+  "ensureFacadeRoot",
+  "ensureServicesLayer",
+  "ensureDetailedFloor",
+  "floorLoadPromises",
+  "FLOOR_LOAD_CONFIG",
+  "Building shell ready",
+  "streaming detailed model",
+  "ensureB1F1Continuity",
+  "await ensureDetailedFloor(1)",
+  "buildingLoaded.then(()=>enterRoomMode())",
+]) {
+  assert.ok(viewer.includes(performanceGuard), "progressive building shell guard missing: " + performanceGuard);
+}
+assert.equal(viewer.includes("if(loaded!==11)return"), false, "viewer may not wait for all 11 visual roots before becoming usable");
+assert.equal(viewer.includes("loaded===11"), false, "Room Mode may not poll the old all-root completion counter");
+assert.equal(viewer.includes("loaded<11"), false, "Room Mode may not require every detailed floor");
+for (const performanceGuard of [
+  'id="quality"',
+  "QUALITY_PROFILES",
+  "LOW:{dpr:1,shadows:false",
+  "BALANCED:{dpr:1.35",
+  "HIGH:{dpr:2",
+  "matchMedia('(max-width:820px)')",
+  "performanceLodVisible",
+  "deviceLodFt",
+  "personLodFt",
+  "cableMode:'floor-only'",
+  "o.frustumCulled=true",
+  "applyQualityMode",
+  "qualityProfile().cameraFeedMs",
+  "if(!deviceFeed.hidden)renderDeviceCameraFeed(t)",
+  "loadViewerLabDatasets('/equity-uprise-preview','__STAMP__')",
+]) {
+  assert.ok(viewer.includes(performanceGuard), "viewer performance profile guard missing: " + performanceGuard);
+}
+assert.equal(viewer.includes('http-equiv="Cache-Control" content="no-store"'), false,
+  "canonical viewer must not blanket-disable cache for stamped immutable assets");
+assert.equal(viewer.includes("o.frustumCulled=false"), false,
+  "canonical viewer must restore Three.js frustum culling");
+assert.equal(viewer.includes("m.side=THREE.DoubleSide"), false,
+  "canonical viewer must preserve authored material sidedness instead of forcing every material double-sided");
+assert.equal(integrationText.includes('{ cache: "no-store" }'), false,
+  "versioned lab datasets must not bypass browser cache");
+assert.ok(integrationText.includes('"force-cache"') && integrationText.includes("encodeURIComponent(version)"),
+  "lab dataset loader must cache build-stamped immutable data");
+
 const rootWait = viewer.indexOf("await labVisualRootsReady");
 const controllerCreate = viewer.indexOf("labController=labModule.createViewerLabController");
 assert.ok(rootWait >= 0 && controllerCreate > rootWait, "deep-linked labs must wait for modeled visual roots before first render");

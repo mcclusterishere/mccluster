@@ -1,15 +1,24 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Cache-Control" content="no-store"><meta name="equity-uprise-build" content="__STAMP__"><title>Equity Uprise — Working Building Stack</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="equity-uprise-build" content="__STAMP__"><title>Equity Uprise — Working Building Stack</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101214;color:#fff;font-family:Inter,system-ui,sans-serif}#app{position:fixed;inset:0}.hud{position:fixed;z-index:5;left:12px;top:12px;max-width:min(660px,calc(100vw - 24px));background:#0b0d10df;border:1px solid #444;border-radius:14px;padding:12px}.hud h1{font-size:14px;margin:0 0 4px}.hud p{font-size:11px;color:#ccc;margin:0 0 8px}.c{display:flex;gap:5px;flex-wrap:wrap}button{border:1px solid #555;border-radius:999px;background:#232629;color:#fff;padding:6px 9px;font:700 10px system-ui}button.active{background:#851a1d}.solar{margin-top:8px;font-size:10px;color:#d6dde4}.plantlegend{display:none;margin-top:8px;padding-top:8px;border-top:1px solid #394047;font-size:9px;color:#d8e0e6}.plantlegend.on{display:flex;gap:5px 10px;flex-wrap:wrap}.plantkey{display:flex;align-items:center;gap:4px}.plantkey i{display:inline-block;width:16px;height:3px;border-radius:3px}.s{position:fixed;right:12px;bottom:12px;background:#0b0d10df;border:1px solid #444;border-radius:10px;padding:8px 10px;font-size:10px}.labpanel{position:fixed;z-index:6;right:12px;top:12px;width:min(390px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;background:#080a0def;border:1px solid #555;border-radius:14px;padding:12px;box-sizing:border-box}.labpanel[hidden]{display:none}.labpanel h2{font-size:13px;margin:0 0 8px}.labgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.labpanel select,.labpanel input{width:100%;box-sizing:border-box;background:#171a1d;color:#fff;border:1px solid #555;border-radius:8px;padding:6px;font:11px system-ui}.labrow{margin-top:8px;padding-top:8px;border-top:1px solid #333;font-size:10px;color:#d6dde4}.labrow strong{color:#fff}.labtasks{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.labtasks button{border-radius:8px;text-align:left}.labmsg{white-space:pre-wrap;word-break:break-word;color:#bfc8d0}.labwarn{color:#ffcc80}.labok{color:#9fe0b5}.ticketcard{margin-top:9px;padding:11px;border:1px solid #3d4650;border-radius:12px;background:#11161be8}.ticketeyebrow{font:800 9px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#9fb0bf}.tickettitle{font:800 15px/1.2 system-ui;margin-top:3px}.ticketreport{font:11px/1.45 system-ui;color:#eef3f7;margin-top:7px}.ticketknown{font:10px/1.45 system-ui;color:#c6d0d8;margin-top:7px}.diagloop{display:flex;gap:4px;flex-wrap:wrap}.diagstep{border:1px solid #3f4851;border-radius:999px;padding:4px 7px;font:800 9px system-ui;opacity:.5}.diagstep.done{opacity:.78}.diagstep.now{opacity:1;border-color:#c8d4de;background:#29333c}.choicegrid{display:grid;grid-template-columns:1fr;gap:5px;margin-top:7px}.choicegrid button{white-space:normal}.labtech{margin-top:9px;border-top:1px solid #333;padding-top:8px;font:10px system-ui;color:#adb9c3}.labtech summary{cursor:pointer;font-weight:800;color:#dbe4eb}.labtech .labrow{font-size:9px}.labsystem{display:flex;justify-content:space-between;gap:8px}.labsystem span:last-child{font-weight:800}.reinforce{margin-top:7px;padding:7px;border:1px dashed #52606b;border-radius:8px}.reinforce a{color:inherit;font-weight:800}@media(max-width:760px){.labpanel{top:auto;bottom:12px;max-height:48vh}.hud{max-width:calc(100vw - 24px)}}
 .devicehud{position:fixed;z-index:8;right:12px;bottom:12px;width:min(360px,calc(100vw - 24px));max-height:50vh;overflow:auto;background:#080a0def;border:1px solid #58616b;border-radius:14px;padding:12px;box-sizing:border-box;backdrop-filter:blur(12px)}.devicehud[hidden]{display:none}.devicehud h3{font:800 13px system-ui;margin:0 0 4px}.devicekind{font:800 9px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#9fb0bf}.devicestatus{margin-top:7px;padding:7px;border:1px solid #35404a;border-radius:9px;font:10px/1.4 system-ui}.devicerow{display:flex;justify-content:space-between;gap:10px;margin-top:5px;font:10px system-ui}.devicerow span:first-child{color:#aeb9c2}.deviceparts{margin-top:8px;padding-top:8px;border-top:1px solid #333;font:9px/1.5 system-ui;color:#cbd5dc}.deviceactions{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.devicefeed{position:relative;margin-top:8px;height:120px;border-radius:9px;border:1px solid #343d46;background:linear-gradient(135deg,#17232b,#080b0d);overflow:hidden;font:800 10px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#9fe0b5}.devicefeed canvas{width:100%;height:100%;display:block}.devicefeedlabel{position:absolute;left:7px;bottom:6px;padding:3px 5px;border-radius:5px;background:#000a;color:inherit;pointer-events:none}.devicefeed.offline{color:#ff9c9c;background:linear-gradient(135deg,#271717,#090909)}.devicefeed.offline canvas{opacity:.08;filter:grayscale(1) contrast(.7)}.devicefeed.degraded{color:#ffd28a}.devicecomponent{display:inline-block;margin:2px 4px 2px 0;padding:2px 5px;border-radius:999px;border:1px solid #47525c}.roomhud{position:fixed;z-index:9;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(720px,calc(100vw - 24px));box-sizing:border-box;background:#080a0de8;border:1px solid #555;border-radius:16px;padding:10px 12px;backdrop-filter:blur(12px)}.roomhud[hidden]{display:none}.roomtop{display:flex;justify-content:space-between;gap:10px;align-items:center}.roomtitle{font:800 11px system-ui}.roomnote{margin-top:4px;font:10px system-ui;color:#cbd4dc}.roomcontrols{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.roomselection{margin-top:7px;padding-top:7px;border-top:1px solid #333;font:10px system-ui;color:#dce4eb}.roomreticle{position:fixed;z-index:8;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none}.roomreticle[hidden]{display:none}.roomreticle:before,.roomreticle:after{content:"";position:absolute;background:#fff9;box-shadow:0 0 8px #000}.roomreticle:before{width:18px;height:1px;left:0;top:8px}.roomreticle:after{width:1px;height:18px;left:8px;top:0}.room-active>.hud{display:none}.room-active>.s{opacity:.3}.room-active canvas{touch-action:none}
 </style>  <script src="js/live-content.js?v=__STAMP__"></script>
-</head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now with the detailed architectural facade active. Tap a floor to isolate it, Facade to inspect the shell, or expose the building-services nervous system. B1 and F1–F7 remain physically continuous through both protected stairs.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="facade">Facade</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button data-v="south">South</button><button data-v="east">East</button><button data-v="north">North</button><button data-v="west">West</button><button data-v="entry">Entry</button><button data-v="crown">Crown</button><button id="xray">X-Ray: Off</button><button id="plant">Physical Plant: Off</button><button id="cabling">Cabling: Off</button><button id="services">Services: Off</button><button id="sunmode">Sun: Auto</button><button id="wire">Wireframe</button><button id="labs">Work Tickets</button><button id="roommode">Room Mode</button></div><div class="solar" id="serviceStatus">Services layer · hidden</div><div class="plantlegend" id="plantLegend"><span class="plantkey"><i style="background:rgb(40,120,255)"></i>Cat6A data / PoE</span><span class="plantkey"><i style="background:rgb(220,80,255)"></i>OS2 fiber</span><span class="plantkey"><i style="background:rgb(255,220,60)"></i>208Y/120V feeder</span><span class="plantkey"><i style="background:rgb(255,210,50)"></i>120V branch / equipment power</span><span class="plantkey"><i style="background:rgb(40,220,80)"></i>BACnet MS/TP</span><span class="plantkey"><i style="background:rgb(255,145,40)"></i>24V Class 2 / OSDP</span><span class="plantkey"><i style="background:rgb(255,40,40)"></i>Fire alarm</span><span class="plantkey"><i style="background:rgb(80,220,220)"></i>Speaker</span></div><div class="solar" id="solarStatus">Solar environment · syncing to device clock…</div></div><div class="labpanel" id="labPanel" hidden><h2>DIAGNOSTIC SANDBOX · TRAINING ONLY</h2><div class="labgrid"><select id="labSelect" aria-label="Support ticket"></select><select id="labDifficulty" aria-label="Difficulty"></select></div><div class="labtasks"><button id="labStart">Accept Ticket</button><button id="labReset">Restart</button><button id="labHint">Ask for a hint</button><button id="labComplete">Close Ticket</button></div><div class="ticketcard"><div class="ticketeyebrow" id="labRole">Choose a support ticket</div><div class="tickettitle" id="labTicket">A building user needs help.</div><div class="ticketreport" id="labReport">Start from the symptom, not the answer.</div><div class="ticketknown" id="labKnown"></div></div><div class="labrow diagloop" id="labLoop"></div><div class="labrow" id="labGuidance"></div><div class="labrow"><strong>What can you do next?</strong><div class="labtasks" id="labActions"></div><div class="choicegrid" id="labChoices"></div></div><div class="labrow" id="labSystems"></div><div class="labrow labmsg" id="labMessage">Training simulation only · observe → hypothesize → test → fix → verify.</div><details class="labtech" id="labTechnical"><summary>Instructor / technical details</summary><div class="labrow" id="labScenario">Choose a lab.</div><div class="labrow" id="labAssessment"></div><div class="labrow"><input id="labInput" aria-label="Action JSON input" placeholder='Advanced action input JSON, e.g. {"finding":"..."}'></div><div class="labtasks"><button id="labEvidence">Attach Evidence</button></div></details></div><div class="devicehud" id="deviceHud" hidden><div class="devicekind" id="deviceKind">Physical device</div><h3 id="deviceTitle">Device</h3><div class="devicestatus" id="deviceStatus">Select a modeled device.</div><div id="deviceDetails"></div><div class="devicefeed" id="deviceFeed" hidden><canvas id="deviceFeedCanvas" width="320" height="180"></canvas><span class="devicefeedlabel" id="deviceFeedLabel">VIDEO STREAM · ONLINE</span></div><div class="deviceparts" id="deviceParts"></div><div class="deviceactions"><button id="deviceFov" hidden>Show camera coverage</button><button id="deviceClose">Close</button></div></div><div class="roomhud" id="roomHud" hidden><div class="roomtop"><div class="roomtitle" id="roomTitle">ROOM MODE · FLOOR 1</div><button id="roomExit">Exit Room</button></div><div class="roomnote" id="roomMessage">Center-room view. Drag to look or enable device motion.</div><div class="roomcontrols"><button id="roomMotion">Enable Motion</button><button id="roomRecenter">Recenter</button><button id="roomBack" disabled>Step Back</button><button id="roomInspect" disabled>Inspect</button></div><div class="roomselection" id="roomSelection">Look around and tap a highlighted object.</div></div><div class="roomreticle" id="roomReticle" hidden></div><div class="s" id="status">Loading working stack…</div>
+</head><body><div id="app"></div><div class="hud"><h1>EQUITY UPRISE · WORKING BUILDING · B1 → ROOF</h1><p>The full building is stacked now with the detailed architectural facade active. Tap a floor to isolate it, Facade to inspect the shell, or expose the building-services nervous system. B1 and F1–F7 remain physically continuous through both protected stairs.</p><div class="c"><button data-f="stack" class="active">Stack</button><button data-f="facade">Facade</button><button data-f="0">B1</button><button data-f="1">1</button><button data-f="2">2</button><button data-f="3">3</button><button data-f="4">4</button><button data-f="5">5</button><button data-f="6">6</button><button data-f="7">Roof</button><button data-v="south">South</button><button data-v="east">East</button><button data-v="north">North</button><button data-v="west">West</button><button data-v="entry">Entry</button><button data-v="crown">Crown</button><button id="xray">X-Ray: Off</button><button id="plant">Physical Plant: Off</button><button id="cabling">Cabling: Off</button><button id="services">Services: Off</button><button id="sunmode">Sun: Auto</button><button id="quality">Quality: Auto</button><button id="wire">Wireframe</button><button id="labs">Work Tickets</button><button id="roommode">Room Mode</button></div><div class="solar" id="serviceStatus">Services layer · hidden</div><div class="plantlegend" id="plantLegend"><span class="plantkey"><i style="background:rgb(40,120,255)"></i>Cat6A data / PoE</span><span class="plantkey"><i style="background:rgb(220,80,255)"></i>OS2 fiber</span><span class="plantkey"><i style="background:rgb(255,220,60)"></i>208Y/120V feeder</span><span class="plantkey"><i style="background:rgb(255,210,50)"></i>120V branch / equipment power</span><span class="plantkey"><i style="background:rgb(40,220,80)"></i>BACnet MS/TP</span><span class="plantkey"><i style="background:rgb(255,145,40)"></i>24V Class 2 / OSDP</span><span class="plantkey"><i style="background:rgb(255,40,40)"></i>Fire alarm</span><span class="plantkey"><i style="background:rgb(80,220,220)"></i>Speaker</span></div><div class="solar" id="solarStatus">Solar environment · syncing to device clock…</div></div><div class="labpanel" id="labPanel" hidden><h2>DIAGNOSTIC SANDBOX · TRAINING ONLY</h2><div class="labgrid"><select id="labSelect" aria-label="Support ticket"></select><select id="labDifficulty" aria-label="Difficulty"></select></div><div class="labtasks"><button id="labStart">Accept Ticket</button><button id="labReset">Restart</button><button id="labHint">Ask for a hint</button><button id="labComplete">Close Ticket</button></div><div class="ticketcard"><div class="ticketeyebrow" id="labRole">Choose a support ticket</div><div class="tickettitle" id="labTicket">A building user needs help.</div><div class="ticketreport" id="labReport">Start from the symptom, not the answer.</div><div class="ticketknown" id="labKnown"></div></div><div class="labrow diagloop" id="labLoop"></div><div class="labrow" id="labGuidance"></div><div class="labrow"><strong>What can you do next?</strong><div class="labtasks" id="labActions"></div><div class="choicegrid" id="labChoices"></div></div><div class="labrow" id="labSystems"></div><div class="labrow labmsg" id="labMessage">Training simulation only · observe → hypothesize → test → fix → verify.</div><details class="labtech" id="labTechnical"><summary>Instructor / technical details</summary><div class="labrow" id="labScenario">Choose a lab.</div><div class="labrow" id="labAssessment"></div><div class="labrow"><input id="labInput" aria-label="Action JSON input" placeholder='Advanced action input JSON, e.g. {"finding":"..."}'></div><div class="labtasks"><button id="labEvidence">Attach Evidence</button></div></details></div><div class="devicehud" id="deviceHud" hidden><div class="devicekind" id="deviceKind">Physical device</div><h3 id="deviceTitle">Device</h3><div class="devicestatus" id="deviceStatus">Select a modeled device.</div><div id="deviceDetails"></div><div class="devicefeed" id="deviceFeed" hidden><canvas id="deviceFeedCanvas" width="320" height="180"></canvas><span class="devicefeedlabel" id="deviceFeedLabel">VIDEO STREAM · ONLINE</span></div><div class="deviceparts" id="deviceParts"></div><div class="deviceactions"><button id="deviceFov" hidden>Show camera coverage</button><button id="deviceClose">Close</button></div></div><div class="roomhud" id="roomHud" hidden><div class="roomtop"><div class="roomtitle" id="roomTitle">ROOM MODE · FLOOR 1</div><button id="roomExit">Exit Room</button></div><div class="roomnote" id="roomMessage">Center-room view. Drag to look or enable device motion.</div><div class="roomcontrols"><button id="roomMotion">Enable Motion</button><button id="roomRecenter">Recenter</button><button id="roomBack" disabled>Step Back</button><button id="roomInspect" disabled>Inspect</button></div><div class="roomselection" id="roomSelection">Look around and tap a highlighted object.</div></div><div class="roomreticle" id="roomReticle" hidden></div><div class="s" id="status">Loading working stack…</div>
 <script type="module">
 import * as THREE from'three';import{OrbitControls}from'three/addons/controls/OrbitControls.js';import{GLTFLoader}from'three/addons/loaders/GLTFLoader.js';import{RoomEnvironment}from'three/addons/environments/RoomEnvironment.js';
 const FT=.3048,ft=v=>v*FT,app=document.getElementById('app'),status=document.getElementById('status'),solarStatus=document.getElementById('solarStatus'),serviceStatus=document.getElementById('serviceStatus'),plantLegend=document.getElementById('plantLegend'),deviceHud=document.getElementById('deviceHud'),deviceKind=document.getElementById('deviceKind'),deviceTitle=document.getElementById('deviceTitle'),deviceStatus=document.getElementById('deviceStatus'),deviceDetails=document.getElementById('deviceDetails'),deviceFeed=document.getElementById('deviceFeed'),deviceFeedCanvas=document.getElementById('deviceFeedCanvas'),deviceFeedLabel=document.getElementById('deviceFeedLabel'),deviceParts=document.getElementById('deviceParts'),deviceFovButton=document.getElementById('deviceFov');const scene=new THREE.Scene();scene.background=new THREE.Color(0xb9c6cf);scene.fog=new THREE.Fog(0xb9c6cf,ft(120),ft(260));
-const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.shadowMap.enabled=true;ren.shadowMap.type=THREE.PCFSoftShadowMap;app.appendChild(ren.domElement);const pmrem=new THREE.PMREMGenerator(ren);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);
-const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;const sunTarget=new THREE.Object3D();sunTarget.position.set(ft(36),ft(42),ft(-36));scene.add(sunTarget);dl.target=sunTarget;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
-const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,loaded=0,solarMode='auto',servicesOn=false,engineeringMode=false,plantMode=false,cablingMode=false,currentFocus='stack';
+const QUALITY_PROFILES={
+ LOW:{dpr:1,shadows:false,shadowMap:512,deviceLodFt:55,personLodFt:45,cableMode:'floor-only',cameraFeedMs:700,cameraFeed:[240,135]},
+ BALANCED:{dpr:1.35,shadows:true,shadowMap:1024,deviceLodFt:95,personLodFt:80,cableMode:'all',cameraFeedMs:320,cameraFeed:[320,180]},
+ HIGH:{dpr:2,shadows:true,shadowMap:2048,deviceLodFt:180,personLodFt:150,cableMode:'all',cameraFeedMs:180,cameraFeed:[480,270]}
+};
+const bootParams=new URLSearchParams(location.search),requestedQuality=(bootParams.get('quality')||'').toUpperCase();
+const autoLow=matchMedia('(max-width:820px)').matches||Number(navigator.deviceMemory||8)<=4;
+let qualityMode=QUALITY_PROFILES[requestedQuality]?requestedQuality:(autoLow?'LOW':'BALANCED');
+const qualityProfile=()=>QUALITY_PROFILES[qualityMode];
+const cam=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,.05,ft(360)),ren=new THREE.WebGLRenderer({antialias:qualityMode!=='LOW',powerPreference:qualityMode==='LOW'?'low-power':'high-performance'});ren.setPixelRatio(Math.min(devicePixelRatio||1,qualityProfile().dpr));ren.setSize(innerWidth,innerHeight);ren.outputColorSpace=THREE.SRGBColorSpace;ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.shadowMap.enabled=qualityProfile().shadows;ren.shadowMap.type=THREE.PCFSoftShadowMap;app.appendChild(ren.domElement);const pmrem=new THREE.PMREMGenerator(ren);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;pmrem.dispose();const ctl=new OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.maxDistance=ft(260);ctl.minDistance=ft(15);
+const hemi=new THREE.HemisphereLight(0xf2eee6,0x15181b,1.55);scene.add(hemi);const dl=new THREE.DirectionalLight(0xfff1df,3.0);dl.position.set(ft(90),ft(150),ft(20));dl.castShadow=qualityProfile().shadows;dl.shadow.mapSize.set(qualityProfile().shadowMap,qualityProfile().shadowMap);dl.shadow.camera.left=ft(-95);dl.shadow.camera.right=ft(95);dl.shadow.camera.top=ft(130);dl.shadow.camera.bottom=ft(-45);dl.shadow.camera.near=ft(15);dl.shadow.camera.far=ft(280);dl.shadow.bias=-.00018;const sunTarget=new THREE.Object3D();sunTarget.position.set(ft(36),ft(42),ft(-36));scene.add(sunTarget);dl.target=sunTarget;scene.add(dl);const warm=new THREE.AmbientLight(0xffd6aa,0);scene.add(warm);
+const loader=new GLTFLoader();let base,facade,services,b1,f1,f2,f3,f4,f5,f6,f7,electronics,wire=false,solarMode='auto',servicesOn=false,engineeringMode=false,plantMode=false,cablingMode=false,currentFocus='stack';
 let resolveBuildingLoaded=null;const buildingLoaded=new Promise(resolve=>{resolveBuildingLoaded=resolve});
 const labOverlay=new THREE.Group();labOverlay.name='STEP8-LAB-OVERLAY';scene.add(labOverlay);
 const engineeringOverlay=new THREE.Group();engineeringOverlay.name='ENGINEERING-XRAY-OVERLAY';engineeringOverlay.visible=false;scene.add(engineeringOverlay);
@@ -29,8 +38,13 @@ function failLabVisualRoot(label,error){
  if(resolveLabVisualRootsReady){resolveLabVisualRootsReady();resolveLabVisualRootsReady=null}
 }
 const archMaterials=new Set(),wireMaterials=new Set(),archMaterialState=new Map();let architectureGhosted=false;
+function applyMeshQuality(o){
+ if(!o?.isMesh)return;const p=qualityProfile(),ms=Array.isArray(o.material)?o.material:[o.material],transparent=ms.filter(Boolean).some(m=>m.transparent&&m.opacity<.98);
+ o.frustumCulled=true;o.castShadow=!o.userData.noDynamicShadow&&p.shadows&&!transparent;o.receiveShadow=p.shadows
+}
+function applyRootQuality(root){root?.traverse(o=>{if(o.isMesh)applyMeshQuality(o)})}
 function makeReliable(root,trackArchitecture=true){
- root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>{wireMaterials.add(m);if(trackArchitecture)archMaterials.add(m);m.side=THREE.DoubleSide;m.needsUpdate=true})}});
+ root.traverse(o=>{if(o.isMesh){applyMeshQuality(o);const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>{wireMaterials.add(m);if(trackArchitecture)archMaterials.add(m);m.needsUpdate=true})}});
 }
 const facadeLightMaterials=new Set();
 function makeFacadeReliable(root){
@@ -44,7 +58,7 @@ function makeFacadeReliable(root){
 }
 function makeServicesReliable(root){
  makeReliable(root,false);
- root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>{m.transparent=true;m.opacity=/SEPARATION/.test(m.name||'')?.16:.88;m.depthWrite=false;if('envMapIntensity'in m)m.envMapIntensity=.55;m.needsUpdate=true})});
+ root.traverse(o=>{if(!o.isMesh)return;o.userData.noDynamicShadow=true;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];ms.filter(Boolean).forEach(m=>{m.transparent=true;m.opacity=/SEPARATION/.test(m.name||'')?.16:.88;m.depthWrite=false;if('envMapIntensity'in m)m.envMapIntensity=.55;m.needsUpdate=true})});
 }
 function enhanceFloor1Interior(root){
  root.traverse(o=>{
@@ -70,6 +84,26 @@ function buildRoomLightRig(){
  const defs=[[36,48,9.4,42],[17,30,8.8,34],[47,18,8.8,34],[50,35,8.8,30]];
  defs.forEach(([x,y,z,intensity],i)=>{const l=new THREE.PointLight(0xffd7ad,intensity,ft(26),2);l.position.set(ft(x),ft(z),-ft(y));l.name='ROOM-LIGHT-'+(i+1);roomLightRig.add(l)});
 }
+function performanceLodVisible(kind,worldPosition){
+ if(!worldPosition)return true;const p=qualityProfile(),limitFt=kind==='person'?p.personLodFt:p.deviceLodFt;
+ return cam.position.distanceTo(worldPosition)<=ft(limitFt)
+}
+function publishPerformanceProfile(){
+ const p=qualityProfile();scene.userData.performanceProfile={qualityMode,deviceLodFt:p.deviceLodFt,personLodFt:p.personLodFt,cableMode:p.cableMode};
+ scene.userData.performanceLodVisible=performanceLodVisible
+}
+function applyQualityMode(next,announce=true){
+ if(!QUALITY_PROFILES[next])return;qualityMode=next;const p=qualityProfile();
+ ren.setPixelRatio(Math.min(devicePixelRatio||1,p.dpr));ren.setSize(innerWidth,innerHeight,false);ren.shadowMap.enabled=p.shadows;dl.castShadow=p.shadows;
+ if(dl.shadow.mapSize.width!==p.shadowMap||dl.shadow.mapSize.height!==p.shadowMap){dl.shadow.map?.dispose?.();dl.shadow.map=null;dl.shadow.mapSize.set(p.shadowMap,p.shadowMap)}
+ [base,facade,b1,f1,f2,f3,f4,f5,f6,f7].filter(Boolean).forEach(applyRootQuality);
+ if(services)applyRootQuality(services);if(electronics)applyRootQuality(electronics);
+ const q=document.getElementById('quality');if(q){q.textContent='Quality: '+next[0]+next.slice(1).toLowerCase();q.classList.toggle('active',next==='LOW')}
+ if(deviceFeedRenderer&&deviceFeedCamera){const [w,h]=p.cameraFeed;deviceFeedRenderer.setPixelRatio(1);deviceFeedRenderer.setSize(w,h,false);deviceFeedCamera.aspect=w/h;deviceFeedCamera.updateProjectionMatrix()}
+ publishPerformanceProfile();if(electronics&&(engineeringMode||plantMode||cablingMode))syncElectronicsVisibility();
+ if(announce)status.textContent='Rendering quality · '+next+' · DPR '+Math.min(devicePixelRatio||1,p.dpr).toFixed(2)+(p.shadows?' · shadows':' · shadows off')
+}
+applyQualityMode(qualityMode,false);
 function setArchitectureGhost(on){
  if(on===architectureGhosted)return;
  if(on){
@@ -106,7 +140,7 @@ function frameStack(){
  if(!stackFrameCache){const box=new THREE.Box3().setFromObject(scene),size=new THREE.Vector3(),center=new THREE.Vector3();box.getSize(size);box.getCenter(center);stackFrameCache={center:center.clone(),span:Math.max(size.x,size.z,size.y)}}
  const {center,span}=stackFrameCache;cam.position.set(center.x+span*.7,center.y+span*.48,center.z+span*.85);ctl.target.copy(center);cam.far=Math.max(ft(420),span*8);cam.updateProjectionMatrix();ctl.update();
 }
-const params=new URLSearchParams(location.search),requestedFloor=params.get('floor'),requestedView=params.get('view'),requestedCamera=params.get('camera'),requestedServices=params.get('services')==='1',requestedLab=params.get('lab'),requestedDifficulty=(params.get('difficulty')||'FOUNDATION').toUpperCase(),requestedRoom=params.get('room')==='1';
+const params=bootParams,requestedFloor=params.get('floor'),requestedView=params.get('view'),requestedCamera=params.get('camera'),requestedServices=params.get('services')==='1',requestedLab=params.get('lab'),requestedDifficulty=(params.get('difficulty')||'FOUNDATION').toUpperCase(),requestedRoom=params.get('room')==='1';
 let f7StackDupMeshes=null,b1StackDupMeshes=null,detailedPerimeterMeshes=null;
 function collectMeshes(roots,predicate){const out=[];roots.filter(Boolean).forEach(root=>root.traverse(o=>{if(o.isMesh&&predicate(o.name||''))out.push(o)}));return out}
 function setF7StackDupVisibility(show){
@@ -121,28 +155,83 @@ function setDetailedPerimeterVisibility(show){
  if(!detailedPerimeterMeshes)detailedPerimeterMeshes=collectMeshes([f1,f2,f3,f4,f5,f6],n=>/^(?:north_exterior_wall|west_exterior_wall|east_exterior_wall|south_exterior_(?:left|right)|north_wall|west_wall|east_wall|south_mullion_)/i.test(n)||/^F[2-6]-SOUTH-GLAZING-01::pane-/i.test(n));
  detailedPerimeterMeshes.forEach(o=>{o.visible=show});
 }
-function done(){
- loaded++;
- if(loaded!==11)return;
- status.textContent='Working stack loaded · detailed facade + B1–F7 + Services Step 8 verified · source-to-endpoint traceability · protected stairs B1→roof';
- servicesOn=requestedServices;document.getElementById('services').textContent=servicesOn?'Services: Exposed':'Services: Off';document.getElementById('services').classList.toggle('active',servicesOn);
- setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);facade.visible=true;
- if(requestedView==='facade'){focus('facade');if(requestedCamera)setView(requestedCamera)}
- else if(requestedFloor&&/^[0-7]$/.test(requestedFloor))focus(requestedFloor);
- else{syncServicesVisibility();frameStack();if(requestedView&&requestedView!=='stack')setView(requestedView)}
- if(resolveBuildingLoaded){resolveBuildingLoaded();resolveBuildingLoaded=null}
+const floorLoadPromises=new Map(),floorLoadErrors=new Map();let baseLoadPromise=null,facadeLoadPromise=null,servicesLoadPromise=null;
+function loadGltfWithRetry(url,label,retries=2,attempt=0){
+ const requestUrl=attempt?url+'&retry='+attempt:url;
+ return new Promise((resolve,reject)=>loader.load(requestUrl,resolve,undefined,reject)).catch(err=>{
+  if(attempt>=retries)throw new Error(label+' failed after '+(attempt+1)+' attempts · '+(err?.message||err));
+  return new Promise(resolve=>setTimeout(resolve,250*Math.pow(2,attempt))).then(()=>loadGltfWithRetry(url,label,retries,attempt+1))
+ })
 }
-loader.load('/equity-uprise-preview/equity-uprise-building-core-v2.glb?v=__STAMP__',g=>{base=g.scene;base.rotation.x=-Math.PI/2;base.updateMatrixWorld(true);scene.add(base);makeReliable(base);base.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^L0_(slab|north_wall|west_wall|east_wall|program|circle|support|zone)/.test(n)||/^B1_(south_wall|program)/.test(n)||/^L[123456]_(program|circle|support|slab|north_wall|south_|west_wall|east_wall)/.test(n)||/^L7_(program|circle|support|slab|parapet|zone)/.test(n))o.visible=false});markLabVisualRootReady(1);done()},undefined,e=>failLabVisualRoot('building core',e));
-loader.load('/equity-uprise-preview/equity-uprise-facade-core-v2.glb?v=__STAMP__',g=>{facade=g.scene;facade.rotation.x=-Math.PI/2;facade.updateMatrixWorld(true);scene.add(facade);makeFacadeReliable(facade);done()});
-loader.load('/equity-uprise-preview/equity-uprise-building-services-core-v2.glb?v=__STAMP__',g=>{services=g.scene;services.rotation.x=-Math.PI/2;services.updateMatrixWorld(true);scene.add(services);makeServicesReliable(services);services.visible=false;done()});
-loader.load('/equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb?v=__STAMP__',g=>{b1=g.scene;b1.rotation.x=-Math.PI/2;b1.position.y=ft(-13.5);b1.updateMatrixWorld(true);scene.add(b1);makeReliable(b1);done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',g=>{f1=g.scene;f1.rotation.x=-Math.PI/2;f1.updateMatrixWorld(true);scene.add(f1);makeReliable(f1);enhanceFloor1Interior(f1);buildRoomLightRig();f1.traverse(o=>{if(o.isMesh&&/^(stair_|passenger_|freight_|mep)/i.test(o.name||''))o.visible=false});markLabVisualRootReady(2);done()},undefined,e=>failLabVisualRoot('floor 1',e));
-loader.load('/equity-uprise-preview/equity-uprise-floor-02-core-v2.glb?v=__STAMP__',g=>{f2=g.scene;f2.rotation.x=-Math.PI/2;f2.position.y=ft(13.5);f2.updateMatrixWorld(true);scene.add(f2);makeReliable(f2);f2.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-03-core-v2.glb?v=__STAMP__',g=>{f3=g.scene;f3.rotation.x=-Math.PI/2;f3.position.y=ft(27);f3.updateMatrixWorld(true);scene.add(f3);makeReliable(f3);f3.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-04-core-v2.glb?v=__STAMP__',g=>{f4=g.scene;f4.rotation.x=-Math.PI/2;f4.position.y=ft(40.5);f4.updateMatrixWorld(true);scene.add(f4);makeReliable(f4);f4.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-05-core-v2.glb?v=__STAMP__',g=>{f5=g.scene;f5.rotation.x=-Math.PI/2;f5.position.y=ft(54);f5.updateMatrixWorld(true);scene.add(f5);makeReliable(f5);f5.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-06-core-v2.glb?v=__STAMP__',g=>{f6=g.scene;f6.rotation.x=-Math.PI/2;f6.position.y=ft(67.5);f6.updateMatrixWorld(true);scene.add(f6);makeReliable(f6);f6.traverse(o=>{if(o.isMesh&&/^(stair_|pass_|freight_|mep)/i.test(o.name||''))o.visible=false});done()});
-loader.load('/equity-uprise-preview/equity-uprise-floor-07-core-v2.glb?v=__STAMP__',g=>{f7=g.scene;f7.rotation.x=-Math.PI/2;f7.position.y=ft(81);f7.updateMatrixWorld(true);scene.add(f7);makeReliable(f7);done()});
+function refreshArchitectureGhostAfterLoad(){
+ if(!architectureGhosted)return;architectureGhosted=false;setArchitectureGhost(true)
+}
+function configureBaseRoot(g){
+ base=g.scene;base.rotation.x=-Math.PI/2;base.updateMatrixWorld(true);scene.add(base);makeReliable(base);
+ base.traverse(o=>{if(!o.isMesh)return;const n=o.name||'';if(/^L0_(slab|north_wall|west_wall|east_wall|program|circle|support|zone)/.test(n)||/^B1_(south_wall|program)/.test(n)||/^L[123456]_(program|circle|support|slab|north_wall|south_|west_wall|east_wall)/.test(n)||/^L7_(program|circle|support|slab|parapet|zone)/.test(n))o.visible=false});
+ markLabVisualRootReady(1);stackFrameCache=null;refreshArchitectureGhostAfterLoad();return base
+}
+function ensureBaseRoot(){
+ if(base)return Promise.resolve(base);if(baseLoadPromise)return baseLoadPromise;
+ baseLoadPromise=loadGltfWithRetry('/equity-uprise-preview/equity-uprise-building-core-v2.glb?v=__STAMP__','building core').then(configureBaseRoot).catch(err=>{baseLoadPromise=null;throw err});return baseLoadPromise
+}
+function ensureFacadeRoot(){
+ if(facade)return Promise.resolve(facade);if(facadeLoadPromise)return facadeLoadPromise;
+ facadeLoadPromise=loadGltfWithRetry('/equity-uprise-preview/equity-uprise-facade-core-v2.glb?v=__STAMP__','building facade').then(g=>{facade=g.scene;facade.rotation.x=-Math.PI/2;facade.updateMatrixWorld(true);scene.add(facade);makeFacadeReliable(facade);stackFrameCache=null;refreshArchitectureGhostAfterLoad();return facade}).catch(err=>{facadeLoadPromise=null;throw err});return facadeLoadPromise
+}
+function ensureServicesLayer(){
+ if(services)return Promise.resolve(services);if(servicesLoadPromise)return servicesLoadPromise;
+ servicesLoadPromise=loadGltfWithRetry('/equity-uprise-preview/equity-uprise-building-services-core-v2.glb?v=__STAMP__','building services').then(g=>{services=g.scene;services.rotation.x=-Math.PI/2;services.updateMatrixWorld(true);scene.add(services);makeServicesReliable(services);services.visible=false;return services}).catch(err=>{servicesLoadPromise=null;throw err});return servicesLoadPromise
+}
+function loadedFloorRoot(level){return [b1,f1,f2,f3,f4,f5,f6,f7][Number(level)]||null}
+function hideDetailedCoreDuplicates(root,level){
+ const re=level===1?/^(stair_|passenger_|freight_|mep)/i:/^(stair_|pass_|freight_|mep)/i;
+ if(level>=1&&level<=6)root.traverse(o=>{if(o.isMesh&&re.test(o.name||''))o.visible=false})
+}
+const FLOOR_LOAD_CONFIG={
+ 0:{url:'/equity-uprise-preview/equity-uprise-basement-b1-core-v2.glb?v=__STAMP__',y:-13.5,assign:r=>b1=r},
+ 1:{url:'/equity-uprise-preview/equity-uprise-floor-01-core-v2.glb?v=__STAMP__',y:0,assign:r=>f1=r},
+ 2:{url:'/equity-uprise-preview/equity-uprise-floor-02-core-v2.glb?v=__STAMP__',y:13.5,assign:r=>f2=r},
+ 3:{url:'/equity-uprise-preview/equity-uprise-floor-03-core-v2.glb?v=__STAMP__',y:27,assign:r=>f3=r},
+ 4:{url:'/equity-uprise-preview/equity-uprise-floor-04-core-v2.glb?v=__STAMP__',y:40.5,assign:r=>f4=r},
+ 5:{url:'/equity-uprise-preview/equity-uprise-floor-05-core-v2.glb?v=__STAMP__',y:54,assign:r=>f5=r},
+ 6:{url:'/equity-uprise-preview/equity-uprise-floor-06-core-v2.glb?v=__STAMP__',y:67.5,assign:r=>f6=r},
+ 7:{url:'/equity-uprise-preview/equity-uprise-floor-07-core-v2.glb?v=__STAMP__',y:81,assign:r=>f7=r}
+};
+function ensureDetailedFloor(level){
+ level=Number(level);const existing=loadedFloorRoot(level);if(existing)return Promise.resolve(existing);
+ if(floorLoadPromises.has(level))return floorLoadPromises.get(level);
+ const cfg=FLOOR_LOAD_CONFIG[level];if(!cfg)return Promise.reject(new Error('Unknown floor '+level));
+ floorLoadErrors.delete(level);status.textContent=(level===0?'B1':'Floor '+level)+' · loading detailed model…';
+ const p=loadGltfWithRetry(cfg.url,(level===0?'B1':'Floor '+level)+' detailed model').then(g=>{
+  const root=g.scene;root.rotation.x=-Math.PI/2;if(cfg.y)root.position.y=ft(cfg.y);root.updateMatrixWorld(true);scene.add(root);makeReliable(root);cfg.assign(root);hideDetailedCoreDuplicates(root,level);
+  if(level===1){enhanceFloor1Interior(root);buildRoomLightRig();markLabVisualRootReady(2)}
+  detailedPerimeterMeshes=null;if(level===0)b1StackDupMeshes=null;if(level===7)f7StackDupMeshes=null;stackFrameCache=null;refreshArchitectureGhostAfterLoad();floorLoadErrors.delete(level);return root
+ }).catch(err=>{floorLoadPromises.delete(level);floorLoadErrors.set(level,err);throw err});
+ floorLoadPromises.set(level,p);return p
+}
+function ensureB1F1Continuity(level){
+ if(level!==0&&level!==1)return;const neighbor=level===0?1:0;
+ ensureDetailedFloor(neighbor).then(()=>{if(currentFocus==='stack')focus('stack')}).catch(()=>{})
+}
+async function bootstrapViewer(){
+ status.textContent='Loading canonical building shell…';
+ try{
+  await ensureBaseRoot();
+  if(resolveBuildingLoaded){resolveBuildingLoaded();resolveBuildingLoaded=null}
+  status.textContent='Building shell ready · Services Step 8 verified · choose a floor to stream its detailed model';
+  const facadePending=ensureFacadeRoot().then(()=>{if(currentFocus==='stack'||currentFocus==='facade')focus(currentFocus)}).catch(err=>{console.warn(err);return null});
+  if(requestedServices){
+   try{await ensureServicesLayer();servicesOn=true;document.getElementById('services').textContent='Services: Exposed';document.getElementById('services').classList.add('active')}catch(err){console.warn(err)}
+  }
+  if(requestedView==='facade'){await facadePending;if(facade)await focus('facade');else await focus('stack');if(requestedCamera)setView(requestedCamera)}
+  else if(requestedFloor&&/^[0-7]$/.test(requestedFloor)){const level=Number(requestedFloor);await ensureDetailedFloor(level);await focus(String(level));ensureB1F1Continuity(level)}
+  else{await focus('stack');if(requestedView&&requestedView!=='stack')setView(requestedView)}
+ }catch(err){
+  status.textContent='Building shell load failed · retrying the failed asset on the next request';console.error(err)
+ }
+}
+bootstrapViewer();
 const elev={0:-13.5,1:0,2:13.5,3:27,4:40.5,5:54,6:67.5,7:81};
 const detailed={0:()=>b1,1:()=>f1,2:()=>f2,3:()=>f3,4:()=>f4,5:()=>f5,6:()=>f6,7:()=>f7};
 function frameObject(root,pad=1.35){
@@ -170,35 +259,36 @@ function isolateBaseLevel(level){
     o.visible=isLevel;
   });
 }
-function focus(k){
-  currentFocus=String(k);
-  document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('active',b.dataset.f===String(k)));
-  const roots=[b1,f1,f2,f3,f4,f5,f6,f7].filter(Boolean);
-  if(k==='stack'){
-    roots.forEach(r=>r.visible=true);facade.visible=true;
-    restoreBaseStackVisibility();
-    setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);
-    status.textContent='Stack view · detailed architectural facade + B1–F7 · protected stairs B1→roof';
-    syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameStack();return;
-  }
-  if(k==='facade'){
-    roots.forEach(r=>r.visible=false);base.visible=false;setDetailedPerimeterVisibility(true);facade.visible=true;
-    status.textContent='Facade isolation · complete architectural finish · approved Equity Uprise identity';
-    syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(facade);return;
-  }
-  const level=+k;
-  roots.forEach(r=>r.visible=false);facade.visible=false;setDetailedPerimeterVisibility(true);
-  if(detailed[level]&&detailed[level]()){
-    base.visible=false;
-    const root=detailed[level]();root.visible=true;
-    if(level===0)setB1StackDupVisibility(true);
-    if(level===7)setF7StackDupVisibility(true);
-    status.textContent=level===0?'Isolated B1 · detailed underground operations + B1→Floor 1 stairs':(level===7?'Isolated Level 7 · detailed roof + protected stair arrivals':'Isolated Floor '+level+' · detailed model only');
-    syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(root);return;
-  }
-  isolateBaseLevel(level);
-  status.textContent=level===0?'Isolated B1 chassis':'Isolated Floor '+level+' chassis';
-  syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(base);
+async function focus(k){
+ currentFocus=String(k);
+ document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('active',b.dataset.f===String(k)));
+ let roots=[b1,f1,f2,f3,f4,f5,f6,f7].filter(Boolean);
+ if(k==='stack'){
+  roots.forEach(r=>r.visible=true);if(facade)facade.visible=true;
+  if(base)restoreBaseStackVisibility();
+  setB1StackDupVisibility(false);setF7StackDupVisibility(false);setDetailedPerimeterVisibility(false);
+  status.textContent='Stack view · shell ready · '+roots.length+'/8 detailed floors currently resident';
+  syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameStack();return
+ }
+ if(k==='facade'){
+  roots.forEach(r=>r.visible=false);if(base)base.visible=false;setDetailedPerimeterVisibility(true);
+  if(!facade){status.textContent='Facade · loading detailed shell…';try{await ensureFacadeRoot()}catch(err){status.textContent='Facade load failed · tap Facade to retry';return}}
+  if(currentFocus!=='facade')return;facade.visible=true;
+  status.textContent='Facade isolation · complete architectural finish · approved Equity Uprise identity';
+  syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(facade);return
+ }
+ const level=+k;
+ let root=loadedFloorRoot(level);
+ if(!root){
+  if(base){isolateBaseLevel(level);if(facade)facade.visible=false}
+  syncServicesVisibility();status.textContent=(level===0?'B1':'Floor '+level)+' · streaming detailed model…';
+  try{root=await ensureDetailedFloor(level)}catch(err){status.textContent=(level===0?'B1':'Floor '+level)+' detail failed · tap floor to retry';console.error(err);return}
+  if(currentFocus!==String(k))return
+ }
+ roots=[b1,f1,f2,f3,f4,f5,f6,f7].filter(Boolean);roots.forEach(r=>r.visible=false);if(facade)facade.visible=false;setDetailedPerimeterVisibility(true);if(base)base.visible=false;root.visible=true;
+ if(level===0)setB1StackDupVisibility(true);if(level===7)setF7StackDupVisibility(true);
+ status.textContent=level===0?'Isolated B1 · detailed underground operations + B1→Floor 1 stairs':(level===7?'Isolated Level 7 · detailed roof + protected stair arrivals':'Isolated Floor '+level+' · detailed model');
+ syncServicesVisibility();if(engineeringMode)syncEngineeringView();frameObject(root);ensureB1F1Continuity(level)
 }
 function setView(v){
  const V={
@@ -280,7 +370,7 @@ function electronicsComponentIdFromName(name){
 }
 async function ensureLabRuntime(){
  if(!labModule)labModule=await import(LAB_MODULE_URL);
- if(!labDatasets)labDatasets=await labModule.loadViewerLabDatasets('/equity-uprise-preview');
+ if(!labDatasets)labDatasets=await labModule.loadViewerLabDatasets('/equity-uprise-preview','__STAMP__');
  if(!labSelect.options.length){
    const distributedById=new Map((labDatasets.distributedPack.scenarios||[]).map(x=>[x.source_lab_id,x]));
    const allChoices=[
@@ -304,7 +394,7 @@ function engineeringClassColor(cls){
  return {support:0xffa640,work:0x56d7ff,security:0xff5ad9,ceiling:0x68f7a0,av:0x7b8cff,fire:0xff4d4d}[cls]||0x8de7ff
 }
 function makeElectronicsReliable(root){
- makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.userData=m.userData||{};if(m.color&&!m.userData.step4bNativeColor)m.userData.step4bNativeColor=m.color.getHex();m.transparent=true;m.opacity=.10;m.depthWrite=false;m.depthTest=true;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
+ makeReliable(root,false);root.traverse(o=>{if(!o.isMesh)return;o.userData.noDynamicShadow=true;o.castShadow=false;const ms=Array.isArray(o.material)?o.material:[o.material];o.material=Array.isArray(o.material)?ms.map(m=>m.clone()):o.material.clone();const next=Array.isArray(o.material)?o.material:[o.material];next.filter(Boolean).forEach(m=>{wireMaterials.add(m);m.userData=m.userData||{};if(m.color&&!m.userData.step4bNativeColor)m.userData.step4bNativeColor=m.color.getHex();m.transparent=true;m.opacity=.10;m.depthWrite=false;m.depthTest=true;if('emissiveIntensity'in m)m.emissiveIntensity=0;m.needsUpdate=true})});
 }
 function physicalLevelFromId(id){
  const key=electronicsAssetIdFromName(id);if(/^B1-/.test(key))return 0;if(/^L7-|^F7-/.test(key))return 7;const m=/^F([1-6])-/.exec(key);return m?Number(m[1]):null
@@ -344,7 +434,7 @@ async function ensureElectronicsLayer(){
 }
 function engineeringMeshIsCable(o){return /^CABLE::/.test(o?.name||'')}
 function cableMatchesFocus(o){
- if(!/^[0-7]$/.test(currentFocus))return true;const level=Number(currentFocus),lo=ft(elev[level]-.5),hi=ft((elev[level]||0)+13.5);
+ if(!/^[0-7]$/.test(currentFocus))return qualityProfile().cableMode!=='floor-only';const level=Number(currentFocus),lo=ft(elev[level]-.5),hi=ft((elev[level]||0)+13.5);
  const box=new THREE.Box3().setFromObject(o);return box.max.y>=lo&&box.min.y<=hi
 }
 function syncElectronicsVisibility(){
@@ -354,8 +444,8 @@ function syncElectronicsVisibility(){
  electronics.visible=allowPlant||allowXray||allowCables;
  electronics.traverse(o=>{if(!o.isMesh)return;
    if(engineeringMeshIsCable(o)){const show=allowCables&&cableMatchesFocus(o);o.visible=show;if(show)cables++;return}
-   const b=o.userData.spatialBinding,scope=focusLevel===null||b?.level===focusLevel,show=(allowPlant||allowXray)&&o.userData.spatialBound===true&&scope;
-   o.visible=show;stylePhysicalMesh(o,show?(allowXray?'xray':'plant'):'hidden');if(show)visibleAssets.add(o.userData.assetId||electronicsAssetIdFromName(o.name))
+   const b=o.userData.spatialBinding,scope=focusLevel===null||b?.level===focusLevel,assetId=o.userData.assetId||electronicsAssetIdFromName(o.name),world=electronicsBoundWorld.get(assetId),lodOk=focusLevel!==null||qualityMode!=='LOW'||performanceLodVisible('device',world),show=(allowPlant||allowXray)&&o.userData.spatialBound===true&&scope&&lodOk;
+   o.visible=show;stylePhysicalMesh(o,show?(allowXray?'xray':'plant'):'hidden');if(show)visibleAssets.add(assetId)
  });
  if(allowXray)rebuildEngineeringMarkers();else{clearEngineeringMarkers();engineeringOverlay.visible=false}
  return{devices:visibleAssets.size,cables}
@@ -364,7 +454,7 @@ function setEngineeringElectronics(on){return syncElectronicsVisibility().device
 function infrastructureStatus(counts=syncElectronicsVisibility()){
  const scope=/^[0-7]$/.test(currentFocus)?('Level '+currentFocus):'whole building',modes=[];
  if(plantMode)modes.push('physical devices '+counts.devices);
- if(cablingMode)modes.push('routed cables '+counts.cables);
+ if(cablingMode)modes.push(qualityMode==='LOW'&&!/^[0-7]$/.test(currentFocus)?'cabling · select a floor in LOW':'routed cables '+counts.cables);
  if(engineeringMode)modes.push('X-Ray '+counts.devices);
  if(servicesOn&&!roomMode)modes.push('MEP services');
  serviceStatus.textContent=modes.length?'Infrastructure · '+modes.join(' · ')+' · '+scope:'Infrastructure layers · hidden';
@@ -558,7 +648,8 @@ async function enableRoomMotion(){
 }
 function disableRoomMotion(){window.removeEventListener('deviceorientation',onRoomOrientation,true);window.removeEventListener('deviceorientationabsolute',onRoomOrientation,true);window.removeEventListener('devicemotion',onRoomMotion,true);roomMotionActive=false;roomSensorMode='none';roomSensorZero=null;roomLastRawQuaternion=null;roomMotionEnabledAt=0;roomLastMotionStamp=0;roomMotionButton.textContent='Enable Motion'}
 async function enterRoomMode(){
- if(roomMode)return;if(!f1||loaded<11){roomMessage.textContent='Building is still loading. Try Room Mode again when the stack finishes.';roomHud.hidden=false;return}
+ if(roomMode)return;roomHud.hidden=false;roomMessage.textContent='Loading Floor 1 room…';
+ try{await buildingLoaded;await ensureDetailedFloor(1)}catch(err){roomMessage.textContent='Floor 1 failed to load · try Room Mode again to retry that floor.';return}
  roomPrevFocus=currentFocus;roomPrevServices=servicesOn;roomPrevWire=wire;roomMode=true;engineeringOverlay.visible=false;document.body.classList.add('room-active');roomHud.hidden=false;roomReticle.hidden=false;labPanel.hidden=true;ctl.enabled=false;roomLightRig.visible=true;
  if(wire){wire=false;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=false;m.needsUpdate=true}});document.getElementById('wire').textContent='Wireframe'}
  focus('1');if(electronics)syncElectronicsVisibility();syncServicesVisibility();clearRoomHighlights();roomSelectedId=null;roomBackButton.disabled=true;roomInspectButton.disabled=true;
@@ -596,15 +687,15 @@ function deviceConnectionChain(assetId){
  return result.slice(0,10)
 }
 function ensureDeviceFeedRenderer(){
- if(deviceFeedRenderer)return deviceFeedRenderer;
- deviceFeedRenderer=new THREE.WebGLRenderer({canvas:deviceFeedCanvas,antialias:true,alpha:false});
- deviceFeedRenderer.setPixelRatio(1);deviceFeedRenderer.setSize(320,180,false);deviceFeedRenderer.outputColorSpace=THREE.SRGBColorSpace;deviceFeedRenderer.toneMapping=THREE.ACESFilmicToneMapping;deviceFeedRenderer.toneMappingExposure=1.0;
- deviceFeedCamera=new THREE.PerspectiveCamera(50,16/9,.03,ft(100));return deviceFeedRenderer
+ if(deviceFeedRenderer)return deviceFeedRenderer;const p=qualityProfile(),[w,h]=p.cameraFeed;
+ deviceFeedRenderer=new THREE.WebGLRenderer({canvas:deviceFeedCanvas,antialias:qualityMode!=='LOW',alpha:false,powerPreference:qualityMode==='LOW'?'low-power':'high-performance'});
+ deviceFeedRenderer.setPixelRatio(1);deviceFeedRenderer.setSize(w,h,false);deviceFeedRenderer.outputColorSpace=THREE.SRGBColorSpace;deviceFeedRenderer.toneMapping=THREE.ACESFilmicToneMapping;deviceFeedRenderer.toneMappingExposure=1.0;
+ deviceFeedCamera=new THREE.PerspectiveCamera(50,w/h,.03,ft(100));return deviceFeedRenderer
 }
 function renderDeviceCameraFeed(now=performance.now()){
- if(deviceHud.hidden||!inspectedDeviceId||now-deviceFeedLastRender<180)return;const record=deviceRecordById.get(inspectedDeviceId);if(!record||record.archetype!=='camera')return;
+ if(deviceHud.hidden||!inspectedDeviceId||now-deviceFeedLastRender<qualityProfile().cameraFeedMs)return;const record=deviceRecordById.get(inspectedDeviceId);if(!record||record.archetype!=='camera')return;
  const state=deviceStateFor(inspectedDeviceId);if(state==='unavailable'||state==='faulted')return;
- ensureDeviceFeedRenderer();deviceFeedLastRender=now;deviceFeedCamera.fov=record.optics?.vertical_fov_deg||50;deviceFeedCamera.updateProjectionMatrix();
+ ensureDeviceFeedRenderer();deviceFeedLastRender=now;const [w,h]=qualityProfile().cameraFeed;deviceFeedCamera.aspect=w/h;deviceFeedCamera.fov=record.optics?.vertical_fov_deg||50;deviceFeedCamera.updateProjectionMatrix();
  const p=record.position_ft||[0,0,0],a=record.aim_vector||[-1,0,0],origin=new THREE.Vector3(ft(p[0]),ft(p[2]),-ft(p[1])),aim=new THREE.Vector3(a[0],a[2]||0,-a[1]).normalize();
  deviceFeedCamera.position.copy(origin).addScaledVector(aim,ft(.62));deviceFeedCamera.lookAt(deviceFeedCamera.position.clone().addScaledVector(aim,ft(20)));
  const hidden=[labOverlay,engineeringOverlay,deviceOverlay],vis=hidden.map(x=>x.visible);hidden.forEach(x=>x.visible=false);
@@ -688,7 +779,7 @@ async function prepareLabPresentation(view){
  if(roomMode&&target!=='1')exitRoomMode();
  if(exp.learner_first&&engineeringMode)await setEngineeringMode(false);if(exp.learner_first&&!plantMode)await setPhysicalPlantMode(true);
  if(!exp.learner_first&&scenario.engineering_view===true&&roomMode)exitRoomMode();
- if(target==='stack'||/^[0-7]$/.test(target)){focus(target)}
+ if(target==='stack'||/^[0-7]$/.test(target)){await focus(target)}
  if(exp.engineering_default===true&&!engineeringMode)await setEngineeringMode(true);
 }
 function parseLabInput(){const raw=labInput.value.trim();if(!raw)return{};return JSON.parse(raw)}
@@ -703,7 +794,7 @@ async function runLabAction(id,inputOverride=null){
  }catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}
 }
 async function startLab(lab=labSelect.value,difficulty=labDifficulty.value||'FOUNDATION'){
- try{await ensureLabRuntime();await labVisualRootsReady;if(labVisualRootsError)throw labVisualRootsError;labSelect.value=lab;labDifficulty.value=difficulty;labController=labModule.createViewerLabController({lab,difficulty, datasets:labDatasets});labPickingIds=labController.canonicalIdsForPicking();const view=labController.start();labPanel.hidden=false;labMessage.textContent='Ticket accepted · loading the affected part of the building…';labMessage.className='labrow labmsg';await prepareLabPresentation(view);await applyLabView(view);labMessage.textContent='Start with the reported symptom. Inspect before you change anything. You can also double-click inspectable learner markers in the 3D scene.'}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn';labPanel.hidden=false}
+ try{await ensureLabRuntime();await buildingLoaded;await ensureDetailedFloor(1);await labVisualRootsReady;if(labVisualRootsError)throw labVisualRootsError;labSelect.value=lab;labDifficulty.value=difficulty;labController=labModule.createViewerLabController({lab,difficulty, datasets:labDatasets});labPickingIds=labController.canonicalIdsForPicking();const view=labController.start();labPanel.hidden=false;labMessage.textContent='Ticket accepted · loading the affected part of the building…';labMessage.className='labrow labmsg';await prepareLabPresentation(view);await applyLabView(view);labMessage.textContent='Start with the reported symptom. Inspect before you change anything. You can also double-click inspectable learner markers in the 3D scene.'}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn';labPanel.hidden=false}
 }
 async function openLabs(){
  labPanel.hidden=false;try{await ensureLabRuntime();if(!labDifficulty.value)labDifficulty.value=requestedDifficulty;if(requestedLab)labSelect.value=requestedLab}catch(err){labMessage.textContent='LAB LOAD ERROR · '+err.message;labMessage.className='labrow labmsg labwarn'}
@@ -732,7 +823,7 @@ deviceFovButton.onclick=()=>{if(!inspectedDeviceId)return;const record=deviceRec
 document.getElementById('deviceClose').onclick=()=>{deviceHud.hidden=true;inspectedDeviceId=null;clearDeviceInteractionOverlay()};
 
 if(requestedLab){openLabs().then(()=>startLab(requestedLab,requestedDifficulty))}
-if(requestedRoom){const roomBoot=setInterval(()=>{if(loaded===11){clearInterval(roomBoot);enterRoomMode()}},60)}
+if(requestedRoom){buildingLoaded.then(()=>enterRoomMode())}
 
 function projectedRoomTarget(ndcX,ndcY,maxDistance=.16){
  let best=null,bestD=maxDistance;
@@ -755,8 +846,9 @@ ren.domElement.addEventListener('click',async ev=>{if(roomMode&&!roomTweening)aw
 
 document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>focus(b.dataset.f));
 document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>setView(b.dataset.v));
-document.getElementById('services').onclick=async e=>{if(!engineeringMode)await setEngineeringMode(true);servicesOn=!servicesOn;syncServicesVisibility();e.target.textContent=servicesOn?'Services: Exposed':'Services: Off';e.target.classList.toggle('active',servicesOn)};
+document.getElementById('services').onclick=async e=>{if(!servicesOn)await ensureServicesLayer();if(!engineeringMode)await setEngineeringMode(true);servicesOn=!servicesOn;syncServicesVisibility();e.target.textContent=servicesOn?'Services: Exposed':'Services: Off';e.target.classList.toggle('active',servicesOn)};
 document.getElementById('sunmode').onclick=e=>{solarMode=solarMode==='auto'?'day':solarMode==='day'?'night':'auto';applySolarEnvironment(solarMode);e.target.textContent=solarMode==='auto'?'Sun: Auto':solarMode==='day'?'Sun: Day':'Sun: Night'};
+document.getElementById('quality').onclick=()=>{const order=['LOW','BALANCED','HIGH'],i=order.indexOf(qualityMode);applyQualityMode(order[(i+1)%order.length])};
 document.getElementById('wire').onclick=e=>{wire=!wire;wireMaterials.forEach(m=>{if('wireframe'in m){m.wireframe=wire;m.needsUpdate=true}});e.target.textContent=wire?'Solid':'Wireframe'};
-addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});ren.setAnimationLoop(t=>{if(!roomMode)ctl.update();ren.render(scene,cam);renderDeviceCameraFeed(t)});
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();ren.setSize(innerWidth,innerHeight)});ren.setAnimationLoop(t=>{if(!roomMode)ctl.update();ren.render(scene,cam);if(!deviceFeed.hidden)renderDeviceCameraFeed(t)});
 </script></body></html>
