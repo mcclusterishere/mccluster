@@ -14,6 +14,8 @@ function fakeClock(start = 1000, step = 100) {
   return () => { const out = now; now += step; return out; };
 }
 
+const deviceArchetypes = load("../electronics/device-archetypes-v1.json");
+const deviceComponents = load("../electronics/generated/equity-uprise-device-components-v1.json");
 const datasets = {
   distributedPack: load("./distributed-building-scenario-pack-v1.json"),
   cisaPack: load("./cisa-itot-scenario-pack-v1.json"),
@@ -67,6 +69,25 @@ for (const connection of datasets.connections.connections || []) {
   assert.ok(connection.from_port && connection.to_port, "physical connection must expose both port IDs: " + connection.connection_id);
   assert.ok(connection.metadata?.pathway_class, "physical connection must expose pathway class: " + connection.connection_id);
   assert.equal(connection.metadata?.lab_traceable, true, "physical connection must be lab-traceable: " + connection.connection_id);
+}
+
+assert.equal(deviceArchetypes.status, "step4c-device-archetype-authority");
+assert.equal(deviceComponents.status, "step4c-device-components");
+const cameraRecords = (deviceComponents.devices || []).filter((record) => record.archetype === "camera");
+assert.equal(cameraRecords.length, 18, "Step 4C must publish all 18 modeled security-camera assemblies");
+for (const camera of cameraRecords) {
+  const componentIds = new Set((camera.components || []).map((part) => part.component_id));
+  for (const required of ["MOUNT_PLATE","BRACKET_ARM","HOUSING","LENS_BARREL","LENS_GLASS","IR_LED_RING","STATUS_LED","RJ45_POE_PORT","CABLE_ENTRY"]) {
+    assert.ok(componentIds.has(required), camera.asset_id + " missing Step 4C camera component " + required);
+  }
+  assert.ok((camera.ports || []).some((port) =>
+    port.id === "RJ45_POE_PORT" &&
+    (port.services || []).includes("Ethernet/IP") &&
+    (port.services || []).includes("PoE")
+  ), camera.asset_id + " missing functional RJ45/PoE port");
+  assert.deepEqual(camera.lab_behaviors, ["camera_link_down","poe_disabled"]);
+  assert.ok((camera.planned_behaviors || []).includes("lens_obstructed"),
+    "lens obstruction must remain planned until runtime support exists");
 }
 
 function controller(lab, difficulty, start = 1000) {
@@ -309,6 +330,17 @@ for (const required of [
   "Cat6A data / PoE",
   "OS2 fiber",
   "208Y/120V feeder",
+  "DEVICE-INTERACTION-OVERLAY",
+  "ensureDeviceCatalog",
+  "equity-uprise-device-components-v1.json",
+  "deviceRecordById",
+  "electronicsAssetIdFromName",
+  "applyComponentVisualState",
+  "STATUS_LED",
+  "cameraCoverage",
+  "VIDEO STREAM",
+  "Show camera coverage",
+  "findPhysicalDeviceFromHit",
 ]) {
   assert.ok(viewer.includes(required), "electronics physical-installation viewer guard missing: "+required);
 }
@@ -387,6 +419,8 @@ for (const required of [
   "competency-rubrics.json",
   "FEDERAL-TRAINING-BINDINGS.json",
   "distributed-building-scenario-pack-v1.json",
+  "equity-uprise-device-components-v1.json",
+  "device-archetypes-v1.json",
 ]) {
   assert.ok(deploy.includes(required), "deploy workflow must publish Step 8 dependency " + required);
 }
