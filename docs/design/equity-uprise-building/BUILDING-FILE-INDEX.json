@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 333,
+  "tracked_count": 335,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -139,6 +139,7 @@
       "docs/design/equity-uprise-building/BUILDING-FILE-INDEX.json",
       "docs/design/equity-uprise-building/HISTORICAL-REFERENCE-BUILDS.md",
       "docs/design/equity-uprise-building/MASTER-INDEX.md",
+      "docs/design/equity-uprise-building/PLAYABLE-BUILDING-SYSTEMS-AUDIT-2026-09-24.md",
       "docs/design/equity-uprise-building/PROJECT-STATE.md",
       "docs/design/equity-uprise-building/README.md"
     ],
@@ -353,6 +354,7 @@
       "docs/design/equity-uprise-building/production/lab-runtime/verify_lab_runtime_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_public_service_scenarios_v1.mjs",
       "docs/design/equity-uprise-building/production/lab-runtime/verify_viewer_lab_integration_v1.mjs",
+      "docs/design/equity-uprise-building/production/playable-building-gap-ledger-v1.json",
       "docs/design/equity-uprise-building/production/services/build_equity_uprise_services_v2.py",
       "docs/design/equity-uprise-building/production/services/floor-services-addenda.json",
       "docs/design/equity-uprise-building/production/underground-tunnel-network.json",
