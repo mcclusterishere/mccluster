@@ -10,7 +10,7 @@
   "data_jacks_total": 190,
   "receptacles_total": 187,
   "electrical_panelboards_total": 14,
-  "step4c_componentized_devices_total": 676,
+  "step4c_componentized_devices_total": 772,
   "step4c_componentized_camera_total": 18,
   "step4c_componentized_access_switch_total": 8,
   "step4c_componentized_patch_panel_total": 8,
@@ -31,6 +31,12 @@
   "step4c_componentized_electrical_panel_total": 14,
   "step4c_componentized_bas_controller_total": 8,
   "step4c_componentized_environment_sensor_total": 29,
+  "step4c_componentized_av_microphone_total": 26,
+  "step4c_componentized_speaker_total": 26,
+  "step4c_componentized_fire_detector_total": 28,
+  "step4c_componentized_fire_notification_total": 14,
+  "step4c_componentized_fire_alarm_control_panel_total": 1,
+  "step4c_componentized_fire_alarm_read_only_gateway_total": 1,
   "wireless_links_total": 45,
   "lab_scenarios_total": 40,
   "new_asset_type_counts": {
@@ -198,10 +204,10 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 4967548,
-  "overlay_glb_sha256": "ace3271403d1fdf2b2ca9530813774e1bb82763ec18b890230eaf5c497ae9a32",
-  "checks_total": 66,
-  "checks_passed": 66,
+  "overlay_glb_bytes": 5343736,
+  "overlay_glb_sha256": "31b298fb719e9cc2edc05ab79b81a14cf4b434efefa83bd48280140063bd3277",
+  "checks_total": 78,
+  "checks_passed": 78,
   "checks_failed": 0,
   "checks": [
     {
@@ -528,6 +534,66 @@
       "detail": ""
     },
     {
+      "name": "all AV microphones use Step 4C component assemblies",
+      "passed": true,
+      "detail": "26/26"
+    },
+    {
+      "name": "AV microphone assemblies expose body, array, status, PoE, and mount",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all speakers use Step 4C component assemblies",
+      "passed": true,
+      "detail": "26/26"
+    },
+    {
+      "name": "speaker assemblies expose enclosure, driver, mount, and speaker terminals",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all fire detectors use Step 4C component assemblies",
+      "passed": true,
+      "detail": "28/28"
+    },
+    {
+      "name": "fire detector assemblies expose base, chamber, status, and SLC terminals",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all fire notification appliances use Step 4C component assemblies",
+      "passed": true,
+      "detail": "14/14"
+    },
+    {
+      "name": "fire notification assemblies expose housing, strobe, sounder, and NAC terminals",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fire alarm control panel uses Step 4C component assembly",
+      "passed": true,
+      "detail": "1/1"
+    },
+    {
+      "name": "fire alarm control panel exposes enclosure, display, keypad, indicators, SLC, NAC, and power",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fire alarm read-only gateway uses Step 4C component assembly",
+      "passed": true,
+      "detail": "1/1"
+    },
+    {
+      "name": "fire gateway exposes enclosure, fire interface, network, power, and indicators",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all physical Step 4B assets have spatial positions",
       "passed": true,
       "detail": ""
@@ -566,7 +632,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 4967548
+      "detail": 5343736
     }
   ],
   "passed": true

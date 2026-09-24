@@ -264,6 +264,114 @@
       ]
     },
     {
+      "asset_id": "B1-AV-SPKR-01",
+      "label": "B1 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        50.0,
+        -5.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "B1-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "B1-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "B1-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "B1-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-AV-SPKR-02",
+      "label": "B1 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        50.0,
+        -5.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "B1-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "B1-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "B1-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "B1-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
       "asset_id": "B1-BAS-CTRL-01",
       "label": "B1 BAS Floor Controller 1",
       "asset_type": "bas_controller",
@@ -914,6 +1022,331 @@
       ]
     },
     {
+      "asset_id": "B1-FIRE-DET-01",
+      "label": "B1 Addressable Fire Detector 1",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        26.0,
+        -3.8
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "B1-FIRE-DET-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "B1-FIRE-DET-01::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-FIRE-DET-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "B1-FIRE-DET-01::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-FIRE-DET-02",
+      "label": "B1 Addressable Fire Detector 2",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        39.2,
+        26.0,
+        -3.8
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "B1-FIRE-DET-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "B1-FIRE-DET-02::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-FIRE-DET-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "B1-FIRE-DET-02::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-FIRE-DET-03",
+      "label": "B1 Addressable Fire Detector 3",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        36.8,
+        26.0,
+        -3.8
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "B1-FIRE-DET-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "B1-FIRE-DET-03::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-FIRE-DET-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "B1-FIRE-DET-03::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-FIRE-DET-04",
+      "label": "B1 Addressable Fire Detector 4",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        27.2,
+        -3.8
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "B1-FIRE-DET-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "B1-FIRE-DET-04::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-FIRE-DET-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "B1-FIRE-DET-04::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-FIRE-FACP-01",
+      "label": "Fire Alarm Control Panel",
+      "asset_type": "fire_alarm_control_panel",
+      "archetype": "fire_alarm_control_panel",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        60.0,
+        -9.5
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "B1-FIRE-FACP-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DISPLAY",
+          "mesh_name": "B1-FIRE-FACP-01::PART::DISPLAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "KEYPAD",
+          "mesh_name": "B1-FIRE-FACP-01::PART::KEYPAD",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "B1-FIRE-FACP-01::PART::STATUS_LEDS",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "B1-FIRE-FACP-01::PART::SLC_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "B1-FIRE-FACP-01::PART::NAC_TERMINALS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_SECTION",
+          "mesh_name": "B1-FIRE-FACP-01::PART::POWER_SECTION",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled FACP AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "SLC",
+          "connector": "SLC terminal bank",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "addressable_fire_devices"
+          ],
+          "required": true
+        },
+        {
+          "id": "NAC",
+          "connector": "NAC terminal bank",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliances"
+          ],
+          "required": true
+        },
+        {
+          "id": "READ_ONLY_GATEWAY_LINK",
+          "connector": "modeled read-only interface",
+          "medium": "training/read-only",
+          "services": [
+            "read_only_gateway"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_status_read_only",
+        "slc_state",
+        "nac_state",
+        "training_alarm_state",
+        "training_panel_launch_point"
+      ],
+      "planned_behaviors": [
+        "training_alarm",
+        "slc_fault",
+        "nac_fault",
+        "ac_power_loss",
+        "panel_trouble"
+      ]
+    },
+    {
       "asset_id": "B1-FIRE-FACP-01::PWR-OUTLET",
       "label": "Fire Alarm Control Panel Power Outlet",
       "asset_type": "receptacle",
@@ -978,6 +1411,85 @@
       ]
     },
     {
+      "asset_id": "B1-FIRE-GW-01",
+      "label": "Fire Alarm Read Only Gateway",
+      "asset_type": "fire_alarm_read_only_gateway",
+      "archetype": "fire_alarm_read_only_gateway",
+      "maturity": "componentized",
+      "position_ft": [
+        40.0,
+        60.0,
+        -9.5
+      ],
+      "components": [
+        {
+          "component_id": "ENCLOSURE",
+          "mesh_name": "B1-FIRE-GW-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FIRE_INTERFACE",
+          "mesh_name": "B1-FIRE-GW-01::PART::FIRE_INTERFACE",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_PORT",
+          "mesh_name": "B1-FIRE-GW-01::PART::RJ45_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "B1-FIRE-GW-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LEDS",
+          "mesh_name": "B1-FIRE-GW-01::PART::STATUS_LEDS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_INTERFACE",
+          "connector": "read-only fire interface",
+          "medium": "training/read-only",
+          "services": [
+            "fire_alarm_status_read_only"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "read_only_status_network"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "modeled gateway AC input",
+          "medium": "120VAC",
+          "services": [
+            "gateway_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "gateway_state",
+        "read_only_fire_state",
+        "network_state"
+      ],
+      "planned_behaviors": [
+        "gateway_unavailable",
+        "fire_interface_loss",
+        "network_link_loss",
+        "power_loss"
+      ]
+    },
+    {
       "asset_id": "B1-FIRE-GW-01::PWR-OUTLET",
       "label": "Fire Alarm Read Only Gateway Power Outlet",
       "asset_type": "receptacle",
@@ -1039,6 +1551,118 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "B1-FIRE-STROBE-01",
+      "label": "B1 Fire Notification Appliance 1",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        50.0,
+        -5.0
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "B1-FIRE-STROBE-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "B1-FIRE-STROBE-01::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "B1-FIRE-STROBE-01::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "B1-FIRE-STROBE-01::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "B1-FIRE-STROBE-02",
+      "label": "B1 Fire Notification Appliance 2",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        50.0,
+        -5.0
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "B1-FIRE-STROBE-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "B1-FIRE-STROBE-02::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "B1-FIRE-STROBE-02::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "B1-FIRE-STROBE-02::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
       ]
     },
     {
@@ -7032,6 +7656,70 @@
       ]
     },
     {
+      "asset_id": "F1-AV-MIC-01",
+      "label": "F1 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        31.35,
+        52.16,
+        4.6
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F1-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F1-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F1-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F1-AV-MIC-01::DATA-JACK",
       "label": "F1 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -7098,6 +7786,70 @@
       ]
     },
     {
+      "asset_id": "F1-AV-MIC-02",
+      "label": "F1 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        36.75,
+        52.16,
+        4.6
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F1-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F1-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F1-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F1-AV-MIC-02::DATA-JACK",
       "label": "F1 Network Microphone 2 Data Jack",
       "asset_type": "data_jack",
@@ -7161,6 +7913,114 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F1-AV-SPKR-01",
+      "label": "F1 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        31.35,
+        52.16,
+        8.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F1-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F1-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F1-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F1-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F1-AV-SPKR-02",
+      "label": "F1 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        36.75,
+        52.16,
+        8.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F1-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F1-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F1-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F1-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
       ]
     },
     {
@@ -7875,6 +8735,342 @@
         "branch_trip",
         "feeder_loss",
         "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F1-FIRE-DET-01",
+      "label": "F1 Addressable Fire Detector 1",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        26.0,
+        10.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F1-FIRE-DET-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F1-FIRE-DET-01::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-FIRE-DET-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F1-FIRE-DET-01::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F1-FIRE-DET-02",
+      "label": "F1 Addressable Fire Detector 2",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        26.0,
+        10.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F1-FIRE-DET-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F1-FIRE-DET-02::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-FIRE-DET-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F1-FIRE-DET-02::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F1-FIRE-DET-03",
+      "label": "F1 Addressable Fire Detector 3",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        48.0,
+        10.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F1-FIRE-DET-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F1-FIRE-DET-03::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-FIRE-DET-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F1-FIRE-DET-03::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F1-FIRE-DET-04",
+      "label": "F1 Addressable Fire Detector 4",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        48.0,
+        10.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F1-FIRE-DET-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F1-FIRE-DET-04::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-FIRE-DET-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F1-FIRE-DET-04::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F1-FIRE-STROBE-01",
+      "label": "F1 Fire Notification Appliance 1",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        31.35,
+        52.16,
+        8.5
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F1-FIRE-STROBE-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F1-FIRE-STROBE-01::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F1-FIRE-STROBE-01::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F1-FIRE-STROBE-01::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F1-FIRE-STROBE-02",
+      "label": "F1 Fire Notification Appliance 2",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        36.75,
+        52.16,
+        8.5
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F1-FIRE-STROBE-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F1-FIRE-STROBE-02::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F1-FIRE-STROBE-02::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F1-FIRE-STROBE-02::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
       ]
     },
     {
@@ -13136,6 +14332,70 @@
       ]
     },
     {
+      "asset_id": "F2-AV-MIC-01",
+      "label": "F2 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        28.25,
+        52.09,
+        18.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F2-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F2-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F2-AV-MIC-01::DATA-JACK",
       "label": "F2 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -13199,6 +14459,70 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-MIC-02",
+      "label": "F2 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        18.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F2-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F2-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
       ]
     },
     {
@@ -13268,6 +14592,70 @@
       ]
     },
     {
+      "asset_id": "F2-AV-MIC-03",
+      "label": "F2 Network Microphone 3",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        42.55,
+        52.09,
+        18.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F2-AV-MIC-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F2-AV-MIC-03::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-AV-MIC-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-AV-MIC-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-MIC-03::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F2-AV-MIC-03::DATA-JACK",
       "label": "F2 Network Microphone 3 Data Jack",
       "asset_type": "data_jack",
@@ -13334,6 +14722,70 @@
       ]
     },
     {
+      "asset_id": "F2-AV-MIC-04",
+      "label": "F2 Network Microphone 4",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        0.9,
+        24.7,
+        18.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F2-AV-MIC-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F2-AV-MIC-04::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-AV-MIC-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-AV-MIC-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-MIC-04::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F2-AV-MIC-04::DATA-JACK",
       "label": "F2 Network Microphone 4 Data Jack",
       "asset_type": "data_jack",
@@ -13397,6 +14849,222 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-SPKR-01",
+      "label": "F2 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        28.25,
+        52.09,
+        22.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F2-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F2-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F2-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-SPKR-02",
+      "label": "F2 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        22.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F2-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F2-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F2-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-SPKR-03",
+      "label": "F2 Speaker 3",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        42.55,
+        52.09,
+        22.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F2-AV-SPKR-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F2-AV-SPKR-03::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-SPKR-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F2-AV-SPKR-03::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-SPKR-04",
+      "label": "F2 Speaker 4",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        0.9,
+        24.7,
+        22.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F2-AV-SPKR-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F2-AV-SPKR-04::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-SPKR-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F2-AV-SPKR-04::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
       ]
     },
     {
@@ -14047,6 +15715,342 @@
         "branch_trip",
         "feeder_loss",
         "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F2-FIRE-DET-01",
+      "label": "F2 Addressable Fire Detector 1",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        26.0,
+        24.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F2-FIRE-DET-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F2-FIRE-DET-01::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-FIRE-DET-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F2-FIRE-DET-01::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F2-FIRE-DET-02",
+      "label": "F2 Addressable Fire Detector 2",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        26.0,
+        24.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F2-FIRE-DET-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F2-FIRE-DET-02::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-FIRE-DET-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F2-FIRE-DET-02::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F2-FIRE-DET-03",
+      "label": "F2 Addressable Fire Detector 3",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        48.0,
+        24.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F2-FIRE-DET-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F2-FIRE-DET-03::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-FIRE-DET-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F2-FIRE-DET-03::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F2-FIRE-DET-04",
+      "label": "F2 Addressable Fire Detector 4",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        48.0,
+        24.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F2-FIRE-DET-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F2-FIRE-DET-04::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-FIRE-DET-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F2-FIRE-DET-04::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F2-FIRE-STROBE-01",
+      "label": "F2 Fire Notification Appliance 1",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        28.25,
+        52.09,
+        22.0
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F2-FIRE-STROBE-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F2-FIRE-STROBE-01::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F2-FIRE-STROBE-01::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F2-FIRE-STROBE-01::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F2-FIRE-STROBE-02",
+      "label": "F2 Fire Notification Appliance 2",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        22.0
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F2-FIRE-STROBE-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F2-FIRE-STROBE-02::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F2-FIRE-STROBE-02::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F2-FIRE-STROBE-02::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
       ]
     },
     {
@@ -17470,6 +19474,70 @@
       ]
     },
     {
+      "asset_id": "F3-AV-MIC-01",
+      "label": "F3 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        31.6
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F3-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F3-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F3-AV-MIC-01::DATA-JACK",
       "label": "F3 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -17533,6 +19601,70 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-MIC-02",
+      "label": "F3 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        31.6
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F3-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F3-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
       ]
     },
     {
@@ -17602,6 +19734,70 @@
       ]
     },
     {
+      "asset_id": "F3-AV-MIC-03",
+      "label": "F3 Network Microphone 3",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        31.6
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F3-AV-MIC-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F3-AV-MIC-03::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-AV-MIC-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-AV-MIC-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-MIC-03::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F3-AV-MIC-03::DATA-JACK",
       "label": "F3 Network Microphone 3 Data Jack",
       "asset_type": "data_jack",
@@ -17668,6 +19864,70 @@
       ]
     },
     {
+      "asset_id": "F3-AV-MIC-04",
+      "label": "F3 Network Microphone 4",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        0.9,
+        28.2,
+        31.6
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F3-AV-MIC-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F3-AV-MIC-04::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-AV-MIC-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-AV-MIC-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-MIC-04::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F3-AV-MIC-04::DATA-JACK",
       "label": "F3 Network Microphone 4 Data Jack",
       "asset_type": "data_jack",
@@ -17731,6 +19991,222 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-SPKR-01",
+      "label": "F3 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        35.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F3-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F3-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F3-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-SPKR-02",
+      "label": "F3 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        35.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F3-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F3-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F3-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-SPKR-03",
+      "label": "F3 Speaker 3",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        35.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F3-AV-SPKR-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F3-AV-SPKR-03::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-SPKR-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F3-AV-SPKR-03::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-SPKR-04",
+      "label": "F3 Speaker 4",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        0.9,
+        28.2,
+        35.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F3-AV-SPKR-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F3-AV-SPKR-04::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-SPKR-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F3-AV-SPKR-04::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
       ]
     },
     {
@@ -18381,6 +20857,342 @@
         "branch_trip",
         "feeder_loss",
         "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F3-FIRE-DET-01",
+      "label": "F3 Addressable Fire Detector 1",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        26.0,
+        37.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F3-FIRE-DET-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F3-FIRE-DET-01::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-FIRE-DET-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F3-FIRE-DET-01::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F3-FIRE-DET-02",
+      "label": "F3 Addressable Fire Detector 2",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        26.0,
+        37.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F3-FIRE-DET-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F3-FIRE-DET-02::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-FIRE-DET-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F3-FIRE-DET-02::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F3-FIRE-DET-03",
+      "label": "F3 Addressable Fire Detector 3",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        48.0,
+        37.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F3-FIRE-DET-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F3-FIRE-DET-03::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-FIRE-DET-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F3-FIRE-DET-03::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F3-FIRE-DET-04",
+      "label": "F3 Addressable Fire Detector 4",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        48.0,
+        37.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F3-FIRE-DET-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F3-FIRE-DET-04::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-FIRE-DET-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F3-FIRE-DET-04::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F3-FIRE-STROBE-01",
+      "label": "F3 Fire Notification Appliance 1",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        35.5
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F3-FIRE-STROBE-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F3-FIRE-STROBE-01::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F3-FIRE-STROBE-01::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F3-FIRE-STROBE-01::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F3-FIRE-STROBE-02",
+      "label": "F3 Fire Notification Appliance 2",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        35.5
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F3-FIRE-STROBE-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F3-FIRE-STROBE-02::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F3-FIRE-STROBE-02::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F3-FIRE-STROBE-02::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
       ]
     },
     {
@@ -22848,6 +25660,70 @@
       ]
     },
     {
+      "asset_id": "F4-AV-MIC-01",
+      "label": "F4 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F4-AV-MIC-01::DATA-JACK",
       "label": "F4 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -22911,6 +25787,70 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-MIC-02",
+      "label": "F4 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
       ]
     },
     {
@@ -22980,6 +25920,70 @@
       ]
     },
     {
+      "asset_id": "F4-AV-MIC-03",
+      "label": "F4 Network Microphone 3",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-03::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-03::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F4-AV-MIC-03::DATA-JACK",
       "label": "F4 Network Microphone 3 Data Jack",
       "asset_type": "data_jack",
@@ -23043,6 +26047,70 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-MIC-04",
+      "label": "F4 Network Microphone 4",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        6.5,
+        9.08,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-04::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-04::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
       ]
     },
     {
@@ -23112,6 +26180,70 @@
       ]
     },
     {
+      "asset_id": "F4-AV-MIC-05",
+      "label": "F4 Network Microphone 5",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        23.0,
+        8.68,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-05",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-05::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-05::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-05::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-05::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F4-AV-MIC-05::DATA-JACK",
       "label": "F4 Network Microphone 5 Data Jack",
       "asset_type": "data_jack",
@@ -23175,6 +26307,70 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-MIC-06",
+      "label": "F4 Network Microphone 6",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        13.2,
+        9.7,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-06",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-06::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-06::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-06::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-06::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
       ]
     },
     {
@@ -23244,6 +26440,70 @@
       ]
     },
     {
+      "asset_id": "F4-AV-MIC-07",
+      "label": "F4 Network Microphone 7",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        25.8,
+        53.29,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-07",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-07::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-07::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-07::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-07::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F4-AV-MIC-07::DATA-JACK",
       "label": "F4 Network Microphone 7 Data Jack",
       "asset_type": "data_jack",
@@ -23310,6 +26570,70 @@
       ]
     },
     {
+      "asset_id": "F4-AV-MIC-08",
+      "label": "F4 Network Microphone 8",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        50.89,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-08",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-08::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-08::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-08::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-08::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F4-AV-MIC-08::DATA-JACK",
       "label": "F4 Network Microphone 8 Data Jack",
       "asset_type": "data_jack",
@@ -23373,6 +26697,330 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-01",
+      "label": "F4 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-02",
+      "label": "F4 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-03",
+      "label": "F4 Speaker 3",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-03::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-03::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-04",
+      "label": "F4 Speaker 4",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        6.5,
+        9.08,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-04::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-04::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-05",
+      "label": "F4 Speaker 5",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        23.0,
+        8.68,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-05",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-05::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-05::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-05::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-06",
+      "label": "F4 Speaker 6",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        13.2,
+        9.7,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-06",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-06::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-06::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-06::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
       ]
     },
     {
@@ -24153,6 +27801,342 @@
         "branch_trip",
         "feeder_loss",
         "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F4-FIRE-DET-01",
+      "label": "F4 Addressable Fire Detector 1",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        26.0,
+        51.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F4-FIRE-DET-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F4-FIRE-DET-01::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-FIRE-DET-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F4-FIRE-DET-01::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-FIRE-DET-02",
+      "label": "F4 Addressable Fire Detector 2",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        26.0,
+        51.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F4-FIRE-DET-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F4-FIRE-DET-02::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-FIRE-DET-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F4-FIRE-DET-02::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-FIRE-DET-03",
+      "label": "F4 Addressable Fire Detector 3",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        48.0,
+        51.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F4-FIRE-DET-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F4-FIRE-DET-03::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-FIRE-DET-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F4-FIRE-DET-03::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-FIRE-DET-04",
+      "label": "F4 Addressable Fire Detector 4",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        48.0,
+        51.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F4-FIRE-DET-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F4-FIRE-DET-04::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-FIRE-DET-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F4-FIRE-DET-04::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-FIRE-STROBE-01",
+      "label": "F4 Fire Notification Appliance 1",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F4-FIRE-STROBE-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F4-FIRE-STROBE-01::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F4-FIRE-STROBE-01::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F4-FIRE-STROBE-01::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F4-FIRE-STROBE-02",
+      "label": "F4 Fire Notification Appliance 2",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F4-FIRE-STROBE-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F4-FIRE-STROBE-02::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F4-FIRE-STROBE-02::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F4-FIRE-STROBE-02::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
       ]
     },
     {
@@ -31024,6 +35008,70 @@
       ]
     },
     {
+      "asset_id": "F5-AV-MIC-01",
+      "label": "F5 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        58.6
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F5-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F5-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F5-AV-MIC-01::DATA-JACK",
       "label": "F5 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -31087,6 +35135,70 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-MIC-02",
+      "label": "F5 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        58.6
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F5-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F5-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
       ]
     },
     {
@@ -31156,6 +35268,70 @@
       ]
     },
     {
+      "asset_id": "F5-AV-MIC-03",
+      "label": "F5 Network Microphone 3",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        58.6
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F5-AV-MIC-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F5-AV-MIC-03::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-AV-MIC-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-AV-MIC-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-MIC-03::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F5-AV-MIC-03::DATA-JACK",
       "label": "F5 Network Microphone 3 Data Jack",
       "asset_type": "data_jack",
@@ -31222,6 +35398,70 @@
       ]
     },
     {
+      "asset_id": "F5-AV-MIC-04",
+      "label": "F5 Network Microphone 4",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        7.5,
+        17.08,
+        58.6
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F5-AV-MIC-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F5-AV-MIC-04::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-AV-MIC-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-AV-MIC-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-MIC-04::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F5-AV-MIC-04::DATA-JACK",
       "label": "F5 Network Microphone 4 Data Jack",
       "asset_type": "data_jack",
@@ -31285,6 +35525,222 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-SPKR-01",
+      "label": "F5 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        62.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F5-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F5-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F5-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-SPKR-02",
+      "label": "F5 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        62.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F5-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F5-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F5-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-SPKR-03",
+      "label": "F5 Speaker 3",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        62.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F5-AV-SPKR-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F5-AV-SPKR-03::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-SPKR-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F5-AV-SPKR-03::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-SPKR-04",
+      "label": "F5 Speaker 4",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        7.5,
+        17.08,
+        62.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F5-AV-SPKR-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F5-AV-SPKR-04::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-SPKR-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F5-AV-SPKR-04::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
       ]
     },
     {
@@ -31935,6 +36391,342 @@
         "branch_trip",
         "feeder_loss",
         "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F5-FIRE-DET-01",
+      "label": "F5 Addressable Fire Detector 1",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        26.0,
+        64.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F5-FIRE-DET-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F5-FIRE-DET-01::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-FIRE-DET-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F5-FIRE-DET-01::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-FIRE-DET-02",
+      "label": "F5 Addressable Fire Detector 2",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        26.0,
+        64.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F5-FIRE-DET-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F5-FIRE-DET-02::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-FIRE-DET-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F5-FIRE-DET-02::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-FIRE-DET-03",
+      "label": "F5 Addressable Fire Detector 3",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        48.0,
+        64.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F5-FIRE-DET-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F5-FIRE-DET-03::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-FIRE-DET-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F5-FIRE-DET-03::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-FIRE-DET-04",
+      "label": "F5 Addressable Fire Detector 4",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        48.0,
+        64.56
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F5-FIRE-DET-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F5-FIRE-DET-04::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-FIRE-DET-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F5-FIRE-DET-04::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-FIRE-STROBE-01",
+      "label": "F5 Fire Notification Appliance 1",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        62.5
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F5-FIRE-STROBE-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F5-FIRE-STROBE-01::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F5-FIRE-STROBE-01::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F5-FIRE-STROBE-01::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-FIRE-STROBE-02",
+      "label": "F5 Fire Notification Appliance 2",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        62.5
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F5-FIRE-STROBE-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F5-FIRE-STROBE-02::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F5-FIRE-STROBE-02::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F5-FIRE-STROBE-02::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
       ]
     },
     {
@@ -38870,6 +43662,70 @@
       ]
     },
     {
+      "asset_id": "F6-AV-MIC-01",
+      "label": "F6 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        72.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F6-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F6-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F6-AV-MIC-01::DATA-JACK",
       "label": "F6 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -38933,6 +43789,70 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-MIC-02",
+      "label": "F6 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        72.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F6-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F6-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
       ]
     },
     {
@@ -39002,6 +43922,70 @@
       ]
     },
     {
+      "asset_id": "F6-AV-MIC-03",
+      "label": "F6 Network Microphone 3",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        72.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F6-AV-MIC-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F6-AV-MIC-03::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-AV-MIC-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-AV-MIC-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-MIC-03::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F6-AV-MIC-03::DATA-JACK",
       "label": "F6 Network Microphone 3 Data Jack",
       "asset_type": "data_jack",
@@ -39068,6 +44052,70 @@
       ]
     },
     {
+      "asset_id": "F6-AV-MIC-04",
+      "label": "F6 Network Microphone 4",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        7.5,
+        17.08,
+        72.1
+      ],
+      "components": [
+        {
+          "component_id": "BODY",
+          "mesh_name": "F6-AV-MIC-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F6-AV-MIC-04::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-AV-MIC-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-AV-MIC-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-MIC-04::PART::MOUNT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
+    },
+    {
       "asset_id": "F6-AV-MIC-04::DATA-JACK",
       "label": "F6 Network Microphone 4 Data Jack",
       "asset_type": "data_jack",
@@ -39131,6 +44179,222 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-SPKR-01",
+      "label": "F6 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        76.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F6-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F6-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F6-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-SPKR-02",
+      "label": "F6 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        76.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F6-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F6-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F6-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-SPKR-03",
+      "label": "F6 Speaker 3",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        76.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F6-AV-SPKR-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F6-AV-SPKR-03::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-SPKR-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F6-AV-SPKR-03::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-SPKR-04",
+      "label": "F6 Speaker 4",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        7.5,
+        17.08,
+        76.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F6-AV-SPKR-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F6-AV-SPKR-04::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-SPKR-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F6-AV-SPKR-04::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
       ]
     },
     {
@@ -39911,6 +45175,342 @@
         "branch_trip",
         "feeder_loss",
         "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F6-FIRE-DET-01",
+      "label": "F6 Addressable Fire Detector 1",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        26.0,
+        78.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F6-FIRE-DET-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F6-FIRE-DET-01::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-FIRE-DET-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F6-FIRE-DET-01::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-FIRE-DET-02",
+      "label": "F6 Addressable Fire Detector 2",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        26.0,
+        78.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F6-FIRE-DET-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F6-FIRE-DET-02::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-FIRE-DET-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F6-FIRE-DET-02::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-FIRE-DET-03",
+      "label": "F6 Addressable Fire Detector 3",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        24.0,
+        48.0,
+        78.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F6-FIRE-DET-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F6-FIRE-DET-03::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-FIRE-DET-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F6-FIRE-DET-03::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-FIRE-DET-04",
+      "label": "F6 Addressable Fire Detector 4",
+      "asset_type": "fire_detector",
+      "archetype": "fire_detector",
+      "maturity": "componentized",
+      "position_ft": [
+        38.0,
+        48.0,
+        78.06
+      ],
+      "components": [
+        {
+          "component_id": "BASE",
+          "mesh_name": "F6-FIRE-DET-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "SENSING_CHAMBER",
+          "mesh_name": "F6-FIRE-DET-04::PART::SENSING_CHAMBER",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-FIRE-DET-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "SLC_TERMINALS",
+          "mesh_name": "F6-FIRE-DET-04::PART::SLC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-FIRE-STROBE-01",
+      "label": "F6 Fire Notification Appliance 1",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        76.0
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F6-FIRE-STROBE-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F6-FIRE-STROBE-01::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F6-FIRE-STROBE-01::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F6-FIRE-STROBE-01::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-FIRE-STROBE-02",
+      "label": "F6 Fire Notification Appliance 2",
+      "asset_type": "fire_notification",
+      "archetype": "fire_notification",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        76.0
+      ],
+      "components": [
+        {
+          "component_id": "HOUSING",
+          "mesh_name": "F6-FIRE-STROBE-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "STROBE",
+          "mesh_name": "F6-FIRE-STROBE-02::PART::STROBE",
+          "inspectable": true
+        },
+        {
+          "component_id": "SOUNDER",
+          "mesh_name": "F6-FIRE-STROBE-02::PART::SOUNDER",
+          "inspectable": true
+        },
+        {
+          "component_id": "NAC_TERMINALS",
+          "mesh_name": "F6-FIRE-STROBE-02::PART::NAC_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
       ]
     },
     {
