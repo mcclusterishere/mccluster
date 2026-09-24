@@ -1135,3 +1135,8 @@ This is the first usable layman diagnostic layer, not the final embodied simulat
 ## B1 Workplace Derived-Artifact Refresh — 2026-09-24
 
 The B1 workplace canon now lives in source authority and deterministic generators. This reconciliation regenerates and commits the derived B1/Floor 1 production packages, plan references and verification reports so main-source and generated artifacts remain byte-current under the Core V2 freshness gate.
+
+
+## Playable-Building Audit Derived-Report Refresh — 2026-09-24
+
+The playable-building audit and machine gap ledger are now tracked building context. This deterministic reconciliation refreshes the authority-hygiene report so its check count includes those new tracked sources.
