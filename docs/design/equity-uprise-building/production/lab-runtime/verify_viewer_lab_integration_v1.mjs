@@ -447,10 +447,15 @@ for (const performanceGuard of [
   "applyQualityMode",
   "qualityProfile().cameraFeedMs",
   "if(!deviceFeed.hidden)renderDeviceCameraFeed(t)",
-  "loadViewerLabDatasets('/equity-uprise-preview','__STAMP__')",
 ]) {
   assert.ok(viewer.includes(performanceGuard), "viewer performance profile guard missing: " + performanceGuard);
 }
+const viewerBuildMatch = viewer.match(/<meta name="equity-uprise-build" content="([^"]+)"/);
+const datasetVersionMatch = viewer.match(/loadViewerLabDatasets\('\/equity-uprise-preview','([^']+)'\)/);
+assert.ok(viewerBuildMatch, "viewer must expose the deployed/source build stamp");
+assert.ok(datasetVersionMatch, "viewer must version lab datasets with the build stamp");
+assert.equal(datasetVersionMatch[1], viewerBuildMatch[1],
+  "lab dataset cache version must match the viewer build stamp");
 assert.equal(viewer.includes('http-equiv="Cache-Control" content="no-store"'), false,
   "canonical viewer must not blanket-disable cache for stamped immutable assets");
 assert.equal(viewer.includes("o.frustumCulled=false"), false,
