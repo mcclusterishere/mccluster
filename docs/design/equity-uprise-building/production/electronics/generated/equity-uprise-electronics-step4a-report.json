@@ -10,7 +10,7 @@
   "data_jacks_total": 190,
   "receptacles_total": 187,
   "electrical_panelboards_total": 14,
-  "step4c_componentized_devices_total": 676,
+  "step4c_componentized_devices_total": 775,
   "step4c_componentized_camera_total": 18,
   "step4c_componentized_access_switch_total": 8,
   "step4c_componentized_patch_panel_total": 8,
@@ -31,6 +31,12 @@
   "step4c_componentized_electrical_panel_total": 14,
   "step4c_componentized_bas_controller_total": 8,
   "step4c_componentized_environment_sensor_total": 29,
+  "step4c_componentized_av_controller_total": 7,
+  "step4c_componentized_av_dsp_total": 7,
+  "step4c_componentized_av_camera_total": 13,
+  "step4c_componentized_av_microphone_total": 26,
+  "step4c_componentized_network_display_decoder_total": 20,
+  "step4c_componentized_speaker_total": 26,
   "wireless_links_total": 45,
   "lab_scenarios_total": 40,
   "new_asset_type_counts": {
@@ -198,10 +204,10 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 4967548,
-  "overlay_glb_sha256": "ace3271403d1fdf2b2ca9530813774e1bb82763ec18b890230eaf5c497ae9a32",
-  "checks_total": 66,
-  "checks_passed": 66,
+  "overlay_glb_bytes": 5373952,
+  "overlay_glb_sha256": "7d717f8e6ebb96448a85ee996efe35e358d5f502442e6ab83b62b845ace7ace4",
+  "checks_total": 73,
+  "checks_passed": 73,
   "checks_failed": 0,
   "checks": [
     {
@@ -528,6 +534,41 @@
       "detail": ""
     },
     {
+      "name": "all AV controllers use Step 4C component assemblies",
+      "passed": true,
+      "detail": "7/7"
+    },
+    {
+      "name": "all AV DSPs use Step 4C component assemblies",
+      "passed": true,
+      "detail": "7/7"
+    },
+    {
+      "name": "all AV cameras use Step 4C component assemblies",
+      "passed": true,
+      "detail": "13/13"
+    },
+    {
+      "name": "all AV microphones use Step 4C component assemblies",
+      "passed": true,
+      "detail": "26/26"
+    },
+    {
+      "name": "all display decoders use Step 4C component assemblies",
+      "passed": true,
+      "detail": "20/20"
+    },
+    {
+      "name": "all speakers use Step 4C component assemblies",
+      "passed": true,
+      "detail": "26/26"
+    },
+    {
+      "name": "AV component assemblies expose required physical subcomponents",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all physical Step 4B assets have spatial positions",
       "passed": true,
       "detail": ""
@@ -566,7 +607,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 4967548
+      "detail": 5373952
     }
   ],
   "passed": true

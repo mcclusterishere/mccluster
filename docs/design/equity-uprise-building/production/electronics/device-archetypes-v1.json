@@ -161,20 +161,41 @@
       "display_name": "Network AV Camera",
       "form_factor": "PTZ/box camera",
       "components": [
-        "BODY",
-        "LENS",
-        "STATUS_LED",
-        "RJ45_POE_PORT",
-        "MOUNT"
+        {
+          "id": "MOUNT",
+          "role": "camera_mount",
+          "inspectable": true
+        },
+        {
+          "id": "BODY",
+          "role": "camera_body",
+          "inspectable": true
+        },
+        {
+          "id": "LENS",
+          "role": "optics",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_POE_PORT",
+          "role": "network_power_port",
+          "inspectable": true
+        }
       ],
       "ports": [
         {
           "id": "RJ45_POE_PORT",
           "connector": "8P8C/RJ45",
-          "medium": "Cat6A",
+          "medium": "Cat6A patch cord",
           "services": [
             "Ethernet/IP",
-            "PoE"
+            "PoE",
+            "AV video"
           ],
           "required": true
         }
@@ -182,7 +203,8 @@
       "simulated_capabilities": [
         "network_reachability",
         "video_stream",
-        "status_indicator"
+        "status_indicator",
+        "simulated_preview"
       ],
       "lab_behaviors": [
         "camera_link_down"
@@ -212,7 +234,13 @@
         "trace_network_and_poe",
         "open_simulated_preview"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "ceiling_or_wall_mounted_network_av_camera",
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
     },
     "wireless_ap": {
       "maturity": "componentized",
@@ -1411,8 +1439,8 @@
       ]
     },
     "av_controller": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "av_media",
       "display_name": "AV Control Processor",
@@ -1440,11 +1468,80 @@
         "trace_power",
         "open_av_control_sandbox"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "19_in_rack_mount_av_control_processor",
+      "components": [
+        {
+          "id": "RACK_CHASSIS",
+          "role": "controller_chassis",
+          "inspectable": true
+        },
+        {
+          "id": "FRONT_STATUS",
+          "role": "front_status_panel",
+          "inspectable": true
+        },
+        {
+          "id": "NETWORK_PORT",
+          "role": "network_port",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_INPUT",
+          "role": "power_port",
+          "inspectable": true
+        },
+        {
+          "id": "CONTROL_IO",
+          "role": "control_io",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV control"
+          ],
+          "required": true
+        },
+        {
+          "id": "CONTROL_IO",
+          "connector": "modeled GPIO/serial terminals",
+          "medium": "control wiring",
+          "services": [
+            "AV control I/O"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "processor_state",
+        "network_state",
+        "control_io_state",
+        "av_control_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "control_io_fault"
+      ]
     },
     "av_dsp": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "av_media",
       "display_name": "AV DSP / Amplifier",
@@ -1474,11 +1571,95 @@
         "trace_speaker_path",
         "trace_power"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "19_in_rack_mount_av_dsp_amplifier",
+      "components": [
+        {
+          "id": "RACK_CHASSIS",
+          "role": "dsp_chassis",
+          "inspectable": true
+        },
+        {
+          "id": "FRONT_METERS",
+          "role": "audio_meters",
+          "inspectable": true
+        },
+        {
+          "id": "NETWORK_PORT",
+          "role": "network_port",
+          "inspectable": true
+        },
+        {
+          "id": "AUDIO_IO",
+          "role": "audio_io",
+          "inspectable": true
+        },
+        {
+          "id": "SPEAKER_OUTPUTS",
+          "role": "speaker_outputs",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_INPUT",
+          "role": "power_port",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV management"
+          ],
+          "required": true
+        },
+        {
+          "id": "AUDIO_IO",
+          "connector": "modeled balanced audio I/O",
+          "medium": "audio wiring",
+          "services": [
+            "audio_input_output"
+          ],
+          "required": true
+        },
+        {
+          "id": "SPEAKER_OUT",
+          "connector": "speaker terminal bank",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "dsp_state",
+        "network_state",
+        "meter_state",
+        "speaker_zone_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "audio_input_loss",
+        "speaker_output_fault"
+      ]
     },
     "av_microphone": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "av_media",
       "display_name": "Network AV Microphone",
@@ -1503,7 +1684,58 @@
         "trace_network_and_poe",
         "inspect_audio_state"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "ceiling_or_table_network_av_microphone",
+      "components": [
+        {
+          "id": "BODY",
+          "role": "microphone_body",
+          "inspectable": true
+        },
+        {
+          "id": "CAPSULE_OR_ARRAY",
+          "role": "microphone_array",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_POE_PORT",
+          "role": "network_power_port",
+          "inspectable": true
+        },
+        {
+          "id": "MOUNT",
+          "role": "mount",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
     },
     "backup_appliance": {
       "maturity": "placeholder",
@@ -2146,8 +2378,8 @@
       "october_demo_required": false
     },
     "network_display_decoder": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "av_media",
       "display_name": "Network Display Decoder",
@@ -2172,7 +2404,62 @@
         "trace_network_and_poe",
         "trace_hdmi_display_path"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "display_mounted_network_av_decoder",
+      "components": [
+        {
+          "id": "DECODER_CHASSIS",
+          "role": "decoder_chassis",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_POE_PORT",
+          "role": "network_power_port",
+          "inspectable": true
+        },
+        {
+          "id": "HDMI_OUTPUT",
+          "role": "video_output",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
+      ]
     },
     "pdu": {
       "maturity": "componentized",
@@ -2442,8 +2729,8 @@
       ]
     },
     "speaker": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "av_media",
       "display_name": "Installed AV Speaker",
@@ -2467,7 +2754,50 @@
         "trace_speaker_pair",
         "inspect_audio_zone"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "ceiling_or_wall_installed_av_speaker",
+      "components": [
+        {
+          "id": "GRILLE_OR_CABINET",
+          "role": "speaker_enclosure",
+          "inspectable": true
+        },
+        {
+          "id": "DRIVER",
+          "role": "audio_driver",
+          "inspectable": true
+        },
+        {
+          "id": "MOUNT",
+          "role": "mount",
+          "inspectable": true
+        },
+        {
+          "id": "SPEAKER_TERMINALS",
+          "role": "speaker_pair_terminals",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
     },
     "virtualization_host": {
       "maturity": "placeholder",
