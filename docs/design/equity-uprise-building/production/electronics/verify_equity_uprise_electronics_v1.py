@@ -115,14 +115,39 @@ for record in camera_records:
     if record.get("maturity")!="lab_complete":fail(f"{record.get('asset_id')} camera archetype not lab_complete")
     if not {"normal","unavailable","degraded","faulted"}.issubset(set(record.get("state_rules",{}))):
         fail(f"{record.get('asset_id')} missing visible state rules")
+access_switch_records=[x for x in component_records if x.get("archetype")=="access_switch"]
+patch_panel_records=[x for x in component_records if x.get("archetype")=="patch_panel"]
+modeled_access_switches=[a for a in assets.values() if a["classification"].get("asset_type")=="access_switch" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+modeled_patch_panels=[a for a in assets.values() if a["classification"].get("asset_type")=="patch_panel" and a["source_snapshot"].get("source")=="electronics_step4a_policy"]
+
+if len(access_switch_records)!=len(modeled_access_switches):fail(f"Step 4C access-switch coverage mismatch {len(access_switch_records)}/{len(modeled_access_switches)}")
+required_switch_parts={"RACK_CHASSIS","RJ45_PORT_BANK","UPLINK_CAGES","POWER_INPUT","FAN_BANK","STATUS_LEDS","PORT_LABELS"}
+for record in access_switch_records:
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required_switch_parts.issubset(parts):fail(f"{record.get('asset_id')} missing switch component(s): {sorted(required_switch_parts-parts)}")
+    ports={p.get("id") for p in record.get("ports",[])}
+    if not {"48x_RJ45_POE","2x_UPLINK"}.issubset(ports):fail(f"{record.get('asset_id')} missing access/uplink port banks")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} access switch archetype not componentized")
+
+if len(patch_panel_records)!=len(modeled_patch_panels):fail(f"Step 4C patch-panel coverage mismatch {len(patch_panel_records)}/{len(modeled_patch_panels)}")
+required_patch_parts={"RACK_FRAME","48x_FRONT_JACKS","REAR_TERMINATIONS","LABEL_STRIP","CABLE_MANAGEMENT"}
+for record in patch_panel_records:
+    parts={x.get("component_id") for x in record.get("components",[])}
+    if not required_patch_parts.issubset(parts):fail(f"{record.get('asset_id')} missing patch-panel component(s): {sorted(required_patch_parts-parts)}")
+    ports={p.get("id") for p in record.get("ports",[])}
+    if not {"48x_RJ45_FRONT","48x_REAR_TERMINATION"}.issubset(ports):fail(f"{record.get('asset_id')} missing front/rear termination banks")
+    if record.get("maturity")!="componentized":fail(f"{record.get('asset_id')} patch panel archetype not componentized")
+
 if rep.get("step4c_componentized_devices_total")!=len(component_records):fail("Step 4C device count mismatch")
 if rep.get("step4c_componentized_camera_total")!=len(camera_records):fail("Step 4C camera count mismatch")
+if rep.get("step4c_componentized_access_switch_total")!=len(access_switch_records):fail("Step 4C access-switch count mismatch")
+if rep.get("step4c_componentized_patch_panel_total")!=len(patch_panel_records):fail("Step 4C patch-panel count mismatch")
 
-# Prove the component catalog is not metadata-only: the generated GLB must
-# contain the named camera assembly parts that the viewer inspects.
+# Prove the component catalog is not metadata-only: every componentized
+# reference family must have its named assembly parts in the generated GLB.
 scene=trimesh.load(GLB,force="scene",process=False)
 node_names=set(scene.graph.nodes_geometry)
-for record in camera_records:
+for record in camera_records+access_switch_records+patch_panel_records:
     for part in record.get("components",[]):
         mesh_name=part.get("mesh_name")
         if mesh_name not in node_names:

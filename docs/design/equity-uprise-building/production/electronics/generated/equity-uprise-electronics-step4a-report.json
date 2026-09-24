@@ -10,8 +10,10 @@
   "data_jacks_total": 190,
   "receptacles_total": 187,
   "electrical_panelboards_total": 14,
-  "step4c_componentized_devices_total": 18,
+  "step4c_componentized_devices_total": 34,
   "step4c_componentized_camera_total": 18,
+  "step4c_componentized_access_switch_total": 8,
+  "step4c_componentized_patch_panel_total": 8,
   "wireless_links_total": 45,
   "lab_scenarios_total": 40,
   "new_asset_type_counts": {
@@ -179,10 +181,10 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 2217040,
-  "overlay_glb_sha256": "a210e8bc062701691ecaec848382727c50730d7c19c8570cb4ccd9d45cf66876",
-  "checks_total": 26,
-  "checks_passed": 26,
+  "overlay_glb_bytes": 2441060,
+  "overlay_glb_sha256": "091f5d5ca7c991148edb733564d1c1d87cb4463c233b56a53b62b6d7511b08f0",
+  "checks_total": 32,
+  "checks_passed": 32,
   "checks_failed": 0,
   "checks": [
     {
@@ -309,6 +311,36 @@
       "detail": ""
     },
     {
+      "name": "all access switches use Step 4C component assemblies",
+      "passed": true,
+      "detail": "8/8"
+    },
+    {
+      "name": "access switch assemblies expose chassis, ports, uplinks, power, cooling, indicators, and labels",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "access switch archetype exposes 48 access ports and dual uplinks",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all patch panels use Step 4C component assemblies",
+      "passed": true,
+      "detail": "8/8"
+    },
+    {
+      "name": "patch panel assemblies expose front jacks, rear terminations, labels, and cable management",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "patch panel archetype exposes front and rear 48-port terminations",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all physical Step 4B assets have spatial positions",
       "passed": true,
       "detail": ""
@@ -347,7 +379,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 2217040
+      "detail": 2441060
     }
   ],
   "passed": true

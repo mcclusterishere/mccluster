@@ -1182,6 +1182,153 @@ def camera_component_meshes(a):
     })
     return parts
 
+
+def _box_group(extents,centers):
+    meshes=[]
+    for center in centers:
+        m=trimesh.creation.box(extents=extents)
+        m.apply_translation(np.array(center,dtype=float))
+        meshes.append(m)
+    return trimesh.util.concatenate(meshes)
+
+def _sphere_group(radius,centers):
+    meshes=[]
+    for center in centers:
+        m=trimesh.creation.icosphere(subdivisions=1,radius=radius)
+        m.apply_translation(np.array(center,dtype=float))
+        meshes.append(m)
+    return trimesh.util.concatenate(meshes)
+
+def _cylinder_group(radius,height,centers,direction):
+    meshes=[]
+    for center in centers:
+        m=trimesh.creation.cylinder(radius=radius,height=height,sections=16)
+        meshes.append(_place(m,np.array(center,dtype=float),direction))
+    return trimesh.util.concatenate(meshes)
+
+def _record_componentized_device(a,archetype_key,parts):
+    aid=a["asset_id"]; archetype=device_archetypes["archetypes"][archetype_key]
+    primary={"BODY","HOUSING","RACK_CHASSIS","RACK_FRAME"}
+    record={
+        "asset_id":aid,
+        "label":a["label"],
+        "asset_type":archetype_key,
+        "archetype":archetype_key,
+        "maturity":archetype["maturity"],
+        "position_ft":[round(float(x),4) for x in positions[aid]],
+        "components":[
+            {
+                "component_id":cid,
+                "mesh_name":aid if cid in primary else f"{aid}::PART::{cid}",
+                "inspectable":True,
+            }
+            for cid,_ in parts
+        ],
+        "ports":archetype.get("ports",[]),
+        "simulated_capabilities":archetype.get("simulated_capabilities",[]),
+        "planned_behaviors":archetype.get("planned_behaviors",[]),
+    }
+    device_component_records.append(record)
+
+def access_switch_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.425
+    rear_y=p[1]+.425
+
+    chassis=trimesh.creation.box(extents=[1.72,.82,.32])
+    parts.append(_component_mesh(aid,"RACK_CHASSIS",_place(chassis,p),[70,76,82,255],"chassis","access_switch"))
+
+    jack_centers=[]
+    for zoff in (-.048,.048):
+        for col in range(24):
+            xoff=-.70+(1.12/23.0)*col
+            jack_centers.append([p[0]+xoff,front_y-.012,p[2]+zoff])
+    jacks=_box_group([.040,.035,.042],jack_centers)
+    parts.append(_component_mesh(aid,"RJ45_PORT_BANK",jacks,[28,32,36,255],"access_ports","access_switch",{
+        "port_count":48,"connector":"8P8C/RJ45","label_scheme":"Gi1/0/1-48","poe_capable":True
+    }))
+
+    uplinks=_box_group([.070,.040,.082],[
+        [p[0]+.575,front_y-.014,p[2]],
+        [p[0]+.675,front_y-.014,p[2]],
+    ])
+    parts.append(_component_mesh(aid,"UPLINK_CAGES",uplinks,[118,124,132,255],"uplink_ports","access_switch",{
+        "port_count":2,"connector":"SFP/SFP+","labels":["UPLINK-1","UPLINK-2"]
+    }))
+
+    power=trimesh.creation.box(extents=[.16,.045,.11])
+    parts.append(_component_mesh(aid,"POWER_INPUT",_place(power,[p[0]+.63,rear_y+.012,p[2]]),[25,28,32,255],"power_port","access_switch",{
+        "connector":"IEC rack power inlet"
+    }))
+
+    fans=_cylinder_group(.075,.026,[
+        [p[0]-.24,rear_y+.012,p[2]],
+        [p[0]-.04,rear_y+.012,p[2]],
+    ],[0,1,0])
+    parts.append(_component_mesh(aid,"FAN_BANK",fans,[42,46,50,255],"cooling","access_switch",{"fan_count":2}))
+
+    leds=_sphere_group(.022,[
+        [p[0]-.80,front_y-.028,p[2]+.075],
+        [p[0]-.80,front_y-.028,p[2]+.025],
+        [p[0]-.80,front_y-.028,p[2]-.025],
+        [p[0]-.80,front_y-.028,p[2]-.075],
+    ])
+    parts.append(_component_mesh(aid,"STATUS_LEDS",leds,[50,220,105,255],"indicator","access_switch",{
+        "state_driven":True,"indicators":["system","poe","uplink_a","uplink_b"]
+    }))
+
+    labels=_box_group([1.18,.018,.020],[
+        [p[0]-.12,front_y-.030,p[2]+.125],
+        [p[0]-.12,front_y-.030,p[2]-.125],
+    ])
+    parts.append(_component_mesh(aid,"PORT_LABELS",labels,[220,220,215,255],"labeling","access_switch",{
+        "label_scheme":"Gi1/0/1-48 + UPLINK-1/2"
+    }))
+
+    _record_componentized_device(a,"access_switch",parts)
+    return parts
+
+def patch_panel_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.135
+    rear_y=p[1]+.135
+
+    frame=trimesh.creation.box(extents=[1.72,.24,.28])
+    parts.append(_component_mesh(aid,"RACK_FRAME",_place(frame,p),[58,62,66,255],"frame","patch_panel"))
+
+    front_centers=[]
+    rear_centers=[]
+    for zoff in (-.048,.048):
+        for col in range(24):
+            xoff=-.70+(1.40/23.0)*col
+            front_centers.append([p[0]+xoff,front_y-.012,p[2]+zoff])
+            rear_centers.append([p[0]+xoff,rear_y+.012,p[2]+zoff])
+    front=_box_group([.046,.032,.044],front_centers)
+    parts.append(_component_mesh(aid,"48x_FRONT_JACKS",front,[28,34,40,255],"front_ports","patch_panel",{
+        "port_count":48,"connector":"8P8C/RJ45","label_scheme":"PORT-01-48"
+    }))
+    rear=_box_group([.042,.032,.038],rear_centers)
+    parts.append(_component_mesh(aid,"REAR_TERMINATIONS",rear,[78,118,160,255],"rear_terminations","patch_panel",{
+        "termination_count":48,"medium":"Cat6A permanent link"
+    }))
+
+    label=trimesh.creation.box(extents=[1.48,.018,.025])
+    parts.append(_component_mesh(aid,"LABEL_STRIP",_place(label,[p[0],front_y-.030,p[2]+.115]),[225,225,218,255],"labeling","patch_panel",{
+        "label_scheme":"PORT-01-48"
+    }))
+
+    manager=_box_group([1.46,.15,.050],[
+        [p[0],front_y-.090,p[2]-.125],
+    ])
+    parts.append(_component_mesh(aid,"CABLE_MANAGEMENT",manager,[38,42,46,255],"cable_management","patch_panel",{
+        "role":"horizontal_patch_cord_management"
+    }))
+
+    _record_componentized_device(a,"patch_panel",parts)
+    return parts
+
 def physical_meshes_for_asset(a):
     p=positions.get(a["asset_id"])
     if not p:return []
@@ -1189,6 +1336,10 @@ def physical_meshes_for_asset(a):
     color=color_for_type(t)
     if t=="camera":
         return camera_component_meshes(a)
+    if t=="access_switch":
+        return access_switch_component_meshes(a)
+    if t=="patch_panel":
+        return patch_panel_component_meshes(a)
     if t in {"wireless_ap","fire_detector","environment_sensor"}:
         radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
         height=.14 if t=="wireless_ap" else .18
@@ -1220,7 +1371,7 @@ def physical_meshes_for_asset(a):
 for a in new_assets:
     if a["classification"]["registry_role"]=="capability_semantic": continue
     for component_id,mesh in physical_meshes_for_asset(a):
-        name=a["asset_id"] if component_id in {"BODY","HOUSING"} else f"{a['asset_id']}::PART::{component_id}"
+        name=a["asset_id"] if component_id in {"BODY","HOUSING","RACK_CHASSIS","RACK_FRAME"} else f"{a['asset_id']}::PART::{component_id}"
         scene.add_geometry(mesh,node_name=name,geom_name=name)
 
 cable_colors={
@@ -1330,6 +1481,11 @@ jacks=[a for a in new_assets if a["classification"]["asset_type"]=="data_jack"]
 outlets=[a for a in new_assets if a["classification"]["asset_type"]=="receptacle"]
 panelboards=[a for a in new_assets if a["classification"]["asset_type"]=="electrical_panel"]
 modeled_cameras=[a for a in new_assets if a["classification"]["asset_type"]=="camera"]
+modeled_access_switches=[a for a in new_assets if a["classification"]["asset_type"]=="access_switch"]
+modeled_patch_panels=[a for a in new_assets if a["classification"]["asset_type"]=="patch_panel"]
+camera_component_records=[x for x in device_component_records if x.get("archetype")=="camera"]
+access_switch_component_records=[x for x in device_component_records if x.get("archetype")=="access_switch"]
+patch_panel_component_records=[x for x in device_component_records if x.get("archetype")=="patch_panel"]
 
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
@@ -1372,15 +1528,35 @@ ck("BAS sensors use field bus and Class 2 power",all(
 ck("access readers use OSDP",all(any(c["to_asset_id"]==a["asset_id"] and c["cable_type"]=="OSDP-RS485-STP" for c in connections) for a in new_assets if a["classification"]["asset_type"]=="access_reader"),"")
 ck("logical services are non-physical",all(a["physical_representation"]["physical_status"]=="not_applicable" for a in new_assets if a["classification"]["asset_type"] in {"logical_service","vlan","ssid"}),"")
 ck("LIVE control remains disabled",not any(a["security"].get("live_control_allowed") for a in assets),"")
-ck("all security cameras use Step 4C component assemblies",len(device_component_records)==len(modeled_cameras),f"{len(device_component_records)}/{len(modeled_cameras)}")
+ck("all security cameras use Step 4C component assemblies",len(camera_component_records)==len(modeled_cameras),f"{len(camera_component_records)}/{len(modeled_cameras)}")
 ck("camera assemblies expose functional components",all(
     {x["component_id"] for x in record["components"]}.issuperset({"MOUNT_PLATE","BRACKET_ARM","HOUSING","LENS_BARREL","LENS_GLASS","IR_LED_RING","STATUS_LED","RJ45_POE_PORT","CABLE_ENTRY"})
-    for record in device_component_records
+    for record in camera_component_records
 ), "")
 ck("camera archetype exposes PoE/Ethernet port and state rules",all(
     any("PoE" in port.get("services",[]) and "Ethernet/IP" in port.get("services",[]) for port in record.get("ports",[]))
     and "unavailable" in record.get("state_rules",{})
-    for record in device_component_records
+    for record in camera_component_records
+), "")
+ck("all access switches use Step 4C component assemblies",len(access_switch_component_records)==len(modeled_access_switches),f"{len(access_switch_component_records)}/{len(modeled_access_switches)}")
+ck("access switch assemblies expose chassis, ports, uplinks, power, cooling, indicators, and labels",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"RACK_CHASSIS","RJ45_PORT_BANK","UPLINK_CAGES","POWER_INPUT","FAN_BANK","STATUS_LEDS","PORT_LABELS"})
+    and record.get("maturity")=="componentized"
+    for record in access_switch_component_records
+), "")
+ck("access switch archetype exposes 48 access ports and dual uplinks",all(
+    {"48x_RJ45_POE","2x_UPLINK"}.issubset({p.get("id") for p in record.get("ports",[])})
+    for record in access_switch_component_records
+), "")
+ck("all patch panels use Step 4C component assemblies",len(patch_panel_component_records)==len(modeled_patch_panels),f"{len(patch_panel_component_records)}/{len(modeled_patch_panels)}")
+ck("patch panel assemblies expose front jacks, rear terminations, labels, and cable management",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"RACK_FRAME","48x_FRONT_JACKS","REAR_TERMINATIONS","LABEL_STRIP","CABLE_MANAGEMENT"})
+    and record.get("maturity")=="componentized"
+    for record in patch_panel_component_records
+), "")
+ck("patch panel archetype exposes front and rear 48-port terminations",all(
+    {"48x_RJ45_FRONT","48x_REAR_TERMINATION"}.issubset({p.get("id") for p in record.get("ports",[])})
+    for record in patch_panel_component_records
 ), "")
 ck("all physical Step 4B assets have spatial positions",all(
     a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
@@ -1395,7 +1571,8 @@ report={
  "step4b_new_assets":len(new_assets),"step4b_new_relationships":len(new_relationships),"physical_connections_total":len(connections),
  "routed_connections_total":len(routed),"port_complete_connections_total":len(port_complete),
  "data_jacks_total":len(jacks),"receptacles_total":len(outlets),"electrical_panelboards_total":len(panelboards),
- "step4c_componentized_devices_total":len(device_component_records),"step4c_componentized_camera_total":len(modeled_cameras),
+ "step4c_componentized_devices_total":len(device_component_records),"step4c_componentized_camera_total":len(camera_component_records),
+ "step4c_componentized_access_switch_total":len(access_switch_component_records),"step4c_componentized_patch_panel_total":len(patch_panel_component_records),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -1409,7 +1586,8 @@ print(" physical connections:",len(connections))
 print(" routed connections:",len(routed))
 print(" port-complete connections:",len(port_complete))
 print(" data jacks:",len(jacks),"receptacles:",len(outlets),"panelboards:",len(panelboards))
-print(" Step 4C componentized cameras:",len(device_component_records))
+print(" Step 4C componentized devices:",len(device_component_records))
+print("  cameras:",len(camera_component_records),"access switches:",len(access_switch_component_records),"patch panels:",len(patch_panel_component_records))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))
