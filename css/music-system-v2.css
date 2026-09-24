@@ -173,6 +173,11 @@ body.music-v2 a{color:inherit}
   text-decoration:none;background:#fff;color:#09090b;
   font-size:11px;font-weight:820
 }
+/* The room-wide reset `body.music-v2 a{color:inherit}` is (0,1,2) and outranks
+   `.music-launch a` at (0,1,1), so this pill inherited the page's cream text
+   onto its own white fill and the label vanished — a button you could only
+   find by guessing where it was. Scoped to the one rule it has to beat. */
+body.music-v2 .music-launch a{color:#09090b}
 
 /* Section rhythm matches Apple Music's vertically stacked shelves. */
 .music-v2 .ls__sec{margin:0 0 28px}
