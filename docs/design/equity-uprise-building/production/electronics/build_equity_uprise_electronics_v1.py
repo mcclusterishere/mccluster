@@ -1224,6 +1224,12 @@ PRIMARY_COMPONENT_BY_ARCHETYPE={
     "electrical_panel":"ENCLOSURE",
     "bas_controller":"ENCLOSURE",
     "environment_sensor":"HOUSING",
+    "av_microphone":"BODY",
+    "speaker":"GRILLE_OR_CABINET",
+    "fire_detector":"BASE",
+    "fire_notification":"HOUSING",
+    "fire_alarm_control_panel":"ENCLOSURE",
+    "fire_alarm_read_only_gateway":"ENCLOSURE",
 }
 def _is_primary_component(archetype_key,component_id):
     return component_id==PRIMARY_COMPONENT_BY_ARCHETYPE.get(archetype_key)
@@ -2013,6 +2019,165 @@ def environment_sensor_component_meshes(a):
     _record_componentized_device(a,"environment_sensor",parts)
     return parts
 
+
+def av_microphone_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    body=trimesh.creation.cylinder(radius=.18,height=.22,sections=16)
+    parts.append(_component_mesh(aid,"BODY",_place(body,p),[52,56,62,255],"microphone_body","av_microphone"))
+
+    capsules=_sphere_group(.026,[
+        [p[0]-.07,p[1],p[2]-.125],
+        [p[0],p[1]-.07,p[2]-.125],
+        [p[0]+.07,p[1],p[2]-.125],
+        [p[0],p[1]+.07,p[2]-.125],
+    ])
+    parts.append(_component_mesh(aid,"CAPSULE_OR_ARRAY",capsules,[28,32,36,255],"microphone_array","av_microphone",{"capsules":4}))
+
+    led=trimesh.creation.icosphere(subdivisions=1,radius=.018)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,[p[0],p[1]-.14,p[2]-.09]),[55,215,105,255],"indicator","av_microphone",{"state_driven":True}))
+
+    rj45=trimesh.creation.box(extents=[.11,.075,.04])
+    parts.append(_component_mesh(aid,"RJ45_POE_PORT",_place(rj45,[p[0],p[1]+.10,p[2]+.13]),[28,34,40,255],"network_power_port","av_microphone",{"services":["Ethernet/IP","PoE","network audio"]}))
+
+    mount=trimesh.creation.cylinder(radius=.12,height=.04,sections=12)
+    parts.append(_component_mesh(aid,"MOUNT",_place(mount,[p[0],p[1],p[2]+.15]),[110,114,118,255],"mounting_hardware","av_microphone"))
+
+    _record_componentized_device(a,"av_microphone",parts)
+    return parts
+
+def speaker_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    grille=trimesh.creation.cylinder(radius=.32,height=.18,sections=18)
+    parts.append(_component_mesh(aid,"GRILLE_OR_CABINET",_place(grille,p),[215,215,208,255],"speaker_enclosure","speaker"))
+
+    driver=trimesh.creation.cylinder(radius=.22,height=.08,sections=16)
+    parts.append(_component_mesh(aid,"DRIVER",_place(driver,[p[0],p[1],p[2]-.13]),[35,38,42,255],"speaker_driver","speaker"))
+
+    mount=trimesh.creation.cylinder(radius=.26,height=.035,sections=16)
+    parts.append(_component_mesh(aid,"MOUNT",_place(mount,[p[0],p[1],p[2]+.12]),[125,128,132,255],"mounting_hardware","speaker"))
+
+    terminals=_box_group([.07,.04,.05],[
+        [p[0]-.05,p[1]+.20,p[2]+.07],
+        [p[0]+.05,p[1]+.20,p[2]+.07],
+    ])
+    parts.append(_component_mesh(aid,"SPEAKER_TERMINALS",terminals,[80,55,40,255],"speaker_pair_terminals","speaker",{"port_id":"SPEAKER_PAIR"}))
+
+    _record_componentized_device(a,"speaker",parts)
+    return parts
+
+def fire_detector_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    base=trimesh.creation.cylinder(radius=.21,height=.05,sections=18)
+    parts.append(_component_mesh(aid,"BASE",_place(base,[p[0],p[1],p[2]+.07]),[215,215,208,255],"detector_base","fire_detector"))
+
+    chamber=trimesh.creation.cylinder(radius=.17,height=.13,sections=18)
+    parts.append(_component_mesh(aid,"SENSING_CHAMBER",_place(chamber,[p[0],p[1],p[2]-.03]),[235,235,228,255],"sensing_chamber","fire_detector",{"training_representation":True}))
+
+    led=trimesh.creation.icosphere(subdivisions=1,radius=.016)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,[p[0],p[1]-.16,p[2]-.07]),[210,45,45,255],"indicator","fire_detector",{"state_driven":True}))
+
+    terminals=_box_group([.065,.04,.045],[
+        [p[0]-.045,p[1]+.14,p[2]+.075],
+        [p[0]+.045,p[1]+.14,p[2]+.075],
+    ])
+    parts.append(_component_mesh(aid,"SLC_TERMINALS",terminals,[90,60,45,255],"signaling_line_terminals","fire_detector",{"port_id":"FIRE_ALARM_SLC"}))
+
+    _record_componentized_device(a,"fire_detector",parts)
+    return parts
+
+def fire_notification_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.11
+    rear_y=p[1]+.11
+
+    housing=trimesh.creation.box(extents=[.42,.18,.48])
+    parts.append(_component_mesh(aid,"HOUSING",_place(housing,p),[205,45,45,255],"notification_housing","fire_notification"))
+
+    strobe=trimesh.creation.box(extents=[.24,.04,.12])
+    parts.append(_component_mesh(aid,"STROBE",_place(strobe,[p[0],front_y-.025,p[2]+.12]),[235,235,220,255],"visual_notification","fire_notification",{"training_only":True}))
+
+    sounder=trimesh.creation.cylinder(radius=.105,height=.035,sections=14)
+    parts.append(_component_mesh(aid,"SOUNDER",_place(sounder,[p[0],front_y-.03,p[2]-.10],[0,1,0]),[90,20,20,255],"audible_notification","fire_notification",{"training_only":True}))
+
+    terminals=_box_group([.065,.04,.045],[
+        [p[0]-.045,rear_y+.018,p[2]-.14],
+        [p[0]+.045,rear_y+.018,p[2]-.14],
+    ])
+    parts.append(_component_mesh(aid,"NAC_TERMINALS",terminals,[90,60,45,255],"notification_circuit_terminals","fire_notification",{"port_id":"FIRE_ALARM_NAC"}))
+
+    _record_componentized_device(a,"fire_notification",parts)
+    return parts
+
+def fire_alarm_control_panel_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.24
+    rear_y=p[1]+.24
+
+    enclosure=trimesh.creation.box(extents=[1.28,.42,2.50])
+    parts.append(_component_mesh(aid,"ENCLOSURE",_place(enclosure,p),[135,38,38,255],"panel_enclosure","fire_alarm_control_panel"))
+
+    display=trimesh.creation.box(extents=[.58,.035,.24])
+    parts.append(_component_mesh(aid,"DISPLAY",_place(display,[p[0],front_y-.04,p[2]+.68]),[24,62,70,255],"read_only_training_display","fire_alarm_control_panel",{"training_only":True}))
+
+    keypad_centers=[]
+    for row in range(3):
+        for col in range(4):
+            keypad_centers.append([p[0]-.18+col*.12,front_y-.045,p[2]+.30-row*.10])
+    keypad=_box_group([.07,.025,.055],keypad_centers)
+    parts.append(_component_mesh(aid,"KEYPAD",keypad,[80,82,86,255],"training_panel_input","fire_alarm_control_panel",{"training_only":True}))
+
+    leds=_sphere_group(.022,[
+        [p[0]-.34,front_y-.05,p[2]+.50],
+        [p[0]-.26,front_y-.05,p[2]+.50],
+        [p[0]-.18,front_y-.05,p[2]+.50],
+    ])
+    parts.append(_component_mesh(aid,"STATUS_LEDS",leds,[220,80,55,255],"indicators","fire_alarm_control_panel",{"state_driven":True}))
+
+    slc=_box_group([.08,.035,.06],[[p[0]-.18+i*.10,rear_y+.02,p[2]-.50] for i in range(4)])
+    parts.append(_component_mesh(aid,"SLC_TERMINALS",slc,[90,60,45,255],"signaling_line_terminals","fire_alarm_control_panel",{"port_id":"SLC"}))
+
+    nac=_box_group([.08,.035,.06],[[p[0]-.18+i*.10,rear_y+.02,p[2]-.67] for i in range(4)])
+    parts.append(_component_mesh(aid,"NAC_TERMINALS",nac,[110,65,45,255],"notification_circuit_terminals","fire_alarm_control_panel",{"port_id":"NAC"}))
+
+    power=trimesh.creation.box(extents=[.64,.18,.42])
+    parts.append(_component_mesh(aid,"POWER_SECTION",_place(power,[p[0],p[1]+.05,p[2]-.92]),[45,48,52,255],"panel_power_section","fire_alarm_control_panel",{"port_id":"AC_IN","training_representation":True}))
+
+    _record_componentized_device(a,"fire_alarm_control_panel",parts)
+    return parts
+
+def fire_alarm_read_only_gateway_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.22
+    rear_y=p[1]+.22
+
+    enclosure=trimesh.creation.box(extents=[1.10,.38,1.72])
+    parts.append(_component_mesh(aid,"ENCLOSURE",_place(enclosure,p),[82,86,92,255],"gateway_enclosure","fire_alarm_read_only_gateway"))
+
+    fire_if=trimesh.creation.box(extents=[.30,.035,.12])
+    parts.append(_component_mesh(aid,"FIRE_INTERFACE",_place(fire_if,[p[0]-.22,front_y-.035,p[2]+.20]),[120,55,45,255],"read_only_fire_interface","fire_alarm_read_only_gateway",{"port_id":"FIRE_INTERFACE","read_only":True}))
+
+    rj45=trimesh.creation.box(extents=[.12,.035,.075])
+    parts.append(_component_mesh(aid,"RJ45_PORT",_place(rj45,[p[0]+.18,front_y-.035,p[2]+.20]),[28,34,40,255],"read_only_network_port","fire_alarm_read_only_gateway",{"port_id":"RJ45_ETH","read_only":True}))
+
+    power=trimesh.creation.box(extents=[.15,.035,.10])
+    parts.append(_component_mesh(aid,"POWER_INPUT",_place(power,[p[0]+.28,rear_y+.018,p[2]-.48]),[28,30,34,255],"power_input","fire_alarm_read_only_gateway",{"port_id":"AC_IN"}))
+
+    leds=_sphere_group(.021,[
+        [p[0]-.20,front_y-.04,p[2]+.52],
+        [p[0]-.12,front_y-.04,p[2]+.52],
+        [p[0]-.04,front_y-.04,p[2]+.52],
+    ])
+    parts.append(_component_mesh(aid,"STATUS_LEDS",leds,[55,190,105,255],"indicators","fire_alarm_read_only_gateway",{"state_driven":True}))
+
+    _record_componentized_device(a,"fire_alarm_read_only_gateway",parts)
+    return parts
+
 def physical_meshes_for_asset(a):
     p=positions.get(a["asset_id"])
     if not p:return []
@@ -2058,6 +2223,18 @@ def physical_meshes_for_asset(a):
         return bas_controller_component_meshes(a)
     if t=="environment_sensor":
         return environment_sensor_component_meshes(a)
+    if t=="av_microphone":
+        return av_microphone_component_meshes(a)
+    if t=="speaker":
+        return speaker_component_meshes(a)
+    if t=="fire_detector":
+        return fire_detector_component_meshes(a)
+    if t=="fire_notification":
+        return fire_notification_component_meshes(a)
+    if t=="fire_alarm_control_panel":
+        return fire_alarm_control_panel_component_meshes(a)
+    if t=="fire_alarm_read_only_gateway":
+        return fire_alarm_read_only_gateway_component_meshes(a)
     if t in {"wireless_ap","fire_detector","environment_sensor"}:
         radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
         height=.14 if t=="wireless_ap" else .18
@@ -2238,6 +2415,18 @@ modeled_environment_sensors=[a for a in new_assets if a["classification"]["asset
 electrical_panel_component_records=[x for x in device_component_records if x.get("archetype")=="electrical_panel"]
 bas_controller_component_records=[x for x in device_component_records if x.get("archetype")=="bas_controller"]
 environment_sensor_component_records=[x for x in device_component_records if x.get("archetype")=="environment_sensor"]
+modeled_av_microphones=[a for a in new_assets if a["classification"]["asset_type"]=="av_microphone"]
+modeled_speakers=[a for a in new_assets if a["classification"]["asset_type"]=="speaker"]
+modeled_fire_detectors=[a for a in new_assets if a["classification"]["asset_type"]=="fire_detector"]
+modeled_fire_notifications=[a for a in new_assets if a["classification"]["asset_type"]=="fire_notification"]
+modeled_facps=[a for a in new_assets if a["classification"]["asset_type"]=="fire_alarm_control_panel"]
+modeled_fire_gateways=[a for a in new_assets if a["classification"]["asset_type"]=="fire_alarm_read_only_gateway"]
+av_microphone_component_records=[x for x in device_component_records if x.get("archetype")=="av_microphone"]
+speaker_component_records=[x for x in device_component_records if x.get("archetype")=="speaker"]
+fire_detector_component_records=[x for x in device_component_records if x.get("archetype")=="fire_detector"]
+fire_notification_component_records=[x for x in device_component_records if x.get("archetype")=="fire_notification"]
+facp_component_records=[x for x in device_component_records if x.get("archetype")=="fire_alarm_control_panel"]
+fire_gateway_component_records=[x for x in device_component_records if x.get("archetype")=="fire_alarm_read_only_gateway"]
 
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
@@ -2412,6 +2601,42 @@ ck("environment sensor assemblies expose housing, vents, status, BACnet, and Cla
     and record.get("maturity")=="componentized"
     for record in environment_sensor_component_records
 ), "")
+ck("all AV microphones use Step 4C component assemblies",len(av_microphone_component_records)==len(modeled_av_microphones),f"{len(av_microphone_component_records)}/{len(modeled_av_microphones)}")
+ck("AV microphone assemblies expose body, array, status, PoE, and mount",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"BODY","CAPSULE_OR_ARRAY","STATUS_LED","RJ45_POE_PORT","MOUNT"})
+    and record.get("maturity")=="componentized"
+    for record in av_microphone_component_records
+), "")
+ck("all speakers use Step 4C component assemblies",len(speaker_component_records)==len(modeled_speakers),f"{len(speaker_component_records)}/{len(modeled_speakers)}")
+ck("speaker assemblies expose enclosure, driver, mount, and speaker terminals",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"GRILLE_OR_CABINET","DRIVER","MOUNT","SPEAKER_TERMINALS"})
+    and record.get("maturity")=="componentized"
+    for record in speaker_component_records
+), "")
+ck("all fire detectors use Step 4C component assemblies",len(fire_detector_component_records)==len(modeled_fire_detectors),f"{len(fire_detector_component_records)}/{len(modeled_fire_detectors)}")
+ck("fire detector assemblies expose base, chamber, status, and SLC terminals",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"BASE","SENSING_CHAMBER","STATUS_LED","SLC_TERMINALS"})
+    and record.get("maturity")=="componentized"
+    for record in fire_detector_component_records
+), "")
+ck("all fire notification appliances use Step 4C component assemblies",len(fire_notification_component_records)==len(modeled_fire_notifications),f"{len(fire_notification_component_records)}/{len(modeled_fire_notifications)}")
+ck("fire notification assemblies expose housing, strobe, sounder, and NAC terminals",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"HOUSING","STROBE","SOUNDER","NAC_TERMINALS"})
+    and record.get("maturity")=="componentized"
+    for record in fire_notification_component_records
+), "")
+ck("fire alarm control panel uses Step 4C component assembly",len(facp_component_records)==len(modeled_facps),f"{len(facp_component_records)}/{len(modeled_facps)}")
+ck("fire alarm control panel exposes enclosure, display, keypad, indicators, SLC, NAC, and power",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"ENCLOSURE","DISPLAY","KEYPAD","STATUS_LEDS","SLC_TERMINALS","NAC_TERMINALS","POWER_SECTION"})
+    and record.get("maturity")=="componentized"
+    for record in facp_component_records
+), "")
+ck("fire alarm read-only gateway uses Step 4C component assembly",len(fire_gateway_component_records)==len(modeled_fire_gateways),f"{len(fire_gateway_component_records)}/{len(modeled_fire_gateways)}")
+ck("fire gateway exposes enclosure, fire interface, network, power, and indicators",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"ENCLOSURE","FIRE_INTERFACE","RJ45_PORT","POWER_INPUT","STATUS_LEDS"})
+    and record.get("maturity")=="componentized"
+    for record in fire_gateway_component_records
+), "")
 ck("all physical Step 4B assets have spatial positions",all(
     a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
 ), "")
@@ -2438,6 +2663,9 @@ report={
  "step4c_componentized_access_controller_total":len(access_controller_component_records),
  "step4c_componentized_electrical_panel_total":len(electrical_panel_component_records),"step4c_componentized_bas_controller_total":len(bas_controller_component_records),
  "step4c_componentized_environment_sensor_total":len(environment_sensor_component_records),
+ "step4c_componentized_av_microphone_total":len(av_microphone_component_records),"step4c_componentized_speaker_total":len(speaker_component_records),
+ "step4c_componentized_fire_detector_total":len(fire_detector_component_records),"step4c_componentized_fire_notification_total":len(fire_notification_component_records),
+ "step4c_componentized_fire_alarm_control_panel_total":len(facp_component_records),"step4c_componentized_fire_alarm_read_only_gateway_total":len(fire_gateway_component_records),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -2458,6 +2686,8 @@ print("  data jacks:",len(data_jack_component_records),"receptacles:",len(recept
 print("  APs:",len(wireless_ap_component_records),"workstations:",len(workstation_component_records),"monitors:",len(monitor_component_records),"IP phones:",len(ip_phone_component_records),"MFPs:",len(mfp_component_records))
 print("  access readers:",len(access_reader_component_records),"intercoms:",len(intercom_component_records),"access controllers:",len(access_controller_component_records))
 print("  electrical panels:",len(electrical_panel_component_records),"BAS controllers:",len(bas_controller_component_records),"environment sensors:",len(environment_sensor_component_records))
+print("  AV microphones:",len(av_microphone_component_records),"speakers:",len(speaker_component_records))
+print("  fire detectors:",len(fire_detector_component_records),"notification appliances:",len(fire_notification_component_records),"FACP:",len(facp_component_records),"read-only gateways:",len(fire_gateway_component_records))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))

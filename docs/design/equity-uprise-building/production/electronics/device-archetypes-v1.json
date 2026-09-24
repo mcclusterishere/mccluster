@@ -1477,8 +1477,8 @@
       "october_demo_required": true
     },
     "av_microphone": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "av_media",
       "display_name": "Network AV Microphone",
@@ -1503,7 +1503,60 @@
         "trace_network_and_poe",
         "inspect_audio_state"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "ceiling_or_table_mounted_network_av_microphone",
+      "components": [
+        {
+          "id": "BODY",
+          "role": "microphone_body",
+          "inspectable": true
+        },
+        {
+          "id": "CAPSULE_OR_ARRAY",
+          "role": "microphone_array",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_POE_PORT",
+          "role": "network_power_port",
+          "inspectable": true
+        },
+        {
+          "id": "MOUNT",
+          "role": "mounting_hardware",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_input_state",
+        "network_state",
+        "poe_state",
+        "audio_zone_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault",
+        "audio_path_degraded"
+      ]
     },
     "backup_appliance": {
       "maturity": "placeholder",
@@ -1960,8 +2013,8 @@
       ]
     },
     "fire_alarm_control_panel": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "building_ot_life_safety",
       "display_name": "Fire Alarm Control Panel",
@@ -1993,11 +2046,101 @@
         "trace_power",
         "open_training_panel"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "secured_wall_mounted_fire_alarm_control_panel",
+      "components": [
+        {
+          "id": "ENCLOSURE",
+          "role": "panel_enclosure",
+          "inspectable": true
+        },
+        {
+          "id": "DISPLAY",
+          "role": "read_only_training_display",
+          "inspectable": true
+        },
+        {
+          "id": "KEYPAD",
+          "role": "training_panel_input",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LEDS",
+          "role": "indicators",
+          "inspectable": true
+        },
+        {
+          "id": "SLC_TERMINALS",
+          "role": "signaling_line_terminals",
+          "inspectable": true
+        },
+        {
+          "id": "NAC_TERMINALS",
+          "role": "notification_circuit_terminals",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_SECTION",
+          "role": "panel_power_section",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "modeled FACP AC input",
+          "medium": "120VAC",
+          "services": [
+            "panel_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "SLC",
+          "connector": "SLC terminal bank",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "addressable_fire_devices"
+          ],
+          "required": true
+        },
+        {
+          "id": "NAC",
+          "connector": "NAC terminal bank",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliances"
+          ],
+          "required": true
+        },
+        {
+          "id": "READ_ONLY_GATEWAY_LINK",
+          "connector": "modeled read-only interface",
+          "medium": "training/read-only",
+          "services": [
+            "read_only_gateway"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "panel_status_read_only",
+        "slc_state",
+        "nac_state",
+        "training_alarm_state",
+        "training_panel_launch_point"
+      ],
+      "planned_behaviors": [
+        "training_alarm",
+        "slc_fault",
+        "nac_fault",
+        "ac_power_loss",
+        "panel_trouble"
+      ]
     },
     "fire_alarm_read_only_gateway": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "building_ot_life_safety",
       "display_name": "Fire Alarm Read-Only Gateway",
@@ -2024,11 +2167,79 @@
         "trace_fire_interface",
         "trace_read_only_network_path"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "secured_read_only_fire_alarm_gateway",
+      "components": [
+        {
+          "id": "ENCLOSURE",
+          "role": "gateway_enclosure",
+          "inspectable": true
+        },
+        {
+          "id": "FIRE_INTERFACE",
+          "role": "read_only_fire_interface",
+          "inspectable": true
+        },
+        {
+          "id": "RJ45_PORT",
+          "role": "read_only_network_port",
+          "inspectable": true
+        },
+        {
+          "id": "POWER_INPUT",
+          "role": "power_input",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LEDS",
+          "role": "indicators",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_INTERFACE",
+          "connector": "read-only fire interface",
+          "medium": "training/read-only",
+          "services": [
+            "fire_alarm_status_read_only"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "read_only_status_network"
+          ],
+          "required": true
+        },
+        {
+          "id": "AC_IN",
+          "connector": "modeled gateway AC input",
+          "medium": "120VAC",
+          "services": [
+            "gateway_power"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "gateway_state",
+        "read_only_fire_state",
+        "network_state"
+      ],
+      "planned_behaviors": [
+        "gateway_unavailable",
+        "fire_interface_loss",
+        "network_link_loss",
+        "power_loss"
+      ]
     },
     "fire_detector": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "building_ot_life_safety",
       "display_name": "Addressable Fire Detector",
@@ -2052,11 +2263,56 @@
         "trace_slc",
         "inspect_training_alarm_state"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "ceiling_mounted_addressable_fire_detector",
+      "components": [
+        {
+          "id": "BASE",
+          "role": "detector_base",
+          "inspectable": true
+        },
+        {
+          "id": "SENSING_CHAMBER",
+          "role": "sensing_chamber",
+          "inspectable": true
+        },
+        {
+          "id": "STATUS_LED",
+          "role": "indicator",
+          "inspectable": true
+        },
+        {
+          "id": "SLC_TERMINALS",
+          "role": "signaling_line_terminals",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_SLC",
+          "connector": "addressable SLC terminals",
+          "medium": "FIRE-ALARM-SLC",
+          "services": [
+            "fire_alarm_signaling_line"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "detector_state",
+        "slc_state",
+        "training_alarm_state"
+      ],
+      "planned_behaviors": [
+        "slc_open",
+        "detector_fault",
+        "training_alarm",
+        "device_unavailable"
+      ]
     },
     "fire_notification": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "building_ot_life_safety",
       "display_name": "Fire Notification Appliance",
@@ -2080,7 +2336,52 @@
         "trace_nac",
         "inspect_training_notification_state"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "wall_or_ceiling_fire_notification_appliance",
+      "components": [
+        {
+          "id": "HOUSING",
+          "role": "notification_housing",
+          "inspectable": true
+        },
+        {
+          "id": "STROBE",
+          "role": "visual_notification",
+          "inspectable": true
+        },
+        {
+          "id": "SOUNDER",
+          "role": "audible_notification",
+          "inspectable": true
+        },
+        {
+          "id": "NAC_TERMINALS",
+          "role": "notification_circuit_terminals",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "FIRE_ALARM_NAC",
+          "connector": "NAC terminals",
+          "medium": "FIRE-ALARM-NAC",
+          "services": [
+            "notification_appliance_circuit"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "notification_state",
+        "nac_state",
+        "training_notification_state"
+      ],
+      "planned_behaviors": [
+        "nac_open",
+        "strobe_fault",
+        "sounder_fault",
+        "device_unavailable"
+      ]
     },
     "firewall": {
       "maturity": "placeholder",
@@ -2442,8 +2743,8 @@
       ]
     },
     "speaker": {
-      "maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "family": "av_media",
       "display_name": "Installed AV Speaker",
@@ -2467,7 +2768,50 @@
         "trace_speaker_pair",
         "inspect_audio_zone"
       ],
-      "october_demo_required": true
+      "october_demo_required": true,
+      "installation": "ceiling_or_wall_installed_av_speaker",
+      "components": [
+        {
+          "id": "GRILLE_OR_CABINET",
+          "role": "speaker_enclosure",
+          "inspectable": true
+        },
+        {
+          "id": "DRIVER",
+          "role": "speaker_driver",
+          "inspectable": true
+        },
+        {
+          "id": "MOUNT",
+          "role": "mounting_hardware",
+          "inspectable": true
+        },
+        {
+          "id": "SPEAKER_TERMINALS",
+          "role": "speaker_pair_terminals",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker pair terminals",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_zone_state",
+        "speaker_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "audio_zone_unavailable"
+      ]
     },
     "virtualization_host": {
       "maturity": "placeholder",
