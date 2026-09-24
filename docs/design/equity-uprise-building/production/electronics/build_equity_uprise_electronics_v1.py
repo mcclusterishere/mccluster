@@ -1208,7 +1208,7 @@ def _cylinder_group(radius,height,centers,direction):
 
 def _record_componentized_device(a,archetype_key,parts):
     aid=a["asset_id"]; archetype=device_archetypes["archetypes"][archetype_key]
-    primary={"BODY","HOUSING","RACK_CHASSIS","RACK_FRAME"}
+    primary={"BODY","HOUSING","RACK_CHASSIS","RACK_FRAME","RADOME_HOUSING","CHASSIS","DISPLAY_PANEL","BASE"}
     record={
         "asset_id":aid,
         "label":a["label"],
@@ -1544,6 +1544,215 @@ def wap_spare_jack_component_meshes(a):
     _record_componentized_device(a,"wap_spare_jack",parts)
     return parts
 
+
+def wireless_ap_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+
+    mount=trimesh.creation.cylinder(radius=.31,height=.035,sections=16)
+    parts.append(_component_mesh(aid,"MOUNT",_place(mount,[p[0],p[1],p[2]+.055]),[160,165,170,255],"ceiling_mount","wireless_ap"))
+
+    housing=trimesh.creation.cylinder(radius=.46,height=.15,sections=20)
+    parts.append(_component_mesh(aid,"RADOME_HOUSING",_place(housing,[p[0],p[1],p[2]-.035]),[238,238,232,255],"radio_enclosure","wireless_ap",{
+        "indoor_radio_enclosure":True
+    }))
+
+    led=trimesh.creation.icosphere(subdivisions=1,radius=.030)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,[p[0],p[1]-.39,p[2]-.105]),[50,210,105,255],"indicator","wireless_ap",{
+        "state_driven":True
+    }))
+
+    rj45=trimesh.creation.box(extents=[.13,.08,.045])
+    parts.append(_component_mesh(aid,"RJ45_POE_PORT",_place(rj45,[p[0],p[1]+.25,p[2]+.055]),[30,34,40,255],"network_power_port","wireless_ap",{
+        "connector":"8P8C/RJ45","services":["Ethernet/IP","PoE"]
+    }))
+
+    entry=trimesh.creation.cylinder(radius=.055,height=.055,sections=12)
+    parts.append(_component_mesh(aid,"CABLE_ENTRY",_place(entry,[p[0],p[1]+.35,p[2]+.055]),[60,64,70,255],"cable_entry","wireless_ap",{
+        "medium":"Cat6A"
+    }))
+
+    _record_componentized_device(a,"wireless_ap",parts)
+    return parts
+
+def workstation_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.58
+    rear_y=p[1]+.58
+
+    chassis=trimesh.creation.box(extents=[.76,1.12,1.62])
+    parts.append(_component_mesh(aid,"CHASSIS",_place(chassis,p),[52,56,62,255],"computer_chassis","workstation"))
+
+    front_io=_box_group([.08,.035,.055],[
+        [p[0]-.16,front_y-.010,p[2]+.48],
+        [p[0]-.05,front_y-.010,p[2]+.48],
+        [p[0]+.06,front_y-.010,p[2]+.48],
+    ])
+    parts.append(_component_mesh(aid,"FRONT_IO",front_io,[25,28,32,255],"user_io","workstation",{
+        "modeled_ports":["USB","audio","service"]
+    }))
+
+    rear_io=trimesh.creation.box(extents=[.46,.035,.34])
+    parts.append(_component_mesh(aid,"REAR_IO",_place(rear_io,[p[0],rear_y+.010,p[2]+.22]),[36,40,46,255],"rear_io","workstation"))
+
+    psu=trimesh.creation.box(extents=[.30,.035,.25])
+    parts.append(_component_mesh(aid,"POWER_SUPPLY",_place(psu,[p[0]+.18,rear_y+.018,p[2]-.48]),[28,30,34,255],"power_input","workstation",{
+        "port_id":"AC_IN"
+    }))
+
+    nic=trimesh.creation.box(extents=[.115,.035,.085])
+    parts.append(_component_mesh(aid,"NIC_PORT",_place(nic,[p[0]-.18,rear_y+.025,p[2]+.24]),[28,34,40,255],"network_port","workstation",{
+        "port_id":"RJ45_ETH","connector":"8P8C/RJ45"
+    }))
+
+    display_ports=_box_group([.10,.035,.045],[
+        [p[0]-.02,rear_y+.025,p[2]+.12],
+        [p[0]+.12,rear_y+.025,p[2]+.12],
+    ])
+    parts.append(_component_mesh(aid,"DISPLAY_OUTPUTS",display_ports,[55,60,66,255],"video_outputs","workstation",{
+        "port_id":"DISPLAY_OUT","connector":"DisplayPort"
+    }))
+
+    status=trimesh.creation.icosphere(subdivisions=1,radius=.028)
+    parts.append(_component_mesh(aid,"STATUS_INDICATOR",_place(status,[p[0]+.22,front_y-.025,p[2]+.52]),[55,215,105,255],"indicator","workstation",{
+        "state_driven":True
+    }))
+
+    _record_componentized_device(a,"workstation",parts)
+    return parts
+
+def monitor_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.105
+    rear_y=p[1]+.105
+
+    panel=trimesh.creation.box(extents=[1.72,.12,.98])
+    parts.append(_component_mesh(aid,"DISPLAY_PANEL",_place(panel,[p[0],p[1],p[2]+.20]),[28,32,38,255],"display_surface","monitor"))
+
+    bezel=_box_group([1.82,.05,.055],[
+        [p[0],front_y-.020,p[2]+.705],
+        [p[0],front_y-.020,p[2]-.305],
+    ])
+    bezel_side=_box_group([.055,.05,.96],[
+        [p[0]-.88,front_y-.020,p[2]+.20],
+        [p[0]+.88,front_y-.020,p[2]+.20],
+    ])
+    bezel=trimesh.util.concatenate([bezel,bezel_side])
+    parts.append(_component_mesh(aid,"BEZEL",bezel,[18,20,24,255],"display_frame","monitor"))
+
+    stand=_box_group([.11,.32,.62],[
+        [p[0],p[1]+.08,p[2]-.58],
+    ])
+    base=trimesh.creation.box(extents=[.72,.48,.06])
+    base.apply_translation([p[0],p[1]+.08,p[2]-.89])
+    stand=trimesh.util.concatenate([stand,base])
+    parts.append(_component_mesh(aid,"STAND_OR_MOUNT",stand,[65,68,72,255],"support","monitor"))
+
+    power=trimesh.creation.box(extents=[.12,.035,.065])
+    parts.append(_component_mesh(aid,"POWER_INPUT",_place(power,[p[0]+.55,rear_y+.020,p[2]-.20]),[26,28,32,255],"power_port","monitor",{
+        "port_id":"AC_IN"
+    }))
+
+    video=trimesh.creation.box(extents=[.12,.035,.050])
+    parts.append(_component_mesh(aid,"VIDEO_INPUT",_place(video,[p[0]+.34,rear_y+.020,p[2]-.20]),[45,50,56,255],"video_port","monitor",{
+        "port_id":"DISPLAYPORT_IN","connector":"DisplayPort"
+    }))
+
+    led=trimesh.creation.icosphere(subdivisions=1,radius=.022)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,[p[0]+.78,front_y-.030,p[2]-.27]),[55,215,105,255],"indicator","monitor",{
+        "state_driven":True
+    }))
+
+    _record_componentized_device(a,"monitor",parts)
+    return parts
+
+def ip_phone_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.25
+    rear_y=p[1]+.25
+
+    base=trimesh.creation.box(extents=[.74,.48,.16])
+    parts.append(_component_mesh(aid,"BASE",_place(base,p),[42,46,52,255],"phone_base","ip_phone"))
+
+    handset=_box_group([.12,.44,.10],[
+        [p[0]-.27,p[1],p[2]+.16],
+    ])
+    earpieces=_box_group([.18,.12,.13],[
+        [p[0]-.27,p[1]-.17,p[2]+.17],
+        [p[0]-.27,p[1]+.17,p[2]+.17],
+    ])
+    handset=trimesh.util.concatenate([handset,earpieces])
+    parts.append(_component_mesh(aid,"HANDSET",handset,[28,30,34,255],"handset","ip_phone"))
+
+    keypad_centers=[]
+    for row in range(4):
+        for col in range(3):
+            keypad_centers.append([p[0]+.06+col*.09,front_y-.012,p[2]+.10-row*.065])
+    keypad=_box_group([.055,.025,.040],keypad_centers)
+    parts.append(_component_mesh(aid,"KEYPAD",keypad,[82,86,92,255],"input_keys","ip_phone",{"key_count":12}))
+
+    display=trimesh.creation.box(extents=[.28,.025,.12])
+    parts.append(_component_mesh(aid,"DISPLAY",_place(display,[p[0]+.14,front_y-.016,p[2]+.16]),[25,70,88,255],"phone_display","ip_phone",{
+        "simulated":True
+    }))
+
+    led=trimesh.creation.icosphere(subdivisions=1,radius=.018)
+    parts.append(_component_mesh(aid,"STATUS_LED",_place(led,[p[0]+.33,front_y-.020,p[2]+.17]),[55,215,105,255],"indicator","ip_phone",{
+        "state_driven":True
+    }))
+
+    lan=trimesh.creation.box(extents=[.11,.035,.065])
+    parts.append(_component_mesh(aid,"RJ45_LAN",_place(lan,[p[0]-.02,rear_y+.018,p[2]]),[28,34,40,255],"poe_network_port","ip_phone",{
+        "services":["Ethernet/IP","PoE","voice"]
+    }))
+
+    pc=trimesh.creation.box(extents=[.11,.035,.065])
+    parts.append(_component_mesh(aid,"RJ45_PC",_place(pc,[p[0]+.14,rear_y+.018,p[2]]),[28,34,40,255],"pc_passthrough_port","ip_phone",{
+        "services":["Ethernet passthrough"]
+    }))
+
+    _record_componentized_device(a,"ip_phone",parts)
+    return parts
+
+def mfp_component_meshes(a):
+    aid=a["asset_id"]; p=np.array(positions[aid],dtype=float)
+    parts=[]
+    front_y=p[1]-.73
+    rear_y=p[1]+.73
+
+    chassis=trimesh.creation.box(extents=[1.50,1.40,2.65])
+    parts.append(_component_mesh(aid,"CHASSIS",_place(chassis,p),[188,190,190,255],"printer_chassis","mfp"))
+
+    adf=trimesh.creation.box(extents=[1.18,.86,.22])
+    parts.append(_component_mesh(aid,"ADF",_place(adf,[p[0],p[1]+.08,p[2]+1.44]),[55,58,62,255],"automatic_document_feeder","mfp"))
+
+    scanner=trimesh.creation.box(extents=[1.24,1.05,.12])
+    parts.append(_component_mesh(aid,"SCANNER_BED",_place(scanner,[p[0],p[1],p[2]+1.23]),[36,42,48,255],"scanner_surface","mfp"))
+
+    tray=trimesh.creation.box(extents=[.95,.45,.11])
+    parts.append(_component_mesh(aid,"OUTPUT_TRAY",_place(tray,[p[0],front_y-.18,p[2]+.34]),[90,94,98,255],"paper_output","mfp"))
+
+    panel=trimesh.creation.box(extents=[.48,.10,.22])
+    parts.append(_component_mesh(aid,"CONTROL_PANEL",_place(panel,[p[0]+.42,front_y-.075,p[2]+.92]),[24,70,86,255],"operator_interface","mfp",{
+        "simulated":True
+    }))
+
+    rj45=trimesh.creation.box(extents=[.115,.035,.075])
+    parts.append(_component_mesh(aid,"RJ45_PORT",_place(rj45,[p[0]-.30,rear_y+.020,p[2]-.55]),[28,34,40,255],"network_port","mfp",{
+        "port_id":"RJ45_ETH"
+    }))
+
+    power=trimesh.creation.box(extents=[.15,.035,.10])
+    parts.append(_component_mesh(aid,"POWER_INLET",_place(power,[p[0]+.30,rear_y+.020,p[2]-.72]),[26,28,32,255],"power_port","mfp",{
+        "port_id":"AC_IN"
+    }))
+
+    _record_componentized_device(a,"mfp",parts)
+    return parts
+
 def physical_meshes_for_asset(a):
     p=positions.get(a["asset_id"])
     if not p:return []
@@ -1567,6 +1776,16 @@ def physical_meshes_for_asset(a):
         return receptacle_component_meshes(a)
     if t=="wap_spare_jack":
         return wap_spare_jack_component_meshes(a)
+    if t=="wireless_ap":
+        return wireless_ap_component_meshes(a)
+    if t=="workstation":
+        return workstation_component_meshes(a)
+    if t=="monitor":
+        return monitor_component_meshes(a)
+    if t=="ip_phone":
+        return ip_phone_component_meshes(a)
+    if t=="mfp":
+        return mfp_component_meshes(a)
     if t in {"wireless_ap","fire_detector","environment_sensor"}:
         radius=.48 if t=="wireless_ap" else (.20 if t=="fire_detector" else .16)
         height=.14 if t=="wireless_ap" else .18
@@ -1598,7 +1817,7 @@ def physical_meshes_for_asset(a):
 for a in new_assets:
     if a["classification"]["registry_role"]=="capability_semantic": continue
     for component_id,mesh in physical_meshes_for_asset(a):
-        name=a["asset_id"] if component_id in {"BODY","HOUSING","RACK_CHASSIS","RACK_FRAME"} else f"{a['asset_id']}::PART::{component_id}"
+        name=a["asset_id"] if component_id in {"BODY","HOUSING","RACK_CHASSIS","RACK_FRAME","RADOME_HOUSING","CHASSIS","DISPLAY_PANEL","BASE"} else f"{a['asset_id']}::PART::{component_id}"
         scene.add_geometry(mesh,node_name=name,geom_name=name)
 
 cable_colors={
@@ -1725,6 +1944,16 @@ modeled_wap_spare_jacks=[a for a in new_assets if a["classification"]["asset_typ
 data_jack_component_records=[x for x in device_component_records if x.get("archetype")=="data_jack"]
 receptacle_component_records=[x for x in device_component_records if x.get("archetype")=="receptacle"]
 wap_spare_jack_component_records=[x for x in device_component_records if x.get("archetype")=="wap_spare_jack"]
+modeled_wireless_aps=[a for a in new_assets if a["classification"]["asset_type"]=="wireless_ap"]
+modeled_workstations=[a for a in new_assets if a["classification"]["asset_type"]=="workstation"]
+modeled_monitors=[a for a in new_assets if a["classification"]["asset_type"]=="monitor"]
+modeled_ip_phones=[a for a in new_assets if a["classification"]["asset_type"]=="ip_phone"]
+modeled_mfps=[a for a in new_assets if a["classification"]["asset_type"]=="mfp"]
+wireless_ap_component_records=[x for x in device_component_records if x.get("archetype")=="wireless_ap"]
+workstation_component_records=[x for x in device_component_records if x.get("archetype")=="workstation"]
+monitor_component_records=[x for x in device_component_records if x.get("archetype")=="monitor"]
+ip_phone_component_records=[x for x in device_component_records if x.get("archetype")=="ip_phone"]
+mfp_component_records=[x for x in device_component_records if x.get("archetype")=="mfp"]
 
 ck("new asset IDs unique",len(new_assets)==len({a["asset_id"] for a in new_assets}),len(new_assets))
 ck("all physical connection endpoints exist",all(c["from_asset_id"] in allids and c["to_asset_id"] in allids for c in connections),"")
@@ -1833,6 +2062,36 @@ ck("reserved WAP jack assemblies expose ceiling jack, keystone, label, and rear 
     and record.get("maturity")=="componentized"
     for record in wap_spare_jack_component_records
 ), "")
+ck("all wireless APs use Step 4C component assemblies",len(wireless_ap_component_records)==len(modeled_wireless_aps),f"{len(wireless_ap_component_records)}/{len(modeled_wireless_aps)}")
+ck("wireless AP assemblies expose mount, radome, LED, PoE port, and cable entry",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"MOUNT","RADOME_HOUSING","STATUS_LED","RJ45_POE_PORT","CABLE_ENTRY"})
+    and record.get("maturity")=="componentized"
+    for record in wireless_ap_component_records
+), "")
+ck("all workstations use Step 4C component assemblies",len(workstation_component_records)==len(modeled_workstations),f"{len(workstation_component_records)}/{len(modeled_workstations)}")
+ck("workstation assemblies expose chassis, IO, power, NIC, display outputs, and status",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"CHASSIS","FRONT_IO","REAR_IO","POWER_SUPPLY","NIC_PORT","DISPLAY_OUTPUTS","STATUS_INDICATOR"})
+    and record.get("maturity")=="componentized"
+    for record in workstation_component_records
+), "")
+ck("all monitors use Step 4C component assemblies",len(monitor_component_records)==len(modeled_monitors),f"{len(monitor_component_records)}/{len(modeled_monitors)}")
+ck("monitor assemblies expose panel, bezel, support, power, video, and status",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"DISPLAY_PANEL","BEZEL","STAND_OR_MOUNT","POWER_INPUT","VIDEO_INPUT","STATUS_LED"})
+    and record.get("maturity")=="componentized"
+    for record in monitor_component_records
+), "")
+ck("all IP phones use Step 4C component assemblies",len(ip_phone_component_records)==len(modeled_ip_phones),f"{len(ip_phone_component_records)}/{len(modeled_ip_phones)}")
+ck("IP phone assemblies expose base, handset, keypad, display, status, LAN, and PC ports",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"BASE","HANDSET","KEYPAD","DISPLAY","STATUS_LED","RJ45_LAN","RJ45_PC"})
+    and record.get("maturity")=="componentized"
+    for record in ip_phone_component_records
+), "")
+ck("all MFPs use Step 4C component assemblies",len(mfp_component_records)==len(modeled_mfps),f"{len(mfp_component_records)}/{len(modeled_mfps)}")
+ck("MFP assemblies expose chassis, ADF, scanner, output, control, network, and power",all(
+    {x["component_id"] for x in record["components"]}.issuperset({"CHASSIS","ADF","SCANNER_BED","OUTPUT_TRAY","CONTROL_PANEL","RJ45_PORT","POWER_INLET"})
+    and record.get("maturity")=="componentized"
+    for record in mfp_component_records
+), "")
 ck("all physical Step 4B assets have spatial positions",all(
     a["asset_id"] in positions for a in new_assets if a["classification"]["registry_role"]!="capability_semantic"
 ), "")
@@ -1852,6 +2111,9 @@ report={
  "step4c_componentized_fiber_panel_total":len(fiber_panel_component_records),
  "step4c_componentized_data_jack_total":len(data_jack_component_records),"step4c_componentized_receptacle_total":len(receptacle_component_records),
  "step4c_componentized_wap_spare_jack_total":len(wap_spare_jack_component_records),
+ "step4c_componentized_wireless_ap_total":len(wireless_ap_component_records),"step4c_componentized_workstation_total":len(workstation_component_records),
+ "step4c_componentized_monitor_total":len(monitor_component_records),"step4c_componentized_ip_phone_total":len(ip_phone_component_records),
+ "step4c_componentized_mfp_total":len(mfp_component_records),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
  "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
@@ -1869,6 +2131,7 @@ print(" Step 4C componentized devices:",len(device_component_records))
 print("  cameras:",len(camera_component_records),"access switches:",len(access_switch_component_records),"patch panels:",len(patch_panel_component_records))
 print("  rack UPS:",len(rack_ups_component_records),"PDUs:",len(pdu_component_records),"fiber panels:",len(fiber_panel_component_records))
 print("  data jacks:",len(data_jack_component_records),"receptacles:",len(receptacle_component_records),"WAP spare jacks:",len(wap_spare_jack_component_records))
+print("  APs:",len(wireless_ap_component_records),"workstations:",len(workstation_component_records),"monitors:",len(monitor_component_records),"IP phones:",len(ip_phone_component_records),"MFPs:",len(mfp_component_records))
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))
