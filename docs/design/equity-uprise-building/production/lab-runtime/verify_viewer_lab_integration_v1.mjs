@@ -255,7 +255,7 @@ assert.ok(publicView.visuals.occupants.every((item) => item.synthetic_only === t
 const viewer = text("../../../../../equity-uprise-building-core-v2-3d.html");
 const viewerModuleMatch = viewer.match(/<script type="module">([\s\S]*?)<\/script>/);
 assert.ok(viewerModuleMatch, "canonical viewer must expose one module script");
-const viewerSyntaxSource = viewerModuleMatch[1].replace(/^import[^\n]*\n/, "");
+const viewerSyntaxSource = viewerModuleMatch[1].trimStart().replace(/^(?:import[^;\n]+;\s*)+/, "");
 assert.doesNotThrow(() => new Function(viewerSyntaxSource), "canonical viewer module must remain syntactically valid");
 for (const required of [
   'data-f="stack"', 'data-f="facade"', 'id="services"', 'id="wire"', 'deviceClockSolar',
