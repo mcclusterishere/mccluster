@@ -1029,17 +1029,32 @@ def feeder_route(conn,start,end,n,mode):
 
 def local_equipment_route(conn,start,end):
     if not start or not end:return []
-    # Keep patch/power cords local to racks/work areas. A small service loop
-    # avoids a long diagonal while not pretending there is a building pathway.
+    # Keep patch/power cords local to racks/work areas. Device-center anchors can
+    # legitimately coincide (stacked rack units, decoder on display, etc.); in
+    # that case use a small deterministic service loop so the connection remains
+    # physically traceable until the viewer snaps each end to its real component.
     d=_route_dist(start,end)
-    if d<.35:return _finalize_pathway_route(conn,[start,end],"local_equipment")
     lane=_lane_offset(conn)
     midz=(float(start[2])+float(end[2]))/2.0
+    if d<.35:
+        side=1.0 if _lane_index(conn)%2==0 else -1.0
+        reach=.28+abs(lane)
+        rise=.10+abs(lane)*.25
+        base=[
+            start,
+            [float(start[0])+side*reach,float(start[1])+lane,midz+rise],
+            [float(end[0])+side*reach,float(end[1])+lane,midz+rise],
+            end,
+        ]
+        return _finalize_pathway_route(conn,base,"local_equipment",{
+            "local_service_loop":True,
+            "coincident_anchor_resolution":d<.03,
+        })
     if d<=8.0:
         base=[start,[start[0],start[1]+lane,midz],[end[0],end[1]+lane,midz],end]
     else:
         base=[start,[start[0],start[1],midz],[end[0],start[1],midz],[end[0],end[1],midz],end]
-    return _finalize_pathway_route(conn,base,"local_equipment")
+    return _finalize_pathway_route(conn,base,"local_equipment",{"local_service_loop":False})
 
 def connection_endpoint_position(aid):
     p=positions.get(aid)
@@ -2658,6 +2673,10 @@ ck("long-run cabling has supported bend-aware pathway routes",all(
 ck("legacy single tray-turn routing is eliminated",not any(
     any(abs(float(p[0])-float(SUP["tray_turn"][0]))<.01 and abs(float(p[1])-float(SUP["tray_turn"][1]))<.01 for p in (c.get("route") or [])[1:-1])
     for c in physical_connections if c["cable_type"] in long_run_types
+), "")
+ck("local equipment cords remain non-zero and traceable",all(
+    len(c.get("route") or [])>=2 and c.get("metadata",{}).get("route_length_ft",0)>.03
+    for c in physical_connections if c.get("metadata",{}).get("pathway_family_id")=="local_equipment"
 ), "")
 ck("all Cat6A permanent links remain within 90 m design limit",all(
     c.get("metadata",{}).get("route_length_ft",0)<=295.276
