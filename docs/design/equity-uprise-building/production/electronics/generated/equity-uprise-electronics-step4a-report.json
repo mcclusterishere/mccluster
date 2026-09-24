@@ -10,6 +10,8 @@
   "data_jacks_total": 190,
   "receptacles_total": 187,
   "electrical_panelboards_total": 14,
+  "step4c_componentized_devices_total": 18,
+  "step4c_componentized_camera_total": 18,
   "wireless_links_total": 45,
   "lab_scenarios_total": 40,
   "new_asset_type_counts": {
@@ -177,10 +179,10 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 2014264,
-  "overlay_glb_sha256": "50d2a955c6a93b137645a8275127eb3d350876539e6401c6b81f5d81a7dd7633",
-  "checks_total": 23,
-  "checks_passed": 23,
+  "overlay_glb_bytes": 2217040,
+  "overlay_glb_sha256": "a210e8bc062701691ecaec848382727c50730d7c19c8570cb4ccd9d45cf66876",
+  "checks_total": 26,
+  "checks_passed": 26,
   "checks_failed": 0,
   "checks": [
     {
@@ -292,6 +294,21 @@
       "detail": ""
     },
     {
+      "name": "all security cameras use Step 4C component assemblies",
+      "passed": true,
+      "detail": "18/18"
+    },
+    {
+      "name": "camera assemblies expose functional components",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "camera archetype exposes PoE/Ethernet port and state rules",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all physical Step 4B assets have spatial positions",
       "passed": true,
       "detail": ""
@@ -330,7 +347,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 2014264
+      "detail": 2217040
     }
   ],
   "passed": true
