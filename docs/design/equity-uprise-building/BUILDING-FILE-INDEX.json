@@ -25,7 +25,7 @@
       "GEMINI.md"
     ]
   },
-  "tracked_count": 331,
+  "tracked_count": 333,
   "categories": {
     "active_references": [
       "docs/design/equity-uprise-building/references/basement-b1/README.md",
@@ -130,7 +130,8 @@
       "docs/design/equity-uprise-building/REFERENCE-AUTHORITY.md",
       "docs/design/equity-uprise-building/SIMULATION-CODE-REFERENCE-PROFILE.md",
       "docs/design/equity-uprise-building/UNDERGROUND-TUNNEL-NETWORK-SPEC.md",
-      "docs/design/equity-uprise-building/VERTICAL-DISTRIBUTION-AND-RISER-SPEC.md"
+      "docs/design/equity-uprise-building/VERTICAL-DISTRIBUTION-AND-RISER-SPEC.md",
+      "docs/design/equity-uprise-building/WORKPLACE-OCCUPANCY-AUTHORITY.md"
     ],
     "context": [
       "docs/design/equity-uprise-building/AGENTS.md",
@@ -361,7 +362,8 @@
       "docs/design/equity-uprise-building/production/verify_equity_uprise_program_coverage.py",
       "docs/design/equity-uprise-building/production/verify_equity_uprise_repo_sources.py",
       "docs/design/equity-uprise-building/production/verify_floor_01_b1_simulation.py",
-      "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json"
+      "docs/design/equity-uprise-building/production/vertical-risers-core-v2.json",
+      "docs/design/equity-uprise-building/production/workplace-occupancy-v1.json"
     ],
     "public_viewers": [
       "equity-uprise-basement-b1-3d.html",
