@@ -185,7 +185,7 @@ async function bootstrapViewer(){
  try{
   await ensureBaseRoot();
   if(resolveBuildingLoaded){resolveBuildingLoaded();resolveBuildingLoaded=null}
-  status.textContent='Building shell ready · choose a floor to stream its detailed model';
+  status.textContent='Building shell ready · Services Step 8 verified · choose a floor to stream its detailed model';
   const facadePending=ensureFacadeRoot().then(()=>{if(currentFocus==='stack'||currentFocus==='facade')focus(currentFocus)}).catch(err=>{console.warn(err);return null});
   if(requestedServices){
    try{await ensureServicesLayer();servicesOn=true;document.getElementById('services').textContent='Services: Exposed';document.getElementById('services').classList.add('active')}catch(err){console.warn(err)}
