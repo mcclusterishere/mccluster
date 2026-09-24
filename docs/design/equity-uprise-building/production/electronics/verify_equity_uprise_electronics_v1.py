@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json, math
 from pathlib import Path
+import trimesh
 
 ROOT=Path(__file__).resolve().parents[5]
 HERE=Path(__file__).resolve().parent
@@ -116,6 +117,16 @@ for record in camera_records:
         fail(f"{record.get('asset_id')} missing visible state rules")
 if rep.get("step4c_componentized_devices_total")!=len(component_records):fail("Step 4C device count mismatch")
 if rep.get("step4c_componentized_camera_total")!=len(camera_records):fail("Step 4C camera count mismatch")
+
+# Prove the component catalog is not metadata-only: the generated GLB must
+# contain the named camera assembly parts that the viewer inspects.
+scene=trimesh.load(GLB,force="scene",process=False)
+node_names=set(scene.graph.nodes_geometry)
+for record in camera_records:
+    for part in record.get("components",[]):
+        mesh_name=part.get("mesh_name")
+        if mesh_name not in node_names:
+            fail(f"{record.get('asset_id')} component mesh missing from GLB: {mesh_name}")
 
 labs=l.get("labs",[])
 if len(labs)<40 or set(x["tier"] for x in labs)!=set(p["lab_tiers"]):fail("lab ladder incomplete")
