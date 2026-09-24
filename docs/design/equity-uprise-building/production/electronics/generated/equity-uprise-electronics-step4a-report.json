@@ -10,7 +10,7 @@
   "data_jacks_total": 190,
   "receptacles_total": 187,
   "electrical_panelboards_total": 14,
-  "step4c_componentized_devices_total": 598,
+  "step4c_componentized_devices_total": 625,
   "step4c_componentized_camera_total": 18,
   "step4c_componentized_access_switch_total": 8,
   "step4c_componentized_patch_panel_total": 8,
@@ -25,6 +25,9 @@
   "step4c_componentized_monitor_total": 62,
   "step4c_componentized_ip_phone_total": 16,
   "step4c_componentized_mfp_total": 7,
+  "step4c_componentized_access_reader_total": 10,
+  "step4c_componentized_intercom_total": 9,
+  "step4c_componentized_access_controller_total": 8,
   "wireless_links_total": 45,
   "lab_scenarios_total": 40,
   "new_asset_type_counts": {
@@ -192,10 +195,10 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 4387852,
-  "overlay_glb_sha256": "2ea99ad4d826b3d4fb4b4b5cdb7ca666625f7b7bf12e8030fc9e994e85bb0c1c",
-  "checks_total": 54,
-  "checks_passed": 54,
+  "overlay_glb_bytes": 4603324,
+  "overlay_glb_sha256": "fadfcdee86c299ed91901101d4aaafea5f47702c7787032961b4228852fd3808",
+  "checks_total": 60,
+  "checks_passed": 60,
   "checks_failed": 0,
   "checks": [
     {
@@ -462,6 +465,36 @@
       "detail": ""
     },
     {
+      "name": "all access readers use Step 4C component assemblies",
+      "passed": true,
+      "detail": "10/10"
+    },
+    {
+      "name": "access reader assemblies expose faceplate, reader zone, status, beeper, OSDP terminal, and mount",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all intercoms use Step 4C component assemblies",
+      "passed": true,
+      "detail": "9/9"
+    },
+    {
+      "name": "intercom assemblies expose faceplate, call button, mic, speaker, status, and PoE port",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all access controllers use Step 4C component assemblies",
+      "passed": true,
+      "detail": "8/8"
+    },
+    {
+      "name": "access controller assemblies expose enclosure, board, Ethernet, OSDP, power, battery, and status",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all physical Step 4B assets have spatial positions",
       "passed": true,
       "detail": ""
@@ -500,7 +533,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 4387852
+      "detail": 4603324
     }
   ],
   "passed": true

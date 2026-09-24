@@ -1565,8 +1565,8 @@
       "instance_count": 8,
       "display_name": "Access Control Panel",
       "family": "wireless_security",
-      "current_maturity": "placeholder",
-      "minimum_ci_maturity": "placeholder",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "ENCLOSURE",
@@ -1606,8 +1606,8 @@
       "instance_count": 10,
       "display_name": "OSDP Access Reader",
       "family": "wireless_security",
-      "current_maturity": "recognizable",
-      "minimum_ci_maturity": "recognizable",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "FACEPLATE",
@@ -1683,8 +1683,8 @@
       "instance_count": 9,
       "display_name": "IP Intercom",
       "family": "wireless_security",
-      "current_maturity": "recognizable",
-      "minimum_ci_maturity": "recognizable",
+      "current_maturity": "componentized",
+      "minimum_ci_maturity": "componentized",
       "target_maturity": "lab_complete",
       "expected_components": [
         "FACEPLATE",
