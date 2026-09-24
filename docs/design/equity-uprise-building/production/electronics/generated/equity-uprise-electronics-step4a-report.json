@@ -10,7 +10,7 @@
   "data_jacks_total": 190,
   "receptacles_total": 187,
   "electrical_panelboards_total": 14,
-  "step4c_componentized_devices_total": 462,
+  "step4c_componentized_devices_total": 598,
   "step4c_componentized_camera_total": 18,
   "step4c_componentized_access_switch_total": 8,
   "step4c_componentized_patch_panel_total": 8,
@@ -20,6 +20,11 @@
   "step4c_componentized_data_jack_total": 190,
   "step4c_componentized_receptacle_total": 187,
   "step4c_componentized_wap_spare_jack_total": 15,
+  "step4c_componentized_wireless_ap_total": 15,
+  "step4c_componentized_workstation_total": 36,
+  "step4c_componentized_monitor_total": 62,
+  "step4c_componentized_ip_phone_total": 16,
+  "step4c_componentized_mfp_total": 7,
   "wireless_links_total": 45,
   "lab_scenarios_total": 40,
   "new_asset_type_counts": {
@@ -187,10 +192,10 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 3719796,
-  "overlay_glb_sha256": "7d7053f82a625e34500dffb8e82c2e377b80f1eb954199e493d23c4dd12f3f07",
-  "checks_total": 44,
-  "checks_passed": 44,
+  "overlay_glb_bytes": 4387852,
+  "overlay_glb_sha256": "2ea99ad4d826b3d4fb4b4b5cdb7ca666625f7b7bf12e8030fc9e994e85bb0c1c",
+  "checks_total": 54,
+  "checks_passed": 54,
   "checks_failed": 0,
   "checks": [
     {
@@ -407,6 +412,56 @@
       "detail": ""
     },
     {
+      "name": "all wireless APs use Step 4C component assemblies",
+      "passed": true,
+      "detail": "15/15"
+    },
+    {
+      "name": "wireless AP assemblies expose mount, radome, LED, PoE port, and cable entry",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all workstations use Step 4C component assemblies",
+      "passed": true,
+      "detail": "36/36"
+    },
+    {
+      "name": "workstation assemblies expose chassis, IO, power, NIC, display outputs, and status",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all monitors use Step 4C component assemblies",
+      "passed": true,
+      "detail": "62/62"
+    },
+    {
+      "name": "monitor assemblies expose panel, bezel, support, power, video, and status",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all IP phones use Step 4C component assemblies",
+      "passed": true,
+      "detail": "16/16"
+    },
+    {
+      "name": "IP phone assemblies expose base, handset, keypad, display, status, LAN, and PC ports",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all MFPs use Step 4C component assemblies",
+      "passed": true,
+      "detail": "7/7"
+    },
+    {
+      "name": "MFP assemblies expose chassis, ADF, scanner, output, control, network, and power",
+      "passed": true,
+      "detail": ""
+    },
+    {
       "name": "all physical Step 4B assets have spatial positions",
       "passed": true,
       "detail": ""
@@ -445,7 +500,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 3719796
+      "detail": 4387852
     }
   ],
   "passed": true
