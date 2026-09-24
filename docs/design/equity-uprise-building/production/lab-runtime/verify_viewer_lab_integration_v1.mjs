@@ -342,6 +342,14 @@ for (const required of [
   "Show camera coverage",
   "findPhysicalDeviceFromHit",
   "if(deviceRecordById.has(x.canonical_id))styleCanonical(e,x.canonical_id,x.visual_state)",
+  "deviceFeedCanvas",
+  "ensureDeviceFeedRenderer",
+  "renderDeviceCameraFeed",
+  "deviceFeedCamera=new THREE.PerspectiveCamera",
+  "record.aim_vector",
+  "record.optics?.vertical_fov_deg",
+  "VIDEO STREAM · ",
+  "devicefeed.offline canvas",
 ]) {
   assert.ok(viewer.includes(required), "electronics physical-installation viewer guard missing: "+required);
 }
