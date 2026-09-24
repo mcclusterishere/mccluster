@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "status": "canonical_audit_gap_ledger",
-  "snapshot_sha": "9c4e5721ba71ddf8d01905f75bf2efc064a322e1",
+  "snapshot_sha": "8508a1cfd01586abf9ef1bfa154645a3f9dc474c",
   "target": "one canonical building state shared by 3D, labs, Building OS, people, and tactical play",
   "current_metrics": {
     "registry_assets_total": 1883,
