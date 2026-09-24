@@ -248,6 +248,20 @@ The electronics layer extends, rather than replaces, the Digital-to-Physical Ass
 The existing generated artifact filenames remain stable for downstream compatibility even though their internal status/version advances to Step 4B.
 
 
+## Living workplace / PRIM3 occupancy authority
+
+Canonical workplace authority:
+- WORKPLACE-OCCUPANCY-AUTHORITY.md
+- production/workplace-occupancy-v1.json
+
+Equity Uprise HQ is the recurring PRIM3 workplace and visual set. It is **not** Site 0 / Root HQ.
+
+The occupancy layer binds the existing PRIM3 ensemble to persistent desks/benches/offices across B1–F7 and defines background role populations for security, cohorts, field operations, media, research, executive command and mobility.
+
+B1 is now a **known staffed technical-operations floor**. Room-level electrical, life-safety, telecom and tunnel controls remain restricted where appropriate, but the floor itself is not hidden and supervised learners/instructors may use the canonical SANDBOX geometry.
+
+The occupancy layer is story/simulation authority; it does not claim real-world staffing or construction occupancy.
+
 ## Federal training authority
 
 The canonical external training/evidence layer that binds federal programs to the building, competencies, Floor 1 scenarios and Step 4A labs is:
