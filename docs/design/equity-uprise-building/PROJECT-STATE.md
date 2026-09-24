@@ -259,7 +259,7 @@ Level 7 is **implementation-complete for the current review pass but still await
 - both protected stairs include the complete **13.5 ft B1→Floor 1 rise** for isolated review;
 - passenger/freight/MEP core relationships remain aligned to Core V2;
 - standalone B1 viewer and detailed working-stack integration are implemented;
-- live operations remain restricted and learner/instructor use remains sandbox-only;
+- B1 is now a known staffed workplace floor; room-level operational/safety restrictions remain and all learner/instructor interaction remains SANDBOX-only;
 - tunnel geometry stops at the building-side Transfer Lock.
 
 Required references:
@@ -280,6 +280,28 @@ Key references:
 - archived plans under `references/archive/core-v1/floor-01/`
 
 Use these to recover design quality, not obsolete stair/core geometry.
+
+## Living Workplace / PRIM3 Canon Reconciliation — ACTIVE
+
+Equity Uprise HQ is now canonically the recurring workplace for the PRIM3 ensemble.
+
+This building is **not Site 0 / Root HQ**. Site 0 remains the separate hidden McCluster Corp / PRIM root facility associated with the final RAID/succession conflict.
+
+New authority:
+- WORKPLACE-OCCUPANCY-AUTHORITY.md
+- production/workplace-occupancy-v1.json
+
+The occupancy authority assigns persistent recurring-character workspaces across B1–F7 and defines background role families that can later drive NPC population/skins.
+
+B1 canon changed materially:
+- B1 is not a secret owner-only floor;
+- B1 is Technical Operations + Infrastructure + Security + Hands-On Lab;
+- staff wayfinding may include B1;
+- supervised learners/instructors may use the canonical B1 SANDBOX geometry;
+- hazardous/operational rooms retain room-level access restrictions;
+- the underground tunnel/logistics network is known infrastructure with controlled sectors, not a secret passage.
+
+This step changes program/occupancy authority, not construction claims. Human 3D/NPC generation remains a later implementation pass and must consume the occupancy authority rather than inventing a parallel roster.
 
 ## NEXT APPROVED WORK
 
