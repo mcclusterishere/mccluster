@@ -379,7 +379,7 @@ function syncEngineeringView(){
 }
 async function setPhysicalPlantMode(on){
  plantMode=!!on;const b=document.getElementById('plant');b.classList.toggle('active',plantMode);
- if(plantMode){await buildingLoaded;await ensureElectronicsLayer()}const counts=syncElectronicsVisibility();syncServicesVisibility();infrastructureStatus(counts)
+ if(plantMode){await buildingLoaded;await ensureElectronicsLayer()}else{deviceHud.hidden=true;inspectedDeviceId=null;clearDeviceInteractionOverlay()}const counts=syncElectronicsVisibility();syncServicesVisibility();infrastructureStatus(counts)
 }
 async function setCablingMode(on){
  cablingMode=!!on;const b=document.getElementById('cabling');b.classList.toggle('active',cablingMode);
@@ -610,10 +610,11 @@ function renderDeviceInspector(assetId){
  const linkText=links.map(x=>escapeText(x.cable_type)+' · '+escapeText(x.from_asset_id)+' → '+escapeText(x.to_asset_id)+'<br><small>'+escapeText(x.from_port||'')+' → '+escapeText(x.to_port||'')+'</small>').join('<br>');
  deviceDetails.innerHTML='<div class="devicerow"><span>Port</span><span>'+ (portText||'—') +'</span></div><div class="deviceparts"><strong>Physical connection path</strong><br>'+(linkText||'No routed connection found')+'</div>';
  deviceParts.innerHTML='<strong>Modeled parts</strong><br>'+(record.components||[]).map(x=>'<span class="devicecomponent">'+escapeText(x.component_id)+'</span>').join('');
- if(record.archetype==='camera'){deviceFeed.hidden=false;deviceFeed.className='devicefeed '+(feedState==='offline'||feedState==='faulted'?'offline':feedState==='degraded'?'degraded':'');deviceFeed.textContent='VIDEO STREAM · '+feedState.toUpperCase();deviceFovButton.hidden=false}else{deviceFeed.hidden=true;deviceFovButton.hidden=true}
+ if(record.archetype==='camera'){deviceFeed.hidden=false;deviceFeed.className='devicefeed '+(feedState==='offline'||feedState==='faulted'?'offline':feedState==='degraded'?'degraded':'');deviceFeed.textContent='VIDEO STREAM · '+feedState.toUpperCase();deviceFovButton.hidden=false;deviceFovButton.disabled=feedState==='offline'||feedState==='faulted';if(deviceFovButton.disabled&&deviceFovVisible)clearDeviceInteractionOverlay()}else{deviceFeed.hidden=true;deviceFovButton.hidden=true}
  deviceHud.hidden=false
 }
 function refreshInspectedDevice(){if(inspectedDeviceId&&!deviceHud.hidden)renderDeviceInspector(inspectedDeviceId)}
+function findPhysicalDeviceFromHit(hit){let o=hit?.object;while(o){const id=o.userData?.assetId||electronicsAssetIdFromName(o.name||'');if(id&&deviceRecordById.has(id))return id;o=o.parent}return null}
 function plainSystemState(v){return {normal:'Normal',changed:'Changed',at_risk:'Needs attention',degraded:'Unstable',faulted:'Problem detected',unavailable:'Not working',available:'Available'}[String(v||'').toLowerCase()]||escapeText(v||'Observed')}
 function renderDiagnosticLoop(exp){
  const steps=exp.diagnostic_loop||['OBSERVE','HYPOTHESIZE','TEST','FIX','VERIFY'],stage=exp.diagnostic_stage||'OBSERVE',order=[...steps,'COMPLETE'],at=Math.max(0,order.indexOf(stage));
@@ -703,6 +704,13 @@ document.getElementById('labHint').onclick=async()=>{if(!labController)return;tr
 document.getElementById('labEvidence').onclick=async()=>{if(!labController)return;const title=prompt('Learner artifact title');if(!title)return;const reference=prompt('Artifact reference (URL/URI/path)');if(!reference)return;try{const out=labController.submitArtifact({title,reference});labMessage.textContent='Learner artifact reference recorded.';await applyLabView(out.view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}};
 document.getElementById('labComplete').onclick=async()=>{if(!labController)return;try{const out=labController.complete();labMessage.textContent=out.view?.learner_experience?.success_message||'Ticket closed · the simulated problem was repaired and verified.';labMessage.className='labrow labmsg labok';await applyLabView(out.view)}catch(err){labMessage.textContent=(err.code||'ERROR')+' · '+err.message;labMessage.className='labrow labmsg labwarn'}};
 ren.domElement.addEventListener('dblclick',async ev=>{if(!labController||!labView||labView.scenario.phase!=='RUNNING')return;const rect=ren.domElement.getBoundingClientRect();labPointer.x=((ev.clientX-rect.left)/rect.width)*2-1;labPointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;labRaycaster.setFromCamera(labPointer,cam);const roots=[labOverlay,electronics,b1,f1,f2,f3,f4,f5,f6,f7,base].filter(Boolean),hits=labRaycaster.intersectObjects(roots,true);for(const hit of hits){let o=hit.object;while(o){const n=o.name||'';const id=labPickingIds.find(x=>n===x||n.startsWith(x+'::'));if(id){const action=labController.actionForCanonicalId(id);if(action){await runLabAction(action);return}}o=o.parent}}});
+ren.domElement.addEventListener('dblclick',async ev=>{
+ if(!plantMode||roomMode)return;await ensureElectronicsLayer();const rect=ren.domElement.getBoundingClientRect();labPointer.x=((ev.clientX-rect.left)/rect.width)*2-1;labPointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;labRaycaster.setFromCamera(labPointer,cam);
+ const hits=labRaycaster.intersectObjects([electronics].filter(Boolean),true);for(const hit of hits){if(engineeringMeshIsCable(hit.object))continue;const id=findPhysicalDeviceFromHit(hit);if(id){clearDeviceInteractionOverlay();renderDeviceInspector(id);return}}
+});
+deviceFovButton.onclick=()=>{if(!inspectedDeviceId)return;const record=deviceRecordById.get(inspectedDeviceId);if(!record||record.archetype!=='camera')return;if(deviceFovVisible)clearDeviceInteractionOverlay();else cameraCoverage(record)};
+document.getElementById('deviceClose').onclick=()=>{deviceHud.hidden=true;inspectedDeviceId=null;clearDeviceInteractionOverlay()};
+
 if(requestedLab){openLabs().then(()=>startLab(requestedLab,requestedDifficulty))}
 if(requestedRoom){const roomBoot=setInterval(()=>{if(loaded===11){clearInterval(roomBoot);enterRoomMode()}},60)}
 
