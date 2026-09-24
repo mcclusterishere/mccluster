@@ -543,33 +543,35 @@ export function createViewerLabController(options) {
   return new ViewerLabController(options);
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, { cache: "no-store" });
+async function fetchJson(url, cacheMode = "default") {
+  const response = await fetch(url, { cache: cacheMode });
   if (!response.ok) throw new Error("Step 8 viewer dataset fetch failed " + response.status + " " + url);
   return response.json();
 }
 
-export async function loadViewerLabDatasets(root = "/equity-uprise-preview") {
+export async function loadViewerLabDatasets(root = "/equity-uprise-preview", version = "") {
   const r = root.replace(/\/$/, "");
+  const suffix = version ? "?v=" + encodeURIComponent(version) : "";
+  const fetchVersioned = (path) => fetchJson(r + path + suffix, version ? "force-cache" : "default");
   const [
     distributedPack, cisaPack, opsPack, publicServicePack, difficultyPolicy, learnerExperience, rubrics, federalBindings,
     labCatalog, registry, connections, manifest, program, simulationObjects, objectInventory,
   ] = await Promise.all([
-    fetchJson(r + "/lab-runtime/distributed-building-scenario-pack-v1.json"),
-    fetchJson(r + "/lab-runtime/cisa-itot-scenario-pack-v1.json"),
-    fetchJson(r + "/lab-runtime/fema-building-ops-scenario-pack-v1.json"),
-    fetchJson(r + "/lab-runtime/public-service-scenario-pack-v1.json"),
-    fetchJson(r + "/lab-runtime/difficulty-progression-policy-v1.json"),
-    fetchJson(r + "/lab-runtime/learner-experience-v1.json"),
-    fetchJson(r + "/competency-rubrics.json"),
-    fetchJson(r + "/federal-training-bindings.json"),
-    fetchJson(r + "/equity-uprise-it-lab-catalog-v1.json"),
-    fetchJson(r + "/equity-uprise-asset-registry-v1.json"),
-    fetchJson(r + "/equity-uprise-electronics-connections-v1.json"),
-    fetchJson(r + "/equity-uprise-electronics-manifest-v1.json"),
-    fetchJson(r + "/floor-01-digital-twin-program.json"),
-    fetchJson(r + "/floor-01-simulation-objects.json"),
-    fetchJson(r + "/floor-01-object-inventory.json"),
+    fetchVersioned("/lab-runtime/distributed-building-scenario-pack-v1.json"),
+    fetchVersioned("/lab-runtime/cisa-itot-scenario-pack-v1.json"),
+    fetchVersioned("/lab-runtime/fema-building-ops-scenario-pack-v1.json"),
+    fetchVersioned("/lab-runtime/public-service-scenario-pack-v1.json"),
+    fetchVersioned("/lab-runtime/difficulty-progression-policy-v1.json"),
+    fetchVersioned("/lab-runtime/learner-experience-v1.json"),
+    fetchVersioned("/competency-rubrics.json"),
+    fetchVersioned("/federal-training-bindings.json"),
+    fetchVersioned("/equity-uprise-it-lab-catalog-v1.json"),
+    fetchVersioned("/equity-uprise-asset-registry-v1.json"),
+    fetchVersioned("/equity-uprise-electronics-connections-v1.json"),
+    fetchVersioned("/equity-uprise-electronics-manifest-v1.json"),
+    fetchVersioned("/floor-01-digital-twin-program.json"),
+    fetchVersioned("/floor-01-simulation-objects.json"),
+    fetchVersioned("/floor-01-object-inventory.json"),
   ]);
   return {
     distributedPack, cisaPack, opsPack, publicServicePack, difficultyPolicy, learnerExperience, rubrics, federalBindings,

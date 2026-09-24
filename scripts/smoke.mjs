@@ -116,6 +116,10 @@ try {
     viewerSource.includes("requestedLab=params.get('lab')") &&
     viewerSource.includes("labPanel.hidden") &&
     viewerSource.includes("requestedRoom=params.get('room')==='1'"));
+  check("building viewer: mobile performance shell", [
+    'id="quality"', "QUALITY_PROFILES", "LOW:{dpr:1,shadows:false", "matchMedia('(max-width:820px)')",
+    "o.frustumCulled=true", "cableMode:'floor-only'", "performanceLodVisible", "ensureDetailedFloor"
+  ].every((token) => viewerSource.includes(token)));
   await viewerProbe.close();
 
   const PAGES = [
