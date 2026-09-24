@@ -1,11 +1,16 @@
 {
-  "schema_version": "1.0.0",
-  "status": "step4a-whole-building-electronics-fabric",
-  "registry_assets_total": 1492,
-  "step4a_new_assets": 473,
-  "step4a_new_relationships": 933,
-  "physical_connections_total": 894,
-  "wireless_links_total": 30,
+  "schema_version": "1.1.0",
+  "status": "step4b-physical-installation-fabric",
+  "registry_assets_total": 1883,
+  "step4b_new_assets": 864,
+  "step4b_new_relationships": 1340,
+  "physical_connections_total": 1330,
+  "routed_connections_total": 1330,
+  "port_complete_connections_total": 1330,
+  "data_jacks_total": 190,
+  "receptacles_total": 187,
+  "electrical_panelboards_total": 14,
+  "wireless_links_total": 45,
   "lab_scenarios_total": 40,
   "new_asset_type_counts": {
     "access_controller": 8,
@@ -22,7 +27,9 @@
     "carrier_handoff": 1,
     "carrier_handoff_reserved": 1,
     "collapsed_core_switch": 2,
+    "data_jack": 190,
     "edge_router": 1,
+    "electrical_panel": 14,
     "environment_sensor": 29,
     "fiber_panel": 7,
     "fire_alarm_control_panel": 1,
@@ -40,6 +47,7 @@
     "patch_panel": 8,
     "pdu": 22,
     "rack_ups": 7,
+    "receptacle": 187,
     "speaker": 26,
     "ssid": 3,
     "virtualization_host": 3,
@@ -51,30 +59,33 @@
   },
   "cable_type_counts": {
     "10G-DAC": 20,
-    "120VAC-BRANCH": 171,
+    "120VAC-BRANCH": 187,
+    "208Y120V-FEEDER": 14,
+    "24VDC-CLASS2": 29,
     "BACNET-MSTP-STP": 29,
     "CAT6A-HORIZONTAL": 215,
-    "CAT6A-PATCH": 214,
+    "CAT6A-PATCH": 404,
     "CAT6A-WAP-SPARE": 15,
     "DISPLAYPORT": 62,
     "FIRE-ALARM-NAC": 14,
     "FIRE-ALARM-SLC": 28,
     "HDMI": 20,
     "IEC-POWER": 54,
+    "NEMA5-15-POWER-CORD": 187,
     "OS2-SM-DUPLEX": 16,
     "OSDP-RS485-STP": 10,
     "SPEAKER-PAIR": 26
   },
   "new_assets_by_level": {
-    "B1": 74,
+    "B1": 122,
     "BUILDING": 31,
-    "F1": 52,
-    "F2": 45,
-    "F3": 51,
-    "F4": 75,
-    "F5": 68,
-    "F6": 65,
-    "L7": 12
+    "F1": 106,
+    "F2": 79,
+    "F3": 94,
+    "F4": 144,
+    "F5": 134,
+    "F6": 123,
+    "L7": 31
   },
   "transient_client_profiles": [
     {
@@ -166,16 +177,16 @@
       "status": "training_load_profile_not_fixed_asset"
     }
   ],
-  "overlay_glb_bytes": 621536,
-  "overlay_glb_sha256": "9002b92b65e3d7998de937915e4d833c72dad7a75bcbac30df73725a0756aa39",
-  "checks_total": 15,
-  "checks_passed": 15,
+  "overlay_glb_bytes": 2014264,
+  "overlay_glb_sha256": "50d2a955c6a93b137645a8275127eb3d350876539e6401c6b81f5d81a7dd7633",
+  "checks_total": 23,
+  "checks_passed": 23,
   "checks_failed": 0,
   "checks": [
     {
       "name": "new asset IDs unique",
       "passed": true,
-      "detail": 473
+      "detail": 864
     },
     {
       "name": "all physical connection endpoints exist",
@@ -188,6 +199,8 @@
       "detail": [
         "10G-DAC",
         "120VAC-BRANCH",
+        "208Y120V-FEEDER",
+        "24VDC-CLASS2",
         "BACNET-MSTP-STP",
         "CAT6A-HORIZONTAL",
         "CAT6A-PATCH",
@@ -197,13 +210,34 @@
         "FIRE-ALARM-SLC",
         "HDMI",
         "IEC-POWER",
+        "NEMA5-15-POWER-CORD",
         "OS2-SM-DUPLEX",
         "OSDP-RS485-STP",
         "SPEAKER-PAIR"
       ]
     },
     {
-      "name": "all active WAPs have one horizontal data link",
+      "name": "all modeled physical connections have deterministic route geometry",
+      "passed": true,
+      "detail": "1330/1330"
+    },
+    {
+      "name": "all modeled physical connections have endpoint port identifiers",
+      "passed": true,
+      "detail": "1330/1330"
+    },
+    {
+      "name": "all modeled routes expose pathway and length metadata",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all Cat6A permanent links remain within 90 m design limit",
+      "passed": true,
+      "detail": 106.175
+    },
+    {
+      "name": "all active WAPs terminate through jack plus PoE patch",
       "passed": true,
       "detail": ""
     },
@@ -218,12 +252,27 @@
       "detail": ""
     },
     {
+      "name": "all plug-connected 120V branches terminate at outlets",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "every generated receptacle serves a physical load with power cord",
+      "passed": true,
+      "detail": "187 outlets"
+    },
+    {
+      "name": "floor panelboards receive riser feeders",
+      "passed": true,
+      "detail": "14 panelboards"
+    },
+    {
       "name": "fire-alarm field devices are not direct LAN endpoints",
       "passed": true,
       "detail": ""
     },
     {
-      "name": "BAS sensors use field bus",
+      "name": "BAS sensors use field bus and Class 2 power",
       "passed": true,
       "detail": ""
     },
@@ -239,6 +288,11 @@
     },
     {
       "name": "LIVE control remains disabled",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all physical Step 4B assets have spatial positions",
       "passed": true,
       "detail": ""
     },
@@ -276,7 +330,7 @@
     {
       "name": "overlay GLB generated",
       "passed": true,
-      "detail": 621536
+      "detail": 2014264
     }
   ],
   "passed": true
