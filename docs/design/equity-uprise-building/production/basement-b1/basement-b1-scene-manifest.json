@@ -1,10 +1,12 @@
 {
   "schema_version": "1.0.0",
   "scene_id": "equity-uprise-basement-b1",
-  "scene_name": "Equity Uprise B1 — Technical Operations / Infrastructure / Underground Operations",
+  "scene_name": "Equity Uprise B1 \u2014 Technical Operations / Infrastructure / Underground Operations",
   "status": "core-v2-active-controlled",
   "not_for_construction": true,
   "public_navigation": true,
+  "access_model": "known-floor-controlled-compartments",
+  "sandbox_only": true,
   "shared_core_ref": "../building-core-v2.json",
   "basement_program_ref": "../basement-b1-program.json",
   "tunnel_network_ref": "../underground-tunnel-network.json",
@@ -62,7 +64,7 @@
       ],
       "level_7_service": "not_assumed",
       "shaft_continuity": "continuous_through_served_stack",
-      "note": "Serves B1 and Floors 1–6. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
+      "note": "Serves B1 and Floors 1\u20136. Level 7 direct service remains unassumed. B1 emergency-use behavior depends on the selected simulation code/accessibility profile.",
       "b1_access_policy": {
         "physical_stop": true,
         "visible_in_normal_floor_selector": false,
@@ -103,7 +105,7 @@
       "level_7_service": "reserved_for_future_resolution",
       "shaft_continuity": "continuous_reservation_to_roof",
       "pit_overhead_machine_strategy": "unresolved",
-      "note": "Serves B1 and Floors 1–6; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts.",
+      "note": "Serves B1 and Floors 1\u20136; Level 7 service remains reserved for later resolution. Car capacity, pit, overhead, MRL/machine-room strategy, loading and ratings remain unresolved professional-design concepts.",
       "b1_access_policy": {
         "physical_stop": true,
         "access": "restricted-operational"
@@ -245,8 +247,8 @@
         "x2": 30,
         "y2": 26
       },
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only",
+      "live_access": "qualified-staff-or-supervised-training",
+      "training_mode": "canonical_sandbox",
       "systems": [
         "HVAC plant",
         "pumps/fans",
@@ -264,8 +266,8 @@
         "x2": 52,
         "y2": 20
       },
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only",
+      "live_access": "qualified-staff-or-supervised-training",
+      "training_mode": "canonical_sandbox",
       "systems": [
         "main electrical distribution",
         "UPS/emergency distribution",
@@ -283,8 +285,8 @@
         "x2": 70,
         "y2": 20
       },
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only",
+      "live_access": "qualified-staff-or-supervised-training",
+      "training_mode": "canonical_sandbox",
       "systems": [
         "fire pump concept",
         "sprinkler riser concept",
@@ -302,8 +304,8 @@
         "x2": 52,
         "y2": 34
       },
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only",
+      "live_access": "qualified-staff-or-supervised-training",
+      "training_mode": "canonical_sandbox",
       "systems": [
         "telecom demarc",
         "core network",
@@ -322,8 +324,8 @@
         "x2": 70,
         "y2": 32
       },
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only",
+      "live_access": "qualified-staff-or-supervised-training",
+      "training_mode": "canonical_sandbox",
       "systems": [
         "sump pumps",
         "water sensors",
@@ -341,8 +343,8 @@
         "x2": 16,
         "y2": 52
       },
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only",
+      "live_access": "role-authorized-staff-or-supervised-learner",
+      "training_mode": "canonical_sandbox",
       "systems": [
         "maintenance tools",
         "parts storage",
@@ -360,8 +362,8 @@
         "x2": 52,
         "y2": 54
       },
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only",
+      "live_access": "equity-uprise-staff-instructor-supervised-learner",
+      "training_mode": "canonical_sandbox",
       "systems": [
         "digital twin dashboard",
         "BAS simulation",
@@ -379,8 +381,8 @@
         "x2": 8,
         "y2": 60
       },
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only",
+      "live_access": "role-authorized-staff-or-supervised-learner",
+      "training_mode": "canonical_sandbox",
       "systems": [
         "freight staging",
         "maintenance receiving"
@@ -397,8 +399,8 @@
         "x2": 48,
         "y2": 64
       },
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only",
+      "live_access": "role-authorized-staff-or-supervised-learner",
+      "training_mode": "canonical_sandbox",
       "systems": [
         "identity/access",
         "underground occupancy accountability",
@@ -418,8 +420,8 @@
         "x2": 44,
         "y2": 72
       },
-      "live_access": "mccluster-house-owner-or-underground-operations-admin",
-      "training_mode": "sandboxed_clone_only",
+      "live_access": "mobility-ops-security-qualified-staff",
+      "training_mode": "canonical_sandbox",
       "systems": [
         "security interlock",
         "environmental/fire separation",
@@ -431,20 +433,25 @@
   ],
   "live_access": {
     "allowed": [
-      "mccluster_house_owner",
-      "underground_operations_admin"
+      "equity_uprise_staff",
+      "equity_uprise_instructor",
+      "equity_uprise_security",
+      "equity_uprise_facilities",
+      "field_t",
+      "mobility_operations",
+      "supervised_equity_uprise_learner"
     ],
-    "delegated_by": "mccluster_house_owner",
-    "ordinary_equity_uprise_admin_sufficient": false,
-    "competency_sufficient": false,
+    "floor_hidden": false,
+    "room_level_restrictions": true,
+    "competency_alone_sufficient": false,
     "audit_required": true
   },
   "training_access": {
-    "mode": "sandboxed_clone_only",
-    "live_b1_access": false,
-    "live_tunnel_access": false,
+    "mode": "canonical_sandbox_same_geometry",
+    "b1_access": true,
+    "tunnel_training_access": "scenario-and-role-controlled",
     "live_controls_available": false,
-    "live_occupancy_visible": false,
+    "real_world_operational_data_available": false,
     "competency_evidence_allowed": true
   },
   "design_maturity": "reconciled-current-iterative-pass",
@@ -459,7 +466,5 @@
   "lighting_ref": "basement-b1-lighting.json",
   "hotspots_ref": "basement-b1-hotspots.json",
   "routing_ref": "basement-b1-routing.json",
-  "states_ref": "basement-b1-states.json",
-  "access_model": "known-floor-controlled-compartments",
-  "sandbox_only": true
+  "states_ref": "basement-b1-states.json"
 }

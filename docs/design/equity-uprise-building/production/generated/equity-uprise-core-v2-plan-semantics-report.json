@@ -15,17 +15,17 @@
     {
       "name": "L0 README authoritative title",
       "passed": true,
-      "detail": "Underground Operations / Technical Service Basement"
+      "detail": "Technical Operations / Infrastructure / Underground Operations"
     },
     {
       "name": "L0 README generated-only warning",
       "passed": true,
-      "detail": "# Basement B1 \u2014 Underground Operations / Technical Service Basement \u2014 Core V2 Plan References\n\n> Status: **RESTRICTED CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCT"
+      "detail": "# Basement B1 \u2014 Technical Operations / Infrastructure / Underground Operations \u2014 Core V2 Plan References\n\n> Status: **RESTRICTED CORE V2 PLAN REFERENCE / NOT FO"
     },
     {
       "name": "L0 README restricted support status",
       "passed": true,
-      "detail": "# Basement B1 \u2014 Underground Operations / Technical Service Basement \u2014 Core V2 Plan References\n\n> Status: **RESTRICTED CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-core-v2.json`\n"
+      "detail": "# Basement B1 \u2014 Technical Operations / Infrastructure / Underground Operations \u2014 Core V2 Plan References\n\n> Status: **RESTRICTED CORE V2 PLAN REFERENCE / NOT FOR CONSTRUCTION**\n\nGenerated from:\n- `production/building-cor"
     },
     {
       "name": "L0 README design maturity",
@@ -50,12 +50,12 @@
     {
       "name": "L0 SVG authoritative title",
       "passed": true,
-      "detail": "EQUITY UPRISE \u2014 BASEMENT B1 \u2014 UNDERGROUND OPERATIONS / TECHNICAL SERVICE BASEMENT"
+      "detail": "EQUITY UPRISE \u2014 BASEMENT B1 \u2014 TECHNICAL OPERATIONS / INFRASTRUCTURE / UNDERGROUND OPERATIONS"
     },
     {
       "name": "L0 DXF authoritative title",
       "passed": true,
-      "detail": "UNDERGROUND OPERATIONS / TECHNICAL SERVICE BASEMENT"
+      "detail": "TECHNICAL OPERATIONS / INFRASTRUCTURE / UNDERGROUND OPERATIONS"
     },
     {
       "name": "L0 SVG label BUILDING SYSTEMS LAB / OBSERVATION",
@@ -220,12 +220,12 @@
     {
       "name": "L0 PNG signature",
       "passed": true,
-      "detail": "bytes=79831"
+      "detail": "bytes=79338"
     },
     {
       "name": "L0 PNG nontrivial size",
       "passed": true,
-      "detail": "bytes=79831"
+      "detail": "bytes=79338"
     },
     {
       "name": "L0 active plan triplet only",
@@ -1940,7 +1940,7 @@
     {
       "name": "L0 manifest title matches authority",
       "passed": true,
-      "detail": "Underground Operations / Technical Service Basement != Underground Operations / Technical Service Basement"
+      "detail": "Technical Operations / Infrastructure / Underground Operations != Technical Operations / Infrastructure / Underground Operations"
     },
     {
       "name": "L0 manifest maturity matches authority",
@@ -2445,7 +2445,7 @@
     {
       "name": "contact sheet nontrivial size",
       "passed": true,
-      "detail": "bytes=135291"
+      "detail": "bytes=134942"
     }
   ]
 }

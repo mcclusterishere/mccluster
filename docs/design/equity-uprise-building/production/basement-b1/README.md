@@ -1,12 +1,12 @@
-# B1 — Underground Operations / Technical Service Basement — Core V2 Restricted Production Package
+# B1 — Technical Operations / Infrastructure / Underground Operations — Core V2 Controlled Workplace Production Package
 
 Status: **ACTIVE CORE V2 RESTRICTED DERIVED PACKAGE / NOT FOR CONSTRUCTION**
 
-Live access requires McCluster house-owner or explicitly delegated underground-operations-admin authority.
+B1 is a known staffed workplace. Individual hazardous/operational compartments remain role/safety controlled.
 
-Ordinary Equity Uprise admin/staff roles and competency status do not unlock live B1.
+Staff, instructors and supervised learners may enter appropriate B1 areas; competency alone never grants hazardous-compartment authority.
 
-Learner/instructor building-systems work uses a sandboxed clone and cannot expose live underground occupancy, route/security state, utilities, vehicles, or tunnel controls.
+Learner/instructor building-systems work uses the canonical B1/tunnel SANDBOX geometry and cannot expose or control real-world infrastructure.
 
 Authority:
 - `../building-core-v2.json`

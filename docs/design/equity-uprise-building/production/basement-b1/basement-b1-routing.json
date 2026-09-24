@@ -16,6 +16,7 @@
       "type": "ui_state",
       "target": "underground_operations",
       "access": "role-and-safety-authorized",
+      "known_floor": true,
       "sandbox_environment": true,
       "live_real_world_control": false
     },
@@ -37,7 +38,7 @@
       "live_real_world_control": false
     }
   },
-  "normal_floor_selector_visible": false,
+  "normal_floor_selector_visible": true,
   "security": {
     "floor_hidden": false,
     "general_floor_access": [
