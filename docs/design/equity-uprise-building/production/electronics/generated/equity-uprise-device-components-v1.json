@@ -4,6 +4,86 @@
   "archetype_authority": "docs/design/equity-uprise-building/production/electronics/device-archetypes-v1.json",
   "devices": [
     {
+      "asset_id": "B1-AV-CTRL-01",
+      "label": "B1 AV Control Processor",
+      "asset_type": "av_controller",
+      "archetype": "av_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        63.35,
+        -10.35
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "B1-AV-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_STATUS",
+          "mesh_name": "B1-AV-CTRL-01::PART::FRONT_STATUS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "B1-AV-CTRL-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "B1-AV-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROL_IO",
+          "mesh_name": "B1-AV-CTRL-01::PART::CONTROL_IO",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV control"
+          ],
+          "required": true
+        },
+        {
+          "id": "CONTROL_IO",
+          "connector": "modeled GPIO/serial terminals",
+          "medium": "control wiring",
+          "services": [
+            "AV control I/O"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "processor_state",
+        "network_state",
+        "control_io_state",
+        "av_control_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "control_io_fault"
+      ]
+    },
+    {
       "asset_id": "B1-AV-CTRL-01::DATA-JACK",
       "label": "B1 AV Control Processor Data Jack",
       "asset_type": "data_jack",
@@ -134,6 +214,101 @@
       ]
     },
     {
+      "asset_id": "B1-AV-DSP-01",
+      "label": "B1 AV DSP / Amplifier",
+      "asset_type": "av_dsp",
+      "archetype": "av_dsp",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        63.9,
+        -9.7
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "B1-AV-DSP-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_METERS",
+          "mesh_name": "B1-AV-DSP-01::PART::FRONT_METERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "B1-AV-DSP-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "AUDIO_IO",
+          "mesh_name": "B1-AV-DSP-01::PART::AUDIO_IO",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_OUTPUTS",
+          "mesh_name": "B1-AV-DSP-01::PART::SPEAKER_OUTPUTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "B1-AV-DSP-01::PART::POWER_INPUT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV management"
+          ],
+          "required": true
+        },
+        {
+          "id": "AUDIO_IO",
+          "connector": "modeled balanced audio I/O",
+          "medium": "audio wiring",
+          "services": [
+            "audio_input_output"
+          ],
+          "required": true
+        },
+        {
+          "id": "SPEAKER_OUT",
+          "connector": "speaker terminal bank",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "dsp_state",
+        "network_state",
+        "meter_state",
+        "speaker_zone_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "audio_input_loss",
+        "speaker_output_fault"
+      ]
+    },
+    {
       "asset_id": "B1-AV-DSP-01::DATA-JACK",
       "label": "B1 AV DSP / Amplifier Data Jack",
       "asset_type": "data_jack",
@@ -261,6 +436,114 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "B1-AV-SPKR-01",
+      "label": "B1 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        36.0,
+        50.0,
+        -5.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "B1-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "B1-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "B1-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "B1-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "B1-AV-SPKR-02",
+      "label": "B1 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        50.0,
+        -5.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "B1-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "B1-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "B1-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "B1-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
       ]
     },
     {
@@ -1936,6 +2219,72 @@
       ]
     },
     {
+      "asset_id": "B1-LAB-DASHBOARD-01::AV-DECODER",
+      "label": "Digital twin dashboard wall AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        35.0,
+        52.325,
+        -7.8
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "B1-LAB-DASHBOARD-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "B1-LAB-DASHBOARD-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "B1-LAB-DASHBOARD-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-LAB-DASHBOARD-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
+      ]
+    },
+    {
       "asset_id": "B1-LAB-DASHBOARD-01::AV-DECODER::DATA-JACK",
       "label": "Digital twin dashboard wall AV-over-IP Decoder Data Jack",
       "asset_type": "data_jack",
@@ -2802,6 +3151,72 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "B1-OPS-STATUS-01::AV-DECODER",
+      "label": "Incident / route status wall AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        26.5,
+        61.325,
+        -8.2
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "B1-OPS-STATUS-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "B1-OPS-STATUS-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "B1-OPS-STATUS-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "B1-OPS-STATUS-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -6706,6 +7121,69 @@
       ]
     },
     {
+      "asset_id": "F1-AV-CAM-01",
+      "label": "F1 AV Camera 1",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        31.35,
+        52.16,
+        7.4
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F1-AV-CAM-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F1-AV-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F1-AV-CAM-01::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-AV-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-AV-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F1-AV-CAM-01::DATA-JACK",
       "label": "F1 AV Camera 1 Data Jack",
       "asset_type": "data_jack",
@@ -6769,6 +7247,86 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F1-AV-CTRL-01",
+      "label": "F1 AV Control Processor",
+      "asset_type": "av_controller",
+      "archetype": "av_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        63.35,
+        3.15
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F1-AV-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_STATUS",
+          "mesh_name": "F1-AV-CTRL-01::PART::FRONT_STATUS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F1-AV-CTRL-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F1-AV-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROL_IO",
+          "mesh_name": "F1-AV-CTRL-01::PART::CONTROL_IO",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV control"
+          ],
+          "required": true
+        },
+        {
+          "id": "CONTROL_IO",
+          "connector": "modeled GPIO/serial terminals",
+          "medium": "control wiring",
+          "services": [
+            "AV control I/O"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "processor_state",
+        "network_state",
+        "control_io_state",
+        "av_control_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "control_io_fault"
       ]
     },
     {
@@ -6902,6 +7460,101 @@
       ]
     },
     {
+      "asset_id": "F1-AV-DSP-01",
+      "label": "F1 AV DSP / Amplifier",
+      "asset_type": "av_dsp",
+      "archetype": "av_dsp",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        63.9,
+        3.8
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F1-AV-DSP-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_METERS",
+          "mesh_name": "F1-AV-DSP-01::PART::FRONT_METERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F1-AV-DSP-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "AUDIO_IO",
+          "mesh_name": "F1-AV-DSP-01::PART::AUDIO_IO",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_OUTPUTS",
+          "mesh_name": "F1-AV-DSP-01::PART::SPEAKER_OUTPUTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F1-AV-DSP-01::PART::POWER_INPUT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV management"
+          ],
+          "required": true
+        },
+        {
+          "id": "AUDIO_IO",
+          "connector": "modeled balanced audio I/O",
+          "medium": "audio wiring",
+          "services": [
+            "audio_input_output"
+          ],
+          "required": true
+        },
+        {
+          "id": "SPEAKER_OUT",
+          "connector": "speaker terminal bank",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "dsp_state",
+        "network_state",
+        "meter_state",
+        "speaker_zone_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "audio_input_loss",
+        "speaker_output_fault"
+      ]
+    },
+    {
       "asset_id": "F1-AV-DSP-01::DATA-JACK",
       "label": "F1 AV DSP / Amplifier Data Jack",
       "asset_type": "data_jack",
@@ -7032,6 +7685,68 @@
       ]
     },
     {
+      "asset_id": "F1-AV-MIC-01",
+      "label": "F1 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        31.35,
+        52.16,
+        4.6
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F1-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F1-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F1-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F1-AV-MIC-01::DATA-JACK",
       "label": "F1 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -7098,6 +7813,68 @@
       ]
     },
     {
+      "asset_id": "F1-AV-MIC-02",
+      "label": "F1 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        36.75,
+        52.16,
+        4.6
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F1-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F1-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F1-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F1-AV-MIC-02::DATA-JACK",
       "label": "F1 Network Microphone 2 Data Jack",
       "asset_type": "data_jack",
@@ -7161,6 +7938,114 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F1-AV-SPKR-01",
+      "label": "F1 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        31.35,
+        52.16,
+        8.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F1-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F1-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F1-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F1-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F1-AV-SPKR-02",
+      "label": "F1 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        36.75,
+        52.16,
+        8.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F1-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F1-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F1-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F1-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
       ]
     },
     {
@@ -8156,6 +9041,72 @@
       ]
     },
     {
+      "asset_id": "F1-INTAKE-DISPLAY-01::AV-DECODER",
+      "label": "Intake Private Display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        43.35,
+        52.16,
+        4.2
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F1-INTAKE-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-INTAKE-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F1-INTAKE-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-INTAKE-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
+      ]
+    },
+    {
       "asset_id": "F1-INTAKE-DISPLAY-01::AV-DECODER::DATA-JACK",
       "label": "Intake Private Display AV-over-IP Decoder Data Jack",
       "asset_type": "data_jack",
@@ -8283,6 +9234,72 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F1-JOURNEY-DISPLAY-01::AV-DECODER",
+      "label": "Journey Wall Display 1 AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        31.35,
+        52.16,
+        4.0
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F1-JOURNEY-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-JOURNEY-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F1-JOURNEY-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-JOURNEY-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -8416,6 +9433,72 @@
       ]
     },
     {
+      "asset_id": "F1-JOURNEY-DISPLAY-02::AV-DECODER",
+      "label": "Journey Wall Display 2 AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        35.55,
+        52.16,
+        4.0
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F1-JOURNEY-DISPLAY-02::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-JOURNEY-DISPLAY-02::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F1-JOURNEY-DISPLAY-02::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-JOURNEY-DISPLAY-02::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
+      ]
+    },
+    {
       "asset_id": "F1-JOURNEY-DISPLAY-02::AV-DECODER::DATA-JACK",
       "label": "Journey Wall Display 2 AV-over-IP Decoder Data Jack",
       "asset_type": "data_jack",
@@ -8543,6 +9626,72 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F1-JOURNEY-DISPLAY-03::AV-DECODER",
+      "label": "Journey Wall Display 3 AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        39.75,
+        52.16,
+        4.0
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F1-JOURNEY-DISPLAY-03::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-JOURNEY-DISPLAY-03::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F1-JOURNEY-DISPLAY-03::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-JOURNEY-DISPLAY-03::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -8676,6 +9825,72 @@
       ]
     },
     {
+      "asset_id": "F1-JOURNEY-DISPLAY-04::AV-DECODER",
+      "label": "Journey Wall Display 4 AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        43.35,
+        52.16,
+        4.0
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F1-JOURNEY-DISPLAY-04::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-JOURNEY-DISPLAY-04::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F1-JOURNEY-DISPLAY-04::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-JOURNEY-DISPLAY-04::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
+      ]
+    },
+    {
       "asset_id": "F1-JOURNEY-DISPLAY-04::AV-DECODER::DATA-JACK",
       "label": "Journey Wall Display 4 AV-over-IP Decoder Data Jack",
       "asset_type": "data_jack",
@@ -8803,6 +10018,72 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F1-LOUNGE-DISPLAY-01::AV-DECODER",
+      "label": "Orientation Lounge AV / Orientation Display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        31.35,
+        52.16,
+        4.2
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F1-LOUNGE-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-LOUNGE-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F1-LOUNGE-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-LOUNGE-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -9949,6 +11230,72 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F1-RECEPTION-MONITOR-01::AV-DECODER",
+      "label": "Reception Workstation Monitor AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        36.1,
+        44.175,
+        4.0
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F1-RECEPTION-MONITOR-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F1-RECEPTION-MONITOR-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F1-RECEPTION-MONITOR-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F1-RECEPTION-MONITOR-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -12744,6 +14091,69 @@
       ]
     },
     {
+      "asset_id": "F2-AV-CAM-01",
+      "label": "F2 AV Camera 1",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        28.25,
+        52.09,
+        20.9
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-CAM-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F2-AV-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F2-AV-CAM-01::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-AV-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-AV-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F2-AV-CAM-01::DATA-JACK",
       "label": "F2 AV Camera 1 Data Jack",
       "asset_type": "data_jack",
@@ -12810,6 +14220,69 @@
       ]
     },
     {
+      "asset_id": "F2-AV-CAM-02",
+      "label": "F2 AV Camera 2",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        20.9
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-CAM-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F2-AV-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F2-AV-CAM-02::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-AV-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-AV-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F2-AV-CAM-02::DATA-JACK",
       "label": "F2 AV Camera 2 Data Jack",
       "asset_type": "data_jack",
@@ -12873,6 +14346,86 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-CTRL-01",
+      "label": "F2 AV Control Processor",
+      "asset_type": "av_controller",
+      "archetype": "av_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        63.35,
+        16.65
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F2-AV-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_STATUS",
+          "mesh_name": "F2-AV-CTRL-01::PART::FRONT_STATUS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F2-AV-CTRL-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F2-AV-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROL_IO",
+          "mesh_name": "F2-AV-CTRL-01::PART::CONTROL_IO",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV control"
+          ],
+          "required": true
+        },
+        {
+          "id": "CONTROL_IO",
+          "connector": "modeled GPIO/serial terminals",
+          "medium": "control wiring",
+          "services": [
+            "AV control I/O"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "processor_state",
+        "network_state",
+        "control_io_state",
+        "av_control_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "control_io_fault"
       ]
     },
     {
@@ -13006,6 +14559,101 @@
       ]
     },
     {
+      "asset_id": "F2-AV-DSP-01",
+      "label": "F2 AV DSP / Amplifier",
+      "asset_type": "av_dsp",
+      "archetype": "av_dsp",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        63.9,
+        17.3
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F2-AV-DSP-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_METERS",
+          "mesh_name": "F2-AV-DSP-01::PART::FRONT_METERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F2-AV-DSP-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "AUDIO_IO",
+          "mesh_name": "F2-AV-DSP-01::PART::AUDIO_IO",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_OUTPUTS",
+          "mesh_name": "F2-AV-DSP-01::PART::SPEAKER_OUTPUTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F2-AV-DSP-01::PART::POWER_INPUT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV management"
+          ],
+          "required": true
+        },
+        {
+          "id": "AUDIO_IO",
+          "connector": "modeled balanced audio I/O",
+          "medium": "audio wiring",
+          "services": [
+            "audio_input_output"
+          ],
+          "required": true
+        },
+        {
+          "id": "SPEAKER_OUT",
+          "connector": "speaker terminal bank",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "dsp_state",
+        "network_state",
+        "meter_state",
+        "speaker_zone_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "audio_input_loss",
+        "speaker_output_fault"
+      ]
+    },
+    {
       "asset_id": "F2-AV-DSP-01::DATA-JACK",
       "label": "F2 AV DSP / Amplifier Data Jack",
       "asset_type": "data_jack",
@@ -13136,6 +14784,68 @@
       ]
     },
     {
+      "asset_id": "F2-AV-MIC-01",
+      "label": "F2 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        28.25,
+        52.09,
+        18.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F2-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F2-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F2-AV-MIC-01::DATA-JACK",
       "label": "F2 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -13199,6 +14909,68 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-MIC-02",
+      "label": "F2 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        18.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F2-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F2-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
       ]
     },
     {
@@ -13268,6 +15040,68 @@
       ]
     },
     {
+      "asset_id": "F2-AV-MIC-03",
+      "label": "F2 Network Microphone 3",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        42.55,
+        52.09,
+        18.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-MIC-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F2-AV-MIC-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F2-AV-MIC-03::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-AV-MIC-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-AV-MIC-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F2-AV-MIC-03::DATA-JACK",
       "label": "F2 Network Microphone 3 Data Jack",
       "asset_type": "data_jack",
@@ -13334,6 +15168,68 @@
       ]
     },
     {
+      "asset_id": "F2-AV-MIC-04",
+      "label": "F2 Network Microphone 4",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        0.9,
+        24.7,
+        18.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-MIC-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F2-AV-MIC-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F2-AV-MIC-04::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F2-AV-MIC-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F2-AV-MIC-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F2-AV-MIC-04::DATA-JACK",
       "label": "F2 Network Microphone 4 Data Jack",
       "asset_type": "data_jack",
@@ -13397,6 +15293,222 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-SPKR-01",
+      "label": "F2 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        28.25,
+        52.09,
+        22.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F2-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F2-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F2-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-SPKR-02",
+      "label": "F2 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        22.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F2-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F2-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F2-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-SPKR-03",
+      "label": "F2 Speaker 3",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        42.55,
+        52.09,
+        22.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F2-AV-SPKR-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F2-AV-SPKR-03::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-SPKR-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F2-AV-SPKR-03::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F2-AV-SPKR-04",
+      "label": "F2 Speaker 4",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        0.9,
+        24.7,
+        22.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F2-AV-SPKR-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F2-AV-SPKR-04::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F2-AV-SPKR-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F2-AV-SPKR-04::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
       ]
     },
     {
@@ -17078,6 +19190,69 @@
       ]
     },
     {
+      "asset_id": "F3-AV-CAM-01",
+      "label": "F3 AV Camera 1",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        34.4
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-CAM-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F3-AV-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F3-AV-CAM-01::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-AV-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-AV-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F3-AV-CAM-01::DATA-JACK",
       "label": "F3 AV Camera 1 Data Jack",
       "asset_type": "data_jack",
@@ -17144,6 +19319,69 @@
       ]
     },
     {
+      "asset_id": "F3-AV-CAM-02",
+      "label": "F3 AV Camera 2",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        34.4
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-CAM-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F3-AV-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F3-AV-CAM-02::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-AV-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-AV-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F3-AV-CAM-02::DATA-JACK",
       "label": "F3 AV Camera 2 Data Jack",
       "asset_type": "data_jack",
@@ -17207,6 +19445,86 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-CTRL-01",
+      "label": "F3 AV Control Processor",
+      "asset_type": "av_controller",
+      "archetype": "av_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        63.35,
+        30.15
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F3-AV-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_STATUS",
+          "mesh_name": "F3-AV-CTRL-01::PART::FRONT_STATUS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F3-AV-CTRL-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F3-AV-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROL_IO",
+          "mesh_name": "F3-AV-CTRL-01::PART::CONTROL_IO",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV control"
+          ],
+          "required": true
+        },
+        {
+          "id": "CONTROL_IO",
+          "connector": "modeled GPIO/serial terminals",
+          "medium": "control wiring",
+          "services": [
+            "AV control I/O"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "processor_state",
+        "network_state",
+        "control_io_state",
+        "av_control_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "control_io_fault"
       ]
     },
     {
@@ -17340,6 +19658,101 @@
       ]
     },
     {
+      "asset_id": "F3-AV-DSP-01",
+      "label": "F3 AV DSP / Amplifier",
+      "asset_type": "av_dsp",
+      "archetype": "av_dsp",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        63.9,
+        30.8
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F3-AV-DSP-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_METERS",
+          "mesh_name": "F3-AV-DSP-01::PART::FRONT_METERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F3-AV-DSP-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "AUDIO_IO",
+          "mesh_name": "F3-AV-DSP-01::PART::AUDIO_IO",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_OUTPUTS",
+          "mesh_name": "F3-AV-DSP-01::PART::SPEAKER_OUTPUTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F3-AV-DSP-01::PART::POWER_INPUT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV management"
+          ],
+          "required": true
+        },
+        {
+          "id": "AUDIO_IO",
+          "connector": "modeled balanced audio I/O",
+          "medium": "audio wiring",
+          "services": [
+            "audio_input_output"
+          ],
+          "required": true
+        },
+        {
+          "id": "SPEAKER_OUT",
+          "connector": "speaker terminal bank",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "dsp_state",
+        "network_state",
+        "meter_state",
+        "speaker_zone_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "audio_input_loss",
+        "speaker_output_fault"
+      ]
+    },
+    {
       "asset_id": "F3-AV-DSP-01::DATA-JACK",
       "label": "F3 AV DSP / Amplifier Data Jack",
       "asset_type": "data_jack",
@@ -17470,6 +19883,68 @@
       ]
     },
     {
+      "asset_id": "F3-AV-MIC-01",
+      "label": "F3 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        31.6
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F3-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F3-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F3-AV-MIC-01::DATA-JACK",
       "label": "F3 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -17533,6 +20008,68 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-MIC-02",
+      "label": "F3 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        31.6
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F3-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F3-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
       ]
     },
     {
@@ -17602,6 +20139,68 @@
       ]
     },
     {
+      "asset_id": "F3-AV-MIC-03",
+      "label": "F3 Network Microphone 3",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        31.6
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-MIC-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F3-AV-MIC-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F3-AV-MIC-03::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-AV-MIC-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-AV-MIC-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F3-AV-MIC-03::DATA-JACK",
       "label": "F3 Network Microphone 3 Data Jack",
       "asset_type": "data_jack",
@@ -17668,6 +20267,68 @@
       ]
     },
     {
+      "asset_id": "F3-AV-MIC-04",
+      "label": "F3 Network Microphone 4",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        0.9,
+        28.2,
+        31.6
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-MIC-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F3-AV-MIC-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F3-AV-MIC-04::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-AV-MIC-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-AV-MIC-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F3-AV-MIC-04::DATA-JACK",
       "label": "F3 Network Microphone 4 Data Jack",
       "asset_type": "data_jack",
@@ -17731,6 +20392,222 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-SPKR-01",
+      "label": "F3 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        35.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F3-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F3-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F3-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-SPKR-02",
+      "label": "F3 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        35.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F3-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F3-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F3-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-SPKR-03",
+      "label": "F3 Speaker 3",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        35.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F3-AV-SPKR-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F3-AV-SPKR-03::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-SPKR-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F3-AV-SPKR-03::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F3-AV-SPKR-04",
+      "label": "F3 Speaker 4",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        0.9,
+        28.2,
+        35.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F3-AV-SPKR-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F3-AV-SPKR-04::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F3-AV-SPKR-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F3-AV-SPKR-04::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
       ]
     },
     {
@@ -18662,6 +21539,72 @@
       ]
     },
     {
+      "asset_id": "F3-INTERVIEW-A-DISPLAY-01::AV-DECODER",
+      "label": "Interview Room A Display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        8.0,
+        15.88,
+        31.0
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F3-INTERVIEW-A-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-INTERVIEW-A-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F3-INTERVIEW-A-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-INTERVIEW-A-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
+      ]
+    },
+    {
       "asset_id": "F3-INTERVIEW-A-DISPLAY-01::AV-DECODER::DATA-JACK",
       "label": "Interview Room A Display AV-over-IP Decoder Data Jack",
       "asset_type": "data_jack",
@@ -18789,6 +21732,72 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F3-INTERVIEW-B-DISPLAY-01::AV-DECODER",
+      "label": "Interview Room B Display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        22.0,
+        15.88,
+        31.0
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F3-INTERVIEW-B-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F3-INTERVIEW-B-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F3-INTERVIEW-B-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F3-INTERVIEW-B-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -22324,6 +25333,69 @@
       ]
     },
     {
+      "asset_id": "F4-AV-CAM-01",
+      "label": "F4 AV Camera 1",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        47.9
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-CAM-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F4-AV-CAM-01::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F4-AV-CAM-01::DATA-JACK",
       "label": "F4 AV Camera 1 Data Jack",
       "asset_type": "data_jack",
@@ -22387,6 +25459,69 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-CAM-02",
+      "label": "F4 AV Camera 2",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        47.9
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-CAM-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F4-AV-CAM-02::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
       ]
     },
     {
@@ -22456,6 +25591,69 @@
       ]
     },
     {
+      "asset_id": "F4-AV-CAM-03",
+      "label": "F4 AV Camera 3",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        47.9
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-CAM-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-CAM-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F4-AV-CAM-03::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-CAM-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-CAM-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F4-AV-CAM-03::DATA-JACK",
       "label": "F4 AV Camera 3 Data Jack",
       "asset_type": "data_jack",
@@ -22522,6 +25720,69 @@
       ]
     },
     {
+      "asset_id": "F4-AV-CAM-04",
+      "label": "F4 AV Camera 4",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        6.5,
+        9.08,
+        47.9
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-CAM-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-CAM-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F4-AV-CAM-04::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-CAM-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-CAM-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F4-AV-CAM-04::DATA-JACK",
       "label": "F4 AV Camera 4 Data Jack",
       "asset_type": "data_jack",
@@ -22585,6 +25846,86 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-CTRL-01",
+      "label": "F4 AV Control Processor",
+      "asset_type": "av_controller",
+      "archetype": "av_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        63.35,
+        43.65
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F4-AV-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_STATUS",
+          "mesh_name": "F4-AV-CTRL-01::PART::FRONT_STATUS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F4-AV-CTRL-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F4-AV-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROL_IO",
+          "mesh_name": "F4-AV-CTRL-01::PART::CONTROL_IO",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV control"
+          ],
+          "required": true
+        },
+        {
+          "id": "CONTROL_IO",
+          "connector": "modeled GPIO/serial terminals",
+          "medium": "control wiring",
+          "services": [
+            "AV control I/O"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "processor_state",
+        "network_state",
+        "control_io_state",
+        "av_control_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "control_io_fault"
       ]
     },
     {
@@ -22718,6 +26059,101 @@
       ]
     },
     {
+      "asset_id": "F4-AV-DSP-01",
+      "label": "F4 AV DSP / Amplifier",
+      "asset_type": "av_dsp",
+      "archetype": "av_dsp",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        63.9,
+        44.3
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F4-AV-DSP-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_METERS",
+          "mesh_name": "F4-AV-DSP-01::PART::FRONT_METERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F4-AV-DSP-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "AUDIO_IO",
+          "mesh_name": "F4-AV-DSP-01::PART::AUDIO_IO",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_OUTPUTS",
+          "mesh_name": "F4-AV-DSP-01::PART::SPEAKER_OUTPUTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F4-AV-DSP-01::PART::POWER_INPUT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV management"
+          ],
+          "required": true
+        },
+        {
+          "id": "AUDIO_IO",
+          "connector": "modeled balanced audio I/O",
+          "medium": "audio wiring",
+          "services": [
+            "audio_input_output"
+          ],
+          "required": true
+        },
+        {
+          "id": "SPEAKER_OUT",
+          "connector": "speaker terminal bank",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "dsp_state",
+        "network_state",
+        "meter_state",
+        "speaker_zone_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "audio_input_loss",
+        "speaker_output_fault"
+      ]
+    },
+    {
       "asset_id": "F4-AV-DSP-01::DATA-JACK",
       "label": "F4 AV DSP / Amplifier Data Jack",
       "asset_type": "data_jack",
@@ -22848,6 +26284,68 @@
       ]
     },
     {
+      "asset_id": "F4-AV-MIC-01",
+      "label": "F4 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F4-AV-MIC-01::DATA-JACK",
       "label": "F4 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -22911,6 +26409,68 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-MIC-02",
+      "label": "F4 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
       ]
     },
     {
@@ -22980,6 +26540,68 @@
       ]
     },
     {
+      "asset_id": "F4-AV-MIC-03",
+      "label": "F4 Network Microphone 3",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-03::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F4-AV-MIC-03::DATA-JACK",
       "label": "F4 Network Microphone 3 Data Jack",
       "asset_type": "data_jack",
@@ -23043,6 +26665,68 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-MIC-04",
+      "label": "F4 Network Microphone 4",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        6.5,
+        9.08,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-04::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
       ]
     },
     {
@@ -23112,6 +26796,68 @@
       ]
     },
     {
+      "asset_id": "F4-AV-MIC-05",
+      "label": "F4 Network Microphone 5",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        23.0,
+        8.68,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-05::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-05",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-05::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-05::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-05::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F4-AV-MIC-05::DATA-JACK",
       "label": "F4 Network Microphone 5 Data Jack",
       "asset_type": "data_jack",
@@ -23175,6 +26921,68 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-MIC-06",
+      "label": "F4 Network Microphone 6",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        13.2,
+        9.7,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-06::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-06",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-06::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-06::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-06::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
       ]
     },
     {
@@ -23244,6 +27052,68 @@
       ]
     },
     {
+      "asset_id": "F4-AV-MIC-07",
+      "label": "F4 Network Microphone 7",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        25.8,
+        53.29,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-07::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-07",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-07::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-07::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-07::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F4-AV-MIC-07::DATA-JACK",
       "label": "F4 Network Microphone 7 Data Jack",
       "asset_type": "data_jack",
@@ -23310,6 +27180,68 @@
       ]
     },
     {
+      "asset_id": "F4-AV-MIC-08",
+      "label": "F4 Network Microphone 8",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        50.89,
+        45.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-MIC-08::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F4-AV-MIC-08",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F4-AV-MIC-08::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-AV-MIC-08::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-AV-MIC-08::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F4-AV-MIC-08::DATA-JACK",
       "label": "F4 Network Microphone 8 Data Jack",
       "asset_type": "data_jack",
@@ -23373,6 +27305,330 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-01",
+      "label": "F4 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-02",
+      "label": "F4 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-03",
+      "label": "F4 Speaker 3",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-03::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-03::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-04",
+      "label": "F4 Speaker 4",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        6.5,
+        9.08,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-04::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-04::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-05",
+      "label": "F4 Speaker 5",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        23.0,
+        8.68,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-05",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-05::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-05::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-05::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F4-AV-SPKR-06",
+      "label": "F4 Speaker 6",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        13.2,
+        9.7,
+        49.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F4-AV-SPKR-06",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F4-AV-SPKR-06::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F4-AV-SPKR-06::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F4-AV-SPKR-06::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
       ]
     },
     {
@@ -23869,6 +28125,72 @@
         "field_bus_loss",
         "class2_power_loss",
         "sensor_fault"
+      ]
+    },
+    {
+      "asset_id": "F4-EDIT-DISPLAY-01::AV-DECODER",
+      "label": "Edit / Review Calibrated Display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        23.0,
+        9.88,
+        44.5
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F4-EDIT-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-EDIT-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F4-EDIT-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-EDIT-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -25319,6 +29641,72 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F4-RECORDING-MONITOR-01::AV-DECODER",
+      "label": "Recording Room Work Display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        6.5,
+        7.88,
+        44.5
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F4-RECORDING-MONITOR-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F4-RECORDING-MONITOR-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F4-RECORDING-MONITOR-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F4-RECORDING-MONITOR-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -30502,6 +34890,72 @@
       ]
     },
     {
+      "asset_id": "F5-ARCHIVE-SEARCH-01::AV-DECODER",
+      "label": "Evidence Archive Search Surface AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        15.5,
+        27.0,
+        58.0
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F5-ARCHIVE-SEARCH-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-ARCHIVE-SEARCH-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F5-ARCHIVE-SEARCH-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-ARCHIVE-SEARCH-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
+      ]
+    },
+    {
       "asset_id": "F5-ARCHIVE-SEARCH-01::AV-DECODER::DATA-JACK",
       "label": "Evidence Archive Search Surface AV-over-IP Decoder Data Jack",
       "asset_type": "data_jack",
@@ -30632,6 +35086,69 @@
       ]
     },
     {
+      "asset_id": "F5-AV-CAM-01",
+      "label": "F5 AV Camera 1",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        61.4
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-CAM-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F5-AV-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F5-AV-CAM-01::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-AV-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-AV-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F5-AV-CAM-01::DATA-JACK",
       "label": "F5 AV Camera 1 Data Jack",
       "asset_type": "data_jack",
@@ -30698,6 +35215,69 @@
       ]
     },
     {
+      "asset_id": "F5-AV-CAM-02",
+      "label": "F5 AV Camera 2",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        61.4
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-CAM-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F5-AV-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F5-AV-CAM-02::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-AV-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-AV-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F5-AV-CAM-02::DATA-JACK",
       "label": "F5 AV Camera 2 Data Jack",
       "asset_type": "data_jack",
@@ -30761,6 +35341,86 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-CTRL-01",
+      "label": "F5 AV Control Processor",
+      "asset_type": "av_controller",
+      "archetype": "av_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        63.35,
+        57.15
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F5-AV-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_STATUS",
+          "mesh_name": "F5-AV-CTRL-01::PART::FRONT_STATUS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F5-AV-CTRL-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F5-AV-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROL_IO",
+          "mesh_name": "F5-AV-CTRL-01::PART::CONTROL_IO",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV control"
+          ],
+          "required": true
+        },
+        {
+          "id": "CONTROL_IO",
+          "connector": "modeled GPIO/serial terminals",
+          "medium": "control wiring",
+          "services": [
+            "AV control I/O"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "processor_state",
+        "network_state",
+        "control_io_state",
+        "av_control_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "control_io_fault"
       ]
     },
     {
@@ -30894,6 +35554,101 @@
       ]
     },
     {
+      "asset_id": "F5-AV-DSP-01",
+      "label": "F5 AV DSP / Amplifier",
+      "asset_type": "av_dsp",
+      "archetype": "av_dsp",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        63.9,
+        57.8
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F5-AV-DSP-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_METERS",
+          "mesh_name": "F5-AV-DSP-01::PART::FRONT_METERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F5-AV-DSP-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "AUDIO_IO",
+          "mesh_name": "F5-AV-DSP-01::PART::AUDIO_IO",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_OUTPUTS",
+          "mesh_name": "F5-AV-DSP-01::PART::SPEAKER_OUTPUTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F5-AV-DSP-01::PART::POWER_INPUT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV management"
+          ],
+          "required": true
+        },
+        {
+          "id": "AUDIO_IO",
+          "connector": "modeled balanced audio I/O",
+          "medium": "audio wiring",
+          "services": [
+            "audio_input_output"
+          ],
+          "required": true
+        },
+        {
+          "id": "SPEAKER_OUT",
+          "connector": "speaker terminal bank",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "dsp_state",
+        "network_state",
+        "meter_state",
+        "speaker_zone_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "audio_input_loss",
+        "speaker_output_fault"
+      ]
+    },
+    {
       "asset_id": "F5-AV-DSP-01::DATA-JACK",
       "label": "F5 AV DSP / Amplifier Data Jack",
       "asset_type": "data_jack",
@@ -31024,6 +35779,68 @@
       ]
     },
     {
+      "asset_id": "F5-AV-MIC-01",
+      "label": "F5 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        58.6
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F5-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F5-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F5-AV-MIC-01::DATA-JACK",
       "label": "F5 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -31087,6 +35904,68 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-MIC-02",
+      "label": "F5 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        58.6
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F5-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F5-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
       ]
     },
     {
@@ -31156,6 +36035,68 @@
       ]
     },
     {
+      "asset_id": "F5-AV-MIC-03",
+      "label": "F5 Network Microphone 3",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        58.6
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-MIC-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F5-AV-MIC-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F5-AV-MIC-03::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-AV-MIC-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-AV-MIC-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F5-AV-MIC-03::DATA-JACK",
       "label": "F5 Network Microphone 3 Data Jack",
       "asset_type": "data_jack",
@@ -31222,6 +36163,68 @@
       ]
     },
     {
+      "asset_id": "F5-AV-MIC-04",
+      "label": "F5 Network Microphone 4",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        7.5,
+        17.08,
+        58.6
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-MIC-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F5-AV-MIC-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F5-AV-MIC-04::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-AV-MIC-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-AV-MIC-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F5-AV-MIC-04::DATA-JACK",
       "label": "F5 Network Microphone 4 Data Jack",
       "asset_type": "data_jack",
@@ -31285,6 +36288,222 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-SPKR-01",
+      "label": "F5 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        62.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F5-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F5-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F5-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-SPKR-02",
+      "label": "F5 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        62.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F5-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F5-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F5-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-SPKR-03",
+      "label": "F5 Speaker 3",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        62.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F5-AV-SPKR-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F5-AV-SPKR-03::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-SPKR-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F5-AV-SPKR-03::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F5-AV-SPKR-04",
+      "label": "F5 Speaker 4",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        7.5,
+        17.08,
+        62.5
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F5-AV-SPKR-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F5-AV-SPKR-04::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F5-AV-SPKR-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F5-AV-SPKR-04::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
       ]
     },
     {
@@ -33104,6 +38323,72 @@
       ]
     },
     {
+      "asset_id": "F5-PUB-DISPLAY-01::AV-DECODER",
+      "label": "Publication Review Display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        23.5,
+        15.88,
+        58.0
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F5-PUB-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-PUB-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F5-PUB-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-PUB-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
+      ]
+    },
+    {
       "asset_id": "F5-PUB-DISPLAY-01::AV-DECODER::DATA-JACK",
       "label": "Publication Review Display AV-over-IP Decoder Data Jack",
       "asset_type": "data_jack",
@@ -34081,6 +39366,72 @@
         "reader_tamper",
         "credential_denied",
         "controller_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F5-SOURCE-DISPLAY-01::AV-DECODER",
+      "label": "Source Review Display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        7.5,
+        15.88,
+        58.0
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F5-SOURCE-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F5-SOURCE-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F5-SOURCE-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F5-SOURCE-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -38478,6 +43829,69 @@
       ]
     },
     {
+      "asset_id": "F6-AV-CAM-01",
+      "label": "F6 AV Camera 1",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        74.9
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-CAM-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F6-AV-CAM-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F6-AV-CAM-01::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-AV-CAM-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-AV-CAM-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F6-AV-CAM-01::DATA-JACK",
       "label": "F6 AV Camera 1 Data Jack",
       "asset_type": "data_jack",
@@ -38544,6 +43958,69 @@
       ]
     },
     {
+      "asset_id": "F6-AV-CAM-02",
+      "label": "F6 AV Camera 2",
+      "asset_type": "av_camera",
+      "archetype": "av_camera",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        74.9
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-CAM-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F6-AV-CAM-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "LENS",
+          "mesh_name": "F6-AV-CAM-02::PART::LENS",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-AV-CAM-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-AV-CAM-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "network_reachability",
+        "video_stream",
+        "status_indicator",
+        "simulated_preview"
+      ],
+      "planned_behaviors": [
+        "camera_link_down",
+        "poe_loss",
+        "video_stream_fault"
+      ]
+    },
+    {
       "asset_id": "F6-AV-CAM-02::DATA-JACK",
       "label": "F6 AV Camera 2 Data Jack",
       "asset_type": "data_jack",
@@ -38607,6 +44084,86 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-CTRL-01",
+      "label": "F6 AV Control Processor",
+      "asset_type": "av_controller",
+      "archetype": "av_controller",
+      "maturity": "componentized",
+      "position_ft": [
+        45.9,
+        63.35,
+        70.65
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F6-AV-CTRL-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_STATUS",
+          "mesh_name": "F6-AV-CTRL-01::PART::FRONT_STATUS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F6-AV-CTRL-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F6-AV-CTRL-01::PART::POWER_INPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "CONTROL_IO",
+          "mesh_name": "F6-AV-CTRL-01::PART::CONTROL_IO",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV control"
+          ],
+          "required": true
+        },
+        {
+          "id": "CONTROL_IO",
+          "connector": "modeled GPIO/serial terminals",
+          "medium": "control wiring",
+          "services": [
+            "AV control I/O"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "processor_state",
+        "network_state",
+        "control_io_state",
+        "av_control_sandbox_launch_point"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "control_io_fault"
       ]
     },
     {
@@ -38740,6 +44297,101 @@
       ]
     },
     {
+      "asset_id": "F6-AV-DSP-01",
+      "label": "F6 AV DSP / Amplifier",
+      "asset_type": "av_dsp",
+      "archetype": "av_dsp",
+      "maturity": "componentized",
+      "position_ft": [
+        45.0,
+        63.9,
+        71.3
+      ],
+      "components": [
+        {
+          "component_id": "RACK_CHASSIS",
+          "mesh_name": "F6-AV-DSP-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "FRONT_METERS",
+          "mesh_name": "F6-AV-DSP-01::PART::FRONT_METERS",
+          "inspectable": true
+        },
+        {
+          "component_id": "NETWORK_PORT",
+          "mesh_name": "F6-AV-DSP-01::PART::NETWORK_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "AUDIO_IO",
+          "mesh_name": "F6-AV-DSP-01::PART::AUDIO_IO",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_OUTPUTS",
+          "mesh_name": "F6-AV-DSP-01::PART::SPEAKER_OUTPUTS",
+          "inspectable": true
+        },
+        {
+          "component_id": "POWER_INPUT",
+          "mesh_name": "F6-AV-DSP-01::PART::POWER_INPUT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "AC_IN",
+          "connector": "IEC rack power inlet",
+          "medium": "AC",
+          "services": [
+            "equipment_power"
+          ],
+          "required": true
+        },
+        {
+          "id": "RJ45_ETH",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "AV management"
+          ],
+          "required": true
+        },
+        {
+          "id": "AUDIO_IO",
+          "connector": "modeled balanced audio I/O",
+          "medium": "audio wiring",
+          "services": [
+            "audio_input_output"
+          ],
+          "required": true
+        },
+        {
+          "id": "SPEAKER_OUT",
+          "connector": "speaker terminal bank",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "dsp_state",
+        "network_state",
+        "meter_state",
+        "speaker_zone_state"
+      ],
+      "planned_behaviors": [
+        "power_loss",
+        "network_link_loss",
+        "audio_input_loss",
+        "speaker_output_fault"
+      ]
+    },
+    {
       "asset_id": "F6-AV-DSP-01::DATA-JACK",
       "label": "F6 AV DSP / Amplifier Data Jack",
       "asset_type": "data_jack",
@@ -38870,6 +44522,68 @@
       ]
     },
     {
+      "asset_id": "F6-AV-MIC-01",
+      "label": "F6 Network Microphone 1",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        72.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-MIC-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F6-AV-MIC-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F6-AV-MIC-01::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-AV-MIC-01::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-AV-MIC-01::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F6-AV-MIC-01::DATA-JACK",
       "label": "F6 Network Microphone 1 Data Jack",
       "asset_type": "data_jack",
@@ -38933,6 +44647,68 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-MIC-02",
+      "label": "F6 Network Microphone 2",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        72.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-MIC-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F6-AV-MIC-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F6-AV-MIC-02::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-AV-MIC-02::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-AV-MIC-02::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
       ]
     },
     {
@@ -39002,6 +44778,68 @@
       ]
     },
     {
+      "asset_id": "F6-AV-MIC-03",
+      "label": "F6 Network Microphone 3",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        72.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-MIC-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F6-AV-MIC-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F6-AV-MIC-03::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-AV-MIC-03::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-AV-MIC-03::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F6-AV-MIC-03::DATA-JACK",
       "label": "F6 Network Microphone 3 Data Jack",
       "asset_type": "data_jack",
@@ -39068,6 +44906,68 @@
       ]
     },
     {
+      "asset_id": "F6-AV-MIC-04",
+      "label": "F6 Network Microphone 4",
+      "asset_type": "av_microphone",
+      "archetype": "av_microphone",
+      "maturity": "componentized",
+      "position_ft": [
+        7.5,
+        17.08,
+        72.1
+      ],
+      "components": [
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-MIC-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "BODY",
+          "mesh_name": "F6-AV-MIC-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "CAPSULE_OR_ARRAY",
+          "mesh_name": "F6-AV-MIC-04::PART::CAPSULE_OR_ARRAY",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-AV-MIC-04::PART::STATUS_LED",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-AV-MIC-04::PART::RJ45_POE_PORT",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "network_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "audio_state",
+        "network_state",
+        "poe_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "microphone_fault"
+      ]
+    },
+    {
       "asset_id": "F6-AV-MIC-04::DATA-JACK",
       "label": "F6 Network Microphone 4 Data Jack",
       "asset_type": "data_jack",
@@ -39131,6 +45031,222 @@
         "open_permanent_link",
         "wrong_patch_target",
         "damaged_front_jack"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-SPKR-01",
+      "label": "F6 Speaker 1",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        27.0,
+        52.09,
+        76.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F6-AV-SPKR-01",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F6-AV-SPKR-01::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-SPKR-01::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F6-AV-SPKR-01::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-SPKR-02",
+      "label": "F6 Speaker 2",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        37.2,
+        52.09,
+        76.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F6-AV-SPKR-02",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F6-AV-SPKR-02::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-SPKR-02::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F6-AV-SPKR-02::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-SPKR-03",
+      "label": "F6 Speaker 3",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        43.8,
+        52.09,
+        76.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F6-AV-SPKR-03",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F6-AV-SPKR-03::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-SPKR-03::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F6-AV-SPKR-03::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
+      ]
+    },
+    {
+      "asset_id": "F6-AV-SPKR-04",
+      "label": "F6 Speaker 4",
+      "asset_type": "speaker",
+      "archetype": "speaker",
+      "maturity": "componentized",
+      "position_ft": [
+        7.5,
+        17.08,
+        76.0
+      ],
+      "components": [
+        {
+          "component_id": "GRILLE_OR_CABINET",
+          "mesh_name": "F6-AV-SPKR-04",
+          "inspectable": true
+        },
+        {
+          "component_id": "DRIVER",
+          "mesh_name": "F6-AV-SPKR-04::PART::DRIVER",
+          "inspectable": true
+        },
+        {
+          "component_id": "MOUNT",
+          "mesh_name": "F6-AV-SPKR-04::PART::MOUNT",
+          "inspectable": true
+        },
+        {
+          "component_id": "SPEAKER_TERMINALS",
+          "mesh_name": "F6-AV-SPKR-04::PART::SPEAKER_TERMINALS",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "SPEAKER_PAIR",
+          "connector": "speaker terminal pair",
+          "medium": "SPEAKER-PAIR",
+          "services": [
+            "amplified_audio"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "speaker_zone_state",
+        "audio_path_state"
+      ],
+      "planned_behaviors": [
+        "speaker_pair_open",
+        "driver_fault",
+        "zone_audio_loss"
       ]
     },
     {
@@ -39630,6 +45746,72 @@
       ]
     },
     {
+      "asset_id": "F6-BRIEFING-DISPLAY-01::AV-DECODER",
+      "label": "Partner Briefing Display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        23.5,
+        15.88,
+        71.5
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F6-BRIEFING-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-BRIEFING-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F6-BRIEFING-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-BRIEFING-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
+      ]
+    },
+    {
       "asset_id": "F6-BRIEFING-DISPLAY-01::AV-DECODER::DATA-JACK",
       "label": "Partner Briefing Display AV-over-IP Decoder Data Jack",
       "asset_type": "data_jack",
@@ -39911,6 +46093,72 @@
         "branch_trip",
         "feeder_loss",
         "directory_mismatch"
+      ]
+    },
+    {
+      "asset_id": "F6-HALO-GLOBE-01::AV-DECODER",
+      "label": "Halo Globe / Spatial Intelligence AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        55.0,
+        12.0,
+        75.75
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F6-HALO-GLOBE-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-HALO-GLOBE-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F6-HALO-GLOBE-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-HALO-GLOBE-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -42158,6 +48406,72 @@
         "reader_tamper",
         "credential_denied",
         "controller_unavailable"
+      ]
+    },
+    {
+      "asset_id": "F6-STRATEGY-DISPLAY-01::AV-DECODER",
+      "label": "Strategy Review Display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        7.5,
+        15.88,
+        71.5
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F6-STRATEGY-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F6-STRATEGY-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F6-STRATEGY-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F6-STRATEGY-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
@@ -45772,6 +52086,72 @@
         "branch_power_loss",
         "receptacle_unavailable",
         "equipment_unplugged"
+      ]
+    },
+    {
+      "asset_id": "F7-ECOSYSTEM-DISPLAY-01::AV-DECODER",
+      "label": "Destination / route display AV-over-IP Decoder",
+      "asset_type": "network_display_decoder",
+      "archetype": "network_display_decoder",
+      "maturity": "componentized",
+      "position_ft": [
+        48.0,
+        26.7,
+        86.2
+      ],
+      "components": [
+        {
+          "component_id": "DECODER_CHASSIS",
+          "mesh_name": "F7-ECOSYSTEM-DISPLAY-01::AV-DECODER",
+          "inspectable": true
+        },
+        {
+          "component_id": "RJ45_POE_PORT",
+          "mesh_name": "F7-ECOSYSTEM-DISPLAY-01::AV-DECODER::PART::RJ45_POE_PORT",
+          "inspectable": true
+        },
+        {
+          "component_id": "HDMI_OUTPUT",
+          "mesh_name": "F7-ECOSYSTEM-DISPLAY-01::AV-DECODER::PART::HDMI_OUTPUT",
+          "inspectable": true
+        },
+        {
+          "component_id": "STATUS_LED",
+          "mesh_name": "F7-ECOSYSTEM-DISPLAY-01::AV-DECODER::PART::STATUS_LED",
+          "inspectable": true
+        }
+      ],
+      "ports": [
+        {
+          "id": "RJ45_POE_PORT",
+          "connector": "8P8C/RJ45",
+          "medium": "Cat6A patch cord",
+          "services": [
+            "Ethernet/IP",
+            "PoE",
+            "AV over IP"
+          ],
+          "required": true
+        },
+        {
+          "id": "HDMI_OUT",
+          "connector": "HDMI",
+          "medium": "HDMI cable",
+          "services": [
+            "display_video"
+          ],
+          "required": true
+        }
+      ],
+      "simulated_capabilities": [
+        "decoder_state",
+        "network_state",
+        "video_output_state"
+      ],
+      "planned_behaviors": [
+        "poe_loss",
+        "network_link_loss",
+        "hdmi_output_loss"
       ]
     },
     {
