@@ -470,10 +470,12 @@ body.music-now-open{overflow:hidden}
 .music-v2 .creator-form,.music-v2 .creator-form.two{display:grid;grid-template-columns:1fr;gap:11px}
 .music-v2 .creator-field.wide,.music-v2 .creator-actions.wide,.music-v2 .creator-status.wide,.music-v2 .creator-check.wide{grid-column:auto}
 .music-v2 .creator-field{display:grid;gap:5px}
-.music-v2 .creator-field label,.music-v2 .creator-label{
+/* Same exclusions as css/music-creator.css: a `.creator-check` is a <label>
+   around an <input>, so the caption and text-control rules must not claim it. */
+.music-v2 .creator-field label:not(.creator-check),.music-v2 .creator-label{
   color:var(--music-muted);font-size:8.5px;font-weight:800;letter-spacing:.07em
 }
-.music-v2 .creator-field input,.music-v2 .creator-field textarea,.music-v2 .creator-field select{
+.music-v2 .creator-field input:not([type="checkbox"]):not([type="radio"]),.music-v2 .creator-field textarea,.music-v2 .creator-field select{
   width:100%;box-sizing:border-box;
   border:0;border-radius:9px;
   background:#0d0d10;color:var(--music-text);
