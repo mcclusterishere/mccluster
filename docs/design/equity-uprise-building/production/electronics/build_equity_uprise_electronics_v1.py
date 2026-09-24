@@ -872,80 +872,212 @@ for rel in relationships:
         by_id[src]["systems"]["downstream_asset_ids"]=uniq(by_id[src]["systems"].get("downstream_asset_ids",[])+[dst])
         by_id[dst]["systems"]["upstream_asset_ids"]=uniq(by_id[dst]["systems"].get("upstream_asset_ids",[])+[src])
 
-def same_floor_route(start,end,n,height_aff,pathway):
-    if not start or not end:return []
-    z=ffe(n)+height_aff
-    # Route from support zone into the established north tray, then along the
-    # central ceiling spine before the final drop to the endpoint.
-    pts=[start,[SUP["tray_turn"][0],SUP["tray_turn"][1],z],[40.0,end[1],z],[end[0],end[1],z],end]
-    # Remove consecutive duplicate/near-duplicate points.
+
+PATHWAYS=ROUTE["pathway_families"]
+PATHWAY_VERSION=ROUTE["pathway_model_version"]
+BUNDLE_LANES=[float(x) for x in ROUTE.get("bundle_lane_offsets_ft",[-.18,-.06,.06,.18])]
+
+def _route_point(p):
+    return [round(float(v),4) for v in p]
+
+def _route_dist(a,b):
+    return math.sqrt(sum((float(b[i])-float(a[i]))**2 for i in range(3)))
+
+def _dedupe_route(points):
     out=[]
-    for p in pts:
-        q=[round(float(v),4) for v in p]
-        if not out or math.sqrt(sum((q[k]-out[-1][k])**2 for k in range(3)))>.03:out.append(q)
+    for p in points:
+        q=_route_point(p)
+        if not out or _route_dist(q,out[-1])>.03:out.append(q)
     return out
 
-def cross_floor_route(start,end,src_level,dst_level,riser_xy,height_aff):
-    if not start or not end:return []
-    sx,sy=riser_xy
-    z1=ffe(src_level)+height_aff
-    z2=ffe(dst_level)+height_aff
-    pts=[start,[sx,sy,z1],[sx,sy,z2],[40.0,61.1,z2],[40.0,end[1],z2],[end[0],end[1],z2],end]
-    out=[]
-    for p in pts:
-        q=[round(float(v),4) for v in p]
-        if not out or math.sqrt(sum((q[k]-out[-1][k])**2 for k in range(3)))>.03:out.append(q)
-    return out
+def _soften_route(points,radius):
+    pts=_dedupe_route(points)
+    if len(pts)<3 or radius<=0:return pts
+    out=[pts[0]]
+    for i in range(1,len(pts)-1):
+        a,p,b=pts[i-1],pts[i],pts[i+1]
+        vin=[p[k]-a[k] for k in range(3)]
+        vout=[b[k]-p[k] for k in range(3)]
+        lin=math.sqrt(sum(v*v for v in vin));lout=math.sqrt(sum(v*v for v in vout))
+        if lin<.06 or lout<.06:
+            out.append(p);continue
+        uin=[v/lin for v in vin];uout=[v/lout for v in vout]
+        dot=sum(uin[k]*uout[k] for k in range(3))
+        if dot>.998:
+            out.append(p);continue
+        r=min(float(radius),lin*.28,lout*.28)
+        if r<.04:
+            out.append(p);continue
+        entry=[p[k]-uin[k]*r for k in range(3)]
+        exit=[p[k]+uout[k]*r for k in range(3)]
+        out.append(_route_point(entry))
+        # Three points approximate a supported sweep instead of a zero-radius corner.
+        for t in (.25,.5,.75):
+            q=[(1-t)*(1-t)*entry[k]+2*(1-t)*t*p[k]+t*t*exit[k] for k in range(3)]
+            out.append(_route_point(q))
+        out.append(_route_point(exit))
+    out.append(pts[-1])
+    return _dedupe_route(out)
 
-def feeder_route(conn,dst,n,mode):
-    xy=R["emergency_power"] if mode=="emergency" else R["normal_power"]
-    z0=ffe(0)+8.6
-    zn=ffe(n)+H["power_branch"]
-    return [[xy[0],xy[1],z0],[xy[0],xy[1],zn],[SUP["normal_panel"][0] if mode=="normal" else SUP["emergency_panel"][0],SUP["normal_panel"][1],zn],dst]
+def pathway_family_for_cable(ctype):
+    if ctype in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE","OS2-SM-DUPLEX"}:return "telecommunications"
+    if ctype in {"BACNET-MSTP-STP","OSDP-RS485-STP","24VDC-CLASS2"}:return "controls_security"
+    if ctype in {"FIRE-ALARM-SLC","FIRE-ALARM-NAC"}:return "life_safety"
+    if ctype=="120VAC-BRANCH":return "power_branch"
+    if ctype=="208Y120V-FEEDER":return "power_feeder"
+    if ctype=="SPEAKER-PAIR":return "av_audio"
+    return "local_equipment"
+
+def _lane_index(conn):
+    raw=str(conn.get("connection_id","0")).split("::")[-1]
+    try:n=int(raw)
+    except ValueError:n=sum(ord(ch) for ch in raw)
+    return n%len(BUNDLE_LANES) if BUNDLE_LANES else 0
+
+def _lane_offset(conn):
+    return BUNDLE_LANES[_lane_index(conn)] if BUNDLE_LANES else 0.0
+
+def _pathway_height(n,family):
+    spec=PATHWAYS[family]
+    aff=spec.get("roof_height_aff_ft") if int(n)==7 and spec.get("roof_height_aff_ft") is not None else spec.get("height_aff_ft")
+    return ffe(int(n))+float(aff or 0.0)
+
+def _nearest_branch_x(x,family,lane=0.0):
+    branches=[float(v) for v in PATHWAYS[family].get("branch_x_ft",[])]
+    if not branches:return float(x)
+    base=min(branches,key=lambda v:abs(v-float(x)))
+    return base+lane*.35
+
+def _route_metadata(conn,family,extra=None):
+    spec=PATHWAYS[family]
+    md=conn.setdefault("metadata",{})
+    md["pathway_route_version"]=PATHWAY_VERSION
+    md["pathway_family_id"]=family
+    md["pathway_class"]=spec["pathway_class"]
+    md["support_system"]=spec["support_system"]
+    md["separation_group"]=spec["separation_group"]
+    md["bundle_lane_index"]=_lane_index(conn)
+    md["bundle_lane_offset_ft"]=round(_lane_offset(conn),3)
+    md["visual_bend_radius_ft"]=float(spec.get("visual_bend_radius_ft",0.0))
+    md["pathway_policy_ref"]="electronics-population-policy-v1.json::physical_routing"
+    md["field_bend_radius_verification_required"]=family!="local_equipment"
+    if extra:md.update(extra)
+    return md
+
+def _finalize_pathway_route(conn,base,family,extra=None):
+    md=_route_metadata(conn,family,extra)
+    return _soften_route(base,float(md["visual_bend_radius_ft"]))
+
+def same_floor_route(conn,start,end,n,family):
+    if not start or not end:return []
+    spec=PATHWAYS[family];lane=_lane_offset(conn);z=_pathway_height(n,family)
+    trunk_y=float(spec["trunk_y_ft"])+lane
+    sx=_nearest_branch_x(start[0],family,lane);ex=_nearest_branch_x(end[0],family,lane)
+    base=[start,[start[0],start[1],z],[sx,start[1],z]]
+    if abs(sx-ex)<.04:
+        base.append([sx,end[1],z])
+    else:
+        base.extend([[sx,trunk_y,z],[ex,trunk_y,z],[ex,end[1],z]])
+    base.extend([[end[0],end[1],z],end])
+    return _finalize_pathway_route(conn,base,family,{
+        "pathway_trunk_y_ft":round(trunk_y,3),
+        "pathway_branch_x_ft":[round(sx,3),round(ex,3)],
+    })
+
+def cross_floor_route(conn,start,end,src_level,dst_level,riser_xy,family):
+    if not start or not end:return []
+    spec=PATHWAYS[family];lane=_lane_offset(conn)
+    z1=_pathway_height(src_level,family);z2=_pathway_height(dst_level,family)
+    trunk_y=float(spec["trunk_y_ft"])+lane
+    sx=_nearest_branch_x(start[0],family,lane);ex=_nearest_branch_x(end[0],family,lane)
+    rx=float(riser_xy[0])+lane*.25;ry=float(riser_xy[1])
+    base=[
+        start,[start[0],start[1],z1],[sx,start[1],z1],[sx,trunk_y,z1],
+        [rx,trunk_y,z1],[rx,ry,z1],[rx,ry,z2],
+        [rx,trunk_y,z2],[ex,trunk_y,z2],[ex,end[1],z2],[end[0],end[1],z2],end
+    ]
+    return _finalize_pathway_route(conn,base,family,{
+        "pathway_trunk_y_ft":round(trunk_y,3),
+        "pathway_branch_x_ft":[round(sx,3),round(ex,3)],
+        "riser_center_ft":[round(float(riser_xy[0]),3),round(float(riser_xy[1]),3)],
+    })
+
+def feeder_route(conn,start,end,n,mode):
+    if not start or not end:return []
+    family="power_feeder";lane=_lane_offset(conn)
+    riser=R["emergency_power"] if mode=="emergency" else R["normal_power"]
+    rx=float(riser[0])+lane*.22;ry=float(riser[1])
+    zn=_pathway_height(n,"power_branch")
+    panel_xy=SUP["emergency_panel"] if mode=="emergency" else SUP["normal_panel"]
+    base=[
+        start,[rx,ry,start[2]],[rx,ry,zn],
+        [float(panel_xy[0]),float(panel_xy[1]),zn],
+        [end[0],end[1],zn],end
+    ]
+    return _finalize_pathway_route(conn,base,family,{
+        "riser_center_ft":[round(float(riser[0]),3),round(float(riser[1]),3)],
+        "feeder_mode":mode,
+    })
+
+def local_equipment_route(conn,start,end):
+    if not start or not end:return []
+    # Keep patch/power cords local to racks/work areas. A small service loop
+    # avoids a long diagonal while not pretending there is a building pathway.
+    d=_route_dist(start,end)
+    if d<.35:return _finalize_pathway_route(conn,[start,end],"local_equipment")
+    lane=_lane_offset(conn)
+    midz=(float(start[2])+float(end[2]))/2.0
+    if d<=8.0:
+        base=[start,[start[0],start[1]+lane,midz],[end[0],end[1]+lane,midz],end]
+    else:
+        base=[start,[start[0],start[1],midz],[end[0],start[1],midz],[end[0],end[1],midz],end]
+    return _finalize_pathway_route(conn,base,"local_equipment")
 
 def route_for_connection(conn):
     src,dst=conn["from_asset_id"],conn["to_asset_id"]
     a,b=positions.get(src),positions.get(dst)
     sa,sb=asset_level(src),asset_level(dst)
     ctype=conn["cable_type"]
+    family=pathway_family_for_cable(ctype)
 
-    if ctype=="208Y120V-FEEDER" and b is not None and sb is not None:
-        return feeder_route(conn,b,sb,"emergency" if src=="ELEC-EMERGENCY" else "normal")
     if a is None or b is None:return conn.get("route") or []
 
-    if ctype in {"10G-DAC","IEC-POWER","NEMA5-15-POWER-CORD","CAT6A-PATCH","HDMI","DISPLAYPORT"}:
-        return [[round(float(v),4) for v in a],[round(float(v),4) for v in b]]
+    if ctype=="208Y120V-FEEDER" and sb is not None:
+        return feeder_route(conn,a,b,sb,"emergency" if src=="ELEC-EMERGENCY" else "normal")
+
+    if family=="local_equipment":
+        return local_equipment_route(conn,a,b)
 
     if ctype=="OS2-SM-DUPLEX":
         if sa is not None and sb is not None and sa!=sb:
-            return cross_floor_route(a,b,sa,sb,R["data"],H["data_tray"])
-        return same_floor_route(a,b,sa or sb or 0,H["data_tray"],"data")
+            return cross_floor_route(conn,a,b,sa,sb,R["data"],family)
+        return same_floor_route(conn,a,b,sa if sa is not None else (sb if sb is not None else 0),family)
 
     if ctype in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE"}:
-        n=sb if sb is not None else sa
-        return same_floor_route(a,b,n,H["data_tray"],"data")
+        n=sb if sb is not None else (sa if sa is not None else 0)
+        return same_floor_route(conn,a,b,n,family)
 
     if ctype in {"BACNET-MSTP-STP","OSDP-RS485-STP","24VDC-CLASS2"}:
         if sa is not None and sb is not None and sa!=sb:
-            return cross_floor_route(a,b,sa,sb,R["controls"],H["controls_tray"])
-        return same_floor_route(a,b,sb if sb is not None else sa,H["controls_tray"],"controls")
+            return cross_floor_route(conn,a,b,sa,sb,R["controls"],family)
+        return same_floor_route(conn,a,b,sb if sb is not None else (sa if sa is not None else 0),family)
 
     if ctype in {"FIRE-ALARM-SLC","FIRE-ALARM-NAC"}:
         if sa is not None and sb is not None and sa!=sb:
-            return cross_floor_route(a,b,sa,sb,R["fire"],H["fire_alarm"])
-        return same_floor_route(a,b,sb if sb is not None else sa,H["fire_alarm"],"fire_alarm")
+            return cross_floor_route(conn,a,b,sa,sb,R["fire"],family)
+        return same_floor_route(conn,a,b,sb if sb is not None else (sa if sa is not None else 0),family)
 
     if ctype=="120VAC-BRANCH":
         if sa is not None and sb is not None and sa!=sb:
             mode="emergency" if "PANEL-E-" in src else "normal"
             riser=R["emergency_power"] if mode=="emergency" else R["normal_power"]
-            return cross_floor_route(a,b,sa,sb,riser,H["power_branch"])
-        return same_floor_route(a,b,sb if sb is not None else sa,H["power_branch"],"power")
+            return cross_floor_route(conn,a,b,sa,sb,riser,family)
+        return same_floor_route(conn,a,b,sb if sb is not None else (sa if sa is not None else 0),family)
 
     if ctype=="SPEAKER-PAIR":
-        return same_floor_route(a,b,sb if sb is not None else sa,9.2,"av")
+        return same_floor_route(conn,a,b,sb if sb is not None else (sa if sa is not None else 0),family)
 
-    return [[round(float(v),4) for v in a],[round(float(v),4) for v in b]]
+    return local_equipment_route(conn,a,b)
 
 def port_prefix(ctype):
     if "CAT6A" in ctype:return "RJ45"
@@ -966,14 +1098,7 @@ for conn in connections:
     route=route_for_connection(conn)
     conn["route"]=route
     conn.setdefault("metadata",{})["route_length_ft"]=route_length_ft(route) if len(route)>=2 else 0.0
-    conn["metadata"]["pathway_class"]=(
-        "data_riser_and_ceiling_pathway" if ctype in {"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE","OS2-SM-DUPLEX"}
-        else "power_riser_and_branch_raceway" if ctype in {"208Y120V-FEEDER","120VAC-BRANCH"}
-        else "controls_pathway" if ctype in {"BACNET-MSTP-STP","OSDP-RS485-STP","24VDC-CLASS2"}
-        else "life_safety_pathway" if ctype.startswith("FIRE-ALARM")
-        else "local_equipment_patch"
-    )
-    conn["metadata"]["concealment"]="concealed_above_ceiling_or_in_raceway" if ctype not in {"CAT6A-PATCH","HDMI","DISPLAYPORT","IEC-POWER","NEMA5-15-POWER-CORD","10G-DAC"} else "local_visible_or_equipment_internal"
+    conn["metadata"]["concealment"]="concealed_above_ceiling_or_in_raceway" if pathway_family_for_cable(ctype)!="local_equipment" else "local_visible_or_equipment_internal"
     conn["metadata"]["lab_traceable"]=True
     pref=port_prefix(ctype)
     if not conn.get("from_port"):
@@ -2396,6 +2521,7 @@ write(DEVICE_COMPONENTS,{
 
 asset_types=Counter(a["classification"]["asset_type"] for a in new_assets)
 cable_types=Counter(c["cable_type"] for c in connections)
+pathway_families=Counter(c.get("metadata",{}).get("pathway_family_id","unclassified") for c in connections)
 level_assets=Counter(a["location"]["level_id"] for a in new_assets if a["location"].get("level_id"))
 checks=[]
 def ck(name,ok,detail=""):checks.append({"name":name,"passed":bool(ok),"detail":detail})
@@ -2475,6 +2601,23 @@ ck("all modeled physical connections have endpoint port identifiers",len(port_co
 ck("all modeled routes expose pathway and length metadata",all(
     c.get("metadata",{}).get("pathway_class") and c.get("metadata",{}).get("route_length_ft",0)>=0
     for c in physical_connections
+), "")
+ck("all modeled routes use pathway-first v1 metadata",all(
+    c.get("metadata",{}).get("pathway_route_version")==PATHWAY_VERSION
+    and c.get("metadata",{}).get("pathway_family_id") in PATHWAYS
+    and c.get("metadata",{}).get("support_system")
+    for c in physical_connections
+), "")
+long_run_types={"CAT6A-HORIZONTAL","CAT6A-WAP-SPARE","OS2-SM-DUPLEX","BACNET-MSTP-STP","OSDP-RS485-STP","24VDC-CLASS2","FIRE-ALARM-SLC","FIRE-ALARM-NAC","120VAC-BRANCH","SPEAKER-PAIR"}
+ck("long-run cabling has supported bend-aware pathway routes",all(
+    len(c.get("route") or [])>=6
+    and c.get("metadata",{}).get("visual_bend_radius_ft",0)>0
+    and c.get("metadata",{}).get("field_bend_radius_verification_required") is True
+    for c in physical_connections if c["cable_type"] in long_run_types
+), "")
+ck("legacy single tray-turn routing is eliminated",not any(
+    any(abs(float(p[0])-float(SUP["tray_turn"][0]))<.01 and abs(float(p[1])-float(SUP["tray_turn"][1]))<.01 for p in (c.get("route") or [])[1:-1])
+    for c in physical_connections if c["cable_type"] in long_run_types
 ), "")
 ck("all Cat6A permanent links remain within 90 m design limit",all(
     c.get("metadata",{}).get("route_length_ft",0)<=295.276
@@ -2706,7 +2849,7 @@ report={
  "step4c_componentized_fire_detector_total":len(fire_detector_component_records),"step4c_componentized_fire_notification_total":len(fire_notification_component_records),
  "step4c_componentized_fire_alarm_control_panel_total":len(facp_component_records),"step4c_componentized_fire_alarm_read_only_gateway_total":len(fire_gateway_component_records),
  "wireless_links_total":len(wireless_links),"lab_scenarios_total":len(labs),"new_asset_type_counts":dict(sorted(asset_types.items())),
- "cable_type_counts":dict(sorted(cable_types.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
+ "cable_type_counts":dict(sorted(cable_types.items())),"pathway_family_counts":dict(sorted(pathway_families.items())),"new_assets_by_level":dict(sorted(level_assets.items())),
  "transient_client_profiles":transient_profiles,"overlay_glb_bytes":GLB.stat().st_size,"overlay_glb_sha256":glb_sha,
  "checks_total":len(checks),"checks_passed":sum(1 for x in checks if x["passed"]),"checks_failed":sum(1 for x in checks if not x["passed"]),
  "checks":checks,"passed":passed
@@ -2730,6 +2873,7 @@ print("  fire detectors:",len(fire_detector_component_records),"notification app
 print(" wireless links:",len(wireless_links))
 print(" labs:",len(labs))
 print(" cable types:",dict(sorted(cable_types.items())))
+print(" pathway families:",dict(sorted(pathway_families.items())))
 print(" checks:",report["checks_passed"],"/",report["checks_total"])
 if not passed:
     print(" failed checks:")

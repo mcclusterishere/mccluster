@@ -574,6 +574,123 @@
     "work_area_model": "switch patch cord -> patch panel -> Cat6A permanent link -> work-area/ceiling jack -> equipment patch cord",
     "power_model": "building feeder -> floor panel -> branch circuit -> receptacle/floor box -> equipment power cord; PoE endpoints receive power only over the modeled Ethernet path",
     "concealment_default": "concealed_above_ceiling_or_in_raceway",
-    "visible_lab_mode": "cable geometry may be exposed by the viewer for training/trace labs while remaining concealed in ordinary architectural presentation"
+    "visible_lab_mode": "cable geometry may be exposed by the viewer for training/trace labs while remaining concealed in ordinary architectural presentation",
+    "pathway_model_version": "step4-pathway-first-v1",
+    "standards_basis": [
+      "ANSI/TIA-569-E Telecommunications Pathways and Spaces",
+      "BICSI TDMM 15th Edition distribution-design best practices"
+    ],
+    "routing_statement": "Design-intent pathway-first routing only. Exact field separation, support spacing, fill, firestopping, conductor sizing and manufacturer bend-radius compliance require project-specific professional coordination.",
+    "bundle_lane_offsets_ft": [
+      -0.18,
+      -0.06,
+      0.06,
+      0.18
+    ],
+    "pathway_families": {
+      "telecommunications": {
+        "pathway_class": "telecommunications_ceiling_and_riser_pathway",
+        "support_system": "basket_tray_and_ladder_rack",
+        "trunk_y_ft": 57.75,
+        "branch_x_ft": [
+          12,
+          24,
+          36,
+          48,
+          60
+        ],
+        "height_aff_ft": 10.2,
+        "roof_height_aff_ft": 3,
+        "riser_key": "data",
+        "visual_bend_radius_ft": 0.55,
+        "separation_group": "ict"
+      },
+      "controls_security": {
+        "pathway_class": "controls_security_low_voltage_pathway",
+        "support_system": "dedicated_low_voltage_tray_or_supported_pathway",
+        "trunk_y_ft": 55.75,
+        "branch_x_ft": [
+          14,
+          28,
+          42,
+          56
+        ],
+        "height_aff_ft": 9.9,
+        "roof_height_aff_ft": 2.8,
+        "riser_key": "controls",
+        "visual_bend_radius_ft": 0.45,
+        "separation_group": "controls_security"
+      },
+      "life_safety": {
+        "pathway_class": "dedicated_life_safety_pathway",
+        "support_system": "dedicated_fire_alarm_pathway",
+        "trunk_y_ft": 53.75,
+        "branch_x_ft": [
+          16,
+          32,
+          48,
+          64
+        ],
+        "height_aff_ft": 10.45,
+        "roof_height_aff_ft": 3.2,
+        "riser_key": "fire",
+        "visual_bend_radius_ft": 0.45,
+        "separation_group": "life_safety"
+      },
+      "power_branch": {
+        "pathway_class": "power_branch_raceway",
+        "support_system": "electrical_branch_raceway",
+        "trunk_y_ft": 51.5,
+        "branch_x_ft": [
+          18,
+          34,
+          50,
+          66
+        ],
+        "height_aff_ft": 9.4,
+        "roof_height_aff_ft": 2.5,
+        "riser_key": null,
+        "visual_bend_radius_ft": 0.65,
+        "separation_group": "power"
+      },
+      "av_audio": {
+        "pathway_class": "av_audio_pathway",
+        "support_system": "dedicated_av_supported_pathway",
+        "trunk_y_ft": 59.25,
+        "branch_x_ft": [
+          13,
+          27,
+          41,
+          55
+        ],
+        "height_aff_ft": 9.65,
+        "roof_height_aff_ft": 3,
+        "riser_key": null,
+        "visual_bend_radius_ft": 0.45,
+        "separation_group": "av"
+      },
+      "power_feeder": {
+        "pathway_class": "electrical_riser_and_panel_raceway",
+        "support_system": "dedicated_electrical_riser_and_panel_raceway",
+        "trunk_y_ft": null,
+        "branch_x_ft": [],
+        "height_aff_ft": 9.4,
+        "roof_height_aff_ft": 2.5,
+        "riser_key": null,
+        "visual_bend_radius_ft": 0.8,
+        "separation_group": "power"
+      },
+      "local_equipment": {
+        "pathway_class": "local_equipment_patch_or_power_cord",
+        "support_system": "rack_cable_manager_or_local_equipment_cord",
+        "trunk_y_ft": null,
+        "branch_x_ft": [],
+        "height_aff_ft": null,
+        "roof_height_aff_ft": null,
+        "riser_key": null,
+        "visual_bend_radius_ft": 0.18,
+        "separation_group": "local"
+      }
+    }
   }
 }

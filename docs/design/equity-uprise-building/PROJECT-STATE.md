@@ -127,20 +127,21 @@ The X-Ray control is now a true visible engineering view rather than a state-onl
 - The full cable graph remains hidden; scenario-specific traces still render only between canonical rebound endpoints.
 - X-Ray lifecycle hardening keeps the engineering view active across lab visual clears/resets, rejects stale async activation work after rapid toggles, and detaches/disposes engineering markers before rebuilding them.
 
-### Step 4 routed wiring presentation — ACTIVE
+### Step 4 pathway-first routed wiring — ACTIVE
 
-The canonical viewer now renders the electronics connection graph from the deterministic connection catalog rather than exposing the legacy baked straight-line cable meshes:
-- all **1,330** authored physical connections remain sourced from `equity-uprise-electronics-connections-v1.json`;
-- route geometry consumes each connection's canonical `route` polyline and preserves its authored pathway class, riser/tray path, and endpoint port identifiers;
-- first/last route points snap to the rebound physical device component when an inspectable port-bearing component exists, otherwise to the bound device center or authored route endpoint;
-- Cat6A/PoE, OS2 fiber, rack patch/DAC, normal/emergency power, BACnet, Class 2, OSDP, fire alarm, AV/display and speaker-pair families render in batched cable-type line groups;
-- the renderer uses one `THREE.LineSegments` object per visible cable family instead of one draw object per connection;
-- LOW quality remains floor-scoped; higher-quality stack views may show the whole routed graph;
-- Cabling mode ghosts the architectural shell for engineering inspection while Room Mode continues to suppress engineering overlays;
-- legacy `CABLE::` meshes inside the electronics GLB are always hidden and are no longer the Cabling-mode source of truth;
-- scenario-specific lab traces now reuse the same rebound route resolver as the persistent Cabling view.
+The canonical viewer renders the existing **1,330** connection records from `equity-uprise-electronics-connections-v1.json`, but the route generator is now pathway-first rather than endpoint-first:
+- telecommunications copper/fiber, controls/security, fire/life-safety, branch power and AV audio each use a dedicated modeled pathway family with separate corridor trunk lanes and branch spines;
+- cross-floor services enter their declared data, controls, fire, normal-power or emergency-power riser before returning to the destination-floor pathway;
+- floor endpoints join the nearest branch pathway, travel on that pathway/trunk, then leave near the destination instead of doglegging through the former single `tray_turn` + x=40 center-spine pattern;
+- local rack patch cords, DACs, HDMI/DisplayPort and equipment power cords stay local rather than masquerading as building-distribution cabling;
+- deterministic bundle-lane offsets keep related cables visually grouped inside the same modeled pathway instead of producing identical overlapping centerlines or uncontrolled spaghetti;
+- pathway corners receive non-zero visual bend sweeps; exact manufacturer cable bend-radius compliance remains a required field-design verification and is **not** claimed by the digital twin;
+- the pathway policy records support-system intent and explicitly references ANSI/TIA-569-E plus BICSI TDMM distribution-design practice as design basis;
+- route metadata records pathway family, support system, separation group, bundle lane and visual bend radius for every connection;
+- Cabling mode continues to snap the route endpoints onto rebound physical device components and batch visible segments by cable type for mobile performance;
+- the legacy baked `CABLE::` GLB meshes remain hidden, and scenario lab traces use the same pathway-first route data.
 
-This is a visualization of deterministic design-intent routing, not an as-built construction claim. Exact field routing, conduit fill, conductor sizing and stamped electrical/low-voltage design remain outside the digital-twin authority.
+This is still **design-intent coordination**, not an as-built or construction drawing. Exact pathway sizing/fill, support spacing, cable/conduit separation, penetrations/firestopping, conductor sizing, grounding/bonding and manufacturer-specific bend limits require project-specific professional coordination.
 
 ### Play / Engineering spatial separation — ACTIVE
 
