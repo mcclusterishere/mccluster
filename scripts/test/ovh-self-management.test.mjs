@@ -38,8 +38,18 @@ test('public Core liveness exposes only safe deployment provenance', async () =>
   assert.match(source, /if \(!authenticated\)/);
 });
 
-test('Core runner gets enough graceful-stop time to finish bounded local-model jobs', async () => {
-  const source = await read('core/systemd/mccluster-core-runner.service');
-  assert.match(source, /TimeoutStopSec=11min/);
-  assert.match(source, /Restart=always/);
+
+test('reconciler sandbox permits only deploy-controlled configuration writes', async () => {
+  const source = await read('core/systemd/mccluster-vps-reconcile.service');
+  assert.match(source, /ProtectSystem=full/);
+  assert.match(source, /ReadWritePaths=.*\/etc\/systemd\/system/);
+  assert.match(source, /ReadWritePaths=.*\/etc\/polkit-1\/rules\.d/);
+  assert.match(source, /ReadWritePaths=.*\/etc\/mccluster-node/);
+  assert.doesNotMatch(source, /ProtectSystem=false/);
+});
+
+test('rollback ignores optional services that are not installed', async () => {
+  const source = await read('scripts/deploy-ovh-core.sh');
+  assert.match(source, /systemctl list-unit-files "\$\{unit\}"/);
+  assert.match(source, /systemctl try-restart "\$\{unit\}" \|\| true/);
 });
