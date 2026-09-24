@@ -200,7 +200,7 @@
    "slug": "cia-mind-control",
    "name": "CIA Mind Control",
    "artist": "KKK",
-   "tag": "The album · 1 track",
+   "tag": "The album · 2 tracks",
    "art": "assets/img/cia-mind-control-cover.jpg",
    "by": "",
    "tracks": [
@@ -231,6 +231,11 @@
       "preview_visibility": "signed_out_only",
       "full_visibility": "signed_in"
      }
+    },
+    {
+     "title": "You the Feds",
+     "src": "assets/audio/you-the-feds.m4a",
+     "poster": "assets/img/cia-mind-control-cover.jpg"
     }
    ]
   }
